@@ -1,7 +1,16 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { FC } from 'react';
-import QRCodeSvg from 'react-qr-code';
+import type { FC, ForwardRefExoticComponent, Ref, RefAttributes } from 'react';
+import QRCode, { type QRCodeProps } from 'react-qr-code';
 import cssStyles from './QrCode.module.scss';
+
+/*
+ * react-qr-code's typings declare a class component, but at runtime it is a
+ * `forwardRef` that hands the ref straight to its `<svg>` — which is the element
+ * `svgRef` promises its caller.
+ */
+const QRCodeSvg = QRCode as unknown as ForwardRefExoticComponent<
+  QRCodeProps & RefAttributes<SVGSVGElement>
+>;
 
 /** All user-visible strings in {@link QrCodeProps}. */
 export interface QrCodeLabels {
@@ -33,10 +42,12 @@ export interface QrCodeProps {
   labels: QrCodeLabels;
   /** Typography/color utility-class overrides for the frame and QR fill. */
   styles?: QrCodeStyles;
+  /** Receives the rendered QR `<svg>` element, e.g. to rasterize the exact code shown. */
+  svgRef?: Ref<SVGSVGElement>;
 }
 
 /** QR code rendering of the share link, scannable to open it on another device. */
-export const QrCode: FC<QrCodeProps> = ({ value, labels, styles }) => {
+export const QrCode: FC<QrCodeProps> = ({ value, labels, styles, svgRef }) => {
   const { colors } = styles ?? {};
 
   const cssVars = buildCssVars({
@@ -56,6 +67,7 @@ export const QrCode: FC<QrCodeProps> = ({ value, labels, styles }) => {
       )}
     >
       <QRCodeSvg
+        ref={svgRef}
         value={value}
         size={128}
         bgColor="transparent"

@@ -38,7 +38,9 @@ import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
 import {
+  getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
   mapScheduledTaskApiError,
 } from '../../utils/scheduled-task-form-validation';
@@ -91,7 +93,6 @@ const ScheduledTaskCreatePage: FC = () => {
 
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
-  const isSkillSelectionEnabled = useFeatureFlag('skillUsageEnabled');
   const skillLabelId = useId();
   const skillErrorId = useId();
   const navigate = useNavigate();
@@ -129,7 +130,7 @@ const ScheduledTaskCreatePage: FC = () => {
     [searchParams],
   );
 
-  const labels = useScheduledTaskFormLabels('create', isSkillSelectionEnabled);
+  const labels = useScheduledTaskFormLabels('create');
 
   const handleFieldChange = useCallback(
     <K extends keyof ScheduledTaskCreateFormValues>(
@@ -142,10 +143,14 @@ const ScheduledTaskCreatePage: FC = () => {
         if (field === 'modelId' || field === 'skillUrl') delete next.skillUrl;
         if (field === 'prompt' || field === 'skillUrl') delete next.prompt;
         delete next[field as keyof ScheduledTaskCreateFormErrors];
+        const liveError = getLiveScheduledTaskFieldError(field, value, t);
+        if (liveError) {
+          next[field as keyof ScheduledTaskCreateFormErrors] = liveError;
+        }
         return next;
       });
     },
-    [],
+    [t],
   );
 
   const handleModelSelect = useCallback(
@@ -179,16 +184,20 @@ const ScheduledTaskCreatePage: FC = () => {
       });
       navigate(returnUrl, { state: { refresh: true } });
     } catch (error) {
-      const { traceId, code } = await getApiErrorDetails(error);
-      const fieldErrors = mapScheduledTaskApiError(code, t);
+      const details = await getApiErrorDetails(error);
+      const fieldErrors = mapScheduledTaskApiError(details.code, t);
       if (fieldErrors) {
         setErrors(fieldErrors);
         setIsSubmitting(false);
         return;
       }
       showErrorNotification({
-        message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
-        requestId: traceId,
+        message: resolveScheduledTaskErrorMessage(
+          details,
+          ScheduledTasksI18nKeys.CreateErrorNotification,
+          t,
+        ),
+        requestId: details.traceId,
       });
       setIsSubmitting(false);
     }
@@ -222,17 +231,15 @@ const ScheduledTaskCreatePage: FC = () => {
       skillLabelId={skillLabelId}
       skillErrorId={skillErrorId}
       skillSelector={
-        isSkillSelectionEnabled ? (
-          <ScheduledTaskSkillField
-            value={values.skillUrl}
-            onChange={(value) => handleFieldChange('skillUrl', value)}
-            isSkillsSupported={isSkillsSupported}
-            isDisabled={isSubmitting}
-            isInvalid={Boolean(effectiveErrors.skillUrl)}
-            labelledById={skillLabelId}
-            describedById={effectiveErrors.skillUrl ? skillErrorId : undefined}
-          />
-        ) : undefined
+        <ScheduledTaskSkillField
+          value={values.skillUrl}
+          onChange={(value) => handleFieldChange('skillUrl', value)}
+          isSkillsSupported={isSkillsSupported}
+          isDisabled={isSubmitting}
+          isInvalid={Boolean(effectiveErrors.skillUrl)}
+          labelledById={skillLabelId}
+          describedById={effectiveErrors.skillUrl ? skillErrorId : undefined}
+        />
       }
       modelSelector={
         <DeploymentSelectorFieldTrigger

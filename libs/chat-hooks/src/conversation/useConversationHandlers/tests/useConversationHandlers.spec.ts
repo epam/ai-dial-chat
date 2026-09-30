@@ -1,5 +1,6 @@
 import {
   MessageRating,
+  MessageRole,
   type Conversation,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
@@ -193,6 +194,65 @@ describe('useConversationHandlers', () => {
         'regenerate',
       );
     });
+
+    it.each([
+      [false, true],
+      [true, false],
+    ])(
+      'regenerates with the current tool toggle (stored deep_research: %s, current: %s)',
+      (storedValue, currentValue) => {
+        const conversation = makeConversation({
+          messages: [
+            {
+              role: 'user' as never,
+              content: 'hi',
+              timestamp: 't',
+              custom_content: {
+                configuration_value: { deep_research: storedValue },
+                attachments: [
+                  {
+                    title: 'a.pdf',
+                    url: 'files/bucket/a.pdf',
+                    type: 'application/pdf',
+                  },
+                ],
+              } as never,
+            },
+            {
+              role: 'assistant' as never,
+              content: 'partial',
+              timestamp: 't',
+              wasStoppedByUser: true,
+            },
+          ],
+        });
+        const { result } = renderHook(() =>
+          useHarness({
+            conversation,
+            toolConfigurationValue: { deep_research: currentValue },
+          }),
+        );
+
+        act(() => result.current.handlers.handleRegenerateMessage(1));
+
+        const expectedCustomContent = {
+          configuration_value: { deep_research: currentValue },
+          attachments: [expect.objectContaining({ title: 'a.pdf' })],
+        };
+        expect(result.current.startStream).toHaveBeenCalledWith(
+          conversation.id,
+          'hi',
+          1,
+          'selected-model',
+          expectedCustomContent,
+          expect.any(String),
+          'regenerate',
+        );
+        expect(result.current.conversation?.messages[0].custom_content).toEqual(
+          expectedCustomContent,
+        );
+      },
+    );
 
     it('does nothing while streaming', () => {
       const conversation = makeConversation({
@@ -760,5 +820,120 @@ describe('useConversationHandlers', () => {
 
       expect(result.current.startStream).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('useConversationHandlers — identity across conversation updates', () => {
+  const withRatedAnswer = (content: string): Conversation =>
+    makeConversation({
+      messages: [
+        { role: MessageRole.User, content: 'question' },
+        {
+          role: MessageRole.Assistant,
+          content,
+          responseId: 'response-1',
+          rating: MessageRating.Like,
+        },
+      ] as Conversation['messages'],
+    });
+
+  const renderWithConversation = (initial: Conversation) => {
+    const conversationRef: { current: Conversation | null } = {
+      current: initial,
+    };
+    const saveConversation = vi.fn().mockResolvedValue(undefined);
+    const rateMessage = vi.fn().mockResolvedValue(undefined);
+    const base = {
+      conversationId: initial.id,
+      bucket: 'bucket',
+      isStreaming: false,
+      startStream: vi.fn(),
+      state: { setConversation: vi.fn(), conversationRef },
+      filesApi: { uploadFile: vi.fn() },
+      conversationsApi: {
+        saveConversation,
+        deleteConversation: vi.fn(),
+      },
+      rateApi: { rateMessage },
+      resolveModelId: () => 'selected-model',
+      onConversationDeleted: vi.fn(),
+    } as unknown as Omit<UseConversationHandlersParams, 'conversation'>;
+    const view = renderHook(
+      ({ conversation }: { conversation: Conversation }) =>
+        useConversationHandlers({ ...base, conversation }),
+      { initialProps: { conversation: initial } },
+    );
+    return { ...view, conversationRef, saveConversation };
+  };
+
+  it('keeps the conversation-reading callbacks when the conversation object changes', () => {
+    const first = withRatedAnswer('first');
+    const { result, rerender, conversationRef } = renderWithConversation(first);
+    const before = result.current;
+
+    const second = withRatedAnswer('second');
+    conversationRef.current = second;
+    rerender({ conversation: second });
+
+    expect(result.current.handleRegenerateMessage).toBe(
+      before.handleRegenerateMessage,
+    );
+    expect(result.current.handleRateMessage).toBe(before.handleRateMessage);
+    expect(result.current.handleButtonSelect).toBe(before.handleButtonSelect);
+    expect(result.current.handleEditMessage).toBe(before.handleEditMessage);
+  });
+
+  it('acts on the latest conversation through a callback obtained earlier', async () => {
+    const first = withRatedAnswer('first');
+    const { result, rerender, conversationRef, saveConversation } =
+      renderWithConversation(first);
+    const { handleRateMessage } = result.current;
+
+    const second = withRatedAnswer('second');
+    conversationRef.current = second;
+    rerender({ conversation: second });
+
+    await act(async () => {
+      await handleRateMessage(1, null);
+    });
+
+    const saved =
+      saveConversation.mock.calls[0][0].saveConversationBodyDto.conversation;
+    expect(saved.messages[1].content).toBe('second');
+    expect(saved.messages[1].rating).toBeUndefined();
+  });
+
+  it('does not persist a rating whose rate request failed', async () => {
+    /* keepRefInSync: false — only the handlers write the ref, as in a host. */
+    const conversation = makeConversation({
+      messages: [
+        { role: MessageRole.User, content: 'q1' },
+        { role: MessageRole.Assistant, content: 'a1', responseId: 'r1' },
+        { role: MessageRole.User, content: 'q2' },
+        { role: MessageRole.Assistant, content: 'a2', responseId: 'r2' },
+      ] as Conversation['messages'],
+    });
+    const rateMessage = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('rate failed'))
+      .mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      useHarness(
+        { conversation, rateApi: { rateMessage } },
+        { keepRefInSync: false },
+      ),
+    );
+
+    await act(async () => {
+      await result.current.handlers.handleRateMessage(1, MessageRating.Like);
+    });
+    await act(async () => {
+      await result.current.handlers.handleRateMessage(3, MessageRating.Like);
+    });
+
+    const saved = result.current.saveConversation.mock.calls[0][0]
+      .saveConversationBodyDto.conversation as Conversation;
+    expect(saved.messages[1].rating).toBeUndefined();
+    expect(saved.messages[3].rating).toBe(MessageRating.Like);
   });
 });

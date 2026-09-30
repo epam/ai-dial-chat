@@ -11,10 +11,21 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
+import {
+  ALL_METADATA_FIELDS,
+  MetadataField,
+} from '../../models/metadata-field';
 import { AddAvatar } from '../AddAvatar/AddAvatar';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
-/** Controlled field set for deployment creation: avatar, name, description, version, and topics. */
+const DEFAULT_TOPICS_PLACEHOLDER = 'Add tags, comma separated';
+const DESCRIPTION_FIELD_ID = 'deployment-creation-form-description';
+
+/**
+ * Controlled field set for deployment creation: avatar, name, version,
+ * description, locales, and topics. `fields` narrows which ones render; the
+ * order never changes.
+ */
 export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   values,
   errors,
@@ -26,27 +37,91 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   labels,
   styles,
   availableLocaleOptions = [],
+  fields = ALL_METADATA_FIELDS,
+  isNameReadOnly = false,
+  nameCaption,
+  isDescriptionRequired = false,
+  renderDescription,
+  focusRequestKey,
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const versionInputRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const hadErrorsRef = useRef(false);
 
-  const hasErrors = !!(errors.name || errors.version);
+  const shows = (field: MetadataField) => fields.includes(field);
+  const showsName = shows(MetadataField.Name);
+  const showsVersion = shows(MetadataField.Version);
 
-  /*
-   * Only steal focus on the transition from no errors to some errors (a
-   * submit attempt), not on every keystroke that adds/removes one field's
-   * error while the user is still typing.
-   */
+  const hasErrors = !!(errors.name || errors.version || errors.description);
+  const lastFocusRequestKeyRef = useRef(focusRequestKey);
+
   useEffect(() => {
-    if (hasErrors && !hadErrorsRef.current) {
-      const firstInvalidRef = errors.name ? nameInputRef : versionInputRef;
+    const focusFirstInvalid = () => {
+      if (errors.name) {
+        nameInputRef.current?.focus();
+      } else if (errors.version) {
+        versionInputRef.current?.focus();
+      } else if (errors.description) {
+        descriptionRef.current?.focus();
+      }
+    };
 
-      firstInvalidRef.current?.focus();
+    /*
+     * With a focus request key the host says exactly when a submit happened,
+     * so an error that appears on blur never pulls focus back from the field
+     * the user just moved to.
+     */
+    if (focusRequestKey !== undefined) {
+      if (focusRequestKey !== lastFocusRequestKeyRef.current) {
+        lastFocusRequestKeyRef.current = focusRequestKey;
+        focusFirstInvalid();
+      }
+      return;
+    }
+
+    /*
+     * Without one, only steal focus on the transition from no errors to some
+     * errors (a submit attempt), not on every keystroke that adds/removes one
+     * field's error while the user is still typing.
+     */
+    if (hasErrors && !hadErrorsRef.current) {
+      focusFirstInvalid();
     }
 
     hadErrorsRef.current = hasErrors;
-  }, [hasErrors, errors.name, errors.version]);
+  }, [
+    focusRequestKey,
+    hasErrors,
+    errors.name,
+    errors.version,
+    errors.description,
+  ]);
+
+  const descriptionTextarea = (
+    <Textarea
+      id={DESCRIPTION_FIELD_ID}
+      ref={descriptionRef}
+      value={values.description}
+      onChange={(value) => onChange({ description: value })}
+      aria-required={isDescriptionRequired || undefined}
+      // A `renderDescription` wrapper renders the label itself.
+      labelProps={
+        renderDescription
+          ? undefined
+          : {
+              label: labels.description.label,
+              required: isDescriptionRequired,
+            }
+      }
+      placeholder={labels.description.placeholder}
+      error={errors.description || undefined}
+      invalid={!!errors.description}
+      containerClassName={renderDescription ? undefined : styles?.field}
+      className={RESIZABLE_TEXTAREA_CLASS_NAME}
+      resize={TextareaResize.Vertical}
+    />
+  );
 
   return (
     <div
@@ -54,72 +129,90 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
       aria-label={labels.ariaLabel}
       className={mergeClasses('flex flex-col gap-4', styles?.root)}
     >
-      <AddAvatar
-        label={labels.iconUrl.label}
-        avatarUrl={iconPreviewUrl}
-        addAvatarLabel={labels.iconUrl.addAvatarLabel}
-        captionText={labels.iconUrl.captionText}
-        onAddAvatarClick={onAddAvatarClick}
-        className={styles?.field}
-      />
-
-      <div className={mergeClasses('flex items-start gap-4', styles?.field)}>
-        <Input
-          id="deployment-creation-form-name"
-          inputRef={nameInputRef}
-          value={values.name}
-          onChange={(value) => onChange({ name: value ?? '' })}
-          onBlur={onNameBlur}
-          labelProps={{ label: labels.name.label, required: true }}
-          placeholder={labels.name.placeholder}
-          error={errors.name || undefined}
-          invalid={!!errors.name}
-          containerClassName="min-w-0 basis-0 grow-[2]"
+      {shows(MetadataField.Avatar) && (
+        <AddAvatar
+          label={labels.iconUrl.label}
+          avatarUrl={iconPreviewUrl}
+          addAvatarLabel={labels.iconUrl.addAvatarLabel}
+          captionText={labels.iconUrl.captionText}
+          onAddAvatarClick={onAddAvatarClick}
+          className={styles?.field}
         />
+      )}
 
-        <Input
-          id="deployment-creation-form-version"
-          inputRef={versionInputRef}
-          value={values.version}
-          onChange={(value) => onChange({ version: value ?? '' })}
-          onBlur={onVersionBlur}
-          labelProps={{ label: labels.version.label }}
-          placeholder={labels.version.placeholder}
-          error={errors.version || undefined}
-          invalid={!!errors.version}
-          containerClassName="min-w-0 basis-0 grow-[1]"
+      {(showsName || showsVersion) && (
+        <div className={mergeClasses('flex items-start gap-4', styles?.field)}>
+          {showsName && (
+            <Input
+              id="deployment-creation-form-name"
+              inputRef={nameInputRef}
+              value={values.name}
+              onChange={(value) => onChange({ name: value ?? '' })}
+              onBlur={onNameBlur}
+              readOnly={isNameReadOnly}
+              labelProps={{ label: labels.name.label, required: true }}
+              placeholder={labels.name.placeholder}
+              caption={nameCaption}
+              error={errors.name || undefined}
+              invalid={!!errors.name}
+              containerClassName={
+                showsVersion ? 'min-w-0 basis-0 grow-[2]' : 'min-w-0 flex-1'
+              }
+            />
+          )}
+
+          {showsVersion && (
+            <Input
+              id="deployment-creation-form-version"
+              inputRef={versionInputRef}
+              value={values.version}
+              onChange={(value) => onChange({ version: value ?? '' })}
+              onBlur={onVersionBlur}
+              labelProps={{ label: labels.version.label }}
+              placeholder={labels.version.placeholder}
+              error={errors.version || undefined}
+              invalid={!!errors.version}
+              containerClassName={
+                showsName ? 'min-w-0 basis-0 grow-[1]' : 'min-w-0 flex-1'
+              }
+            />
+          )}
+        </div>
+      )}
+
+      {shows(MetadataField.Description) &&
+        (renderDescription ? (
+          <div className={styles?.field}>
+            {renderDescription(descriptionTextarea, DESCRIPTION_FIELD_ID)}
+          </div>
+        ) : (
+          descriptionTextarea
+        ))}
+
+      {shows(MetadataField.Locales) && (
+        <DeploymentLocalesField
+          value={values.otherLocales}
+          onChange={(otherLocales) => onChange({ otherLocales })}
+          availableLocaleOptions={availableLocaleOptions}
+          labels={labels.otherLocales}
+          className={styles?.field}
         />
-      </div>
+      )}
 
-      <Textarea
-        id="deployment-creation-form-description"
-        value={values.description}
-        onChange={(value) => onChange({ description: value })}
-        labelProps={{ label: labels.description.label }}
-        placeholder={labels.description.placeholder}
-        containerClassName={styles?.field}
-        className={RESIZABLE_TEXTAREA_CLASS_NAME}
-        resize={TextareaResize.Vertical}
-      />
-
-      <DeploymentLocalesField
-        value={values.otherLocales}
-        onChange={(otherLocales) => onChange({ otherLocales })}
-        availableLocaleOptions={availableLocaleOptions}
-        labels={labels.otherLocales}
-        className={styles?.field}
-      />
-
-      <div className={styles?.field}>
-        <TagInput
-          id="deployment-creation-form-topics"
-          labelProps={{ label: labels.topics.label }}
-          placeholder={labels.topics.placeholder}
-          value={values.topics}
-          onChange={(topics) => onChange({ topics })}
-          tagClassName={TAG_INPUT_TAG_CLASS_NAME}
-        />
-      </div>
+      {shows(MetadataField.Tags) && (
+        <div className={styles?.field}>
+          <TagInput
+            id="deployment-creation-form-topics"
+            labelProps={{ label: labels.topics.label }}
+            placeholder={
+              labels.topics.placeholder ?? DEFAULT_TOPICS_PLACEHOLDER
+            }
+            value={values.topics}
+            onChange={(topics) => onChange({ topics })}
+            tagClassName={TAG_INPUT_TAG_CLASS_NAME}
+          />
+        </div>
+      )}
     </div>
   );
 };

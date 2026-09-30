@@ -98,7 +98,7 @@ describe('ToolsetsMutationService', () => {
 
       const result = await service.createToolset('user1', 'token', baseBody);
       expect(result).toEqual({
-        id: 'toolsets/test-bucket/My%20toolset__0.0.1',
+        id: 'toolsets/test-bucket/My%20toolset__1.0.0',
       });
       expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
     });
@@ -122,11 +122,11 @@ describe('ToolsetsMutationService', () => {
       });
 
       expect(result).toEqual({
-        id: 'toolsets/test-bucket/Team%2Ftoolset__0.0.1',
+        id: 'toolsets/test-bucket/Team%2Ftoolset__1.0.0',
       });
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'Team%2Ftoolset__0.0.1',
+        'Team%2Ftoolset__1.0.0',
         expect.any(Object),
       );
     });
@@ -158,7 +158,7 @@ describe('ToolsetsMutationService', () => {
 
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'My%20toolset__0.0.1',
+        'My%20toolset__1.0.0',
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer token',
@@ -168,7 +168,7 @@ describe('ToolsetsMutationService', () => {
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody).toEqual({
         displayName: 'My toolset',
-        displayVersion: '0.0.1',
+        displayVersion: '1.0.0',
         endpoint: 'https://my-toolset.example.com/mcp',
         transport: 'HTTP',
         allowed_tools: ['tool1'],

@@ -10,6 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentsService } from '../deployments.service';
+import { DeploymentType } from '../dto/deployment-type';
 import { UserLimitsController } from '../user-limits.controller';
 
 const TEST_USER = {
@@ -179,7 +180,10 @@ describe('UserLimitsController (integration)', () => {
         .expect(200);
 
       expect(res.body).toEqual(mockUserLimits);
-      expect(service.getUserLimits).toHaveBeenCalledWith(TEST_USER.at);
+      expect(service.getUserLimits).toHaveBeenCalledWith(
+        TEST_USER.at,
+        undefined,
+      );
     });
 
     it('sets Cache-Control: private, no-store', async () => {
@@ -229,7 +233,10 @@ describe('UserLimitsController (integration)', () => {
         .expect(200);
 
       expect(res.body).toEqual(mockUserUsage);
-      expect(service.getUserUsage).toHaveBeenCalledWith(TEST_USER.at);
+      expect(service.getUserUsage).toHaveBeenCalledWith(
+        TEST_USER.at,
+        undefined,
+      );
     });
 
     it('sets Cache-Control: private, no-store', async () => {
@@ -287,6 +294,44 @@ describe('UserLimitsController (integration)', () => {
       expect(
         res.body.deployments['gpt-5.2-2025-12-11'].dayTokenStats,
       ).not.toHaveProperty('resetsAt');
+    });
+  });
+
+  describe.each([
+    ['limits', 'getUserLimits'],
+    ['usage', 'getUserUsage'],
+  ] as const)('GET /api/v1/user/%s deploymentTypes', (route, method) => {
+    const path = `/api/v1/user/${route}`;
+
+    beforeEach(() => {
+      service[method].mockResolvedValue({ deployments: {} });
+    });
+
+    it.each([
+      ['comma-separated', '?deploymentTypes=model,application'],
+      ['repeated keys', '?deploymentTypes=model&deploymentTypes=application'],
+    ])('passes both kinds to the service for %s input', async (_label, qs) => {
+      await request(app.getHttpServer()).get(`${path}${qs}`).expect(200);
+
+      expect(service[method]).toHaveBeenCalledWith(TEST_USER.at, [
+        DeploymentType.Model,
+        DeploymentType.Application,
+      ]);
+    });
+
+    it('leaves the default to the service when the parameter is absent', async () => {
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(service[method]).toHaveBeenCalledWith(TEST_USER.at, undefined);
+      expect(res.headers['cache-control']).toBe('private, no-store');
+    });
+
+    it('rejects an unknown kind with 400 without calling DIAL Core', async () => {
+      await request(app.getHttpServer())
+        .get(`${path}?deploymentTypes=route`)
+        .expect(400);
+
+      expect(service[method]).not.toHaveBeenCalled();
     });
   });
 });

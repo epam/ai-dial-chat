@@ -1,5 +1,6 @@
 import {
   Catalog,
+  type CatalogContentFileTreeRenderProps,
   type CatalogItem,
   CredentialsLevel,
   ToolsetAuthenticationType,
@@ -14,8 +15,9 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -68,6 +70,7 @@ import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
@@ -75,6 +78,11 @@ import {
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
+
+/* The details panel draws a skill's files with the same file-manager tree as the skill editor. */
+const renderContentFileTree = (props: CatalogContentFileTreeRenderProps) => (
+  <SkillContentFileTree {...props} />
+);
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -125,17 +133,21 @@ const CatalogView: FC<Props> = ({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
-  const initialDetailsItemId = itemIdParam;
+  const [initialDetailsItemId, setInitialDetailsItemId] = useState(itemIdParam);
 
   /*
-   * `itemId` is a one-shot signal from a shared-invitation redirect (see
-   * SharedInvitationPage) meant to open the details panel once. Clearing it
-   * here keeps it from lingering in the URL, so a later navigation back to
-   * the same deployment's shared link isn't ignored just because the param
-   * still equals a value Catalog already consumed once before.
+   * `itemId` is a one-shot signal — from a shared-invitation redirect (see
+   * SharedInvitationPage) or the skill editor after a create — meant to open
+   * the details panel once. Clearing it here keeps it from lingering in the
+   * URL, so a later navigation back to the same deployment's shared link isn't
+   * ignored just because the param still equals a value Catalog already
+   * consumed once before. The id itself is held in state until the item is
+   * listed (see below): the catalog may still be loading when the param is
+   * cleared.
    */
   useEffect(() => {
     if (!itemIdParam) return;
+    setInitialDetailsItemId(itemIdParam);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -227,7 +239,8 @@ const CatalogView: FC<Props> = ({
   const {
     isDialogOpen: isSkillArchiveDialogOpen,
     statusMessage: skillArchiveStatusMessage,
-    selectionError: skillArchiveSelectionError,
+    errorText: skillArchiveErrorText,
+    isUploading: isSkillArchiveUploading,
     openDialog: openSkillArchiveDialog,
     closeDialog: closeSkillArchiveDialog,
     handleFilesSelected: handleSkillArchiveFilesSelected,
@@ -281,6 +294,20 @@ const CatalogView: FC<Props> = ({
     isCatalogHideMyAppsEnabled,
     persistedFilterTopics,
   });
+
+  /*
+   * Released once the item is listed: Catalog's own effect (a child, so it
+   * runs first in the same commit) has opened the panel by then, and handing
+   * it `undefined` afterwards resets its applied-id guard for the next signal.
+   */
+  useEffect(() => {
+    if (
+      initialDetailsItemId != null &&
+      visibleCatalogItems.some((item) => item.id === initialDetailsItemId)
+    ) {
+      setInitialDetailsItemId(undefined);
+    }
+  }, [initialDetailsItemId, visibleCatalogItems]);
 
   const { activeTab, setActiveTab } =
     useCatalogActiveTabPreference(availableTabIds);
@@ -497,6 +524,43 @@ const CatalogView: FC<Props> = ({
     [t],
   );
 
+  const handleDeleteSuccess = useCallback(
+    (item: CatalogItem) => {
+      notifyOperationSuccess(
+        resolveCatalogItemEntity(
+          item.type,
+          findDeploymentByIdOrReference(deployments, item.id),
+        ),
+        EntityOperation.Deleted,
+        { name: item.name },
+      );
+
+      /*
+       * A deleted item's id stays in the user-config favourites unless it is
+       * removed here, and an item re-created later at the same resource path
+       * would come back already starred (Issue #9143). The delete itself has
+       * succeeded, so a failed cleanup is only logged.
+       */
+      if (!favoriteIds.has(item.id)) return;
+      const removeFavorite = async () => {
+        try {
+          await toggleFavorite(
+            item.id,
+            false,
+            resolveFavoriteEntityType(item.type),
+          );
+        } catch (err) {
+          console.warn(
+            '[CatalogView] Failed to remove deleted item from favourites',
+            err,
+          );
+        }
+      };
+      void removeFavorite();
+    },
+    [deployments, favoriteIds, notifyOperationSuccess, toggleFavorite],
+  );
+
   const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
     deployments,
     isCustomAppsEnabled,
@@ -515,15 +579,7 @@ const CatalogView: FC<Props> = ({
     refetchToolsets,
     refetchSkills,
     refetchDeployments,
-    onDeleteSuccess: (item) =>
-      notifyOperationSuccess(
-        resolveCatalogItemEntity(
-          item.type,
-          findDeploymentByIdOrReference(deployments, item.id),
-        ),
-        EntityOperation.Deleted,
-        { name: item.name },
-      ),
+    onDeleteSuccess: handleDeleteSuccess,
     labels: catalogEditNavigationLabels,
     onNotify: showErrorNotification,
     onSkillUploadClick: openSkillArchiveDialog,
@@ -537,7 +593,8 @@ const CatalogView: FC<Props> = ({
     <>
       <SkillArchiveUploadDialog
         isOpen={isSkillArchiveDialogOpen}
-        errorText={skillArchiveSelectionError}
+        errorText={skillArchiveErrorText}
+        isUploading={isSkillArchiveUploading}
         onClose={closeSkillArchiveDialog}
         onFilesSelected={handleSkillArchiveFilesSelected}
         onFilesRejected={handleSkillArchiveFilesRejected}
@@ -577,6 +634,7 @@ const CatalogView: FC<Props> = ({
         isDownloadVisible={isDownloadVisible}
         onLoadContentFile={onLoadContentFile}
         renderContentFilePreview={renderContentFilePreview}
+        renderContentFileTree={renderContentFileTree}
         onDelete={handleDelete}
         onUnshare={handleUnshare}
         isUnshareVisible={isUnshareVisible}

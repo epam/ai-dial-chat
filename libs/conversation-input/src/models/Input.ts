@@ -135,6 +135,10 @@ export interface ModelMenuStyles {
 export interface ToolsChipLabels {
   /** Returns the accessible label for a chip's × button, which drops the tool from the input. Receives the tool label. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
+  /** Visible state text shown after the tool label while the tool is on, e.g. `"ON"`. Renders only when `stateOffLabel` is also set. */
+  stateOnLabel?: string;
+  /** Visible state text shown after the tool label while the tool is off, e.g. `"OFF"`. Renders only when `stateOnLabel` is also set. */
+  stateOffLabel?: string;
 }
 
 /** A host-injected overlay entry for the `+` menu: a menu item whose submenu renders host-owned content. */
@@ -265,6 +269,8 @@ export interface InputHandle {
 
 /** Props accepted by the `Input` component. */
 export interface InputProps {
+  /** Changing this token requests textarea focus without altering its value or caret. */
+  focusRequestId?: number;
   /**
    * Message value. Sets the initial textarea content on mount and syncs the
    * textarea whenever the value changes.
@@ -551,13 +557,19 @@ export interface InputProps {
    * whitespace-free, prefix-free query — opens an overlay above the input;
    * it stays open while the value keeps matching the prefix followed by a
    * query with no whitespace or second prefix character, and closes on
-   * unmatch, Escape, or an outside click (a dismissed menu reopens only
-   * after the value stops matching and the trigger is typed or pasted
-   * again). Any other pasted value, and any paste into a non-empty
-   * textarea, inserts as a regular paste and opens nothing. Selection
-   * typically goes through `ctx.close({ consumeQuery: true })`, which
-   * removes the `/query` text from the textarea. Absent disables the
-   * mechanism.
+   * unmatch, Escape, or an outside click. Escape is the one dismissal that
+   * latches: the menu stays closed over that same word until the value stops
+   * matching and the trigger is typed or pasted again. An outside click only
+   * closes it for the moment — typing/deleting within the same still-matching
+   * word, or moving the caret back into it (a click, or refocusing the
+   * textarea), reopens it with no need to retype the trigger. A message can
+   * hold more than one command-shaped word at once; the menu always tracks
+   * whichever one the caret is actually in, re-evaluated on every such caret
+   * move rather than assumed from whichever word was active before. Any other
+   * pasted value, and any paste into a non-empty textarea, inserts as a
+   * regular paste and opens nothing. Selection typically goes through
+   * `ctx.close({ consumeQuery: true })`, which removes the `/query` text from
+   * the textarea. Absent disables the mechanism.
    */
   commandMenu?: CommandMenuConfig;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */

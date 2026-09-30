@@ -3,14 +3,13 @@ import {
   mergeClasses,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  EllipsisTooltip,
-} from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
-import { FC, useId, useState } from 'react';
+import { Accordion, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { FC, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
+import {
+  STAGE_ACCORDION_CLASS_NAME,
+  STAGE_ACCORDION_HEADER_CLASS_NAME,
+} from '../../constants/stage-accordion';
 import { StageRow } from '../../models/stage-grouping';
 import type {
   StagesPanelLabels,
@@ -35,6 +34,8 @@ interface StageGroupRowProps {
   typography?: StageTypography;
   /** User-visible strings. */
   labels?: StagesPanelLabels;
+  /** Called when a stage attachment tile is clicked/activated. See {@link StagesPanelProps.onAttachmentClick}. */
+  onAttachmentClick?: StagesPanelProps['onAttachmentClick'];
 }
 
 /** Expandable summary row for a collapsed `×N` group of identical stage attempts. */
@@ -43,6 +44,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   isLive,
   typography,
   labels,
+  onAttachmentClick,
 }) => {
   const {
     runningAriaLabel,
@@ -50,8 +52,6 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
     attemptLabel = (n: number) => `Attempt ${n}`,
   } = labels ?? {};
   const [isOpen, setIsOpen] = useState(false);
-  const contentId = useId();
-
   const hasUnresolved = row.attempts?.some((a) => a.status == null) ?? false;
   const hasFailed = row.attempts?.some((a) => a.status === StageStatus.Failed);
   const groupStatus = hasUnresolved
@@ -65,100 +65,81 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   const totalDurationLabel =
     totalSeconds > 0 ? formatTotalDuration(totalSeconds) : undefined;
 
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={isOpen}
-        aria-controls={contentId}
+  const header = (
+    <span className="flex min-w-0 items-center gap-2">
+      <span className="flex flex-none items-center">
+        <StageIcon
+          status={groupStatus}
+          isLive={isLive}
+          runningLabel={runningAriaLabel}
+          failedLabel={failedAriaLabel}
+        />
+      </span>
+      <span
         className={mergeClasses(
-          'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start',
-          styles.collapseButton,
-          styles.row,
+          'min-w-0 max-w-[22rem] truncate',
+          typography?.fontClassName ?? 'dial-small-text',
+          styles.stageName,
+          hasFailed && styles.stageNameFailed,
         )}
       >
-        <span className="flex flex-none items-center">
-          <StageIcon
-            status={groupStatus}
-            isLive={isLive}
-            runningLabel={runningAriaLabel}
-            failedLabel={failedAriaLabel}
-          />
-        </span>
-        <span
-          className={mergeClasses(
-            'min-w-0 max-w-[22rem] truncate',
-            typography?.fontClassName ?? 'dial-small-text',
-            styles.stageName,
-            hasFailed && styles.stageNameFailed,
-          )}
-        >
-          <EllipsisTooltip text={row.name} />
-        </span>
+        <EllipsisTooltip text={row.name} />
+      </span>
+      <span
+        className={mergeClasses(
+          'flex-none',
+          typography?.countFontClassName ?? 'dial-tiny-text',
+          styles.count,
+        )}
+      >
+        ×{row.attempts?.length ?? 0}
+      </span>
+      {totalDurationLabel && (
         <span
           className={mergeClasses(
             'flex-none',
             typography?.countFontClassName ?? 'dial-tiny-text',
-            styles.count,
+            styles.duration,
           )}
         >
-          ×{row.attempts?.length ?? 0}
+          {totalDurationLabel}
         </span>
-        {totalDurationLabel && (
-          <span
-            className={mergeClasses(
-              'flex-none',
-              typography?.countFontClassName ?? 'dial-tiny-text',
-              styles.duration,
-            )}
-          >
-            {totalDurationLabel}
-          </span>
-        )}
-        <span className={mergeClasses('flex-none', styles.iconSecondary)}>
-          {isOpen ? (
-            <IconChevronDown
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ) : (
-            <IconChevronRight
-              size={DIAL_ICON_SIZE.SM}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          )}
-        </span>
-      </button>
-      <div
-        id={contentId}
-        inert={!isOpen}
-        className={mergeClasses(
-          'grid overflow-hidden transition-[grid-template-rows] duration-[250ms] ease-in-out',
-          isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-        )}
-      >
-        <div className="overflow-hidden">
-          <ul role="list" className="mt-1 flex flex-col gap-0.5 ps-6">
-            {isOpen &&
-              row.attempts?.map((attempt, i) => (
-                <li key={attempt.index} role="listitem">
-                  <StageItem
-                    stage={attempt}
-                    nameOverride={attemptLabel(i + 1)}
-                    isLive={isLive && attempt.status == null}
-                    typography={typography}
-                    labels={labels}
-                  />
-                </li>
-              ))}
-          </ul>
-        </div>
-      </div>
-    </div>
+      )}
+    </span>
+  );
+
+  /* `-mt-2` turns the kit's 12px spacer into the 4px the attempts list has
+     always sat below its summary row. */
+  return (
+    <Accordion
+      expanded={isOpen}
+      onToggle={setIsOpen}
+      title={header}
+      className={STAGE_ACCORDION_CLASS_NAME}
+      headerClassName={mergeClasses(
+        STAGE_ACCORDION_HEADER_CLASS_NAME,
+        styles.collapseButton,
+        styles.row,
+        styles.stageHeader,
+      )}
+      contentClassName={mergeClasses('-mt-2 px-0 ps-6', styles.stageRegion)}
+    >
+      <ul role="list" className="flex flex-col gap-0.5">
+        {isOpen &&
+          row.attempts?.map((attempt, i) => (
+            <li key={attempt.index} role="listitem">
+              <StageItem
+                stage={attempt}
+                nameOverride={attemptLabel(i + 1)}
+                isLive={isLive && attempt.status == null}
+                typography={typography}
+                labels={labels}
+                onAttachmentClick={onAttachmentClick}
+              />
+            </li>
+          ))}
+      </ul>
+    </Accordion>
   );
 };
 
@@ -169,6 +150,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   className,
   styles: panelStyles,
   labels,
+  onAttachmentClick,
 }) => {
   const { colors, typography } = panelStyles ?? {};
 
@@ -211,6 +193,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 isLive={isStreaming && row.stage.status == null}
                 typography={typography}
                 labels={labels}
+                onAttachmentClick={onAttachmentClick}
               />
             </li>
           ) : (
@@ -224,6 +207,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 }
                 typography={typography}
                 labels={labels}
+                onAttachmentClick={onAttachmentClick}
               />
             </li>
           ),

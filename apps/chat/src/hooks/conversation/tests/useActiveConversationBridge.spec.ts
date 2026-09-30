@@ -44,6 +44,7 @@ const makeOverlay = (): OverlayContextType & {
   registerActiveConversationBridge: vi.fn(),
   registerConversationListBridge: vi.fn(),
   pendingModelId: null,
+  modelId: null,
   authProviderUiModes: undefined,
   authAutoSignInProvider: undefined,
   clearPendingModelId: vi.fn(),

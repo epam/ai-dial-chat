@@ -1,21 +1,22 @@
 import { formatFileSize } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
+  ButtonVariant,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
   FileDropzone,
-  GhostButton,
   GhostIconButton,
   Popup,
   PopupSize,
-  PrimaryButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconFileText, IconTrashX } from '@tabler/icons-react';
 import type { FC } from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type {
   SkillEditorFileActions,
   SkillEditorLabels,
+  SkillFileSourceEntry,
   SkillFileUploadCandidate,
   SkillFileValidationResult,
 } from '../../models/skill-editor-props';
@@ -23,7 +24,9 @@ import {
   SkillFileCandidateKind,
   SkillFileValidationStatus,
 } from '../../models/skill-editor-props';
+import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
 import { resolveCandidatePath } from '../../utils/candidate-path';
+import { joinSkillPath } from '../../utils/file-tree';
 
 /** Props for `SkillFileUploadDialog`. */
 export interface SkillFileUploadDialogProps {
@@ -32,7 +35,16 @@ export interface SkillFileUploadDialogProps {
   /** Called to close the dialog (Escape, close control, Cancel, or a successful commit). */
   onClose: () => void;
   /** Batch validation/commit operations, host-owned. */
-  fileActions: Pick<SkillEditorFileActions, 'validateBatch' | 'commitBatch'>;
+  fileActions: Pick<
+    SkillEditorFileActions,
+    'validateBatch' | 'commitBatch' | 'extractArchive'
+  >;
+  /** Whether picked/dropped files are staged as-is or expanded as `.zip` archives. Defaults to `SkillFileUploadMode.Files`. */
+  mode?: SkillFileUploadMode;
+  /** Folder every staged path is placed under; `''` is the skill root. Defaults to `''`. */
+  targetFolderPath?: string;
+  /** Host-supplied entries (e.g. a file-system pick) to stage when the dialog opens. Read once per open transition. */
+  initialEntries?: SkillFileSourceEntry[];
   /**
    * Files to stage immediately when the dialog opens (e.g. files dropped
    * outside the dialog before it was open). Read once per open transition.
@@ -42,8 +54,20 @@ export interface SkillFileUploadDialogProps {
   labels?: SkillEditorLabels;
 }
 
+const ARCHIVE_ACCEPT = '.zip,application/zip';
+
 let candidateSeq = 0;
 const nextCandidateId = (): string => `skill-file-candidate-${++candidateSeq}`;
+
+const toCandidate = (
+  file: File,
+  path: string,
+  targetFolderPath: string,
+): SkillFileUploadCandidate => ({
+  id: nextCandidateId(),
+  file,
+  path: joinSkillPath(targetFolderPath, path.replace(/\\/g, '/')),
+});
 
 /*
  * The AI DIAL UI Kit's `Popup` has no bottom-sheet variant (confirmed via the
@@ -59,7 +83,10 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   isOpen,
   onClose,
   fileActions,
+  mode = SkillFileUploadMode.Files,
+  targetFolderPath = '',
   initialFiles,
+  initialEntries,
   labels,
 }) => {
   const t = labels ?? {};
@@ -71,17 +98,64 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   const [isValidating, setIsValidating] = useState(false);
   const [commitError, setCommitError] = useState<string | undefined>();
   const [isCommitting, setIsCommitting] = useState(false);
+  const [sourceError, setSourceError] = useState<string | undefined>();
+  const [pendingExtractions, setPendingExtractions] = useState(0);
+  /* Bumped on every open so an extraction settling after a close/reopen is dropped. */
+  const openGenerationRef = useRef(0);
+  const isArchiveMode = mode === SkillFileUploadMode.Archive;
+  const archiveErrorMessage =
+    t.uploadArchiveErrorMessage ?? "Couldn't read this archive";
 
   const liveRegionId = useId();
 
-  const addFiles = (files: File[]) => {
-    const next = files.map<SkillFileUploadCandidate>((file) => ({
-      id: nextCandidateId(),
-      file,
-      path: resolveCandidatePath(file),
-    }));
+  const stageCandidates = (next: SkillFileUploadCandidate[]) => {
     setCommitError(undefined);
     setCandidates((prev) => [...prev, ...next]);
+  };
+
+  const extractArchives = async (archives: File[]) => {
+    const { extractArchive } = fileActions;
+    if (!extractArchive) return;
+    const generation = openGenerationRef.current;
+    setSourceError(undefined);
+    setPendingExtractions((count) => count + 1);
+    try {
+      const extracted = await Promise.all(
+        archives.map((archive) => extractArchive(archive)),
+      );
+      if (generation !== openGenerationRef.current) return;
+      const entries = extracted.flat();
+      if (entries.length === 0) {
+        setSourceError(
+          t.uploadArchiveEmptyMessage ?? 'This archive has no files',
+        );
+        return;
+      }
+      stageCandidates(
+        entries.map((entry) =>
+          toCandidate(entry.file, entry.path, targetFolderPath),
+        ),
+      );
+    } catch {
+      if (generation !== openGenerationRef.current) return;
+      setSourceError(archiveErrorMessage);
+    } finally {
+      if (generation === openGenerationRef.current) {
+        setPendingExtractions((count) => count - 1);
+      }
+    }
+  };
+
+  const addFiles = (files: File[]) => {
+    if (isArchiveMode) {
+      void extractArchives(files);
+      return;
+    }
+    stageCandidates(
+      files.map((file) =>
+        toCandidate(file, resolveCandidatePath(file), targetFolderPath),
+      ),
+    );
   };
 
   const removeCandidate = (id: string) => {
@@ -93,17 +167,21 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   // the dialog itself was open).
   useEffect(() => {
     if (!isOpen) return;
-    setCandidates(
-      (initialFiles ?? []).map((file) => ({
-        id: nextCandidateId(),
-        file,
-        path: resolveCandidatePath(file),
-      })),
-    );
+    openGenerationRef.current += 1;
+    setCandidates([
+      ...(initialFiles ?? []).map((file) =>
+        toCandidate(file, resolveCandidatePath(file), targetFolderPath),
+      ),
+      ...(initialEntries ?? []).map((entry) =>
+        toCandidate(entry.file, entry.path, targetFolderPath),
+      ),
+    ]);
     setResults(new Map());
     setBatchErrors([]);
     setCommitError(undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- read once per open transition, not on every initialFiles identity change
+    setSourceError(undefined);
+    setPendingExtractions(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read once per open transition, not on every initialFiles/initialEntries identity change
   }, [isOpen]);
 
   // Re-validate the whole staged batch on every add/remove.
@@ -147,7 +225,8 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
     !hasInvalidCandidate &&
     batchErrors.length === 0 &&
     !isValidating &&
-    !isCommitting;
+    !isCommitting &&
+    pendingExtractions === 0;
 
   const handleConfirm = async () => {
     setIsCommitting(true);
@@ -181,47 +260,73 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   return (
     <Popup
       open={isOpen}
-      header={t.uploadDialogTitle ?? 'Upload files from device'}
+      header={
+        isArchiveMode
+          ? (t.uploadArchiveDialogTitle ?? 'Upload archive from device')
+          : (t.uploadDialogTitle ?? 'Upload files from device')
+      }
       size={PopupSize.Sm}
       closeAriaLabel={t.uploadDialogCloseAriaLabel ?? 'Close'}
       onClose={onClose}
-      footer={
-        <div className="flex min-h-[44px] items-center justify-end gap-2 px-6 py-4">
-          <GhostButton
-            label={t.uploadCancelLabel ?? 'Cancel'}
-            onClick={onClose}
-          />
-          <PrimaryButton
-            label={t.uploadConfirmLabel ?? 'Add'}
-            iconBefore={
-              isCommitting ? <Spinner size={16} ariaLabel="" /> : undefined
-            }
-            onClick={() => void handleConfirm()}
-            disabled={!canConfirm}
-          />
-        </div>
-      }
+      mainButtons={[
+        {
+          label: t.uploadCancelLabel ?? 'Cancel',
+          variant: ButtonVariant.Primary,
+          appearance: ButtonAppearance.Ghost,
+          onClick: onClose,
+        },
+        {
+          label: t.uploadConfirmLabel ?? 'Add',
+          variant: ButtonVariant.Primary,
+          iconBefore: isCommitting ? (
+            <Spinner size={16} ariaLabel="" />
+          ) : undefined,
+          onClick: () => void handleConfirm(),
+          disabled: !canConfirm,
+        },
+      ]}
     >
       <div className="flex flex-col gap-4 px-6 py-4">
         <FileDropzone
           label={
             <>
               <span className="desktop:hidden">
-                {t.uploadDropZoneMobileLabel ?? 'Click here to upload'}
+                {isArchiveMode
+                  ? (t.uploadArchiveDropZoneMobileLabel ??
+                    'Click here to upload a .zip archive')
+                  : (t.uploadDropZoneMobileLabel ?? 'Click here to upload')}
               </span>
               <span className="hidden desktop:inline">
-                {t.uploadDropZoneLabel ??
-                  'Drag and drop it or click here to upload'}
+                {isArchiveMode
+                  ? (t.uploadArchiveDropZoneLabel ??
+                    'Drag and drop a .zip archive or click here to upload')
+                  : (t.uploadDropZoneLabel ??
+                    'Drag and drop it or click here to upload')}
               </span>
             </>
           }
           ariaLabel={t.uploadDropZoneAriaLabel ?? 'Upload files'}
           multiple
+          accept={isArchiveMode ? ARCHIVE_ACCEPT : undefined}
           className={
             isAllInvalid ? 'border-error hover:border-error' : undefined
           }
           onChange={addFiles}
+          onReject={
+            isArchiveMode
+              ? () => setSourceError(archiveErrorMessage)
+              : undefined
+          }
         />
+
+        {pendingExtractions > 0 && (
+          <Spinner
+            ariaLabel={t.uploadArchiveExtractingAriaLabel ?? 'Reading archive'}
+          />
+        )}
+        <div role="alert">
+          {sourceError && <ErrorText text={sourceError} />}
+        </div>
 
         <span
           role="status"

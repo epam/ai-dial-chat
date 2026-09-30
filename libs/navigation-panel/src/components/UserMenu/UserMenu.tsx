@@ -1,12 +1,12 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
   DropdownItemType,
   EllipsisTooltip,
   MenuItemMark,
-  Tooltip,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconLogout, IconSettings } from '@tabler/icons-react';
@@ -142,18 +142,21 @@ export const UserMenu: FC<UserMenuProps> = memo(
         )}
       >
         <Dropdown placement="top-end" matchReferenceWidth={false} items={items}>
-          <button
-            type="button"
-            className={mergeClasses(
-              styles.trigger,
-              'flex size-[44px] items-center justify-center rounded-full border border-transparent',
-            )}
+          {/* The email tooltip describes the button itself (the kit attaches
+              it with `asChild`), not a wrapper span around the avatar that no
+              screen reader associated with the control. */}
+          <Button
             aria-label={labels.trigger}
-          >
-            <Tooltip tooltip={profile.email} hideTooltip={isTooltipHidden}>
-              <UserAvatar profile={profile} alt={labels.avatarAlt} />
-            </Tooltip>
-          </button>
+            tooltipProps={{
+              tooltip: profile.email,
+              hideTooltip: isTooltipHidden,
+            }}
+            iconBefore={<UserAvatar profile={profile} alt={labels.avatarAlt} />}
+            className={mergeClasses(
+              'size-[44px] gap-0 !rounded-full p-0',
+              styles.trigger,
+            )}
+          />
         </Dropdown>
       </div>
     );

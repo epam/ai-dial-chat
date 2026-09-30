@@ -33,6 +33,13 @@ import '@epam/ai-dial-conversation-input/styles.css';
 
 ### ConversationInput
 
+`ConversationInput` and `Input` accept `focusRequestId?: number`. Providing a new
+token focuses the textarea without replacing the current draft or caret. Omit it
+to retain the normal focus behavior. Hosts can pair it with `pendingDropFiles` to
+attach a generated `File` through the same validation/upload flow as dropped files.
+Each pending file is consumed once per handoff, including React effect replay;
+clear the delivered batch from `onDropFilesConsumed` before supplying it again.
+
 The primary input component. Renders the text area, attachment tray, action buttons, and model selector. Every prop is optional — the component manages its own local attachment list and textarea state, and reports outward through callbacks. `onSend` receives the message text plus the current local attachments; the model selector is only rendered when `deployments` is supplied.
 
 ```tsx
@@ -43,6 +50,7 @@ import { ConversationInput } from '@epam/ai-dial-conversation-input';
   placeholder="Type a message"
   welcomeText={welcomeText}
   descriptionText={descriptionText}
+  belowWelcomeSlot={starters}
   onSend={handleSend}
   onUploadAttachment={uploadAttachment}
   onAttachmentsChange={setDraftAttachments}

@@ -13,4 +13,8 @@ export const BUILDER_FORM_CLASS = {
   layout: 'dial-builder-form-layout',
   /** Every `EditorSection` box, whatever a caller puts inside it. */
   section: 'dial-builder-form-section',
+  /** The Metadata section `EntityEditor` renders in the left column. */
+  metadataSection: 'dial-builder-form-metadata-section',
+  /** The Setup section `EntityEditor` renders in the right column. */
+  setupSection: 'dial-builder-form-setup-section',
 } as const;

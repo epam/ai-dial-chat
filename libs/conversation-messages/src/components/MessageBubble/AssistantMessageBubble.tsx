@@ -14,6 +14,7 @@ import { FC, useMemo } from 'react';
 import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInlineStartIndent';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
+import { copySelectionWithoutStyles } from '../../utils/clipboard';
 import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
@@ -28,6 +29,7 @@ const FIRST_LINE_INDENT_CLASS_NAME =
 /** Assistant-authored message bubble, start-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
+  contentRef,
   styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
@@ -104,6 +106,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
       role="group"
       aria-label={assistantMessageAriaLabel}
       style={cssVars}
+      onCopy={copySelectionWithoutStyles}
       className={mergeClasses('flex w-full items-start gap-3', className)}
     >
       {hasDeploymentIcon && (
@@ -170,7 +173,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                * The plain marker class (not a CSS-module hash) keeps the
                * indent selector above a static string Tailwind can generate.
                */}
-              <div className="cm-bubble-markdown min-w-0 max-w-full">
+              <div
+                ref={contentRef}
+                className="cm-bubble-markdown min-w-0 max-w-full"
+              >
                 <MDMessageViewer
                   content={text ?? ''}
                   isPlainText={responseFormat === ResponseFormat.PlainText}

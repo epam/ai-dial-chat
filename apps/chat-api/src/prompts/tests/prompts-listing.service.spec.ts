@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import { PromptsPersonalService } from '../personal/prompts-personal.service';
 import { PromptsPublicService } from '../public/prompts-public.service';
-import { isHiddenPromptPath, PUBLIC_BUCKET } from '../utils/prompt-mapper.util';
+import { isHiddenPromptPath } from '../utils/prompt-mapper.util';
 
 const BUCKET = 'my-bucket';
 

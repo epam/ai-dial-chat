@@ -1,4 +1,4 @@
-import { ElementSize, GhostIconButton, Tooltip } from '@epam/ai-dial-ui-kit';
+import { ElementSize, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type ReactNode,
@@ -185,14 +185,14 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
           <div className="sticky top-0 z-10 h-0">
             <div className="absolute end-2 top-2 flex items-center gap-1 rounded-lg border border-tertiary bg-layer-raised px-2 py-1 opacity-0 shadow-xs transition-opacity focus-within:opacity-100 group-hover/table:opacity-100">
               {tableActions.map((action) => (
-                <Tooltip key={action.label} tooltip={action.label} asChild>
-                  <GhostIconButton
-                    aria-label={action.label}
-                    icon={<span aria-hidden>{action.icon}</span>}
-                    size={ElementSize.Small}
-                    onClick={action.onClick}
-                  />
-                </Tooltip>
+                <GhostIconButton
+                  key={action.label}
+                  tooltipProps={{ tooltip: action.label }}
+                  aria-label={action.label}
+                  icon={<span aria-hidden>{action.icon}</span>}
+                  size={ElementSize.Small}
+                  onClick={action.onClick}
+                />
               ))}
             </div>
           </div>

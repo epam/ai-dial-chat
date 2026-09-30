@@ -4,18 +4,14 @@ import {
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Accordion,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
-  LinkButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconCheck,
-  IconChevronDown,
-  IconChevronRight,
-} from '@tabler/icons-react';
-import { FC, useEffect, useId, useRef, useState } from 'react';
+import { IconCheck } from '@tabler/icons-react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import type { CollapsedGroupProps } from '../../models/collapsed-group';
 import {
@@ -34,6 +30,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   labels,
   className,
   styles: groupStyles,
+  onAttachmentClick,
 }) => {
   const {
     executedLabel = 'Executed',
@@ -43,10 +40,10 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     copyAriaLabel,
     failedAriaLabel,
     attemptLabel,
+    attachmentClickLabel,
   } = labels ?? {};
 
   const [isOpen, setIsOpen] = useState(isStreaming);
-  const contentId = useId();
   const wasStreamingRef = useRef(isStreaming);
   useEffect(() => {
     if (wasStreamingRef.current && !isStreaming) {
@@ -91,6 +88,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     runningAriaLabel,
     failedAriaLabel,
     attemptLabel,
+    attachmentClickLabel,
   };
 
   if (stages.length === 1) {
@@ -101,6 +99,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         className={className}
         styles={{ colors: panelColors, typography: groupStyles?.typography }}
         labels={panelLabels}
+        onAttachmentClick={onAttachmentClick}
       />
     );
   }
@@ -216,56 +215,34 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         CONVERSATION_STAGES_CLASS.group,
       )}
     >
-      <LinkButton
-        className={mergeClasses(
+      {/* `-mt-2` turns the kit's 12px spacer, plus the panel's `pt-1`, into
+          the 8px the stages have always sat below the summary line. */}
+      <Accordion
+        title={summary}
+        expanded={isOpen}
+        onToggle={setIsOpen}
+        className="overflow-visible py-0"
+        headerClassName={mergeClasses(
+          'justify-start gap-1 rounded-none px-0',
           styles.toggleButton,
           CONVERSATION_STAGES_CLASS.groupToggle,
         )}
-        textClassName="min-w-0"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={isOpen}
-        aria-controls={contentId}
-        iconAfter={
-          isOpen ? (
-            <IconChevronDown
-              size={12}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ) : (
-            <IconChevronRight
-              size={12}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          )
-        }
-        label={summary}
-      />
-      <div
-        id={contentId}
-        inert={!isOpen}
-        className={mergeClasses(
-          'grid transition-[grid-template-rows] duration-300 ease-in-out',
-          isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-        )}
+        contentClassName={mergeClasses('-mt-2 px-0', styles.groupRegion)}
       >
-        <div className="overflow-hidden">
-          {isOpen && (
-            <StagesPanel
-              stages={stages}
-              isStreaming={isStreaming}
-              styles={{
-                colors: panelColors,
-                typography: groupStyles?.typography,
-              }}
-              labels={panelLabels}
-              className="pt-1"
-            />
-          )}
-        </div>
-      </div>
+        {isOpen && (
+          <StagesPanel
+            stages={stages}
+            isStreaming={isStreaming}
+            styles={{
+              colors: panelColors,
+              typography: groupStyles?.typography,
+            }}
+            labels={panelLabels}
+            className="pt-1"
+            onAttachmentClick={onAttachmentClick}
+          />
+        )}
+      </Accordion>
     </div>
   );
 };

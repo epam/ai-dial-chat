@@ -1,5 +1,8 @@
+import type { DialToolsetAuthSettingsDto } from '@epam/ai-dial-chat-api-client';
+import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
+import { ToolsetCredentialsLevel } from './types';
+
 const TOOLSETS_ID_PREFIX = 'toolsets/';
-const PUBLIC_BUCKET_SEGMENT = 'public';
 
 /**
  * Percent-encodes each `/`-separated segment of a toolset id so it satisfies
@@ -41,5 +44,53 @@ export const decodeToolsetId = (id: string): string =>
 export const isPublicToolsetId = (toolsetId: string): boolean => {
   if (!toolsetId.startsWith(TOOLSETS_ID_PREFIX)) return false;
   const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
-  return bucket === PUBLIC_BUCKET_SEGMENT;
+  return bucket === PUBLIC_BUCKET;
 };
+
+/**
+ * Encodes a toolset id to its single-encoded form regardless of whether the
+ * value received it in was already percent-encoded or the raw,
+ * human-readable form — decoding first then re-encoding once is idempotent
+ * either way, since `decodeToolsetId` on a raw (unencoded) id is a no-op.
+ * Use this instead of `encodeToolsetId` at a boundary that cannot guarantee
+ * which form it receives, such as a `postMessage` payload from an embedded
+ * iframe: calling `encodeToolsetId` directly on a value the sender already
+ * encoded escapes the existing `%` characters a second time (`%20` becomes
+ * `%2520`), which the backend only ever undoes once and so 404s on.
+ */
+export const normalizeToolsetId = (toolsetId: string): string =>
+  encodeToolsetId(decodeToolsetId(toolsetId));
+
+/**
+ * Resolves which credentials level a toolset's login applies to, per DIAL
+ * Core's public/private toolset convention: a `public`-bucket toolset is
+ * shared credentials-wise at `User` level, while a private/workspace toolset
+ * is scoped at `Global` level. Every surface that drives a toolset login
+ * (the sign-in-interrupt dialog, the QuickApps editor iframe bridge,
+ * `useToolsetLogin`) must resolve the level this way rather than assuming one.
+ */
+export const resolveToolsetCredentialsLevel = (
+  toolsetId: string,
+): ToolsetCredentialsLevel.User | ToolsetCredentialsLevel.Global =>
+  isPublicToolsetId(toolsetId)
+    ? ToolsetCredentialsLevel.User
+    : ToolsetCredentialsLevel.Global;
+
+/**
+ * Picks the auth-status field matching one credentials level out of a
+ * toolset's `authSettings` — DIAL Core reports `userLevelAuthStatus` and
+ * `globalAuthStatus` as independent fields rather than one status keyed by
+ * level.
+ */
+export const selectToolsetAuthStatus = (
+  authSettings:
+    | Pick<
+        DialToolsetAuthSettingsDto,
+        'userLevelAuthStatus' | 'globalAuthStatus'
+      >
+    | undefined,
+  credentialsLevel: ToolsetCredentialsLevel,
+): string | undefined =>
+  credentialsLevel === ToolsetCredentialsLevel.User
+    ? authSettings?.userLevelAuthStatus
+    : authSettings?.globalAuthStatus;

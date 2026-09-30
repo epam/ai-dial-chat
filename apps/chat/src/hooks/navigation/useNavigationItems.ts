@@ -13,16 +13,19 @@ export const useNavigationItems = (): NavigationPanelItem[] => {
   const { pathname } = useLocation();
   const visibleNavItems = useVisibleNavItems();
 
-  return visibleNavItems.map(({ path, matchPaths, icon, labelKey }) => ({
-    id: path,
-    href: path,
-    icon,
-    label: t(labelKey),
-    isActive:
-      (path === ROUTES.Root
-        ? pathname === ROUTES.Root
-        : pathname.startsWith(path)) ||
-      (matchPaths?.some((matchPath) => pathname.startsWith(matchPath)) ??
-        false),
-  }));
+  return visibleNavItems.map(
+    ({ path, matchPaths, icon, activeIcon, labelKey }) => ({
+      id: path,
+      href: path,
+      icon,
+      activeIcon,
+      label: t(labelKey),
+      isActive:
+        (path === ROUTES.Root
+          ? pathname === ROUTES.Root
+          : pathname.startsWith(path)) ||
+        (matchPaths?.some((matchPath) => pathname.startsWith(matchPath)) ??
+          false),
+    }),
+  );
 };

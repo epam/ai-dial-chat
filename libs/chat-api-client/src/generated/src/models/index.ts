@@ -651,6 +651,18 @@ export interface ApplicationVisualizerDto {
    * @memberof ApplicationVisualizerDto
    */
   passExplicitToken?: boolean;
+  /**
+   * When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  borderless?: boolean;
+  /**
+   * When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  withoutTitle?: boolean;
 }
 /**
  *
@@ -926,7 +938,7 @@ export interface Check200Response {
    */
   timestamp?: string;
   /**
-   * Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
+   * Application version. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
    * @type {string}
    * @memberof Check200Response
    */
@@ -957,7 +969,7 @@ export interface ClientConfigDto {
    */
   activeEventId: string | null;
   /**
-   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
+   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.
    * @type {string}
    * @memberof ClientConfigDto
    */
@@ -1011,7 +1023,7 @@ export interface ClientConfigDto {
    */
   mcpAppHostName?: string | null;
   /**
-   * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
+   * Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
    */
@@ -1249,6 +1261,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  createdAt?: number;
   /**
    * Unix epoch milliseconds of the last update.
    * @type {number}
@@ -2205,6 +2223,12 @@ export interface CreatedScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof CreatedScheduledTaskDto
@@ -2741,6 +2765,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   skillsSupported?: boolean;
+  /**
+   * Whether the deployment supports tools/functions in chat completion requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  tools?: boolean;
 }
 /**
  *
@@ -6090,6 +6120,12 @@ export interface ScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof ScheduledTaskDto
@@ -6152,6 +6188,7 @@ export const ScheduledTaskErrorCode = {
   ScheduledTaskInstructionsOrSkillRequired:
     'scheduledTaskInstructionsOrSkillRequired',
   ScheduledTaskDeploymentUnavailable: 'scheduledTaskDeploymentUnavailable',
+  ScheduledTaskAdminConsentRequired: 'scheduledTaskAdminConsentRequired',
 } as const;
 export type ScheduledTaskErrorCode =
   (typeof ScheduledTaskErrorCode)[keyof typeof ScheduledTaskErrorCode];
@@ -6248,6 +6285,18 @@ export interface ScheduledTaskValidationErrorDto {
    * @memberof ScheduledTaskValidationErrorDto
    */
   field?: string;
+  /**
+   * DIAL Scheduler's own error reason, trimmed and capped at 1000 characters. Never present for 401/403/404.
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  upstreamMessage?: string;
+  /**
+   * DIAL Scheduler's own error code (matches ^[A-Za-z0-9_.:-]{1,128}$). Never present for 401/403/404.
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  upstreamCode?: string;
 }
 
 /**
@@ -7858,6 +7907,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
   /**
    *
    * @type {boolean}

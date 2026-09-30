@@ -174,6 +174,16 @@ export enum OverlayFeature {
    */
   ShowAllStarters = 'show-all-starters',
   /**
+   * Moves the conversation starters on the empty-chat screen from below the
+   * input to between the greeting and the input.
+   */
+  StartersBelowGreeting = 'starters-below-greeting',
+  /**
+   * Hides the time-of-day greeting on the empty-chat screen, together with
+   * the welcome-screen description rendered under it.
+   */
+  HideGreeting = 'hide-greeting',
+  /**
    * Hides the application version label in the footer. The label is
    * diagnostic chrome an embedding host usually owns itself, and it is not
    * gated by the operator's `footer` capability flag.
@@ -206,7 +216,8 @@ export enum OverlayFeature {
   /**
    * Renders the theme logo in the desktop top bar, centered between the
    * conversation controls and the sources toggle. The mobile header shows the
-   * logo regardless of this key; `Header` still gates that surface.
+   * logo whenever `Header` is on; with `Header` off, this key still renders
+   * the mobile header row carrying only the logo.
    */
   ShowHeaderLogo = 'show-header-logo',
 }
@@ -376,6 +387,26 @@ export interface ChatOverlayOptions {
      */
     autoSignInProvider?: string;
   };
+  /**
+   * Legacy automatic sign-in options, translated into `auth` for hosts that
+   * still pass the old chat's shape. `auth.autoSignInProvider` wins when both
+   * are set.
+   * @deprecated Use `auth.autoSignInProvider` with a `providerUiModes` entry.
+   */
+  signInOptions?: LegacySignInOptions;
+}
+
+/**
+ * Legacy `signInOptions` shape accepted by `ChatOverlayOptions`.
+ * @deprecated Use `ChatOverlayOptions.auth` instead.
+ */
+export interface LegacySignInOptions {
+  /** Starts login for `signInProvider` without a user click when `true`. */
+  autoSignIn?: boolean;
+  /** Provider id to sign in with, as returned by `GET /api/v1/auth/providers`. */
+  signInProvider?: string;
+  /** Maps `signInProvider` to `OverlayAuthUiMode.External` instead of `SameWindow` when `true`. */
+  signInInNewWindow?: boolean;
 }
 
 /** Payload of a `SET_OVERLAY_OPTIONS` request. */

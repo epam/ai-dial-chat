@@ -1,6 +1,15 @@
-import { EditorLayout } from '@epam/ai-dial-builder-form';
+import {
+  DEFAULT_METADATA_FORM_LABELS,
+  EntityEditor,
+  MetadataField,
+  MetadataForm,
+  type DeploymentCreationFormValues,
+  type EntityEditorProps,
+  type MetadataFormLabels,
+} from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
@@ -10,25 +19,36 @@ import {
   type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
-import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
+import {
+  DialFileNodeType,
+  DialFoldersTree,
+} from '@epam/ai-dial-react-file-manager';
 import {
   Accordion,
+  ButtonAppearance,
+  ButtonDropdown,
+  ButtonVariant,
   CaptionText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   EditorThemes,
+  ElementSize,
   ErrorText,
   GhostButton,
-  Input,
   Label,
-  NeutralButton,
   PrimaryButton,
   Spinner,
-  Textarea,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
-import { IconPlus, IconTrashX } from '@tabler/icons-react';
+import {
+  IconDatabase,
+  IconFileZip,
+  IconFolderPlus,
+  IconPlus,
+  IconTrashX,
+  IconUpload,
+} from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this
@@ -40,6 +60,7 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import {
   ComponentType,
   FC,
+  ReactNode,
   Suspense,
   lazy,
   useCallback,
@@ -50,18 +71,36 @@ import {
   useState,
 } from 'react';
 import { SKILL_EDITOR_CLASS } from '../../constants/public-class-names';
+import { useDraftFolder } from '../../hooks/useDraftFolder';
 import { useSkillFileDropZone } from '../../hooks/useSkillFileDropZone';
 import type {
   SkillEditorProps,
   SkillEditorValues,
+  SkillFileSourceEntry,
   SkillFileTreeNode,
 } from '../../models/skill-editor-props';
+import { SkillAddSource } from '../../types/skill-add-source';
 import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
 import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
-import { buildDialFileTree } from '../../utils/file-tree';
+import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
+import { SkillFilesPane } from '../../types/skill-files-pane';
+import { buildDialFileTree, resolveAddTarget } from '../../utils/file-tree';
 import { SkillFileDropOverlay } from '../SkillFileDropOverlay/SkillFileDropOverlay';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog/SkillFileUploadDialog';
 import styles from './SkillEditor.module.scss';
+
+/** What the upload dialog was last opened for. */
+interface UploadRequest {
+  mode: SkillFileUploadMode;
+  targetFolderPath: string;
+  initialFiles?: File[];
+  initialEntries?: SkillFileSourceEntry[];
+}
+
+const DEFAULT_UPLOAD_REQUEST: UploadRequest = {
+  mode: SkillFileUploadMode.Files,
+  targetFolderPath: '',
+};
 
 type MarkdownEditorComponent = ComponentType<{
   value: string;
@@ -73,6 +112,18 @@ type MarkdownEditorComponent = ComponentType<{
   id?: string;
   ariaLabel?: string;
 }>;
+
+const METADATA_FIELDS = [MetadataField.Name, MetadataField.Description];
+
+/* Instructions fill the column to the bottom, ending on the column's `py-6`. */
+const INSTRUCTIONS_EDITOR_BOTTOM_GAP = 24;
+/* Filling never shrinks the editor below a usable height. */
+const INSTRUCTIONS_EDITOR_MIN_HEIGHT = 300;
+
+/* Paddings of the Files column and the selected-file column, as before the shared editor. */
+const FILES_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
+const SETUP_SECTION_CLASS_NAME =
+  'gap-4 px-4 py-6 desktop:gap-5 desktop:px-8 desktop:py-6';
 
 const LazyMarkdown = lazy(async () => {
   const { MarkdownEditor } = await LazyMarkdownEditor();
@@ -118,10 +169,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     description: initialValues?.description ?? '',
     instructions: initialValues?.instructions ?? '',
   });
-  const descriptionId = useId();
   const instructionsId = useId();
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
-  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
+  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>({
+    bottomGap: INSTRUCTIONS_EDITOR_BOTTOM_GAP,
+    minHeight: INSTRUCTIONS_EDITOR_MIN_HEIGHT,
+  });
   const valuesRef = useRef(values);
   const updateValues = (patch: Partial<SkillEditorValues>) => {
     const next = { ...valuesRef.current, ...patch };
@@ -248,7 +301,13 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   );
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [droppedFiles, setDroppedFiles] = useState<File[] | undefined>();
+  const [uploadRequest, setUploadRequest] = useState<UploadRequest>(
+    DEFAULT_UPLOAD_REQUEST,
+  );
+  const openUploadDialog = useCallback((request: UploadRequest) => {
+    setUploadRequest(request);
+    setIsUploadDialogOpen(true);
+  }, []);
   /*
    * Collapsed on first paint. The accordion only mounts under the mobile
    * breakpoint — desktop renders the always-visible Files sidebar instead — so
@@ -266,10 +325,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const handleSurfaceFilesDropped = useCallback(
     (droppedFileList: File[]) => {
       if (isUploadDialogOpen) return;
-      setDroppedFiles(droppedFileList);
-      setIsUploadDialogOpen(true);
+      openUploadDialog({
+        ...DEFAULT_UPLOAD_REQUEST,
+        initialFiles: droppedFileList,
+      });
     },
-    [isUploadDialogOpen],
+    [isUploadDialogOpen, openUploadDialog],
   );
   const {
     isDragActive: isSurfaceDragActive,
@@ -284,6 +345,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
   const removeIconClassName =
     typography.removeIconClassName ?? 'text-secondary';
+  const menuIconClassName = typography.menuIconClassName ?? 'text-secondary';
 
   const cssVars = buildCssVars({
     '--se-title-color': colors?.title,
@@ -300,15 +362,58 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     ),
     errorClassName: styles.refineError,
   };
-  const layoutStyles = colors?.border
-    ? {
-        colors: {
-          headerBorderColor: colors.border,
-          sidebarBorderColor: colors.border,
-        },
-      }
-    : undefined;
+  const editorStyles: EntityEditorProps['styles'] = {
+    layout: colors?.border
+      ? {
+          colors: {
+            headerBorderColor: colors.border,
+            sidebarBorderColor: colors.border,
+          },
+        }
+      : undefined,
+    section: colors?.title
+      ? { colors: { titleColor: colors.title } }
+      : undefined,
+  };
 
+  const folderNameMessages = useMemo(
+    () => ({
+      required: t.folderNameRequiredError ?? 'Enter a folder name',
+      invalid:
+        t.folderNameInvalidError ??
+        "Folder name can't contain / or \\, or be . or ..",
+      duplicate:
+        t.folderNameDuplicateError ??
+        'An item with this name already exists here',
+    }),
+    [
+      t.folderNameRequiredError,
+      t.folderNameInvalidError,
+      t.folderNameDuplicateError,
+    ],
+  );
+  const revealFolder = useCallback(
+    (path: string) => {
+      if (expandedPathsSet.has(path)) return;
+      handleExpandedPathsChange(new Set([...expandedPathsSet, path]));
+    },
+    [expandedPathsSet, handleExpandedPathsChange],
+  );
+  const draftFolder = useDraftFolder({
+    files,
+    fileActions,
+    defaultName: t.newFolderDefaultName ?? 'New folder',
+    messages: folderNameMessages,
+    onRevealFolder: revealFolder,
+    onCreated: handleSelectedPathChange,
+  });
+  const { draftNode, draftPath, draftPane } = draftFolder;
+
+  /*
+   * The Files pane renders once per breakpoint, so the draft (and its inline
+   * rename field) lives only in the rendering the user started it from —
+   * two live rename fields would both save on the same outside click.
+   */
   const treeItems: DialFile[] = useMemo(
     () =>
       buildDialFileTree([
@@ -321,6 +426,21 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       ]),
     [files],
   );
+  const treeItemsWithDraft: DialFile[] = useMemo(
+    () =>
+      draftNode
+        ? buildDialFileTree([
+            {
+              path: SKILL_MANIFEST_PATH,
+              name: SKILL_MANIFEST_PATH,
+              kind: SkillFileNodeKind.File,
+            },
+            ...files,
+            draftNode,
+          ])
+        : treeItems,
+    [files, draftNode, treeItems],
+  );
 
   const selectedNode = useMemo(
     () => files.find((node) => node.path === selectedPath),
@@ -329,9 +449,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const handleTreeItemClick = useCallback(
     (item: DialFile) => {
+      if (item.path === draftPath) return;
       handleSelectedPathChange(item.path);
     },
-    [handleSelectedPathChange],
+    [handleSelectedPathChange, draftPath],
   );
 
   const handleRemoveNode = useCallback(
@@ -344,13 +465,141 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [fileActions, selectedPath, handleSelectedPathChange],
   );
 
-  const getContextMenuItems = useCallback(
-    (item: DialFile): DropdownItem[] => {
-      if (item.path === SKILL_MANIFEST_PATH) return [];
-      return [
+  const { startDraft } = draftFolder;
+  const { onCreateFolder, extractArchive, pickFromFileSystem } = fileActions;
+
+  const handlePickFromFileSystem = useCallback(
+    async (targetFolderPath: string) => {
+      if (!pickFromFileSystem) return;
+      const entries = await pickFromFileSystem();
+      if (!entries?.length) return;
+      openUploadDialog({
+        mode: SkillFileUploadMode.Files,
+        targetFolderPath,
+        initialEntries: entries,
+      });
+    },
+    [pickFromFileSystem, openUploadDialog],
+  );
+
+  const buildAddMenuItems = useCallback(
+    (targetFolderPath: string, pane: SkillFilesPane): DropdownItem[] => {
+      const menuIcon = (Icon: typeof IconPlus) => (
+        <Icon
+          size={DIAL_ICON_SIZE.SM}
+          className={menuIconClassName}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      );
+      const items: DropdownItem[] = [];
+      if (onCreateFolder) {
+        items.push({
+          key: 'create-folder',
+          label: t.createFolderLabel ?? 'Create folder',
+          icon: menuIcon(IconFolderPlus),
+          onClick: () => startDraft(targetFolderPath, pane),
+        });
+      }
+      items.push({
+        key: 'upload-files',
+        label:
+          t.uploadFilesLabel ?? t.addUploadLabel ?? 'Upload files from device',
+        icon: menuIcon(IconUpload),
+        onClick: () =>
+          openUploadDialog({
+            mode: SkillFileUploadMode.Files,
+            targetFolderPath,
+          }),
+      });
+      if (extractArchive) {
+        items.push({
+          key: 'upload-archive',
+          label: t.uploadArchiveLabel ?? 'Upload archive from device',
+          icon: menuIcon(IconFileZip),
+          onClick: () =>
+            openUploadDialog({
+              mode: SkillFileUploadMode.Archive,
+              targetFolderPath,
+            }),
+        });
+      }
+      if (pickFromFileSystem) {
+        items.push({
+          key: 'open-file-system',
+          label: t.openFileSystemLabel ?? 'Open DIAL file system',
+          icon: menuIcon(IconDatabase),
+          onClick: () => void handlePickFromFileSystem(targetFolderPath),
+        });
+      }
+      return items;
+    },
+    [
+      menuIconClassName,
+      onCreateFolder,
+      extractArchive,
+      pickFromFileSystem,
+      t.createFolderLabel,
+      t.uploadFilesLabel,
+      t.addUploadLabel,
+      t.uploadArchiveLabel,
+      t.openFileSystemLabel,
+      startDraft,
+      openUploadDialog,
+      handlePickFromFileSystem,
+    ],
+  );
+
+  const headerAddItems = useMemo(() => {
+    const target = resolveAddTarget(
+      SkillAddSource.Header,
+      files.find((node) => node.path === selectedPath),
+    );
+    return {
+      [SkillFilesPane.Mobile]: buildAddMenuItems(target, SkillFilesPane.Mobile),
+      [SkillFilesPane.Desktop]: buildAddMenuItems(
+        target,
+        SkillFilesPane.Desktop,
+      ),
+    };
+  }, [buildAddMenuItems, files, selectedPath]);
+
+  const buildContextMenuItems = useCallback(
+    (item: DialFile, pane: SkillFilesPane): DropdownItem[] => {
+      if (item.path === SKILL_MANIFEST_PATH || item.path === draftPath) {
+        return [];
+      }
+      const node: SkillFileTreeNode = {
+        path: item.path,
+        name: item.name,
+        kind:
+          item.nodeType === DialFileNodeType.FOLDER
+            ? SkillFileNodeKind.Folder
+            : SkillFileNodeKind.File,
+      };
+      const items: DropdownItem[] = [];
+      if (node.kind === SkillFileNodeKind.Folder) {
+        items.push({
+          key: 'add-child',
+          label: t.addChildLabel ?? 'Add child',
+          children: buildAddMenuItems(
+            resolveAddTarget(SkillAddSource.Child, node),
+            pane,
+          ),
+        });
+      }
+      items.push(
         {
-          key: 'remove',
-          label: t.removeLabel ?? 'Remove',
+          key: 'add-sibling',
+          label: t.addSiblingLabel ?? 'Add sibling',
+          children: buildAddMenuItems(
+            resolveAddTarget(SkillAddSource.Sibling, node),
+            pane,
+          ),
+        },
+        {
+          key: 'delete',
+          label: t.deleteLabel ?? t.removeLabel ?? 'Delete',
           icon: (
             <IconTrashX
               size={DIAL_ICON_SIZE.SM}
@@ -361,73 +610,159 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           ),
           onClick: () => handleRemoveNode(item.path),
         },
-      ];
+      );
+      return items;
     },
-    [t.removeLabel, removeIconClassName, handleRemoveNode],
+    [
+      draftPath,
+      t.addChildLabel,
+      t.addSiblingLabel,
+      t.deleteLabel,
+      t.removeLabel,
+      removeIconClassName,
+      buildAddMenuItems,
+      handleRemoveNode,
+    ],
+  );
+  const getContextMenuItems = useMemo(
+    () => ({
+      [SkillFilesPane.Mobile]: (item: DialFile) =>
+        buildContextMenuItems(item, SkillFilesPane.Mobile),
+      [SkillFilesPane.Desktop]: (item: DialFile) =>
+        buildContextMenuItems(item, SkillFilesPane.Desktop),
+    }),
+    [buildContextMenuItems],
   );
 
-  const filesPane = (
+  const renderFilesPane = (pane: SkillFilesPane) => (
     <div className="flex flex-col gap-2 desktop:gap-5">
       <div className="flex items-center justify-between">
         <span className={mergeClasses(styles.title, titleClassName)}>
           {t.filesHeading ?? 'Files'}
         </span>
-        <NeutralButton
-          label={t.addUploadLabel ?? 'Upload from device'}
+        <ButtonDropdown
+          label={t.addLabel ?? 'Add'}
+          variant={ButtonVariant.Neutral}
+          appearance={ButtonAppearance.Solid}
+          size={ElementSize.Small}
           iconBefore={
-            <IconPlus size={16} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+            <IconPlus
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
           }
-          onClick={() => {
-            setDroppedFiles(undefined);
-            setIsUploadDialogOpen(true);
-          }}
+          items={headerAddItems[pane]}
         />
       </div>
       <div role="tree" aria-label={t.filesTreeAriaLabel ?? 'Skill files'}>
         <DialFoldersTree
-          items={treeItems}
+          items={draftPane === pane ? treeItemsWithDraft : treeItems}
           showFiles
           selectedPath={selectedPath}
           expandedPaths={expandedPathsSet}
           onExpandedPathsChange={handleExpandedPathsChange}
           onItemClick={handleTreeItemClick}
-          getContextMenuItems={getContextMenuItems}
+          getContextMenuItems={getContextMenuItems[pane]}
+          renamedPath={draftPane === pane ? draftPath : undefined}
+          onRenameSave={draftFolder.handleSave}
+          onRenameCancel={draftFolder.handleCancel}
+          onRenameValidate={draftFolder.handleValidate}
           rootItemPath=""
         />
       </div>
     </div>
   );
 
-  const actions = (
-    <>
-      <NeutralButton
-        label={t.cancelLabel ?? 'Cancel'}
-        onClick={handleCancel}
-        disabled={isSubmitting}
-      />
-      <PrimaryButton
-        label={t.createLabel ?? 'Create'}
-        iconBefore={
-          isSubmitting ? <Spinner size={16} ariaLabel="" /> : undefined
-        }
-        onClick={handleSubmit}
-        disabled={isSubmitting || isRefining || isLoading || hasLoadError}
-      />
-    </>
+  /* MetadataForm edits the shared deployment shape; the skill keeps only Name and Description. */
+  const metadataValues = useMemo<DeploymentCreationFormValues>(
+    () => ({
+      name: values.name,
+      description: values.description,
+      iconUrl: '',
+      version: '',
+      topics: [],
+      otherLocales: [],
+    }),
+    [values.name, values.description],
   );
+  const metadataErrors = useMemo(
+    () => ({ name: errors?.name, description: errors?.description }),
+    [errors?.name, errors?.description],
+  );
+  const metadataLabels = useMemo<MetadataFormLabels>(
+    () => ({
+      form: {
+        ...DEFAULT_METADATA_FORM_LABELS,
+        name: {
+          label: t.nameLabel ?? 'Name',
+          placeholder: t.namePlaceholder ?? 'good-morning-breakfast',
+        },
+        description: {
+          label: t.descriptionLabel ?? 'Description',
+          placeholder:
+            t.descriptionPlaceholder ??
+            'What this skill does and when to use it',
+        },
+        // The SKILL.md heading above the fields already names them.
+        ariaLabel: undefined,
+      },
+    }),
+    [
+      t.nameLabel,
+      t.namePlaceholder,
+      t.descriptionLabel,
+      t.descriptionPlaceholder,
+    ],
+  );
+  const handleMetadataChange = (
+    patch: Partial<DeploymentCreationFormValues>,
+  ) => {
+    if (patch.name !== undefined) updateValues({ name: patch.name });
+    if (patch.description !== undefined) {
+      descriptionRefinement.reset();
+      updateValues({ description: patch.description });
+    }
+  };
+  const renderRefinableDescription = onRefineDescription
+    ? (textarea: ReactNode, fieldId: string) => (
+        <TextRefinementField
+          isEnabled
+          fieldId={fieldId}
+          required
+          label={t.descriptionLabel ?? 'Description'}
+          labels={t}
+          refinement={descriptionRefinement}
+          disabled={isRefining || isSubmitting}
+          {...refinementStyles}
+        >
+          {textarea}
+        </TextRefinementField>
+      )
+    : undefined;
+
+  const editorProps = {
+    title,
+    onBack: handleBack,
+    onCancel: handleCancel,
+    onSubmit: handleSubmit,
+    submitLabel: t.createLabel ?? 'Create',
+    isSubmitDisabled: isRefining || isLoading || hasLoadError,
+    labels: {
+      cancelLabel: t.cancelLabel ?? 'Cancel',
+      backAriaLabel: backAriaLabel ?? 'Back',
+      savingStatusLabel: t.savingStatusLabel ?? 'Saving',
+    },
+    styles: editorStyles,
+    metadataTitle: null,
+  };
 
   if (isLoading) {
     return (
       <div dir={dir} className="relative flex min-h-0 flex-1 flex-col">
-        <EditorLayout
-          title={title}
-          onBack={handleBack}
-          backAriaLabel={backAriaLabel}
-          actions={actions}
-          isSaving={false}
-          labels={{ savingStatusLabel: t.savingStatusLabel }}
-          styles={layoutStyles}
-          leftContent={
+        <EntityEditor
+          {...editorProps}
+          metadata={
             <div
               role="status"
               aria-label={t.loadingAriaLabel ?? 'Loading skill'}
@@ -444,15 +779,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   if (hasLoadError) {
     return (
       <div dir={dir} className="relative flex min-h-0 flex-1 flex-col">
-        <EditorLayout
-          title={title}
-          onBack={handleBack}
-          backAriaLabel={backAriaLabel}
-          actions={actions}
-          isSaving={false}
-          labels={{ savingStatusLabel: t.savingStatusLabel }}
-          styles={layoutStyles}
-          leftContent={
+        <EntityEditor
+          {...editorProps}
+          metadata={
             <div role="alert" className="flex flex-col items-center gap-4 p-8">
               <ErrorText
                 text={
@@ -471,6 +800,98 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     );
   }
 
+  const isManifestSelected = selectedPath === SKILL_MANIFEST_PATH;
+  const setupTitle = isManifestSelected
+    ? SKILL_MANIFEST_PATH
+    : (t.selectedFileHeading?.(selectedNode?.name ?? selectedPath) ??
+      selectedNode?.name ??
+      selectedPath);
+
+  const alert =
+    submitError != null || conflict != null ? (
+      <div className="flex flex-col gap-2">
+        {submitError != null && (
+          <div className="flex items-center gap-2">
+            <ErrorText text={submitError} />
+            {onRetrySubmit != null && (
+              <GhostButton
+                label={t.retryLabel ?? 'Retry'}
+                onClick={onRetrySubmit}
+              />
+            )}
+          </div>
+        )}
+        {conflict != null && (
+          <div className="flex items-center gap-2">
+            <ErrorText text={conflict.message} />
+            <GhostButton
+              label={t.reloadLatestLabel ?? 'Reload latest'}
+              onClick={onReloadLatest}
+            />
+          </div>
+        )}
+      </div>
+    ) : undefined;
+
+  const instructionsEditor = (
+    <TextRefinementField
+      isEnabled={Boolean(onRefineInstructions)}
+      fieldId={instructionsId}
+      required
+      labelClassName={mergeClasses(styles.helperText, helperTextClassName)}
+      label={t.instructionsLabel ?? 'Instructions'}
+      labels={t}
+      refinement={instructionsRefinement}
+      disabled={isRefining || isSubmitting}
+      {...refinementStyles}
+    >
+      <div className="flex flex-1 flex-col gap-2">
+        {!onRefineInstructions && (
+          <Label
+            htmlFor={instructionsId}
+            className={mergeClasses(styles.helperText, helperTextClassName)}
+            label={t.instructionsLabel ?? 'Instructions'}
+            required
+          />
+        )}
+        <div
+          ref={instructionsCapRef}
+          className={mergeClasses(
+            MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+            MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
+            MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+          )}
+        >
+          <Suspense
+            fallback={
+              <Spinner
+                ariaLabel={t.instructionsLoadingAriaLabel ?? 'Loading'}
+              />
+            }
+          >
+            <LazyMarkdown
+              id={instructionsId}
+              ariaLabel={t.instructionsLabel ?? 'Instructions'}
+              value={values.instructions}
+              onChange={(value) => {
+                instructionsRefinement.reset();
+                updateValues({ instructions: value });
+              }}
+              theme={instructionsEditorTheme}
+              placeholder={
+                t.instructionsPlaceholder ??
+                'Write the skill instructions in Markdown'
+              }
+            />
+          </Suspense>
+        </div>
+        {errors?.instructions != null && (
+          <ErrorText text={errors.instructions} />
+        )}
+      </div>
+    </TextRefinementField>
+  );
+
   return (
     <div
       dir={dir}
@@ -486,18 +907,14 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         labels={labels}
       />
 
-      <EditorLayout
-        title={title}
-        onBack={handleBack}
-        backAriaLabel={backAriaLabel}
-        actions={actions}
-        isSaving={isSubmitting}
-        labels={{ savingStatusLabel: t.savingStatusLabel }}
-        styles={layoutStyles}
-        leftContent={
+      <EntityEditor
+        {...editorProps}
+        isSubmitting={isSubmitting}
+        metadataSectionClassName={FILES_SECTION_CLASS_NAME}
+        metadata={
           <>
             {/* Mobile: collapsible file-list summary, collapsed by default. */}
-            <div className="px-4 py-4 desktop:hidden">
+            <div className="desktop:hidden">
               <Accordion
                 title={t.editingFileLabel ?? 'Editing file'}
                 description={selectedNode?.name ?? SKILL_MANIFEST_PATH}
@@ -505,188 +922,67 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 onToggle={setIsFilesExpanded}
                 ariaLabel={t.editingFileLabel ?? 'Editing file'}
               >
-                {filesPane}
+                {renderFilesPane(SkillFilesPane.Mobile)}
               </Accordion>
             </div>
 
             {/* Desktop: always-visible Files panel. */}
-            <div className="hidden px-8 py-6 desktop:block">{filesPane}</div>
+            <div className="hidden desktop:block">
+              {renderFilesPane(SkillFilesPane.Desktop)}
+            </div>
           </>
         }
-        rightContent={
-          <div className="flex flex-1 flex-col gap-4 px-4 py-6 desktop:gap-5 desktop:px-8">
-            {submitError != null && (
-              <div role="alert" className="flex items-center gap-2">
-                <ErrorText text={submitError} />
-                {onRetrySubmit != null && (
-                  <GhostButton
-                    label={t.retryLabel ?? 'Retry'}
-                    onClick={onRetrySubmit}
-                  />
-                )}
-              </div>
-            )}
-            {conflict != null && (
-              <div role="alert" className="flex items-center gap-2">
-                <ErrorText text={conflict.message} />
-                <GhostButton
-                  label={t.reloadLatestLabel ?? 'Reload latest'}
-                  onClick={onReloadLatest}
-                />
-              </div>
-            )}
-
-            <h2 className={mergeClasses(styles.title, titleClassName)}>
-              {selectedPath === SKILL_MANIFEST_PATH
-                ? SKILL_MANIFEST_PATH
-                : (t.selectedFileHeading?.(
-                    selectedNode?.name ?? selectedPath,
-                  ) ??
-                  selectedNode?.name ??
-                  selectedPath)}
-            </h2>
-
-            {selectedPath === SKILL_MANIFEST_PATH ? (
-              <>
-                <Input
-                  labelProps={{
-                    label: t.nameLabel ?? 'Name',
-                    required: true,
-                  }}
-                  value={values.name}
-                  onChange={(value) => updateValues({ name: value ?? '' })}
-                  placeholder={t.namePlaceholder ?? 'good-morning-breakfast'}
-                  caption={
-                    errors?.name
-                      ? undefined
-                      : (t.nameCaption ??
-                        "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
-                  }
-                  error={errors?.name}
-                  invalid={!!errors?.name}
-                  disabled={isNameReadOnly}
-                />
-                <TextRefinementField
-                  isEnabled={Boolean(onRefineDescription)}
-                  fieldId={descriptionId}
-                  required
-                  label={t.descriptionLabel ?? 'Description'}
-                  labels={t}
-                  refinement={descriptionRefinement}
-                  disabled={isRefining || isSubmitting}
-                  {...refinementStyles}
-                >
-                  <Textarea
-                    id={descriptionId}
-                    aria-required
-                    labelProps={
-                      onRefineDescription
-                        ? undefined
-                        : {
-                            label: t.descriptionLabel ?? 'Description',
-                            required: true,
-                          }
-                    }
-                    value={values.description}
-                    placeholder={
-                      t.descriptionPlaceholder ??
-                      'What this skill does and when to use it'
-                    }
-                    onChange={(value) => {
-                      descriptionRefinement.reset();
-                      updateValues({ description: value });
-                    }}
-                    error={errors?.description}
-                    invalid={!!errors?.description}
-                  />
-                </TextRefinementField>
-                <TextRefinementField
-                  isEnabled={Boolean(onRefineInstructions)}
-                  fieldId={instructionsId}
-                  required
-                  labelClassName={mergeClasses(
-                    styles.helperText,
-                    helperTextClassName,
+        alert={alert}
+        setupTitle={setupTitle}
+        setupSectionClassName={SETUP_SECTION_CLASS_NAME}
+        setup={
+          isManifestSelected ? (
+            <>
+              <MetadataForm
+                values={metadataValues}
+                errors={metadataErrors}
+                onChange={handleMetadataChange}
+                fields={METADATA_FIELDS}
+                isDescriptionRequired
+                isNameReadOnly={isNameReadOnly}
+                nameCaption={
+                  errors?.name
+                    ? undefined
+                    : (t.nameCaption ??
+                      "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
+                }
+                renderDescription={renderRefinableDescription}
+                labels={metadataLabels}
+              />
+              {instructionsEditor}
+            </>
+          ) : (
+            <>
+              {selectedNode?.kind === SkillFileNodeKind.File && (
+                <div className="flex min-h-0 flex-1 flex-col">
+                  {supportingFileContent ?? (
+                    <CaptionText
+                      text={
+                        t.supportingFileNote ??
+                        'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
+                      }
+                    />
                   )}
-                  label={t.instructionsLabel ?? 'Instructions'}
-                  labels={t}
-                  refinement={instructionsRefinement}
-                  disabled={isRefining || isSubmitting}
-                  {...refinementStyles}
-                >
-                  <div className="flex flex-1 flex-col gap-2">
-                    {!onRefineInstructions && (
-                      <Label
-                        htmlFor={instructionsId}
-                        className={mergeClasses(
-                          styles.helperText,
-                          helperTextClassName,
-                        )}
-                        label={t.instructionsLabel ?? 'Instructions'}
-                        required
-                      />
-                    )}
-                    <div
-                      ref={instructionsCapRef}
-                      className={mergeClasses(
-                        MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-                        MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
-                      )}
-                    >
-                      <Suspense
-                        fallback={
-                          <Spinner
-                            ariaLabel={
-                              t.instructionsLoadingAriaLabel ?? 'Loading'
-                            }
-                          />
-                        }
-                      >
-                        <LazyMarkdown
-                          id={instructionsId}
-                          ariaLabel={t.instructionsLabel ?? 'Instructions'}
-                          value={values.instructions}
-                          onChange={(value) => {
-                            instructionsRefinement.reset();
-                            updateValues({ instructions: value });
-                          }}
-                          theme={instructionsEditorTheme}
-                          placeholder={
-                            t.instructionsPlaceholder ??
-                            'Write the skill instructions in Markdown'
-                          }
-                        />
-                      </Suspense>
-                    </div>
-                    {errors?.instructions != null && (
-                      <ErrorText text={errors.instructions} />
-                    )}
-                  </div>
-                </TextRefinementField>
-              </>
-            ) : (
-              selectedNode?.kind === SkillFileNodeKind.File &&
-              (supportingFileContent ?? (
-                <CaptionText
-                  text={
-                    t.supportingFileNote ??
-                    'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
-                  }
-                />
-              ))
-            )}
-          </div>
+                </div>
+              )}
+            </>
+          )
         }
       />
 
       <SkillFileUploadDialog
         isOpen={isUploadDialogOpen}
-        onClose={() => {
-          setIsUploadDialogOpen(false);
-          setDroppedFiles(undefined);
-        }}
+        onClose={() => setIsUploadDialogOpen(false)}
         fileActions={fileActions}
-        initialFiles={droppedFiles}
+        mode={uploadRequest.mode}
+        targetFolderPath={uploadRequest.targetFolderPath}
+        initialFiles={uploadRequest.initialFiles}
+        initialEntries={uploadRequest.initialEntries}
         labels={labels}
       />
     </div>

@@ -85,6 +85,7 @@ import {
   useCallback,
   useMemo,
   type ReactNode,
+  type Ref,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -155,6 +156,7 @@ const isCitationPreviewable = (annotation: Annotation): boolean => {
 };
 
 interface Props {
+  contentRef?: Ref<HTMLDivElement>;
   msg: MessageType;
   index: number;
   totalCount: number;
@@ -324,6 +326,7 @@ interface Props {
 
 const ConversationMessageItem: FC<Props> = ({
   msg,
+  contentRef,
   index,
   totalCount,
   isAssistantTyping,
@@ -394,7 +397,7 @@ const ConversationMessageItem: FC<Props> = ({
   const { currentTheme } = useTheme();
   const applicationVisualizers = useApplicationVisualizers();
   const isMobile = useIsMobile();
-  const { openCanvas } = useAttachmentCanvas();
+  const { openCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const isLikesEnabled = useUiFeature(OverlayFeature.Likes);
   const isEditUserMessageHidden = useUiFeature(
     OverlayFeature.HideEditUserMessage,
@@ -523,7 +526,8 @@ const ConversationMessageItem: FC<Props> = ({
           t(CitationsI18nKeys.PopupSwitcher, { current, total }),
         preview: t(BasicI18nKeys.Preview),
         openInBrowser: t(CitationsI18nKeys.PopupOpenInBrowser),
-        download: t(ButtonsI18nKeys.Download),
+        showMore: t(ButtonsI18nKeys.ShowMore),
+        showLess: t(ButtonsI18nKeys.ShowLess),
       };
       const markerLabels = {
         ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
@@ -544,9 +548,15 @@ const ConversationMessageItem: FC<Props> = ({
       onPreview: handleCitationPreview,
       isPreviewable: isCitationPreviewable,
       onOpenInBrowser: handleCitationOpenInBrowser,
+      isPreviewOpen: isCanvasOpen,
       buildLabels: buildCitationLabels,
     }),
-    [handleCitationPreview, handleCitationOpenInBrowser, buildCitationLabels],
+    [
+      handleCitationPreview,
+      handleCitationOpenInBrowser,
+      isCanvasOpen,
+      buildCitationLabels,
+    ],
   );
   const { processedContent, markdownComponents } =
     useCitationMarkdownComponents(
@@ -625,6 +635,8 @@ const ConversationMessageItem: FC<Props> = ({
       height:
         (isMobile ? (entry.mobileHeight ?? entry.height) : entry.height) ??
         DEFAULT_VISUALIZER_HEIGHT,
+      isBorderless: entry.borderless === true,
+      isTitleHidden: entry.withoutTitle === true,
     };
   }, [
     effectiveDeploymentId,
@@ -656,6 +668,27 @@ const ConversationMessageItem: FC<Props> = ({
   const handleStreamErrorRetry = useCallback(() => {
     onRegenerateMessage?.(index);
   }, [onRegenerateMessage, index]);
+
+  const handleStageAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) => {
+      if (attachment.data) {
+        openCanvas(
+          { type: AttachmentContentType.Markdown, text: attachment.data },
+          attachment.name,
+        );
+        return;
+      }
+      const linkUrl = attachment.url ?? attachment.referenceUrl;
+      if (linkUrl) {
+        window.open(
+          resolveMarkdownUrl(linkUrl),
+          '_blank',
+          'noopener,noreferrer',
+        );
+      }
+    },
+    [openCanvas],
+  );
 
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
@@ -816,6 +849,7 @@ const ConversationMessageItem: FC<Props> = ({
     <CitationCardProvider value={citationCard}>
       <MessageBubble
         role={msg.role}
+        contentRef={contentRef}
         text={messageText}
         textSegments={textSegments}
         beforeContent={beforeContent}
@@ -890,6 +924,7 @@ const ConversationMessageItem: FC<Props> = ({
                           isPdfPagePreviewable ? onPreviewReference : undefined
                         }
                         onOpenInBrowser={handleOpenReferenceInBrowser}
+                        isPreviewOpen={isCanvasOpen}
                         icon={
                           <IconLink
                             size={14}
@@ -914,7 +949,8 @@ const ConversationMessageItem: FC<Props> = ({
                           openInBrowser: t(
                             CitationsI18nKeys.PopupOpenInBrowser,
                           ),
-                          download: t(ButtonsI18nKeys.Download),
+                          showMore: t(ButtonsI18nKeys.ShowMore),
+                          showLess: t(ButtonsI18nKeys.ShowLess),
                         }}
                         markerLabels={{
                           ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
@@ -941,6 +977,7 @@ const ConversationMessageItem: FC<Props> = ({
                   stages={msg.custom_content?.stages ?? []}
                   isStreaming={isStreaming}
                   labels={{ executedLabel, stepsLabel }}
+                  onAttachmentClick={handleStageAttachmentClick}
                 />
               )}
               {groupedVisualizer != null &&
@@ -958,6 +995,8 @@ const ConversationMessageItem: FC<Props> = ({
                   <InlineGroupedVisualizer
                     content={groupedVisualizer.content}
                     height={groupedVisualizer.height}
+                    isBorderless={groupedVisualizer.isBorderless}
+                    isTitleHidden={groupedVisualizer.isTitleHidden}
                     onExpand={handleExpandGroupedVisualizer}
                     expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
                     actionsGroupAriaLabel={t(

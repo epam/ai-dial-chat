@@ -1,4 +1,10 @@
-import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
+import {
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+  exceedsMaxLength,
+  hasControlCharacters,
+  isSkillSelectionUnsupported,
+} from '@epam/ai-dial-chat-shared';
 import { DESCRIPTION_MAX_LENGTH } from '../constants/scheduled-task-create-form';
 import type { ScheduledTaskCreateFormValues } from '../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
@@ -7,8 +13,14 @@ import { TIME_OF_DAY_PATTERN } from '../utils/calendar-value';
 /** Stable error codes that a host translates at its application boundary. */
 export enum ScheduledTaskValidationErrorCode {
   DisplayNameRequired = 'displayNameRequired',
+  /** The display name exceeds the shared entity-name length limit. */
+  DisplayNameTooLong = 'displayNameTooLong',
+  /** The display name contains a control character (line break, tab, …). */
+  DisplayNameControlCharacters = 'displayNameControlCharacters',
   ModelRequired = 'modelRequired',
   PromptRequired = 'promptRequired',
+  /** The instructions exceed the shared instructions length limit. */
+  PromptTooLong = 'promptTooLong',
   /** Neither instructions nor a skill was provided. */
   InstructionsOrSkillRequired = 'instructionsOrSkillRequired',
   /** A selected skill requires explicit capability support. */
@@ -35,6 +47,39 @@ export interface ScheduledTaskValidationOptions {
   /** Explicit capability of the draft's selected model; omitted means unsupported. */
   isSkillsSupported?: boolean;
 }
+
+/** Scheduled-task form fields that carry free text with a length limit. */
+export type ScheduledTaskTextField = 'displayName' | 'description' | 'prompt';
+
+/**
+ * Checks one free-text field against its length limit (and, for the display
+ * name, control characters) as the BFF will see it — trimmed. An empty value
+ * passes; required checks live in `validateScheduledTaskFormValues`.
+ */
+export const validateScheduledTaskTextField = (
+  field: ScheduledTaskTextField,
+  value: string | undefined,
+): ScheduledTaskValidationErrorCode | undefined => {
+  const trimmed = value?.trim() ?? '';
+  switch (field) {
+    case 'displayName':
+      if (exceedsMaxLength(trimmed, ENTITY_NAME_MAX_LENGTH)) {
+        return ScheduledTaskValidationErrorCode.DisplayNameTooLong;
+      }
+      if (hasControlCharacters(trimmed)) {
+        return ScheduledTaskValidationErrorCode.DisplayNameControlCharacters;
+      }
+      return undefined;
+    case 'description':
+      return exceedsMaxLength(trimmed, DESCRIPTION_MAX_LENGTH)
+        ? ScheduledTaskValidationErrorCode.DescriptionTooLong
+        : undefined;
+    case 'prompt':
+      return exceedsMaxLength(trimmed, ENTITY_INSTRUCTIONS_MAX_LENGTH)
+        ? ScheduledTaskValidationErrorCode.PromptTooLong
+        : undefined;
+  }
+};
 
 const DEFAULT_MINIMUM_LEAD_MS = 60_000;
 const MINUTE_PATTERN = /^(?:[0-9]|[1-5][0-9])$/;
@@ -73,9 +118,18 @@ export const validateScheduledTaskFormValues = (
   }: ScheduledTaskValidationOptions,
 ): ScheduledTaskValidationErrors => {
   const errors: ScheduledTaskValidationErrors = {};
+  const setTextFieldError = (
+    field: ScheduledTaskTextField,
+    value: string | undefined,
+  ) => {
+    const code = validateScheduledTaskTextField(field, value);
+    if (code) errors[field] = code;
+  };
 
   if (!values.displayName.trim()) {
     errors.displayName = ScheduledTaskValidationErrorCode.DisplayNameRequired;
+  } else {
+    setTextFieldError('displayName', values.displayName);
   }
   if (!values.modelId.trim()) {
     errors.modelId = ScheduledTaskValidationErrorCode.ModelRequired;
@@ -83,13 +137,13 @@ export const validateScheduledTaskFormValues = (
   if (!values.prompt.trim() && !values.skillUrl?.trim()) {
     errors.prompt =
       ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired;
+  } else {
+    setTextFieldError('prompt', values.prompt);
   }
   if (isSkillSelectionUnsupported(values.skillUrl, isSkillsSupported)) {
     errors.skillUrl = ScheduledTaskValidationErrorCode.SkillUnsupported;
   }
-  if ((values.description?.trim().length ?? 0) > DESCRIPTION_MAX_LENGTH) {
-    errors.description = ScheduledTaskValidationErrorCode.DescriptionTooLong;
-  }
+  setTextFieldError('description', values.description);
 
   if (values.repeat === ScheduledTaskRepeat.OneTime) {
     const runAtTime = values.runAt ? new Date(values.runAt).getTime() : NaN;

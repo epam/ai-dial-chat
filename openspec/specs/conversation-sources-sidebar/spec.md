@@ -146,7 +146,7 @@ The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` 
 
 ### Requirement: `ConversationSourcesPanel` renders a global empty state or the source sections
 
-`ConversationSourcesPanel` SHALL render either a global empty state or the source/task sections described below. `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` accepts no props, imports `SidebarPanel` from `@epam/ai-dial-sidebar`, obtains messages from `useSourcesSidebar()`, derives `uploaded`, `generated`, and `sources` through `useConversationSources(messages)`, reads `useActiveScheduledTask()` for scheduled-task state, and renders `<SidebarPanel side="right">`.
+`ConversationSourcesPanel` SHALL render either a global empty state or the source/task sections described below. `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` accepts no props, imports `SidebarPanel` from `@epam/ai-dial-sidebar`, obtains `messages` and `conversationModelId` from `useSourcesSidebarData()` and `isOpen`/`handleClose` from `useSourcesSidebar()` (both exported from `apps/chat/src/context/SourcesSidebarContext.tsx`), derives `uploaded`, `generated`, and `sources` through `useConversationSources(isOpen ? messages : EMPTY_MESSAGES)` where `EMPTY_MESSAGES` is a module-level constant array, so the derivation does not run while the sidebar is closed, reads `useActiveScheduledTask()` for scheduled-task state, and renders `<SidebarPanel side="right">`.
 
 The panel SHALL use `useAttachmentAction()` to obtain `handleAttachmentClick` and SHALL pass it as `onAttachmentClick` to both `FilesSection` instances (Uploaded Files and Generated Files).
 
@@ -234,7 +234,7 @@ For both states:
 
 - **WHEN** the user activates the close button
 - **THEN** `useSourcesSidebar().isOpen` becomes `false` on the next read
-- **AND** the stored sidebar messages are cleared
+- **AND** the stored sidebar messages are preserved (they are cleared only when the conversation page unmounts), so reopening the sidebar shows the same content
 
 #### Scenario: Non-empty sections render in fixed order for non-task conversations
 
@@ -255,6 +255,18 @@ For both states:
 
 - **WHEN** a user clicks an attachment card in the panel
 - **THEN** `handleAttachmentClick` is invoked with the corresponding `DisplayAttachment`
+
+#### Scenario: A closed sidebar does not derive sources
+
+- **GIVEN** the sidebar is closed
+- **WHEN** `useSourcesSidebarData().messages` changes (for example on a stream chunk)
+- **THEN** `useConversationSources` is not recomputed over the new messages
+
+#### Scenario: Opening the sidebar shows current sources
+
+- **GIVEN** the sidebar is closed while messages with attachments have been published
+- **WHEN** the user opens the sidebar
+- **THEN** the panel renders sections derived from the current messages on that render
 
 ---
 
@@ -739,20 +751,30 @@ Unlike `ScheduledTaskDetailView`'s own History card (which keeps its existing sc
 
 For a scheduled-task conversation, the panel SHALL render a Details section built from a shared, host-agnostic presentational component (`ScheduledTaskDetailsSummary`, `libs/scheduled-tasks`) showing:
 
-- **Model**: the task's model resolved to its deployment display name via the existing deployments context (the same resolution used in `ScheduledTaskDetailPage.tsx:106`), falling back to the raw model id when unresolved.
+- **Model**: the deployment that executed THIS run — the run conversation's own model id (`conversation.assistantModelId || conversation.model.id`, the same value the Conversation page passes as `initialModelId`), published through `SourcesSidebarContext` alongside the messages the page already publishes — resolved to its deployment display name via the deployments context (`findDeploymentByIdOrReference` + `resolveLocalizedText`), falling back to the raw model id when unresolved. The schedule's current `model` SHALL NOT be the source: it names the deployment of the latest saved settings, which a later edit may have changed after this run fired (issue #9045). While the run conversation is still loading (no model id published yet), the Model field SHALL be omitted rather than showing another value.
 - **Instructions**: the task's prompt/instructions rendered through the same shared markdown renderer (`MDMessageViewer` from `@epam/ai-dial-chat-shared`) used by `ScheduledTaskDetailView` and chat assistant messages — raw markdown SHALL NOT be shown as plain text, and no separate markdown implementation SHALL be introduced.
 
 The Details section SHALL NOT render edit controls. It is a concise summary; the "Task details" navigation (see `scheduled-task-conversation-context`) remains the path to the full task view.
 
-#### Scenario: Model resolves to its deployment display name
+#### Scenario: Model resolves to the deployment that executed the run
 
-- **WHEN** the task's `model` id matches a known deployment
+- **WHEN** the run conversation's `model.id` matches a known deployment
 - **THEN** the Details section shows that deployment's display name, not the raw id
+
+#### Scenario: Divergence from the schedule's current model
+
+- **WHEN** the schedule's current `model` names a deployment different from the one in the run conversation's `model.id` (the schedule was edited after this run fired)
+- **THEN** the Details section shows the run conversation's deployment, not the schedule's current model
 
 #### Scenario: Unresolvable model falls back to the raw id
 
-- **WHEN** the task's `model` id does not match any known deployment
+- **WHEN** the run conversation's `model.id` does not match any known deployment
 - **THEN** the Details section shows the raw model id
+
+#### Scenario: Model field is omitted while the conversation loads
+
+- **WHEN** the run conversation is still loading and no model id has been published yet
+- **THEN** the Details section omits the Model field rather than showing another value
 
 #### Scenario: Instructions render as formatted markdown
 
@@ -845,3 +867,31 @@ Task-detail failure, run-history failure, and attachment/source-derivation issue
 - **WHEN** `getScheduledTask` or `listScheduledTaskRuns` responds with `429`, `502`, or `503`
 - **THEN** the existing app-wide API error/notification handling applies
 - **AND** the user is not redirected away from the conversation
+
+### Requirement: Sidebar data is published separately from sidebar controls
+
+`apps/chat/src/context/SourcesSidebarContext.tsx` SHALL expose two contexts, both rendered by the existing `SourcesSidebarProvider`:
+
+- The controls context, read by `useSourcesSidebar()`, with value `{ isOpen, handleOpen, handleClose, setMessages, setConversationModelId }`. Every member except `isOpen` is referentially stable for the provider's lifetime.
+- The data context, read by `useSourcesSidebarData()`, with value `{ messages, conversationModelId }`.
+
+Each context value SHALL be memoized with `useMemo` over its own fields only. Each hook SHALL throw a clear error when used outside `SourcesSidebarProvider`. A `setMessages` or `setConversationModelId` call SHALL NOT change the controls context value. `useSourcesSidebar()` no longer returns `messages` or `conversationModelId`. `ConversationSourcesPanel` is their only reader.
+
+The provider's name, props and mount point in `apps/chat/src/main.tsx` do not change. There is no user-visible string, RTL or a11y change, feature flag, cache or telemetry.
+
+#### Scenario: A controls-only consumer does not re-render on a messages update
+
+- **GIVEN** a component that calls only `useSourcesSidebar()`, rendered inside `SourcesSidebarProvider`
+- **WHEN** `setMessages` is called with a new array
+- **THEN** that component does not re-render
+
+#### Scenario: A data consumer sees the new messages
+
+- **GIVEN** a component that calls `useSourcesSidebarData()`
+- **WHEN** `setMessages` is called with a new array
+- **THEN** that component re-renders and reads the new array
+
+#### Scenario: The data hook outside the provider throws
+
+- **WHEN** `useSourcesSidebarData()` is called outside `SourcesSidebarProvider`
+- **THEN** it throws an error naming the provider

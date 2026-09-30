@@ -3,18 +3,32 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { StagesPanel } from '../StagesPanel';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 14, MD: 16 },
-  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
-    <span role="status" aria-label={ariaLabel} />
-  ),
-  EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
-}));
+/* Disclosures are the real kit `Accordion`, so their button, region and inert state are what a user gets. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { Accordion } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    Accordion,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    DIAL_ICON_SIZE: { SM: 14, MD: 16 },
+    Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+      <span role="status" aria-label={ariaLabel} />
+    ),
+    EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
+  };
+});
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: { name: string } }) => (
-    <div>{attachment.name}</div>
+  AttachmentCard: ({
+    attachment,
+    onClick,
+  }: {
+    attachment: { id: string; name: string };
+    onClick?: (id: string) => void;
+  }) => (
+    <button type="button" onClick={() => onClick?.(attachment.id)}>
+      {attachment.name}
+    </button>
   ),
 }));
 
@@ -321,5 +335,31 @@ describe('StagesPanel', () => {
 
     expect(screen.getByText('40.0s')).toBeTruthy();
     expect(screen.queryByText('1m 20s')).toBeNull();
+  });
+
+  it('passes onAttachmentClick through to a rendered stage attachment tile', () => {
+    const onAttachmentClick = vi.fn();
+    const stageWithAttachment = {
+      index: 5,
+      name: 'Combined search',
+      status: StageStatus.Completed,
+      attachments: [
+        { title: 'result.csv', reference_url: 'files/abc/result.csv' },
+      ],
+    };
+    render(
+      <StagesPanel
+        stages={[stageWithAttachment]}
+        isStreaming={false}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Combined search/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+    expect(onAttachmentClick).toHaveBeenCalledOnce();
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'result.csv' }),
+    );
   });
 });

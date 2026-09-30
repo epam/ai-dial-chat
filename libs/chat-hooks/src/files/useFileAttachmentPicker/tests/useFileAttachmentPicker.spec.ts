@@ -24,6 +24,7 @@ const STUB_CONTROLLER = {
 } as unknown as UseDialFileManagerResult;
 
 const TAB_LABELS: Record<DialFileManagerTabs, string> = {
+  [DialFileManagerTabs.All]: 'All',
   [DialFileManagerTabs.MyFiles]: 'My files',
   [DialFileManagerTabs.Shared]: 'Shared with me',
   [DialFileManagerTabs.Organization]: 'Organization',
@@ -124,6 +125,41 @@ describe('useFileAttachmentPicker', () => {
 
     expect(result.current.selectedPaths.size).toBe(0);
     expect(result.current.activeTab).toBe(DialFileManagerTabs.Shared);
+  });
+
+  it('never offers the All tab, even when the configuration allows it', () => {
+    const { result } = renderHook(() =>
+      useFileAttachmentPicker(
+        buildOptions({
+          allowedTabs: ['all', 'my_files', 'shared', 'organization'],
+        }),
+      ),
+    );
+
+    expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
+      DialFileManagerTabs.MyFiles,
+      DialFileManagerTabs.Shared,
+      DialFileManagerTabs.Organization,
+    ]);
+    expect(result.current.activeTab).toBe(DialFileManagerTabs.MyFiles);
+  });
+
+  it('opens on the first enabled source tab when asked to start on All', () => {
+    const { result } = renderHook(() =>
+      useFileAttachmentPicker(
+        buildOptions({
+          initialTab: DialFileManagerTabs.All,
+          allowedTabs: ['all', 'shared', 'organization'],
+        }),
+      ),
+    );
+
+    expect(result.current.activeTab).toBe(DialFileManagerTabs.Shared);
+    expect(
+      mockUseDialFileManager.mock.calls.every(
+        ([options]) => options.activeTab !== DialFileManagerTabs.All,
+      ),
+    ).toBe(true);
   });
 
   it('filters the tab list down to allowedTabs', () => {

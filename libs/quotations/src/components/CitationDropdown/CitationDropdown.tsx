@@ -29,6 +29,8 @@ export interface CitationDropdownProps {
   isPreviewable?: (annotation: Annotation) => boolean;
   /** Called when the user clicks "Open in browser" for an annotation. */
   onOpenInBrowser: (annotation: Annotation) => void;
+  /** Whether the host's preview panel is open; a marker click then previews the active annotation directly instead of showing the card. Defaults to `false`. */
+  isPreviewOpen?: boolean;
   /** Optional icon rendered before the marker's label. */
   icon?: ReactNode;
   /** Optional icon rendered in the card header. When absent, no header icon is shown. */
@@ -49,6 +51,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   onPreview,
   isPreviewable,
   onOpenInBrowser,
+  isPreviewOpen = false,
   icon,
   headerIcon,
   cardLabels,
@@ -81,6 +84,14 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     [onPreview, canPreview, citationCard, ownerKey],
   );
 
+  const handleMarkerOpen = useCallback(() => {
+    if (isPreviewOpen && handlePreview) {
+      handlePreview(annotation);
+      return;
+    }
+    citationCard.openPopup(ownerKey);
+  }, [isPreviewOpen, handlePreview, annotation, citationCard, ownerKey]);
+
   /*
    * This is a controlled popover carrying an interactive card and needs
    * `bottom-end` so the 400px card aligns with the marker instead of
@@ -92,7 +103,10 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     <Tooltip
       open={isOpen}
       onOpenChange={handleOpenChange}
-      triggerClassName="ms-1 inline-flex align-middle"
+      triggerClassName={mergeClasses(
+        'ms-1 inline-flex align-middle',
+        styles.trigger,
+      )}
       contentClassName={mergeClasses(
         '!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none',
         styles.content,
@@ -114,7 +128,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       <CitationMarker
         sourceName={group.sourceName}
         annotationCount={group.annotations.length}
-        onOpen={() => citationCard.openPopup(ownerKey)}
+        onOpen={handleMarkerOpen}
         icon={icon}
         labels={markerLabels}
         labelClassName={markerLabelClassName}

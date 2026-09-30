@@ -2,6 +2,7 @@ import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   MessageRole,
+  StageStatus,
   type Annotation,
   type ApplicationVisualizer,
   type ApplicationVisualizerRegistry,
@@ -112,6 +113,43 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
 
 vi.mock('@epam/ai-dial-conversation-stages', () => ({
   StagesPanel: () => null,
+  CollapsedGroup: ({
+    stages,
+    onAttachmentClick,
+  }: {
+    stages: {
+      attachments?: {
+        title: string;
+        data?: string;
+        reference_url?: string;
+      }[];
+    }[];
+    onAttachmentClick?: (attachment: {
+      name: string;
+      data?: string;
+      referenceUrl?: string;
+    }) => void;
+  }) => (
+    <>
+      {stages
+        .flatMap((stage) => stage.attachments ?? [])
+        .map((attachment) => (
+          <button
+            key={attachment.title}
+            type="button"
+            onClick={() =>
+              onAttachmentClick?.({
+                name: attachment.title,
+                data: attachment.data,
+                referenceUrl: attachment.reference_url,
+              })
+            }
+          >
+            {attachment.title}
+          </button>
+        ))}
+    </>
+  ),
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
@@ -1039,7 +1077,7 @@ describe('ConversationMessageItem — inline citations', () => {
    * `annotationsToPdfHighlights` never gathers more than one entry.
    */
   it.each([0, 1, 2, 3])(
-    'reproduces issue #8822: repeated PDF citation %i supports preview and download',
+    'reproduces issue #8822: repeated PDF citation %i supports preview without a download action',
     async (markerIndex) => {
       const message: Message = {
         role: MessageRole.Assistant,
@@ -1131,11 +1169,10 @@ describe('ConversationMessageItem — inline citations', () => {
       expect(screen.queryAllByRole('dialog')).toHaveLength(0);
       mockOpenCanvas.mockClear();
       await userEvent.click(marker);
-      await userEvent.click(
-        screen.getByRole('button', { name: ButtonsI18nKeys.Download }),
-      );
-      expect(clickSpy).toHaveBeenCalledOnce();
-      clickSpy.mockClear();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Download }),
+      ).toBeNull();
+      expect(clickSpy).not.toHaveBeenCalled();
 
       clickSpy.mockRestore();
     },
@@ -1345,6 +1382,69 @@ describe('ConversationMessageItem — Markdown table actions', () => {
   });
 });
 
+describe('ConversationMessageItem — stage attachment click handling', () => {
+  const renderWithStageAttachment = (attachment: {
+    title: string;
+    data?: string;
+    reference_url?: string;
+  }) =>
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: 'Here are the results',
+          timestamp: '2024-01-01T00:00:05Z',
+          custom_content: {
+            stages: [
+              {
+                index: 0,
+                name: 'Combined search',
+                status: StageStatus.Completed,
+                attachments: [attachment],
+              },
+            ],
+          },
+        }}
+        index={1}
+      />,
+    );
+
+  it('opens a stage attachment with inline data as markdown in the attachment canvas', () => {
+    renderWithStageAttachment({
+      title: 'result.csv',
+      data: 'Some markdown search result',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      {
+        type: AttachmentContentType.Markdown,
+        text: 'Some markdown search result',
+      },
+      'result.csv',
+    );
+  });
+
+  it('opens a reference-only stage attachment (no inline data) in a new tab via the resolved download URL', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    renderWithStageAttachment({
+      title: 'result.csv',
+      reference_url: 'files/bucket-1/generated/report.txt',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+
+    expect(openSpy).toHaveBeenCalledWith(
+      '/api/v1/files/download?bucket=bucket-1&path=generated%2Freport.txt',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    openSpy.mockRestore();
+  });
+});
+
 describe('ConversationMessageItem — markdown file URLs', () => {
   it('rewrites DIAL file ids in assistant markdown images to download URLs', () => {
     render(
@@ -1422,6 +1522,32 @@ describe('ConversationMessageItem — application visualizers', () => {
 
     expect(screen.getByText('my-viz')).toBeTruthy();
     expect(screen.getByTitle('my-viz')).toBeTruthy();
+  });
+
+  it('hides the inline header title when the entry sets withoutTitle', () => {
+    applicationVisualizersMock = registryWith({ withoutTitle: true });
+
+    renderItem();
+
+    expect(screen.queryByText('my-viz')).toBeNull();
+    expect(screen.getByTitle('my-viz')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
+    ).toBeTruthy();
+  });
+
+  it('renders the inline frame without its border when the entry sets borderless', () => {
+    applicationVisualizersMock = registryWith({ borderless: true });
+
+    renderItem();
+
+    const toolbar = screen.getByRole('toolbar', {
+      name: 'attachmentCanvas.visualizerActionsAriaLabel',
+    });
+    // eslint-disable-next-line testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
+    const frame = toolbar.closest('.overflow-hidden');
+
+    expect(frame?.classList.contains('border')).toBe(false);
   });
 
   it('renders no inline visualizer when the registry is empty', () => {

@@ -6,6 +6,9 @@ import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names'
 import { ConversationItem } from '../../../models/panel-props';
 import { ConversationPanel } from '../ConversationPanel';
 
+/* Records one entry per ConversationRow body render (its title renders once). */
+const rowRenderLog = vi.hoisted((): string[] => []);
+
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
@@ -110,17 +113,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Button: ({
     onClick,
     label,
+    className,
     'aria-current': ariaCurrent,
   }: {
     onClick?: () => void;
     label?: React.ReactNode;
+    className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
   }) => (
-    <button onClick={onClick} aria-current={ariaCurrent}>
+    <button onClick={onClick} className={className} aria-current={ariaCurrent}>
       {label}
     </button>
   ),
-  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
+  Highlight: ({ text }: { text: string }) => {
+    rowRenderLog.push(text);
+    return <span>{text}</span>;
+  },
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
@@ -590,5 +598,39 @@ describe('ConversationPanel — header style forwarding', () => {
     expect(
       screen.getByRole('group', { name: 'panel header actions' }).classList,
     ).toContain('gap-4');
+  });
+});
+
+describe('ConversationPanel — navigation re-renders', () => {
+  it('re-renders only the previous and the new active row', () => {
+    /* Stable host callback; each row builds its actions only when it must. */
+    const getActions = vi.fn((_item: ConversationItem): never[] => []);
+    const { rerender } = render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        activeConversationId="c1"
+        getActions={getActions}
+      />,
+    );
+    rowRenderLog.length = 0;
+    getActions.mockClear();
+
+    rerender(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        activeConversationId="c2"
+        getActions={getActions}
+      />,
+    );
+
+    expect([...rowRenderLog].sort()).toEqual(['First chat', 'Second chat']);
+    expect(getActions).not.toHaveBeenCalled();
+    expect(
+      screen
+        .getByRole('button', { name: 'Second chat' })
+        .getAttribute('aria-current'),
+    ).toBe('page');
   });
 });

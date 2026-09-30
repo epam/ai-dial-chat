@@ -8,19 +8,19 @@ dropdown or mobile bottom sheet, Browse opens the skill catalog, and the trailin
 clear button removes the selected skill. Favorites come from the existing
 personal, shared, and public skills collections and favorites context.
 Task-form favorite rows omit the hover tooltip and View details action.
-`skillUsageEnabled` gates selection; existing references remain in the draft
-when selection is hidden. Support comes from the draft model's deployment
-entry, independent of chat's active model. Missing/false support blocks saving
-a skill and immediately shows the shared chat message. Typed BFF validation
-errors preserve the form; deployment-not-found errors do not replace it with
-the missing-task page. A change in deployment skill support clears a stale
-server capability error and revalidates the current draft, allowing retry when
-support recovers without requiring the user to reselect the model or skill.
+Skill selection is always available. Support comes from the draft model's
+deployment entry, independent of chat's active model. Missing/false support
+blocks saving a skill and immediately shows the shared chat message. Typed
+BFF validation errors preserve the form; deployment-not-found errors do not
+replace it with the missing-task page. A change in deployment skill support
+clears a stale server capability error and revalidates the current draft,
+allowing retry when support recovers without requiring the user to reselect
+the model or skill.
 
 Detail and conversation task summaries show a resolved skill name, falling
-back to its full reference while metadata loads or cannot be read. They remain
-visible when skill selection is disabled. These lookups belong to app adapters;
-the libraries receive resolved values and callbacks.
+back to its full reference while metadata loads or cannot be read. These
+lookups belong to app adapters; the libraries receive resolved values and
+callbacks.
 
 The AI DIAL Chat frontend — a React 19 single-page application served by
 `apps/chat-api`. It is the user-facing surface for conversations, the entity
@@ -54,90 +54,22 @@ Existing conversations send text normally. The current modules are:
 | `halloween` | Ghosts, connected web, bats, cat, witches, ghost train, portal, ravens, candy rain, invisible paw prints, dancing skeletons | `trick or treat` → random descending spiders, cauldron, mimic, pumpkin bowling or mummy |
 | `new-year`  | Snow, confetti, flying sleighs                                                                                              | `happy new year` → confetti                                                             |
 
-The Halloween portal briefly pulls visual copies of up to two adjacent, visible
-conversation-history rows into its claw, then restores the rows. It never changes
-conversation data. Interaction, scrolling, resizing, navigation or enabling reduced
-motion cancels the borrowing immediately. With closed or empty history, only the
-portal artwork appears. Reduced motion shows a static rift and leaves history alone.
-Every scene notification includes a hint for the event's secret chat phrase.
-
-The four new message-only surprises interact with the existing page through
-inert visual copies. A mummy walks in from the side, braces against the chat input
-and strains twice without moving it, then slowly pushes it completely offscreen.
-The input returns at the end; its draft and focus are preserved throughout.
-A cauldron pulls two chats into its brew and releases them as bubbles; a toothy
-mimic curls a shaded tongue in front of and behind two neighboring chats and pulls
-them into its mouth, keeping them attached to the tongue tip, then chews and spits them back. A pumpkin
-rolls into the visible history and scatters only the rows whose visible titles
-its body touches (up to six), starting each row's motion at contact, before they regroup.
-Original layout and conversation data never change. Copies disappear and originals
-return immediately on typing, composition, clicking, focus changes, scrolling,
-resizing, source changes, navigation or reduced motion. Unavailable or unusually
-large targets fall back to artwork alone. The mummy can use a focused composer;
-history scenes skip focused rows. The mummy animates for twelve seconds and
-unmounts after thirteen; the other three animate for eight and unmount after nine.
-Repeated secret messages select randomly without consecutive repeats, independently
-of pumpkin clicks. The new scenes are exclusive to messages and show a static
-illustration with reduced motion enabled.
-
-Descending spiders can now borrow up to three visible welcome-page elements:
-the greeting, model selector, attachment control and sometimes a history row.
-They descend, weave fine curved silk strands around their prizes, then climb above the viewport carrying
-the copies. Each carrier and its cargo share a transform. Originals retain layout
-and focus and return within eleven seconds; interaction cancels the theft
-immediately. Focused or expanded controls are skipped. Missing targets keep the
-decorative spider drop; reduced motion leaves the page untouched and shows static
-spiders. Existing public selectors provide all targets without changes to core
-page components or libraries.
-
-The Halloween train stops with an empty final wagon, picks up the main pumpkin
-and departs with smoke from its chimney and side vents. Boarding uses the pumpkin's
-actual screen position; its decorative copy rides behind the wagon front while
-the original labelled button retains focus and layout. The scene restores the
-pumpkin on completion or interaction and shows static artwork under reduced motion.
-Train direction follows the pumpkin's side, including RTL.
-
-`HALLOWEEN_TRAIN_AUDIO_SRC` in `src/constants/halloween.ts` optionally accepts a
-supplied audio asset URL. It is unset by default, so the train stays silent and
-makes no audio request.
-Configured playback is bounded to the scene, stops on interruption and gracefully
-handles browser playback rejection. Reduced motion always stays silent.
+The celebrations themselves live in
+[`@epam/ai-dial-celebrations`](../../libs/celebrations/README.md), which documents
+every scene, decoration behavior and the runtime. The app only adapts itself to
+the library in [`CelebrationHost`](src/context/CelebrationHost.tsx): it passes the
+configured event on `/` once the user config is ready, the navigation key as the
+reset key, labels translated from the existing `halloween.*` and `newYear.*` keys,
+the success toast as the notification sink, `useIsMobile`, and the composer,
+starter-list and history-panel anchors. The app keeps every scene enabled.
 
 ### Adding an event
 
-Use [the New Year definition](src/celebrations/new-year.ts) as the example and
-implement the [CelebrationEvent contract](src/types/celebration.ts):
-
-1. Add event components and resources in the app. The `Decoration` component
-   receives `onActivate`; it does not import the provider or select scenes.
-2. Export a default definition with `id`, optional `iconUrl`, `Decoration`,
-   `scenes`, `clickSceneIds` and `notificationTitleKey`. Every scene supplies
-   an `id`, `Component`, `durationMs` and typed `notificationKey`. Its duration
-   must include delayed arrivals and departures. An optional `secretTrigger`
-   supplies `phrases`, `hintPhrase` and `sceneIds`. The runtime samples distinct
-   valid IDs without consecutive repeats, independently of click selection.
-   A singleton pool can repeat; an empty or entirely invalid pool leaves messages
-   untouched. Both selection histories reset on navigation or event changes.
-3. Add one dynamic import to [the event registry](src/celebrations/registry.ts).
-   New IDs require no backend enum, provider, header or composer changes.
-4. Add translated labels/messages. Scenes for an event with a secret phrase
-   include `{{phrase}}` in their notification; the runtime interpolates the
-   module's `hintPhrase`. Phrases match the entire normalized input and support
-   non-Latin characters; omitting a trigger leaves all text untouched.
-5. Reuse [FlyingCharacters](src/components/FlyingCharacters/FlyingCharacters.tsx)
-   and [flight paths](src/utils/flying-characters.ts) where appropriate. Every
-   custom animation supplies a visible static frame under reduced motion,
-   stays decorative and non-interactive, and supports the mobile/desktop
-   breakpoints and RTL. A scene renders artwork inside the shared viewport
-   layer rather than creating its own portal.
-
-The shared provider owns one active scene, random selection without consecutive
-repeats when alternatives exist, replacement and cleanup. Event changes and
-navigation cancel playback and pending imports. Loading, unknown IDs and module
-failures leave the ordinary chat available; no input is intercepted until the
-selected module is ready. Missing providers are intentionally inert. Seasonal
-icons replace existing navigation/header slots only, preserving theme wordmarks
-and the browser-tab favicon. No event state is persisted.
+1. Add the event to the library as a new entry point; see the library README.
+2. Register its loader in `EVENTS` and its translated labels in
+   [`CelebrationHost`](src/context/CelebrationHost.tsx), adding the keys to
+   `translation-keys.ts` and `en.json`.
+3. New IDs require no backend enum, provider, header or composer changes.
 
 ## Content Security Policy
 
@@ -438,6 +370,28 @@ Every `aria-label` must be translated too: libraries expose label props with
 English defaults, and this app passes `t(...)` values in.
 
 ## Testing
+
+### Reply to selected message text
+
+Reply stays hidden while selection is in progress and appears after pointer release
+or completion of keyboard selection, including repeated selections.
+
+Select text inside one completed user or assistant message and activate **Reply**
+to add it to the current composer as `reply-<uuid>.txt`. The UTF-8 file contains
+the selected visible text, including whitespace and Unicode. The typed draft is
+preserved; Reply focuses the composer without sending. The file uses normal
+attachment upload, size/count validation, preview, retry, removal and URL-based
+send behavior. A loading or failed upload blocks sending; removing its draft tile
+does not delete the uploaded file.
+
+Reply is available only in an editable conversation whose selected model permits
+text attachments. It is unavailable during streaming or message editing, with
+disabled input/files, and in read-only views. Cross-message selections, attachment
+viewers, control-only selections and tool output are excluded. Inline citations,
+annotations and links within selected message text do not hide Reply; the file
+preserves the browser-selected text, including selected marker labels. Tab reaches Reply after
+selection; Enter/Space activates it and Escape dismisses it. Touch and RTL use the
+same flow.
 
 ```bash
 # Run all tests

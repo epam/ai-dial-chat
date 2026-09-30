@@ -7,6 +7,7 @@ import {
   type OverlayMessageRequest,
   OverlayRequestType,
   type ChatOverlayOptions,
+  type SetOverlayOptionsPayload,
 } from '../../protocol';
 import { ChatOverlay, ChatOverlayRequestError } from '../ChatOverlay';
 import { OverlayClassName } from '../internal/overlay-styles';
@@ -494,6 +495,97 @@ describe('ChatOverlay', () => {
     expect(
       Object.hasOwn(sentMessage?.payload as object, 'authAutoSignInProvider'),
     ).toBe(false);
+  });
+
+  describe('legacy signInOptions', () => {
+    const getHandshakePayload = (
+      options: Partial<ChatOverlayOptions>,
+    ): SetOverlayOptionsPayload | undefined => {
+      const { iframe } = setup(options);
+      const postMessageSpy = vi.spyOn(
+        iframe.contentWindow as Window,
+        'postMessage',
+      );
+      dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+      const sentMessage = postMessageSpy.mock
+        .calls[0][0] as OverlayMessageRequest<SetOverlayOptionsPayload>;
+      return sentMessage.payload;
+    };
+
+    it('maps autoSignIn and signInProvider to a same-window auto sign-in', () => {
+      const payload = getHandshakePayload({
+        signInOptions: { autoSignIn: true, signInProvider: 'keycloak' },
+      });
+
+      expect(payload?.authAutoSignInProvider).toBe('keycloak');
+      expect(payload?.authProviderUiModes).toEqual({ keycloak: 'sameWindow' });
+    });
+
+    it('maps the provider to external mode when signInInNewWindow is set', () => {
+      const payload = getHandshakePayload({
+        signInOptions: {
+          autoSignIn: true,
+          signInProvider: 'keycloak',
+          signInInNewWindow: true,
+        },
+      });
+
+      expect(payload?.authProviderUiModes).toEqual({ keycloak: 'external' });
+    });
+
+    it('ignores the legacy pair when autoSignIn is not true', () => {
+      const payload = getHandshakePayload({
+        signInOptions: { autoSignIn: false, signInProvider: 'keycloak' },
+      });
+
+      expect(Object.hasOwn(payload as object, 'authAutoSignInProvider')).toBe(
+        false,
+      );
+      expect(Object.hasOwn(payload as object, 'authProviderUiModes')).toBe(
+        false,
+      );
+    });
+
+    it('ignores the legacy pair when signInProvider is blank', () => {
+      const payload = getHandshakePayload({
+        signInOptions: { autoSignIn: true, signInProvider: '  ' },
+      });
+
+      expect(Object.hasOwn(payload as object, 'authAutoSignInProvider')).toBe(
+        false,
+      );
+    });
+
+    it('keeps the mode the host already set for the legacy provider', () => {
+      const payload = getHandshakePayload({
+        auth: {
+          providerUiModes: {
+            keycloak: OverlayAuthUiMode.External,
+            okta: OverlayAuthUiMode.SameWindow,
+          },
+        },
+        signInOptions: { autoSignIn: true, signInProvider: 'keycloak' },
+      });
+
+      expect(payload?.authAutoSignInProvider).toBe('keycloak');
+      expect(payload?.authProviderUiModes).toEqual({
+        keycloak: 'external',
+        okta: 'sameWindow',
+      });
+    });
+
+    it('prefers auth.autoSignInProvider over the legacy pair', () => {
+      const payload = getHandshakePayload({
+        auth: {
+          providerUiModes: { okta: OverlayAuthUiMode.SameWindow },
+          autoSignInProvider: 'okta',
+        },
+        signInOptions: { autoSignIn: true, signInProvider: 'keycloak' },
+      });
+
+      expect(payload?.authAutoSignInProvider).toBe('okta');
+      expect(payload?.authProviderUiModes).toEqual({ okta: 'sameWindow' });
+    });
   });
 
   it('includes enabledFeatures from constructor options in the initial handshake send', () => {

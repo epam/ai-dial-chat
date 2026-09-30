@@ -1,3 +1,8 @@
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   PROMPT_CONTENT_MAX_LENGTH,
@@ -10,6 +15,14 @@ import {
   validatePromptDescription,
   validatePromptName,
 } from '../prompt';
+
+describe('prompt length limits', () => {
+  it('match the shared entity limits every other editor uses', () => {
+    expect(PROMPT_NAME_MAX_LENGTH).toBe(ENTITY_NAME_MAX_LENGTH);
+    expect(PROMPT_DESCRIPTION_MAX_LENGTH).toBe(ENTITY_DESCRIPTION_MAX_LENGTH);
+    expect(PROMPT_CONTENT_MAX_LENGTH).toBe(ENTITY_INSTRUCTIONS_MAX_LENGTH);
+  });
+});
 
 describe('validatePromptName', () => {
   it('accepts a name of letters, digits, spaces, and _ . -', () => {

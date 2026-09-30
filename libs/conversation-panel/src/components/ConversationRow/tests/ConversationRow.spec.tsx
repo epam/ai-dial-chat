@@ -28,7 +28,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       aria-hidden={ariaHidden ? 'true' : undefined}
     />
   ),
-  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
+  Highlight: ({ text, className }: { text: string; className?: string }) => (
+    <span className={className}>{text}</span>
+  ),
   Button: ({
     iconBefore,
     label,
@@ -54,14 +56,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   Dropdown: ({
     children,
+    items,
     onOpenChange,
   }: {
     children: React.ReactElement<{ onClick?: () => void }>;
+    items?: Array<{ key: string; label: React.ReactNode }>;
     onOpenChange?: (isOpen: boolean) => void;
-  }) =>
-    React.cloneElement(children, {
-      onClick: () => onOpenChange?.(true),
-    }),
+  }) => (
+    <>
+      {React.cloneElement(children, {
+        onClick: () => onOpenChange?.(true),
+      })}
+      <ul aria-label="menu items">
+        {items?.map((menuItem) => (
+          <li key={menuItem.key}>{menuItem.label}</li>
+        ))}
+      </ul>
+    </>
+  ),
   GhostIconButton: React.forwardRef<
     HTMLButtonElement,
     { 'aria-label'?: string; onClick?: () => void }
@@ -91,9 +103,6 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconDotsVertical: () => <span>dots</span>,
-  IconClock: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg data-testid="task-badge-icon" aria-hidden={props['aria-hidden']} />
-  ),
 }));
 
 const baseItem = {
@@ -200,71 +209,140 @@ describe('ConversationRow', () => {
     expect(onActionMenuOpen).toHaveBeenCalledWith(baseItem, trigger);
   });
 
-  it('renders the task badge when showTaskBadge is true', () => {
-    render(
-      <ConversationRow
-        item={{ ...baseItem, showTaskBadge: true, taskBadgeLabel: 'TASK' }}
-        isActive={false}
-        onSelectConversation={vi.fn()}
-      />,
-    );
+  describe('memoisation', () => {
+    it('does not rebuild the action items when re-rendered with the same props', () => {
+      const getActions = vi.fn(() => [{ key: 'pin', label: 'Pin' }]);
+      const onSelectConversation = vi.fn();
+      const { rerender } = render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={getActions}
+        />,
+      );
 
-    expect(screen.getByText('TASK')).toBeTruthy();
-    expect(screen.getByTestId('task-badge-icon')).toBeTruthy();
+      rerender(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={getActions}
+        />,
+      );
+
+      expect(getActions).toHaveBeenCalledOnce();
+    });
+
+    it('shows new action items when the host passes a new getActions while the menu is open', () => {
+      const onSelectConversation = vi.fn();
+      const { rerender } = render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={() => [{ key: 'publish', label: 'Publish' }]}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+      rerender(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={() => [{ key: 'unpublish', label: 'Unpublish' }]}
+        />,
+      );
+
+      expect(screen.getByText('Unpublish')).toBeTruthy();
+      expect(screen.queryByText('Publish')).toBeNull();
+    });
+
+    it('renders no action trigger when getActions returns no items', () => {
+      render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+          getActions={() => []}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
+    });
   });
 
-  it('does not render the task badge when showTaskBadge is omitted', () => {
-    render(
-      <ConversationRow
-        item={baseItem}
-        isActive={false}
-        onSelectConversation={vi.fn()}
-      />,
-    );
+  describe('leading icon', () => {
+    const taskIcon = <svg data-testid="task-icon" aria-hidden="true" />;
 
-    expect(screen.queryByText('TASK')).toBeNull();
-    expect(screen.queryByTestId('task-badge-icon')).toBeNull();
-  });
+    it('renders the leading icon instead of the deployment icon', () => {
+      render(
+        <ConversationRow
+          item={{
+            ...baseItem,
+            leadingIcon: taskIcon,
+            iconUrl: 'https://example.com/icon.png',
+          }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
 
-  it('does not render the task badge when showTaskBadge is false', () => {
-    render(
-      <ConversationRow
-        item={{ ...baseItem, showTaskBadge: false, taskBadgeLabel: 'TASK' }}
-        isActive={false}
-        onSelectConversation={vi.fn()}
-      />,
-    );
+      expect(screen.getByTestId('task-icon')).toBeTruthy();
+      expect(screen.queryByTestId('deployment-icon')).toBeNull();
+    });
 
-    expect(screen.queryByText('TASK')).toBeNull();
-  });
+    it('renders the leading icon even while deployment icons are loading', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, leadingIcon: taskIcon, isIconLoading: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
 
-  it('marks the task badge icon as aria-hidden', () => {
-    render(
-      <ConversationRow
-        item={{ ...baseItem, showTaskBadge: true, taskBadgeLabel: 'TASK' }}
-        isActive={false}
-        onSelectConversation={vi.fn()}
-      />,
-    );
+      expect(screen.getByTestId('task-icon')).toBeTruthy();
+      expect(screen.queryByTestId('dial-skeleton')).toBeNull();
+    });
 
-    expect(
-      screen.getByTestId('task-badge-icon').getAttribute('aria-hidden'),
-    ).toBe('true');
-  });
+    it('keeps the deployment icon when no leading icon is given', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, iconUrl: 'https://example.com/icon.png' }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
 
-  it('clicking the task badge selects the conversation like any other row click', () => {
-    const onSelectConversation = vi.fn();
-    render(
-      <ConversationRow
-        item={{ ...baseItem, showTaskBadge: true, taskBadgeLabel: 'TASK' }}
-        isActive={false}
-        onSelectConversation={onSelectConversation}
-      />,
-    );
+      expect(screen.getByTestId('deployment-icon')).toBeTruthy();
+    });
 
-    fireEvent.click(screen.getByText('TASK'));
+    it('puts the leading icon in the same 24px slot as the avatar', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, leadingIcon: taskIcon }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
 
-    expect(onSelectConversation).toHaveBeenCalledWith(baseItem.id);
+      // eslint-disable-next-line testing-library/no-node-access -- the slot wrapper has no role; its size is the contract under test
+      const slot = screen.getByTestId('task-icon').parentElement;
+      expect(slot?.classList.contains('size-6')).toBe(true);
+    });
+
+    it('does not render any TASK pill', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, leadingIcon: taskIcon, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      expect(screen.queryByText('TASK')).toBeNull();
+    });
   });
 
   describe('unread indicator', () => {
@@ -316,6 +394,134 @@ describe('ConversationRow', () => {
 
       expect(screen.getByText('New task')).toBeTruthy();
       expect(screen.queryByText('Unread')).toBeNull();
+    });
+
+    it('renders the unread indicator after the title, at the trailing edge', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      const title = screen.getByText('My chat');
+      const label = screen.getByText('Unread');
+      expect(
+        title.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('uses logical spacing only, so the indicator stays at the end in RTL', () => {
+      render(
+        <div dir="rtl">
+          <ConversationRow
+            item={{ ...baseItem, isUnread: true }}
+            isActive={false}
+            onSelectConversation={vi.fn()}
+          />
+        </div>,
+      );
+
+      const button = screen.getByRole('button');
+      expect(button.className).not.toMatch(/\b(pl|pr|ml|mr|left|right)-/);
+      // eslint-disable-next-line testing-library/no-node-access -- the indicator wrapper has no role
+      const indicator = screen.getByText('Unread').parentElement;
+      expect(indicator?.className).not.toMatch(/\b(pl|pr|ml|mr|left|right)-/);
+    });
+
+    it('sets the title in the semibold style while unread', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+          itemTitleClassName="dial-small-text"
+        />,
+      );
+
+      expect(
+        screen.getByText('My chat').classList.contains('dial-small-semi-text'),
+      ).toBe(true);
+    });
+
+    it('keeps the regular title style when read', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: false }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      const title = screen.getByText('My chat');
+      expect(title.classList.contains('dial-small-text')).toBe(true);
+      expect(title.classList.contains('dial-small-semi-text')).toBe(false);
+    });
+
+    it('starts a read row with plain start padding and no reserved indicator slot', () => {
+      render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      const button = screen.getByRole('button');
+      expect(button.classList.contains('ps-3')).toBe(true);
+      expect(button.classList.contains('ps-0')).toBe(false);
+    });
+
+    it('hides the dot while the actions menu is open but keeps announcing unread', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+          getActions={() => [{ key: 'rename', label: 'Rename' }]}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+      const label = screen.getByText('Unread');
+      // eslint-disable-next-line testing-library/no-node-access -- the dot is aria-hidden and has no accessible handle
+      const dot = label.previousElementSibling;
+      expect(dot?.classList.contains('opacity-0')).toBe(true);
+      expect(label.classList.contains('sr-only')).toBe(true);
+    });
+
+    it('hides the dot on hover and focus when the row has actions', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+          getActions={() => [{ key: 'rename', label: 'Rename' }]}
+        />,
+      );
+
+      // eslint-disable-next-line testing-library/no-node-access -- the dot is aria-hidden and has no accessible handle
+      const dot = screen.getByText('Unread').previousElementSibling;
+      expect(dot?.className).toContain('group-hover/conversation:opacity-0');
+      expect(dot?.className).toContain(
+        'group-focus-within/conversation:opacity-0',
+      );
+    });
+
+    it('keeps the dot visible when the row has no actions', () => {
+      render(
+        <ConversationRow
+          item={{ ...baseItem, isUnread: true }}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+        />,
+      );
+
+      // eslint-disable-next-line testing-library/no-node-access -- the dot is aria-hidden and has no accessible handle
+      const dot = screen.getByText('Unread').previousElementSibling;
+      expect(dot?.className).not.toContain('opacity-0');
     });
 
     it('clicking the row with an unread dot still selects the conversation', () => {

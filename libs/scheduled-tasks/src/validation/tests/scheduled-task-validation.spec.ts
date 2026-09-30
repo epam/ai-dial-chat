@@ -6,6 +6,7 @@ import {
 import {
   ScheduledTaskValidationErrorCode,
   validateScheduledTaskFormValues,
+  validateScheduledTaskTextField,
 } from '../index';
 
 const now = new Date('2026-09-22T10:00:00.000Z');
@@ -52,6 +53,30 @@ describe('validateScheduledTaskFormValues', () => {
       modelId: ScheduledTaskValidationErrorCode.ModelRequired,
       prompt: ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired,
     });
+  });
+
+  it('reports over-limit text fields and a control character in the name', () => {
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          displayName: 'a'.repeat(257),
+          prompt: 'a'.repeat(50001),
+          description: 'a'.repeat(501),
+        },
+        { now },
+      ),
+    ).toEqual({
+      displayName: ScheduledTaskValidationErrorCode.DisplayNameTooLong,
+      prompt: ScheduledTaskValidationErrorCode.PromptTooLong,
+      description: ScheduledTaskValidationErrorCode.DescriptionTooLong,
+    });
+    expect(validateScheduledTaskTextField('displayName', 'Daily\treview')).toBe(
+      ScheduledTaskValidationErrorCode.DisplayNameControlCharacters,
+    );
+    expect(
+      validateScheduledTaskTextField('displayName', 'a'.repeat(256)),
+    ).toBeUndefined();
   });
 
   it('rejects empty or out-of-range weekly and monthly fields', () => {

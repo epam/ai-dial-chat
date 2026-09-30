@@ -125,13 +125,27 @@ Trusted-host and expiry rules: an active-conversation request SHALL be accepted 
 
 ### Requirement: SET_OVERLAY_OPTIONS applies to existing contexts
 
-On receiving `SET_OVERLAY_OPTIONS`, the app SHALL: set `hostDomain` from the payload (validated per `chat-overlay-protocol`); if `theme` is present, apply it via the existing `ThemeContext` setter; if `modelId` is present, apply it via `DeploymentsContext`'s `restoreSelectedItemId` (not `setSelectedItemId`, so the overlay-driven choice does not overwrite the end-user's persisted `UserConfig` preference); if `overlayConversationId` is present, navigate to that conversation using the existing route/`ConversationPage` loading path; if `enabledFeatures` is present, apply it via `UiFeaturesContext`'s `applyOverlayOverride` setter, which replaces (does not merge with) the app's current effective UI-feature set (see `ui-feature-toggles`). The app SHALL respond `SET_OVERLAY_OPTIONS/RESPONSE` only after these have been applied (or determined inapplicable, e.g. an unknown `modelId`, or filtered, e.g. unrecognized `enabledFeatures` entries per `ui-feature-toggles`).
+On receiving `SET_OVERLAY_OPTIONS`, the app SHALL: set `hostDomain` from the payload (validated per `chat-overlay-protocol`); if `theme` is present, apply it via the existing `ThemeContext` setter; if `modelId` is present, store it both as `OverlayContextType.pendingModelId` (one-shot, cleared once applied) and as `OverlayContextType.modelId` (the latest value from the host, never cleared); `useOverlayPendingModel` (`apps/chat/src/hooks/overlay/useOverlayPendingModel.ts`) applies the pending id via `DeploymentsContext`'s `restoreSelectedItemId` (not `setSelectedItemId`, so the overlay-driven choice does not overwrite the end-user's persisted `UserConfig` preference) once deployments have loaded, matching it by deployment `id` or `reference`, and `DeploymentsContext` treats `modelId` as the default for every new chat in the overlay session (step 2 of `resolveInitialSelection`, owned by `default-agent-preference`); if `overlayConversationId` is present, navigate to that conversation using the existing route/`ConversationPage` loading path; if `enabledFeatures` is present, apply it via `UiFeaturesContext`'s `applyOverlayOverride` setter, which replaces (does not merge with) the app's current effective UI-feature set (see `ui-feature-toggles`). The app SHALL respond `SET_OVERLAY_OPTIONS/RESPONSE` only after these have been applied (or determined inapplicable, e.g. an unknown `modelId`, or filtered, e.g. unrecognized `enabledFeatures` entries per `ui-feature-toggles`).
 
 #### Scenario: modelId does not overwrite the user's persisted preference
 
 - **WHEN** `SET_OVERLAY_OPTIONS` includes `modelId: 'gpt-4o'` for a user whose own `UserConfig` selection is a different model
 - **THEN** the displayed selection changes to `gpt-4o` for this session
 - **AND** the user's persisted `UserConfig` selected-deployment value is unchanged
+
+#### Scenario: modelId stays the default for new chats after it is applied
+
+- **WHEN** `SET_OVERLAY_OPTIONS` includes `modelId: 'sigma'`, which exists in the catalog, for a user
+  whose persisted selection is empty or a different model, and `pendingModelId` has been applied and
+  cleared
+- **THEN** `OverlayContextType.modelId` is still `'sigma'`, the composer's selection is `'sigma'`, and
+  every later new chat in the session opens on `'sigma'` unless the user picks another model for it
+
+#### Scenario: modelId matches a deployment reference
+
+- **WHEN** `SET_OVERLAY_OPTIONS` includes `modelId: 'sigma-ref'` and the catalog holds a deployment
+  with id `'sigma'` and `reference: 'sigma-ref'`
+- **THEN** the displayed selection becomes `'sigma'`
 
 #### Scenario: overlayConversationId navigates to that conversation
 
@@ -157,6 +171,7 @@ On receiving `SET_OVERLAY_OPTIONS`, the app SHALL: set `hostDomain` from the pay
 
 - **WHEN** `SET_OVERLAY_OPTIONS` includes `theme: 'dark'`, `modelId: 'gpt-4o'`, and `enabledFeatures: ['header']` in a single payload
 - **THEN** all three are applied (theme changes, model selection restores, effective UI-feature set becomes `{header}`) before the single `SET_OVERLAY_OPTIONS/RESPONSE` is sent
+
 
 ### Requirement: Chat and generation events are emitted from existing hooks
 

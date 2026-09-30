@@ -80,6 +80,10 @@ const SharePopoverContainer: FC<Props> = ({
             ? t(ShareI18nKeys.ExpiryNote, { days: data.expiresInDays })
             : undefined,
         qrCodeAriaLabel: t(ShareI18nKeys.QrCodeAriaLabel),
+        qrCopyButtonLabel: t(ButtonsI18nKeys.Copy),
+        qrCopiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),
+        qrDownloadButtonLabel: t(ButtonsI18nKeys.Download),
+        qrDownloadFileName: t(ShareI18nKeys.QrDownloadFileName),
         loadingLabel: t(ShareI18nKeys.LoadingLabel),
         errorTitle: t(ShareI18nKeys.ErrorTitle),
       }}

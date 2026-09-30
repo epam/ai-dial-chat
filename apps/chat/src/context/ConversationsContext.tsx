@@ -38,6 +38,19 @@ import { useUserConfig } from './UserConfigContext';
 
 const DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000;
 
+/* Returns `prev` untouched when nothing changes, so React skips the update. */
+const setPinnedState = (
+  prev: ConversationListItemDto[],
+  id: string,
+  isPinned: boolean,
+): ConversationListItemDto[] => {
+  const index = prev.findIndex((c) => c.id === id);
+  if (index === -1 || prev[index].isPinned === isPinned) return prev;
+  const next = prev.slice();
+  next[index] = { ...prev[index], isPinned };
+  return next;
+};
+
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
   conversations: ConversationListItemDto[];
@@ -153,11 +166,15 @@ export const ConversationsProvider = ({
   }, []);
 
   const updateConversationTitle = useCallback((id: string, title: string) => {
-    setConversations((prev) =>
-      prev.map((item) =>
-        conversationIdsMatch(item.id, id) ? { ...item, title } : item,
-      ),
-    );
+    /* Returning `prev` on a no-op lets React bail out — every conversation
+       load calls this, usually with the title the list already has. */
+    setConversations((prev) => {
+      const index = prev.findIndex((item) => conversationIdsMatch(item.id, id));
+      if (index === -1 || prev[index].title === title) return prev;
+      const next = prev.slice();
+      next[index] = { ...prev[index], title };
+      return next;
+    });
   }, []);
 
   const bumpConversationActivity = useCallback((id: string) => {
@@ -312,15 +329,11 @@ export const ConversationsProvider = ({
 
   const pinConversation = useCallback(
     async (id: string, isPinned: boolean) => {
-      setConversations((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, isPinned } : c)),
-      );
+      setConversations((prev) => setPinnedState(prev, id, isPinned));
       try {
         await setPinnedConversation(id, isPinned);
       } catch (err) {
-        setConversations((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, isPinned: !isPinned } : c)),
-        );
+        setConversations((prev) => setPinnedState(prev, id, !isPinned));
         console.error('Failed to persist pin state', err);
       }
     },
@@ -376,9 +389,10 @@ export const ConversationsProvider = ({
    * another flow (e.g. deleting its last message empties it out).
    */
   const removeConversationFromList = useCallback((id: string) => {
-    setConversations((prev) =>
-      prev.filter((c) => !conversationIdsMatch(c.id, id)),
-    );
+    setConversations((prev) => {
+      const next = prev.filter((c) => !conversationIdsMatch(c.id, id));
+      return next.length === prev.length ? prev : next;
+    });
   }, []);
 
   const renameConversation = useCallback(

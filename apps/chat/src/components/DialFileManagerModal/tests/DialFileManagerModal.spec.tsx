@@ -45,7 +45,7 @@ const { mockShowNotification } = vi.hoisted(() => ({
  */
 const ALL_TABS: FilterChipItem<DialFileManagerTabs>[] = [
   { value: DialFileManagerTabs.MyFiles, label: 'My Files' },
-  { value: DialFileManagerTabs.Shared, label: 'Shared with Me' },
+  { value: DialFileManagerTabs.Shared, label: 'Shared' },
   { value: DialFileManagerTabs.Organization, label: 'Organization' },
 ];
 
@@ -493,6 +493,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
+  cancelUploadFile: vi.fn(),
   clearUploadBatch: vi.fn(),
   onCreateFolder: vi.fn(),
   onCreateFolderValidate: vi.fn(),
@@ -573,8 +574,6 @@ const defaultProps = {
     `Delete ${names.length} ${names.length === 1 ? 'item' : 'items'}?`,
   deleteConfirmLabel: 'Delete',
   deleteCancelLabel: 'Cancel',
-  uploadProgressTitle: 'Uploading files',
-  cancelLabel: 'Cancel',
 };
 
 beforeEach(() => {
@@ -1015,7 +1014,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-tab-count')).toBe('3');
     expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Shared with Me' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Shared' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
   });
 
@@ -1026,7 +1025,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(manager.getAttribute('data-tab-count')).toBe('2');
     expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Shared' })).toBeNull();
   });
 
   it('passes the activeTab from useFileAttachmentPicker to treeOptions', () => {
@@ -1042,7 +1041,7 @@ describe('DialFileManagerModal — tab navigation', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
     expect(screen.getByText('1 item selected')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Shared' })).toBeNull();
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Invoke tab-change handler' }),

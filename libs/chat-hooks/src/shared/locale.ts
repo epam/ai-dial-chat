@@ -1,8 +1,8 @@
-import type {
-  DeploymentCreationFormLocaleEntry,
-  DeploymentCreationFormLocaleOption,
-} from '@epam/ai-dial-builder-form';
 import type { LocaleTextEntryDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  LocaleOption,
+  LocalizedTextEntry,
+} from '@epam/ai-dial-chat-shared';
 
 /** Lowercased base language of a BCP-47 tag, e.g. `'en-US'` -> `'en'`. */
 export const toBaseLocale = (locale: string): string =>
@@ -52,7 +52,7 @@ export const appendLocaleCode = (label: string, locale: string): string =>
  * this feature stays byte-identical to today.
  */
 export const composeLocalePayload = (
-  otherLocales: DeploymentCreationFormLocaleEntry[],
+  otherLocales: LocalizedTextEntry[],
   primaryLocale: string,
 ): LocaleTextEntryDto[] | undefined => {
   const byLanguage = new Map<string, LocaleTextEntryDto>();
@@ -82,7 +82,7 @@ export const decomposeLocalizedFields = (
   displayName: LocalizedText | undefined,
   description: LocalizedText | undefined,
   primaryLocale: string,
-): DeploymentCreationFormLocaleEntry[] => {
+): LocalizedTextEntry[] => {
   const nameMap = typeof displayName === 'object' ? displayName : {};
   const descriptionMap = typeof description === 'object' ? description : {};
   const languages = new Set([
@@ -108,7 +108,7 @@ export const decomposeLocalizedFields = (
 export const buildAdditionalLocaleOptions = (
   additionalLocaleCodes: string[],
   primaryLocale: string,
-): DeploymentCreationFormLocaleOption[] =>
+): LocaleOption[] =>
   additionalLocaleCodes
     .filter((code) => code !== primaryLocale)
     .map((code) => ({ code, label: code.toUpperCase() }));

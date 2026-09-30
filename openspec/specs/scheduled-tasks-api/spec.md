@@ -144,7 +144,7 @@ Example response (with `?limit=20&offset=0&search=daily&sort=firstToRun`):
 }
 ```
 
-or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and a string `prompt` are required; `skillUrl` is optional and nullable, and empty/whitespace-only prompt is allowed only with an effective skill; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `service_id` or `stream` field — both are fixed/derived server-side (see below) and are not client-controllable.
+or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and a string `prompt` are required; `displayName` is `@MaxLength(256)` and rejects control characters (`@Matches(/^[^\p{Cc}]*$/u)`), and `prompt` is `@MaxLength(50000)` (bounds from `apps/chat-api/src/common/validators/entity-field-limits.ts`, see `entity-field-limits`); `skillUrl` is optional and nullable, and empty/whitespace-only prompt is allowed only with an effective skill; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `service_id` or `stream` field — both are fixed/derived server-side (see below) and are not client-controllable.
 
 The service SHALL build the upstream body server-side with `service_id` set from `SCHEDULER_SERVICE_ID` (read once at `ScheduledTasksService` construction; see the "SCHEDULER_APP_ID and SCHEDULER_SERVICE_ID environment configuration" requirement) and `properties`:
 
@@ -194,6 +194,11 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 - **WHEN** `displayName`, `trigger`, or `model` is missing/empty, `prompt` is missing or not a string, or both trimmed `prompt` and the effective skill are empty
 - **THEN** the response is `400 Bad Request` and DIAL Core is never called
+
+#### Scenario: Over-limit display name or instructions is rejected
+
+- **WHEN** `displayName` is longer than 256 characters or contains a control character such as a line break, or `prompt` is longer than 50000 characters
+- **THEN** the response is `400 Bad Request` and DIAL Core is never called; a printable `displayName` (including letters such as `p` or `C` and braces) is accepted
 
 #### Scenario: Both trigger variants or neither is rejected
 
@@ -567,7 +572,7 @@ Before validation the service SHALL resolve the effective skill from authoritati
 
 `DELETE /api/v1/scheduled-tasks/:scheduleId` SHALL validate `scheduleId` against the existing allowlist `^[A-Za-z0-9_-]{1,128}$` (reusing `GetScheduledTaskDto`) before use, take no request body and no query parameters, and proxy `DELETE {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` using the session bearer token via a dedicated `deleteScheduledTask` method on `ScheduledTasksService` (not the `performScheduleAction`/`ScheduleAction` helper used by pause/resume, since delete uses a different HTTP verb and returns no body to re-fetch). Creator isolation SHALL be delegated entirely to the upstream endpoint's own `created_by` scoping — the BFF SHALL NOT perform its own ownership check beyond what upstream already enforces via the session's access token. The BFF SHALL NOT attempt to predict or request a hard vs. soft deletion outcome; it SHALL treat both outcomes identically as a successful deletion.
 
-On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Content` with an empty body (`@HttpCode(HttpStatus.NO_CONTENT)`), SHALL NOT attempt to parse a JSON body from the upstream response, and SHALL invalidate the caller's scheduled-tasks list cache using the existing `invalidateListCache(userSub)` epoch-bump helper before responding. The response SHALL carry cache-preventing headers consistent with the controller's other mutation endpoints (no caching of a delete response). Upstream errors SHALL map through the existing `mapDialHttpStatus`/`handleDialFetchError` mechanism without exposing the upstream's bare-JSON-string error body: a `404` (unknown schedule, another user's schedule, or an already hard-deleted schedule) maps to `404 Not Found`; a `409` (already soft-deleted) maps to `409 Conflict`; a `502` (scheduler could not unregister the job; no DB change occurred, the task remains live, and retrying is safe) maps to `502 Bad Gateway`; upstream timeout or unavailability maps to `503 Service Unavailable`.
+On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Content` with an empty body (`@HttpCode(HttpStatus.NO_CONTENT)`), SHALL NOT attempt to parse a JSON body from the upstream response, and SHALL invalidate the caller's scheduled-tasks list cache using the existing `invalidateListCache(userSub)` epoch-bump helper before responding. The response SHALL carry cache-preventing headers consistent with the controller's other mutation endpoints (no caching of a delete response). Upstream errors SHALL map through the existing `mapDialHttpStatus`/`handleDialFetchError` mechanism, never forwarding the raw upstream body object; the upstream reason and code SHALL be exposed only through the `upstreamMessage`/`upstreamCode` fields defined by the "Scheduler error responses carry the upstream reason and code" requirement: a `404` (unknown schedule, another user's schedule, or an already hard-deleted schedule) maps to `404 Not Found` without upstream fields; a `409` (already soft-deleted) maps to `409 Conflict`; a `502` (scheduler could not unregister the job; no DB change occurred, the task remains live, and retrying is safe) maps to `502 Bad Gateway`; upstream timeout or unavailability maps to `503 Service Unavailable`.
 
 #### Scenario: Valid delete request succeeds with an empty 204 body
 
@@ -592,17 +597,17 @@ On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Co
 #### Scenario: Unknown, foreign, or already hard-deleted schedule returns 404
 
 - **WHEN** DIAL Scheduler returns 404 for the given `scheduleId` (unknown id, another user's schedule, or already hard-deleted)
-- **THEN** the response is `404 Not Found` and the upstream's bare-string error body is not echoed to the client
+- **THEN** the response is `404 Not Found`, and neither the upstream's bare-string error body nor `upstreamMessage`/`upstreamCode` is returned to the client
 
 #### Scenario: Already soft-deleted schedule returns 409
 
 - **WHEN** DIAL Scheduler returns 409 because the schedule is already soft-deleted
-- **THEN** the response is `409 Conflict` and the upstream's bare-string error body is not echoed to the client
+- **THEN** the response is `409 Conflict` with the generic `message`, and the upstream's text, when present, only as `upstreamMessage`
 
 #### Scenario: Scheduler unregistration failure returns 502 and does not invalidate the cache
 
 - **WHEN** DIAL Scheduler returns 502 because it could not unregister the job
-- **THEN** the response is `502 Bad Gateway`, the list cache is NOT invalidated, and no partial deletion state is created
+- **THEN** the response is `502 Bad Gateway` (with `upstreamMessage`/`upstreamCode` when Scheduler supplied them), the list cache is NOT invalidated, and no partial deletion state is created
 
 #### Scenario: Upstream timeout or unavailability returns 503
 
@@ -668,16 +673,21 @@ On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Co
 
 ### Requirement: Scheduled task ownership and trigger-kind metadata
 
-`ScheduledTaskDto` SHALL include optional `serviceId` (upstream `service_id`), `triggerType` (upstream `trigger_type`, one of `cron`/`date`), `updatedAt` (upstream `updated_at`, ISO-8601), and `createdBy` (upstream `created_by`, the owning user's sub) fields, confirmed present on a live DIAL Scheduler list response. These are additive optional fields; mapping MUST NOT throw when any of them is absent. `triggerType` reflects which trigger variant the schedule uses even when the list endpoint's `trigger` object itself is absent (see the "List scheduled tasks" requirement above).
+`ScheduledTaskDto` SHALL include optional `serviceId` (upstream `service_id`), `triggerType` (one of `cron`/`date`), `updatedAt` (upstream `updated_at`, ISO-8601), and `createdBy` (upstream `created_by`, the owning user's sub) fields, confirmed present on a live DIAL Scheduler list response. These are additive optional fields; mapping MUST NOT throw when any of them is absent. `triggerType` reflects which trigger variant the schedule uses even when the list endpoint's `trigger` object itself is absent (see the "List scheduled tasks" requirement above). Upstream GET responses (observed live) carry the nested `trigger` object but no `trigger_type` — `fromUpstreamSchedule` SHALL therefore derive `triggerType` from the nested trigger shape (`trigger.cron` present → `cron`, `trigger.date` present → `date`) whenever `trigger_type` is absent, so both response shapes name the trigger kind. The completed-state derivation and the detail page's disabled-switch fallbacks both branch on `triggerType`, so a GET response must not silently lose it.
 
 #### Scenario: Upstream ownership/trigger-kind fields are mapped
 
 - **WHEN** an upstream schedule includes `service_id`, `trigger_type`, `updated_at`, and `created_by`
 - **THEN** the mapped `ScheduledTaskDto` includes `serviceId`, `triggerType`, `updatedAt`, and `createdBy` with the same values
 
+#### Scenario: GET response without trigger_type derives the kind from the nested trigger
+
+- **WHEN** an upstream GET response includes `trigger: { date: null, cron: { fields, end_date } }` and no `trigger_type` field
+- **THEN** the mapped `ScheduledTaskDto.triggerType` is `cron` (derived from the nested trigger), so downstream completed-state derivation behaves identically to a list response
+
 #### Scenario: Missing ownership/trigger-kind fields does not throw
 
-- **WHEN** an upstream schedule omits `service_id`, `trigger_type`, `updated_at`, and/or `created_by`
+- **WHEN** an upstream schedule omits `service_id`, `trigger_type`, `updated_at`, and/or `created_by` and its nested `trigger` names no variant
 - **THEN** the corresponding `ScheduledTaskDto` fields are `undefined`, and mapping does not throw
 
 ### Requirement: List response surfaces upstream pagination metadata
@@ -764,6 +774,69 @@ Both fields apply only to a `cron` (recurring) trigger and are optional; when un
 - **WHEN** `fromUpstreamSchedule` is called with an upstream object that has no `trigger` field (as returned by the list endpoint for individual items)
 - **THEN** it returns a `ScheduledTaskDto` with `trigger.cron` `undefined`, without throwing
 
+### Requirement: Scheduled task completed-state field
+
+`ScheduledTaskDto` SHALL include an optional `isCompleted: boolean` field, computed by `ScheduledTasksService` (not by `fromUpstreamSchedule`, which cannot see run history) on both the list and get paths. `isCompleted: true` means the schedule can no longer produce a future run, via exactly two terminal shapes:
+
+- **Expired recurring schedule:** `triggerType === 'cron'` AND `nextRunTime` is null AND `trigger.cron.endDate` is in the past. Unambiguous from the schedule fields alone — no runs call is issued. A cron schedule with no `endDate`, or with one still in the future, is merely paused, not terminal. When the response carries no `trigger.cron.endDate` (a list shape without the nested trigger), this shape is not detected and the task keeps today's Paused display.
+- **Finished one-time schedule:** `triggerType === 'date'` AND (`nextRunTime` is null OR `trigger.date` is in the past) — the candidate gate, an OR so it is path-independent — AND the newest run (fetched via `GET schedules/{scheduleId}/runs?limit=1`, newest first per the endpoint's documented ordering) exists with status `Success` or `Error`. `InProgress`, `Missed`, and an empty run list all yield `isCompleted: false` for candidates.
+
+Non-terminal schedules yield `isCompleted: false` with no runs call. Derivation SHALL use the BFF's server clock for the date comparisons. A failed runs call MUST NOT fail the parent list/get response: the affected item SHALL carry `isCompleted: undefined` (mapped by the frontend identically to `false`) and the failure SHALL be logged at warn. The field is a documented assumption alongside `isActive` (no authoritative upstream state field is confirmed); when one is confirmed, both derivations MUST be replaced in this same service/mapper location, not duplicated elsewhere.
+
+#### Scenario: One-time task whose run finished maps to isCompleted true
+
+- **WHEN** the upstream schedule has `trigger_type: "date"`, `next_run_time: null`, and its newest run has status `success` (or `error`)
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `true`
+
+#### Scenario: One-time task currently running maps to isCompleted false
+
+- **WHEN** the upstream schedule has `trigger_type: "date"`, `next_run_time: null`, and its newest run has status `in_progress`
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false`
+
+#### Scenario: Paused one-time task that never ran maps to isCompleted false
+
+- **WHEN** the upstream schedule has `trigger_type: "date"`, `next_run_time: null` (paused before its date arrived, or the date passed while paused), and the runs list is empty (or the newest run has status `missed`)
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false`, and no run-record-based completion is claimed
+
+#### Scenario: Recurring schedule whose activity window has closed maps to isCompleted true without a runs call
+
+- **WHEN** the upstream schedule has `trigger_type: "cron"`, `next_run_time: null`, and a `trigger.cron.end_date` in the past
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `true` and no runs check is issued for it
+
+#### Scenario: Recurring schedule with an open or unbounded window never reports completed
+
+- **WHEN** the upstream schedule has `trigger_type: "cron"` and either no `trigger.cron.end_date`, an `end_date` in the future, or a non-null `next_run_time`
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false` and no runs check is issued for it
+
+#### Scenario: Future one-time task is not a candidate
+
+- **WHEN** the upstream schedule has `trigger_type: "date"` and a non-null `next_run_time` (or, on the get path, a `trigger.date` in the future)
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false` and no runs check is issued for it
+
+#### Scenario: Failed runs check degrades the list item, not the list
+
+- **WHEN** the runs check for a candidate item fails upstream during a list request
+- **THEN** the list response still succeeds, that item's `isCompleted` is `undefined`, and the failure is logged at warn
+
+#### Scenario: Get path computes the same field
+
+- **WHEN** `GET /api/v1/scheduled-tasks/{scheduleId}` is called for a one-time schedule whose date is past and whose newest run is terminal
+- **THEN** the returned `ScheduledTaskDto.isCompleted` is `true`, computed with the same rule as the list path
+
+### Requirement: Completed-state list enrichment is cached and bounded
+
+The runs checks in `listScheduledTasks` SHALL execute inside the existing `withCachedDialRequest` wrapper (30s TTL, the existing `{limit, offset, search, sort}` cache-key family, existing invalidation on create/update/pause/resume/delete), issued in parallel only for the page's candidate items — at most one `runs?limit=1` call per candidate item, so a cache miss costs no more concurrent upstream calls than the page's `limit` (hard cap 100). No separate cache SHALL be introduced for the enrichment. No concurrency limiter is required while the burst is page-bounded; when DIAL Scheduler gains an authoritative state field or a batch runs endpoint, the fan-out SHALL be replaced in this one location.
+
+#### Scenario: Cache hit skips the runs checks
+
+- **WHEN** `listScheduledTasks` is served from the 30s list cache
+- **THEN** no upstream runs calls are issued and `isCompleted` values come from the cached response
+
+#### Scenario: Candidate checks are parallel and limited to candidates
+
+- **WHEN** a cache-missed list page contains 20 cron schedules and 2 date-trigger schedules with null `next_run_time`
+- **THEN** exactly 2 upstream `runs?limit=1` calls are issued, in parallel, before the response is returned
+
 ### Requirement: Scheduled execution uses the ordinary completion skill contract
 
 The scheduled completion SHALL carry one selected skill in `properties.payload.messages[0].custom_content.skills`. Scheduler SHALL preserve this message-level extension in storage and detail responses and forward it to DIAL Core during execution. A skill-only task SHALL use empty-string message content. Execution SHALL use the existing offline-credentials identity to access the skill resource, without a separate skill execution API or local worker.
@@ -836,6 +909,7 @@ No new endpoint, role, telemetry, or cache SHALL be introduced. Existing session
 - **THEN** opening detail/edit loads that skill and does not treat the list omission as a removal
 
 #### Scenario: Encoded reference matches chat
+The runs checks in `listScheduledTasks` SHALL execute inside the existing `withCachedDialRequest` wrapper (30s TTL, the existing `{limit, offset, search, sort}` cache-key family, existing invalidation on create/update/pause/resume/delete), issued in parallel only for the page's candidate items — at most one `runs?limit=1` call per candidate item, so a cache miss costs no more concurrent upstream calls than the page's `limit` (hard cap 100). No separate cache SHALL be introduced for the enrichment. No concurrency limiter is required while the burst is page-bounded; when DIAL Scheduler gains an authoritative state field or a batch runs endpoint, the fan-out SHALL be replaced in this one location.
 
 - **WHEN** a selected resource has spaces, Unicode, or already-encoded segments
 - **THEN** the Scheduler completion reference matches chat's encoding without double encoding and resolves to the same resource after read/edit
@@ -878,3 +952,109 @@ Swagger SHALL describe these typed bodies and status codes; generation via `npm 
 
 - **WHEN** deployment resolution returns 404 or fails with 502/503 during save
 - **THEN** no task mutation occurs and the client retains the form, distinguishes deployment-unavailable from task-not-found, and allows retry/correction
+
+### Requirement: Schedule-activating operations check the DIAL_NATIVE scheduler application consent
+
+`createScheduledTask` (`POST /api/v1/scheduled-tasks`, operationId `createScheduledTask`), `updateScheduledTask` (`PUT /api/v1/scheduled-tasks/:scheduleId`, operationId `updateScheduledTask`) and `resumeScheduledTask` (`POST /api/v1/scheduled-tasks/:scheduleId/resume`, operationId `resumeScheduledTask`) SHALL, before any request to DIAL Scheduler and before model/skill validation, read the scheduler's external service `SCHEDULER_SERVICE_ID` of application `SCHEDULER_APP_ID` through `ExternalServicesService.getExternalService` (DIAL Core `GET /v1/applications/{appId}/external-services/{serviceId}`, with the application-resource fallback that method already performs) using the session bearer token. The result SHALL NOT be cached: every call re-reads it, so an administrator's revocation takes effect on the user's next operation.
+
+When the service's `authenticationType` is `DIAL_NATIVE` and its `appLevelAuthStatus` is exactly `SIGNED_OUT`, the endpoint SHALL throw `ForbiddenException` with the typed body below, SHALL NOT contact DIAL Scheduler, and SHALL NOT invalidate the list cache:
+
+```json
+{
+  "statusCode": 403,
+  "error": "Forbidden",
+  "code": "scheduledTaskAdminConsentRequired",
+  "message": "A DIAL administrator must approve this application's access before you can continue."
+}
+```
+
+`ScheduledTaskErrorCode` SHALL gain the member `AdminConsentRequired = 'scheduledTaskAdminConsentRequired'`, published through the existing `ScheduledTaskValidationErrorDto.code` OpenAPI enum (`enumName: 'ScheduledTaskErrorCode'`) so the generated client exposes `ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired`. No new endpoint, request DTO, or response DTO is introduced; frontend callers keep using the normal (non-`Raw`) generated methods. The `403` `@ApiResponse` of create, update and resume SHALL document this case with `type: ScheduledTaskValidationErrorDto`.
+
+The check SHALL fail open: when the lookup throws (any HTTP or network error), or the service is not `DIAL_NATIVE`, or `appLevelAuthStatus` is absent or any value other than `SIGNED_OUT`, the BFF SHALL log a warning (lookup failure only) and continue with the operation, leaving the decision to DIAL Scheduler. `pauseScheduledTask`, `deleteScheduledTask`, and the read endpoints SHALL NOT perform the check, so a user can always stop or remove a schedule after consent is revoked. The existing `scheduledTasksEnabled` feature gate and session authentication continue to apply unchanged; no telemetry is added. A Scheduler error that still occurs after the check passes follows the "Scheduler error responses carry the upstream reason and code" requirement below.
+
+#### Scenario: Revoked consent blocks create without contacting DIAL Scheduler
+
+- **GIVEN** DIAL Core reports the scheduler service as `authentication_type: DIAL_NATIVE`, `app_level_auth_status: SIGNED_OUT`
+- **WHEN** an authenticated, feature-enabled user calls `POST /api/v1/scheduled-tasks` with a valid body
+- **THEN** the response is `403` with `code: "scheduledTaskAdminConsentRequired"`, DIAL Scheduler is never called, and the list cache is not invalidated
+
+#### Scenario: Revoked consent blocks update and resume
+
+- **GIVEN** the scheduler service consent is `SIGNED_OUT`
+- **WHEN** the user calls `PUT /api/v1/scheduled-tasks/sched_123` or `POST /api/v1/scheduled-tasks/sched_123/resume`
+- **THEN** each response is `403` with `code: "scheduledTaskAdminConsentRequired"` and no DIAL Scheduler request is made
+
+#### Scenario: Consent is re-read on every operation
+
+- **WHEN** a create succeeds while consent is `SIGNED_IN`, and the administrator then revokes consent before the user's next create
+- **THEN** the second create reads the service again and is rejected with `scheduledTaskAdminConsentRequired`
+
+#### Scenario: Pause and delete are not blocked
+
+- **GIVEN** the scheduler service consent is `SIGNED_OUT`
+- **WHEN** the user pauses or deletes `sched_123`
+- **THEN** no consent lookup is made and the request proceeds to DIAL Scheduler as before
+
+#### Scenario: Non-DIAL_NATIVE service or unreported status does not block
+
+- **WHEN** the scheduler service is `OAUTH`, or is `DIAL_NATIVE` without an `app_level_auth_status`
+- **THEN** create/update/resume proceed to DIAL Scheduler unchanged
+
+#### Scenario: Failed consent lookup defers to DIAL Scheduler
+
+- **WHEN** the consent lookup fails with a DIAL Core error or is unreachable
+- **THEN** a warning is logged and the operation proceeds to DIAL Scheduler; its own response determines the result
+
+### Requirement: Scheduler error responses carry the upstream reason and code
+
+Every endpoint that proxies DIAL Scheduler (`listScheduledTasks`, `getScheduledTask`, `listScheduledTaskRuns`, `createScheduledTask`, `updateScheduledTask`, `pauseScheduledTask`, `resumeScheduledTask`, `deleteScheduledTask`) SHALL, when DIAL Scheduler answers with a non-2xx status, keep mapping the status through `mapDialHttpStatus` exactly as today (same exception type, same status, same generic `message`, `error` and `statusCode`) and SHALL additionally add two optional string fields to the JSON error body:
+
+- `upstreamMessage` — the reason DIAL Scheduler returned, extracted with `extractDialErrorMessage` (a bare string body, else `error.display_message`, else `error.message`, else top-level `message`), trimmed; omitted when empty; truncated to its first 1000 characters when longer.
+- `upstreamCode` — `error.code`, else top-level `code`, of the upstream body when it is a string matching `^[A-Za-z0-9_.:-]{1,128}$`; omitted otherwise.
+
+Both fields SHALL follow the shared exposure rule of `mapDialHttpStatus`: they are added for 400, 405, 409, 412, 413, 422, 429 and any status ≥ 500 (and any other unmapped status), and SHALL NEVER be added for 401, 403 or 404, so auth and resource details stay private. That rule SHALL be defined once in `apps/chat-api/src/common/dial/dial-error.mapper.ts` and reused, not re-listed in the scheduled-tasks domain. The raw upstream body object SHALL still never be forwarded — only these two extracted fields. `message` SHALL keep the BFF's own generic text (for example `DIAL Core returned a server error`), and the BFF's own typed `code` (`ScheduledTaskErrorCode`) SHALL never be taken from or overwritten by the upstream code; errors the BFF raises itself (validation, consent, configuration, timeouts, network failures) carry neither field. The full upstream body continues to be logged server-side by `mapDialHttpStatus`.
+
+`ScheduledTaskValidationErrorDto` SHALL gain `upstreamMessage?: string` and `upstreamCode?: string` (`@ApiPropertyOptional`), and the 400, 409 and 502 `@ApiResponse` entries of the endpoints above SHALL reference `type: ScheduledTaskValidationErrorDto`, so the regenerated `@epam/ai-dial-chat-api-client` describes both fields. No endpoint, operationId, request DTO or success response DTO changes; frontend callers keep the normal (non-`Raw`) generated methods. No cache is introduced; failed mutations still do not invalidate the list cache.
+
+Example — DIAL Scheduler answers create with `500 {"error":{"message":"Application consent revoked","code":"consent_revoked"}}`; the BFF responds:
+
+```json
+{
+  "statusCode": 502,
+  "error": "Bad Gateway",
+  "message": "DIAL Core returned a server error",
+  "upstreamMessage": "Application consent revoked",
+  "upstreamCode": "consent_revoked",
+  "traceparent": "00-ea5fa30918c91040b8a0837a22810c17-e2be692f315e8855-01"
+}
+```
+
+#### Scenario: Scheduler 5xx carries its reason and code
+
+- **WHEN** DIAL Scheduler answers create with `500` and body `{ "error": { "message": "Application consent revoked", "code": "consent_revoked" } }`
+- **THEN** the response is `502` with `message: "DIAL Core returned a server error"`, `upstreamMessage: "Application consent revoked"`, and `upstreamCode: "consent_revoked"`
+
+#### Scenario: Bare-string upstream body becomes upstreamMessage
+
+- **WHEN** DIAL Scheduler answers delete with `409` and the JSON string body `"Schedule is already deleted"`
+- **THEN** the response is `409 Conflict` with `upstreamMessage: "Schedule is already deleted"` and no `upstreamCode`
+
+#### Scenario: 401, 403 and 404 never carry upstream fields
+
+- **WHEN** DIAL Scheduler answers with `404` (or `401`/`403`) and a body containing text and a code
+- **THEN** the mapped response has neither `upstreamMessage` nor `upstreamCode`
+
+#### Scenario: Unsafe or oversized upstream values are sanitized
+
+- **WHEN** the upstream `error.code` contains characters outside `[A-Za-z0-9_.:-]` or exceeds 128 characters, and the upstream message is 5000 characters long
+- **THEN** `upstreamCode` is omitted and `upstreamMessage` holds the first 1000 characters
+
+#### Scenario: Upstream code never overrides the BFF's typed code
+
+- **WHEN** the consent pre-check rejects with `code: "scheduledTaskAdminConsentRequired"`
+- **THEN** the body has no `upstreamCode`/`upstreamMessage`, and for upstream errors the top-level `code` is never set from the upstream body
+
+#### Scenario: Timeouts and network failures carry no upstream fields
+
+- **WHEN** the Scheduler request times out or DIAL Core is unreachable
+- **THEN** the response is `503` with the existing generic message and neither upstream field

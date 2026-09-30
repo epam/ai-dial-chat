@@ -4,7 +4,7 @@ Panel component for displaying the processing stages of an agent or LLM response
 
 ## Overview
 
-`@epam/ai-dial-conversation-stages` visualises the intermediate reasoning and execution steps that an AI agent or model produces while streaming a response. When a model performs tool calls, retrieval operations, or multi-step reasoning, users benefit from seeing the progress rather than staring at a blank loading state. This library renders that progress as a live list of labelled stages, each showing a running spinner, a completed check, or a failure icon, with expandable markdown content, per-stage copy buttons, and attempt/duration badges for retried steps. Related stages can be wrapped in a `CollapsedGroup` whose single summary line tracks the run, keeping the panel compact during long agentic runs. Use this library in any conversation view that consumes streamed agent responses; it takes the `Stage[]` array from `@epam/ai-dial-chat-shared` directly and handles all display transitions internally.
+`@epam/ai-dial-conversation-stages` visualises the intermediate reasoning and execution steps that an AI agent or model produces while streaming a response. When a model performs tool calls, retrieval operations, or multi-step reasoning, users benefit from seeing the progress rather than staring at a blank loading state. This library renders that progress as a live list of labelled stages, each showing a running spinner, a completed check, or a failure icon, with expandable markdown content, per-stage attachment tiles, per-stage copy buttons, and attempt/duration badges for retried steps. Related stages can be wrapped in a `CollapsedGroup` whose single summary line tracks the run, keeping the panel compact during long agentic runs. Use this library in any conversation view that consumes streamed agent responses; it takes the `Stage[]` array from `@epam/ai-dial-chat-shared` directly and handles all display transitions internally.
 
 ## Installation
 
@@ -50,9 +50,15 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
     runningAriaLabel: 'Running',
     failedAriaLabel: 'Failed',
     attemptLabel: (n) => `Attempt ${n}`,
+    attachmentClickLabel: 'Preview search result',
   }}
+  onAttachmentClick={(attachment) => openPreview(attachment)}
 />;
 ```
+
+### Stage attachments
+
+When a stage carries `attachments` (e.g. a RAG agent's search results), its expanded body renders each one as an `AttachmentCard` tile from `@epam/ai-dial-attachment-input`, in a wrapping row below any `stage.content`. The library maps each raw `MessageAttachment` to a `DisplayAttachment` itself — the host never has to. Clicking a tile calls `onAttachmentClick` with the mapped `DisplayAttachment`; the library never opens a preview or builds a URL itself, so the host decides what "click" means (open a canvas preview, download, navigate, etc.). `attachmentClickLabel` overrides the tile's default click-action label, which otherwise reads as a download/open action rather than a preview.
 
 ### CollapsedGroup
 
@@ -74,8 +80,11 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
     failedCountLabel: (failedCount) => `${failedCount} failed`,
   }}
   styles={{ panel: { stageTextColor: 'var(--text-secondary)' } }}
+  onAttachmentClick={(attachment) => openPreview(attachment)}
 />;
 ```
+
+`onAttachmentClick` is forwarded unchanged to the inner `StagesPanel` (and every `StageItem` it renders) — see [Stage attachments](#stage-attachments) above.
 
 `CollapsedGroupStyles.panel` is typed `StagesPanelColors` and is forwarded to the
 inner `StagesPanel`, so the group and the panel it wraps are themed from one

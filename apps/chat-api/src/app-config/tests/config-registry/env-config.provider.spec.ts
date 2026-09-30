@@ -405,6 +405,17 @@ describe('EnvConfigProvider', () => {
       ]);
     });
 
+    it('accepts all as a recognized tab id', async () => {
+      const { provider } = makeProvider({
+        FILE_MANAGER_AVAILABLE_TABS: ['all', 'my_files', 'shared'],
+      });
+      expect(await provider.resolve('fileManager.availableTabs', ctx)).toEqual([
+        'all',
+        'my_files',
+        'shared',
+      ]);
+    });
+
     it('drops unknown ids and keeps only recognized tabs', async () => {
       const { provider } = makeProvider({
         FILE_MANAGER_AVAILABLE_TABS: ['my_files', 'review', 'bogus'],
@@ -821,6 +832,36 @@ describe('EnvConfigProvider', () => {
       expect(loggerWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining('expanded'),
       );
+    });
+
+    it('passes borderless and withoutTitle through without warning', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, borderless: true, withoutTitle: true },
+        }),
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, { borderless?: boolean; withoutTitle?: boolean }>;
+
+      expect(result['app-1'].borderless).toBe(true);
+      expect(result['app-1'].withoutTitle).toBe(true);
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('unrecognized'),
+      );
+    });
+
+    it('drops an entry whose borderless flag is not a boolean', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, borderless: 'yes' },
+        }),
+      });
+
+      expect(await provider.resolve('applicationVisualizers', ctx)).toEqual({});
     });
 
     it('warns when the entry origin is absent from ALLOWED_IFRAME_ORIGINS', async () => {

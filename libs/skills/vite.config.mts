@@ -38,6 +38,7 @@ export default defineConfig(() => ({
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-catalog',
         '@epam/ai-dial-conversation-input',
+        '@epam/ai-dial-react-file-manager',
         '@tabler/icons-react',
       ],
     },

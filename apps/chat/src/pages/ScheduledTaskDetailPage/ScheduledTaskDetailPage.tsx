@@ -48,6 +48,7 @@ import { resolveLocalizedText } from '../../utils/locale';
 import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
+  resolveScheduledTaskErrorMessage,
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 import NotFoundPage from '../NotFound/NotFound';
@@ -90,7 +91,11 @@ const ScheduledTaskDetailPage: FC = () => {
     hasMore: runsHasMore,
     loadMore: onRunsLoadMore,
     refetch: refetchRuns,
-  } = useScheduledTaskRuns(scheduleId, isEnabled && Boolean(scheduleId));
+  } = useScheduledTaskRuns(
+    scheduleId,
+    isEnabled && Boolean(scheduleId),
+    task?.nextRunTime,
+  );
 
   useEffect(() => {
     if (!isEnabled || !scheduleId) {
@@ -230,6 +235,7 @@ const ScheduledTaskDetailPage: FC = () => {
         missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
       },
       activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
+      completedFieldLabel: t(ScheduledTasksI18nKeys.DetailCompletedFieldLabel),
       activeStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
@@ -249,12 +255,20 @@ const ScheduledTaskDetailPage: FC = () => {
   };
 
   /*
-   * A one-time (`date`) schedule with no next run has already fired and
-   * can't produce another run by resuming it. A recurring (`cron`) schedule
-   * whose activity window `endDate` has already passed can't produce a
-   * future run either, even though — unlike a one-time schedule — it may
-   * still be actively paused/resumable in principle; both cases disable
-   * (not hide) the switch so the state stays visible without offering a
+   * A completed task can never produce another run, so its Active switch is
+   * hidden entirely (the completed line in the details summary carries the
+   * state) — no dead-end control is offered.
+   */
+  const isTaskCompleted = task?.isCompleted === true;
+
+  /*
+   * Fallback for the shapes where the BFF's `isCompleted` enrichment degraded
+   * to `undefined` (a failed runs check) or the run is still in flight: a
+   * one-time (`date`) schedule with no next run has already fired, and a
+   * recurring (`cron`) schedule whose activity window `endDate` has already
+   * passed can't produce a future run either. Completed tasks never reach
+   * this — their switch is hidden above — so this only disables the switch
+   * that still renders, keeping the state visible without offering a
    * dead-end toggle.
    */
   const cronWindowEndDate = task?.trigger.cron?.endDate;
@@ -263,6 +277,25 @@ const ScheduledTaskDetailPage: FC = () => {
     (task?.triggerType === 'cron' &&
       cronWindowEndDate != null &&
       new Date(cronWindowEndDate).getTime() <= Date.now());
+
+  /*
+   * The disabled switch's explanatory text differs per case: a fired one-time
+   * schedule already ran, while a recurring schedule's activity window has
+   * closed — the user sees why the toggle is dead rather than a bare disabled
+   * control. Only computed while the switch renders; a completed task hides
+   * the switch, so it gets no reason.
+   */
+  let activeDisabledReason: string | undefined;
+  if (isActiveDisabled && !isTaskCompleted) {
+    activeDisabledReason =
+      task?.triggerType === 'date'
+        ? t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted)
+        : t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
+  }
+
+  const completedLabel = isTaskCompleted
+    ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
+    : undefined;
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
@@ -300,10 +333,14 @@ const ScheduledTaskDetailPage: FC = () => {
         setTask((current) =>
           current ? { ...current, isActive: !nextActive } : current,
         );
-        const { traceId } = await getApiErrorDetails(err);
+        const details = await getApiErrorDetails(err);
         showErrorNotification({
-          message: t(ScheduledTasksI18nKeys.DetailActiveStatusUpdateError),
-          requestId: traceId,
+          message: resolveScheduledTaskErrorMessage(
+            details,
+            ScheduledTasksI18nKeys.DetailActiveStatusUpdateError,
+            t,
+          ),
+          requestId: details.traceId,
         });
       } finally {
         if (!isStale()) {
@@ -341,10 +378,19 @@ const ScheduledTaskDetailPage: FC = () => {
       });
       navigate(ROUTES.ScheduledTasks);
     } catch (err) {
-      const { status, traceId } = await getApiErrorDetails(err);
+      const { status, traceId, upstreamMessage } =
+        await getApiErrorDetails(err);
       const messageKey = getDeleteErrorMessageKey(status);
       showErrorNotification({
-        message: t(messageKey),
+        /* 404/409/502 keep their actionable localized messages; only the generic branch shows Scheduler's reason. */
+        message:
+          messageKey === ScheduledTasksI18nKeys.DetailDeleteGenericError
+            ? resolveScheduledTaskErrorMessage(
+                { upstreamMessage },
+                messageKey,
+                t,
+              )
+            : t(messageKey),
         requestId: traceId,
       });
       setIsDeleting(false);
@@ -381,9 +427,11 @@ const ScheduledTaskDetailPage: FC = () => {
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
         isDeleting={isDeleting}
         isDeleted={isTaskDeleted}
+        isCompleted={isTaskCompleted}
         isActive={isTaskDeleted ? undefined : task?.isActive}
         isActiveUpdating={isActiveUpdating}
         isActiveDisabled={isActiveDisabled}
+        activeDisabledReason={activeDisabledReason}
         onActiveChange={isTaskDeleted ? undefined : handleActiveChange}
         displayName={task?.displayName ?? ''}
         isLoading={isTaskLoading}
@@ -393,6 +441,7 @@ const ScheduledTaskDetailPage: FC = () => {
         modelLabel={modelLabel}
         repeatsLabel={repeatsLabel}
         activeWindowLabel={activeWindowLabel}
+        completedLabel={completedLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
         skillDisplayName={skillDisplayName}

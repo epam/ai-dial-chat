@@ -8,7 +8,7 @@ import Logo from '../Logo';
 const celebration = vi.hoisted(() => ({
   event: null as { iconUrl: string } | null,
 }));
-vi.mock('../../../context/CelebrationContext', () => ({
+vi.mock('@epam/ai-dial-celebrations', () => ({
   useCelebration: () => celebration,
 }));
 
@@ -79,6 +79,40 @@ describe('Logo', () => {
     // eslint-disable-next-line testing-library/no-node-access
     const restoredIcon = restoredLink.firstElementChild as HTMLElement;
     expect(restoredIcon.style.backgroundImage).toContain('/theme/favicon.svg');
+  });
+
+  it('hides the full logo below desktop when the theme has a favicon', () => {
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      currentThemeLogo: 'logo.svg',
+      currentThemeFavicon: 'favicon.svg',
+      themes: [],
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+    const { container } = render(<Logo />);
+    /* Breakpoint visibility is CSS-level behavior with no semantic query. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const logoImage = container.querySelector('span.desktop\\:block');
+    expect(logoImage?.classList.contains('hidden')).toBe(true);
+  });
+
+  it('shows the full logo below desktop when the theme has no favicon', () => {
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      currentThemeLogo: 'logo.svg',
+      themes: [],
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+    const { container } = render(<Logo />);
+    /* Breakpoint visibility is CSS-level behavior with no semantic query. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const logoImage = container.querySelector('span.desktop\\:block');
+    expect(logoImage?.classList.contains('hidden')).toBe(false);
+    expect(logoImage?.classList.contains('block')).toBe(true);
   });
 
   it('should return null when logo is not available', () => {

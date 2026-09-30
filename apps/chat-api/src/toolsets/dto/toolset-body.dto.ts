@@ -1,4 +1,4 @@
-﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -11,12 +11,17 @@ import {
   Matches,
   ValidateIf,
   ValidateNested,
+  MaxLength,
 } from 'class-validator';
 import { LocaleTextEntryDto } from '../../common/dto/locale-text-entry.dto';
 import {
   DISPLAY_NAME_PATTERN,
   DISPLAY_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/display-name.pattern';
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '../../common/validators/entity-field-limits';
 import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
@@ -105,7 +110,7 @@ export class ToolsetAuthSettingsBodyDto {
 }
 
 export class ToolsetBodyDto {
-  @ApiProperty({ example: 'My toolset' })
+  @ApiProperty({ example: 'My toolset', maxLength: ENTITY_NAME_MAX_LENGTH })
   @IsString()
   @IsNotEmpty()
   @Matches(DISPLAY_NAME_PATTERN, { message: DISPLAY_NAME_VALIDATION_MESSAGE })
@@ -117,9 +122,13 @@ export class ToolsetBodyDto {
   @Matches(VERSION_PATTERN, { message: VERSION_MESSAGE })
   version?: string;
 
-  @ApiPropertyOptional({ example: 'My toolset description' })
+  @ApiPropertyOptional({
+    example: 'My toolset description',
+    maxLength: ENTITY_DESCRIPTION_MAX_LENGTH,
+  })
   @IsString()
   @IsOptional()
+  @MaxLength(ENTITY_DESCRIPTION_MAX_LENGTH)
   description?: string;
 
   @ApiPropertyOptional({

@@ -32,6 +32,7 @@ import ConversationPanelView from '../components/ConversationPanel/ConversationP
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
+import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -45,18 +46,18 @@ import {
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
-import { useDeployments } from '../context/DeploymentsContext';
 import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
-import { useOptionalOverlay } from '../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
+import { useOverlayPendingModel } from '../hooks/overlay/useOverlayPendingModel';
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
+import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 import { configurePdfWorker } from '../utils/pdf';
@@ -78,12 +79,8 @@ const ScheduledTaskDetailPage = lazy(
 const ScheduledTaskEditPage = lazy(
   () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
-const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
-const ToolsetEditorPage = lazy(
-  () => import('../pages/ToolsetEditor/ToolsetEditor'),
-);
-const CustomAppEditorPage = lazy(
-  () => import('../pages/ToolsetEditor/CustomAppEditor'),
+const ApplicationEditorPage = lazy(
+  () => import('../pages/ApplicationEditor/ApplicationEditorPage'),
 );
 const PromptEditorPage = lazy(
   () => import('../pages/PromptEditor/PromptEditor'),
@@ -139,34 +136,8 @@ const App: FC = () => {
    */
   useConversationListBridge();
 
-  /*
-   * OverlayContext (an ancestor of DeploymentsProvider) cannot call
-   * useDeployments() itself, so it hands off a pending overlay-selected
-   * modelId here, where both contexts are reachable. Silently ignored if the
-   * id is not in the loaded deployments list — matches SET_OVERLAY_OPTIONS'
-   * "unknown modelId falls back to normal default-deployment resolution".
-   */
-  const overlay = useOptionalOverlay();
-  const {
-    items: deploymentItemsForOverlay,
-    isLoading: isDeploymentsLoading,
-    restoreSelectedItemId,
-  } = useDeployments();
-  useEffect(() => {
-    if (!overlay?.pendingModelId || isDeploymentsLoading) return;
-    const exists = deploymentItemsForOverlay.some(
-      (item) => item.id === overlay.pendingModelId,
-    );
-    if (exists) {
-      restoreSelectedItemId(overlay.pendingModelId);
-    }
-    overlay.clearPendingModelId();
-  }, [
-    overlay,
-    deploymentItemsForOverlay,
-    isDeploymentsLoading,
-    restoreSelectedItemId,
-  ]);
+  /* Applies an overlay host's modelId once deployments are loaded. */
+  useOverlayPendingModel();
 
   const [isNavOpen, setIsNavOpen] = useState(false);
   const closeNav = useCallback(() => setIsNavOpen(false), []);
@@ -224,6 +195,12 @@ const App: FC = () => {
   const handlePanelActiveFilterChange = useCallback((tab: FilterTab) => {
     activeFilterRef.current = tab;
   }, []);
+
+  /* Stable, so `memo(ConversationPanelView)` holds across App re-renders. */
+  const handlePanelRequestedFilterChange = useCallback(
+    () => setPanelRequestedFilter(undefined),
+    [],
+  );
 
   useEffect(() => {
     if (!switchToMyChatsOnNavRef.current) return;
@@ -285,7 +262,7 @@ const App: FC = () => {
           onSelectConversation={handleSelectConversation}
           onNewChat={handleNewChat}
           requestedFilter={panelRequestedFilter}
-          onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+          onRequestedFilterChange={handlePanelRequestedFilterChange}
           onActiveFilterChange={handlePanelActiveFilterChange}
           onDuplicateReadonly={handleDuplicateReadonly}
         />
@@ -417,7 +394,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <AppsEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.QuickApp}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
@@ -447,7 +426,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <ToolsetEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.Toolset}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
@@ -457,7 +438,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <CustomAppEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.CustomApp}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
@@ -562,6 +545,7 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
               ),
             }}
+            leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
             maxWidth={canvasMaxWidth}

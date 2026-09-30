@@ -2,8 +2,9 @@ import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   getConversationPath,
+  getFormSchemaToolSyncKey,
   getLastDeploymentId,
-  getLastUserMessageToolConfiguration,
+  getLatestToolConfiguration,
   isAwaitingGenerationResume,
   isConversationNotFoundError,
   shouldWatchForDisplayNameUpdate,
@@ -93,6 +94,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const displayNameWatchKeyRef = useRef<string | null>(null);
   const notificationShownForRef = useRef<string | null>(null);
   const restoredToolConfigIdRef = useRef<string | null>(null);
+  /* Key of the last assistant `form_schema` tool values applied to the toggles. */
+  const appliedFormSchemaKeyRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -117,8 +120,25 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       />
     ),
   });
-  const { handleClose: handleCloseSourcesSidebar, setMessages } =
-    useSourcesSidebar();
+  /*
+   * `toolsMenuItems` is a new array on every render (the inline `toolIcon`
+   * is part of its memo), so the ids are memoised by value instead.
+   */
+  const toolIdsSignature = JSON.stringify(toolsMenuItems.map(({ id }) => id));
+  const toolIds = useMemo(
+    (): string[] => JSON.parse(toolIdsSignature),
+    [toolIdsSignature],
+  );
+  /* Read by `loadConversation` without making it depend on the tool list. */
+  const toolIdsRef = useRef(toolIds);
+  useEffect(() => {
+    toolIdsRef.current = toolIds;
+  }, [toolIds]);
+  const {
+    handleClose: handleCloseSourcesSidebar,
+    setMessages,
+    setConversationModelId,
+  } = useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const { status: activeScheduledTaskStatus } = useActiveScheduledTask();
@@ -222,7 +242,37 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-  }, [conversation?.messages, setMessages]);
+    setConversationModelId(
+      conversation?.assistantModelId || conversation?.model.id,
+    );
+  }, [
+    conversation?.messages,
+    conversation?.assistantModelId,
+    conversation?.model.id,
+    setMessages,
+    setConversationModelId,
+  ]);
+
+  /*
+   * A DIAL app can switch a tool toggle per assistant message through its
+   * `form_schema` (e.g. `deep_research` on while a run streams, off with the
+   * final report). Each distinct value is applied once, so a toggle the user
+   * flips afterwards survives re-renders until the app sends a new value.
+   * Waits for the load-time restore of this id: until then `conversation`
+   * may still hold the previous conversation's messages.
+   */
+  useEffect(() => {
+    if (!conversationId || !conversation) return;
+    if (restoredToolConfigIdRef.current !== conversationId) return;
+    const sync = getFormSchemaToolSyncKey(
+      conversationId,
+      conversation.messages,
+      toolIds,
+    );
+    if (!sync || sync.key === appliedFormSchemaKeyRef.current) return;
+    appliedFormSchemaKeyRef.current = sync.key;
+    restoreToolConfiguration(sync.values);
+  }, [conversation, conversationId, restoreToolConfiguration, toolIds]);
 
   /*
    * Switching to another conversation resets the sidebar, matching how the
@@ -244,8 +294,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     () => () => {
       handleCloseSourcesSidebar();
       setMessages([]);
+      setConversationModelId(undefined);
     },
-    [handleCloseSourcesSidebar, setMessages],
+    [handleCloseSourcesSidebar, setMessages, setConversationModelId],
   );
 
   const addStatusMessage = useCallback(
@@ -326,6 +377,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       ChatI18nKeys.GenerationPersistenceError,
     ),
     onStreamError: logConversationStreamError,
+    /* One commit per frame while a reply streams, not one per network read. */
+    batchChunksPerFrame: true,
   });
 
   /*
@@ -420,9 +473,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         }
         if (restoredToolConfigIdRef.current !== id) {
           restoredToolConfigIdRef.current = id;
-          restoreToolConfiguration(
-            getLastUserMessageToolConfiguration(result.messages),
-          );
+          restoreToolConfiguration(getLatestToolConfiguration(result.messages));
+          appliedFormSchemaKeyRef.current =
+            getFormSchemaToolSyncKey(id, result.messages, toolIdsRef.current)
+              ?.key ?? null;
         }
 
         const lastMsg = result.messages[result.messages.length - 1];
@@ -671,6 +725,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const toolsChipLabels = useMemo(
     () => ({
       removeLabel: (label: string) => t(ToolsI18nKeys.RemoveTool, { label }),
+      stateOnLabel: t(ToolsI18nKeys.StateOn),
+      stateOffLabel: t(ToolsI18nKeys.StateOff),
     }),
     [t],
   );

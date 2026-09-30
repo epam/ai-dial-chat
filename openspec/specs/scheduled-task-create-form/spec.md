@@ -3,9 +3,7 @@
 ## Purpose
 
 The create and edit routes for scheduled tasks and the shared form component behind them.
-
 ## Requirements
-
 ### Requirement: New task navigates to a dedicated create route
 
 The Scheduled Tasks list page's primary "create" action SHALL navigate to a new route, `ROUTES.ScheduledTaskCreate` (`/scheduled-tasks/new`), passing the current list URL as a `returnUrl` query parameter, instead of invoking a no-op handler. The route SHALL be lazy-loaded and registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTasks`. State is owned by the `ScheduledTaskCreatePage` component (local `useState`) — no new React Context is introduced.
@@ -259,12 +257,12 @@ This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/
 
 ### Requirement: Create-task strings flow through react-i18next
 
-Every user-visible string on the create-task page (page title, repeat-field labels, model/prompt/description labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel MUST reuse `ButtonsI18nKeys.Cancel`; the submit action MUST reuse `ButtonsI18nKeys.Create` (labeled "Create" — the create page creates a task; the edit page keeps `ButtonsI18nKeys.Save`).
+Every user-visible string on the create-task page (page title, repeat-field labels, model/prompt/description labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Length and control-character errors on the display name, description and instructions MUST reuse `EditorI18nKeys.FieldTooLong` (interpolating the exceeded limit as `count`) and `EditorI18nKeys.NameControlCharacters`; there is no scheduled-task-specific length key. Cancel MUST reuse `ButtonsI18nKeys.Cancel`; the submit action MUST reuse `ButtonsI18nKeys.Create` (labeled "Create" — the create page creates a task; the edit page keeps `ButtonsI18nKeys.Save`).
 
 #### Scenario: New keys exist for the Repeat control and model copy
 
 - **WHEN** the change is applied
-- **THEN** `en.json` contains at minimum `scheduledTasks.create.pageTitle`, `scheduledTasks.create.repeatLabel`, `scheduledTasks.create.repeatOneTime`, `scheduledTasks.create.repeatHourly`, `scheduledTasks.create.repeatDaily`, `scheduledTasks.create.repeatWeekly`, `scheduledTasks.create.repeatMonthly`, `scheduledTasks.create.minuteLabel`, `scheduledTasks.create.minuteInvalid`, `scheduledTasks.create.timeLabel`, `scheduledTasks.create.modelLabel`, `scheduledTasks.create.promptLabel`, `scheduledTasks.create.descriptionLabel`, `scheduledTasks.create.descriptionMaxLengthError`, `scheduledTasks.create.successNotification`, and `scheduledTasks.create.errorNotification`; it no longer needs `scheduleSectionLabel`, `scheduleTypeOnce`, `scheduleTypeRecurring`, `scheduleTypeAriaLabel`, `frequencyLabel`, `frequencyDaily`, `frequencyWeekly`, `frequencyMonthly`, or `streamLabel` keys
+- **THEN** `en.json` contains at minimum `scheduledTasks.create.pageTitle`, `scheduledTasks.create.repeatLabel`, `scheduledTasks.create.repeatOneTime`, `scheduledTasks.create.repeatHourly`, `scheduledTasks.create.repeatDaily`, `scheduledTasks.create.repeatWeekly`, `scheduledTasks.create.repeatMonthly`, `scheduledTasks.create.minuteLabel`, `scheduledTasks.create.minuteInvalid`, `scheduledTasks.create.timeLabel`, `scheduledTasks.create.modelLabel`, `scheduledTasks.create.promptLabel`, `scheduledTasks.create.descriptionLabel`, `scheduledTasks.create.successNotification`, and `scheduledTasks.create.errorNotification`; it no longer needs `scheduleSectionLabel`, `scheduleTypeOnce`, `scheduleTypeRecurring`, `scheduleTypeAriaLabel`, `frequencyLabel`, `frequencyDaily`, `frequencyWeekly`, `frequencyMonthly`, or `streamLabel` keys
 
 #### Scenario: Generic labels are reused, not duplicated
 
@@ -545,7 +543,7 @@ For the remaining (non-Hourly) shapes, mapping SHALL fail when: the task's `trig
 
 ### Requirement: Edit page submits via PUT and preserves input on failure
 
-On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rules as the create page, map the current form `values` to `UpdateScheduledTaskBodyDto` (identical shape to `CreateScheduledTaskBodyDto`) using the same trigger-building logic as `mapFormValuesToCreateBody`, and call `updateScheduledTask(scheduleId, body)` (`PUT /api/v1/scheduled-tasks/:scheduleId`) through `apps/chat/src/server-api/scheduled-tasks.api.ts`. The Save action SHALL be disabled while a submission is in flight (`isSubmitting`) to prevent duplicate submissions. On success (**200 OK**), the page SHALL show a localized success notification and navigate to `getScheduledTaskDetailRoute(scheduleId)`. On failure, all user-entered form values SHALL be preserved, an error notification SHALL be shown (including the request/trace id when available, per the existing notification pattern), `isSubmitting` SHALL be reset so Save is re-enabled, and no navigation SHALL occur. A task-not-found **404** SHALL render the same NotFoundPage treatment as an initial task-load 404; a response carrying `scheduledTaskDeploymentUnavailable` SHALL preserve the draft and show a model error instead. **400**, **403**, **429**, **502**, and **503** SHALL all surface through that same single error-notification path — the notification's message text comes from the server's own error body via `getApiErrorDetails`, so it already differs meaningfully per status without the page hardcoding four separate copy variants, matching `ScheduledTaskCreatePage`'s existing single-catch-all error handling. **401** SHALL trigger the app's existing unauthenticated-session handling in the API client layer, which intercepts it before it reaches this page's catch block in the normal flow.
+On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rules as the create page, map the current form `values` to `UpdateScheduledTaskBodyDto` (identical shape to `CreateScheduledTaskBodyDto`) using the same trigger-building logic as `mapFormValuesToCreateBody`, and call `updateScheduledTask(scheduleId, body)` (`PUT /api/v1/scheduled-tasks/:scheduleId`) through `apps/chat/src/server-api/scheduled-tasks.api.ts`. The Save action SHALL be disabled while a submission is in flight (`isSubmitting`) to prevent duplicate submissions. On success (**200 OK**), the page SHALL show a localized success notification and navigate to `getScheduledTaskDetailRoute(scheduleId)`. On failure, all user-entered form values SHALL be preserved, an error notification SHALL be shown (including the request/trace id when available, per the existing notification pattern), `isSubmitting` SHALL be reset so Save is re-enabled, and no navigation SHALL occur. A task-not-found **404** SHALL render the same NotFoundPage treatment as an initial task-load 404; a response carrying `scheduledTaskDeploymentUnavailable` SHALL preserve the draft and show a model error instead; a response carrying a field-mapped code (`scheduledTaskSkillUnsupported`, `scheduledTaskInstructionsOrSkillRequired`) SHALL show the inline field error instead of a notification. **400**, **403**, **409**, **429**, **502**, and **503** otherwise SHALL all surface through that same single error-notification path, whose message `resolveScheduledTaskErrorMessage` chooses: `toolsetSignin.adminConsentRequired` for `scheduledTaskAdminConsentRequired`, else the response's `upstreamMessage` from DIAL Scheduler, else the localized `scheduledTasks.edit.errorNotification`; the BFF's generic `message` is never displayed, matching `ScheduledTaskCreatePage`'s single-catch-all error handling. **401** SHALL trigger the app's existing unauthenticated-session handling in the API client layer, which intercepts it before it reaches this page's catch block in the normal flow.
 
 #### Scenario: Back and Cancel both return to the detail page without a network call
 
@@ -559,8 +557,8 @@ On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rul
 
 #### Scenario: Submit failure preserves entered values and re-enables Save
 
-- **WHEN** the user activates Save and `updateScheduledTask` rejects with a 400, 403, 429, 502, or 503
-- **THEN** an error notification is shown with the server's error message and a trace id when present, the form remains open with all entered values unchanged, `isSubmitting` returns to `false`, and no navigation occurs
+- **WHEN** the user activates Save and `updateScheduledTask` rejects with a 400, 403, 429, 502, or 503 that carries no field-mapped code
+- **THEN** an error notification is shown with the message chosen by `resolveScheduledTaskErrorMessage` (admin-consent key, else `upstreamMessage`, else `scheduledTasks.edit.errorNotification`) and a trace id when present, the form remains open with all entered values unchanged, `isSubmitting` returns to `false`, and no navigation occurs
 
 #### Scenario: Duplicate submission is prevented while a save is in flight
 
@@ -637,7 +635,7 @@ The form SHALL expose optional backIcon, className and typed layout customizatio
 
 ### Requirement: Create and edit integrate shared validation without duplicating policy
 
-Both app pages SHALL use the shared validator/checked preparation before API writes and map error codes through one host translation mapping. A local useScheduledTaskFormLabels(mode) SHALL own common labels/options. Form values and notifications SHALL remain app-owned. Network failure SHALL preserve edits. The library minimum disabled guard SHALL not replace full submit validation.
+Both app pages SHALL use the shared validator/checked preparation before API writes and map error codes through one host translation mapping. A local useScheduledTaskFormLabels(mode) SHALL own common labels/options. Form values and notifications SHALL remain app-owned. Network failure SHALL preserve edits. The library minimum disabled guard SHALL not replace full submit validation. On every field change, both pages SHALL re-check the display name, description and instructions through `validateScheduledTaskTextField` (via `getLiveScheduledTaskFieldError` in `apps/chat/src/utils/scheduled-task-form-validation.ts`), so an over-limit value or a control character in the display name shows inline as the user types, instead of surfacing as the generic create/update error notification after submit.
 
 #### Scenario: Both submit paths reject missing recurrence day
 
@@ -648,6 +646,11 @@ Both app pages SHALL use the shared validator/checked preparation before API wri
 
 - **WHEN** a user fixes an invalid field or changes repeat mode
 - **THEN** irrelevant field errors clear/recompute consistently in create and edit while other errors remain meaningful.
+
+#### Scenario: Over-long display name is flagged before submit
+
+- **WHEN** the user types a 257-character display name on the create or edit page
+- **THEN** "Use 256 characters or fewer." is shown under Display name immediately, and activating Create/Save calls neither create nor update
 
 #### Scenario: Save failure preserves entered values
 
@@ -682,7 +685,7 @@ Edit state SHALL distinguish loading, ready, not-found, load-error and unsupport
 
 ### Requirement: Scheduled task configuration exposes a controlled optional Skill field
 
-Create and edit SHALL render Skill above Instructions when the host's `skillUsageEnabled` is enabled. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode`, `skillLabelId`, `skillErrorId`, and `labels.skillLabel`, and render its own label/error markup only when the slot is supplied. The host SHALL provide unique matching label/error IDs to the composed control. The library SHALL add `skillUrl?: string` to form values and `skillUrl?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
+Create and edit SHALL render Skill above Instructions. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode`, `skillLabelId`, `skillErrorId`, and `labels.skillLabel`, and render its own label/error markup only when the slot is supplied. The host SHALL provide unique matching label/error IDs to the composed control. The library SHALL add `skillUrl?: string` to form values and `skillUrl?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
 
 Existing page-local controlled form values SHALL own selection. `SkillSelectorField` from `@epam/ai-dial-skills` SHALL report replacement/removal through `onFieldChange('skillUrl', value)` via the app adapter. No new context or second uncontrolled selection state SHALL be introduced. The library minimum save guard SHALL accept nonblank instructions or a nonempty skill, and SHALL reject a skill field error; checked preparation remains mandatory before writing.
 
@@ -721,18 +724,12 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 #### Scenario: Capability recovers after a server rejection
 
 - **WHEN** a save returns `scheduledTaskSkillUnsupported` and deployment support subsequently changes from false to true
-- **THEN** the stale server error clears and the unchanged draft can be submitted again, including when the Skill field is hidden
+- **THEN** the stale server error clears and the unchanged draft can be submitted again
 - **AND** unrelated rerenders do not clear a server rejection while capability data remains unchanged
-
-#### Scenario: Feature-disabled editing is non-destructive
-
-- **WHEN** `skillUsageEnabled` is false and an existing task has a saved skill
-- **THEN** the Skill field is not rendered but the loaded reference stays in the draft and subsequent save
-- **AND** an unsupported model/skill combination still blocks save with the shared message in a visible form-level alert
 
 ### Requirement: Scheduled Skill UI preserves localization accessibility and responsive behavior
 
-The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, `scheduledTasks.create.instructionsOnlySubtitle`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` when enabled and `skillSelector.unsupportedTooltipLabel` for all unsupported messages. Existing `scheduledTasksEnabled` route gating and `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` resolution SHALL remain unchanged; no new flag/role is introduced.
+The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` and `skillSelector.unsupportedTooltipLabel` for all unsupported messages. Existing `scheduledTasksEnabled` route gating and `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` resolution SHALL remain unchanged; no new flag/role is introduced.
 
 The field SHALL support keyboard opening/selection/removal, Escape dismissal and focus restoration, unique label/error associations, `aria-invalid`, `aria-expanded`, and live error/status announcements. Touch removal SHALL not depend on hover. The field SHALL fit scheduler's existing container-responsive form at 360px and desktop sizes with wrapped long references, logical spacing, appropriate directional-icon mirroring, and AAA contrast. Library code SHALL inherit direction rather than read locale. Host labels/catalog callbacks SHALL have stable memoized identities; async resolution SHALL ignore stale results. No new cache or telemetry is required.
 
@@ -745,3 +742,33 @@ The field SHALL support keyboard opening/selection/removal, Escape dismissal and
 
 - **WHEN** the form renders under RTL in a 360px container with a long skill reference
 - **THEN** labels and controls follow logical direction, text wraps, and selection/removal remain reachable without horizontal overflow
+
+### Requirement: Create and edit notifications show the actionable reason with a localized fallback
+
+When `createScheduledTask` or `updateScheduledTask` rejects and the failure is not handled by a field error or the edit page's NotFound treatment, `ScheduledTaskCreatePage` and `ScheduledTaskEditPage` SHALL choose the error-notification message through one app-level helper, `resolveScheduledTaskErrorMessage(details, fallbackKey, t)` in `apps/chat/src/utils/map-scheduled-task-dto.ts` (shared with the detail page; `details` is the `getApiErrorDetails` result), in this order:
+
+1. `details.code === 'scheduledTaskAdminConsentRequired'` → `t('toolsetSignin.adminConsentRequired')` (en: "A DIAL administrator must approve this application's access before you can continue. Contact your administrator, then retry.");
+2. otherwise a non-empty `details.upstreamMessage` → that text as received from DIAL Scheduler (not translated);
+3. otherwise `t(fallbackKey)` — `scheduledTasks.create.errorNotification` / `scheduledTasks.edit.errorNotification`.
+
+The BFF's own generic `details.message` SHALL NOT be displayed (it is English-only and not actionable). The notification SHALL still include the trace id when present, all entered values SHALL be preserved, the submit action SHALL be re-enabled, and no navigation SHALL occur. No new i18n key is added. State stays local to each page (no context); the helper is a pure function, so no memoisation is required. The notification uses the existing `useNotification` alert pattern — no new UI surface, so no new RTL or ARIA requirements; upstream text renders in the notification's inherited direction. No `libs/scheduled-tasks` change: `ScheduledTaskCreateForm` stays unaware of error codes.
+
+#### Scenario: Create shows the admin-consent message and keeps the draft
+
+- **WHEN** the user activates Create and the BFF returns `403 { code: "scheduledTaskAdminConsentRequired" }`
+- **THEN** an error notification with `toolsetSignin.adminConsentRequired` is shown, the form keeps every entered value, Create is re-enabled, and no navigation occurs
+
+#### Scenario: Create shows the Scheduler's reason
+
+- **WHEN** create fails with `502 { message: "DIAL Core returned a server error", upstreamMessage: "Quota exceeded for schedules" }`
+- **THEN** the error notification text is `Quota exceeded for schedules`, not the generic `message`
+
+#### Scenario: Edit shows the admin-consent message and keeps the draft
+
+- **WHEN** the user activates Save and `updateScheduledTask` rejects with `code: "scheduledTaskAdminConsentRequired"`
+- **THEN** an error notification with `toolsetSignin.adminConsentRequired` is shown, the page does not render `NotFoundPage`, and the draft is preserved
+
+#### Scenario: No upstream text falls back to the localized message
+
+- **WHEN** create or update fails without a known code and without `upstreamMessage` (for example a 503 timeout)
+- **THEN** the page's localized generic error key is used

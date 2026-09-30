@@ -14,6 +14,7 @@ import type {
  * Pre-translated labels for the general (metadata) form. Each group is
  * optional and replaced as a whole; omitting one falls back to the library's
  * English defaults.
+ * @deprecated Use `MetadataFormLabels` from `@epam/ai-dial-builder-form`.
  */
 export interface GeneralFormLabels {
   /** Labels for the embedded `DeploymentCreationForm` fields. */
@@ -22,7 +23,10 @@ export interface GeneralFormLabels {
   avatarPicker?: AvatarPickerModalLabels;
 }
 
-/** Props of the general (metadata) form shared by the Toolset and Custom App editors. */
+/**
+ * Props of the general (metadata) form shared by the Toolset and Custom App editors.
+ * @deprecated Use `MetadataFormProps` from `@epam/ai-dial-builder-form`.
+ */
 export interface GeneralFormProps {
   /** Current general form values. */
   form: DeploymentGeneralFormData;

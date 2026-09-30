@@ -1,4 +1,5 @@
 import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import {
   useAttachmentAction,
   isDownloadableAttachment,
@@ -14,6 +15,7 @@ import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import type {
   AttachmentDisplayResolvers,
   DisplayAttachment,
+  Message,
 } from '@epam/ai-dial-chat-shared';
 import {
   MDMessageViewer,
@@ -53,7 +55,10 @@ import {
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import {
+  useSourcesSidebar,
+  useSourcesSidebarData,
+} from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -69,6 +74,9 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 
+/* Stable stand-in for the messages while the panel is closed. */
+const EMPTY_MESSAGES: Message[] = [];
+
 const MIN_PANEL_WIDTH = 312;
 const DEFAULT_PANEL_WIDTH = 360;
 /** Delay between successive triggered downloads so browsers don't block a burst of anchor clicks. */
@@ -83,9 +91,12 @@ const attachmentDisplayResolvers: AttachmentDisplayResolvers = {
 const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { handleClose, isOpen, messages } = useSourcesSidebar();
+  const { handleClose, isOpen } = useSourcesSidebar();
+  const { messages, conversationModelId } = useSourcesSidebarData();
+  /* Nothing reads the derived lists while the panel is closed, so a stream
+     chunk does not walk every message for an invisible panel. */
   const { uploaded, generated, sources } = useConversationSources(
-    messages,
+    isOpen ? messages : EMPTY_MESSAGES,
     attachmentDisplayResolvers,
   );
   const { handleAttachmentClick: downloadAttachment } = useAttachmentAction({
@@ -129,14 +140,24 @@ const ConversationSourcesPanelContainer: FC = () => {
     [navigate],
   );
 
-  const taskModel = activeScheduledTask.task?.model;
+  /*
+   * The Details section describes this run, so its Model field must show the
+   * deployment the run actually used — the run conversation's own model id,
+   * already published to the sources sidebar with its messages — not the
+   * schedule's current `model`, which a later edit may have changed after
+   * this run fired.
+   */
   const modelDisplayName = useMemo(() => {
-    if (!taskModel) return undefined;
-    const deployment = deploymentItems.find((item) => item.id === taskModel);
+    if (!conversationModelId) return undefined;
+    const deployment = findDeploymentByIdOrReference(
+      deploymentItems,
+      conversationModelId,
+    );
     return deployment
-      ? resolveLocalizedText(deployment.displayName, language) || taskModel
-      : taskModel;
-  }, [taskModel, deploymentItems, language]);
+      ? resolveLocalizedText(deployment.displayName, language) ||
+          conversationModelId
+      : conversationModelId;
+  }, [conversationModelId, deploymentItems, language]);
 
   const historyLabels = useMemo(
     () => ({
@@ -193,7 +214,7 @@ const ConversationSourcesPanelContainer: FC = () => {
         instructionsLabel={t(ScheduledTasksI18nKeys.CreateInstructionsLabel)}
         skillLabel={t(ScheduledTasksI18nKeys.CreateSkillLabel)}
         skillDisplayName={skillDisplayName}
-        modelDisplayName={modelDisplayName as string}
+        modelDisplayName={modelDisplayName}
         instructionsMarkdown={activeScheduledTask.task?.prompt}
         renderInstructions={(markdown) => (
           <MDMessageViewer content={markdown} />

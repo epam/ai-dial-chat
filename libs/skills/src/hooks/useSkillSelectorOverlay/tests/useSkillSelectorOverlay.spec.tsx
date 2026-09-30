@@ -3,16 +3,17 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { SkillListingEntry } from '../../../models/favorite-skill-item';
 import type { UseSkillSelectorOverlayOptions } from '../../../models/skill-selector-overlay';
+import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
 import { useSkillSelectorOverlay } from '../useSkillSelectorOverlay';
 
 const abcSkill: SkillListingEntry = { url: 'skills/bucket/abc', name: 'abc' };
 const csdSkill: SkillListingEntry = { url: 'skills/bucket/csd', name: 'csd' };
 
 const baseOptions: UseSkillSelectorOverlayOptions = {
-  isEnabled: true,
   isSkillsSupported: true,
   skills: [abcSkill, csdSkill],
   favoriteIds: new Set(),
+  viewerBucket: 'bucket',
   onToggleFavorite: vi.fn(),
   renderCatalogContent: () => null,
   detailsPanelComponent: () => null,
@@ -29,6 +30,28 @@ const getOnSelect = (
     .onSelect;
 
 describe('useSkillSelectorOverlay', () => {
+  it('forwards the configured trigger only to active mention chips', () => {
+    const { result } = renderHook(() =>
+      useSkillSelectorOverlay({
+        ...baseOptions,
+        activeMentionDetailsTrigger: 'click',
+      }),
+    );
+
+    act(() => {
+      result.current.seedSkillMentions('/abc', [{ url: abcSkill.url }]);
+    });
+
+    const activeChip = result.current.activeMentions[0]
+      .render!() as ReactElement;
+    const historyChip = result.current.renderHistorySkills([
+      { url: abcSkill.url },
+    ]) as ReactElement[];
+
+    expect(activeChip.props).toMatchObject({ detailsTrigger: 'click' });
+    expect(historyChip[0].props).not.toHaveProperty('detailsTrigger');
+  });
+
   it('tracks a mention selected via the slash command menu', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
@@ -215,18 +238,13 @@ describe('useSkillSelectorOverlay', () => {
     ]);
   });
 
-  it('returns disabled stub outputs while isEnabled is false', () => {
+  it('omits the entry points while the deployment does not support skills', () => {
     const { result } = renderHook(() =>
-      useSkillSelectorOverlay({ ...baseOptions, isEnabled: false }),
+      useSkillSelectorOverlay({ ...baseOptions, isSkillsSupported: false }),
     );
 
     expect(result.current.skillMenuOverlay).toBeUndefined();
     expect(result.current.commandMenu).toBeUndefined();
-    expect(result.current.message).toBe('');
-    expect(result.current.activeMentions).toEqual([]);
-    expect(result.current.selectedSkills).toBeUndefined();
-    expect(result.current.renderHistorySkillSegments('/abc', [])).toBeNull();
-    expect(result.current.renderHistorySkills([])).toBeNull();
   });
 
   describe('renderHistorySkillSegments', () => {
@@ -258,6 +276,50 @@ describe('useSkillSelectorOverlay', () => {
         result.current.renderHistorySkillSegments('hello', undefined),
       ).toBeNull();
     });
+
+    it("marks an unresolved entry in the viewer's own bucket as deleted", () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const historySegments = result.current.renderHistorySkillSegments(
+        '/gone',
+        [{ url: 'skills/bucket/gone' }],
+      );
+
+      expect((historySegments?.[0] as ReactElement).props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.Deleted,
+      });
+    });
+
+    it('marks an unresolved entry in a foreign bucket as not-shared', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const historySegments = result.current.renderHistorySkillSegments(
+        '/foreign',
+        [{ url: 'skills/other-bucket/foreign' }],
+      );
+
+      expect((historySegments?.[0] as ReactElement).props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.NotShared,
+      });
+    });
+
+    it('leaves unresolvedReason unset for a resolved entry', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const historySegments = result.current.renderHistorySkillSegments(
+        '/abc',
+        [{ url: abcSkill.url }],
+      );
+
+      expect(
+        (historySegments?.[0] as ReactElement).props as {
+          unresolvedReason?: string;
+        },
+      ).toHaveProperty('unresolvedReason', undefined);
+    });
   });
 
   describe('renderHistorySkills', () => {
@@ -280,6 +342,60 @@ describe('useSkillSelectorOverlay', () => {
 
       expect(result.current.renderHistorySkills([])).toBeNull();
       expect(result.current.renderHistorySkills(undefined)).toBeNull();
+    });
+
+    it("marks an unresolved entry in the viewer's own bucket as deleted", () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      const historyChips = result.current.renderHistorySkills([
+        { url: 'skills/bucket/gone' },
+      ]) as ReactElement[];
+
+      expect(historyChips[0].props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.Deleted,
+      });
+    });
+
+    it('marks an unresolved entry in a foreign bucket as not-shared', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      const historyChips = result.current.renderHistorySkills([
+        { url: 'skills/other-bucket/foreign' },
+      ]) as ReactElement[];
+
+      expect(historyChips[0].props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.NotShared,
+      });
+    });
+
+    it('leaves unresolvedReason unset for a resolved entry', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      const historyChips = result.current.renderHistorySkills([
+        { url: abcSkill.url },
+      ]) as ReactElement[];
+
+      expect(
+        historyChips[0].props as { unresolvedReason?: string },
+      ).toHaveProperty('unresolvedReason', undefined);
+    });
+  });
+
+  describe('reference stability (issue #9109)', () => {
+    it('keeps seedSkillMentions stable across a re-render that does not touch mentions', () => {
+      const { result, rerender } = renderHook(
+        (props: UseSkillSelectorOverlayOptions) =>
+          useSkillSelectorOverlay(props),
+        { initialProps: baseOptions },
+      );
+
+      const firstSeed = result.current.seedSkillMentions;
+
+      /* Same options, new object identity — mirrors a host re-render caused
+         by something unrelated to skills (e.g. a route change). */
+      rerender({ ...baseOptions });
+
+      expect(result.current.seedSkillMentions).toBe(firstSeed);
     });
   });
 });

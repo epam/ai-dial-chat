@@ -2,7 +2,7 @@ import type {
   ScheduledTaskDto,
   ScheduledTaskRunDto,
 } from '@epam/ai-dial-chat-api-client';
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
   MIMEType,
@@ -97,11 +97,20 @@ vi.mock('@epam/ai-dial-source-panel', () => ({
   ),
 }));
 
+let mockSidebarConversationModelId: string | undefined;
+let mockSidebarIsOpen = true;
+const mockSidebarMessages: Message[] = [];
+/* Messages argument of every `useConversationSources` call, in order. */
+const sourcesDerivationInputs: Message[][] = [];
+
 vi.mock('../../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => ({
     handleClose: mockHandleClose,
-    isOpen: true,
-    messages: [],
+    isOpen: mockSidebarIsOpen,
+  }),
+  useSourcesSidebarData: () => ({
+    messages: mockSidebarMessages,
+    conversationModelId: mockSidebarConversationModelId,
   }),
 }));
 
@@ -130,7 +139,10 @@ vi.mock('../../../context/ActiveScheduledTaskContext', () => ({
 
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({
-    items: [{ id: 'gpt-5', displayName: 'GPT-5' }],
+    items: [
+      { id: 'gpt-5', displayName: 'GPT-5' },
+      { id: 'gpt-4o', displayName: 'GPT-4o' },
+    ],
   }),
 }));
 
@@ -177,11 +189,14 @@ vi.mock(
       >();
     return {
       ...actual,
-      useConversationSources: () => ({
-        uploaded: mockUploaded,
-        generated: mockGenerated,
-        sources: mockSources,
-      }),
+      useConversationSources: (messages: Message[]) => {
+        sourcesDerivationInputs.push(messages);
+        return {
+          uploaded: mockUploaded,
+          generated: mockGenerated,
+          sources: mockSources,
+        };
+      },
     };
   },
 );
@@ -245,6 +260,34 @@ const resetActiveScheduledTaskMock = () => {
   activeScheduledTaskMock.historyHasMore = false;
 };
 
+describe('ConversationSourcesPanelContainer — derivation while closed', () => {
+  afterEach(() => {
+    mockSidebarIsOpen = true;
+    sourcesDerivationInputs.length = 0;
+  });
+
+  it('derives sources from an empty list while the sidebar is closed', () => {
+    mockSidebarIsOpen = false;
+
+    render(<ConversationSourcesPanelContainer />);
+
+    const lastInput =
+      sourcesDerivationInputs[sourcesDerivationInputs.length - 1];
+    expect(lastInput).not.toBe(mockSidebarMessages);
+    expect(lastInput).toEqual([]);
+  });
+
+  it('derives sources from the published messages while the sidebar is open', () => {
+    mockSidebarIsOpen = true;
+
+    render(<ConversationSourcesPanelContainer />);
+
+    expect(sourcesDerivationInputs[sourcesDerivationInputs.length - 1]).toBe(
+      mockSidebarMessages,
+    );
+  });
+});
+
 describe('ConversationSourcesPanelContainer — download all', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -252,6 +295,7 @@ describe('ConversationSourcesPanelContainer — download all', () => {
     mockUploaded = [];
     mockGenerated = [];
     mockConversations = [];
+    mockSidebarConversationModelId = undefined;
     resetActiveScheduledTaskMock();
   });
 
@@ -303,11 +347,36 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     );
     expect(screen.getByText('skills/public/deleted')).toBeTruthy();
   });
+
+  it('shows the deployment used for the run in Details, not the schedule current model', async () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.runId = 'run-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Weekly digest',
+      model: 'gpt-5',
+      prompt: 'Do the thing',
+    } as ScheduledTaskDto;
+    mockSidebarConversationModelId = 'gpt-4o';
+
+    render(<ConversationSourcesPanelContainer />);
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.create.detailsSectionTitle',
+      }),
+    );
+
+    expect(screen.getByText('GPT-4o')).toBeTruthy();
+    expect(screen.queryByText('GPT-5')).toBeNull();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mockUploaded = [];
     mockGenerated = [];
     mockConversations = [];
+    mockSidebarConversationModelId = undefined;
     resetActiveScheduledTaskMock();
   });
 
@@ -621,7 +690,11 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
 
     render(<ConversationSourcesPanelContainer />);
 
-    expect(screen.queryByText('Do the thing')).toBeNull();
+    /* The Accordion keeps collapsed content mounted, so keyboard reachability
+       is governed by the inert wrapper rather than by unmounting. */
+    const collapsedContent = screen.getByText('Do the thing');
+    // eslint-disable-next-line testing-library/no-node-access -- `inert` has no Testing Library query
+    expect(collapsedContent.closest('[inert]')).toBeTruthy();
   });
 
   it('navigates to the conversation route when a History run with a conversationId is activated', async () => {
@@ -729,6 +802,7 @@ describe('ConversationSourcesPanelContainer — source clicks', () => {
     mockGenerated = [];
     mockSources = [];
     mockConversations = [];
+    mockSidebarConversationModelId = undefined;
     resetActiveScheduledTaskMock();
     mockOpenAttachmentCanvas.mockResolvedValue(true);
     vi.spyOn(window, 'open').mockReturnValue(null);

@@ -1,4 +1,4 @@
-import { ElementSize, GhostIconButton, Tooltip } from '@epam/ai-dial-ui-kit';
+import { ElementSize, GhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './TableHeader.module.scss';
@@ -40,18 +40,18 @@ export const TableHeader: FC<TableHeaderProps> = ({
     {actions != null && (
       <div className="ms-auto flex items-center gap-1">
         {actions.map((action) => (
-          <Tooltip key={action.label} tooltip={action.label} asChild>
-            <GhostIconButton
-              aria-label={action.label}
-              icon={
-                <span aria-hidden className="flex items-center">
-                  {action.icon}
-                </span>
-              }
-              size={ElementSize.Small}
-              onClick={action.onClick}
-            />
-          </Tooltip>
+          <GhostIconButton
+            key={action.label}
+            tooltipProps={{ tooltip: action.label }}
+            aria-label={action.label}
+            icon={
+              <span aria-hidden className="flex items-center">
+                {action.icon}
+              </span>
+            }
+            size={ElementSize.Small}
+            onClick={action.onClick}
+          />
         ))}
       </div>
     )}

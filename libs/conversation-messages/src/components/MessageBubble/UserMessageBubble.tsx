@@ -12,6 +12,7 @@ import { FC, useId } from 'react';
 import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';
 import { BubblePosition } from '../../types/bubble-position';
+import { copySelectionWithoutStyles } from '../../utils/clipboard';
 import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
@@ -20,6 +21,7 @@ const DEFAULT_COLLAPSED_LINE_COUNT = 10;
 /** User-authored message bubble, end-aligned with configurable radius based on group position. */
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   text,
+  contentRef,
   position = BubblePosition.Bottom,
   styles: bubbleStyles,
   actions,
@@ -88,6 +90,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       role="group"
       aria-label={userMessageAriaLabel}
       style={cssVars}
+      onCopy={copySelectionWithoutStyles}
       className={mergeClasses('flex w-full', className)}
     >
       <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
@@ -121,6 +124,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             <div className="flex min-w-0 flex-col items-start">
               <div
                 id={collapsibleTextId}
+                ref={contentRef}
                 className={mergeClasses(
                   // Bleed room for chip edges — see design.md Decision 3a.
                   'relative -me-1 -ms-1 w-[calc(100%+8px)] overflow-hidden pe-1 ps-1',

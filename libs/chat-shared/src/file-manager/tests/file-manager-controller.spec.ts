@@ -32,6 +32,7 @@ describe('FileManagerController', () => {
       onValidateUpload: true,
       uploadBatchState: true,
       cancelUpload: true,
+      cancelUploadFile: true,
       clearUploadBatch: true,
       onCreateFolder: true,
       onCreateFolderValidate: true,
@@ -63,9 +64,10 @@ describe('FileManagerController', () => {
       isFileMetadataLoading: true,
       onGetInfo: true,
       clearMetadata: true,
+      sectionTab: true,
     } satisfies Record<ControllerKeys, true>;
 
-    expect(Object.keys(controllerKeys)).toHaveLength(51);
+    expect(Object.keys(controllerKeys)).toHaveLength(53);
   });
 });
 

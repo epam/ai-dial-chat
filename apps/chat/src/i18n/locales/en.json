@@ -20,6 +20,9 @@
     "apiKey": "API key"
   },
   "chat": {
+    "reply": "Reply",
+    "replySelectionAvailable": "Reply to selected text is available",
+    "replyAttachmentAdded": "Text attached",
     "greetingMorning": "Good morning, {{name}}",
     "greetingMorningNoName": "Good morning",
     "greetingAfternoon": "Afternoon, {{name}}",
@@ -61,11 +64,11 @@
     "negativeFeedbackTitle": "Send negative feedback",
     "feedbackTypeLabel": "What type of feedback you want to give?",
     "feedbackCategories": {
-      "uiBug": "Ui bug",
+      "uiBug": "UI bug",
       "overactiveRefusal": "Overactive refusal",
       "incompleteResponse": "Incomplete response",
       "shouldHaveTriggeredThinking": "Should have triggered thinking",
-      "shouldHaveSearchedTheWeb": "Should have search the web"
+      "shouldHaveSearchedTheWeb": "Should have searched the web"
     },
     "feedbackCommentPlaceholder": "Type an optional comment to your feedback",
     "likeToastTitle": "Thank you for your positive feedback!",
@@ -325,6 +328,8 @@
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
+    "deletedTooltipLabel": "This skill has been deleted. Its details are no longer available.",
+    "notSharedTooltipLabel": "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.",
     "viewDetailsLabel": "View details",
     "removeSkillLabel": "Remove skill"
   },
@@ -473,7 +478,6 @@
       "revokeSuccess": "Shared access to \"{{name}}\" was revoked.",
       "revokeError": "Failed to revoke access to \"{{name}}\". Please try again."
     },
-    "taskBadgeLabel": "TASK",
     "unreadIndicatorLabel": "Unread"
   },
   "conversationPublish": {
@@ -559,6 +563,7 @@
     "errorFileTooLarge": "Export failed. File is too large",
     "errorUnknown": "Export failed. Please try again.",
     "canceledLabel": "Canceled",
+    "succeededLabel": "Completed",
     "collapseQueueAriaLabel": "Collapse queue",
     "expandQueueAriaLabel": "Expand queue",
     "closeQueueAriaLabel": "Close queue",
@@ -749,7 +754,6 @@
       "modelPlaceholder": "Select Model or Agent",
       "modelRequired": "Model is required",
       "descriptionLabel": "Description",
-      "descriptionMaxLengthError": "Description must be 500 characters or fewer",
       "instructionsLabel": "Instructions",
       "promptRequired": "Instructions are required",
       "submittingLabel": "Creating",
@@ -757,8 +761,7 @@
       "errorNotification": "Failed to create the scheduled task",
       "skillLabel": "Skill",
       "skillPlaceholder": "Choose a skill",
-      "instructionsOrSkillRequired": "Choose a skill or write instructions.",
-      "instructionsOnlySubtitle": "Write custom instructions for this task."
+      "instructionsOrSkillRequired": "Choose a skill or write instructions."
     },
     "detail": {
       "repeatsLabel": "Repeats",
@@ -778,6 +781,9 @@
       "statusMissed": "Missed",
       "errorLabel": "Failed to load the scheduled task",
       "activeStatusLabel": "Active",
+      "completedFieldLabel": "Status",
+      "activeDisabledReasonCompleted": "Already ran — cannot be rescheduled",
+      "activeDisabledReasonExpired": "Activity window has ended — cannot be rescheduled",
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
       "activeStatusUpdateError": "Failed to update the task's active status",
@@ -830,13 +836,11 @@
     "hiddenFiles": "Hidden files",
     "showHiddenFiles": "Show hidden files",
     "hideHiddenFiles": "Hide hidden files",
-    "itemsSelected_one": "{{count}} item selected",
-    "itemsSelected_other": "{{count}} items selected",
-    "upload": "Upload files",
-    "newFolder": "New folder",
+    "itemsSelected_one": "item selected",
+    "itemsSelected_other": "items selected",
+    "upload": "Files",
+    "newFolder": "Folder",
     "downloading": "Preparing download…",
-    "uploadProgressTitle": "Uploading files",
-    "uploadProgressSummary": "{{done}} of {{total}} complete",
     "checkInternetConnection": "Please check your internet connection and try again.",
     "uploadFailed": "Upload failed",
     "uploadSuccess": "The file has been uploaded successfully to “{{parentPath}}”",
@@ -856,9 +860,24 @@
     "folderConflict": "A folder with this name already exists",
     "folderNameEmpty": "Folder name cannot be empty",
     "folderNameInvalidChars": "Folder name should not contain special symbols {{notAllowedSymbols}}",
-    "folderNameHidden": "Folder name cannot start with a dot",
     "folderNameReserved": "This folder name is reserved",
     "folderNameTooLong": "Folder name is too long",
+    "uploadQueueTitle_one": "Uploading {{count}} file",
+    "uploadQueueTitle_other": "Uploading {{count}} files",
+    "uploadQueueCancelFileAriaLabel": "Cancel uploading \"{{fileName}}\"",
+    "uploadQueueFileProgressAriaLabel": "Uploading \"{{fileName}}\"",
+    "uploadQueueProgressAriaLabel": "Upload progress",
+    "fileCopiedSuccessfully": "File \"{{name}}\" copied successfully",
+    "folderCopiedSuccessfully": "Folder \"{{name}}\" copied successfully",
+    "copiedToFolder": "Copied to folder \"{{folder}}\"",
+    "fileMovedSuccessfully": "File \"{{name}}\" moved successfully",
+    "folderMovedSuccessfully": "Folder \"{{name}}\" moved successfully",
+    "movedToFolder": "Moved to folder \"{{folder}}\"",
+    "fileDuplicatedSuccessfully": "File \"{{name}}\" duplicated successfully",
+    "folderDuplicatedSuccessfully": "Folder \"{{name}}\" duplicated successfully",
+    "itemsDuplicatedSuccessfully": "{{count}} items duplicated successfully",
+    "duplicatedToSameFolder": "You’ll find the copy in the same folder.",
+    "itemsDuplicatedToSameFolder": "You’ll find the copies in the same folder.",
     "noPermissionToCreate": "You don't have permission to create items in this folder",
     "maxSizeSupportedTypes": "Maximum size: {{maxSize}}. Supported types: {{allowedExtensions}}",
     "maxSizeOnly": "Maximum size: {{maxSize}}",
@@ -924,9 +943,16 @@
     "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
     "folderPickerEmptyStateTitle": "This folder is empty",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
+    "crossSectionTransferUnsupported": "Copying and moving between My files, Shared, and Organization isn't supported yet.",
+    "searchPlaceholder": {
+      "myFiles": "Search in My files",
+      "shared": "Search in Shared with me files",
+      "organization": "Search in Organization files"
+    },
     "tab": {
+      "all": "All",
       "myFiles": "My Files",
-      "shared": "Shared with Me"
+      "shared": "Shared"
     },
     "myFiles": {
       "treeHeader": "File storage",
@@ -934,6 +960,7 @@
       "emptyStateDescription": "Upload files to your personal storage"
     },
     "shared": {
+      "rootFolder": "Shared",
       "emptyStateTitle": "No shared files",
       "emptyStateDescription": "Files shared with you will appear here"
     },
@@ -958,7 +985,7 @@
     "metadataModifiedDateLabel": "Modified Date:",
     "metadataSizeLabel": "Size:",
     "metadataAuthorLabel": "Author:",
-    "uploadArchiveAction": "Upload archive",
+    "uploadArchiveAction": "Archive",
     "uploadArchiveError": "Failed to upload the archive",
     "uploadArchiveFilesError_one": "Failed to upload this archive file: {{files}}",
     "uploadArchiveFilesError_other": "Failed to upload these archive files: {{files}}",
@@ -1047,19 +1074,20 @@
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
     "qrCodeAriaLabel": "QR code for the share link",
+    "qrDownloadFileName": "share-qr-code.png",
     "loadingLabel": "Creating share link…",
     "errorTitle": "Couldn't create the share link. Please try again.",
     "invitationAcceptError": "This share link is invalid or has expired."
   },
   "editor": {
-    "stepGeneral": "General",
-    "stepsNavAriaLabel": "Editor steps",
-    "stepOfTotal": "Step {{current}} of {{total}}",
-    "moreActionsLabel": "More actions",
-    "saveButton": "Save & Exit",
-    "nextButton": "Next",
+    "backAriaLabel": "Back to catalog",
+    "savingStatus": "Saving",
+    "metadataSectionTitle": "Metadata",
+    "setupSectionTitle": "Setup",
     "nameLabel": "Name",
     "nameRequired": "Name is required",
+    "fieldTooLong": "Use {{count}} characters or fewer.",
+    "nameControlCharacters": "Remove line breaks, tabs and other control characters.",
     "descriptionLabel": "Description",
     "avatarLabel": "Avatar",
     "addAvatarButtonLabel": "Add avatar",
@@ -1067,7 +1095,7 @@
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Tags",
-    "topicsPlaceholder": "Add a topic",
+    "topicsPlaceholder": "Add tags, comma separated",
     "locales": {
       "summaryLabel": "Locales",
       "rowLabel": "Locale",
@@ -1083,7 +1111,13 @@
       "deleteAriaLabel": "Delete locale"
     }
   },
+  "applicationEditor": {
+    "setupPendingCreate": "Create the application to configure its setup."
+  },
   "appsEditor": {
+    "createTitle": "Create {{type}}",
+    "editTitle": "Edit {{type}}",
+    "defaultTypeName": "quick app",
     "exitPreviewButton": "Exit preview",
     "savingOverlay": "Saving in progress…",
     "previewChat": {
@@ -1110,14 +1144,9 @@
   "toolsetEditor": {
     "createTitle": "Create toolset",
     "editTitle": "Edit toolset",
-    "backAriaLabel": "Back to catalog",
-    "metadataSectionTitle": "Metadata",
-    "setupSectionTitle": "Setup",
-    "savingStatus": "Saving",
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "topicsPlaceholder": "Add tags, comma separated",
       "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
@@ -1208,7 +1237,9 @@
   },
   "tools": {
     "menuTitle": "Tools",
-    "removeTool": "Remove {{label}}"
+    "removeTool": "Remove {{label}}",
+    "stateOn": "On",
+    "stateOff": "Off"
   },
   "conversationInput": {
     "usageLimits": {
@@ -1226,6 +1257,8 @@
     }
   },
   "customApp": {
+    "createTitle": "Create custom app",
+    "editTitle": "Edit custom app",
     "settings": {
       "completionUrlLabel": "Chat completion URL",
       "completionUrlRequired": "Chat completion URL is required",
@@ -1293,8 +1326,6 @@
     "returnedToManifestStatus": "Returned to SKILL.md",
     "filesHeading": "Files",
     "filesTreeAriaLabel": "Skill files",
-    "addUploadLabel": "Upload from device",
-    "removeLabel": "Remove",
     "editingFileLabel": "Editing file",
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
@@ -1359,7 +1390,22 @@
     "dropOverlayTitle": "Upload files",
     "dropOverlaySubtitle": "Drop files here to add them to this skill",
     "manifestImportConfirmTitle": "Replace Skill metadata?",
-    "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone."
+    "manifestImportConfirmMessage": "Importing this SKILL.md will replace the Name, Description, and Instructions fields. This cannot be undone.",
+    "createFolder": "Create folder",
+    "uploadArchive": "Upload archive from device",
+    "openFileSystem": "Open DIAL file system",
+    "addChild": "Add child",
+    "addSibling": "Add sibling",
+    "newFolderDefaultName": "New folder",
+    "folderNameRequired": "Enter a folder name",
+    "folderNameInvalid": "Folder name can't contain / or \\, or be . or ..",
+    "folderNameDuplicate": "An item with this name already exists here",
+    "uploadArchiveDropZone": "Drag and drop a .zip archive or click here to upload",
+    "uploadArchiveDropZoneMobile": "Click here to upload a .zip archive",
+    "uploadArchiveError": "Couldn't read this archive",
+    "uploadArchiveEmpty": "This archive has no files",
+    "uploadArchiveExtractingAriaLabel": "Reading archive",
+    "fileSystemDownloadError": "Couldn't copy files from the DIAL file system"
   },
   "skillArchiveImport": {
     "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",
@@ -1528,6 +1574,8 @@
     "tokensColumnLabel": "Tokens",
     "statusColumnLabel": "Status",
     "modelTypeLabel": "Model",
+    "applicationTypeLabel": "Agent",
+    "includesCalledModelsLabel": "Includes cost of models it called",
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"

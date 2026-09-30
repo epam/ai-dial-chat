@@ -89,7 +89,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
         <div
           className={mergeClasses(
             rightContent != null
-              ? 'desktop:w-[360px] desktop:shrink-0 desktop:overflow-y-auto desktop:border-e'
+              ? 'desktop:w-[400px] desktop:shrink-0 desktop:overflow-y-auto desktop:border-e'
               : 'desktop:flex-1',
             'desktop:overflow-y-auto',
             rightContent != null ? styles.sidebarBorder : undefined,
@@ -98,7 +98,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
           {leftContent}
         </div>
         {rightContent != null && (
-          <div className="desktop:flex-1 desktop:overflow-y-auto">
+          <div className="desktop:flex desktop:min-h-0 desktop:flex-1 desktop:flex-col desktop:overflow-y-auto">
             {rightContent}
           </div>
         )}

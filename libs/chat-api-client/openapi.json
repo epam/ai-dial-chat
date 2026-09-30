@@ -27,7 +27,7 @@
                     "version": {
                       "type": "string",
                       "example": "1.0.0",
-                      "description": "Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint."
+                      "description": "Application version. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Matches the appVersion reported by the client config endpoint."
                     },
                     "buildId": {
                       "type": "string",
@@ -679,9 +679,24 @@
     },
     "/api/v1/user/limits": {
       "get": {
-        "description": "Returns rate-limit and calendar-period usage statistics for every model deployment visible to the caller, plus the caller's global cost-budget figures. The day, week, and month stats cover the current UTC day, week, and month; each may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "description": "Returns rate-limit and calendar-period usage statistics for every deployment of the requested kinds visible to the caller, plus the caller's global cost-budget figures. `deploymentTypes` selects models and/or applications; when omitted, the server-configured default kinds are reported. A deployment's cost includes the cost of deployments it called, so per-deployment cost figures overlap and are not additive. The day, week, and month stats cover the current UTC day, week, and month; each may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
         "operationId": "getUserLimits",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "deploymentTypes",
+            "required": false,
+            "in": "query",
+            "description": "Deployment kinds to report on, comma-separated or as repeated keys. When omitted, the server-configured default kinds are reported.",
+            "schema": {
+              "example": ["model", "application"],
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["model", "application"]
+              }
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved aggregate user limits",
@@ -692,6 +707,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid `deploymentTypes` value"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -712,9 +730,24 @@
     },
     "/api/v1/user/usage": {
       "get": {
-        "description": "Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the currently reported calendar periods (the current UTC day, week, and month). Each day, week, and month stat may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "description": "Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the currently reported calendar periods (the current UTC day, week, and month). Each day, week, and month stat may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. `deploymentTypes` selects models and/or applications; when omitted, the server-configured default kinds are reported. A deployment's cost includes the cost of deployments it called, so per-deployment cost figures are not additive. Proxies GET /v1/user/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
         "operationId": "getUserUsage",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "deploymentTypes",
+            "required": false,
+            "in": "query",
+            "description": "Deployment kinds to report on, comma-separated or as repeated keys. When omitted, the server-configured default kinds are reported.",
+            "schema": {
+              "example": ["model", "application"],
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["model", "application"]
+              }
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved user usage",
@@ -725,6 +758,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid `deploymentTypes` value"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -5978,7 +6014,14 @@
             }
           },
           "400": {
-            "description": "Invalid limit, offset, or search query parameter"
+            "description": "Invalid limit, offset, or search query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -5987,7 +6030,14 @@
             "description": "The scheduledTasksEnabled feature is not enabled for this user"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6035,7 +6085,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "Feature disabled or selected model is inaccessible",
+            "description": "Feature disabled, selected model is inaccessible, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6055,7 +6105,14 @@
             }
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6094,7 +6151,14 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6106,7 +6170,14 @@
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6166,7 +6237,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "Feature disabled or selected model is inaccessible",
+            "description": "Feature disabled, selected model is inaccessible, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6186,7 +6257,14 @@
             }
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6216,7 +6294,14 @@
             "description": "Scheduled task deleted successfully (empty body)"
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6228,10 +6313,24 @@
             "description": "Scheduled task not found, owned by another user, or already hard-deleted"
           },
           "409": {
-            "description": "Scheduled task is already soft-deleted"
+            "description": "Scheduled task is already soft-deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "502": {
-            "description": "DIAL Scheduler could not unregister the job; no data changed and retrying is safe"
+            "description": "DIAL Scheduler could not unregister the job; no data changed and retrying is safe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6295,7 +6394,14 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId, limit, or offset"
+            "description": "Invalid scheduleId, limit, or offset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6307,7 +6413,14 @@
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6346,7 +6459,14 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6358,7 +6478,14 @@
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6397,19 +6524,40 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+            "description": "Feature disabled, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6702,6 +6850,16 @@
             "type": "boolean",
             "description": "Whether the host should pass an explicit access token. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.",
             "example": false
+          },
+          "borderless": {
+            "type": "boolean",
+            "description": "When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.",
+            "example": false
+          },
+          "withoutTitle": {
+            "type": "boolean",
+            "description": "When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.",
+            "example": false
           }
         },
         "required": ["title", "url"]
@@ -6813,20 +6971,20 @@
       "ClientConfigDto": {
         "type": "object",
         "properties": {
+          "aiTextRefinementAvailable": {
+            "type": "boolean",
+            "description": "Whether a text refinement model is configured. Missing means unavailable.",
+            "example": false
+          },
           "activeEventId": {
             "type": "string",
             "description": "Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.",
             "nullable": true,
             "example": "new-year"
           },
-          "aiTextRefinementAvailable": {
-            "type": "boolean",
-            "description": "Whether a text refinement model is configured. Missing means unavailable.",
-            "example": false
-          },
           "appVersion": {
             "type": "string",
-            "description": "Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.",
+            "description": "Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.",
             "example": "0.45.0"
           },
           "asrModelId": {
@@ -6875,8 +7033,8 @@
             "nullable": true
           },
           "fileManagerTabs": {
-            "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
-            "example": ["my_files", "shared", "organization"],
+            "description": "Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs.",
+            "example": ["all", "my_files", "shared", "organization"],
             "type": "array",
             "items": {
               "type": "string"
@@ -7171,7 +7329,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "maxLength": 256
           },
           "type": {
             "type": "string",
@@ -7180,7 +7339,8 @@
           },
           "description": {
             "type": "string",
-            "example": "A custom application."
+            "example": "A custom application.",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -7258,11 +7418,13 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "maxLength": 256
           },
           "description": {
             "type": "string",
-            "example": "A custom application."
+            "example": "A custom application.",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -7384,6 +7546,10 @@
           "skillsSupported": {
             "type": "boolean",
             "description": "Whether the deployment supports custom skills in chat requests"
+          },
+          "tools": {
+            "type": "boolean",
+            "description": "Whether the deployment supports tools/functions in chat completion requests"
           }
         },
         "required": ["systemPrompt", "temperature"]
@@ -9023,7 +9189,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My toolset"
+            "example": "My toolset",
+            "maxLength": 256
           },
           "version": {
             "type": "string",
@@ -9031,7 +9198,8 @@
           },
           "description": {
             "type": "string",
-            "example": "My toolset description"
+            "example": "My toolset description",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -10119,6 +10287,11 @@
             "type": "string",
             "description": "Human-readable conversation title (the resource `name` from DIAL Core).",
             "example": "My chat"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.",
+            "example": 1749600000000
           },
           "updatedAt": {
             "type": "number",
@@ -12206,6 +12379,11 @@
             "type": "boolean",
             "example": true
           },
+          "isCompleted": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs)."
+          },
           "isDeleted": {
             "type": "boolean",
             "example": false
@@ -12276,12 +12454,70 @@
         },
         "required": ["items"]
       },
+      "ScheduledTaskErrorCode": {
+        "type": "string",
+        "enum": [
+          "scheduledTaskSkillUnsupported",
+          "scheduledTaskInstructionsOrSkillRequired",
+          "scheduledTaskDeploymentUnavailable",
+          "scheduledTaskAdminConsentRequired"
+        ]
+      },
+      "ScheduledTaskValidationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 400
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          },
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScheduledTaskErrorCode"
+              }
+            ]
+          },
+          "field": {
+            "type": "string",
+            "example": "skillUrl"
+          },
+          "upstreamMessage": {
+            "type": "string",
+            "example": "Application consent revoked",
+            "description": "DIAL Scheduler's own error reason, trimmed and capped at 1000 characters. Never present for 401/403/404."
+          },
+          "upstreamCode": {
+            "type": "string",
+            "example": "consent_revoked",
+            "description": "DIAL Scheduler's own error code (matches ^[A-Za-z0-9_.:-]{1,128}$). Never present for 401/403/404."
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
       "CreateScheduledTaskBodyDto": {
         "type": "object",
         "properties": {
           "displayName": {
             "type": "string",
-            "example": "Daily summary"
+            "example": "Daily summary",
+            "maxLength": 256
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
@@ -12293,7 +12529,8 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox",
-            "description": "Instructions; may be empty when the effective task has a skill."
+            "description": "Instructions; may be empty when the effective task has a skill.",
+            "maxLength": 50000
           },
           "skillUrl": {
             "type": "string",
@@ -12343,6 +12580,11 @@
             "type": "boolean",
             "example": true
           },
+          "isCompleted": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs)."
+          },
           "isDeleted": {
             "type": "boolean",
             "example": false
@@ -12373,52 +12615,6 @@
           }
         },
         "required": ["id", "displayName", "trigger"]
-      },
-      "ScheduledTaskErrorCode": {
-        "type": "string",
-        "enum": [
-          "scheduledTaskSkillUnsupported",
-          "scheduledTaskInstructionsOrSkillRequired",
-          "scheduledTaskDeploymentUnavailable"
-        ]
-      },
-      "ScheduledTaskValidationErrorDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 400
-          },
-          "message": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            ]
-          },
-          "error": {
-            "type": "string",
-            "example": "Bad Request"
-          },
-          "code": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ScheduledTaskErrorCode"
-              }
-            ]
-          },
-          "field": {
-            "type": "string",
-            "example": "skillUrl"
-          }
-        },
-        "required": ["statusCode", "message", "error"]
       },
       "ScheduledTaskRunDto": {
         "type": "object",
@@ -12496,7 +12692,8 @@
         "properties": {
           "displayName": {
             "type": "string",
-            "example": "Daily summary"
+            "example": "Daily summary",
+            "maxLength": 256
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
@@ -12508,7 +12705,8 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox",
-            "description": "Instructions; may be empty when the effective task has a skill."
+            "description": "Instructions; may be empty when the effective task has a skill.",
+            "maxLength": 50000
           },
           "skillUrl": {
             "type": "string",
@@ -12557,6 +12755,11 @@
           "isActive": {
             "type": "boolean",
             "example": true
+          },
+          "isCompleted": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs)."
           },
           "isDeleted": {
             "type": "boolean",

@@ -63,8 +63,11 @@ const getApiErrorDetailsMock = vi.fn();
 
 const useScheduledTaskRunsMock = vi.fn();
 vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskRuns', () => ({
-  useScheduledTaskRuns: (scheduleId: string, enabled: boolean) =>
-    useScheduledTaskRunsMock(scheduleId, enabled),
+  useScheduledTaskRuns: (
+    scheduleId: string,
+    enabled: boolean,
+    nextRunTime?: string | null,
+  ) => useScheduledTaskRunsMock(scheduleId, enabled, nextRunTime),
 }));
 
 const getApiErrorStatusMock = vi.fn();
@@ -92,9 +95,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onDelete,
     isDeleting,
     isDeleted,
+    isCompleted,
     isActive,
     isActiveUpdating,
     isActiveDisabled,
+    activeDisabledReason,
     onActiveChange,
     displayName,
     isLoading,
@@ -105,6 +110,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     skillDisplayName,
     repeatsLabel,
     activeWindowLabel,
+    completedLabel,
     nextRunLabel,
     runs,
     runsError,
@@ -122,15 +128,18 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       deletedStateLabel: string;
       activeStatusLabel: string;
       activeStatusAnnouncement?: string;
+      completedFieldLabel: string;
     };
     onBack: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
     isDeleting?: boolean;
     isDeleted?: boolean;
+    isCompleted?: boolean;
     isActive?: boolean;
     isActiveUpdating?: boolean;
     isActiveDisabled?: boolean;
+    activeDisabledReason?: string;
     onActiveChange?: (nextActive: boolean) => void;
     displayName: string;
     isLoading?: boolean;
@@ -141,6 +150,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     skillDisplayName?: string;
     repeatsLabel?: string;
     activeWindowLabel?: string;
+    completedLabel?: string;
     nextRunLabel?: string;
     runs: { id: string; conversationId?: string; isUnread?: boolean }[];
     runsError?: Error | null;
@@ -163,6 +173,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <span>skill:{skillDisplayName}</span>
       <span>repeatsLabel:{repeatsLabel}</span>
       <span>activeWindowLabel:{activeWindowLabel}</span>
+      {completedLabel && <span>completedLabel:{completedLabel}</span>}
+      {activeDisabledReason && (
+        <span>disabledReason:{activeDisabledReason}</span>
+      )}
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>
       {runs.map((run) => (
@@ -186,7 +200,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
           {labels.editButtonLabel}
         </button>
       )}
-      {isActive !== undefined && (
+      {!isDeleted && !isCompleted && isActive !== undefined && (
         <>
           <input
             type="checkbox"
@@ -360,7 +374,36 @@ describe('ScheduledTaskDetailPage', () => {
     expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     expect(getScheduledTaskMock).toHaveBeenCalledWith('sched_123');
-    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith('sched_123', true);
+    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+      'sched_123',
+      true,
+      undefined,
+    );
+  });
+
+  it("passes the loaded task's nextRunTime to useScheduledTaskRuns once resolved, undefined beforehand", async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+      nextRunTime: '2026-07-31T09:00:00.000Z',
+    });
+    renderDetailPage();
+
+    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+      'sched_123',
+      true,
+      undefined,
+    );
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+
+    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+      'sched_123',
+      true,
+      '2026-07-31T09:00:00.000Z',
+    );
   });
 
   it('renders NotFoundPage when getScheduledTask resolves with a 404', async () => {
@@ -875,6 +918,58 @@ describe('ScheduledTaskDetailPage', () => {
 
       expect(resumeScheduledTaskMock).toHaveBeenCalledWith('sched_123');
     });
+
+    it('reverts the switch and asks to contact an administrator when resume is blocked by revoked consent', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        ...activeTask,
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      resumeScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 403,
+        code: 'scheduledTaskAdminConsentRequired',
+        traceId: 'trace-consent',
+      });
+      renderDetailPage();
+
+      await userEvent.click(await screen.findByRole('switch'));
+
+      await waitFor(() =>
+        expect(screen.getByRole('switch')).toHaveProperty('checked', false),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: 'error',
+          message: 'toolsetSignin.adminConsentRequired',
+          requestId: 'trace-consent',
+        }),
+      );
+    });
+
+    it("shows DIAL Scheduler's reason when a pause fails with one", async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(activeTask);
+      pauseScheduledTaskMock.mockRejectedValue(new Error('upstream error'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 502,
+        upstreamMessage: 'Schedule is locked by another operation',
+      });
+      renderDetailPage();
+
+      await userEvent.click(await screen.findByRole('switch'));
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: 'Schedule is locked by another operation',
+          }),
+        ),
+      );
+      expect(screen.getByRole('switch')).toHaveProperty('checked', true);
+    });
   });
 
   describe('Delete action', () => {
@@ -1105,6 +1200,56 @@ describe('ScheduledTaskDetailPage', () => {
       expect(screen.getByText('isDeleting:false')).toBeTruthy();
       expect(screen.getByRole('dialog')).toBeTruthy();
     });
+
+    it("a generic failure shows DIAL Scheduler's reason when it supplies one", async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockRejectedValue(new Error('rejected'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 400,
+        upstreamMessage: 'Schedule is running; retry later',
+      });
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: 'Schedule is running; retry later',
+          }),
+        ),
+      );
+      expect(screen.getByText('isDeleting:false')).toBeTruthy();
+    });
+
+    it('a 502 keeps the localized retryable message even when Scheduler supplies a reason', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockRejectedValue(new Error('upstream'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 502,
+        upstreamMessage: 'Could not unregister job',
+      });
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'scheduledTasks.detail.deleteRetryableError',
+          }),
+        ),
+      );
+    });
   });
 
   describe('History run navigation', () => {
@@ -1274,5 +1419,98 @@ describe('ScheduledTaskDetailPage', () => {
       expect(screen.queryByRole('switch')).toBeNull();
       expect(screen.getByText('runs:1')).toBeTruthy();
     });
+  });
+});
+
+describe('ScheduledTaskDetailPage — completed state', () => {
+  it('renders the completed label and hides the active switch for a finished one-time task', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'One-time report',
+      trigger: { date: '2020-01-01T00:00:00.000Z' },
+      triggerType: 'date',
+      isActive: false,
+      isCompleted: true,
+      nextRunTime: null,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'completedLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+
+    expect(pauseScheduledTaskMock).not.toHaveBeenCalled();
+    expect(resumeScheduledTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('hides the active switch and shows the completed label for a recurring schedule whose activity window has ended', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          endDate: '2020-01-01T00:00:00.000Z',
+        },
+      },
+      triggerType: 'cron',
+      isActive: false,
+      isCompleted: true,
+      nextRunTime: undefined,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'completedLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+  });
+
+  it('keeps the switch disabled with a reason when the completed signal is missing but the fields show exhaustion', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'One-time report',
+      trigger: { date: '2020-01-01T00:00:00.000Z' },
+      triggerType: 'date',
+      isActive: false,
+      nextRunTime: null,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'disabledReason:scheduledTasks.detail.activeDisabledReasonCompleted',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    expect(screen.queryByText(/^completedLabel:/)).toBeNull();
+  });
+
+  it('renders no completed label for a task that has not completed', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      triggerType: 'cron',
+      isActive: true,
+      isCompleted: false,
+      nextRunTime: '2030-01-01T09:00:00.000Z',
+    });
+    renderDetailPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    expect(screen.queryByText(/^completedLabel:/)).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
   });
 });

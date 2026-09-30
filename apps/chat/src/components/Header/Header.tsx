@@ -45,6 +45,7 @@ const Header: FC<Props> = ({
      the + button only on the latter — see the new-chat button below. */
   const isConversationPanel = isConversationRoute || isRootRoute;
   const isHeaderEnabled = useUiFeature(OverlayFeature.Header);
+  const isHeaderLogoShown = useUiFeature(OverlayFeature.ShowHeaderLogo);
   const isConversationsPanelToggleEnabled = useUiFeature(
     OverlayFeature.ConversationsPanelToggle,
   );
@@ -55,7 +56,9 @@ const Header: FC<Props> = ({
     OverlayFeature.HideNavigationMenu,
   );
 
-  if (!isHeaderEnabled) {
+  /* `show-header-logo` keeps the brand visible on mobile even when the host
+     turns the header off: the row then carries only the logo. */
+  if (!isHeaderEnabled && !isHeaderLogoShown) {
     return null;
   }
 
@@ -67,7 +70,7 @@ const Header: FC<Props> = ({
       )}
     >
       <div className="flex items-center gap-1 ps-3">
-        {!isNavigationMenuHidden && (
+        {isHeaderEnabled && !isNavigationMenuHidden && (
           <GhostIconButton
             icon={
               <IconMenu2
@@ -79,7 +82,8 @@ const Header: FC<Props> = ({
             onClick={onMenuToggle}
           />
         )}
-        {onConversationPanelToggle != null &&
+        {isHeaderEnabled &&
+          onConversationPanelToggle != null &&
           isConversationPanel &&
           isConversationsPanelToggleEnabled && (
             <GhostIconButton
@@ -105,7 +109,8 @@ const Header: FC<Props> = ({
             duplicate it. The desktop equivalent lives in `ChatLayout`, which
             keeps the button on every route because its header row has no
             composer beneath it — keep the two in sync knowingly. */}
-        {onNewChat != null &&
+        {isHeaderEnabled &&
+          onNewChat != null &&
           isConversationRoute &&
           !isNewConversationHidden && (
             <div
@@ -137,7 +142,7 @@ const Header: FC<Props> = ({
       </div>
       <Logo />
       <div className="flex justify-end pe-3">
-        <SourcesSidebarToggle />
+        {isHeaderEnabled && <SourcesSidebarToggle />}
       </div>
     </header>
   );

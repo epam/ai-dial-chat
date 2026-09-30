@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.18`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.27`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.18
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.27
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.19 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -257,14 +257,14 @@ import type {
 ```
 
 - `CustomVisualizer` — one MIME → visualizer mapping. `contentType` is **required** and accepts a comma-separated MIME list. One attachment per iframe.
-- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together.
+- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together. Optional `borderless` and `withoutTitle` tell the host to render the inline frame without its border chrome, or without its header title text.
 - `GroupedAttachmentsData` / `GroupedAttachmentItem` — the grouped payload the host builds from the claimed attachments. Each item's `url` is absolute, resolved by the host before sending.
 
 In both types, `title` is the postMessage protocol namespace rather than a display label: the iframe-side application must be constructed with the identical string as its `appName`, so it must never be localised. `passAuthInfo` and `passExplicitToken` are accepted for configuration parity and are inert — auth is server-side and the browser holds no access token.
 
 ### ConversationTransfer
 
-Types for the queued export/import job model. Consumed by `@epam/ai-dial-conversation-panel`'s `ImportExportQueue` component.
+Types for the queued export/import job model. The host maps these jobs onto the UI kit's `TransferQueue` items to render the export/import queue.
 
 ```tsx
 import {
@@ -771,6 +771,11 @@ import {
   MARKDOWN_TABLE_CSV_MIME_TYPE,
   getUtf8ByteLength,
   truncateToUtf8Bytes,
+  ENTITY_NAME_MAX_LENGTH,
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  exceedsMaxLength,
+  hasControlCharacters,
   sanitizeConversationName,
   stripTrailingDots,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
@@ -778,6 +783,11 @@ import {
   resolvePromptParams,
   buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
+
+// Length limits shared by every entity editor (prompts, skills, toolsets,
+// applications, scheduled tasks): name 256, description 2000, instructions 50000.
+const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
+const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
 
 // Merge conditional class names — the only supported way to compose classes.
 // Conflicting utilities collapse to the last one, including the workspace
@@ -871,6 +881,7 @@ import {
   RESIZABLE_TEXTAREA_CLASS_NAME,
   RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+  MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   SELECT_LIST_MAX_HEIGHT_PX,
   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
@@ -884,19 +895,21 @@ import {
 | `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists          |
 | `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types           |
 | `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders             |
+| `PUBLIC_BUCKET`                              | `public`, the DIAL Core bucket holding organization-wide resources        |
 | `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step         |
 | `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                       |
 | `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field      |
 | `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`     |
 | `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to        |
 | `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap      |
+| `MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME`     | `className` stretching `MarkdownEditor` to that measured cap, bar hidden  |
 | `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview        |
 | `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap        |
 | `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                   |
 
 ## Stylesheet
 
-The package ships Tailwind-generated CSS for its components (`DialFileManagerShell`, `OperationLoaderModal`, `UploadProgressModal`, etc.). Import it once in the host application's entry point:
+The package ships Tailwind-generated CSS for its components (`DialFileManagerShell`, `OperationLoaderModal`, etc.). Import it once in the host application's entry point:
 
 ```ts
 import '@epam/ai-dial-chat-shared/styles.css';
@@ -936,7 +949,9 @@ import { DialFileManagerShell } from '@epam/ai-dial-chat-shared/file-manager';
 
 ### FileManagerController
 
-Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` (or `UseDialFileManagerSectionsResult`) value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+
+The optional `sectionTab` is the source tab of the browsed folder when the host shows the combined All tab. The shell gates its per-tab behaviour — the upload-archive toolbar entry, the root empty state — on `sectionTab ?? activeTab`, while `activeTab` stays the tab-strip value and the `treeHeaderByTab` key.
 
 ```ts
 import type { FileManagerController } from '@epam/ai-dial-chat-shared';
@@ -944,7 +959,7 @@ import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellLabels
 
-Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n.
+Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n. `treeHeaderByTab` and `emptyStateByTab` are keyed by every `DialFileManagerTabs` member, `all` included. The optional `searchPlaceholderByTab` sets the search field placeholder for the browsed folder's source tab (`sectionTab ?? activeTab`); a tab without an entry keeps the file manager's default.
 
 ```ts
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
@@ -1067,15 +1082,24 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 // Call reset() when the data source changes (e.g. on a tab switch).
 ```
 
-### OperationLoaderModal / UploadProgressModal
+### OperationLoaderModal
 
-Internal modals already rendered by `DialFileManagerShell`. Exported for hosts that need to compose them independently outside the shell.
+Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell.
 
 ```tsx
-import {
-  OperationLoaderModal,
-  UploadProgressModal,
-} from '@epam/ai-dial-chat-shared';
+import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';
+```
+
+### Upload queue
+
+`DialFileManagerShell` shows uploads in the UI kit's `TransferQueue`, fixed to the bottom-end corner. Its heading comes from `labels.getUploadQueueTitle(count)` and its strings from `labels.uploadQueueLabels`. Closing it aborts whatever is still uploading. Two helpers are exported for hosts that render the queue themselves — `isUploadInProgress` from the root entry, and `toUploadQueueItems` from `./file-manager`, since it is a value import of the kit:
+
+```ts
+import { isUploadInProgress } from '@epam/ai-dial-chat-shared';
+import { toUploadQueueItems } from '@epam/ai-dial-chat-shared/file-manager';
+
+const items = toUploadQueueItems(uploadBatchState?.files ?? []);
+const isBusy = isUploadInProgress(uploadBatchState);
 ```
 
 ## Building

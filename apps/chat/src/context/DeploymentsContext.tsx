@@ -36,6 +36,7 @@ import { resolveLocalizedText } from '../utils/locale';
 import { useAppConfig, useFeatureFlag } from './AppConfigContext';
 import { useUser } from './auth/UserContext';
 import { useNotification } from './NotificationContext';
+import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';
 
 export interface DeploymentsContextType {
@@ -52,10 +53,11 @@ export interface DeploymentsContextType {
    */
   restoreSelectedItemId: (id: string) => void;
   /**
-   * Re-resolves `selectedItemId` back to the user's own preference (persisted
-   * `selectedDeploymentId`, falling back to the operator default, falling
-   * back to the first item), ignoring whatever the in-memory `selectedItemId`
-   * currently holds. Use when landing on the New Chat screen, so a value left
+   * Re-resolves `selectedItemId` back to the default for a new chat (the
+   * overlay host's `modelId` in overlay mode, otherwise the user's own
+   * preference: persisted `selectedDeploymentId`, falling back to the
+   * operator default, falling back to the first item), ignoring whatever the
+   * in-memory `selectedItemId` currently holds. Use when landing on the New Chat screen, so a value left
    * behind by `restoreSelectedItemId` (from having viewed a different
    * conversation) never becomes the next new chat's model. Does not persist.
    */
@@ -159,6 +161,13 @@ const isDeploymentPresent = (
   id: string | null,
 ): boolean => id != null && deployments.some((d) => d.id === id);
 
+/* A deployment the operator hid via HIDDEN_ENTITY_TAGS must not become a new
+   chat's model through a stored or configured preference (Issue #9150). */
+const isDeploymentSelectable = (
+  deployments: DeploymentItemDto[],
+  id: string | null,
+): boolean => id != null && deployments.some((d) => d.id === id && !d.isHidden);
+
 /*
  * `pinnedDefaultId` is the operator default only when `defaultDeploymentPinned`
  * is on; `configuredDefaultId` is that default regardless of pinning. They are
@@ -174,6 +183,13 @@ const isDeploymentPresent = (
  * precedence `DEFAULT_DEPLOYMENT_PINNED` documents. Without that step the
  * option would be inert — the control that writes it is offered only where an
  * agent is pinned, so the pin would always win (Issue #8889).
+ *
+ * `overlayModelId` is the `modelId` the embedding host sent through
+ * `SET_OVERLAY_OPTIONS`. It outranks every user and operator preference: the
+ * host embeds the overlay for one specific agent, so a new overlay chat must
+ * open on it for a first-time user too, not only for one whose own persisted
+ * selection happens to match. It is matched by id or by reference, and an
+ * unknown value falls through to the normal resolution.
  */
 const resolveInitialSelection = (
   deployments: DeploymentItemDto[],
@@ -182,36 +198,44 @@ const resolveInitialSelection = (
   pinnedDefaultId: string | null,
   defaultAgent: string | null,
   configuredDefaultId: string | null,
+  overlayModelId: string | null,
 ): string | null => {
   if (isDeploymentPresent(deployments, inMemoryId)) {
     return inMemoryId;
   }
+  const overlayDeployment = findDeploymentByIdOrReference(
+    deployments,
+    overlayModelId,
+  );
+  if (overlayDeployment) {
+    return overlayDeployment.id;
+  }
   if (
     defaultAgent != null &&
     !isDefaultAgentSentinel(defaultAgent) &&
-    isDeploymentPresent(deployments, defaultAgent)
+    isDeploymentSelectable(deployments, defaultAgent)
   ) {
     return defaultAgent;
   }
   if (
     defaultAgent === DefaultAgentMode.DefaultAgent &&
-    isDeploymentPresent(deployments, configuredDefaultId)
+    isDeploymentSelectable(deployments, configuredDefaultId)
   ) {
     return configuredDefaultId;
   }
   if (
     defaultAgent === DefaultAgentMode.LastUsedAgent &&
-    isDeploymentPresent(deployments, userConfigId)
+    isDeploymentSelectable(deployments, userConfigId)
   ) {
     return userConfigId;
   }
-  if (isDeploymentPresent(deployments, pinnedDefaultId)) {
+  if (isDeploymentSelectable(deployments, pinnedDefaultId)) {
     return pinnedDefaultId;
   }
-  if (isDeploymentPresent(deployments, userConfigId)) {
+  if (isDeploymentSelectable(deployments, userConfigId)) {
     return userConfigId;
   }
-  return deployments[0]?.id ?? null;
+  return (deployments.find((d) => !d.isHidden) ?? deployments[0])?.id ?? null;
 };
 
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
@@ -287,6 +311,18 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     defaultAgentRef.current = defaultAgent;
   }, [defaultAgent]);
+
+  /*
+   * Read through a ref for the same reason as `defaultAgentRef`: a host
+   * resending `SET_OVERLAY_OPTIONS` must not re-create
+   * `restoreDefaultSelection`. `null` outside overlay mode.
+   */
+  const overlayModelId = useOptionalOverlay()?.modelId ?? null;
+  const overlayModelIdRef = useRef(overlayModelId);
+
+  useEffect(() => {
+    overlayModelIdRef.current = overlayModelId;
+  }, [overlayModelId]);
 
   useEffect(() => {
     languageRef.current = language;
@@ -383,6 +419,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
             effectivePinnedId,
             defaultAgentRef.current,
             defaultDeploymentIdRef.current,
+            overlayModelIdRef.current,
           ),
         );
       }
@@ -426,6 +463,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       isDefaultDeploymentPinned ? appConfig.defaultDeploymentId : null,
       defaultAgent,
       appConfig.defaultDeploymentId,
+      overlayModelId,
     );
     if (resolved != null) setSelectedItemIdState(resolved);
   }, [
@@ -433,6 +471,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     appConfig.defaultDeploymentId,
     isDefaultDeploymentPinned,
     defaultAgent,
+    overlayModelId,
     rawDeployments,
   ]);
 
@@ -616,6 +655,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       effectiveDefaultDeploymentId,
       defaultAgentRef.current,
       defaultDeploymentIdRef.current,
+      overlayModelIdRef.current,
     );
     if (resolved != null) setSelectedItemIdState(resolved);
   }, []);

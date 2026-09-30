@@ -233,6 +233,8 @@ export interface EditMessageInputProps {
 
 /** Props accepted by the `ConversationInput` component. */
 export interface ConversationInputProps {
+  /** Changing this token requests textarea focus without altering its value or caret. */
+  focusRequestId?: number;
   /** Placeholder text shown inside the textarea when empty. */
   placeholder?: string;
   /**
@@ -279,6 +281,8 @@ export interface ConversationInputProps {
   welcomeText?: string;
   /** Optional description text rendered below the welcome heading. Ignored when `welcomeText` is absent. */
   descriptionText?: string;
+  /** Slot rendered between the welcome heading and the input, e.g. conversation starters. */
+  belowWelcomeSlot?: ReactNode;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
   /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */

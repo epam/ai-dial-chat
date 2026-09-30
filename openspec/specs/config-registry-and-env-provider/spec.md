@@ -509,36 +509,6 @@ Malformed JSON in `ANNOUNCEMENTS` SHALL NOT fail application startup or environm
 
 ---
 
-### Requirement: Registry contains the skillUsageEnabled client feature key
-
-The `CONFIG_DEFINITIONS` registry SHALL include a `features.skillUsageEnabled` entry: `type='feature'`, `valueType='boolean'`, `visibility='client'`, `defaultValue=false`, `critical=false`, `envVar='SKILL_USAGE_ENABLED'`, and no `allowedRolesEnvVar` (role-based rollout is out of scope). Unlike `features.responsesApiEnabled` (server-only), this key SHALL be included in `AppConfigService.getClientConfig`'s response by virtue of its `visibility='client'` classification, because it gates frontend UI (the catalog skill "Use in chat" button and the conversation input's Skills menu).
-
-`EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`) SHALL gain the validated boolean `SKILL_USAGE_ENABLED` (default `false`) using the same raw-source-value `@Transform` as `RESPONSES_API_ENABLED`, so the literal string `"false"` parses to `false`. The `FeatureKey` enum SHALL gain `SkillUsageEnabled = 'features.skillUsageEnabled'` (its string value matching the registry key exactly), per the feature-flags-service requirement that every feature key be declared in the enum before use.
-
-**Feature flag:** the entry declares `features.skillUsageEnabled`, consumed by the frontend via `useFeatureFlag('skillUsageEnabled')` and by the `catalog-use-in-chat` / `skill-input-attachment` capabilities.
-
-**RTL impact:** None. **i18n impact:** None (the flag carries no user-visible text).
-
-#### Scenario: Registry contains the skillUsageEnabled feature key with client visibility
-
-- **WHEN** the registry is imported
-- **THEN** it MUST contain an entry with `key='features.skillUsageEnabled'`, `type='feature'`, `valueType='boolean'`, `visibility='client'`, `critical=false`, `envVar='SKILL_USAGE_ENABLED'`, `defaultValue=false`, and no `allowedRolesEnvVar`
-
-#### Scenario: Flag is exposed to the client and off by default
-
-- **WHEN** the client-config endpoint is called on a deployment that has not set `SKILL_USAGE_ENABLED`
-- **THEN** the response's `features` map contains `skillUsageEnabled: false`
-
-#### Scenario: Literal "false" parses to false
-
-- **WHEN** the deployment sets `SKILL_USAGE_ENABLED=false` in the environment
-- **THEN** the resolved `features.skillUsageEnabled` value is `false`, not `true`
-
-#### Scenario: FeatureKey enum stays in sync with the registry
-
-- **WHEN** all `FeatureKey` enum values are compared to `CONFIG_DEFINITIONS`
-- **THEN** `FeatureKey.SkillUsageEnabled` has a matching `type='feature'` entry with the identical key string
-
 ### Requirement: Client-owned variables have a generic environment entry
 
 The registry SHALL declare `customVariables` as a non-critical, client-visible JSON config entry sourced from `CUSTOM_CLIENT_VARIABLES`, defaulting to an empty object. The environment schema SHALL accept an optional string. EnvConfigProvider SHALL parse this string as JSON and accept only a non-null, non-array object. The BFF SHALL NOT register or interpret individual client-owned keys.
@@ -687,3 +657,49 @@ Additionally, the provider SHALL log a warning when a surviving entry's URL orig
 - **WHEN** a valid entry's `url` is `https://viz.example.com` and `ALLOWED_IFRAME_ORIGINS` does not contain that origin
 - **THEN** the entry is still returned in the resolved registry
 - **AND** a warning naming the entry key and the missing origin is logged
+
+### Requirement: Client-visible registry keys stay in sync with the client-config mapping
+
+Every `CONFIG_DEFINITIONS` entry with `visibility: 'client'` and `type: 'config'` SHALL
+fall into exactly one of two groups. Either it has exactly one entry in the
+client-config mapping table, or it is `app.version`, which `AppConfigService` resolves
+through its documented special path. Every mapping-table entry SHALL name a key that
+exists in `CONFIG_DEFINITIONS` with `visibility: 'client'` and `type: 'config'`. No two
+mapping entries SHALL write the same response field. The mapped fields, together with
+`appVersion` and `aiTextRefinementAvailable`, SHALL cover every `ClientConfigDto`
+field.
+
+A unit test in `apps/chat-api/src/app-config/tests/` SHALL enforce these properties
+against the real `CONFIG_DEFINITIONS`, so a new unmapped client key fails the test
+suite during development. `ConfigDefinition.key` SHALL stay typed as `string`, and
+`CONFIG_DEFINITIONS` SHALL stay annotated as `ConfigDefinition[]`. This requirement
+does not require a type-level rewrite of the registry. Server-visible keys, such as
+`utility.modelId`, and `type: 'feature'` keys SHALL have no mapping entry.
+
+This requirement SHALL NOT change the contents or order of `CONFIG_DEFINITIONS`,
+provider priority, or provider fallback behavior.
+
+#### Scenario: A new client key without a mapping is caught
+
+- **WHEN** a developer adds a `visibility: 'client'`, `type: 'config'` definition to `CONFIG_DEFINITIONS` without adding a mapping entry
+- **THEN** the registry-coverage test fails and names the unmapped key
+
+#### Scenario: A stale mapping is caught
+
+- **WHEN** a mapping entry names a key that is absent from `CONFIG_DEFINITIONS`, or that is server-visible or a feature
+- **THEN** the registry-coverage test fails and names the stale key
+
+#### Scenario: Duplicate field ownership is caught
+
+- **WHEN** two mapping entries write the same `ClientConfigDto` field
+- **THEN** the registry-coverage test fails and names the field
+
+#### Scenario: app.version is the only unmapped client config key
+
+- **WHEN** the coverage test lists client-visible `type: 'config'` keys without a mapping entry
+- **THEN** the only key listed is `app.version`
+
+#### Scenario: Server-only keys stay out of the mapping
+
+- **WHEN** the mapping table is inspected
+- **THEN** it has no entry for `utility.modelId` or for any `features.*` key

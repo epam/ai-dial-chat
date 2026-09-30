@@ -293,72 +293,63 @@ describe('ScheduledTaskEditPage', () => {
       screen.queryByRole('button', { name: 'refine instructions' }),
     ).toBeNull();
   });
-  it.each([true, false])(
-    'allows retry after support recovers with skill selection enabled: %s',
-    async (skillSelectionEnabled) => {
-      useFeatureFlagMock.mockImplementation(
-        (key) => key === 'scheduledTasksEnabled' || skillSelectionEnabled,
-      );
-      getScheduledTaskMock.mockResolvedValue({
-        ...baseTask,
-        skillUrl: 'skills/public/report',
-      });
-      updateScheduledTaskMock.mockRejectedValueOnce(new Error('Unsupported'));
-      getApiErrorDetailsMock.mockResolvedValue({
-        code: 'scheduledTaskSkillUnsupported',
-      });
-      const page = () => (
-        <MemoryRouter initialEntries={['/scheduled-tasks/sched_123/edit']}>
-          <Routes>
-            <Route
-              path="/scheduled-tasks/:scheduleId/edit"
-              element={<ScheduledTaskEditPage />}
-            />
-            <Route
-              path="/scheduled-tasks/:scheduleId"
-              element={<DetailTargetStub />}
-            />
-          </Routes>
-        </MemoryRouter>
-      );
-      const view = render(page());
-      fireEvent.change(await screen.findByLabelText('displayName'), {
-        target: { value: 'Retained draft' },
-      });
-      const submit = screen.getByRole('button', { name: 'buttons.save' });
-      await userEvent.click(submit);
-      await screen.findByText('skillSelector.unsupportedTooltipLabel');
-      expect((submit as HTMLButtonElement).disabled).toBe(true);
-      view.rerender(page());
-      expect((submit as HTMLButtonElement).disabled).toBe(true);
-
-      useDeploymentsMock.mockReturnValue({
-        items: [{ id: 'gpt-4o', features: { skillsSupported: false } }],
-      });
-      view.rerender(page());
-      expect((submit as HTMLButtonElement).disabled).toBe(true);
-      useDeploymentsMock.mockReturnValue({
-        items: [{ id: 'gpt-4o', features: { skillsSupported: true } }],
-      });
-      view.rerender(page());
-      expect(
-        screen.queryByText('skillSelector.unsupportedTooltipLabel'),
-      ).toBeNull();
-      expect((submit as HTMLButtonElement).disabled).toBe(false);
-
-      updateScheduledTaskMock.mockResolvedValueOnce(baseTask);
-      await userEvent.click(submit);
-      expect(updateScheduledTaskMock).toHaveBeenCalledTimes(2);
-      expect(updateScheduledTaskMock.mock.calls[1]).toEqual(
-        updateScheduledTaskMock.mock.calls[0],
-      );
-    },
-  );
-
-  it('hydrates skill-only content and preserves the reference when selection is hidden', async () => {
-    useFeatureFlagMock.mockImplementation(
-      (key) => key === 'scheduledTasksEnabled',
+  it('allows retry after support recovers', async () => {
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      skillUrl: 'skills/public/report',
+    });
+    updateScheduledTaskMock.mockRejectedValueOnce(new Error('Unsupported'));
+    getApiErrorDetailsMock.mockResolvedValue({
+      code: 'scheduledTaskSkillUnsupported',
+    });
+    const page = () => (
+      <MemoryRouter initialEntries={['/scheduled-tasks/sched_123/edit']}>
+        <Routes>
+          <Route
+            path="/scheduled-tasks/:scheduleId/edit"
+            element={<ScheduledTaskEditPage />}
+          />
+          <Route
+            path="/scheduled-tasks/:scheduleId"
+            element={<DetailTargetStub />}
+          />
+        </Routes>
+      </MemoryRouter>
     );
+    const view = render(page());
+    fireEvent.change(await screen.findByLabelText('displayName'), {
+      target: { value: 'Retained draft' },
+    });
+    const submit = screen.getByRole('button', { name: 'buttons.save' });
+    await userEvent.click(submit);
+    await screen.findByText('skillSelector.unsupportedTooltipLabel');
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    view.rerender(page());
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+
+    useDeploymentsMock.mockReturnValue({
+      items: [{ id: 'gpt-4o', features: { skillsSupported: false } }],
+    });
+    view.rerender(page());
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    useDeploymentsMock.mockReturnValue({
+      items: [{ id: 'gpt-4o', features: { skillsSupported: true } }],
+    });
+    view.rerender(page());
+    expect(
+      screen.queryByText('skillSelector.unsupportedTooltipLabel'),
+    ).toBeNull();
+    expect((submit as HTMLButtonElement).disabled).toBe(false);
+
+    updateScheduledTaskMock.mockResolvedValueOnce(baseTask);
+    await userEvent.click(submit);
+    expect(updateScheduledTaskMock).toHaveBeenCalledTimes(2);
+    expect(updateScheduledTaskMock.mock.calls[1]).toEqual(
+      updateScheduledTaskMock.mock.calls[0],
+    );
+  });
+
+  it('hydrates a skill-only task and preserves the saved reference on save', async () => {
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
       prompt: '',
@@ -367,7 +358,9 @@ describe('ScheduledTaskEditPage', () => {
     updateScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
     await screen.findByRole('button', { name: 'buttons.save' });
-    expect(screen.queryByLabelText('skillUrl')).toBeNull();
+    expect((screen.getByLabelText('skillUrl') as HTMLInputElement).value).toBe(
+      'skills/public/report',
+    );
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
     await vi.waitFor(() =>
       expect(updateScheduledTaskMock).toHaveBeenCalledWith(
@@ -417,10 +410,7 @@ describe('ScheduledTaskEditPage', () => {
     ).toBeNull();
   });
 
-  it('blocks a hidden saved skill when the selected model is unsupported', async () => {
-    useFeatureFlagMock.mockImplementation(
-      (key) => key === 'scheduledTasksEnabled',
-    );
+  it('blocks a saved skill when the selected model is unsupported', async () => {
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
       model: 'unsupported',
@@ -712,5 +702,56 @@ describe('ScheduledTaskEditPage', () => {
     expect(
       await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
     ).toBeTruthy();
+  });
+
+  it('keeps the draft and asks to contact an administrator when consent was revoked', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({
+      status: 403,
+      code: 'scheduledTaskAdminConsentRequired',
+    });
+    renderEditPage();
+    fireEvent.change(await screen.findByLabelText('displayName'), {
+      target: { value: 'Retained draft' },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await vi.waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'toolsetSignin.adminConsentRequired',
+        }),
+      ),
+    );
+    expect(
+      (screen.getByLabelText('displayName') as HTMLInputElement).value,
+    ).toBe('Retained draft');
+    expect(
+      screen.queryByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeNull();
+  });
+
+  it("shows DIAL Scheduler's reason when the update fails with one", async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('upstream'));
+    getApiErrorStatusMock.mockReturnValue(502);
+    getApiErrorDetailsMock.mockResolvedValue({
+      status: 502,
+      message: 'DIAL Core returned a server error',
+      upstreamMessage: 'Quota exceeded for schedules',
+    });
+    renderEditPage();
+    await screen.findByLabelText('displayName');
+
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await vi.waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Quota exceeded for schedules' }),
+      ),
+    );
   });
 });

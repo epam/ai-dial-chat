@@ -10,7 +10,7 @@ import type {
   CallToolResult,
   Implementation,
 } from '@modelcontextprotocol/sdk/types.js';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   AttachmentContentType,
   AttachmentErrorType,
@@ -200,10 +200,14 @@ export interface CodeCanvasContent {
 export interface HtmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Html;
-  /** Full HTML text rendered via `srcdoc` in a sandboxed iframe. Used for file attachments. */
+  /** Full HTML text rendered via `srcdoc` in a sandboxed iframe. Populated only when no `url` is available (local, non-downloadable file attachments); when `url` is set, "View source" instead calls `resolveSourceText`. */
   srcdoc?: string;
-  /** External URL rendered via `src` in a sandboxed iframe. Used for external link sources. */
+  /** URL rendered via `src` in a sandboxed iframe when `srcdoc` is absent, or in preference to `srcdoc` when `isSameOriginUrl` is set. Also used as the download-button/"Open in new tab" target. */
   url?: string;
+  /** True when `url`'s origin matches the embedding document's own origin. Forces the iframe sandbox to omit `allow-same-origin` — granting it would let a same-origin framed document reach this page's own cookies/storage — and makes `src` take precedence over `srcdoc`; also skips the `contentDocument` block-detection check, since the iframe is intentionally opaque-origin either way. */
+  isSameOriginUrl?: boolean;
+  /** Lazily fetches the full HTML source text for the "View source" toggle. Used instead of an eagerly-populated `srcdoc` when `url` is set; absent when `srcdoc` is already populated. */
+  resolveSourceText?: () => Promise<string>;
 }
 
 /** Content payload for a custom-visualizer attachment rendered inside a sandboxed iframe. */
@@ -495,6 +499,8 @@ export interface AttachmentCanvasProps {
   content: AttachmentCanvasContent;
   /** File name displayed as the panel title. */
   fileName?: string;
+  /** Host-supplied controls rendered in the header before the title. */
+  leftActions?: ReactNode;
   /** User-visible strings. */
   labels: AttachmentCanvasLabels;
   /** Called when the user activates the download button. When omitted the download button is hidden. Hidden automatically when content type is `Unsupported`. */

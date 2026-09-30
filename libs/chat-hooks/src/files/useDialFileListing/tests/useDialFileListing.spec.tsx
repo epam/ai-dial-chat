@@ -2,6 +2,7 @@ import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialFilesApi } from '../../dial-files-api';
 import type { UseDialFileListingOptions } from '../useDialFileListing';
@@ -96,6 +97,174 @@ describe('useDialFileListing', () => {
 
     expect(result.current.path).toBe('/My files');
     expect(filesApi.listPublicFiles).toHaveBeenCalled();
+  });
+
+  describe('isActive', () => {
+    it('issues no request and reports not loading while inactive', async () => {
+      const { result } = renderListing({ isActive: false });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(filesApi.listFiles).not.toHaveBeenCalled();
+      expect(filesApi.listSharedByMe).not.toHaveBeenCalled();
+      expect(result.current.items).toHaveLength(1);
+      expect(result.current.items[0].path).toBe('/My files');
+    });
+
+    it('loads the root once when it becomes active', async () => {
+      const { result, rerender } = renderHook(
+        ({ isActive }: { isActive: boolean }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            isActive,
+          }),
+        { initialProps: { isActive: false } },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(filesApi.listFiles).not.toHaveBeenCalled();
+
+      rerender({ isActive: true });
+
+      await waitFor(() => expect(filesApi.listFiles).toHaveBeenCalledOnce());
+      expect(filesApi.listFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ bucket: BUCKET, path: '' }),
+      );
+    });
+
+    it('commits the activating render as loading, before the listing effect runs', async () => {
+      const committed: { isActive: boolean; isLoading: boolean }[] = [];
+      const { rerender } = renderHook(
+        ({ isActive }: { isActive: boolean }) => {
+          const listing = useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            isActive,
+          });
+          /* A layout effect sees each committed value before the hook's own passive effects run. */
+          useLayoutEffect(() => {
+            committed.push({ isActive, isLoading: listing.isLoading });
+          });
+          return listing;
+        },
+        { initialProps: { isActive: false } },
+      );
+      rerender({ isActive: true });
+
+      expect(committed).toContainEqual({ isActive: true, isLoading: true });
+      expect(committed).not.toContainEqual({
+        isActive: true,
+        isLoading: false,
+      });
+      await waitFor(() => expect(filesApi.listFiles).toHaveBeenCalledOnce());
+    });
+
+    it('ignores folder expansion while inactive', async () => {
+      const { result } = renderListing({ isActive: false });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() =>
+        result.current.onExpandedPathsChange(new Set(['/My files/reports'])),
+      );
+
+      expect(filesApi.listFiles).not.toHaveBeenCalled();
+      expect(result.current.expandedPaths.size).toBe(0);
+    });
+  });
+
+  describe('sessionKey', () => {
+    it('resets navigation and cache when the session key changes', async () => {
+      const { result, rerender } = renderHook(
+        ({ sessionKey }: { sessionKey: string }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            sessionKey,
+          }),
+        { initialProps: { sessionKey: 'all' } },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onPathChange('/My files/reports/'));
+      await waitFor(() =>
+        expect(result.current.path).toBe('/My files/reports/'),
+      );
+      act(() =>
+        result.current.onExpandedPathsChange(new Set(['/My files/reports'])),
+      );
+      await waitFor(() => expect(result.current.expandedPaths.size).toBe(1));
+
+      rerender({ sessionKey: 'my_files' });
+
+      await waitFor(() => expect(result.current.path).toBe('/My files'));
+      expect(result.current.expandedPaths.size).toBe(0);
+      expect(result.current.cache.has('reports/')).toBe(false);
+    });
+
+    it('reloads the root listing when the session key changes while at the root', async () => {
+      const rootItem: ListFilesItemDto = {
+        name: 'reports',
+        path: `${BUCKET}/reports/`,
+        folderId: `${BUCKET}:`,
+        nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+        bucket: BUCKET,
+      };
+      vi.mocked(filesApi.listFiles).mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [rootItem],
+      });
+      const { result, rerender } = renderHook(
+        ({ sessionKey }: { sessionKey: string }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            sessionKey,
+          }),
+        { initialProps: { sessionKey: 'all' } },
+      );
+      await waitFor(() => expect(result.current.cache.has('')).toBe(true));
+      vi.mocked(filesApi.listFiles).mockClear();
+
+      rerender({ sessionKey: 'my_files' });
+
+      await waitFor(() => expect(filesApi.listFiles).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(result.current.items[0].items).toHaveLength(1),
+      );
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('keeps navigation when re-rendered with the same session key', async () => {
+      const { result, rerender } = renderHook(
+        ({ sessionKey }: { sessionKey: string }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            sessionKey,
+          }),
+        { initialProps: { sessionKey: 'all' } },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.onPathChange('/My files/reports/'));
+      await waitFor(() =>
+        expect(result.current.path).toBe('/My files/reports/'),
+      );
+
+      rerender({ sessionKey: 'all' });
+
+      expect(result.current.path).toBe('/My files/reports/');
+      expect(result.current.cache.has('')).toBe(true);
+    });
   });
 
   it('falls back to the parent folder when the current folder 404s (e.g. emptied and removed)', async () => {
@@ -238,6 +407,40 @@ describe('useDialFileListing', () => {
             (r) => r.name === 'first-only.pdf',
           ),
         ).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('returns the unfiltered recursive listing so a replacement query can still match', async () => {
+      vi.mocked(filesApi.listFiles).mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: ['A.svg', 'B.svg'].map((name) => ({
+          name,
+          path: name,
+          folderId: `${BUCKET}:`,
+          nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+          bucket: BUCKET,
+        })),
+        nextToken: undefined,
+      });
+
+      const { result } = renderListing();
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      vi.useFakeTimers();
+      try {
+        act(() => result.current.onSearchFiles('/', 'A.svg'));
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+        await act(() => Promise.resolve());
+
+        expect(result.current.searchResults?.map((r) => r.name)).toEqual([
+          'A.svg',
+          'B.svg',
+        ]);
       } finally {
         vi.useRealTimers();
       }

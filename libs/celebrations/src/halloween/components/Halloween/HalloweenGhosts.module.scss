@@ -1,0 +1,138 @@
+/* Viewport measurements are physical coordinates in both LTR and RTL. */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  user-select: none;
+  contain: layout style;
+}
+
+.scene[data-ready='false'],
+.scene[data-ended='true'] {
+  visibility: hidden;
+}
+
+.scene[data-ended='true'] [data-ghost-fallback],
+.scene[data-ended='true'] [data-ghost-fallback] > svg {
+  animation: none;
+}
+
+.actor,
+.copies,
+.pumpkinGlow {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.copies {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.actor {
+  inline-size: 0;
+  block-size: 0;
+  transform-origin: 0 0;
+  z-index: 3;
+  opacity: 0;
+}
+
+.art {
+  position: absolute;
+  left: 0;
+  right: auto;
+  top: 0;
+  transform: translate(-50%, -50%);
+}
+
+.cloth {
+  inline-size: 100%;
+  block-size: 100%;
+  transform-origin: 50% 35%;
+
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+  }
+
+  [data-ghost-arms] {
+    transform-origin: 32px 44px;
+  }
+}
+
+.templates {
+  display: none;
+}
+
+.possessedFace {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  inline-size: 33px;
+  block-size: 18px;
+  margin-inline: 0;
+  transform: translate(-50%, -50%) scale(var(--ghost-face-scale, 1));
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+}
+
+.eye {
+  position: relative;
+  display: block;
+  flex: 0 0 14px;
+  inline-size: 14px;
+  block-size: 18px;
+  border-radius: 48% 48% 42% 42%;
+  background: radial-gradient(
+    ellipse at 40% 30%,
+    #fff 15%,
+    #e4d6fb 68%,
+    #b5a0d1
+  );
+  box-shadow: 0 0 7px #d8baffb3;
+  overflow: hidden;
+
+  [data-ghost-pupil] {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    inline-size: 5px;
+    block-size: 8px;
+    border-radius: 50%;
+    background: #28283c;
+  }
+}
+
+.pumpkinGlow {
+  opacity: 0;
+  z-index: 2;
+  transform-origin: 50% 50%;
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    #ffe68970 0%,
+    #ffaf3547 35%,
+    #ff80261f 53%,
+    transparent 72%
+  );
+}
+
+.scene[data-stationary='true'] {
+  [data-ghost-fallback] {
+    animation: none;
+    opacity: var(--ghost-opacity);
+    transform: translate3d(var(--ghost-rest-x), var(--ghost-rest-y), 0)
+      scale(var(--ghost-scale-from));
+  }
+
+  [data-ghost-fallback] > svg {
+    animation: none;
+  }
+}

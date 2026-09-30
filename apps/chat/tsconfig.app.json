@@ -64,6 +64,9 @@
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/celebrations/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/skills/tsconfig.lib.json"
     },
     {

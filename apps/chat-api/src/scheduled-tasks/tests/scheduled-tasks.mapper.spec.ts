@@ -370,6 +370,7 @@ describe('fromUpstreamSchedule', () => {
       id: 'sched_123',
       displayName: 'Daily summary',
       trigger: { date: '2026-07-24T09:00:00.000Z', cron: undefined },
+      triggerType: 'date',
       serviceId: 'dial-oauth',
       isActive: false,
       isDeleted: false,
@@ -406,6 +407,42 @@ describe('fromUpstreamSchedule', () => {
     expect(result.triggerType).toBe('cron');
     expect(result.updatedAt).toBe('2026-07-24T05:44:20.011023Z');
     expect(result.createdBy).toBe('70e570e9-cc23-4ffd-9182-078d09f116ac');
+  });
+
+  it('derives triggerType from the nested cron trigger when trigger_type is absent (get-path shape)', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_904',
+      display_name: 'Bounded schedule',
+      trigger: {
+        cron: {
+          fields: { hour: '6', minute: '0' },
+          start_date: '2026-08-31T21:00:00Z',
+          end_date: '2026-09-22T20:59:59.999000Z',
+        },
+      },
+    };
+
+    expect(fromUpstreamSchedule(upstream).triggerType).toBe('cron');
+  });
+
+  it('derives triggerType from the nested date trigger when trigger_type is absent', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_905',
+      display_name: 'One-time report',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+    };
+
+    expect(fromUpstreamSchedule(upstream).triggerType).toBe('date');
+  });
+
+  it('leaves triggerType undefined when neither the nested trigger nor trigger_type names a kind', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_906',
+      display_name: 'Kindless schedule',
+      trigger: {},
+    };
+
+    expect(fromUpstreamSchedule(upstream).triggerType).toBeUndefined();
   });
 
   it('maps upstream cron start_date/end_date to startDate/endDate', () => {
@@ -467,6 +504,7 @@ describe('fromUpstreamSchedule', () => {
       id: 'sched_456',
       displayName: 'Hourly check',
       trigger: { date: undefined, cron: { fields: { minute: '0' } } },
+      triggerType: 'cron',
       isActive: false,
       isDeleted: false,
     });

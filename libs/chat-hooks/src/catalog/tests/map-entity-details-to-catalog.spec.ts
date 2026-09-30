@@ -58,6 +58,54 @@ describe('mapEntityDetailsToCatalogDetails', () => {
         },
       ]);
     });
+
+    it('renders a Skills row as the last Capabilities entry when skillsSupported is true', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: {
+            features: {
+              tools: true,
+              parallelToolCalls: true,
+              skillsSupported: true,
+            },
+          },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Capabilities',
+          specs: [
+            { label: 'Tools', value: true },
+            { label: 'Parallel tool calls', value: true },
+            { label: 'Skills', value: true },
+          ],
+        },
+      ]);
+    });
+
+    it('omits the Skills row when the backend does not report skillsSupported', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: { features: { tools: true } },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      const labels = (result.overview?.sections ?? []).flatMap((section) =>
+        section.specs.map((spec) => spec.label),
+      );
+      expect(labels).not.toContain('Skills');
+    });
   });
 
   describe('AGENT', () => {
@@ -111,6 +159,54 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       );
 
       expect(result.overview?.sections ?? []).toEqual([]);
+    });
+
+    it('renders a Skills row as the last Capabilities entry when skillsSupported is true', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'applications/als-test-catalog',
+          type: 'application',
+          applicationDetails: {
+            features: {
+              tools: true,
+              hasConfigurationSchema: true,
+              skillsSupported: true,
+            },
+          },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Capabilities',
+          specs: [
+            { label: 'Tools', value: true },
+            { label: 'Configuration schema', value: true },
+            { label: 'Skills', value: true },
+          ],
+        },
+      ]);
+    });
+
+    it('omits the Skills row when the backend does not report skillsSupported', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'applications/als-test-catalog',
+          type: 'application',
+          applicationDetails: { features: { tools: true } },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      const labels = (result.overview?.sections ?? []).flatMap((section) =>
+        section.specs.map((spec) => spec.label),
+      );
+      expect(labels).not.toContain('Skills');
     });
   });
 
@@ -288,6 +384,21 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       );
       expect(labels).not.toContain('Allowed tools');
       expect(labels).not.toContain('All supported tools');
+    });
+
+    it('still renders no Capabilities section even when skillsSupported is true', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'toolsets/ALS-OauthToolset-copy',
+          type: 'toolset',
+          toolsetDetails: { features: { skillsSupported: true } },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections ?? []).toEqual([]);
     });
   });
 });

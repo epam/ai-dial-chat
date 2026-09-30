@@ -222,21 +222,33 @@ export const useConversationHandlers = ({
 
   const handleRegenerateMessage = useCallback(
     (messageIndex: number) => {
-      if (isStreaming || !conversationId || !conversation) return;
+      const latest = conversationRef.current;
+      if (isStreaming || !conversationId || !latest) return;
 
       if (
         messageIndex === -1 ||
-        conversation.messages[messageIndex]?.role !== MessageRole.Assistant
+        latest.messages[messageIndex]?.role !== MessageRole.Assistant
       )
         return;
 
-      const userMsg = conversation.messages[messageIndex - 1];
+      const userMsg = latest.messages[messageIndex - 1];
       if (!userMsg || userMsg.role !== MessageRole.User) return;
 
       const modelId = resolveModelId();
 
+      /* The tool toggles may have changed since the original send (e.g. Deep
+       * Research switched on after stopping the answer), so regeneration uses
+       * the current toggle state rather than the stored one. */
+      const customContent: MessageCustomContent | undefined =
+        hasActiveToolConfig(toolConfigurationValue)
+          ? {
+              ...userMsg.custom_content,
+              configuration_value: toolConfigurationValue,
+            }
+          : userMsg.custom_content;
+
       const regeneratedMessage = {
-        ...conversation.messages[messageIndex],
+        ...latest.messages[messageIndex],
         content: '',
         custom_content: undefined,
         wasStoppedByUser: undefined,
@@ -245,9 +257,10 @@ export const useConversationHandlers = ({
         deploymentId: modelId,
       };
       const next = {
-        ...conversation,
+        ...latest,
         messages: [
-          ...conversation.messages.slice(0, messageIndex),
+          ...latest.messages.slice(0, messageIndex - 1),
+          { ...userMsg, custom_content: customContent },
           regeneratedMessage,
         ],
       };
@@ -264,19 +277,19 @@ export const useConversationHandlers = ({
         userMsg.content,
         messageIndex,
         modelId,
-        userMsg.custom_content,
+        customContent,
         generateUUID(),
         CompletionMode.Regenerate,
       );
     },
     [
-      conversation,
       conversationId,
       conversationRef,
       isStreaming,
       resolveModelId,
       setConversation,
       startStream,
+      toolConfigurationValue,
     ],
   );
 
@@ -335,15 +348,16 @@ export const useConversationHandlers = ({
       rating: MessageRating | null,
       comment?: string,
     ): Promise<boolean> => {
-      if (!conversationId || !conversation) return false;
+      const latest = conversationRef.current;
+      if (!conversationId || !latest) return false;
 
-      const msg = conversation.messages[messageIndex];
+      const msg = latest.messages[messageIndex];
       if (!msg) return false;
 
       const previousRating = msg.rating;
       const updatedConversation: Conversation = {
-        ...conversation,
-        messages: conversation.messages.map((m, i) =>
+        ...latest,
+        messages: latest.messages.map((m, i) =>
           i === messageIndex ? { ...m, rating: rating ?? undefined } : m,
         ),
       };
@@ -355,15 +369,19 @@ export const useConversationHandlers = ({
 
       const conversationPath = getConversationPath(conversationId);
 
+      /* The ref moves with the state: later handlers read it, and a stale
+         optimistic rating would otherwise be persisted by the next save. */
       const revert = () => {
         setConversation((prev) => {
           if (!prev) return prev;
-          return {
+          const next = {
             ...prev,
             messages: prev.messages.map((m, i) =>
               i === messageIndex ? { ...m, rating: previousRating } : m,
             ),
           };
+          conversationRef.current = next;
+          return next;
         });
       };
 
@@ -384,9 +402,9 @@ export const useConversationHandlers = ({
       try {
         await rateApi.rateMessage({
           rateMessageDto: {
-            conversationId: conversation.id,
+            conversationId: latest.id,
             responseId,
-            modelId: conversation.model.id,
+            modelId: latest.model.id,
             rate: rating,
             ...(comment ? { comment } : {}),
           },
@@ -399,7 +417,6 @@ export const useConversationHandlers = ({
       }
     },
     [
-      conversation,
       conversationId,
       conversationRef,
       conversationsApi,
@@ -410,7 +427,8 @@ export const useConversationHandlers = ({
 
   const submitStarter = useCallback(
     (starter: StarterOption, propertyKey?: string, description?: string) => {
-      if (!conversationId || !conversation) return;
+      const latest = conversationRef.current;
+      if (!conversationId || !latest) return;
 
       const displayText = getStarterDisplayText(starter, description);
       const submitText = getStarterSubmitText(starter, description);
@@ -452,7 +470,7 @@ export const useConversationHandlers = ({
       startStream(
         conversationId,
         submitText,
-        conversation.messages.length + 1,
+        latest.messages.length + 1,
         modelId,
         customContent,
         generateUUID(),
@@ -460,7 +478,6 @@ export const useConversationHandlers = ({
       );
     },
     [
-      conversation,
       conversationId,
       conversationRef,
       resolveModelId,
@@ -472,7 +489,8 @@ export const useConversationHandlers = ({
 
   const handleButtonSelect = useCallback(
     (starter: StarterOption, propertyKey?: string, description?: string) => {
-      if (!conversationId || !conversation || isStreaming) return;
+      const latest = conversationRef.current;
+      if (!conversationId || !latest || isStreaming) return;
 
       if (starter['dial:widgetOptions'].confirmationMessage) {
         setPendingStarterContext({ starter, propertyKey, description });
@@ -480,7 +498,7 @@ export const useConversationHandlers = ({
         submitStarter(starter, propertyKey, description);
       }
     },
-    [conversation, conversationId, isStreaming, submitStarter],
+    [conversationId, conversationRef, isStreaming, submitStarter],
   );
 
   const handleConfirmStarter = useCallback(() => {
@@ -510,17 +528,17 @@ export const useConversationHandlers = ({
       newAttachments: Attachment[],
       skills?: RequestSkill[],
     ) => {
-      if (isStreaming || !conversationId || !conversation) return;
+      const latest = conversationRef.current;
+      if (isStreaming || !conversationId || !latest) return;
 
       const idx = messageIndex;
-      if (idx === -1 || conversation.messages[idx].role !== MessageRole.User)
-        return;
+      if (idx === -1 || latest.messages[idx].role !== MessageRole.User) return;
 
-      const originalMessage = conversation.messages[idx];
+      const originalMessage = latest.messages[idx];
 
       if (
         !shouldRerunGenerationOnEdit(
-          conversation.messages,
+          latest.messages,
           idx,
           text,
           keptDisplayAttachments,
@@ -589,12 +607,12 @@ export const useConversationHandlers = ({
       };
 
       const updatedMessages = [
-        ...conversation.messages.slice(0, idx),
+        ...latest.messages.slice(0, idx),
         updatedUserMessage,
         assistantMessage,
       ];
 
-      const updated = { ...conversation, messages: updatedMessages };
+      const updated = { ...latest, messages: updatedMessages };
 
       /* The ref is assigned outside the updater because startStream reads it
        * synchronously below to seed its live-message buffer: React may defer a
@@ -619,7 +637,6 @@ export const useConversationHandlers = ({
       setEditingMessageIndexes(new Set());
     },
     [
-      conversation,
       conversationId,
       conversationRef,
       isStreaming,

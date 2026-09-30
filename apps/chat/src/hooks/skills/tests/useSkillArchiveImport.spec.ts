@@ -95,7 +95,10 @@ describe('useSkillArchiveImport (host adapter)', () => {
       await Promise.resolve();
     });
 
-    expect(mockImportSkillArchive).toHaveBeenCalledWith(file);
+    expect(mockImportSkillArchive).toHaveBeenCalledWith(
+      file,
+      expect.any(AbortSignal),
+    );
     expect(mockRefetchSkills).toHaveBeenCalledOnce();
     expect(mockShowNotification).toHaveBeenCalledWith({
       variant: NotificationVariant.Success,
@@ -105,25 +108,40 @@ describe('useSkillArchiveImport (host adapter)', () => {
     expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
   });
 
-  it('closes the dialog once an accepted file starts uploading', async () => {
-    mockImportSkillArchive.mockResolvedValue(IMPORT_RESPONSE);
+  it('keeps the dialog open while uploading and closes it once the import succeeds', async () => {
+    let resolveImport: (value: SkillImportResponseDto) => void = () =>
+      undefined;
+    mockImportSkillArchive.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveImport = resolve;
+        }),
+    );
     const { result } = renderHook(() => useSkillArchiveImport());
 
     act(() => {
       result.current.openDialog();
     });
-
-    await act(async () => {
+    act(() => {
       result.current.handleFilesSelected([
         new File(['zip bytes'], 'skill.zip'),
       ]);
+    });
+
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(result.current.isUploading).toBe(true);
+
+    await act(async () => {
+      resolveImport(IMPORT_RESPONSE);
+      await Promise.resolve();
       await Promise.resolve();
     });
 
     expect(result.current.isDialogOpen).toBe(false);
+    expect(result.current.isUploading).toBe(false);
   });
 
-  it('ends in the error state, shows an error toast, and skips the success notification/refetch on failure', async () => {
+  it('shows a mapped failure inline in the still-open dialog, without a toast or refetch', async () => {
     /* Mirrors the shape of a generated-client `ResponseError`, which
      * `getApiErrorStatus` reads via `error.response.status`. */
     mockImportSkillArchive.mockRejectedValue({
@@ -131,6 +149,9 @@ describe('useSkillArchiveImport (host adapter)', () => {
     });
     const { result } = renderHook(() => useSkillArchiveImport());
 
+    act(() => {
+      result.current.openDialog();
+    });
     await act(async () => {
       result.current.handleFilesSelected([
         new File(['zip bytes'], 'skill.zip'),
@@ -141,16 +162,45 @@ describe('useSkillArchiveImport (host adapter)', () => {
     });
 
     expect(result.current.status).toBe(SkillArchiveImportStatus.Error);
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(result.current.errorText).toBe(
+      SkillArchiveImportI18nKeys.ErrorCollision,
+    );
     expect(result.current.statusMessage).toBe(
       SkillArchiveImportI18nKeys.ErrorCollision,
     );
     expect(mockRefetchSkills).not.toHaveBeenCalled();
-    expect(mockShowNotification).toHaveBeenCalledWith({
-      variant: NotificationVariant.Error,
-      title: SkillArchiveImportI18nKeys.ErrorTitle,
-      message: SkillArchiveImportI18nKeys.ErrorCollision,
-      requestId: undefined,
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('shows a 502 from an unreadable archive inline and lets the dialog be closed and reopened', async () => {
+    mockImportSkillArchive.mockRejectedValue({
+      response: new Response(null, { status: 502 }),
     });
+    const { result } = renderHook(() => useSkillArchiveImport());
+
+    act(() => {
+      result.current.openDialog();
+    });
+    await act(async () => {
+      result.current.handleFilesSelected([new File(['text'], 'broken.zip')]);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.errorText).toBe(
+      SkillArchiveImportI18nKeys.ErrorServiceUnavailable,
+    );
+
+    act(() => {
+      result.current.closeDialog();
+    });
+    act(() => {
+      result.current.openDialog();
+    });
+
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(result.current.errorText).toBeUndefined();
   });
 
   it('includes a trace id on the error toast only for an unmapped/generic failure', async () => {
@@ -182,6 +232,9 @@ describe('useSkillArchiveImport (host adapter)', () => {
     expect(result.current.statusMessage).toBe(
       SkillArchiveImportI18nKeys.ErrorGeneric,
     );
+    expect(result.current.errorText).toBe(
+      SkillArchiveImportI18nKeys.ErrorGeneric,
+    );
     expect(mockShowNotification).toHaveBeenCalledWith({
       variant: NotificationVariant.Error,
       title: SkillArchiveImportI18nKeys.ErrorTitle,
@@ -190,23 +243,32 @@ describe('useSkillArchiveImport (host adapter)', () => {
     });
   });
 
-  it('does not reopen the dialog while an import is already in flight', () => {
+  it('aborts a hanging import when the dialog is closed, so it can be reopened right away', () => {
+    mockImportSkillArchive.mockImplementation(
+      () => new Promise(() => undefined),
+    );
     const { result } = renderHook(() => useSkillArchiveImport());
-
-    act(() => {
-      mockImportSkillArchive.mockImplementation(
-        () => new Promise(() => undefined),
-      );
-      result.current.handleFilesSelected([
-        new File(['zip bytes'], 'skill.zip'),
-      ]);
-    });
 
     act(() => {
       result.current.openDialog();
     });
+    act(() => {
+      result.current.handleFilesSelected([
+        new File(['zip bytes'], 'skill.zip'),
+      ]);
+    });
+    const signal = mockImportSkillArchive.mock.calls[0][1];
 
-    expect(result.current.isDialogOpen).toBe(false);
+    act(() => {
+      result.current.closeDialog();
+    });
+    act(() => {
+      result.current.openDialog();
+    });
+
+    expect(signal?.aborted).toBe(true);
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(result.current.isUploading).toBe(false);
   });
 
   it('does nothing when no file is selected', () => {
@@ -231,7 +293,10 @@ describe('useSkillArchiveImport (host adapter)', () => {
       await Promise.resolve();
     });
 
-    expect(mockImportSkillArchive).toHaveBeenCalledWith(file);
+    expect(mockImportSkillArchive).toHaveBeenCalledWith(
+      file,
+      expect.any(AbortSignal),
+    );
     expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
   });
 
