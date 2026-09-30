@@ -33,12 +33,22 @@ export interface StageItemProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
 
-/** Renders a stage's attachments as a wrapping row of attachment tiles. */
-const StageAttachmentRow: FC<{
+/** Props for {@link StageAttachmentRow}. */
+interface StageAttachmentRowProps {
+  /** The mapped display attachments to render as tiles. */
   attachments: DisplayAttachment[];
+  /** Accessible label for each tile's interactive click action. */
   clickLabel?: string;
+  /** Called when a tile is clicked/activated. Receives the mapped display attachment. */
   onAttachmentClick?: StageItemProps['onAttachmentClick'];
-}> = ({ attachments, clickLabel, onAttachmentClick }) => {
+}
+
+/** Renders a stage's attachments as a wrapping row of attachment tiles. */
+const StageAttachmentRow: FC<StageAttachmentRowProps> = ({
+  attachments,
+  clickLabel,
+  onAttachmentClick,
+}) => {
   const handleClick = useCallback(
     (id: string) => {
       const attachment = attachments.find((a) => a.id === id);

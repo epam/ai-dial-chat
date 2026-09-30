@@ -258,7 +258,7 @@ describe('CollapsedGroup — onAttachmentClick', () => {
         onAttachmentClick={onAttachmentClick}
       />,
     );
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Executed 2 steps/ }));
     fireEvent.click(screen.getByRole('button', { name: /Combined search/ }));
     fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
     expect(onAttachmentClick).toHaveBeenCalledWith(
@@ -305,7 +305,7 @@ describe('conversation-stages — public class names', () => {
         isStreaming={false}
       />,
     );
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Executed 2 steps/ }));
 
     expect(
       closestWithClass(
@@ -323,7 +323,7 @@ describe('conversation-stages — public class names', () => {
       />,
     );
 
-    const toggle = screen.getAllByRole('button')[0];
+    const toggle = screen.getByRole('button', { name: /Executed 2 steps/ });
     expect(toggle.classList).toContain(CONVERSATION_STAGES_CLASS.groupToggle);
     expect(
       closestWithClass(toggle, CONVERSATION_STAGES_CLASS.group),
