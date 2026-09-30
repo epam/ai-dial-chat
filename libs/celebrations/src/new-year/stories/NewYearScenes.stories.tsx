@@ -42,3 +42,24 @@ export const Sleigh: Story = {
   args: { sceneId: NewYearScene.Sleigh },
   parameters: { celebrationScene: NewYearScene.Sleigh },
 };
+
+export const GiftWrapping: Story = {
+  args: { sceneId: NewYearScene.GiftWrapping },
+  parameters: { celebrationScene: NewYearScene.GiftWrapping },
+};
+
+export const GiftWrappingMobile: Story = {
+  args: {
+    sceneId: NewYearScene.GiftWrapping,
+    isMobile: true,
+    showStarters: false,
+  },
+};
+
+export const GiftWrappingRtl: Story = {
+  args: { sceneId: NewYearScene.GiftWrapping, dir: 'rtl' },
+};
+
+export const GiftWrappingReducedMotion: Story = {
+  args: { sceneId: NewYearScene.GiftWrapping, isReducedMotion: true },
+};

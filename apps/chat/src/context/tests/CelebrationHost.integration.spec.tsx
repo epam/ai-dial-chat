@@ -175,7 +175,7 @@ describe('CelebrationHost with the celebrations library', () => {
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: 'newYear.toastTitle',
       message: expect.stringMatching(
-        /^newYear\.(snow|confetti|sleigh)ToastMessage happy new year$/,
+        /^newYear\.(snow|confetti|sleigh|giftWrapping)ToastMessage happy new year$/,
       ),
     });
   });

@@ -196,13 +196,27 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`Snow`, `Confetti`, `Sleigh`. `Confetti` is also the secret-phrase scene.
+`Snow`, `Confetti`, `Sleigh`, `GiftWrapping`. `Confetti` is also the secret-phrase scene.
 
 ## Types
 
 `CelebrationProviderProps`, `CelebrationContextValue`, `CelebrationEvent`, `CelebrationEventLoader`, `CelebrationScene`, `CelebrationSecretTrigger`, `CelebrationDecorationProps`, `CelebrationEventSelection`, `CelebrationAnchors`, `CelebrationNotification`, `HalloweenEventOptions`, `HalloweenLabels`, `NewYearLabels`.
 
 ## Scenes
+
+New Year's gift-wrapping scene has two elves treat the composer as a present.
+They wrap its edges in golden ribbon, catch the helper's hat in the bow, unwrap
+the present to free it, and depart with the bow on the helper's hat. The scene
+animates for eighteen seconds and unmounts after eighteen and a half. It only
+measures the composer: no host element is copied, hidden or moved, and drafts,
+focus and selection remain intact. Both elves and the full story remain on
+mobile. Missing, clipped or spatially unsuitable composers use a decorative
+parcel. Reduced motion or unavailable animation APIs show stationary elves
+without measuring the host. Interaction, focus changes, scrolling, viewport or
+target changes, hidden tabs, navigation and motion-preference changes cancel
+playback. The gift selects it from the existing random click pool; the secret
+phrase still plays confetti. Hosts can override `giftWrappingToastMessage`
+through the existing New Year labels.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
