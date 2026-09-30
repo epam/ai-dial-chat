@@ -21,16 +21,16 @@ The system SHALL provide a `/toolset-editor` route that opens the toolset editor
 ### Requirement: Metadata section fields
 The Metadata section SHALL allow editing the toolset avatar, name, version, description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), which opens the `AvatarPickerModal` file manager restricted to a single image up to a host-configured size, rather than a plain URL text field. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup, which is present only while the host supplies a non-empty `availableLocaleOptions` (see `builder-form`). These fields SHALL be rendered through the toolset-editor lib's `GeneralForm` component, which wraps the shared `DeploymentCreationForm` component from `@epam/ai-dial-builder-form`. The Metadata section SHALL NOT contain any connection or authentication fields.
 
-The Version field SHALL be validated against the shared `builder-form` library's default `VERSION_PATTERN` (via `validateDeploymentCreationFields` with `validateVersionPattern: true`) — letters, digits, dots, underscores, and dashes are all allowed, unlike the stricter dot-separated-numeric-only pattern the Quick App and Custom App editors use. A non-empty version that contains any other character SHALL surface a version-invalid error (`toolsetEditor.general.versionInvalid`, "Version may only contain letters, digits, dots, underscores, and dashes") under the Version field and SHALL keep the Save button disabled.
+The Version field SHALL be validated against the shared `builder-form` library's `SEMVER_VERSION_PATTERN` (via `validateDeploymentCreationFields` with `validateVersionPattern: SEMVER_VERSION_PATTERN`), the same rule the Quick App and Custom App editors use: a non-empty version must be a SemVer 2.0.0 version (`MAJOR.MINOR.PATCH` without leading zeros, with optional pre-release and build metadata — e.g. `1.0.0`, `1.0.0-beta`, `1.0.0+build`; not `1.2`, `1.0.0.0`, `01.0.0` or `abc`), the rule DIAL Admin applies through `semver.valid()`. A non-empty version that is not SemVer 2.0.0 SHALL surface a version-invalid error ("Version must follow semantic versioning (e.g., 1.0.0)" (`editor.versionInvalid`)) under the Version field and SHALL keep the Save button disabled. The BFF's `ToolsetBodyDto` SHALL enforce the same pattern (at most 64 characters).
 
 The Name field SHALL be at most 256 characters and SHALL NOT contain control characters. The Description field SHALL be at most 2000 characters (see `entity-field-limits`). The host SHALL pass the translated `editor.fieldTooLong` and `editor.nameControlCharacters` messages as `labels.validation.nameTooLong`, `nameControlCharacters` and `descriptionTooLong`, so these errors appear inline under their fields. The BFF's DTO message SHALL NOT surface as a toast for a rule the client already enforces.
 
 #### Scenario: Version format error
-- **WHEN** a user types a version containing a character outside letters, digits, dots, underscores, and dashes (e.g. a space or `/`)
+- **WHEN** a user types a version that is not SemVer 2.0.0 (e.g. `abc`, `1.2`, `1.0.0.0` or `01.0.0`)
 - **THEN** a version-invalid error is shown under the Version field and the Save button stays disabled
 
-#### Scenario: Letters-only version is accepted
-- **WHEN** a user types a version made only of letters, digits, dots, underscores, and dashes (e.g. `abc` or `1.0-beta`)
+#### Scenario: Pre-release and build metadata are accepted
+- **WHEN** a user types a SemVer 2.0.0 version with a pre-release or build metadata (e.g. `1.0.0-beta` or `1.0.0+build`)
 - **THEN** no version error is shown
 
 #### Scenario: Edit metadata fields

@@ -196,10 +196,11 @@ have no side effects and SHALL NOT depend on i18n, routing, or network state.
 
 `validateVersionPattern` SHALL accept either `true` — checking the non-empty version against the
 exported default `VERSION_PATTERN` (letters, digits, dots, underscores, dashes) — or a `RegExp`,
-checked instead of the default. The library SHALL also export `SEMVER_VERSION_PATTERN` (one or
-more dot-separated numeric segments, e.g. `0.0.1`, `2.0`) as a stricter alternative a host can
-pass when it requires a dot-separated numeric version rather than the default permissive
-character-set check.
+checked instead of the default. The library SHALL also export `SEMVER_VERSION_PATTERN` (a
+SemVer 2.0.0 version: `MAJOR.MINOR.PATCH` without leading zeros, with an optional pre-release
+and build metadata, e.g. `1.0.0`, `1.0.0-beta.1`, `1.0.0+build.5`) as a stricter alternative a
+host can pass when it requires the version rule DIAL Admin applies (`semver.valid()`) rather
+than the default permissive character-set check.
 
 #### Scenario: Valid values produce no errors
 - **WHEN** the function is called with a non-empty, correctly formatted name
@@ -229,8 +230,9 @@ character-set check.
 
 #### Scenario: Stricter version pattern override
 - **WHEN** the function is called with `validateVersionPattern: SEMVER_VERSION_PATTERN` and a
-  non-empty version that is not entirely dot-separated numeric segments (e.g. `abc`)
-- **THEN** it returns a version-format error; a version such as `0.0.1` or `2.0` produces no error
+  non-empty version that is not SemVer 2.0.0 (e.g. `abc`, `1.2`, `1.0.0.0`, `01.0.0`)
+- **THEN** it returns a version-format error; a version such as `0.0.1`, `1.0.0-beta` or
+  `1.0.0+build` produces no error
 
 #### Scenario: Empty version is never flagged
 - **WHEN** the function is called with `validateVersionPattern` set (either `true` or a `RegExp`)

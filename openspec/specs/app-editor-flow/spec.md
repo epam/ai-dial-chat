@@ -134,11 +134,11 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 | `editor.addAvatarButtonLabel` | `Add avatar` |
 | `editor.avatarCaption` | `PNG, JPG or SVG (max 1 MB)` |
 | `editor.versionLabel` | `Version` |
+| `editor.versionInvalid` | `Version must follow semantic versioning (e.g., 1.0.0)` |
 | `editor.topicsLabel` | `Topics` |
 | `appsEditor.generalForm.namePlaceholder` | `Enter application name` |
 | `appsEditor.generalForm.descriptionPlaceholder` | `Describe your application` |
 | `appsEditor.generalForm.nameInvalid` | `Name may only contain letters, digits, spaces, underscores, dots, and dashes` |
-| `appsEditor.generalForm.versionInvalid` | `Version format is invalid (example: 0.0.1)` |
 | `appsEditor.settingsStep.loadingLabel` | `Loading editor…` |
 | `appsEditor.settingsStep.noEditorPlaceholder` | `Editor not available for this application type yet.` |
 | `appsEditor.error.createFailed` | `Failed to create application. Please try again.` |
@@ -405,7 +405,7 @@ State owned locally via `useState`:
 
 `initialValues`, when supplied, SHALL seed `values` exactly once (guarded by a ref) so later edits are never overwritten by a re-render of the host.
 
-Client-side validation SHALL run through `validateDeploymentCreationFields` with `validateNamePattern` enabled and `validateVersionPattern` set to the library's exported `SEMVER_VERSION_PATTERN`, with codes translated by `translateDeploymentCreationErrors` (`apps/chat/src/utils/entity-field-validation.ts`): the Name field is required, at most 256 characters and must match the allowed-character pattern, the Description field is at most 2000 characters (see `entity-field-limits`), and the Version field — when non-empty — must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`), stricter than the shared library's default character-set-only version pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
+Client-side validation SHALL run through `validateDeploymentCreationFields` with `validateNamePattern` enabled and `validateVersionPattern` set to the library's exported `SEMVER_VERSION_PATTERN`, with codes translated by `translateDeploymentCreationErrors` (`apps/chat/src/utils/entity-field-validation.ts`): the Name field is required, at most 256 characters and must match the allowed-character pattern, the Description field is at most 2000 characters (see `entity-field-limits`), and the Version field — when non-empty — must be a SemVer 2.0.0 version (`MAJOR.MINOR.PATCH` without leading zeros, with optional pre-release and build metadata — e.g. `1.0.0`, `1.0.0-beta`, `1.0.0+build`; not `1.2`, `1.0.0.0`, `01.0.0` or `abc`), the rule DIAL Admin applies through `semver.valid()`, stricter than the shared library's default character-set-only version pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
 
 Submitting the form (via the imperative `submit()` handle, or the underlying `<form onSubmit>` if the user presses Enter):
 - Is a no-op while `isSubmitting` is already true.
