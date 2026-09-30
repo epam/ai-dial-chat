@@ -908,7 +908,7 @@ describe('annotationToPdfCanvasContent', () => {
     );
   });
 
-  it('sets page to undefined and produces no highlight for a malformed pdf_region selector', () => {
+  it('keeps the page but produces no highlight for a malformed pdf_region selector', () => {
     const annotation: Annotation = {
       index: 0,
       body: {
@@ -921,8 +921,46 @@ describe('annotationToPdfCanvasContent', () => {
         },
         selector: {
           type: 'pdf_region',
-          page: 1,
+          page: 3,
           bbox: { lt: [1], wh: [2, 3] },
+        },
+      },
+    };
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBe(3);
+    expect(result?.highlights).toEqual([]);
+    expect(result?.selectedHighlightId).toBeUndefined();
+  });
+
+  it('opens the cited page for a page-only pdf_region selector without a bbox', () => {
+    const annotation = {
+      target: { selector: { type: 'html_tag', tag: 'cit', id: '14a0ba' } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: [{ type: 'pdf_region', page: 2 }],
+      },
+    } as Annotation;
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBe(2);
+    expect(result?.highlights).toEqual([]);
+    expect(result?.selectedHighlightId).toBeUndefined();
+  });
+
+  it('leaves page undefined for an annotation without a body selector', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
         },
       },
     };
