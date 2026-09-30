@@ -12,6 +12,7 @@ import { FC, useId } from 'react';
 import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';
 import { BubblePosition } from '../../types/bubble-position';
+import { copySelectionWithoutStyles } from '../../utils/clipboard';
 import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
@@ -89,6 +90,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       role="group"
       aria-label={userMessageAriaLabel}
       style={cssVars}
+      onCopy={copySelectionWithoutStyles}
       className={mergeClasses('flex w-full', className)}
     >
       <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
