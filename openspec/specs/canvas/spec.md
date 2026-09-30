@@ -829,7 +829,9 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 
 ### Requirement: One PDF selector reader serves both highlight geometry and page navigation
 
-`libs/quotations/src/utils/annotation.ts` SHALL expose a single internal reader that converts one `AnnotationSelector` to the highlighter's `{ page, x1, y1, x2, y2 }` box shape, or `undefined` when the selector is not a recognised PDF selector or fails validation. Both `annotationsToPdfHighlights` and `getAnnotationPdfPage` SHALL derive their result from that one reader, so the set of selector shapes that produce a highlight and the set that produce a page number are identical by construction.
+`libs/quotations/src/utils/annotation.ts` SHALL expose a single internal reader that converts one `AnnotationSelector` to the highlighter's `{ page, x1, y1, x2, y2 }` box shape, or `undefined` when the selector is not a recognised PDF selector or fails validation. Both `annotationsToPdfHighlights` and `getAnnotationPdfPage` SHALL derive their geometry-backed result from that one reader, so every selector that produces a highlight also produces the same page number.
+
+Page navigation SHALL additionally accept a **page-only** PDF selector: a `pdf_bbox` or `pdf_region` selector whose `page` is an integer `>= 1` but whose geometry is absent or fails validation (e.g. `{ type: 'pdf_region', page: 2 }`). Such a selector yields a page but never a highlight. A second internal page reader SHALL validate only `type` and `page` for this fallback, so a page number is never taken from a non-PDF selector type.
 
 The reader SHALL recognise three input shapes:
 
@@ -852,7 +854,7 @@ Validation SHALL be per selector and non-throwing: the reader SHALL reject a sel
 
 `annotationsToPdfHighlights` SHALL keep its current contract with the wider set of selector shapes: `body.selector` may be a single selector or an array; one annotation still yields at most one `InputHighlightData` whose `bboxes` collects every box the reader accepted from that annotation, in selector order; the highlight `id` is derived by the shared annotation-identity helper described in the "Citation highlight ids identify the annotation, not its position in the clicked group" requirement (no longer the input position); `CITATION_HIGHLIGHT_STYLE` is unchanged; and an annotation contributing no accepted box still produces no highlight.
 
-`getAnnotationPdfPage` SHALL return the `page` of the first selector the reader accepts, and `undefined` when it accepts none.
+`getAnnotationPdfPage` SHALL return the `page` of the first selector the box reader accepts, so the page matches the selected highlight whenever geometry exists. When the box reader accepts none, it SHALL return the `page` of the first page-only `pdf_bbox`/`pdf_region` selector, and `undefined` when neither exists.
 
 The original annotations SHALL NOT be mutated and the persisted message format SHALL NOT change — conversion happens only where PDF preview data is built, so a message saved with `pdf_region` selectors is reloaded and re-read the same way.
 
@@ -882,10 +884,26 @@ The original annotations SHALL NOT be mutated and the persisted message format S
 - **WHEN** a selector array holds `{ type: 'pdf_region', page: 1, bbox: { lt: [1], wh: [2, 3] } }`, `{ type: 'pdf_region', page: 0, bbox: { left: 0, top: 0, width: 1, height: 1 } }`, `null`, and then a valid `pdf_region` entry on page 6
 - **THEN** no error is thrown, the first three entries are skipped, the highlight carries only the page-6 box, and `getAnnotationPdfPage` returns `6`
 
-#### Scenario: A region with a non-finite coordinate is rejected
+#### Scenario: A region with a non-finite coordinate produces no highlight
 
 - **WHEN** a `pdf_region` selector's `wh` contains `NaN`, or its `bbox` is absent or not an object
-- **THEN** the reader rejects that selector, it contributes no bbox, and it is not considered for the page
+- **THEN** the box reader rejects that selector and it contributes no bbox
+- **AND** its `page`, when a valid integer `>= 1`, is still used by `getAnnotationPdfPage` as the page-only fallback
+
+#### Scenario: A page-only pdf_region selector navigates without a highlight
+
+- **WHEN** an annotation's `body.selector` is `[{ type: 'pdf_region', page: 2 }]`
+- **THEN** `annotationsToPdfHighlights` produces no highlight for it and `getAnnotationPdfPage` returns `2`
+
+#### Scenario: Geometry wins over an earlier page-only selector
+
+- **WHEN** a selector array holds `{ type: 'pdf_region', page: 2 }` followed by a valid `pdf_region` `lt`/`wh` entry on page 5
+- **THEN** `getAnnotationPdfPage` returns `5`, the page of the highlighted region
+
+#### Scenario: A page-only fallback still rejects invalid pages and non-PDF types
+
+- **WHEN** the only selectors are page-only PDF selectors with `page` `0`, `1.5`, or the string `'2'`, or a non-PDF selector such as `docx_text_range` carrying `page: 2`
+- **THEN** `getAnnotationPdfPage` returns `undefined`
 
 #### Scenario: A zero-size region still navigates
 
@@ -907,20 +925,19 @@ The original annotations SHALL NOT be mutated and the persisted message format S
 - **WHEN** every selector on a message is `pdf_bbox`, including entries with all-zero coordinates, a missing page, or a non-integer page
 - **THEN** the highlight geometry, styling, and selected page are identical to the behavior before this change, and the highlight ids are whatever the annotation-identity helper produces — equal to `annotation.index` when the wire supplied one
 
-
 ### Requirement: PDF citation preview navigates to the annotation's referenced page independent of highlight geometry
 
 When opening a PDF citation or a reference-only PDF-page chip in the attachment canvas, the panel SHALL navigate to the page specified by the triggering annotation's/reference's page number, whether or not that page's bounding box is renderable as a visible highlight.
 
 `PdfCanvasContent` (`libs/attachment-canvas/src/models/attachment-canvas.ts`) SHALL include an optional `page?: number` field — a 1-based page to navigate to on initial load, independent of `highlights`/`selectedHighlightId`.
 
-`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array), taking the page of the first entry the PDF selector reader accepts — a `pdf_bbox` or a `pdf_region` selector with an integer `page >= 1` and finite geometry — skipping malformed entries and invalid pages; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
+`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array), using `getAnnotationPdfPage`: the page of the first entry the PDF selector box reader accepts — a `pdf_bbox` or a `pdf_region` selector with an integer `page >= 1` and finite geometry — or, when none has valid geometry, the page of the first page-only `pdf_bbox`/`pdf_region` selector with an integer `page >= 1`, skipping malformed entries and invalid pages; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
 
 `referenceAttachmentToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL likewise set `page` to the parsed page fragment when a reference-only PDF URL carries one (e.g. `files/{bucket}/report.pdf#page=81`).
 
 `PdfContent` (`libs/attachment-canvas/src/components/PdfContent/PdfContent.tsx`) SHALL accept a `selectedPageNumber?: number` prop, forward it directly to the vendor `DocumentPreview`'s own `selectedPageNumber` prop, and prefer it over the highlight-bbox lookup when initialising and syncing its internal `selectedPage` state (which also drives the thumbnails panel's scroll position). `AttachmentCanvasBody` SHALL pass `content.page` as this prop when rendering `PdfCanvasContent`.
 
-The mapper SHALL find the group by exact annotation membership, not source URL alone, and include highlights only from that group's annotations for the selected PDF. It SHALL omit a selected highlight ID when no generated highlight matches. Highlight generation SHALL ignore malformed selectors, invalid pages, and non-finite coordinates, while retaining valid zero-area boxes. Download behavior and non-PDF routing SHALL remain unchanged.
+The mapper SHALL find the group by exact annotation membership, not source URL alone, and include highlights only from that group's annotations for the selected PDF. When no generated highlight matches the clicked annotation but `page` is set, it SHALL append an invisible page-anchor highlight — a zero-area box at the top of that page (`x1 = y1 = x2 = y2 = 0`), transparent, `opacity: 0`, the same shape `referenceAttachmentToPdfCanvasContent` uses — with an id distinct from every generated highlight, and select it. Selecting a highlight routes the vendor viewer through highlight navigation, which runs after its initial auto-zoom; a bare `selectedPageNumber` is applied before that zoom and reset to page 1 by it. It SHALL omit a selected highlight ID only when no generated highlight matches and `page` is `undefined`. Highlight generation SHALL ignore malformed selectors, invalid pages, and non-finite coordinates, while retaining valid zero-area boxes. Download behavior and non-PDF routing SHALL remain unchanged.
 
 The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page or selected highlight is present. This prevents wrapper-originated resets; asynchronous vendor auto-zoom resets remain a diagnostic investigation, not a verified fix in this change.
 
@@ -969,9 +986,24 @@ The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page
 - **WHEN** a citation group contains annotations for pages 2 and 7 of the same PDF, the group's `primaryAnnotation` is the page-2 entry, and the user has switched the popup to the page-7 annotation before clicking Preview
 - **THEN** `annotationToPdfCanvasContent` is called with the page-7 annotation and returns `PdfCanvasContent.page === 7`
 
+#### Scenario: A page-only citation opens its page without a highlight
+
+- **WHEN** the user clicks Preview for a PDF citation whose annotation has `body.selector: [{ type: 'pdf_region', page: 2 }]` and no `bbox`
+- **THEN** the canvas opens with `PdfCanvasContent.page === 2` and `highlights` holding only an invisible zero-area page-anchor box on page 2, which is the `selectedHighlightId`, and the viewer navigates to page 2 with no visible highlight
+
+#### Scenario: A malformed region keeps its page
+
+- **WHEN** the clicked annotation has a single `pdf_region` selector with `page: 3` and a malformed `bbox` (`lt: [1]`)
+- **THEN** `PdfCanvasContent.page === 3`, and `highlights` holds only the selected invisible page-anchor box on page 3
+
+#### Scenario: A page-only annotation keeps its group's other highlights
+
+- **WHEN** the clicked page-only annotation (page 4) shares a citation group and PDF with an annotation that has valid geometry on page 1
+- **THEN** `highlights` carries the sibling's page-1 highlight followed by the page-4 anchor, and `selectedHighlightId` is the anchor's id
+
 #### Scenario: Missing or invalid page data falls back to the existing default
 
-- **WHEN** the clicked annotation has no recognised PDF selector, or every such selector's `page` is missing, non-integer, or less than 1
+- **WHEN** the clicked annotation has no `body.selector`, no recognised PDF selector, or every such selector's `page` is missing, non-integer, or less than 1
 - **THEN** `getAnnotationPdfPage` returns `undefined`, `PdfCanvasContent.page` is `undefined`, and the canvas falls back to the existing default behavior (page 1) without throwing
 
 #### Scenario: Reference-only PDF-page reference also navigates independent of highlight geometry
