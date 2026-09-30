@@ -183,11 +183,19 @@ describe('StagesPanel', () => {
 
     const button = screen.getByRole('button');
     expect(button.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText('Detailed stage output')).toBeNull();
+    /*
+     * `queryByText` is a plain DOM text search and does not respect `inert` —
+     * only role-based queries do — so the collapsed state is asserted on the
+     * region's own `inert` property instead.
+     */
+    const contentText = screen.getByText('Detailed stage output');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(contentText.closest('[inert]')).toBeTruthy();
 
     fireEvent.click(button);
     expect(button.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByText('Detailed stage output')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(contentText.closest('[inert]')).toBeNull();
   });
 
   it('renders a stage without expandable content as a plain row (no button)', () => {
