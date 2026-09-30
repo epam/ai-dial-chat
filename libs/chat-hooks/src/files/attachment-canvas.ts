@@ -453,21 +453,58 @@ export const resolveCodeCanvasContent = async (
 };
 
 /**
+ * Returns the origin of `url`, or `undefined` when it cannot be parsed. A
+ * relative `url` resolves against the current document location, since a
+ * relative URL is always same-origin.
+ */
+const extractOrigin = (url: string): string | undefined => {
+  try {
+    return new URL(url, window.location.href).origin;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Resolves an HTML canvas content payload from a DisplayAttachment.
- * Fetches and inlines the HTML as `srcdoc` when the attachment has a download URL or inline data.
- * Returns `null` if no source is available, or an `ErrorCanvasContent` on fetch failure.
- * Rejects `srcdoc` payloads larger than 1 MiB to prevent browser truncation.
+ * When the attachment has a download URL, that URL is the primary render
+ * target so the preview loads via `src` and gets its own response-level CSP
+ * instead of inheriting the host document's — no HTML text is fetched up
+ * front; `resolveSourceText` fetches it lazily, only when the "View source"
+ * toggle is used, and rejects if that fetch fails. `isSameOriginUrl` reflects
+ * a real comparison against the embedding document's own origin.
+ * With no download URL (local file or inline data), falls back to `srcdoc`
+ * only, rejecting payloads larger than 1 MiB to prevent browser truncation.
+ * Returns `null` if no source is available, or an `ErrorCanvasContent` when
+ * that fallback fetch fails.
  */
 export const resolveHtmlCanvasContent = async (
   attachment: DisplayAttachment,
   resolvers: AttachmentCanvasUrlResolvers,
 ): Promise<HtmlCanvasContent | ErrorCanvasContent | null> => {
+  const downloadUrl = resolvers.resolveDialUrl(attachment) ?? undefined;
+  if (downloadUrl != null) {
+    return {
+      type: AttachmentContentType.Html,
+      url: downloadUrl,
+      isSameOriginUrl:
+        extractOrigin(downloadUrl) === extractOrigin(window.location.href),
+      resolveSourceText: async () => {
+        const result = await resolveAttachmentText(attachment, resolvers);
+        if (result == null || typeof result !== 'string') {
+          throw new Error('Failed to resolve HTML source text');
+        }
+        return result;
+      },
+    };
+  }
+
   const result = await resolveAttachmentText(attachment, resolvers);
   if (result == null) return null;
   if (typeof result !== 'string') return result;
+
   if (result.length > HTML_SRCDOC_SIZE_LIMIT) return null;
-  const url = resolvers.resolveDialUrl(attachment) ?? undefined;
-  return { type: AttachmentContentType.Html, srcdoc: result, url };
+  return { type: AttachmentContentType.Html, srcdoc: result };
 };
 
 /**
