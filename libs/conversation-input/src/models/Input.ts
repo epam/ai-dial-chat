@@ -135,6 +135,10 @@ export interface ModelMenuStyles {
 export interface ToolsChipLabels {
   /** Returns the accessible label for a chip's × button, which drops the tool from the input. Receives the tool label. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
+  /** Visible state text shown after the tool label while the tool is on, e.g. `"ON"`. Renders only when `stateOffLabel` is also set. */
+  stateOnLabel?: string;
+  /** Visible state text shown after the tool label while the tool is off, e.g. `"OFF"`. Renders only when `stateOnLabel` is also set. */
+  stateOffLabel?: string;
 }
 
 /** A host-injected overlay entry for the `+` menu: a menu item whose submenu renders host-owned content. */

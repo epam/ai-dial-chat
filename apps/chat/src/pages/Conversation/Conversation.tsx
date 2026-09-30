@@ -723,6 +723,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const toolsChipLabels = useMemo(
     () => ({
       removeLabel: (label: string) => t(ToolsI18nKeys.RemoveTool, { label }),
+      stateOnLabel: t(ToolsI18nKeys.StateOn),
+      stateOffLabel: t(ToolsI18nKeys.StateOff),
     }),
     [t],
   );

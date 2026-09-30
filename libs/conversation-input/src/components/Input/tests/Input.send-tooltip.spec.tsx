@@ -38,7 +38,7 @@ describe.each([
       render(<Component {...tooltips} message={message} />);
 
       const send = screen.getByRole('button', { name: 'Send message' });
-      expect(send).toHaveProperty('disabled', true);
+      expect(send.getAttribute('aria-disabled')).toBe('true');
       await user.hover(send);
       expect(await screen.findByText('Type a message first')).toBeTruthy();
     },
@@ -99,7 +99,7 @@ describe.each([
     const user = userEvent.setup({ delay: null });
     render(<Component {...tooltips} message="Hello" isSendDisabled />);
     const send = screen.getByRole('button', { name: 'Send message' });
-    expect(send).toHaveProperty('disabled', true);
+    expect(send.getAttribute('aria-disabled')).toBe('true');
 
     await user.hover(send);
     expect(await screen.findByText('Send message')).toBeTruthy();
@@ -110,7 +110,7 @@ describe.each([
     const user = userEvent.setup({ delay: null });
     render(<Component {...tooltips} message="Hello" deployments={[]} />);
     const send = screen.getByRole('button', { name: 'Send message' });
-    expect(send).toHaveProperty('disabled', true);
+    expect(send.getAttribute('aria-disabled')).toBe('true');
     await user.hover(send);
     expect(await screen.findByText('Send message')).toBeTruthy();
   });

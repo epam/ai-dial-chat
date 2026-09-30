@@ -78,14 +78,13 @@ const getWrapper = (container: HTMLElement): HTMLElement =>
   container.firstElementChild as HTMLElement;
 
 /*
- * The disabled-state marker around the model selector chip carries no
- * accessible role/label of its own — only the nested trigger button does.
+ * Scoped to the chip's trigger: other kit buttons with a tooltip (e.g. "Add")
+ * also render `aria-disabled="true"` when disabled, so a container-wide query
+ * would match them instead.
  */
-const getModelSelectorDisabledMarker = (
-  container: HTMLElement,
-): Element | null =>
-  // eslint-disable-next-line testing-library/no-node-access
-  container.querySelector('[aria-disabled="true"]');
+const isModelSelectorMarkedDisabled = (): boolean =>
+  screen.getByLabelText(/Select model/).getAttribute('aria-disabled') ===
+  'true';
 
 /*
  * Skeleton is mocked to a bare <span data-variant> for this test file; it has
@@ -568,7 +567,7 @@ describe('Input — model selector', () => {
 
 describe('Input — isModelSelectorDisabled', () => {
   it('keeps the model chip visible and marks it aria-disabled', () => {
-    const { container } = render(
+    render(
       <Input
         deployments={mockItems}
         selectedDeploymentId="gpt-4o"
@@ -577,11 +576,11 @@ describe('Input — isModelSelectorDisabled', () => {
       />,
     );
     expect(screen.getByLabelText(/Select model/)).toBeTruthy();
-    expect(getModelSelectorDisabledMarker(container)).toBeTruthy();
+    expect(isModelSelectorMarkedDisabled()).toBe(true);
   });
 
   it('does not mark the chip aria-disabled when isModelSelectorDisabled is false', () => {
-    const { container } = render(
+    render(
       <Input
         deployments={mockItems}
         selectedDeploymentId="gpt-4o"
@@ -589,7 +588,7 @@ describe('Input — isModelSelectorDisabled', () => {
         isModelSelectorDisabled={false}
       />,
     );
-    expect(getModelSelectorDisabledMarker(container)).toBeNull();
+    expect(isModelSelectorMarkedDisabled()).toBe(false);
   });
 
   it('keeps typing and sending enabled while the model selector is disabled', () => {
@@ -737,7 +736,7 @@ describe('Input — isInputDisabled', () => {
   it('attach button is disabled when isInputDisabled is true', () => {
     render(<Input isInputDisabled />);
     const addButton = screen.getByLabelText('Add') as HTMLButtonElement;
-    expect(addButton.disabled).toBe(true);
+    expect(addButton.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('does not call onSend on Enter when isInputDisabled is true', () => {
@@ -776,7 +775,7 @@ describe('Input — isInputDisabled', () => {
   });
 
   it('does not dim the model selector when isInputDisabled is true', () => {
-    const { container } = render(
+    render(
       <Input
         deployments={mockItems}
         selectedDeploymentId="gpt-4o"
@@ -784,7 +783,7 @@ describe('Input — isInputDisabled', () => {
         isInputDisabled
       />,
     );
-    expect(getModelSelectorDisabledMarker(container)).toBeNull();
+    expect(isModelSelectorMarkedDisabled()).toBe(false);
   });
 
   it('keeps the model picker closed when the selector is explicitly disabled', () => {

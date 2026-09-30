@@ -1160,6 +1160,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
           onToolDismiss={handleToolDismiss}
           canRemove={canRemoveTools}
           removeLabel={toolsChipLabels?.removeLabel}
+          stateOnLabel={toolsChipLabels?.stateOnLabel}
+          stateOffLabel={toolsChipLabels?.stateOffLabel}
         />
       </div>
     );

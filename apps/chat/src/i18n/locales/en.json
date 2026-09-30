@@ -64,11 +64,11 @@
     "negativeFeedbackTitle": "Send negative feedback",
     "feedbackTypeLabel": "What type of feedback you want to give?",
     "feedbackCategories": {
-      "uiBug": "Ui bug",
+      "uiBug": "UI bug",
       "overactiveRefusal": "Overactive refusal",
       "incompleteResponse": "Incomplete response",
       "shouldHaveTriggeredThinking": "Should have triggered thinking",
-      "shouldHaveSearchedTheWeb": "Should have search the web"
+      "shouldHaveSearchedTheWeb": "Should have searched the web"
     },
     "feedbackCommentPlaceholder": "Type an optional comment to your feedback",
     "likeToastTitle": "Thank you for your positive feedback!",
@@ -1236,7 +1236,9 @@
   },
   "tools": {
     "menuTitle": "Tools",
-    "removeTool": "Remove {{label}}"
+    "removeTool": "Remove {{label}}",
+    "stateOn": "On",
+    "stateOff": "Off"
   },
   "conversationInput": {
     "usageLimits": {
