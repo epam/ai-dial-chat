@@ -1,7 +1,9 @@
 import type { NewYearLabels } from '../models/labels';
 
 /** English defaults for every New Year label. */
-export const NEW_YEAR_LABELS: NewYearLabels = {
+export const NEW_YEAR_LABELS = {
+  giftWrappingToastMessage:
+    'Some gifts have a mind of their own. Send "{{phrase}}" in the start-page chat for a secret surprise.',
   toastTitle: 'Happy New Year!',
   snowToastMessage:
     'A little winter magic. Send "{{phrase}}" in the start-page chat for a secret surprise.',
@@ -10,4 +12,4 @@ export const NEW_YEAR_LABELS: NewYearLabels = {
   sleighToastMessage:
     'Special delivery from the night sky. Send "{{phrase}}" in the start-page chat for a secret surprise.',
   giftLabel: 'New Year gift',
-};
+} satisfies NewYearLabels;

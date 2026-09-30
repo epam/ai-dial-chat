@@ -15,7 +15,7 @@
     "lib": ["dom"],
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json"],
   "exclude": [
     "src/test-utils/**",
     "src/stories/**",

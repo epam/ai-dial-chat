@@ -196,13 +196,43 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`Snow`, `Confetti`, `Sleigh`. `Confetti` is also the secret-phrase scene.
+`Snow`, `Confetti`, `Sleigh`, `GiftWrapping`. `Confetti` is also the secret-phrase scene.
 
 ## Types
 
 `CelebrationProviderProps`, `CelebrationContextValue`, `CelebrationEvent`, `CelebrationEventLoader`, `CelebrationScene`, `CelebrationSecretTrigger`, `CelebrationDecorationProps`, `CelebrationEventSelection`, `CelebrationAnchors`, `CelebrationNotification`, `HalloweenEventOptions`, `HalloweenLabels`, `NewYearLabels`.
 
 ## Scenes
+
+New Year's gift-wrapping scene has two mischievous cartoon elves: a stocky,
+self-important green master and a nimble coral helper. Small noses, expressive
+brows and grins make their reactions distinct, while compact articulated arms
+keep each mitten on its ribbon or reel. They treat the composer as a present.
+A continuous golden ribbon travels around its edges, then retracts as the
+helper's overenthusiastic pull wraps the master instead. The helper proudly
+presents his work while the frustrated master hops away with a chest bow and a
+ribbon around his
+ankles; the helper follows with the reel. Both elves and the full story remain
+on mobile and in RTL layouts.
+
+The scene plays one sixteen-second Lottie vector composition and unmounts by
+eighteen and a half seconds. Its light SVG player loads only for animated
+playback, with a two-second import deadline and a further 250 ms for SVG
+readiness; hosts need no extra player setup or peer dependency. The artwork is
+local and uses no external animation URL, fonts or raster assets. It only measures
+the composer: no host element is copied, hidden or moved, and drafts, focus and
+selection remain intact. Missing,
+clipped or spatially unsuitable composers use a decorative parcel. Reduced
+motion, missing browser support or player failure show the same redesigned
+characters as a stationary, annoyed bound master beside the proud helper.
+Waiting for the player import and reduced-motion fallback do not measure the
+host.
+
+Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
+navigation and motion-preference changes cancel playback and release the player.
+The gift selects the scene from the existing random click pool; the secret
+phrase still plays confetti. Hosts can override `giftWrappingToastMessage`
+through the existing New Year labels.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
