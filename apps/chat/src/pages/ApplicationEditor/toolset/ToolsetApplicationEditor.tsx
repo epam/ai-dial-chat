@@ -313,7 +313,7 @@ const ToolsetApplicationEditor: FC = () => {
         descriptionTooLong: t(EditorI18nKeys.FieldTooLong, {
           count: ENTITY_DESCRIPTION_MAX_LENGTH,
         }),
-        versionInvalid: t(ToolsetEditorI18nKeys.VersionInvalid),
+        versionInvalid: t(EditorI18nKeys.VersionInvalid),
         endpointRequired: t(ToolsetEditorI18nKeys.EndpointRequired),
         endpointInvalid: t(ToolsetEditorI18nKeys.EndpointInvalid),
         keyHeaderRequired: t(ToolsetEditorI18nKeys.KeyHeaderRequired),

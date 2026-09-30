@@ -36,7 +36,7 @@ The endpoint SHALL:
   description?: string;  // optional, @IsString, @IsOptional, @MaxLength(2000)
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsValidResourceReference (https?:// URL or a
                          //   DIAL file id "files/{bucket}/{path}", no traversal segments)
-  version?: string;      // optional, @IsString, @IsOptional, @Matches(/^[a-zA-Z0-9._-]+$/)
+  version?: string;      // optional, @IsString, @IsOptional, @Matches(SEMVER_VERSION_PATTERN) — SemVer 2.0.0
                          //   — defaults to "0.0.1" in the service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
   applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional

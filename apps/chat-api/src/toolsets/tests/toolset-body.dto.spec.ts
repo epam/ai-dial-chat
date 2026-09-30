@@ -158,3 +158,21 @@ describe('ToolsetBodyDto — name and description length', () => {
     expect(errors.some((e) => e.property === 'description')).toBe(true);
   });
 });
+
+describe('ToolsetBodyDto — version', () => {
+  it.each(['0.0.1', '1.0.0-beta', '1.0.0+build', '1.0.0-rc.1+build.5'])(
+    'accepts the SemVer 2.0.0 version %s',
+    async (version) => {
+      const errors = await validateDto({ ...BASE_BODY, version });
+      expect(errors).toHaveLength(0);
+    },
+  );
+
+  it.each(['1.2', '1.0.0.0', '01.0.0', 'abc', `1.0.0-${'a'.repeat(64)}`])(
+    'rejects the version %s',
+    async (version) => {
+      const errors = await validateDto({ ...BASE_BODY, version });
+      expect(errors.some((e) => e.property === 'version')).toBe(true);
+    },
+  );
+});

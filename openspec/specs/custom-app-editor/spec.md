@@ -85,15 +85,19 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **THEN** the create request body carries no `type` field and no `application_type_schema_id`
 
 ### Requirement: General step validation — name and version
-`CustomAppEditor` SHALL validate the General step through `validateDeploymentCreationFields` from `@epam/ai-dial-builder-form`, passing `validateVersionPattern: SEMVER_VERSION_PATTERN`, and translate its codes with `translateDeploymentCreationErrors` (`apps/chat/src/utils/entity-field-validation.ts`). The `name` field is required, at most 256 characters, and free of control characters. The `description` field is at most 2000 characters. The `version` field is checked against the shared `DeploymentCreationForm`'s exported `SEMVER_VERSION_PATTERN`, which is stricter than that library's default character-set-only version pattern: a non-empty version must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. A too-long or control-character error SHALL additionally appear as soon as the value changes (see `entity-field-limits`). The Next button SHALL stay disabled while any General field is invalid. The version-invalid error message SHALL be `"Version format is invalid (example: 0.0.1)"` (`appsEditor.generalForm.versionInvalid`).
+`CustomAppEditor` SHALL validate the General step through `validateDeploymentCreationFields` from `@epam/ai-dial-builder-form`, passing `validateVersionPattern: SEMVER_VERSION_PATTERN`, and translate its codes with `translateDeploymentCreationErrors` (`apps/chat/src/utils/entity-field-validation.ts`). The `name` field is required, at most 256 characters, and free of control characters. The `description` field is at most 2000 characters. The `version` field is checked against the shared `DeploymentCreationForm`'s exported `SEMVER_VERSION_PATTERN`, which is stricter than that library's default character-set-only version pattern: a non-empty version must be a SemVer 2.0.0 version (`MAJOR.MINOR.PATCH` without leading zeros, with optional pre-release and build metadata — e.g. `1.0.0`, `1.0.0-beta`, `1.0.0+build`; not `1.2`, `1.0.0.0`, `01.0.0` or `abc`), the rule DIAL Admin applies through `semver.valid()`. Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. A too-long or control-character error SHALL additionally appear as soon as the value changes (see `entity-field-limits`). The Next button SHALL stay disabled while any General field is invalid. The version-invalid error message SHALL be "Version must follow semantic versioning (e.g., 1.0.0)" (`editor.versionInvalid`).
 
 #### Scenario: Name required error on blur
 - **WHEN** the Name field is blank and loses focus
 - **THEN** a name-required error is shown under the Name field
 
 #### Scenario: Version format error on blur
-- **WHEN** the Version field contains a value that is not entirely dot-separated numeric segments (e.g. contains letters) and loses focus
-- **THEN** a version-invalid error ("Version format is invalid (example: 0.0.1)") is shown under the Version field
+- **WHEN** the Version field contains a value that is not SemVer 2.0.0 (e.g. `1.2` or `abc`) and loses focus
+- **THEN** a version-invalid error ("Version must follow semantic versioning (e.g., 1.0.0)") is shown under the Version field
+
+#### Scenario: Pre-release and build metadata are accepted
+- **WHEN** the Version field contains `1.0.0-beta` or `1.0.0+build` and loses focus
+- **THEN** no version error is shown
 
 #### Scenario: Over-long name shows while typing
 - **WHEN** the user types a 257th character into the Name field
@@ -154,7 +158,7 @@ On save in edit mode, `CustomAppEditor` SHALL call `PATCH /api/v1/applications/:
 
 ### Requirement: `UpdateApplicationBodyDto` — settings fields
 `UpdateApplicationBodyDto` SHALL accept the following optional settings fields:
-- `version` — string matching `/^[a-zA-Z0-9._-]+$/`
+- `version` — a SemVer 2.0.0 string matching `SEMVER_VERSION_PATTERN` (`apps/chat-api/src/common/validators/semver-version.pattern.ts`)
 - `endpoint` — URL string (protocol required, TLD not required)
 - `features` — `Record<string, unknown>` object
 - `inputAttachmentTypes` — `string[]`

@@ -273,7 +273,9 @@ isToolsetFormValid(form, isEditMode);
 ```
 
 Returns whether the whole editor form can be saved (name/version via
-`builder-form`'s shared validation, endpoint URL, and auth block).
+`builder-form`'s shared validation — the version must be SemVer 2.0.0
+(`SEMVER_VERSION_PATTERN`), as DIAL Admin requires — endpoint URL, and auth
+block).
 
 ## Constants
 

@@ -968,6 +968,7 @@ export enum EditorI18nKeys {
   NameRequired = 'editor.nameRequired',
   FieldTooLong = 'editor.fieldTooLong',
   NameControlCharacters = 'editor.nameControlCharacters',
+  VersionInvalid = 'editor.versionInvalid',
   DescriptionLabel = 'editor.descriptionLabel',
   AvatarLabel = 'editor.avatarLabel',
   AddAvatarButtonLabel = 'editor.addAvatarButtonLabel',
@@ -1136,7 +1137,6 @@ export enum AppsEditorI18nKeys {
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
   GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
-  GeneralFormVersionInvalid = 'appsEditor.generalForm.versionInvalid',
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
   ExitPreviewButton = 'appsEditor.exitPreviewButton',
@@ -1156,7 +1156,6 @@ export enum ToolsetEditorI18nKeys {
   // General form
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
-  VersionInvalid = 'toolsetEditor.general.versionInvalid',
   // Settings form
   EndpointCaption = 'toolsetEditor.settings.endpointCaption',
   EndpointRequired = 'toolsetEditor.settings.endpointRequired',

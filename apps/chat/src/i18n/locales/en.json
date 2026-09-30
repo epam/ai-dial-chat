@@ -1101,6 +1101,7 @@
     "nameRequired": "Name is required",
     "fieldTooLong": "Use {{count}} characters or fewer.",
     "nameControlCharacters": "Remove line breaks, tabs and other control characters.",
+    "versionInvalid": "Version must follow semantic versioning (e.g., 1.0.0)",
     "descriptionLabel": "Description",
     "avatarLabel": "Avatar",
     "addAvatarButtonLabel": "Add avatar",
@@ -1140,8 +1141,7 @@
     "generalForm": {
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
-      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version format is invalid (example: 0.0.1)"
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1159,8 +1159,7 @@
     "editTitle": "Edit toolset",
     "general": {
       "namePlaceholder": "Enter name",
-      "descriptionPlaceholder": "Describe what this toolset does",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
+      "descriptionPlaceholder": "Describe what this toolset does"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.",
