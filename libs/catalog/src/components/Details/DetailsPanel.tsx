@@ -17,6 +17,7 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import {
   CloseButton,
+  ConfirmationPopupVariant,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
@@ -42,10 +43,7 @@ import type {
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
-import {
-  DetailsConfirmationKind,
-  DetailsConfirmationVariant,
-} from '../../types/details-confirmation';
+import { DetailsConfirmationKind } from '../../types/details-confirmation';
 import {
   CredentialsLevel,
   ToolsetAuthenticationType,
@@ -179,13 +177,13 @@ interface ConfirmationContent {
   /** Status text announced to assistive tech while the action is in flight. */
   loadingStatusLabel: string;
   /** Palette the confirm button (and its icon) is rendered with. */
-  variant: DetailsConfirmationVariant;
+  variant: ConfirmationPopupVariant;
   /**
    * Palette of the item identity card. Defaults to `variant` when absent —
    * only `DeleteApiKey` diverges, since removing one credential is far less
    * consequential than the whole-item actions that share the danger button.
    */
-  cardVariant?: DetailsConfirmationVariant;
+  cardVariant?: ConfirmationPopupVariant;
 }
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
@@ -941,7 +939,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             texts?.deleteConfirmConsequences ?? DEFAULT_DELETE_CONSEQUENCES,
           confirmLabel: deleteLabel,
           loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
         };
       }
       case DetailsConfirmationKind.Unshare: {
@@ -960,7 +958,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           loadingStatusLabel: texts?.unsharingStatusLabel ?? 'Removing',
           /* Removal only revokes the caller's own access and is recoverable
            * with a new invitation, so it is not framed as destructive. */
-          variant: DetailsConfirmationVariant.Info,
+          variant: ConfirmationPopupVariant.Info,
         };
       }
       case DetailsConfirmationKind.RevokeAccess: {
@@ -982,7 +980,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           /* Other people irreversibly lose access and the owner must re-share
            * to restore it, so this is framed as destructive — even though the
            * item itself survives untouched for its owner. */
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
         };
       }
       case DetailsConfirmationKind.Unpublish: {
@@ -1020,7 +1018,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           /* Everyone loses access to the published copy and the owner must
            * publish again to restore it — the same reasoning as revoke, with
            * the same caveat that the source item is untouched. */
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
         };
       }
       case DetailsConfirmationKind.Logout: {
@@ -1032,7 +1030,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           consequences: undefined,
           confirmLabel: logoutLabel,
           loadingStatusLabel: texts?.loggingOutStatusLabel ?? 'Logging out',
-          variant: DetailsConfirmationVariant.Info,
+          variant: ConfirmationPopupVariant.Info,
         };
       }
       case DetailsConfirmationKind.DeleteApiKey: {
@@ -1047,10 +1045,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           consequences: undefined,
           confirmLabel: deleteLabel,
           loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
           /* Removing one credential doesn't warrant a red toolset card — the
            * item itself is unaffected, only the confirm button stays danger. */
-          cardVariant: DetailsConfirmationVariant.Info,
+          cardVariant: ConfirmationPopupVariant.Info,
         };
       }
       default:

@@ -1,11 +1,10 @@
 import {
   buildCssVars,
-  ConfirmationFooter,
+  ConfirmationDialog,
   ConfirmationIdentityCard,
-  ConfirmationView,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { ConfirmationPopupVariant, Popup } from '@epam/ai-dial-ui-kit';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 import styles from './ScheduledTaskDeleteConfirmation.module.scss';
 
@@ -15,6 +14,7 @@ export interface ScheduledTaskDeleteConfirmationColors {
   typeLabelText?: string;
 }
 
+/** Style overrides for `ScheduledTaskDeleteConfirmation`. */
 export interface ScheduledTaskDeleteConfirmationStyles {
   /** CSS class applied to the popup container, for example to constrain its width. */
   popupClassName?: string;
@@ -26,7 +26,9 @@ export interface ScheduledTaskDeleteConfirmationStyles {
   colors?: ScheduledTaskDeleteConfirmationColors;
 }
 
+/** Props for `ScheduledTaskDeleteConfirmation`. */
 export interface ScheduledTaskDeleteConfirmationProps {
+  /** Whether the dialog is open. */
   open: boolean;
   /** Task name, echoed in the identity card so the user sees exactly which task will go. */
   taskName: string;
@@ -42,99 +44,77 @@ export interface ScheduledTaskDeleteConfirmationProps {
   title: string;
   /** Warning sentence, which the host composes so it can emphasise the task name. */
   body: ReactNode;
+  /** Consequences listed as bullets under the warning. The last one states that the action cannot be undone. */
   consequences?: string[];
+  /** Label of the cancel button. */
   cancelLabel: string;
+  /** Label of the confirming action button. */
   confirmLabel: string;
   /** Announced while the deletion is in flight. */
   pendingLabel?: string;
+  /** Whether the delete request is in flight; blocks both actions and every dismissal route. Default: `false`. */
   isDeleting?: boolean;
+  /** Called when the user confirms deletion. */
   onConfirm: () => void;
+  /** Called when the dialog is dismissed — Cancel, the close control, Escape, or an outside click. */
   onClose: () => void;
+  /** Style overrides. */
   styles?: ScheduledTaskDeleteConfirmationStyles;
 }
 
 /**
- * Controlled, host-localized delete-task confirmation. The dialog frame is the
- * kit's `Popup`; the content and the action row are the shared confirmation
- * components, so this reads the same as the catalog's in-panel confirmation.
+ * Controlled, host-localized delete-task confirmation: the shared confirmation
+ * dialog, with the task's identity card composed from the icon and type label
+ * the host supplies.
  */
 export const ScheduledTaskDeleteConfirmation: FC<
   ScheduledTaskDeleteConfirmationProps
 > = ({
-  open,
   taskName,
   icon,
   typeLabel,
-  title,
   body,
-  consequences,
-  cancelLabel,
-  confirmLabel,
   pendingLabel,
   isDeleting = false,
-  onConfirm,
-  onClose,
   styles: stylesProp,
+  ...dialogProps
 }) => {
-  /* The footer's own controls are disabled while in flight; this also covers
-   * the header's close control, Escape, and an outside click. */
-  const close = () => {
-    if (!isDeleting) onClose();
-  };
-
   const cssVars = buildCssVars({
     '--stdc-type-label-text': stylesProp?.colors?.typeLabelText,
   });
 
   return (
-    <Popup
-      open={open}
-      className={stylesProp?.popupClassName}
+    <ConfirmationDialog
+      {...dialogProps}
+      variant={ConfirmationPopupVariant.Danger}
+      popupClassName={stylesProp?.popupClassName}
       titleClassName={stylesProp?.titleClassName}
-      header={title}
-      onClose={close}
-      footer={
-        <ConfirmationFooter
-          variant={ConfirmationPopupVariant.Danger}
-          confirmLabel={confirmLabel}
-          cancelLabel={cancelLabel}
-          isLoading={isDeleting}
-          loadingStatusLabel={pendingLabel}
-          onConfirm={onConfirm}
-          onCancel={close}
-        />
+      messageClassName={
+        stylesProp?.messageClassName ?? 'dial-body-paragraph-text'
       }
-    >
-      <ConfirmationView
-        variant={ConfirmationPopupVariant.Danger}
-        identity={
-          <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
-            <div style={cssVars} className="flex min-w-0 items-center gap-2">
-              {icon}
-              <div className="flex min-w-0 flex-col">
-                {typeLabel != null && (
-                  <span
-                    className={mergeClasses(
-                      'dial-caption-lead-semi-text',
-                      styles.typeLabel,
-                    )}
-                  >
-                    {typeLabel}
-                  </span>
-                )}
-                <span className="dial-small-semi-text truncate">
-                  {taskName}
+      message={body}
+      isLoading={isDeleting}
+      loadingStatusLabel={pendingLabel}
+      identity={
+        <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+          <div style={cssVars} className="flex min-w-0 items-center gap-2">
+            {icon}
+            <div className="flex min-w-0 flex-col">
+              {typeLabel != null && (
+                <span
+                  className={mergeClasses(
+                    'dial-caption-lead-semi-text',
+                    styles.typeLabel,
+                  )}
+                >
+                  {typeLabel}
                 </span>
-              </div>
+              )}
+              <span className="dial-small-semi-text truncate">{taskName}</span>
             </div>
-          </ConfirmationIdentityCard>
-        }
-        message={body}
-        consequences={consequences}
-        messageClassName={
-          stylesProp?.messageClassName ?? 'dial-body-paragraph-text'
-        }
-      />
-    </Popup>
+          </div>
+        </ConfirmationIdentityCard>
+      }
+    />
   );
 };

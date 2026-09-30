@@ -78,7 +78,7 @@ import {
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
-import { CONFIRMATION_BOLD_COMPONENTS } from './confirmation-copy';
+import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 
 /* The details panel draws a skill's files with the same file-manager tree as the skill editor. */
 const renderContentFileTree = (props: CatalogContentFileTreeRenderProps) => (
@@ -732,7 +732,7 @@ const CatalogView: FC<Props> = ({
           downloadActionLabel: t(ButtonsI18nKeys.Download),
           downloadingStatusLabel: t(CatalogI18nKeys.DetailsDownloadingStatus),
           deleteActionLabel: t(ButtonsI18nKeys.Delete),
-          deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+          deletingStatusLabel: t(BasicI18nKeys.DeletingStatus),
           apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
           apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
           apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
@@ -842,7 +842,7 @@ const CatalogView: FC<Props> = ({
           deleteConfirmConsequences: [
             t(CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations),
             t(CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess),
-            t(CatalogI18nKeys.DetailsDeleteConsequenceCannotBeUndone),
+            t(BasicI18nKeys.ConsequenceCannotBeUndone),
           ],
           unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
           unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),

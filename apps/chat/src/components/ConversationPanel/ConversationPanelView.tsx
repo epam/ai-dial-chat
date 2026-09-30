@@ -26,6 +26,9 @@ import {
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  ConfirmationDialog,
+  ConfirmationIdentityCard,
+  ConfirmationIdentityRow,
   ConversationTransferErrorCode,
   FilterTab,
   mergeClasses,
@@ -53,6 +56,7 @@ import {
 import {
   IconCopy,
   IconDownload,
+  IconMessage,
   IconPencilMinus,
   IconPin,
   IconPinnedFilled,
@@ -72,9 +76,10 @@ import {
   useState,
   type FC,
 } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { CELEBRATION_HISTORY_CLASS } from '../../constants/celebration';
+import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -1355,31 +1360,42 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         />
       </div>
 
-      <ConfirmationPopup
+      <ConfirmationDialog
         open={isDeletePending}
-        header={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
+        title={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
+        variant={ConfirmationPopupVariant.Danger}
+        identity={
+          <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+            <ConfirmationIdentityRow
+              icon={
+                <IconMessage
+                  size={DIAL_ICON_SIZE.MD}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                />
+              }
+              typeLabel={t(ConversationPanelI18nKeys.TypeLabel)}
+              name={pendingDeleteTitle}
+            />
+          </ConfirmationIdentityCard>
+        }
+        message={
+          <Trans
+            i18nKey={ConversationPanelI18nKeys.DeleteConfirmMessage}
+            values={{ name: pendingDeleteTitle }}
+            components={CONFIRMATION_BOLD_COMPONENTS}
+          />
+        }
+        consequences={[t(BasicI18nKeys.ConsequenceCannotBeUndone)]}
         confirmLabel={t(ButtonsI18nKeys.Delete)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
-        variant={ConfirmationPopupVariant.Danger}
         isLoading={isDeleting}
-        description={
-          <>
-            <span className="break-words">
-              {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-              <span className="dial-small-text text-primary">
-                &ldquo;{pendingDeleteTitle}&rdquo;
-              </span>
-              ?
-            </span>
-            {deleteError && (
-              <span className="mt-1 block text-error">{deleteError}</span>
-            )}
-          </>
-        }
+        loadingStatusLabel={t(ConversationPanelI18nKeys.DeletingLabel)}
         onConfirm={handleConfirmDelete}
-        onCancel={handleCloseDeleteDialog}
         onClose={handleCloseDeleteDialog}
-      />
+      >
+        {deleteError && <span className="block text-error">{deleteError}</span>}
+      </ConfirmationDialog>
 
       <ConfirmationPopup
         open={isUnpublishPending}

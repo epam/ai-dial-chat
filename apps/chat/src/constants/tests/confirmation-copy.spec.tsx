@@ -2,8 +2,11 @@ import { render, screen } from '@testing-library/react';
 import i18next, { type i18n as I18n } from 'i18next';
 import { I18nextProvider, initReactI18next, Trans } from 'react-i18next';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { CatalogI18nKeys } from '../../../constants/translation-keys';
-import en from '../../../i18n/locales/en.json';
+import {
+  CatalogI18nKeys,
+  ConversationPanelI18nKeys,
+} from '../translation-keys';
+import en from '../../i18n/locales/en.json';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../confirmation-copy';
 
 /*
@@ -35,6 +38,10 @@ const CASES: { key: string; values: Record<string, string> }[] = [
     key: CatalogI18nKeys.DetailsUnpublishSelectFolderMessage,
     values: { name: NAME },
   },
+  {
+    key: ConversationPanelI18nKeys.DeleteConfirmMessage,
+    values: { name: NAME },
+  },
 ];
 
 let i18n: I18n;
@@ -59,7 +66,7 @@ const renderMessage = (key: string, values: Record<string, string>) =>
     </I18nextProvider>,
   );
 
-describe('catalog confirmation copy', () => {
+describe('confirmation copy', () => {
   it.each(CASES)('emphasises the resource name in $key', ({ key, values }) => {
     const { container } = renderMessage(key, values);
 

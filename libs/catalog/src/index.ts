@@ -7,10 +7,7 @@ export * from './entry-points/mapping';
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
 export { CatalogLimitStatus } from './models/item-details-data';
-export {
-  DetailsConfirmationKind,
-  DetailsConfirmationVariant,
-} from './types/details-confirmation';
+export { DetailsConfirmationKind } from './types/details-confirmation';
 export { DeploymentSize } from './types/deployment-icon-size';
 export { CatalogViewMode } from './types/view-mode';
 export { LimitRowLayout } from './types/limit-row-layout';
@@ -134,16 +131,6 @@ export type {
   TopicTagColors,
   TopicTagProps,
 } from './components/TopicTag/TopicTag';
-
-/*
- * Re-exported from `@epam/ai-dial-chat-shared`, where the confirmation
- * presentation now lives so the full-page delete flows can share it. Kept
- * under the catalog's original names so existing hosts keep compiling.
- */
-export {
-  ConfirmationIdentityCard as InfoCard,
-  type ConfirmationIdentityCardProps as InfoCardProps,
-} from '@epam/ai-dial-chat-shared';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type {

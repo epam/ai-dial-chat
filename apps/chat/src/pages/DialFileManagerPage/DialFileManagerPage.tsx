@@ -209,7 +209,7 @@ const DialFileManagerPage: FC = () => {
       downloadLabel: t(ButtonsI18nKeys.Download),
       downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
       deleteLabel: t(ButtonsI18nKeys.Delete),
-      deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+      deletingLabel: t(BasicI18nKeys.DeletingStatus),
       renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),

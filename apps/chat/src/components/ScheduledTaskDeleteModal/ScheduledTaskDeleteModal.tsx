@@ -2,6 +2,7 @@ import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
 import { memo, type FC } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
@@ -25,7 +26,7 @@ interface Props {
  * users-lose-access rows removed at product request. */
 const DELETE_CONSEQUENCE_KEYS = [
   ScheduledTasksI18nKeys.DetailDeleteConsequenceConversationsAccessible,
-  ScheduledTasksI18nKeys.DetailDeleteConsequenceCannotBeUndone,
+  BasicI18nKeys.ConsequenceCannotBeUndone,
 ] as const;
 
 /**
@@ -61,7 +62,7 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
       consequences={DELETE_CONSEQUENCE_KEYS.map((key) => t(key))}
       cancelLabel={t(ButtonsI18nKeys.Cancel)}
       confirmLabel={t(ButtonsI18nKeys.Delete)}
-      pendingLabel={t(ScheduledTasksI18nKeys.DetailDeleteConfirmingLabel)}
+      pendingLabel={t(BasicI18nKeys.DeletingStatus)}
       isDeleting={isDeleting}
       onConfirm={onConfirm}
       onClose={onClose}

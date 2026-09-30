@@ -12,6 +12,8 @@
     "usage": "Usage",
     "attachFiles": "Attach files",
     "deleteConfirmDescription": "Are you sure you want to delete",
+    "consequenceCannotBeUndone": "Cannot be undone",
+    "deletingStatus": "Deleting…",
     "canView": "Can view",
     "canEdit": "Can edit"
   },
@@ -199,7 +201,6 @@
         "confirmMessage": "Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone.",
         "consequenceSharedConfigurations": "All shared configurations will be lost",
         "consequenceUsersLoseAccess": "Users who rely on it will lose access",
-        "consequenceCannotBeUndone": "Cannot be undone",
         "error": "Failed to delete. Please try again."
       },
       "unshare": {
@@ -426,6 +427,7 @@
   },
   "conversationPanel": {
     "title": "Chats",
+    "typeLabel": "Chat",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
     "filter": {
@@ -441,7 +443,8 @@
       "unpinLabel": "Unpin"
     },
     "delete": {
-      "deleteConfirmTitle": "Confirm Deleting Chat",
+      "deleteConfirmTitle": "Delete chat",
+      "confirmMessage": "Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone.",
       "deleteError": "Failed to delete the conversation. Please try again."
     },
     "rename": {
@@ -790,8 +793,6 @@
       "activeStatusUpdateError": "Failed to update the task's active status",
       "deleteConfirmTitle": "Delete task",
       "deleteConfirmDescription": "Are you sure you want to delete <bold>{{taskName}}</bold>? This action is permanent and cannot be undone.",
-      "deleteConsequenceConversationsAccessible": "All run conversations will still be accessible",
-      "deleteConsequenceCannotBeUndone": "Cannot be undone",
       "deleteConfirmingLabel": "Deleting…",
       "deleteSuccess": "Scheduled task deleted",
       "deleteNotFoundError": "This task has already been deleted or could not be found",
@@ -892,7 +893,6 @@
     "unsupportedFilesDescription": "Files with unsupported type were not attached",
     "tooManyFilesSelected": "Too many files selected",
     "tooManyFilesDescription": "You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.",
-    "deletingLabel": "Deleting…",
     "deleteConfirmTitleSingle": "Confirm deleting",
     "deleteConfirmTitleMultiple": "Confirm deleting items",
     "deleteConfirmBodyMultiple": "Do you want to delete following",

@@ -428,25 +428,20 @@ import { EntityTypeLabel, CatalogEntityType } from '@epam/ai-dial-chat-shared';
 <EntityTypeLabel type={CatalogEntityType.Model} />;
 ```
 
-### InfoCard
+### Item identity card
 
-Tinted card showing a catalog item's identity, used to anchor a message to the
-item it is about. Defaults to the `Info` surface; pass `Danger` for destructive
+The tinted card that anchors a confirmation to the item it is about is
+`ConfirmationIdentityCard` from `@epam/ai-dial-chat-shared` — the catalog does
+not re-export it. It accepts any `EntityHeaderItem`, of which `CatalogItem` is
+one, and defaults to the `Info` surface; pass `Danger` for destructive
 messaging.
 
-Re-exported under this name from `@epam/ai-dial-chat-shared`, where it is
-`ConfirmationIdentityCard`: the confirmation presentation is shared rather
-than catalog-owned, so a confirmation outside this panel can show the same
-card. It accepts any `EntityHeaderItem`, of which `CatalogItem` is one.
-
 ```tsx
-import {
-  InfoCard,
-  DetailsConfirmationVariant,
-} from '@epam/ai-dial-catalog';
+import { ConfirmationIdentityCard } from '@epam/ai-dial-chat-shared';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 
-<InfoCard item={item} />
-<InfoCard item={item} variant={DetailsConfirmationVariant.Danger} />
+<ConfirmationIdentityCard item={item} />
+<ConfirmationIdentityCard item={item} variant={ConfirmationPopupVariant.Danger} />
 ```
 
 ### DetailsPanel
@@ -594,15 +589,13 @@ import {
   CredentialsUiState,
   DeploymentSize,
   DetailsConfirmationKind,
-  DetailsConfirmationVariant,
   LimitRowLayout,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
 /*
  * CatalogEntityType is owned by @epam/ai-dial-chat-shared, not this lib, and
- * DetailsConfirmationVariant re-exports the kit's ConfirmationPopupVariant,
- * the same palette `ConfirmationPopup` is rendered with.
+ * confirmation variants use the kit's ConfirmationPopupVariant directly.
  */
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
