@@ -1,4 +1,6 @@
 import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconClockHour3 } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import {
@@ -6,7 +8,6 @@ import {
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
-import ScheduledTasksIcon from '../Icons/ScheduledTasksIcon/ScheduledTasksIcon';
 
 interface Props {
   /** Whether the dialog is open. */
@@ -45,7 +46,13 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
     <ScheduledTaskDeleteConfirmation
       open={open}
       taskName={taskName}
-      icon={<ScheduledTasksIcon />}
+      icon={
+        <IconClockHour3
+          size={DIAL_ICON_SIZE.MD}
+          stroke={DIAL_KIT_ICON_STROKE}
+          aria-hidden
+        />
+      }
       typeLabel={t(ScheduledTasksI18nKeys.TypeLabel)}
       title={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
       body={

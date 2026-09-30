@@ -28,7 +28,6 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
-  DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,

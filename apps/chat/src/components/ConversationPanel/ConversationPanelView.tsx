@@ -57,7 +57,7 @@ import {
   IconClockHour3,
   IconCopy,
   IconDownload,
-  IconMessage,
+  IconMessageCircle,
   IconPencilMinus,
   IconPin,
   IconPinnedFilled,
@@ -1381,7 +1381,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
             <ConfirmationIdentityRow
               icon={
-                <IconMessage
+                <IconMessageCircle
                   size={DIAL_ICON_SIZE.MD}
                   stroke={DIAL_KIT_ICON_STROKE}
                   aria-hidden
@@ -1403,7 +1403,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         confirmLabel={t(ButtonsI18nKeys.Delete)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         isLoading={isDeleting}
-        loadingStatusLabel={t(ConversationPanelI18nKeys.DeletingLabel)}
+        loadingStatusLabel={t(BasicI18nKeys.DeletingStatus)}
         onConfirm={handleConfirmDelete}
         onClose={handleCloseDeleteDialog}
       >

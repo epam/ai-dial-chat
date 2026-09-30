@@ -23,7 +23,9 @@ vi.unmock('react-i18next');
 const NAME = 'Weekly digest';
 const FOLDER = 'Public/Reports';
 
-const CASES: { key: string; values: Record<string, string> }[] = [
+type ConfirmationCopyKey = CatalogI18nKeys | ConversationPanelI18nKeys;
+
+const CASES: { key: ConfirmationCopyKey; values: Record<string, string> }[] = [
   { key: CatalogI18nKeys.DetailsDeleteConfirmMessage, values: { name: NAME } },
   { key: CatalogI18nKeys.DetailsUnshareConfirmMessage, values: { name: NAME } },
   {
@@ -55,7 +57,10 @@ beforeAll(async () => {
   });
 });
 
-const renderMessage = (key: string, values: Record<string, string>) =>
+const renderMessage = (
+  key: ConfirmationCopyKey,
+  values: Record<string, string>,
+) =>
   render(
     <I18nextProvider i18n={i18n}>
       <Trans

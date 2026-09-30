@@ -793,7 +793,7 @@
       "activeStatusUpdateError": "Failed to update the task's active status",
       "deleteConfirmTitle": "Delete task",
       "deleteConfirmDescription": "Are you sure you want to delete <bold>{{taskName}}</bold>? This action is permanent and cannot be undone.",
-      "deleteConfirmingLabel": "Deleting…",
+      "deleteConsequenceConversationsAccessible": "All run conversations will still be accessible",
       "deleteSuccess": "Scheduled task deleted",
       "deleteNotFoundError": "This task has already been deleted or could not be found",
       "deleteRetryableError": "Couldn't delete the task — it hasn't been removed and you can safely try again",
