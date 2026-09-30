@@ -84,6 +84,42 @@ describe('getApiErrorDetails', () => {
     });
     expect(response.bodyUsed).toBe(false);
   });
+  it('preserves the domain code and the upstream code and reason alongside the message', async () => {
+    const response = new Response(
+      JSON.stringify({
+        message: 'DIAL Core returned a server error',
+        code: 'scheduledTaskAdminConsentRequired',
+        upstreamCode: 'consent_revoked',
+        upstreamMessage: 'Application consent revoked',
+      }),
+      { status: 502 },
+    );
+
+    await expect(getApiErrorDetails({ response })).resolves.toMatchObject({
+      message: 'DIAL Core returned a server error',
+      code: 'scheduledTaskAdminConsentRequired',
+      upstreamCode: 'consent_revoked',
+      upstreamMessage: 'Application consent revoked',
+    });
+  });
+
+  it('omits non-string or empty upstream fields', async () => {
+    const response = new Response(
+      JSON.stringify({
+        message: 'Failed',
+        upstreamCode: 42,
+        upstreamMessage: '',
+      }),
+      { status: 502 },
+    );
+
+    const details = await getApiErrorDetails({ response });
+
+    expect(details).not.toHaveProperty('upstreamCode');
+    expect(details).not.toHaveProperty('upstreamMessage');
+    expect(details.message).toBe('Failed');
+  });
+
   it('resolves message and traceId from a generated-client ResponseError-shaped body', async () => {
     const response = new Response(
       JSON.stringify({

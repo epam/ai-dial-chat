@@ -918,6 +918,58 @@ describe('ScheduledTaskDetailPage', () => {
 
       expect(resumeScheduledTaskMock).toHaveBeenCalledWith('sched_123');
     });
+
+    it('reverts the switch and asks to contact an administrator when resume is blocked by revoked consent', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        ...activeTask,
+        isActive: false,
+        nextRunTime: undefined,
+      });
+      resumeScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 403,
+        code: 'scheduledTaskAdminConsentRequired',
+        traceId: 'trace-consent',
+      });
+      renderDetailPage();
+
+      await userEvent.click(await screen.findByRole('switch'));
+
+      await waitFor(() =>
+        expect(screen.getByRole('switch')).toHaveProperty('checked', false),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: 'error',
+          message: 'toolsetSignin.adminConsentRequired',
+          requestId: 'trace-consent',
+        }),
+      );
+    });
+
+    it("shows DIAL Scheduler's reason when a pause fails with one", async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(activeTask);
+      pauseScheduledTaskMock.mockRejectedValue(new Error('upstream error'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 502,
+        upstreamMessage: 'Schedule is locked by another operation',
+      });
+      renderDetailPage();
+
+      await userEvent.click(await screen.findByRole('switch'));
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: 'Schedule is locked by another operation',
+          }),
+        ),
+      );
+      expect(screen.getByRole('switch')).toHaveProperty('checked', true);
+    });
   });
 
   describe('Delete action', () => {
@@ -1147,6 +1199,56 @@ describe('ScheduledTaskDetailPage', () => {
       );
       expect(screen.getByText('isDeleting:false')).toBeTruthy();
       expect(screen.getByRole('dialog')).toBeTruthy();
+    });
+
+    it("a generic failure shows DIAL Scheduler's reason when it supplies one", async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockRejectedValue(new Error('rejected'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 400,
+        upstreamMessage: 'Schedule is running; retry later',
+      });
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: 'Schedule is running; retry later',
+          }),
+        ),
+      );
+      expect(screen.getByText('isDeleting:false')).toBeTruthy();
+    });
+
+    it('a 502 keeps the localized retryable message even when Scheduler supplies a reason', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      deleteScheduledTaskMock.mockRejectedValue(new Error('upstream'));
+      getApiErrorDetailsMock.mockResolvedValue({
+        status: 502,
+        upstreamMessage: 'Could not unregister job',
+      });
+      renderDetailPage();
+
+      const dialog = await openDeleteDialog();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.delete' }),
+      );
+
+      await waitFor(() =>
+        expect(showNotificationMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'scheduledTasks.detail.deleteRetryableError',
+          }),
+        ),
+      );
     });
   });
 

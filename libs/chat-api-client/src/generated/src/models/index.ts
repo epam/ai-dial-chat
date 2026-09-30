@@ -6188,6 +6188,7 @@ export const ScheduledTaskErrorCode = {
   ScheduledTaskInstructionsOrSkillRequired:
     'scheduledTaskInstructionsOrSkillRequired',
   ScheduledTaskDeploymentUnavailable: 'scheduledTaskDeploymentUnavailable',
+  ScheduledTaskAdminConsentRequired: 'scheduledTaskAdminConsentRequired',
 } as const;
 export type ScheduledTaskErrorCode =
   (typeof ScheduledTaskErrorCode)[keyof typeof ScheduledTaskErrorCode];
@@ -6284,6 +6285,18 @@ export interface ScheduledTaskValidationErrorDto {
    * @memberof ScheduledTaskValidationErrorDto
    */
   field?: string;
+  /**
+   * DIAL Scheduler's own error reason, trimmed and capped at 1000 characters. Never present for 401/403/404.
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  upstreamMessage?: string;
+  /**
+   * DIAL Scheduler's own error code (matches ^[A-Za-z0-9_.:-]{1,128}$). Never present for 401/403/404.
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  upstreamCode?: string;
 }
 
 /**

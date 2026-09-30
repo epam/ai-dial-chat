@@ -86,6 +86,7 @@ export class ScheduledTasksController {
   @ApiResponse({
     status: 400,
     description: 'Invalid limit, offset, or search query parameter',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
@@ -95,7 +96,9 @@ export class ScheduledTasksController {
   })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response',
+    description:
+      "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,
@@ -134,12 +137,15 @@ export class ScheduledTasksController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
-    description: 'Feature disabled or selected model is inaccessible',
+    description:
+      'Feature disabled, selected model is inaccessible, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)',
     type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response',
+    description:
+      "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,
@@ -177,7 +183,11 @@ export class ScheduledTasksController {
     description: 'Successfully retrieved the scheduled task',
     type: ScheduledTaskDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid scheduleId' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid scheduleId',
+    type: ScheduledTaskValidationErrorDto,
+  })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
@@ -187,7 +197,9 @@ export class ScheduledTasksController {
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response',
+    description:
+      "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,
@@ -232,6 +244,7 @@ export class ScheduledTasksController {
   @ApiResponse({
     status: 400,
     description: 'Invalid scheduleId, limit, or offset',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
@@ -242,7 +255,9 @@ export class ScheduledTasksController {
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response',
+    description:
+      "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,
@@ -276,7 +291,11 @@ export class ScheduledTasksController {
     description: 'Scheduled task paused successfully',
     type: ScheduledTaskDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid scheduleId' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid scheduleId',
+    type: ScheduledTaskValidationErrorDto,
+  })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
@@ -286,7 +305,9 @@ export class ScheduledTasksController {
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response',
+    description:
+      "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,
@@ -319,17 +340,24 @@ export class ScheduledTasksController {
     description: 'Scheduled task resumed successfully',
     type: ScheduledTaskDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid scheduleId' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid scheduleId',
+    type: ScheduledTaskValidationErrorDto,
+  })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
     description:
-      'The scheduledTasksEnabled feature is not enabled for this user',
+      'Feature disabled, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({ status: 404, description: 'Scheduled task not found' })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response',
+    description:
+      "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,
@@ -372,7 +400,8 @@ export class ScheduledTasksController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
-    description: 'Feature disabled or selected model is inaccessible',
+    description:
+      'Feature disabled, selected model is inaccessible, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)',
     type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
@@ -383,7 +412,9 @@ export class ScheduledTasksController {
   })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response',
+    description:
+      "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,
@@ -422,7 +453,11 @@ export class ScheduledTasksController {
     status: 204,
     description: 'Scheduled task deleted successfully (empty body)',
   })
-  @ApiResponse({ status: 400, description: 'Invalid scheduleId' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid scheduleId',
+    type: ScheduledTaskValidationErrorDto,
+  })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
@@ -437,11 +472,13 @@ export class ScheduledTasksController {
   @ApiResponse({
     status: 409,
     description: 'Scheduled task is already soft-deleted',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 502,
     description:
       'DIAL Scheduler could not unregister the job; no data changed and retrying is safe',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 503,

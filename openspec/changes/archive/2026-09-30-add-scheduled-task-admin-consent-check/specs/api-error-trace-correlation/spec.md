@@ -1,10 +1,4 @@
-# api-error-trace-correlation Specification
-
-## Purpose
-
-A single helper that normalizes any API error into a message and trace ID, so a failure the user sees can be correlated with a backend trace.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: One normalization helper resolves message and trace ID from any API error
 `@epam/ai-dial-chat-hooks` SHALL export an async `getApiErrorDetails(error: unknown)`
@@ -82,45 +76,3 @@ with the host. `message` resolution is unaffected by them.
 #### Scenario: Non-string or empty error fields are omitted
 - **WHEN** the body carries `upstreamCode: 42` and `upstreamMessage: ""`
 - **THEN** the result has no `upstreamCode` and no `upstreamMessage` keys
-
-### Requirement: Malformed or absent trace data is never surfaced
-`getApiErrorDetails` SHALL validate any candidate `traceparent` against the W3C Trace Context shape
-(version `00`, 32 lowercase-hex trace ID not all zero, 16 lowercase-hex span ID not all zero, 2-hex
-flags) before returning a `traceId`. A value that fails this check SHALL be dropped silently — the
-helper SHALL NOT throw and SHALL still return the resolved `message`.
-
-#### Scenario: All-zero trace ID is rejected
-- **WHEN** a response's `traceparent` has a syntactically valid shape but an all-zero trace ID
-  (`00000000000000000000000000000000`)
-- **THEN** `getApiErrorDetails` returns `traceId: undefined`
-
-#### Scenario: Truncated or malformed value is rejected
-- **WHEN** a response's `traceparent` value is truncated, uses uppercase hex, or has the wrong
-  number of dash-separated segments
-- **THEN** `getApiErrorDetails` returns `traceId: undefined` without throwing
-
-### Requirement: Library hooks take trace-ID resolution from the host
-Hooks in `@epam/ai-dial-chat-hooks` that attach a trace ID to a failure event SHALL accept it
-through an optional host-supplied `resolveErrorTraceId(error: unknown) => Promise<string |
-undefined>` callback rather than calling `getApiErrorDetails` themselves, and SHALL default that
-callback to one resolving `undefined`. A host that supplies no callback SHALL still receive working
-failure events, simply without a trace ID.
-
-#### Scenario: Host supplies the resolver
-- **WHEN** a host passes `resolveErrorTraceId` to a conversation transfer hook and an operation fails
-  with a response carrying a valid `traceparent`
-- **THEN** the emitted failure event carries the resolved trace ID
-
-#### Scenario: Host omits the resolver
-- **WHEN** a host mounts the same hook without passing `resolveErrorTraceId` and an operation fails
-- **THEN** the failure event is still emitted, with no trace ID attached and no error thrown
-
-### Requirement: Batch failures surface exactly one trace ID
-When a caller aggregates results from multiple operations and one representative failure must be shown, the caller SHALL resolve the trace ID from the first failing operation in the existing
-iteration order — via `getApiErrorDetails`, or via the injected `resolveErrorTraceId` when inside a
-library hook — and use only that result's `traceId`. Trace IDs from other failed operations in the
-same batch SHALL NOT be concatenated or otherwise included in the same notification.
-
-#### Scenario: Multiple failures in one batch show only the first trace ID
-- **WHEN** a bulk operation fails for three of five items, each with a different valid `traceparent`
-- **THEN** the resulting error notification carries only the first failing item's trace ID

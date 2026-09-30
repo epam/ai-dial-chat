@@ -34,6 +34,24 @@ The frontend never talks to DIAL Core directly: this service holds the session,
 attaches the caller's access token upstream, and adapts DIAL Core's surface into
 the endpoints `apps/chat` consumes.
 
+## Scheduled task application consent and upstream errors
+
+When the `SCHEDULER_SERVICE_ID` external service is `DIAL_NATIVE`, every
+schedule runs under an application consent an administrator can revoke.
+Create, update, and resume re-read that service's `app_level_auth_status`
+from DIAL Core before calling DIAL Scheduler (never cached); `SIGNED_OUT`
+rejects with `403` and code `scheduledTaskAdminConsentRequired`, and nothing
+is sent upstream. Pause and delete skip the check so a user can always stop a
+task. A failed consent lookup or an unreported status defers to DIAL Scheduler.
+
+When DIAL Scheduler itself rejects a request, the response keeps the generic
+`message` (for example `DIAL Core returned a server error`) and adds
+Scheduler's own reason and code as `upstreamMessage` and `upstreamCode`. The
+message is trimmed and capped at 1000 characters; the code is kept only when it
+matches `^[A-Za-z0-9_.:-]{1,128}$`. Neither field is ever added for 401, 403,
+or 404 (the shared `isUpstreamTextExposable` rule), the raw upstream body is
+never forwarded, and the typed `code` never comes from the upstream body.
+
 ## Completion persistence failures
 
 The backend saves an empty assistant placeholder before streaming and attempts

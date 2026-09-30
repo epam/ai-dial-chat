@@ -48,6 +48,7 @@ import { resolveLocalizedText } from '../../utils/locale';
 import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
+  resolveScheduledTaskErrorMessage,
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 import NotFoundPage from '../NotFound/NotFound';
@@ -332,10 +333,14 @@ const ScheduledTaskDetailPage: FC = () => {
         setTask((current) =>
           current ? { ...current, isActive: !nextActive } : current,
         );
-        const { traceId } = await getApiErrorDetails(err);
+        const details = await getApiErrorDetails(err);
         showErrorNotification({
-          message: t(ScheduledTasksI18nKeys.DetailActiveStatusUpdateError),
-          requestId: traceId,
+          message: resolveScheduledTaskErrorMessage(
+            details,
+            ScheduledTasksI18nKeys.DetailActiveStatusUpdateError,
+            t,
+          ),
+          requestId: details.traceId,
         });
       } finally {
         if (!isStale()) {
@@ -373,10 +378,19 @@ const ScheduledTaskDetailPage: FC = () => {
       });
       navigate(ROUTES.ScheduledTasks);
     } catch (err) {
-      const { status, traceId } = await getApiErrorDetails(err);
+      const { status, traceId, upstreamMessage } =
+        await getApiErrorDetails(err);
       const messageKey = getDeleteErrorMessageKey(status);
       showErrorNotification({
-        message: t(messageKey),
+        /* 404/409/502 keep their actionable localized messages; only the generic branch shows Scheduler's reason. */
+        message:
+          messageKey === ScheduledTasksI18nKeys.DetailDeleteGenericError
+            ? resolveScheduledTaskErrorMessage(
+                { upstreamMessage },
+                messageKey,
+                t,
+              )
+            : t(messageKey),
         requestId: traceId,
       });
       setIsDeleting(false);

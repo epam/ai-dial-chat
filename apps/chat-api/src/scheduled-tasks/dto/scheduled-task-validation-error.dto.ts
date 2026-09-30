@@ -22,4 +22,18 @@ export class ScheduledTaskValidationErrorDto {
 
   @ApiPropertyOptional({ example: 'skillUrl' })
   field?: string;
+
+  @ApiPropertyOptional({
+    example: 'Application consent revoked',
+    description:
+      "DIAL Scheduler's own error reason, trimmed and capped at 1000 characters. Never present for 401/403/404.",
+  })
+  upstreamMessage?: string;
+
+  @ApiPropertyOptional({
+    example: 'consent_revoked',
+    description:
+      "DIAL Scheduler's own error code (matches ^[A-Za-z0-9_.:-]{1,128}$). Never present for 401/403/404.",
+  })
+  upstreamCode?: string;
 }
