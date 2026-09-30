@@ -1,12 +1,10 @@
 import {
-  buildCssVars,
   ConfirmationDialog,
   ConfirmationIdentityCard,
-  mergeClasses,
+  ConfirmationIdentityRow,
 } from '@epam/ai-dial-chat-shared';
 import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
-import styles from './ScheduledTaskDeleteConfirmation.module.scss';
 
 /** Color overrides for `ScheduledTaskDeleteConfirmation`. */
 export interface ScheduledTaskDeleteConfirmationColors {
@@ -78,43 +76,27 @@ export const ScheduledTaskDeleteConfirmation: FC<
   isDeleting = false,
   styles: stylesProp,
   ...dialogProps
-}) => {
-  const cssVars = buildCssVars({
-    '--stdc-type-label-text': stylesProp?.colors?.typeLabelText,
-  });
-
-  return (
-    <ConfirmationDialog
-      {...dialogProps}
-      variant={ConfirmationPopupVariant.Danger}
-      popupClassName={stylesProp?.popupClassName}
-      titleClassName={stylesProp?.titleClassName}
-      messageClassName={
-        stylesProp?.messageClassName ?? 'dial-body-paragraph-text'
-      }
-      message={body}
-      isLoading={isDeleting}
-      loadingStatusLabel={pendingLabel}
-      identity={
-        <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
-          <div style={cssVars} className="flex min-w-0 items-center gap-2">
-            {icon}
-            <div className="flex min-w-0 flex-col">
-              {typeLabel != null && (
-                <span
-                  className={mergeClasses(
-                    'dial-caption-lead-semi-text',
-                    styles.typeLabel,
-                  )}
-                >
-                  {typeLabel}
-                </span>
-              )}
-              <span className="dial-small-semi-text truncate">{taskName}</span>
-            </div>
-          </div>
-        </ConfirmationIdentityCard>
-      }
-    />
-  );
-};
+}) => (
+  <ConfirmationDialog
+    {...dialogProps}
+    variant={ConfirmationPopupVariant.Danger}
+    popupClassName={stylesProp?.popupClassName}
+    titleClassName={stylesProp?.titleClassName}
+    messageClassName={
+      stylesProp?.messageClassName ?? 'dial-body-paragraph-text'
+    }
+    message={body}
+    isLoading={isDeleting}
+    loadingStatusLabel={pendingLabel}
+    identity={
+      <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+        <ConfirmationIdentityRow
+          icon={icon}
+          typeLabel={typeLabel}
+          name={taskName}
+          styles={{ colors: stylesProp?.colors }}
+        />
+      </ConfirmationIdentityCard>
+    }
+  />
+);
