@@ -23,13 +23,13 @@ export const defineApplicationEditor = <TSetup extends ApplicationSetupValues>(
 ): ApplicationEditorFormDefinition<ApplicationSetupValues> =>
   definition as unknown as ApplicationEditorFormDefinition<ApplicationSetupValues>;
 
-/** Returns the kind that edits apps of `schemaId`: a schema without an editor but with properties uses the schema form. */
+/** Returns the kind that edits apps of `schemaId`: a schema with an editor URL uses its embedded editor, any other schema the schema form. */
 export const resolveSchemaEditorKind = (
   schemas: ApplicationSchemaSummaryDto[],
   schemaId: string | null,
 ): ApplicationEditorKind => {
   const schema = schemas.find((item) => item.id === schemaId);
-  return schema && !schema.editorUrl && schema.hasProperties
+  return schema && !schema.editorUrl
     ? ApplicationEditorKind.SchemaApp
     : ApplicationEditorKind.QuickApp;
 };

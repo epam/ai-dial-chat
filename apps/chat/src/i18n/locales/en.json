@@ -265,7 +265,6 @@
     },
     "create": {
       "menuCaption": "Create new",
-      "quickApp": "QuickApp",
       "toolset": "Toolset",
       "customApp": "Custom App",
       "prompt": "Prompt",

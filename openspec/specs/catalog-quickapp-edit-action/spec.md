@@ -53,12 +53,12 @@ The Catalog details panel (`Header.tsx`) SHALL accept an optional `onEdit?: (ite
 - **THEN** every mapped deployment's `isEditable` is `false`
 
 ### Requirement: Clicking Edit navigates to the correct editor for the item's entity type
-`CatalogView` SHALL wire a single `onEdit` handler that branches on the clicked `CatalogItem`'s `type`. For `CatalogEntityType.Agent` (QuickApp) items it SHALL navigate to the Apps editor (`ROUTES.AppsEditor`) with `AppsEditorQuery.Step=AppsEditorStep.Settings`, `AppsEditorQuery.Schema` set to the resolved QuickApp schema id, `AppsEditorQuery.AppId` set to the item's `id`, and `AppsEditorQuery.ReturnUrl` set to `ROUTES.Catalog`, without setting `AppsEditorQuery.IsCreating`. For `CatalogEntityType.Toolset` items it SHALL navigate to `ROUTES.ToolsetEditor` with `ToolsetEditorQuery.Id` set to the item's `id` and `ToolsetEditorQuery.ReturnUrl` set to `ROUTES.Catalog`. The label passed as `editActionLabel` SHALL remain the existing `ButtonsI18nKeys.Edit` translation for both entity types — no new i18n key is introduced.
+`CatalogView` SHALL wire a single `onEdit` handler that branches on the clicked `CatalogItem`'s `type`. For `CatalogEntityType.Agent` (QuickApp) items it SHALL navigate to the Apps editor (`ROUTES.AppsEditor`) with `AppsEditorQuery.Schema` set to the resolved QuickApp schema id and `AppsEditorQuery.AppId` set to the item's `id`. For `CatalogEntityType.Toolset` items it SHALL navigate to `ROUTES.ToolsetEditor` with `ToolsetEditorQuery.Id` set to the item's `id` and `ToolsetEditorQuery.ReturnUrl` set to `ROUTES.Catalog`. The label passed as `editActionLabel` SHALL remain the existing `ButtonsI18nKeys.Edit` translation for both entity types — no new i18n key is introduced.
 
 #### Scenario: Edit opens the Settings step with the existing app pre-loaded
 - **WHEN** the user opens the Catalog, opens the details panel for a QuickApp they own, and clicks "Edit"
-- **THEN** the app navigates to the Apps editor with `step=settings`, `schema=<quickAppSchemaId>`, `appId=<item.id>`, and `returnUrl=/catalog`
-- **AND** the Apps editor shows that app's Settings step (its existing configuration), not the General step and not the create flow
+- **THEN** the app navigates to the Apps editor with `schema=<quickAppSchemaId>` and `appId=<item.id>`
+- **AND** the Apps editor opens in edit mode with the app's existing configuration, not the create flow
 
 #### Scenario: Edit opens the Toolset editor with the existing toolset pre-loaded
 - **WHEN** the user opens the Catalog, opens the details panel for a toolset they own, and clicks "Edit"
@@ -81,8 +81,8 @@ The Catalog details panel (`Header.tsx`) SHALL accept an optional `onEdit?: (ite
 - **THEN** its mapped `CatalogItem.isEditable` is `false`
 
 ### Requirement: URL-building for the Apps editor is unified across create and edit
-`CatalogView`'s `buildEditorUrl` helper SHALL be a single function accepting `{ schemaId, step, appId?, isCreating? }` and used by both the "Create QuickApp" option (General step, `isCreating: true`, no `appId`) and the Edit action (Settings step, existing `appId`, no `isCreating`), rather than separate ad hoc URL-construction code paths.
+`CatalogView` SHALL build both Apps-editor URLs in its `CatalogEditNavigationUrls` object, with one shared `buildUrl(route, params)` helper: `buildQuickAppCreateUrl(schemaId)` for the "Create QuickApp" option (`schema` only) and `buildQuickAppEditUrl(schemaId, appId)` for the Edit action (`schema` and `appId`), rather than separate ad hoc URL-construction code paths.
 
 #### Scenario: Create QuickApp still works unchanged after unification
 - **WHEN** the user clicks "Create" → "QuickApp" in the Catalog
-- **THEN** the app navigates to the Apps editor with `step=general`, `schema=<quickAppSchemaId>`, `isCreating=true`, `returnUrl=/catalog`, and no `appId`
+- **THEN** the app navigates to the Apps editor with `schema=<quickAppSchemaId>` and no `appId`

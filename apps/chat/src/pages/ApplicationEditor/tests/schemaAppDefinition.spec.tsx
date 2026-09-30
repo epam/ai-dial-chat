@@ -47,7 +47,7 @@ const SCHEMA_ID = 'https://example.com/schemas/text-classification';
 const SUMMARY = {
   id: SCHEMA_ID,
   displayName: 'Text classification',
-  hasProperties: true,
+  properties: { prompt: { type: 'string' } },
 };
 const FULL_SCHEMA = {
   $id: SCHEMA_ID,

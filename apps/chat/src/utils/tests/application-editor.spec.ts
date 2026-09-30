@@ -8,11 +8,11 @@ import {
 describe('resolveSchemaEditorKind', () => {
   const schemas = [
     { id: 'with-editor', editorUrl: 'https://editor.example' },
-    { id: 'form-only', hasProperties: true },
-    { id: 'bare', hasProperties: false },
+    { id: 'form-only', properties: { prompt: { type: 'string' } } },
+    { id: 'bare', properties: {} },
   ];
 
-  it('uses the schema form for a schema without an editor URL that has properties', () => {
+  it('uses the schema form for a schema without an editor URL', () => {
     expect(resolveSchemaEditorKind(schemas, 'form-only')).toBe(
       ApplicationEditorKind.SchemaApp,
     );
@@ -24,10 +24,13 @@ describe('resolveSchemaEditorKind', () => {
     );
   });
 
-  it('keeps the embedded editor for an unknown or property-less schema', () => {
+  it('uses the schema form for an editor-less schema even without properties', () => {
     expect(resolveSchemaEditorKind(schemas, 'bare')).toBe(
-      ApplicationEditorKind.QuickApp,
+      ApplicationEditorKind.SchemaApp,
     );
+  });
+
+  it('keeps the embedded editor while the schema is unknown', () => {
     expect(resolveSchemaEditorKind(schemas, null)).toBe(
       ApplicationEditorKind.QuickApp,
     );

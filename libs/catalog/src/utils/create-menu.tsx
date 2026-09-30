@@ -1,6 +1,6 @@
 import { DropdownItem, Highlight } from '@epam/ai-dial-ui-kit';
 
-/** Returns `items` with every string label, nested ones included, rendered through `Highlight` for `query`. */
+/** Returns `items` with every string label, nested ones included, rendered through a single-line `Highlight` for `query`. */
 export const highlightDropdownLabels = (
   items: DropdownItem[],
   query: string,
@@ -9,7 +9,7 @@ export const highlightDropdownLabels = (
     ...item,
     label:
       typeof item.label === 'string' ? (
-        <Highlight text={item.label} query={query} />
+        <Highlight text={item.label} query={query} maxLines={1} />
       ) : (
         item.label
       ),

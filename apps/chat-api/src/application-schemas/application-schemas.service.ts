@@ -53,68 +53,25 @@ export class ApplicationSchemasService {
           'DEV_QUICKAPPS_EDITOR_URL',
           { infer: true },
         );
-        const summaries = items.map((rawItem): ApplicationSchemaSummaryDto => {
-          const id = rawItem['$id'] as string | undefined;
-          const isQuickApp = isQuickAppSchema(id);
-          return {
-            id,
-            displayName: rawItem['dial:applicationTypeDisplayName'],
-            viewerUrl: rawItem['dial:applicationTypeViewerUrl'],
-            editorUrl:
-              isQuickApp && devQuickAppsEditorUrl
-                ? devQuickAppsEditorUrl
-                : rawItem['dial:applicationTypeEditorUrl'],
-            schemaEndpoint: rawItem['dial:applicationTypeSchemaEndpoint'],
-            iconUrl: rawItem['dial:applicationTypeIconUrl'],
-          };
-        });
         return {
-          schemas: await this.resolveHasProperties(
-            summaries,
-            userSub,
-            accessToken,
-          ),
+          schemas: items.map((rawItem): ApplicationSchemaSummaryDto => {
+            const id = rawItem['$id'] as string | undefined;
+            const isQuickApp = isQuickAppSchema(id);
+            return {
+              id,
+              displayName: rawItem['dial:applicationTypeDisplayName'],
+              viewerUrl: rawItem['dial:applicationTypeViewerUrl'],
+              editorUrl:
+                isQuickApp && devQuickAppsEditorUrl
+                  ? devQuickAppsEditorUrl
+                  : rawItem['dial:applicationTypeEditorUrl'],
+              schemaEndpoint: rawItem['dial:applicationTypeSchemaEndpoint'],
+              iconUrl: rawItem['dial:applicationTypeIconUrl'],
+            };
+          }),
         };
       },
     });
-  }
-
-  /*
-   * A schema without an editor URL can only be configured through a form
-   * rendered from its JSON schema, so the list reports whether that schema
-   * declares any property. The list endpoint carries no properties, so each
-   * such schema is fetched (and cached) individually; a failed fetch counts
-   * as "no properties" rather than failing the whole list.
-   */
-  private async resolveHasProperties(
-    summaries: ApplicationSchemaSummaryDto[],
-    userSub: string,
-    accessToken: string,
-  ): Promise<ApplicationSchemaSummaryDto[]> {
-    return Promise.all(
-      summaries.map(async (summary) => {
-        if (summary.editorUrl || !summary.id) return summary;
-        try {
-          const schema = await this.getApplicationSchema(
-            userSub,
-            accessToken,
-            summary.id,
-          );
-          const { properties } = schema;
-          const hasProperties =
-            properties != null &&
-            typeof properties === 'object' &&
-            Object.keys(properties).length > 0;
-          return { ...summary, hasProperties };
-        } catch (err) {
-          this.logger.warn(
-            `Failed to load application schema ${summary.id}; treating it as having no properties`,
-            err instanceof Error ? err.message : undefined,
-          );
-          return { ...summary, hasProperties: false };
-        }
-      }),
-    );
   }
 
   async getApplicationSchema(

@@ -67,13 +67,13 @@ The Quick App entry SHALL resolve its schema id once, memoised on `useDeployment
 
 The same resolved id also drives the catalog's Quick App **edit** action, which is why it is computed at component scope rather than inside the create-menu memo.
 
-Navigation SHALL go through the shared `buildEditorUrl({ schemaId, step, appId?, isCreating? })` callback rather than a hand-written query string, so create and edit cannot drift apart. For the create option it is called with the resolved schema id, `AppsEditorStep.General`, and `isCreating: true`, producing:
+Navigation SHALL go through the host-supplied `CatalogEditNavigationUrls` builders — `buildQuickAppCreateUrl(schemaId)` and `buildQuickAppEditUrl(schemaId, appId)` — rather than a hand-written query string, so create and edit cannot drift apart. For the create option `buildQuickAppCreateUrl` is called with the resolved schema id, producing:
 
 ```
-/apps-editor?step=general&schema=<encoded schemaId>&returnUrl=%2Fcatalog&isCreating=1
+/apps-editor?schema=<encoded schemaId>
 ```
 
-`buildEditorUrl` SHALL always set the step, schema, and return-url parameters, and SHALL add `appId` and `isCreating` only when supplied. The schema id is passed whole, with no stripping — the editor stores it as-is in the URL and looks it up in `schemas` on mount. `URLSearchParams` does the encoding.
+Both builders SHALL set the `schema` parameter; only `buildQuickAppEditUrl` adds `appId`, whose presence is what puts the editor in edit mode. No `step` or `isCreating` parameter is written — the single-page editor ignores both, and accepts them only so that older links keep working. The schema id is passed whole, with no stripping — the editor stores it as-is in the URL and looks it up in `schemas` on mount. `URLSearchParams` does the encoding.
 
 #### Scenario: Quick App option present when a schema matches
 
@@ -83,7 +83,7 @@ Navigation SHALL go through the shared `buildEditorUrl({ schemaId, step, appId?,
 #### Scenario: Clicking Create Quick App navigates to apps-editor
 
 - **WHEN** the user activates the Quick App option
-- **THEN** the router navigates to `/apps-editor` with `step=general`, the resolved schema id, `returnUrl` pointing at the catalog, and `isCreating=1`
+- **THEN** the router navigates to `/apps-editor` with the resolved schema id as `schema` and no `appId`, `step` or `isCreating`
 
 #### Scenario: Quick App option hidden when no schema matches
 
@@ -98,4 +98,4 @@ Navigation SHALL go through the shared `buildEditorUrl({ schemaId, step, appId?,
 #### Scenario: The edit action reuses the same builder
 
 - **WHEN** the catalog opens an existing Quick App for editing
-- **THEN** it calls the same `buildEditorUrl` with `AppsEditorStep.Settings`, supplying `appId` and omitting `isCreating`
+- **THEN** it calls `buildQuickAppEditUrl` with the same schema id and the item's `appId`

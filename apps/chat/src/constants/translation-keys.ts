@@ -219,7 +219,6 @@ export enum CatalogI18nKeys {
   DetailsLimitsFollowsCostLimitLabel = 'catalog.details.limits.followsCostLimit',
   DetailsLimitsFollowsCostLimitAriaLabel = 'catalog.details.limits.followsCostLimitAriaLabel',
   DetailsLimitsProgressAriaLabel = 'catalog.details.limits.progressAriaLabel',
-  CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
   CreateCustomApp = 'catalog.create.customApp',
   PublishFolderSearchPlaceholder = 'catalog.publishFolderSearchPlaceholder',

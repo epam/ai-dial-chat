@@ -20,7 +20,6 @@ import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
-import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
@@ -63,7 +62,7 @@ import {
   loginToolset,
   logoutToolset,
 } from '../../server-api/toolsets';
-import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
+import { AppsEditorQuery } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
 import { EntityOperation } from '../../types/entity-notification';
@@ -468,22 +467,16 @@ const CatalogView: FC<Props> = ({
       buildCustomAppCreateUrl: () => ROUTES.CustomAppEditor,
       buildQuickAppEditUrl: (schemaId, appId) =>
         buildUrl(ROUTES.AppsEditor, {
-          [AppsEditorQuery.Step]: AppsEditorStep.Settings,
           [AppsEditorQuery.Schema]: schemaId,
           [AppsEditorQuery.AppId]: appId,
         }),
       buildQuickAppCreateUrl: (schemaId) =>
-        buildUrl(ROUTES.AppsEditor, {
-          [AppsEditorQuery.Step]: AppsEditorStep.General,
-          [AppsEditorQuery.Schema]: schemaId,
-          [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
-        }),
+        buildUrl(ROUTES.AppsEditor, { [AppsEditorQuery.Schema]: schemaId }),
     };
   }, []);
 
   const catalogEditNavigationLabels: CatalogEditNavigationLabels = useMemo(
     () => ({
-      createQuickApp: t(CatalogI18nKeys.CreateQuickApp),
       createToolset: t(CatalogI18nKeys.CreateToolset),
       createCustomApp: t(CatalogI18nKeys.CreateCustomApp),
       createSkill: t(CatalogI18nKeys.CreateSkill),

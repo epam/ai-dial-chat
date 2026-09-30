@@ -2368,20 +2368,19 @@ import { isCustomAppSchema } from '@epam/ai-dial-chat-hooks';
 isCustomAppSchema({ id: 'custom_app' }); // true
 ```
 
-### getRunnerSchemas / hasSchemaSetup
+### getRunnerSchemas
 
-`getRunnerSchemas` returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries, the custom-app schema, and schemas that cannot be configured removed. `hasSchemaSetup` is the configurability check: a schema qualifies when it has an `editorUrl` (embedded editor) or `hasProperties: true` (a form rendered from its JSON schema). Both accept any `RunnerSchemaLike` (`id`, `displayName`, `editorUrl`, `hasProperties`). `useCatalogEditNavigation` builds one Create option per returned schema.
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
 
 getRunnerSchemas([
   { id: 'quickapps2', editorUrl: 'https://editor.example/quickapps' },
-  { id: 'mind-map', hasProperties: true },
-  { id: 'mind-map', hasProperties: true },
-  { id: 'bare', hasProperties: false },
+  { id: 'mind-map' },
+  { id: 'mind-map' },
   { id: 'custom_app', editorUrl: 'https://editor.example/custom' },
-]); // [{ id: 'quickapps2', … }, { id: 'mind-map', … }]
+]); // [{ id: 'quickapps2', … }, { id: 'mind-map' }]
 ```
 
 ### isValidAbsoluteUrl / parseFeaturesData / isValidFeaturesData
@@ -3477,12 +3476,12 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name            | Type                                   | Description                                                                                                                                                                |
-| --------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                                     |
-| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                                 |
-| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners sorted alphabetically and capped at 7, then the static options, all filtered by the search query. |
-| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                          |
+| Name            | Type                                   | Description                                                                                                                                                   |
+| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                        |
+| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                    |
+| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query. |
+| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                             |
 
 ```tsx
 import {
@@ -3499,7 +3498,6 @@ const urls: CatalogEditNavigationUrls = {
 };
 
 const labels: CatalogEditNavigationLabels = {
-  createQuickApp: t('catalog.create.quickApp'),
   createToolset: t('catalog.create.toolset'),
   createCustomApp: t('catalog.create.customApp'),
   createSkill: t('catalog.create.skill'),
@@ -4018,6 +4016,8 @@ const resolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
   resolveDialUrl: (attachment) => myResolveDisplayAttachmentUrl(attachment),
   resolveDialFileMetadataUrl: (fileId) => myResolveFileMetadataUrl(fileId),
+  // Optional: renders HTML with no download URL under its own response CSP
+  htmlSrcdocHostUrl: '/my-app/html-preview-frame',
 };
 
 const content = await resolveMarkdownCanvasContent(attachment, resolvers);

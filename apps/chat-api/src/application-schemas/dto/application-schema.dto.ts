@@ -1,11 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 
 export class ApplicationSchemaSummaryDto {
   @ApiPropertyOptional({ example: 'https://example.com/schemas/quick-app' })
@@ -37,15 +31,6 @@ export class ApplicationSchemaSummaryDto {
   @IsOptional()
   @IsString()
   iconUrl?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'Whether the full JSON schema declares at least one property. Resolved only for schemas without an editor URL; absent otherwise.',
-    example: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  hasProperties?: boolean;
 }
 
 export class ApplicationSchemasResponseDto {
