@@ -479,9 +479,11 @@ section below; a skills-scoped wrapper lives in `@epam/ai-dial-skills`.
 
 #### The Manage menu, and the last action standing
 
-Secondary actions collect behind the header's `...` trigger: Edit, Download,
-Publish/Unpublish, Delete, "Revoke access", "Remove from My List", and Share
-where `isSharePrimary` returns `false`. When filtering leaves exactly one of
+Secondary actions collect behind the header's `...` trigger: Share where
+`isSharePrimary` returns `false`, then Edit, Download, Publish/Unpublish,
+"Revoke access", "Remove from My List", and Delete. Delete comes last by
+design — the destructive entry closes the menu rather than sitting between
+two recoverable ones. When filtering leaves exactly one of
 them, it renders as a button in the action row instead and the trigger goes
 away — a menu of one costs a click for nothing and leaves the header looking
 empty until it is opened. A destructive action keeps its danger styling on
