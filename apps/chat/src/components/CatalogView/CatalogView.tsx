@@ -21,6 +21,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
+import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
@@ -77,7 +78,6 @@ import {
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
-import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 
 /* The details panel draws a skill's files with the same file-manager tree as the skill editor. */
 const renderContentFileTree = (props: CatalogContentFileTreeRenderProps) => (

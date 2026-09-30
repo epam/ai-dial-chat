@@ -108,6 +108,7 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
+import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
@@ -1293,30 +1294,7 @@ const ConversationView: FC<Props> = ({
                       : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
                   }
                   deleteConfirmBody={(names) => (
-                    <div className="dial-small-text px-6 py-3">
-                      <p className="mb-3 text-secondary">
-                        {names.length === 1 ? (
-                          <>
-                            {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-                            <span className="break-words text-primary">
-                              &quot;{names[0].split('/').pop()}&quot;?
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            {t(
-                              DialFileManagerI18nKeys.DeleteConfirmBodyMultiple,
-                            )}{' '}
-                            <span className="text-primary">
-                              {names.length}{' '}
-                              {t(
-                                DialFileManagerI18nKeys.DeleteConfirmBodyItems,
-                              )}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                    </div>
+                    <FileDeleteConfirmContent names={names} />
                   )}
                   deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
                   deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}

@@ -2,12 +2,12 @@ import { render, screen } from '@testing-library/react';
 import i18next, { type i18n as I18n } from 'i18next';
 import { I18nextProvider, initReactI18next, Trans } from 'react-i18next';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import en from '../../i18n/locales/en.json';
+import { CONFIRMATION_BOLD_COMPONENTS } from '../confirmation-copy';
 import {
   CatalogI18nKeys,
   ConversationPanelI18nKeys,
 } from '../translation-keys';
-import en from '../../i18n/locales/en.json';
-import { CONFIRMATION_BOLD_COMPONENTS } from '../confirmation-copy';
 
 /*
  * The app's test setup mocks `Trans` into a component that renders its

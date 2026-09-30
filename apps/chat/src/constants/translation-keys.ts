@@ -533,6 +533,11 @@ export enum DialFileManagerI18nKeys {
   TooManyFilesDescription = 'dialFileManager.tooManyFilesDescription',
   DeleteConfirmTitleSingle = 'dialFileManager.deleteConfirmTitleSingle',
   DeleteConfirmTitleMultiple = 'dialFileManager.deleteConfirmTitleMultiple',
+  DeleteConfirmMessageSingle = 'dialFileManager.deleteConfirmMessageSingle',
+  DeleteConfirmMessageMultiple = 'dialFileManager.deleteConfirmMessageMultiple',
+  DeleteConfirmItemCount = 'dialFileManager.deleteConfirmItemCount',
+  DeleteConfirmMoreItems = 'dialFileManager.deleteConfirmMoreItems',
+  /* Still the avatar picker's wording; it composes its own body from labels. */
   DeleteConfirmBodyMultiple = 'dialFileManager.deleteConfirmBodyMultiple',
   DeleteConfirmBodyItems = 'dialFileManager.deleteConfirmBodyItems',
   ConflictSingleTitle = 'dialFileManager.conflictSingleTitle',
