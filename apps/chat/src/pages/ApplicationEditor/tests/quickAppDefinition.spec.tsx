@@ -87,23 +87,25 @@ const LocationProbe = () => {
   return <output>{`location:${location.search}`}</output>;
 };
 
-const renderPage = (search: string) =>
-  render(
-    <MemoryRouter initialEntries={[`${ROUTES.AppsEditor}?${search}`]}>
-      <Routes>
-        <Route
-          path={ROUTES.AppsEditor}
-          element={
-            <>
-              <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
-              <LocationProbe />
-            </>
-          }
-        />
-        <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-      </Routes>
-    </MemoryRouter>,
-  );
+/* Extracted so a test can `rerender` the identical tree after changing a mock's return value. */
+const buildTree = (search: string) => (
+  <MemoryRouter initialEntries={[`${ROUTES.AppsEditor}?${search}`]}>
+    <Routes>
+      <Route
+        path={ROUTES.AppsEditor}
+        element={
+          <>
+            <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
+            <LocationProbe />
+          </>
+        }
+      />
+      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+    </Routes>
+  </MemoryRouter>
+);
+
+const renderPage = (search: string) => render(buildTree(search));
 
 /* The layout renders its actions in the header and again in the mobile bar; take the header copy. */
 const getAction = (name: string) =>
@@ -183,7 +185,7 @@ describe('ApplicationEditorPage — quick app', () => {
     });
 
     it('creates the app with seeded properties, confirms it and switches to edit mode in place', async () => {
-      renderPage(createSearch);
+      const { rerender } = renderPage(createSearch);
 
       await user.type(getNameInput(), 'My App');
       await user.click(getAction(ButtonsI18nKeys.Create));
@@ -217,6 +219,34 @@ describe('ApplicationEditorPage — quick app', () => {
         }),
       ).toBeTruthy();
       expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      /*
+       * Regression guard for #9169: the create->edit switch itself must never
+       * blank the Name field, even though the deployments list has not yet
+       * caught up with the newly created app at this point (`items` below is
+       * still the empty array from `beforeEach`).
+       */
+      expect((getNameInput() as HTMLInputElement).value).toBe('My App');
+
+      /*
+       * The deployments list later catches up with the newly created app —
+       * with a *different* displayName, standing in for an edit the user
+       * could have typed during the fire-and-forget refetch's race window
+       * (switchToCreatedApp's refetch does not gate the form as busy). The
+       * Metadata form must never reseed from it: once a metadata-first
+       * create has switched this session into edit mode, the already-
+       * submitted values are authoritative for the rest of the session.
+       */
+      vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
+        schemas: [SCHEMA],
+        items: [{ id: APP_ID, displayName: 'My App (server)' }],
+        isLoading: false,
+        refetchDeployments: mockRefetchDeployments,
+      } as unknown as ReturnType<
+        typeof DeploymentsContextModule.useDeployments
+      >);
+      rerender(buildTree(createSearch));
+
+      expect((getNameInput() as HTMLInputElement).value).toBe('My App');
     });
 
     it('raises an error notification and stays on the page when create fails', async () => {
@@ -242,6 +272,30 @@ describe('ApplicationEditorPage — quick app', () => {
     const typeName = async () => {
       await user.type(getNameInput(), 'My App');
     };
+
+    it('reseeds the Name field once the resolved deployment arrives (e.g. a reload right after creation)', async () => {
+      /*
+       * Regression guard for #9169: opening directly in edit mode (a fresh
+       * mount, distinct from the metadata-first create->edit switch covered
+       * above) must recover the persisted name once the deployments list
+       * resolves — this is the one case where a reseed is desired.
+       */
+      const { rerender } = renderPage(editSearch);
+
+      expect((getNameInput() as HTMLInputElement).value).toBe('');
+
+      vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
+        schemas: [SCHEMA],
+        items: [{ id: APP_ID, displayName: 'My App' }],
+        isLoading: false,
+        refetchDeployments: mockRefetchDeployments,
+      } as unknown as ReturnType<
+        typeof DeploymentsContextModule.useDeployments
+      >);
+      rerender(buildTree(editSearch));
+
+      expect((getNameInput() as HTMLInputElement).value).toBe('My App');
+    });
 
     it('keeps Save and Preview disabled until the embedded editor is ready to save', async () => {
       renderPage(editSearch);

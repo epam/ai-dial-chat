@@ -207,10 +207,29 @@ export class ApplicationsService {
         );
       }
 
-      await this.cacheManager.del(cacheKey);
-      this.logger.debug(
-        `Created application ${appPath}, invalidated cache for sub: ${userSub}`,
-      );
+      /*
+       * The DIAL Core create already succeeded above — a cache-layer hiccup
+       * here must not turn a successful create into an error response, so
+       * it's logged and swallowed rather than propagated.
+       */
+      try {
+        await Promise.all([
+          this.cacheManager.del(cacheKey),
+          this.deploymentsService.invalidateListCache(userSub),
+        ]);
+        this.logger.debug(
+          `Created application ${appPath}, invalidated applications list and deployments list caches for sub: ${userSub}`,
+        );
+      } catch (err) {
+        handleDialFetchError(
+          err,
+          `invalidate list caches after creating application "${appPath}" (sub: ${userSub})`,
+          this.logger,
+          0,
+          { swallow: true },
+        );
+      }
+
       return { id: `applications/${bucket}/${encodedPath}` };
     } catch (err) {
       return handleDialFetchError(err, 'create application', this.logger, 0);
