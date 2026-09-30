@@ -25,7 +25,10 @@ export interface StarToggleButtonProps {
   starFilledColor?: string;
 }
 
-/** Ghost icon button that toggles between a filled and outline star. */
+/**
+ * Ghost icon button that toggles between a filled and outline star.
+ * The starred state is exposed to assistive technology via `aria-pressed`.
+ */
 export const StarToggleButton: FC<StarToggleButtonProps> = ({
   isStarred,
   onClick,
@@ -38,15 +41,20 @@ export const StarToggleButton: FC<StarToggleButtonProps> = ({
     size={size}
     style={buildCssVars({ '--cat-star-filled': starFilledColor })}
     className={className}
+    isSelected={isStarred}
     icon={
-      isStarred ? (
-        <IconStarFilled
-          size={DIAL_ICON_SIZE.SM}
-          className={styles.starFilledIcon}
-        />
-      ) : (
-        <IconStar size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
-      )
+      <IconStar
+        size={DIAL_ICON_SIZE.SM}
+        stroke={DIAL_KIT_ICON_STROKE}
+        aria-hidden
+      />
+    }
+    selectedIcon={
+      <IconStarFilled
+        size={DIAL_ICON_SIZE.SM}
+        className={styles.starFilledIcon}
+        aria-hidden
+      />
     }
     aria-label={ariaLabel}
     onClick={onClick}

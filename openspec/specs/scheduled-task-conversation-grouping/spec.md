@@ -21,7 +21,14 @@ Show one conversation-panel row per scheduled task instead of one per run, by co
 
 **Ownership.** The full, uncollapsed list remains owned by `ConversationsContext` and SHALL NOT be replaced or filtered in the context. Only the `items` argument passed to `useConversationPanelItems` in `ConversationPanelView` is collapsed; `useActiveConversationSync`, `ActiveScheduledTaskContext`, the History run mapping (`mapScheduledTaskRunDtosToItems`), `Conversation.isReadOnly`, and the overlay conversation-list bridge keep reading the full list.
 
-**Memoisation.** `ConversationPanelView` SHALL compute the collapsed list with `useMemo` keyed on the context list reference, the active conversation id, and the (stable) `conversationIdsMatch`, so `useConversationPanelItems`' memoised output stays referentially stable when inputs are unchanged.
+**Two-phase evaluation.** The same module SHALL also export:
+
+- `groupScheduledTaskConversations(items, { conversationIdsMatch })`, which returns an opaque `ScheduledTaskGrouping`. It holds the collapsed list with no active id applied (every group represented by its newest unpinned run), and the grouped unpinned runs with their group key and whether each is the group's representative. `applyActiveScheduledTaskRun` finds the active run by scanning only those runs with `conversationIdsMatch`, not the whole list.
+- `applyActiveScheduledTaskRun(grouping, activeConversationId)`, which returns a collapsed list.
+
+`applyActiveScheduledTaskRun` SHALL return the grouping's own collapsed array (the same reference) when `activeConversationId` is absent, matches no grouped unpinned run, or matches a run that already is its group's newest representative. Only when the active id matches an older unpinned run SHALL it return a new array. That array is the grouping's collapsed list with that group's representative swapped for the active run, at the active run's original relative position. The result of the two-phase evaluation SHALL equal `collapseScheduledTaskConversations(items, { activeConversationId, conversationIdsMatch })` for every input. `collapseScheduledTaskConversations` stays exported and is implemented as the two phases composed.
+
+**Memoisation.** `ConversationPanelView` SHALL compute the grouping with `useMemo` keyed on the context list reference and the (stable) `conversationIdsMatch`. It SHALL compute the collapsed list with a second `useMemo` over the grouping and the active conversation id. Navigating between conversations whose ids do not change any representative therefore leaves the collapsed list, and `useConversationPanelItems`' memoised output, referentially unchanged.
 
 **Feature flag.** Collapsing is not gated by `ENABLED_FEATURES` / `scheduledTasksEnabled`: scheduler conversations exist and appear in the panel regardless of that flag (same rule as the previous TASK badge), so the collapsing applies regardless of it too.
 
@@ -95,8 +102,24 @@ Show one conversation-panel row per scheduled task instead of one per run, by co
 - **WHEN** the user opens B from the task's History panel
 - **THEN** `ActiveScheduledTaskContext` resolves B as a task conversation (banner and History render), B is marked viewed via `markConversationViewed`, and the panel shows B as that task's row (active-run substitution)
 
+#### Scenario: Navigating between ordinary conversations keeps the collapsed list reference
+
+- **GIVEN** a grouping computed for a list containing ordinary conversations and task runs
+- **WHEN** `applyActiveScheduledTaskRun` is called with the id of an ordinary conversation, then with the id of another ordinary conversation
+- **THEN** both calls return the grouping's collapsed array, the same reference
+
+#### Scenario: The newest run as active keeps the collapsed list reference
+
+- **GIVEN** runs B (older) and C (newest) of one task in a grouping
+- **WHEN** `applyActiveScheduledTaskRun` is called with C's id
+- **THEN** it returns the grouping's collapsed array, the same reference, containing C
+
+#### Scenario: Two-phase result equals the single-pass result
+
+- **WHEN** the two phases run on any input for which `collapseScheduledTaskConversations` has a scenario above
+- **THEN** the returned list is element-wise identical to `collapseScheduledTaskConversations`' result
+
 #### Scenario: Input is not mutated
 
 - **WHEN** the function runs on a frozen input array
 - **THEN** no error is thrown and a new array is returned
-

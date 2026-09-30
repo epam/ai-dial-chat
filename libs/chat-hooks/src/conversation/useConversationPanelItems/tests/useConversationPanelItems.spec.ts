@@ -160,6 +160,107 @@ describe('useConversationPanelItems', () => {
   });
 });
 
+describe('useConversationPanelItems — item identity and deployment lookup', () => {
+  const renderItems = (initial: UseConversationPanelItemsParams) =>
+    renderHook(
+      (params: UseConversationPanelItemsParams) =>
+        useConversationPanelItems(params),
+      { initialProps: initial },
+    );
+
+  it('keeps the item of an unchanged DTO when the list changes', () => {
+    const a = makeItem('conversations/bucket/model-1__A');
+    const b = makeItem('conversations/bucket/model-1__B');
+    const c = makeItem('conversations/bucket/model-1__C');
+    const params = makeParams({ items: [a, b] });
+    const { result, rerender } = renderItems(params);
+    const [itemA] = result.current;
+
+    rerender({ ...params, items: [a, c] });
+
+    expect(result.current[0]).toBe(itemA);
+    expect(result.current[1].title).toBe(c.title);
+  });
+
+  it('rebuilds every item when a resolver changes', () => {
+    const a = makeItem('conversations/bucket/model-1__A');
+    const params = makeParams({ items: [a] });
+    const { result, rerender } = renderItems(params);
+    const [itemA] = result.current;
+
+    rerender({ ...params, resolveHref: (id) => `/other/${id}` });
+
+    expect(result.current[0]).not.toBe(itemA);
+    expect(result.current[0].href).toBe(`/other/panel:${a.id}`);
+  });
+
+  it('rebuilds every item when the deployments array changes', () => {
+    const a = makeItem('conversations/bucket/model-1__A');
+    const params = makeParams({ items: [a] });
+    const { result, rerender } = renderItems(params);
+    const [itemA] = result.current;
+
+    rerender({
+      ...params,
+      deployments: [
+        { id: 'model-1', displayName: 'Renamed' } as DeploymentItemDto,
+      ],
+    });
+
+    expect(result.current[0]).not.toBe(itemA);
+    expect(result.current[0].iconTooltip).toBe('Renamed');
+  });
+
+  it('maps a DTO afresh after it left the list and came back', () => {
+    const a = makeItem('conversations/bucket/model-1__A');
+    const b = makeItem('conversations/bucket/model-1__B');
+    const params = makeParams({ items: [a, b] });
+    const { result, rerender } = renderItems(params);
+    const [itemA] = result.current;
+
+    rerender({ ...params, items: [b] });
+    rerender({ ...params, items: [a, b] });
+
+    expect(result.current[0]).not.toBe(itemA);
+    expect(result.current[0]).toEqual(itemA);
+  });
+
+  it('prefers a deployment matched by id over one matched by reference', () => {
+    const { result } = renderItems(
+      makeParams({
+        items: [makeItem('conversations/bucket/model-1__Chat')],
+        deployments: [
+          {
+            id: 'other',
+            reference: 'model-1',
+            displayName: 'By reference',
+          } as DeploymentItemDto,
+          { id: 'model-1', displayName: 'By id' } as DeploymentItemDto,
+        ],
+      }),
+    );
+
+    expect(result.current[0].iconTooltip).toBe('By id');
+  });
+
+  it('falls back to a deployment matched by reference', () => {
+    const { result } = renderItems(
+      makeParams({
+        items: [makeItem('conversations/bucket/model-1__Chat')],
+        deployments: [
+          {
+            id: 'model-1-2024',
+            reference: 'model-1',
+            displayName: 'By reference',
+          } as DeploymentItemDto,
+        ],
+      }),
+    );
+
+    expect(result.current[0].iconTooltip).toBe('By reference');
+  });
+});
+
 describe('getConversationSource', () => {
   it('returns the shared enum member before organization when both flags are set', () => {
     expect(

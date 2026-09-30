@@ -34,6 +34,24 @@ The frontend never talks to DIAL Core directly: this service holds the session,
 attaches the caller's access token upstream, and adapts DIAL Core's surface into
 the endpoints `apps/chat` consumes.
 
+## Scheduled task application consent and upstream errors
+
+When the `SCHEDULER_SERVICE_ID` external service is `DIAL_NATIVE`, every
+schedule runs under an application consent an administrator can revoke.
+Create, update, and resume re-read that service's `app_level_auth_status`
+from DIAL Core before calling DIAL Scheduler (never cached); `SIGNED_OUT`
+rejects with `403` and code `scheduledTaskAdminConsentRequired`, and nothing
+is sent upstream. Pause and delete skip the check so a user can always stop a
+task. A failed consent lookup or an unreported status defers to DIAL Scheduler.
+
+When DIAL Scheduler itself rejects a request, the response keeps the generic
+`message` (for example `DIAL Core returned a server error`) and adds
+Scheduler's own reason and code as `upstreamMessage` and `upstreamCode`. The
+message is trimmed and capped at 1000 characters; the code is kept only when it
+matches `^[A-Za-z0-9_.:-]{1,128}$`. Neither field is ever added for 401, 403,
+or 404 (the shared `isUpstreamTextExposable` rule), the raw upstream body is
+never forwarded, and the typed `code` never comes from the upstream body.
+
 ## Completion persistence failures
 
 The backend saves an empty assistant placeholder before streaming and attempts
@@ -775,6 +793,31 @@ download or `.wasm` endpoint would break previews. Removing it from chat HTML
 requires a separately isolated viewer document; client-side SPA navigation does
 not replace the document's CSP. The separately deployed MCP sandbox has its own
 policy and is not changed by `CSP_MODE`.
+
+`GET /api/v1/files/download` overwrites its own `Content-Security-Policy`
+header — built by `createHtmlPreviewCspHeader()` — whenever the downloaded
+file's `content-type` starts with `text/html`, and strips any
+`Content-Security-Policy-Report-Only` header from that response defensively
+(today's forwarded-header allowlist never includes it, but this holds even if
+that allowlist widens later). Every other download keeps the app's normal
+enforced/report-only policy unmodified. This lets the chat app
+preview an HTML attachment by loading this route's response directly into an
+iframe (`src=`, not `srcdoc`) without the previewed file's own inline
+`<script>`/`<style>` being blocked by the strict policy the chat document
+enforces for itself — an arbitrary previewed HTML file cannot be expected to
+carry a nonce or avoid inline styles. `frame-ancestors` is `'self'` plus
+`ALLOWED_IFRAME_ORIGINS`, the same as the rest of this section: `frame-ancestors`
+validates the whole ancestor chain, so when this app is itself embedded in an
+overlay host, the host's origin has to be listed too, not just this app's own.
+As with the WebAssembly exception above, this relaxation is scoped to one
+response and never substitutes for document policy: the property that
+actually stops a previewed HTML file from reading this app's cookies,
+session, or APIs is the CSP `sandbox="allow-scripts"` directive baked into
+`createHtmlPreviewCspHeader()` itself, which holds regardless of how the
+response is loaded — directly in a new tab or inside the preview iframe. The
+iframe's own `sandbox="allow-scripts"` attribute (no `allow-same-origin`) the
+chat frontend sets is additional defense-in-depth on top of that, not the
+primary control.
 
 ### Security
 

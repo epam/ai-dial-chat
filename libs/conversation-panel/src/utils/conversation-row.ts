@@ -38,3 +38,13 @@ export const getRowHeight = (
   if (row.kind === VirtualRowKind.Item) return ITEM_ROW_HEIGHT;
   return index === 0 ? FIRST_GROUP_HEADER_ROW_HEIGHT : GROUP_HEADER_ROW_HEIGHT;
 };
+
+/* Fewest rows kept mounted beyond each edge of the viewport, even for a tiny list. */
+const MIN_OVERSCAN_COUNT = 5;
+
+/** Returns how many rows to render beyond each edge of a viewport `height` pixels tall: half a viewport, at least 5. */
+export const getOverscanCount = (height: number): number =>
+  Math.max(
+    MIN_OVERSCAN_COUNT,
+    Math.ceil(Math.ceil(height / ITEM_ROW_HEIGHT) / 2),
+  );

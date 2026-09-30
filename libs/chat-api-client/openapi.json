@@ -6014,7 +6014,14 @@
             }
           },
           "400": {
-            "description": "Invalid limit, offset, or search query parameter"
+            "description": "Invalid limit, offset, or search query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6023,7 +6030,14 @@
             "description": "The scheduledTasksEnabled feature is not enabled for this user"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6071,7 +6085,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "Feature disabled or selected model is inaccessible",
+            "description": "Feature disabled, selected model is inaccessible, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6091,7 +6105,14 @@
             }
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6130,7 +6151,14 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6142,7 +6170,14 @@
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6202,7 +6237,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "Feature disabled or selected model is inaccessible",
+            "description": "Feature disabled, selected model is inaccessible, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6222,7 +6257,14 @@
             }
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6252,7 +6294,14 @@
             "description": "Scheduled task deleted successfully (empty body)"
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6264,10 +6313,24 @@
             "description": "Scheduled task not found, owned by another user, or already hard-deleted"
           },
           "409": {
-            "description": "Scheduled task is already soft-deleted"
+            "description": "Scheduled task is already soft-deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "502": {
-            "description": "DIAL Scheduler could not unregister the job; no data changed and retrying is safe"
+            "description": "DIAL Scheduler could not unregister the job; no data changed and retrying is safe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6331,7 +6394,14 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId, limit, or offset"
+            "description": "Invalid scheduleId, limit, or offset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6343,7 +6413,14 @@
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6382,7 +6459,14 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -6394,7 +6478,14 @@
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -6433,19 +6524,40 @@
             }
           },
           "400": {
-            "description": "Invalid scheduleId"
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+            "description": "Feature disabled, or an administrator revoked the DIAL_NATIVE scheduler consent (code scheduledTaskAdminConsentRequired)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Scheduled task not found"
           },
           "502": {
-            "description": "DIAL Core returned an error response"
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
@@ -12342,6 +12454,63 @@
         },
         "required": ["items"]
       },
+      "ScheduledTaskErrorCode": {
+        "type": "string",
+        "enum": [
+          "scheduledTaskSkillUnsupported",
+          "scheduledTaskInstructionsOrSkillRequired",
+          "scheduledTaskDeploymentUnavailable",
+          "scheduledTaskAdminConsentRequired"
+        ]
+      },
+      "ScheduledTaskValidationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 400
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          },
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScheduledTaskErrorCode"
+              }
+            ]
+          },
+          "field": {
+            "type": "string",
+            "example": "skillUrl"
+          },
+          "upstreamMessage": {
+            "type": "string",
+            "example": "Application consent revoked",
+            "description": "DIAL Scheduler's own error reason, trimmed and capped at 1000 characters. Never present for 401/403/404."
+          },
+          "upstreamCode": {
+            "type": "string",
+            "example": "consent_revoked",
+            "description": "DIAL Scheduler's own error code (matches ^[A-Za-z0-9_.:-]{1,128}$). Never present for 401/403/404."
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
       "CreateScheduledTaskBodyDto": {
         "type": "object",
         "properties": {
@@ -12446,52 +12615,6 @@
           }
         },
         "required": ["id", "displayName", "trigger"]
-      },
-      "ScheduledTaskErrorCode": {
-        "type": "string",
-        "enum": [
-          "scheduledTaskSkillUnsupported",
-          "scheduledTaskInstructionsOrSkillRequired",
-          "scheduledTaskDeploymentUnavailable"
-        ]
-      },
-      "ScheduledTaskValidationErrorDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 400
-          },
-          "message": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            ]
-          },
-          "error": {
-            "type": "string",
-            "example": "Bad Request"
-          },
-          "code": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ScheduledTaskErrorCode"
-              }
-            ]
-          },
-          "field": {
-            "type": "string",
-            "example": "skillUrl"
-          }
-        },
-        "required": ["statusCode", "message", "error"]
       },
       "ScheduledTaskRunDto": {
         "type": "object",

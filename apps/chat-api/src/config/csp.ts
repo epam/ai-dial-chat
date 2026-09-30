@@ -85,6 +85,18 @@ export const buildFrameAncestorsDirective = (
   allowedOverlayOrigins.length > 0 ? allowedOverlayOrigins : ["'none'"];
 
 /**
+ * Builds the `frame-ancestors` directive for the HTML-preview download
+ * response. `'self'` covers this app's own preview iframe; the overlay-host
+ * origins cover the case where this app is itself embedded, since
+ * `frame-ancestors` validates the full ancestor chain, not just the
+ * immediate parent — so a bare `'self'` would fail that check for the host
+ * page's origin whenever this app is embedded via `ALLOWED_IFRAME_ORIGINS`.
+ */
+export const buildDownloadFrameAncestorsDirective = (
+  allowedIframeOrigins: string[],
+): string[] => ["'self'", ...allowedIframeOrigins];
+
+/**
  * Builds the `Permissions-Policy` header value delegating the
  * `local-network-access` feature to `'self'` plus every allowlisted iframe
  * origin. Helmet has no built-in support for this header, so `main.ts`
@@ -173,3 +185,61 @@ export const createHelmetOptions = (
       }
     : false,
 });
+
+/**
+ * Builds the CSP for an HTML file's `/download` response so it can render
+ * live in the attachment-preview iframe (`src=`, not `srcdoc`) with its
+ * inline scripts/styles intact. Deliberately far more permissive than
+ * `createHelmetOptions`'s app-shell policy for rendering directives
+ * (style/img/font/media), but the `sandbox` directive below is what actually
+ * neutralizes that permissiveness: it forces the response itself to render
+ * at an opaque origin with no `allow-same-origin`, so the guarantee holds
+ * even if the resource is opened directly (new tab, bookmarked, linked from
+ * elsewhere) instead of through the app's own sandboxed preview iframe. The
+ * iframe's own `sandbox="allow-scripts"` attribute is redundant
+ * defense-in-depth on top of this, not the primary control.
+ * `frame-ancestors` combines `'self'` (this app's own preview iframe) with
+ * `allowedIframeOrigins` (`ALLOWED_IFRAME_ORIGINS`) because the directive
+ * validates the *entire* ancestor chain: when this app is itself embedded in
+ * an overlay host, the host's origin is also part of that chain and must be
+ * allowed, or the whole embed fails the check.
+ * `script-src` omits `'unsafe-eval'`, remote/data/blob script sources, and
+ * `connect-src`/`base-uri`/`form-action`/`worker-src`/`frame-src`/`child-src`
+ * are all `'none'`: a previewed HTML file needs inline scripts/styles to
+ * render, but not `eval`/`Function`/string-timers, outbound
+ * `fetch`/`XHR`/WebSocket, loading further script resources, rewriting its
+ * base URL, submitting forms, spawning workers, or framing further content —
+ * so none of that is granted, narrowing what a malicious attachment's script
+ * could do inside its already-sandboxed, cookie-less iframe. Each of these is
+ * given its own explicit `'none'` rather than left to `default-src`'s
+ * fallback, so a future accidental removal of one directive cannot silently
+ * reopen it through `default-src`. `default-src` itself is `'self' data:
+ * blob:` — no bare `https:` — since every fetch type that legitimately needs
+ * HTTPS (style/img/font/media) already has its own explicit directive above.
+ */
+export const createHtmlPreviewCspHeader = (
+  allowedIframeOrigins: string[] = [],
+): string => {
+  const directives: [string, string][] = [
+    ['default-src', "'self' data: blob:"],
+    ['script-src', "'unsafe-inline'"],
+    ['style-src', "'unsafe-inline' https:"],
+    ['style-src-attr', "'unsafe-inline'"],
+    ['img-src', "'self' data: blob: https:"],
+    ['font-src', "'self' data: https:"],
+    ['media-src', "'self' data: blob: https:"],
+    ['connect-src', "'none'"],
+    ['object-src', "'none'"],
+    ['base-uri', "'none'"],
+    ['form-action', "'none'"],
+    ['worker-src', "'none'"],
+    ['frame-src', "'none'"],
+    ['child-src', "'none'"],
+    [
+      'frame-ancestors',
+      buildDownloadFrameAncestorsDirective(allowedIframeOrigins).join(' '),
+    ],
+    ['sandbox', 'allow-scripts'],
+  ];
+  return directives.map(([key, value]) => `${key} ${value}`).join('; ');
+};

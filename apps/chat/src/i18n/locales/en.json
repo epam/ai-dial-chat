@@ -952,7 +952,7 @@
     "tab": {
       "all": "All",
       "myFiles": "My Files",
-      "shared": "Shared with Me"
+      "shared": "Shared"
     },
     "myFiles": {
       "treeHeader": "File storage",
@@ -960,6 +960,7 @@
       "emptyStateDescription": "Upload files to your personal storage"
     },
     "shared": {
+      "rootFolder": "Shared",
       "emptyStateTitle": "No shared files",
       "emptyStateDescription": "Files shared with you will appear here"
     },

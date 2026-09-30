@@ -16,7 +16,15 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { useCallback, useRef, useState, type DragEvent, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type FC,
+} from 'react';
 import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
 import { getButtonPaddingEnd } from '../../utils/conversation-row';
@@ -74,8 +82,7 @@ export interface ConversationRowProps {
   ) => void;
 }
 
-/** Single draggable conversation row rendered inside the virtualised list or a static `ConversationGroup`. */
-export const ConversationRow: FC<ConversationRowProps> = ({
+const ConversationRowComponent: FC<ConversationRowProps> = ({
   item,
   isActive,
   onSelectConversation,
@@ -110,8 +117,20 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     [item, onActionMenuOpen],
   );
 
-  const menuItems = getActions?.(item) ?? [];
+  /* Built only when this row renders with a new item or a new `getActions`;
+     a host's new `getActions` (e.g. a landed revoke-count lookup) still
+     refreshes an open menu. */
+  const menuItems = useMemo(() => getActions?.(item) ?? [], [getActions, item]);
   const hasActions = menuItems.length > 0;
+
+  const deploymentIconLabels = useMemo(
+    () => ({ tooltip: item.iconTooltip }),
+    [item.iconTooltip],
+  );
+  const deploymentIconStyles = useMemo(
+    () => ({ badgeClassName: itemIconBadgeClassName }),
+    [itemIconBadgeClassName],
+  );
 
   const avatar = item.leadingIcon ? (
     <span className="flex size-6 shrink-0 items-center justify-center">
@@ -130,8 +149,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       src={item.iconUrl}
       size={DIAL_ICON_SIZE.LG}
       initialsName={item.iconTooltip ?? ''}
-      labels={{ tooltip: item.iconTooltip }}
-      styles={{ badgeClassName: itemIconBadgeClassName }}
+      labels={deploymentIconLabels}
+      styles={deploymentIconStyles}
     />
   );
 
@@ -283,3 +302,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     </li>
   );
 };
+
+/** Single draggable conversation row rendered inside the virtualised list or a static `ConversationGroup`. */
+export const ConversationRow = memo(ConversationRowComponent);

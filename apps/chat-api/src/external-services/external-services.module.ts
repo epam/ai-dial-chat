@@ -7,5 +7,6 @@ import { ExternalServicesService } from './external-services.service';
   imports: [AppConfigModule],
   controllers: [ExternalServicesController],
   providers: [ExternalServicesService],
+  exports: [ExternalServicesService],
 })
 export class ExternalServicesModule {}

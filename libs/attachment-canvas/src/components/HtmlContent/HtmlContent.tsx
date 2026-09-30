@@ -54,17 +54,70 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
 
     const [isLoading, setIsLoading] = useState(true);
     const [isBlocked, setIsBlocked] = useState(false);
+    const [fetchedSourceText, setFetchedSourceText] = useState<
+      string | undefined
+    >(undefined);
+    const [isSourceLoading, setIsSourceLoading] = useState(false);
+    const [hasSourceFetchFailed, setHasSourceFetchFailed] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
       setIsLoading(true);
       setIsBlocked(false);
+      setFetchedSourceText(undefined);
+      setIsSourceLoading(false);
+      setHasSourceFetchFailed(false);
     }, [content]);
+
+    const prevIsSourceViewRef = useRef(isSourceView);
+    if (prevIsSourceViewRef.current !== isSourceView) {
+      prevIsSourceViewRef.current = isSourceView;
+      /* Reset synchronously during render (not in an effect) so a retry
+       * after a failed fetch never paints the fallback iframe for a frame
+       * before `willFetchSourceText` below can recompute with the reset
+       * flag. */
+      if (isSourceView && hasSourceFetchFailed) {
+        setHasSourceFetchFailed(false);
+      }
+    }
+
+    useEffect(() => {
+      if (
+        !isSourceView ||
+        content.srcdoc != null ||
+        content.resolveSourceText == null ||
+        fetchedSourceText != null
+      ) {
+        return;
+      }
+      let isCancelled = false;
+      const resolveSourceText = content.resolveSourceText;
+      const fetchSourceText = async (): Promise<void> => {
+        setIsSourceLoading(true);
+        try {
+          const text = await resolveSourceText();
+          if (!isCancelled) setFetchedSourceText(text);
+        } catch {
+          /* Falls through to the rendered iframe below; the toggle retries on the next click. */
+          if (!isCancelled) setHasSourceFetchFailed(true);
+        } finally {
+          if (!isCancelled) setIsSourceLoading(false);
+        }
+      };
+      void fetchSourceText();
+      return () => {
+        isCancelled = true;
+      };
+    }, [isSourceView, content, fetchedSourceText]);
+
+    const isSameOriginUrl =
+      content.isSameOriginUrl === true && content.url != null;
+    const isSrcdoc = !isSameOriginUrl && content.srcdoc != null;
 
     const handleLoad = useCallback(
       (_e: SyntheticEvent<HTMLIFrameElement>) => {
         setIsLoading(false);
-        if (content.srcdoc != null) return;
+        if (isSrcdoc || isSameOriginUrl) return;
         try {
           const doc = iframeRef.current?.contentDocument;
           if (doc == null) {
@@ -74,7 +127,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
           setIsBlocked(true);
         }
       },
-      [content.srcdoc],
+      [isSrcdoc, isSameOriginUrl],
     );
 
     const handleError = useCallback(() => {
@@ -82,12 +135,36 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       setIsBlocked(true);
     }, []);
 
-    if (isSourceView && content.srcdoc != null) {
+    const sourceText = content.srcdoc ?? fetchedSourceText;
+    const canViewSource =
+      content.srcdoc != null || content.resolveSourceText != null;
+    /* True from the very first render where `isSourceView` flips on, before
+     * the fetch effect below has had a chance to commit `isSourceLoading` —
+     * without it, that render would briefly show the live iframe instead of
+     * the spinner. */
+    const willFetchSourceText =
+      content.srcdoc == null &&
+      content.resolveSourceText != null &&
+      fetchedSourceText == null &&
+      !hasSourceFetchFailed;
+
+    if (
+      isSourceView &&
+      canViewSource &&
+      (sourceText != null || isSourceLoading || willFetchSourceText)
+    ) {
+      if (sourceText == null) {
+        return (
+          <div className="flex h-full items-center justify-center">
+            <Spinner />
+          </div>
+        );
+      }
       return (
         <CodeContent
           content={{
             type: AttachmentContentType.Code,
-            text: content.srcdoc,
+            text: sourceText,
             language: 'html',
           }}
           codeBlockTheme={codeBlockTheme}
@@ -117,7 +194,6 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       );
     }
 
-    const isSrcdoc = content.srcdoc != null;
     const iframeSrc = !isSrcdoc ? content.url : undefined;
     const iframeSrcdoc = isSrcdoc ? content.srcdoc : undefined;
 
@@ -135,7 +211,9 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
           src={iframeSrc}
           srcDoc={iframeSrcdoc}
           sandbox={
-            isSrcdoc ? 'allow-scripts' : 'allow-scripts allow-same-origin'
+            isSrcdoc || isSameOriginUrl
+              ? 'allow-scripts'
+              : 'allow-scripts allow-same-origin'
           }
           className={mergeClasses(
             'h-full w-full border-none',

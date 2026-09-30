@@ -2247,8 +2247,16 @@ Host-agnostic API error/trace-ID normalization. Works identically for a generate
 ```ts
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 
-const { status, message, traceId } = await getApiErrorDetails(error);
+const { status, message, traceId, code, upstreamCode, upstreamMessage } =
+  await getApiErrorDetails(error);
 ```
+
+Besides `status`, `message` and `traceId`, the result carries the body's `code`
+(a stable domain code), `upstreamCode` and `upstreamMessage` (the code and
+reason of the service behind the API, when the API forwards them). Each is
+present only when the body holds it as a non-empty string. The library passes
+them through untouched — translating a code or deciding to display upstream
+text stays with the host.
 
 ## Locale Utilities
 
@@ -4085,7 +4093,7 @@ const conversations = useConversationPanelItems({
 | `resolveHref`             | `(id: string) => string`                                                                         | Converts a panel-space ID to a navigation href.                                                                                                                                                    |
 | `resolveTaskPresentation` | `(item: ConversationListItemDto) => { leadingIcon?: ReactNode; isUnread: boolean } \| undefined` | Optional; returns the row presentation for scheduled-task conversations. `leadingIcon` (a host-rendered, `aria-hidden` node) replaces the deployment avatar; `isUnread` drives the unread styling. |
 
-**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host.
+**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host. While every input except `items` keeps its reference, a DTO that is the same object as in the previous render maps to the same `ConversationItem` object, so a list change only produces new items for the DTOs that changed. Keep the resolvers referentially stable (`useCallback`) to benefit; a new resolver or `deployments` array rebuilds every item. Deployments are resolved by `id` first, then by `reference`.
 
 `resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
 

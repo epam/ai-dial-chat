@@ -703,4 +703,55 @@ describe('ScheduledTaskEditPage', () => {
       await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
     ).toBeTruthy();
   });
+
+  it('keeps the draft and asks to contact an administrator when consent was revoked', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({
+      status: 403,
+      code: 'scheduledTaskAdminConsentRequired',
+    });
+    renderEditPage();
+    fireEvent.change(await screen.findByLabelText('displayName'), {
+      target: { value: 'Retained draft' },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await vi.waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'toolsetSignin.adminConsentRequired',
+        }),
+      ),
+    );
+    expect(
+      (screen.getByLabelText('displayName') as HTMLInputElement).value,
+    ).toBe('Retained draft');
+    expect(
+      screen.queryByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeNull();
+  });
+
+  it("shows DIAL Scheduler's reason when the update fails with one", async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('upstream'));
+    getApiErrorStatusMock.mockReturnValue(502);
+    getApiErrorDetailsMock.mockResolvedValue({
+      status: 502,
+      message: 'DIAL Core returned a server error',
+      upstreamMessage: 'Quota exceeded for schedules',
+    });
+    renderEditPage();
+    await screen.findByLabelText('displayName');
+
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await vi.waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Quota exceeded for schedules' }),
+      ),
+    );
+  });
 });

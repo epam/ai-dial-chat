@@ -8,7 +8,7 @@ The HTML-viewing variant of the attachment canvas: the `Html` content type, prev
 
 ### Overview
 
-Adds an HTML viewer to `AttachmentCanvas` as a new `Html` content type. HTML file attachments (`.html`, `.htm`) are rendered inside a sandboxed `<iframe>` using `srcdoc`. External HTML URLs are rendered via `src`. When a URL-sourced iframe is blocked by the target page's CSP or `X-Frame-Options`, the viewer shows a friendly error panel with an "Open in new tab" fallback.
+Adds an HTML viewer to `AttachmentCanvas` as a new `Html` content type. HTML file attachments (`.html`, `.htm`) that have a same-origin DIAL download URL are rendered inside a sandboxed `<iframe>` via `src` against that URL, so the response carries its own relaxed, preview-scoped CSP instead of inheriting the host document's; a locally-picked file with no download URL falls back to `srcdoc`. External HTML URLs are also rendered via `src`. When a URL-sourced iframe is blocked by the target page's CSP or `X-Frame-Options`, the viewer shows a friendly error panel with an "Open in new tab" fallback.
 
 ---
 
@@ -70,12 +70,15 @@ interface HtmlCanvasContent {
   type: AttachmentContentType.Html;
   srcdoc?: string;
   url?: string;
+  isSameOriginUrl?: boolean;
+  resolveSourceText?: () => Promise<string>;
 }
 ```
 
-- `srcdoc` — the full HTML text to render inline via the iframe `srcdoc` attribute. Used for file attachments.
-- `url` — an external URL to render via the iframe `src` attribute. Used for external link sources.
-- Exactly one of the two fields is expected to be set. When both are set, `srcdoc` takes precedence. When neither is set, the renderer treats it as an unsupported state and shows the blocked/error panel.
+- `srcdoc` — the full HTML text to render inline via the iframe `srcdoc` attribute. Populated only when no `url` is available (a locally-picked file with no download URL); when `url` is set, "View source" instead calls `resolveSourceText`.
+- `url` — a URL to render via the iframe `src` attribute. Either this app's own same-origin file-download endpoint (when `isSameOriginUrl` is `true`) or a genuinely external site.
+- `isSameOriginUrl` — `true` when `url`'s origin matches the embedding document's own origin. It governs precedence and sandboxing (see the `HtmlContent` renderer requirement): when `true`, `url` takes precedence over `srcdoc` for rendering even if both are set, and the iframe sandbox omits `allow-same-origin`. When `false`/absent and only `url` is set, `url` renders with `allow-same-origin` (safe because it is a different origin). When neither `srcdoc` nor `url` is set, the renderer treats it as an unsupported state and shows the blocked/error panel.
+- `resolveSourceText` — lazily fetches the full HTML source text for the "View source" toggle. Set instead of an eagerly-populated `srcdoc` when `url` is set; absent when `srcdoc` is already populated. Invoked only when the toggle is switched to source view, so a preview that is never inspected as source never triggers this fetch.
 
 `HtmlCanvasContent` SHALL be added to the `AttachmentCanvasContent` discriminated union.
 
@@ -133,30 +136,37 @@ htmlViewRenderedLabel?: string;
 `isSourceView` is a **prop** (not internal state) — it is owned and toggled by `AttachmentCanvas` (see the toggle button requirement below).
 
 - **Rendered mode (`isSourceView === false`):** displays the iframe (see below).
-- **Source mode (`isSourceView === true`):** renders `content.srcdoc` using `CodeContent` with `language: 'html'`. Only reachable when `content.srcdoc != null`.
+- **Source mode (`isSourceView === true`):** renders the resolved source text using `CodeContent` with `language: 'html'`. The text is `content.srcdoc` when set, or the string returned by `content.resolveSourceText()` once that lazy fetch resolves (a spinner is shown while it is pending). Only reachable when `content.srcdoc != null` or `content.resolveSourceText != null`.
 
 **Toggle button:**
 - Rendered in the `AttachmentCanvas` panel header (`rightActions`), alongside the download and copy buttons — **not** inside `HtmlContent`.
 - Uses `IconCode` ("View source") when rendered view is active; `IconEye` ("View rendered") when source view is active.
 - `aria-pressed={isHtmlSourceView}` to expose toggle state.
 - Tooltip/`aria-label`: `labels.htmlViewSourceLabel` when rendered; `labels.htmlViewRenderedLabel` when source.
-- The toggle button SHALL only be rendered when `content.srcdoc != null`. For `url`-only content the source is not downloaded, so the toggle is hidden.
+- The toggle button SHALL only be rendered when `content.srcdoc != null` or `content.resolveSourceText != null`. When neither is set, there is no source text to show, so the toggle is hidden.
 - `isHtmlSourceView` state is reset to `false` in `AttachmentCanvas` whenever `content` changes.
 
-**`srcdoc` mode (file attachments):**
+Let `isSameOriginUrl = content.isSameOriginUrl === true && content.url != null` and `isSrcdoc = !isSameOriginUrl && content.srcdoc != null`. `isSameOriginUrl` takes precedence over `srcdoc` so a same-origin download URL always renders via `src`, even when `srcdoc` is also populated (for the "View source" toggle).
+
+**`srcdoc` mode (local file attachments, no download URL):**
 - Set the iframe's `srcdoc` attribute to `content.srcdoc`.
 - The iframe SHALL carry `sandbox="allow-scripts"` — no `allow-same-origin`, no `allow-forms`, no `allow-popups`, no `allow-navigation`.
 - The iframe SHALL fill the remaining panel body area (`w-full h-full border-none`).
 - No CSP block detection is needed for `srcdoc`; the content is always rendered.
 
-**`src` mode (external URLs):**
+**`src` mode, same-origin download (`isSameOriginUrl === true`):**
+- Set the iframe's `src` attribute to `content.url` (this app's own `/api/v1/files/download` route).
+- The iframe SHALL carry `sandbox="allow-scripts"` — no `allow-same-origin`. Although `url` is same-origin, granting `allow-same-origin` would let the framed document read this app's cookies/session; omitting it keeps the framed document at an opaque origin regardless of the URL's own origin. Safety therefore rests on the sandbox, not on the response's CSP — the download response itself carries its own relaxed, preview-scoped CSP (see `chat-content-security-policy` spec) so its inline `<script>`/`<style>` render, but that relaxed policy is not a substitute for the sandbox.
+- No CSP block detection: `contentDocument` access is meaningless at an opaque origin regardless of load outcome, so the `onLoad` handler skips it and trusts the load event.
+
+**`src` mode, external URL (`isSameOriginUrl` falsy):**
 - Set the iframe's `src` attribute to `content.url`.
 - The iframe SHALL carry `sandbox="allow-scripts allow-same-origin"`. `allow-same-origin` is safe here because the external URL is a different origin from the host app, so the embedded page cannot access the host's cookies or storage.
 - **CSP block detection:** attach an `onLoad` handler. Inside `onLoad`, wrap the `contentDocument` access in a `try/catch`. If accessing `contentDocument` throws (cross-origin security error) or `contentDocument` is `null`, set `isBlocked = true`. Also attach an `onError` handler that sets `isBlocked = true` for outright network/load failures.
 - When `isBlocked` is `true`, replace the iframe with the blocked-state panel (see below).
 - Show a loading spinner while the iframe is loading (`isLoading` state, set to `false` in `onLoad` or `onError`). The iframe SHALL stay mounted and merely `invisible` behind the spinner, so hiding it never restarts the load.
 - `isLoading` and `isBlocked` SHALL both reset whenever `content` changes, so a newly opened attachment never inherits the previous one's blocked or settled state.
-- Since source text is not available for URL-only content, the toggle button is not shown.
+- Since source text is not fetched eagerly for URL-only content, the toggle button relies on `resolveSourceText` being set (see the same-origin case above); when it is absent (a genuinely external URL with no source-text source), the toggle is not shown.
 
 **Blocked-state panel:**
 - Centered in the panel body, same layout as the existing `Unsupported` / `Error` panels.
@@ -228,6 +238,13 @@ The component MUST NOT read from any app-level context.
 - **WHEN** `HtmlContent` is rendered with `srcdoc` content (no `url`)
 - **THEN** no block-detection logic runs and no blocked panel is shown
 
+#### Scenario: same-origin url takes precedence over srcdoc and skips block detection
+
+- **WHEN** `HtmlContent` is rendered with `{ type: Html, url: <download url>, isSameOriginUrl: true, srcdoc: <text>, resolveSourceText: <fn> }`
+- **THEN** the iframe `src` attribute equals the download url, and `srcDoc` is not set
+- **AND** the sandbox is `allow-scripts` with no `allow-same-origin`
+- **AND** the `onLoad` handler does not run block-detection logic
+
 ---
 
 ### Requirement: `AttachmentCanvas` switch handles `Html` variant
@@ -238,7 +255,7 @@ The panel chrome SHALL be identical to other content types. The scroll container
 
 **`isHtmlSourceView` state** is owned by `AttachmentCanvas`, initialized to `false`, and reset to `false` whenever `content` changes.
 
-**Toggle button in `rightActions`:** When `content.type === Html && content.srcdoc != null`, a toggle button SHALL be rendered in the panel header alongside the other action buttons:
+**Toggle button in `rightActions`:** When `content.type === Html && (content.srcdoc != null || content.resolveSourceText != null)`, a toggle button SHALL be rendered in the panel header alongside the other action buttons:
 - `IconCode` ("View source") in rendered mode; `IconEye` ("View rendered") in source mode.
 - `aria-pressed={isHtmlSourceView}`.
 - Tooltip and `aria-label` use `htmlViewSourceLabel` / `htmlViewRenderedLabel` from `labels`.
@@ -275,26 +292,35 @@ export const resolveHtmlCanvasContent = async (
 ): Promise<HtmlCanvasContent | ErrorCanvasContent | null>
 ```
 
-The function SHALL delegate text resolution to the shared `resolveAttachmentText` helper. On success, return `{ type: AttachmentContentType.Html, srcdoc: text }`. A non-`null` `url` from the injected `resolvers.resolveDialUrl(attachment)` SHALL also be included in the payload (as `url`) so the download button is available. The DIAL-URL resolution is injected rather than imported, so the resolver stays host-agnostic; `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts` binds it and exposes it to the canvas hook as `resolveHtmlContent(attachment)`.
+Resolution branches on the injected `resolvers.resolveDialUrl(attachment)`, which decides the primary render target:
 
-**Size gate:** When the resolved text length exceeds 1 048 576 characters (1 MiB), the function SHALL return `null` (falling through to `UnsupportedCanvasContent`). This prevents `srcdoc` truncation in browsers that cap the attribute length.
+- **A non-`null` download URL** (the attachment is a DIAL-uploaded file): return `{ type: AttachmentContentType.Html, url: downloadUrl, isSameOriginUrl, resolveSourceText }` with no eager fetch and no `srcdoc`. `isSameOriginUrl` is a real comparison — the download URL's origin against the embedding document's own origin — not a hardcoded literal. `resolveSourceText` is a lazy `() => Promise<string>` that fetches and returns the HTML text (via the shared `resolveAttachmentText` helper) only when invoked, and rejects if that fetch fails; it is not called during resolution, so a preview that is never switched to source view never fetches the text at all, avoiding a double download against the same URL the iframe already loads. The size gate below does not apply to this branch — the preview always renders via the download URL regardless of the file's text size.
+- **No download URL** (a locally-picked file or inline `data`, not yet uploaded): delegate to the shared `resolveAttachmentText` helper eagerly, gated at 1 MiB — return `{ type: AttachmentContentType.Html, srcdoc: text }` when the fetched text is within the gate, or `null` when it exceeds the gate (falling through to `UnsupportedCanvasContent`).
 
-Because `null` also means "this attachment carries no text at all" (an external HTML URL), the caller SHALL distinguish the two with `hasAttachmentTextSource(attachment)` — see the routing requirement below — so a size-gated file is not re-opened as a url-only iframe and reported as frame-blocked.
+The DIAL-URL resolution is injected rather than imported, so the resolver stays host-agnostic; `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts` binds it and exposes it to the canvas hook as `resolveHtmlContent(attachment)`.
 
-#### Scenario: file attachment resolves to srcdoc
+Because `null` also means "this attachment carries no text at all" (an external HTML URL), the caller SHALL distinguish the two with `hasAttachmentTextSource(attachment)` — see the routing requirement below — so a size-gated local file is not re-opened as a url-only iframe and reported as frame-blocked.
 
-- **WHEN** `resolveHtmlCanvasContent` is called with an HTML file attachment that has downloadable text
-- **THEN** it returns `{ type: AttachmentContentType.Html, srcdoc: <fetched text>, url: <download url> }`
+#### Scenario: DIAL file resolves to url with a lazy source-text resolver, no eager fetch
+
+- **WHEN** `resolveHtmlCanvasContent` is called with an HTML file attachment that has a download URL
+- **THEN** it returns `{ type: AttachmentContentType.Html, url: <download url>, isSameOriginUrl: <real origin comparison>, resolveSourceText: <fn> }` with no `srcdoc`
+- **AND** no text fetch is performed until `resolveSourceText()` is invoked
+
+#### Scenario: local file with small text resolves to srcdoc only
+
+- **WHEN** `resolveHtmlCanvasContent` is called with a locally-picked HTML file (no download URL) whose text is within the 1 MiB gate
+- **THEN** it returns `{ type: AttachmentContentType.Html, srcdoc: <fetched text> }` with no `url`
+
+#### Scenario: local file with oversized text falls through
+
+- **WHEN** `resolveHtmlCanvasContent` is called with a locally-picked HTML file (no download URL) whose text exceeds 1 MiB
+- **THEN** it returns `null`
 
 #### Scenario: fetch error propagates
 
 - **WHEN** the underlying fetch returns HTTP 403
 - **THEN** `resolveHtmlCanvasContent` returns an `ErrorCanvasContent` with `errorType: Forbidden`
-
-#### Scenario: oversized file falls through
-
-- **WHEN** the resolved text exceeds 1 MiB
-- **THEN** `resolveHtmlCanvasContent` returns `null`
 
 ---
 
@@ -319,14 +345,14 @@ For external URL sources (an `AttachmentResource` whose URL path ends in `.html`
 
 **i18n impact:** see "new `AttachmentCanvasLabels` fields" requirement above.
 
-#### Scenario: html attachment opens Html content type
+#### Scenario: html attachment with a download URL opens Html content type
 
-- **WHEN** the user clicks a `.html` file attachment
-- **THEN** `openCanvas` is called with `HtmlCanvasContent { srcdoc: <file text>, url: <download url> }`
+- **WHEN** the user clicks a `.html` file attachment that has a DIAL download URL
+- **THEN** `openCanvas` is called with `HtmlCanvasContent { url: <download url>, isSameOriginUrl: <real origin comparison>, resolveSourceText: <fn> }`, with no `srcdoc` and no eager text fetch
 
-#### Scenario: htm attachment opens Html content type
+#### Scenario: htm attachment with no download URL opens Html content type
 
-- **WHEN** the user clicks a `.htm` file attachment
+- **WHEN** the user clicks a `.htm` file attachment with no DIAL download URL (a locally-picked file)
 - **THEN** `openCanvas` is called with `HtmlCanvasContent { srcdoc: <file text> }`
 
 #### Scenario: external html URL opens Html content type
@@ -340,7 +366,7 @@ For external URL sources (an `AttachmentResource` whose URL path ends in `.html`
 - **WHEN** a cited source's `name` is a title with no file extension and its URL path ends with `.html`
 - **THEN** `openCanvas` is called with `HtmlCanvasContent { url: <resource url> }`, not `UnsupportedCanvasContent`
 
-#### Scenario: oversized html file opens the unsupported panel
+#### Scenario: oversized local html file opens the unsupported panel
 
-- **WHEN** an HTML file attachment's text exceeds the srcdoc size gate, so `resolveHtmlCanvasContent` returns `null`
+- **WHEN** a locally-picked HTML file attachment with no DIAL download URL has text exceeding the srcdoc size gate, so `resolveHtmlCanvasContent` returns `null`
 - **THEN** `openCanvas` is called with `UnsupportedCanvasContent`, and the frame-blocked panel is not shown
