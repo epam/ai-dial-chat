@@ -229,7 +229,7 @@ const baseLabels: DialFileManagerShellLabels = {
   treeHeaderByTab: {
     [DialFileManagerTabs.All]: 'File storage',
     [DialFileManagerTabs.MyFiles]: 'My Files',
-    [DialFileManagerTabs.Shared]: 'Shared with Me',
+    [DialFileManagerTabs.Shared]: 'Shared',
     [DialFileManagerTabs.Organization]: 'Organization',
     [DialFileManagerTabs.Review]: '',
   },

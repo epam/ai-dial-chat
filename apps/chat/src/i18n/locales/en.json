@@ -953,7 +953,7 @@
     "tab": {
       "all": "All",
       "myFiles": "My Files",
-      "shared": "Shared with Me"
+      "shared": "Shared"
     },
     "myFiles": {
       "treeHeader": "File storage",
