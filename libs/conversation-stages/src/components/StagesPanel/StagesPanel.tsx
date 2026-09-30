@@ -9,7 +9,7 @@ import {
   EllipsisTooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+import { FC, useId, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import { StageRow } from '../../models/stage-grouping';
 import type {
@@ -50,6 +50,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
     attemptLabel = (n: number) => `Attempt ${n}`,
   } = labels ?? {};
   const [isOpen, setIsOpen] = useState(false);
+  const contentId = useId();
 
   const hasUnresolved = row.attempts?.some((a) => a.status == null) ?? false;
   const hasFailed = row.attempts?.some((a) => a.status === StageStatus.Failed);
@@ -70,6 +71,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
+        aria-controls={contentId}
         className={mergeClasses(
           'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start',
           styles.collapseButton,
@@ -132,6 +134,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
         </span>
       </button>
       <div
+        id={contentId}
+        inert={!isOpen}
         className={mergeClasses(
           'grid overflow-hidden transition-[grid-template-rows] duration-[250ms] ease-in-out',
           isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
@@ -139,17 +143,18 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
       >
         <div className="overflow-hidden">
           <ul role="list" className="mt-1 flex flex-col gap-0.5 ps-6">
-            {row.attempts?.map((attempt, i) => (
-              <li key={attempt.index} role="listitem">
-                <StageItem
-                  stage={attempt}
-                  nameOverride={attemptLabel(i + 1)}
-                  isLive={isLive && attempt.status == null}
-                  typography={typography}
-                  labels={labels}
-                />
-              </li>
-            ))}
+            {isOpen &&
+              row.attempts?.map((attempt, i) => (
+                <li key={attempt.index} role="listitem">
+                  <StageItem
+                    stage={attempt}
+                    nameOverride={attemptLabel(i + 1)}
+                    isLive={isLive && attempt.status == null}
+                    typography={typography}
+                    labels={labels}
+                  />
+                </li>
+              ))}
           </ul>
         </div>
       </div>

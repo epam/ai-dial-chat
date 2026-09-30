@@ -1,5 +1,5 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_STAGES_CLASS } from '../../../constants/public-class-names';
@@ -17,17 +17,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick,
     className,
     'aria-expanded': ariaExpanded,
+    'aria-controls': ariaControls,
   }: {
     label: ReactNode;
     onClick?: () => void;
     className?: string;
     'aria-expanded'?: boolean;
+    'aria-controls'?: string;
   }) => (
     <button
       type="button"
       onClick={onClick}
       className={className}
       aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
     >
       {label}
     </button>
@@ -57,6 +60,37 @@ const running = (index: number, name: string) => ({
 });
 
 describe('CollapsedGroup — collapsed states', () => {
+  it('mounts the panel on demand and resets nested disclosures when closed', () => {
+    render(
+      <CollapsedGroup
+        stages={[
+          { ...completed(0, 'Step 1'), content: 'Stage details' },
+          completed(1, 'Step 2'),
+        ]}
+        isStreaming={false}
+      />,
+    );
+    const toggle = screen.getByRole('button', { name: /Executed 2 steps/ });
+    expect(screen.queryByText('Step 1')).toBeNull();
+    expect(screen.queryByText('Stage details')).toBeNull();
+
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: /Step 1/ }));
+    expect(screen.getByText('Stage details')).toBeTruthy();
+
+    fireEvent.click(toggle);
+    expect(screen.queryByText('Stage details')).toBeNull();
+    expect(screen.queryByText('Step 1')).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(
+      screen
+        .getByRole('button', { name: /Step 1/ })
+        .getAttribute('aria-expanded'),
+    ).toBe('false');
+    expect(screen.queryByText('Stage details')).toBeNull();
+  });
+
   it('renders nothing for an empty stage list', () => {
     const { container } = render(
       <CollapsedGroup stages={[]} isStreaming={false} />,
@@ -196,6 +230,7 @@ describe('CollapsedGroup — collapse-by-default-when-finished transition', () =
     expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe(
       'true',
     );
+    expect(screen.getByText('Step 1')).toBeTruthy();
 
     rerender(
       <CollapsedGroup
@@ -206,6 +241,7 @@ describe('CollapsedGroup — collapse-by-default-when-finished transition', () =
     expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe(
       'false',
     );
+    expect(screen.queryByText('Step 1')).toBeNull();
   });
 });
 
@@ -240,7 +276,7 @@ describe('conversation-stages — public class names', () => {
    * stylesheet simply stops applying, so each class is asserted here. The
    * panel root carries no role, so the stage row is located by text first.
    */
-  it('stamps the panel root behind a collapsed group', () => {
+  it('stamps the panel root when a collapsed group is opened', () => {
     render(
       <CollapsedGroup
         stages={[completed(0, 'Step 1'), completed(1, 'Step 2')]}
@@ -248,6 +284,7 @@ describe('conversation-stages — public class names', () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /Executed/ }));
     expect(
       closestWithClass(
         screen.getByText('Step 1'),

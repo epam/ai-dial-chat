@@ -433,6 +433,10 @@ times; `copiedLabel` is announced through the block's own
 behind a `Suspense` boundary — `value` is shown immediately as plain,
 unhighlighted text via the fallback, then swapped for the highlighted output
 once the engine resolves. A language-less block never loads the engine at all.
+Blocks exceeding 50,000 UTF-16 code units overall or 2,000 on any line also
+bypass the engine and display complete plain text. Copy and download retain
+the original content, and the language label is preserved. This size guard
+reduces expensive highlighting; it is not an execution timeout.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
@@ -444,6 +448,19 @@ import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
   copyLabel="Copy code"
   copiedLabel="Copied!"
 />;
+```
+
+### isSyntaxHighlightingAllowed
+
+`isSyntaxHighlightingAllowed(text: string): boolean` is the shared size guard
+for synchronous syntax highlighting. It permits up to 50,000 UTF-16 code units
+overall and 2,000 per line, inclusively, recognizing LF, CRLF, and CR endings.
+Callers render complete plain text when it returns `false`.
+
+```ts
+import { isSyntaxHighlightingAllowed } from '@epam/ai-dial-chat-shared';
+
+const canHighlight = isSyntaxHighlightingAllowed('const answer = 42;');
 ```
 
 ### MarkdownTable

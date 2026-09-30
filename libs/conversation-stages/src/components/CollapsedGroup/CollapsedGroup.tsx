@@ -15,7 +15,7 @@ import {
   IconChevronDown,
   IconChevronRight,
 } from '@tabler/icons-react';
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useId, useRef, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import type { CollapsedGroupProps } from '../../models/collapsed-group';
 import {
@@ -46,6 +46,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   } = labels ?? {};
 
   const [isOpen, setIsOpen] = useState(isStreaming);
+  const contentId = useId();
   const wasStreamingRef = useRef(isStreaming);
   useEffect(() => {
     if (wasStreamingRef.current && !isStreaming) {
@@ -223,6 +224,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         textClassName="min-w-0"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
+        aria-controls={contentId}
         iconAfter={
           isOpen ? (
             <IconChevronDown
@@ -242,22 +244,26 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         label={summary}
       />
       <div
+        id={contentId}
+        inert={!isOpen}
         className={mergeClasses(
           'grid transition-[grid-template-rows] duration-300 ease-in-out',
           isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
         )}
       >
         <div className="overflow-hidden">
-          <StagesPanel
-            stages={stages}
-            isStreaming={isStreaming}
-            styles={{
-              colors: panelColors,
-              typography: groupStyles?.typography,
-            }}
-            labels={panelLabels}
-            className="pt-1"
-          />
+          {isOpen && (
+            <StagesPanel
+              stages={stages}
+              isStreaming={isStreaming}
+              styles={{
+                colors: panelColors,
+                typography: groupStyles?.typography,
+              }}
+              labels={panelLabels}
+              className="pt-1"
+            />
+          )}
         </div>
       </div>
     </div>

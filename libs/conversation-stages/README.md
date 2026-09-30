@@ -33,6 +33,10 @@ import '@epam/ai-dial-conversation-stages/styles.css';
 
 ### StagesPanel
 
+Stage details and repeated-attempt rows mount only while expanded, so closed
+stages do not parse Markdown or mount copy controls. Closing removes their
+content; reopening renders the latest stage data.
+
 Renders the full list of stages for the current response. `stages` and `isStreaming` are both required — while `isStreaming` is `true`, every stage with `status: null` shows a live spinner. A completed check is rendered only after that stage explicitly receives `status: "completed"`.
 
 ```tsx
@@ -51,6 +55,10 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 ```
 
 ### CollapsedGroup
+
+The nested panel mounts only while the summary is expanded. Collapsing removes
+the panel and resets its nested disclosures; reopening starts those disclosures
+closed. Streaming groups still open by default and collapse when the run ends.
 
 Wraps `StagesPanel` with a collapsible summary line whose text and default open/closed state track the run. Takes the same `stages` / `isStreaming` inputs; several labels are functions so the host controls plural rules.
 

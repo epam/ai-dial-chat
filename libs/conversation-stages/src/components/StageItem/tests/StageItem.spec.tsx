@@ -1,5 +1,5 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { StageItem } from '../StageItem';
 
@@ -23,6 +23,43 @@ const baseStage = {
   name: 'Parsed user intent',
   status: StageStatus.Completed,
 };
+
+describe('StageItem deferred content', () => {
+  it('mounts details only while open and renders updated content on reopening', () => {
+    const { rerender } = render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          content: '[Original link](https://example.com)',
+        }}
+        isLive={false}
+      />,
+    );
+    const toggle = screen.getByRole('button', { name: /Parsed user intent/ });
+    expect(screen.queryByText('Original link')).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(screen.getByRole('link', { name: 'Original link' })).toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    const controlledId = toggle.getAttribute('aria-controls');
+    expect(controlledId).toBeTruthy();
+
+    fireEvent.click(toggle);
+    expect(screen.queryByText('Original link')).toBeNull();
+    expect(screen.queryByRole('link', { hidden: true })).toBeNull();
+
+    rerender(
+      <StageItem
+        stage={{ ...baseStage, content: '[Updated link](https://example.com)' }}
+        isLive={false}
+      />,
+    );
+    expect(screen.queryByText('Updated link')).toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getByRole('link', { name: 'Updated link' })).toBeTruthy();
+    expect(toggle.getAttribute('aria-controls')).toBe(controlledId);
+  });
+});
 
 describe('StageItem — optional-field rendering', () => {
   it('renders only the icon and name when no other field has data (minimum row)', () => {

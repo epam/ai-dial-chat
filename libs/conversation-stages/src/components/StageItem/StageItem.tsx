@@ -6,7 +6,7 @@ import {
   EllipsisTooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+import { FC, useId, useState } from 'react';
 import type {
   StagesPanelLabels,
   StageTypography,
@@ -39,6 +39,7 @@ export const StageItem: FC<StageItemProps> = ({
   nameOverride,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const contentId = useId();
   const {
     copyAriaLabel = 'Copy stage content',
     runningAriaLabel,
@@ -131,12 +132,15 @@ export const StageItem: FC<StageItemProps> = ({
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-expanded={isOpen}
+          aria-controls={contentId}
           className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-start"
         >
           {header}
         </button>
       </div>
       <div
+        id={contentId}
+        inert={!isOpen}
         className={mergeClasses(
           'grid overflow-hidden transition-[grid-template-rows] duration-[250ms] ease-in-out',
           isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
@@ -144,7 +148,7 @@ export const StageItem: FC<StageItemProps> = ({
       >
         <div className="overflow-hidden">
           <div className="mt-2 flex flex-col gap-3 py-1 ps-8">
-            {stage.content && (
+            {isOpen && stage.content && (
               <div className="max-h-[300px] overflow-y-auto">
                 <StageMarkdownContent
                   content={stage.content}

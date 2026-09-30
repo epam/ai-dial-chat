@@ -177,6 +177,11 @@ import {
 
 ### CodeContent
 
+Content exceeding 50,000 UTF-16 code units overall or 2,000 on any line is
+shown in full as plain text without loading or invoking the syntax highlighter.
+The limits use the shared `isSyntaxHighlightingAllowed` guard from
+`@epam/ai-dial-chat-shared` and apply to every highlighting language.
+
 Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above.
 
 ```tsx
