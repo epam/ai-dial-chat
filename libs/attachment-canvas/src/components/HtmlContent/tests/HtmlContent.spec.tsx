@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { HTML_PREVIEW_FRAME_RENDER_MESSAGE } from '../../../constants/html-preview';
 import type { HtmlCanvasContent } from '../../../models/attachment-canvas';
 import { AttachmentContentType } from '../../../types/attachment-canvas';
 import { HtmlContent } from '../HtmlContent';
@@ -111,6 +112,112 @@ describe('HtmlContent — src/srcdoc precedence and sandbox', () => {
     expect(
       screen.queryByText('This page cannot be displayed in preview'),
     ).toBeNull();
+  });
+});
+
+describe('HtmlContent — srcdoc through a host document', () => {
+  const hostUrl = '/api/v1/files/html-preview-frame';
+  const html = '<style>p{color:red}</style><p>Hi</p>';
+
+  const stubContentWindow = (iframe: HTMLElement) => {
+    const postMessage = vi.fn();
+    Object.defineProperty(iframe, 'contentWindow', {
+      configurable: true,
+      get: () => ({ postMessage }),
+    });
+    return postMessage;
+  };
+
+  it('loads the host document via src instead of srcdoc, with no allow-same-origin', () => {
+    renderContent({
+      type: AttachmentContentType.Html,
+      srcdoc: html,
+      srcdocHostUrl: hostUrl,
+    });
+
+    const iframe = screen.getByTitle('page.html');
+    expect(iframe.getAttribute('src')).toBe(hostUrl);
+    expect(iframe.getAttribute('srcdoc')).toBeNull();
+    expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
+  });
+
+  it('posts the HTML to the host document once, even if it fires load again', () => {
+    renderContent({
+      type: AttachmentContentType.Html,
+      srcdoc: html,
+      srcdocHostUrl: hostUrl,
+    });
+    const iframe = screen.getByTitle('page.html');
+    const postMessage = stubContentWindow(iframe);
+
+    fireEvent.load(iframe);
+    fireEvent.load(iframe);
+
+    expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html },
+      '*',
+    );
+  });
+
+  it('never block-detects the opaque-origin host document', () => {
+    renderContent({
+      type: AttachmentContentType.Html,
+      srcdoc: html,
+      srcdocHostUrl: hostUrl,
+    });
+    loadBlockedIframe();
+
+    expect(screen.getByTitle('page.html')).toBeTruthy();
+    expect(
+      screen.queryByText('This page cannot be displayed in preview'),
+    ).toBeNull();
+  });
+
+  it('remounts the frame and posts the new HTML when the content changes', () => {
+    const { rerender } = renderContent({
+      type: AttachmentContentType.Html,
+      srcdoc: html,
+      srcdocHostUrl: hostUrl,
+    });
+    const firstIframe = screen.getByTitle('page.html');
+    stubContentWindow(firstIframe);
+    fireEvent.load(firstIframe);
+
+    const nextHtml = '<p>Next</p>';
+    rerender(
+      <HtmlContent
+        content={{
+          type: AttachmentContentType.Html,
+          srcdoc: nextHtml,
+          srcdocHostUrl: hostUrl,
+        }}
+        labels={{}}
+        isSourceView={false}
+        title="page.html"
+      />,
+    );
+    const nextIframe = screen.getByTitle('page.html');
+    expect(nextIframe).not.toBe(firstIframe);
+    const postMessage = stubContentWindow(nextIframe);
+    fireEvent.load(nextIframe);
+
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: nextHtml },
+      '*',
+    );
+  });
+
+  it('ignores the host document when a same-origin download URL takes precedence', () => {
+    renderContent({
+      type: AttachmentContentType.Html,
+      url,
+      isSameOriginUrl: true,
+      srcdoc: html,
+      srcdocHostUrl: hostUrl,
+    });
+
+    expect(screen.getByTitle('page.html').getAttribute('src')).toBe(url);
   });
 });
 

@@ -14,6 +14,7 @@ import type {
   AttachmentCanvasLabels,
   HtmlCanvasContent,
 } from '../../models/attachment-canvas';
+import { HTML_PREVIEW_FRAME_RENDER_MESSAGE } from '../../constants/html-preview';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent/CodeContent';
 import styles from './HtmlContent.module.scss';
@@ -60,6 +61,21 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
     const [isSourceLoading, setIsSourceLoading] = useState(false);
     const [hasSourceFetchFailed, setHasSourceFetchFailed] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const hasPostedSrcdocRef = useRef(false);
+
+    /* Bumped whenever `content` changes and used as the iframe `key`: with
+     * `srcdocHostUrl` the iframe `src` can stay identical across contents,
+     * and the bootstrap document accepts only one render message, so a new
+     * content needs a freshly loaded frame. */
+    const contentGenerationRef = useRef({ content, generation: 0 });
+    if (contentGenerationRef.current.content !== content) {
+      contentGenerationRef.current = {
+        content,
+        generation: contentGenerationRef.current.generation + 1,
+      };
+      hasPostedSrcdocRef.current = false;
+    }
+    const frameKey = contentGenerationRef.current.generation;
 
     useEffect(() => {
       setIsLoading(true);
@@ -113,10 +129,27 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
     const isSameOriginUrl =
       content.isSameOriginUrl === true && content.url != null;
     const isSrcdoc = !isSameOriginUrl && content.srcdoc != null;
+    /* Loading `srcdoc` through a host document (`src=`) instead of the
+     * `srcdoc` attribute keeps it from inheriting this page's CSP. */
+    const srcdocHostUrl = isSrcdoc ? content.srcdocHostUrl : undefined;
+    const srcdoc = content.srcdoc;
 
     const handleLoad = useCallback(
       (_e: SyntheticEvent<HTMLIFrameElement>) => {
         setIsLoading(false);
+        if (srcdocHostUrl != null) {
+          /* The host document replaces itself with the posted HTML, which can
+           * fire `load` again — post only once per loaded frame. Its origin is
+           * opaque (sandboxed), so `'*'` is the only matching target. */
+          if (!hasPostedSrcdocRef.current && srcdoc != null) {
+            hasPostedSrcdocRef.current = true;
+            iframeRef.current?.contentWindow?.postMessage(
+              { type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: srcdoc },
+              '*',
+            );
+          }
+          return;
+        }
         if (isSrcdoc || isSameOriginUrl) return;
         try {
           const doc = iframeRef.current?.contentDocument;
@@ -127,7 +160,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
           setIsBlocked(true);
         }
       },
-      [isSrcdoc, isSameOriginUrl],
+      [isSrcdoc, isSameOriginUrl, srcdocHostUrl, srcdoc],
     );
 
     const handleError = useCallback(() => {
@@ -194,8 +227,9 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       );
     }
 
-    const iframeSrc = !isSrcdoc ? content.url : undefined;
-    const iframeSrcdoc = isSrcdoc ? content.srcdoc : undefined;
+    const iframeSrc = isSrcdoc ? srcdocHostUrl : content.url;
+    const iframeSrcdoc =
+      isSrcdoc && srcdocHostUrl == null ? content.srcdoc : undefined;
 
     return (
       <div className="relative h-full">
@@ -206,6 +240,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
         )}
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- onLoad/onError are resource events, not mouse/keyboard listeners */}
         <iframe
+          key={frameKey}
           ref={iframeRef}
           title={title}
           src={iframeSrc}

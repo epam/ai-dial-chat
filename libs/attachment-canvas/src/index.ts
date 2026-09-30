@@ -86,4 +86,5 @@ export {
   partitionAttachmentsForApplicationVisualizer,
 } from './utils/visualizer';
 export type { ApplicationVisualizerPartition } from './utils/visualizer';
+export { HTML_PREVIEW_FRAME_RENDER_MESSAGE } from './constants/html-preview';
 export { ATTACHMENT_CANVAS_CLASS } from './constants/public-class-names';

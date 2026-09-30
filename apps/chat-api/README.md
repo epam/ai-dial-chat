@@ -819,6 +819,18 @@ iframe's own `sandbox="allow-scripts"` attribute (no `allow-same-origin`) the
 chat frontend sets is additional defense-in-depth on top of that, not the
 primary control.
 
+HTML with no file URL — an attachment carried inline as `data` in a message —
+cannot go through `/download`. For that case `GET /api/v1/files/html-preview-frame`
+returns a static bootstrap document under the same `createHtmlPreviewCspHeader()`
+policy (and `Cache-Control: no-cache`). The chat frontend loads it into the
+preview iframe via `src=` and posts it the HTML
+(`{ type: 'dial-html-preview:render', html }`); the document accepts that one
+message only from its parent window and replaces itself with the HTML through
+`document.write`, which keeps the same document and therefore the same
+sandboxed, preview-scoped policy. Rendering that HTML via `srcdoc` instead
+would inherit the chat document's enforced CSP and refuse its inline
+`<script>`/`<style>`.
+
 ### Security
 
 - **Environment Variable Validation**: Required variables are validated at startup using class-validator
