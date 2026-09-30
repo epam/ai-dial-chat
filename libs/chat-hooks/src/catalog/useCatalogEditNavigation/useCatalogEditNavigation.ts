@@ -15,7 +15,7 @@ import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
 
 /** Maximum number of runner options the Create menu lists at once. */
-const CREATE_MENU_RUNNER_LIMIT = 10;
+const CREATE_MENU_RUNNER_LIMIT = 7;
 
 /** A host notification `useCatalogEditNavigation` asks to be shown for a failed delete. */
 export interface CatalogEditNavigationNotification {
@@ -103,7 +103,7 @@ export interface UseCatalogEditNavigationParams {
 export interface UseCatalogEditNavigationResult {
   handleEdit: (item: CatalogItem) => void;
   handleDelete: (item: CatalogItem) => Promise<void>;
-  /** The Create dropdown's items: runners sorted by label and capped at 10, then the static options, all filtered by `createSearch.value`. */
+  /** The Create dropdown's items: runners sorted by label and capped at 7, then the static options, all filtered by `createSearch.value`. */
   createOptions: DropdownItem[];
   /** The Create menu's search field state, or `undefined` when no runner option is offered. */
   createSearch: CatalogCreateSearch | undefined;

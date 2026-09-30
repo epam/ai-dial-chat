@@ -496,7 +496,7 @@ describe('useCatalogEditNavigation', () => {
       );
     });
 
-    it('sorts runner options alphabetically and lists at most 10 of them', () => {
+    it('sorts runner options alphabetically and lists at most 7 of them', () => {
       const names = [
         'Zeta',
         'alpha',
@@ -527,9 +527,6 @@ describe('useCatalogEditNavigation', () => {
         'Gamma',
         'Iota',
         'Kappa',
-        'Lambda',
-        'Mind map',
-        'OCR',
       ]);
     });
 

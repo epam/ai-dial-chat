@@ -3453,12 +3453,12 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name            | Type                                   | Description                                                                                                                                                                 |
-| --------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                                      |
-| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                                  |
-| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners sorted alphabetically and capped at 10, then the static options, all filtered by the search query. |
-| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                           |
+| Name            | Type                                   | Description                                                                                                                                                                |
+| --------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                                     |
+| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                                 |
+| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners sorted alphabetically and capped at 7, then the static options, all filtered by the search query. |
+| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                          |
 
 ```tsx
 import {
