@@ -229,17 +229,19 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         )}
         contentClassName={mergeClasses('-mt-2 px-0', styles.groupRegion)}
       >
-        <StagesPanel
-          stages={stages}
-          isStreaming={isStreaming}
-          styles={{
-            colors: panelColors,
-            typography: groupStyles?.typography,
-          }}
-          labels={panelLabels}
-          className="pt-1"
-          onAttachmentClick={onAttachmentClick}
-        />
+        {isOpen && (
+          <StagesPanel
+            stages={stages}
+            isStreaming={isStreaming}
+            styles={{
+              colors: panelColors,
+              typography: groupStyles?.typography,
+            }}
+            labels={panelLabels}
+            className="pt-1"
+            onAttachmentClick={onAttachmentClick}
+          />
+        )}
       </Accordion>
     </div>
   );

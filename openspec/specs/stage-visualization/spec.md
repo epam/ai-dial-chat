@@ -96,7 +96,7 @@ A completion check MUST be driven only by the explicit `StageStatus.Completed` v
 
 ### Requirement: `StageItem` collapses/expands its content body
 
-Each `StageItem` SHALL render a header row (icon + name). When `stage.content` is present, or `stage.attachments` contains at least one entry, the item SHALL render as the kit's `Accordion` component, whose header toggles the visibility of its content body. When both `stage.content` is absent/empty and `stage.attachments` is absent/empty, the item is a static row with no toggle.
+Each `StageItem` SHALL render a header row (icon + name). When `stage.content` is present, or `stage.attachments` contains at least one entry, the item SHALL render as the kit's `Accordion` component, whose header toggles a content body mounted only while expanded, with immediate unmount on collapse. When both `stage.content` is absent/empty and `stage.attachments` is absent/empty, the item is a static row with no toggle.
 
 #### Scenario: Stage without content renders a plain row
 - **WHEN** `stage.content` is undefined or empty and `stage.attachments` is undefined or empty
@@ -105,6 +105,11 @@ Each `StageItem` SHALL render a header row (icon + name). When `stage.content` i
 #### Scenario: Stage with content renders a collapsible button
 - **WHEN** `stage.content` is a non-empty string
 - **THEN** a button element is rendered and clicking it expands/collapses the content body
+
+#### Scenario: Closed details are not rendered
+
+- **WHEN** the item starts closed or is collapsed after opening
+- **THEN** its Markdown body and attachment tiles are unmounted and its disclosure exposes `aria-expanded="false"`
 
 #### Scenario: Stage with only attachments renders a collapsible button
 - **WHEN** `stage.content` is undefined or empty and `stage.attachments` contains at least one entry

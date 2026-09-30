@@ -2,7 +2,7 @@ import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
 import { Accordion, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { FC, useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import {
   STAGE_ACCORDION_CLASS_NAME,
   STAGE_ACCORDION_HEADER_CLASS_NAME,
@@ -81,6 +81,7 @@ export const StageItem: FC<StageItemProps> = ({
   nameOverride,
   onAttachmentClick,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const {
     copyAriaLabel = 'Copy stage content',
     runningAriaLabel,
@@ -162,6 +163,8 @@ export const StageItem: FC<StageItemProps> = ({
      the stage content has always sat below its row. */
   return (
     <Accordion
+      expanded={isOpen}
+      onToggle={setIsOpen}
       title={<span className="flex min-w-0 items-center gap-2">{header}</span>}
       className={STAGE_ACCORDION_CLASS_NAME}
       headerClassName={mergeClasses(
@@ -174,7 +177,7 @@ export const StageItem: FC<StageItemProps> = ({
         styles.stageRegion,
       )}
     >
-      {stage.content && (
+      {isOpen && stage.content && (
         <div className="max-h-[300px] overflow-y-auto">
           <StageMarkdownContent
             content={stage.content}
@@ -183,7 +186,7 @@ export const StageItem: FC<StageItemProps> = ({
           />
         </div>
       )}
-      {displayAttachments.length > 0 && (
+      {isOpen && displayAttachments.length > 0 && (
         <StageAttachmentRow
           attachments={displayAttachments}
           clickLabel={attachmentClickLabel}

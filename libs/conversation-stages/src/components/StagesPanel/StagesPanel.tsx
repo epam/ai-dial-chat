@@ -4,7 +4,7 @@ import {
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 import { Accordion, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import {
   STAGE_ACCORDION_CLASS_NAME,
@@ -51,6 +51,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
     failedAriaLabel,
     attemptLabel = (n: number) => `Attempt ${n}`,
   } = labels ?? {};
+  const [isOpen, setIsOpen] = useState(false);
   const hasUnresolved = row.attempts?.some((a) => a.status == null) ?? false;
   const hasFailed = row.attempts?.some((a) => a.status === StageStatus.Failed);
   const groupStatus = hasUnresolved
@@ -111,6 +112,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
      always sat below its summary row. */
   return (
     <Accordion
+      expanded={isOpen}
+      onToggle={setIsOpen}
       title={header}
       className={STAGE_ACCORDION_CLASS_NAME}
       headerClassName={mergeClasses(
@@ -122,18 +125,19 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
       contentClassName={mergeClasses('-mt-2 px-0 ps-6', styles.stageRegion)}
     >
       <ul role="list" className="flex flex-col gap-0.5">
-        {row.attempts?.map((attempt, i) => (
-          <li key={attempt.index} role="listitem">
-            <StageItem
-              stage={attempt}
-              nameOverride={attemptLabel(i + 1)}
-              isLive={isLive && attempt.status == null}
-              typography={typography}
-              labels={labels}
-              onAttachmentClick={onAttachmentClick}
-            />
-          </li>
-        ))}
+        {isOpen &&
+          row.attempts?.map((attempt, i) => (
+            <li key={attempt.index} role="listitem">
+              <StageItem
+                stage={attempt}
+                nameOverride={attemptLabel(i + 1)}
+                isLive={isLive && attempt.status == null}
+                typography={typography}
+                labels={labels}
+                onAttachmentClick={onAttachmentClick}
+              />
+            </li>
+          ))}
       </ul>
     </Accordion>
   );

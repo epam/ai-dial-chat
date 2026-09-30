@@ -33,6 +33,10 @@ import '@epam/ai-dial-conversation-stages/styles.css';
 
 ### StagesPanel
 
+Stage details and repeated-attempt rows mount only while expanded, so closed
+stages do not parse Markdown or mount copy controls. Closing removes their
+content; reopening renders the latest stage data.
+
 Renders the full list of stages for the current response. `stages` and `isStreaming` are both required — while `isStreaming` is `true`, every stage with `status: null` shows a live spinner. A completed check is rendered only after that stage explicitly receives `status: "completed"`.
 
 ```tsx
@@ -57,6 +61,10 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 When a stage carries `attachments` (e.g. a RAG agent's search results), its expanded body renders each one as an `AttachmentCard` tile from `@epam/ai-dial-attachment-input`, in a wrapping row below any `stage.content`. The library maps each raw `MessageAttachment` to a `DisplayAttachment` itself — the host never has to. Clicking a tile calls `onAttachmentClick` with the mapped `DisplayAttachment`; the library never opens a preview or builds a URL itself, so the host decides what "click" means (open a canvas preview, download, navigate, etc.). `attachmentClickLabel` overrides the tile's default click-action label, which otherwise reads as a download/open action rather than a preview.
 
 ### CollapsedGroup
+
+The nested panel mounts only while the summary is expanded. Collapsing removes
+the panel and resets its nested disclosures; reopening starts those disclosures
+closed. Streaming groups still open by default and collapse when the run ends.
 
 Wraps `StagesPanel` with a collapsible summary line whose text and default open/closed state track the run. Takes the same `stages` / `isStreaming` inputs; several labels are functions so the host controls plural rules.
 

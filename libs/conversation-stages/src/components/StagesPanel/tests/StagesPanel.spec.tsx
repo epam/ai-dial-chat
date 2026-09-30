@@ -183,19 +183,14 @@ describe('StagesPanel', () => {
 
     const button = screen.getByRole('button');
     expect(button.getAttribute('aria-expanded')).toBe('false');
-    /*
-     * `queryByText` is a plain DOM text search and does not respect `inert` —
-     * only role-based queries do — so the collapsed state is asserted on the
-     * region's own `inert` property instead.
-     */
-    const contentText = screen.getByText('Detailed stage output');
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    expect(contentText.closest('[inert]')).toBeTruthy();
+    expect(screen.queryByText('Detailed stage output')).toBeNull();
 
     fireEvent.click(button);
     expect(button.getAttribute('aria-expanded')).toBe('true');
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    expect(contentText.closest('[inert]')).toBeNull();
+    expect(screen.getByText('Detailed stage output')).toBeTruthy();
+
+    fireEvent.click(button);
+    expect(screen.queryByText('Detailed stage output')).toBeNull();
   });
 
   it('renders a stage without expandable content as a plain row (no button)', () => {
@@ -267,12 +262,18 @@ describe('StagesPanel', () => {
     const toggle = screen.getByRole('button');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(screen.getByText('×3')).toBeTruthy();
+    expect(screen.queryByText('Attempt 1')).toBeNull();
 
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText('Attempt 1')).toBeTruthy();
     expect(screen.getByText('Attempt 2')).toBeTruthy();
     expect(screen.getByText('Attempt 3')).toBeTruthy();
+
+    fireEvent.click(toggle);
+    expect(screen.queryByText('Attempt 1')).toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getByText('Attempt 1')).toBeTruthy();
   });
 
   it('keeps a repeated-stage group running while any attempt is unresolved', () => {
