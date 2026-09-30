@@ -20,7 +20,7 @@ export interface NavigationPanelColors {
   background?: string;
   /** Icon color of an inactive item. */
   itemText?: string;
-  /** Icon color of the active item. */
+  /** Icon color of the active item; also its keyboard-focus ring. */
   itemActiveText?: string;
   /** Background of the active/selected item. Defaults to `--bg-control-accent-alpha-active`. */
   itemSelectedBackground?: string;
