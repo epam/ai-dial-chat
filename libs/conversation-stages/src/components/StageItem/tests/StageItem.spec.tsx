@@ -1,5 +1,6 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { StageItem } from '../StageItem';
 
@@ -19,8 +20,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: { name: string } }) => (
-    <div>{attachment.name}</div>
+  AttachmentCard: ({
+    attachment,
+    onClick,
+  }: {
+    attachment: { id: string; name: string };
+    onClick?: (id: string) => void;
+  }) => (
+    <button type="button" onClick={() => onClick?.(attachment.id)}>
+      {attachment.name}
+    </button>
   ),
 }));
 
@@ -102,6 +111,122 @@ describe('StageItem — optional-field rendering', () => {
     expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe(
       'false',
     );
+  });
+
+  it('renders a disclosure button when the stage has only attachments (no content)', () => {
+    render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          attachments: [{ title: 'result.csv', data: 'Some markdown' }],
+        }}
+        isLive={false}
+        typography={{}}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Parsed user intent' }),
+    ).toBeTruthy();
+  });
+
+  it('renders no toggle when the stage has neither content nor attachments', () => {
+    render(
+      <StageItem
+        stage={{ ...baseStage, attachments: [] }}
+        isLive={false}
+        typography={{}}
+      />,
+    );
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+});
+
+describe('StageItem — attachment rendering', () => {
+  it('renders a tile for each attachment, in order', async () => {
+    const user = userEvent.setup();
+    render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          attachments: [
+            { index: 0, title: 'First', data: 'first body' },
+            { index: 1, title: 'Second', data: 'second body' },
+          ],
+        }}
+        isLive={false}
+        typography={{}}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+    const tiles = screen.getAllByRole('button', { name: /First|Second/ });
+    expect(tiles.map((el) => el.textContent)).toEqual(['First', 'Second']);
+  });
+
+  it('calls onAttachmentClick with the mapped display attachment when a tile is activated', async () => {
+    const user = userEvent.setup();
+    const onAttachmentClick = vi.fn();
+    render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          attachments: [{ title: 'result.csv', data: 'Some markdown text' }],
+        }}
+        isLive={false}
+        typography={{}}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+    await user.click(screen.getByRole('button', { name: 'result.csv' }));
+    expect(onAttachmentClick).toHaveBeenCalledOnce();
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'result.csv',
+        data: 'Some markdown text',
+      }),
+    );
+  });
+
+  it('renders a tile for a reference-only attachment (no inline data)', async () => {
+    const user = userEvent.setup();
+    render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          attachments: [
+            { title: 'result.csv', reference_url: 'files/abc/result.csv' },
+          ],
+        }}
+        isLive={false}
+        typography={{}}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+    expect(screen.getByRole('button', { name: 'result.csv' })).toBeTruthy();
+  });
+
+  it('renders the tile even when no onAttachmentClick handler is supplied', async () => {
+    const user = userEvent.setup();
+    render(
+      <StageItem
+        stage={{
+          ...baseStage,
+          attachments: [{ title: 'result.csv', data: 'Some markdown text' }],
+        }}
+        isLive={false}
+        typography={{}}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+    expect(screen.getByText('result.csv')).toBeTruthy();
   });
 });
 
