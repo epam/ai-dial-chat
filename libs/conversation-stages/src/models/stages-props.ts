@@ -1,4 +1,4 @@
-import type { Stage } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
 
 /** Typography class overrides for stage name and expanded content elements in `StagesPanel`. */
 export interface StageTypography {
@@ -72,6 +72,8 @@ export interface StagesPanelLabels {
   failedAriaLabel?: string;
   /** Label for a single attempt given its 1-based number. Defaults to `(n) => \`Attempt ${n}\``. */
   attemptLabel?: (attemptNumber: number) => string;
+  /** Accessible label for a stage attachment tile's interactive click action. Defaults to `'Preview search result'`. */
+  attachmentClickLabel?: string;
 }
 
 /** Props accepted by the `StagesPanel` component. */
@@ -86,4 +88,6 @@ export interface StagesPanelProps {
   styles?: StagesPanelStyles;
   /** User-visible strings. */
   labels?: StagesPanelLabels;
+  /** Called when a stage attachment tile is clicked/activated. Receives the mapped display attachment. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
