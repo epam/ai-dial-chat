@@ -3,9 +3,11 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -88,4 +90,16 @@ export class StageDto {
   @ValidateNested({ each: true })
   @Type(() => StageAttachmentDto)
   attachments?: StageAttachmentDto[];
+
+  @ApiPropertyOptional({
+    description:
+      "Index of the parent stage. In a streaming delta it is the parent's streaming `index` and is sent only on the chunk that opens the child; in a complete array without `index` values it is the parent's array position. Absent for a top-level stage",
+    type: 'integer',
+    minimum: 0,
+    example: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  parent_stage_index?: number;
 }

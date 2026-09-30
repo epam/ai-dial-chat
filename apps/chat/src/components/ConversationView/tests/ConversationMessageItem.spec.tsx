@@ -85,6 +85,8 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'dark' }),
 }));
 
+let capturedStageGroupProps:
+  { stages: unknown[]; labels?: Record<string, unknown> } | undefined;
 let isMobileMock = false;
 
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
@@ -115,8 +117,10 @@ vi.mock('@epam/ai-dial-conversation-stages', () => ({
   StagesPanel: () => null,
   CollapsedGroup: ({
     stages,
+    labels,
     onAttachmentClick,
   }: {
+    labels?: Record<string, unknown>;
     stages: {
       attachments?: {
         title: string;
@@ -129,27 +133,30 @@ vi.mock('@epam/ai-dial-conversation-stages', () => ({
       data?: string;
       referenceUrl?: string;
     }) => void;
-  }) => (
-    <>
-      {stages
-        .flatMap((stage) => stage.attachments ?? [])
-        .map((attachment) => (
-          <button
-            key={attachment.title}
-            type="button"
-            onClick={() =>
-              onAttachmentClick?.({
-                name: attachment.title,
-                data: attachment.data,
-                referenceUrl: attachment.reference_url,
-              })
-            }
-          >
-            {attachment.title}
-          </button>
-        ))}
-    </>
-  ),
+  }) => {
+    capturedStageGroupProps = { stages, labels };
+    return (
+      <>
+        {stages
+          .flatMap((stage) => stage.attachments ?? [])
+          .map((attachment) => (
+            <button
+              key={attachment.title}
+              type="button"
+              onClick={() =>
+                onAttachmentClick?.({
+                  name: attachment.title,
+                  data: attachment.data,
+                  referenceUrl: attachment.reference_url,
+                })
+              }
+            >
+              {attachment.title}
+            </button>
+          ))}
+      </>
+    );
+  },
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
@@ -211,6 +218,7 @@ beforeEach(() => {
   isMobileMock = false;
   capturedActions = undefined;
   capturedLabels = undefined;
+  capturedStageGroupProps = undefined;
   vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
     (feature) =>
       feature !== OverlayFeature.HideEditUserMessage &&
@@ -1973,5 +1981,123 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
     const alertMarkup = screen.getByRole('alert').innerHTML;
     expect(alertMarkup).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
     expect(alertMarkup).not.toMatch(/\btext-(left|right)\b/);
+  });
+});
+
+describe('ConversationMessageItem — stage normalization at the app boundary', () => {
+  const assistantWith = (stages: unknown[]): Message => ({
+    role: MessageRole.Assistant,
+    content: 'Result',
+    timestamp: '2024-01-01T00:00:05Z',
+    custom_content: { stages: stages as never },
+  });
+
+  it('gives unindexed history stages positional indexes and keeps their parents', () => {
+    const history = [
+      { name: 'Plan', status: 'completed' },
+      { name: 'Search', status: 'completed', parent_stage_index: 0 },
+      { name: 'Read', parent_stage_index: 1 },
+    ];
+    const snapshot = structuredClone(history);
+
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={assistantWith(history)}
+        index={1}
+      />,
+    );
+
+    expect(capturedStageGroupProps?.stages).toEqual([
+      { index: 0, name: 'Plan', status: StageStatus.Completed },
+      {
+        index: 1,
+        name: 'Search',
+        status: StageStatus.Completed,
+        parent_stage_index: 0,
+      },
+      { index: 2, name: 'Read', status: null, parent_stage_index: 1 },
+    ]);
+    expect(history).toEqual(snapshot);
+  });
+
+  it('keeps explicit live indexes and parents from streamed or replayed data', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={assistantWith([
+          { index: 4, name: 'Plan', status: null },
+          { index: 9, name: 'Search', status: null, parent_stage_index: 4 },
+        ])}
+        index={1}
+        totalCount={2}
+        isAssistantTyping
+      />,
+    );
+
+    expect(capturedStageGroupProps?.stages).toEqual([
+      { index: 4, name: 'Plan', status: null },
+      { index: 9, name: 'Search', status: null, parent_stage_index: 4 },
+    ]);
+  });
+
+  it('reuses the normalized stages for the same stored array and refreshes on a new snapshot', () => {
+    const msg = assistantWith([{ index: 0, name: 'Plan', status: null }]);
+    const { rerender } = render(
+      <ConversationMessageItem {...defaultProps} msg={msg} index={1} />,
+    );
+    const first = capturedStageGroupProps?.stages;
+
+    rerender(<ConversationMessageItem {...defaultProps} msg={msg} index={1} />);
+    expect(capturedStageGroupProps?.stages).toBe(first);
+
+    rerender(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={assistantWith([
+          { index: 0, name: 'Plan', status: 'completed' },
+          { index: 1, name: 'Search', status: 'failed', parent_stage_index: 0 },
+        ])}
+        index={1}
+      />,
+    );
+    expect(capturedStageGroupProps?.stages).toEqual([
+      { index: 0, name: 'Plan', status: StageStatus.Completed },
+      {
+        index: 1,
+        name: 'Search',
+        status: StageStatus.Failed,
+        parent_stage_index: 0,
+      },
+    ]);
+  });
+
+  it('passes translated stage labels for nested attempts, status and actions', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={assistantWith([{ index: 0, name: 'Plan', status: null }])}
+        index={1}
+      />,
+    );
+
+    const labels = capturedStageGroupProps?.labels as {
+      executedLabel: string;
+      runningAriaLabel: string;
+      failedAriaLabel: string;
+      failedCountLabel: (count: number) => string;
+      attemptLabel: (number: number) => string;
+      copyAriaLabel: string;
+      attachmentClickLabel: string;
+    };
+    expect(labels).toMatchObject({
+      executedLabel: 'Executed',
+      runningAriaLabel: 'conversation.stages.running',
+      failedAriaLabel: 'conversation.stages.failed',
+      copyAriaLabel: 'conversation.stages.copyContent',
+      attachmentClickLabel: 'conversation.stages.previewAttachment',
+    });
+    expect(labels.attemptLabel(2)).toBe('conversation.stages.attempt');
+    expect(labels.failedCountLabel(3)).toBe('conversation.stages.failedCount');
   });
 });

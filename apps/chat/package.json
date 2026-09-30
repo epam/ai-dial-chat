@@ -19,6 +19,13 @@
           "command": "node --test browser-tests/csp.browser.spec.mjs"
         }
       },
+      "test-nested-stages-browser": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "apps/chat",
+          "command": "node --test browser-tests/nested-stages.browser.spec.mjs"
+        }
+      },
       "build": {
         "dependsOn": [
           "typecheck",

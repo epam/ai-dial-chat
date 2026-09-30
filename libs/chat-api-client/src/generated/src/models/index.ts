@@ -6799,6 +6799,12 @@ export interface StageDto {
    * @memberof StageDto
    */
   attachments?: Array<StageAttachmentDto>;
+  /**
+   * Index of the parent stage. In a streaming delta it is the parent's streaming `index` and is sent only on the chunk that opens the child; in a complete array without `index` values it is the parent's array position. Absent for a top-level stage
+   * @type {number}
+   * @memberof StageDto
+   */
+  parentStageIndex?: number;
 }
 
 /**

@@ -100,6 +100,126 @@ describe('mapStages', () => {
   });
 });
 
+describe('mapStages — nested stage snapshots', () => {
+  it('gives an unindexed snapshot positional indexes and keeps a three-level hierarchy', () => {
+    expect(
+      mapStages([
+        { name: 'Plan', status: 'completed' },
+        { name: 'Search', status: 'completed', parent_stage_index: 0 },
+        { name: 'Read', parent_stage_index: 1 },
+      ]),
+    ).toEqual([
+      { index: 0, name: 'Plan', status: StageStatus.Completed },
+      {
+        index: 1,
+        name: 'Search',
+        status: StageStatus.Completed,
+        parent_stage_index: 0,
+      },
+      { index: 2, name: 'Read', status: null, parent_stage_index: 1 },
+    ]);
+  });
+
+  it('keeps explicit sparse indexes instead of array positions', () => {
+    expect(
+      mapStages([
+        { index: 4, name: 'Plan' },
+        { index: 9, name: 'Search', parent_stage_index: 4 },
+      ]),
+    ).toEqual([
+      { index: 4, name: 'Plan', status: null },
+      { index: 9, name: 'Search', status: null, parent_stage_index: 4 },
+    ]);
+  });
+
+  it('keeps a parent of zero', () => {
+    expect(
+      mapStages([
+        { index: 0, name: 'Plan' },
+        { index: 1, name: 'Search', parent_stage_index: 0 },
+      ])?.[1].parent_stage_index,
+    ).toBe(0);
+  });
+
+  it.each([undefined, null])(
+    'omits the parent field for a %p parent — a top-level stage',
+    (parent) => {
+      const [stage] = mapStages([
+        { name: 'Plan', parent_stage_index: parent },
+      ])!;
+      expect('parent_stage_index' in stage).toBe(false);
+    },
+  );
+
+  it.each([
+    [
+      'custom_content',
+      {
+        custom_content: {
+          stages: [{ name: 'Plan' }, { name: 'Search', parent_stage_index: 0 }],
+        },
+      },
+    ],
+    [
+      'customContent',
+      {
+        customContent: {
+          stages: [{ name: 'Plan' }, { name: 'Search', parent_stage_index: 0 }],
+        },
+      },
+    ],
+  ])('normalizes a nested snapshot carried in %s', (_form, source) => {
+    expect(mapStages(source)).toEqual([
+      { index: 0, name: 'Plan', status: null },
+      { index: 1, name: 'Search', status: null, parent_stage_index: 0 },
+    ]);
+  });
+
+  it('keeps attachments and status defaults unchanged for nested stages', () => {
+    expect(
+      mapStages([
+        { name: 'Plan', status: 'running' },
+        {
+          name: 'Search',
+          status: 'failed',
+          parent_stage_index: 0,
+          attachments: [{ index: 0, url: 'files/a.pdf' }],
+        },
+      ]),
+    ).toEqual([
+      { index: 0, name: 'Plan', status: null },
+      {
+        index: 1,
+        name: 'Search',
+        status: StageStatus.Failed,
+        parent_stage_index: 0,
+        attachments: [{ index: 0, title: '', url: 'files/a.pdf' }],
+      },
+    ]);
+  });
+
+  it('does not mutate its input', () => {
+    const input: RawStage[] = [
+      { name: 'Plan' },
+      { name: 'Search', parent_stage_index: 0 },
+    ];
+    const snapshot = structuredClone(input);
+
+    mapStages(input);
+
+    expect(input).toEqual(snapshot);
+  });
+
+  it('keeps toStage single-item defaults for an unindexed entry', () => {
+    expect(toStage({ name: 'Search', parent_stage_index: 0 })).toEqual({
+      index: 0,
+      name: 'Search',
+      status: null,
+      parent_stage_index: 0,
+    });
+  });
+});
+
 /*
  * Compile-time assignability assertion: the generated `StageDto` must satisfy
  * `RawStage` without a cast, so a REST-loaded conversation maps straight

@@ -1,20 +1,9 @@
-# stage-visualization Specification
+## RENAMED Requirements
 
-## Purpose
+- FROM: `StagesPanel` renders a flat list of stages
+- TO: `StagesPanel` renders a hierarchy of stages
 
-The `conversation-stages` library: merging streamed stages into a conversation and rendering them above assistant message bubbles.
-
-## Requirements
-
-### Requirement: `libs/conversation-stages` exposes the stage renderers
-
-The `@epam/ai-dial-conversation-stages` library SHALL exist at `libs/conversation-stages/`. It SHALL export `StagesPanel`, `CollapsedGroup`, and their public props, labels, color, style, and typography types. The library SHALL declare `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and `@tabler/icons-react` as peer dependencies.
-
-#### Scenario: CollapsedGroup is importable in apps/chat
-- **WHEN** `apps/chat` imports `CollapsedGroup` from `@epam/ai-dial-conversation-stages`
-- **THEN** TypeScript resolves the import without error
-
----
+## MODIFIED Requirements
 
 ### Requirement: Stage type includes optional content field
 
@@ -82,34 +71,6 @@ Text token accumulation (`delta.content`) SHALL continue independently.
 - **WHEN** replay opens parent 4 and children 7 and 9, both referencing parent 4, and subsequently updates the children in interleaved chunks
 - **THEN** all three indexes remain distinct and both children retain parent 4
 
-### Requirement: `StageIcon` maps status to the correct icon
-
-The `StageIcon` component SHALL render:
-- `IconAlertCircle` — when `status === StageStatus.Failed`, regardless of a stale `isLive` value
-- `IconCheck` — when `status === StageStatus.Completed`, regardless of a stale `isLive` value
-- `Spinner` — when `status === null` AND `isLive === true`
-- no status icon — when `status === null` AND `isLive === false`
-
-A completion check MUST be driven only by the explicit `StageStatus.Completed` value. The component MUST NOT infer completion because a stage is no longer the latest entry or because `isLive` is `false`.
-
-#### Scenario: Live running stage shows spinner
-- **WHEN** `status` is `null` and `isLive` is `true`
-- **THEN** `Spinner` is rendered
-
-#### Scenario: Completed stage shows check icon
-- **WHEN** `status` is `StageStatus.Completed`
-- **THEN** `IconCheck` is rendered
-
-#### Scenario: Non-live unresolved stage does not show a completed check
-- **WHEN** `status` is `null` and `isLive` is `false`
-- **THEN** neither `IconCheck`, `IconAlertCircle`, nor `Spinner` is rendered
-
-#### Scenario: Explicit failure wins over stale live state
-- **WHEN** `status` is `StageStatus.Failed` and `isLive` is `true`
-- **THEN** `IconAlertCircle` is rendered and `Spinner` is not rendered
-
----
-
 ### Requirement: `StageItem` collapses/expands its content body
 
 Each `StageItem` SHALL render a header row (icon + name). When `stage.content` is present, `stage.attachments` contains at least one entry, or the stage has derived child nodes, the item SHALL render as the kit's `Accordion` component, whose header toggles a content body mounted only while expanded, with immediate unmount on collapse. When `stage.content` and `stage.attachments` are absent/empty and the stage has no child nodes, the item is a static row with no toggle.
@@ -121,11 +82,6 @@ Each `StageItem` SHALL render a header row (icon + name). When `stage.content` i
 #### Scenario: Stage with content renders a collapsible button
 - **WHEN** `stage.content` is a non-empty string
 - **THEN** a button element is rendered and clicking it expands/collapses the content body
-
-#### Scenario: Closed details are not rendered
-
-- **WHEN** the item starts closed or is collapsed after opening
-- **THEN** its Markdown body and attachment tiles are unmounted and its disclosure exposes `aria-expanded="false"`
 
 #### Scenario: Stage with only attachments renders a collapsible button
 - **WHEN** `stage.content` is undefined or empty and `stage.attachments` contains at least one entry
@@ -139,42 +95,6 @@ Each `StageItem` SHALL render a header row (icon + name). When `stage.content` i
 - **WHEN** a parent has markdown, attachments and children and is expanded
 - **THEN** its body shows markdown, then its attachment tiles, then a nested stage list
 - **AND** child controls are outside the parent's header button and keep the host's attachment callback
-
-### Requirement: Stage attachments render as attachment tiles inside the expanded content body
-
-When a `StageItem`'s content body is expanded and `stage.attachments` contains entries, the component SHALL map each raw attachment to a display-only attachment model and render it as an attachment tile below any `stage.content`, in array order. Tiles SHALL be rendered in a `role="list"` region with one `role="listitem"` per tile. The component SHALL NOT render an attachment's `data` inline as visible markdown text — a tile is the only visible representation of a stage attachment. The mapped tile's content type (which drives its icon and type badge) SHALL come from the attachment's own declared `type` when present, not from a type inferred from `reference_url`'s path — a stage attachment's `reference_url` points at the source document a result was extracted from, not at the attachment's own content.
-
-#### Scenario: Each attachment renders as its own tile
-- **WHEN** the expanded stage has `attachments: [{ title: "[0.2] doc.csv", data: "Some markdown text" }]`
-- **THEN** the expanded body shows one attachment tile whose accessible name is "[0.2] doc.csv"
-
-#### Scenario: A tile's type badge reflects the attachment's own declared type, not its reference_url's extension
-- **WHEN** an attachment has `type: "text/markdown"`, inline `data`, and `reference_url: "files/abc/uploads/glossary_terms.csv"`
-- **THEN** the tile's content type is `"text/markdown"`, not a CSV type inferred from the `.csv` path in `reference_url`
-
-#### Scenario: Multiple attachments render in order
-- **WHEN** the expanded stage has two attachments at index 0 and 1
-- **THEN** both render as separate tiles, in that order, below any `stage.content`
-
-#### Scenario: A reference-only attachment (no inline data) still renders a tile
-- **WHEN** an attachment has `reference_url: "files/abc/doc.csv"` and no `data`
-- **THEN** the expanded body still shows one attachment tile for it
-
----
-
-### Requirement: Clicking a stage attachment tile invokes a caller-supplied callback
-
-`StageItem` SHALL accept an optional `onAttachmentClick: (attachment: DisplayAttachment) => void` callback, threaded unchanged through `StagesPanel` and `CollapsedGroup`. When a tile is clicked/activated, the component SHALL resolve the click back to the specific mapped display attachment and invoke `onAttachmentClick` with that object. The component SHALL NOT itself open any preview, canvas, or download — that is the caller's responsibility.
-
-#### Scenario: Clicking a tile calls onAttachmentClick with the mapped attachment
-- **WHEN** an attachment `{ title: "result.csv", data: "Some markdown text" }` is clicked and `onAttachmentClick` is supplied
-- **THEN** `onAttachmentClick` is called once with an object whose `name` is `"result.csv"` and whose `data` is `"Some markdown text"`
-
-#### Scenario: A tile still renders when no callback is supplied
-- **WHEN** `onAttachmentClick` is omitted
-- **THEN** the tile still renders and clicking it does not throw
-
----
 
 ### Requirement: `StagesPanel` renders a hierarchy of stages
 
@@ -212,60 +132,6 @@ When a `StageItem`'s content body is expanded and `stage.attachments` contains e
 - **WHEN** `CollapsedGroup` receives an empty stage array
 - **THEN** it renders no stage surface
 
-### Requirement: `StagesPanel` is themed via CSS custom properties
-
-When `styles.colors` is provided, `StagesPanel` SHALL apply its values as CSS custom properties on the root element using `buildCssVars`. Supported variables are `--cs-text`, `--cs-row-hover`, `--cs-button-bg`, `--cs-stage-text`, `--cs-failed-text`, `--cs-tag-text`, `--cs-count-text`, `--cs-duration-text`, `--cs-icon-secondary`, `--cs-icon-completed`, `--cs-icon-error`, `--cs-code-bg`, `--cs-code-border`, `--cs-code-text`, and `--cs-border`.
-
-#### Scenario: Supplied colors become custom properties
-
-- **WHEN** `StagesPanel` is rendered with a `styles.colors` object
-- **THEN** its root element carries the corresponding `--cs-*` custom properties built via `buildCssVars`
-
-#### Scenario: Omitted colors leave the root unstyled
-
-- **WHEN** `StagesPanel` is rendered without `colors`
-- **THEN** no `--cs-*` custom property is written onto the root element and the panel inherits the ambient theme
-
----
-
-### Requirement: Finished stage summaries report elapsed execution time
-
-`CollapsedGroup` and collapsed repeated-stage rows in `StagesPanel` SHALL show the elapsed execution time represented by parseable duration metadata in stage names. When every duration-bearing stage also has a valid `Start: HH:mm:ss` timestamp, each stage SHALL be treated as the interval from its start timestamp through its declared duration, and overlapping intervals SHALL contribute to the total only once. A backward jump of more than 12 hours between consecutive stage start timestamps SHALL be treated as a midnight rollover; a wide but forward-moving range within one day SHALL remain on the same day.
-
-If any duration-bearing stage lacks a valid start timestamp, the components SHALL preserve compatibility with duration-only stage names by summing all parseable durations. If no duration can be parsed, no total-duration label SHALL be shown.
-
-#### Scenario: Fully parallel stages contribute time once
-
-- **WHEN** three finished stages each declare a duration of 40 seconds and the same start timestamp
-- **THEN** the finished summary shows `40.0s`, not `2m 0s`
-
-#### Scenario: Partially overlapping stages contribute their interval union
-
-- **WHEN** one 20-second stage starts at `11:21:00`, another 20-second stage starts at `11:21:10`, and a separate 10-second stage starts at `11:21:40`
-- **THEN** the finished summary shows `40.0s`
-
-#### Scenario: Duration-only metadata uses the compatibility fallback
-
-- **WHEN** two finished stages declare `[40s]` without start timestamps
-- **THEN** the finished summary shows their summed duration of `1m 20s`
-
-#### Scenario: Overlapping stages can span midnight
-
-- **WHEN** a 20-second stage starts at `23:59:50` and a 10-second stage starts at `00:00:05`
-- **THEN** the finished summary shows `25.0s`
-
-#### Scenario: A wide same-day range does not imply a midnight rollover
-
-- **WHEN** ordered stages start at `00:00:00`, `11:59:59`, `12:00:00`, and `23:59:59`, with the middle two intervals overlapping across noon
-- **THEN** the middle intervals remain on the same day and the finished summary shows `7.0s`
-
-#### Scenario: Stages without durations omit the total
-
-- **WHEN** none of the finished stage names contains parseable duration metadata
-- **THEN** no total-duration label is rendered
-
----
-
 ### Requirement: `CollapsedGroup` is rendered in assistant messages that have stages
 
 In `ConversationMessageItem.tsx`, the `messageHasStages` utility SHALL return `true` only when `message.role` is `MessageRole.Assistant` and `message.custom_content?.stages?.length > 0`. For each message where this returns `true`, a `CollapsedGroup` SHALL be rendered in the corresponding `MessageBubble`'s `afterContent`, receiving a memoized `mapStages(message.custom_content.stages)` result, including parent metadata and positional identities for complete unindexed arrays. The memo SHALL depend on the original stage-array reference. It SHALL NOT rewrite the stored message or alter other custom content. `ConversationMessageItem` remains the app adapter supplying translated labels and `onAttachmentClick`; neither UI library nor mapper SHALL import app contexts, endpoint paths, SDK setup, routing or persistence. Its `isStreaming` prop SHALL come from `isStreamingMessage`, so it is `true` only for the last assistant message while `isAssistantTyping` is `true`.
@@ -287,13 +153,7 @@ In `ConversationMessageItem.tsx`, the `messageHasStages` utility SHALL return `t
 - **THEN** its stage renderers receive normalized `Stage[]` through the existing prop
 - **AND** attachment activation continues to invoke the app-supplied callback
 
-### Requirement: Stage status rendering has unit tests
-
-Tests SHALL be placed under the component-local `tests/` folders for `StageIcon`, `StageItem`, and `StagesPanel`. They MUST cover explicit completed and failed statuses, unresolved live and non-live states, multiple simultaneous `status: null` stages, the `null` to `completed` transition, and unresolved repeated-stage groups.
-
-#### Scenario: Test suite covers icon mapping
-- **WHEN** the conversation-stages test suite runs
-- **THEN** it asserts that a completed check appears only for `StageStatus.Completed` and that adding a later stage does not complete an earlier `status: null` stage
+## ADDED Requirements
 
 ### Requirement: Complete stage arrays normalize parent references and identities
 

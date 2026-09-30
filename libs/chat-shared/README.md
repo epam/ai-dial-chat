@@ -192,6 +192,33 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
+### Stage parent references
+
+`Stage.parent_stage_index?: number` names the `index` of the stage that
+produced this one, in the same message's stage array. Omitted means a
+top-level stage; `0` is a valid parent. The model stays a flat array — there is
+no `children` field — and renderers derive the hierarchy.
+
+```tsx
+import { StageStatus } from '@epam/ai-dial-chat-shared';
+import type { Stage } from '@epam/ai-dial-chat-shared';
+
+const stages: Stage[] = [
+  { index: 0, name: 'Plan', status: StageStatus.Completed },
+  {
+    index: 1,
+    name: 'Search',
+    status: StageStatus.Completed,
+    parent_stage_index: 0,
+  },
+];
+```
+
+In a streaming delta the field refers to the parent's streaming `index` and is
+sent only on the chunk that opens the child; in a complete non-streaming array
+without indexes it refers to the parent's array position (see `mapStages` in
+`@epam/ai-dial-chat-hooks`).
+
 ### Conversation custom view state
 
 `Conversation.customViewState?: Record<string, unknown>` is an open, feature-keyed container for conversation-level view state that rides the existing save/read of the conversation. It is absent on every conversation that has none. A host reads and writes individual keys of this record at the application edge; the model itself imposes no schema on the keys.

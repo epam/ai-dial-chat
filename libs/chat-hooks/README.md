@@ -2082,6 +2082,29 @@ running), and `content` / `tag` / `attachments` pass through when present
 (each attachment's missing `title` becoming `''`). `mapStages` returns
 `undefined` for a nullish or empty source rather than an empty array.
 
+`parent_stage_index` is kept when present — `0` included — and a nullish value
+is dropped (a top-level stage). `mapStages` treats its input as a **complete**
+array: an entry without an `index` takes its array position, which is what a
+non-streaming snapshot's `parent_stage_index` refers to, while explicit
+(possibly sparse) indexes are kept as they are. `toStage` alone keeps the
+single-stage `index: 0` default. Do not run either over partial stream deltas —
+the defaults would overwrite accumulated values; the stream assemblers
+(`mergeStages` / `applyChunkToMessages`) already keep a parent reference sent
+only on a child's opening delta.
+
+```ts
+import { mapStages } from '@epam/ai-dial-chat-hooks/conversation';
+
+mapStages([
+  { name: 'Plan', status: 'completed' },
+  { name: 'Search', parent_stage_index: 0 },
+]);
+// → [
+//   { index: 0, name: 'Plan', status: 'completed' },
+//   { index: 1, name: 'Search', status: null, parent_stage_index: 0 },
+// ]
+```
+
 `RawStage`, `RawStageAttachment`, and `RawStageSource` describe the wire shape
 before normalization — every field optional and nullable — so the generated
 `StageDto` satisfies `RawStage` with no cast.
