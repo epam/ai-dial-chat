@@ -131,4 +131,34 @@ describe('validateScheduledTaskFormValues', () => {
       startDate: ScheduledTaskValidationErrorCode.StartDateInvalid,
     });
   });
+
+  it('rejects activity-window boundaries earlier than the clock today', () => {
+    /* Constructed from local components so the clock's local today is
+       2026-09-22 in every runner timezone. */
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-21' },
+        { now: localNow },
+      ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInPast });
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, endDate: '2026-09-21' },
+        { now: localNow },
+      ),
+    ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInPast });
+  });
+
+  it('accepts a window starting on the clock today', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-22', endDate: '2026-09-23' },
+        { now: localNow },
+      ),
+    ).toEqual({});
+  });
 });

@@ -37,6 +37,7 @@ import {
   Suspense,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type FC,
@@ -132,6 +133,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   };
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [timeBlurError, setTimeBlurError] = useState<string>();
+  /* Pinned at mount so past days stay unselectable in the start/end date
+   * pickers while the earliest selectable day stays fixed, instead of
+   * advancing on every re-render — the same pin `ScheduledTaskRunAtField`
+   * applies to the one-shot run-at picker. */
+  const minDate = useMemo(() => new Date(), []);
   const { colors, typography, layout } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
@@ -477,6 +483,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
+                      minDate={minDate}
                       labelProps={{ label: labels.startDateLabel }}
                       placeholder={labels.startDatePlaceholder}
                       invalid={Boolean(errors.startDate)}
@@ -504,6 +511,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
+                      minDate={minDate}
                       labelProps={{ label: labels.endDateLabel }}
                       placeholder={labels.endDatePlaceholder}
                       invalid={Boolean(errors.endDate)}

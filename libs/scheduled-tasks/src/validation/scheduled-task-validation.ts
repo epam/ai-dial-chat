@@ -32,7 +32,11 @@ export enum ScheduledTaskValidationErrorCode {
   DayOfWeekInvalid = 'dayOfWeekInvalid',
   DayOfMonthInvalid = 'dayOfMonthInvalid',
   StartDateInvalid = 'startDateInvalid',
+  /** The activity-window start date is earlier than the injected clock's local today. */
+  StartDateInPast = 'startDateInPast',
   EndDateInvalid = 'endDateInvalid',
+  /** The activity-window end date is earlier than the injected clock's local today. */
+  EndDateInPast = 'endDateInPast',
 }
 
 /** Field-keyed validation result for scheduled-task create and edit values. */
@@ -103,6 +107,12 @@ const isValidLocalDateTime = (value: string): boolean => {
   const timestamp = new Date(value).getTime();
   return Number.isFinite(timestamp);
 };
+
+const padDatePart = (value: number): string => String(value).padStart(2, '0');
+
+/** Formats a `Date` as its local `YYYY-MM-DD` date-only string, matching the form's `startDate`/`endDate` shape. */
+const toLocalDateOnly = (date: Date): string =>
+  `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
 
 /**
  * Validates only the fields active for the selected repeat cadence. This pure
@@ -193,6 +203,28 @@ export const validateScheduledTaskFormValues = (
     values.endDate <= values.startDate
   ) {
     errors.endDate = ScheduledTaskValidationErrorCode.EndDateInvalid;
+  }
+
+  /*
+   * ISO date-only strings compare lexicographically as chronological dates,
+   * so a boundary earlier than the clock's local today is a past date. This
+   * runs after the ordering check so the more fundamental "date is past"
+   * message wins when a boundary is both past and mis-ordered.
+   */
+  const today = toLocalDateOnly(now);
+  if (
+    values.startDate &&
+    isValidDateOnly(values.startDate) &&
+    values.startDate < today
+  ) {
+    errors.startDate = ScheduledTaskValidationErrorCode.StartDateInPast;
+  }
+  if (
+    values.endDate &&
+    isValidDateOnly(values.endDate) &&
+    values.endDate < today
+  ) {
+    errors.endDate = ScheduledTaskValidationErrorCode.EndDateInPast;
   }
 
   return errors;
