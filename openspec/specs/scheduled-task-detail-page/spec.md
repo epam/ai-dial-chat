@@ -625,7 +625,7 @@ A recurring (`cron`) schedule with no upcoming run but an `endDate` that has not
 
 ### Requirement: Detail and history layout have public per-instance settings
 
-ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout and forwarded historyStyles. The Details/Configuration divider SHALL stretch the full shared desktop content height. History SHALL expose maxHeight, rowMinHeight, hover/focus colors and retain its own vertical scroll. Responsive fallback SHALL preserve existing mobile tabs; no structural child selectors SHALL be needed by a host.
+ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout and forwarded historyStyles. The Details/Configuration divider SHALL stretch the full shared desktop content height. History SHALL expose maxHeight, rowMinHeight, hover/focus colors and retain its own vertical scroll. An interactive run row SHALL show a visible hover background even when the host configures none: `rowHoverBackground` (`--strhl-row-hover-bg`) defaults to `--bg-control-accent-alpha`, and `rowFocusBackground` (`--strhl-row-focus-bg`) defaults to the hover background. Responsive fallback SHALL preserve existing mobile tabs; no structural child selectors SHALL be needed by a host.
 
 #### Scenario: Short metadata does not shorten the divider
 
@@ -640,7 +640,7 @@ ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout an
 #### Scenario: History interactions and empty label are configurable
 
 - **WHEN** a history row is hovered or keyboard-focused, or there are no runs
-- **THEN** the configured interaction background/focus treatment is visible; an empty panel renders the host label, including 'No tasks runs yet' when supplied.
+- **THEN** the configured interaction background/focus treatment is visible, falling back to `--bg-control-accent-alpha` when the host configures none; an empty panel renders the host label, including 'No tasks runs yet' when supplied.
 
 ### Requirement: Details show independent metadata and load states
 
