@@ -1,6 +1,6 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Tooltip } from '@epam/ai-dial-ui-kit';
+import { Dropdown } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useCallback, useId, useMemo } from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 import { useCitationCardContext } from '../../context/CitationCardContext';
@@ -45,7 +45,7 @@ export interface CitationDropdownProps {
   markerLabelClassName?: string;
 }
 
-/** Combines `CitationMarker` and `CitationCard` into a tooltip-based dropdown. Requires a `CitationCardProvider` ancestor. */
+/** Combines `CitationMarker` and `CitationCard` into a click-opened popover. Requires a `CitationCardProvider` ancestor. */
 export const CitationDropdown: FC<CitationDropdownProps> = ({
   group,
   onPreview,
@@ -92,38 +92,54 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     citationCard.openPopup(ownerKey);
   }, [isPreviewOpen, handlePreview, annotation, citationCard, ownerKey]);
 
+  const renderCard = useCallback(
+    () => (
+      <CitationCard
+        group={group}
+        activeIndex={activeIndex}
+        onIndexChange={(i) => citationCard.setActiveIndex(group.groupKey, i)}
+        onPreview={handlePreview}
+        onOpenInBrowser={onOpenInBrowser}
+        headerIcon={headerIcon}
+        labels={cardLabels}
+        typography={cardTypography}
+      />
+    ),
+    [
+      group,
+      activeIndex,
+      citationCard,
+      handlePreview,
+      onOpenInBrowser,
+      headerIcon,
+      cardLabels,
+      cardTypography,
+    ],
+  );
+
   /*
-   * This is a controlled popover carrying an interactive card and needs
-   * `bottom-end` so the 400px card aligns with the marker instead of
-   * overhanging it. The resolved `Tooltip` export is the 2.0 component; it
-   * narrows `placement` to the four `TooltipPlacement` sides, which cannot
-   * express `-end` alignment, so no `placement` is passed here.
+   * The card is interactive content opened by a tap or click, so it is hosted
+   * in a controlled `Dropdown` overlay rather than a `Tooltip`: the kit's
+   * tooltips render nothing on a touch-only device (`hover: none`), which left
+   * the card unreachable on mobile. `trigger={[]}` keeps the marker's own
+   * `onOpen` the only way in — it chooses between opening the card and
+   * previewing directly — while the dropdown still handles outside-press and
+   * Escape dismissal, focus return, and `bottom-end` alignment with the
+   * marker. The panel surface is stripped because the card paints its own.
    */
   return (
-    <Tooltip
+    <Dropdown
       open={isOpen}
       onOpenChange={handleOpenChange}
-      triggerClassName={mergeClasses(
-        'ms-1 inline-flex align-middle',
-        styles.trigger,
-      )}
-      contentClassName={mergeClasses(
-        '!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none',
-        styles.content,
+      trigger={[]}
+      placement="bottom-end"
+      matchReferenceWidth={false}
+      className={mergeClasses('ms-1 inline-flex align-middle', styles.trigger)}
+      listClassName={mergeClasses(
+        '!p-0 !bg-transparent !shadow-none !rounded-none',
         QUOTATIONS_CLASS.citationDropdown,
       )}
-      tooltip={
-        <CitationCard
-          group={group}
-          activeIndex={activeIndex}
-          onIndexChange={(i) => citationCard.setActiveIndex(group.groupKey, i)}
-          onPreview={handlePreview}
-          onOpenInBrowser={onOpenInBrowser}
-          headerIcon={headerIcon}
-          labels={cardLabels}
-          typography={cardTypography}
-        />
-      }
+      renderOverlay={renderCard}
     >
       <CitationMarker
         sourceName={group.sourceName}
@@ -133,6 +149,6 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
         labels={markerLabels}
         labelClassName={markerLabelClassName}
       />
-    </Tooltip>
+    </Dropdown>
   );
 };

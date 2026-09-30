@@ -89,7 +89,7 @@ import { CitationCard } from '@epam/ai-dial-quotations';
 
 ### `CitationDropdown`
 
-Combines `CitationMarker` and `CitationCard` into a tooltip-based dropdown.
+Combines `CitationMarker` and `CitationCard` into a click-opened popover that works on touch and pointer devices alike.
 
 Pass the optional `isPreviewable(annotation)` callback to control Preview for
 each active annotation. When it returns `false`, the card shows only
