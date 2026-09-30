@@ -25,14 +25,15 @@ const Logo: FC = () => {
       {currentThemeFavicon && (
         <span
           style={{
-            backgroundImage: `url(${event?.iconUrl ?? getIconPath(currentThemeFavicon)})`,
+            // Quoted: an inlined SVG data URL breaks an unquoted `url()`.
+            backgroundImage: `url("${event?.iconUrl ?? getIconPath(currentThemeFavicon)}")`,
           }}
           className="h-[32px] w-[32px] bg-contain bg-center bg-no-repeat desktop:hidden"
         />
       )}
       {currentThemeLogo && (
         <span
-          style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
+          style={{ backgroundImage: `url("${getIconPath(currentThemeLogo)}")` }}
           className={mergeClasses(
             'min-w-[125px] bg-contain bg-center bg-no-repeat desktop:block desktop:h-[48px]',
             currentThemeFavicon ? 'hidden' : 'block h-[32px]',
