@@ -315,8 +315,12 @@ export const resolveCatalogItemEntity = (
   if (deployment == null) return NotifiableEntity.Agent;
   const schemaId = deployment.applicationTypeSchemaId;
   if (!schemaId) return NotifiableEntity.CustomApp;
-  if (isQuickAppSchema({ id: schemaId })) return NotifiableEntity.QuickApp;
-  return findSchemaDisplayName(schemas, schemaId)
+  // The full schema, so a QuickApp schema matched only by its display name gets the same copy as in the editor.
+  const schema = schemas.find((item) => item.id === schemaId) ?? {
+    id: schemaId,
+  };
+  if (isQuickAppSchema(schema)) return NotifiableEntity.QuickApp;
+  return schema.displayName
     ? NotifiableEntity.SchemaApp
     : NotifiableEntity.Agent;
 };

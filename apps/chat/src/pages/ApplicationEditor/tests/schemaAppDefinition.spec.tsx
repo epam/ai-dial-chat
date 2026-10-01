@@ -17,8 +17,16 @@ import {
 } from '../../../server-api/applications';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import { ApplicationEditorKind } from '../../../types/application-editor';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
 import ApplicationEditorPage from '../ApplicationEditorPage';
+
+const { mockNotifyOperationSuccess } = vi.hoisted(() => ({
+  mockNotifyOperationSuccess: vi.fn(),
+}));
 
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
@@ -36,7 +44,9 @@ vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'b' } }),
 }));
 vi.mock('../../../hooks/useOperationNotification', () => ({
-  useOperationNotification: () => ({ notifyOperationSuccess: vi.fn() }),
+  useOperationNotification: () => ({
+    notifyOperationSuccess: mockNotifyOperationSuccess,
+  }),
 }));
 vi.mock(
   '../../../components/DialFileManagerModal/DialFileManagerModal',
@@ -56,6 +66,8 @@ const FULL_SCHEMA = {
   required: ['labels'],
 };
 const APP_ID = 'applications/bucket/classifier';
+/* The kit renderer's own required-field message. */
+const LABELS_REQUIRED = '"Labels" is required';
 
 const renderPage = (search: string) =>
   render(
@@ -77,7 +89,7 @@ const getAction = (name: string) =>
   screen.getAllByRole('button', { name })[0] as HTMLButtonElement;
 /* The kit's schema renderer names the field's group, not its input, so the input is found inside the group. */
 const findLabelsInput = async () =>
-  within(await screen.findByRole('group', { name: /Labels/ })).getByRole(
+  within(await screen.findByRole('group', { name: /^Labels/ })).getByRole(
     'textbox',
   ) as HTMLInputElement;
 const getNameInput = () =>
@@ -112,9 +124,10 @@ describe('ApplicationEditorPage — schema app', () => {
     expect(getApplicationSchema).toHaveBeenCalledWith(SCHEMA_ID);
   });
 
-  it('blocks creation while a required schema property is empty', async () => {
+  it('blocks creation while a required schema property is empty and marks that untouched field', async () => {
     renderPage(createSearch);
     await findLabelsInput();
+    expect(screen.queryByText(LABELS_REQUIRED)).toBeNull();
 
     await user.type(getNameInput(), 'Classifier');
     await user.click(getAction(ButtonsI18nKeys.Create));
@@ -122,7 +135,44 @@ describe('ApplicationEditorPage — schema app', () => {
     expect(
       await screen.findByText(AppsEditorI18nKeys.SchemaFormRequiredMissing),
     ).toBeTruthy();
+    expect(await screen.findByText(LABELS_REQUIRED)).toBeTruthy();
     expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('keeps Create disabled until the schema has loaded', async () => {
+    let resolveSchema: (schema: typeof FULL_SCHEMA) => void = () => undefined;
+    vi.mocked(getApplicationSchema).mockReturnValue(
+      new Promise((resolve) => {
+        resolveSchema = resolve;
+      }),
+    );
+    renderPage(createSearch);
+
+    expect(
+      screen.getByRole('img', {
+        name: AppsEditorI18nKeys.SettingsStepLoadingLabel,
+      }),
+    ).toBeTruthy();
+    expect(getAction(ButtonsI18nKeys.Create).disabled).toBe(true);
+
+    resolveSchema(FULL_SCHEMA);
+    await findLabelsInput();
+    await waitFor(() =>
+      expect(getAction(ButtonsI18nKeys.Create).disabled).toBe(false),
+    );
+  });
+
+  it('renders nothing while the schema list is still loading', () => {
+    vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
+      schemas: [],
+      items: [],
+      isLoading: true,
+      refetchDeployments: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
+    const { container } = renderPage(createSearch);
+
+    expect(container.innerHTML).toBe('');
+    expect(getApplicationSchema).not.toHaveBeenCalled();
   });
 
   it('creates the app in one request carrying the form values as applicationProperties', async () => {
@@ -142,41 +192,87 @@ describe('ApplicationEditorPage — schema app', () => {
       ),
     );
     expect(await screen.findByText('Catalog')).toBeTruthy();
+    expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
+      NotifiableEntity.SchemaApp,
+      EntityOperation.Created,
+      { name: 'Classifier', type: SUMMARY.displayName },
+    );
   });
 
-  it("prefills an edited app's saved properties and saves them back", async () => {
-    vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
-      schemas: [SUMMARY],
-      items: [
-        {
-          id: APP_ID,
-          displayName: 'Classifier',
-          displayVersion: '1.0.0',
-          applicationTypeSchemaId: SCHEMA_ID,
+  describe('editing', () => {
+    beforeEach(() => {
+      vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
+        schemas: [SUMMARY],
+        items: [
+          {
+            id: APP_ID,
+            displayName: 'Classifier',
+            displayVersion: '1.0.0',
+            applicationTypeSchemaId: SCHEMA_ID,
+          },
+        ],
+        isLoading: false,
+        refetchDeployments: vi.fn().mockResolvedValue(undefined),
+      } as unknown as ReturnType<
+        typeof DeploymentsContextModule.useDeployments
+      >);
+      vi.mocked(getDeploymentDetails).mockResolvedValue({
+        applicationDetails: { applicationProperties: { labels: 'a,b' } },
+      } as never);
+    });
+
+    it("prefills an edited app's saved properties and saves them back", async () => {
+      renderPage(editSearch);
+
+      const labels = await findLabelsInput();
+      expect(labels.value).toBe('a,b');
+
+      await user.type(labels, ',c');
+      await user.click(getAction(ButtonsI18nKeys.Save));
+
+      await waitFor(() =>
+        expect(updateApplication).toHaveBeenCalledWith(
+          APP_ID,
+          expect.objectContaining({
+            applicationProperties: { labels: 'a,b,c' },
+          }),
+        ),
+      );
+      await waitFor(() =>
+        expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
+          NotifiableEntity.SchemaApp,
+          EntityOperation.Edited,
+          { name: 'Classifier', type: SUMMARY.displayName },
+        ),
+      );
+    });
+
+    it('fills in the default of a property added to the schema after the app was saved', async () => {
+      vi.mocked(getApplicationSchema).mockResolvedValue({
+        ...FULL_SCHEMA,
+        properties: {
+          ...FULL_SCHEMA.properties,
+          mode: { type: 'string', title: 'Mode', default: 'strict' },
         },
-      ],
-      isLoading: false,
-      refetchDeployments: vi.fn().mockResolvedValue(undefined),
-    } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
-    vi.mocked(getDeploymentDetails).mockResolvedValue({
-      applicationDetails: { applicationProperties: { labels: 'a,b' } },
-    } as never);
-    renderPage(editSearch);
+        required: ['labels', 'mode'],
+      });
+      renderPage(editSearch);
+      /* Two fields share the kit's broken group label, so wait for readiness instead of the field. */
+      await waitFor(() =>
+        expect(getAction(ButtonsI18nKeys.Save).disabled).toBe(false),
+      );
 
-    const labels = await findLabelsInput();
-    expect(labels.value).toBe('a,b');
+      await user.click(getAction(ButtonsI18nKeys.Save));
 
-    await user.type(labels, ',c');
-    await user.click(getAction(ButtonsI18nKeys.Save));
-
-    await waitFor(() =>
-      expect(updateApplication).toHaveBeenCalledWith(
-        APP_ID,
-        expect.objectContaining({
-          applicationProperties: { labels: 'a,b,c' },
-        }),
-      ),
-    );
+      await waitFor(() =>
+        expect(updateApplication).toHaveBeenCalledWith(
+          APP_ID,
+          expect.objectContaining({
+            applicationProperties: { labels: 'a,b', mode: 'strict' },
+          }),
+        ),
+      );
+    });
   });
 
   it('shows the load error when the schema cannot be fetched', async () => {

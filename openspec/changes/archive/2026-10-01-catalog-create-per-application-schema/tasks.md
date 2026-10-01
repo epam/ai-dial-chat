@@ -65,6 +65,17 @@ Slicing strategy: **vertical**. Each slice ran end to end (lib → app → tests
 - [x] 8.5 Tests in `apps/chat/src/utils/tests/entity-notification.spec.ts`, `apps/chat/src/utils/tests/application-editor.spec.ts`, and `apps/chat/src/hooks/useCatalogPublishing/tests/useCatalogPublishing.spec.ts`.
   - Verification: `npm run test:file -- apps/chat/src/utils/tests/entity-notification.spec.ts apps/chat/src/utils/tests/application-editor.spec.ts apps/chat/src/hooks/tests/useOperationNotification.spec.ts apps/chat/src/hooks/useCatalogPublishing/tests/useCatalogPublishing.spec.ts apps/chat/src/pages/ApplicationEditor/tests/quickAppDefinition.spec.tsx`
 
+## 9. PR #9216 review fixes
+
+- [x] 9.1 Mark every missing required field after a blocked Create/Save: `skipUntouched={!errors.properties}` in `SchemaAppSetup.tsx`, and `getMissingRequiredProperties` uses the renderer's own rule (absent, `null`, `''`).
+- [x] 9.2 Close the schema-loading race: `SchemaAppSetup` reports `onReadyChange(false)` until the schema's `required` list is in the setup, `ApplicationFormEditor` disables Create as well as Save while the Setup is not ready, and the `required` lists are compared as sets.
+- [x] 9.3 Edit mode merges the schema's top-level defaults under the saved properties (`getSchemaTopLevelDefaults`); the loading `Spinner` gets the translated `appsEditor.settingsStep.loadingLabel`; an empty schema id fails without a request.
+- [x] 9.4 `resolveCatalogItemEntity` classifies the full schema, so a QuickApp schema matched only by display name gets the quick-app copy.
+- [x] 9.5 Move the Metadata defaults, label overrides, schema id, title and locale helpers shared by `quickAppDefinition` and `schemaAppDefinition` to `definitions/schemaDefinitionHelpers.ts`.
+- [x] 9.6 Sync `app-editor-flow` and `app-preview-chat` specs with the removed `step`/`isCreating`/`returnUrl` params and `AppsEditorStep`.
+- [x] 9.7 Tests: blocked create marks the untouched field, Create waits for the schema, the page renders nothing while the schema list loads, Created/Edited notifications carry `SchemaApp` + `type`, publish/unpublish confirmations name the schema, defaults of a newly added property are saved.
+  - Verification: `npm run test:file -- apps/chat/src/pages/ApplicationEditor apps/chat/src/utils/tests/application-editor.spec.ts apps/chat/src/utils/tests/entity-notification.spec.ts apps/chat/src/hooks/useCatalogPublishing/tests/useCatalogPublishing.spec.ts`
+
 ## 7. Follow-ups (out of scope)
 
 - [ ] 7.1 Pass translated `texts` to `DialSchemaRenderer` in `SchemaAppSetup.tsx` (placeholders, add/remove labels, aria labels).

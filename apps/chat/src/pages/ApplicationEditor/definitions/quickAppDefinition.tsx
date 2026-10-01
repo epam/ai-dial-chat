@@ -2,16 +2,10 @@ import {
   SEMVER_VERSION_PATTERN,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
-import {
-  appendLocaleCode,
-  composeLocalePayload,
-  isQuickAppSchema,
-} from '@epam/ai-dial-chat-hooks';
-import type { TFunction } from 'i18next';
+import { isQuickAppSchema } from '@epam/ai-dial-chat-hooks';
 import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
-  EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import type {
   ApplicationEditorContext,
@@ -28,42 +22,16 @@ import {
   defineApplicationEditor,
   resolveSchemaNotificationTarget,
 } from '../../../utils/application-editor';
-import { PRIMARY_LOCALE } from '../../../utils/locale';
 import QuickAppSetup from '../setup/QuickAppSetup';
-
-const EMPTY_METADATA: DeploymentCreationFormValues = {
-  name: '',
-  description: '',
-  iconUrl: '',
-  version: '',
-  topics: [],
-  otherLocales: [],
-};
+import {
+  SCHEMA_APP_EMPTY_METADATA,
+  getSchemaAppMetadataLabelOverrides,
+  getSchemaAppTitle,
+  getSchemaId,
+  toLocaleFields,
+} from './schemaDefinitionHelpers';
 
 const EMPTY_SETUP: EmptyApplicationSetup = {};
-
-const getMetadataLabelOverrides = (t: TFunction) => ({
-  name: {
-    label: appendLocaleCode(t(EditorI18nKeys.NameLabel), PRIMARY_LOCALE),
-    placeholder: t(AppsEditorI18nKeys.GeneralFormNamePlaceholder),
-  },
-  description: {
-    label: appendLocaleCode(t(EditorI18nKeys.DescriptionLabel), PRIMARY_LOCALE),
-    placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
-  },
-});
-
-const getSchemaId = ({ searchParams }: ApplicationEditorContext): string =>
-  searchParams.get(AppsEditorQuery.Schema) ?? '';
-
-const getTitle = (ctx: ApplicationEditorContext, isEditMode: boolean) => {
-  const schemaId = getSchemaId(ctx);
-  const schema = ctx.schemas.find((item) => item.id === schemaId);
-  const type = schema?.displayName || ctx.t(AppsEditorI18nKeys.DefaultTypeName);
-  return isEditMode
-    ? ctx.t(AppsEditorI18nKeys.EditTitle, { type })
-    : ctx.t(AppsEditorI18nKeys.CreateTitle, { type });
-};
 
 const create = async (
   metadata: DeploymentCreationFormValues,
@@ -80,7 +48,6 @@ const create = async (
         tool_sets: [],
       }
     : undefined;
-  const locales = composeLocalePayload(metadata.otherLocales, PRIMARY_LOCALE);
   const result = await createApplication({
     name: metadata.name.trim(),
     type: schemaId,
@@ -89,8 +56,7 @@ const create = async (
     version: metadata.version.trim() || undefined,
     topics: metadata.topics.length > 0 ? metadata.topics : undefined,
     applicationProperties,
-    locales,
-    primaryLocale: locales ? PRIMARY_LOCALE : undefined,
+    ...toLocaleFields(metadata),
   });
   return { id: result.id };
 };
@@ -114,13 +80,13 @@ export const quickAppDefinition =
       preview: BasicI18nKeys.Preview,
       exitPreview: AppsEditorI18nKeys.ExitPreviewButton,
     },
-    getTitle,
+    getTitle: getSchemaAppTitle,
     metadataValidation: {
       validateNamePattern: true,
       validateVersionPattern: SEMVER_VERSION_PATTERN,
     },
-    getMetadataLabelOverrides,
-    defaultMetadata: EMPTY_METADATA,
+    getMetadataLabelOverrides: getSchemaAppMetadataLabelOverrides,
+    defaultMetadata: SCHEMA_APP_EMPTY_METADATA,
     defaultSetup: EMPTY_SETUP,
     validateSetup: () => ({}),
     Setup: QuickAppSetup,

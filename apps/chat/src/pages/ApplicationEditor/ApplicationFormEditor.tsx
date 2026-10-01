@@ -398,7 +398,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
             isEditMode ? ButtonsI18nKeys.Save : ButtonsI18nKeys.Create,
           )}
           isSubmitting={isSaving}
-          isSubmitDisabled={isEditMode && !isSetupReady}
+          isSubmitDisabled={!isSetupReady}
           extraActions={extraActions}
           hideStandardActions={isPreviewing}
           labels={{

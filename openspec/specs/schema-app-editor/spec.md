@@ -39,20 +39,25 @@ While `useDeployments().isLoading` is true and `schemas` is empty, the page SHAL
 
 ### Requirement: The schema-app Setup renders the schema with DialSchemaRenderer
 
-`SchemaAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/SchemaAppSetup.tsx`) SHALL load the full JSON schema for `AppsEditorQuery.Schema` through `getApplicationSchema(schemaId)` (`apps/chat/src/server-api/application-schemas.ts`) in a `useEffect` with a cancelled flag, and render it with the kit's `DialSchemaRenderer` (`variant={SchemaRendererVariant.Flat}`, `skipUntouched`). `DialSchemaRenderer` is a 1.0 component with no 2.0 replacement. Its `onChange` and `onDefaultValues` SHALL both write the whole value into the setup's `properties`.
+`SchemaAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/SchemaAppSetup.tsx`) SHALL load the full JSON schema for `AppsEditorQuery.Schema` through `getApplicationSchema(schemaId)` (`apps/chat/src/server-api/application-schemas.ts`) in a `useEffect` with a cancelled flag, and render it with the kit's `DialSchemaRenderer` (`variant={SchemaRendererVariant.Flat}`). `DialSchemaRenderer` is a 1.0 component with no 2.0 replacement. Its `onChange` and `onDefaultValues` SHALL both write the whole value into the setup's `properties`. An empty schema id fails without a request.
+
+`skipUntouched` SHALL be on until a submit is blocked by a missing required property (`errors.properties` set) and off from then on, so after a blocked Create/Save every missing required field is marked invalid, not only the touched ones (WCAG 3.3.1).
 
 Its states SHALL be:
 
 | State | Rendering |
 |---|---|
-| schema loading, or edit mode before the saved properties arrive | a centred `Spinner` |
+| schema loading, or edit mode before the saved properties arrive | a centred `Spinner` labelled `appsEditor.settingsStep.loadingLabel` |
 | schema load failed | `ErrorMessageNotification` with `appsEditor.schemaForm.loadFailed` |
-| ready | the renderer, with `defaultValue` set to the setup's `properties` |
-| required property missing on submit | a `role="alert"` line with `appsEditor.schemaForm.requiredMissing` above the renderer |
+| ready, create mode | the renderer without `defaultValue`, so it fills in the schema's defaults |
+| ready, edit mode | the renderer, with `defaultValue` set to the schema's top-level `default`s overlaid by the saved `properties` (`getSchemaTopLevelDefaults`), so a property added to the schema after the app was saved gets its default |
+| required property missing on submit | a `role="alert"` line with `appsEditor.schemaForm.requiredMissing` above the renderer, and every missing required field marked invalid |
 
 The renderer reads `defaultValue` only on mount, so in edit mode it SHALL mount only after the saved properties have loaded.
 
-The setup model is `SchemaApplicationSetup` (`apps/chat/src/models/application-editor.ts`): `properties?: Record<string, unknown>` and `requiredProperties: string[]`. The component SHALL copy the schema's top-level `required` list into `requiredProperties` whenever the two differ, because loading an edited app replaces the whole setup.
+The setup model is `SchemaApplicationSetup` (`apps/chat/src/models/application-editor.ts`): `properties?: Record<string, unknown>` and `requiredProperties: string[]`. The component SHALL copy the schema's top-level `required` list into `requiredProperties` whenever the two differ as sets, because loading an edited app replaces the whole setup.
+
+The component SHALL report `onReadyChange(false)` until the form is shown and the schema's `required` list is in the setup, and `true` afterwards; `ApplicationFormEditor` disables Create/Save while the Setup is not ready, in create mode as in edit mode. So a submit can never be validated against an empty required list while the schema is still loading.
 
 **Endpoint reused** — no new endpoint. `GET /api/v1/application-schemas/:id` (operationId `getApplicationSchema`, generated `applicationsApi.getApplicationSchema({ id })`, normal method), cached server-side under `application-schemas:item:<userSub>:<schemaId>` for 60 seconds with TTL-only invalidation, as `application-schemas-get` specifies. Example: `GET /api/v1/application-schemas/https%3A%2F%2Fexample.com%2Fschemas%2Ftext-classification` → `200 { "$id": "…", "type": "object", "properties": { "labels": { "type": "string", "title": "Labels" } }, "required": ["labels"] }`; `401`/`403` pass through, `404` when unknown, `502` for upstream 5xx, `503` when DIAL Core is unreachable — all shown as the load-failed message.
 
@@ -93,14 +98,19 @@ Example body:
 }
 ```
 
-Its `validateSetup` SHALL return a `properties` error (`appsEditor.schemaForm.requiredMissing`) when any name in `requiredProperties` has no value — absent, `null`, a blank string, or an empty array (`getMissingRequiredProperties`). `false` and `0` count as values. Only top-level required properties are checked; nested ones are left to the renderer's own highlighting.
+Its `validateSetup` SHALL return a `properties` error (`appsEditor.schemaForm.requiredMissing`) when any name in `requiredProperties` has no value — absent, `null` or an empty string (`getMissingRequiredProperties`). This is the rule `DialSchemaRenderer` marks a required field invalid by, so every field that blocks a save is also highlighted; `false`, `0`, a whitespace-only string and an empty array count as values. Only top-level required properties are checked; nested ones are left to the renderer's own highlighting.
 
 The page title SHALL use the schema's `displayName` (`appsEditor.createTitle` / `appsEditor.editTitle` with `{{type}}`), falling back to `appsEditor.defaultTypeName`. The definition reports success through `getNotificationTarget: resolveSchemaNotificationTarget`: the `Quick app` copy for the QuickApp schema, the `SchemaApp` copy naming the schema's `displayName` (e.g. "External app edited successfully") for any other known schema, and the generic `Agent` copy when the schema is unknown (see `entity-operation-notifications`). The embedded-editor kind (`quickAppDefinition`) resolves its notifications the same way.
 
 #### Scenario: Creation is blocked while a required property is empty
 
 - **WHEN** the schema requires `labels`, the user fills the name and leaves `labels` empty, then clicks Create
-- **THEN** `appsEditor.schemaForm.requiredMissing` is shown and `createApplication` is not called
+- **THEN** `appsEditor.schemaForm.requiredMissing` is shown, the `labels` field is marked invalid, and `createApplication` is not called
+
+#### Scenario: Create waits for the schema
+
+- **WHEN** the schema is still loading
+- **THEN** the Create button is disabled
 
 #### Scenario: One request carries the form values
 

@@ -28,6 +28,21 @@ describe('resolveCatalogItemEntity', () => {
     ).toBe(NotifiableEntity.QuickApp);
   });
 
+  it('names an app a quick app when only its schema display name marks it as QuickApp', () => {
+    expect(
+      resolveCatalogItemEntity(
+        CatalogEntityType.Agent,
+        { applicationTypeSchemaId: 'https://example.com/schemas/renamed' },
+        [
+          {
+            id: 'https://example.com/schemas/renamed',
+            displayName: 'Quick app 2.0',
+          },
+        ],
+      ),
+    ).toBe(NotifiableEntity.QuickApp);
+  });
+
   it('names an app of another known schema by that schema', () => {
     expect(
       resolveCatalogItemEntity(

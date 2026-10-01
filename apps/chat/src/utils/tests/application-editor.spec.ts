@@ -3,6 +3,7 @@ import { ApplicationEditorKind } from '../../types/application-editor';
 import { NotifiableEntity } from '../../types/entity-notification';
 import {
   getMissingRequiredProperties,
+  getSchemaTopLevelDefaults,
   resolveSchemaEditorKind,
   resolveSchemaNotificationTarget,
 } from '../application-editor';
@@ -40,17 +41,45 @@ describe('resolveSchemaEditorKind', () => {
 });
 
 describe('getMissingRequiredProperties', () => {
-  it('returns required names whose value is absent, null, blank or an empty array', () => {
+  /* The same rule DialSchemaRenderer highlights a required field by. */
+  it('returns required names whose value is absent, null or an empty string', () => {
     expect(
       getMissingRequiredProperties(
-        { blank: '  ', empty: [], nil: null, filled: 'x', zero: 0, off: false },
-        ['absent', 'blank', 'empty', 'nil', 'filled', 'zero', 'off'],
+        {
+          empty: '',
+          nil: null,
+          blank: '  ',
+          list: [],
+          filled: 'x',
+          zero: 0,
+          off: false,
+        },
+        ['absent', 'empty', 'nil', 'blank', 'list', 'filled', 'zero', 'off'],
       ),
-    ).toEqual(['absent', 'blank', 'empty', 'nil']);
+    ).toEqual(['absent', 'empty', 'nil']);
   });
 
   it('treats every required name as missing when there are no properties yet', () => {
     expect(getMissingRequiredProperties(undefined, ['a'])).toEqual(['a']);
+  });
+});
+
+describe('getSchemaTopLevelDefaults', () => {
+  it('returns the default of every top-level property that declares one', () => {
+    expect(
+      getSchemaTopLevelDefaults({
+        type: 'object',
+        properties: {
+          threshold: { type: 'number', default: 0.5 },
+          strict: { type: 'boolean', default: false },
+          labels: { type: 'string' },
+        },
+      }),
+    ).toEqual({ threshold: 0.5, strict: false });
+  });
+
+  it('returns no defaults for a schema without properties', () => {
+    expect(getSchemaTopLevelDefaults({ type: 'object' })).toEqual({});
   });
 });
 

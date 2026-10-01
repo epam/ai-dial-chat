@@ -8,6 +8,7 @@ import {
   decomposeLocalizedFields,
   isQuickAppSchema,
 } from '@epam/ai-dial-chat-hooks';
+import type { JsonSchema } from '@epam/ai-dial-ui-kit';
 import type {
   ApplicationEditorContext,
   ApplicationEditorDefinition,
@@ -54,17 +55,29 @@ export const resolveSchemaNotificationTarget = ({
     : { entity: NotifiableEntity.Agent };
 };
 
-/** Returns the required property names that have no value: absent, `null`, a blank string or an empty array. */
+/**
+ * Returns the required property names that have no value: absent, `null` or an
+ * empty string. Matches the rule `DialSchemaRenderer` marks a required field
+ * invalid by, so every field that blocks a save is also highlighted.
+ */
 export const getMissingRequiredProperties = (
   properties: Record<string, unknown> | undefined,
   requiredProperties: string[],
 ): string[] =>
   requiredProperties.filter((name) => {
     const value = properties?.[name];
-    if (value == null) return true;
-    if (typeof value === 'string') return value.trim() === '';
-    return Array.isArray(value) && value.length === 0;
+    return value == null || value === '';
   });
+
+/** Returns the `default` of every top-level property of `schema` that declares one. */
+export const getSchemaTopLevelDefaults = (
+  schema: JsonSchema,
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(schema.properties ?? {}).flatMap(([name, property]) =>
+      property.default === undefined ? [] : [[name, property.default]],
+    ),
+  );
 
 /** Returns whether a registered kind renders its own page body. */
 export const isApplicationEditorPageDefinition = (

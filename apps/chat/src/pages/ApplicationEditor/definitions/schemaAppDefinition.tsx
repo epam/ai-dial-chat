@@ -2,15 +2,8 @@ import {
   SEMVER_VERSION_PATTERN,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
-import {
-  appendLocaleCode,
-  composeLocalePayload,
-} from '@epam/ai-dial-chat-hooks';
 import type { TFunction } from 'i18next';
-import {
-  AppsEditorI18nKeys,
-  EditorI18nKeys,
-} from '../../../constants/translation-keys';
+import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
 import type {
   ApplicationEditorContext,
   ApplicationSetupErrors,
@@ -32,47 +25,16 @@ import {
   getMissingRequiredProperties,
   resolveSchemaNotificationTarget,
 } from '../../../utils/application-editor';
-import { PRIMARY_LOCALE } from '../../../utils/locale';
 import SchemaAppSetup from '../setup/SchemaAppSetup';
-
-const EMPTY_METADATA: DeploymentCreationFormValues = {
-  name: '',
-  description: '',
-  iconUrl: '',
-  version: '',
-  topics: [],
-  otherLocales: [],
-};
+import {
+  SCHEMA_APP_EMPTY_METADATA,
+  getSchemaAppMetadataLabelOverrides,
+  getSchemaAppTitle,
+  getSchemaId,
+  toLocaleFields,
+} from './schemaDefinitionHelpers';
 
 const EMPTY_SETUP: SchemaApplicationSetup = { requiredProperties: [] };
-
-const getMetadataLabelOverrides = (t: TFunction) => ({
-  name: {
-    label: appendLocaleCode(t(EditorI18nKeys.NameLabel), PRIMARY_LOCALE),
-    placeholder: t(AppsEditorI18nKeys.GeneralFormNamePlaceholder),
-  },
-  description: {
-    label: appendLocaleCode(t(EditorI18nKeys.DescriptionLabel), PRIMARY_LOCALE),
-    placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
-  },
-});
-
-const getSchemaId = ({ searchParams }: ApplicationEditorContext): string =>
-  searchParams.get(AppsEditorQuery.Schema) ?? '';
-
-const getTitle = (ctx: ApplicationEditorContext, isEditMode: boolean) => {
-  const schemaId = getSchemaId(ctx);
-  const schema = ctx.schemas.find((item) => item.id === schemaId);
-  const type = schema?.displayName || ctx.t(AppsEditorI18nKeys.DefaultTypeName);
-  return isEditMode
-    ? ctx.t(AppsEditorI18nKeys.EditTitle, { type })
-    : ctx.t(AppsEditorI18nKeys.CreateTitle, { type });
-};
-
-const toLocaleFields = (metadata: DeploymentCreationFormValues) => {
-  const locales = composeLocalePayload(metadata.otherLocales, PRIMARY_LOCALE);
-  return { locales, primaryLocale: locales ? PRIMARY_LOCALE : undefined };
-};
 
 const loadSetup = async (appId: string): Promise<SchemaApplicationSetup> => {
   const dto = await getDeploymentDetails(appId);
@@ -126,7 +88,8 @@ const update = (
 export const schemaAppDefinition =
   defineApplicationEditor<SchemaApplicationSetup>({
     kind: ApplicationEditorKind.SchemaApp,
-    notifiableEntity: NotifiableEntity.QuickApp,
+    // Fallback only: `getNotificationTarget` always resolves the entity from the schema.
+    notifiableEntity: NotifiableEntity.Agent,
     getNotificationTarget: resolveSchemaNotificationTarget,
     createStrategy: ApplicationCreateStrategy.AllAtOnce,
     idQueryParam: AppsEditorQuery.AppId,
@@ -139,13 +102,13 @@ export const schemaAppDefinition =
       savingOverlay: AppsEditorI18nKeys.SavingOverlayLabel,
       loadingOverlay: AppsEditorI18nKeys.SettingsStepLoadingLabel,
     },
-    getTitle,
+    getTitle: getSchemaAppTitle,
     metadataValidation: {
       validateNamePattern: true,
       validateVersionPattern: SEMVER_VERSION_PATTERN,
     },
-    getMetadataLabelOverrides,
-    defaultMetadata: EMPTY_METADATA,
+    getMetadataLabelOverrides: getSchemaAppMetadataLabelOverrides,
+    defaultMetadata: SCHEMA_APP_EMPTY_METADATA,
     defaultSetup: EMPTY_SETUP,
     loadSetup,
     validateSetup,

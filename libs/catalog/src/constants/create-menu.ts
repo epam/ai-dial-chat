@@ -8,6 +8,7 @@ export const CREATE_MENU_VISIBLE_ROWS = 7;
  */
 const MENU_ROW_HEIGHT_PX = 40;
 const MENU_ROW_GAP_PX = 2;
+// The panel's 4px inset plus the list's 4px inset.
 const MENU_INSETS_PX = 8;
 const MENU_SEARCH_ROW_PX = 44;
 

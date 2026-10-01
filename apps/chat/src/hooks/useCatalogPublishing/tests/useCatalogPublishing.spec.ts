@@ -12,7 +12,10 @@ import {
   publishCatalogEntity,
   unpublishCatalogEntity,
 } from '../../../server-api/publish.api';
-import { EntityOperation } from '../../../types/entity-notification';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../../types/entity-notification';
 import { useCatalogPublishing } from '../useCatalogPublishing';
 
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
@@ -71,6 +74,20 @@ const renderPublishing = (
 };
 
 const PUBLIC_AGENT_ID = 'applications/public/Data Science/Revenue bot';
+
+const EXTERNAL_SCHEMA_ID = 'https://example.com/schemas/externalapps';
+const SCHEMA_APP_ITEM = makeCatalogItem({
+  id: 'applications/bucket/classifier',
+  type: CatalogEntityType.Agent,
+  name: 'Classifier',
+});
+/* An agent whose deployment carries a non-QuickApp schema with a display name. */
+const SCHEMA_APP_PUBLISHING = {
+  deployments: [
+    { id: SCHEMA_APP_ITEM.id, applicationTypeSchemaId: EXTERNAL_SCHEMA_ID },
+  ] as DeploymentItemDto[],
+  schemas: [{ id: EXTERNAL_SCHEMA_ID, displayName: 'External app' }],
+};
 
 describe('useCatalogPublishing', () => {
   beforeEach(() => {
@@ -326,6 +343,23 @@ describe('useCatalogPublishing', () => {
       );
     });
 
+    it('names a schema app by its schema in the publish confirmation', () => {
+      const { result, notifyOperationSuccess } = renderPublishing(
+        SCHEMA_APP_PUBLISHING,
+      );
+
+      result.current.handlePublishSuccess(SCHEMA_APP_ITEM, [
+        'Organization',
+        'Data Science',
+      ]);
+
+      expect(notifyOperationSuccess).toHaveBeenCalledWith(
+        NotifiableEntity.SchemaApp,
+        EntityOperation.PublishRequested,
+        { name: 'Classifier', folder: 'Data Science', type: 'External app' },
+      );
+    });
+
     it('forwards rules added in the panel to publishCatalogEntity', async () => {
       vi.mocked(publishCatalogEntity).mockResolvedValue({
         entityId: 'tool-abc123',
@@ -539,6 +573,23 @@ describe('useCatalogPublishing', () => {
         expect.anything(),
         EntityOperation.UnpublishRequested,
         { name: 'My toolset', folder: BasicI18nKeys.Organization },
+      );
+    });
+
+    it('names a schema app by its schema in the unpublish confirmation', async () => {
+      const { result, notifyOperationSuccess } = renderPublishing(
+        SCHEMA_APP_PUBLISHING,
+      );
+
+      await result.current.handleUnpublish(SCHEMA_APP_ITEM, [
+        'Organization',
+        'Data Science',
+      ]);
+
+      expect(notifyOperationSuccess).toHaveBeenCalledWith(
+        NotifiableEntity.SchemaApp,
+        EntityOperation.UnpublishRequested,
+        { name: 'Classifier', folder: 'Data Science', type: 'External app' },
       );
     });
 
