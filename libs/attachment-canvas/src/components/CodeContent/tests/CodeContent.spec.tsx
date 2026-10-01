@@ -1,17 +1,65 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { Prism } from 'react-syntax-highlighter';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AttachmentContentType } from '../../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent';
 
 vi.mock('react-syntax-highlighter', () => ({
-  Prism: ({ children, language }: { children: string; language: string }) => (
-    <pre data-language={language}>
-      <code>{children}</code>
-    </pre>
+  Prism: vi.fn(
+    ({ children, language }: { children: string; language: string }) => (
+      <pre data-language={language}>
+        <code>{children}</code>
+      </pre>
+    ),
   ),
 }));
 
 describe('CodeContent', () => {
+  beforeEach(() => {
+    vi.mocked(Prism).mockClear();
+  });
+
+  it.each([
+    ['markdown', 'x'.repeat(2_001)],
+    ['json', `${'x'.repeat(999)}\n`.repeat(51)],
+    ['markdown', JSON.stringify({ contentBytes: 'A'.repeat(175_052) })],
+  ])(
+    'preserves oversized %s attachments without invoking Prism',
+    async (language, text) => {
+      render(
+        <CodeContent
+          content={{ type: AttachmentContentType.Code, language, text }}
+        />,
+      );
+      await act(() => Promise.resolve());
+
+      expect(Prism).not.toHaveBeenCalled();
+      expect(
+        screen.getByText(text, { exact: true, normalizer: (value) => value })
+          .textContent,
+      ).toBe(text);
+      expect(screen.queryByRole('status')).toBeNull();
+    },
+  );
+
+  it('rechecks eligibility when switching between small and oversized attachments', async () => {
+    const content = {
+      type: AttachmentContentType.Code as const,
+      language: 'markdown',
+      text: '# Small',
+    };
+    const { rerender } = render(<CodeContent content={content} />);
+    await waitFor(() => expect(Prism).toHaveBeenCalled());
+    vi.mocked(Prism).mockClear();
+
+    rerender(<CodeContent content={{ ...content, text: 'x'.repeat(2_001) }} />);
+    await act(() => Promise.resolve());
+    expect(Prism).not.toHaveBeenCalled();
+
+    rerender(<CodeContent content={{ ...content, text: '# Small again' }} />);
+    await waitFor(() => expect(Prism).toHaveBeenCalled());
+    expect(screen.getByText('# Small again')).toBeTruthy();
+  });
   it('renders plain text immediately with no syntax highlighter for a plaintext language', () => {
     render(
       <CodeContent

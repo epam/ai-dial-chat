@@ -73,6 +73,7 @@ export type {
 export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
 export { ScheduledTaskDeleteConfirmation } from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';
 export type {
+  ScheduledTaskDeleteConfirmationColors,
   ScheduledTaskDeleteConfirmationProps,
   ScheduledTaskDeleteConfirmationStyles,
 } from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';

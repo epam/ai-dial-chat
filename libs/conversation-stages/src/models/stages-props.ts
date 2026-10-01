@@ -40,7 +40,7 @@ export interface StagesPanelColors {
   durationTextColor?: string;
   /** Color of secondary (non-status) icons. Defaults to `--text-secondary` at 70% opacity. */
   iconSecondaryColor?: string;
-  /** Color of the completed-check icon. Defaults to `--text-tertiary`. */
+  /** Color of the completed-check icon. Defaults to `--text-success`. */
   iconCompletedColor?: string;
   /** Color of the error/exception icon. Defaults to `--text-warning`. */
   iconErrorColor?: string;

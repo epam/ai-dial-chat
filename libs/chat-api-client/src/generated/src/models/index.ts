@@ -944,7 +944,7 @@ export interface Check200Response {
    */
   version?: string;
   /**
-   * Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build.
+   * Stable identifier for the running deployment, derived from a hash of the served frontend build, or of the application version when no frontend is bundled (BFF-only image). Changes when a new deployment replaces the frontend static assets or the version, letting long-lived clients detect that a reload will pick up a newer build.
    * @type {string}
    * @memberof Check200Response
    */
@@ -6799,6 +6799,12 @@ export interface StageDto {
    * @memberof StageDto
    */
   attachments?: Array<StageAttachmentDto>;
+  /**
+   * Index of the parent stage. In a streaming delta it is the parent's streaming `index` and is sent only on the chunk that opens the child; in a complete array without `index` values it is the parent's array position. Absent for a top-level stage
+   * @type {number}
+   * @memberof StageDto
+   */
+  parentStageIndex?: number;
 }
 
 /**

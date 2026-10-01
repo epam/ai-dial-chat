@@ -52,6 +52,7 @@ const useHookHarness = ({
   generationConflictMessage?: string;
   generationPersistenceErrorMessage?: string;
   onStreamError?: (error: Error) => void;
+  batchChunksPerFrame?: boolean;
   /** Overrides the `AbortController` `startGeneration` returns, so a test can abort it directly to simulate a host-driven stop. */
   generationOverride?: () => AbortController;
 }) => {
@@ -96,6 +97,146 @@ describe('useConversationStream', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  describe('batchChunksPerFrame', () => {
+    const streaming = () =>
+      makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'question', timestamp: 't0' },
+          { role: MessageRole.Assistant, content: '', timestamp: 't1' },
+        ],
+      });
+    const textChunk = (content: string) => ({
+      id: 'response-1',
+      object: 'chat.completion.chunk' as const,
+      choices: [{ index: 0, finish_reason: null, delta: { content } }],
+    });
+
+    const renderBatched = async (batchChunksPerFrame = true) => {
+      vi.useFakeTimers();
+      const initial = streaming();
+      const view = renderHook(
+        ({ conversationId }: { conversationId: string }) =>
+          useHookHarness({
+            transport,
+            conversationId,
+            initialConversation: initial,
+            batchChunksPerFrame,
+          }),
+        { initialProps: { conversationId: 'bucket/conv' } },
+      );
+      await act(async () => {
+        view.result.current.stream.startStream(
+          'bucket/conv',
+          'question',
+          1,
+          'gpt-4o',
+        );
+      });
+      return view;
+    };
+    const answer = (view: {
+      result: { current: { conversation: Conversation | null } };
+    }) => view.result.current.conversation?.messages[1].content;
+
+    it('shows several chunks of one frame in a single update', async () => {
+      const view = await renderBatched();
+
+      act(() => {
+        capturedOptions?.onChunk(textChunk('a'));
+        capturedOptions?.onChunk(textChunk('b'));
+        capturedOptions?.onChunk(textChunk('c'));
+      });
+      expect(answer(view)).toBe('');
+
+      act(() => vi.advanceTimersToNextFrame());
+      expect(answer(view)).toBe('abc');
+    });
+
+    it('never re-applies a pending chunk over the completion reload', async () => {
+      const reloaded = makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'question', timestamp: 't0' },
+          { role: MessageRole.Assistant, content: 'final', timestamp: 't1' },
+        ],
+      });
+      vi.mocked(transport.getConversation).mockResolvedValue(reloaded);
+      const view = await renderBatched();
+
+      act(() => capturedOptions?.onChunk(textChunk('partial')));
+      await act(async () => {
+        await capturedOptions?.onComplete();
+      });
+      act(() => vi.advanceTimersToNextFrame());
+
+      expect(answer(view)).toBe('final');
+    });
+
+    it('shows the received text together with the failure', async () => {
+      const view = await renderBatched();
+
+      act(() => capturedOptions?.onChunk(textChunk('partial')));
+      act(() => capturedOptions?.onError(new Error('boom')));
+
+      expect(view.result.current.conversation?.messages[1]).toMatchObject({
+        content: 'partial',
+        streamErrorMessage: '',
+      });
+    });
+
+    it('shows the received text as soon as the user stops', async () => {
+      const view = await renderBatched();
+
+      act(() => capturedOptions?.onChunk(textChunk('partial')));
+      act(() => view.result.current.stream.handleStop());
+
+      expect(answer(view)).toBe('partial');
+    });
+
+    it('flushes before a superseding generation and ignores the old one', async () => {
+      const view = await renderBatched();
+      const firstOptions = capturedOptions;
+
+      act(() => firstOptions?.onChunk(textChunk('first')));
+      await act(async () => {
+        view.result.current.stream.startStream(
+          'bucket/conv',
+          'question',
+          1,
+          'gpt-4o',
+        );
+      });
+      expect(answer(view)).toBe('first');
+
+      act(() => firstOptions?.onChunk(textChunk(' stale')));
+      act(() => vi.advanceTimersToNextFrame());
+      expect(answer(view)).toBe('first');
+    });
+
+    it('drops the pending write when the conversation is left, keeping the buffer', async () => {
+      const view = await renderBatched();
+
+      act(() => capturedOptions?.onChunk(textChunk('partial')));
+      view.rerender({ conversationId: 'bucket/other' });
+      act(() => vi.advanceTimersToNextFrame());
+
+      expect(answer(view)).toBe('');
+      expect(
+        view.result.current.stream.restoreBufferedGeneration(
+          'bucket/conv',
+          streaming(),
+        ).messages[1].content,
+      ).toBe('partial');
+    });
+
+    it('applies every chunk synchronously when batching is off', async () => {
+      const view = await renderBatched(false);
+
+      act(() => capturedOptions?.onChunk(textChunk('a')));
+
+      expect(answer(view)).toBe('a');
+    });
   });
 
   describe('unsaved answers', () => {
@@ -662,6 +803,88 @@ describe('useConversationStream', () => {
         afterCompletion,
       ),
     ).toBe(afterCompletion);
+  });
+
+  it('restores parent references sent only on opening deltas from the background buffer', async () => {
+    const initialConversation = makeConversation({
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Plan it',
+          timestamp: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          role: MessageRole.Assistant,
+          content: '',
+          timestamp: '2026-01-01T00:00:01.000Z',
+        },
+      ],
+    });
+    const { result, rerender } = renderHook(
+      (props: { conversationId: string }) =>
+        useHookHarness({
+          transport,
+          conversationId: props.conversationId,
+          initialConversation,
+        }),
+      { initialProps: { conversationId: 'bucket/convA' } },
+    );
+    const sendStages = (id: string, stages: unknown[]) =>
+      act(() => {
+        capturedOptions?.onChunk({
+          id,
+          object: 'chat.completion.chunk',
+          choices: [
+            {
+              delta: { custom_content: { stages: stages as never } },
+              finish_reason: null,
+              index: 0,
+            },
+          ],
+        });
+      });
+
+    await act(async () => {
+      result.current.stream.startStream(
+        'bucket/convA',
+        'Plan it',
+        1,
+        'gpt-4o',
+        undefined,
+        'gen-1',
+      );
+      await Promise.resolve();
+    });
+
+    sendStages('chunk-1', [
+      { index: 0, name: 'Plan', status: null },
+      { index: 1, name: 'Search', status: null, parent_stage_index: 0 },
+    ]);
+    rerender({ conversationId: 'bucket/convB' });
+    sendStages('chunk-2', [
+      { index: 1, content: 'found' },
+      { index: 1, status: 'completed' },
+    ]);
+
+    const restored = result.current.stream.restoreBufferedGeneration(
+      'bucket/convA',
+      makeConversation({
+        messages: initialConversation.messages.map((message) => ({
+          ...message,
+        })),
+      }),
+    );
+
+    expect(restored.messages[1].custom_content?.stages).toEqual([
+      { index: 0, name: 'Plan', status: null },
+      {
+        index: 1,
+        name: 'Search',
+        status: 'completed',
+        parent_stage_index: 0,
+        content: 'found',
+      },
+    ]);
   });
 
   it('does not reload the displayed conversation when a different conversation completes', async () => {
@@ -1406,6 +1629,95 @@ describe('useConversationStream', () => {
       expect(result.current.stream.isStreaming).toBe(false);
       // Attach fully resolved the resume — the watch fallback never ran.
       expect(transport.watchConversation).not.toHaveBeenCalled();
+    });
+
+    it('keeps sparse parent references from the replay snapshot through later interleaved chunks', async () => {
+      const encoder = new TextEncoder();
+      const event = (payload: unknown) =>
+        encoder.encode(`data: ${JSON.stringify(payload)}\n\n`);
+      const stagesChunk = (stages: unknown[]) => ({
+        type: 'chunk',
+        chunk: { choices: [{ delta: { custom_content: { stages } } }] },
+      });
+      transport.attachToGeneration = vi.fn().mockResolvedValue(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(
+              event({
+                type: 'snapshot',
+                message: {
+                  role: MessageRole.Assistant,
+                  content: '',
+                  timestamp: '2026-01-01T00:00:00.000Z',
+                  custom_content: {
+                    stages: [
+                      { index: 4, name: 'Plan', status: null },
+                      {
+                        index: 7,
+                        name: 'Search',
+                        status: null,
+                        parent_stage_index: 4,
+                      },
+                    ],
+                  },
+                },
+              }),
+            );
+            controller.enqueue(
+              event(
+                stagesChunk([
+                  { index: 9, name: 'Read', parent_stage_index: 4 },
+                  { index: 7, content: 'found' },
+                ]),
+              ),
+            );
+            controller.enqueue(
+              event(
+                stagesChunk([
+                  { index: 9, status: 'failed' },
+                  { index: 7, status: 'completed' },
+                ]),
+              ),
+            );
+          },
+        }),
+      );
+
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: makeAwaitingConversation(),
+        }),
+      );
+
+      act(() => {
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          makeAwaitingConversation(),
+        );
+      });
+
+      await waitFor(() =>
+        expect(
+          result.current.conversation?.messages[1].custom_content?.stages,
+        ).toEqual([
+          { index: 4, name: 'Plan', status: null },
+          {
+            index: 7,
+            name: 'Search',
+            status: 'completed',
+            parent_stage_index: 4,
+            content: 'found',
+          },
+          {
+            index: 9,
+            name: 'Read',
+            status: 'failed',
+            parent_stage_index: 4,
+          },
+        ]),
+      );
     });
 
     it('keeps waiting on attach past the old 5-minute watch timeout instead of falling back (Issue #8494)', async () => {

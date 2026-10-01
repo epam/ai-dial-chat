@@ -99,7 +99,6 @@ export const quickAppDefinition =
     notifiableEntity: NotifiableEntity.QuickApp,
     createStrategy: ApplicationCreateStrategy.MetadataFirst,
     idQueryParam: AppsEditorQuery.AppId,
-    returnUrlQueryParam: AppsEditorQuery.ReturnUrl,
     messageKeys: {
       createTitle: AppsEditorI18nKeys.CreateTitle,
       editTitle: AppsEditorI18nKeys.EditTitle,

@@ -223,3 +223,60 @@ describe('saveConversation', () => {
     );
   });
 });
+
+describe('nested stage metadata over the generated client', () => {
+  const stages = [
+    { index: 0, name: 'Plan', status: 'completed' },
+    { index: 1, parent_stage_index: 0, name: 'Search', status: 'completed' },
+  ];
+  const conversation = {
+    id: 'test-bucket/nested.json',
+    folderId: 'test-bucket',
+    name: 'Nested stages',
+    messages: [
+      {
+        role: 'assistant',
+        content: 'Result',
+        timestamp: '2026-09-30T10:00:00.000Z',
+        custom_content: { stages },
+      },
+    ],
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('sends and receives parent_stage_index unchanged on save and get', async () => {
+    const fetchMock = vi.fn(
+      async (_url: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(JSON.stringify(conversation), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+
+    const saved = await saveConversation(
+      'test-bucket/nested.json',
+      conversation as never,
+    );
+    const fetched = await getConversation('test-bucket/nested.json');
+
+    const saveInit = fetchMock.mock.calls.find(
+      ([, init]) => init?.method === 'PUT',
+    )?.[1];
+    expect(
+      JSON.parse(saveInit?.body as string).conversation.messages[0]
+        .custom_content.stages,
+    ).toEqual(stages);
+    for (const response of [saved, fetched]) {
+      expect(
+        (response as unknown as typeof conversation).messages[0].custom_content
+          .stages,
+      ).toEqual(stages);
+    }
+  });
+});

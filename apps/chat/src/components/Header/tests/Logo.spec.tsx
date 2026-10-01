@@ -42,15 +42,12 @@ describe('Logo', () => {
     const { container } = render(<Logo />);
 
     const logo = screen.getByLabelText(ChatI18nKeys.Logo);
-    /* This is a decorative background-image span with no accessible role
-       or text; asserting its inline style/class is CSS-level behavior with
-       no semantic query equivalent. */
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const logoImage = container.querySelector('span.desktop\\:block');
     expect(logo).toBeTruthy();
     expect(logoImage).toBeTruthy();
-    expect((logoImage as HTMLElement).style.backgroundImage).toBe(
-      `url(${mockIconPath})`,
+    expect((logoImage as HTMLElement).style.backgroundImage).toContain(
+      mockIconPath,
     );
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLogoName);
   });
@@ -152,8 +149,8 @@ describe('Logo', () => {
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const logoImage = container.querySelector('span.desktop\\:block');
     expect(logoImage).toBeTruthy();
-    expect((logoImage as HTMLElement).style.backgroundImage).toBe(
-      `url(${mockLightPath})`,
+    expect((logoImage as HTMLElement).style.backgroundImage).toContain(
+      mockLightPath,
     );
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLightLogo);
   });

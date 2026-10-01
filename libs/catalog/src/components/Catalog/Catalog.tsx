@@ -108,6 +108,7 @@ export const Catalog: FC<CatalogProps> = ({
   onLogout,
   onCreateClick,
   createOptions,
+  createSearch,
   hideCreateButton = false,
   hidePageTitle = false,
   isReadonly = false,
@@ -570,6 +571,10 @@ export const Catalog: FC<CatalogProps> = ({
                 label={createLabel}
                 options={createOptions}
                 onClick={onCreateClick}
+                search={createSearch}
+                searchPlaceholder={titles?.createSearchPlaceholder}
+                searchClearLabel={titles?.createSearchClearLabel}
+                noResultsLabel={titles?.createNoResultsLabel}
               />
             )}
           </div>

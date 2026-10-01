@@ -10,17 +10,22 @@ or a plain custom application — by proxying DIAL Core (`saveCustomApplication`
 caller's session access token. The full request/response contract and DIAL Core body mapping
 are owned by the `application-create-api` capability; this requirement covers only the write
 surface shared with update and delete. The request body
-SHALL be validated via `CreateApplicationBodyDto`. The per-user applications list cache SHALL
-be invalidated on success, and DIAL Core error statuses SHALL be mapped to typed HTTP
-responses. `CreateApplicationBodyDto` SHALL NOT define an `intro` field — the `intro` field is
-removed from the request/response contract entirely; a request body that still includes an
-`intro` property SHALL be rejected with a 400 (the global `ValidationPipe`'s
-`forbidNonWhitelisted` behavior applies to any property not declared on the DTO).
+SHALL be validated via `CreateApplicationBodyDto`. On success, the per-user applications and
+deployments-list caches SHALL be invalidated so subsequent catalog and editor reads include the
+new application. DIAL Core error statuses SHALL be mapped to typed HTTP responses. `CreateApplicationBodyDto` SHALL NOT
+define an `intro` field — the `intro` field is removed from the request/response contract
+entirely; a request body that still includes an `intro` property SHALL be rejected with a 400
+(the global `ValidationPipe`'s `forbidNonWhitelisted` behavior applies to any property not
+declared on the DTO).
 
 #### Scenario: Successful create
 - **WHEN** an authenticated user POSTs a valid application body
 - **THEN** the service proxies the create to DIAL Core and returns the created application
   identifier
+
+#### Scenario: Create invalidates both list caches
+- **WHEN** an authenticated user creates an application
+- **THEN** a subsequent deployments-list request includes that application
 
 #### Scenario: Invalid create body
 - **WHEN** the request body fails DTO validation (for example, `name` is missing)

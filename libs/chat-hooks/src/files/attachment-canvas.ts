@@ -507,9 +507,24 @@ export const resolveHtmlCanvasContent = async (
   return { type: AttachmentContentType.Html, srcdoc: result };
 };
 
+/*
+ * An invisible, zero-area highlight at the top of `page`. Selecting it routes
+ * the viewer through highlight navigation, which runs after the initial
+ * auto-zoom; a plain page request is applied before that zoom and reset to
+ * page 1 by it.
+ */
+const pageAnchorHighlight = (id: string, page: number) => ({
+  id,
+  bboxes: [{ page, x1: 0, y1: 0, x2: 0, y2: 0 }],
+  style: { backgroundColor: 'transparent', opacity: 0 },
+});
+
 /**
  * Builds a `PdfCanvasContent` for a PDF citation annotation, including highlights
  * for the clicked annotation's document within its citation group.
+ * When the clicked annotation has a page but no selector with valid geometry,
+ * an invisible page-anchor highlight is added and selected so the viewer
+ * still opens that page.
  * Returns `null` if the annotation has no PDF source attachment.
  */
 export const annotationToPdfCanvasContent = (
@@ -532,17 +547,28 @@ export const annotationToPdfCanvasContent = (
   const selectedIndex = allAnnotations.indexOf(annotation);
   const highlights = annotationsToPdfHighlights(allAnnotations);
   const highlightId = annotationHighlightId(annotation, selectedIndex);
+  const page = getAnnotationPdfPage(annotation);
+  const hasSelectedHighlight = highlights.some(
+    (highlight) => highlight.id === highlightId,
+  );
+
+  if (!hasSelectedHighlight && page != null) {
+    const anchorId = `page-anchor-${highlightId}`;
+    return {
+      type: AttachmentContentType.Pdf,
+      url,
+      highlights: [...highlights, pageAnchorHighlight(anchorId, page)],
+      selectedHighlightId: anchorId,
+      page,
+    };
+  }
 
   return {
     type: AttachmentContentType.Pdf,
     url,
     highlights,
-    selectedHighlightId: highlights.some(
-      (highlight) => highlight.id === highlightId,
-    )
-      ? highlightId
-      : undefined,
-    page: getAnnotationPdfPage(annotation),
+    selectedHighlightId: hasSelectedHighlight ? highlightId : undefined,
+    page,
   };
 };
 
@@ -679,13 +705,7 @@ export const referenceAttachmentToPdfCanvasContent = (
   return {
     type: AttachmentContentType.Pdf,
     url,
-    highlights: [
-      {
-        id: selectedHighlightId,
-        bboxes: [{ page: parsed.page, x1: 0, y1: 0, x2: 0, y2: 0 }],
-        style: { backgroundColor: 'transparent', opacity: 0 },
-      },
-    ],
+    highlights: [pageAnchorHighlight(selectedHighlightId, parsed.page)],
     selectedHighlightId,
     page: parsed.page,
   };

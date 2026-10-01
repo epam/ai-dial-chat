@@ -12,6 +12,8 @@
     "usage": "Usage",
     "attachFiles": "Attach files",
     "deleteConfirmDescription": "Are you sure you want to delete",
+    "consequenceCannotBeUndone": "Cannot be undone",
+    "deletingStatus": "Deleting…",
     "canView": "Can view",
     "canEdit": "Can edit"
   },
@@ -196,15 +198,14 @@
       },
       "delete": {
         "confirmTitle": "Delete",
-        "confirmMessage": "Are you sure you want to delete \"{{name}}\"? This action is permanent and cannot be undone.",
+        "confirmMessage": "Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone.",
         "consequenceSharedConfigurations": "All shared configurations will be lost",
         "consequenceUsersLoseAccess": "Users who rely on it will lose access",
-        "consequenceCannotBeUndone": "Cannot be undone",
         "error": "Failed to delete. Please try again."
       },
       "unshare": {
         "confirmTitle": "Remove from My List",
-        "confirmMessage": "Remove \"{{name}}\" from your list? You'll need a new invitation to access it again.",
+        "confirmMessage": "Remove <bold>{{name}}</bold> from your list? You'll need a new invitation to access it again.",
         "consequenceYouLoseAccess": "You will lose access to this item",
         "consequenceOthersKeepAccess": "Other people keep their access",
         "consequenceNeedNewInvitation": "You will need a new invitation to get it back",
@@ -216,8 +217,8 @@
       },
       "unpublish": {
         "confirmTitle": "Unpublish?",
-        "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
-        "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+        "confirmMessage": "Unpublish <bold>{{name}}</bold> from \"{{folder}}\"? The request is submitted for admin approval.",
+        "selectFolderMessage": "Choose which folder to unpublish <bold>{{name}}</bold> from. The request is submitted for admin approval.",
         "folderGroupAriaLabel": "Published folders",
         "consequenceEveryoneLosesAccess": "Everyone loses access to the published copy",
         "consequenceKeepsYourCopy": "Your own copy is not deleted",
@@ -226,7 +227,7 @@
       },
       "revokeShare": {
         "confirmTitle": "Revoke access?",
-        "confirmMessage": "Revoke shared access to \"{{name}}\"? Anyone you shared it with will lose access.",
+        "confirmMessage": "Revoke shared access to <bold>{{name}}</bold>? Anyone you shared it with will lose access.",
         "consequenceOthersLoseAccess": "Everyone you shared it with loses access",
         "consequenceLinksStopWorking": "Existing share links stop working",
         "consequenceKeepsYourCopy": "You keep full access — nothing is deleted",
@@ -418,7 +419,13 @@
     "stages": {
       "executed": "Executed",
       "step_one": "step",
-      "step_other": "steps"
+      "step_other": "steps",
+      "running": "Running",
+      "failed": "Failed",
+      "failedCount": "{{count}} failed",
+      "attempt": "Attempt {{number}}",
+      "copyContent": "Copy stage content",
+      "previewAttachment": "Preview search result"
     },
     "attachMenuDialFileSystem": "DIAL file system",
     "addMenuTitle": "Add",
@@ -426,6 +433,7 @@
   },
   "conversationPanel": {
     "title": "Chats",
+    "typeLabel": "Chat",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
     "filter": {
@@ -441,7 +449,8 @@
       "unpinLabel": "Unpin"
     },
     "delete": {
-      "deleteConfirmTitle": "Confirm Deleting Chat",
+      "deleteConfirmTitle": "Delete chat",
+      "confirmMessage": "Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone.",
       "deleteError": "Failed to delete the conversation. Please try again."
     },
     "rename": {
@@ -683,6 +692,7 @@
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
   "scheduledTasks": {
+    "typeLabel": "Scheduled task",
     "page": {
       "navLabel": "Scheduled tasks",
       "title": "Scheduled tasks",
@@ -747,9 +757,11 @@
       "startDateLabel": "Start date",
       "startDatePlaceholder": "Pick start date",
       "startDateInvalid": "Enter a valid start date",
+      "startDateInPast": "Start date cannot be in the past",
       "endDateLabel": "End date",
       "endDatePlaceholder": "Pick end date",
       "endDateBeforeStartError": "End date must be after start date",
+      "endDateInPast": "End date cannot be in the past",
       "modelOrAgentLabel": "Model or Agent",
       "modelPlaceholder": "Select Model or Agent",
       "modelRequired": "Model is required",
@@ -790,8 +802,6 @@
       "deleteConfirmTitle": "Delete task",
       "deleteConfirmDescription": "Are you sure you want to delete <bold>{{taskName}}</bold>? This action is permanent and cannot be undone.",
       "deleteConsequenceConversationsAccessible": "All run conversations will still be accessible",
-      "deleteConsequenceCannotBeUndone": "Cannot be undone",
-      "deleteConfirmingLabel": "Deleting…",
       "deleteSuccess": "Scheduled task deleted",
       "deleteNotFoundError": "This task has already been deleted or could not be found",
       "deleteRetryableError": "Couldn't delete the task — it hasn't been removed and you can safely try again",
@@ -891,9 +901,14 @@
     "unsupportedFilesDescription": "Files with unsupported type were not attached",
     "tooManyFilesSelected": "Too many files selected",
     "tooManyFilesDescription": "You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.",
-    "deletingLabel": "Deleting…",
-    "deleteConfirmTitleSingle": "Confirm deleting",
-    "deleteConfirmTitleMultiple": "Confirm deleting items",
+    "deleteConfirmTitleSingle": "Delete item",
+    "deleteConfirmTitleMultiple": "Delete items",
+    "deleteConfirmMessageSingle": "Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone.",
+    "deleteConfirmMessageMultiple": "Are you sure you want to delete <bold>{{count}} items</bold>? This action is permanent and cannot be undone.",
+    "deleteConfirmItemCount_one": "{{count}} item",
+    "deleteConfirmItemCount_other": "{{count}} items",
+    "deleteConfirmMoreItems_one": "… and {{count}} more",
+    "deleteConfirmMoreItems_other": "… and {{count}} more",
     "deleteConfirmBodyMultiple": "Do you want to delete following",
     "deleteConfirmBodyItems": "items?",
     "deleteError": "Delete failed. Please try again.",
@@ -1088,6 +1103,7 @@
     "nameRequired": "Name is required",
     "fieldTooLong": "Use {{count}} characters or fewer.",
     "nameControlCharacters": "Remove line breaks, tabs and other control characters.",
+    "versionInvalid": "Version must follow semantic versioning (e.g., 1.0.0)",
     "descriptionLabel": "Description",
     "avatarLabel": "Avatar",
     "addAvatarButtonLabel": "Add avatar",
@@ -1127,8 +1143,7 @@
     "generalForm": {
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
-      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version format is invalid (example: 0.0.1)"
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1146,8 +1161,7 @@
     "editTitle": "Edit toolset",
     "general": {
       "namePlaceholder": "Enter name",
-      "descriptionPlaceholder": "Describe what this toolset does",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
+      "descriptionPlaceholder": "Describe what this toolset does"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.",

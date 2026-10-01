@@ -1,6 +1,8 @@
 import {
   buildCssVars,
   CatalogEntityType,
+  ConfirmationFooter,
+  ConfirmationView,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import type {
@@ -15,6 +17,7 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import {
   CloseButton,
+  ConfirmationPopupVariant,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
@@ -40,10 +43,7 @@ import type {
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
-import {
-  DetailsConfirmationKind,
-  DetailsConfirmationVariant,
-} from '../../types/details-confirmation';
+import { DetailsConfirmationKind } from '../../types/details-confirmation';
 import {
   CredentialsLevel,
   ToolsetAuthenticationType,
@@ -59,8 +59,6 @@ import {
 } from '../../utils/toolset-credentials';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
-import { ConfirmationFooter } from './ConfirmationView/ConfirmationFooter';
-import { ConfirmationView } from './ConfirmationView/ConfirmationView';
 import { CredentialsBanner } from './Credentials/CredentialsBanner/CredentialsBanner';
 import { CredentialsManagementPanel } from './Credentials/CredentialsManagementPanel/CredentialsManagementPanel';
 import styles from './DetailsPanel.module.scss';
@@ -179,13 +177,13 @@ interface ConfirmationContent {
   /** Status text announced to assistive tech while the action is in flight. */
   loadingStatusLabel: string;
   /** Palette the confirm button (and its icon) is rendered with. */
-  variant: DetailsConfirmationVariant;
+  variant: ConfirmationPopupVariant;
   /**
    * Palette of the item identity card. Defaults to `variant` when absent —
    * only `DeleteApiKey` diverges, since removing one credential is far less
    * consequential than the whole-item actions that share the danger button.
    */
-  cardVariant?: DetailsConfirmationVariant;
+  cardVariant?: ConfirmationPopupVariant;
 }
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
@@ -276,11 +274,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-grid-cell-text': detailsColors?.gridCellText,
     '--cat-grid-cell-divider': detailsColors?.gridCellDivider,
     '--cat-grid-row-even-bg': detailsColors?.gridRowEvenBackground,
-    '--cat-info-card-bg': detailsColors?.infoCardBackground,
-    '--cat-info-card-danger-bg': detailsColors?.infoCardDangerBackground,
-    '--cat-confirm-message-text': detailsColors?.confirmMessageText,
-    '--cat-confirm-consequence-text': detailsColors?.confirmConsequenceText,
-    '--cat-confirm-footer-border': detailsColors?.confirmFooterBorder,
     '--cat-cred-surface-bg': detailsColors?.credentialsSurfaceBackground,
     '--cat-cred-active-icon': detailsColors?.credentialsActiveIcon,
     '--cat-cred-banner-icon-bg': detailsColors?.credentialsBannerIconBackground,
@@ -946,7 +939,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             texts?.deleteConfirmConsequences ?? DEFAULT_DELETE_CONSEQUENCES,
           confirmLabel: deleteLabel,
           loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
         };
       }
       case DetailsConfirmationKind.Unshare: {
@@ -965,7 +958,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           loadingStatusLabel: texts?.unsharingStatusLabel ?? 'Removing',
           /* Removal only revokes the caller's own access and is recoverable
            * with a new invitation, so it is not framed as destructive. */
-          variant: DetailsConfirmationVariant.Info,
+          variant: ConfirmationPopupVariant.Info,
         };
       }
       case DetailsConfirmationKind.RevokeAccess: {
@@ -987,7 +980,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           /* Other people irreversibly lose access and the owner must re-share
            * to restore it, so this is framed as destructive — even though the
            * item itself survives untouched for its owner. */
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
         };
       }
       case DetailsConfirmationKind.Unpublish: {
@@ -1025,7 +1018,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           /* Everyone loses access to the published copy and the owner must
            * publish again to restore it — the same reasoning as revoke, with
            * the same caveat that the source item is untouched. */
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
         };
       }
       case DetailsConfirmationKind.Logout: {
@@ -1037,7 +1030,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           consequences: undefined,
           confirmLabel: logoutLabel,
           loadingStatusLabel: texts?.loggingOutStatusLabel ?? 'Logging out',
-          variant: DetailsConfirmationVariant.Info,
+          variant: ConfirmationPopupVariant.Info,
         };
       }
       case DetailsConfirmationKind.DeleteApiKey: {
@@ -1052,10 +1045,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           consequences: undefined,
           confirmLabel: deleteLabel,
           loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
-          variant: DetailsConfirmationVariant.Danger,
+          variant: ConfirmationPopupVariant.Danger,
           /* Removing one credential doesn't warrant a red toolset card — the
            * item itself is unaffected, only the confirm button stays danger. */
-          cardVariant: DetailsConfirmationVariant.Info,
+          cardVariant: ConfirmationPopupVariant.Info,
         };
       }
       default:
@@ -1207,6 +1200,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 confirmationContent.cardVariant ?? confirmationContent.variant
               }
               messageClassName={confirmMessageClassName}
+              styles={{
+                colors: {
+                  messageText: detailsColors?.confirmMessageText,
+                  consequenceText: detailsColors?.confirmConsequenceText,
+                  cardBackground: detailsColors?.infoCardBackground,
+                  cardDangerBackground: detailsColors?.infoCardDangerBackground,
+                },
+              }}
             >
               {confirmation === DetailsConfirmationKind.Unpublish &&
                 publishedFolders.length > 1 && (
@@ -1475,6 +1476,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             isLoading={isConfirming}
             isConfirmDisabled={isConfirmDisabled}
             loadingStatusLabel={confirmationContent.loadingStatusLabel}
+            styles={{ colors: { border: detailsColors?.confirmFooterBorder } }}
             onConfirm={handleConfirm}
             onCancel={handleCancelConfirmation}
           />

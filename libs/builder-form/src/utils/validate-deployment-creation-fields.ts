@@ -17,8 +17,14 @@ export const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 /** Allowed characters for the version field: letters, digits, dots, underscores, dashes. */
 export const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
-/** Stricter version shape: one or more dot-separated numeric segments (e.g. `0.0.1`). */
-export const SEMVER_VERSION_PATTERN = /^\d+(\.\d+)*$/;
+/**
+ * SemVer 2.0.0 version (https://semver.org): `MAJOR.MINOR.PATCH` without
+ * leading zeros, with an optional pre-release (`-beta.1`) and build metadata
+ * (`+build.5`). DIAL Admin checks versions with `semver.valid()`, so a value
+ * accepted here is accepted when the same entity is edited there.
+ */
+export const SEMVER_VERSION_PATTERN =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(?:\+[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?$/;
 
 /** Validates the General-step fields and returns untranslated error codes; has no side effects. */
 export const validateDeploymentCreationFields = (

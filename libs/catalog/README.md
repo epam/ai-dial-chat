@@ -25,7 +25,7 @@ import '@epam/ai-dial-catalog/styles.css';
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.27 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.30 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -428,20 +428,20 @@ import { EntityTypeLabel, CatalogEntityType } from '@epam/ai-dial-chat-shared';
 <EntityTypeLabel type={CatalogEntityType.Model} />;
 ```
 
-### InfoCard
+### Item identity card
 
-Tinted card showing a catalog item's identity, used to anchor a message to the
-item it is about. Defaults to the `Info` surface; pass `Danger` for destructive
+The tinted card that anchors a confirmation to the item it is about is
+`ConfirmationIdentityCard` from `@epam/ai-dial-chat-shared` — the catalog does
+not re-export it. It accepts any `EntityHeaderItem`, of which `CatalogItem` is
+one, and defaults to the `Info` surface; pass `Danger` for destructive
 messaging.
 
 ```tsx
-import {
-  InfoCard,
-  DetailsConfirmationVariant,
-} from '@epam/ai-dial-catalog';
+import { ConfirmationIdentityCard } from '@epam/ai-dial-chat-shared';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 
-<InfoCard item={item} />
-<InfoCard item={item} variant={DetailsConfirmationVariant.Danger} />
+<ConfirmationIdentityCard item={item} />
+<ConfirmationIdentityCard item={item} variant={ConfirmationPopupVariant.Danger} />
 ```
 
 ### DetailsPanel
@@ -474,9 +474,11 @@ section below; a skills-scoped wrapper lives in `@epam/ai-dial-skills`.
 
 #### The Manage menu, and the last action standing
 
-Secondary actions collect behind the header's `...` trigger: Edit, Download,
-Publish/Unpublish, Delete, "Revoke access", "Remove from My List", and Share
-where `isSharePrimary` returns `false`. When filtering leaves exactly one of
+Secondary actions collect behind the header's `...` trigger: Share where
+`isSharePrimary` returns `false`, then Edit, Download, Publish/Unpublish,
+"Revoke access", "Remove from My List", and Delete. Delete comes last by
+design — the destructive entry closes the menu rather than sitting between
+two recoverable ones. When filtering leaves exactly one of
 them, it renders as a button in the action row instead and the trigger goes
 away — a menu of one costs a click for nothing and leaves the header looking
 empty until it is opened. A destructive action keeps its danger styling on
@@ -587,12 +589,14 @@ import {
   CredentialsUiState,
   DeploymentSize,
   DetailsConfirmationKind,
-  DetailsConfirmationVariant,
   LimitRowLayout,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
-/* CatalogEntityType is owned by @epam/ai-dial-chat-shared, not this lib. */
+/*
+ * CatalogEntityType is owned by @epam/ai-dial-chat-shared, not this lib, and
+ * confirmation variants use the kit's ConfirmationPopupVariant directly.
+ */
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 CatalogEntityType.Model; // 'MODEL'
@@ -621,6 +625,10 @@ Every confirmation replaces the panel's details content in place - there is
 no modal. `DetailsConfirmationKind` names the active step, and each kind
 resolves its title, copy, consequence bullets, confirm label, loading status
 text, and palette from `detailsTexts`.
+
+The step itself is rendered by `ConfirmationView` and `ConfirmationFooter` from
+`@epam/ai-dial-chat-shared`, so a confirmation shown outside this panel can
+reuse the same content and action row.
 
 `Delete`, `RevokeAccess`, and `Unpublish` render with the danger palette;
 `Unshare` and `Logout` with the info one. `DeleteApiKey` is the only kind

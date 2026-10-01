@@ -13,6 +13,7 @@ import {
   attachmentDtosToDisplayAttachments,
   isDialFileId,
   isExternalSourcePreviewable,
+  mapStages,
   messageHasStages,
   openAnnotationAttachment,
   referenceAttachmentToPdfCanvasContent,
@@ -95,6 +96,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   CitationsI18nKeys,
+  ConversationI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { useApplicationVisualizers } from '../../hooks/attachment/useApplicationVisualizers';
@@ -443,6 +445,28 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const isEditing =
     msg.role === MessageRole.User && !!editingMessageIndexes?.has(index);
+
+  /* Complete arrays without indexes take positional identities, which their
+     `parent_stage_index` refers to; keyed on the stored array reference. */
+  const stages = useMemo(
+    () => mapStages(msg.custom_content?.stages) ?? [],
+    [msg.custom_content?.stages],
+  );
+  const stageLabels = useMemo(
+    () => ({
+      executedLabel,
+      stepsLabel,
+      runningAriaLabel: t(ConversationI18nKeys.StagesRunning),
+      failedAriaLabel: t(ConversationI18nKeys.StagesFailed),
+      failedCountLabel: (count: number) =>
+        t(ConversationI18nKeys.StagesFailedCount, { count }),
+      attemptLabel: (number: number) =>
+        t(ConversationI18nKeys.StagesAttempt, { number }),
+      copyAriaLabel: t(ConversationI18nKeys.StagesCopyContent),
+      attachmentClickLabel: t(ConversationI18nKeys.StagesPreviewAttachment),
+    }),
+    [executedLabel, stepsLabel, t],
+  );
 
   const annotations = useAnnotations(msg, isStreaming);
   const citationGroups = useMemo(
@@ -974,9 +998,9 @@ const ConversationMessageItem: FC<Props> = ({
               )}
               {hasStages && (
                 <CollapsedGroup
-                  stages={msg.custom_content?.stages ?? []}
+                  stages={stages}
                   isStreaming={isStreaming}
-                  labels={{ executedLabel, stepsLabel }}
+                  labels={stageLabels}
                   onAttachmentClick={handleStageAttachmentClick}
                 />
               )}

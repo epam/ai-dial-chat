@@ -48,6 +48,12 @@ li > .rowActive {
   .rowIcon {
     color: inherit;
   }
+
+  /* An item without an `activeIcon` keeps its outline glyph (Tabler outline
+     icons carry `fill="none"`), so fill it in place as the rail does. */
+  .rowIcon svg[fill='none'] {
+    fill: currentColor;
+  }
 }
 
 .rowIcon {

@@ -286,7 +286,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
               ref={actionTriggerRef}
               icon={
                 <IconDotsVertical
-                  size={DIAL_ICON_SIZE.SM}
+                  size={DIAL_ICON_SIZE.MD}
                   className={styles.triggerIcon}
                   aria-hidden
                   stroke={DIAL_KIT_ICON_STROKE}

@@ -133,6 +133,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder,
     disabled,
     showTimezone,
+    minDate,
   }: {
     id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
@@ -142,6 +143,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder?: string;
     disabled?: boolean;
     showTimezone?: boolean;
+    minDate?: Date;
   }) => (
     /* The timezone hint renders outside the label, mirroring the kit's
        trailing-edge adornment, so it does not pollute the input's
@@ -162,6 +164,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         />
       </label>
       {showTimezone && <span>(GMT+00:00) (UTC) UTC</span>}
+      {minDate && <span>hasMinDate</span>}
     </>
   ),
   Select: ({
@@ -853,6 +856,14 @@ describe('ScheduledTaskCreateForm', () => {
 
     expect(screen.getByPlaceholderText('Pick start date')).toBeTruthy();
     expect(screen.getByPlaceholderText('Pick end date')).toBeTruthy();
+  });
+
+  it('passes a minimum selectable date to both date pickers', async () => {
+    await renderForm();
+
+    /* Only the start/end date pickers forward a minDate in a recurring form
+       (the time and day-of-week calendars do not), so exactly two markers. */
+    expect(screen.getAllByText('hasMinDate').length).toBe(2);
   });
 
   it('calls onFieldChange via calendarValueToDateValue when the start-date calendar changes', async () => {

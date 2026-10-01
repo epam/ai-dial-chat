@@ -215,11 +215,6 @@ describe('AnnouncementsPopover — height and scrolling', () => {
       name: 'announcementsPopover.listAriaLabel',
     });
 
-    /* The scroll container is the floating panel the ui-kit caps with an inline
-       max-height, so it is the element that has to do the scrolling — a scroll
-       style on any descendant would leave the overflow uncontained. That panel
-       is the ui-kit's own element and carries no role of its own, so the only
-       way to reach it is through the region it wraps. */
     // eslint-disable-next-line testing-library/no-node-access
     const panel = region.parentElement;
 
