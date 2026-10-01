@@ -112,7 +112,7 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByText('Broken image')).toBeTruthy();
   });
 
-  it('renders an audio element with the given mimeType', () => {
+  it('renders an audio element with the given mimeType and no native download', () => {
     renderBody(
       {
         type: AttachmentContentType.Audio,
@@ -121,7 +121,9 @@ describe('AttachmentCanvasBody', () => {
       },
       { fileName: 'track.mp3' },
     );
-    expect(screen.getByLabelText('track.mp3')).toBeTruthy();
+    expect(screen.getByLabelText('track.mp3').getAttribute('controlsList')).toBe(
+      'nodownload',
+    );
   });
 
   it('renders MarkdownRenderer for Markdown content', () => {

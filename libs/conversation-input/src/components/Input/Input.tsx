@@ -174,7 +174,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
           '--ci-model-selector-disabled-color': colors?.modelSelectorDisabled,
           '--ci-model-selector-name-color': colors?.modelSelectorName,
           '--ci-model-selector-version-color': colors?.modelSelectorVersion,
-          '--ci-voice-error': colors?.voiceError,
           '--ci-voice-waveform': colors?.voiceWaveform,
           '--ci-voice-accent': colors?.voiceAccent,
           '--ci-mention-highlight-bg': colors?.mentionHighlightBg,
@@ -1225,7 +1224,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
             embedded
             state={voiceState}
             analyserNodeRef={analyserNodeRef}
-            errorMessage={voiceError}
             onStop={stopRecording}
             onDiscard={discardRecording}
             attachButton={attachButtonNode}

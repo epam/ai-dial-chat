@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.30 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.35 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -145,6 +145,13 @@ import {
 
 ### ScheduledTaskDetailView
 
+The header can opt into host-owned Start now behavior with `onStartNow`,
+`isStarting`, `isStartNowDisabled`, and `labels.startNowButtonLabel`; use the
+optional `labels.startingLabel` while the request is pending. The host owns
+execution, eligibility, errors, translations, and live announcements. Below
+1280px header actions wrap while retaining their text and 44px targets. The
+back arrow mirrors in RTL, while the Start now play icon does not.
+
 Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout; below it (mobile and tablet) they render as a tab row — Details active by default — with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
 
 ```tsx
@@ -157,6 +164,9 @@ import {
   labels={{/* ..., unreadIndicatorLabel: 'Unread' */}}
   onBack={() => {}}
   onEdit={() => {}}
+  onStartNow={() => {}}
+  isStarting={false}
+  isStartNowDisabled={false}
   displayName="Daily summary"
   description="Summarizes unread inbox items every morning"
   modelLabel="GPT-4.1 mini"

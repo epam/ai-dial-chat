@@ -4,33 +4,26 @@
 TBD - created by archiving change add-intro-field-quick-app-toolset. Update Purpose after archive.
 ## Requirements
 ### Requirement: General step fields
-The Quick App editor's General step SHALL allow editing the application avatar, name, version,
-description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview
-box plus "Add avatar" button), which opens the file manager restricted to a single PNG/JPG/SVG
-image up to 1 MB, rather than a plain URL text field. Name SHALL be required and restricted to
-letters, digits, spaces, underscores, dots, and dashes. The General step SHALL NOT render an
-Intro field. The name and description fields SHALL also allow editing translations for
-additional locales through the shared `DeploymentLocalesField` popup, which is present only while
-the host supplies a non-empty `availableLocaleOptions` (see `builder-form`). These fields SHALL be
-rendered and validated through the shared `DeploymentCreationForm` component from `@epam/ai-dial-builder-form`, the same
-component used by Toolset creation's General step.
+The Quick App editor's **Metadata section** SHALL allow editing the application's avatar, name, version, description and topics.
+
+- **Avatar** SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), not a plain URL text field. It opens the file manager restricted to a single PNG/JPG/SVG image up to 1 MB.
+- **Name** SHALL be required and restricted to letters, digits, spaces, underscores, dots and dashes.
+- **Intro:** the Metadata section SHALL NOT render an Intro field.
+- **Additional locales:** name and description SHALL also allow editing translations for additional locales, through the shared `DeploymentLocalesField` popup. The popup is present only while the host supplies a non-empty `availableLocaleOptions` (see `builder-form`).
+
+These fields SHALL be rendered through the shared `MetadataForm` from `@epam/ai-dial-builder-form` and validated through `useMetadataForm`, the same components the Toolset and Custom App editors use.
 
 #### Scenario: Edit general fields
-- **WHEN** a user picks an avatar image and types a name, version, description, and adds topic
-  tags
+- **WHEN** a user picks an avatar image and types a name, version, description, and adds topic tags
 - **THEN** those values are held in component state without saving
 
 #### Scenario: Pick an avatar image
-- **WHEN** a user clicks "Add avatar" on the General step
-- **THEN** the file manager opens restricted to PNG, JPG, or SVG files up to 1 MB, and
-  selecting one replaces the placeholder icon with that image while leaving the "Add avatar"
-  button in place so the user can pick a different file
+- **WHEN** a user clicks "Add avatar" in the Metadata section
+- **THEN** the file manager opens restricted to PNG, JPG, or SVG files up to 1 MB, and selecting one replaces the placeholder icon with that image while leaving the "Add avatar" button in place so the user can pick a different file
 
 #### Scenario: Edit an additional-locale translation
-- **WHEN** a user opens the "Add locale" popup on the General step and adds a translated name
-  and description for another language
-- **THEN** that translation is held in component state, alongside the primary name and
-  description, until the next save
+- **WHEN** a user opens the "Add locale" popup in the Metadata section and adds a translated name and description for another language
+- **THEN** that translation is held in component state, alongside the primary name and description, until the next save
 
 #### Scenario: Name is required
 - **WHEN** a user clears the name field and attempts to save
@@ -68,75 +61,45 @@ made before this feature existed.
 - **THEN** the create request body includes neither `locales` nor `primaryLocale`
 
 ### Requirement: Quick App edit forwards additional locales for forward compatibility only
-The `TriggerSave` message's General payload SHALL include `locales`/`primaryLocale` fields
-composed the same way as the create request, even though Quick App editing (as opposed to
-creation) is handled by an embedded QuickApps editor owned by another repository that this
-repository does not control the save for. This repository SHALL NOT assume the embedded editor
-honors those fields — until it does, saving an existing Quick App's General step through the
-embedded editor MAY flatten a previously configured locale map back to a plain string.
+The `TriggerSave` message's General payload SHALL include `locales`/`primaryLocale` fields, composed the same way as for the create request. This holds even though Quick App editing (as opposed to creation) is handled by an embedded QuickApps editor owned by another repository, whose save this repository does not control.
 
-#### Scenario: Save & Exit forwards locale fields to the embedded editor
-- **WHEN** an existing Quick App with additional-locale translations advances past the General
-  step via "Next"/"Save & Exit"
-- **THEN** the `TriggerSave` message's `general` payload includes `locales`/`primaryLocale`
-  composed from the current form state, in addition to the existing General-step fields
+This repository SHALL NOT assume the embedded editor honors those fields. Until it does, saving an existing Quick App's metadata through the embedded editor MAY flatten a previously configured locale map back to a plain string.
+
+#### Scenario: Save forwards locale fields to the embedded editor
+- **WHEN** a user clicks Save in edit mode for a Quick App with additional-locale translations
+- **THEN** the `TriggerSave` message's `general` payload includes `locales`/`primaryLocale` composed from the current form state, in addition to the other metadata fields
 
 ### Requirement: Editing General step fields persists the changes on Save & Exit
 
-Clicking "Next" on the General step of an existing app (an `appId` is already known) SHALL
-only validate the fields and advance to the Settings step — it SHALL NOT call any
-persistence API. The edited General step values SHALL be held in memory across the step
-transition. Persistence of General step edits SHALL happen only when the user performs the
-final "Save & Exit" action from the Settings step. At that point, if this editor session
-started against an app that already existed (as opposed to one created fresh in this
-session), the editor SHALL include the current General-step values — name, description,
-icon URL, topics, and `display_version` — as a `general` payload on the
-`TriggerSave` message posted to the embedded Settings-step editor, so the embedded editor
-persists them as part of the single save it already performs for the Settings step. The
-`general` payload SHALL NOT include an `intro` property. The host SHALL NOT make a separate
-`update-application` (or any other) request to persist these values. The `general` payload
-SHALL NOT include the backend `version` field. Triggering a Preview action SHALL NOT
-include a `general` payload. The `TriggerSave` message's `general` payload SHALL NOT alter
-that application's settings-step configuration (`application_properties`, including
-orchestrator/tool set state) or its `version`. "Save & Exit" SHALL always additionally
-trigger the Settings step's own save (regardless of whether the Settings step step was
-itself touched), matching prior behavior for that step.
+In edit mode (an `appId` is known, whether from the URL or from an in-place create in this session), metadata edits SHALL be held in memory and persisted only when the user clicks **Save**.
 
-#### Scenario: Next does not persist General edits
-- **WHEN** a user edits General step fields for an existing app and clicks "Next"
-- **THEN** no update-application (or create-application) request is sent, and the editor
-  advances to the Settings step with the edited values retained in memory
+When Save is clicked, the editor SHALL do the following:
 
-#### Scenario: Save & Exit forwards edited General fields to the embedded editor
-- **WHEN** a user edits Topic, Description, Icon, Name, or Version on the General step of an
-  existing Quick App, clicks Next, and then clicks Save & Exit on the Settings step
-- **THEN** the `TriggerSave` message posted to the embedded Settings-step editor includes
-  a `general` payload carrying the edited field values (with no `intro` property), and no
-  `update-application` request is made by the host
+- It SHALL always include the current metadata values (name, description, icon URL, topics and `display_version`) as a `general` payload on the `TriggerSave` message posted to the embedded Setup editor. The embedded editor persists them as part of the single save it already performs.
+- The `general` payload SHALL NOT include an `intro` property or the backend `version` field.
+- The host SHALL NOT make a separate `update-application` request to persist these values.
+- The `general` payload SHALL NOT alter the application's setup configuration (`application_properties`, including orchestrator/tool set state) or its `version`.
 
-#### Scenario: Save & Exit still forwards General fields when General is unchanged
-- **WHEN** a user does not edit any General step field for an existing app, clicks Next,
-  and then clicks Save & Exit on the Settings step without changing Settings either
-- **THEN** the `TriggerSave` message still includes a `general` payload carrying the
-  (unchanged) current values, no `update-application` request is made, and the Settings
-  step save is still triggered as it was before this behavior existed
+Triggering Preview SHALL NOT include a `general` payload.
 
-#### Scenario: Preview does not forward General fields
-- **WHEN** a user triggers Preview from the Settings step
-- **THEN** the `TriggerSave` message posted to the embedded editor has no `general`
-  payload
+#### Scenario: Save forwards edited metadata to the embedded editor
+- **WHEN** a user edits Topic, Description, Icon, Name or Version of an existing Quick App and clicks Save
+- **THEN** the `TriggerSave` message includes a `general` payload carrying the edited values (with no `intro` property), and no `update-application` request is made by the host
 
-#### Scenario: Save & Exit does not forward General fields for a session-created app
-- **WHEN** a user creates a new app in this editor session, advances to the Settings
-  step, and clicks Save & Exit
-- **THEN** the `TriggerSave` message posted to the embedded editor has no `general`
-  payload, matching the pre-existing behavior for apps created within the current
-  session
+#### Scenario: Save still forwards metadata when it is unchanged
+- **WHEN** a user clicks Save without editing any metadata field
+- **THEN** the `TriggerSave` message still includes a `general` payload carrying the current values, and no `update-application` request is made
 
-#### Scenario: Save does not affect Settings-step configuration or version
-- **WHEN** the General step's edits are forwarded as part of Save & Exit for an existing
-  app that already has orchestrator or tool set configuration, or a `version`, from the
-  Settings step
+#### Scenario: Save after an in-place create forwards metadata
+- **WHEN** a user creates a Quick App in this session, edits its Description in the Metadata section and clicks Save
+- **THEN** the `TriggerSave` message includes a `general` payload carrying the edited Description
+
+#### Scenario: Preview does not forward metadata
+- **WHEN** a user triggers Preview
+- **THEN** the `TriggerSave` message posted to the embedded editor has no `general` payload
+
+#### Scenario: Save does not affect setup configuration or version
+- **WHEN** metadata edits are forwarded on Save for an app that already has orchestrator or tool set configuration, or a `version`
 - **THEN** that configuration and version are unchanged after the save completes
 
 ### Requirement: SaveSuccess reports whether persisted data changed
@@ -191,83 +154,54 @@ calling it), threading it through `SettingsStep` to `AppsEditor`.
 
 ### Requirement: Settings step readiness gates Save and Preview
 
-The "Save & Exit" and "Preview" actions SHALL be disabled until the Settings step's
-embedded editor — which runs in an iframe and communicates over `postMessage` — has
-signaled it is ready to save (`AppsEditorEvent.ReadyToSave`) — a distinct signal from
-`AppsEditorEvent.ReadyToInteract`, which only indicates the iframe's UI has rendered and
-continues to control the loading-spinner overlay independently. `ReadyToSave` SHALL
-indicate that the embedded editor has finished loading and validating its own internal
-application model and it is safe to trigger a save. Triggering a save or preview before
-readiness would post a message the embedded app is not yet safely able to act on, risking
-a save that operates on stale or partially-loaded data. As a defense in depth against any
-case where no save/preview response arrives after being triggered, a save or preview
-action that does not receive a response (`SaveSuccess`/`SaveError`) within a bounded
-timeout SHALL time out, reset the loading state, and surface an error, rather than leaving
-the buttons stuck disabled forever. Separately, if `ReadyToSave` itself never arrives
-within a bounded readiness timeout after the Settings step becomes visible, the system
-SHALL surface an inline error explaining that the Settings editor did not report
-readiness, rather than leaving Save/Preview disabled indefinitely with no explanation.
+In edit mode, the **Save** button and the **Preview** action SHALL be disabled until the Setup section's embedded editor has signaled it is ready to save (`AppsEditorEvent.ReadyToSave`). That editor runs in an iframe and communicates over `postMessage`.
 
-The embedded editor MAY instead post a `LoggedOut` message once its session has resolved
-and the user is not authenticated (or the session errored). In that case `ReadyToInteract`
-was already sent (so the loading spinner clears) but `ReadyToSave` will never arrive, since
-the embedded editor cannot load its data model without an authenticated session. This is an
-expected state, not a readiness failure, so the host SHALL NOT surface the generic
-"Settings not ready" timeout error while, or after, a `LoggedOut` message has been received
-for the current Settings-step session — including suppressing an instance of that error
-already shown before `LoggedOut` arrived. The "Save & Exit" and "Preview" buttons SHALL
-remain disabled in this state, since `ReadyToSave` still gates them and will not arrive.
+- **Readiness signals.** `ReadyToSave` is distinct from `AppsEditorEvent.ReadyToInteract`. `ReadyToInteract` only indicates that the iframe's UI has rendered, and it continues to control the loading-spinner overlay independently. `ReadyToSave` SHALL indicate that the embedded editor has finished loading and validating its own application model, so a save is safe.
+- **Save timeout.** A save or preview that receives no `SaveSuccess`/`SaveError` within a bounded timeout SHALL time out, reset the loading state and surface an error.
+- **Readiness timeout.** If `ReadyToSave` never arrives within a bounded readiness timeout after the Setup editor mounts, the system SHALL surface an inline error explaining that the editor did not report readiness.
+- **Logged out.** The embedded editor MAY instead post `LoggedOut`. In that case the host SHALL NOT surface the readiness-timeout error, while or after `LoggedOut` is received, and SHALL clear an instance of it already shown. Save and Preview SHALL remain disabled.
+
+In create mode, before the app exists, the Create button is not gated by readiness, and Preview is disabled.
 
 #### Scenario: A logged-out signal suppresses the readiness-timeout error
-- **WHEN** the Settings step's iframe posts `LoggedOut` before the readiness timeout elapses
-- **THEN** the timeout does not surface the "Settings not ready" error once it elapses, and
-  the "Save & Exit" and "Preview" buttons remain disabled
+- **WHEN** the Setup iframe posts `LoggedOut` before the readiness timeout elapses
+- **THEN** the timeout does not surface the "not ready" error once it elapses, and Save and Preview remain disabled
 
 #### Scenario: A logged-out signal clears an already-surfaced readiness-timeout error
-- **WHEN** the readiness timeout has already surfaced the "Settings not ready" error and the
-  Settings step's iframe then posts `LoggedOut`
-- **THEN** the "Settings not ready" error is cleared
+- **WHEN** the readiness timeout has already surfaced the "not ready" error and the iframe then posts `LoggedOut`
+- **THEN** the "not ready" error is cleared
 
-#### Scenario: Save & Exit is disabled before the Settings step is ready to save
-- **WHEN** the Settings step's iframe has not yet sent `ReadyToSave`
-- **THEN** the "Save & Exit" button is disabled and cannot trigger a save
+#### Scenario: Save is disabled before the Setup editor is ready to save
+- **WHEN** in edit mode the iframe has not yet sent `ReadyToSave`
+- **THEN** the Save button is disabled and cannot trigger a save
 
-#### Scenario: Preview is disabled before the Settings step is ready to save
-- **WHEN** the Settings step's iframe has not yet sent `ReadyToSave`
-- **THEN** the "Preview" button is disabled and cannot trigger a preview
+#### Scenario: Preview is disabled before the Setup editor is ready to save
+- **WHEN** the iframe has not yet sent `ReadyToSave`
+- **THEN** the Preview button is disabled
 
 #### Scenario: UI-rendered readiness alone does not enable Save or Preview
-- **WHEN** the Settings step's iframe sends `ReadyToInteract` but has not sent `ReadyToSave`
-- **THEN** the loading spinner over the iframe is hidden, but the "Save & Exit" and
-  "Preview" buttons remain disabled
+- **WHEN** the iframe sends `ReadyToInteract` but not `ReadyToSave`
+- **THEN** the loading spinner over the iframe is hidden, but Save and Preview remain disabled
 
-#### Scanario: Preview is reset when step is changed
-- **WHEN** current step is changed
-- **THEN** Preview state is reset and becomes false
-
-#### Scenario: Buttons re-enable once the Settings step signals it is ready to save
-- **WHEN** the Settings step's iframe sends `ReadyToSave` after the user has been waiting
-  on the Settings step
-- **THEN** the "Save & Exit" and "Preview" buttons become enabled without requiring a
-  page reload
+#### Scenario: Buttons re-enable once the Setup editor signals it is ready to save
+- **WHEN** the iframe sends `ReadyToSave`
+- **THEN** Save and Preview become enabled without a page reload
 
 #### Scenario: Readiness re-gates to false when the iframe reloads for a different app
-- **WHEN** the host reloads the Settings step's iframe for a different app or schema after
-  having previously received `ReadyToSave`
-- **THEN** "Save & Exit" and "Preview" become disabled again until a new `ReadyToSave` is
-  received for the newly loaded app/schema
+- **WHEN** the host reloads the iframe for a different app or schema (including the in-place switch after create) after having received `ReadyToSave`
+- **THEN** Save and Preview become disabled again until a new `ReadyToSave` is received
 
-#### Scenario: A save that never receives a response times out instead of hanging forever
-- **WHEN** a save is triggered and no `SaveSuccess`/`SaveError` response arrives within
-  the bounded save-in-progress timeout
-- **THEN** the saving state is cleared, an error is shown, and the "Save & Exit" button
-  becomes clickable again without a page reload
+#### Scenario: A save that never receives a response times out
+- **WHEN** a save is triggered and no `SaveSuccess`/`SaveError` arrives within the bounded save timeout
+- **THEN** the saving state is cleared, an error is shown, and Save becomes clickable again without a page reload
 
-#### Scenario: A Settings step that never signals readiness surfaces an error instead of hanging forever
-- **WHEN** the Settings step's iframe has not sent `ReadyToSave` within the bounded readiness
-  timeout after becoming visible
-- **THEN** an inline error explaining that the Settings editor did not report readiness is
-  shown, distinct from the save-in-progress timeout error
+#### Scenario: A Setup editor that never signals readiness surfaces an error
+- **WHEN** the iframe has not sent `ReadyToSave` within the bounded readiness timeout after mounting
+- **THEN** an inline error explaining that the editor did not report readiness is shown, distinct from the save-timeout error
+
+#### Scenario: Create is not gated by iframe readiness
+- **WHEN** the editor is in create mode with no `appId`
+- **THEN** the Create button is enabled (subject only to submit-in-flight) and Preview is disabled
 
 ### Requirement: Settings iframe receives live updates for toolset logins initiated elsewhere
 
@@ -317,32 +251,29 @@ existing request-response flow.
 
 ### Requirement: Save & Exit confirms the saved quick app
 
-`AppsEditor` SHALL raise a success notification when a user-initiated **Save & Exit** completes — that is, when the embedded editor posts `AppsEditorEvent.SaveSuccess` for a save the host triggered from Save & Exit — through `useOperationNotification` (see `entity-operation-notifications`), before or in the same tick as the navigation to the return URL.
+The Quick App editor SHALL raise success notifications through `useOperationNotification` (see `entity-operation-notifications`), with `name` set to the metadata name as submitted:
 
-- Create mode → `NotifiableEntity.QuickApp` + `EntityOperation.Created`.
-- Edit mode → `NotifiableEntity.QuickApp` + `EntityOperation.Edited`.
-- `name` = the quick app's General-step name as submitted.
+- **Create** (metadata-first create succeeds): `NotifiableEntity.QuickApp` + `EntityOperation.Created`, raised before the in-place switch to edit mode.
+- **Save** (the embedded editor posts `AppsEditorEvent.SaveSuccess` for a save the host triggered from the Save button): `NotifiableEntity.QuickApp` + `EntityOperation.Edited`, raised before or in the same tick as the navigation to the return URL.
 
-The notification SHALL NOT be raised for saves the host triggers for other reasons — a `TriggerSave` issued to open Preview, or any other implicit save — because those are not outcomes the user asked to be told about. The `hasChanges` flag on `SaveSuccess` SHALL NOT gate the notification: the user asked to save, so the save is reported whether or not any user-editable field differed (`hasChanges` keeps its existing, separate role of resetting the preview session).
+The notification SHALL NOT be raised for a `TriggerSave` issued to open Preview. The `hasChanges` flag SHALL NOT gate the notification. A `SaveError`, or a save that never reports success, SHALL NOT raise a success notification.
 
-A `SaveError` or a save that never reports success SHALL NOT raise a success notification; the existing error handling is unchanged.
+#### Scenario: Create confirms and stays on the page
 
-#### Scenario: Save & Exit in create mode confirms
+- **WHEN** a user clicks Create for a new quick app and `createApplication` succeeds
+- **THEN** a notification titled `"Quick app created successfully"` naming the app is shown, and the page stays open in edit mode
 
-- **WHEN** a user completes Save & Exit for a new quick app and the embedded editor reports `SaveSuccess`
-- **THEN** a success notification titled `"Quick app created successfully"` naming the app is shown and the host navigates to the return URL
+#### Scenario: Save in edit mode confirms
 
-#### Scenario: Save & Exit in edit mode confirms
-
-- **WHEN** a user completes Save & Exit for an existing quick app and the embedded editor reports `SaveSuccess`
-- **THEN** a success notification titled `"Quick app edited successfully"` naming the app is shown and the host navigates to the return URL
+- **WHEN** a user clicks Save for a quick app and the embedded editor reports `SaveSuccess`
+- **THEN** a notification titled `"Quick app edited successfully"` naming the app is shown, and the host navigates to the return URL
 
 #### Scenario: Preview-triggered save stays silent
 
 - **WHEN** the host issues `TriggerSave` to open Preview and the embedded editor reports `SaveSuccess`
 - **THEN** no success notification is shown and the preview opens as before
 
-#### Scenario: A no-op Save & Exit still confirms
+#### Scenario: A no-op Save still confirms
 
-- **WHEN** Save & Exit succeeds with `hasChanges: false`
+- **WHEN** Save succeeds with `hasChanges: false`
 - **THEN** the success notification is still shown, and the preview session is not reset

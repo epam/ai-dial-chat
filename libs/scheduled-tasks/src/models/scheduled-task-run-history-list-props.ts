@@ -54,7 +54,9 @@ export interface ScheduledTaskRunHistoryListStyles {
   /** Typography class overrides. */
   typography?: ScheduledTaskRunHistoryListTypography;
   rowMinHeight?: string;
+  /** Background of an interactive run row on hover. Defaults to `--bg-control-accent-alpha`. */
   rowHoverBackground?: string;
+  /** Background of an interactive run row on keyboard focus. Defaults to `rowHoverBackground`. */
   rowFocusBackground?: string;
 }
 

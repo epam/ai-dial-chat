@@ -14,6 +14,8 @@ export default [
             '{projectRoot}/.storybook/**',
             '{projectRoot}/src/**/*.stories.{ts,tsx}',
             '{projectRoot}/src/stories/**',
+            /* Dev-only Playwright baseline; its tools are root devDependencies. */
+            '{projectRoot}/browser-tests/**',
           ],
         },
       ],

@@ -58,11 +58,12 @@ The application SHALL expose a lazy-loaded Scheduled Task Detail page at `ROUTES
 
 The detail page header SHALL render a back-navigation control and the task's `displayName` as its title on the start side. Activating the back control SHALL navigate to `ROUTES.ScheduledTasks`. Once the task has loaded successfully and `task.isDeleted` is not `true`, the header SHALL additionally render, on the inline-end side, in this order:
 
-1. an **Active** switch (`DialSwitch` from `@epam/ai-dial-ui-kit`) with a visible localized "Active" label, rendered only when `isActive !== undefined` on the loaded task, never an unchecked switch while the active state is unknown;
+1. an **Active** switch (`Switch` from `@epam/ai-dial-ui-kit`) with a visible localized "Active" label, rendered only when `isActive !== undefined` on the loaded task, never an unchecked switch while the active state is unknown;
 2. a destructive **Delete** action (`GhostIconButton`/equivalent destructive-treatment control from `@epam/ai-dial-ui-kit`, red/danger styling, the standard delete icon marked `aria-hidden`, and a visible localized "Delete" label). Activating Delete SHALL open the confirmation dialog described in the "Delete confirmation dialog gates the delete request" requirement — it SHALL NOT call any API directly;
-3. a `NeutralButton` (`@epam/ai-dial-ui-kit`) with a pencil icon (`IconPencilMinus` from `@tabler/icons-react`) and a localized "Edit" label. Activating Edit SHALL navigate to `getScheduledTaskEditRoute(scheduleId)` for the task currently being viewed.
+3. a `NeutralButton` (`@epam/ai-dial-ui-kit`) with a pencil icon (`IconPencilMinus` from `@tabler/icons-react`) and a localized "Edit" label. Activating Edit SHALL navigate to `getScheduledTaskEditRoute(scheduleId)` for the task currently being viewed;
+4. a localized **Start now** button with a decorative play icon, invoking the manual-run action described above.
 
-When `task.isDeleted` is `true`, the header SHALL render none of the Active switch, Delete action, or Edit button — only the back control, title, and the read-only deleted-state indicator described in the "Soft-deleted task renders as a read-only deleted state" requirement. The header SHALL NOT render a Run-now control in this iteration, and SHALL NOT render the Edit button, Active switch, or Delete action while the task is loading or failed to load. While a delete request is in flight (`isDeleting` is `true`), the Active switch, Delete action, and Edit button SHALL all render disabled rather than absent.
+When `task.isDeleted` is `true`, the header SHALL render none of the Active switch, Delete action, Edit button, or Start now button — only the back control, title, and the read-only deleted-state indicator described in the "Soft-deleted task renders as a read-only deleted state" requirement. The header SHALL render a localized Start now button after Edit as specified by the manual-run requirements, and SHALL NOT render Start now, the Edit button, Active switch, or Delete action while the task is loading or failed to load. While a delete request is in flight (`isDeleting` is `true`), the Active switch, Delete action, Edit button, and Start now button SHALL all render disabled rather than absent.
 
 #### Scenario: Back control returns to the list
 
@@ -103,6 +104,16 @@ When `task.isDeleted` is `true`, the header SHALL render none of the Active swit
 
 - **WHEN** the loaded task has `isDeleted: true`
 - **THEN** the header shows the back control, the title, and the deleted-state indicator, and none of the Active switch, Delete action, or Edit button render
+
+#### Scenario: Start now follows Edit
+
+- **WHEN** the loaded task is not deleted and the host supplies the start action
+- **THEN** the header displays Start now after Edit, with eligibility and pending behavior defined by the manual-run requirements
+
+#### Scenario: Start now is absent during task load failure or deletion
+
+- **WHEN** task details are loading, failed, or soft-deleted
+- **THEN** Start now is absent along with the other unavailable task actions
 
 ### Requirement: Details and Configuration sections render read-only task metadata
 
@@ -396,7 +407,7 @@ When `onEdit` is supplied, the component SHALL render the Edit button; when omit
 
 ### Requirement: Delete confirmation dialog gates the delete request
 
-`ScheduledTaskDetailPage` SHALL render a confirmation dialog (`ConfirmationPopup` from `@epam/ai-dial-ui-kit`, `variant={ConfirmationPopupVariant.Danger}`) that opens when the header's Delete action is activated and MUST NOT issue any `deleteScheduledTask` call until the dialog's destructive confirm action is explicitly activated. The dialog SHALL present a localized title and a description stating that deletion is permanent, the task will never run again, and the action cannot be undone, plus a `Cancel` action and a destructive `Delete` confirm action. Activating `Cancel`, pressing `Escape`, or otherwise closing the dialog SHALL close it without making any API call and SHALL NOT change any task state. While a delete request triggered by the confirm action is in flight, the dialog SHALL remain open, its confirm action SHALL render a loading state (`isLoading`) and be prevented from firing a second concurrent call (`disableConfirmButton`), and `Cancel`/`Escape`/close SHALL be inert until the request settles. When the dialog closes without a completed deletion (`Cancel`, `Escape`, close, or a failed request that the user dismisses), focus SHALL return to the header's Delete action.
+`ScheduledTaskDetailPage` SHALL render a confirmation dialog (`ScheduledTaskDeleteModal` in `apps/chat/src/components/ScheduledTaskDeleteModal/`, which renders `ScheduledTaskDeleteConfirmation` from `@epam/ai-dial-scheduled-tasks`, itself the shared `ConfirmationDialog` from `@epam/ai-dial-chat-shared` in its `ConfirmationPopupVariant.Danger` variant — see the `shared-delete-confirmation` spec) that opens when the header's Delete action is activated and MUST NOT issue any `deleteScheduledTask` call until the dialog's destructive confirm action is explicitly activated. The dialog SHALL present the title "Delete task"; an identity card with an `IconClockHour3` glyph, the type label `SCHEDULED TASK`, and the task name; the sentence "Are you sure you want to delete **{taskName}**? This action is permanent and cannot be undone." with the task name bold; the consequence bullets "All run conversations will still be accessible" and "Cannot be undone"; and a text `Cancel` action beside a destructive `Delete` confirm action with a leading trash icon. Activating `Cancel`, pressing `Escape`, or otherwise closing the dialog SHALL close it without making any API call and SHALL NOT change any task state. While a delete request triggered by the confirm action is in flight, the dialog SHALL remain open, its confirm action SHALL show a spinner in place of the trash icon and be disabled so it cannot fire a second concurrent call, the localized "Deleting…" status SHALL be announced through a polite live region (the confirm label itself stays "Delete", so the button keeps one accessible name), and `Cancel`/`Escape`/close SHALL be inert until the request settles. When the dialog closes without a completed deletion (`Cancel`, `Escape`, close, or a failed request that the user dismisses), focus SHALL return to the header's Delete action.
 
 #### Scenario: Opening the dialog makes no API call
 
@@ -421,7 +432,7 @@ When `onEdit` is supplied, the component SHALL render the Edit button; when omit
 #### Scenario: Repeated confirmation is prevented while a request is pending
 
 - **WHEN** the user activates the confirm action again while a previous `deleteScheduledTask` call for the same task is still in flight
-- **THEN** no second `deleteScheduledTask` call is made, and the confirm action renders a loading state throughout
+- **THEN** no second `deleteScheduledTask` call is made, and the confirm action stays disabled with a spinner throughout while its label stays "Delete"
 
 #### Scenario: Cancel, Escape, and close are inert while a request is pending
 
@@ -493,7 +504,8 @@ Every user-visible string on the Scheduled Task Detail page (section titles, bac
 #### Scenario: Delete-related keys are present in en.json
 
 - **WHEN** the change is applied
-- **THEN** `en.json` contains `scheduledTasks.detail.deleteButtonLabel`, `scheduledTasks.detail.deleteConfirmTitle`, `scheduledTasks.detail.deleteConfirmDescription`, `scheduledTasks.detail.deleteConfirmingLabel`, `scheduledTasks.detail.deleteSuccess`, `scheduledTasks.detail.deleteNotFoundError`, `scheduledTasks.detail.deleteRetryableError`, `scheduledTasks.detail.deleteGenericError`, and `scheduledTasks.detail.deletedStateLabel`
+- **THEN** `en.json` contains `scheduledTasks.detail.deleteConfirmTitle`, `scheduledTasks.detail.deleteConfirmDescription`, `scheduledTasks.detail.deleteConsequenceConversationsAccessible`, `scheduledTasks.detail.deleteSuccess`, `scheduledTasks.detail.deleteNotFoundError`, `scheduledTasks.detail.deleteRetryableError`, `scheduledTasks.detail.deleteGenericError`, `scheduledTasks.detail.deletedStateLabel`, and `scheduledTasks.typeLabel`
+- **AND** the Delete action, confirm button, and Cancel reuse `buttons.delete` / `buttons.cancel`, while the "Cannot be undone" bullet and the in-flight "Deleting…" status reuse `basic.consequenceCannotBeUndone` / `basic.deletingStatus`, with no `scheduledTasks.detail.*` duplicate of any of them
 
 #### Scenario: Lib receives strings, not translation keys
 
@@ -595,7 +607,7 @@ All directional layout in the detail page header, Details/Configuration sections
 
 ### Requirement: Active switch is hidden for completed tasks, disabled only when the completed signal degrades
 
-`ScheduledTaskDetailPage` SHALL pass `isCompleted={true}` to `ScheduledTaskDetailView` when the loaded task has `isCompleted: true`, and the view SHALL NOT render the Active switch (nor any disabled-switch reason) in that case — a completed task can never produce another run, so no dead-end control is offered; the completed line in the details summary carries the state. When the BFF's `isCompleted` is `undefined` or `false` but the loaded task's fields show it can no longer produce a future run — the enrichment degraded (a failed runs check) or a run is still in flight — the page SHALL pass `isActiveDisabled={true}` so the switch still renders (since `isActive` is defined) but disabled, with an explanatory reason label (a `labels` entry with an English default, localized by the page). Two field shapes qualify for the disabled fallback:
+`ScheduledTaskDetailPage` SHALL pass `isCompleted={true}` to `ScheduledTaskDetailView` when the loaded task has `isCompleted: true`, and the view SHALL NOT render the Active switch (nor any disabled-switch reason) in that case — a completed task cannot produce another automatic run from its exhausted trigger, so no dead-end control is offered; the completed line in the details summary carries the state. When the BFF's `isCompleted` is `undefined` or `false` but the loaded task's fields show it can no longer produce a future automatic run — the enrichment degraded (a failed runs check) or a run is still in flight — the page SHALL pass `isActiveDisabled={true}` so the switch still renders (since `isActive` is defined) but disabled, with an explanatory reason label (a `labels` entry with an English default, localized by the page). Two field shapes qualify for the disabled fallback:
 
 - **Completed one-time schedule:** `triggerType` is `date` (one-time) and `nextRunTime` is `null` — the schedule has already run once and a `date` trigger cannot be rescheduled.
 - **Expired recurring schedule:** `triggerType` is `cron` and `trigger.cron.endDate` is a past timestamp — the schedule's activity window has closed, so resuming it cannot produce a future run within that window either.
@@ -622,9 +634,16 @@ A recurring (`cron`) schedule with no upcoming run but an `endDate` that has not
 - **WHEN** the loaded task has `triggerType: 'cron'`, `nextRunTime: null` (paused, not completed), and `trigger.cron.endDate` is absent or in the future
 - **THEN** the Active switch renders unchecked but NOT disabled, no reason label is shown, and toggling it on calls `resumeScheduledTask`
 
+Manual execution is independent of the Active switch: a non-deleted completed task SHALL still offer Start now under the manual-run requirements.
+
+#### Scenario: Completed task is manually runnable
+
+- **WHEN** a completed non-deleted task has no known InProgress run
+- **THEN** the Active switch remains hidden while Start now is available without resuming the schedule
+
 ### Requirement: Detail and history layout have public per-instance settings
 
-ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout and forwarded historyStyles. The Details/Configuration divider SHALL stretch the full shared desktop content height. History SHALL expose maxHeight, rowMinHeight, hover/focus colors and retain its own vertical scroll. Responsive fallback SHALL preserve existing mobile tabs; no structural child selectors SHALL be needed by a host.
+ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout and forwarded historyStyles. The Details/Configuration divider SHALL stretch the full shared desktop content height. History SHALL expose maxHeight, rowMinHeight, hover/focus colors and retain its own vertical scroll. An interactive run row SHALL show a visible hover background even when the host configures none: `rowHoverBackground` (`--strhl-row-hover-bg`) defaults to `--bg-control-accent-alpha`, and `rowFocusBackground` (`--strhl-row-focus-bg`) defaults to the hover background. Responsive fallback SHALL preserve existing mobile tabs; no structural child selectors SHALL be needed by a host.
 
 #### Scenario: Short metadata does not shorten the divider
 
@@ -639,7 +658,7 @@ ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout an
 #### Scenario: History interactions and empty label are configurable
 
 - **WHEN** a history row is hovered or keyboard-focused, or there are no runs
-- **THEN** the configured interaction background/focus treatment is visible; an empty panel renders the host label, including 'No tasks runs yet' when supplied.
+- **THEN** the configured interaction background/focus treatment is visible, falling back to `--bg-control-accent-alpha` when the host configures none; an empty panel renders the host label, including 'No tasks runs yet' when supplied.
 
 ### Requirement: Details show independent metadata and load states
 
@@ -662,12 +681,12 @@ The app SHALL use trigger-only descriptions and host-resolved model display name
 
 ### Requirement: Delete confirmation presentation is reusable and host-configurable
 
-scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled open/pending state, task name, host-provided title/body/consequences/action labels, callbacks, cancelAppearance (Ghost by default), and typed title/action styling. It SHALL render safe React content and contain no API, routing or i18n imports. The parent SHALL retain mutation, notification and navigation ownership.
+`@epam/ai-dial-scheduled-tasks` SHALL export `ScheduledTaskDeleteConfirmation`, a thin composition of the shared `ConfirmationDialog`, `ConfirmationIdentityCard`, and `ConfirmationIdentityRow` from `@epam/ai-dial-chat-shared` (see the `shared-delete-confirmation` spec), always in the `ConfirmationPopupVariant.Danger` variant. Its props are the controlled `open` and `isDeleting` state; `taskName`; a host-supplied `icon` and `typeLabel` for the identity card; host-provided `title` (a `string`, not a `ReactNode`, because the kit names the dialog only from a string header), `body` (`ReactNode`, so the host can bold the task name), `consequences`, `cancelLabel`, `confirmLabel`, and `pendingLabel`; `onConfirm` / `onClose`; and `styles` (`popupClassName`, `titleClassName`, `messageClassName` defaulting to `'dial-body-paragraph-text'`, and `colors.typeLabelText`). It SHALL NOT carry its own Tailwind colors, its own button row, or a cancel-appearance switch — Cancel is always the shared footer's text button. It SHALL render safe React content and contain no API, routing or i18n imports. The parent SHALL retain mutation, notification and navigation ownership.
 
 #### Scenario: Host supplies the complete deletion design
 
-- **WHEN** the host passes 'Delete task', the specified permanent-action body and four consequences, a 16px title style and ghost Cancel
-- **THEN** the confirmation renders that content and styling without private selectors or hardcoded package English.
+- **WHEN** the host passes the title 'Delete task', a clock icon, the type label 'Scheduled task', a body with the bolded task name, and the consequence bullets
+- **THEN** the confirmation renders the danger identity card (icon, uppercased type, name), the body, the bullets, a text Cancel, and a danger Delete with a leading trash icon, without private selectors or hardcoded package English.
 
 #### Scenario: Cancel and confirm have distinct effects
 
@@ -768,3 +787,115 @@ The three section bodies (Details fields, Configuration instructions, History ru
 
 - **WHEN** the tab row renders at any breakpoint
 - **THEN** no tab renders a count or badge value
+
+### Requirement: Start now immediately exposes the accepted run in History
+
+`ScheduledTaskDetailPage` SHALL use a page-scoped app hook `useStartScheduledTask` in `apps/chat/src/hooks/scheduled-tasks/` for manual-run mutation state, accepted run DTOs and status tracking; the existing `useScheduledTaskRuns` SHALL retain history pagination ownership. No new context SHALL be introduced. The feature SHALL inherit `scheduledTasksEnabled` and its existing role policy.
+
+For a loaded, non-deleted task, Start now SHALL execute the saved definition through `startScheduledTask(scheduleId)` exactly once per activation, with no confirmation dialog or payload override. The action SHALL be disabled while its POST is pending, deletion or Active mutation is pending, or any known run is InProgress. A synchronous guard SHALL prevent duplicate dispatch before the disabled state renders. Paused, completed and expired schedules SHALL remain manually runnable; the operation SHALL NOT resume or edit them.
+
+After HTTP 202, History SHALL immediately include the returned real run id, timestamp and InProgress spinner before older entries. No optimistic fabricated row SHALL be added before acceptance. Entries SHALL be deduplicated by id without discarding loaded pages or changing the underlying pagination offset. An earlier list response SHALL NOT erase the new row or downgrade its confirmed terminal status. Accepted rows SHALL remain visible even if the independent initial history request is pending or fails; history errors SHALL remain scoped with retry alongside available rows.
+
+The page SHALL NOT refetch schedule/list metadata or change its loaded trigger, Active state, next-run label or update timestamp on start. Run rows without a conversation id SHALL remain non-navigable. Once a terminal response supplies a conversation id, existing navigation/unread behavior SHALL apply without automatic navigation.
+
+The library SHALL receive only optional `onStartNow`, `isStarting`, `isStartNowDisabled` and localized label/announcement props described in design.md. It SHALL NOT import app hooks, clients, auth, routing or i18n. Existing hosts omitting the action SHALL retain current behavior. The app SHALL memoize merged run items/labels and stabilize supplied callbacks.
+
+#### Scenario: New row appears before any polling response
+
+- **WHEN** Start now returns 202 with an InProgress run while previous history is loaded
+- **THEN** that run appears exactly once as the newest row with a spinner and no duration/link, all previous rows remain, and schedule metadata is unchanged
+
+#### Scenario: First ever run replaces empty history
+
+- **WHEN** an empty task history receives an accepted run
+- **THEN** the empty-state message is replaced by the accepted InProgress row
+
+#### Scenario: Acceptance survives a pending or failed history fetch
+
+- **WHEN** the POST succeeds before initial history finishes or after that independent fetch fails
+- **THEN** the accepted row is visible, and history loading/error feedback does not hide it
+
+#### Scenario: Double click and an existing active run
+
+- **WHEN** the user activates Start now twice in one render cycle or while a known run is InProgress
+- **THEN** no overlapping POST is sent and the disabled action exposes the localized pending/busy reason
+
+#### Scenario: Paused or completed task runs without rescheduling
+
+- **WHEN** Start now is activated for a non-deleted paused/completed task
+- **THEN** only the start endpoint is called, without resume/update/list invalidation, and the next scheduled fire is unchanged
+
+#### Scenario: Pagination overlaps with an accepted run
+
+- **WHEN** initial, load-more or background history responses contain the accepted run or older snapshots
+- **THEN** rows are deduplicated, previous pages remain available, and terminal status cannot regress to InProgress
+
+### Requirement: Manual run tracking is bounded and scoped to the current task
+
+The app hook SHALL poll `getScheduledTaskRun(scheduleId, returnedRunId)` every two seconds while InProgress, with at most one GET in flight and an absolute 70-second deadline from acceptance. It SHALL update the existing row by id and stop on terminal status (including one learned from ordinary history refresh), unmount, task-id change or feature disablement. Ordinary shared-history polling SHALL retain its current 15-second behavior. Hidden tabs SHALL pause fast network polling; visibility restoration SHALL request at most one catch-up within the original deadline.
+
+On deadline/transient poll failure, the UI SHALL retain the last confirmed status and expose scoped feedback and Refresh status, which SHALL issue a GET only. The deadline SHALL NOT create an Error status or enable another start while the known run remains InProgress. 401 SHALL follow existing session-expiry handling; 403/404 SHALL stop fast polling with scoped feedback. Transient errors SHALL remain bounded by the deadline; rate limiting SHALL respect Retry-After when present. Timers/read requests SHALL be cleaned up and stale POST/GET outcomes ignored across schedule generations. Stopping observation SHALL NOT claim to cancel server execution.
+
+#### Scenario: Run finishes successfully
+
+- **WHEN** a status GET returns Success with end time and conversation id
+- **THEN** the existing row displays completion/duration, becomes navigable, announces completion once and stops fast polling
+
+#### Scenario: Polling deadline is reached
+
+- **WHEN** the run still reports InProgress at 70 seconds
+- **THEN** fast polling stops, the row remains InProgress, Start now remains disabled, and Refresh status performs one GET without starting another run
+
+#### Scenario: User leaves while requests are pending
+
+- **WHEN** the task id changes, the page unmounts or the feature becomes disabled before POST/GET resolution
+- **THEN** pending timers/read requests are cleaned up and late responses cause no rows, notifications or state changes for another task
+
+#### Scenario: A hidden tab becomes visible
+
+- **WHEN** the tab returns before or after the absolute deadline
+- **THEN** it performs at most one catch-up GET before the deadline, or offers status refresh after it, without extending fast polling indefinitely
+
+### Requirement: Start and execution failures remain actionable
+
+POST rejection SHALL create no fabricated History row. 404 SHALL show the localized not-found message; 409 SHALL show that a deleted task cannot run and disable Start now until detail retry establishes eligibility. For every other failure, the error notification SHALL include the trace id when present and use `resolveScheduledTaskErrorMessage`: `toolsetSignin.adminConsentRequired` for `scheduledTaskAdminConsentRequired`, then a non-empty Scheduler `upstreamMessage`, then the localized `scheduledTasks.detail.startError` fallback. Ambiguous network/5xx outcomes without an upstream reason SHALL say acceptance could not be confirmed and recommend checking History. No automatic POST retry SHALL occur.
+
+An Error run with `resultStage === 'credentials'` SHALL retain its History row and show a sign-in-to-DIAL-Chat prompt instead of a generic task-failure notification. The app SHALL reuse its existing offline-credentials login behavior/banner, initiated by the user. Successful login SHALL NOT automatically rerun the task. Ordinary terminal errors SHALL continue to display Error in History.
+
+#### Scenario: Deleted task is rejected after the page loaded
+
+- **WHEN** Start now returns 409 after the task was deleted elsewhere
+- **THEN** the UI reports that a deleted task cannot run, inserts no new row, and disables the action until detail retry
+
+#### Scenario: Acceptance is uncertain after a network failure
+
+- **WHEN** the POST response is lost or fails with an ambiguous server/network error
+- **THEN** the UI offers the localized check-History message without fabricating a run or automatically repeating the POST
+
+#### Scenario: Credential recovery does not rerun silently
+
+- **WHEN** the tracked run ends with Error and `resultStage: "credentials"`, and the user completes the offered login
+- **THEN** the failed row remains in History and any subsequent run requires a new explicit Start now activation
+
+### Requirement: Start now supports localization responsive layout and accessibility
+
+The app SHALL translate all new UI strings using the `scheduledTasks.detail` keys `startNow`, `starting`, `startAccepted`, `startBusy`, `startNotFound`, `startDeleted`, `startError`, `runStatusUnavailable`, `runStatusDelayed`, `refreshRunStatus`, `runCredentialsRequired` and `runFinished`, plus existing status/login labels. Libraries SHALL receive resolved strings as props. The action SHALL use a generation-2 UI Kit button and a decorative Tabler play icon with `DIAL_KIT_ICON_STROKE`.
+
+Desktop SHALL show Start now after Edit. Below 1280px, header actions SHALL wrap as needed, retain the Start now text, and use at least 44-by-44px touch targets without horizontal overflow at 360px; existing Details/Configuration/History tabs and selection SHALL remain. Acceptance SHALL be announced even when the History tab is not selected, without switching tabs or stealing focus. RTL SHALL inherit direction, use logical properties and mirror navigation arrows; the media-play symbol SHALL remain direction-independent.
+
+Keyboard Enter/Space SHALL invoke the same guarded action. Decorative icons SHALL be aria-hidden. Pending controls SHALL expose disabled/busy state, acceptance/completion SHALL use a polite live region with no repeated announcements on unchanged polls, and errors SHALL use an alert. The delayed-status Refresh status control SHALL use a generation-2 `GhostButton` with a minimum 44px touch target; the status text itself SHALL not create a second live announcement. Completion announcements SHALL interpolate the localized run-status label, never the raw Scheduler status enum. Focus visibility and text contrast SHALL satisfy the repository AAA target. Existing HTTP observability suffices; no new analytics or client cache SHALL be introduced.
+
+#### Scenario: Keyboard launch keeps focus
+
+- **WHEN** a keyboard user activates Start now
+- **THEN** exactly one POST is initiated, pending state is accessible, acceptance is announced, and focus is not moved to History
+
+#### Scenario: Mobile RTL launch from Details
+
+- **WHEN** a user starts a task in Arabic at 360px while Details is selected
+- **THEN** the labeled action remains reachable without horizontal overflow, acceptance is announced, and opening History shows the same new run as desktop
+
+#### Scenario: Existing embedding host has no launch callback
+
+- **WHEN** a host renders ScheduledTaskDetailView without the optional start props
+- **THEN** no Start now control is rendered and its established detail/history behavior is preserved

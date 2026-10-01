@@ -2,12 +2,11 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  ErrorText,
-  GhostIconButton,
+  NeutralIconButton,
   PrimaryIconButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlayerStopFilled, IconX } from '@tabler/icons-react';
+import { IconCheck, IconX } from '@tabler/icons-react';
 import {
   type CSSProperties,
   type FC,
@@ -28,12 +27,10 @@ const RING_SIZE = 200;
 
 /** Props accepted by the `VoiceBar` component. */
 export interface VoiceBarProps {
-  /** Current recorder state — must not be `'idle'` when this component is rendered. */
+  /** Current recorder state — `Recording` or `Processing` while this component is rendered. */
   state: VoiceRecorderState;
   /** Stable ref to the live `AnalyserNode` during recording; `.current` is `null` when idle. */
   analyserNodeRef: RefObject<AnalyserNode | null>;
-  /** Error message in `error` state; `null` otherwise. */
-  errorMessage: string | null;
   /** Called when the user clicks the stop button to finish recording. */
   onStop: () => void;
   /** Called when the user clicks the X to discard the recording. */
@@ -58,7 +55,6 @@ export interface VoiceBarProps {
 export const VoiceBar: FC<VoiceBarProps> = ({
   state,
   analyserNodeRef,
-  errorMessage,
   onStop,
   onDiscard,
   attachButton,
@@ -75,7 +71,6 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   /* Tracks sub-bar-width scroll offset in pixels (0 … BAR_STEP) for smooth animation. */
   const scrollPxRef = useRef(0);
   const isRecording = state === VoiceRecorderState.Recording;
-  const isError = state === VoiceRecorderState.Error;
   const isProcessing = state === VoiceRecorderState.Processing;
 
   /* Draw the ring buffer as a scrolling bar histogram spanning the full canvas width.
@@ -191,7 +186,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
 
   const controls = (
     <div className="flex flex-shrink-0 items-center justify-end gap-1">
-      <GhostIconButton
+      <NeutralIconButton
         icon={
           <IconX
             size={DIAL_ICON_SIZE.LG}
@@ -205,7 +200,13 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       />
       {isRecording && (
         <PrimaryIconButton
-          icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} aria-hidden />}
+          icon={
+            <IconCheck
+              size={DIAL_ICON_SIZE.LG}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
           onClick={() => onStop?.()}
           autoFocus
           aria-label={stopLabel}
@@ -229,7 +230,6 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           !embedded && inputStyles.wrapper,
           !embedded &&
             'min-h-[64px] max-w-[748px] rounded-xl border px-3 shadow-md',
-          isError && styles.wrapperError,
         )}
       >
         {/*
@@ -265,12 +265,6 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           {controls}
         </div>
       </div>
-
-      {isError && errorMessage && (
-        <div role="alert">
-          <ErrorText text={errorMessage} className="mt-1 px-1" />
-        </div>
-      )}
     </div>
   );
 };

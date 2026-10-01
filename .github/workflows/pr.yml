@@ -80,6 +80,23 @@ jobs:
           image-tags: test
           dockerfile-path: apps/mcp-app-sandbox/Dockerfile
 
+  # Validates apps/chat-api/Dockerfile (the BFF-only image) builds, build-only, for the
+  # same reason as docker_build_mcp_app_sandbox above.
+  docker_build_bff:
+    name: Build BFF image (validation only)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we check it on the step
+      - if: ${{ hashFiles('apps/chat-api/Dockerfile') != '' }}
+        uses: epam/ai-dial-ci/actions/build_docker@4.11.0
+        with:
+          image-names: ghcr.io/${{ github.repository }}-bff
+          image-tags: test
+          dockerfile-path: apps/chat-api/Dockerfile
+
   chat_hooks_packed_smoke:
     # Checks three representative packed consumers on PRs.
     # The complete matrix is available through the test-packed target.

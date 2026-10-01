@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -10,7 +11,13 @@ import { SessionService } from '../auth/session/session.service';
 import { AUTH_STRATEGIES } from '../auth/strategies/auth-strategies.token';
 import { CookieSessionStrategy } from '../auth/strategies/cookie-session.strategy';
 import { PACKAGE_VERSION } from '../common/utils/app-version';
-import { HealthController } from './health.controller';
+import { computeBuildId, HealthController } from './health.controller';
+
+/* Point the frontend lookup at a path that never exists, so the build
+ * identifier does not depend on whether apps/chat/dist was built locally. */
+vi.mock('../app/static-assets', () => ({
+  resolveFrontendRootPath: () => '/nonexistent-frontend-dist',
+}));
 
 // supertest is CJS; use require to avoid vite ESM interop issues
 const request = require('supertest') as (
@@ -61,6 +68,50 @@ describe('HealthController', () => {
       .get('/health')
       .expect(200);
     expect(second.body.buildId).toBe(first.body.buildId);
+  });
+
+  describe('build identifier', () => {
+    const sha256Prefix = (input: string) =>
+      createHash('sha256').update(input).digest('hex').slice(0, 12);
+    const missingFrontend = () => {
+      throw new Error('ENOENT: index.html');
+    };
+
+    it('is derived from the frontend index.html when one is bundled', () => {
+      const indexHtml = '<!doctype html><title>chat</title>';
+
+      expect(computeBuildId('1.4.0', () => Buffer.from(indexHtml))).toBe(
+        sha256Prefix(indexHtml),
+      );
+    });
+
+    it('is derived from the app version when no frontend is bundled', () => {
+      expect(computeBuildId('1.4.0', missingFrontend)).toBe(
+        sha256Prefix('1.4.0'),
+      );
+    });
+
+    it('changes with the version when no frontend is bundled', () => {
+      expect(computeBuildId('1.4.0', missingFrontend)).not.toBe(
+        computeBuildId('1.4.1', missingFrontend),
+      );
+    });
+
+    it('reports a different build identifier for a different CHAT_VERSION', async () => {
+      const first = await createApp('1.4.0');
+      const second = await createApp('1.4.1');
+      try {
+        const [a, b] = await Promise.all([
+          request(first.getHttpServer()).get('/health').expect(200),
+          request(second.getHttpServer()).get('/health').expect(200),
+        ]);
+        expect(a.body.buildId).toBe(sha256Prefix('1.4.0'));
+        expect(b.body.buildId).toBe(sha256Prefix('1.4.1'));
+      } finally {
+        await first.close();
+        await second.close();
+      }
+    });
   });
 
   describe('version', () => {

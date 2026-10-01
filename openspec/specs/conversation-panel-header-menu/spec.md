@@ -4,6 +4,8 @@
 
 The overflow menu in the conversation panel header and the "Delete all conversations" flow behind it.
 
+"Delete all conversations" has no single resource to name, so it deliberately stays on the kit's `ConfirmationPopup` described below. Deleting one conversation from the panel is a different flow: it uses the shared `ConfirmationDialog` (title "Delete chat", chat identity card, "Cannot be undone" bullet) specified in `shared-delete-confirmation`.
+
 ## Requirements
 
 ---

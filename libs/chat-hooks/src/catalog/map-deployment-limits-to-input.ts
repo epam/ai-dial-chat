@@ -126,7 +126,7 @@ const isUnlimitedTotal = (total: number): boolean =>
  * Spread into a row so that an unformattable reset time leaves all three
  * fields absent rather than present-and-undefined.
  */
-const buildResetFields = (
+export const buildResetFields = (
   stats: LimitStatsDto,
   formatResetTime: FormatResetTime | undefined,
 ): Pick<

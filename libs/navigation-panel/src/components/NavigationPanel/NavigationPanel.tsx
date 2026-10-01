@@ -108,7 +108,9 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
               className="flex h-16 w-full shrink-0 items-center justify-center"
             >
               <span
-                style={{ backgroundImage: `url(${logo.iconUrl})` }}
+                /* Quoted: an inlined SVG data URL carries `'` characters,
+                   which invalidate an unquoted `url()`. */
+                style={{ backgroundImage: `url("${logo.iconUrl}")` }}
                 className="h-6 w-6 bg-contain bg-center bg-no-repeat"
               />
             </a>

@@ -6,15 +6,23 @@
  * header at desktop and above it at mobile/tablet, so only the side with a
  * non-zero width from the scoped responsive rules shows. */
 .header.header {
+  flex-wrap: wrap;
   border-block-start-width: 1px;
   border-block-end-width: 0;
 
   @media (min-width: 1280px) {
+    flex-wrap: nowrap;
     border-block-start-width: 0;
     border-block-end-width: 1px;
   }
 
   border-color: var(--stdv-header-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.headerActions {
+  /* The action row may occupy a second header line below 1280px, preserving
+   * labels and touch targets without forcing a horizontal overflow. */
+  min-inline-size: 0;
 }
 
 .detailsColumn {

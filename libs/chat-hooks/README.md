@@ -81,7 +81,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.30
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.35
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -2994,7 +2994,7 @@ const limits = mapDeploymentLimitsToInput(
 
 ### mapDeploymentLimitsDtoToCatalogLimits
 
-Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Each row carries a "spent" caption built from the sibling cost stat for the same period, and a row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
+Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Rows cover the current UTC calendar day, week, and month — the same periods the Usage page reports — and, when `labels.formatResetTime` is given, each carries the reset line built from its own `resetsAt`. A row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. The DTO's cost stats are ignored: they are the caller's account-wide budget and spend across every deployment, not the queried deployment's own spend, so no row carries a `captionLabel`. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
 
 ```ts
 import {
@@ -3004,18 +3004,18 @@ import {
 
 const labels: DeploymentLimitsLabels = {
   tokenGroup: t('catalog.details.limits.tokenGroup'),
-  tokensPerDay: t('catalog.details.limits.tokensPerDay'),
-  tokensPerWeek: t('catalog.details.limits.tokensPerWeek'),
-  tokensPerMonth: t('catalog.details.limits.tokensPerMonth'),
+  tokensPerDay: t('usage.todayTitle'),
+  tokensPerWeek: t('usage.thisWeekTitle'),
+  tokensPerMonth: t('usage.thisMonthTitle'),
   followsCostLimit: t('catalog.details.limits.followsCostLimit'),
-  formatSpentCaption: (amount) =>
-    t('catalog.details.limits.spentLabel', { amount }),
   formatValueLabel: (used, total) =>
     t('catalog.details.limits.value', { used, total }),
   formatProgressAriaLabel: ({ label, used, total }) =>
     t('catalog.details.limits.progressAriaLabel', { label, used, total }),
   formatFollowsCostLimitAriaLabel: ({ label, used }) =>
     t('catalog.details.limits.followsCostLimitAriaLabel', { label, used }),
+  // Optional; returns `{ resetsAtMs, isoValue, label, ariaLabel }` or `undefined`.
+  formatResetTime: (resetsAt) => formatResetTime(resetsAt),
 };
 
 const limits = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);

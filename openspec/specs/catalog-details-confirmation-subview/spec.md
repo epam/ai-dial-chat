@@ -8,8 +8,8 @@ Defines how the catalog details panel (`libs/catalog/src/components/Details/Deta
 The details panel SHALL NOT use `ConfirmationPopup` (or any other modal overlay) for its own confirmations. Instead it SHALL track a single active confirmation as `DetailsConfirmationKind | null` and, while one is active, replace its details content with a confirmation sub-view laid out exactly like the Publish sub-view:
 
 - **Panel header row**: a back `GhostIconButton` (`IconChevronLeft`, mirrored in RTL via `rtl:scale-x-[-1]`, accessible name from `texts.backToDetailsAriaLabel`, default `'Back'`) followed by the confirmation title. The star toggle and the panel close button SHALL be hidden while any sub-view is open.
-- **Scrollable body** (`ConfirmationView`): an `InfoCard` naming the item the step is about, the confirmation copy, an optional bulleted consequence list, and an optional interactive slot rendered after the bullets.
-- **Pinned footer** (`ConfirmationFooter`), rendered outside the scroll container: a `GhostButton` cancel and a confirming button whose treatment follows the step's variant.
+- **Scrollable body** (`ConfirmationView` from `@epam/ai-dial-chat-shared`): a `ConfirmationIdentityCard` naming the item the step is about, the confirmation copy, an optional bulleted consequence list, and an optional interactive slot rendered after the bullets.
+- **Pinned footer** (`ConfirmationFooter` from `@epam/ai-dial-chat-shared`), rendered outside the scroll container: a `GhostButton` cancel and a confirming button whose treatment follows the step's variant.
 
 The interactive slot exists because a confirmation may need an input before it can be confirmed — today, choosing which published folder to unpublish from. `ConfirmationView` SHALL accept it as optional `children`, and the panel SHALL own whatever state it holds; `ConfirmationView` stays presentational. A kind that needs no input passes nothing and renders exactly as before.
 
@@ -53,16 +53,16 @@ Only one confirmation can be active at a time, so the panel keeps exactly one `i
 
 ### Requirement: Confirmation variants
 
-`DetailsConfirmationVariant` (`libs/catalog/src/types/details-confirmation.ts`) SHALL enumerate exactly `Danger` and `Info`, and SHALL drive both the `InfoCard` surface and the confirm button:
+The confirmation's palette SHALL be `ConfirmationPopupVariant` from `@epam/ai-dial-ui-kit`, of which the sub-view uses exactly `Danger` and `Info`; the variant drives both the identity-card surface and the confirm button. The catalog no longer defines or exports its own `DetailsConfirmationVariant` enum.
 
-| Variant | `InfoCard` surface | Confirm button | Meaning |
+| Variant | Identity-card surface | Confirm button | Meaning |
 |---|---|---|---|
-| `Danger` | `--bg-error` | `DangerButton` with a leading `IconTrashX` | Irreversible loss for everyone |
+| `Danger` | `--bg-control-error-alpha-active`, bordered with `--stroke-error-alpha` | `DangerButton` with a leading `IconTrashX` | Irreversible loss for everyone |
 | `Info` | `--bg-info` | `NeutralButton`, no icon | Affects only the current user and is recoverable |
 
-`Info` is the default for `InfoCard`, `ConfirmationView`, and `ConfirmationFooter`.
+`Info` is the default for `ConfirmationIdentityCard`, `ConfirmationView`, and `ConfirmationFooter`.
 
-`InfoCard` (`libs/catalog/src/components/InfoCard/InfoCard.tsx`) is a standalone exported component — a tinted rounded surface wrapping an `EntityHeader` (default `iconSize` 40, no featured tag) — so any view that needs to anchor a message to a specific catalog item reuses it rather than re-deriving the treatment. Its surface colors are themed through `ItemDetailsColors.infoCardBackground` / `infoCardDangerBackground` (`--cat-info-card-bg` / `--cat-info-card-danger-bg`).
+The body, footer, and identity card are not catalog components: `ConfirmationView`, `ConfirmationFooter`, and `ConfirmationIdentityCard` live in `@epam/ai-dial-chat-shared` (see the `shared-delete-confirmation` spec), so the scheduled-task, chat, and Files delete dialogs render the same block. The catalog's former `InfoCard` component and its `InfoCardProps` type are removed and not re-exported; a view that anchors a message to a catalog item uses `ConfirmationIdentityCard` with `item`. The details panel still themes the card through `ItemDetailsColors.infoCardBackground` / `infoCardDangerBackground`, forwarded to `ConfirmationView`'s `styles.colors.cardBackground` / `cardDangerBackground`; there is no themable override for the danger border.
 
 #### Scenario: Only true destruction gets the danger palette
 
@@ -90,7 +90,7 @@ Unpublish is `Danger` for the same reason as revocation and with the same caveat
 
 `DeleteApiKey` is the only kind whose card and confirm button diverge: the confirm button is `Danger`, but the identity card stays `Info` via the separate `cardVariant` field, because removing one stored credential leaves the item itself untouched. Its message is `deleteApiKeyConfirmMessage(level)`, defaulting to `'Are you sure you want to delete the organization API key?'` for `CredentialsLevel.Global` and `'Are you sure you want to delete your personal API key?'` otherwise, and its loading status label is `deletingStatusLabel` → `'Deleting'`. It is listed here because the enumeration above is exhaustive; this change does not alter its behaviour.
 
-Message defaults emphasize the item name with `<strong>`. Hosts supplying `deleteConfirmMessage`/`unshareConfirmMessage`/`revokeShareConfirmMessage`/`unpublishConfirmMessage` return a `ReactNode`, so a host that wants emphasis can pass JSX; a host passing a plain translated string gets plain text. The English default revoke message is: `Revoke shared access to <strong>{name}</strong>? Anyone you shared it with will lose access.`
+Message defaults emphasize the item name with `<strong>`. The chat app's `CatalogView` passes its own `deleteConfirmMessage` as a `<Trans>` node whose `<bold>` tag maps to `CONFIRMATION_BOLD_COMPONENTS` (`dial-small-semi-text`), so the name stays bold in the translated copy too. Hosts supplying `deleteConfirmMessage`/`unshareConfirmMessage`/`revokeShareConfirmMessage`/`unpublishConfirmMessage` return a `ReactNode`, so a host that wants emphasis can pass JSX; a host passing a plain translated string gets plain text. The English default revoke message is: `Revoke shared access to <strong>{name}</strong>? Anyone you shared it with will lose access.`
 
 #### Scenario: Host text overrides win over defaults
 
@@ -118,6 +118,8 @@ Message defaults emphasize the item name with `<strong>`. Hosts supplying `delet
 ### Requirement: The details header only requests confirmations
 
 `Header` SHALL NOT perform the action or own any in-flight state for Delete, Remove from My List, or Revoke access. Its `onDelete`, `onUnshare`, and `onRevokeShare` props are request callbacks with no return value; the panel wires them to handlers that set the active confirmation. `Header` therefore has no `onCloseDetails` prop, no `isDeleting` state, no spinner in the Manage menu, and no delete progress `aria-live` region — the confirmation footer owns all of that.
+
+In the Manage ("...") menu, Delete SHALL be the last entry, after Remove from My List and Revoke access, so the destructive action never sits next to an entry a misclick can reach. Delete and Remove from My List both use the `IconTrashX` glyph, and Delete carries the menu's danger treatment.
 
 #### Scenario: Clicking Delete does not delete
 

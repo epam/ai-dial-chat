@@ -31,12 +31,14 @@ When the backend built this resource url from a bucket-relative path in the past
 The invitation URL for a prompt SHALL use the catalog accept-invitation route, since prompts are surfaced in the catalog — the existing `conversations/`-prefix check already yields that outcome for a `prompts/…` url, unconditionally, with no dependency on a `resourceKind` parameter. `resolveSharedItemSummary` SHALL return an empty summary for a `prompts/` itemId instead of attempting deployment or toolset resolution: a prompt has no entry in either list, so the lookup could only fail.
 
 On success, `POST /api/v1/share` returns HTTP 201 with the existing
-`ShareLinkResponseDto` contract:
+`ShareLinkResponseDto` contract. `expiresInDays` is optional: it is read from
+the DIAL Core invitation's `expireAt` and is omitted when the expiry cannot be
+determined (see `share-link-expiry`):
 
 ```
 {
   "url": "<absolute frontend invitation URL>",
-  "expiresInDays": 3,
+  "expiresInDays": <days until the DIAL Core invitation's expireAt, when known>,
   "access": ["view"]
 }
 ```
@@ -44,7 +46,7 @@ On success, `POST /api/v1/share` returns HTTP 201 with the existing
 #### Scenario: Sharing a prompt produces an invitation link
 
 - **WHEN** `POST /api/v1/share` is called with `{ "itemId": "prompts/{bucket}/Work/greeting", "access": ["view"] }`
-- **THEN** the response is 201 with `url`, `expiresInDays`, and `access`
+- **THEN** the response is 201 with `url` and `access`, plus `expiresInDays` when DIAL Core reports the invitation's expiry
 - **AND** DIAL Core records the share for that resource path
 
 #### Scenario: Share endpoint accepts prompt paths without additional validation
@@ -55,7 +57,7 @@ On success, `POST /api/v1/share` returns HTTP 201 with the existing
 #### Scenario: Sharing a prompt nested inside a folder with a space in its name succeeds
 
 - **WHEN** `POST /api/v1/share` is called with `{ "itemId": "prompts/{bucket}/New%20folder%201/Prompt%201", "access": ["view"] }`
-- **THEN** the response is 201 with `url`, `expiresInDays`, and `access`, not a 400
+- **THEN** the response is 201 with `url` and `access` (and `expiresInDays` when known), not a 400
 
 #### Scenario: A prompt share invitation uses the catalog accept route
 
