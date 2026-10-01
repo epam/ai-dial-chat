@@ -132,6 +132,9 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 vi.mock('../../../hooks/conversation/useActiveConversationBridge', () => ({
   useActiveConversationBridge: () => undefined,
 }));
+vi.mock('../../../hooks/conversation/useVisualizerMessageSendHandler', () => ({
+  useVisualizerMessageSendHandler: () => undefined,
+}));
 vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   useAudioTranscription: () => ({ isAudioMessageSupported: false }),
 }));

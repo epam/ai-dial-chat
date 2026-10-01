@@ -278,6 +278,24 @@ describe('validate', () => {
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(expected);
   });
 
+  it('defaults ALLOW_VISUALIZER_SEND_MESSAGES to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+    ['0', false],
+    ['no', false],
+  ])('parses ALLOW_VISUALIZER_SEND_MESSAGES=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      ALLOW_VISUALIZER_SEND_MESSAGES: rawValue,
+    });
+    expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(expected);
+  });
+
   it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(false);

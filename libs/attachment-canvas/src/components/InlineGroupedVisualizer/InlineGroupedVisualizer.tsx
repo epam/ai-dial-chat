@@ -47,6 +47,8 @@ export interface InlineGroupedVisualizerProps {
   isTitleHidden?: boolean;
   /** Color overrides applied as CSS custom properties. */
   colors?: InlineGroupedVisualizerColors;
+  /** Called with the message text when the visualizer iframe posts `SEND_MESSAGE`. Forwarded to `VisualizerCanvasRenderer` as `onSendMessage`; when omitted, those messages are ignored. */
+  onVisualizerSendMessage?: (content: string) => void;
 }
 
 const InlineGroupedVisualizerBase: FC<InlineGroupedVisualizerProps> = ({
@@ -62,6 +64,7 @@ const InlineGroupedVisualizerBase: FC<InlineGroupedVisualizerProps> = ({
   isBorderless = false,
   isTitleHidden = false,
   colors,
+  onVisualizerSendMessage,
 }) => {
   /* `visualizerName` is an opaque postMessage namespace, so it can legitimately
    * be whitespace — rendering that as a heading would leave a blank line, and
@@ -131,6 +134,7 @@ const InlineGroupedVisualizerBase: FC<InlineGroupedVisualizerProps> = ({
           loadingLabel={loadingLabel}
           errorLabel={errorLabel}
           frameTitle={frameTitle}
+          onSendMessage={onVisualizerSendMessage}
         />
       </div>
     </div>

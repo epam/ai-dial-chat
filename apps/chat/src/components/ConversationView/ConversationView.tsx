@@ -149,6 +149,8 @@ interface Props {
     propertyKey?: string,
     description?: string,
   ) => void;
+  /** Sends a visualizer `SEND_MESSAGE` text; `undefined` while visualizer messages are disabled. */
+  onVisualizerSendMessage?: (content: string) => void;
   onStartEdit?: (messageIndex: number) => void;
   onCancelEdit?: (messageIndex: number) => void;
   onEditMessage?: (
@@ -221,6 +223,7 @@ const ConversationView: FC<Props> = ({
   onDislikeMessage,
   onAttachmentsChange,
   onSelectStarter,
+  onVisualizerSendMessage,
   onStartEdit,
   onCancelEdit,
   onEditMessage,
@@ -1001,6 +1004,7 @@ const ConversationView: FC<Props> = ({
                     fallbackCitationGroups={fallbackCitationGroups}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
+                    onVisualizerSendMessage={onVisualizerSendMessage}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}
                     onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
                     onRegenerateMessage={

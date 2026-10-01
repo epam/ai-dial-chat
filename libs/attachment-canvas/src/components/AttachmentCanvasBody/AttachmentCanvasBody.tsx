@@ -136,6 +136,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   hidePdfToolbar = false,
   configurePdfWorker,
   onAppInfo,
+  onVisualizerSendMessage,
 }) => {
   const {
     colors,
@@ -428,6 +429,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           <VisualizerCanvasRenderer
             content={content}
             errorLabel={visualizerErrorLabel}
+            onSendMessage={onVisualizerSendMessage}
           />
         );
       case AttachmentContentType.McpApp:

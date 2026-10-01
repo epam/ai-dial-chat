@@ -545,6 +545,8 @@ export interface AttachmentCanvasProps {
    * bundled worker asset.
    */
   configurePdfWorker?: () => void | Promise<void>;
+  /** Called with the message text when a `Visualizer` or `GroupedVisualizer` iframe posts `SEND_MESSAGE`. Forwarded to `VisualizerCanvasRenderer` as `onSendMessage`; when omitted, those messages are ignored. */
+  onVisualizerSendMessage?: (content: string) => void;
 }
 
 /** User-visible strings for `AttachmentCanvasBody`'s content states. */
@@ -623,4 +625,6 @@ export interface AttachmentCanvasBodyProps {
    * bundled worker asset.
    */
   configurePdfWorker?: () => void | Promise<void>;
+  /** Called with the message text when a `Visualizer` or `GroupedVisualizer` iframe posts `SEND_MESSAGE`. Forwarded to `VisualizerCanvasRenderer` as `onSendMessage`; when omitted, those messages are ignored. */
+  onVisualizerSendMessage?: (content: string) => void;
 }

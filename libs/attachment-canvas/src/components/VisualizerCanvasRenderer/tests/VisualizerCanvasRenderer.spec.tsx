@@ -1,5 +1,5 @@
 import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   GroupedVisualizerCanvasContent,
@@ -14,6 +14,14 @@ import {
 const readyMock = vi.fn();
 const sendMock = vi.fn();
 const destroyMock = vi.fn();
+const unsubscribeMock = vi.fn();
+const subscriptions = new Map<string, (payload: unknown) => void>();
+const subscribeMock = vi.fn(
+  (eventType: string, callback: (payload: unknown) => void) => {
+    subscriptions.set(eventType, callback);
+    return unsubscribeMock;
+  },
+);
 let lastConstructorRoot: HTMLElement | undefined;
 let lastConstructorOptions: Record<string, unknown> | undefined;
 
@@ -28,6 +36,7 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
       ready: readyMock,
       send: sendMock,
       destroy: destroyMock,
+      subscribe: subscribeMock,
     };
   }),
 }));
@@ -50,6 +59,7 @@ describe('VisualizerCanvasRenderer', () => {
     vi.clearAllMocks();
     lastConstructorRoot = undefined;
     lastConstructorOptions = undefined;
+    subscriptions.clear();
   });
 
   it('mounts a VisualizerConnector with the content-derived options', () => {
@@ -121,6 +131,107 @@ describe('VisualizerCanvasRenderer', () => {
   });
 });
 
+describe('VisualizerCanvasRenderer — SEND_MESSAGE', () => {
+  const postFromIframe = (payload: unknown) =>
+    act(() => {
+      subscriptions.get('my-viz/SEND_MESSAGE')?.(payload);
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    subscriptions.clear();
+    readyMock.mockReturnValue(new Promise(() => undefined));
+  });
+
+  it('forwards a valid message to onSendMessage unchanged', () => {
+    const onSendMessage = vi.fn();
+    render(
+      <VisualizerCanvasRenderer
+        content={content}
+        onSendMessage={onSendMessage}
+      />,
+    );
+
+    postFromIframe({ message: '  Show Q3 details ' });
+
+    expect(onSendMessage).toHaveBeenCalledOnce();
+    expect(onSendMessage).toHaveBeenCalledWith('  Show Q3 details ');
+  });
+
+  it.each([
+    ['undefined', undefined],
+    ['a string', 'hello'],
+    ['an empty object', {}],
+    ['a non-string message', { message: 42 }],
+    ['a blank message', { message: '   ' }],
+  ])('ignores a payload that is %s', (_label, payload) => {
+    const onSendMessage = vi.fn();
+    render(
+      <VisualizerCanvasRenderer
+        content={content}
+        onSendMessage={onSendMessage}
+      />,
+    );
+
+    postFromIframe(payload);
+
+    expect(onSendMessage).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('ignores a valid message when no onSendMessage is given', () => {
+    render(<VisualizerCanvasRenderer content={content} />);
+
+    expect(() => postFromIframe({ message: 'hi' })).not.toThrow();
+  });
+
+  it('uses the latest callback without remounting when the callback changes', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const { rerender } = render(
+      <VisualizerCanvasRenderer content={content} onSendMessage={first} />,
+    );
+
+    rerender(
+      <VisualizerCanvasRenderer content={content} onSendMessage={second} />,
+    );
+    postFromIframe({ message: 'hi' });
+
+    expect(destroyMock).not.toHaveBeenCalled();
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith('hi');
+  });
+
+  it('starts forwarding without remounting when a callback is added later', () => {
+    const onSendMessage = vi.fn();
+    const { rerender } = render(<VisualizerCanvasRenderer content={content} />);
+
+    rerender(
+      <VisualizerCanvasRenderer
+        content={content}
+        onSendMessage={onSendMessage}
+      />,
+    );
+    postFromIframe({ message: 'hi' });
+
+    expect(destroyMock).not.toHaveBeenCalled();
+    expect(onSendMessage).toHaveBeenCalledWith('hi');
+  });
+
+  it('unsubscribes before destroying the connector on unmount', () => {
+    const { unmount } = render(
+      <VisualizerCanvasRenderer content={content} onSendMessage={vi.fn()} />,
+    );
+
+    unmount();
+
+    expect(unsubscribeMock).toHaveBeenCalledOnce();
+    expect(unsubscribeMock.mock.invocationCallOrder[0]).toBeLessThan(
+      destroyMock.mock.invocationCallOrder[0],
+    );
+  });
+});
+
 describe('VisualizerCanvasRenderer — grouped content', () => {
   const groupedContent: GroupedVisualizerCanvasContent = {
     type: AttachmentContentType.GroupedVisualizer,
@@ -149,6 +260,7 @@ describe('VisualizerCanvasRenderer — grouped content', () => {
     vi.clearAllMocks();
     lastConstructorRoot = undefined;
     lastConstructorOptions = undefined;
+    subscriptions.clear();
   });
 
   it('sends SEND_GROUPED_VISUALIZE_DATA exactly once after ready resolves', async () => {

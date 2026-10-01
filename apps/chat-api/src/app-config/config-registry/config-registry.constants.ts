@@ -356,6 +356,20 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DEFAULT_DEPLOYMENT_PINNED',
   },
   {
+    key: 'features.visualizerSendMessages',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'When enabled, a custom or application visualizer iframe may post ' +
+      '`SEND_MESSAGE` to send its text as a user message in the conversation ' +
+      'that renders it. Off by default; port of the legacy ALLOW_VISUALIZER_SEND_MESSAGES.',
+    owner: 'chat-team',
+    envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',
