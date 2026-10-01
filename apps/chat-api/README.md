@@ -17,7 +17,7 @@ credentials stage is recorded as a run error for the client to recover through
 the offline-credentials flow; it is not a failed start request and does not
 trigger an automatic retry.
 
-Rate-limited single-run reads preserve Scheduler's valid `Retry-After` header
+Rate-limited manual starts and single-run reads preserve Scheduler's valid `Retry-After` header
 (delay seconds or an HTTP date) alongside the existing mapped error body.
 
 ## Scheduled task skill contract

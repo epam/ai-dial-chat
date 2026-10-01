@@ -828,6 +828,26 @@ describe('ScheduledTasksController (integration)', () => {
   });
 
   describe('POST /api/v1/scheduled-tasks/:scheduleId/run', () => {
+    it.each(['4', 'Wed, 30 Sep 2026 10:00:00 GMT', undefined])(
+      'preserves the rate-limit body and optional Retry-After header %s',
+      async (retryAfter) => {
+        const body = {
+          statusCode: 429,
+          message: 'Rate limited',
+          upstreamCode: 'rate_limited',
+        };
+        service.startScheduledTask.mockRejectedValue(
+          new ScheduledTaskRateLimitException(body, retryAfter ?? null),
+        );
+        const response = await request(app.getHttpServer())
+          .post('/api/v1/scheduled-tasks/sched_123/run')
+          .expect(429);
+        expect(response.headers['retry-after']).toBe(retryAfter);
+        expect(response.body).toEqual(body);
+        expect(service.startScheduledTask).toHaveBeenCalledTimes(1);
+      },
+    );
+
     const acceptedRun = {
       id: 'run_123',
       status: 'InProgress',

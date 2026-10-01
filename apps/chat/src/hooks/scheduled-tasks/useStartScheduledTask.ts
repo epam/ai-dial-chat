@@ -252,6 +252,7 @@ export const useStartScheduledTask = ({
         currentPollingRun.retryAt = Date.now() + nextDelay;
         if (Date.now() + nextDelay >= currentPollingRun.deadline) {
           setStatusFeedback(ScheduledTaskRunStatusFeedback.Delayed);
+          clearPolling(true);
           return;
         }
         schedulePoll(nextDelay, requestGeneration);

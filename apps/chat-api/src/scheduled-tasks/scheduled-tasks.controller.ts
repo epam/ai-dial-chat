@@ -395,6 +395,13 @@ export class ScheduledTasksController {
     status: 429,
     description: 'DIAL Scheduler rate limited the start request',
     type: ScheduledTaskValidationErrorDto,
+    headers: {
+      'Retry-After': {
+        description:
+          'Scheduler retry delay in seconds or an HTTP date, when supplied.',
+        schema: { type: 'string' },
+      },
+    },
   })
   @ApiResponse({
     status: 502,
@@ -407,12 +414,26 @@ export class ScheduledTasksController {
     description:
       'DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured',
   })
-  startScheduledTask(
+  async startScheduledTask(
     @Req() req: Request,
     @Param() params: GetScheduledTaskDto,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<ScheduledTaskRunDto> {
     const { at } = req.user as SessionUser;
-    return this.scheduledTasksService.startScheduledTask(at, params.scheduleId);
+    try {
+      return await this.scheduledTasksService.startScheduledTask(
+        at,
+        params.scheduleId,
+      );
+    } catch (error) {
+      if (
+        error instanceof ScheduledTaskRateLimitException &&
+        error.retryAfter
+      ) {
+        response.setHeader('Retry-After', error.retryAfter);
+      }
+      throw error;
+    }
   }
 
   @Post(':scheduleId/pause')

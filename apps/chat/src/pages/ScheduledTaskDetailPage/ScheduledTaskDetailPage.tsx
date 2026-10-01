@@ -691,7 +691,9 @@ const ScheduledTaskDetailPage: FC = () => {
           isActiveUpdating ||
           isTaskLoading ||
           isStartRejectedAsDeleted ||
-          mergedRunDtos.some((run) => run.status === 'InProgress')
+          mergedRunDtos.some(
+            (run) => run.status === ScheduledTaskRunDtoStatusEnum.InProgress,
+          )
         }
         isDeleted={isTaskDeleted}
         isCompleted={isTaskCompleted}

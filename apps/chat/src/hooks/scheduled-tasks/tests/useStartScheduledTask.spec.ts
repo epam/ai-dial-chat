@@ -6,6 +6,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   mergeScheduledTaskRuns,
+  ScheduledTaskRunStatusFeedback,
   useStartScheduledTask,
 } from '../useStartScheduledTask';
 
@@ -439,6 +440,67 @@ describe('useStartScheduledTask', () => {
         await vi.advanceTimersByTimeAsync(1);
       });
       expect(getScheduledTaskRunMock).toHaveBeenCalledTimes(2);
+      expect(result.current.statusFeedback).toBeUndefined();
+      expect(startScheduledTaskMock).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(['seconds', 'date'])(
+    'allows a manual GET after a Retry-After %s delay beyond the polling deadline expires',
+    async (format) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-09-30T10:00:00Z'));
+      startScheduledTaskMock.mockResolvedValue(inProgressRun);
+      const completedRun = {
+        ...inProgressRun,
+        status: ScheduledTaskRunDtoStatusEnum.Success,
+      };
+      getScheduledTaskRunMock
+        .mockRejectedValueOnce({
+          response: new Response(null, {
+            status: 429,
+            headers: {
+              'Retry-After':
+                format === 'seconds' ? '90' : 'Wed, 30 Sep 2026 10:01:32 GMT',
+            },
+          }),
+        })
+        .mockResolvedValue(completedRun);
+      const { result } = renderHook(() =>
+        useStartScheduledTask({
+          scheduleId: 'sched_123',
+          enabled: true,
+          canStart: true,
+        }),
+      );
+      await act(async () => {
+        await result.current.start();
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      await flushEffects();
+      expect(result.current.statusFeedback).toBe(
+        ScheduledTaskRunStatusFeedback.Delayed,
+      );
+      expect(result.current.isRefreshingStatus).toBe(false);
+
+      await act(async () => result.current.refreshStatus());
+      expect(getScheduledTaskRunMock).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(89_999);
+        result.current.refreshStatus();
+      });
+      expect(getScheduledTaskRunMock).toHaveBeenCalledTimes(1);
+      expect(result.current.acceptedRuns).toEqual([inProgressRun]);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+      expect(getScheduledTaskRunMock).toHaveBeenCalledTimes(1);
+      await act(async () => result.current.refreshStatus());
+      expect(getScheduledTaskRunMock).toHaveBeenCalledTimes(2);
+      expect(result.current.acceptedRuns).toEqual([completedRun]);
       expect(result.current.statusFeedback).toBeUndefined();
       expect(startScheduledTaskMock).toHaveBeenCalledTimes(1);
     },

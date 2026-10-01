@@ -6583,6 +6583,14 @@
           },
           "429": {
             "description": "DIAL Scheduler rate limited the start request",
+            "headers": {
+              "Retry-After": {
+                "description": "Scheduler retry delay in seconds or an HTTP date, when supplied.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {

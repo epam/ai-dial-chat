@@ -1137,7 +1137,7 @@ The BFF SHALL expose `GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` with 
 
 `ScheduledTaskRunDto` SHALL add optional `resultStage?: string`, preserving only the string `result.stage` when supplied. List/start/single-run mapping SHALL use the same `fromUpstreamRun` normalization; arbitrary result objects SHALL NOT be forwarded. Missing/null/non-string stage SHALL omit `resultStage`, preserving compatibility. Existing enum mapping, time/duration derivation and nullable conversation normalization SHALL remain unchanged.
 
-For a rate-limited single-run read, BFF SHALL preserve a valid Scheduler `Retry-After` response header (delay seconds or an HTTP date), without changing the existing mapped error body or trace handling. Invalid header values SHALL be omitted.
+For a rate-limited manual start or single-run read, BFF SHALL preserve a valid Scheduler `Retry-After` response header (delay seconds or an HTTP date), without changing the existing mapped error body or trace handling. Invalid header values SHALL be omitted.
 
 Concrete request: `GET /api/v1/scheduled-tasks/sched_123/runs/0b7548aa-7751-483f-84ad-a8392e55efbe`.
 
