@@ -81,7 +81,7 @@ The pinned footer's "Cancel" button SHALL call the same `onClose` handler as the
 
 The scrollable body SHALL render the shared `PublishPanel` component (exported from `@epam/ai-dial-publish-panel`, not `@epam/ai-dial-catalog`) providing the destination folder picker with search, inline folder creation, no-access/submit-error callouts, and publish history list, configured with a `PublishResourceSummary` built from the conversation's title (no icon, no version) rather than a `CatalogItem`. The summary row SHALL show the conversation's title and SHALL NOT render a version pill or any `{name}__{version}`-style identifier, since conversations have no version.
 
-Destination folder picker, search, and inline folder creation SHALL behave identically to the catalog publish flow (folder tree via `PublishFoldersTree`, bucket root selectable as `[]`, lazy-loaded children, optimistic create with rollback on failure), reusing `usePublishFolders` (the renamed, shared `useCatalogPublishFolders`).
+Destination folder picker, search, and inline folder creation SHALL behave identically to the catalog publish flow (folder tree via `PublishFoldersTree`, bucket root selectable as `[]`, lazy-loaded children, inline folder creation), reusing `usePublishFolders`. Inline creation is local only: `onCreatePublishFolder` adds the new folder to the tree without any backend call, so there is nothing to roll back; the folder becomes real when the publish request writes to that nested `folderPath`, and a cancelled publish leaves no empty folder behind.
 
 #### Scenario: Summary row shows the conversation title with no version
 - **WHEN** the publish panel opens for a conversation titled "Q3 planning notes"

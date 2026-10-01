@@ -16,16 +16,12 @@ import {
   usePublishFlow,
 } from '@epam/ai-dial-publish-panel';
 import {
-  CloseButton,
   ConfirmationPopupVariant,
-  DIAL_KIT_ICON_STROKE,
-  ElementSize,
-  GhostIconButton,
   RadioGroup,
+  SideDrawer,
   Skeleton,
   Tabs,
 } from '@epam/ai-dial-ui-kit';
-import { IconChevronLeft } from '@tabler/icons-react';
 import {
   FC,
   useCallback,
@@ -802,21 +798,22 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   ]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || confirmation == null) return;
 
+    /*
+     * Escape backs out of an open confirmation before it closes the panel.
+     * Listening in the capture phase and stopping the event there keeps it
+     * from the drawer's own dismiss handler, which would close the panel.
+     */
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      /* Escape backs out of an open confirmation before it closes the panel. */
-      if (confirmation != null) {
-        handleCancelConfirmation();
-        return;
-      }
-      onClose();
+      event.stopPropagation();
+      handleCancelConfirmation();
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, confirmation, handleCancelConfirmation]);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, confirmation, handleCancelConfirmation]);
 
   const handleOpenPublish = useCallback(() => setIsPublishOpen(true), []);
   const handleClosePublish = useCallback(() => {
@@ -1113,389 +1110,344 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   /* While a sub-view is open the dialog is named after it, not the details. */
   const dialogAriaLabel = subViewHeader?.title ?? panelAriaLabel;
 
+  /*
+   * The kit drawer owns the backdrop, the slide, focus and scroll lock, and
+   * Escape/backdrop dismissal. Its body is turned into a column so the
+   * content below scrolls on its own while the footers stay pinned under it.
+   */
   return (
-    <>
+    <SideDrawer
+      open={isOpen}
+      onClose={onClose}
+      header={subViewHeader?.title}
+      ariaLabel={dialogAriaLabel}
+      onBack={subViewHeader?.onBack}
+      backAriaLabel={backToDetailsAriaLabel}
+      backDisabled={subViewHeader?.isBackDisabled}
+      hideClose={subViewHeader != null}
+      closeAriaLabel={closeAriaLabel}
+      headerActions={
+        subViewHeader == null &&
+        !isReadonly &&
+        isFavoriteVisible?.(item) !== false ? (
+          <StarToggleButton
+            isStarred={isStarred}
+            ariaLabel={starAriaLabel}
+            onClick={handleToggleFavorite}
+          />
+        ) : undefined
+      }
+      style={cssVars}
+      overlayStyle={cssVars}
+      className={styles.panel}
+      overlayClassName={styles.backdrop}
+      headerClassName={styles.divider}
+      titleClassName={mergeClasses(subViewTitleClassName, styles.publishTitle)}
+      bodyClassName="flex flex-col overflow-hidden"
+    >
       <div
-        style={cssVars}
         className={mergeClasses(
-          'fixed inset-0 z-50 transition-opacity duration-300',
-          styles.backdrop,
-          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
-        )}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={dialogAriaLabel}
-        style={cssVars}
-        className={mergeClasses(
-          'fixed inset-y-0 end-0 z-50 flex flex-col overflow-hidden mobile:w-full',
-          'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
-          'transition-transform duration-300',
-          styles.panel,
-          isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
+          'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto',
+          styles.content,
         )}
       >
-        <div className="flex shrink-0 items-center gap-2 px-6 py-3">
-          {subViewHeader != null && (
-            <>
-              <GhostIconButton
-                icon={
-                  <IconChevronLeft
-                    className="rtl:scale-x-[-1]"
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                }
-                aria-label={backToDetailsAriaLabel}
-                disabled={subViewHeader.isBackDisabled}
-                onClick={subViewHeader.onBack}
-              />
-              <span
-                className={mergeClasses(
-                  'flex-1',
-                  subViewTitleClassName,
-                  styles.publishTitle,
-                )}
-              >
-                {subViewHeader.title}
-              </span>
-            </>
-          )}
-          {subViewHeader == null && (
-            <>
-              <div className="flex-1" />
-              {!isReadonly && isFavoriteVisible?.(item) !== false && (
-                <StarToggleButton
-                  isStarred={isStarred}
-                  ariaLabel={starAriaLabel}
-                  onClick={handleToggleFavorite}
+        {isConfirmationOpen && (
+          <ConfirmationView
+            item={item}
+            message={confirmationContent.message}
+            consequences={confirmationContent.consequences}
+            variant={
+              confirmationContent.cardVariant ?? confirmationContent.variant
+            }
+            messageClassName={confirmMessageClassName}
+            styles={{
+              colors: {
+                messageText: detailsColors?.confirmMessageText,
+                consequenceText: detailsColors?.confirmConsequenceText,
+                cardBackground: detailsColors?.infoCardBackground,
+                cardDangerBackground: detailsColors?.infoCardDangerBackground,
+              },
+            }}
+          >
+            {confirmation === DetailsConfirmationKind.Unpublish &&
+              publishedFolders.length > 1 && (
+                <RadioGroup
+                  ariaLabel={
+                    texts?.unpublishFolderGroupAriaLabel ?? 'Published folders'
+                  }
+                  value={selectedUnpublishFolder ?? undefined}
+                  onChange={setSelectedUnpublishFolder}
+                  /* Locked in flight so the choice cannot drift away from the
+                   * folder path the request already captured. */
+                  disabled={isConfirming}
+                  items={publishedFolders.map((folder) => ({
+                    value: folder.key,
+                    label: formatFolderLabel(folder.key),
+                  }))}
+                  radioClassName={confirmMessageClassName}
                 />
               )}
-              <CloseButton
-                onClose={onClose}
-                size={ElementSize.Standard}
-                ariaLabel={closeAriaLabel}
-              />
-            </>
-          )}
-        </div>
-
-        <div className={mergeClasses('shrink-0', styles.divider)} />
-
-        <div
-          className={mergeClasses(
-            'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto',
-            styles.content,
-          )}
-        >
-          {isConfirmationOpen && (
-            <ConfirmationView
-              item={item}
-              message={confirmationContent.message}
-              consequences={confirmationContent.consequences}
-              variant={
-                confirmationContent.cardVariant ?? confirmationContent.variant
-              }
-              messageClassName={confirmMessageClassName}
-              styles={{
-                colors: {
-                  messageText: detailsColors?.confirmMessageText,
-                  consequenceText: detailsColors?.confirmConsequenceText,
-                  cardBackground: detailsColors?.infoCardBackground,
-                  cardDangerBackground: detailsColors?.infoCardDangerBackground,
-                },
-              }}
-            >
-              {confirmation === DetailsConfirmationKind.Unpublish &&
-                publishedFolders.length > 1 && (
-                  <RadioGroup
-                    ariaLabel={
-                      texts?.unpublishFolderGroupAriaLabel ??
-                      'Published folders'
-                    }
-                    value={selectedUnpublishFolder ?? undefined}
-                    onChange={setSelectedUnpublishFolder}
-                    /* Locked in flight so the choice cannot drift away from the
-                     * folder path the request already captured. */
-                    disabled={isConfirming}
-                    items={publishedFolders.map((folder) => ({
-                      value: folder.key,
-                      label: formatFolderLabel(folder.key),
-                    }))}
-                    radioClassName={confirmMessageClassName}
-                  />
-                )}
-            </ConfirmationView>
-          )}
-
-          {!isConfirmationOpen &&
-            !isPublishOpen &&
-            isCredentialsManagementOpen && (
-              <CredentialsManagementPanel
-                item={item}
-                onLogin={onLogin}
-                onRequestLogout={handleRequestLogout}
-                onRequestDeleteApiKey={handleRequestDeleteApiKey}
-                texts={texts}
-                detailsStyles={detailsStyles}
-              />
-            )}
-
-          {!isConfirmationOpen && isPublishOpen && (
-            <div className="p-[22px]">
-              <PublishPanel
-                resource={{
-                  title: item.name,
-                  version: item.version,
-                  type: item.type,
-                  iconUrl: item.iconUrl,
-                }}
-                history={publishHistory}
-                isHistoryLoading={isPublishHistoryLoading}
-                hasHistoryError={hasPublishHistoryError}
-                folderItems={publishFlow.folderItems}
-                selectedFolderPath={publishFlow.selectedFolderPath}
-                onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
-                onCreateFolder={publishFlow.handleCreateFolder}
-                expandedPaths={publishExpandedPaths}
-                onExpandedPathsChange={onPublishExpandedPathsChange}
-                loadingPaths={publishLoadingPaths}
-                hasExistingPublicationInFolder={
-                  publishFlow.hasExistingPublicationInFolder
-                }
-                hasWriteAccess={publishFlow.hasWriteAccess}
-                isSubmitting={publishFlow.isSubmitting}
-                hasSubmitError={publishFlow.hasSubmitError}
-                author={publishFlow.author}
-                onAuthorChange={publishFlow.setAuthor}
-                publishCredentials={publishFlow.publishCredentials}
-                onPublishCredentialsChange={
-                  isPublishCredentialsEligible
-                    ? publishFlow.setPublishCredentials
-                    : undefined
-                }
-                rules={publishFlow.rules}
-                onRulesChange={publishFlow.setRules}
-                ruleSourceOptions={ruleSourceOptions}
-                isRulesLoading={publishFlow.isRulesLoading}
-                hasRulesLoadError={publishFlow.hasRulesLoadError}
-                labels={publishLabels}
-                styles={{
-                  colors: {
-                    summaryVersionTagBorder: detailsColors?.versionTagBorder,
-                    summaryVersionTagBackground:
-                      detailsColors?.versionTagBackground,
-                    summaryVersionTagText: detailsColors?.versionTagText,
-                  },
-                }}
-              />
-            </div>
-          )}
-
-          {!isSubViewOpen && (
-            <>
-              <Header
-                item={item}
-                onUseInChat={onUseInChat}
-                isPrimaryActionVisible={isPrimaryActionVisible}
-                onShare={onShare}
-                shareOverlay={shareOverlay}
-                isShareVisible={isShareVisible}
-                isSharePrimary={isSharePrimary}
-                isPublishVisible={isPublishVisible}
-                isPublishPrimary={isPublishPrimary}
-                onOpenPublish={handleOpenPublish}
-                isUnpublishVisible={isUnpublishVisible}
-                hasPublishedFolders={hasPublishedFolders}
-                isPublishHistoryResolved={
-                  getPublishHistory == null || isPublishHistoryResolved
-                }
-                onRequestPublishHistory={requestPublishHistory}
-                onOpenUnpublish={
-                  onUnpublish ? handleRequestUnpublish : undefined
-                }
-                onEdit={onEdit}
-                onDownload={onDownload}
-                isDownloadVisible={isDownloadVisible}
-                isDownloadPrimary={isDownloadPrimary}
-                onDelete={onDelete ? handleRequestDelete : undefined}
-                onUnshare={onUnshare ? handleRequestUnshare : undefined}
-                isUnshareVisible={isUnshareVisible}
-                onRevokeShare={
-                  onRevokeShare ? handleRequestRevokeShare : undefined
-                }
-                onFetchRecipientsCount={onFetchRecipientsCount}
-                isRevokeShareVisible={isRevokeShareVisible}
-                onLogin={onLogin}
-                onLogout={onLogout}
-                onOpenCredentialsManagement={handleOpenCredentialsManagement}
-                onRequestLogout={handleRequestLogout}
-                texts={texts}
-                detailsStyles={detailsStyles}
-                isReadonly={isReadonly}
-              />
-
-              {item.credentials != null &&
-                (() => {
-                  const bannerState = getCredentialsBannerState(
-                    item.credentials,
-                  );
-                  return (
-                    bannerState != null && (
-                      <div className="px-6">
-                        <CredentialsBanner
-                          state={bannerState}
-                          authenticationType={
-                            item.credentials.authenticationType
-                          }
-                          texts={texts}
-                        />
-                      </div>
-                    )
-                  );
-                })()}
-
-              {!isReadonly && isOpen && renderCredentials?.(item)}
-
-              <div className="flex items-center px-6">
-                <Tabs
-                  tabs={tabs}
-                  activeTabId={activeTab}
-                  onTabChange={setActiveTab}
-                />
-                {isDetailsLoading && (
-                  <div
-                    role="status"
-                    aria-label={
-                      texts?.detailsLoadingAriaLabel ?? 'Loading details'
-                    }
-                    className="shrink-0"
-                  >
-                    <Skeleton
-                      showTitle={false}
-                      paragraph={{ rows: 1, width: '72px' }}
-                      active
-                      color={styles.skeletonColor}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div
-                className={mergeClasses(
-                  'min-h-0 flex-1 overflow-y-auto',
-                  activeTab !== CatalogDetailsTab.Overview && 'px-6',
-                )}
-              >
-                {activeTab === CatalogDetailsTab.About && (
-                  <AboutTab
-                    content={item.description}
-                    topics={item.topics}
-                    detailsStyles={detailsStyles}
-                  />
-                )}
-                {activeTab === CatalogDetailsTab.Content && (
-                  <ContentTab
-                    content={promptContent?.content ?? ''}
-                    filePreview={resolveContentFilePreview()}
-                    filePreviewContent={renderedContentFilePreview}
-                    renderFileTree={renderContentFileTree}
-                    description={promptContent?.description ?? item.description}
-                    files={promptContent?.files}
-                    selectedFileId={selectedFileId}
-                    onSelectFile={(fileId) =>
-                      void handleSelectContentFile(fileId)
-                    }
-                    isFileLoading={isContentFileLoading}
-                    expandedFolderIds={expandedFolderIds}
-                    onToggleFolder={handleToggleFolder}
-                    isFileSelectorOpen={isFileSelectorOpen}
-                    onFileSelectorOpenChange={setIsFileSelectorOpen}
-                    fileSelectorAriaLabel={texts?.contentFileSelectorAriaLabel}
-                    fileCountLabel={texts?.contentFileCountLabel}
-                    fileLoadingLabel={texts?.contentFileLoadingLabel}
-                    fileUnsupportedLabel={texts?.contentFileUnsupportedLabel}
-                    detailsStyles={detailsStyles}
-                  />
-                )}
-                {activeTab === CatalogDetailsTab.Overview && (
-                  <Overview
-                    sections={item.details?.overview?.sections}
-                    sectionClassName={overviewSectionClassName}
-                    labelClassName={overviewLabelClassName}
-                    valueClassName={overviewValueClassName}
-                    valueTrueClassName={overviewValueTrueClassName}
-                    yesLabel={overviewYesLabel}
-                    noLabel={overviewNoLabel}
-                  />
-                )}
-                {activeTab === CatalogDetailsTab.Pricing && (
-                  <Pricing
-                    pricing={item.details?.pricing}
-                    pricesSectionLabel={texts?.pricingPricesSectionLabel}
-                    limitsSectionLabel={texts?.pricingLimitsSectionLabel}
-                  />
-                )}
-                {activeTab === CatalogDetailsTab.Limits && (
-                  <LimitsTab
-                    limits={item.details?.limits}
-                    footerNote={limitsFooterNote}
-                  />
-                )}
-                {activeTab === CatalogDetailsTab.Api &&
-                  hasConnectableApi(item.details?.api) && (
-                    <ApiDetails
-                      api={item.details?.api}
-                      resourceSectionLabel={texts?.apiResourceSectionLabel}
-                      snippetSectionLabel={texts?.apiSnippetSectionLabel}
-                      modelIdLabel={texts?.apiModelIdLabel}
-                      endpointLabel={texts?.apiEndpointLabel}
-                      endpointSectionLabel={texts?.apiEndpointSectionLabel}
-                      requestExampleLabel={texts?.apiRequestExampleLabel}
-                      responseSchemaLabel={texts?.apiResponseSchemaLabel}
-                      copyAriaLabel={texts?.copyCodeAriaLabel}
-                      copiedStatusLabel={texts?.copiedCodeStatusLabel}
-                    />
-                  )}
-                {activeTab === CatalogDetailsTab.Tools && (
-                  <Tools tools={item.details?.tools} />
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        {isConfirmationOpen && (
-          <ConfirmationFooter
-            confirmLabel={confirmationContent.confirmLabel}
-            cancelLabel={cancelLabel}
-            variant={confirmationContent.variant}
-            isLoading={isConfirming}
-            isConfirmDisabled={isConfirmDisabled}
-            loadingStatusLabel={confirmationContent.loadingStatusLabel}
-            styles={{ colors: { border: detailsColors?.confirmFooterBorder } }}
-            onConfirm={handleConfirm}
-            onCancel={handleCancelConfirmation}
-          />
+          </ConfirmationView>
         )}
+
+        {!isConfirmationOpen &&
+          !isPublishOpen &&
+          isCredentialsManagementOpen && (
+            <CredentialsManagementPanel
+              item={item}
+              onLogin={onLogin}
+              onRequestLogout={handleRequestLogout}
+              onRequestDeleteApiKey={handleRequestDeleteApiKey}
+              texts={texts}
+              detailsStyles={detailsStyles}
+            />
+          )}
 
         {!isConfirmationOpen && isPublishOpen && (
-          <PublishFooter
-            version={item.version}
-            hasExistingPublicationInFolder={
-              publishFlow.hasExistingPublicationInFolder
-            }
-            isSubmitDisabled={publishDerived.isSubmitDisabled}
-            isSubmitLoading={publishDerived.isSubmitLoading}
-            onCancel={handleClosePublish}
-            onSubmit={handleSubmitPublish}
-            labels={publishLabels}
-          />
+          <div className="p-[22px]">
+            <PublishPanel
+              resource={{
+                title: item.name,
+                version: item.version,
+                type: item.type,
+                iconUrl: item.iconUrl,
+              }}
+              history={publishHistory}
+              isHistoryLoading={isPublishHistoryLoading}
+              hasHistoryError={hasPublishHistoryError}
+              folderItems={publishFlow.folderItems}
+              selectedFolderPath={publishFlow.selectedFolderPath}
+              onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
+              onCreateFolder={publishFlow.handleCreateFolder}
+              expandedPaths={publishExpandedPaths}
+              onExpandedPathsChange={onPublishExpandedPathsChange}
+              loadingPaths={publishLoadingPaths}
+              hasExistingPublicationInFolder={
+                publishFlow.hasExistingPublicationInFolder
+              }
+              hasWriteAccess={publishFlow.hasWriteAccess}
+              isSubmitting={publishFlow.isSubmitting}
+              hasSubmitError={publishFlow.hasSubmitError}
+              author={publishFlow.author}
+              onAuthorChange={publishFlow.setAuthor}
+              publishCredentials={publishFlow.publishCredentials}
+              onPublishCredentialsChange={
+                isPublishCredentialsEligible
+                  ? publishFlow.setPublishCredentials
+                  : undefined
+              }
+              rules={publishFlow.rules}
+              onRulesChange={publishFlow.setRules}
+              ruleSourceOptions={ruleSourceOptions}
+              isRulesLoading={publishFlow.isRulesLoading}
+              hasRulesLoadError={publishFlow.hasRulesLoadError}
+              labels={publishLabels}
+              styles={{
+                colors: {
+                  summaryVersionTagBorder: detailsColors?.versionTagBorder,
+                  summaryVersionTagBackground:
+                    detailsColors?.versionTagBackground,
+                  summaryVersionTagText: detailsColors?.versionTagText,
+                },
+              }}
+            />
+          </div>
+        )}
+
+        {!isSubViewOpen && (
+          <>
+            <Header
+              item={item}
+              onUseInChat={onUseInChat}
+              isPrimaryActionVisible={isPrimaryActionVisible}
+              onShare={onShare}
+              shareOverlay={shareOverlay}
+              isShareVisible={isShareVisible}
+              isSharePrimary={isSharePrimary}
+              isPublishVisible={isPublishVisible}
+              isPublishPrimary={isPublishPrimary}
+              onOpenPublish={handleOpenPublish}
+              isUnpublishVisible={isUnpublishVisible}
+              hasPublishedFolders={hasPublishedFolders}
+              isPublishHistoryResolved={
+                getPublishHistory == null || isPublishHistoryResolved
+              }
+              onRequestPublishHistory={requestPublishHistory}
+              onOpenUnpublish={onUnpublish ? handleRequestUnpublish : undefined}
+              onEdit={onEdit}
+              onDownload={onDownload}
+              isDownloadVisible={isDownloadVisible}
+              isDownloadPrimary={isDownloadPrimary}
+              onDelete={onDelete ? handleRequestDelete : undefined}
+              onUnshare={onUnshare ? handleRequestUnshare : undefined}
+              isUnshareVisible={isUnshareVisible}
+              onRevokeShare={
+                onRevokeShare ? handleRequestRevokeShare : undefined
+              }
+              onFetchRecipientsCount={onFetchRecipientsCount}
+              isRevokeShareVisible={isRevokeShareVisible}
+              onLogin={onLogin}
+              onLogout={onLogout}
+              onOpenCredentialsManagement={handleOpenCredentialsManagement}
+              onRequestLogout={handleRequestLogout}
+              texts={texts}
+              detailsStyles={detailsStyles}
+              isReadonly={isReadonly}
+            />
+
+            {item.credentials != null &&
+              (() => {
+                const bannerState = getCredentialsBannerState(item.credentials);
+                return (
+                  bannerState != null && (
+                    <div className="px-6">
+                      <CredentialsBanner
+                        state={bannerState}
+                        authenticationType={item.credentials.authenticationType}
+                        texts={texts}
+                      />
+                    </div>
+                  )
+                );
+              })()}
+
+            {!isReadonly && isOpen && renderCredentials?.(item)}
+
+            <div className="flex items-center px-6">
+              <Tabs
+                tabs={tabs}
+                activeTabId={activeTab}
+                onTabChange={setActiveTab}
+              />
+              {isDetailsLoading && (
+                <div
+                  role="status"
+                  aria-label={
+                    texts?.detailsLoadingAriaLabel ?? 'Loading details'
+                  }
+                  className="shrink-0"
+                >
+                  <Skeleton
+                    showTitle={false}
+                    paragraph={{ rows: 1, width: '72px' }}
+                    active
+                    color={styles.skeletonColor}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div
+              className={mergeClasses(
+                'min-h-0 flex-1 overflow-y-auto',
+                activeTab !== CatalogDetailsTab.Overview && 'px-6',
+              )}
+            >
+              {activeTab === CatalogDetailsTab.About && (
+                <AboutTab
+                  content={item.description}
+                  topics={item.topics}
+                  detailsStyles={detailsStyles}
+                />
+              )}
+              {activeTab === CatalogDetailsTab.Content && (
+                <ContentTab
+                  content={promptContent?.content ?? ''}
+                  filePreview={resolveContentFilePreview()}
+                  filePreviewContent={renderedContentFilePreview}
+                  renderFileTree={renderContentFileTree}
+                  description={promptContent?.description ?? item.description}
+                  files={promptContent?.files}
+                  selectedFileId={selectedFileId}
+                  onSelectFile={(fileId) =>
+                    void handleSelectContentFile(fileId)
+                  }
+                  isFileLoading={isContentFileLoading}
+                  expandedFolderIds={expandedFolderIds}
+                  onToggleFolder={handleToggleFolder}
+                  isFileSelectorOpen={isFileSelectorOpen}
+                  onFileSelectorOpenChange={setIsFileSelectorOpen}
+                  fileSelectorAriaLabel={texts?.contentFileSelectorAriaLabel}
+                  fileCountLabel={texts?.contentFileCountLabel}
+                  fileLoadingLabel={texts?.contentFileLoadingLabel}
+                  fileUnsupportedLabel={texts?.contentFileUnsupportedLabel}
+                  detailsStyles={detailsStyles}
+                />
+              )}
+              {activeTab === CatalogDetailsTab.Overview && (
+                <Overview
+                  sections={item.details?.overview?.sections}
+                  sectionClassName={overviewSectionClassName}
+                  labelClassName={overviewLabelClassName}
+                  valueClassName={overviewValueClassName}
+                  valueTrueClassName={overviewValueTrueClassName}
+                  yesLabel={overviewYesLabel}
+                  noLabel={overviewNoLabel}
+                />
+              )}
+              {activeTab === CatalogDetailsTab.Pricing && (
+                <Pricing
+                  pricing={item.details?.pricing}
+                  pricesSectionLabel={texts?.pricingPricesSectionLabel}
+                  limitsSectionLabel={texts?.pricingLimitsSectionLabel}
+                />
+              )}
+              {activeTab === CatalogDetailsTab.Limits && (
+                <LimitsTab
+                  limits={item.details?.limits}
+                  footerNote={limitsFooterNote}
+                />
+              )}
+              {activeTab === CatalogDetailsTab.Api &&
+                hasConnectableApi(item.details?.api) && (
+                  <ApiDetails
+                    api={item.details?.api}
+                    resourceSectionLabel={texts?.apiResourceSectionLabel}
+                    snippetSectionLabel={texts?.apiSnippetSectionLabel}
+                    modelIdLabel={texts?.apiModelIdLabel}
+                    endpointLabel={texts?.apiEndpointLabel}
+                    endpointSectionLabel={texts?.apiEndpointSectionLabel}
+                    requestExampleLabel={texts?.apiRequestExampleLabel}
+                    responseSchemaLabel={texts?.apiResponseSchemaLabel}
+                    copyAriaLabel={texts?.copyCodeAriaLabel}
+                    copiedStatusLabel={texts?.copiedCodeStatusLabel}
+                  />
+                )}
+              {activeTab === CatalogDetailsTab.Tools && (
+                <Tools tools={item.details?.tools} />
+              )}
+            </div>
+          </>
         )}
       </div>
-    </>
+
+      {isConfirmationOpen && (
+        <ConfirmationFooter
+          confirmLabel={confirmationContent.confirmLabel}
+          cancelLabel={cancelLabel}
+          variant={confirmationContent.variant}
+          isLoading={isConfirming}
+          isConfirmDisabled={isConfirmDisabled}
+          loadingStatusLabel={confirmationContent.loadingStatusLabel}
+          styles={{ colors: { border: detailsColors?.confirmFooterBorder } }}
+          onConfirm={handleConfirm}
+          onCancel={handleCancelConfirmation}
+        />
+      )}
+
+      {!isConfirmationOpen && isPublishOpen && (
+        <PublishFooter
+          version={item.version}
+          hasExistingPublicationInFolder={
+            publishFlow.hasExistingPublicationInFolder
+          }
+          isSubmitDisabled={publishDerived.isSubmitDisabled}
+          isSubmitLoading={publishDerived.isSubmitLoading}
+          onCancel={handleClosePublish}
+          onSubmit={handleSubmitPublish}
+          labels={publishLabels}
+        />
+      )}
+    </SideDrawer>
   );
 };

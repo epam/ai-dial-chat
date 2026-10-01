@@ -135,18 +135,25 @@ An intermediate `UpdatedSuccess` message from the embedded editor SHALL also ref
 
 `AppPreviewChat` SHALL resolve the application deployment from `useDeployments().items` against the raw `appId` prop (the same raw, human-readable id used by the settings iframe's postMessage protocol) through the shared `findDeploymentByIdOrReference` helper, since `items[].id` is always the raw id. It SHALL render Quick Apps `conversationStarters` through the same `getQuickAppConversationStarters` utility used by the main new-conversation screen.
 
-`AppPreviewChat` SHALL use the raw `appId` as-is for every deployment-identifying value it produces or forwards — `fixedModel.id`, `apiCreateConversation`'s `deploymentId` argument, `startStream`'s `model` argument, `useAudioTranscription`'s `selectedDeploymentId`, and `useConversationHandlers`' `fixedModelId`. It SHALL NOT percent-encode `appId` (e.g. via `encodeDeploymentId`) for any of these, because each of them is consumed as a JSON body field (`createConversation`, `streamCompletion`, `transcribeAudio`), never as a raw URL path segment. Percent-encoding it would embed literal `%` characters into the value; since the backend builds the created conversation's stored resource path directly from this value and the frontend's own URL-building code later percent-encodes that whole stored path once when fetching/saving/watching the conversation, a pre-encoded input becomes double-encoded on the wire and DIAL Core rejects the request with 400.
+`AppPreviewChat` SHALL use the raw `appId` as-is for `fixedModel.id`, the deployment lookup, `startStream`'s `model` argument, `useAudioTranscription`'s `selectedDeploymentId`, the composer's `selectedDeploymentId`, and the `resolveModelId` callback it passes to `useConversationHandlers`.
+
+The one exception is `apiCreateConversation`'s `deploymentId` argument: `AppPreviewChat` SHALL pass `normalizeDeploymentId(appId)` there, which decodes and then `encodeURIComponent`-encodes each `/`-separated segment, so a raw (`My App`) or an already-encoded (`My%20App`) segment both produce `My%20App`. `CreateConversationDto.deploymentId` is validated against `DEPLOYMENT_ID_PATTERN` (`apps/chat-api/src/common/validators/deployment-id.pattern.ts`), which rejects whitespace and accepts only valid `%XX` escapes, so a raw id with a space would fail creation with 400 (fix #8526).
 
 #### Scenario: Preview resolves the deployment for an app id containing reserved characters
 
 - **WHEN** `appId` is `"applications/bucket/My App"` (contains a space) and `useDeployments().items` contains an entry with `id: "applications/bucket/My App"`
 - **THEN** `AppPreviewChat` resolves that entry as the application deployment and renders its `conversationStarters`
 
-#### Scenario: Conversation creation from preview uses the raw app id
+#### Scenario: Conversation creation from preview sends a percent-encoded deployment id
 
 - **WHEN** the user selects a submit-enabled starter (or sends a manually typed first message) in the preview pane for `appId: "applications/bucket/My App"`
-- **THEN** `apiCreateConversation` is called with `deploymentId: "applications/bucket/My App"` (raw, unencoded) — not `"applications/bucket/My%20App"`
-- **AND** the subsequent `GET /api/v1/conversations?path=...` request for that conversation succeeds (no double-encoded segment, no 400 from DIAL Core)
+- **THEN** `apiCreateConversation` is called with `deploymentId: "applications/bucket/My%20App"`, which passes `DEPLOYMENT_ID_PATTERN`
+- **AND** `startStream` receives the raw `"applications/bucket/My App"` as its model id
+
+#### Scenario: An already-encoded app id is not double-encoded
+
+- **WHEN** `appId` is `"applications/bucket/My%20App"`
+- **THEN** `apiCreateConversation` is called with `deploymentId: "applications/bucket/My%20App"`, not `"applications/bucket/My%2520App"`
 
 The preview composer SHALL:
 - Render `conversationStarters.introText` below the input and above the starter buttons when present.

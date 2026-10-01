@@ -272,7 +272,9 @@ Introducing the upload flow SHALL NOT alter the existing Attach footer behavior,
 - **WHEN** the user selects files and clicks "Attach" (no upload action taken)
 - **THEN** the existing attach flow is unchanged; the upload queue is not shown; no upload is triggered
 
-#### Scenario: Unsupported mutation actions remain absent
+#### Scenario: The attach modal exposes only the Attach action profile
 
-- **GIVEN** the file manager modal is open
-- **THEN** no delete, rename, move, copy, share, or permissions management UI is visible or reachable
+- **GIVEN** the file manager modal is open, so `useDialFileManager` runs with `DialFileManagerVariant.Attach` and therefore `DialFileManagerActionProfile.Attach`
+- **THEN** on the My files tab only Download, Delete (with its confirmation dialog) and, in a writable folder, Rename are offered
+- **AND** Copy, Move and Duplicate are absent (`isCopyMoveDuplicateAllowed` is false for `Attach`), Unshare and Remove access are absent (`isShareActionsAllowed` requires `Full`), and Info is absent on every tab
+- **AND** the other tabs offer only Download
