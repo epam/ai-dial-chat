@@ -16,6 +16,7 @@ import {
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { resolveLocalizedValue } from '../../common/utils/localized-value';
+import { StringUtils } from '../../common/utils/string-utils';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import type {
@@ -75,6 +76,52 @@ export class DeploymentsDetailsService {
       (this.cacheGenerations.get(cacheKey) ?? 0) + 1,
     );
     this.pendingDetailsRequests.delete(cacheKey);
+    await this.cacheManager.del(
+      `deployments:interfaces:${userSub}:${deployment}`,
+    );
+  }
+
+  /**
+   * Returns the DIAL Core `interfaces` of one deployment (e.g. `openaiResponses`), read
+   * from `GET /v1/deployments/{id}` with the caller's token and cached like the details.
+   * Any failure resolves to an empty list, so a lookup problem only makes the deployment
+   * look less capable and never fails the calling request.
+   * @param userSub - caller's subject, part of the cache key
+   * @param deployment - deployment id
+   * @param accessToken - caller's bearer token
+   */
+  async getDeploymentInterfaces(
+    userSub: string,
+    deployment: string,
+    accessToken: string,
+  ): Promise<string[]> {
+    const cacheKey = `deployments:interfaces:${userSub}:${deployment}`;
+    const cached = await this.cacheManager.get<string[]>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const result = await this.dialClient.client.getDeploymentInfo(
+        encodeDialResourcePath(deployment),
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+      if (result.error) {
+        this.logger.warn(
+          `DIAL Core getDeploymentInfo for "${StringUtils.sanitizeForLog(deployment)}" returned ${result.response.status}`,
+        );
+        return [];
+      }
+      const raw = (result.data ?? {}) as { interfaces?: unknown };
+      const interfaces = Array.isArray(raw.interfaces)
+        ? raw.interfaces.filter((i): i is string => typeof i === 'string')
+        : [];
+      await this.cacheManager.set(cacheKey, interfaces, 60 * 1000);
+      return interfaces;
+    } catch (err) {
+      this.logger.warn(
+        `DIAL Core getDeploymentInfo for "${StringUtils.sanitizeForLog(deployment)}" failed: ${err instanceof Error ? err.name : 'unknown error'}`,
+      );
+      return [];
+    }
   }
 
   async getDeploymentConfiguration(

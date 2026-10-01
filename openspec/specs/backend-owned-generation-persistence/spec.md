@@ -4,11 +4,14 @@
 
 The backend owns conversation persistence across the generation lifecycle — saving the start, final, and partial (stop/error) states — so the frontend never races to save and chunks cannot land in the wrong conversation.
 ## Requirements
+
 ### Requirement: Backend persists the conversation across the generation lifecycle
 
 `ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`, invoked via the `ConversationService` facade) SHALL own conversation persistence for a completion. The frontend MUST NOT call `saveConversation` during streaming. The backend SHALL save at the start of generation (user message + empty assistant placeholder), on successful completion (full assembled assistant message), and on stop/error (the partial assistant message accumulated so far).
 
 A failure of the **start-state** save SHALL be logged as a warning and SHALL NOT abort the request: the stream still opens, and the terminal save that follows writes the conversation anyway. Losing the placeholder costs a resumable mid-flight view; refusing to stream because of it would cost the answer itself.
+
+On the background path defined by `background-responses-generation`, the start-state save is the placeholder that carries the background association and gates the Core job: a storage failure SHALL NOT abort the request either, but the request SHALL continue on the stateless Responses path (with its best-effort start save) instead of creating a background job, and a version conflict SHALL end the request with `409` before any Core call. On that path the final, stopped, and failed states are taken from DIAL Core's retrieved response rather than from an assembled message, and are written as defined there.
 
 The terminal save SHALL distinguish how the generation ended:
 
@@ -69,6 +72,11 @@ The downstream HTTP connection closing (browser tab closed, page navigated away,
 
 - **WHEN** the start-state `saveConversation` rejects
 - **THEN** the failure is logged as a warning and the completion request proceeds to stream normally
+
+#### Scenario: A failed background placeholder save falls back to the stateless path
+
+- **WHEN** a background-eligible request's placeholder save rejects with a storage error
+- **THEN** the failure is logged as a warning, no background job is created, and the request streams on the stateless Responses path
 
 ### Requirement: A closed downstream response does not alter generation persistence or outcome
 
@@ -292,6 +300,8 @@ The start-state write, the assembled-message updates, and the single terminal wr
 
 ### Requirement: Exactly one terminal write attempt, and cancellation never adds or replaces one
 
+This requirement applies to the Chat Completions and stateless Responses paths. On the background path, terminal writes follow `background-responses-generation` "Every background write applies only to the same pending generation": more than one writer and a bounded retry on a version conflict are allowed there, and exactly one terminal state is guaranteed by that storage-side precondition instead of by a single attempt.
+
 A generation SHALL attempt at most one terminal write. The worker SHALL record that the terminal write has been dispatched before awaiting it, and from that point:
 
 - A cancellation request of any reason SHALL be recorded for logging and telemetry only. It SHALL NOT change the persisted outcome, SHALL NOT trigger a second write, and SHALL NOT cancel the dispatched write.
@@ -319,32 +329,51 @@ A rejected terminal write SHALL be logged and reported as a persistence error on
 - **WHEN** that write is in flight
 - **THEN** the capability makes no claim that the write can be prevented, cancelled, or proven uncommitted; safety instead rests on no replacement being admitted while the entry is owned
 
+#### Scenario: Background terminal writes may retry
+
+- **GIVEN** a background generation's final write receives a version conflict caused by an unrelated writer
+- **WHEN** the re-read shows the message still `pending` with the same `generationId`
+- **THEN** the backend writes again (bounded to 3 attempts), which this requirement does not forbid on the background path
+
 ### Requirement: Fencing guarantees are process-local, and storage-side fencing is not claimed
 
-This capability SHALL distinguish which guarantees are process-local from which would require a verified DIAL Core contract.
+This capability SHALL distinguish which guarantees are process-local from which rely on a DIAL Core contract, and SHALL distinguish the non-background paths (Chat Completions and stateless Responses) from the background path defined by `background-responses-generation`.
 
-Process-local, and guaranteed: admission of at most one owner per `ownerKey + path`; internal operation identity; cancellation propagation through the entry's `AbortController`; single idempotent settlement; and the consequence that no second worker holds a key while an older write is outstanding.
+Process-local, and guaranteed on the non-background paths: admission of at most one owner per `ownerKey + path`; internal operation identity; cancellation propagation through the entry's `AbortController`; single idempotent settlement; and the consequence that no second worker holds a key while an older write is outstanding.
 
-Not guaranteed, and requiring a verified DIAL Core contract to ever be guaranteed: that a write already handed to the persistence adapter has not committed and will not commit. In particular, a lease or generation-id check placed before awaiting the write does not fence a write that has already been issued; racing the write against a timeout does not cancel it; and aborting the underlying HTTP request would not prove the storage server has neither committed nor will commit it. The generation registry is process-local and is not a cross-pod coordination mechanism.
+Not guaranteed on the non-background paths: that a write already handed to the persistence adapter has not committed and will not commit. In particular, a lease or generation-id check placed before awaiting the write does not fence a write that has already been issued; racing the write against a timeout does not cancel it; and aborting the underlying HTTP request would not prove the storage server has neither committed nor will commit it. The generation registry is process-local and is not a cross-pod coordination mechanism. Non-background writes SHALL remain unconditional.
 
-`ConversationPersistencePort` exposes no cancellation parameter and no conditional-write parameter, and this change SHALL NOT add one. The DIAL Core conversation-save contract declared by the installed `@epam/ai-dial-typescript-sdk` does accept `If-Match`/`If-None-Match` preconditions and can answer `412`, and returns an `ETag` on both save and read — but that is a contract declaration, not verified deployment behaviour, so no storage-side fencing guarantee SHALL be asserted on its basis.
+On the background path, writes to the conversation (placeholder, `responseId`, final, stopped, failed, expired, interrupted) SHALL be conditional: each SHALL send `If-Match` with the `ETag` of the conversation version it read, and SHALL apply its change only if that version's last assistant message still satisfies the write's precondition (`pending` with the same `generationId`, or for the placeholder: the conversation version the request started from). A `412` SHALL cause a re-read and a re-check, bounded to 3 attempts. The persistence port SHALL expose this conditional write for the background path only. Because background-path writers can run on different instances, correctness on that path rests on this storage-side precondition rather than on process-local admission; the spike SHALL verify that DIAL Core returns an `ETag` on read and honors `If-Match` with `412`.
 
-Unrelated writers to the same conversation path SHALL be named explicitly rather than assumed absent. `ConversationPersistenceService.saveConversation` performs an awaited display-name-preservation read before its write, and then fire-and-forget schedules `ConversationNamingService.maybeRenameAfterFirstReply`, which is an independent asynchronous writer that can write after a generation has released ownership. It writes only the conversation's display name and its naming-done marker, so it does not overwrite assistant message content and is not part of the overlap this capability fences; it would, however, have to be brought into any future conditional-write chain.
+Unrelated writers to the same conversation path SHALL be named explicitly rather than assumed absent. `ConversationPersistenceService.saveConversation` performs an awaited display-name-preservation read before its write, and then fire-and-forget schedules `ConversationNamingService.maybeRenameAfterFirstReply`, which is an independent asynchronous writer that can write after a generation has released ownership. It re-reads the conversation and writes the **whole** conversation with the new display name and naming-done marker. It SHALL therefore write conditionally (`If-Match` with the `ETag` of its re-read, bounded re-read and retry on `412`), so it can never write back a stale copy of a message — in particular a background message that was `pending` when it read. A naming write that interleaves with a background write causes that write's `412`, which the bounded re-read handles.
+
+Client full-body saves through `PUT /api/v1/conversations` (rating, message delete, settings, system prompt, status messages, overlay bridge) are the other writers to the same path; on the background path they are governed by `background-responses-generation` "Client conversation saves cannot change a pending background message".
 
 #### Scenario: The asynchronous naming writer can write after ownership is released
 
 - **GIVEN** a generation settled and released its registry key, and a naming write it scheduled is still in flight
 - **WHEN** that naming write completes
-- **THEN** it updates only the conversation's display name and naming-done marker, and does not overwrite the assistant message content persisted by any generation
+- **THEN** it updates the conversation's display name and naming-done marker on the version it re-read, and a `412` makes it re-read instead of overwriting a newer write
 
 #### Scenario: No storage-side fencing is asserted
 
-- **WHEN** a terminal write is performed
-- **THEN** it is issued without a conditional-write precondition, and the capability documents that correctness rests on process-local admission rather than on storage-side fencing
+- **WHEN** a terminal write is performed for a Chat Completions or stateless Responses generation
+- **THEN** it is issued without a conditional-write precondition, and correctness rests on process-local admission
+
+#### Scenario: Background writes are conditional
+
+- **WHEN** a background-path write is performed
+- **THEN** it carries `If-Match` with the `ETag` of the version it read, and is skipped if the re-read shows the message is no longer `pending` with the same `generationId`
+
+#### Scenario: A naming write between read and write is retried
+
+- **GIVEN** a background finalizer read the conversation, then the naming writer updated the display name
+- **WHEN** the finalizer's conditional write receives `412`
+- **THEN** it re-reads, finds the message still `pending` with its `generationId`, and writes again with the new `ETag`
 
 ### Requirement: Terminal reloads cannot erase received assistant payload
 
-A client SHALL retain its accumulated assistant payload on an explicit persistence error or when a terminal reload returns the unresolved empty placeholder at that generation's assistant index. It SHALL show an app-localized warning that server persistence is unconfirmed and a page reload can lose the local answer. It SHALL preserve text and custom content together and SHALL NOT attempt a client-side save. Successful reloads SHALL still replace local state with server-persisted data. A superseded generation or another displayed conversation SHALL NOT receive stale restoration.
+A client SHALL retain its accumulated assistant payload on an explicit persistence error or when a terminal reload returns the unresolved empty placeholder at that generation's assistant index. It SHALL show an app-localized warning that server persistence is unconfirmed and a page reload can lose the local answer. It SHALL preserve text and custom content together and SHALL NOT attempt a client-side save. Successful reloads SHALL still replace local state with server-persisted data. A reload that returns a conversation containing a background message with `status: "pending"` is neither a persistence error nor an unresolved placeholder for this requirement: the client SHALL resume through attach as `chat-hooks-conversation-stream` "A stream that ends on a pending background message resumes" defines, and the answer is restored by Core replay rather than by the retained local payload. A superseded generation or another displayed conversation SHALL NOT receive stale restoration.
 
 `useConversationStream` SHALL own the retained message in its existing per-conversation buffer, including buffers assembled by `createResumeIfAwaitingGeneration`. The buffer lasts only within the mounted hook and is replaced by a new generation; it introduces no durable cache or cache TTL. Apps SHALL supply translated warning text through the optional `generationPersistenceErrorMessage` parameter using `chat.generationPersistenceError`; independently embedded hosts can use the safe default. The warning SHALL use the existing message `role="alert"` surface alongside the answer on mobile and desktop. It introduces no new controls or directional layout; existing RTL rendering and keyboard behavior remain applicable. This behavior is not feature-gated and requires no new memoisation, metrics, REST endpoint, OpenAPI schema, or generated-client method. The existing terminal-save logger SHALL retain the original failure server-side while the client receives safe text.
 
@@ -362,6 +391,11 @@ A client SHALL retain its accumulated assistant payload on an explicit persisten
 
 - **WHEN** another generation starts before the prior generation's terminal reload returns
 - **THEN** the old callback cannot restore its content over the new generation
+
+#### Scenario: Reload shows a pending background message
+
+- **WHEN** a client's completion stream ends cleanly and the reload returns the conversation with its background message still `pending`
+- **THEN** the client shows no persistence warning and resumes through attach, which replays the answer
 
 ### Requirement: The completion response sends a periodic SSE keepalive while streaming
 
