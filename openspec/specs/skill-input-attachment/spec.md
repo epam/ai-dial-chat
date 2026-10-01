@@ -344,6 +344,20 @@ The caret is not required to sit outside an already-selected skill's `/{name}` t
 - **WHEN** the user activates Browse (consuming `/query`) and then picks a skill from the modal
 - **THEN** the input shows the selected skill's `/{name}` mention, not the original `/query` text
 
+#### Scenario: Catalog close immediately after selection preserves the committed mention
+
+- **GIVEN** Browse was opened from either the slash dropdown or the Add menu, consuming an unconfirmed `/query` or an existing tracked skill mention
+- **WHEN** the catalog reports a skill selection and then invokes its close callback in the same event, before the input re-renders
+- **THEN** the modal SHALL close with the selected skill's `/{name}` mention at the captured insertion position, and the consumed query or previous mention SHALL NOT be restored
+- **AND** surrounding text and other tracked mentions SHALL remain intact, the selected skills SHALL follow their order in the draft, and the caret override SHALL remain immediately after the inserted run, including any trailing space added by insertion
+
+#### Scenario: Repeated cancellation restores the consumed run only once
+
+- **GIVEN** Browse was opened from either entry point, consuming an unconfirmed `/query` or an existing tracked skill mention
+- **WHEN** the modal is canceled without a selection and its close callback is invoked more than once before the input re-renders
+- **THEN** the consumed run SHALL be restored exactly once at its original position, with a previously tracked mention restored as a mention
+- **AND** the original draft text and ordered skill references SHALL be preserved without duplicate text or mention anchors
+
 #### Scenario: Canceling Browse over an existing mention restores it as a mention, not plain text
 
 - **WHEN** the caret rests on or inside an already-selected skill's `/{name}` mention, the user activates Browse (from either entry point), and then cancels the modal
