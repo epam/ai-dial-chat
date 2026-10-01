@@ -752,12 +752,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           : t(ConversationPanelI18nKeys.PinLabel),
         icon: panelItem.isPinned ? (
           <IconPinnedFilled
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.MD}
             className="text-secondary"
           />
         ) : (
           <IconPin
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.MD}
             className="text-secondary"
             stroke={DIAL_KIT_ICON_STROKE}
           />
@@ -770,7 +770,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         label: t(ButtonsI18nKeys.Duplicate),
         icon: (
           <IconCopy
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.MD}
             className="text-secondary"
             stroke={DIAL_KIT_ICON_STROKE}
           />
@@ -811,7 +811,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         label: t(ConversationExportI18nKeys.ExportLabel),
         icon: (
           <IconDownload
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.MD}
             className="text-secondary"
             stroke={DIAL_KIT_ICON_STROKE}
           />
@@ -841,7 +841,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             label: t(ButtonsI18nKeys.RemoveFromMyList),
             icon: (
               <IconTrashX
-                size={DIAL_ICON_SIZE.SM}
+                size={DIAL_ICON_SIZE.MD}
                 stroke={DIAL_KIT_ICON_STROKE}
               />
             ),
@@ -859,7 +859,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           label: t(ButtonsI18nKeys.Rename),
           icon: (
             <IconPencilMinus
-              size={DIAL_ICON_SIZE.SM}
+              size={DIAL_ICON_SIZE.MD}
               className="text-secondary"
               stroke={DIAL_KIT_ICON_STROKE}
             />
@@ -879,7 +879,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 label: t(ShareI18nKeys.Title),
                 icon: (
                   <IconShare
-                    size={DIAL_ICON_SIZE.SM}
+                    size={DIAL_ICON_SIZE.MD}
                     className="text-secondary"
                     stroke={DIAL_KIT_ICON_STROKE}
                   />
@@ -903,7 +903,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 label: t(ButtonsI18nKeys.Publish),
                 icon: (
                   <IconWorldShare
-                    size={DIAL_ICON_SIZE.SM}
+                    size={DIAL_ICON_SIZE.MD}
                     className="text-secondary"
                     stroke={DIAL_KIT_ICON_STROKE}
                   />
@@ -939,7 +939,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 label: t(ButtonsI18nKeys.Unpublish),
                 icon: (
                   <IconWorldOff
-                    size={DIAL_ICON_SIZE.SM}
+                    size={DIAL_ICON_SIZE.MD}
                     aria-hidden
                     className="text-secondary"
                     stroke={DIAL_KIT_ICON_STROKE}
@@ -982,7 +982,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                       }),
                 icon: (
                   <IconUserOff
-                    size={DIAL_ICON_SIZE.SM}
+                    size={DIAL_ICON_SIZE.MD}
                     className="text-secondary"
                     stroke={DIAL_KIT_ICON_STROKE}
                   />
@@ -997,7 +997,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           label: t(ButtonsI18nKeys.Delete),
           icon: (
             <IconTrashX
-              size={DIAL_ICON_SIZE.SM}
+              size={DIAL_ICON_SIZE.MD}
               className="text-error"
               stroke={DIAL_KIT_ICON_STROKE}
             />
@@ -1455,11 +1455,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onClose={handleCloseUnpublishDialog}
       />
 
-      {/* Outside the popup on purpose: `ConfirmationPopup` swaps its whole
-       * body for a spinner while `isLoading`, so a region rendered in
-       * `description` would unmount at the moment it needs to announce.
-       * Mounted only while the popup is open, so the panel does not carry a
-       * second permanent status region alongside the transfer queues. */}
       {pendingUnpublish != null && (
         <span role="status" aria-live="polite" className="sr-only">
           {isUnpublishing
