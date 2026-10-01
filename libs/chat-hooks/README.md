@@ -4016,8 +4016,6 @@ const resolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
   resolveDialUrl: (attachment) => myResolveDisplayAttachmentUrl(attachment),
   resolveDialFileMetadataUrl: (fileId) => myResolveFileMetadataUrl(fileId),
-  // Optional: renders HTML with no download URL under its own response CSP
-  htmlSrcdocHostUrl: '/my-app/html-preview-frame',
 };
 
 const content = await resolveMarkdownCanvasContent(attachment, resolvers);
