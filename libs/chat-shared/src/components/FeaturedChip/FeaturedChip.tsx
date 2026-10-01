@@ -1,18 +1,15 @@
+import { Badge, BadgeVariant } from '@epam/ai-dial-ui-kit';
 import { CSSProperties, FC } from 'react';
-import {
-  ENTITY_TYPE_BG_COLOR,
-  ENTITY_TYPE_COLOR,
-} from '../../constants/entity-colors';
 import { CatalogEntityType } from '../../types/entity-type';
-import { mergeClasses } from '../../utils/merge-class';
+import { getEntityTypeBadgeColor } from '../../utils/entity-type';
 
 /** Props for `FeaturedChip`. */
 export interface FeaturedChipProps {
   /** Label text shown inside the chip. */
   label: string;
-  /** Additional CSS class for typography overrides. */
+  /** Typography class for the label. Defaults to the kit badge's `'dial-caption-lead-semi-text'`. */
   className?: string;
-  /** Entity category — resolves the label's default color via ENTITY_TYPE_COLOR when `style` doesn't set one. */
+  /** Entity category — picks the chip's default colours. */
   type: CatalogEntityType;
   /** Style overrides merged over the chip's default per-entity-type colors, e.g. `{ backgroundColor, color, border }`. */
   style?: CSSProperties;
@@ -24,20 +21,14 @@ export const FeaturedChip: FC<FeaturedChipProps> = ({
   className,
   type,
   style,
-}) => {
-  const bgColor = ENTITY_TYPE_BG_COLOR[type];
-  const color = ENTITY_TYPE_COLOR[type];
-
-  return (
-    <div
-      className={mergeClasses(
-        'h-[24px] gap-1 rounded-2xl border-none px-2',
-        'flex items-center justify-center',
-        className ?? 'dial-caption-lead-semi-text',
-      )}
-      style={{ backgroundColor: bgColor, color: color, ...style }}
-    >
-      {label}
-    </div>
-  );
-};
+}) => (
+  /* An inline `style` outranks the badge's colour classes, so a host override
+     still wins over the per-entity-type default. */
+  <Badge
+    label={label}
+    variant={BadgeVariant.Filled}
+    color={getEntityTypeBadgeColor(type)}
+    textClassName={className}
+    style={style}
+  />
+);
