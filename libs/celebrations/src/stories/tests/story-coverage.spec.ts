@@ -3,7 +3,7 @@ import {
   HalloweenDecorBehavior,
   HalloweenScene,
 } from '../../halloween/types/halloween';
-import { NewYearScene } from '../../new-year/components/NewYear/types';
+import { NewYearScene } from '../../new-year/types/new-year';
 
 interface StoryModule {
   default?: { title?: string };

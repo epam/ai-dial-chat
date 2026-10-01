@@ -1,6 +1,6 @@
 ---
 name: celebration-scene-ideas
-description: 'Propose and improve story-driven celebration scenes in AI DIAL Chat, including interaction with page components, character motion, SVG artwork and performance. Use for event scene ideas, celebration animation improvements, or more realistic SVG characters. Produce concepts, storyboards or prioritized findings; implement only when requested.'
+description: 'Propose and improve story-driven celebration scenes in AI DIAL Chat, including interaction with page components, character motion, SVG/Lottie artwork and performance. Use for event scene ideas, celebration animation improvements, or more realistic vector characters. Produce concepts, storyboards or prioritized findings; implement only when requested.'
 ---
 
 # Celebration Scene Ideas
@@ -55,6 +55,12 @@ Describe the action's feel as well as its route: anticipation, contact, weight t
 
 Separate confirmed defects from expressive suggestions. For each substantial finding, provide a code location or recording timestamp, observation, proposed change and verification method. Prioritize readability, correctness and cost. Without browser observation, label perceptual conclusions as hypotheses. When implementation is authorized, put selected improvements into the OpenSpec change and continue apply.
 
+## Choose the animation mechanism
+
+For a new character-led scene, start by considering a scene-local Lottie SVG composition. Prefer it when articulated poses, several synchronized characters or props, or vector shape changes benefit from one authored timeline. Use the repository's existing light player and keep geometry, grips and UI reactions on that timeline. If the user explicitly requests Lottie, plan for Lottie unless a required interaction cannot reasonably be represented in it; explain that constraint and use a coordinated companion animation only where needed.
+
+Use CSS/WAAPI for simple decor loops, brief element transforms or UI snapshots that need direct DOM control. Do not migrate a working scene merely to change its animation engine. Lottie is a way to author motion, not a performance or realism guarantee. Read [Lottie scene quality](references/lottie-scene-quality.md) when proposing or implementing it; include the player, composition and fallback in the scene design.
+
 ## Check feasibility
 
 - Move inert visual copies when borrowing UI. Preserve real data, chat ordering, drafts, selection, focus and layout; never send a message or navigate for an effect. Prefer measuring the composer as a support over copying it. For apparent composer displacement, inspect the specialized Mummy implementation.
@@ -64,15 +70,15 @@ Separate confirmed defects from expressive suggestions. For each substantial fin
 - For RTL, use actual target positions and logical sides; never mirror copied text. Reduced motion needs a meaningful static composition without borrowing UI. Keep keyboard activation and an inert, pointer-transparent decorative layer. The story must work without sound.
 - The host supplies anchors, translations and settings. Keep app routes, another package's classes, i18n and app contexts out of `libs/celebrations`. Identify a new anchor, trigger or contract as an extension, not an existing API.
 
-Verify details against current code. One scene idea does not justify a global refactor or a new animation engine.
+Verify details against current code. Keep the animation mechanism local to the scene; do not make an event-wide engine change for one idea.
 
 ## Performance is part of the concept
 
 Keep the chat responsive, especially on mobile. Consider cost when choosing mechanics and carry constraints into the design, acceptance criteria and verification tasks.
 
 - Set scene-specific numerical budgets: characters, concurrently borrowed elements, DOM snapshot size/complexity and duration. Explain the mobile reduction. Example counts are not universal library limits.
-- Prefer precomputed choreography and existing CSS/WAAPI `transform`/`opacity` animation. Measure during preparation; avoid per-frame DOM reads, React updates and interleaved layout reads/writes. Event-driven geometry rechecks for safe cancellation are different from continuous polling.
-- Bound DOM traversal and copying; use a small element or fragment when it serves the story. Budget total animations and keyframes. Avoid expensive blur/filter effects, full-screen repainting, unbounded particles or a new engine without a concrete need.
+- Precompute choreography and measure host geometry during preparation. Avoid per-frame DOM reads, React updates and interleaved layout reads/writes. Event-driven geometry rechecks for safe cancellation are different from continuous polling.
+- Bound DOM traversal and copying; use a small element or fragment when it serves the story. Budget total animations and keyframes; for Lottie also budget composition bytes, layers, paths/vertices, generated SVG nodes and concurrent players. Avoid expensive blur/filter effects, full-screen repainting and unbounded particles.
 - Missing targets, reduced motion and unsupported APIs need inexpensive fallbacks. Completion, interruption and hidden tabs release copies, animations, timers, observers and listeners. Preserve event lazy loading.
 - Name the main performance risk and how to detect it: tested limits, no playback measurements, replay/cancellation without resource accumulation, and mobile/desktop browser profiles. Structural budgets are not measured frame times; unit tests are not a browser profile. Do not promise 60 FPS without evidence.
 
@@ -92,6 +98,7 @@ Scale the response to the request; useful content includes:
 - **Activation and user behavior:** trigger, permitted interaction and cancellation.
 - **Adaptations:** mobile/missing targets, RTL, reduced motion and restoration for this plot.
 - **Performance:** mobile/desktop object and snapshot budgets, playback mechanism, primary risk and verification.
+- **Animation mechanism:** for implementation proposals, say whether Lottie or CSS/WAAPI carries the story, why, and how synchronized UI props and fallbacks work.
 - **Code references and effort:** one or two examples, reusable mechanisms, new work and a reasoned complexity estimate.
 
 Lead with a scene the user can picture. Technical details support it. End with a meaningful resolution and assessment, not an obligatory approval question or automatic implementation.

@@ -4,7 +4,7 @@ Seasonal start-page celebrations with lazily loaded Halloween and New Year scene
 
 ## Overview
 
-`@epam/ai-dial-celebrations` adds seasonal easter eggs to a chat start page: a decoration with a clickable trigger (a pumpkin, a gift), full-screen animated scenes that play when the trigger is pressed, and an optional secret phrase that plays a hidden scene instead of sending the message. The runtime is a React provider that owns playback — which event is loaded, which scene is playing and when it ends — while the host decides everything the library cannot know: which event is active and on which page, how texts are translated, how notifications are shown, whether the layout is mobile, and which DOM elements scenes may borrow. Each event lives in its own entry point (`./halloween`, `./new-year`) and is loaded only when selected, so a host that never enables New Year never downloads it. Hosts can disable individual scenes, individual decoration behaviors and the secret phrase per event. Every scene respects `prefers-reduced-motion`, all artwork is `aria-hidden` and pointer-transparent, and scenes that borrow interface elements animate inert copies and always restore the originals.
+`@epam/ai-dial-celebrations` adds seasonal easter eggs to a chat start page: a decoration with a clickable trigger (a pumpkin, a gift), full-screen animated scenes that play when the trigger is pressed, and an optional secret phrase that plays a hidden scene instead of sending the message. The runtime is a React provider that owns playback — which event is loaded, which scene is playing and when it ends — while the host decides everything the library cannot know: which event is active and on which page, how texts are translated, how notifications are shown, whether the layout is mobile, and which DOM elements scenes may borrow. Each event lives in its own entry point (`./halloween`, `./new-year`) and is loaded only when selected, so a host that never enables New Year never downloads it. Hosts can disable individual scenes, individual decoration behaviors and the secret phrase per event. Every scene respects `prefers-reduced-motion`, all artwork is `aria-hidden` and pointer-transparent, and scenes that borrow interface elements restore their original appearance on completion or interruption.
 
 ## Installation
 
@@ -196,13 +196,76 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`Snow`, `Confetti`, `Sleigh`. `Confetti` is also the secret-phrase scene.
+`Snow`, `Confetti`, `Sleigh`, `GiftWrapping`, `PenguinStar`. `Confetti` is also the secret-phrase scene.
 
 ## Types
 
 `CelebrationProviderProps`, `CelebrationContextValue`, `CelebrationEvent`, `CelebrationEventLoader`, `CelebrationScene`, `CelebrationSecretTrigger`, `CelebrationDecorationProps`, `CelebrationEventSelection`, `CelebrationAnchors`, `CelebrationNotification`, `HalloweenEventOptions`, `HalloweenLabels`, `NewYearLabels`.
 
 ## Scenes
+
+New Year's fir stands near the model selector while a penguin in a Santa hat
+walks in directly from the side of the start-page stage. It visually pulls the
+nearest eligible starter-prompt button from the page, or the idle model
+selector if no prompt qualifies. The button folds down to a paper ball in its
+flipper; the penguin crushes that into a gold star and throws it onto the fir. After a
+surprised look and a bow to the tree, it leaves by the same side. The borrowed
+button returns to its original appearance when the scene ends or is interrupted.
+One 20-second native Lottie SVG composition owns the scene; the
+provider allows 22.5 seconds including player loading. The existing light
+player loads only for animated playback, with a two-second import deadline and
+250 ms renderer deadline.
+
+The scene measures the composer, model selector, greeting and starter prompts
+to place the cast close together while keeping host text readable. When the
+greeting or prompts block the stage, the cast stands on a decorative snow
+ledge below the composer; an eligible prompt or selector can still be borrowed.
+The penguin follows a supplied image reference: front-facing
+black-and-white body, large pale belly, opaque sunglasses, tapered flippers,
+small pale feet and a restrained red Santa hat. The same full story runs on
+mobile and in RTL. Reduced motion, unsupported browser APIs and player failures
+show static art. The borrowed control is never clicked, cloned or reparented;
+its reversible visual transform is cancelled when playback stops.
+
+Typing, pointer/focus interaction, scrolling, viewport or target changes,
+hidden tabs, navigation, scene replacement and motion-preference changes stop
+the scene and release its player, listeners, observers and timers. The gift
+selects it from the random click pool; the secret phrase still plays confetti.
+Hosts can override `penguinStarToastMessage` through existing labels. The scene
+budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
+per property and 120 KB of composition data. It uses no external assets,
+filters, masks, copied controls or per-frame host measurements; these limits
+are not a frame-rate guarantee.
+
+New Year's gift-wrapping scene has two mischievous cartoon elves: a stocky,
+self-important green master and a nimble coral helper. Small noses, expressive
+brows and grins make their reactions distinct, while compact articulated arms
+keep each mitten on its ribbon or reel. They treat the composer as a present.
+A continuous golden ribbon travels around its edges, then retracts as the
+helper's overenthusiastic pull wraps the master instead. The helper proudly
+presents his work while the frustrated master hops away with a chest bow and a
+ribbon around his
+ankles; the helper follows with the reel. Both elves and the full story remain
+on mobile and in RTL layouts.
+
+The scene plays one sixteen-second Lottie vector composition and unmounts by
+eighteen and a half seconds. Its light SVG player loads only for animated
+playback, with a two-second import deadline and a further 250 ms for SVG
+readiness; hosts need no extra player setup or peer dependency. The artwork is
+local and uses no external animation URL, fonts or raster assets. It only measures
+the composer: no host element is copied, hidden or moved, and drafts, focus and
+selection remain intact. Missing,
+clipped or spatially unsuitable composers use a decorative parcel. Reduced
+motion, missing browser support or player failure show the same redesigned
+characters as a stationary, annoyed bound master beside the proud helper.
+Waiting for the player import and reduced-motion fallback do not measure the
+host.
+
+Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
+navigation and motion-preference changes cancel playback and release the player.
+The gift selects the scene from the existing random click pool; the secret
+phrase still plays confetti. Hosts can override `giftWrappingToastMessage`
+through the existing New Year labels.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
