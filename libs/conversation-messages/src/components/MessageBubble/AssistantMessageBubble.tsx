@@ -38,6 +38,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   beforeContent,
   responseFormat,
   afterContent,
+  hasThinkingPlaceholder = true,
   starters,
   onSelectStarter,
   deploymentIconUrl,
@@ -142,7 +143,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           {beforeContent != null && !text && (
             <div className="min-w-0">{beforeContent}</div>
           )}
-          {(text || isStreaming) && (
+          {(text || (isStreaming && hasThinkingPlaceholder)) && (
             <div
               aria-live="polite"
               aria-atomic="false"
