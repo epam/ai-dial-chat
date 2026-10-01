@@ -1,7 +1,8 @@
 /**
  * `postMessage` type the embedding app sends to hand the preview frame the
  * HTML to render. Must stay in sync with `HTML_PREVIEW_FRAME_RENDER_MESSAGE`
- * in `@epam/ai-dial-attachment-canvas`.
+ * in `@epam/ai-dial-attachment-canvas` — `tests/html-preview-frame.spec.ts`
+ * fails when they diverge.
  */
 export const HTML_PREVIEW_FRAME_RENDER_MESSAGE = 'dial-html-preview:render';
 

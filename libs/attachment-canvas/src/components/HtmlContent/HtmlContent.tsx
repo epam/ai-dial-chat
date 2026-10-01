@@ -61,7 +61,14 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
     const [isSourceLoading, setIsSourceLoading] = useState(false);
     const [hasSourceFetchFailed, setHasSourceFetchFailed] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    const hasPostedSrcdocRef = useRef(false);
+    /* The frame window the HTML was last posted to. Keyed on the window
+     * rather than the content so a remounted iframe (new content, or a
+     * "View source" round-trip) is posted to again, while the `load` the
+     * host document fires after replacing itself is not. */
+    const postedFrameWindowRef = useRef<Window | null>(null);
+    /* Set while the source view has unmounted the iframe, so switching back
+     * shows the spinner until the remounted frame loads. */
+    const isFrameUnmountedRef = useRef(false);
 
     /* Bumped whenever `content` changes and used as the iframe `key`: with
      * `srcdocHostUrl` the iframe `src` can stay identical across contents,
@@ -73,7 +80,6 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
         content,
         generation: contentGenerationRef.current.generation + 1,
       };
-      hasPostedSrcdocRef.current = false;
     }
     const frameKey = contentGenerationRef.current.generation;
 
@@ -94,6 +100,10 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
        * flag. */
       if (isSourceView && hasSourceFetchFailed) {
         setHasSourceFetchFailed(false);
+      }
+      if (!isSourceView && isFrameUnmountedRef.current) {
+        isFrameUnmountedRef.current = false;
+        setIsLoading(true);
       }
     }
 
@@ -139,11 +149,17 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
         setIsLoading(false);
         if (srcdocHostUrl != null) {
           /* The host document replaces itself with the posted HTML, which can
-           * fire `load` again — post only once per loaded frame. Its origin is
-           * opaque (sandboxed), so `'*'` is the only matching target. */
-          if (!hasPostedSrcdocRef.current && srcdoc != null) {
-            hasPostedSrcdocRef.current = true;
-            iframeRef.current?.contentWindow?.postMessage(
+           * fire `load` again on the same window — post only once per frame
+           * window. Its origin is opaque (sandboxed), so `'*'` is the only
+           * matching target. */
+          const frameWindow = iframeRef.current?.contentWindow;
+          if (
+            frameWindow != null &&
+            frameWindow !== postedFrameWindowRef.current &&
+            srcdoc != null
+          ) {
+            postedFrameWindowRef.current = frameWindow;
+            frameWindow.postMessage(
               { type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: srcdoc },
               '*',
             );
@@ -186,6 +202,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       canViewSource &&
       (sourceText != null || isSourceLoading || willFetchSourceText)
     ) {
+      isFrameUnmountedRef.current = true;
       if (sourceText == null) {
         return (
           <div className="flex h-full items-center justify-center">

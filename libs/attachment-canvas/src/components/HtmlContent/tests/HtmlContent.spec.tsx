@@ -121,9 +121,10 @@ describe('HtmlContent — srcdoc through a host document', () => {
 
   const stubContentWindow = (iframe: HTMLElement) => {
     const postMessage = vi.fn();
+    const frameWindow = { postMessage };
     Object.defineProperty(iframe, 'contentWindow', {
       configurable: true,
-      get: () => ({ postMessage }),
+      get: () => frameWindow,
     });
     return postMessage;
   };
@@ -206,6 +207,43 @@ describe('HtmlContent — srcdoc through a host document', () => {
       { type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: nextHtml },
       '*',
     );
+  });
+
+  it('posts the HTML again to the frame remounted after a View source round-trip', () => {
+    const content: HtmlCanvasContent = {
+      type: AttachmentContentType.Html,
+      srcdoc: html,
+      srcdocHostUrl: hostUrl,
+    };
+    const renderWithView = (isSourceView: boolean) => (
+      <HtmlContent
+        content={content}
+        labels={{}}
+        isSourceView={isSourceView}
+        title="page.html"
+      />
+    );
+    const { rerender } = render(renderWithView(false));
+    const firstIframe = screen.getByTitle('page.html');
+    stubContentWindow(firstIframe);
+    fireEvent.load(firstIframe);
+
+    rerender(renderWithView(true));
+    expect(screen.queryByTitle('page.html')).toBeNull();
+
+    rerender(renderWithView(false));
+    const nextIframe = screen.getByTitle('page.html');
+    expect(nextIframe).not.toBe(firstIframe);
+    expect(nextIframe.className).toContain('invisible');
+    const postMessage = stubContentWindow(nextIframe);
+    fireEvent.load(nextIframe);
+
+    expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html },
+      '*',
+    );
+    expect(nextIframe.className).not.toContain('invisible');
   });
 
   it('ignores the host document when a same-origin download URL takes precedence', () => {
