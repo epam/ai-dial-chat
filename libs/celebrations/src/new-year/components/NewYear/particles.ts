@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { NewYearScene } from './types';
+import { NewYearScene } from '../../types/new-year';
 
 /** Scatter short-lived particles once per scene, keeping a static reduced-motion layout. */
 export const buildNewYearParticles = (

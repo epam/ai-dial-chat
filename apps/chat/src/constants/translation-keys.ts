@@ -1503,6 +1503,7 @@ export enum HalloweenI18nKeys {
 }
 
 export enum NewYearI18nKeys {
+  PenguinStarToastMessage = 'newYear.penguinStarToastMessage',
   GiftWrappingToastMessage = 'newYear.giftWrappingToastMessage',
   ToastTitle = 'newYear.toastTitle',
   SnowToastMessage = 'newYear.snowToastMessage',
