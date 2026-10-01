@@ -11,8 +11,9 @@ import {
 import { shareApi } from '../../../server-api/api-client';
 import SharePopoverContainer from '../SharePopoverContainer';
 
-const { mockSharePopover } = vi.hoisted(() => ({
+const { mockSharePopover, mockT } = vi.hoisted(() => ({
   mockSharePopover: vi.fn((_props: SharePopoverProps) => null),
+  mockT: vi.fn((key: string, _options?: Record<string, unknown>) => key),
 }));
 
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
@@ -22,7 +23,7 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
 });
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: mockT }),
 }));
 
 vi.mock('@epam/ai-dial-share', () => ({
@@ -91,6 +92,53 @@ describe('SharePopoverContainer', () => {
       }),
       undefined,
     );
+  });
+
+  it('passes no expiry note when the share link has no expiresInDays', () => {
+    mockUseShareLink({
+      data: {
+        url: 'https://example.com/marketplace/share/item-1',
+        access: [ShareLinkAccess.View],
+      },
+    });
+
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Agent)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://example.com/marketplace/share/item-1',
+        labels: expect.objectContaining({ expiryNote: undefined }),
+      }),
+      undefined,
+    );
+    expect(mockT).not.toHaveBeenCalledWith(
+      ShareI18nKeys.ExpiryNote,
+      expect.anything(),
+    );
+  });
+
+  it('builds the expiry note from the expiresInDays reported by DIAL Core', () => {
+    mockUseShareLink({
+      data: {
+        url: 'https://example.com/marketplace/share/item-1',
+        expiresInDays: 7,
+        access: [ShareLinkAccess.View],
+      },
+    });
+
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Agent)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockT).toHaveBeenCalledWith(ShareI18nKeys.ExpiryNote, { days: 7 });
   });
 
   it('passes canEditAccess true for an Application item', () => {

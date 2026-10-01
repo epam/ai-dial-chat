@@ -63,6 +63,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     classes.filter(Boolean).join(' '),
   Tooltip: ({ children }: { children: ReactNode }) => children,
   EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  /* Rendered by the navigation lib's UserAvatar / AvatarInitials. */
+  AvatarShape: { Circle: 'circle', Square: 'square' },
+  Avatar: () => <span aria-hidden="true" />,
   MenuItem: ({
     label,
     icon,

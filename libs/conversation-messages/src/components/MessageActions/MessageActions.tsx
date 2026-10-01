@@ -9,7 +9,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
-  ToggleIconButton,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconMarkdown,
@@ -103,7 +103,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
       {role === MessageRole.User ? (
         <>
           {onEdit && (
-            <ToggleIconButton
+            <GhostIconButton
               icon={
                 <IconPencilMinus
                   size={DIAL_ICON_SIZE.SM}
@@ -121,7 +121,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onDelete && (
-            <ToggleIconButton
+            <GhostIconButton
               icon={
                 <IconTrashX
                   size={DIAL_ICON_SIZE.SM}
@@ -140,7 +140,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
       ) : (
         <>
           {onRegenerate && (
-            <ToggleIconButton
+            <GhostIconButton
               icon={
                 <IconRefresh
                   size={DIAL_ICON_SIZE.SM}
@@ -190,7 +190,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
           )}
 
           {onLike && (
-            <ToggleIconButton
+            <GhostIconButton
               icon={
                 activeRating === MessageRating.Like ? (
                   <IconThumbUpFilled
@@ -215,7 +215,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onDislike && (
-            <ToggleIconButton
+            <GhostIconButton
               icon={
                 activeRating === MessageRating.Dislike ? (
                   <IconThumbDownFilled

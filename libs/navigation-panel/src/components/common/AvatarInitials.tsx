@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { Avatar } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import styles from './MenuPrimitives.module.scss';
 
@@ -15,15 +16,12 @@ export interface AvatarInitialsProps {
 /** Circular 28 px badge showing a signed-in user's initials. */
 export const AvatarInitials: FC<AvatarInitialsProps> = memo(
   ({ shortName, className, textClassName = 'dial-tiny-text' }) => (
-    <div
-      className={mergeClasses(
-        styles.avatar,
-        'flex size-[28px] flex-shrink-0 items-center justify-center rounded-full',
-        textClassName,
-        className,
-      )}
-    >
-      {shortName}
-    </div>
+    <Avatar
+      name={shortName ?? ''}
+      initials={shortName ?? ''}
+      size={28}
+      textClassName={textClassName}
+      className={mergeClasses(styles.avatar, className)}
+    />
   ),
 );

@@ -3,7 +3,13 @@ import {
   type ScheduledTaskRunDto,
 } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   getScheduledTaskRun,
   startScheduledTask,
@@ -114,11 +120,16 @@ export const useStartScheduledTask = ({
   const canStartRef = useRef(canStart);
   const loadedRunsRef = useRef(loadedRuns);
 
-  useEffect(() => {
+  /*
+   * Synced during commit, not in a passive effect: the Start button is enabled
+   * as soon as this render commits, so a click that lands before passive
+   * effects flush would otherwise read a stale ref and be silently dropped.
+   */
+  useLayoutEffect(() => {
     canStartRef.current = canStart;
   }, [canStart]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     loadedRunsRef.current = loadedRuns;
   }, [loadedRuns]);
 

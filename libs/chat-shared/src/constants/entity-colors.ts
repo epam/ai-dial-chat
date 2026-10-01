@@ -17,3 +17,4 @@ export const ENTITY_TYPE_BG_COLOR: Record<CatalogEntityType, string> = {
   [CatalogEntityType.Toolset]: 'var(--bg-visual-brown, #FDE8D8)',
   [CatalogEntityType.Prompt]: 'var(--bg-visual-violet-1, #DDE3F9)',
 };
+

@@ -725,6 +725,20 @@ describe('AssistantMessageBubble — inline-start slot', () => {
     expect(slotIndex).toBeLessThan(placeholderIndex);
   });
 
+  it('omits the thinking placeholder when hasThinkingPlaceholder is false', () => {
+    render(
+      <AssistantMessageBubble
+        isStreaming
+        hasThinkingPlaceholder={false}
+        afterContent={<span>Stages</span>}
+        labels={{ thinkingLabel: 'Thinking…' }}
+      />,
+    );
+
+    expect(screen.queryByText('Thinking…')).toBeNull();
+    expect(screen.getByText('Stages')).toBeTruthy();
+  });
+
   it('renders the slot on its own line for a message with no text at all', () => {
     const { container } = render(
       <AssistantMessageBubble beforeContent={skillSlot} />,
