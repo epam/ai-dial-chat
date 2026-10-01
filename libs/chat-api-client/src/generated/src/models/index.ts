@@ -6392,11 +6392,11 @@ export interface ShareLinkResponseDto {
    */
   url: string;
   /**
-   * Number of days the link stays active before expiring.
+   * Number of whole days (rounded up) the link stays active before expiring, read from the DIAL Core invitation's `expireAt`. Omitted when DIAL Core does not report an expiry.
    * @type {number}
    * @memberof ShareLinkResponseDto
    */
-  expiresInDays: number;
+  expiresInDays?: number;
   /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}

@@ -77,25 +77,103 @@ describe('ShareInvitationService', () => {
   });
 
   describe('createShareLink', () => {
-    it('maps a successful DIAL Core response to ShareLinkResponseDto', async () => {
-      const { service } = makeService();
-      vi.spyOn(
-        (service['dialClient'] as DialClientService).client,
-        'shareResource',
-      ).mockResolvedValue(
-        okResponse({ invitationLink: '/v1/invitations/abc123' }),
-      );
+    const NOW = Date.UTC(2026, 9, 1, 12, 0, 0);
+    const HOUR_MS = 60 * 60 * 1000;
 
-      const result = await service.createShareLink('token-abc', 'my-bucket', {
+    const createViewLink = (service: ShareInvitationService) =>
+      service.createShareLink('token-abc', 'my-bucket', {
         itemId: 'gpt-4o',
         access: [ShareAccess.View],
       });
+
+    const mockShareResource = (dialClient: DialClientService) =>
+      vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(
+          okResponse({ invitationLink: '/v1/invitations/abc123' }),
+        );
+
+    it('maps a successful DIAL Core response to ShareLinkResponseDto', async () => {
+      vi.spyOn(Date, 'now').mockReturnValue(NOW);
+      const { service, dialClient } = makeService();
+      mockShareResource(dialClient);
+      vi.spyOn(dialClient.client, 'getInvitation').mockResolvedValue(
+        okResponse({ id: 'abc123', expireAt: NOW + 72 * HOUR_MS }),
+      );
+
+      const result = await createViewLink(service);
 
       expect(result).toEqual({
         url: 'https://example.com/catalog/shared/abc123',
         expiresInDays: 3,
         access: [ShareAccess.View],
       });
+    });
+
+    it('reads the expiry with a non-accepting invitation peek', async () => {
+      vi.spyOn(Date, 'now').mockReturnValue(NOW);
+      const { service, dialClient } = makeService();
+      mockShareResource(dialClient);
+      const peekSpy = vi
+        .spyOn(dialClient.client, 'getInvitation')
+        .mockResolvedValue(okResponse({ expireAt: NOW + 72 * HOUR_MS }));
+
+      await createViewLink(service);
+
+      expect(peekSpy).toHaveBeenCalledTimes(1);
+      expect(peekSpy).toHaveBeenCalledWith('abc123', {
+        headers: { Authorization: 'Bearer token-abc' },
+      });
+    });
+
+    it('rounds a partial remaining day up', async () => {
+      vi.spyOn(Date, 'now').mockReturnValue(NOW);
+      const { service, dialClient } = makeService();
+      mockShareResource(dialClient);
+      vi.spyOn(dialClient.client, 'getInvitation').mockResolvedValue(
+        okResponse({ expireAt: NOW + 36 * HOUR_MS }),
+      );
+
+      const result = await createViewLink(service);
+
+      expect(result.expiresInDays).toBe(2);
+    });
+
+    it.each([
+      ['the peek returns an error response', () => errResponse(404)],
+      ['the invitation has no expireAt', () => okResponse({ id: 'abc123' })],
+      [
+        'the invitation has already expired',
+        () => okResponse({ expireAt: NOW - HOUR_MS }),
+      ],
+    ])(
+      'still returns the link without expiresInDays when %s',
+      async (_case, peekResponse) => {
+        vi.spyOn(Date, 'now').mockReturnValue(NOW);
+        const { service, dialClient } = makeService();
+        mockShareResource(dialClient);
+        vi.spyOn(dialClient.client, 'getInvitation').mockResolvedValue(
+          peekResponse(),
+        );
+
+        const result = await createViewLink(service);
+
+        expect(result.url).toBe('https://example.com/catalog/shared/abc123');
+        expect(result.expiresInDays).toBeUndefined();
+      },
+    );
+
+    it('still returns the link without expiresInDays when the peek throws', async () => {
+      const { service, dialClient } = makeService();
+      mockShareResource(dialClient);
+      vi.spyOn(dialClient.client, 'getInvitation').mockRejectedValue(
+        new Error('socket hang up'),
+      );
+
+      const result = await createViewLink(service);
+
+      expect(result.url).toBe('https://example.com/catalog/shared/abc123');
+      expect(result.expiresInDays).toBeUndefined();
     });
 
     it('builds the frontend invitation URL from an absolute DIAL Core link', async () => {

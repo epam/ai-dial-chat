@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ShareAccess } from './create-share-link.dto';
 
 /** Response body for `POST /api/v1/share`. */
@@ -9,11 +9,12 @@ export class ShareLinkResponseDto {
   })
   url!: string;
 
-  @ApiProperty({
-    description: 'Number of days the link stays active before expiring.',
+  @ApiPropertyOptional({
+    description:
+      "Number of whole days (rounded up) the link stays active before expiring, read from the DIAL Core invitation's `expireAt`. Omitted when DIAL Core does not report an expiry.",
     example: 3,
   })
-  expiresInDays!: number;
+  expiresInDays?: number;
 
   @ApiProperty({
     description:

@@ -130,7 +130,7 @@ import type {
 } from '@epam/ai-dial-share';
 ```
 
-`ShareLinkData` — `{ url: string; expiresInDays: number; access: ShareLinkAccess[] }` —
+`ShareLinkData` — `{ url: string; expiresInDays?: number; access: ShareLinkAccess[] }` —
 is the shape the host's share-link seam returns; the popover takes its fields as
 individual props rather than the object.
 
