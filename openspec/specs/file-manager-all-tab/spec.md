@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The All tab on the standalone File storage page: one tree with My files, Shared and Organization as top-level folders, composed by `useDialFileManagerSections` so each section keeps its own tab's listing, columns, upload rules and actions.
+The All tab on the standalone File storage page and file attachment picker: one tree with My files, Shared and Organization as top-level folders, composed by `useDialFileManagerSections` so each section keeps its own tab's listing, columns, upload rules and actions.
 
 ## Requirements
 ### Requirement: All tab enum member

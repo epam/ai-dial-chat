@@ -38,12 +38,13 @@ const { mockShowNotification } = vi.hoisted(() => ({
  * suite exercises through interaction (tab clicks, selection buttons) has
  * moved into that hook, unit-tested at
  * `libs/chat-hooks/src/files/useFileAttachmentPicker/tests`. This fake
- * reproduces just enough of it (real React state, the same 3-tab list, the
+ * reproduces just enough of it (real React state, the same 4-tab list, the
  * same eligibility rules) so the modal's own wiring — which options it
  * forwards, how it renders the composed result — stays covered end to end
  * without duplicating the hook's own test suite.
  */
 const ALL_TABS: FilterChipItem<DialFileManagerTabs>[] = [
+  { value: DialFileManagerTabs.All, label: 'All' },
   { value: DialFileManagerTabs.MyFiles, label: 'My Files' },
   { value: DialFileManagerTabs.Shared, label: 'Shared' },
   { value: DialFileManagerTabs.Organization, label: 'Organization' },
@@ -192,6 +193,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     ...actual,
     DialFileManager: ({
       className,
+      contentClassName,
       gridClassName,
       gridOptions,
       uploadEnabled,
@@ -214,6 +216,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       autoSelectUploadedItems,
     }: {
       className?: string;
+      contentClassName?: string;
       gridClassName?: string;
       gridOptions?: {
         additionalGridOptions?: {
@@ -232,6 +235,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         tabs?: Array<{ value: string; label: string }>;
         activeTab?: string;
         onTabChange?: (id: DialFileManagerTabs) => void;
+        containerClassName?: string;
       };
       toolbarOptions?: {
         showHiddenFilesToggle?: boolean;
@@ -282,6 +286,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         className={className}
         role="region"
         aria-label="file manager"
+        data-content-class={contentClassName}
         data-grid-class={gridClassName}
         data-grid-layout={gridOptions?.additionalGridOptions?.domLayout}
         data-loading={filesLoading}
@@ -303,6 +308,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         data-hide-hidden-files-label={toolbarOptions?.hideHiddenFilesLabel}
         data-active-tab={treeOptions?.activeTab}
         data-tab-count={treeOptions?.tabs?.length}
+        data-tree-container-class={treeOptions?.containerClassName}
         data-has-delete={String(
           Actions.Delete in (gridOptions?.actionLabels ?? {}),
         )}
@@ -578,7 +584,7 @@ const defaultProps = {
 
 beforeEach(() => {
   mockActiveTab.value = undefined;
-  mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
+  mockFileManagerTabs.value = ['all', 'my_files', 'shared', 'organization'];
   mockHandleTabChange.mockClear();
   mockShowNotification.mockClear();
   mockUseFileAttachmentPicker.mockClear();
@@ -629,7 +635,13 @@ describe('DialFileManagerModal', () => {
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
     expect(fileManager.classList.contains('bg-layer-sunken')).toBe(true);
-    expect(fileManager.getAttribute('data-grid-class')).toBe('size-full');
+    expect(fileManager.getAttribute('data-content-class')).toBe('pb-0');
+    expect(fileManager.getAttribute('data-grid-class')).toBe(
+      'size-full px-5 py-4',
+    );
+    expect(fileManager.getAttribute('data-tree-container-class')).toBe(
+      'min-h-0 h-full rounded-xl bg-layer-raised shadow-sm',
+    );
     expect(fileManager.getAttribute('data-grid-layout')).toBe('normal');
     expect(fileManager.getAttribute('data-show-hidden-files-toggle')).toBe(
       'true',
@@ -670,7 +682,7 @@ describe('DialFileManagerModal', () => {
     );
   });
 
-  it('keeps a fixed modal height and pads the footer', () => {
+  it('keeps a fixed modal height and uses one-sided header and footer padding', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
     const dialog = screen.getByRole('dialog');
@@ -692,9 +704,14 @@ describe('DialFileManagerModal', () => {
     expect(contentWrapper?.classList.contains('flex-col')).toBe(true);
 
     // eslint-disable-next-line testing-library/no-node-access
-    const footer = dialog.querySelector('.px-6.py-4');
+    const header = dialog.querySelector('.pb-0');
+    expect(header?.classList.contains('px-6')).toBe(true);
+    expect(header).not.toBeNull();
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const footer = dialog.querySelector('.pt-0');
     expect(footer?.classList.contains('px-6')).toBe(true);
-    expect(footer?.classList.contains('py-4')).toBe(true);
+    expect(footer).not.toBeNull();
   });
 
   it('attaches selected files', () => {
@@ -1009,10 +1026,11 @@ describe('DialFileManagerModal', () => {
 });
 
 describe('DialFileManagerModal — tab navigation', () => {
-  it('renders three tabs beside the folder tree', () => {
+  it('renders four tabs beside the folder tree', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
-    expect(manager.getAttribute('data-tab-count')).toBe('3');
+    expect(manager.getAttribute('data-tab-count')).toBe('4');
+    expect(screen.getByRole('button', { name: 'All' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Shared' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
@@ -1032,7 +1050,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-active-tab')).toBe(
-      DialFileManagerTabs.MyFiles,
+      DialFileManagerTabs.All,
     );
   });
 

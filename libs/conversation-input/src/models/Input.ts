@@ -52,11 +52,9 @@ export interface InputColors {
   modelSelectorName?: string;
   /** Model-selector chip version text color (desktop only). Defaults to `--text-secondary`. */
   modelSelectorVersion?: string;
-  /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
-  voiceError?: string;
-  /** Voice bar waveform and timer text color. Defaults to `--text-primary`. */
+  /** Voice bar waveform color. Defaults to `--text-primary`. */
   voiceWaveform?: string;
-  /** Voice bar stop button and recording-dot accent color. Defaults to `--text-error`. */
+  /** Voice bar recording-dot color. Defaults to `--text-error`. */
   voiceAccent?: string;
   /** Background color of a tracked skill mention's highlighted run. Defaults to `--bg-control-accent-alpha`. */
   mentionHighlightBg?: string;

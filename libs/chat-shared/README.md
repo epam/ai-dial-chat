@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.30`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.35`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.30
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.35
 - `@epam/ai-dial-react-file-manager` ^0.3.0-dev.20 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -581,7 +581,7 @@ import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 
 ### InitialsAvatar
 
-Generates an avatar from a user's display name with a consistent background color.
+A square initials badge for an entity without an icon, drawn by the UI kit's `Avatar`: the initials come from `name`, and the same name always gets the same colour from the theme's visual tokens. `textClassName` replaces the default semibold initials sized at 40% of `size`.
 
 ```tsx
 import { InitialsAvatar } from '@epam/ai-dial-chat-shared';
@@ -631,8 +631,8 @@ import { CatalogEntityType, EntityTypeLabel } from '@epam/ai-dial-chat-shared';
 
 ### FeaturedChip
 
-Featured badge whose text and background colors follow the entity type by
-default. Pass `style` to override any of the chip's own style properties
+Featured badge, drawn as the UI kit's filled `Badge`, whose text and
+background colors follow the entity type by default. Pass `style` to override any of the chip's own style properties
 (e.g. `backgroundColor`, `color`, `border`) — it is merged on top of the
 per-entity-type default, so it always wins.
 

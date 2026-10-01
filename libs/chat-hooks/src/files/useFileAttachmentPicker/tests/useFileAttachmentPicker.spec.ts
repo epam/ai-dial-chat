@@ -7,20 +7,21 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UseDialFileManagerResult } from '../../dial-file-manager.types';
 import { DialFileManagerVariant } from '../../file-manager-variant';
-import { useDialFileManager } from '../../useDialFileManager/useDialFileManager';
+import { useDialFileManagerSections } from '../../useDialFileManagerSections/useDialFileManagerSections';
 import {
   useFileAttachmentPicker,
   type UseFileAttachmentPickerOptions,
 } from '../useFileAttachmentPicker';
 
-vi.mock('../../useDialFileManager/useDialFileManager', () => ({
-  useDialFileManager: vi.fn(),
+vi.mock('../../useDialFileManagerSections/useDialFileManagerSections', () => ({
+  useDialFileManagerSections: vi.fn(),
 }));
 
-const mockUseDialFileManager = vi.mocked(useDialFileManager);
+const mockUseDialFileManagerSections = vi.mocked(useDialFileManagerSections);
 
 const STUB_CONTROLLER = {
   marker: 'stub-controller',
+  sectionTab: DialFileManagerTabs.MyFiles,
 } as unknown as UseDialFileManagerResult;
 
 const TAB_LABELS: Record<DialFileManagerTabs, string> = {
@@ -51,40 +52,42 @@ const buildRow = (
 
 describe('useFileAttachmentPicker', () => {
   beforeEach(() => {
-    mockUseDialFileManager.mockClear();
-    mockUseDialFileManager.mockReturnValue(STUB_CONTROLLER);
+    mockUseDialFileManagerSections.mockClear();
+    mockUseDialFileManagerSections.mockReturnValue(STUB_CONTROLLER as never);
   });
 
-  it('forwards the composed controller and the derived rootLabel/variant/bucket', () => {
+  it('forwards the composed controller and section configuration', () => {
     renderHook(() => useFileAttachmentPicker(buildOptions()));
 
-    expect(mockUseDialFileManager).toHaveBeenCalledOnce();
-    const [callOptions] = mockUseDialFileManager.mock.calls[0];
+    expect(mockUseDialFileManagerSections).toHaveBeenCalledOnce();
+    const [callOptions] = mockUseDialFileManagerSections.mock.calls[0];
     expect(callOptions.bucket).toBe('my-bucket');
     expect(callOptions.activeTab).toBe(DialFileManagerTabs.MyFiles);
-    expect(callOptions.rootLabel).toBe('My files');
+    expect(callOptions.sections).toEqual([
+      { tab: DialFileManagerTabs.MyFiles, rootLabel: 'My files' },
+      { tab: DialFileManagerTabs.Shared, rootLabel: 'Shared with me' },
+      { tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' },
+    ]);
     expect(callOptions.variant).toBe(DialFileManagerVariant.Attach);
   });
 
-  it('derives the rootLabel for the Shared and Organization tabs', () => {
+  it('filters the composed sections using the allowed tabs', () => {
     renderHook(() =>
       useFileAttachmentPicker(
-        buildOptions({ initialTab: DialFileManagerTabs.Shared }),
+        buildOptions({
+          allowedTabs: [
+            DialFileManagerTabs.All,
+            DialFileManagerTabs.Shared,
+            DialFileManagerTabs.Organization,
+          ],
+        }),
       ),
-    );
-    expect(mockUseDialFileManager.mock.calls[0][0].rootLabel).toBe(
-      'Shared with me',
     );
 
-    mockUseDialFileManager.mockClear();
-    renderHook(() =>
-      useFileAttachmentPicker(
-        buildOptions({ initialTab: DialFileManagerTabs.Organization }),
-      ),
-    );
-    expect(mockUseDialFileManager.mock.calls[0][0].rootLabel).toBe(
-      'Organization',
-    );
+    expect(mockUseDialFileManagerSections.mock.calls[0][0].sections).toEqual([
+      { tab: DialFileManagerTabs.Shared, rootLabel: 'Shared with me' },
+      { tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' },
+    ]);
   });
 
   it('returns the mocked controller reference unchanged', () => {
@@ -127,7 +130,7 @@ describe('useFileAttachmentPicker', () => {
     expect(result.current.activeTab).toBe(DialFileManagerTabs.Shared);
   });
 
-  it('never offers the All tab, even when the configuration allows it', () => {
+  it('offers All first when the configuration allows it', () => {
     const { result } = renderHook(() =>
       useFileAttachmentPicker(
         buildOptions({
@@ -137,6 +140,7 @@ describe('useFileAttachmentPicker', () => {
     );
 
     expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
+      DialFileManagerTabs.All,
       DialFileManagerTabs.MyFiles,
       DialFileManagerTabs.Shared,
       DialFileManagerTabs.Organization,
@@ -144,7 +148,7 @@ describe('useFileAttachmentPicker', () => {
     expect(result.current.activeTab).toBe(DialFileManagerTabs.MyFiles);
   });
 
-  it('opens on the first enabled source tab when asked to start on All', () => {
+  it('keeps All active and composes only enabled source sections', () => {
     const { result } = renderHook(() =>
       useFileAttachmentPicker(
         buildOptions({
@@ -154,12 +158,12 @@ describe('useFileAttachmentPicker', () => {
       ),
     );
 
-    expect(result.current.activeTab).toBe(DialFileManagerTabs.Shared);
+    expect(result.current.activeTab).toBe(DialFileManagerTabs.All);
     expect(
-      mockUseDialFileManager.mock.calls.every(
-        ([options]) => options.activeTab !== DialFileManagerTabs.All,
+      mockUseDialFileManagerSections.mock.calls[0][0].sections.map(
+        ({ tab }) => tab,
       ),
-    ).toBe(true);
+    ).toEqual([DialFileManagerTabs.Shared, DialFileManagerTabs.Organization]);
   });
 
   it('filters the tab list down to allowedTabs', () => {

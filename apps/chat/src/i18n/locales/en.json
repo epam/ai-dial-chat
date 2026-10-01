@@ -300,7 +300,7 @@
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
     "emptyHint": "Star a model or agent to pin it here.",
-    "currentlySelectedLabel": "Current Selected",
+    "currentlySelectedLabel": "Currently selected",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",

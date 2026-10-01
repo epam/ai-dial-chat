@@ -45,7 +45,7 @@ export interface DeploymentSelectorLabels {
   browseCatalogLabel?: string;
   /** Accessible label for the remove-from-favorites button. Default: `'Remove from favorites'`. */
   removeFromFavoritesLabel?: string;
-  /** Heading above the currently-selected row when it isn't a favorite. Default: `'Currently selected'`. */
+  /** Heading above the currently-selected row. Default: `'Currently selected'`. */
   currentlySelectedLabel?: string;
   /** Accessible label for the add-to-favorites button on the currently-selected row. Default: `'Add to favorites'`. */
   addToFavoritesLabel?: string;
@@ -81,7 +81,8 @@ interface Props {
   /**
    * Full catalog item for the currently selected deployment. Pass this even
    * when the item isn't in `favorites` so the panel can surface it in a
-   * dedicated "Currently selected" row above the Favorites list.
+   * dedicated "Currently selected" row above the Favorites list, which then
+   * omits it.
    */
   selectedItem?: CatalogItem;
   /** Called with the selected item's id. The panel closes itself after calling this. */
@@ -181,10 +182,13 @@ const DeploymentSelectorPanel: FC<Props> = ({
     [favorites],
   );
 
+  /* The selected item always gets its own section, so the Favorites list
+     never repeats it. */
   const filteredFavorites = useMemo(() => {
-    if (!query.trim()) return talkableItems;
-    return talkableItems.filter((f) => matchesQuery(f, query));
-  }, [talkableItems, query]);
+    const listItems = talkableItems.filter((f) => f.id !== selectedItem?.id);
+    if (!query.trim()) return listItems;
+    return listItems.filter((f) => matchesQuery(f, query));
+  }, [talkableItems, query, selectedItem?.id]);
 
   const filteredExtraOptions = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -192,13 +196,8 @@ const DeploymentSelectorPanel: FC<Props> = ({
     return extraOptions.filter((o) => o.label.toLowerCase().includes(q));
   }, [extraOptions, query]);
 
-  const isSelectedInFavorites = talkableItems.some(
-    (f) => f.id === selectedItem?.id,
-  );
-
   const showCurrentlySelected =
     selectedItem != null &&
-    !isSelectedInFavorites &&
     (!query.trim() || matchesQuery(selectedItem, query));
 
   /*
@@ -317,9 +316,14 @@ const DeploymentSelectorPanel: FC<Props> = ({
     );
   };
 
-  const renderRow = (item: CatalogItem, isFavoriteRow: boolean): ReactNode => {
+  const renderRow = (
+    item: CatalogItem,
+    isFavoriteRow: boolean,
+    isSelectedSectionRow = false,
+  ): ReactNode => {
     const isSelected = item.id === selectedId;
-    const isLeaving = leavingIds.has(item.id);
+    // The selected section keeps its row when unstarred, so it never plays the exit animation.
+    const isLeaving = !isSelectedSectionRow && leavingIds.has(item.id);
     return (
       <li
         key={item.id}
@@ -455,7 +459,11 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 {currentlySelectedLabel}
               </p>
               <ul role="group" className="flex flex-col gap-1 px-1 pb-1">
-                {renderRow(selectedItem, false)}
+                {renderRow(
+                  selectedItem,
+                  favoriteIds.has(selectedItem.id),
+                  true,
+                )}
               </ul>
             </>
           )}

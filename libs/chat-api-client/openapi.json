@@ -12037,7 +12037,7 @@
           },
           "expiresInDays": {
             "type": "number",
-            "description": "Number of days the link stays active before expiring.",
+            "description": "Days until the DIAL Core invitation expires, rounded up. Omitted when DIAL Core does not report a usable expiry.",
             "example": 3
           },
           "access": {
@@ -12050,7 +12050,7 @@
             }
           }
         },
-        "required": ["url", "expiresInDays", "access"]
+        "required": ["url", "access"]
       },
       "SkillMetadataItemDto": {
         "type": "object",

@@ -1,6 +1,7 @@
+import { Avatar } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import type { NavigationUserProfile } from '../../models/user-profile';
-import { AvatarInitials } from './AvatarInitials';
+import styles from './MenuPrimitives.module.scss';
 
 /** Props for `UserAvatar`. */
 export interface UserAvatarProps {
@@ -11,18 +12,20 @@ export interface UserAvatarProps {
 }
 
 /** Avatar image with an initials badge fallback for a missing or broken image. */
-export const UserAvatar: FC<UserAvatarProps> = memo(({ profile, alt }) =>
-  profile.isFallbackShown || !profile.imageUrl ? (
-    <AvatarInitials shortName={profile.shortName} />
-  ) : (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-    <img
-      className="rounded-full"
-      src={profile.imageUrl}
-      width={28}
-      height={28}
-      alt={alt}
-      onError={profile.onImageError}
+export const UserAvatar: FC<UserAvatarProps> = memo(({ profile, alt }) => {
+  const isFallbackShown = profile.isFallbackShown || !profile.imageUrl;
+
+  return (
+    <Avatar
+      name={profile.displayName}
+      initials={profile.shortName ?? ''}
+      src={isFallbackShown ? undefined : profile.imageUrl}
+      /* Only the image is named; the initials fallback stays decorative. */
+      alt={isFallbackShown ? '' : alt}
+      size={28}
+      textClassName="dial-tiny-text"
+      className={styles.avatar}
+      onImageError={profile.onImageError}
     />
-  ),
-);
+  );
+});
