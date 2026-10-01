@@ -132,6 +132,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   };
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [timeBlurError, setTimeBlurError] = useState<string>();
+  /* Pinned at mount through a ref — `useMemo` is only a performance hint
+   * React may discard, and the earliest selectable day must stay fixed for
+   * the component's lifetime — the same pin `ScheduledTaskRunAtField`
+   * applies to the one-shot run-at picker. */
+  const minDate = useRef(new Date()).current;
   const { colors, typography, layout } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
@@ -477,6 +482,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
+                      minDate={minDate}
                       labelProps={{ label: labels.startDateLabel }}
                       placeholder={labels.startDatePlaceholder}
                       invalid={Boolean(errors.startDate)}
@@ -504,6 +510,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           calendarValueToDateValue(value),
                         )
                       }
+                      minDate={minDate}
                       labelProps={{ label: labels.endDateLabel }}
                       placeholder={labels.endDatePlaceholder}
                       invalid={Boolean(errors.endDate)}

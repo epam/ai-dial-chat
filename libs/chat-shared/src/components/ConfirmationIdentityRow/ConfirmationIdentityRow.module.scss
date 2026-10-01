@@ -1,0 +1,6 @@
+// Colors only; the card surface around this row is themed by
+// `ConfirmationIdentityCard`.
+
+.typeLabel {
+  color: var(--cir-type-label-text, var(--text-secondary, #57647a));
+}

@@ -52,7 +52,7 @@ import '@epam/ai-dial-toolset-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.27`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.30`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 
@@ -273,7 +273,9 @@ isToolsetFormValid(form, isEditMode);
 ```
 
 Returns whether the whole editor form can be saved (name/version via
-`builder-form`'s shared validation, endpoint URL, and auth block).
+`builder-form`'s shared validation — the version must be SemVer 2.0.0
+(`SEMVER_VERSION_PATTERN`), as DIAL Admin requires — endpoint URL, and auth
+block).
 
 ## Constants
 

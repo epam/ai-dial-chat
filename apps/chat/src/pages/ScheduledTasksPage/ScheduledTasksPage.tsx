@@ -17,7 +17,6 @@ import ScheduledTasksLoginBanner, {
   ScheduledTasksLoginBannerState,
 } from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
 import { getScheduledTaskDetailRoute } from '../../constants/routes';
-import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import {
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
@@ -107,10 +106,7 @@ const ScheduledTasksPage: FC = () => {
   }, [location, navigate, refetch]);
 
   const handleCreateClick = useCallback(() => {
-    const params = new URLSearchParams({
-      [ScheduledTaskCreateQuery.ReturnUrl]: ROUTES.ScheduledTasks,
-    });
-    navigate(`${ROUTES.ScheduledTaskCreate}?${params.toString()}`);
+    navigate(ROUTES.ScheduledTaskCreate);
   }, [navigate]);
 
   const handleCardClick = useCallback(

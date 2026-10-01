@@ -7,6 +7,7 @@ import {
 } from './components/NewYear/NewYearParticles';
 import NewYearSleigh from './components/NewYear/NewYearSleigh';
 import { NewYearScene } from './components/NewYear/types';
+import NewYearGiftWrapping from './components/NewYearGiftWrapping/NewYearGiftWrapping';
 import { NEW_YEAR_LABELS } from './constants/labels';
 
 /** The New Year celebration event. */
@@ -15,6 +16,12 @@ export const newYearEvent: CelebrationEvent = {
   iconUrl,
   Decoration: NewYearDecor,
   scenes: [
+    {
+      id: NewYearScene.GiftWrapping,
+      Component: NewYearGiftWrapping,
+      durationMs: 18500,
+      labelId: 'giftWrappingToastMessage',
+    },
     {
       id: NewYearScene.Snow,
       Component: NewYearSnow,

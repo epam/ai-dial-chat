@@ -71,8 +71,12 @@ const VALIDATION_ERROR_KEYS: Record<
     ScheduledTasksI18nKeys.CreateDayOfMonthRequired,
   [ScheduledTaskValidationErrorCode.StartDateInvalid]:
     ScheduledTasksI18nKeys.CreateStartDateInvalid,
+  [ScheduledTaskValidationErrorCode.StartDateInPast]:
+    ScheduledTasksI18nKeys.CreateStartDateInPast,
   [ScheduledTaskValidationErrorCode.EndDateInvalid]:
     ScheduledTasksI18nKeys.CreateEndDateBeforeStartError,
+  [ScheduledTaskValidationErrorCode.EndDateInPast]:
+    ScheduledTasksI18nKeys.CreateEndDateInPast,
 };
 
 /** Limit interpolated into the shared "Use {{count}} characters or fewer." message. */

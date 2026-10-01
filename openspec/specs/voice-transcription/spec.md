@@ -41,7 +41,7 @@ It returns `true` when the array contains `"*/*"` or any `"audio/..."` MIME type
 
 ### Requirement: Audio format detection
 
-The `useVoiceRecorder` hook SHALL choose a supported MediaRecorder format in this order: `audio/webm;codecs=opus`, `audio/ogg;codecs=opus`, `audio/webm`, then the browser default. The completed File SHALL contain all recorder blobs, including the final event, and use the actual recorder MIME type when provided. Its extension SHALL follow that MIME type. A standalone timeslice blob SHALL NOT be submitted for recognition.
+The `useVoiceRecorder` hook SHALL choose a supported MediaRecorder format in this order: `audio/webm;codecs=opus`, `audio/ogg;codecs=opus`, `audio/webm`, then the browser default. The completed File SHALL contain all recorder blobs, including the final event, and use the actual recorder MIME type when provided. Its extension SHALL be looked up by the MIME type without parameters in `MIME_TYPE_EXT_MAP` from `@epam/ai-dial-chat-shared` (for example `audio/webm` → `.weba`, `audio/ogg` → `.oga`, `audio/mp4` → `.m4a`), falling back to the MIME subtype when the map has no entry. A standalone timeslice blob SHALL NOT be submitted for recognition.
 
 #### Scenario: Preferred format supported
 
@@ -51,13 +51,13 @@ The `useVoiceRecorder` hook SHALL choose a supported MediaRecorder format in thi
 #### Scenario: Browser-selected fallback
 
 - **WHEN** none of the preferred types is supported and the browser records `audio/mp4`
-- **THEN** the complete File has MIME type `audio/mp4` and an `.mp4` extension
+- **THEN** the complete File has MIME type `audio/mp4` and an `.m4a` extension
 
 ---
 
 ### Requirement: Host-owned file-to-text callback
 
-`Input` and `ConversationInput` SHALL accept optional `onTranscribeAudio?: (file: File, signal: AbortSignal) => Promise<string>`. The library SHALL invoke it once with the complete recording in dictation mode after Stop. It SHALL contain no API routes, generated clients, auth, environment, deployment selection or upload storage conventions. `useAudioTranscription` in the app SHALL own validation, upload, provider routing and retries. Record voice SHALL bypass this callback even when supplied.
+`Input` and `ConversationInput` SHALL accept optional `onTranscribeAudio?: (file: File, signal: AbortSignal) => Promise<string>`. The library SHALL invoke it once with the complete recording in dictation mode after Stop. `libs/conversation-input` SHALL contain no API routes, generated clients, auth, environment, deployment selection or upload storage conventions. Size validation, upload, provider routing and retries SHALL live in `useTranscribeAudio` in `libs/chat-hooks`, which receives already-configured `filesApi` and `transcriptionApi` client instances, the user's bucket, `asrModelId`, the selected deployment, `maxSizeBytes` and a host-supplied `transcribeWithDeployment` call, and rejects with a translation-free `AudioTranscriptionError`. The app-edge hook `useAudioTranscription` SHALL supply those inputs from app contexts and `apps/chat/src/server-api`, gate the feature, and translate `AudioTranscriptionErrorReason` into i18n messages. Record voice SHALL bypass this callback even when supplied.
 
 #### Scenario: Upload fails
 
@@ -71,7 +71,7 @@ The `useVoiceRecorder` hook SHALL choose a supported MediaRecorder format in thi
 
 ### Requirement: App-owned complete-file upload and routing
 
-The app SHALL validate the complete dictation File against `transcribeSizeLimitBytes` before upload, reject only when its size exceeds the limit, and upload once through the existing file adapter using the user's bucket and session AbortSignal. It SHALL prefer `asrModelId` from AppConfigContext; otherwise it SHALL use the selected audio-capable deployment. Recognition retries SHALL reuse the uploaded URL. The same hook SHALL serve new conversation, existing conversation and app preview.
+`useTranscribeAudio` SHALL validate the complete dictation File against the `transcribeSizeLimitBytes` value the app passes as `maxSizeBytes` before upload, reject only when its size exceeds the limit, and upload once through the supplied generated `FilesApi.uploadFile` client to `uploads/<YYYY-MM>/<file name>` in the user's bucket with the session AbortSignal. It SHALL prefer the `asrModelId` the app reads from AppConfigContext; otherwise it SHALL use the selected audio-capable deployment. Recognition retries SHALL reuse the uploaded URL. The same hook SHALL serve new conversation, existing conversation and app preview.
 
 When the limit is exceeded, the app-edge hook `useAudioTranscription` SHALL translate `voiceRecording.tooLarge` with a `maxSize` interpolation value produced by `formatFileSize` from `@epam/ai-dial-chat-shared`. The value SHALL be based on the error's `limitBytes`, falling back to the configured `transcribeSizeLimitBytes` when `limitBytes` is absent. The message SHALL never contain a raw byte count, and SHALL tell the user to shorten the recording and try again. The English text SHALL be `Audio recording exceeds the {{maxSize}} limit. Please shorten the recording and try again.` `AudioTranscriptionError` in `libs/chat-hooks` SHALL continue to carry the raw `limitBytes` number; unit formatting and translation SHALL stay in the app.
 
@@ -125,7 +125,7 @@ Example success body:
 
 Invalid DTO fields SHALL use the existing 400 validation response. Unauthenticated or forbidden requests SHALL retain existing 401/403 handling. Missing ASR configuration SHALL yield 500. Upstream 429/503 SHALL yield 503, forwarding Retry-After when present; other upstream errors SHALL use the shared DIAL mapper, including 502 for other upstream server failures and 503 for connectivity failures. Existing shared 4xx mappings SHALL remain unchanged.
 
-The OpenAPI operationId and SDK method SHALL remain `transcribeAudio`. Frontend callers SHALL use the normal `TranscriptionApi.transcribeAudio` method through `apps/chat/src/server-api/api-client.ts` and `chat.api.ts`, with request `{ transcribeAudioDto: { audioUrl, mimeType } }` and response `{ transcript?: string }` as currently generated. Swagger-generated 503 response headers SHALL document Retry-After. The selected-deployment fallback SHALL retain the documented `customContent`/`custom_content` generator exception at the app edge.
+The OpenAPI operationId and SDK method SHALL remain `transcribeAudio`. `useTranscribeAudio` SHALL call the normal `TranscriptionApi.transcribeAudio` method on the client instance created in `apps/chat/src/server-api/api-client.ts`, with request `{ transcribeAudioDto: { audioUrl, mimeType } }` and response `{ transcript?: string }` as currently generated. Swagger-generated 503 response headers SHALL document Retry-After. The selected-deployment fallback SHALL retain the documented `customContent`/`custom_content` generator exception at the app edge: its raw request lives in `transcribeAudio` in `apps/chat/src/server-api/chat.api.ts` and reaches `useTranscribeAudio` as `transcribeWithDeployment`.
 
 #### Scenario: Temporary ASR unavailability
 

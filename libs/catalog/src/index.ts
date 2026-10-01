@@ -7,10 +7,7 @@ export * from './entry-points/mapping';
 export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
 export { CatalogLimitStatus } from './models/item-details-data';
-export {
-  DetailsConfirmationKind,
-  DetailsConfirmationVariant,
-} from './types/details-confirmation';
+export { DetailsConfirmationKind } from './types/details-confirmation';
 export { DeploymentSize } from './types/deployment-icon-size';
 export { CatalogViewMode } from './types/view-mode';
 export { LimitRowLayout } from './types/limit-row-layout';
@@ -21,6 +18,7 @@ export {
 
 // Models
 export type {
+  CatalogCreateSearch,
   CatalogEmptyStateContext,
   CatalogProps,
   CatalogTitles,
@@ -134,9 +132,6 @@ export type {
   TopicTagColors,
   TopicTagProps,
 } from './components/TopicTag/TopicTag';
-
-export { InfoCard } from './components/InfoCard/InfoCard';
-export type { InfoCardProps } from './components/InfoCard/InfoCard';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type {

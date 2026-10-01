@@ -153,7 +153,6 @@ export const customAppDefinition = defineApplicationEditor<CustomAppFormData>({
   notifiableEntity: NotifiableEntity.CustomApp,
   createStrategy: ApplicationCreateStrategy.AllAtOnce,
   idQueryParam: ToolsetEditorQuery.Id,
-  returnUrlQueryParam: ToolsetEditorQuery.ReturnUrl,
   messageKeys: {
     createTitle: CustomAppI18nKeys.CreateTitle,
     editTitle: CustomAppI18nKeys.EditTitle,

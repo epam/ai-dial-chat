@@ -378,9 +378,7 @@ describe('PromptEditor', () => {
       ),
     );
   });
-  it('navigates to the return url on cancel without dispatching a mutation', async () => {
-    mockSearchParams = new URLSearchParams({ returnUrl: '/catalog' });
-
+  it('navigates to the catalog on cancel without dispatching a mutation', async () => {
     render(<PromptEditor />);
     await user.click(screen.getByRole('button', { name: 'buttons.cancel' }));
 

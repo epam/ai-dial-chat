@@ -26,7 +26,7 @@ import {
   IconPencil,
   IconPlayerPlayFilled,
   IconShare,
-  IconTrash,
+  IconTrashX,
   IconUserOff,
   IconWorldOff,
   IconWorldShare,
@@ -669,15 +669,6 @@ export const Header: FC<HeaderProps> = ({
         onClick: handleOpenUnpublish,
       });
     }
-    if (shouldShowDeleteAction) {
-      items.push({
-        key: 'delete',
-        label: texts?.deleteActionLabel ?? 'Delete',
-        Icon: IconTrash,
-        danger: true,
-        onClick: handleDelete,
-      });
-    }
     if (shouldShowRevokeShareAction) {
       const revokeShareLabel = texts?.revokeShareLabel ?? 'Revoke access';
       const formatWithCount =
@@ -698,8 +689,19 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'unshare',
         label: texts?.unshareLabel ?? 'Remove from My List',
-        Icon: IconTrash,
+        Icon: IconTrashX,
         onClick: handleUnshare,
+      });
+    }
+    /* Last, and after the access actions: the destructive entry closes the
+     * menu so it is never the neighbour of something a misclick can reach. */
+    if (shouldShowDeleteAction) {
+      items.push({
+        key: 'delete',
+        label: texts?.deleteActionLabel ?? 'Delete',
+        Icon: IconTrashX,
+        danger: true,
+        onClick: handleDelete,
       });
     }
     return items;

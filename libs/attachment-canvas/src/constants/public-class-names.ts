@@ -9,12 +9,5 @@
  * renaming one or moving it to a different element — both are breaking changes.
  */
 export const ATTACHMENT_CANVAS_CLASS = {
-  /**
-   * The canvas panel wrapper — the element `@epam/ai-dial-sidebar` gives the
-   * panel's width and slide transition, which is the outer box a host sizes or
-   * positions. It is **not** the `aside` inside it: that one carries
-   * `dial-sb-aside`, so a host targeting the region itself descends from this
-   * class.
-   */
   panel: 'dial-attachment-canvas-panel',
 } as const;

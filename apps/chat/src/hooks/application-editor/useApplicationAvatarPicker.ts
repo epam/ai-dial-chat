@@ -87,7 +87,7 @@ export const useApplicationAvatarPicker = (): ApplicationAvatarPicker => {
       downloadLabel: t(ButtonsI18nKeys.Download),
       downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
       deleteLabel: t(ButtonsI18nKeys.Delete),
-      deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+      deletingLabel: t(BasicI18nKeys.DeletingStatus),
       deleteConfirmTitleSingle: t(
         DialFileManagerI18nKeys.DeleteConfirmTitleSingle,
       ),

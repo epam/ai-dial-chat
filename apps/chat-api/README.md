@@ -625,11 +625,11 @@ maps each backend domain to its base path.
 
 ### Infrastructure
 
-| Method | Path               | Description                                                                     |
-| ------ | ------------------ | ------------------------------------------------------------------------------- |
-| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version }` (`version` from `CHAT_VERSION`) |
-| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                      |
-| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503              |
+| Method | Path               | Description                                                                                                                                                 |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version, buildId }` (`version` from `CHAT_VERSION`; `buildId` — see [Docker image (BFF only)](#docker-image-bff-only)) |
+| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                                                                                                  |
+| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503                                                                                          |
 
 ### Versioned domains (`/api/v1/...`)
 
@@ -968,6 +968,39 @@ apps/chat-overlay-sandbox/dist
 The sandbox is mounted at `/overlay-sandbox/`. The main React application's SPA
 fallback excludes `/overlay-sandbox/*`, so disabled or missing sandbox routes do
 not fall through to the chat UI.
+
+## Docker image (BFF only)
+
+`apps/chat-api/Dockerfile` builds the BFF without any frontend bundle, for
+deployments that host the React application (or their own shell) elsewhere.
+The Release Workflow publishes it as `epam/ai-dial-chat-bff` and
+`ghcr.io/epam/ai-dial-chat-bff` in the same run and with the same tags as
+`ai-dial-chat` (`development`, `<version>`, `latest`). Every pull request
+builds it without pushing.
+
+```sh
+docker build -f apps/chat-api/Dockerfile -t ai-dial-chat-bff .
+docker run --rm -p 5000:5000 --env-file apps/chat-api/.env ai-dial-chat-bff
+```
+
+The build context is the repository root. Compared with the root `Dockerfile`:
+
+- `apps/chat/dist` and `apps/chat-overlay-sandbox/dist` are not built or copied.
+  Non-API routes such as `/` return `404` instead of the SPA, and
+  `/overlay-sandbox/*` returns `404` even with `OVERLAY_SANDBOX_ENABLED=true`.
+- The environment contract is unchanged: the image reads exactly the
+  [variables](#2-environment-configuration) the full image reads, and no
+  variable switches static serving off.
+- `GET /api/health` `buildId` is the hash of the frontend `index.html` when one
+  is bundled. Without it, `buildId` is the hash of the resolved `version`
+  (`CHAT_VERSION`, otherwise the stamped root `package.json` version), so it
+  changes with every release. If several `development` deployments share one
+  version, set `CHAT_VERSION` (for example `<version>-<commit>`) so that open
+  tabs still detect each new deployment.
+
+The image keeps the same base image, pinned npm and hardening as the root
+image. Keep its `node-base`/`deps` stages in sync with the root `Dockerfile`
+and `apps/mcp-app-sandbox/Dockerfile`.
 
 ## Logging
 

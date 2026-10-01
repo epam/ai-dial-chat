@@ -36,8 +36,8 @@
   },
   "peerDependencies": {
     "react": "^19.2.8",
-    "@epam/ai-dial-ui-kit": "^0.15.0-dev.27",
-    "@epam/ai-dial-react-file-manager": "^0.3.0-dev.19",
+    "@epam/ai-dial-ui-kit": "^0.15.0-dev.30",
+    "@epam/ai-dial-react-file-manager": "^0.3.0-dev.20",
     "ag-grid-community": "^35.3.0"
   },
   "peerDependenciesMeta": {
@@ -51,7 +51,7 @@
   "dependencies": {
     "@tabler/icons-react": "^3.44.0",
     "classnames": "2.5.1",
-    "dompurify": "3.4.15",
+    "dompurify": "3.4.16",
     "katex": "^0.16.22",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.1",

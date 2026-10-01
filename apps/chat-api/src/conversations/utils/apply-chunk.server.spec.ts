@@ -435,3 +435,108 @@ describe('applyChunkToMessage', () => {
     expect((result as { responseId?: string }).responseId).toBe('chunk-xyz');
   });
 });
+
+describe('applyChunkToMessage — nested stage parents', () => {
+  type AssembledStage = {
+    index: number;
+    name?: string;
+    status?: string | null;
+    content?: string;
+    parent_stage_index?: number;
+    attachments?: unknown[];
+  };
+
+  /* Real deltas omit every field they do not update, including `status`. */
+  const applyStageDeltas = (
+    deltas: Record<string, unknown>[][],
+  ): AssembledStage[] => {
+    const message = deltas.reduce<ReturnType<typeof applyChunkToMessage>>(
+      (current, stages) =>
+        applyChunkToMessage(current, makeChunk({ custom_content: { stages } })),
+      baseMessage(),
+    );
+    /* Mirrors persistence and reload through JSON. */
+    const reloaded = JSON.parse(JSON.stringify(message));
+    return reloaded.custom_content?.stages ?? [];
+  };
+
+  it('keeps a parent sent only on the opening delta through later content, attachment and status deltas', () => {
+    const stages = applyStageDeltas([
+      [{ index: 0, name: 'Plan' }],
+      [{ index: 1, name: 'Search', parent_stage_index: 0 }],
+      [{ index: 1, content: 'found' }],
+      [{ index: 1, attachments: [{ index: 0, title: 'a.pdf' }] }],
+      [{ index: 1, status: 'completed' }],
+    ]);
+
+    expect(stages[1]).toEqual({
+      index: 1,
+      name: 'Search',
+      status: 'completed',
+      parent_stage_index: 0,
+      content: 'found',
+      attachments: [{ index: 0, title: 'a.pdf' }],
+    });
+    expect(stages[0].status).toBeUndefined();
+  });
+
+  it('keeps sparse interleaved children attached to their parent', () => {
+    const stages = applyStageDeltas([
+      [{ index: 4, name: 'Plan' }],
+      [
+        { index: 7, name: 'A', parent_stage_index: 4 },
+        { index: 9, name: 'B', parent_stage_index: 4 },
+      ],
+      [
+        { index: 7, content: 'a' },
+        { index: 9, content: 'b' },
+      ],
+      [],
+      [
+        { index: 9, status: 'failed' },
+        { index: 7, content: 'a' },
+      ],
+    ]);
+
+    expect(
+      stages.map(({ index, parent_stage_index, content, status }) => ({
+        index,
+        parent_stage_index,
+        content,
+        status,
+      })),
+    ).toEqual([
+      {
+        index: 4,
+        parent_stage_index: undefined,
+        content: undefined,
+        status: undefined,
+      },
+      { index: 7, parent_stage_index: 4, content: 'aa', status: undefined },
+      { index: 9, parent_stage_index: 4, content: 'b', status: 'failed' },
+    ]);
+  });
+
+  it('settles the parent and the child independently', () => {
+    const stages = applyStageDeltas([
+      [{ index: 0, name: 'Plan' }],
+      [{ index: 1, name: 'Search', parent_stage_index: 0 }],
+      [{ index: 1, status: 'failed' }],
+      [{ index: 0, status: 'completed' }],
+    ]);
+
+    expect(stages[0].status).toBe('completed');
+    expect(stages[1].status).toBe('failed');
+    expect(stages[1].parent_stage_index).toBe(0);
+  });
+
+  it('adds no parent metadata to a legacy flat stream', () => {
+    const stages = applyStageDeltas([
+      [{ index: 0, name: 'Plan' }],
+      [{ index: 1, name: 'Search' }],
+      [{ index: 1, status: 'completed' }],
+    ]);
+
+    expect(stages.some((stage) => 'parent_stage_index' in stage)).toBe(false);
+  });
+});

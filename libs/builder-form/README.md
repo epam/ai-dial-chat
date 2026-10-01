@@ -36,7 +36,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.27`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.30`
 
 ## Components
 
@@ -423,7 +423,7 @@ import {
 
 const codes = validateDeploymentCreationFields(values, {
   validateNamePattern: true,
-  validateVersionPattern: true, // or: SEMVER_VERSION_PATTERN for a stricter check
+  validateVersionPattern: true, // or: SEMVER_VERSION_PATTERN for a SemVer 2.0.0 check
 });
 
 const errors = {
@@ -437,9 +437,10 @@ const errors = {
 `NAME_PATTERN` allows letters, digits, spaces, underscores, dots, and dashes;
 `VERSION_PATTERN` (the default when `validateVersionPattern: true`) allows
 letters, digits, dots, underscores, and dashes. Pass a `RegExp` instead of
-`true` — e.g. `SEMVER_VERSION_PATTERN`, which requires one or more
-dot-separated numeric segments (`0.0.1`, `2.0`) — for a host that needs a
-stricter version format. All three are exported so a host can pre-filter
+`true` — e.g. `SEMVER_VERSION_PATTERN`, which requires a SemVer 2.0.0
+version (`1.0.0`, `1.0.0-beta.1`, `1.0.0+build.5`; not `1.2`, `1.0.0.0` or
+`01.0.0`), the rule DIAL Admin applies — for a host that needs a stricter
+version format. All three are exported so a host can pre-filter
 input with the same rule the validator applies.
 
 ## Hooks

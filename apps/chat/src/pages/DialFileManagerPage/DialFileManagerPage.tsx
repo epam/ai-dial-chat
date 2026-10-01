@@ -23,6 +23,7 @@ import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialFileManagerShell from '../../components/DialFileManagerShell/DialFileManagerShell';
 import { useDialFileManagerHostOptions } from '../../components/DialFileManagerShell/useDialFileManagerHostOptions';
+import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -209,7 +210,7 @@ const DialFileManagerPage: FC = () => {
       downloadLabel: t(ButtonsI18nKeys.Download),
       downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
       deleteLabel: t(ButtonsI18nKeys.Delete),
-      deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+      deletingLabel: t(BasicI18nKeys.DeletingStatus),
       renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),
@@ -250,28 +251,7 @@ const DialFileManagerPage: FC = () => {
         names.length === 1
           ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
           : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple),
-      deleteConfirmBody: (names) => (
-        <div className="dial-small-text px-6 py-3">
-          <p className="mb-3 text-secondary">
-            {names.length === 1 ? (
-              <>
-                {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-                <span className="break-words text-primary">
-                  &quot;{names[0].split('/').pop()}&quot;?
-                </span>
-              </>
-            ) : (
-              <>
-                {t(DialFileManagerI18nKeys.DeleteConfirmBodyMultiple)}{' '}
-                <span className="text-primary">
-                  {names.length}{' '}
-                  {t(DialFileManagerI18nKeys.DeleteConfirmBodyItems)}
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-      ),
+      deleteConfirmBody: (names) => <FileDeleteConfirmContent names={names} />,
       deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
       deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
       ...uploadQueueLabels,

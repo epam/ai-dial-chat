@@ -2,15 +2,15 @@
 
 ## Purpose
 
-The citation card tooltip that shows source details, with preview, navigation, and download actions.
+The citation card popover that shows source details, with preview, navigation, and download actions.
 
 ## Requirements
 
 ---
 
-### Requirement: `CitationCard` renders source details in a positioned tooltip
+### Requirement: `CitationCard` renders source details in a positioned popover
 
-`apps/chat/src/components/Citations/CitationCard/CitationCard.tsx` SHALL render a panel inside a `DialTooltip` (controlled, `placement="bottom-end"`) anchored to the `CitationMarker` trigger with:
+`CitationDropdown` SHALL render the `CitationCard` panel inside a controlled 2.0 `Dropdown` overlay (`trigger={[]}`, `placement="bottom-end"`, `renderOverlay`) anchored to the `CitationMarker` trigger. It SHALL NOT use a `Tooltip` or `InteractiveTooltip`: both render nothing on a touch-only (`hover: none`) or mobile device, which leaves the card unreachable by tap. The card SHALL open from a tap on mobile and a click on desktop. The panel has:
 
 **Header** (horizontal flex, space-between):
 - Left: file type icon (from `getAttachmentIcon`) + source name (`DialEllipsisTooltip` for truncation)
@@ -26,7 +26,7 @@ The citation card tooltip that shows source details, with preview, navigation, a
   - When `onPreview` is provided: label depends on source type — `text/html` or `application/xhtml+xml` → "Open in browser" (`citations.popup.openInBrowser`); all other types → "Download" (`citations.popup.download`).
   - When `onPreview` is **not** provided: label is always "Open in browser" (`citations.popup.openInBrowser`), regardless of source content type — a group with no preview capability is by definition an external reference, never a local download.
 
-Panel styling: `w-[400px]`, `bg-layer-raised`, `border border-primary`, `rounded-lg`, `p-4`, `shadow-lg`.
+Panel styling: `w-[400px] max-w-full` (so the card fits a viewport narrower than 400px), `bg-layer-raised`, `border border-primary`, `rounded-lg`, `p-4`, `shadow-lg`.
 
 The component SHALL accept:
 ```ts
@@ -39,7 +39,12 @@ interface CitationCardProps {
 }
 ```
 
-`CitationDropdown` (the parent that owns the `DialTooltip`) SHALL read open/close/index state from `CitationCardContext` rather than accepting `isOpen`, `activeIndex`, `onOpen`, `onClose`, and `onIndexChange` as props. Its own Props interface is:
+#### Scenario: Tapping a marker on a touch-only device opens the card
+
+- **WHEN** the device reports `hover: none` (e.g. iPhone 16, 393×852, touch) and the user taps a citation marker
+- **THEN** the citation card (`role="dialog"`) opens, as a click does on desktop
+
+`CitationDropdown` (the parent that owns the `Dropdown`) SHALL read open/close/index state from `CitationCardContext` rather than accepting `isOpen`, `activeIndex`, `onOpen`, `onClose`, and `onIndexChange` as props. Its own Props interface is:
 ```ts
 interface CitationDropdownProps {
   group: AnnotationGroup;
@@ -233,7 +238,7 @@ The consuming app's message-item component SHALL wrap its return value in `<Cita
 
 The `CitationCard` component itself only calls the `onPreview` prop when present; closing is the responsibility of `CitationDropdown`.
 
-`CitationDropdown`'s `onOpenChange(false)` handler SHALL likewise close only through its own occurrence key. Because the underlying tooltip's outside-press dismissal is not disabled while the tooltip is controlled, a dismissal event can be delivered to an occurrence that does not own the popup; owner-scoped closing SHALL make that a no-op rather than dismissing the active card.
+`CitationDropdown`'s `onOpenChange(false)` handler SHALL likewise close only through its own occurrence key. Because the underlying dropdown's outside-press dismissal is not disabled while it is controlled, a dismissal event can be delivered to an occurrence that does not own the popup; owner-scoped closing SHALL make that a no-op rather than dismissing the active card.
 
 The reason navigation buttons (Prev/Next) must not cause a close: they update `activeIndex` in `useCitationCard`, which previously triggered `markdownComponents` to recompute with new function references, causing ReactMarkdown to unmount and remount the paragraph subtree (including `CitationDropdown` and its tooltip). The context-based architecture prevents this — see the `CitationCardContext` requirement above.
 

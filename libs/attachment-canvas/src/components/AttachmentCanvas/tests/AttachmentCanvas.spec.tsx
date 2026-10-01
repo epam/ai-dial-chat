@@ -289,12 +289,6 @@ const closestWithClass = (from: Element, className: string): Element | null =>
   from.closest(`.${className}`);
 
 describe('AttachmentCanvas — public class names', () => {
-  /*
-   * A lost public class fails silently: the build passes and a host's
-   * stylesheet simply stops applying. The panel itself is drawn by
-   * `@epam/ai-dial-sidebar`, so the class travels as `styles.className` and
-   * this covers the whole path to the element a host selects.
-   */
   it('stamps the canvas panel, open or closed', () => {
     const { unmount } = render(<AttachmentCanvas {...defaultProps} />);
     expect(

@@ -1,6 +1,6 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_STAGES_CLASS } from '../../../constants/public-class-names';
 import { CollapsedGroup } from '../CollapsedGroup';
@@ -17,26 +17,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       <span role="status" aria-label={ariaLabel} />
     ),
     EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
-    LinkButton: ({
-      label,
-      onClick,
-      className,
-      'aria-expanded': ariaExpanded,
-    }: {
-      label: ReactNode;
-      onClick?: () => void;
-      className?: string;
-      'aria-expanded'?: boolean;
-    }) => (
-      <button
-        type="button"
-        onClick={onClick}
-        className={className}
-        aria-expanded={ariaExpanded}
-      >
-        {label}
-      </button>
-    ),
   };
 });
 
@@ -71,6 +51,37 @@ const running = (index: number, name: string) => ({
 });
 
 describe('CollapsedGroup — collapsed states', () => {
+  it('mounts the panel on demand and resets nested disclosures when closed', () => {
+    render(
+      <CollapsedGroup
+        stages={[
+          { ...completed(0, 'Step 1'), content: 'Stage details' },
+          completed(1, 'Step 2'),
+        ]}
+        isStreaming={false}
+      />,
+    );
+    const toggle = screen.getByRole('button', { name: /Executed 2 steps/ });
+    expect(screen.queryByText('Step 1')).toBeNull();
+    expect(screen.queryByText('Stage details')).toBeNull();
+
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: /Step 1/ }));
+    expect(screen.getByText('Stage details')).toBeTruthy();
+
+    fireEvent.click(toggle);
+    expect(screen.queryByText('Stage details')).toBeNull();
+    expect(screen.queryByText('Step 1')).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(
+      screen
+        .getByRole('button', { name: /Step 1/ })
+        .getAttribute('aria-expanded'),
+    ).toBe('false');
+    expect(screen.queryByText('Stage details')).toBeNull();
+  });
+
   it('renders nothing for an empty stage list', () => {
     const { container } = render(
       <CollapsedGroup stages={[]} isStreaming={false} />,
@@ -210,6 +221,7 @@ describe('CollapsedGroup — collapse-by-default-when-finished transition', () =
     expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe(
       'true',
     );
+    expect(screen.getByText('Step 1')).toBeTruthy();
 
     rerender(
       <CollapsedGroup
@@ -220,6 +232,7 @@ describe('CollapsedGroup — collapse-by-default-when-finished transition', () =
     expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe(
       'false',
     );
+    expect(screen.queryByText('Step 1')).toBeNull();
   });
 });
 
@@ -298,7 +311,7 @@ describe('conversation-stages — public class names', () => {
    * stylesheet simply stops applying, so each class is asserted here. The
    * panel root carries no role, so the stage row is located by text first.
    */
-  it('stamps the panel root behind a collapsed group', () => {
+  it('stamps the panel root when a collapsed group is opened', () => {
     render(
       <CollapsedGroup
         stages={[completed(0, 'Step 1'), completed(1, 'Step 2')]}
@@ -328,5 +341,79 @@ describe('conversation-stages — public class names', () => {
     expect(
       closestWithClass(toggle, CONVERSATION_STAGES_CLASS.group),
     ).toBeTruthy();
+  });
+});
+
+describe('CollapsedGroup — nested stages', () => {
+  const child = (
+    stage: ReturnType<typeof completed> | ReturnType<typeof failed>,
+    parent: number,
+  ) => ({ ...stage, parent_stage_index: parent });
+
+  it('counts every stage once, including a failed child, whatever the disclosure state', () => {
+    render(
+      <CollapsedGroup
+        stages={[
+          completed(0, 'Plan'),
+          child(completed(1, 'Search'), 0),
+          child(failed(2, 'Read'), 0),
+        ]}
+        isStreaming={false}
+      />,
+    );
+
+    expect(screen.getByText(/Executed 3 steps/)).toBeTruthy();
+    expect(screen.getByText('1 failed')).toBeTruthy();
+  });
+
+  it('reports the same total duration as the equivalent flat stages', () => {
+    const names = ['Plan [4s]', 'Search [1s]', 'Read [2s]'];
+    const { unmount } = render(
+      <CollapsedGroup
+        stages={names.map((name, index) => completed(index, name))}
+        isStreaming={false}
+      />,
+    );
+    const flatSummary = screen.getByRole('button', {
+      name: /Executed/,
+    }).textContent;
+    unmount();
+
+    render(
+      <CollapsedGroup
+        stages={[
+          completed(0, names[0]),
+          child(completed(1, names[1]), 0),
+          child(completed(2, names[2]), 1),
+        ]}
+        isStreaming={false}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Executed/ }).textContent).toBe(
+      flatSummary,
+    );
+  });
+
+  it('keeps a stage expanded when a second stage switches the group layout', async () => {
+    const user = userEvent.setup();
+    const first = { ...running(0, 'Plan'), content: 'thinking' };
+    const { rerender } = render(
+      <CollapsedGroup stages={[first]} isStreaming />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Plan/ }));
+    rerender(
+      <CollapsedGroup
+        stages={[first, { ...running(1, 'Search'), parent_stage_index: 0 }]}
+        isStreaming
+      />,
+    );
+
+    /* The last "Plan" disclosure is the stage row; the first is the live summary. */
+    const plan = screen.getAllByRole('button', { name: /Plan/ }).at(-1)!;
+    expect(plan.getAttribute('aria-controls')).toBeTruthy();
+    expect(screen.getByText('thinking')).toBeTruthy();
+    expect(plan.getAttribute('aria-expanded')).toBe('true');
   });
 });

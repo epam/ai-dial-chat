@@ -107,17 +107,10 @@ const SharePopover: FC<SharePopoverProps> = ({
   const { isCopied, copy } = useCodeCopy(url ?? '');
   const qrSvgRef = useRef<SVGSVGElement>(null);
 
+  /* Focus returns to the trigger on close without help: the kit's focus
+     manager moves it to the first tabbable element of the dropdown anchor. */
   const [isAccessOpen, setIsAccessOpen] = useState(false);
-  const accessTriggerRef = useRef<HTMLButtonElement>(null);
-
-  /*
-   * Focus goes back to the trigger button itself: the kit's own return-focus
-   * targets its wrapper element, which is not focusable.
-   */
-  const handleAccessOpenChange = (next: boolean) => {
-    setIsAccessOpen(next);
-    if (!next) accessTriggerRef.current?.focus();
-  };
+  const handleAccessOpenChange = (next: boolean) => setIsAccessOpen(next);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -254,7 +247,6 @@ const SharePopover: FC<SharePopoverProps> = ({
             onOpenChange={handleAccessOpenChange}
             onAccessChange={onAccessChange}
             menuStyle={accessMenuStyle}
-            triggerRef={accessTriggerRef}
             titleClassName={typography?.anyoneTitleClassName}
             subtitleClassName={typography?.anyoneSubtitleClassName}
             accessTriggerLabelClassName={

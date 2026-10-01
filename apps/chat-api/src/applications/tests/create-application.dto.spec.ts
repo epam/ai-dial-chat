@@ -78,3 +78,21 @@ describe('CreateApplicationBodyDto — locales', () => {
     expect(errors.some((e) => e.property === 'locales')).toBe(true);
   });
 });
+
+describe('CreateApplicationBodyDto — version', () => {
+  it.each(['1.0.0', '1.0.0-beta', '1.0.0+build', '1.0.0-rc.1+build.5'])(
+    'accepts the SemVer 2.0.0 version %s',
+    async (version) => {
+      const errors = await validateDto({ ...BASE_BODY, version });
+      expect(errors).toHaveLength(0);
+    },
+  );
+
+  it.each(['1', '1.2', '1.0.0.0', '01.0.0', 'abc', '1.0.0_beta'])(
+    'rejects the non-SemVer version %s',
+    async (version) => {
+      const errors = await validateDto({ ...BASE_BODY, version });
+      expect(errors.some((e) => e.property === 'version')).toBe(true);
+    },
+  );
+});

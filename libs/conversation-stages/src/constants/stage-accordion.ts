@@ -6,8 +6,15 @@
  */
 
 /** Classes merged onto each stage `Accordion` root: no block padding, and no clipping of the header's focus ring. */
-export const STAGE_ACCORDION_CLASS_NAME = 'overflow-visible py-0';
+export const STAGE_ACCORDION_CLASS_NAME = 'min-w-0 overflow-visible py-0';
 
-/** Classes merged onto each stage `Accordion` header: the compact row, with the caret right after the text. */
+/** Classes merged onto each stage `Accordion` header: the compact row, with the caret right after the text and a 44px touch target on mobile. */
 export const STAGE_ACCORDION_HEADER_CLASS_NAME =
-  'justify-start gap-2 rounded-lg px-2 py-1.5 text-start';
+  'min-w-0 justify-start gap-2 rounded-lg px-2 py-1.5 text-start mobile:min-h-11';
+
+/**
+ * Nesting levels (child lists and retry-attempt lists) that still add inline
+ * indentation. Deeper levels align with the last indented one, so a deep
+ * hierarchy never runs out of width; semantic nesting is not capped.
+ */
+export const MAX_INDENTED_STAGE_DEPTH = 3;

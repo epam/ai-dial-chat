@@ -84,6 +84,20 @@ export interface CatalogTitles {
   filterMyAppsLabel?: string;
   /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
   filterTopicsLabel?: string;
+  /** Placeholder and accessible name of the Create menu's search field. Default: 'Search'. */
+  createSearchPlaceholder?: string;
+  /** Accessible name of the Create menu search field's clear button. Default: 'Clear search'. */
+  createSearchClearLabel?: string;
+  /** Text shown when the Create menu search leaves no options. Default: 'No results found'. */
+  createNoResultsLabel?: string;
+}
+
+/** Controlled search field rendered at the top of the Create menu. */
+export interface CatalogCreateSearch {
+  /** Current search query. */
+  value: string;
+  /** Called with the new query on every edit, and with `''` when the menu closes. */
+  onChange: (value: string) => void;
 }
 
 /** Props for Catalog. */
@@ -384,6 +398,8 @@ export interface CatalogProps {
   createOptions?: DropdownItem[];
   /** Called when the Create button is clicked (used when `createOptions` is absent). */
   onCreateClick?: () => void;
+  /** When provided, the Create menu shows a search field; the host filters `createOptions` by its value. */
+  createSearch?: CatalogCreateSearch;
   /** Hides the "Create" button entirely, e.g. when rendering as a read-only picker. Default: false. */
   hideCreateButton?: boolean;
   /**

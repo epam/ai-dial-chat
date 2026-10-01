@@ -578,7 +578,15 @@ The NestJS API serves both the API endpoints and the built React application:
    enabled) fall through to the React app's `index.html`
 
 `Dockerfile` at the repository root builds this arrangement into a single image.
-Both production images use npm during the build and dependency installation,
+The Release Workflow publishes three images per run, all with the same tags:
+
+| Image                          | Dockerfile                        | Contents                                                                                                                |
+| ------------------------------ | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `ai-dial-chat`                 | `Dockerfile`                      | BFF + React SPA + overlay sandbox                                                                                       |
+| `ai-dial-chat-bff`             | `apps/chat-api/Dockerfile`        | BFF only, for a frontend hosted elsewhere; see [Docker image (BFF only)](apps/chat-api/README.md#docker-image-bff-only) |
+| `ai-dial-chat-mcp-app-sandbox` | `apps/mcp-app-sandbox/Dockerfile` | Separate-origin MCP Apps sandbox proxy; see the [sandbox deployment guide](apps/mcp-app-sandbox/README.md)              |
+
+All production images use npm during the build and dependency installation,
 then remove npm/npx and npm's bundled dependencies and cache from the final image.
 The applications start directly with `node`; runtime npm commands are unavailable.
 

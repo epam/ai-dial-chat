@@ -4,7 +4,7 @@ import {
   CalendarMode,
   type CalendarValue,
 } from '@epam/ai-dial-ui-kit';
-import { useMemo, type FC } from 'react';
+import { useRef, type FC } from 'react';
 import {
   calendarValueToRunAt,
   runAtToCalendarValue,
@@ -32,9 +32,10 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
   error,
   errorClassName = 'dial-small-text',
 }) => {
-  /* Pinned at mount so past moments stay unselectable while the earliest
-   * selectable moment stays fixed, instead of advancing on every re-render. */
-  const minDate = useMemo(() => new Date(), []);
+  /* Pinned at mount through a ref — `useMemo` is only a performance hint
+   * React may discard, and the earliest selectable moment must stay fixed for
+   * the component's lifetime. */
+  const minDate = useRef(new Date()).current;
 
   const handleCalendarChange = (next: CalendarValue) =>
     onChange(calendarValueToRunAt(next));

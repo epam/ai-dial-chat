@@ -131,4 +131,77 @@ describe('validateScheduledTaskFormValues', () => {
       startDate: ScheduledTaskValidationErrorCode.StartDateInvalid,
     });
   });
+
+  it('rejects activity-window boundaries earlier than the clock today', () => {
+    /* Constructed from local components so the clock's local today is
+       2026-09-22 in every runner timezone. */
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-21' },
+        { now: localNow },
+      ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInPast });
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, endDate: '2026-09-21' },
+        { now: localNow },
+      ),
+    ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInPast });
+  });
+
+  it('accepts a window starting on the clock today', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-22', endDate: '2026-09-23' },
+        { now: localNow },
+      ),
+    ).toEqual({});
+  });
+
+  it('accepts a single-day window where endDate equals startDate', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-22', endDate: '2026-09-22' },
+        { now: localNow },
+      ),
+    ).toEqual({});
+  });
+
+  it('exempts an unchanged original boundary loaded from an older task', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-21', endDate: '2026-09-25' },
+        {
+          now: localNow,
+          originalStartDate: '2026-09-21',
+          originalEndDate: '2026-09-25',
+        },
+      ),
+    ).toEqual({});
+  });
+
+  it('still rejects a boundary changed to a different past date', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-20' },
+        { now: localNow, originalStartDate: '2026-09-21' },
+      ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInPast });
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, endDate: '2026-09-20' },
+        { now: localNow, originalEndDate: '2026-09-21' },
+      ),
+    ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInPast });
+  });
 });
