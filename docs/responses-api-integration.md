@@ -361,6 +361,7 @@ A background message carries a server-owned marker next to `responseId`:
 - **Stop on a resumed tab when Core ignores the cancel.** The tab stops showing new text right away, but its replay stays open, so it shows "generating" until the job ends in Core. The saved answer is already the stopped one.
 - **Core keeps refusing the retrieve.** If DIAL Core answers `403`, an error, or `409` to every retrieve, attach makes no write and the message stays `pending`, so new messages get `409`. Reopening the conversation resumes it, and Stop then settles it.
 - **Attach in the first moments of a start.** Until the BFF has resolved that a new generation runs in the background, its registry entry looks like a normal one. An attach in that short window is served from the registry, which holds no text on the background path, so that client shows an empty answer until the generation completes.
+- **Stop when the conversation cannot be read.** If storage fails while Stop decides whether the generation runs in the background, Stop falls back to the registry path. A background generation that this instance does not relay then gets `404`, keeps running, and saves its full answer.
 
 ### Security notes
 

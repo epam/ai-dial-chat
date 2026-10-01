@@ -33,9 +33,6 @@ export class ConversationService {
   getConversation = this.persistenceService.getConversation.bind(
     this.persistenceService,
   );
-  saveConversation = this.persistenceService.saveConversation.bind(
-    this.persistenceService,
-  );
 
   // Listing
   listConversations = this.listingService.listConversations.bind(

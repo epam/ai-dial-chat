@@ -14,7 +14,6 @@ describe('ConversationService facade', () => {
   const makeService = () => {
     const persistenceService = {
       getConversation: vi.fn().mockResolvedValue('persistence-get'),
-      saveConversation: vi.fn().mockResolvedValue('persistence-save'),
     };
     const listingService = {
       listConversations: vi.fn().mockResolvedValue('listing-list'),
@@ -77,26 +76,6 @@ describe('ConversationService facade', () => {
       'bucket',
     );
     expect(result).toBe('persistence-get');
-  });
-
-  it('delegates saveConversation to ConversationPersistenceService', async () => {
-    const { service, persistenceService } = makeService();
-    const conversation = { id: 'conv' } as never;
-
-    const result = await service.saveConversation(
-      'path',
-      'token',
-      'bucket',
-      conversation,
-    );
-
-    expect(persistenceService.saveConversation).toHaveBeenCalledWith(
-      'path',
-      'token',
-      'bucket',
-      conversation,
-    );
-    expect(result).toBe('persistence-save');
   });
 
   it('delegates listConversations to ConversationListingService', async () => {
