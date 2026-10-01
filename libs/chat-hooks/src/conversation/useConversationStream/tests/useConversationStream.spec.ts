@@ -1,5 +1,9 @@
 import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
-import { MessageRole, type Conversation } from '@epam/ai-dial-chat-shared';
+import {
+  BackgroundGenerationStatus,
+  MessageRole,
+  type Conversation,
+} from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useRef, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -99,6 +103,176 @@ describe('useConversationStream', () => {
     vi.useRealTimers();
   });
 
+  describe('background generations', () => {
+    const pendingBackground = (generationId = 'gen-bg') => ({
+      role: MessageRole.Assistant,
+      content: '',
+      timestamp: 't1',
+      responseId: 'dial_r1',
+      backgroundGeneration: {
+        generationId,
+        status: BackgroundGenerationStatus.Pending,
+        startedAt: 1,
+      },
+    });
+    const withPending = () =>
+      makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'question', timestamp: 't0' },
+          pendingBackground(),
+        ],
+      });
+    const openStream = () =>
+      new ReadableStream<Uint8Array>({
+        start() {
+          /* stays open: the attach replay is still running */
+        },
+      });
+
+    it('resumes through attach instead of settling when the reload after a stream end shows a pending background message', async () => {
+      const initial = makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'question', timestamp: 't0' },
+          { role: MessageRole.Assistant, content: '', timestamp: 't1' },
+        ],
+      });
+      vi.mocked(transport.getConversation).mockResolvedValue(withPending());
+      vi.mocked(transport.attachToGeneration).mockResolvedValue(openStream());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'question',
+          1,
+          'gpt-4o',
+        );
+      });
+      await act(async () => {
+        await capturedOptions?.onComplete();
+      });
+
+      await waitFor(() =>
+        expect(transport.attachToGeneration).toHaveBeenCalled(),
+      );
+      expect(result.current.stream.isStreaming).toBe(true);
+      expect(
+        result.current.conversation?.messages[1].streamErrorMessage,
+      ).toBeUndefined();
+    });
+
+    it('settles as before when the reload shows a completed background message', async () => {
+      const initial = makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'question', timestamp: 't0' },
+          { role: MessageRole.Assistant, content: '', timestamp: 't1' },
+        ],
+      });
+      vi.mocked(transport.getConversation).mockResolvedValue(
+        makeConversation({
+          messages: [
+            { role: MessageRole.User, content: 'question', timestamp: 't0' },
+            {
+              ...pendingBackground(),
+              content: 'answer',
+              backgroundGeneration: {
+                generationId: 'gen-bg',
+                status: BackgroundGenerationStatus.Completed,
+                startedAt: 1,
+              },
+            },
+          ],
+        }),
+      );
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'question',
+          1,
+          'gpt-4o',
+        );
+      });
+      await act(async () => {
+        await capturedOptions?.onComplete();
+      });
+
+      expect(transport.attachToGeneration).not.toHaveBeenCalled();
+      expect(result.current.stream.isStreaming).toBe(false);
+      expect(result.current.conversation?.messages[1].content).toBe('answer');
+    });
+
+    it('offers Stop after a refresh and sends the stored generation id', async () => {
+      const initial = withPending();
+      vi.mocked(transport.attachToGeneration).mockResolvedValue(openStream());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+
+      act(() =>
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          initial,
+        ),
+      );
+      await waitFor(() => expect(result.current.stream.isStreaming).toBe(true));
+
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: 'gen-bg',
+        path: 'conv',
+        content: initial.messages[1].content,
+      });
+    });
+
+    it('keeps Stop unavailable for a resumed message without a background marker', async () => {
+      const initial = makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'question', timestamp: 't0' },
+          { role: MessageRole.Assistant, content: '', timestamp: 't1' },
+        ],
+      });
+      vi.mocked(transport.attachToGeneration).mockResolvedValue(openStream());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+
+      act(() =>
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          initial,
+        ),
+      );
+      await waitFor(() => expect(result.current.stream.isStreaming).toBe(true));
+
+      expect(result.current.stream.canStopStreaming).toBe(false);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).not.toHaveBeenCalled();
+    });
+  });
+
   describe('batchChunksPerFrame', () => {
     const streaming = () =>
       makeConversation({
@@ -171,6 +345,17 @@ describe('useConversationStream', () => {
       act(() => vi.advanceTimersToNextFrame());
 
       expect(answer(view)).toBe('final');
+    });
+
+    it('sends the answer text shown so far with Stop', async () => {
+      const view = await renderBatched();
+
+      act(() => capturedOptions?.onChunk(textChunk('partial')));
+      act(() => view.result.current.stream.handleStop());
+
+      expect(transport.stopCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({ content: 'partial' }),
+      );
     });
 
     it('shows the received text together with the failure', async () => {
@@ -2148,10 +2333,9 @@ describe('useConversationStream', () => {
       );
 
       act(() => result.current.stream.handleStop());
-      expect(transport.stopCompletion).toHaveBeenCalledWith({
-        generationId: GENERATION_ID,
-        path: 'conv',
-      });
+      expect(transport.stopCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({ generationId: GENERATION_ID, path: 'conv' }),
+      );
       await act(async () => {
         attach.emit({ type: 'stopped' });
       });

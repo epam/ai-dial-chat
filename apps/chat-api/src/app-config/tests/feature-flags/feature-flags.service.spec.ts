@@ -55,4 +55,19 @@ describe('FeatureFlagsService', () => {
 
     expect(await service.isEnabled(FeatureKey.AsrEnabled, ctx)).toBe(false);
   });
+
+  it('fails closed for ResponsesBackgroundEnabled when resolution throws', async () => {
+    const appConfigService = {
+      isEnabled: vi.fn(async () => {
+        throw new Error('unexpected provider error');
+      }),
+    } as unknown as AppConfigService;
+    const service = new FeatureFlagsService(appConfigService);
+
+    expect(
+      await service.isEnabled(FeatureKey.ResponsesBackgroundEnabled, {
+        appId: 'chat-api',
+      }),
+    ).toBe(false);
+  });
 });

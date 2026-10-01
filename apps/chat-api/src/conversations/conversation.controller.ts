@@ -68,6 +68,7 @@ import {
 import { SendCompletionDto } from './dto/send-completion.dto';
 import { StopCompletionDto } from './dto/stop-completion.dto';
 import { WatchConversationBodyDto } from './dto/watch-conversation.dto';
+import { BackgroundStopResult } from './generation/background-generation.service';
 import {
   completionResponseTerminations,
   CompletionResponseTermination,
@@ -227,7 +228,7 @@ export class ConversationController {
     @Body() body: SaveConversationBodyDto,
   ) {
     const { at, bucket } = req.user as SessionUser;
-    return this.conversationService.saveConversation(
+    return this.conversationService.saveClientConversation(
       query.path,
       at,
       bucket,
@@ -437,6 +438,11 @@ export class ConversationController {
   @ApiResponse({ status: 204, description: 'Generation stopped successfully' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
+    status: 503,
+    description:
+      'The stopped state of a background generation could not be saved; the generation keeps running and Stop can be retried',
+  })
+  @ApiResponse({
     status: 404,
     description:
       'No active generation found for this principal for the given path and generationId',
@@ -446,10 +452,44 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: StopCompletionDto,
   ): Promise<void> {
+    const { at, bucket } = req.user as SessionUser;
     const ownerKey = resolvePrincipalKey(
       req.user as SessionUser,
       req.authSource,
     );
+    /* A non-background generation running here is stopped from the registry alone, as
+       before; any other Stop must consult the stored message. */
+    if (
+      !this.generationService.hasLocalForegroundGeneration(
+        ownerKey,
+        dto.path,
+        dto.generationId,
+      )
+    ) {
+      const backgroundStop =
+        await this.conversationService.stopBackgroundGeneration(
+          dto.path,
+          at,
+          bucket,
+          dto.generationId,
+          dto.content,
+        );
+      if (
+        backgroundStop === BackgroundStopResult.StoppedBeforeJob ||
+        backgroundStop === BackgroundStopResult.AlreadyFinished
+      ) {
+        res.status(204).end();
+        return;
+      }
+      if (backgroundStop === BackgroundStopResult.Handled) {
+        /* When this instance also runs the relay, end it now: Core cancel is not
+           always honoured, and the stopping tab must not keep receiving tokens. */
+        this.generationService.abort(ownerKey, dto.path, dto.generationId);
+        res.status(204).end();
+        return;
+      }
+    }
+
     const aborted = this.generationService.abort(
       ownerKey,
       dto.path,
@@ -488,10 +528,39 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: AttachGenerationDto,
   ): Promise<void> {
+    const { at, bucket } = req.user as SessionUser;
     const ownerKey = resolvePrincipalKey(
       req.user as SessionUser,
       req.authSource,
     );
+    /* A non-background generation running here is replayed from the registry alone,
+       as before; any other attach must consult the stored message. */
+    if (
+      !this.generationService.hasLocalForegroundGeneration(ownerKey, dto.path)
+    ) {
+      const backgroundAbort = new AbortController();
+      const backgroundPlan =
+        await this.conversationService.resolveBackgroundAttach(
+          dto.path,
+          at,
+          bucket,
+          backgroundAbort.signal,
+        );
+      if (backgroundPlan?.kind === 'not_found') {
+        throw new NotFoundException(
+          'No active generation found for the given path',
+        );
+      }
+      if (backgroundPlan?.kind === 'stream') {
+        await this.writeBackgroundAttach(
+          res,
+          backgroundPlan.events,
+          backgroundAbort,
+        );
+        return;
+      }
+    }
+
     const attachment = this.generationService.attach(ownerKey, dto.path);
     if (!attachment) {
       throw new NotFoundException(
@@ -566,6 +635,50 @@ export class ConversationController {
     attachment.emitter.on('chunk', onChunk);
     attachment.emitter.on('terminal', onTerminal);
     res.on('close', handleClose);
+  }
+
+  /**
+   * Streams a background generation's attach events (snapshot, replayed chunks, one
+   * terminal event) with the same keepalive, backpressure detach and bounded release
+   * as the registry-based attach. Disconnect or backpressure aborts the DIAL Core replay.
+   * @param res - SSE response
+   * @param events - attach events planned by the background service
+   * @param abort - aborts the Core replay
+   */
+  private async writeBackgroundAttach(
+    res: Response,
+    events: AsyncGenerator<object, void, void>,
+    abort: AbortController,
+  ): Promise<void> {
+    startSseResponse(res);
+    const finishSubscription = trackSseSubscription(
+      SseSubscriptionKind.GenerationAttach,
+    );
+    let isCleanedUp = false;
+    const keepalive = setInterval(() => {
+      writeSseChunk(res, SSE_KEEPALIVE_PAYLOAD);
+    }, SSE_KEEPALIVE_INTERVAL_MS);
+    const cleanup = (): void => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      finishSubscription();
+      clearInterval(keepalive);
+      abort.abort();
+      res.off('close', cleanup);
+      void releaseSseResponse(res, SSE_RELEASE_TIMEOUT_MS);
+    };
+    res.on('close', cleanup);
+    try {
+      for await (const event of events) {
+        if (isCleanedUp || res.writableEnded) break;
+        writeSseChunk(res, `data: ${JSON.stringify(event)}\n\n`);
+        if (res.writableLength > SSE_ATTACH_MAX_BUFFERED_BYTES) break;
+      }
+    } catch (err) {
+      this.logger.warn('Background attach stream failed', err);
+    } finally {
+      cleanup();
+    }
   }
 
   @Post('watch')

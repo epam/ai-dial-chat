@@ -83,6 +83,23 @@ describe('CONFIG_DEFINITIONS', () => {
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
 
+  it('contains the features.responsesBackgroundEnabled entry with server-only visibility and no role gating', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.responsesBackgroundEnabled',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.responsesBackgroundEnabled',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'server',
+      defaultValue: false,
+      critical: false,
+      envVar: 'RESPONSES_BACKGROUND_ENABLED',
+    });
+    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
+  });
+
   it('contains the client-visible features.defaultDeploymentPinned entry', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'features.defaultDeploymentPinned',

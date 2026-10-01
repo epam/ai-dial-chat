@@ -1,5 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID, Matches, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MinLength,
+} from 'class-validator';
 
 export class StopCompletionDto {
   @ApiProperty({
@@ -20,4 +26,12 @@ export class StopCompletionDto {
     message: 'path contains invalid characters',
   })
   path!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Answer text the client has shown so far. Saved as the stopped answer of a background generation, whose text the backend never assembles; ignored for every other generation, whose answer the backend already holds.',
+  })
+  @IsOptional()
+  @IsString()
+  content?: string;
 }

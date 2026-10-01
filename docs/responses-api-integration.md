@@ -106,6 +106,22 @@ Two independent conditions gate the Responses API: the server-side operator flag
 
 The deployment-capability check is deliberately strict: only `true` enables the Responses API on that side. This preserves compatibility with Core versions and deployments that do not yet publish the new flag. The server-side flag defaults to `false`, so upgrading Chat to a version that includes this integration does not change any deployment's behavior until an operator explicitly opts in.
 
+### Background mode
+
+When the Responses API is selected, Chat can instead start the generation as a DIAL Core **background job** (`background: true`, `store: true`), which survives browser disconnects and BFF restarts. Background mode is a sub-mode of Responses and needs two more conditions on top of the table above:
+
+| `features.responsesBackgroundEnabled` (server, default `false`) | `interfaces` of the deployment contain `openaiResponses` | Result                                      |
+| --------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------- |
+| `false` (default)                                               | any                                                      | stateless Responses API (no lookup is made) |
+| `true`                                                          | yes                                                      | background Responses job                    |
+| `true`                                                          | no, or the lookup fails                                  | stateless Responses API                     |
+
+- `features.responsesBackgroundEnabled` is backed by `RESPONSES_BACKGROUND_ENABLED` (server-only, default `false`) and requires DIAL Core 0.48.0 or later.
+- `interfaces` is not part of `getDeploymentDetails`: the BFF reads it from DIAL Core's `GET /v1/deployments/{deployment_name}` with the caller's token, only when Responses is already selected and the background flag is on. It is cached per user and deployment for about 60 seconds under its own key and is invalidated together with the details.
+- The DIAL Core team defines `openaiResponses` in `interfaces` as "the deployment fully supports the Responses API including background jobs". DIAL Core sets it whenever a Responses endpoint is configured, so the guarantee depends on correct deployment configuration; `RESPONSES_BACKGROUND_ENABLED=false` is the operator's switch if a deployment advertises it without working support.
+- The flag only decides how a **new** generation starts. Background jobs already running keep being recovered, stopped and finalized after the flag is turned off.
+- **Slower first text.** A background job first waits in the model provider's queue (`response.queued` → `response.in_progress`; about 3 s for `gpt-4.1-nano` on dev) before any text is produced. DIAL Core proxies the stream directly and the BFF forwards each event as it arrives, so this delay comes from the provider's background mode. It is the trade-off for an answer that survives a refresh, a closed tab, or a restart.
+
 ### Where deployment details come from
 
 Before generation starts, the BFF calls `DeploymentsService.getDeploymentDetails(sub, deploymentName, token)` and uses:
@@ -203,7 +219,7 @@ Mapping rules:
 - for messages with `image/*` attachments, `content` is an array of `input_text` (omitted when empty) and `input_image` parts; non-image attachments are dropped; messages with no image attachments use a plain `content` string;
 - `model` contains the selected deployment name;
 - `stream` is always `true`;
-- `store` is always `false`;
+- `store` is `false` on the stateless path; on the background path (see [Background mode](#background-mode)) the request instead sets `store: true` and `background: true`, and every other field is built the same way;
 - `reasoning.effort` is included when the resolved deployment's `features.reasoningEfforts` list is non-empty (the first entry is used); omitted when the list is absent or empty;
 - `custom_fields.configuration` is included when a configuration value is present on the conversation, mirroring the Chat Completions Deep Research passthrough.
 
@@ -233,11 +249,11 @@ The current Responses API integration is stateless. It does not use:
 
 Chat sends the prepared message history again with every request. AI DIAL Chat's conversation storage remains the source of truth.
 
-### Why `store: false` is used
+### Why `store: false` is used on the stateless path
 
-Chat stores conversation history itself and does not currently use Core to continue, retrieve, or delete Responses objects. Persisting a response mapping in Core is therefore unnecessary.
+Chat stores conversation history itself. On the stateless path it does not use Core to continue, retrieve, or delete Responses objects, so persisting a response in Core is unnecessary and the returned `responseId` is a diagnostic identifier.
 
-As a result, the returned `responseId` is a diagnostic identifier. Chat does not use it for the next turn and does not attempt to retrieve, cancel, or delete the response through Core.
+On the background path `store: true` is required: DIAL Core keeps the job and its result so that Chat can retrieve the final answer after the browser or the originating BFF instance is gone. The history is still sent in full on every turn; `previous_response_id` and `conversation` are never used on either path.
 
 ## SSE Stream Transformation
 
@@ -287,7 +303,71 @@ Native events such as `response.output_text.delta` are never sent to the browser
 
 `ConversationMessageDto` has an optional `responseId` field. The Responses adapter populates it from `response.created` or `response.completed`.
 
-This field is intended for diagnostics and tracing. It does not mean that Chat can continue the response through `previous_response_id`, and it is not required for messages created through Chat Completions.
+On the stateless path this field is intended for diagnostics and tracing. It does not mean that Chat can continue the response through `previous_response_id`, and it is not required for messages created through Chat Completions.
+
+On the background path it is also the job's recovery key: the BFF saves it as soon as `response.created` arrives (while the message is still pending) and keeps it after finalization and after the Core response is deleted, so rating keeps sending the same id.
+
+### Background generation lifecycle
+
+A background message carries a server-owned marker next to `responseId`:
+
+```json
+{
+  "role": "assistant",
+  "responseId": "dial_gpt-4.1-nano-2025-04-14_61994b96...",
+  "backgroundGeneration": {
+    "generationId": "2d0b6c8e-5f7a-4c1b-9e3d-1a2b3c4d5e6f",
+    "status": "pending",
+    "startedAt": 1790000000000
+  }
+}
+```
+
+`generationId` identifies the message (messages have no ids of their own), so every background read and write finds the message by it and replaces it in place — a status message appended after it, for example on a model change, is kept. `status` is `pending`, `completed`, `stopped`, or `failed`.
+
+1. **One pending generation per conversation.** A new send, regenerate, or edit on a conversation that contains a `pending` background message is rejected with `409`, whatever the flags.
+2. **Placeholder first.** The BFF stores the pending placeholder with a conditional write (`If-Match` on the version it read) before creating the Core job. A concurrent start gets `409`; a change by the display-name writer is retried; a storage error makes the request continue on the stateless path, which is safe because no job exists yet.
+3. **Pass-through relay.** Chunks are normalized exactly as on the stateless path but are not assembled: the registry entry holds no answer text, and the originating instance keeps reading the Core stream after the browser disconnects.
+4. **Finalization from Core.** At the stream's end the BFF retrieves the stored response once (`GET /openai/v1/responses/{id}`) and writes the final state, but only while the message is still `pending` with the same `generationId`:
+
+   | Stored response status   | Saved message                                                                     |
+   | ------------------------ | --------------------------------------------------------------------------------- |
+   | `completed`              | final output, `status: completed`                                                 |
+   | `cancelled`              | available output, `wasStoppedByUser: true`, `status: stopped`                     |
+   | `failed` / `incomplete`  | available output, `streamErrorMessage` (DIAL Core text or `''`), `status: failed` |
+   | `queued` / `in_progress` | nothing — the message stays `pending`                                             |
+
+   "Output" is the text of `message` items' `output_text` parts only, so reasoning is never saved.
+
+   If the write cannot be completed (conflicts exhausted, storage error, expired token) the message stays `pending`, the completion stream ends without an error envelope, and the client resumes it through `completions/attach`.
+
+5. **Cleanup.** After a final state is written the BFF deletes the Core response (`DELETE /openai/v1/responses/{id}`); `404` counts as already done and `409` (job still active) is only logged. After Stop, the delete runs only when the cancel reports a finished job; a job that keeps running is left to Core's TTL.
+6. **Detach.** At `MAX_GENERATION_DURATION_MS`, or on process shutdown, the originating instance stops reading and releases its registry entry without cancelling the job or writing the conversation; the message stays `pending` for recovery.
+7. **Recovery on attach.** `POST /api/v1/conversations/completions/attach` is served from the local registry, with no storage read, when this instance runs a non-background generation for the path. Otherwise it checks the caller's conversation for a `pending` background message before the registry, so it works on every instance, including the originating one. With the caller's current token it:
+   - replays a running job from DIAL Core (`GET /openai/v1/responses/{id}?stream=true`): one `snapshot` of the stored message, every event from the first one as `chunk` events, then one terminal event after finalizing;
+   - finalizes a job that already ended and sends the saved message and its terminal event;
+   - marks a job DIAL Core no longer knows (`404`) as `failed` with `streamErrorMessage: ''`;
+   - responds `404` for a response owned by another user (`403` from DIAL Core);
+   - for a `pending` message without `responseId`: responds `404` for the first 2 minutes (the start may still be waiting for `response.created`), then marks it `failed`. The job is never resubmitted.
+
+   Every write goes through the same "still `pending` with this `generationId`" check, so an attach racing the originating instance never produces a second terminal state.
+
+8. **Stop.** `POST /api/v1/conversations/completions/stop` stops a non-background generation running on this instance from the registry alone, as before. Otherwise it checks for the posted `generationId` on a `pending` background message before the registry, so it works on any instance and for a generation resumed after a refresh. The BFF never assembles the answer, and DIAL Core cannot return partial text in time (its JSON retrieve has none, and its replay starts from the first event at the job's own pace), so the frontend posts the text it has shown as the optional `content`. Stop **saves** it as `stopped` with `wasStoppedByUser: true`, responds `204`, and only **then** calls `POST /openai/v1/responses/{id}/cancel`, without waiting for it. `content` is ignored for non-background generations, whose answer the BFF already holds. Saving first means the originating relay and any attach already see a finished message and skip. When DIAL Core refuses the cancel, the message stays stopped and the rest of the job is ignored. When the stopping instance also runs the relay, it ends it, so the tab stops receiving tokens; a tab that resumed the answer through attach ignores further replayed text after its own Stop. A Stop before the job reported its `responseId` saves `stopped` but leaves the relay running, so the relay reads the id, sees the message is no longer pending, and cancels the job. If the stopped state cannot be saved, Stop answers `503` and does not cancel. A Stop that reaches the registry before the placeholder is visible ends the relay, which then saves the message as `stopped`. If the conversation cannot be read, attach and Stop fall back to the registry path.
+9. **Client saves.** `PUT /api/v1/conversations` keeps its contract. While the stored conversation has a `pending` background message, the BFF puts back that message's server-owned fields (`content`, `custom_content`, `responseId`, `backgroundGeneration`, `streamErrorMessage`, `wasStoppedByUser`) from storage, keeps the client's other fields (for example `rating`), and saves with `If-Match`. A stale body that lacks the pending message gets the stored messages up to it put back, so it drops neither the question nor the answer; a body that shows an older answer where a regenerate is now pending gets the pending message in its place; and a body that still shows a finished background answer as pending, or as an unmarked copy at its position while the body still lines up with storage (a tab that streamed it and has not reloaded), takes the stored final state, so it never undoes it. After earlier messages are deleted the positions shift, so a different answer at that position is saved as sent. Every save of an existing conversation is written with `If-Match` on the version read (re-read on `412`, `503` after 3 conflicts), so it never overwrites a placeholder or a final answer written in between; rename does the same. If the read fails, the save keeps today's unconditional path. A client body can never create a `pending` marker: any other `pending` marker it carries is saved as `failed`.
+10. **Copies.** Duplicating a conversation writes a `pending` background message to the copy as `failed`, and import goes through the client-save rule above, so a copy never shares the original's live job. Publish is copied by DIAL Core itself, so `POST /api/v1/conversations/publish` answers `409` ("The answer is still being generated. Publish the conversation after it finishes.") while the conversation has a `pending` background message; the frontend shows it in the existing publish-error notification.
+
+### Known limitations
+
+- **Stop on a resumed tab when Core ignores the cancel.** The tab stops showing new text right away, but its replay stays open, so it shows "generating" until the job ends in Core. The saved answer is already the stopped one.
+- **Core keeps refusing the retrieve.** If DIAL Core answers `403`, an error, or `409` to every retrieve, attach makes no write and the message stays `pending`, so new messages get `409`. Reopening the conversation resumes it, and Stop then settles it.
+- **Attach in the first moments of a start.** Until the BFF has resolved that a new generation runs in the background, its registry entry looks like a normal one. An attach in that short window is served from the registry, which holds no text on the background path, so that client shows an empty answer until the generation completes.
+
+### Security notes
+
+- Every DIAL Core call on the background path (create, retrieve, replay, cancel, delete) uses the bearer token of the request being served. The BFF stores no access token, refresh token, DIAL Core per-request key, or `DIAL_API_KEY` for later use.
+- Authorization for a job is DIAL Core's: it accepts retrieve, replay, cancel and delete only from the user who created the job (`403` otherwise, which the BFF answers as `404`). The BFF only reads conversations from the caller's own bucket, so a `responseId` can only come from the caller's own file.
+- **Isolation on the background path is per DIAL user, not per session.** Unlike the in-memory registry (keyed by cookie session or bearer principal), any authenticated client of the same user — another browser session, another device, a bearer client — can attach to and stop that user's background generation. A different user still gets `404`.
+- `responseId` is not a secret: it appears in exports and shared copies, but only its owner can use it.
 
 ## Completion, Errors, and Stopping
 
@@ -321,9 +401,9 @@ If `response.failed`, `response.incomplete`, an `error` event, an unterminated s
 
 ### User-initiated stop
 
-The frontend uses the existing generation-stop endpoint. The BFF aborts the current upstream request through an AbortController and saves the partial assistant message with `wasStoppedByUser`.
+The frontend uses the existing generation-stop endpoint. On the stateless path the BFF aborts the current upstream request through an AbortController and saves the partial assistant message with `wasStoppedByUser`.
 
-Core's response cancellation endpoint is not used because the current implementation does not start background Responses jobs.
+For a background generation the BFF saves the text the frontend posts with Stop (`content`) and then calls Core's cancel endpoint; see step 8 of [Background generation lifecycle](#background-generation-lifecycle).
 
 ### Fallback
 
@@ -381,9 +461,6 @@ Supported:
 Not yet supported in the Responses branch:
 
 - `previous_response_id` and server-side continuation;
-- `store: true`;
-- background mode;
-- Core `GET`, `CANCEL`, and `DELETE /openai/v1/responses/{response_id}` operations;
 - tools and function calling;
 - reasoning display — `response.reasoning_text.delta` is discarded today; persisting and displaying reasoning requires a dedicated UI design;
 - non-image file input and other non-image multimodal content items (`image/*` attachments are supported; other types are dropped);

@@ -34,6 +34,9 @@ describe('ConversationService facade', () => {
     }
     const streamingService = {
       streamCompletion: vi.fn().mockReturnValue(fakeStream()),
+      resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+      saveClientConversation: vi.fn().mockResolvedValue('client-save'),
+      stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
       watchConversation: vi.fn().mockResolvedValue('streaming-watch'),
     };
     const conversationNamingService = {

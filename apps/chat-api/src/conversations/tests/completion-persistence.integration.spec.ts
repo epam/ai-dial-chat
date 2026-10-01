@@ -18,6 +18,8 @@ import {
 } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
+import { BackgroundGenerationService } from '../generation/background-generation.service';
+import { CoreResponsesClient } from '../generation/core-responses.client';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
@@ -158,6 +160,12 @@ describe('completion persistence over HTTP', () => {
       {
         isEnabled: vi.fn().mockResolvedValue(false),
       } as unknown as FeatureFlagsService,
+      new BackgroundGenerationService(
+        persistence,
+        new ResponsesAdapter(dial),
+        new CoreResponsesClient(dial),
+        registry,
+      ),
     );
     const module = await Test.createTestingModule({
       controllers: [ConversationController],
@@ -166,6 +174,10 @@ describe('completion persistence over HTTP', () => {
           provide: ConversationService,
           useValue: {
             streamCompletion: streaming.streamCompletion.bind(streaming),
+            resolveBackgroundAttach:
+              streaming.resolveBackgroundAttach.bind(streaming),
+            stopBackgroundGeneration:
+              streaming.stopBackgroundGeneration.bind(streaming),
           },
         },
         { provide: ConversationGenerationService, useValue: registry },

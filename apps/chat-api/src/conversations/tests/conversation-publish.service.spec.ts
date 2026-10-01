@@ -2,7 +2,10 @@ import { BadGatewayException, ForbiddenException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { PublishRuleFunction } from '../../publish/dto/publish-rule.dto';
-import { ConversationPublishService } from '../conversation-publish.service';
+import {
+  ConversationPublishService,
+  PUBLISH_WHILE_GENERATING_MESSAGE,
+} from '../conversation-publish.service';
 
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
@@ -214,6 +217,75 @@ describe('ConversationPublishService', () => {
       expect(result.path).toBe(
         'conversations/bucket-123/Planning/My%20conversation',
       );
+    });
+
+    it('rejects with 409 while an answer is still being generated in the background, and publishes nothing', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          name: 'Generating',
+          messages: [
+            {
+              role: 'assistant',
+              content: '',
+              timestamp: 't',
+              backgroundGeneration: {
+                generationId: 'gen-1',
+                status: 'pending',
+                startedAt: 1,
+              },
+            },
+          ],
+        }),
+      );
+
+      await expect(
+        service.publish(
+          'token-abc',
+          'bucket-123',
+          'my-conversation-abc',
+          'Organization/Data Science',
+          'Test User',
+        ),
+      ).rejects.toMatchObject({
+        status: 409,
+        message: PUBLISH_WHILE_GENERATING_MESSAGE,
+      });
+      expect(dialClient.client.createPublication).not.toHaveBeenCalled();
+    });
+
+    it('publishes a conversation whose background answer already finished', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          name: 'Done',
+          messages: [
+            {
+              role: 'assistant',
+              content: 'answer',
+              timestamp: 't',
+              backgroundGeneration: {
+                generationId: 'gen-1',
+                status: 'completed',
+                startedAt: 1,
+              },
+            },
+          ],
+        }),
+      );
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({ createdAt: 1, author: 'Test User' }),
+      );
+
+      await service.publish(
+        'token-abc',
+        'bucket-123',
+        'my-conversation-abc',
+        'Organization/Data Science',
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledOnce();
     });
 
     it('throws NotFoundException when the conversation does not exist in the caller bucket', async () => {

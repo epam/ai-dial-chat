@@ -75,6 +75,14 @@ export class ConversationService {
   watchConversation = this.streamingService.watchConversation.bind(
     this.streamingService,
   );
+  resolveBackgroundAttach = this.streamingService.resolveBackgroundAttach.bind(
+    this.streamingService,
+  );
+  saveClientConversation = this.streamingService.saveClientConversation.bind(
+    this.streamingService,
+  );
+  stopBackgroundGeneration =
+    this.streamingService.stopBackgroundGeneration.bind(this.streamingService);
 
   // Thin pass-throughs to already-independent services — each needs one
   // line of glue (path qualification / URL building), so it stays a method

@@ -1,4 +1,5 @@
 import {
+  BackgroundGenerationStatus,
   type Conversation,
   MessageRole,
   type Message,
@@ -40,15 +41,31 @@ export const hasGeneratedPayload = (message: Message): boolean => {
 };
 
 /**
- * True when the conversation's last message is an unresolved assistant
- * placeholder: the backend only persists a conversation at generation start
- * (empty placeholder) and at generation end (final content, or a partial
- * flagged `streamErrorMessage`/`wasStoppedByUser`). This can mean generation
- * is still active elsewhere, or that its terminal save failed.
+ * Index of the conversation's message that a background generation is still
+ * producing (`backgroundGeneration.status` is `pending`), or -1. It can sit
+ * anywhere, e.g. before a model-changed status message.
+ */
+export const findPendingBackgroundMessageIndex = (
+  conversation: Conversation,
+): number =>
+  conversation.messages.findIndex(
+    (message) =>
+      message.backgroundGeneration?.status ===
+      BackgroundGenerationStatus.Pending,
+  );
+
+/**
+ * True when the conversation has a pending background message, or its last
+ * message is an unresolved assistant placeholder: the backend only persists a
+ * conversation at generation start (empty placeholder) and at generation end
+ * (final content, or a partial flagged `streamErrorMessage`/`wasStoppedByUser`).
+ * This can mean generation is still active elsewhere, or that its terminal save
+ * failed.
  */
 export const isAwaitingGenerationResume = (
   conversation: Conversation,
 ): boolean => {
+  if (findPendingBackgroundMessageIndex(conversation) !== -1) return true;
   const lastMessage = conversation.messages[conversation.messages.length - 1];
   return (
     !!lastMessage &&
@@ -211,6 +228,12 @@ export interface ResumeIfAwaitingGenerationDeps {
   generationPersistenceErrorMessage?: string;
   /** When set, replayed chunks are published at most once per frame through it. */
   frameScheduler?: FrameScheduler;
+  /**
+   * Generation ids the user stopped. A resumed background generation in this set
+   * ignores further replayed chunks (DIAL Core does not always honour the cancel), and
+   * its id is removed when the resume settles.
+   */
+  stoppedGenerationIdsRef?: MutableRefObject<Set<string>>;
 }
 
 /**
@@ -238,6 +261,7 @@ export const createResumeIfAwaitingGeneration = ({
   isPathDisplayed,
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   frameScheduler,
+  stoppedGenerationIdsRef,
 }: ResumeIfAwaitingGenerationDeps) => {
   return (
     currentConversationId: string,
@@ -256,7 +280,12 @@ export const createResumeIfAwaitingGeneration = ({
     resumingPathsRef.current.add(conversationPath);
     addStreamingPath(conversationPath);
 
-    const messageIndex = conversation.messages.length - 1;
+    const pendingBackgroundIndex =
+      findPendingBackgroundMessageIndex(conversation);
+    const isBackground = pendingBackgroundIndex !== -1;
+    const messageIndex = isBackground
+      ? pendingBackgroundIndex
+      : conversation.messages.length - 1;
     const resumedBuffer: BufferedGeneration = {
       generationId: RESUME_BUFFER_GENERATION_ID,
       messageIndex,
@@ -265,13 +294,28 @@ export const createResumeIfAwaitingGeneration = ({
     bufferedGenerationsRef.current.set(conversationPath, resumedBuffer);
     const ownsBuffer = () =>
       bufferedGenerationsRef.current.get(conversationPath) === resumedBuffer;
+    const backgroundGenerationId = isBackground
+      ? conversation.messages[messageIndex].backgroundGeneration?.generationId
+      : undefined;
+    const isStoppedByUser = () =>
+      backgroundGenerationId != null &&
+      (stoppedGenerationIdsRef?.current.has(backgroundGenerationId) ?? false);
 
     const finish = (result?: Conversation, persistenceFailed = false) => {
       frameScheduler?.flush(conversationPath);
+      if (backgroundGenerationId != null) {
+        stoppedGenerationIdsRef?.current.delete(backgroundGenerationId);
+      }
       if (!ownsBuffer()) return;
       resumingPathsRef.current.delete(conversationPath);
       removeStreamingPath(conversationPath);
+      /*
+       * A reload that still shows a pending background message is not a lost
+       * save: the job is still running in DIAL Core, and the stream hook resumes
+       * it again instead of warning.
+       */
       const placeholderReload =
+        !isBackground &&
         result &&
         result.messages.length - 1 === messageIndex &&
         isAwaitingGenerationResume(result) &&
@@ -334,7 +378,7 @@ export const createResumeIfAwaitingGeneration = ({
       });
 
     const applyAttachChunk = (chunk: StreamChunk) => {
-      if (!ownsBuffer()) return;
+      if (!ownsBuffer() || isStoppedByUser()) return;
       const updated = applyChunkToMessages([resumedBuffer.message], 0, chunk);
       if (updated) resumedBuffer.message = updated[0];
       if (!isPathDisplayed(conversationPath)) return;

@@ -177,6 +177,7 @@ import type {
   Message,
   Stage,
   Annotation,
+  BackgroundGeneration,
 } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentItem,
@@ -185,12 +186,17 @@ import type {
 import type { Theme, UserProfile, DialModel } from '@epam/ai-dial-chat-shared';
 import type { EntityHeaderItem } from '@epam/ai-dial-chat-shared';
 import {
+  BackgroundGenerationStatus,
   CatalogEntityType,
   MessageRole,
   MessageRating,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 ```
+
+### Background generation marker
+
+`Message.backgroundGeneration?: BackgroundGeneration` is present only on an assistant message produced by a DIAL Core background Responses job. It carries `generationId` (the message's identity across saves), `status` (`BackgroundGenerationStatus`: `Pending`, `Completed`, `Stopped`, `Failed`) and `startedAt` (epoch ms). The backend owns it; a message whose status is `Pending` is still being generated.
 
 ### Conversation custom view state
 
