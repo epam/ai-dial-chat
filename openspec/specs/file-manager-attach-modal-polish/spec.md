@@ -73,7 +73,7 @@ RTL: none.
 
 ### Requirement: Tab-specific empty state copy
 
-`DialFileManagerShell` SHALL pass tab-specific `emptyStateTitle` and `emptyStateDescription` to `DialFileManager` based on the active tab. Each tab SHALL use distinct i18n keys.
+`DialFileManagerShell` SHALL pass tab-specific `emptyStateTitle` and `emptyStateDescription` to `DialFileManager` based on the browsed source section (`controller.sectionTab ?? activeTab`), including while All remains the active tab. Each tab SHALL use distinct i18n keys.
 
 i18n keys:
 - My Files: `dialFileManager.myFiles.emptyStateTitle`, `dialFileManager.myFiles.emptyStateDescription`
@@ -137,3 +137,20 @@ Feature flag: none.
 
 - **WHEN** name consists of emoji characters (4 bytes each) and total exceeds 255 bytes
 - **THEN** returned name has UTF-8 byte length ≤ 255 with no split surrogate pair
+
+### Requirement: Attach modal uses compact chrome around a raised folder panel
+
+`FileManagerAttachModal` SHALL retain its fixed responsive height of `min(800px, 100dvh)` and sunken background. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
+
+In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners and a subtle shadow. It SHALL remove the file-manager content's bottom padding and apply grid padding through `contentClassName="pb-0"` and `gridClassName="size-full px-5 py-4"`. Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
+
+#### Scenario: Attach chrome and grid spacing
+
+- **WHEN** the file attachment modal renders
+- **THEN** its header has no bottom padding, its footer has no top padding, the raised folder panel has no visible heading, and the grid has the specified internal padding
+- **AND** the tab strip retains an accessible name through `tabsAriaLabel`
+
+#### Scenario: Standalone shell retains its presentation
+
+- **WHEN** the shell renders in Standalone mode
+- **THEN** its visible tree heading and existing content/grid spacing remain unchanged

@@ -67,7 +67,7 @@ When `variant === 'standalone'`, `useDialFileManager` SHALL fetch the initial fo
 - the root empty state (`labels.emptyStateByTab[gateTab]`)
 - the grid-editing-scroll reset
 
-`activeTab` SHALL remain the value passed as `treeOptions.activeTab` and the key for `labels.treeHeaderByTab`. `DialFileManagerShellLabels.treeHeaderByTab` and `.emptyStateByTab` stay `Record<DialFileManagerTabs, …>`, so hosts supply an `all` entry.
+`activeTab` SHALL remain the value passed as `treeOptions.activeTab` and the key for `labels.treeHeaderByTab`. In Attach mode the visible tree header SHALL be null, while `treeOptions.tabsAriaLabel` SHALL receive that label; the standalone header remains visible. `DialFileManagerShellLabels.treeHeaderByTab` and `.emptyStateByTab` stay `Record<DialFileManagerTabs, …>`, so hosts supply an `all` entry.
 
 #### Scenario: Upload-archive entry on the All tab inside My files
 
@@ -87,7 +87,7 @@ When `variant === 'standalone'`, `useDialFileManager` SHALL fetch the initial fo
 #### Scenario: Strip still shows All pressed
 
 - **WHEN** `activeTab === All` and `controller.sectionTab === Shared`
-- **THEN** `treeOptions.activeTab` is `All`, and the tree header is `labels.treeHeaderByTab[All]`
+- **THEN** `treeOptions.activeTab` is `All`, and the standalone tree header is `labels.treeHeaderByTab[All]`; Attach uses the same text as `tabsAriaLabel` with no visible header
 
 #### Scenario: Controllers without sectionTab behave as before
 
