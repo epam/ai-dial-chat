@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,6 +7,7 @@ import {
   useVisualizerMessage,
   VisualizerMessageProvider,
 } from '../../../context/VisualizerMessageContext';
+import { useUiFeature } from '../../useUiFeature';
 import { useVisualizerMessageSendHandler } from '../useVisualizerMessageSendHandler';
 
 vi.mock(
@@ -13,7 +15,10 @@ vi.mock(
   async () => import('../../../context/tests/app-config-context-mock'),
 );
 
+vi.mock('../../useUiFeature', () => ({ useUiFeature: vi.fn() }));
+
 const mockUseFeatureFlag = vi.mocked(useFeatureFlag);
+const mockUseUiFeature = vi.mocked(useUiFeature);
 
 interface HookProps {
   conversationId?: string;
@@ -27,7 +32,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 const renderHandler = (initialProps: HookProps = {}) => {
   const handleSend = vi.fn();
-  const rendered = renderHook(
+  const view = renderHook(
     (props: HookProps) => ({
       handler: useVisualizerMessageSendHandler({
         conversationId:
@@ -40,7 +45,7 @@ const renderHandler = (initialProps: HookProps = {}) => {
     }),
     { wrapper, initialProps },
   );
-  return { ...rendered, handleSend };
+  return { ...view, handleSend };
 };
 
 describe('useVisualizerMessageSendHandler', () => {
@@ -49,6 +54,7 @@ describe('useVisualizerMessageSendHandler', () => {
     mockUseFeatureFlag.mockImplementation(
       (key?: string) => key === 'visualizerSendMessages',
     );
+    mockUseUiFeature.mockReturnValue(false);
   });
 
   it('sends the content as a user message without attachments', () => {
@@ -80,6 +86,17 @@ describe('useVisualizerMessageSendHandler', () => {
 
   it('drops the message in a read-only conversation', () => {
     const { result, handleSend } = renderHandler({ isReadOnly: true });
+
+    result.current.handler?.('Next page');
+
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('drops the message when the overlay host enabled disabled-send', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.DisabledSend,
+    );
+    const { result, handleSend } = renderHandler();
 
     result.current.handler?.('Next page');
 

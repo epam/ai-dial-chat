@@ -285,10 +285,18 @@ describe('validate', () => {
 
   it.each([
     ['true', true],
+    ['TRUE', true],
+    ['1', true],
+    ['yes', true],
+    [' true ', true],
     ['false', false],
+    ['false ', false],
     ['0', false],
     ['no', false],
-  ])('parses ALLOW_VISUALIZER_SEND_MESSAGES=%s as %s', (rawValue, expected) => {
+    ['off', false],
+    ['disabled', false],
+    ['', false],
+  ])('parses ALLOW_VISUALIZER_SEND_MESSAGES=%j as %s', (rawValue, expected) => {
     const config = validate({
       ...baseConfig,
       ALLOW_VISUALIZER_SEND_MESSAGES: rawValue,

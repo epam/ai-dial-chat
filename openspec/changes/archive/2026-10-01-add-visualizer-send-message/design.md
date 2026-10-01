@@ -37,7 +37,7 @@
 Add `features.visualizerSendMessages`, mirroring `features.defaultDeploymentPinned` (`config-registry.constants.ts:344`). The generic provider/service loop already emits `features.*` booleans, so there is no change to `ClientConfigResponseDto`, the mapper, or OpenAPI, and no generated-client regeneration.
 
 - *Alternative:* a top-level `config` boolean like `overlayEnabled`. Rejected: it needs mapper and DTO changes and an OpenAPI regeneration for no gain.
-- *Parsing:* this reuses the strict boolean transform, so `"false"` means off. Legacy treated any non-empty value as on. The difference is documented in the migration guide; it only affects someone who set `=false` expecting it to be on, which is unlikely.
+- *Parsing:* fail-closed, unlike the `false`/`0`/`no` denylist the other boolean flags use: only `true`/`1`/`yes` (case-insensitive, trimmed) turn it on, so `''`, `off` or a typo leave it off. The flag lets an iframe send messages as the user, so an ambiguous value must not enable it. Legacy treated any non-empty value as on. The difference is documented in the migration guide.
 
 ### D2. The lib boundary is a callback prop
 
@@ -67,8 +67,8 @@ Add `features.visualizerSendMessages`, mirroring `features.defaultDeploymentPinn
   - `useVisualizerMessage()` exposes three stable controls: `registerSender`, `getRegisteredConversationId`, and `sendMessage(content, sourceConversationId?)`, which reads the ref at call time.
   - The Conversation page registers through `useVisualizerMessageSendHandler` (`apps/chat/src/hooks/conversation/`). That hook also reads the flag and returns the inline callback.
   - The context value is `useMemo`'d. The consumer hook throws outside the provider.
-- **The `send` registered by the page** is a closure over the latest `isStreaming`, `isReadOnly` and `handleSend`, kept in a ref:
-  - if streaming or read-only → drop;
+- **The `send` registered by the page** is a closure over the latest `isStreaming`, `isReadOnly`, overlay `disabled-send` and `handleSend`, kept in a ref that is synced in a layout effect after each commit (not during render):
+  - if streaming, read-only, or the overlay host enabled `disabled-send` → drop;
   - otherwise → `void handleSend(content, [])`.
   - `isChatMessageInputDisabled` is deliberately **not** a guard (see the spec).
 

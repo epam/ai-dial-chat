@@ -116,10 +116,11 @@ application visualizer can post `${title}/SEND_MESSAGE` with payload
 `{ message: string }`, the wire format `ChatVisualizerConnector.sendMessage`
 already emits. The text is sent as a user message in the conversation the
 visualizer belongs to. It is dropped while a response is streaming, in a
-read-only conversation, and from a canvas opened in another conversation.
-Nothing is posted back to the iframe. The value is now parsed as a boolean:
-`false`, `0` and `no` turn it off. Legacy turned it on for any non-empty
-value, so `ALLOW_VISUALIZER_SEND_MESSAGES=false` used to enable it.
+read-only conversation, when an overlay host enables `disabled-send`, and from
+a canvas opened in another conversation. Nothing is posted back to the iframe.
+The value is now parsed strictly: only `true`, `1` or `yes` turn it on, and any
+other value leaves it off. Legacy turned it on for any non-empty value, so
+`ALLOW_VISUALIZER_SEND_MESSAGES=false` used to enable it.
 
 ### Dropped with no replacement
 

@@ -104,6 +104,7 @@ When the callback fires with `content`, the host SHALL call the Conversation pag
 
 - the assistant is currently streaming in that conversation (`isStreaming`);
 - the conversation is read-only (the same `isReadOnly` that hides the input);
+- an overlay host enabled the `disabled-send` UI feature (`OverlayFeature.DisabledSend`), which blocks every send path;
 - no conversation is registered;
 - for the canvas surface: the conversation that opened the visualizer canvas is not the currently registered conversation.
 
@@ -145,6 +146,11 @@ Accessibility: no new UI. The resulting message and response render through the 
 - **WHEN** the flag is on and the conversation is read-only
 - **THEN** an inbound `SEND_MESSAGE` is dropped
 
+#### Scenario: dropped when the overlay host disabled sending
+
+- **WHEN** the flag is on and the overlay host enabled `disabled-send`
+- **THEN** an inbound `SEND_MESSAGE` is dropped
+
 #### Scenario: canvas from another conversation is dropped
 
 - **WHEN** the user opens a visualizer in the canvas from conversation A, navigates to conversation B with the canvas still open, and the visualizer posts `SEND_MESSAGE`
@@ -159,7 +165,7 @@ Accessibility: no new UI. The resulting message and response render through the 
 
 ### Requirement: Migration guide reflects the ported flag
 
-`docs/legacy-chat-migration-guide.md` SHALL list `ALLOW_VISUALIZER_SEND_MESSAGES` as ported, not under "Dropped with no replacement". It SHALL state that 1.0 parses the value as a boolean, so `false`/`0`/`no` disable it, whereas legacy enabled it for any non-empty value. `apps/chat-api/README.md` and `apps/chat-api/.env.template` SHALL document the variable with default `false`.
+`docs/legacy-chat-migration-guide.md` SHALL list `ALLOW_VISUALIZER_SEND_MESSAGES` as ported, not under "Dropped with no replacement". It SHALL state that 1.0 parses the value strictly, so only `true`/`1`/`yes` (case-insensitive, trimmed) enable it and any other value — including empty, `off` or `disabled` — leaves it off, whereas legacy enabled it for any non-empty value. `apps/chat-api/README.md` and `apps/chat-api/.env.template` SHALL document the variable with default `false`.
 
 #### Scenario: migration guide entry
 

@@ -475,6 +475,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     loadErrorLabel,
     forbiddenErrorLabel,
     visualizerErrorLabel,
+    onVisualizerSendMessage,
     htmlFrameBlockedLabel,
     htmlOpenInNewTabLabel,
     isHtmlSourceView,

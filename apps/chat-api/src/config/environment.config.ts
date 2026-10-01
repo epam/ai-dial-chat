@@ -933,7 +933,9 @@ export class EnvironmentVariables {
     const raw = (obj as Record<string, unknown>)[key];
     if (raw == null) return undefined;
     if (typeof raw === 'boolean') return raw;
-    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+    /* Fail closed: this flag lets an iframe send messages as the user, so
+     * only an explicit truthy value turns it on. */
+    return ['true', '1', 'yes'].includes(String(raw).trim().toLowerCase());
   })
   @IsBoolean()
   ALLOW_VISUALIZER_SEND_MESSAGES?: boolean = false;
