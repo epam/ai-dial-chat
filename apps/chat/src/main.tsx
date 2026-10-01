@@ -26,6 +26,7 @@ import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { UiFeaturesProvider } from './context/UiFeaturesContext';
 import { UserConfigProvider } from './context/UserConfigContext';
+import { VisualizerMessageProvider } from './context/VisualizerMessageContext';
 import './i18n/config';
 import './styles.scss';
 
@@ -80,7 +81,9 @@ root.render(
                                                   <PromptsProvider>
                                                     <SkillsProvider>
                                                       <ConversationsProvider>
-                                                        <App />
+                                                        <VisualizerMessageProvider>
+                                                          <App />
+                                                        </VisualizerMessageProvider>
                                                       </ConversationsProvider>
                                                     </SkillsProvider>
                                                   </PromptsProvider>

@@ -32,6 +32,7 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
       ready: vi.fn().mockReturnValue(new Promise(() => undefined)),
       send: vi.fn(),
       destroy: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
     };
   }),
 }));

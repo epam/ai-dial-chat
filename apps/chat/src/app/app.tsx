@@ -49,6 +49,7 @@ import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskConte
 import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
+import { useCanvasVisualizerMessageHandler } from '../hooks/attachment/useCanvasVisualizerMessageHandler';
 import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
@@ -156,6 +157,7 @@ const App: FC = () => {
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
+  const handleCanvasVisualizerSendMessage = useCanvasVisualizerMessageHandler();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
 
   const { isPanelOpen, closePanel, togglePanel } =
@@ -473,6 +475,7 @@ const App: FC = () => {
         {isConversationRoute && isAttachmentsManagerEnabled && (
           <AttachmentCanvasContainer
             loadPdf={loadPdf}
+            onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
             labels={{
               ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
               closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),

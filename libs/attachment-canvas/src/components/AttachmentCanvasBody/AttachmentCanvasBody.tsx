@@ -137,6 +137,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   loadPdf,
   hidePdfToolbar = false,
   configurePdfWorker,
+  onVisualizerSendMessage,
 }) => {
   const {
     colors,
@@ -430,6 +431,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           <VisualizerCanvasRenderer
             content={content}
             errorLabel={visualizerErrorLabel}
+            onSendMessage={onVisualizerSendMessage}
           />
         );
       case AttachmentContentType.McpApp:
@@ -475,6 +477,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     loadErrorLabel,
     forbiddenErrorLabel,
     visualizerErrorLabel,
+    onVisualizerSendMessage,
     htmlFrameBlockedLabel,
     htmlOpenInNewTabLabel,
     isHtmlSourceView,

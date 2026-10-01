@@ -83,6 +83,23 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
+  it('contains the client-visible features.visualizerSendMessages entry without role gating', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.visualizerSendMessages',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.visualizerSendMessages',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
+    });
+    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
+  });
+
   it('contains an open-ended client-visible event selection without a feature flag', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'ui.activeEventId',

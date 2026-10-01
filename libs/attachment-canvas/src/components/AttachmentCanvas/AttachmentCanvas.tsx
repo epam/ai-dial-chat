@@ -82,6 +82,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   codeBlockTheme,
   loadPdf,
   configurePdfWorker,
+  onVisualizerSendMessage,
 }) => {
   const [isCopiedText, setIsCopiedText] = useState(false);
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
@@ -382,6 +383,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         tableDownloadFilename={tableDownloadFilename}
         loadPdf={loadPdf}
         configurePdfWorker={configurePdfWorker}
+        onVisualizerSendMessage={onVisualizerSendMessage}
       />
     </SidebarPanel>
   );

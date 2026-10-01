@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   findVisualizerForApplication,
   findVisualizerForMime,
+  getVisualizerMessageContent,
   partitionAttachmentsForApplicationVisualizer,
 } from '../visualizer';
 
@@ -264,5 +265,23 @@ describe('partitionAttachmentsForApplicationVisualizer', () => {
     );
 
     expect(result).toEqual({ claimed: [], unclaimed: [] });
+  });
+});
+
+describe('getVisualizerMessageContent', () => {
+  it('returns the untrimmed message of a valid payload', () => {
+    expect(getVisualizerMessageContent({ message: ' hi ' })).toBe(' hi ');
+  });
+
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['a string', 'hi'],
+    ['an object without message', { content: 'hi' }],
+    ['a non-string message', { message: 1 }],
+    ['a blank message', { message: ' ' }],
+    ['an inherited message', Object.create({ message: 'hi' })],
+  ])('returns undefined for %s', (_label, payload) => {
+    expect(getVisualizerMessageContent(payload)).toBeUndefined();
   });
 });

@@ -215,7 +215,7 @@ A `ChatVisualizerConnector` class used by third-party visualizer applications ru
 - Accept one or more allowed host origins (`dialHost: string | string[]`) and discard any inbound `message` whose `event.origin` is not among them. Passing the wildcard `'*'` as the **first** entry disables the check entirely. The published package compares configured hosts with a string prefix check (`allowedHost.startsWith(event.origin)`).
 - Throw a descriptive error when constructed with an empty host list.
 
-For wire-format parity with already-deployed visualizers, the published class additionally retains a `sendMessage(content)` method that posts `${appName}/SEND_MESSAGE`, and a handler for inbound `${appName}/SEND_GROUPED_VISUALIZE_DATA` that invokes an `onGroupedData` callback and posts the matching `/RESPONSE`. **Both are inert end-to-end in the host**: this app implements no counterpart for either (see the "Deferred features" requirement below), so a `SEND_MESSAGE` envelope is silently ignored and `SEND_GROUPED_VISUALIZE_DATA` is never sent.
+The published class additionally exposes `sendMessage(content)`, which posts `${appName}/SEND_MESSAGE` with payload `{ message: content }` and no `requestId`, and a handler for inbound `${appName}/SEND_GROUPED_VISUALIZE_DATA` that invokes an `onGroupedData` callback and posts the matching `/RESPONSE`. The host handles `SEND_MESSAGE` only when the operator enables it, as specified by the `visualizer-send-message` capability; otherwise the envelope is silently ignored. The host sends `SEND_GROUPED_VISUALIZE_DATA` for application-scoped registry entries, as specified by the `application-visualizers` capability.
 
 #### Scenario: handshake is announced explicitly, not on construction
 
@@ -272,19 +272,28 @@ interface CustomVisualizerDataLayout {
 
 ### Requirement: Deferred features
 
-The following features SHALL NOT be implemented **on the host side** in this change. Where an iframe-side counterpart is retained for wire-format parity (see the `ChatVisualizerConnector` requirement above), it is inert because the host has no handler for it:
+The following features SHALL NOT be implemented **on the host side**:
 
-- `SEND_MESSAGE` iframe → host (visualizer injecting messages into the chat). The iframe-side `sendMessage` exists and posts the envelope; the host connector has no subscriber for it and ignores it.
 - Auth-token forwarding (`passAuthInfo`, `passExplicitToken`) or any inclusion of `accessToken`, `providerId`, or `logInHint` in outbound payloads or iframe URLs.
 - Locale, language, or `dir` propagation into the iframe URL query string.
-- Grouped/application-level visualizers (`SEND_GROUPED_VISUALIZE_DATA` and any per-`applicationId` registry). The iframe-side handler exists and would reply to the envelope; the host never sends one.
 
-Any implementation that adds these features SHALL be a separate OpenSpec change.
+Grouped/application-level visualizers are no longer deferred: the host sends
+`SEND_GROUPED_VISUALIZE_DATA` for an application-scoped registry entry, specified by the
+`application-visualizers` capability. Auth-token forwarding remains deferred for that
+registry too — its `passAuthInfo` / `passExplicitToken` fields are accepted for
+configuration parity and are inert, because 1.0 auth is server-side and the browser
+holds no access token.
 
-#### Scenario: SEND_MESSAGE is not handled
+`SEND_MESSAGE` iframe → host is no longer deferred: it is specified by the
+`visualizer-send-message` capability and is off unless the operator sets
+`ALLOW_VISUALIZER_SEND_MESSAGES`.
 
-- **WHEN** a visualizer iframe posts `${visualizerName}/SEND_MESSAGE`
-- **THEN** the host connector does not dispatch a chat message
+Any implementation that adds the remaining features SHALL be a separate OpenSpec change.
+
+#### Scenario: SEND_MESSAGE is ignored while the operator flag is off
+
+- **WHEN** `ALLOW_VISUALIZER_SEND_MESSAGES` is unset or `false` and a visualizer iframe posts `${visualizerName}/SEND_MESSAGE`
+- **THEN** the host does not dispatch a chat message
 - **AND** no error is thrown; the message is silently ignored
 
 #### Scenario: iframe URL is unmodified
