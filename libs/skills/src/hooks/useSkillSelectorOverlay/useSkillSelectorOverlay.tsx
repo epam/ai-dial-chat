@@ -10,6 +10,7 @@ import {
   Suspense,
   useCallback,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -85,8 +86,11 @@ export const useSkillSelectorOverlay = ({
    * argument.
    */
   const [browseCaretPosition, setBrowseCaretPosition] = useState(0);
-  /* Consumed `/query` (or replaced mention) to restore if "Use skill" is canceled — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
-  const [browseRestoreText, setBrowseRestoreText] = useState<{
+  /*
+   * Consumed query or mention to restore on cancel. A ref lets selection
+   * discard it before the catalog calls onClose in the same event.
+   */
+  const browseRestoreTextRef = useRef<{
     position: number;
     text: string;
     mentionUrl?: string;
@@ -244,7 +248,8 @@ export const useSkillSelectorOverlay = ({
 
       const matchedAnchor = mentions.anchors.find(
         (anchor) =>
-          anchor.start === query.start && anchor.start + anchor.length === query.end,
+          anchor.start === query.start &&
+          anchor.start + anchor.length === query.end,
       );
       return {
         position: query.start,
@@ -405,7 +410,7 @@ export const useSkillSelectorOverlay = ({
           const strayQuery = peekQueryAtCaret(caretPosition);
           const position = consumeQueryAtCaret(caretPosition);
           setBrowseCaretPosition(position);
-          setBrowseRestoreText(strayQuery ?? null);
+          browseRestoreTextRef.current = strayQuery ?? null;
           onClose();
           setIsCatalogOpen(true);
         }}
@@ -490,11 +495,11 @@ export const useSkillSelectorOverlay = ({
                   );
                   close({ consumeQuery: true, returnFocus: false });
                   setBrowseCaretPosition(caretPosition);
-                  setBrowseRestoreText({
+                  browseRestoreTextRef.current = {
                     position: caretPosition,
                     text,
                     mentionUrl: matchedAnchor?.url,
-                  });
+                  };
                   setIsCatalogOpen(true);
                 }}
                 onViewDetails={(item) => {
@@ -518,9 +523,11 @@ export const useSkillSelectorOverlay = ({
     ],
   );
 
-  /* Restores browseRestoreText on cancel — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  /* Restore a canceled browse once; a completed selection clears the snapshot. */
   const handleCatalogClose = useCallback(() => {
     setIsCatalogOpen(false);
+    const browseRestoreText = browseRestoreTextRef.current;
+    browseRestoreTextRef.current = null;
     if (browseRestoreText == null) return;
 
     const { position, text, mentionUrl } = browseRestoreText;
@@ -528,21 +535,22 @@ export const useSkillSelectorOverlay = ({
       mentions.restoreMention(mentionUrl, text.slice(1), position);
     } else {
       mentions.onDraftChange(
-        mentions.draft.slice(0, position) + text + mentions.draft.slice(position),
+        mentions.draft.slice(0, position) +
+          text +
+          mentions.draft.slice(position),
       );
     }
     setMessageRevision((revision) => revision + 1);
     setCaretPositionOverride(position + text.length);
-    setBrowseRestoreText(null);
-  }, [browseRestoreText, mentions]);
+  }, [mentions]);
 
   const skillCatalogModal = (
     <SkillCatalogModal
       isOpen={isCatalogOpen}
       onClose={handleCatalogClose}
       onSelect={(id) => {
+        browseRestoreTextRef.current = null;
         insertAndPush(id, resolveName(id), browseCaretPosition);
-        setBrowseRestoreText(null);
         setIsCatalogOpen(false);
       }}
       title={catalogModalTitleLabel}
