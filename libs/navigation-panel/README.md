@@ -131,7 +131,7 @@ A `SheetRow` marks state through two props: `isCurrent` sets `aria-current="true
 
 ### Shared primitives
 
-`UserAvatar` (image with initials fallback) and `AvatarInitials` (circular initials badge).
+`UserAvatar` (image with initials fallback) and `AvatarInitials` (circular initials badge), both drawn by the UI kit's `Avatar`. Only the image is named by `alt`; the initials badge is decorative.
 
 `UserMenu`'s submenu rows mark the applied option through the UI kit's own `MenuItemMark.Check`, so the trailing check and the `menuitemradio` role come from `Dropdown` rather than from this library.
 
