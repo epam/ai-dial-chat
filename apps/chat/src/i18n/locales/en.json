@@ -1485,6 +1485,18 @@
       "unpublishRequestedTitle": "Quick app unpublish requested",
       "unpublishRequested": "Unpublish request for quick app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
+    "schemaApp": {
+      "createdTitle": "{{type}} created successfully",
+      "created": "You can now see {{type}} \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "{{type}} edited successfully",
+      "edited": "Changes for {{type}} \"{{name}}\" are saved.",
+      "deletedTitle": "{{type}} deleted successfully",
+      "deleted": "{{type}} \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "{{type}} publish requested",
+      "publishRequested": "Publish request for {{type}} \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "{{type}} unpublish requested",
+      "unpublishRequested": "Unpublish request for {{type}} \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
     "customApp": {
       "createdTitle": "Custom app created successfully",
       "created": "You can now see custom app \"{{name}}\" in the catalog and My collection.",

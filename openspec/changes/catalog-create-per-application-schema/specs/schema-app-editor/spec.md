@@ -89,7 +89,7 @@ Example body:
 
 Its `validateSetup` SHALL return a `properties` error (`appsEditor.schemaForm.requiredMissing`) when any name in `requiredProperties` has no value — absent, `null`, a blank string, or an empty array (`getMissingRequiredProperties`). `false` and `0` count as values. Only top-level required properties are checked; nested ones are left to the renderer's own highlighting.
 
-The page title SHALL use the schema's `displayName` (`appsEditor.createTitle` / `appsEditor.editTitle` with `{{type}}`), falling back to `appsEditor.defaultTypeName`. The definition reports success through the existing `NotifiableEntity.QuickApp` notifications.
+The page title SHALL use the schema's `displayName` (`appsEditor.createTitle` / `appsEditor.editTitle` with `{{type}}`), falling back to `appsEditor.defaultTypeName`. The definition reports success through `getNotificationTarget: resolveSchemaNotificationTarget`: the `Quick app` copy for the QuickApp schema, the `SchemaApp` copy naming the schema's `displayName` (e.g. "External app edited successfully") for any other known schema, and the generic `Agent` copy when the schema is unknown (see `entity-operation-notifications`). The embedded-editor kind (`quickAppDefinition`) resolves its notifications the same way.
 
 #### Scenario: Creation is blocked while a required property is empty
 

@@ -1,5 +1,8 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
-import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ApplicationSchemaSummaryDto,
+  DeploymentItemDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   findDeploymentByIdOrReference,
   getPublicCatalogEntityFolderPath,
@@ -21,12 +24,17 @@ import {
   unpublishCatalogEntity,
 } from '../../server-api/publish.api';
 import { EntityOperation } from '../../types/entity-notification';
-import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import {
+  findSchemaDisplayName,
+  resolveCatalogItemEntity,
+} from '../../utils/entity-notification';
 import { getPublishFolderLabel } from '../../utils/publish';
 import type { useOperationNotification } from '../useOperationNotification';
 
 interface UseCatalogPublishingParams {
   deployments: DeploymentItemDto[];
+  /** Application schemas, used to name a schema app by its schema in notifications. */
+  schemas: ApplicationSchemaSummaryDto[];
   rememberPublishFolder: (folderPath: string[]) => void;
   notifyOperationSuccess: ReturnType<
     typeof useOperationNotification
@@ -68,6 +76,7 @@ interface UseCatalogPublishingResult {
  */
 export const useCatalogPublishing = ({
   deployments,
+  schemas,
   rememberPublishFolder,
   notifyOperationSuccess,
   showPublishError,
@@ -207,37 +216,41 @@ export const useCatalogPublishing = ({
         showPublishError(error, EntityOperation.UnpublishRequested);
         throw error;
       }
+      const deployment = findDeploymentByIdOrReference(deployments, item.id);
       notifyOperationSuccess(
-        resolveCatalogItemEntity(
-          item.type,
-          findDeploymentByIdOrReference(deployments, item.id),
-        ),
+        resolveCatalogItemEntity(item.type, deployment, schemas),
         EntityOperation.UnpublishRequested,
         {
           name: item.name,
           folder: getPublishFolderLabel(folderPath, t),
+          type: findSchemaDisplayName(
+            schemas,
+            deployment?.applicationTypeSchemaId,
+          ),
         },
       );
     },
-    [deployments, notifyOperationSuccess, showPublishError, t],
+    [deployments, notifyOperationSuccess, schemas, showPublishError, t],
   );
 
   const handlePublishSuccess = useCallback(
     (item: CatalogItem, folderPath: string[]) => {
       rememberPublishFolder(folderPath);
+      const deployment = findDeploymentByIdOrReference(deployments, item.id);
       notifyOperationSuccess(
-        resolveCatalogItemEntity(
-          item.type,
-          findDeploymentByIdOrReference(deployments, item.id),
-        ),
+        resolveCatalogItemEntity(item.type, deployment, schemas),
         EntityOperation.PublishRequested,
         {
           name: item.name,
           folder: getPublishFolderLabel(folderPath, t),
+          type: findSchemaDisplayName(
+            schemas,
+            deployment?.applicationTypeSchemaId,
+          ),
         },
       );
     },
-    [deployments, rememberPublishFolder, notifyOperationSuccess, t],
+    [deployments, rememberPublishFolder, notifyOperationSuccess, schemas, t],
   );
 
   const handlePublishError = useCallback(

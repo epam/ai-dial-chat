@@ -3,6 +3,8 @@ export enum NotifiableEntity {
   Prompt = 'prompt',
   Agent = 'agent',
   QuickApp = 'quickApp',
+  /** An app of an application schema other than QuickApp, named by the schema's display name. */
+  SchemaApp = 'schemaApp',
   CustomApp = 'customApp',
   Toolset = 'toolset',
   Model = 'model',

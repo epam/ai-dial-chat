@@ -6,15 +6,20 @@ import type {
 import {
   composeLocalePayload,
   decomposeLocalizedFields,
+  isQuickAppSchema,
 } from '@epam/ai-dial-chat-hooks';
 import type {
+  ApplicationEditorContext,
   ApplicationEditorDefinition,
+  ApplicationNotificationTarget,
   ApplicationEditorFormDefinition,
   ApplicationEditorPageDefinition,
   ApplicationSetupValues,
 } from '../models/application-editor';
 import { ApplicationEditorKind } from '../types/application-editor';
+import { AppsEditorQuery } from '../types/apps-editor';
 import type { TriggerSaveGeneralPayload } from '../types/apps-editor';
+import { NotifiableEntity } from '../types/entity-notification';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 
 /** Erases a kind's setup type so it can sit in the shared registry. */
@@ -32,6 +37,21 @@ export const resolveSchemaEditorKind = (
   return schema && !schema.editorUrl
     ? ApplicationEditorKind.SchemaApp
     : ApplicationEditorKind.QuickApp;
+};
+
+/** Returns what a schema app's notifications name: quick app for the QuickApp schema, the schema's display name for any other known schema, else the generic application (agent). */
+export const resolveSchemaNotificationTarget = ({
+  searchParams,
+  schemas,
+}: ApplicationEditorContext): ApplicationNotificationTarget => {
+  const schemaId = searchParams.get(AppsEditorQuery.Schema);
+  const schema = schemas.find((item) => item.id === schemaId) ?? {
+    id: schemaId ?? undefined,
+  };
+  if (isQuickAppSchema(schema)) return { entity: NotifiableEntity.QuickApp };
+  return schema.displayName
+    ? { entity: NotifiableEntity.SchemaApp, type: schema.displayName }
+    : { entity: NotifiableEntity.Agent };
 };
 
 /** Returns the required property names that have no value: absent, `null`, a blank string or an empty array. */

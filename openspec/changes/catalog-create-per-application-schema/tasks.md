@@ -56,6 +56,15 @@ Slicing strategy: **vertical**. Each slice ran end to end (lib → app → tests
   - Verification: `npm run test:file -- libs/chat-hooks/src/catalog/useCatalogEditNavigation/tests/useCatalogEditNavigation.spec.ts`
 - [ ] 6.3 Run `npm run verify:changed`, then close the change with one `npm run verify:full`.
 
+## 8. Review fixes
+
+- [x] 8.1 Make the Create menu's sticky search row cover the panel's 4px inset (`-top-1`) in `libs/catalog/src/components/Catalog/CreateButton.tsx`, so scrolled options no longer show above it.
+- [x] 8.2 Add `NotifiableEntity.SchemaApp`, its `ENTITY_OPERATION_NOTIFICATIONS` entry, `EntityNotificationsI18nKeys.SchemaApp*` and the `entityNotifications.schemaApp.*` strings (`{{type}}` = schema display name), and the `type` field of `OperationNotificationParams` (`apps/chat/src/hooks/useOperationNotification.ts`).
+- [x] 8.3 Add `getNotificationTarget` / `ApplicationNotificationTarget` to `apps/chat/src/models/application-editor.ts`, use it in `ApplicationFormEditor.tsx`, and set it to `resolveSchemaNotificationTarget` (`apps/chat/src/utils/application-editor.ts`) in `quickAppDefinition.tsx` and `schemaAppDefinition.tsx`.
+- [x] 8.4 Resolve `SchemaApp` in `resolveCatalogItemEntity` and add `findSchemaDisplayName` (`apps/chat/src/utils/entity-notification.ts`); pass `schemas` and `type` from `CatalogView.tsx` and `useCatalogPublishing.ts`.
+- [x] 8.5 Tests in `apps/chat/src/utils/tests/entity-notification.spec.ts`, `apps/chat/src/utils/tests/application-editor.spec.ts`, and `apps/chat/src/hooks/useCatalogPublishing/tests/useCatalogPublishing.spec.ts`.
+  - Verification: `npm run test:file -- apps/chat/src/utils/tests/entity-notification.spec.ts apps/chat/src/utils/tests/application-editor.spec.ts apps/chat/src/hooks/tests/useOperationNotification.spec.ts apps/chat/src/hooks/useCatalogPublishing/tests/useCatalogPublishing.spec.ts apps/chat/src/pages/ApplicationEditor/tests/quickAppDefinition.spec.tsx`
+
 ## 7. Follow-ups (out of scope)
 
 - [ ] 7.1 Pass translated `texts` to `DialSchemaRenderer` in `SchemaAppSetup.tsx` (placeholders, add/remove labels, aria labels).

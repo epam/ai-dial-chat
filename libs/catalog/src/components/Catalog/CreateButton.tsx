@@ -83,7 +83,10 @@ export const CreateButton: FC<CreateButtonProps> = ({
           matchReferenceWidth={false}
           listClassName={CREATE_MENU_LIST_CLASS_NAME}
           menuHeader={
-            <div className="sticky top-0 z-10 bg-layer-raised px-2 pb-1 pt-2">
+            /* The panel's own 4px inset (`p-1`) would leave a strip above a
+               `top-0` sticky row where scrolled options show through, so the
+               row sticks 4px higher to cover it. */
+            <div className="sticky -top-1 z-10 bg-layer-raised px-2 pb-1 pt-2">
               <Search
                 value={search.value}
                 placeholder={searchPlaceholder}

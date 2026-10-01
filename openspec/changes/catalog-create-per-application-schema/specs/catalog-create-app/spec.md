@@ -125,7 +125,7 @@ The query SHALL be trimmed and matched case-insensitively as a substring of each
 
 `CreateButton` SHALL render, when `search` is provided:
 
-- the kit `Search` (small) in the dropdown's `menuHeader`, named by the placeholder (`aria-label`), sticky at the top of the panel;
+- the kit `Search` (small) in the dropdown's `menuHeader`, named by the placeholder (`aria-label`), on an opaque `bg-layer-raised` row that sticks at `-top-1`, so it also covers the panel's 4px inset and no scrolled option shows above or behind it;
 - every string option label, nested labels included, through the kit `Highlight` for the current query with `maxLines={1}` — one line, ellipsis, tooltip on overflow;
 - a single `DropdownItemType.PlainText` row wrapping the no-results label in `role="status"` when the filtered list is empty;
 - a reset of the query to `''` whenever the menu closes.

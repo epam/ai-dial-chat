@@ -11,6 +11,7 @@ The catalog Create menu offered a single hard-coded "QuickApp" entry, while DIAL
 - The searchable menu has a **fixed 320px width** anchored to the button's end edge, and a height of seven rows under a sticky search row; longer lists scroll.
 - Every runner creates through the existing `/apps-editor` route, like QuickApp. The editor kind is chosen from the schema: a schema **with** `editorUrl` keeps the embedded-editor flow (metadata first, then the "Create the application to configure its setup" step and the iframe); a schema **without** `editorUrl` opens a new **schema-app editor** that renders the full JSON schema with `DialSchemaRenderer`, creates the application in one request carrying `applicationProperties`, loads and saves them on edit, and blocks saving while a top-level required property is empty.
 - Apps of **any** runner are editable by their owner, and Edit opens the editor under the app's own schema.
+- Success notifications name an app "Quick app" only for the QuickApp schema; an app of any other schema is named by the schema's display name ("External app edited successfully"). New i18n keys: `entityNotifications.schemaApp.*` (10 strings).
 - **BREAKING (URLs)**: the editors no longer read a `returnUrl` query parameter; they always return to their fixed route. `isSafeReturnUrl`, `resolveReturnUrl`, `ScheduledTaskCreateQuery` and the `ReturnUrl` enum members are removed.
 
 **Non-goals**
@@ -48,6 +49,7 @@ The catalog Create menu offered a single hard-coded "QuickApp" entry, while DIAL
 - `catalog-create-app`: the Create menu is built from every runner schema plus the static options, sorted together, searchable, with a fixed-size scrolling panel; the single Quick App entry, its schema resolution and the fixed order are replaced; non-runner entries no longer carry a return-url parameter.
 - `catalog-quickapp-edit-action`: owned apps of any runner schema are editable, Edit routes to the app's own schema, and the toolset Edit URL no longer carries `returnUrl`.
 - `catalog-create-options`: the Skill "Write instructions" and Prompt entries (and Prompt Edit) navigate without `returnUrl`, and the Prompt entry is placed by the alphabetical sort instead of last.
+- `entity-operation-notifications`: only apps of the QuickApp schema are named "Quick app"; an app of any other schema is named by the schema's display name (new `schemaApp` copy with `{{type}}`), in the editors and in catalog operations, falling back to "Agent" when the schema is unknown.
 
 ## Impact
 

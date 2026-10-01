@@ -68,7 +68,10 @@ import { EditorQuery } from '../../types/editor-query';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { getCatalogSearchPlaceholder } from '../../utils/catalog';
-import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import {
+  findSchemaDisplayName,
+  resolveCatalogItemEntity,
+} from '../../utils/entity-notification';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
@@ -423,6 +426,7 @@ const CatalogView: FC<Props> = ({
     isUnpublishVisible,
   } = useCatalogPublishing({
     deployments,
+    schemas,
     rememberPublishFolder,
     notifyOperationSuccess,
     showPublishError,
@@ -492,13 +496,17 @@ const CatalogView: FC<Props> = ({
 
   const handleDeleteSuccess = useCallback(
     (item: CatalogItem) => {
+      const deployment = findDeploymentByIdOrReference(deployments, item.id);
       notifyOperationSuccess(
-        resolveCatalogItemEntity(
-          item.type,
-          findDeploymentByIdOrReference(deployments, item.id),
-        ),
+        resolveCatalogItemEntity(item.type, deployment, schemas),
         EntityOperation.Deleted,
-        { name: item.name },
+        {
+          name: item.name,
+          type: findSchemaDisplayName(
+            schemas,
+            deployment?.applicationTypeSchemaId,
+          ),
+        },
       );
 
       /*
@@ -524,7 +532,7 @@ const CatalogView: FC<Props> = ({
       };
       void removeFavorite();
     },
-    [deployments, favoriteIds, notifyOperationSuccess, toggleFavorite],
+    [deployments, favoriteIds, notifyOperationSuccess, schemas, toggleFavorite],
   );
 
   const { handleEdit, handleDelete, createOptions, createSearch } =

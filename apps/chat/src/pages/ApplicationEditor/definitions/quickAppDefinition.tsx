@@ -24,7 +24,10 @@ import {
 } from '../../../types/application-editor';
 import { AppsEditorQuery } from '../../../types/apps-editor';
 import { NotifiableEntity } from '../../../types/entity-notification';
-import { defineApplicationEditor } from '../../../utils/application-editor';
+import {
+  defineApplicationEditor,
+  resolveSchemaNotificationTarget,
+} from '../../../utils/application-editor';
 import { PRIMARY_LOCALE } from '../../../utils/locale';
 import QuickAppSetup from '../setup/QuickAppSetup';
 
@@ -97,6 +100,7 @@ export const quickAppDefinition =
   defineApplicationEditor<EmptyApplicationSetup>({
     kind: ApplicationEditorKind.QuickApp,
     notifiableEntity: NotifiableEntity.QuickApp,
+    getNotificationTarget: resolveSchemaNotificationTarget,
     createStrategy: ApplicationCreateStrategy.MetadataFirst,
     idQueryParam: AppsEditorQuery.AppId,
     messageKeys: {

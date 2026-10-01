@@ -30,6 +30,7 @@ import { NotifiableEntity } from '../../../types/entity-notification';
 import {
   defineApplicationEditor,
   getMissingRequiredProperties,
+  resolveSchemaNotificationTarget,
 } from '../../../utils/application-editor';
 import { PRIMARY_LOCALE } from '../../../utils/locale';
 import SchemaAppSetup from '../setup/SchemaAppSetup';
@@ -126,6 +127,7 @@ export const schemaAppDefinition =
   defineApplicationEditor<SchemaApplicationSetup>({
     kind: ApplicationEditorKind.SchemaApp,
     notifiableEntity: NotifiableEntity.QuickApp,
+    getNotificationTarget: resolveSchemaNotificationTarget,
     createStrategy: ApplicationCreateStrategy.AllAtOnce,
     idQueryParam: AppsEditorQuery.AppId,
     messageKeys: {

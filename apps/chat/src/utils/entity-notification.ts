@@ -1,3 +1,7 @@
+import {
+  isQuickAppSchema,
+  type QuickAppSchemaLike,
+} from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { EntityNotificationsI18nKeys } from '../constants/translation-keys';
 import {
@@ -88,6 +92,28 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
     [EntityOperation.UnpublishRequested]: {
       titleKey: EntityNotificationsI18nKeys.QuickAppUnpublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.QuickAppUnpublishRequested,
+    },
+  },
+  [NotifiableEntity.SchemaApp]: {
+    [EntityOperation.Created]: {
+      titleKey: EntityNotificationsI18nKeys.SchemaAppCreatedTitle,
+      messageKey: EntityNotificationsI18nKeys.SchemaAppCreated,
+    },
+    [EntityOperation.Edited]: {
+      titleKey: EntityNotificationsI18nKeys.SchemaAppEditedTitle,
+      messageKey: EntityNotificationsI18nKeys.SchemaAppEdited,
+    },
+    [EntityOperation.Deleted]: {
+      titleKey: EntityNotificationsI18nKeys.SchemaAppDeletedTitle,
+      messageKey: EntityNotificationsI18nKeys.SchemaAppDeleted,
+    },
+    [EntityOperation.PublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.SchemaAppPublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.SchemaAppPublishRequested,
+    },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.SchemaAppUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.SchemaAppUnpublishRequested,
     },
   },
   [NotifiableEntity.CustomApp]: {
@@ -240,6 +266,7 @@ export type CatalogNotifiableEntity =
   | NotifiableEntity.Prompt
   | NotifiableEntity.Agent
   | NotifiableEntity.QuickApp
+  | NotifiableEntity.SchemaApp
   | NotifiableEntity.CustomApp
   | NotifiableEntity.Toolset
   | NotifiableEntity.Model
@@ -262,20 +289,34 @@ interface AgentDeployment {
   applicationTypeSchemaId?: string | null;
 }
 
+/** Returns the display name of the schema with `schemaId`, or `undefined` when it is not in `schemas` or has none. */
+export const findSchemaDisplayName = (
+  schemas: QuickAppSchemaLike[],
+  schemaId: string | null | undefined,
+): string | undefined =>
+  schemaId
+    ? schemas.find((schema) => schema.id === schemaId)?.displayName
+    : undefined;
+
 /**
  * Returns the notification entity kind for a catalog item. An `Agent` item is a
- * quick app when its deployment carries an application schema and a custom app
- * when it does not; without a resolved deployment the kind is unknown, so the
- * generic `Agent` copy is used rather than guessing.
+ * quick app when its deployment carries the QuickApp schema, a custom app when
+ * it carries no schema, a schema app (copy naming the schema) when its schema's
+ * display name is known, and the generic `Agent` otherwise or when the
+ * deployment is unknown, rather than guessing.
  */
 export const resolveCatalogItemEntity = (
   type: CatalogEntityType,
   deployment?: AgentDeployment,
+  schemas: QuickAppSchemaLike[] = [],
 ): CatalogNotifiableEntity => {
   if (type !== CatalogEntityType.Agent)
     return CATALOG_ENTITY_TO_NOTIFIABLE[type];
   if (deployment == null) return NotifiableEntity.Agent;
-  return deployment.applicationTypeSchemaId
-    ? NotifiableEntity.QuickApp
-    : NotifiableEntity.CustomApp;
+  const schemaId = deployment.applicationTypeSchemaId;
+  if (!schemaId) return NotifiableEntity.CustomApp;
+  if (isQuickAppSchema({ id: schemaId })) return NotifiableEntity.QuickApp;
+  return findSchemaDisplayName(schemas, schemaId)
+    ? NotifiableEntity.SchemaApp
+    : NotifiableEntity.Agent;
 };

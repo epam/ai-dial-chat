@@ -52,6 +52,7 @@ const renderPublishing = (
   const view = renderHook(() =>
     useCatalogPublishing({
       deployments: [] as DeploymentItemDto[],
+      schemas: [],
       rememberPublishFolder,
       notifyOperationSuccess,
       showPublishError,

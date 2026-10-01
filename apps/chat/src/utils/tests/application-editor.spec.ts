@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ApplicationEditorKind } from '../../types/application-editor';
+import { NotifiableEntity } from '../../types/entity-notification';
 import {
   getMissingRequiredProperties,
   resolveSchemaEditorKind,
+  resolveSchemaNotificationTarget,
 } from '../application-editor';
 
 describe('resolveSchemaEditorKind', () => {
@@ -49,5 +51,47 @@ describe('getMissingRequiredProperties', () => {
 
   it('treats every required name as missing when there are no properties yet', () => {
     expect(getMissingRequiredProperties(undefined, ['a'])).toEqual(['a']);
+  });
+});
+
+describe('resolveSchemaNotificationTarget', () => {
+  const t = ((key: string) => key) as never;
+  const contextFor = (schemaId: string) => ({
+    searchParams: new URLSearchParams({ schema: schemaId }),
+    schemas: [
+      {
+        id: 'https://example.com/schemas/quickapps2',
+        displayName: 'Quick app 2.0',
+      },
+      {
+        id: 'https://example.com/schemas/externalapps',
+        displayName: 'External app',
+      },
+    ],
+    t,
+  });
+
+  it('notifies about a quick app for the QuickApp schema', () => {
+    expect(
+      resolveSchemaNotificationTarget(
+        contextFor('https://example.com/schemas/quickapps2'),
+      ),
+    ).toEqual({ entity: NotifiableEntity.QuickApp });
+  });
+
+  it('names any other known schema by its display name', () => {
+    expect(
+      resolveSchemaNotificationTarget(
+        contextFor('https://example.com/schemas/externalapps'),
+      ),
+    ).toEqual({ entity: NotifiableEntity.SchemaApp, type: 'External app' });
+  });
+
+  it('falls back to the generic application copy for an unknown schema', () => {
+    expect(
+      resolveSchemaNotificationTarget(
+        contextFor('https://example.com/schemas/unknown'),
+      ),
+    ).toEqual({ entity: NotifiableEntity.Agent });
   });
 });

@@ -71,9 +71,19 @@ export type ApplicationEditorI18nKey = ParseKeys<'translation'>;
 
 /** Notifiable entities an application editor reports on. */
 export type ApplicationNotifiableEntity =
+  | NotifiableEntity.Agent
   | NotifiableEntity.CustomApp
   | NotifiableEntity.QuickApp
+  | NotifiableEntity.SchemaApp
   | NotifiableEntity.Toolset;
+
+/** What an application editor's success notification names. */
+export interface ApplicationNotificationTarget {
+  /** Entity whose copy is used. */
+  entity: ApplicationNotifiableEntity;
+  /** Schema display name the `SchemaApp` copy interpolates as `{{type}}`. */
+  type?: string;
+}
 
 /** i18n keys of the confirmation popup a kind may show before persisting. */
 export interface ApplicationEditorConfirmation {
@@ -100,6 +110,10 @@ export interface ApplicationEditorMessageKeys {
 export interface ApplicationEditorFormDefinition<TSetup> {
   kind: ApplicationEditorKind;
   notifiableEntity: ApplicationNotifiableEntity;
+  /** Resolves what the notifications name from the page context when it depends on it, e.g. on the schema; overrides `notifiableEntity`. */
+  getNotificationTarget?: (
+    ctx: ApplicationEditorContext,
+  ) => ApplicationNotificationTarget;
   createStrategy: ApplicationCreateStrategy;
   /** Query param holding the edited application's id. */
   idQueryParam: string;
