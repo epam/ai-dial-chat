@@ -1,7 +1,8 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import type { ItemDetailsTexts } from '@epam/ai-dial-catalog';
 import { useSkillDetailsPanelData } from '@epam/ai-dial-chat-hooks';
 import { SkillDetailsSidePanel } from '@epam/ai-dial-skills';
-import { memo, useCallback, useMemo, type FC } from 'react';
+import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
@@ -48,6 +49,12 @@ const SkillDetailsPanelContainer: FC<Props> = ({ skillId, onClose }) => {
   const { t } = useTranslation();
   const { skills, sharedWithMe, publicSkills } = useSkills();
   const { favoriteIds } = useFavoriteApplications();
+  const { closeCanvas } = useAttachmentCanvas();
+
+  /* Skill details take over the attachment preview's space in the chat. */
+  useEffect(() => {
+    if (skillId != null) closeCanvas();
+  }, [skillId, closeCanvas]);
 
   const skillDetailsApi = useMemo(
     () => ({ downloadSkillFile, listSkillFiles, getSkillMetadata }),
