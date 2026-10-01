@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "packId": "new-year-default",
+  "version": "1.0.0",
+  "eventId": "new-year",
+  "requiredCapabilities": [
+    "lottie-light-svg-v1",
+    "viewport-stage-v1",
+    "static-poster-v1"
+  ],
+  "assets": [
+    {
+      "assetId": "new-year-default-sleigh-desktop-7698d031c8419a21",
+      "file": "sleigh.desktop.7698d031c8419a21.json",
+      "mediaType": "application/json",
+      "bytes": 148213,
+      "sha256": "7698d031c8419a219efe251e34bfe4d46cbac27c7695e06617a7b27ca2cded4a"
+    },
+    {
+      "assetId": "new-year-default-sleigh-mobile-56e38cc579cac194",
+      "file": "sleigh.mobile.56e38cc579cac194.json",
+      "mediaType": "application/json",
+      "bytes": 97105,
+      "sha256": "56e38cc579cac1944021a940d793ade34610122f8bb5a9fb3bba7026ae297695"
+    },
+    {
+      "assetId": "new-year-default-sleigh-poster-20f76a6263441b20",
+      "file": "sleigh.poster.20f76a6263441b20.svg",
+      "mediaType": "image/svg+xml",
+      "bytes": 4120,
+      "sha256": "20f76a6263441b2077a50d5e8cfd49abfd97c6252cc30f3c546d62204c1fffe5"
+    }
+  ],
+  "labels": {
+    "en": {
+      "sleighToastMessage": "Special delivery from the night sky. Send \"{{phrase}}\" in the start-page chat for a secret surprise."
+    }
+  },
+  "scenes": [
+    {
+      "id": "sleigh",
+      "labelId": "sleighToastMessage",
+      "renderer": "lottie-light-svg-v1",
+      "requiredCapabilities": [
+        "lottie-light-svg-v1",
+        "viewport-stage-v1",
+        "static-poster-v1"
+      ],
+      "placement": {
+        "template": "viewport-stage-v1",
+        "fit": "contain",
+        "align": "center"
+      },
+      "direction": "none",
+      "timing": {
+        "playbackDurationMs": 10100,
+        "loadTimeoutMs": 2000,
+        "readyTimeoutMs": 250,
+        "maxLifetimeMs": 12500
+      },
+      "posterAssetId": "new-year-default-sleigh-poster-20f76a6263441b20",
+      "posterDurationMs": 4000,
+      "variants": [
+        {
+          "when": {
+            "layout": "desktop"
+          },
+          "animationAssetId": "new-year-default-sleigh-desktop-7698d031c8419a21"
+        },
+        {
+          "when": {
+            "layout": "mobile"
+          },
+          "animationAssetId": "new-year-default-sleigh-mobile-56e38cc579cac194"
+        }
+      ]
+    }
+  ],
+  "event": {
+    "titleLabelId": "toastTitle",
+    "clickSceneIds": [
+      "confetti"
+    ],
+    "iconAssetId": "company-anniversary-icon-fdfbf047a8df14a3",
+    "decoration": {
+      "template": "static-trigger-v1",
+      "posterAssetId": "company-anniversary-icon-fdfbf047a8df14a3",
+      "labelId": "activate"
+    }
+  }
+}
