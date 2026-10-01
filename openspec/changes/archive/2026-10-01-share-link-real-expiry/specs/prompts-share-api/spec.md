@@ -1,10 +1,4 @@
-# prompts-share-api Specification
-
-## Purpose
-
-Sharing personal prompts through the existing share endpoint.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Personal prompts are shareable via the existing share endpoint
 
@@ -68,45 +62,3 @@ determined (see `share-link-expiry`):
 
 - **WHEN** an accepted invitation's itemId starts with `prompts/`
 - **THEN** the response carries neither `sharedDeployment` nor `sharedToolset`, and no deployment or toolset resolution is attempted
-
----
-
-### Requirement: Shared prompts appear in the personal prompt list
-
-The `GET /api/v1/prompts` endpoint's `sharedWithMe` field (defined in `prompts-api`) SHALL be populated by querying DIAL Core's shared-resources listing for resources under the `prompts/` path namespace. The service calls DIAL Core's shared-resources API (the same call used by `ConversationService` to populate shared conversations) filtered to prompt paths, maps results to `PromptResponseDto`, and returns them in `sharedWithMe`.
-
-If DIAL Core returns no shared resources or the call fails non-fatally, `sharedWithMe` SHALL default to an empty array (graceful degradation — the personal and org prompts are still returned).
-
-#### Scenario: Shared prompts are included in the list
-
-- **WHEN** another user has shared a prompt with the current user via DIAL Core
-- **AND** `GET /api/v1/prompts` is called
-- **THEN** that prompt appears in `sharedWithMe` with a valid `PromptResponseDto`
-
-#### Scenario: No shared prompts returns empty sharedWithMe
-
-- **WHEN** no prompts have been shared with the current user
-- **THEN** `GET /api/v1/prompts` returns `sharedWithMe: []`
-
-#### Scenario: DIAL Core shared-resources call failure degrades gracefully
-
-- **WHEN** the DIAL Core shared-resources API returns a non-2xx response
-- **THEN** `GET /api/v1/prompts` still returns 200 with personal prompts; `sharedWithMe` is `[]`
-
----
-
-### Requirement: Swagger description for POST /api/v1/share is updated
-
-The `@ApiOperation.description` on `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) SHALL state it creates a share link "for a DIAL Core resource (catalog entity, conversation, or prompt)". No DTO, status code, or rate-limit change is required. The description SHALL NOT reference a `resourceKind` parameter, since that parameter no longer exists.
-
-#### Scenario: Updated Swagger description reflects prompt support
-
-- **WHEN** the OpenAPI spec is generated
-- **THEN** the `POST /api/v1/share` description mentions prompts alongside conversations and catalog entities, and `CreateShareLinkDto`'s schema has no `resourceKind` field
-
----
-
-RTL / direction impact: none (backend only).
-Feature flag gating: none.
-Cache: none — share links are ephemeral and not cached.
-Observability: log `WARN` if the DIAL Core shared-resources call for prompts fails, include the HTTP status returned.

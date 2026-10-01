@@ -42,6 +42,40 @@ describe('useShareLink', () => {
     expect(result.current.error).toBeNull();
   });
 
+  it('leaves expiresInDays undefined when the response omits it', async () => {
+    createShareLink.mockResolvedValue({
+      url: '/marketplace/share/gpt-4o',
+      access: [ShareLinkResponseDtoAccessEnum.View],
+    });
+
+    const { result } = renderHook(() =>
+      useShareLink(fakeShareApi, 'gpt-4o', ORIGIN),
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data?.url).toBe(
+      'https://example.com/marketplace/share/gpt-4o',
+    );
+    expect(result.current.data?.expiresInDays).toBeUndefined();
+  });
+
+  it('passes through the expiresInDays reported by the API', async () => {
+    createShareLink.mockResolvedValue({
+      url: '/marketplace/share/gpt-4o',
+      expiresInDays: 7,
+      access: [ShareLinkResponseDtoAccessEnum.View],
+    });
+
+    const { result } = renderHook(() =>
+      useShareLink(fakeShareApi, 'gpt-4o', ORIGIN),
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data?.expiresInDays).toBe(7);
+  });
+
   it('sets an error when the share link could not be created', async () => {
     createShareLink.mockRejectedValue(new Error('network down'));
 

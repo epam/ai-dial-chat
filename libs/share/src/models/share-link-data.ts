@@ -4,8 +4,8 @@ import type { ShareLinkAccess } from '../types/share';
 export interface ShareLinkData {
   /** Shareable URL for the entity. */
   url: string;
-  /** Number of days the link stays active before expiring. */
-  expiresInDays: number;
+  /** Number of days the link stays active before expiring; omitted when the host cannot determine the expiry. */
+  expiresInDays?: number;
   /** Access levels granted to anyone with the link. */
   access: ShareLinkAccess[];
 }
