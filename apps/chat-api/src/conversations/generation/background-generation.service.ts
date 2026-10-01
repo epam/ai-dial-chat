@@ -984,8 +984,9 @@ export class BackgroundGenerationService {
    * `If-Match` (see {@link mergeClientMessages} for how background messages are kept),
    * so it never overwrites a placeholder or a final answer written in between. Resolves
    * `null` when the conversation cannot be read, so the caller keeps its unconditional
-   * save; a pending message stored without an `ETag` cannot be protected and makes the
-   * save fail with `503`.
+   * save. When conflicts persist, a conversation without a pending background message
+   * falls back to that unconditional save; one with a pending message (or stored without
+   * an `ETag`) cannot be protected and makes the save fail with `503`.
    * @param context - conversation location and the saving request's token
    * @param conversation - body sent by the client
    */
@@ -994,6 +995,8 @@ export class BackgroundGenerationService {
     conversation: ConversationResponseDto,
   ): Promise<ConversationResponseDto | null> {
     let isRead = false;
+    let hasPending = false;
+    let lastBody: ConversationResponseDto | undefined;
     let result: ConditionalUpdateResult;
     try {
       result = await this.persistence.updateConversation(
@@ -1002,6 +1005,8 @@ export class BackgroundGenerationService {
         context.bucket,
         (stored) => {
           isRead = true;
+          hasPending =
+            findPendingBackgroundMessage(stored?.conversation) != null;
           if (
             stored &&
             !stored.etag &&
@@ -1015,13 +1020,14 @@ export class BackgroundGenerationService {
             conversation,
             stored?.conversation,
           );
-          return {
+          lastBody = {
             ...body,
             messages: mergeClientMessages(
               (body.messages ?? []) as StoredMessage[],
               (stored?.conversation.messages ?? []) as StoredMessage[],
             ),
           } as ConversationResponseDto;
+          return lastBody;
         },
       );
     } catch (err) {
@@ -1031,12 +1037,22 @@ export class BackgroundGenerationService {
       );
       return null;
     }
-    if (result.status !== ConditionalUpdateStatus.Saved) {
+    if (result.status === ConditionalUpdateStatus.Saved) {
+      return result.conversation;
+    }
+    /* Only a pending background answer needs the fence; any other conversation keeps
+       the previous last-writer-wins save rather than failing the request. */
+    if (hasPending || !lastBody) {
       throw new ServiceUnavailableException(
         'The conversation changed concurrently; retry shortly.',
       );
     }
-    return result.conversation;
+    return this.persistence.saveConversation(
+      context.conversationPath,
+      context.token,
+      context.bucket,
+      lastBody,
+    );
   }
 
   /**

@@ -1158,6 +1158,34 @@ describe('BackgroundGenerationService.saveClientConversation', () => {
     expect(store.messages[0]).toMatchObject({ rating: 1 });
     expect(store.mocks.saveConversationIfMatch).toHaveBeenCalledTimes(2);
   });
+
+  it('falls back to the unconditional save when conflicts persist and nothing is pending', async () => {
+    const store = makeStore([olderAnswer]);
+    store.failures.conflicts = 3;
+    const { service } = makeService({ store });
+
+    await service.saveClientConversation(context, {
+      id: 'bucket/conv',
+      messages: [{ ...olderAnswer, rating: 1 }],
+    } as never);
+
+    expect(store.mocks.saveConversation).toHaveBeenCalledTimes(1);
+    expect(store.messages[0]).toMatchObject({ rating: 1 });
+  });
+
+  it('fails with 503 when conflicts persist while an answer is pending', async () => {
+    const store = makeStore([olderAnswer, runningStored()]);
+    store.failures.conflicts = 3;
+    const { service } = makeService({ store });
+
+    await expect(
+      service.saveClientConversation(context, {
+        id: 'bucket/conv',
+        messages: [{ ...olderAnswer, rating: 1 }, runningStored()],
+      } as never),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(store.mocks.saveConversation).not.toHaveBeenCalled();
+  });
 });
 
 describe('background generation memory', () => {
