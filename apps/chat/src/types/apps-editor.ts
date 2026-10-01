@@ -5,7 +5,6 @@ import { type ToolsetCredentialsLevel } from '@epam/ai-dial-chat-hooks';
 export enum AppsEditorQuery {
   Step = 'step',
   Schema = 'schema',
-  ReturnUrl = 'returnUrl',
   IsCreating = 'isCreating',
   AppId = 'appId',
 }

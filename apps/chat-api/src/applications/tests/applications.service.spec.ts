@@ -264,7 +264,7 @@ describe('ApplicationsService', () => {
     };
 
     it('creates application, returns composite id, and invalidates cache', async () => {
-      const { service, cacheManager } = makeService();
+      const { service, cacheManager, deploymentsService } = makeService();
       mockCreateApplicationSdk(service);
 
       const result = await service.createApplication(
@@ -276,6 +276,9 @@ describe('ApplicationsService', () => {
         id: 'applications/test-bucket/My%20App__1.0.0',
       });
       expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
     });
 
     it('uses provided version in path and body', async () => {
@@ -457,12 +460,13 @@ describe('ApplicationsService', () => {
     });
 
     it('does not invalidate cache when PUT returns error', async () => {
-      const { service, cacheManager } = makeService();
+      const { service, cacheManager, deploymentsService } = makeService();
       mockCreateApplicationSdk(service, undefined, errResponse(409));
       await expect(
         service.createApplication('user1', 't', body),
       ).rejects.toThrow();
       expect(cacheManager.del).not.toHaveBeenCalled();
+      expect(deploymentsService.invalidateListCache).not.toHaveBeenCalled();
     });
 
     it('forces features.skills_supported to true for a Quick App with no applicationProperties.features', async () => {

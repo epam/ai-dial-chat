@@ -76,7 +76,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         tabs: [
           { value: Tabs.All, label: 'All' },
           { value: Tabs.MyFiles, label: 'My Files' },
-          { value: Tabs.Shared, label: 'Shared with Me' },
+          { value: Tabs.Shared, label: 'Shared' },
           { value: Tabs.Organization, label: 'Organization' },
         ],
       })),
@@ -423,7 +423,7 @@ describe('DialFileManagerPage — All tab', () => {
           },
           {
             tab: DialFileManagerTabs.Shared,
-            rootLabel: 'dialFileManager.tab.shared',
+            rootLabel: 'dialFileManager.shared.rootFolder',
           },
           {
             tab: DialFileManagerTabs.Organization,
@@ -465,7 +465,7 @@ describe('DialFileManagerPage — All tab', () => {
       expect(tabs.map((tab) => tab.textContent)).toEqual([
         'All',
         'My Files',
-        'Shared with Me',
+        'Shared',
         'Organization',
       ]);
     } finally {

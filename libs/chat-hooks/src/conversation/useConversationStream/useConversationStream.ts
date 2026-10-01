@@ -31,6 +31,7 @@ import {
   restoreBufferedMessage,
 } from './buffered-generation';
 import { getConversationPath } from './conversation-path';
+import { createFrameScheduler } from './frame-scheduler';
 import {
   createResumeIfAwaitingGeneration,
   fetchConversationForRecovery,
@@ -154,6 +155,13 @@ export interface UseConversationStreamParams {
    * still log or report the raw error.
    */
   onStreamError?: (error: Error) => void;
+  /**
+   * Coalesces the displayed chunk updates into one `setConversation` per
+   * animation frame. Chunks still reach the per-path buffer immediately, and
+   * any pending update is flushed before completion, error, stop, or a
+   * superseding generation. Defaults to `false` (one update per chunk).
+   */
+  batchChunksPerFrame?: boolean;
 }
 
 /*
@@ -219,12 +227,19 @@ export const useConversationStream = ({
   generationConflictMessage = DEFAULT_GENERATION_CONFLICT_MESSAGE,
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   onStreamError,
+  batchChunksPerFrame = false,
 }: UseConversationStreamParams): UseConversationStreamResult => {
   /* Read through a ref so a new callback identity never re-creates `startStream`. */
   const onStreamErrorRef = useRef(onStreamError);
   useEffect(() => {
     onStreamErrorRef.current = onStreamError;
   }, [onStreamError]);
+  const batchChunksPerFrameRef = useRef(batchChunksPerFrame);
+  useEffect(() => {
+    batchChunksPerFrameRef.current = batchChunksPerFrame;
+  }, [batchChunksPerFrame]);
+  /* One pending display write per conversation path while batching. */
+  const [frameScheduler] = useState(createFrameScheduler);
   /*
    * Paths with an in-flight generation. A Set (not a boolean) so concurrent
    * generations across conversations each track their own streaming state.
@@ -254,7 +269,10 @@ export const useConversationStream = ({
   const displayedConversationIdRef = useRef<string | undefined>(conversationId);
   useEffect(() => {
     displayedConversationIdRef.current = conversationId;
-  }, [conversationId]);
+    /* Runs on navigation and on unmount: a write queued for the conversation
+       just left must not land in the next one, nor after the host is gone. */
+    return () => frameScheduler.cancelAll();
+  }, [conversationId, frameScheduler]);
 
   const isPathDisplayed = useCallback(
     (path: string): boolean =>
@@ -297,6 +315,7 @@ export const useConversationStream = ({
         removeStreamingPath,
         isPathDisplayed,
         generationPersistenceErrorMessage,
+        frameScheduler: batchChunksPerFrame ? frameScheduler : undefined,
       }),
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,6 +325,8 @@ export const useConversationStream = ({
       isPathDisplayed,
       transport,
       generationPersistenceErrorMessage,
+      batchChunksPerFrame,
+      frameScheduler,
     ],
   );
 
@@ -327,6 +348,8 @@ export const useConversationStream = ({
     ) => {
       const genId = generationId ?? generateUUID();
       const conversationPath = getConversationPath(currentConversationId);
+      /* Lands the previous generation's last chunks before it is superseded. */
+      frameScheduler.flush(conversationPath);
       resumingPathsRef.current.delete(conversationPath);
       activeGenerationIdRef.current = genId;
       activeGenerationPathRef.current = conversationPath;
@@ -425,6 +448,36 @@ export const useConversationStream = ({
           }
 
           if (!isPathDisplayed(conversationPath)) return;
+          /*
+           * The buffer already holds every chunk, so a batched write only has
+           * to publish it once per frame. Without a buffer the chunk itself
+           * must be applied, and that write stays immediate.
+           */
+          if (
+            batchChunksPerFrameRef.current &&
+            buffered?.generationId === genId
+          ) {
+            frameScheduler.schedule(conversationPath, () => {
+              const flushedBuffer =
+                bufferedGenerationsRef.current.get(conversationPath);
+              if (
+                activeGenerationIdRef.current !== genId ||
+                !isPathDisplayed(conversationPath) ||
+                flushedBuffer?.generationId !== genId
+              )
+                return;
+              /* Captured now: a superseding generation replaces the buffer
+                 entry before React runs this updater. */
+              const snapshot = { ...flushedBuffer };
+              setConversation((prev) => {
+                if (!prev) return prev;
+                const next = restoreBufferedMessage(prev, snapshot);
+                conversationRef.current = next;
+                return next;
+              });
+            });
+            return;
+          }
           setConversation((prev) => {
             if (!prev) return prev;
             const currentBuffer =
@@ -446,6 +499,7 @@ export const useConversationStream = ({
           });
         },
         onComplete: async () => {
+          frameScheduler.flush(conversationPath);
           const currentBuffer =
             bufferedGenerationsRef.current.get(conversationPath);
           const buffered =
@@ -510,6 +564,7 @@ export const useConversationStream = ({
           }
         },
         onError: (error: Error) => {
+          frameScheduler.flush(conversationPath);
           onStreamErrorRef.current?.(error);
           /*
            * A lost or stalled connection says nothing about the backend-owned
@@ -727,6 +782,7 @@ export const useConversationStream = ({
       resumeGeneration,
       generationConflictMessage,
       generationPersistenceErrorMessage,
+      frameScheduler,
     ],
   );
 
@@ -752,6 +808,7 @@ export const useConversationStream = ({
     if (activeGenerationPathRef.current !== conversationPath) return;
 
     stoppedGenerationIdsRef.current.add(genId);
+    frameScheduler.flush(conversationPath);
     overlay?.notifyStopGenerating?.();
 
     /*
@@ -765,7 +822,7 @@ export const useConversationStream = ({
         const error = err instanceof Error ? err : new Error(String(err));
         onStopError?.(error);
       });
-  }, [conversationId, onStopError, overlay, transport]);
+  }, [conversationId, frameScheduler, onStopError, overlay, transport]);
 
   /* The public entry point takes no options; those are reserved for stream recovery. */
   const resumeIfAwaitingGeneration = useCallback(

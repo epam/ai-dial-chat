@@ -9,21 +9,12 @@ import {
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { EditorThemes } from '@epam/ai-dial-ui-kit';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import ScheduledTaskSkillField from '../../components/ScheduledTaskSkillField/ScheduledTaskSkillField';
-import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import {
   ScheduledTasksI18nKeys,
   SkillSelectorI18nKeys,
@@ -38,15 +29,13 @@ import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
 import {
   getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
   mapScheduledTaskApiError,
 } from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
-
-const MAX_ASCII_CONTROL_CODE = 31;
-const ASCII_DELETE_CODE = 127;
 
 const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   displayName: '',
@@ -57,28 +46,6 @@ const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   endDate: undefined,
   modelId: '',
   prompt: '',
-};
-
-const containsControlCharacter = (value: string): boolean =>
-  Array.from(value).some((character) => {
-    const codePoint = character.codePointAt(0);
-    return (
-      codePoint !== undefined &&
-      (codePoint <= MAX_ASCII_CONTROL_CODE || codePoint === ASCII_DELETE_CODE)
-    );
-  });
-
-const resolveReturnUrl = (candidate: string | null): string => {
-  if (
-    candidate === null ||
-    !candidate.startsWith('/') ||
-    candidate.startsWith('//') ||
-    candidate.includes('\\') ||
-    containsControlCharacter(candidate)
-  ) {
-    return ROUTES.ScheduledTasks;
-  }
-  return candidate;
 };
 
 const ScheduledTaskCreatePage: FC = () => {
@@ -96,7 +63,6 @@ const ScheduledTaskCreatePage: FC = () => {
   const skillErrorId = useId();
   const navigate = useNavigate();
   const { key: draftKey } = useLocation();
-  const [searchParams] = useSearchParams();
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
@@ -123,11 +89,7 @@ const ScheduledTaskCreatePage: FC = () => {
       : errors.skillUrl,
   };
 
-  const returnUrl = useMemo(
-    () =>
-      resolveReturnUrl(searchParams.get(ScheduledTaskCreateQuery.ReturnUrl)),
-    [searchParams],
-  );
+  const returnUrl = ROUTES.ScheduledTasks;
 
   const labels = useScheduledTaskFormLabels('create');
 
@@ -183,16 +145,20 @@ const ScheduledTaskCreatePage: FC = () => {
       });
       navigate(returnUrl, { state: { refresh: true } });
     } catch (error) {
-      const { traceId, code } = await getApiErrorDetails(error);
-      const fieldErrors = mapScheduledTaskApiError(code, t);
+      const details = await getApiErrorDetails(error);
+      const fieldErrors = mapScheduledTaskApiError(details.code, t);
       if (fieldErrors) {
         setErrors(fieldErrors);
         setIsSubmitting(false);
         return;
       }
       showErrorNotification({
-        message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
-        requestId: traceId,
+        message: resolveScheduledTaskErrorMessage(
+          details,
+          ScheduledTasksI18nKeys.CreateErrorNotification,
+          t,
+        ),
+        requestId: details.traceId,
       });
       setIsSubmitting(false);
     }

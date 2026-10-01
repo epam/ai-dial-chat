@@ -13,6 +13,7 @@ import {
   deriveFavoriteItems,
   filterCatalogItemsBySelector,
   filterHiddenOwnedItems,
+  getRunnerSchemas,
   isQuickAppSchema,
   mapPromptToCatalogItem,
   mapSkillToCatalogItem,
@@ -119,6 +120,11 @@ export const useCatalogItems = ({
     [schemas],
   );
 
+  const runnerSchemaIds = useMemo(
+    () => getRunnerSchemas(schemas).map((schema) => schema.id),
+    [schemas],
+  );
+
   const quickAppDeploymentIds = useMemo(
     () =>
       new Set(
@@ -204,7 +210,7 @@ export const useCatalogItems = ({
         mapDeploymentToCatalogItem(d, {
           favoriteIds,
           t,
-          editableSchemaIds: quickAppSchemaId ? [quickAppSchemaId] : [],
+          editableSchemaIds: runnerSchemaIds,
           isCustomAppsEditable: isCustomAppsEnabled,
           activeLocale: language,
         }),
@@ -279,7 +285,7 @@ export const useCatalogItems = ({
     t,
     language,
     toolsets,
-    quickAppSchemaId,
+    runnerSchemaIds,
     isAdmin,
     isToolsetsEnabled,
     isCustomAppsEnabled,

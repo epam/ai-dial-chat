@@ -11,6 +11,7 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskEditPage from '../ScheduledTaskEditPage';
+
 vi.mock(
   '../../../components/ScheduledTaskSkillField/ScheduledTaskSkillField',
   () => ({
@@ -105,6 +106,7 @@ const refineTextMock = vi.fn();
 vi.mock('../../../server-api/text-refinement.api', () => ({
   refineText: (...args: unknown[]) => refineTextMock(...args),
 }));
+
 interface FormProps {
   onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
   onRefineInstructions?: (
@@ -120,6 +122,8 @@ interface FormProps {
     repeat: string;
     time: string;
     minute?: string;
+    startDate?: string;
+    endDate?: string;
   };
   errors: Record<string, string | undefined>;
   skillSelector?: ReactNode;
@@ -203,11 +207,17 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.time}
         onChange={(e) => onFieldChange('time', e.target.value)}
       />
+      <input
+        aria-label="startDate"
+        value={values.startDate ?? ''}
+        onChange={(e) => onFieldChange('startDate', e.target.value)}
+      />
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       {skillSelector}
       {errors.skillUrl && <span>{errors.skillUrl}</span>}
       {errors.displayName && <span>{errors.displayName}</span>}
+      {errors.startDate && <span>{errors.startDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button
         onClick={onSubmit}
@@ -624,6 +634,62 @@ describe('ScheduledTaskEditPage', () => {
     expect(fields.minute).toBe(String(reference.getUTCMinutes()));
   });
 
+  it('saves an older task whose activity window already started, preserving the boundary', async () => {
+    const loadedStart = new Date('2020-01-01T00:00:00.000Z');
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: loadedStart.toISOString(),
+          endDate: '2099-12-31T23:59:59.999Z',
+        },
+      },
+    });
+    updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+    /* The body rebuilds the boundary from the loaded local calendar day via a
+       reference Date; compute the expectation the same way so the test holds
+       in any runner timezone. */
+    const expected = new Date(
+      loadedStart.getFullYear(),
+      loadedStart.getMonth(),
+      loadedStart.getDate(),
+    ).toISOString();
+    expect(updateScheduledTaskMock.mock.calls[0][1].trigger.cron).toMatchObject(
+      { startDate: expected },
+    );
+  });
+
+  it('blocks save when the start date is changed to a different past date', async () => {
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2020-01-01T00:00:00.000Z',
+          endDate: '2099-12-31T23:59:59.999Z',
+        },
+      },
+    });
+    renderEditPage();
+
+    const startDateInput = await screen.findByLabelText('startDate');
+    await userEvent.clear(startDateInput);
+    await userEvent.type(startDateInput, '2019-06-15');
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(updateScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.startDateInPast'),
+    ).toBeTruthy();
+  });
+
   it('navigates to the detail route without a network call when Cancel is activated', async () => {
     getScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
@@ -702,5 +768,56 @@ describe('ScheduledTaskEditPage', () => {
     expect(
       await screen.findByRole('region', { name: NotFoundI18nKeys.Title }),
     ).toBeTruthy();
+  });
+
+  it('keeps the draft and asks to contact an administrator when consent was revoked', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({
+      status: 403,
+      code: 'scheduledTaskAdminConsentRequired',
+    });
+    renderEditPage();
+    fireEvent.change(await screen.findByLabelText('displayName'), {
+      target: { value: 'Retained draft' },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await vi.waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'toolsetSignin.adminConsentRequired',
+        }),
+      ),
+    );
+    expect(
+      (screen.getByLabelText('displayName') as HTMLInputElement).value,
+    ).toBe('Retained draft');
+    expect(
+      screen.queryByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeNull();
+  });
+
+  it("shows DIAL Scheduler's reason when the update fails with one", async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('upstream'));
+    getApiErrorStatusMock.mockReturnValue(502);
+    getApiErrorDetailsMock.mockResolvedValue({
+      status: 502,
+      message: 'DIAL Core returned a server error',
+      upstreamMessage: 'Quota exceeded for schedules',
+    });
+    renderEditPage();
+    await screen.findByLabelText('displayName');
+
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await vi.waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Quota exceeded for schedules' }),
+      ),
+    );
   });
 });

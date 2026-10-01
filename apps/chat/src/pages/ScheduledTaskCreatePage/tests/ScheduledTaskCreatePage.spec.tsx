@@ -236,6 +236,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
       {errors.description && <span>{errors.description}</span>}
+      {errors.startDate && <span>{errors.startDate}</span>}
       {errors.endDate && <span>{errors.endDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button
@@ -257,7 +258,6 @@ const renderAtRoute = (initialEntry: string) =>
           element={<ScheduledTaskCreatePage />}
         />
         <Route path="/scheduled-tasks" element={<div>list page</div>} />
-        <Route path="/custom" element={<div>custom return page</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -273,6 +273,16 @@ const fillValidForm = async () => {
   fireEvent.change(screen.getByRole('textbox', { name: 'prompt' }), {
     target: { value: 'Summarize my inbox' },
   });
+};
+
+/* Submit validation reads the real clock, so window boundaries are built
+   runtime-relative — a hardcoded date becomes a past date the day after it
+   is written. */
+const localDateOnly = (offsetDays: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
 describe('ScheduledTaskCreatePage', () => {
@@ -522,7 +532,7 @@ describe('ScheduledTaskCreatePage', () => {
     expect(fields.minute).toBe(String(reference.getUTCMinutes()));
   });
 
-  it('navigates to the default list route on Cancel when returnUrl is absent', async () => {
+  it('navigates to the list route on Cancel', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await userEvent.click(
@@ -533,43 +543,14 @@ describe('ScheduledTaskCreatePage', () => {
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
   });
 
-  it('navigates to the returnUrl on Cancel when provided', async () => {
-    renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.cancel' }),
-    );
-
-    expect(screen.getByText('custom return page')).toBeTruthy();
-  });
-
-  it('navigates to the returnUrl on back without a network call', async () => {
-    renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
+  it('navigates to the list route on back without a network call', async () => {
+    renderAtRoute('/scheduled-tasks/new');
 
     await userEvent.click(screen.getByRole('button', { name: 'back' }));
 
-    expect(screen.getByText('custom return page')).toBeTruthy();
+    expect(screen.getByText('list page')).toBeTruthy();
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
   });
-
-  it.each([
-    '/scheduled-tasks/new?returnUrl=',
-    '/scheduled-tasks/new?returnUrl=https%3A%2F%2Fevil.example',
-    '/scheduled-tasks/new?returnUrl=%2F%2Fevil.example',
-    '/scheduled-tasks/new?returnUrl=%2F%5Cevil.example',
-    '/scheduled-tasks/new?returnUrl=%2Fcustom%0A',
-  ])(
-    'falls back to the list route for invalid returnUrl in %s',
-    async (url) => {
-      renderAtRoute(url);
-
-      await userEvent.click(
-        screen.getByRole('button', { name: 'buttons.cancel' }),
-      );
-
-      expect(screen.getByText('list page')).toBeTruthy();
-    },
-  );
 
   it('does not submit when required fields are missing', async () => {
     renderAtRoute('/scheduled-tasks/new');
@@ -595,9 +576,9 @@ describe('ScheduledTaskCreatePage', () => {
     expect(select.value).toBe('gpt-4o');
   });
 
-  it('submits the mapped body and navigates to returnUrl on success', async () => {
+  it('submits the mapped body and navigates to the list route on success', async () => {
     createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
-    renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
+    renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
     await userEvent.click(
@@ -611,7 +592,7 @@ describe('ScheduledTaskCreatePage', () => {
     expect(body.prompt).toBe('Summarize my inbox');
     expect(body.trigger).toBeDefined();
 
-    expect(await screen.findByText('custom return page')).toBeTruthy();
+    expect(await screen.findByText('list page')).toBeTruthy();
     expect(showNotificationMock).toHaveBeenCalledOnce();
   });
 
@@ -662,18 +643,19 @@ describe('ScheduledTaskCreatePage', () => {
     expect(screen.getByText('editor.fieldTooLong')).toBeTruthy();
   });
 
-  it('blocks submit with an inline error when endDate is not after startDate', async () => {
+  it('blocks submit with an inline error when endDate is earlier than startDate', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'startDate' }),
-      '2026-08-31',
-    );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'endDate' }),
-      '2026-08-01',
-    );
+    /* Submit validation reads the real clock, so the window is built
+       runtime-relative — a hardcoded date becomes a past date the day after
+       it is written. */
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(10) },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(5) },
+    });
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.create' }),
     );
@@ -681,6 +663,61 @@ describe('ScheduledTaskCreatePage', () => {
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
     expect(
       screen.getByText('scheduledTasks.create.endDateBeforeStartError'),
+    ).toBeTruthy();
+  });
+
+  it('submits a single-day window where endDate equals startDate', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(1) },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(1) },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByText('scheduledTasks.create.endDateBeforeStartError'),
+    ).toBeNull();
+  });
+
+  it('blocks submit with an inline error when startDate is in the past', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(-1) },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.startDateInPast'),
+    ).toBeTruthy();
+  });
+
+  it('blocks submit with an inline error when endDate is in the past', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(-1) },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.endDateInPast'),
     ).toBeTruthy();
   });
 
@@ -702,10 +739,10 @@ describe('ScheduledTaskCreatePage', () => {
 
     await fillValidForm();
     fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
-      target: { value: '2026-08-01' },
+      target: { value: localDateOnly(1) },
     });
     fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
-      target: { value: '2026-08-31' },
+      target: { value: localDateOnly(10) },
     });
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'repeat' }),
@@ -743,5 +780,79 @@ describe('ScheduledTaskCreatePage', () => {
       'value',
       'Daily summary',
     );
+  });
+
+  it('tells the user to contact an administrator when the scheduler consent was revoked', async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({ code: 'scheduledTaskAdminConsentRequired' }),
+        { status: 403 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'toolsetSignin.adminConsentRequired',
+        }),
+      );
+    });
+    expect(screen.getByRole('textbox', { name: 'displayName' })).toHaveProperty(
+      'value',
+      'Daily summary',
+    );
+  });
+
+  it("shows DIAL Scheduler's reason instead of the generic server message", async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({
+          message: 'DIAL Core returned a server error',
+          upstreamMessage: 'Quota exceeded for schedules',
+        }),
+        { status: 502 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Quota exceeded for schedules' }),
+      );
+    });
+  });
+
+  it('falls back to the localized message when Scheduler supplies no reason', async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({ message: 'DIAL Core request timed out' }),
+        { status: 503 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'scheduledTasks.create.errorNotification',
+        }),
+      );
+    });
   });
 });

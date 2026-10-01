@@ -18,9 +18,10 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
+import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
@@ -28,7 +29,6 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
-  DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,
@@ -70,6 +70,7 @@ import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
@@ -259,7 +260,6 @@ const CatalogView: FC<Props> = ({
   }, [skillsError, showErrorNotification, t]);
 
   const {
-    quickAppSchemaId,
     quickAppDeploymentIds,
     catalogItems,
     visibleCatalogItems,
@@ -455,53 +455,27 @@ const CatalogView: FC<Props> = ({
       `${route}?${new URLSearchParams(params).toString()}`;
     return {
       buildPromptEditUrl: (id) =>
-        buildUrl(ROUTES.PromptEditor, {
-          [EditorQuery.Id]: id,
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildPromptCreateUrl: () =>
-        buildUrl(ROUTES.PromptEditor, {
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.PromptEditor, { [EditorQuery.Id]: id }),
+      buildPromptCreateUrl: () => ROUTES.PromptEditor,
       buildSkillEditUrl: (id) =>
-        buildUrl(ROUTES.SkillEditor, {
-          [EditorQuery.Id]: id,
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildSkillCreateUrl: () =>
-        buildUrl(ROUTES.SkillEditor, {
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.SkillEditor, { [EditorQuery.Id]: id }),
+      buildSkillCreateUrl: () => ROUTES.SkillEditor,
       buildToolsetEditUrl: (id) =>
-        buildUrl(ROUTES.ToolsetEditor, {
-          [ToolsetEditorQuery.Id]: id,
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildToolsetCreateUrl: () =>
-        buildUrl(ROUTES.ToolsetEditor, {
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.ToolsetEditor, { [ToolsetEditorQuery.Id]: id }),
+      buildToolsetCreateUrl: () => ROUTES.ToolsetEditor,
       buildCustomAppEditUrl: (id) =>
-        buildUrl(ROUTES.CustomAppEditor, {
-          [ToolsetEditorQuery.Id]: id,
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildCustomAppCreateUrl: () =>
-        buildUrl(ROUTES.CustomAppEditor, {
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.CustomAppEditor, { [ToolsetEditorQuery.Id]: id }),
+      buildCustomAppCreateUrl: () => ROUTES.CustomAppEditor,
       buildQuickAppEditUrl: (schemaId, appId) =>
         buildUrl(ROUTES.AppsEditor, {
           [AppsEditorQuery.Step]: AppsEditorStep.Settings,
           [AppsEditorQuery.Schema]: schemaId,
-          [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
           [AppsEditorQuery.AppId]: appId,
         }),
       buildQuickAppCreateUrl: (schemaId) =>
         buildUrl(ROUTES.AppsEditor, {
           [AppsEditorQuery.Step]: AppsEditorStep.General,
           [AppsEditorQuery.Schema]: schemaId,
-          [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
           [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
         }),
     };
@@ -523,25 +497,8 @@ const CatalogView: FC<Props> = ({
     [t],
   );
 
-  const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
-    deployments,
-    isCustomAppsEnabled,
-    isSchemaAppsEnabled,
-    isHideCustomAppCreationEnabled,
-    isToolsetsEnabled,
-    isPromptsEnabled,
-    quickAppSchemaId,
-    urls: catalogEditUrls,
-    onNavigate: navigate,
-    deletePrompt,
-    deleteToolset,
-    deleteSkill,
-    deleteApplication,
-    refetchPrompts,
-    refetchToolsets,
-    refetchSkills,
-    refetchDeployments,
-    onDeleteSuccess: (item) =>
+  const handleDeleteSuccess = useCallback(
+    (item: CatalogItem) => {
       notifyOperationSuccess(
         resolveCatalogItemEntity(
           item.type,
@@ -549,11 +506,58 @@ const CatalogView: FC<Props> = ({
         ),
         EntityOperation.Deleted,
         { name: item.name },
-      ),
-    labels: catalogEditNavigationLabels,
-    onNotify: showErrorNotification,
-    onSkillUploadClick: openSkillArchiveDialog,
-  });
+      );
+
+      /*
+       * A deleted item's id stays in the user-config favourites unless it is
+       * removed here, and an item re-created later at the same resource path
+       * would come back already starred (Issue #9143). The delete itself has
+       * succeeded, so a failed cleanup is only logged.
+       */
+      if (!favoriteIds.has(item.id)) return;
+      const removeFavorite = async () => {
+        try {
+          await toggleFavorite(
+            item.id,
+            false,
+            resolveFavoriteEntityType(item.type),
+          );
+        } catch (err) {
+          console.warn(
+            '[CatalogView] Failed to remove deleted item from favourites',
+            err,
+          );
+        }
+      };
+      void removeFavorite();
+    },
+    [deployments, favoriteIds, notifyOperationSuccess, toggleFavorite],
+  );
+
+  const { handleEdit, handleDelete, createOptions, createSearch } =
+    useCatalogEditNavigation({
+      deployments,
+      isCustomAppsEnabled,
+      isSchemaAppsEnabled,
+      isHideCustomAppCreationEnabled,
+      isToolsetsEnabled,
+      isPromptsEnabled,
+      schemas,
+      urls: catalogEditUrls,
+      onNavigate: navigate,
+      deletePrompt,
+      deleteToolset,
+      deleteSkill,
+      deleteApplication,
+      refetchPrompts,
+      refetchToolsets,
+      refetchSkills,
+      refetchDeployments,
+      onDeleteSuccess: handleDeleteSuccess,
+      labels: catalogEditNavigationLabels,
+      onNotify: showErrorNotification,
+      onSkillUploadClick: openSkillArchiveDialog,
+    });
 
   if (!isCatalogEnabled && !isSelectorMode) {
     return null;
@@ -577,6 +581,7 @@ const CatalogView: FC<Props> = ({
         isLoading={isLoading}
         favorites={favorites}
         createOptions={createOptions}
+        createSearch={createSearch}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
         isFullWidth={isFullWidth}
@@ -660,6 +665,9 @@ const CatalogView: FC<Props> = ({
         titles={{
           pageTitle: t(NavigationI18nKeys.Catalog),
           createLabel: t(ButtonsI18nKeys.Create),
+          createSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+          createSearchClearLabel: t(BasicI18nKeys.ClearSearch),
+          createNoResultsLabel: t(BasicI18nKeys.NoResults),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
           searchPlaceholder,
@@ -701,7 +709,7 @@ const CatalogView: FC<Props> = ({
           downloadActionLabel: t(ButtonsI18nKeys.Download),
           downloadingStatusLabel: t(CatalogI18nKeys.DetailsDownloadingStatus),
           deleteActionLabel: t(ButtonsI18nKeys.Delete),
-          deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
+          deletingStatusLabel: t(BasicI18nKeys.DeletingStatus),
           apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
           apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
           apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
@@ -801,17 +809,27 @@ const CatalogView: FC<Props> = ({
           tabConnectLabel: t(ButtonsI18nKeys.Connect),
           manageActionLabel: t(ButtonsI18nKeys.Manage),
           deleteConfirmTitle: t(CatalogI18nKeys.DetailsDeleteConfirmTitle),
-          deleteConfirmMessage: (name) =>
-            t(CatalogI18nKeys.DetailsDeleteConfirmMessage, { name }),
+          deleteConfirmMessage: (name) => (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsDeleteConfirmMessage}
+              values={{ name }}
+              components={CONFIRMATION_BOLD_COMPONENTS}
+            />
+          ),
           deleteConfirmConsequences: [
             t(CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations),
             t(CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess),
-            t(CatalogI18nKeys.DetailsDeleteConsequenceCannotBeUndone),
+            t(BasicI18nKeys.ConsequenceCannotBeUndone),
           ],
           unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
           unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
-          unshareConfirmMessage: (name) =>
-            t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
+          unshareConfirmMessage: (name) => (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsUnshareConfirmMessage}
+              values={{ name }}
+              components={CONFIRMATION_BOLD_COMPONENTS}
+            />
+          ),
           unshareConfirmConsequences: [
             t(CatalogI18nKeys.DetailsUnshareConsequenceYouLoseAccess),
             t(CatalogI18nKeys.DetailsUnshareConsequenceOthersKeepAccess),
@@ -824,8 +842,13 @@ const CatalogView: FC<Props> = ({
           revokeShareConfirmTitle: t(
             CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
           ),
-          revokeShareConfirmMessage: (name) =>
-            t(CatalogI18nKeys.DetailsRevokeShareConfirmMessage, { name }),
+          revokeShareConfirmMessage: (name) => (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsRevokeShareConfirmMessage}
+              values={{ name }}
+              components={CONFIRMATION_BOLD_COMPONENTS}
+            />
+          ),
           revokeShareConfirmConsequences: [
             t(CatalogI18nKeys.DetailsRevokeShareConsequenceOthersLoseAccess),
             t(CatalogI18nKeys.DetailsRevokeShareConsequenceLinksStopWorking),
@@ -838,10 +861,20 @@ const CatalogView: FC<Props> = ({
           unpublishConfirmTitle: t(
             CatalogI18nKeys.DetailsUnpublishConfirmTitle,
           ),
-          unpublishConfirmMessage: (name, folder) =>
-            t(CatalogI18nKeys.DetailsUnpublishConfirmMessage, { name, folder }),
-          unpublishSelectFolderMessage: (name) =>
-            t(CatalogI18nKeys.DetailsUnpublishSelectFolderMessage, { name }),
+          unpublishConfirmMessage: (name, folder) => (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsUnpublishConfirmMessage}
+              values={{ name, folder }}
+              components={CONFIRMATION_BOLD_COMPONENTS}
+            />
+          ),
+          unpublishSelectFolderMessage: (name) => (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsUnpublishSelectFolderMessage}
+              values={{ name }}
+              components={CONFIRMATION_BOLD_COMPONENTS}
+            />
+          ),
           unpublishFolderGroupAriaLabel: t(
             CatalogI18nKeys.DetailsUnpublishFolderGroupAriaLabel,
           ),

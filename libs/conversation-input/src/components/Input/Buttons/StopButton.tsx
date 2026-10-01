@@ -1,9 +1,9 @@
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  StaticIconButton,
+  NeutralIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlaystationSquare } from '@tabler/icons-react';
+import { IconPlayerStop } from '@tabler/icons-react';
 import { type FC } from 'react';
 
 interface Props {
@@ -18,9 +18,9 @@ export const StopButton: FC<Props> = ({
   ariaLabel = 'Stop streaming',
 }) => {
   return (
-    <StaticIconButton
+    <NeutralIconButton
       icon={
-        <IconPlaystationSquare
+        <IconPlayerStop
           size={DIAL_ICON_SIZE.LG}
           stroke={DIAL_KIT_ICON_STROKE}
         />

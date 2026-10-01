@@ -146,7 +146,7 @@ The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` 
 
 ### Requirement: `ConversationSourcesPanel` renders a global empty state or the source sections
 
-`ConversationSourcesPanel` SHALL render either a global empty state or the source/task sections described below. `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` accepts no props, imports `SidebarPanel` from `@epam/ai-dial-sidebar`, obtains messages from `useSourcesSidebar()`, derives `uploaded`, `generated`, and `sources` through `useConversationSources(messages)`, reads `useActiveScheduledTask()` for scheduled-task state, and renders `<SidebarPanel side="right">`.
+`ConversationSourcesPanel` SHALL render either a global empty state or the source/task sections described below. `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` accepts no props, imports `SidebarPanel` from `@epam/ai-dial-sidebar`, obtains `messages` and `conversationModelId` from `useSourcesSidebarData()` and `isOpen`/`handleClose` from `useSourcesSidebar()` (both exported from `apps/chat/src/context/SourcesSidebarContext.tsx`), derives `uploaded`, `generated`, and `sources` through `useConversationSources(isOpen ? messages : EMPTY_MESSAGES)` where `EMPTY_MESSAGES` is a module-level constant array, so the derivation does not run while the sidebar is closed, reads `useActiveScheduledTask()` for scheduled-task state, and renders `<SidebarPanel side="right">`.
 
 The panel SHALL use `useAttachmentAction()` to obtain `handleAttachmentClick` and SHALL pass it as `onAttachmentClick` to both `FilesSection` instances (Uploaded Files and Generated Files).
 
@@ -234,7 +234,7 @@ For both states:
 
 - **WHEN** the user activates the close button
 - **THEN** `useSourcesSidebar().isOpen` becomes `false` on the next read
-- **AND** the stored sidebar messages are cleared
+- **AND** the stored sidebar messages are preserved (they are cleared only when the conversation page unmounts), so reopening the sidebar shows the same content
 
 #### Scenario: Non-empty sections render in fixed order for non-task conversations
 
@@ -255,6 +255,18 @@ For both states:
 
 - **WHEN** a user clicks an attachment card in the panel
 - **THEN** `handleAttachmentClick` is invoked with the corresponding `DisplayAttachment`
+
+#### Scenario: A closed sidebar does not derive sources
+
+- **GIVEN** the sidebar is closed
+- **WHEN** `useSourcesSidebarData().messages` changes (for example on a stream chunk)
+- **THEN** `useConversationSources` is not recomputed over the new messages
+
+#### Scenario: Opening the sidebar shows current sources
+
+- **GIVEN** the sidebar is closed while messages with attachments have been published
+- **WHEN** the user opens the sidebar
+- **THEN** the panel renders sections derived from the current messages on that render
 
 ---
 
@@ -855,3 +867,31 @@ Task-detail failure, run-history failure, and attachment/source-derivation issue
 - **WHEN** `getScheduledTask` or `listScheduledTaskRuns` responds with `429`, `502`, or `503`
 - **THEN** the existing app-wide API error/notification handling applies
 - **AND** the user is not redirected away from the conversation
+
+### Requirement: Sidebar data is published separately from sidebar controls
+
+`apps/chat/src/context/SourcesSidebarContext.tsx` SHALL expose two contexts, both rendered by the existing `SourcesSidebarProvider`:
+
+- The controls context, read by `useSourcesSidebar()`, with value `{ isOpen, handleOpen, handleClose, setMessages, setConversationModelId }`. Every member except `isOpen` is referentially stable for the provider's lifetime.
+- The data context, read by `useSourcesSidebarData()`, with value `{ messages, conversationModelId }`.
+
+Each context value SHALL be memoized with `useMemo` over its own fields only. Each hook SHALL throw a clear error when used outside `SourcesSidebarProvider`. A `setMessages` or `setConversationModelId` call SHALL NOT change the controls context value. `useSourcesSidebar()` no longer returns `messages` or `conversationModelId`. `ConversationSourcesPanel` is their only reader.
+
+The provider's name, props and mount point in `apps/chat/src/main.tsx` do not change. There is no user-visible string, RTL or a11y change, feature flag, cache or telemetry.
+
+#### Scenario: A controls-only consumer does not re-render on a messages update
+
+- **GIVEN** a component that calls only `useSourcesSidebar()`, rendered inside `SourcesSidebarProvider`
+- **WHEN** `setMessages` is called with a new array
+- **THEN** that component does not re-render
+
+#### Scenario: A data consumer sees the new messages
+
+- **GIVEN** a component that calls `useSourcesSidebarData()`
+- **WHEN** `setMessages` is called with a new array
+- **THEN** that component re-renders and reads the new array
+
+#### Scenario: The data hook outside the provider throws
+
+- **WHEN** `useSourcesSidebarData()` is called outside `SourcesSidebarProvider`
+- **THEN** it throws an error naming the provider

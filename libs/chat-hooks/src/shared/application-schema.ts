@@ -25,3 +25,20 @@ export const isQuickAppSchema = (schema?: QuickAppSchemaLike): boolean =>
   !!schema &&
   (!!schema.id?.endsWith('quickapps2') ||
     schema.displayName === 'Quick app 2.0');
+
+/** An application schema with a resolved id, as returned by {@link getRunnerSchemas}. */
+export type RunnerSchema<T extends QuickAppSchemaLike> = T & { id: string };
+
+/** Returns the schemas that create schema-based apps: unique by id, without id-less entries or the custom-app schema. */
+export const getRunnerSchemas = <T extends QuickAppSchemaLike>(
+  schemas: T[],
+): RunnerSchema<T>[] => {
+  const seenIds = new Set<string>();
+  return schemas.filter((schema): schema is RunnerSchema<T> => {
+    if (!schema.id || isCustomAppSchema(schema) || seenIds.has(schema.id)) {
+      return false;
+    }
+    seenIds.add(schema.id);
+    return true;
+  });
+};

@@ -16,6 +16,7 @@ import {
   restoreBufferedMessage,
 } from './buffered-generation';
 import { getConversationPath } from './conversation-path';
+import type { FrameScheduler } from './frame-scheduler';
 import type { ConversationStreamTransport } from './useConversationStream';
 
 /**
@@ -208,6 +209,8 @@ export interface ResumeIfAwaitingGenerationDeps {
   removeStreamingPath: (path: string) => void;
   isPathDisplayed: (path: string) => boolean;
   generationPersistenceErrorMessage?: string;
+  /** When set, replayed chunks are published at most once per frame through it. */
+  frameScheduler?: FrameScheduler;
 }
 
 /**
@@ -234,6 +237,7 @@ export const createResumeIfAwaitingGeneration = ({
   removeStreamingPath,
   isPathDisplayed,
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
+  frameScheduler,
 }: ResumeIfAwaitingGenerationDeps) => {
   return (
     currentConversationId: string,
@@ -263,6 +267,7 @@ export const createResumeIfAwaitingGeneration = ({
       bufferedGenerationsRef.current.get(conversationPath) === resumedBuffer;
 
     const finish = (result?: Conversation, persistenceFailed = false) => {
+      frameScheduler?.flush(conversationPath);
       if (!ownsBuffer()) return;
       resumingPathsRef.current.delete(conversationPath);
       removeStreamingPath(conversationPath);
@@ -306,6 +311,7 @@ export const createResumeIfAwaitingGeneration = ({
     };
 
     const applySnapshot = (message: Message) => {
+      frameScheduler?.cancel(conversationPath);
       if (!ownsBuffer()) return;
       resumedBuffer.message = message;
       if (!isPathDisplayed(conversationPath)) return;
@@ -318,11 +324,7 @@ export const createResumeIfAwaitingGeneration = ({
       });
     };
 
-    const applyAttachChunk = (chunk: StreamChunk) => {
-      if (!ownsBuffer()) return;
-      const updated = applyChunkToMessages([resumedBuffer.message], 0, chunk);
-      if (updated) resumedBuffer.message = updated[0];
-      if (!isPathDisplayed(conversationPath)) return;
+    const publishBuffer = () =>
       setConversation((prev) => {
         if (!prev || !ownsBuffer() || !isPathDisplayed(conversationPath))
           return prev;
@@ -330,6 +332,17 @@ export const createResumeIfAwaitingGeneration = ({
         conversationRef.current = next;
         return next;
       });
+
+    const applyAttachChunk = (chunk: StreamChunk) => {
+      if (!ownsBuffer()) return;
+      const updated = applyChunkToMessages([resumedBuffer.message], 0, chunk);
+      if (updated) resumedBuffer.message = updated[0];
+      if (!isPathDisplayed(conversationPath)) return;
+      if (frameScheduler) {
+        frameScheduler.schedule(conversationPath, publishBuffer);
+        return;
+      }
+      publishBuffer();
     };
 
     /*

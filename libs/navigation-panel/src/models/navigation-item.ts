@@ -14,6 +14,8 @@ export interface NavigationPanelItem {
   label: string;
   /** Icon component rendered inside the rail button and the sheet row. */
   icon: NavigationItemIcon;
+  /** Filled icon the rail and the sheet row render in place of `icon` while the item is active, painted with the selected-state fill. When omitted, both fill the outline `icon` itself (fill plus stroke). */
+  activeIcon?: NavigationItemIcon;
   /** Whether this entry points at the page currently on screen. */
   isActive?: boolean;
   /** Target URL placed on the rail anchor. The host owns route matching and navigation. */

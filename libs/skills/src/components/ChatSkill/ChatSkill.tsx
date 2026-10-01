@@ -120,6 +120,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
        * textarea text. See design.md Decision 3a (multi-skill-message-mentions)
        * for the full rationale.
        */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click/keydown only act in click-triggered mode; hover mode's tooltip is reachable via focus alone */}
       <span
         tabIndex={0}
         className={mergeClasses(

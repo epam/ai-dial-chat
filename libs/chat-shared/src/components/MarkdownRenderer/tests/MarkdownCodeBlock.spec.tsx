@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Prism } from 'react-syntax-highlighter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { CodeBlockTheme } from '../../../types/code-editor';
@@ -16,17 +17,69 @@ vi.mock('../../../utils/file-download', async (importOriginal) => {
   return { ...actual, downloadTextFile: vi.fn() };
 });
 vi.mock('react-syntax-highlighter', () => ({
-  Prism: ({ children, language }: { children: string; language: string }) => (
-    <pre data-language={language}>
-      <code>{children}</code>
-    </pre>
+  Prism: vi.fn(
+    ({ children, language }: { children: string; language: string }) => (
+      <pre data-language={language}>
+        <code>{children}</code>
+      </pre>
+    ),
   ),
 }));
 
 describe('MarkdownCodeBlock', () => {
   beforeEach(() => {
+    vi.mocked(Prism).mockClear();
     vi.mocked(copyToClipboard).mockResolvedValue(true);
     vi.mocked(downloadTextFile).mockClear();
+  });
+
+  it.each([
+    ['markdown', 'x'.repeat(2_001)],
+    ['json', `${'x'.repeat(999)}\n`.repeat(51)],
+    ['markdown', JSON.stringify({ contentBytes: 'A'.repeat(175_052) })],
+  ])(
+    'preserves oversized %s content without invoking Prism',
+    async (language, value) => {
+      render(<MarkdownCodeBlock language={language} value={value} />);
+      await act(() => Promise.resolve());
+
+      expect(Prism).not.toHaveBeenCalled();
+      expect(
+        screen.getByText(value, { exact: true, normalizer: (text) => text })
+          .textContent,
+      ).toBe(value);
+      expect(screen.getByText(language)).toBeTruthy();
+    },
+  );
+
+  it('copies and downloads the complete text when highlighting is bypassed', async () => {
+    const user = userEvent.setup();
+    const value = JSON.stringify({ contentBytes: 'A'.repeat(175_052) });
+    render(<MarkdownCodeBlock language="markdown" value={value} />);
+
+    await user.click(screen.getByRole('button', { name: 'Copy code' }));
+    expect(copyToClipboard).toHaveBeenCalledWith(value);
+    await user.click(screen.getByRole('button', { name: 'Download code' }));
+    expect(downloadTextFile).toHaveBeenCalledWith(value, 'code.md');
+    expect(Prism).not.toHaveBeenCalled();
+  });
+
+  it('rechecks eligibility when content grows and when replaced by ordinary code', async () => {
+    const { rerender } = render(
+      <MarkdownCodeBlock language="markdown" value="# Small" />,
+    );
+    await waitFor(() => expect(Prism).toHaveBeenCalled());
+    vi.mocked(Prism).mockClear();
+
+    rerender(
+      <MarkdownCodeBlock language="markdown" value={'x'.repeat(2_001)} />,
+    );
+    await act(() => Promise.resolve());
+    expect(Prism).not.toHaveBeenCalled();
+
+    rerender(<MarkdownCodeBlock language="markdown" value="# Small again" />);
+    await waitFor(() => expect(Prism).toHaveBeenCalled());
+    expect(screen.getByText('# Small again')).toBeTruthy();
   });
 
   it('renders the language label as a small uppercase muted caption', () => {

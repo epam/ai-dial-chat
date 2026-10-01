@@ -178,6 +178,11 @@ import {
 
 ### CodeContent
 
+Content exceeding 50,000 UTF-16 code units overall or 2,000 on any line is
+shown in full as plain text without loading or invoking the syntax highlighter.
+The limits use the shared `isSyntaxHighlightingAllowed` guard from
+`@epam/ai-dial-chat-shared` and apply to every highlighting language.
+
 Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above.
 
 ```tsx
@@ -447,6 +452,42 @@ import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
 | `AttachmentContentType.GroupedVisualizer` | `GroupedVisualizerCanvasContent` | Renders every attachment an application visualizer claims in one iframe                                                                 |
 | `AttachmentContentType.Unsupported`       | `UnsupportedCanvasContent`       | Fallback for unsupported MIME types                                                                                                     |
 | `AttachmentContentType.Error`             | `ErrorCanvasContent`             | Load failure or forbidden access                                                                                                        |
+
+### HTML preview: same-origin download vs. srcdoc vs. external URL
+
+`HtmlCanvasContent` renders three ways depending on which fields are set:
+
+- **`srcdoc` only** — a locally picked file with no backing download URL.
+  Rendered via `srcDoc` in a sandboxed iframe (`sandbox="allow-scripts"`).
+- **`url` + `isSameOriginUrl: true`** (with `resolveSourceText`, not
+  `srcdoc`) — an attachment backed by this app's own file-download endpoint.
+  Rendered via `src` with `sandbox="allow-scripts"` and no
+  `allow-same-origin`, so the previewed document still runs at an opaque
+  origin with no access to this app's cookies or session. The backend gives
+  this response its own relaxed CSP so inline `<script>`/`<style>` in the
+  previewed file are not blocked by the host document's stricter policy —
+  see `apps/chat-api/README.md`'s CSP section. The HTML text itself is not
+  fetched up front — `resolveSourceText` fetches it lazily, only when the
+  "View source" toggle is used, avoiding a duplicate fetch alongside the
+  iframe's own `src` load.
+- **`url` with `isSameOriginUrl` absent/false** — a genuinely external HTML
+  source (e.g. a web-search citation). Rendered via `src` with
+  `sandbox="allow-scripts allow-same-origin"`, safe because the URL is a
+  different origin from the host app.
+
+```tsx
+import {
+  AttachmentContentType,
+  type HtmlCanvasContent,
+} from '@epam/ai-dial-attachment-canvas';
+
+const sameOriginPreview: HtmlCanvasContent = {
+  type: AttachmentContentType.Html,
+  url: downloadUrl,
+  isSameOriginUrl: true,
+  resolveSourceText: () => fetchHtmlText(downloadUrl), // lazy, only for "View source"
+};
+```
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK

@@ -9,25 +9,32 @@ import { Public } from '../common/decorators/public.decorator';
 import { resolveAppVersion } from '../common/utils/app-version';
 import type { EnvironmentVariables } from '../config/environment.config';
 
-const computeBuildId = (): string => {
+const hashBuildInput = (input: string | Buffer): string =>
+  createHash('sha256').update(input).digest('hex').slice(0, 12);
+
+const readFrontendIndexHtml = (): Buffer =>
+  readFileSync(join(resolveFrontendRootPath(), 'index.html'));
+
+/**
+ * Stable identifier for the running deployment, computed once per process.
+ *
+ * Hashing the built frontend's index.html — rather than requiring a dedicated
+ * deploy-time env var — means every pod serving the same deployed image reports
+ * the same value, and the value changes exactly when a new frontend build is
+ * deployed. Without a bundled frontend (the BFF-only ai-dial-chat-bff image, or
+ * local dev running only chat-api) it falls back to a hash of the resolved app
+ * version, so a BFF-only deployment still reports a new value per release.
+ */
+export const computeBuildId = (
+  appVersion: string,
+  readIndexHtml: () => Buffer = readFrontendIndexHtml,
+): string => {
   try {
-    const indexHtmlPath = join(resolveFrontendRootPath(), 'index.html');
-    const contents = readFileSync(indexHtmlPath);
-    return createHash('sha256').update(contents).digest('hex').slice(0, 12);
+    return hashBuildInput(readIndexHtml());
   } catch {
-    /* No built frontend on disk (e.g. local dev without a build). Falls back to a
-     * fixed placeholder so restarts of an API-only instance (CI, staging without a
-     * built dist) never falsely look like a new deployment to a polling client;
-     * this path never runs against a real deployment, which always serves a built dist. */
-    return 'dev';
+    return hashBuildInput(appVersion);
   }
 };
-
-/* Computed once when this module loads (i.e. once per process). Hashing the
- * built frontend's index.html — rather than requiring a dedicated deploy-time
- * env var — means every pod serving the same deployed image reports the same
- * value, and the value changes exactly when a new frontend build is deployed. */
-const BUILD_ID = computeBuildId();
 
 /**
  * Health check controller.
@@ -43,12 +50,15 @@ export class HealthController {
    * construction rather than per request. */
   private readonly appVersion: string;
 
+  private readonly buildId: string;
+
   constructor(
     private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {
     this.appVersion = resolveAppVersion(
       this.config.get('CHAT_VERSION', { infer: true }),
     );
+    this.buildId = computeBuildId(this.appVersion);
   }
 
   /**
@@ -85,7 +95,7 @@ export class HealthController {
           type: 'string',
           example: '3f9a1c2b8e7d',
           description:
-            'Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build.',
+            'Stable identifier for the running deployment, derived from a hash of the served frontend build, or of the application version when no frontend is bundled (BFF-only image). Changes when a new deployment replaces the frontend static assets or the version, letting long-lived clients detect that a reload will pick up a newer build.',
         },
       },
     },
@@ -95,7 +105,7 @@ export class HealthController {
       status: 'ok',
       timestamp: new Date().toISOString(),
       version: this.appVersion,
-      buildId: BUILD_ID,
+      buildId: this.buildId,
     };
   }
 }

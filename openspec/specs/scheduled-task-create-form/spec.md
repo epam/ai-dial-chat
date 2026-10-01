@@ -334,7 +334,7 @@ endDate?: string;
 
 `ScheduledTaskCreateFormErrors` SHALL gain `startDate?: string` and `endDate?: string`. `ScheduledTaskCreateFormLabels` SHALL gain `startDateLabel`, `endDateLabel`, `startDatePlaceholder` (default `"Pick start date"`), and `endDatePlaceholder` (default `"Pick end date"`) — both fields are optional, so neither label renders a required marker.
 
-`ScheduledTaskCreateForm` SHALL render both pickers whenever `values.repeat !== 'oneTime'` (i.e. for `'hourly'`, `'daily'`, `'weekly'`, and `'monthly'` alike — the activity window is not restricted to a subset of recurring cadences), positioned below the existing **Time** field when it renders (and below **Day of week**/**Day of month** when those render; for `'hourly'`, which renders no Time/Day field, the pickers are positioned directly below the Repeat dropdown), using the `Calendar` component from `@epam/ai-dial-ui-kit` with `mode={CalendarMode.Date}` — date-only, no time part. Layout SHALL be a two-column row (`flex gap-*`, each picker `flex-1`) on desktop and stacked on mobile, per `.claude/skills/responsive-design`. Errors render with the same inline-error paragraph pattern already used for `runAt`/`time` (`errors.startDate`/`errors.endDate` shown in a `<p>` with `instructionsErrorClassName`).
+`ScheduledTaskCreateForm` SHALL render both pickers whenever `values.repeat !== 'oneTime'` (i.e. for `'hourly'`, `'daily'`, `'weekly'`, and `'monthly'` alike — the activity window is not restricted to a subset of recurring cadences), positioned below the existing **Time** field when it renders (and below **Day of week**/**Day of month** when those render; for `'hourly'`, which renders no Time/Day field, the pickers are positioned directly below the Repeat dropdown), using the `Calendar` component from `@epam/ai-dial-ui-kit` with `mode={CalendarMode.Date}` — date-only, no time part. Both pickers pin the earliest selectable day at the form's mount date — a `minDate` memoized once per form mount, mirroring the run-at field's pinned earliest moment — so days strictly before the mount date render unselectable and activating them fires no `onFieldChange('startDate'/'endDate', …)`; the mount date itself and future days remain selectable. Layout SHALL be a two-column row (`flex gap-*`, each picker `flex-1`) on desktop and stacked on mobile, per `.claude/skills/responsive-design`. Errors render with the same inline-error paragraph pattern already used for `runAt`/`time` (`errors.startDate`/`errors.endDate` shown in a `<p>` with `instructionsErrorClassName`).
 
 `libs/scheduled-tasks/src/utils/calendar-value.ts` SHALL gain `dateValueToCalendarValue` and `calendarValueToDateValue` helpers producing/consuming a `YYYY-MM-DD` date-only string — a distinct pair from `calendarValueToRunAt`, which emits a `datetime-local` string for a different consumer (`values.runAt`). The pickers' `onChange` callbacks adapt the ui-kit's `CalendarValue` into `onFieldChange('startDate', ...)` / `onFieldChange('endDate', ...)` calls using these helpers, following the same controlled-value pattern as `runAt`/`time`.
 
@@ -355,6 +355,16 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 - **WHEN** the user selects a date in the Start date picker
 - **THEN** `onFieldChange('startDate', <YYYY-MM-DD string>)` is called via `calendarValueToDateValue`, not a `datetime-local` string
 
+#### Scenario: Past days are unselectable in the start/end date pickers
+
+- **WHEN** the user opens either the Start date or End date picker's month grid
+- **THEN** every day strictly before the form's mount date renders disabled, and activating such a day fires no `onFieldChange('startDate'/'endDate', …)` — the out-of-range click is a no-op — while the mount date itself and future days remain selectable
+
+#### Scenario: The earliest selectable day stays pinned at the form's mount date
+
+- **WHEN** the create or edit form re-renders repeatedly after mounting (e.g. the user edits other fields for several minutes)
+- **THEN** both date pickers' earliest selectable day stays pinned at the form's mount date rather than advancing with each render, matching the run-at field's pinned `minDate` behavior
+
 #### Scenario: Inline errors render for the new fields
 
 - **WHEN** `errors.endDate` is a non-empty string and `values.repeat !== 'oneTime'`
@@ -372,11 +382,13 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 
 ### Requirement: Create-task page validates and converts the activity window to UTC boundaries
 
-`ScheduledTaskCreatePage`'s `DEFAULT_VALUES` SHALL include `startDate: undefined` and `endDate: undefined`. Before calling `createScheduledTask`, when both `values.startDate` and `values.endDate` are set and `endDate` is not strictly after `startDate`, the page SHALL set `errors.endDate` to a validation message and block submit; when either or both fields are empty, this check is skipped (both empty is valid — an unbounded recurring schedule). This check applies whenever `values.repeat !== 'oneTime'`, including `'hourly'`.
+`ScheduledTaskCreatePage`'s `DEFAULT_VALUES` SHALL include `startDate: undefined` and `endDate: undefined`. Before calling `createScheduledTask`, when both `values.startDate` and `values.endDate` are set and `endDate` is earlier than `startDate`, the page SHALL set `errors.endDate` to a validation message and block submit; `endDate` equal to `startDate` is a valid single-day window (the start boundary resolves to that day's `00:00:00.000` local and the end boundary to its `23:59:59.999`), so it MUST NOT be rejected. When either or both fields are empty, this check is skipped (both empty is valid — an unbounded recurring schedule). This check applies whenever `values.repeat !== 'oneTime'`, including `'hourly'`.
+
+The shared `validateScheduledTaskFormValues` (`libs/scheduled-tasks/src/validation`) SHALL additionally reject a recurring activity-window boundary earlier than the validating clock's local today, returning the `StartDateInPast`/`EndDateInPast` error codes — a boundary that is both past and mis-ordered reports the past-date code, which runs after the ordering check so the more actionable message wins. A boundary equal to the option's `originalStartDate`/`originalEndDate` SHALL be exempt: `ScheduledTaskEditPage` passes the hydrated boundaries in those options, so an older task's prefilled past window does not block saving unrelated edits, while a boundary changed into the past is still rejected. The create page passes no originals, so the rule applies to every boundary there.
 
 `mapFormValuesToCreateBody` (`apps/chat/src/utils/scheduled-task-trigger.ts`) SHALL build the `trigger.cron` object for any non-`'oneTime'` `repeat` value as `{ fields, ...(startDate ? { startDate: <iso> } : {}), ...(endDate ? { endDate: <iso> } : {}) }`, and MUST NOT include `startDate`/`endDate` when `repeat === 'oneTime'` (the one-time branch is unaffected by this change). The local calendar-day-to-UTC-instant conversion SHALL follow the same reference-`Date`-plus-UTC-getters technique `buildCronFields` already uses and documents in its own code comment, extended to cover this case: `startDate` converts to that local calendar day's `00:00:00.000` local time, then to its UTC ISO equivalent; `endDate` converts to that local calendar day's `23:59:59.999` local time, then to its UTC ISO equivalent, so the last local day the user selected is not cut off by the UTC conversion.
 
-Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTasks.create.endDateLabel`, `scheduledTasks.create.startDatePlaceholder`, `scheduledTasks.create.endDatePlaceholder`, and `scheduledTasks.create.endDateBeforeStartError` SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching `ScheduledTasksI18nKeys` enum entries, resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings, per the existing i18n requirement for this page.
+Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTasks.create.endDateLabel`, `scheduledTasks.create.startDatePlaceholder`, `scheduledTasks.create.endDatePlaceholder`, `scheduledTasks.create.endDateBeforeStartError`, `scheduledTasks.create.startDateInPast`, and `scheduledTasks.create.endDateInPast` SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching `ScheduledTasksI18nKeys` enum entries, resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings, per the existing i18n requirement for this page.
 
 #### Scenario: No dates set is a valid submit
 
@@ -388,10 +400,40 @@ Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTas
 - **WHEN** `values.repeat !== 'oneTime'`, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`, and the browser's local timezone is UTC+2
 - **THEN** the POST body's `trigger.cron.startDate` is `'2026-07-31T22:00:00.000Z'` (local midnight Aug 1 in UTC+2) and `trigger.cron.endDate` is `'2026-08-31T21:59:59.999Z'` (local 23:59:59.999 Aug 31 in UTC+2)
 
-#### Scenario: endDate not after startDate blocks submit with an inline error
+#### Scenario: endDate earlier than startDate blocks submit with an inline error
 
-- **WHEN** the user sets `endDate` equal to or earlier than `startDate` and activates Create
+- **WHEN** the user sets `endDate` earlier than `startDate` and activates Create
 - **THEN** `errors.endDate` is set to the `endDateBeforeStartError` message, no `createScheduledTask` call is made, and the form remains open
+
+#### Scenario: endDate equal to startDate is a valid single-day window
+
+- **WHEN** the user sets `startDate` and `endDate` to the same calendar day (not earlier than the validating clock's local today) and activates Create/Save
+- **THEN** no ordering error is set and submit proceeds — the window covers that full local day, from `00:00:00.000` to `23:59:59.999`
+
+#### Scenario: A past startDate blocks submit with an inline error
+
+- **WHEN** the user sets `startDate` earlier than the validating clock's local today and activates Create/Save
+- **THEN** `errors.startDate` is set to the `startDateInPast` message, no `createScheduledTask`/`updateScheduledTask` call is made, and the form remains open
+
+#### Scenario: A past endDate blocks submit with an inline error
+
+- **WHEN** the user sets `endDate` earlier than the validating clock's local today (with `startDate` unset or valid) and activates Create/Save
+- **THEN** `errors.endDate` is set to the `endDateInPast` message, no `createScheduledTask`/`updateScheduledTask` call is made, and the form remains open
+
+#### Scenario: An unchanged prefilled past boundary still saves on the edit page
+
+- **WHEN** an older task's past `startDate` (or ended `endDate`) is prefilled on the edit form, the user leaves the boundary unchanged, and activates Save
+- **THEN** no past-date error is set and the `updateScheduledTask` call proceeds with the boundary preserved in `trigger.cron`
+
+#### Scenario: A boundary changed to a different past date blocks save on the edit page
+
+- **WHEN** an older task's past `startDate` is prefilled on the edit form and the user changes it to another date earlier than the validating clock's local today
+- **THEN** `errors.startDate` is set to the `startDateInPast` message and no `updateScheduledTask` call is made
+
+#### Scenario: A window starting on today is accepted
+
+- **WHEN** `startDate` equals the validating clock's local today and `endDate` is a later day
+- **THEN** no past-date error is set and submit proceeds — today is not a past date
 
 #### Scenario: Switching back to One-time never sends the window
 
@@ -543,7 +585,7 @@ For the remaining (non-Hourly) shapes, mapping SHALL fail when: the task's `trig
 
 ### Requirement: Edit page submits via PUT and preserves input on failure
 
-On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rules as the create page, map the current form `values` to `UpdateScheduledTaskBodyDto` (identical shape to `CreateScheduledTaskBodyDto`) using the same trigger-building logic as `mapFormValuesToCreateBody`, and call `updateScheduledTask(scheduleId, body)` (`PUT /api/v1/scheduled-tasks/:scheduleId`) through `apps/chat/src/server-api/scheduled-tasks.api.ts`. The Save action SHALL be disabled while a submission is in flight (`isSubmitting`) to prevent duplicate submissions. On success (**200 OK**), the page SHALL show a localized success notification and navigate to `getScheduledTaskDetailRoute(scheduleId)`. On failure, all user-entered form values SHALL be preserved, an error notification SHALL be shown (including the request/trace id when available, per the existing notification pattern), `isSubmitting` SHALL be reset so Save is re-enabled, and no navigation SHALL occur. A task-not-found **404** SHALL render the same NotFoundPage treatment as an initial task-load 404; a response carrying `scheduledTaskDeploymentUnavailable` SHALL preserve the draft and show a model error instead. **400**, **403**, **429**, **502**, and **503** SHALL all surface through that same single error-notification path — the notification's message text comes from the server's own error body via `getApiErrorDetails`, so it already differs meaningfully per status without the page hardcoding four separate copy variants, matching `ScheduledTaskCreatePage`'s existing single-catch-all error handling. **401** SHALL trigger the app's existing unauthenticated-session handling in the API client layer, which intercepts it before it reaches this page's catch block in the normal flow.
+On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rules as the create page, map the current form `values` to `UpdateScheduledTaskBodyDto` (identical shape to `CreateScheduledTaskBodyDto`) using the same trigger-building logic as `mapFormValuesToCreateBody`, and call `updateScheduledTask(scheduleId, body)` (`PUT /api/v1/scheduled-tasks/:scheduleId`) through `apps/chat/src/server-api/scheduled-tasks.api.ts`. The Save action SHALL be disabled while a submission is in flight (`isSubmitting`) to prevent duplicate submissions. On success (**200 OK**), the page SHALL show a localized success notification and navigate to `getScheduledTaskDetailRoute(scheduleId)`. On failure, all user-entered form values SHALL be preserved, an error notification SHALL be shown (including the request/trace id when available, per the existing notification pattern), `isSubmitting` SHALL be reset so Save is re-enabled, and no navigation SHALL occur. A task-not-found **404** SHALL render the same NotFoundPage treatment as an initial task-load 404; a response carrying `scheduledTaskDeploymentUnavailable` SHALL preserve the draft and show a model error instead; a response carrying a field-mapped code (`scheduledTaskSkillUnsupported`, `scheduledTaskInstructionsOrSkillRequired`) SHALL show the inline field error instead of a notification. **400**, **403**, **409**, **429**, **502**, and **503** otherwise SHALL all surface through that same single error-notification path, whose message `resolveScheduledTaskErrorMessage` chooses: `toolsetSignin.adminConsentRequired` for `scheduledTaskAdminConsentRequired`, else the response's `upstreamMessage` from DIAL Scheduler, else the localized `scheduledTasks.edit.errorNotification`; the BFF's generic `message` is never displayed, matching `ScheduledTaskCreatePage`'s single-catch-all error handling. **401** SHALL trigger the app's existing unauthenticated-session handling in the API client layer, which intercepts it before it reaches this page's catch block in the normal flow.
 
 #### Scenario: Back and Cancel both return to the detail page without a network call
 
@@ -557,8 +599,8 @@ On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rul
 
 #### Scenario: Submit failure preserves entered values and re-enables Save
 
-- **WHEN** the user activates Save and `updateScheduledTask` rejects with a 400, 403, 429, 502, or 503
-- **THEN** an error notification is shown with the server's error message and a trace id when present, the form remains open with all entered values unchanged, `isSubmitting` returns to `false`, and no navigation occurs
+- **WHEN** the user activates Save and `updateScheduledTask` rejects with a 400, 403, 429, 502, or 503 that carries no field-mapped code
+- **THEN** an error notification is shown with the message chosen by `resolveScheduledTaskErrorMessage` (admin-consent key, else `upstreamMessage`, else `scheduledTasks.edit.errorNotification`) and a trace id when present, the form remains open with all entered values unchanged, `isSubmitting` returns to `false`, and no navigation occurs
 
 #### Scenario: Duplicate submission is prevented while a save is in flight
 
@@ -743,3 +785,32 @@ The field SHALL support keyboard opening/selection/removal, Escape dismissal and
 - **WHEN** the form renders under RTL in a 360px container with a long skill reference
 - **THEN** labels and controls follow logical direction, text wraps, and selection/removal remain reachable without horizontal overflow
 
+### Requirement: Create and edit notifications show the actionable reason with a localized fallback
+
+When `createScheduledTask` or `updateScheduledTask` rejects and the failure is not handled by a field error or the edit page's NotFound treatment, `ScheduledTaskCreatePage` and `ScheduledTaskEditPage` SHALL choose the error-notification message through one app-level helper, `resolveScheduledTaskErrorMessage(details, fallbackKey, t)` in `apps/chat/src/utils/map-scheduled-task-dto.ts` (shared with the detail page; `details` is the `getApiErrorDetails` result), in this order:
+
+1. `details.code === 'scheduledTaskAdminConsentRequired'` → `t('toolsetSignin.adminConsentRequired')` (en: "A DIAL administrator must approve this application's access before you can continue. Contact your administrator, then retry.");
+2. otherwise a non-empty `details.upstreamMessage` → that text as received from DIAL Scheduler (not translated);
+3. otherwise `t(fallbackKey)` — `scheduledTasks.create.errorNotification` / `scheduledTasks.edit.errorNotification`.
+
+The BFF's own generic `details.message` SHALL NOT be displayed (it is English-only and not actionable). The notification SHALL still include the trace id when present, all entered values SHALL be preserved, the submit action SHALL be re-enabled, and no navigation SHALL occur. No new i18n key is added. State stays local to each page (no context); the helper is a pure function, so no memoisation is required. The notification uses the existing `useNotification` alert pattern — no new UI surface, so no new RTL or ARIA requirements; upstream text renders in the notification's inherited direction. No `libs/scheduled-tasks` change: `ScheduledTaskCreateForm` stays unaware of error codes.
+
+#### Scenario: Create shows the admin-consent message and keeps the draft
+
+- **WHEN** the user activates Create and the BFF returns `403 { code: "scheduledTaskAdminConsentRequired" }`
+- **THEN** an error notification with `toolsetSignin.adminConsentRequired` is shown, the form keeps every entered value, Create is re-enabled, and no navigation occurs
+
+#### Scenario: Create shows the Scheduler's reason
+
+- **WHEN** create fails with `502 { message: "DIAL Core returned a server error", upstreamMessage: "Quota exceeded for schedules" }`
+- **THEN** the error notification text is `Quota exceeded for schedules`, not the generic `message`
+
+#### Scenario: Edit shows the admin-consent message and keeps the draft
+
+- **WHEN** the user activates Save and `updateScheduledTask` rejects with `code: "scheduledTaskAdminConsentRequired"`
+- **THEN** an error notification with `toolsetSignin.adminConsentRequired` is shown, the page does not render `NotFoundPage`, and the draft is preserved
+
+#### Scenario: No upstream text falls back to the localized message
+
+- **WHEN** create or update fails without a known code and without `upstreamMessage` (for example a 503 timeout)
+- **THEN** the page's localized generic error key is used

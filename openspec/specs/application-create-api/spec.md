@@ -15,14 +15,16 @@ The endpoint SHALL:
 - First resolve the user's storage bucket via the client's `getUserBucket`, and reject with 502 when it succeeds but returns no bucket.
 - Construct the application path as `{name}__{version}` (`appPath`), where `version` defaults to `'1.0.0'` when not supplied; URL-encode it (`encodedPath`) only for the outgoing DIAL Core request.
 - Create the application via the client's `saveCustomApplication(bucket, encodedPath, …)` with a mapped body (see below).
-- On success, invalidate the `applications:list:<userSub>` cache entry via `cacheManager.del` and return `{ id: "applications/{bucket}/{appPath}" }` — the **unencoded** path, matching the resource id format used elsewhere (e.g. `listApplications`).
+- On success, invalidate the per-user applications and deployments-list caches, then return `{ id: "applications/{bucket}/{appPath}" }` — the **unencoded** path, matching the resource id format used elsewhere (e.g. `listApplications`).
 - Map DIAL Core non-2xx responses to the appropriate HTTP status using `mapDialHttpStatus`, and transport-level failures via `handleDialFetchError`.
 - Not log the access token, session cookie, or any secret. Safe identifiers (`userSub`, app path) MAY be logged at debug level.
 - Follow `apps/chat-api/AGENTS.md` for all controller and service conventions.
 
 **Authorization**: Any authenticated session may call this endpoint. No additional role check is required.
 
-**Cache**: After a successful create, delete key `applications:list:<userSub>` (TTL 30 000 ms). Do not cache the creation result itself.
+**Cache**: After a successful create, invalidate `applications:list:<userSub>` and `deployments:list:<userSub>` (including its `:interface:<type>` variants). Do not cache the creation result itself. Cache invalidation failures are logged and do not fail the completed create.
+
+**Module wiring**: `ApplicationsModule` already imports `DeploymentsModule` (for `updateApplication`'s use of `DeploymentsService`), so no additional wiring is required.
 
 **Request DTO** (`CreateApplicationBodyDto`):
 ```ts
@@ -34,7 +36,7 @@ The endpoint SHALL:
   description?: string;  // optional, @IsString, @IsOptional, @MaxLength(2000)
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsValidResourceReference (https?:// URL or a
                          //   DIAL file id "files/{bucket}/{path}", no traversal segments)
-  version?: string;      // optional, @IsString, @IsOptional, @Matches(/^[a-zA-Z0-9._-]+$/)
+  version?: string;      // optional, @IsString, @IsOptional, @Matches(SEMVER_VERSION_PATTERN) — SemVer 2.0.0
                          //   — defaults to "0.0.1" in the service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
   applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional
@@ -69,13 +71,13 @@ The `name` and `version` allowlist patterns exist so the `{name}__{version}` res
 
 **Hoisted deployment fields.** `endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` are top-level DIAL Core application fields, not schema-specific configuration. The service SHALL lift them out of `applicationProperties` and send them at the top level, forwarding only the remaining keys as `application_properties`. When nothing remains after that hoist, `application_properties` SHALL be omitted entirely rather than sent as `{}`.
 
-The service SHALL NOT branch on `body.type` to decide `application_properties` content — that decision belongs to the caller. The frontend `GeneralForm` (`apps/chat/src/pages/AppsEditor/GeneralForm.tsx`) is the current caller, and uses the shared `isQuickAppSchema` helper to decide whether to send the QuickApps 2.0 orchestrator/contexts/tool_sets shape as `applicationProperties`.
+The service SHALL NOT branch on `body.type` to decide `application_properties` content — that decision belongs to the caller.
 
 **Exception — forced `features.skills_supported` for Quick Apps.** The one deliberate exception to the rule above: when `body.type` matches the backend's own `isQuickAppSchema` helper (`apps/chat-api/src/common/utils/application-schema.ts`), the service SHALL force `features.skills_supported` to `true` on the DIAL Core save body, merged with any caller-supplied `features` (hoisted or not), overriding any `skills_supported` value the caller may have sent. This is a narrow, acknowledged hack: when an admin creates a Quick App from the Admin application, Admin's own UI lets them set `skills_supported`; chat has no equivalent UI control, so a Quick App created from chat would otherwise never get the flag set and would silently lose skills. Pushing this default into every individual Quick App implementation was rejected as duplicative across many places, and leaving skills broken was rejected outright — forcing it here, in the one place all chat-originated application writes already pass through, was judged the least-bad of those three options, even though it couples generic application-write logic to a QuickApp-specific business rule that doesn't otherwise belong in this endpoint.
 
 **Response DTO** (`CreatedApplicationDto`): `{ id: string; displayName?: LocalizedText; object?: string }`. This endpoint populates only `id`, constructed locally as `applications/{bucket}/{appPath}` (unencoded); DIAL Core's save response body is not forwarded. The two optional fields exist for other producers of the same DTO.
 
-**OpenAPI / generated client**: operationId `createApplication`. Generated method in `libs/chat-api-client/src/generated/src/apis/ApplicationsApi.ts` as `createApplicationRaw` + `createApplication`.
+**OpenAPI / generated client**: operationId `createApplication`; this cache-only change does not alter the generated client.
 
 **i18n impact**: None (server-side only).
 
@@ -87,7 +89,12 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 - **AND** `GET /v1/bucket` returns `{ "bucket": "users/alice" }`
 - **AND** the DIAL Core save for the URL-encoded path `users/alice/My%20App__0.0.1` succeeds
 - **THEN** the endpoint responds 201 with `{ "id": "applications/users/alice/My App__0.0.1" }` (unencoded path)
-- **AND** the `applications:list:<userSub>` cache key is deleted
+- **AND** the applications and deployments-list caches are invalidated
+
+#### Scenario: Cached deployments list refreshes after create
+
+- **WHEN** a client reads deployments immediately after a successful create
+- **THEN** the response includes the new application rather than a pre-create cached list
 
 #### Scenario: Caller-supplied schema properties are forwarded
 
@@ -148,9 +155,9 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 - **WHEN** the DIAL Core save responds 409 (e.g. name already taken)
 - **THEN** the endpoint responds 409 with the mapped error body
+- **AND** neither cache is invalidated
 
 #### Scenario: DIAL Core unavailable returns 503
 
 - **WHEN** DIAL Core times out or is unreachable
 - **THEN** the endpoint responds 503
-

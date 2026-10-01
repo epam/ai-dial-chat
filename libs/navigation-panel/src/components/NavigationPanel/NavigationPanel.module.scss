@@ -6,11 +6,44 @@
 .item {
   color: var(--np-item-text, var(--text-secondary, #57647a));
 
-  &:hover {
-    background: var(
-      --np-item-hover-bg,
-      var(--bg-control-accent-alpha-hover, #2764d924)
-    );
+  /* The glyph lifts slightly on hover/focus; the overshoot easing gives it
+     a light spring instead of a linear slide. */
+  svg {
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  &:hover svg,
+  a:focus-visible > & svg {
+    transform: translateY(-2px);
+  }
+
+  &:active svg {
+    transform: translateY(0);
+    transition-duration: 100ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transition: none;
+    }
+
+    &:hover svg,
+    a:focus-visible > & svg {
+      transform: none;
+    }
+  }
+
+  /* Hover paints only the glyph: the button background stays unchanged
+     unless a host opts in through `--np-item-hover-bg`. */
+  &:not(.itemActive):hover {
+    background: var(--np-item-hover-bg, transparent);
+  }
+
+  /* Scoped to inactive items: the focus selector outranks `.itemActive svg`
+     and `.itemFilled svg`, so unscoped it would restroke the active glyph. */
+  &:not(.itemActive):hover svg,
+  a:focus-visible > &:not(.itemActive) svg {
+    stroke: var(--np-item-hover-icon, currentColor);
   }
 
   &:active {
@@ -20,18 +53,44 @@
     );
   }
 
-  a:focus-visible > & {
+  /* The link wrapper is `display: contents` and draws no outline, so the
+     background stays as the keyboard focus indicator. */
+  a:focus-visible > &:not(.itemActive) {
     background: var(
       --np-item-hover-bg,
       var(--bg-control-accent-alpha-hover, #2764d924)
     );
   }
+
+  /* The selected background already fills the active item, so keyboard
+     focus there draws a ring instead. */
+  a:focus-visible > &.itemActive {
+    outline: 2px solid var(--np-item-active-text, var(--text-accent, #1d4ed8));
+    outline-offset: -2px;
+  }
 }
 
-.itemActive {
+.item.itemActive {
   background: var(
     --np-item-selected-bg,
-    var(--bg-control-accent-alpha, #2764d90f)
+    var(--bg-control-accent-alpha-active, #2764d933)
   );
   color: var(--np-item-active-text, var(--text-accent, #1d4ed8));
+
+  svg {
+    stroke: var(--np-item-active-icon, currentColor);
+  }
+}
+
+/* A filled `activeIcon` is painted by `fill`; the stroke stays off so hover
+   does not outline the solid glyph. */
+.item.itemFilled svg {
+  fill: var(--np-item-active-icon, currentColor);
+  stroke: none;
+}
+
+/* Without an `activeIcon`, the outline glyph is filled in place; the stroke
+   stays on so open paths (lines, clock hands) do not vanish. */
+.item.itemFilledOutline svg {
+  fill: var(--np-item-active-icon, currentColor);
 }

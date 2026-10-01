@@ -20,6 +20,16 @@ vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
 vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 vi.mock('../NotificationContext', () => ({ useNotification: vi.fn() }));
 
+/* This suite checks host event and notification wiring. The celebrations suite
+   and browser checks cover playback; avoid Lottie's canvas helpers in JSDOM. */
+vi.mock('lottie-web/build/player/lottie_light', () => ({
+  default: {
+    loadAnimation: () => {
+      throw new Error('Animation renderer unavailable in host integration');
+    },
+  },
+}));
+
 /* Key-as-output, but a toast message keeps the interpolated `phrase`, as real
    i18next does, so the library's secret-hint substitution stays visible. */
 vi.mock('react-i18next', () => ({
@@ -175,7 +185,7 @@ describe('CelebrationHost with the celebrations library', () => {
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: 'newYear.toastTitle',
       message: expect.stringMatching(
-        /^newYear\.(snow|confetti|sleigh)ToastMessage happy new year$/,
+        /^newYear\.(snow|confetti|sleigh|giftWrapping|penguinStar)ToastMessage happy new year$/,
       ),
     });
   });

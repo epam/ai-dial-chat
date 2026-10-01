@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { SkillListingEntry } from '../../../models/favorite-skill-item';
+import type { SkillCatalogModalProps } from '../../../models/skill-catalog-modal-props';
 import type { UseSkillSelectorOverlayOptions } from '../../../models/skill-selector-overlay';
 import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
 import { useSkillSelectorOverlay } from '../useSkillSelectorOverlay';
@@ -29,7 +30,117 @@ const getOnSelect = (
   (element.props as { onSelect: (item: { id: string; name: string }) => void })
     .onSelect;
 
+/* Asserts `value` is present and narrows it, in place of a non-null assertion. */
+const assertDefined = <T,>(value: T | null | undefined): T => {
+  expect(value).toBeDefined();
+  return value as T;
+};
+
 describe('useSkillSelectorOverlay', () => {
+  describe.each([
+    { entry: 'slash menu', viaSlash: true },
+    { entry: 'add menu', viaSlash: false },
+  ])('Browse from the $entry', ({ viaSlash }) => {
+    const openBrowse = (
+      overlay: ReturnType<typeof useSkillSelectorOverlay>,
+      query: string,
+    ) => {
+      const panel = (
+        viaSlash
+          ? assertDefined(overlay.commandMenu).renderMenu({
+              query,
+              caretPosition: 5,
+              close: () => overlay.onDraftChange('/abc  after'),
+              listboxId: 'skill-menu-listbox',
+              activeOptionId: null,
+            })
+          : assertDefined(overlay.skillMenuOverlay).renderOverlay(
+              vi.fn(),
+              6 + query.length,
+            )
+      ) as ReactElement<{ onBrowse: () => void }>;
+      panel.props.onBrowse();
+    };
+
+    it.each([false, true])(
+      'keeps the selected skill when the catalog also closes (replacing a mention: %s)',
+      (isMention) => {
+        const { result } = renderHook(() =>
+          useSkillSelectorOverlay(baseOptions),
+        );
+        const query = isMention ? 'abc' : 'search';
+        act(() => {
+          result.current.seedSkillMentions(`/abc /${query} after`, [
+            { url: abcSkill.url },
+            ...(isMention ? [{ url: abcSkill.url }] : []),
+          ]);
+        });
+        act(() => openBrowse(result.current, query));
+
+        const catalog = result.current
+          .skillCatalogModal as ReactElement<SkillCatalogModalProps>;
+        expect(catalog.props.isOpen).toBe(true);
+        act(() => {
+          /* Catalog selection and close are delivered in the same event. */
+          catalog.props.onSelect(csdSkill.url);
+          catalog.props.onClose();
+        });
+
+        expect(result.current.message).toBe('/abc /csd after');
+        expect(result.current.selectedSkills).toEqual([
+          { url: abcSkill.url },
+          { url: csdSkill.url },
+        ]);
+        expect(
+          result.current.activeMentions.map(({ start, length }) => ({
+            start,
+            length,
+          })),
+        ).toEqual([
+          { start: 0, length: 4 },
+          { start: 5, length: 4 },
+        ]);
+        expect(result.current.caretPositionOverride).toBe(9);
+        expect(
+          (
+            result.current
+              .skillCatalogModal as ReactElement<SkillCatalogModalProps>
+          ).props.isOpen,
+        ).toBe(false);
+      },
+    );
+
+    it.each([false, true])(
+      'restores the draft once when cancelled (restoring a mention: %s)',
+      (isMention) => {
+        const { result } = renderHook(() =>
+          useSkillSelectorOverlay(baseOptions),
+        );
+        const query = isMention ? 'abc' : 'search';
+        const originalText = `/abc /${query} after`;
+        const originalSkills = [
+          { url: abcSkill.url },
+          ...(isMention ? [{ url: abcSkill.url }] : []),
+        ];
+        act(() =>
+          result.current.seedSkillMentions(originalText, originalSkills),
+        );
+        act(() => openBrowse(result.current, query));
+
+        const catalog = result.current
+          .skillCatalogModal as ReactElement<SkillCatalogModalProps>;
+        act(() => {
+          catalog.props.onClose();
+          catalog.props.onClose();
+        });
+
+        expect(result.current.message).toBe(originalText);
+        expect(result.current.selectedSkills).toEqual(originalSkills);
+        expect(result.current.caretPositionOverride).toBe(6 + query.length);
+      },
+    );
+  });
+
   it('forwards the configured trigger only to active mention chips', () => {
     const { result } = renderHook(() =>
       useSkillSelectorOverlay({
@@ -42,8 +153,9 @@ describe('useSkillSelectorOverlay', () => {
       result.current.seedSkillMentions('/abc', [{ url: abcSkill.url }]);
     });
 
-    const activeChip = result.current.activeMentions[0]
-      .render!() as ReactElement;
+    const activeChip = assertDefined(
+      result.current.activeMentions[0].render,
+    )() as ReactElement;
     const historyChip = result.current.renderHistorySkills([
       { url: abcSkill.url },
     ]) as ReactElement[];
@@ -56,7 +168,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     const close = vi.fn();
-    const menu = result.current.commandMenu!.renderMenu({
+    const menu = assertDefined(result.current.commandMenu).renderMenu({
       query: '',
       caretPosition: 0,
       close,
@@ -86,7 +198,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     act(() => {
-      const menu = result.current.commandMenu!.renderMenu({
+      const menu = assertDefined(result.current.commandMenu).renderMenu({
         query: '',
         caretPosition: 0,
         close: vi.fn(),
@@ -101,10 +213,9 @@ describe('useSkillSelectorOverlay', () => {
     });
 
     act(() => {
-      const overlay = result.current.skillMenuOverlay!.renderOverlay(
-        vi.fn(),
-        33,
-      ) as ReactElement;
+      const overlay = assertDefined(
+        result.current.skillMenuOverlay,
+      ).renderOverlay(vi.fn(), 33) as ReactElement;
       getOnSelect(overlay)({ id: csdSkill.url, name: csdSkill.name });
     });
 
@@ -135,7 +246,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     act(() => {
-      const menu = result.current.commandMenu!.renderMenu({
+      const menu = assertDefined(result.current.commandMenu).renderMenu({
         query: '',
         caretPosition: 0,
         close: vi.fn(),
@@ -165,7 +276,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     act(() => {
-      const menu = result.current.commandMenu!.renderMenu({
+      const menu = assertDefined(result.current.commandMenu).renderMenu({
         query: '',
         caretPosition: 0,
         close: vi.fn(),

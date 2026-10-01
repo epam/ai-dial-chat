@@ -47,6 +47,7 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
 import {
   getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
@@ -86,6 +87,13 @@ const ScheduledTaskEditPage: FC = () => {
   const [values, setValues] = useState<ScheduledTaskCreateFormValues | null>(
     null,
   );
+  /* Activity-window boundaries the form was hydrated with. The past-date rule
+   * exempts them, so an older task whose window already started stays editable
+   * while a boundary changed into the past is still rejected. */
+  const [originalWindowDates, setOriginalWindowDates] = useState<{
+    startDate?: string;
+    endDate?: string;
+  }>({});
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
@@ -133,6 +141,10 @@ const ScheduledTaskEditPage: FC = () => {
         }
         setTask(result);
         setValues({ minute: '0', ...mapped.values });
+        setOriginalWindowDates({
+          startDate: mapped.values.startDate,
+          endDate: mapped.values.endDate,
+        });
       } catch (err) {
         if (!cancelled.value) {
           if (getApiErrorStatus(err) === 404) {
@@ -205,6 +217,8 @@ const ScheduledTaskEditPage: FC = () => {
     const prepared = prepareScheduledTaskUpdateBody(values, {
       now: new Date(),
       isSkillsSupported,
+      originalStartDate: originalWindowDates.startDate,
+      originalEndDate: originalWindowDates.endDate,
     });
     if (!prepared.ok) {
       setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
@@ -219,7 +233,8 @@ const ScheduledTaskEditPage: FC = () => {
       });
       navigate(returnUrl);
     } catch (error) {
-      const { traceId, code } = await getApiErrorDetails(error);
+      const details = await getApiErrorDetails(error);
+      const { code } = details;
       const fieldErrors = mapScheduledTaskApiError(code, t);
       if (fieldErrors) {
         setErrors(fieldErrors);
@@ -236,13 +251,18 @@ const ScheduledTaskEditPage: FC = () => {
       }
 
       showErrorNotification({
-        message: t(ScheduledTasksI18nKeys.EditErrorNotification),
-        requestId: traceId,
+        message: resolveScheduledTaskErrorMessage(
+          details,
+          ScheduledTasksI18nKeys.EditErrorNotification,
+          t,
+        ),
+        requestId: details.traceId,
       });
       setIsSubmitting(false);
     }
   }, [
     values,
+    originalWindowDates,
     isSkillsSupported,
     showSuccessNotification,
     showErrorNotification,

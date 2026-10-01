@@ -1,13 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
-import {
-  MemoryRouter,
-  Route,
-  Routes,
-  useNavigate,
-  useSearchParams,
-} from 'react-router';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
 import {
@@ -121,16 +115,13 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
 }));
 
 const CreatePageStub = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   return (
     <div>
-      create page returnUrl={searchParams.get('returnUrl')}
+      create page
       <button
         onClick={() =>
-          navigate(searchParams.get('returnUrl') ?? '/scheduled-tasks', {
-            state: { refresh: true },
-          })
+          navigate('/scheduled-tasks', { state: { refresh: true } })
         }
       >
         submit
@@ -313,7 +304,7 @@ describe('ScheduledTasksPage', () => {
     expect(loadMoreMock).toHaveBeenCalledOnce();
   });
 
-  it('navigates to the create route with returnUrl when New task is clicked', async () => {
+  it('navigates to the create route when New task is clicked', async () => {
     useFeatureFlagMock.mockReturnValue(true);
     renderScheduledTasksPage();
 
@@ -323,9 +314,7 @@ describe('ScheduledTasksPage', () => {
       }),
     );
 
-    expect(
-      screen.getByText('create page returnUrl=/scheduled-tasks'),
-    ).toBeTruthy();
+    expect(screen.getByText('create page')).toBeTruthy();
   });
 
   it('navigates to the detail route when a card is clicked', async () => {

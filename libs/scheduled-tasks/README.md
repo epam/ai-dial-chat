@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.27 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.30 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -109,7 +109,7 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", or "monthly"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", or "monthly"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
 
 `isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
 
@@ -145,6 +145,13 @@ import {
 
 ### ScheduledTaskDetailView
 
+The header can opt into host-owned Start now behavior with `onStartNow`,
+`isStarting`, `isStartNowDisabled`, and `labels.startNowButtonLabel`; use the
+optional `labels.startingLabel` while the request is pending. The host owns
+execution, eligibility, errors, translations, and live announcements. Below
+1280px header actions wrap while retaining their text and 44px targets. The
+back arrow mirrors in RTL, while the Start now play icon does not.
+
 Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout; below it (mobile and tablet) they render as a tab row — Details active by default — with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
 
 ```tsx
@@ -157,6 +164,9 @@ import {
   labels={{/* ..., unreadIndicatorLabel: 'Unread' */}}
   onBack={() => {}}
   onEdit={() => {}}
+  onStartNow={() => {}}
+  isStarting={false}
+  isStartNowDisabled={false}
   displayName="Daily summary"
   description="Summarizes unread inbox items every morning"
   modelLabel="GPT-4.1 mini"
@@ -180,9 +190,19 @@ import {
 ### ScheduledTaskDeleteConfirmation
 
 Controlled deletion presentation that leaves mutations, routing, notifications,
-and translated copy to the host. `isDeleting` prevents duplicate confirmation
-and dismissal callbacks. Use `styles.popupClassName` to apply a host popup width
-or other container styling.
+and translated copy to the host. The dialog frame is the kit's `Popup`; the
+identity card, the warning sentence, the consequence bullets, and the action row
+are [`ConfirmationIdentityCard`, `ConfirmationView` and
+`ConfirmationFooter`](../chat-shared/README.md#confirmationview) from
+`@epam/ai-dial-chat-shared`, so a delete confirmation reads the same here as in
+the catalog's details panel.
+
+`title` is a string rather than a node so the kit names the dialog with it.
+`body` is a node, which is how the host emphasises the task name inside its own
+translated sentence. `isDeleting` disables both actions — and the header close
+control, Escape and an outside click — puts a spinner in the confirm button, and
+announces `pendingLabel` politely. Use `styles.popupClassName` to apply a host
+popup width.
 
 ```tsx
 import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
@@ -190,15 +210,31 @@ import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
 <ScheduledTaskDeleteConfirmation
   open={isDeleteOpen}
   taskName={task.displayName}
+  icon={<TaskIcon />}
+  typeLabel="Scheduled task"
   title="Delete task"
-  body="This action cannot be undone."
+  body={
+    <>
+      Are you sure you want to delete <strong>{task.displayName}</strong>? This
+      action is permanent and cannot be undone.
+    </>
+  }
+  consequences={[
+    'All run conversations will still be accessible',
+    'Cannot be undone',
+  ]}
   cancelLabel="Cancel"
   confirmLabel="Delete"
+  pendingLabel="Deleting…"
   isDeleting={isDeleting}
   onClose={closeDelete}
   onConfirm={deleteTask}
 />;
 ```
+
+`icon` and `typeLabel` are optional; the card falls back to the task name alone
+when neither is given. Pass `typeLabel` in sentence case — the label uppercases
+itself.
 
 ## Validation entry point
 
@@ -237,6 +273,13 @@ import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/v
 const errors = validateScheduledTaskFormValues(values, { now: new Date() });
 ```
 
+For a recurring schedule, an activity-window boundary earlier than the
+injected clock's local today is rejected with `StartDateInPast` /
+`EndDateInPast` — the same rule the form's date pickers enforce by making past
+days unselectable. An edit flow passes the hydrated boundary in
+`originalStartDate`/`originalEndDate`, and a value equal to that original is
+exempt: an older task opened for editing stays savable while its prefilled past
+window is unchanged, and only a boundary changed into the past is rejected.
 `validateScheduledTaskTextField` checks a single free-text field against the
 limits shared by every entity editor — display name 256 characters without
 control characters, description 500, instructions 50000 — so a host can

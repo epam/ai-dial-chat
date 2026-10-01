@@ -33,7 +33,11 @@ import '@epam/ai-dial-conversation-stages/styles.css';
 
 ### StagesPanel
 
-Renders the full list of stages for the current response. `stages` and `isStreaming` are both required — while `isStreaming` is `true`, every stage with `status: null` shows a live spinner. A completed check is rendered only after that stage explicitly receives `status: "completed"`.
+Stage details and repeated-attempt rows mount only while expanded, so closed
+stages do not parse Markdown or mount copy controls. Closing removes their
+content; reopening renders the latest stage data.
+
+Renders the stages for the current response, nested by `parent_stage_index` (see [Nested stages](#nested-stages)). `stages` and `isStreaming` are both required — while `isStreaming` is `true`, every stage with `status: null` shows a live spinner. A completed check is rendered only after that stage explicitly receives `status: "completed"`.
 
 ```tsx
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
@@ -52,11 +56,61 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 />;
 ```
 
+### Nested stages
+
+`StagesPanel` derives a hierarchy from each stage's optional
+`parent_stage_index` and renders a child inside its parent's disclosure, at any
+depth. Pass normalized `Stage[]` — for a complete array whose entries have no
+`index`, run it through `mapStages` from `@epam/ai-dial-chat-hooks` first, so
+positions become the identities the parent references point at.
+
+```tsx
+import { StageStatus } from '@epam/ai-dial-chat-shared';
+import { StagesPanel } from '@epam/ai-dial-conversation-stages';
+
+<StagesPanel
+  stages={[
+    { index: 0, name: 'Plan', status: StageStatus.Completed },
+    { index: 1, name: 'Search', status: null, parent_stage_index: 0 },
+    { index: 2, name: 'Read', status: null, parent_stage_index: 1 },
+  ]}
+  isStreaming
+/>;
+```
+
+- **Expansion.** A parent with children is expandable even without its own
+  content or attachments. Its body shows its markdown, then its attachment
+  tiles, then its child list, and mounts only while expanded. Every stage and
+  retry disclosure starts collapsed; the choice is kept per stage `index`
+  (retry groups per first attempt) while the surrounding panel is mounted, so
+  streaming updates, new siblings and a second attempt forming a `×N` group do
+  not reset it, and reopening a parent restores its descendants' choices.
+  Collapsing a `CollapsedGroup` summary resets them.
+- **Retry grouping.** Consecutive equal cleaned names group into `×N` within
+  one sibling list only — equal names under different parents never share a
+  group, and each grouped attempt keeps its own descendants.
+- **Invalid references.** A reference that is missing, unknown, points at the
+  stage itself or forward (not smaller than the child's `index`), or is not a
+  nonnegative integer renders the stage at the top level; nothing is dropped.
+- **Status and summaries.** Each stage shows only its own status — a completed
+  parent keeps its check while a child runs. `CollapsedGroup` counts steps and
+  failures over the flat array once, and its duration rules are unchanged; for
+  duration-only names a parent's and its children's durations are summed, as
+  for any other stages.
+- **Layout.** Indentation uses logical properties, so it follows `dir`;
+  additional indentation stops after the third level while deeper stages stay
+  reachable, and disclosure headers are at least 44px tall at the `mobile`
+  breakpoint.
+
 ### Stage attachments
 
 When a stage carries `attachments` (e.g. a RAG agent's search results), its expanded body renders each one as an `AttachmentCard` tile from `@epam/ai-dial-attachment-input`, in a wrapping row below any `stage.content`. The library maps each raw `MessageAttachment` to a `DisplayAttachment` itself — the host never has to. Clicking a tile calls `onAttachmentClick` with the mapped `DisplayAttachment`; the library never opens a preview or builds a URL itself, so the host decides what "click" means (open a canvas preview, download, navigate, etc.). `attachmentClickLabel` overrides the tile's default click-action label, which otherwise reads as a download/open action rather than a preview.
 
 ### CollapsedGroup
+
+The nested panel mounts only while the summary is expanded. Collapsing removes
+the panel and resets its nested disclosures; reopening starts those disclosures
+closed. Streaming groups still open by default and collapse when the run ends.
 
 Wraps `StagesPanel` with a collapsible summary line whose text and default open/closed state track the run. Takes the same `stages` / `isStreaming` inputs; several labels are functions so the host controls plural rules.
 

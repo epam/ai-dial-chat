@@ -6,8 +6,8 @@ import {
   HalloweenDecorBehavior,
   HalloweenScene,
 } from '../halloween/types/halloween';
-import { NewYearScene } from '../new-year/components/NewYear/types';
 import { newYearEvent } from '../new-year/event';
+import { NewYearScene } from '../new-year/types/new-year';
 import { ScenePlayer } from './ScenePlayer';
 
 const EVENTS = { halloween: halloweenEvent, 'new-year': newYearEvent };

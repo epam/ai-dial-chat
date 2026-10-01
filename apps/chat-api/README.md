@@ -1,5 +1,25 @@
 # Chat API
 
+## Scheduled task manual-run contract
+
+`POST /api/v1/scheduled-tasks/:scheduleId/run` submits the saved Scheduler
+definition without a body and returns HTTP 202 with a camelCase
+`ScheduledTaskRunDto`. It does not resume paused/completed tasks, invalidate a
+schedule-list cache, or precheck external sign-in. Automatic trigger exhaustion
+does not prohibit this manual execution; only a deleted task is rejected with 409. The endpoint uses the existing session, feature, role, and CSRF guards.
+
+`GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` returns the same DTO for
+the caller-owned run. The DTO's optional `resultStage` is a narrow string
+projection of Scheduler's `result.stage`; arbitrary Scheduler result data is
+not exposed. Start and get-one responses use the same camelCase DTO fields as
+run-history responses, including `conversationId` when available. A terminal
+credentials stage is recorded as a run error for the client to recover through
+the offline-credentials flow; it is not a failed start request and does not
+trigger an automatic retry.
+
+Rate-limited manual starts and single-run reads preserve Scheduler's valid `Retry-After` header
+(delay seconds or an HTTP date) alongside the existing mapped error body.
+
 ## Scheduled task skill contract
 
 Scheduled-task POST/PUT bodies accept optional nullable `skillUrl`, validated
@@ -33,6 +53,24 @@ the SPA, and serves the built frontend in production.
 The frontend never talks to DIAL Core directly: this service holds the session,
 attaches the caller's access token upstream, and adapts DIAL Core's surface into
 the endpoints `apps/chat` consumes.
+
+## Scheduled task application consent and upstream errors
+
+When the `SCHEDULER_SERVICE_ID` external service is `DIAL_NATIVE`, every
+schedule runs under an application consent an administrator can revoke.
+Create, update, and resume re-read that service's `app_level_auth_status`
+from DIAL Core before calling DIAL Scheduler (never cached); `SIGNED_OUT`
+rejects with `403` and code `scheduledTaskAdminConsentRequired`, and nothing
+is sent upstream. Pause and delete skip the check so a user can always stop a
+task. A failed consent lookup or an unreported status defers to DIAL Scheduler.
+
+When DIAL Scheduler itself rejects a request, the response keeps the generic
+`message` (for example `DIAL Core returned a server error`) and adds
+Scheduler's own reason and code as `upstreamMessage` and `upstreamCode`. The
+message is trimmed and capped at 1000 characters; the code is kept only when it
+matches `^[A-Za-z0-9_.:-]{1,128}$`. Neither field is ever added for 401, 403,
+or 404 (the shared `isUpstreamTextExposable` rule), the raw upstream body is
+never forwarded, and the typed `code` never comes from the upstream body.
 
 ## Completion persistence failures
 
@@ -587,11 +625,11 @@ maps each backend domain to its base path.
 
 ### Infrastructure
 
-| Method | Path               | Description                                                                     |
-| ------ | ------------------ | ------------------------------------------------------------------------------- |
-| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version }` (`version` from `CHAT_VERSION`) |
-| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                      |
-| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503              |
+| Method | Path               | Description                                                                                                                                                 |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version, buildId }` (`version` from `CHAT_VERSION`; `buildId` — see [Docker image (BFF only)](#docker-image-bff-only)) |
+| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                                                                                                  |
+| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503                                                                                          |
 
 ### Versioned domains (`/api/v1/...`)
 
@@ -776,6 +814,31 @@ requires a separately isolated viewer document; client-side SPA navigation does
 not replace the document's CSP. The separately deployed MCP sandbox has its own
 policy and is not changed by `CSP_MODE`.
 
+`GET /api/v1/files/download` overwrites its own `Content-Security-Policy`
+header — built by `createHtmlPreviewCspHeader()` — whenever the downloaded
+file's `content-type` starts with `text/html`, and strips any
+`Content-Security-Policy-Report-Only` header from that response defensively
+(today's forwarded-header allowlist never includes it, but this holds even if
+that allowlist widens later). Every other download keeps the app's normal
+enforced/report-only policy unmodified. This lets the chat app
+preview an HTML attachment by loading this route's response directly into an
+iframe (`src=`, not `srcdoc`) without the previewed file's own inline
+`<script>`/`<style>` being blocked by the strict policy the chat document
+enforces for itself — an arbitrary previewed HTML file cannot be expected to
+carry a nonce or avoid inline styles. `frame-ancestors` is `'self'` plus
+`ALLOWED_IFRAME_ORIGINS`, the same as the rest of this section: `frame-ancestors`
+validates the whole ancestor chain, so when this app is itself embedded in an
+overlay host, the host's origin has to be listed too, not just this app's own.
+As with the WebAssembly exception above, this relaxation is scoped to one
+response and never substitutes for document policy: the property that
+actually stops a previewed HTML file from reading this app's cookies,
+session, or APIs is the CSP `sandbox="allow-scripts"` directive baked into
+`createHtmlPreviewCspHeader()` itself, which holds regardless of how the
+response is loaded — directly in a new tab or inside the preview iframe. The
+iframe's own `sandbox="allow-scripts"` attribute (no `allow-same-origin`) the
+chat frontend sets is additional defense-in-depth on top of that, not the
+primary control.
+
 ### Security
 
 - **Environment Variable Validation**: Required variables are validated at startup using class-validator
@@ -905,6 +968,39 @@ apps/chat-overlay-sandbox/dist
 The sandbox is mounted at `/overlay-sandbox/`. The main React application's SPA
 fallback excludes `/overlay-sandbox/*`, so disabled or missing sandbox routes do
 not fall through to the chat UI.
+
+## Docker image (BFF only)
+
+`apps/chat-api/Dockerfile` builds the BFF without any frontend bundle, for
+deployments that host the React application (or their own shell) elsewhere.
+The Release Workflow publishes it as `epam/ai-dial-chat-bff` and
+`ghcr.io/epam/ai-dial-chat-bff` in the same run and with the same tags as
+`ai-dial-chat` (`development`, `<version>`, `latest`). Every pull request
+builds it without pushing.
+
+```sh
+docker build -f apps/chat-api/Dockerfile -t ai-dial-chat-bff .
+docker run --rm -p 5000:5000 --env-file apps/chat-api/.env ai-dial-chat-bff
+```
+
+The build context is the repository root. Compared with the root `Dockerfile`:
+
+- `apps/chat/dist` and `apps/chat-overlay-sandbox/dist` are not built or copied.
+  Non-API routes such as `/` return `404` instead of the SPA, and
+  `/overlay-sandbox/*` returns `404` even with `OVERLAY_SANDBOX_ENABLED=true`.
+- The environment contract is unchanged: the image reads exactly the
+  [variables](#2-environment-configuration) the full image reads, and no
+  variable switches static serving off.
+- `GET /api/health` `buildId` is the hash of the frontend `index.html` when one
+  is bundled. Without it, `buildId` is the hash of the resolved `version`
+  (`CHAT_VERSION`, otherwise the stamped root `package.json` version), so it
+  changes with every release. If several `development` deployments share one
+  version, set `CHAT_VERSION` (for example `<version>-<commit>`) so that open
+  tabs still detect each new deployment.
+
+The image keeps the same base image, pinned npm and hardening as the root
+image. Keep its `node-base`/`deps` stages in sync with the root `Dockerfile`
+and `apps/mcp-app-sandbox/Dockerfile`.
 
 ## Logging
 

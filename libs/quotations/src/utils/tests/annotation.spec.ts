@@ -164,8 +164,40 @@ describe('getAnnotationPdfPage', () => {
     expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(2);
   });
 
-  it('returns undefined for a pdf_region selector with non-finite geometry', () => {
-    const selector = pdfRegionLtWh({ wh: [NaN, 1] });
+  it('falls back to the page of a pdf_region selector with non-finite geometry', () => {
+    const selector = pdfRegionLtWh({ page: 3, wh: [NaN, 1] });
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(3);
+  });
+
+  it('returns the page of a page-only pdf_region selector without a bbox', () => {
+    const selector = [{ type: 'pdf_region', page: 2 }] as AnnotationSelector[];
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(2);
+    expect(
+      annotationsToPdfHighlights([{ index: 0, body: { selector } }]),
+    ).toEqual([]);
+  });
+
+  it('prefers a selector with valid geometry over an earlier page-only one', () => {
+    const selector = [
+      { type: 'pdf_region', page: 2 },
+      pdfRegionLtWh({ page: 5 }),
+    ] as AnnotationSelector[];
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(5);
+  });
+
+  it('returns undefined for a page-only selector with an invalid page', () => {
+    const selector = [
+      { type: 'pdf_region', page: 0 },
+      { type: 'pdf_bbox', page: 1.5 },
+      { type: 'pdf_region', page: '2' },
+    ] as unknown as AnnotationSelector[];
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBeUndefined();
+  });
+
+  it('ignores the page of a non-PDF selector', () => {
+    const selector = [
+      { type: 'docx_text_range', page: 2 },
+    ] as unknown as AnnotationSelector[];
     expect(getAnnotationPdfPage(makeAnnotation(selector))).toBeUndefined();
   });
 });

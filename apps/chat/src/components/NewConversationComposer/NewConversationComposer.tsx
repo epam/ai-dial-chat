@@ -62,6 +62,7 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
+import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
@@ -671,33 +672,14 @@ const NewConversationComposer: FC<Props> = ({
           downloadLabel={t(ButtonsI18nKeys.Download)}
           downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
           deleteLabel={t(ButtonsI18nKeys.Delete)}
-          deletingLabel={t(DialFileManagerI18nKeys.DeletingLabel)}
+          deletingLabel={t(BasicI18nKeys.DeletingStatus)}
           deleteConfirmTitle={(names) =>
             names.length === 1
               ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
               : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
           }
           deleteConfirmBody={(names) => (
-            <div className="dial-small-text px-6 py-3">
-              <p className="mb-3 text-secondary">
-                {names.length === 1 ? (
-                  <>
-                    {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
-                    <span className="break-words text-primary">
-                      &quot;{names[0].split('/').pop()}&quot;?
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    {t(DialFileManagerI18nKeys.DeleteConfirmBodyMultiple)}{' '}
-                    <span className="text-primary">
-                      {names.length}{' '}
-                      {t(DialFileManagerI18nKeys.DeleteConfirmBodyItems)}
-                    </span>
-                  </>
-                )}
-              </p>
-            </div>
+            <FileDeleteConfirmContent names={names} />
           )}
           deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
           deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}

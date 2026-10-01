@@ -197,7 +197,7 @@ A selector row renders the entity name followed by its version label. Because fa
 
 `DeploymentSelectorPanel.tsx` SHALL lay the pair out in a wrapping flex line: the name keeps its natural width and truncates with its overflow tooltip when it alone exceeds the row, and the version takes the width the name leaves. When the pair no longer fits on one line, the version SHALL move onto a line of its own at full width rather than truncate — the row grows, and nothing is hidden behind a hover.
 
-The version SHALL therefore carry no `max-w-*` cap and no `truncate`. This is a deliberate departure from the shared `ItemHeader`/`AppIdentity` 30% rule, which stands for cards and headers where row height is fixed; a selector row is `h-auto` and can spend a second line.
+The version SHALL therefore carry no `max-w-*` cap and no `truncate`. This is a deliberate departure from the fixed-height rules used for cards and headers: `ItemHeader` caps the version at 30% of the row, and `AppIdentity` (catalog cards) caps the name at 66% (`max-w-[66%] shrink-0`) and lets the version fill the rest, right-aligned and truncated (`min-w-0 flex-1 text-end`), with the name taking the whole row when there is no version. A selector row is `h-auto` and can spend a second line instead.
 
 #### Scenario: A version that fits is shown in full
 

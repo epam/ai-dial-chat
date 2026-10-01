@@ -137,14 +137,37 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconArrowNarrowLeft: ({ className }: { className?: string }) => (
-    <svg data-icon="back" className={className} />
+  IconArrowNarrowLeft: ({
+    className,
+    'aria-hidden': ariaHidden,
+  }: {
+    className?: string;
+    'aria-hidden'?: boolean;
+  }) => (
+    <svg
+      data-testid="back-icon"
+      className={className}
+      aria-hidden={ariaHidden}
+    />
   ),
   IconCircleCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
   IconClipboardX: () => <svg data-icon="empty" />,
   IconPencilMinus: () => <svg data-icon="edit" />,
+  IconPlayerPlay: ({
+    className,
+    'aria-hidden': ariaHidden,
+  }: {
+    className?: string;
+    'aria-hidden'?: boolean;
+  }) => (
+    <svg
+      data-testid="start-icon"
+      className={className}
+      aria-hidden={ariaHidden}
+    />
+  ),
   IconTrashX: ({ className }: { className?: string }) => (
     <svg data-icon="delete" className={className} />
   ),
@@ -297,6 +320,82 @@ describe('ScheduledTaskDetailView', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
 
     expect(onEdit).toHaveBeenCalledOnce();
+  });
+
+  it('renders Start now after Edit and calls its optional callback once', async () => {
+    const onStartNow = vi.fn();
+    render(
+      <ScheduledTaskDetailView
+        labels={{ ...labels, startNowButtonLabel: 'Start now' }}
+        onBack={vi.fn()}
+        onEdit={vi.fn()}
+        onStartNow={onStartNow}
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    const editButton = screen.getByRole('button', { name: 'Edit' });
+    const startButton = screen.getByRole('button', { name: 'Start now' });
+    expect(
+      editButton.compareDocumentPosition(startButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    await userEvent.click(startButton);
+    expect(onStartNow).toHaveBeenCalledOnce();
+  });
+
+  it('shows the pending label and disables Start now', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={{
+          ...labels,
+          startNowButtonLabel: 'Start now',
+          startingLabel: 'Starting…',
+        }}
+        onBack={vi.fn()}
+        onStartNow={vi.fn()}
+        isStarting
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Starting…' })).toHaveProperty(
+      'disabled',
+      true,
+    );
+  });
+
+  it('keeps the Start now action and mobile tabs keyboard-accessible in RTL without mirroring the play icon', async () => {
+    useIsMobileMock.mockReturnValue(true);
+    document.documentElement.dir = 'rtl';
+    const onStartNow = vi.fn();
+    render(
+      <ScheduledTaskDetailView
+        labels={{ ...labels, startNowButtonLabel: 'Start now' }}
+        onBack={vi.fn()}
+        onEdit={vi.fn()}
+        onStartNow={onStartNow}
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    const startButton = screen.getByRole('button', { name: 'Start now' });
+    await userEvent.click(startButton);
+
+    expect(onStartNow).toHaveBeenCalledOnce();
+    expect(screen.getByRole('tablist')).toBeTruthy();
+    const backIcon = screen.getByTestId('back-icon');
+    const startIcon = screen.getByTestId('start-icon');
+    expect(backIcon?.getAttribute('class')).toContain('rtl:scale-x-[-1]');
+    expect(backIcon?.getAttribute('aria-hidden')).toBe('true');
+    expect(startIcon?.getAttribute('aria-hidden')).toBe('true');
+    expect(startIcon?.getAttribute('class') ?? '').not.toContain('rtl:');
+    document.documentElement.dir = 'ltr';
+    useIsMobileMock.mockReturnValue(false);
   });
 
   it('shows a page-level spinner while isLoading', () => {
@@ -904,8 +1003,7 @@ describe('ScheduledTaskDetailView', () => {
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
 
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- decorative icons inside already-labeled buttons carry no accessible role of their own
-      const backIcon = container.querySelector('[data-icon="back"]');
+      const backIcon = screen.getByTestId('back-icon');
       // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- decorative icons inside already-labeled buttons carry no accessible role of their own
       const deleteIcon = container.querySelector('[data-icon="delete"]');
       expect(backIcon).toBeTruthy();

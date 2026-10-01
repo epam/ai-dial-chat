@@ -65,7 +65,7 @@ The voice bar SHALL replace the textarea inside the existing input border for bo
 
 ### Requirement: Recording state — live scrolling waveform and red controls
 
-During recording the voice bar SHALL display a pulsing recording dot, animated bar-histogram canvas, filled stop-square button and discard button, without an elapsed-time counter. The dot SHALL use the existing voice accent token and the waveform the existing voice waveform token. Stop SHALL finalize the selected mode: attach the file for Record voice or await recognition for Dictate. Discard SHALL abort the session without delivering a new file or transcript.
+During recording the voice bar SHALL display a pulsing recording dot, animated bar-histogram canvas, a discard button (`NeutralIconButton` with `IconX`) and, after it, a stop/confirm button (`PrimaryIconButton` with `IconCheck`), without an elapsed-time counter. The dot SHALL use the existing voice accent token and the waveform the existing voice waveform token. Stop SHALL finalize the selected mode: attach the file for Record voice or await recognition for Dictate. Discard SHALL abort the session without delivering a new file or transcript.
 
 The waveform SHALL use the existing 200-slot ring buffer, 3 px bars and 1 px gaps, minimum 3 px bar height and amplitude scaling capped to the canvas height. Animation SHALL advance by one pixel per RAF tick, sample after a complete bar step, and draw only the bars that fit the canvas. The RAF loop SHALL run only during Recording and be cancelled on state change or unmount. The symmetric microphone/stop/discard icons SHALL NOT be directionally mirrored.
 
