@@ -119,7 +119,9 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
       draftRef.current = nextDraft;
       setDraft(nextDraft);
       /* No trailing space to account for: it was never removed, so `insertAnchor`'s shift covers just `text.length`. */
-      setAnchors((prevAnchors) => insertAnchor(prevAnchors, atIndex, url, name, false));
+      setAnchors((prevAnchors) =>
+        insertAnchor(prevAnchors, atIndex, url, name, false),
+      );
     },
     [],
   );
