@@ -1,4 +1,4 @@
-# Mobile Navigation Bottom Sheet
+# mobile-navigation-bottom-sheet Specification
 
 ## Purpose
 
@@ -6,7 +6,9 @@ The mobile navigation bottom sheet: its shell primitive, the generic stack navig
 
 ## Overview
 
-On mobile viewports the hamburger button opens a multi-page bottom sheet anchored to the bottom of the screen. The sheet provides navigation items (Home, Catalog) and a Profile entry point that leads to user identity, theme selection, keyboard shortcut preference, and logout. Desktop layout and the `DialDropdown`-based `UserMenu` are unchanged.
+On mobile viewports the header hamburger opens a multi-page bottom sheet anchored to the bottom of the screen. The sheet lists the navigation destinations and a Profile entry point that leads to user identity, host-supplied settings groups (today only the keyboard-shortcut preference), an optional Settings link, and logout. Theme selection is not offered in the sheet; it lives only in the Settings page's Preferences tab.
+
+The sheet is a generic, prop-driven component in `libs/navigation-panel` (`@epam/ai-dial-navigation-panel`): `NavigationSheet`, `NavigableBottomSheet`, `NavigationMenuPage`, `ProfilePage`, `OptionListPage`, `SheetRow`, and `useSheetNavigation`. The lib does no i18n, routing, or feature gating. `apps/chat/src/components/Navigation/Navigation.tsx` resolves labels with `t()`, builds the items, profile, and settings groups, performs navigation, and owns the logout confirmation. On desktop the same app shell renders the lib's `NavigationPanel` rail, whose footer holds the lib's `UserMenu` (a 2.0 `Dropdown`).
 
 ---
 
@@ -21,16 +23,19 @@ interface BottomSheetShellProps {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
-  title?: string;           // shown in header; doubles as aria-label
+  title?: string;           // shown in header; doubles as the dialog accessible name
   closeLabel?: string;      // aria-label for × button; required when title is provided
   onBack?: () => void;      // when provided, shows back-arrow button in header
   backLabel?: string;       // aria-label for back button; required when onBack is provided
   'aria-label'?: string;    // accessible name when no title is shown
+  style?: CSSProperties;    // CSS custom properties forwarded to the sheet root
+  titleClassName?: string;  // defaults to 'dial-body-semi-text'
   className?: string;
+  colors?: BottomSheetShellColors;
 }
 ```
 
-The component renders via `createPortal`, shows a semi-transparent backdrop, locks body scroll while open, closes on Escape and backdrop click, and renders an optional header (back button · centred title · close button) when `title` is provided.
+The component renders via `createPortal`, shows a semi-transparent backdrop, locks body scroll while open, closes on Escape and backdrop click, manages dialog focus (initial focus, Tab trapping, focus restoration), and renders an optional header (back button · centred title · close button) when `title` is provided.
 
 #### Scenario: An open sheet locks the page behind it
 - **WHEN** `BottomSheetShell` is rendered with `isOpen`
@@ -49,14 +54,14 @@ The component renders via `createPortal`, shows a semi-transparent backdrop, loc
 
 ### Requirement: NavigableBottomSheet — generic stack navigator
 
-`NavigableBottomSheet` at `apps/chat/src/components/NavigableBottomSheet/NavigableBottomSheet.tsx` SHALL wrap `BottomSheetShell` and manage a `SheetPage[]` stack, exposing navigation to all descendants via `SheetNavigationContext`.
+`NavigableBottomSheet` at `libs/navigation-panel/src/components/NavigationSheet/NavigableBottomSheet.tsx` SHALL wrap `BottomSheetShell` and manage a `SheetPage[]` stack, exposing navigation to all descendants via `SheetNavigationContext`.
 
-Interfaces at `apps/chat/src/models/sheet-navigation.ts`:
+Interfaces at `libs/navigation-panel/src/models/sheet-navigation.ts` (both exported from the lib):
 
 ```ts
 interface SheetPage {
   title: string;
-  content: React.ReactNode;
+  content: ReactNode;
 }
 
 interface SheetNavigation {
@@ -66,30 +71,31 @@ interface SheetNavigation {
 }
 ```
 
-Context at `apps/chat/src/context/SheetNavigationContext.tsx`. Hook at `apps/chat/src/hooks/useSheetNavigation.ts` — throws when used outside the provider.
+Context at `libs/navigation-panel/src/context/SheetNavigationContext.ts`. Hook `useSheetNavigation` at `libs/navigation-panel/src/hooks/useSheetNavigation.ts` (exported from the lib) — throws `useSheetNavigation must be used within a NavigableBottomSheet` when used outside the provider.
 
-Props:
+Props (`NavigableBottomSheetProps`):
 
 ```ts
-interface Props {
+interface NavigableBottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   title: string;       // root-level title (no back button)
+  closeLabel: string;  // caller-localised
+  backLabel: string;   // caller-localised
   className?: string;
+  style?: CSSProperties;
 }
 ```
 
 Rendering rules:
-- **Stack empty**: render `children` with `title` prop (no back button).
-- **Stack non-empty**: render top page's `content` with `title` from top page and `onBack={pop}`.
-- `closeLabel` is `t(NavigationI18nKeys.Close)`, `backLabel` is `t(NavigationI18nKeys.Back)`.
+- **Stack empty**: render `children` with `title` (no back button).
+- **Stack non-empty**: render the top page's `content` with the top page's `title`, `onBack={pop}`, and `backLabel`.
+- `closeLabel` and `backLabel` come from props; the navigator does no i18n.
 - On `close` (X, backdrop, Escape): clear the stack and call `onClose`.
 - Stack resets whenever `isOpen` transitions to `false`.
 
 `push`/`pop`/`close` are stable `useCallback` references. Context value is in `useMemo`.
-
-i18n keys: `navigation.back`, `navigation.close`.
 
 #### Scenario: Root content renders without back button
 - **WHEN** the sheet opens with an empty stack
@@ -115,86 +121,84 @@ i18n keys: `navigation.back`, `navigation.close`.
 
 ### Requirement: Hamburger button opens the sheet on mobile
 
-On mobile the hamburger button SHALL open `NavigableBottomSheet` (rendered in `Navigation.tsx`) with `NavPageContent` as its root child. `isNavOpen` state remains in `app.tsx`.
+On mobile the hamburger button in `apps/chat/src/components/Header/Header.tsx` (the `desktop:hidden` header) SHALL toggle `isNavOpen`, which stays in `app.tsx` and is passed to `Navigation` as `isOpen`/`onClose`. The hamburger's `aria-label` is `t(NavigationI18nKeys.OpenMenu)` (`navigation.openMenu`); it renders only when the header is enabled and `OverlayFeature.HideNavigationMenu` is not set.
 
-i18n keys: `navigation.menu` (root title), `navigation.mobileMenu` (hamburger aria-label).
+`Navigation.tsx` SHALL render the lib's `NavigationSheet` (unless `OverlayFeature.HideNavigationMenu` is set, in which case it is unmounted) with `items` (from `useNavigationItems`), `onSelectItem` (calls `navigate(item.id)`), `profile` (from `useNavigationUserProfile`), `groups` (the keyboard group only, see `OptionListPage`), `onLogout={openLogout}`, `onSettings` (navigates to `ROUTES.Settings`; omitted when `OverlayFeature.HideSettingsPage` is set), `footer={<FooterMessage />}`, and labels `{ title: navigation.menu, close: buttons.close, back: navigation.back, profile: navigation.profile, logOut: buttons.logOut, settings: basic.settings }`. `NavigationSheet` renders `NavigableBottomSheet` with `NavigationMenuPage` as its root child.
 
 #### Scenario: Sheet opens on hamburger tap
 - **WHEN** the user taps the hamburger on mobile
-- **THEN** `NavigableBottomSheet` opens with `NavPageContent` and the root title, no back button
+- **THEN** `NavigationSheet` opens with `NavigationMenuPage` and the `navigation.menu` title, no back button
 
 #### Scenario: Sheet closes on backdrop or Escape
 - **WHEN** the user taps the backdrop or presses Escape
 - **THEN** the sheet closes
 
+#### Scenario: Hidden navigation menu removes the sheet and hamburger
+- **WHEN** `OverlayFeature.HideNavigationMenu` is set
+- **THEN** neither the hamburger button nor `NavigationSheet` is rendered
+
 ---
 
-### Requirement: NavPageContent
+### Requirement: NavigationMenuPage
 
-The navigation root page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/NavPageContent.tsx`.
+The navigation root page SHALL be `NavigationMenuPage` at `libs/navigation-panel/src/components/NavigationSheet/NavigationMenuPage.tsx`.
 
-Props: `{ onLogoutRequest: () => void }`. It SHALL list navigation items from `NAVIGATION_CONFIG` followed by a Profile row (`IconUser`, `IconChevronRight rtl:scale-x-[-1]`). Nav item tap: `close()` + `useNavigate`. Profile tap: `push({ title: t(NavigationI18nKeys.Profile), content: <ProfilePageContent onLogoutRequest={onLogoutRequest} /> })`.
-
-i18n: `navigation.profile`
+It SHALL render one `SheetRow` per entry in `items` (the active item shows its `activeIcon` when provided and is marked current/highlighted), followed by a Profile row (`IconUser`, label `profileLabel`, no trailing chevron) only when `profile` is provided, then `footer`. Item tap: `close()` then `onSelectItem(item)`; the host performs the navigation. Profile tap: `push({ title: profileLabel, content: <ProfilePage … /> })`, forwarding `profile`, `groups`, `logOutLabel`, `onLogout`, `settingsLabel`, `onSettings`, and `textClassName`.
 
 #### Scenario: Tapping a navigation item closes the sheet and navigates
-- **WHEN** the user taps a row backed by `NAVIGATION_CONFIG`
-- **THEN** the sheet closes and the app navigates to that route
+- **WHEN** the user taps a destination row
+- **THEN** the sheet closes and `onSelectItem` is called with that item, which `Navigation.tsx` turns into `navigate(item.id)`
 
 #### Scenario: Tapping Profile pushes the profile page
 - **WHEN** the user taps the Profile row
-- **THEN** `ProfilePageContent` is pushed onto the stack under the Profile title, and the sheet stays open
+- **THEN** `ProfilePage` is pushed onto the stack under the Profile title, and the sheet stays open
+
+#### Scenario: No profile hides the Profile row
+- **WHEN** `profile` is not provided
+- **THEN** no Profile row is rendered
 
 ---
 
-### Requirement: ProfilePageContent
+### Requirement: ProfilePage
 
-The profile page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/ProfilePageContent.tsx`.
-
-Props: `{ onLogoutRequest: () => void }`. It SHALL read identity data from `useUserProfile()` and available themes from `useTheme()`.
+The profile page SHALL be `ProfilePage` at `libs/navigation-panel/src/components/NavigationSheet/ProfilePage.tsx`. It receives the signed-in user as a `NavigationUserProfile` prop; the app builds it in `useNavigationUserProfile` from `useUserProfile()`.
 
 Body:
-1. Avatar (40 × 40 px image or `AvatarInitials` fallback) + `DialEllipsisTooltip` display name.
-2. Theme row (hidden when `themes.length ≤ 1`): `IconColorSwatch` + label + `IconChevronRight rtl:scale-x-[-1]`. Pushes `ThemePageContent`.
-3. Keyboard Shortcuts row: `IconKeyboard` + label + `IconChevronRight rtl:scale-x-[-1]`. Pushes `KeyboardPageContent`.
-4. `<hr>` divider.
-5. Log out row: `IconLogout` + label. Calls `close()` then `onLogoutRequest()`. `LogoutConfirmationModal` is rendered in `Navigation.tsx` via `useLogout()`, not here.
+1. Identity row: `UserAvatar` (image or `AvatarInitials` fallback) + 2.0 `EllipsisTooltip` display name.
+2. One row per settings group in `groups` that has at least one option: the group's `icon` + `label` + trailing `IconChevronRight` (`rtl:scale-x-[-1]`). Tap pushes `{ title: group.label, content: <OptionListPage options={group.options} /> }`.
+3. `<hr>` divider, rendered only when at least one group row is rendered.
+4. Settings row (`IconSettings` + `settingsLabel`), rendered only when both `onSettings` and `settingsLabel` are provided. Tap calls `close()` then `onSettings()`.
+5. Log out row: `IconLogout` + `logOutLabel`. Calls `close()` then `onLogout()`. `LogoutConfirmationModal` is rendered in `Navigation.tsx` via `useLogout()`, not here.
+
+There is no Theme row.
 
 #### Scenario: Log out closes sheet then opens confirmation
 - **WHEN** the user taps Log out
-- **THEN** `close()` fires (sheet unmounts), then `onLogoutRequest()` fires, and `LogoutConfirmationModal` opens from `Navigation.tsx`
+- **THEN** `close()` fires, then `onLogout()` fires, and `LogoutConfirmationModal` opens from `Navigation.tsx`
 
-#### Scenario: Theme row hidden when only one theme
-- **WHEN** the API returns only one theme
-- **THEN** the Theme row is not rendered
+#### Scenario: Settings row navigates to the Settings page
+- **WHEN** `onSettings` is provided and the user taps the Settings row
+- **THEN** the sheet closes and the app navigates to `ROUTES.Settings`
 
----
-
-### Requirement: ThemePageContent
-
-The theme page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/ThemePageContent.tsx`.
-
-It SHALL read `{ hasDark, hasLight, selectedTheme, setTheme }` from `useThemeOptions()` and render one row per available theme: `IconMoon` (Dark), `IconSun` (Light), `IconDeviceDesktop` (System, only when both dark and light are available). Active selection shows `IconCheck` (`DIAL_ICON_SIZE.SM`). All other icons use `BASE_ICON_SIZE`. Tap: `setTheme(id)` then `pop()`.
-
-#### Scenario: Selecting a theme applies it and returns
-- **WHEN** the user taps a theme row
-- **THEN** `setTheme` is called with that theme and the sheet pops back to the profile page
-
-#### Scenario: System is offered only when both variants exist
-- **WHEN** only a dark theme is available
-- **THEN** no System row is rendered
+#### Scenario: Empty groups render no group rows and no divider
+- **WHEN** `groups` is omitted or every group has no options
+- **THEN** no group row and no `<hr>` divider are rendered
 
 ---
 
-### Requirement: KeyboardPageContent
+### Requirement: OptionListPage
 
-The keyboard-shortcut page SHALL live at `apps/chat/src/components/MobileNavBottomSheet/KeyboardPageContent.tsx`.
+Single-select settings pages SHALL be rendered by `OptionListPage` at `libs/navigation-panel/src/components/NavigationSheet/OptionListPage.tsx`, one row per `NavigationMenuOption` (`{ id, label, isActive, icon?, onSelect }`). The active option is marked current and shows a trailing `IconCheck` (`DIAL_ICON_SIZE.SM`). Tap: `option.onSelect()` then `pop()`.
 
-It SHALL read the current preference from `useKeyboardShortcutPreference()` and render two rows mirroring the desktop options; the active one shows `IconCheck` (`DIAL_ICON_SIZE.SM`). Tap: `setPreference(value)` then `pop()`.
+The app's `useNavigationMenuGroups()` (`apps/chat/src/hooks/navigation/useNavigationMenuGroups.tsx`) builds the only group the sheet receives today, `keyboardGroup` (`IconKeyboard`, `settings.keyboardShortcuts`), with two options, `SendOnEnter.Enter` and `SendOnEnter.MetaEnter`, read from and written through `useKeyboardShortcutPreference()`. `keyboardGroup` is `undefined` (so no row is shown) when `OverlayFeature.HideUserSettings` or `OverlayFeature.HideKeyboardShortcuts` is set. The hook's `languageGroup` is passed only to the desktop `UserMenu`.
 
 #### Scenario: Selecting a shortcut persists it and returns
 - **WHEN** the user taps the non-active shortcut row
 - **THEN** `setPreference` is called with that value and the sheet pops back to the profile page
+
+#### Scenario: Hidden keyboard shortcuts remove the group
+- **WHEN** `OverlayFeature.HideKeyboardShortcuts` or `OverlayFeature.HideUserSettings` is set
+- **THEN** the profile page shows no Keyboard Shortcuts row
 
 ---
 
@@ -202,6 +206,7 @@ It SHALL read the current preference from `useKeyboardShortcutPreference()` and 
 
 | Hook | Location | Purpose |
 |------|----------|---------|
-| `useUserProfile` | `hooks/user-profile/useUserProfile.ts` | `email`, `displayName`, `shortName`, `image`, `isFallbackIconShown` from `useUser()` |
-| `useThemeOptions` | `hooks/theme/useThemeOptions.ts` | `hasDark`, `hasLight`, `selectedTheme`, `setTheme` from `useTheme()` |
-| `useLogout` | `hooks/logout/useLogout.ts` | `isLogoutOpen`, `openLogout`, `closeLogout` — shared by `UserMenu` and `Navigation` |
+| `useUserProfile` | `apps/chat/src/hooks/user-profile/useUserProfile.ts` | `email`, `displayName`, `shortName`, `image`, `isFallbackIconShown` from `useUser()` |
+| `useNavigationUserProfile` | `apps/chat/src/hooks/navigation/useNavigationUserProfile.ts` | adapts `useUserProfile()` to the lib's `NavigationUserProfile` |
+| `useNavigationMenuGroups` | `apps/chat/src/hooks/navigation/useNavigationMenuGroups.tsx` | `languageGroup` (desktop `UserMenu`) and `keyboardGroup` (mobile sheet) |
+| `useLogout` | `apps/chat/src/hooks/logout/useLogout.ts` | `isLogoutOpen`, `openLogout`, `closeLogout` — used by `Navigation` for both `UserMenu` and `NavigationSheet` |

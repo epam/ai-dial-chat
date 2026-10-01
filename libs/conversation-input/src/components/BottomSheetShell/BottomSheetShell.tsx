@@ -1,15 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  CloseButton,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  ElementSize,
-  GhostIconButton,
-} from '@epam/ai-dial-ui-kit';
-import { IconArrowLeft } from '@tabler/icons-react';
-import { type CSSProperties, type FC, type ReactNode, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { useBottomSheet } from '../../hooks/useBottomSheet';
+import { BottomSheet } from '@epam/ai-dial-ui-kit';
+import { type CSSProperties, type FC, type ReactNode } from 'react';
 import styles from './BottomSheetShell.module.scss';
 
 /** Color overrides for the `BottomSheetShell` component, applied as CSS custom properties. */
@@ -40,7 +31,7 @@ export interface BottomSheetShellProps {
   backLabel?: string;
   /** Dialog accessible name used when `title` is omitted. */
   'aria-label'?: string;
-  /** Inline CSS custom properties forwarded to the sheet root for theming. */
+  /** Inline CSS custom properties forwarded to the sheet panel for theming. */
   style?: CSSProperties;
   /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
@@ -52,7 +43,7 @@ export interface BottomSheetShellProps {
   children: ReactNode;
 }
 
-/** Generic mobile bottom-sheet shell: backdrop, bottom-anchored panel, optional header, Escape-to-close, body-scroll lock, and dialog focus management (initial focus, Tab trapping, focus restoration). */
+/** Mobile bottom sheet drawn by the UI kit's `BottomSheet`, themed through `BottomSheetShellColors`. */
 export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   isOpen,
   title,
@@ -67,17 +58,6 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   colors,
   children,
 }) => {
-  /*
-   * Focus management (initial focus into the sheet, Tab trapping, and
-   * restoration to the trigger on close) lives in the hook and keys off this
-   * ref; `tabIndex={-1}` below makes the dialog itself the focus fallback
-   * when a sheet hosts no focusable content.
-   */
-  const sheetRef = useRef<HTMLDivElement | null>(null);
-  useBottomSheet(isOpen, onClose, sheetRef);
-
-  if (!isOpen || typeof document === 'undefined') return null;
-
   const cssVars = buildCssVars({
     '--ci-backdrop': colors?.backdrop,
     '--ci-sheet-bg': colors?.sheetBg,
@@ -85,68 +65,28 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
     '--ci-sheet-divider': colors?.divider,
   });
 
-  return createPortal(
-    <>
-      {/* Backdrop — onPointerDown avoids the touch-synthesized ghost click */}
-      <div
-        className={mergeClasses(styles.backdrop, 'fixed inset-0 z-[55]')}
-        style={cssVars}
-        onPointerDown={onClose}
-        aria-hidden
-      />
-
-      {/* Sheet */}
-      <div
-        ref={sheetRef}
-        role="dialog"
-        aria-modal
-        aria-label={title ?? ariaLabel}
-        tabIndex={-1}
-        style={{ ...cssVars, ...style }}
-        className={mergeClasses(
-          styles.sheet,
-          'fixed inset-x-0 bottom-0 z-[60] flex max-h-[85dvh] flex-col rounded-t-lg',
-          className,
-        )}
-      >
-        {title != null && (
-          <>
-            {/* Header: optional back on start, title centered, close on end */}
-            <div className="relative flex h-[60px] flex-shrink-0 items-center justify-center px-4">
-              {onBack && (
-                <div className="absolute start-4">
-                  <GhostIconButton
-                    icon={
-                      <IconArrowLeft
-                        size={DIAL_ICON_SIZE.LG}
-                        stroke={DIAL_KIT_ICON_STROKE}
-                        className="rtl:scale-x-[-1]"
-                      />
-                    }
-                    aria-label={backLabel}
-                    onClick={onBack}
-                  />
-                </div>
-              )}
-              <span className={mergeClasses(styles.title, titleClassName)}>
-                {title}
-              </span>
-              <div className="absolute end-4 m-2">
-                <CloseButton
-                  ariaLabel={closeLabel}
-                  onClose={onClose}
-                  size={ElementSize.Standard}
-                />
-              </div>
-            </div>
-            <div
-              className={mergeClasses(styles.divider, 'h-px flex-shrink-0')}
-            />
-          </>
-        )}
-        <div className="overflow-y-auto">{children}</div>
-      </div>
-    </>,
-    document.body,
+  /*
+   * The sheet renders in a portal, so the colour variables travel on the
+   * panel and the backdrop themselves; a caller's \`style\` lands on the panel
+   * after them, as it always did.
+   */
+  return (
+    <BottomSheet
+      open={isOpen}
+      onClose={onClose}
+      title={title}
+      ariaLabel={ariaLabel}
+      onBack={onBack}
+      backAriaLabel={backLabel}
+      closeAriaLabel={closeLabel}
+      style={{ ...cssVars, ...style }}
+      overlayStyle={cssVars}
+      className={mergeClasses(styles.sheet, className)}
+      overlayClassName={styles.backdrop}
+      headerClassName={styles.divider}
+      titleClassName={mergeClasses(styles.title, titleClassName)}
+    >
+      {children}
+    </BottomSheet>
   );
 };

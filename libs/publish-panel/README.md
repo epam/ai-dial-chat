@@ -135,7 +135,7 @@ replaces the default title-only row and is ignored once `resource.type` is set.
 
 ### StandalonePublishPanel
 
-Standalone end-edge slide-in shell for the Publish flow: backdrop, header with Close, the `PublishPanel` body, and a pinned `PublishFooter`.
+Standalone end-edge slide-in shell for the Publish flow: backdrop, header with Close, the `PublishPanel` body, and a pinned `PublishFooter`. The shell is the UI kit's `SideDrawer`, so focus is kept inside while it is open and Escape or a backdrop press closes it; `returnFocusRef` still decides where focus lands afterwards, and `colors` themes the backdrop, panel, divider, scrollbar and title.
 
 While open it behaves as a modal dialog: it takes focus on mount, cycles Tab and Shift+Tab within itself, closes on Escape, and returns focus to `returnFocusRef` on close. Tab is left alone while focus sits outside the panel, so the folder-row menus and the rule source picker it renders through portals stay keyboard-operable. While closed it is `inert`, so nothing inside it is reachable.
 

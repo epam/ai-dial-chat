@@ -271,7 +271,7 @@ describe('usePublishFolders', () => {
       act(() => result.current.rememberPublishFolder(['Beta', 'Q3']));
       act(() => result.current.rememberPublishFolder(['Alpha']));
 
-      expect(readRemembered()).toEqual(['Beta/Q3', 'Alpha']);
+      expect(readRemembered()).toEqual(['Alpha', 'Beta/Q3']);
     });
 
     it('ignores the bucket root, which is not a folder node', async () => {

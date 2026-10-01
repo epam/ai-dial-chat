@@ -111,7 +111,26 @@ describe('usePublishFolders', () => {
     ]);
   });
 
-  it('does not re-report a destination that is already remembered', async () => {
+  it('moves a re-used destination to the front without duplicating it', async () => {
+    const onRememberedFolderKeysChange = vi.fn();
+    const { result } = render({
+      rememberedFolderKeys: ['Org/Archive', 'Org/Shared', 'Org/Drafts'],
+      onRememberedFolderKeysChange,
+    });
+    await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+    act(() => {
+      result.current.rememberPublishFolder(['Org', 'Shared']);
+    });
+
+    expect(onRememberedFolderKeysChange).toHaveBeenCalledWith([
+      'Org/Shared',
+      'Org/Archive',
+      'Org/Drafts',
+    ]);
+  });
+
+  it('does not re-report the destination that is already the most recent', async () => {
     const onRememberedFolderKeysChange = vi.fn();
     const { result } = render({
       rememberedFolderKeys: ['Org/Shared'],

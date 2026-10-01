@@ -25,7 +25,6 @@ import '@epam/ai-dial-conversation-input/styles.css';
 ## Peer Dependencies
 
 - `react`
-- `react-dom`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
 
@@ -320,7 +319,7 @@ import { ChatSettingsModal } from '@epam/ai-dial-conversation-input';
 
 ### BottomSheetShell
 
-Layout shell for bottom sheet panels on mobile — header with optional title, back and close buttons, and Escape/backdrop dismissal.
+Mobile bottom sheet drawn by the UI kit's `BottomSheet`: an optional header with the title, back and close buttons; Escape, backdrop and close-button dismissal; focus kept inside while open; and page scroll locked. `colors` (`BottomSheetShellColors`) themes the backdrop, panel, title and header divider, and `style` lands on the panel, so custom properties a consumer sets there reach the sheet content.
 
 ```tsx
 import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
