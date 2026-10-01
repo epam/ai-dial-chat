@@ -29,19 +29,13 @@ import {
   FILE_RESOURCE_PREFIX,
   collectApplicationPromptResourceUrls,
   collectConversationResourceUrls,
+  deriveExpiresInDays,
   getInvitationRoutePath,
   isAlreadyOwnedError,
   toShareResourceUrl,
 } from '../utils/share-resource.util';
 
 type ResourceAccessType = components['schemas']['ResourceAccessType'];
-
-/*
- * DIAL Core's `shareResource` endpoint does not return an expiry; the link
- * expiry is a fixed platform default rather than something DIAL Core reports
- * back per-request.
- */
-const SHARE_LINK_EXPIRES_IN_DAYS = 3;
 
 const ACCESS_PERMISSIONS: Record<ShareAccess, ResourceAccessType[]> = {
   [ShareAccess.View]: ['READ'],
@@ -74,7 +68,7 @@ export class ShareInvitationService {
    * segment is reused, to build an absolute frontend URL that lands on the
    * SPA's own accept-invitation route.
    */
-  private buildInvitationUrl(invitationLink: string, itemId: string): string {
+  private extractInvitationId(invitationLink: string): string {
     const { pathname } = new URL(invitationLink, this.appOrigin);
     const invitationId = pathname.split('/').filter(Boolean).pop();
     if (!invitationId) {
@@ -82,7 +76,59 @@ export class ShareInvitationService {
         'DIAL Core returned an invalid invitation link',
       );
     }
+    return invitationId;
+  }
+
+  private buildInvitationUrl(invitationId: string, itemId: string): string {
     return `${this.appOrigin}${getInvitationRoutePath(itemId)}/${invitationId}`;
+  }
+
+  /*
+   * `shareResource` returns only `{ invitationLink }` — no expiry in the body
+   * or headers — while DIAL Core expires the link on a per-role TTL. The
+   * invitation's own `expireAt` is the only authoritative value, so it is
+   * read with a non-accepting peek (no `accept` param: accepting would accept
+   * the sharer's own invitation).
+   *
+   * Best-effort: the link itself was already created, so any failure here
+   * resolves to `undefined` and the caller omits `expiresInDays` rather than
+   * failing the share or showing a guessed number.
+   */
+  private async peekInvitationExpiry(
+    accessToken: string,
+    invitationId: string,
+  ): Promise<number | undefined> {
+    let result;
+    try {
+      result = await this.dialClient.client.getInvitation(invitationId, {
+        headers: getBearerAuthHeaders(accessToken),
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to peek invitation expiry for invitationId=${invitationId}; omitting expiresInDays`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return undefined;
+    }
+
+    if (result.error != null || result.data == null) {
+      this.logger.warn(
+        `DIAL Core returned ${
+          result.error != null
+            ? `an error (status ${result.response?.status})`
+            : 'an empty body'
+        } when peeking invitationId=${invitationId}; omitting expiresInDays`,
+      );
+      return undefined;
+    }
+
+    const expiresInDays = deriveExpiresInDays(result.data, Date.now());
+    if (expiresInDays == null) {
+      this.logger.warn(
+        `DIAL Core invitation invitationId=${invitationId} has no usable future expireAt; omitting expiresInDays`,
+      );
+    }
+    return expiresInDays;
   }
 
   private async getRelatedResourceUrls(
@@ -303,11 +349,18 @@ export class ShareInvitationService {
       );
     }
 
+    const invitationId = this.extractInvitationId(invitationLink);
+
     this.logger.debug(`Created share link for itemId=${resourceUrl}`);
 
+    const expiresInDays = await this.peekInvitationExpiry(
+      accessToken,
+      invitationId,
+    );
+
     return {
-      url: this.buildInvitationUrl(invitationLink, resourceUrl),
-      expiresInDays: SHARE_LINK_EXPIRES_IN_DAYS,
+      url: this.buildInvitationUrl(invitationId, resourceUrl),
+      ...(expiresInDays != null && { expiresInDays }),
       access,
     };
   }

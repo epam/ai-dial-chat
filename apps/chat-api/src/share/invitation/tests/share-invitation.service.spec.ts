@@ -21,6 +21,8 @@ const okResponse = (data: unknown) =>
 const errResponse = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
+const DAY_MS = 86_400_000;
+
 function makeService(callbackBaseUrl = 'https://example.com/callback') {
   const dialClient = {
     client: {
@@ -29,7 +31,10 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
       getCustomApplication: vi
         .fn()
         .mockResolvedValue(okResponse({ application_properties: {} })),
-      getInvitation: vi.fn(),
+      getInvitation: vi.fn(async () => {
+        const createdAt = Date.now();
+        return okResponse({ createdAt, expireAt: createdAt + 3 * DAY_MS });
+      }),
     },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
@@ -564,6 +569,124 @@ describe('ShareInvitationService', () => {
           access: [ShareAccess.View],
         }),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('createShareLink — invitation expiry', () => {
+    const NOW = 1_790_000_000_000;
+
+    const setup = () => {
+      const ctx = makeService();
+      vi.spyOn(Date, 'now').mockReturnValue(NOW);
+      vi.spyOn(ctx.dialClient.client, 'shareResource').mockResolvedValue(
+        okResponse({ invitationLink: '/v1/invitations/abc123' }),
+      );
+      const warn = vi
+        .spyOn(ctx.service['logger'], 'warn')
+        .mockImplementation(() => undefined);
+      const share = () =>
+        ctx.service.createShareLink('token-abc', 'my-bucket', {
+          itemId: 'gpt-4o',
+          access: [ShareAccess.View],
+        });
+      return { ...ctx, warn, share };
+    };
+
+    it("derives expiresInDays from the invitation's expireAt", async () => {
+      const { dialClient, share } = setup();
+      vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
+        okResponse({ createdAt: NOW, expireAt: NOW + 7 * DAY_MS }),
+      );
+
+      await expect(share()).resolves.toEqual({
+        url: 'https://example.com/catalog/shared/abc123',
+        expiresInDays: 7,
+        access: [ShareAccess.View],
+      });
+    });
+
+    it('never sends accept when peeking the created invitation', async () => {
+      const { dialClient, share } = setup();
+
+      await share();
+
+      expect(dialClient.client.getInvitation).toHaveBeenCalledOnce();
+      expect(dialClient.client.getInvitation).toHaveBeenCalledWith('abc123', {
+        headers: { Authorization: 'Bearer token-abc' },
+      });
+    });
+
+    it('returns the link without expiresInDays when the peek rejects', async () => {
+      const { dialClient, share, warn } = setup();
+      vi.mocked(dialClient.client.getInvitation).mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+
+      const result = await share();
+
+      expect(result).toEqual({
+        url: 'https://example.com/catalog/shared/abc123',
+        access: [ShareAccess.View],
+      });
+      expect(result).not.toHaveProperty('expiresInDays');
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('invitationId=abc123'),
+        expect.anything(),
+      );
+    });
+
+    it('returns the link without expiresInDays when the peek returns an upstream error', async () => {
+      const { dialClient, share, warn } = setup();
+      vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
+        errResponse(404),
+      );
+
+      const result = await share();
+
+      expect(result).not.toHaveProperty('expiresInDays');
+      expect(result.url).toBe('https://example.com/catalog/shared/abc123');
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('status 404'));
+    });
+
+    it('returns the link without expiresInDays when expireAt is missing', async () => {
+      const { dialClient, share, warn } = setup();
+      vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
+        okResponse({ id: 'abc123', createdAt: NOW }),
+      );
+
+      const result = await share();
+
+      expect(result).not.toHaveProperty('expiresInDays');
+      expect(warn).toHaveBeenCalledOnce();
+    });
+
+    it('returns the link without expiresInDays when expireAt is already past', async () => {
+      const { dialClient, share } = setup();
+      vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
+        okResponse({ createdAt: NOW - 4 * DAY_MS, expireAt: NOW - DAY_MS }),
+      );
+
+      await expect(share()).resolves.not.toHaveProperty('expiresInDays');
+    });
+
+    it('does not peek when shareResource fails', async () => {
+      const { dialClient, share } = setup();
+      vi.mocked(dialClient.client.shareResource).mockResolvedValue(
+        errResponse(502),
+      );
+
+      await expect(share()).rejects.toThrow(BadGatewayException);
+      expect(dialClient.client.getInvitation).not.toHaveBeenCalled();
+    });
+
+    it('does not peek when DIAL Core returns an invalid invitation link', async () => {
+      const { dialClient, share } = setup();
+      vi.mocked(dialClient.client.shareResource).mockResolvedValue(
+        okResponse({ invitationLink: '/' }),
+      );
+
+      await expect(share()).rejects.toThrow(BadGatewayException);
+      expect(dialClient.client.getInvitation).not.toHaveBeenCalled();
     });
   });
 
