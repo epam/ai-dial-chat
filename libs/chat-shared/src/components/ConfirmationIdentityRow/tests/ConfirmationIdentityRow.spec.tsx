@@ -45,7 +45,7 @@ describe('ConfirmationIdentityRow', () => {
  * The type label's color is a custom property on the row root, which no
  * accessible query reaches.
  */
-/* eslint-disable testing-library/no-container, testing-library/no-node-access */
+/* eslint-disable testing-library/no-node-access */
 describe('ConfirmationIdentityRow color override', () => {
   it('wires the type label color to the property the stylesheet reads', () => {
     const { container } = renderRow({
