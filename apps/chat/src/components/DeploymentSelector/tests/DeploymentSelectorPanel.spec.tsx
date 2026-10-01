@@ -150,16 +150,22 @@ describe('DeploymentSelectorPanel', () => {
       ).toBeTruthy();
     });
 
-    it('does not duplicate the row when the selected model is already a favorite', () => {
-      renderPanel([selectedItem], {
+    it('shows a favorited selected model in its own section, not in Favorites', () => {
+      renderPanel([selectedItem, makeItem('gpt-4o', CatalogEntityType.Model)], {
         selectedId: 'claude-opus',
         selectedItem,
       });
 
-      expect(screen.queryByText('Currently selected')).toBeNull();
+      expect(screen.getByText('Currently selected')).toBeTruthy();
+      const groups = screen.getAllByRole('group');
+      expect(groups[0].textContent).toContain('claude-opus');
+      expect(groups[1].textContent).not.toContain('claude-opus');
       expect(
         screen.getAllByRole('menuitemradio', { name: /claude-opus/ }),
       ).toHaveLength(1);
+      expect(
+        screen.getAllByRole('button', { name: 'Remove from favorites' }),
+      ).toHaveLength(2);
     });
 
     it('shows nothing extra when there is no selected item', () => {

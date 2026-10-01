@@ -32,7 +32,7 @@
                     "buildId": {
                       "type": "string",
                       "example": "3f9a1c2b8e7d",
-                      "description": "Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build."
+                      "description": "Stable identifier for the running deployment, derived from a hash of the served frontend build, or of the application version when no frontend is bundled (BFF-only image). Changes when a new deployment replaces the frontend static assets or the version, letting long-lived clients detect that a reload will pick up a newer build."
                     }
                   }
                 }
@@ -6430,6 +6430,193 @@
         "tags": ["scheduled-tasks"]
       }
     },
+    "/api/v1/scheduled-tasks/{scheduleId}/runs/{runId}": {
+      "get": {
+        "description": "Returns one DIAL Scheduler run for an owned schedule, proxying the Scheduler using the session access token. Not cached.",
+        "operationId": "getScheduledTaskRun",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          },
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler run identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "run_9f2a",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the scheduled task run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskRunDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scheduleId or runId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task run not found or not owned by the current user"
+          },
+          "429": {
+            "description": "DIAL Scheduler rate limited the run status request",
+            "headers": {
+              "Retry-After": {
+                "description": "Scheduler retry delay in seconds or an HTTP date, when supplied.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Get one scheduled task run",
+        "tags": ["scheduled-tasks"]
+      }
+    },
+    "/api/v1/scheduled-tasks/{scheduleId}/run": {
+      "post": {
+        "description": "Starts the saved DIAL Scheduler definition immediately for the authenticated session user. The request has no body, does not wait for completion, and does not change the schedule.",
+        "operationId": "startScheduledTask",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Scheduled task run accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskRunDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scheduleId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user or the request failed CSRF validation"
+          },
+          "404": {
+            "description": "Scheduled task not found or not owned by the current user"
+          },
+          "409": {
+            "description": "Scheduled task is soft-deleted and cannot be started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "DIAL Scheduler rate limited the start request",
+            "headers": {
+              "Retry-After": {
+                "description": "Scheduler retry delay in seconds or an HTTP date, when supplied.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "DIAL Core returned an error response (upstreamMessage/upstreamCode carry DIAL Scheduler's own reason and code when supplied)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Start a scheduled task immediately",
+        "tags": ["scheduled-tasks"]
+      }
+    },
     "/api/v1/scheduled-tasks/{scheduleId}/pause": {
       "post": {
         "description": "Pauses a DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
@@ -11801,7 +11988,7 @@
           },
           "expiresInDays": {
             "type": "number",
-            "description": "Number of days the link stays active before expiring.",
+            "description": "Days until the DIAL Core invitation expires, rounded up. Omitted when DIAL Core does not report a usable expiry.",
             "example": 3
           },
           "access": {
@@ -11814,7 +12001,7 @@
             }
           }
         },
-        "required": ["url", "expiresInDays", "access"]
+        "required": ["url", "access"]
       },
       "SkillMetadataItemDto": {
         "type": "object",
@@ -12650,6 +12837,11 @@
           "conversationId": {
             "type": "string",
             "example": "conversations/bucket/.scheduler/sched_123/dial-chathub-v2-gemini-3.5-flash__123123123123123__run_9f2a"
+          },
+          "resultStage": {
+            "type": "string",
+            "description": "Failure stage reported by DIAL Scheduler. Only a string result.stage is exposed.",
+            "example": "credentials"
           }
         },
         "required": ["id", "status", "startTime"]

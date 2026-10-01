@@ -80,7 +80,7 @@ describe('ConfirmationFooter', () => {
  * already carries its label — and the border color lands as an inline custom
  * property, so neither is reachable through an accessible query.
  */
-/* eslint-disable testing-library/no-container, testing-library/no-node-access */
+/* eslint-disable testing-library/no-node-access */
 describe('ConfirmationFooter presentation', () => {
   it('marks the confirm button with a trash icon for the danger variant', () => {
     renderFooter({ variant: ConfirmationPopupVariant.Danger });

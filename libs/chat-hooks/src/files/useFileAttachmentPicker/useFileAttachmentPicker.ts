@@ -12,12 +12,13 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { useCallback, useMemo, useState } from 'react';
 import { mimeTypesToDialFileAcceptTypes } from '../attachment-types';
+import { DIAL_FILE_MANAGER_SECTION_TABS } from '../dial-file-manager.model';
 import type {
   UseDialFileManagerOptions,
   UseDialFileManagerResult,
 } from '../dial-file-manager.types';
 import { DialFileManagerVariant } from '../file-manager-variant';
-import { useDialFileManager } from '../useDialFileManager/useDialFileManager';
+import { useDialFileManagerSections } from '../useDialFileManagerSections/useDialFileManagerSections';
 import { useDialFileManagerTabConfig } from '../useDialFileManagerTabConfig/useDialFileManagerTabConfig';
 
 /** Options accepted by {@link useFileAttachmentPicker}. */
@@ -36,9 +37,9 @@ export interface UseFileAttachmentPickerOptions {
   forbiddenSymbolsRegExp?: RegExp;
   /** Host-translated label per tab; also supplies the active tab's root-folder label. */
   tabLabels: Record<DialFileManagerTabs, string>;
-  /** Tab ids the host's configuration allows. `undefined` allows every tab. `all` is never offered. */
+  /** Tab ids the host's configuration allows. `undefined` allows every tab. */
   allowedTabs?: string[];
-  /** Initial active tab. Defaults to `DialFileManagerTabs.MyFiles`; `All` is treated as the default. */
+  /** Initial active tab. Defaults to `DialFileManagerTabs.MyFiles`. */
   initialTab?: DialFileManagerTabs;
   /** MIME types eligible for selection/upload. Empty or absent allows every type. */
   allowedTypes?: string[];
@@ -90,21 +91,18 @@ export const useFileAttachmentPicker = ({
   maxSelectableFileSize,
   canAttachFolders = false,
 }: UseFileAttachmentPickerOptions): UseFileAttachmentPickerResult => {
-  /* The picker composes a single-source manager, which cannot list the combined All tab. */
   const {
     activeTab,
     handleTabChange: handleTabChangeRaw,
     tabs: allTabs,
-  } = useDialFileManagerTabs(
-    tabLabels,
-    initialTab === DialFileManagerTabs.All ? undefined : initialTab,
-  );
-  const pickerAllowedTabs = useMemo(
+  } = useDialFileManagerTabs(tabLabels, initialTab);
+
+  const sections = useMemo(
     () =>
-      (allowedTabs ?? Object.values(DialFileManagerTabs)).filter(
-        (tab) => tab !== DialFileManagerTabs.All,
-      ),
-    [allowedTabs],
+      DIAL_FILE_MANAGER_SECTION_TABS.filter(
+        (tab) => allowedTabs == null || allowedTabs.includes(tab),
+      ).map((tab) => ({ tab, rootLabel: tabLabels[tab] })),
+    [allowedTabs, tabLabels],
   );
 
   const [selectedPaths, setSelectedPaths] = useState(() => new Set<string>());
@@ -132,20 +130,26 @@ export const useFileAttachmentPicker = ({
     activeTab,
     onTabChange,
     allTabs,
-    pickerAllowedTabs,
+    allowedTabs,
   );
 
-  const rootLabel =
-    tabLabels[activeTab] || tabLabels[DialFileManagerTabs.MyFiles];
-
-  const controller = useDialFileManager({
+  const controller = useDialFileManagerSections({
     ...fileManagerOptions,
     bucket,
     activeTab,
-    rootLabel,
+    sections,
     variant: DialFileManagerVariant.Attach,
     forbiddenSymbolsRegExp,
   });
+
+  /* Moving between source sections in All changes the listing under the selection. */
+  const [selectionSectionTab, setSelectionSectionTab] = useState(
+    controller.sectionTab,
+  );
+  if (selectionSectionTab !== controller.sectionTab) {
+    setSelectionSectionTab(controller.sectionTab);
+    setSelectedPaths(new Set());
+  }
 
   const isFileTypeAllowed = useCallback(
     (contentType: string): boolean => {

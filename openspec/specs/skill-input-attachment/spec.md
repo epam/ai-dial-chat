@@ -118,10 +118,25 @@ Clicking "View details" SHALL open the skill details side panel (next requiremen
 
 The "View details" action in a row's tooltip SHALL open a right-anchored side panel on the chat route showing the selected skill's details, composed from `DetailsPanel` exported by `@epam/ai-dial-catalog` (see the `skill-details-panel` delta) via a `SkillDetailsSidePanel` wrapper in `libs/skills`. The wrapper SHALL NOT wrap or mount the full `CatalogView` (no tab persistence, sort/filter, or page chrome). The host SHALL own the panel's open state and supply the `CatalogItem` (built with the existing `mapSkillToCatalogItem`), the details fetch (reusing the existing skill details resolution — manifest + file listing — not a duplicate), and close handling; the panel's content-first tab behavior for skills SHALL match the Catalog page's skill details. The panel SHALL render information-only — read-only (`isReadonly`, which withholds the favorite star and every mutating action: Share, Publish/Unpublish, Edit, Delete, "Remove from My List", "Revoke access", and the credentials actions) with the primary "Use in chat" action and Download also hidden. Selecting a skill SHALL stay with the favorites rows, the slash menu, the browse modal, and the Catalog page; favorite toggling SHALL stay with the favorites rows; the Catalog page's own `DetailsPanel` rendering SHALL keep its actions unchanged.
 
+The app-owned `SkillDetailsPanelContainer` SHALL close the global attachment canvas through `useAttachmentCanvas().closeCanvas` when a non-null skill is selected for details. This applies to "View details" from conversation skill mentions as well as the skill-selection UI, on both mobile and desktop, whether the attachment preview is displaying content or still loading. The details panel and its backdrop SHALL be visible without the previous file preview covering the panel. A mounted details container with no selected skill SHALL NOT close an attachment preview. This panel coordination SHALL remain in `apps/chat`, outside the reusable skill components.
+
 #### Scenario: Opening the side panel
 
 - **WHEN** the user clicks "View details" in a favorite row's tooltip
 - **THEN** the side panel opens anchored to the chat route's end edge, showing that skill's details with the content-first tabs and no action buttons
+
+#### Scenario: Opening skill details while a generated attachment is previewed
+
+- **GIVEN** a conversation contains a skill-generated attachment and its file preview is open
+- **WHEN** the user activates "View details" from a skill's tooltip in the conversation
+- **THEN** the attachment preview closes and the background darkens behind the visible skill details panel
+- **AND** the previous file preview does not cover the details content
+
+#### Scenario: Opening skill details while an attachment preview is loading
+
+- **GIVEN** the global attachment canvas is open in its loading state
+- **WHEN** the user activates "View details" for a skill
+- **THEN** the attachment canvas closes and its loading state clears as the skill details panel opens
 
 #### Scenario: Closing the side panel
 
@@ -343,6 +358,20 @@ The caret is not required to sit outside an already-selected skill's `/{name}` t
 
 - **WHEN** the user activates Browse (consuming `/query`) and then picks a skill from the modal
 - **THEN** the input shows the selected skill's `/{name}` mention, not the original `/query` text
+
+#### Scenario: Catalog close immediately after selection preserves the committed mention
+
+- **GIVEN** Browse was opened from either the slash dropdown or the Add menu, consuming an unconfirmed `/query` or an existing tracked skill mention
+- **WHEN** the catalog reports a skill selection and then invokes its close callback in the same event, before the input re-renders
+- **THEN** the modal SHALL close with the selected skill's `/{name}` mention at the captured insertion position, and the consumed query or previous mention SHALL NOT be restored
+- **AND** surrounding text and other tracked mentions SHALL remain intact, the selected skills SHALL follow their order in the draft, and the caret override SHALL remain immediately after the inserted run, including any trailing space added by insertion
+
+#### Scenario: Repeated cancellation restores the consumed run only once
+
+- **GIVEN** Browse was opened from either entry point, consuming an unconfirmed `/query` or an existing tracked skill mention
+- **WHEN** the modal is canceled without a selection and its close callback is invoked more than once before the input re-renders
+- **THEN** the consumed run SHALL be restored exactly once at its original position, with a previously tracked mention restored as a mention
+- **AND** the original draft text and ordered skill references SHALL be preserved without duplicate text or mention anchors
 
 #### Scenario: Canceling Browse over an existing mention restores it as a mention, not plain text
 

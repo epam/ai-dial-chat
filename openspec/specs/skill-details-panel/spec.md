@@ -448,6 +448,8 @@ When Core returns `Content-Type: application/octet-stream`, the details loader S
 
 On both the Catalog page and the conversation route's "View details" panel, selecting a supporting file SHALL render its preview inside the details Content tab. Opening, updating, failing, or disposing that preview SHALL NOT open, close, or replace the page's global attachment canvas or invoke the page-level panel-coordination callback.
 
+Opening the conversation's "View details" panel itself SHALL close an existing global attachment preview through the app-owned container, as specified in [skill-input-attachment](../skill-input-attachment/spec.md). That panel-opening transition is separate from selecting or rendering a supporting file inside the already-open details panel; the inline preview SHALL retain the isolation contract above.
+
 Each selected opaque file id SHALL own its loading, content, error, and canvas state. Changing the selection SHALL immediately discard the previous file's displayed content; neither a pending download nor a pending content-resolution result from an older selection SHALL replace the current preview. Files with identical basenames in different folders SHALL remain distinct.
 
 Closing the details panel SHALL remove the inline preview. Pending work from that preview SHALL NOT reopen the details panel or the global attachment canvas.

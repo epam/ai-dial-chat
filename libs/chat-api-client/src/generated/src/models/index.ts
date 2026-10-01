@@ -944,7 +944,7 @@ export interface Check200Response {
    */
   version?: string;
   /**
-   * Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build.
+   * Stable identifier for the running deployment, derived from a hash of the served frontend build, or of the application version when no frontend is bundled (BFF-only image). Changes when a new deployment replaces the frontend static assets or the version, letting long-lived clients detect that a reload will pick up a newer build.
    * @type {string}
    * @memberof Check200Response
    */
@@ -6235,6 +6235,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   conversationId?: string;
+  /**
+   * Failure stage reported by DIAL Scheduler. Only a string result.stage is exposed.
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  resultStage?: string;
 }
 
 /**
@@ -6386,11 +6392,11 @@ export interface ShareLinkResponseDto {
    */
   url: string;
   /**
-   * Number of days the link stays active before expiring.
+   * Days until the DIAL Core invitation expires, rounded up. Omitted when DIAL Core does not report a usable expiry.
    * @type {number}
    * @memberof ShareLinkResponseDto
    */
-  expiresInDays: number;
+  expiresInDays?: number;
   /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}

@@ -30,12 +30,16 @@ import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task
 import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import { ScheduledTasksSortKey } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
-import { ScheduledTaskRunStatus } from './dto/scheduled-task-run.dto';
+import {
+  type ScheduledTaskRunDto,
+  ScheduledTaskRunStatus,
+} from './dto/scheduled-task-run.dto';
 import {
   ScheduleTriggerType,
   type ScheduledTaskDto,
 } from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
+import { ScheduledTaskRateLimitException } from './scheduled-task-rate-limit.exception';
 import {
   fromUpstreamRun,
   fromUpstreamSchedule,
@@ -198,6 +202,10 @@ export class ScheduledTasksService {
     searchParams.set('order_by', 'created_at');
     searchParams.set('order_dir', 'desc');
     return `${this.buildSchedulesUrl(scheduleId)}/runs?${searchParams.toString()}`;
+  }
+
+  private buildRunUrl(scheduleId: string, runId: string): string {
+    return `${this.buildSchedulesUrl(scheduleId)}/runs/${encodeURIComponent(runId)}`;
   }
 
   /*
@@ -382,7 +390,17 @@ export class ScheduledTasksService {
         } catch {
           errorBody = undefined;
         }
-        return this.throwUpstreamError(response.status, context, errorBody);
+        try {
+          return this.throwUpstreamError(response.status, context, errorBody);
+        } catch (error) {
+          if (error instanceof HttpException && error.getStatus() === 429) {
+            throw new ScheduledTaskRateLimitException(
+              error.getResponse(),
+              response.headers?.get('retry-after') ?? null,
+            );
+          }
+          throw error;
+        }
       }
 
       if (!parseJson) {
@@ -615,6 +633,36 @@ export class ScheduledTasksService {
       next: result.next,
       previous: result.previous,
     };
+  }
+
+  /** Reads one run through the caller-scoped Scheduler route without caching it. */
+  async getScheduledTaskRun(
+    accessToken: string,
+    scheduleId: string,
+    runId: string,
+  ): Promise<ScheduledTaskRunDto> {
+    const result = await this.fetchUpstream<UpstreamScheduleRun>(
+      this.buildRunUrl(scheduleId, runId),
+      'GET',
+      accessToken,
+      `get scheduled task run "${runId}" for "${scheduleId}"`,
+    );
+    return fromUpstreamRun(result);
+  }
+
+  /** Starts a saved schedule without changing its trigger or cached list entries. */
+  async startScheduledTask(
+    accessToken: string,
+    scheduleId: string,
+  ): Promise<ScheduledTaskRunDto> {
+    await this.assertSchedulerConsent(accessToken);
+    const result = await this.fetchUpstream<UpstreamScheduleRun>(
+      this.buildScheduleActionUrl(scheduleId, ScheduleAction.Run),
+      'POST',
+      accessToken,
+      `start scheduled task "${scheduleId}"`,
+    );
+    return fromUpstreamRun(result);
   }
 
   async updateScheduledTask(

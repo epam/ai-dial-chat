@@ -6,7 +6,7 @@ File-manager tabs: per-tab visible columns, action labels, upload rules, and sel
 ## Requirements
 ### Requirement: Tab navigation in DialFileManagerModal
 
-`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `My files`, `Shared with me`, and `Organization` (all three, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`, filtered against `fileManagerTabs`. The active tab SHALL be tracked via `handleTabChange` and wired to `DialFileManager` through the folders-panel options — `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange`. The strip lives there, above the tree it filters, as of `@epam/ai-dial-react-file-manager` 0.3.0-dev.3, which rebuilt the file manager to the 2.0 design; up to 0.3.0-dev.2 the same three props were passed under `toolbarOptions` and rendered in the content toolbar, and a build still pinned to that version renders no strip at all if it passes them under `treeOptions` (and vice versa). The initial tab SHALL be the first tab present in `fileManagerTabs` following the fixed priority `my_files` → `shared` → `organization` (defaulting to `DialFileManagerTabs.MyFiles` when `fileManagerTabs` includes `my_files`, which is the default case).
+`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `All`, `My files`, `Shared with me`, and `Organization` (all four, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`, filtered against `fileManagerTabs`. The active tab SHALL be tracked via `handleTabChange` and wired to `DialFileManager` through the folders-panel options — `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange`. The strip lives there, above the tree it filters, as of `@epam/ai-dial-react-file-manager` 0.3.0-dev.3, which rebuilt the file manager to the 2.0 design; up to 0.3.0-dev.2 the same three props were passed under `toolbarOptions` and rendered in the content toolbar, and a build still pinned to that version renders no strip at all if it passes them under `treeOptions` (and vice versa). The initial tab SHALL be the first tab present in `fileManagerTabs` following the fixed priority `all` → `my_files` → `shared` → `organization` (defaulting to `DialFileManagerTabs.All` when All is configured and at least two source tabs are enabled).
 
 Tab label i18n keys:
 - `my_files` → `dialFileManager.tab.myFiles`
@@ -48,7 +48,7 @@ RTL: tab rendering and label alignment are handled by the ui-kit; no physical di
 #### Scenario: Active tab resets when it becomes unavailable
 
 - **WHEN** the modal is currently active on a tab that is subsequently no longer present in `fileManagerTabs` (e.g. the config resolves after mount to a narrower set that excludes the currently-active tab)
-- **THEN** the active tab automatically changes to the first tab present in `fileManagerTabs` following the fixed priority `my_files` → `shared` → `organization`, per `useDialFileManagerTabConfig` (see `file-manager-tab-config`)
+- **THEN** the active tab automatically changes to the first tab present in `fileManagerTabs` following the fixed priority `all` → `my_files` → `shared` → `organization`, per `useDialFileManagerTabConfig` (see `file-manager-tab-config`)
 
 ---
 
@@ -358,7 +358,7 @@ value, and the change handler, and adds no markup of its own.
 
 The strip SHALL be exposed as a **named `role="group"`**, named by the
 folders-panel heading through `aria-labelledby` when the panel renders a header
-(`treeOptions.header`, which the chat always sets — `labels.treeHeaderByTab`),
+(`treeOptions.header`, supplied for the standalone shell),
 and by `treeOptions.tabsAriaLabel` through `aria-label` when it does not.
 
 Each tab SHALL be a **toggle button**: `role="button"` with `aria-pressed="true"`
@@ -394,25 +394,38 @@ label is the chip's accessible name.
 - **WHEN** the folders panel renders its per-tab heading
 - **THEN** the `role="group"` wrapping the tabs is named from that heading via `aria-labelledby`, so the chips are announced as one storage-section filter rather than as unrelated toggles
 
-### Requirement: Attach pickers never offer the All tab
+### Requirement: Attach pickers support the All tab through section composition
 
-`useFileAttachmentPicker` (`libs/chat-hooks/src/files/useFileAttachmentPicker/useFileAttachmentPicker.ts`), and through it `DialFileManagerModal` and every other attach/file picker built on it, SHALL remove `DialFileManagerTabs.All` from its tab list regardless of `allowedTabs`. The reason is that it composes a single-source `useDialFileManager`. Its initial-tab and active-tab fallback priority SHALL remain `my_files` → `shared` → `organization`, with `all` never selected.
+`useFileAttachmentPicker` SHALL compose `useDialFileManagerSections` in Attach mode and derive enabled source sections and translated root labels from the host's `allowedTabs` and `tabLabels`. It SHALL retain All when configured and at least two source tabs are enabled, using `useDialFileManagerTabConfig`. Active-tab fallback priority SHALL be `all` → `my_files` → `shared` → `organization`. The hook's omitted `initialTab` SHALL still default to My files; `DialFileManagerModal` SHALL explicitly request All initially. Selected paths SHALL clear on tab changes and on changes to the browsed source section within All.
 
-`fetchByTab` (`libs/chat-hooks/src/files/dial-file-manager-mapping.util.ts`) SHALL reject with an `Error` when called with `DialFileManagerTabs.All`, so a wiring mistake cannot silently list My files.
+`fetchByTab` SHALL continue rejecting `DialFileManagerTabs.All`; the section composer SHALL route listing through individual source tabs instead of fetching All as a source.
 
-#### Scenario: Default config shows three tabs in the attach modal
+#### Scenario: Default config shows four tabs in the attach modal
 
 - **WHEN** `DialFileManagerModal` opens with `fileManagerTabs` of `['all', 'my_files', 'shared', 'organization']`
-- **THEN** `treeOptions.tabs` is My files, Shared with me, Organization, with no All chip
-- **AND** the active tab is `DialFileManagerTabs.MyFiles`
+- **THEN** the strip shows All, My files, Shared with me, and Organization, with All pressed
 
-#### Scenario: initialTab of All is corrected
+#### Scenario: All composes only enabled sources
 
-- **WHEN** a host calls `useFileAttachmentPicker` with `initialTab: DialFileManagerTabs.All`
-- **THEN** the returned `activeTab` resolves to the first enabled source tab in the priority `my_files` → `shared` → `organization`
+- **WHEN** a host requests All and allows only All, Shared, and Organization
+- **THEN** All remains active and the composed roots contain Shared and Organization only
+
+#### Scenario: All is hidden with one enabled source
+
+- **WHEN** configuration allows All and only one source tab
+- **THEN** All is absent and the active tab falls back to that source
+
+#### Scenario: Section navigation clears attachment selection
+
+- **WHEN** files in one All source section are selected and the user browses another source section
+- **THEN** selection clears before attachment can use the new listing
 
 #### Scenario: fetchByTab refuses All
 
-- **WHEN** `fetchByTab(filesApi, DialFileManagerTabs.All, bucket, '', new Map())` is called
-- **THEN** the returned promise rejects with an `Error`, and no `DialFilesApi` method is called
+- **WHEN** `fetchByTab` is called directly with All
+- **THEN** it rejects with an Error and calls no file API method
 
+#### Scenario: Headerless attach strip retains its accessible name
+
+- **WHEN** the attach folders panel omits its visible heading
+- **THEN** `treeOptions.tabsAriaLabel` supplies the translated active-tab label and the strip remains a named group of toggle buttons

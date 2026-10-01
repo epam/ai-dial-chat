@@ -67,6 +67,13 @@ describe('SharePopover', () => {
     expect(screen.getByRole('button', { name: 'Can view' })).toBeTruthy();
   });
 
+  it('renders the link without an expiry note when expiryNote is undefined', () => {
+    render(<SharePopover {...makeProps({ labels: {} })} />);
+
+    expect(screen.getByDisplayValue(ITEM_URL)).toBeTruthy();
+    expect(screen.queryByText(/This link is active/)).toBeNull();
+  });
+
   it('shows the view-access visibility note by default', () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 

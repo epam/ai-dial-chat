@@ -139,10 +139,6 @@
       },
       "limits": {
         "tokenGroup": "Token limits",
-        "tokensPerDay": "Last 24 hours",
-        "tokensPerWeek": "Last 7 days",
-        "tokensPerMonth": "Last 30 days",
-        "spentLabel": "{{amount}} spent",
         "value": "{{used}} / {{total}}",
         "followsCostLimit": "Follows cost limit",
         "followsCostLimitAriaLabel": "{{label}}: {{used}} used. Follows cost limit.",
@@ -299,7 +295,7 @@
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
     "emptyHint": "Star a model or agent to pin it here.",
-    "currentlySelectedLabel": "Current Selected",
+    "currentlySelectedLabel": "Currently selected",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",
@@ -805,7 +801,19 @@
       "deleteNotFoundError": "This task has already been deleted or could not be found",
       "deleteRetryableError": "Couldn't delete the task — it hasn't been removed and you can safely try again",
       "deleteGenericError": "Failed to delete the scheduled task",
-      "deletedStateLabel": "Deleted"
+      "deletedStateLabel": "Deleted",
+      "startNow": "Start now",
+      "starting": "Starting…",
+      "startAccepted": "Task started. Execution is in progress.",
+      "startBusy": "A task run is already in progress.",
+      "startNotFound": "Task not found.",
+      "startDeleted": "A deleted task cannot be run.",
+      "startError": "Could not confirm that the task started. Check History before trying again.",
+      "runStatusUnavailable": "Could not refresh the run status.",
+      "runStatusDelayed": "This run has not reported completion yet. Refresh its status.",
+      "refreshRunStatus": "Refresh status",
+      "runCredentialsRequired": "Sign in to DIAL Chat to run this task.",
+      "runFinished": "Task run finished: {{status}}."
     },
     "edit": {
       "pageTitle": "Edit scheduled task",
@@ -1630,6 +1638,7 @@
     "mummyToastMessage": "The mummy is pushing the chat input out of the way — it will be right back! Send \"{{phrase}}\" in the start-page chat for another secret surprise."
   },
   "newYear": {
+    "penguinStarToastMessage": "Every tree deserves a star. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "giftWrappingToastMessage": "Some gifts have a mind of their own. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "toastTitle": "Happy New Year!",
     "snowToastMessage": "A little winter magic. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",

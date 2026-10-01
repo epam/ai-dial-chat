@@ -87,6 +87,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   EllipsisTooltip: ({ text }: { text?: ReactNode }) => <span>{text}</span>,
   Tooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
   Highlight: ({ text }: { text?: ReactNode }) => <span>{text}</span>,
+  /* Rendered by the shared InitialsAvatar fallback when the item has no icon. */
+  AvatarShape: { Circle: 'circle', Square: 'square' },
+  Avatar: () => <span aria-hidden="true" />,
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconBuildingCommunity: () => <svg />,

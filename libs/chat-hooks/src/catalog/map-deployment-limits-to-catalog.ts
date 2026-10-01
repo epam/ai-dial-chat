@@ -7,22 +7,21 @@ import type {
   DeploymentLimitsResponseDto,
   LimitStatsDto,
 } from '@epam/ai-dial-chat-api-client';
-import { formatCost } from '@epam/ai-dial-chat-shared';
+import type { FormatResetTime } from '../usage/map-usage-data-to-dashboard';
+import { buildResetFields } from './map-deployment-limits-to-input';
 
 /** Labels and formatter callbacks for the deployment-limits mapping utility. */
 export interface DeploymentLimitsLabels {
   /** Heading of the group every token stat row is listed under. */
   tokenGroup: string;
-  /** Label for the tokens-per-day stat row. */
+  /** Label for the current-UTC-day token row, e.g. "Today". */
   tokensPerDay: string;
-  /** Label for the tokens-per-week stat row. */
+  /** Label for the current-UTC-week token row, e.g. "This week". */
   tokensPerWeek: string;
-  /** Label for the tokens-per-month stat row. */
+  /** Label for the current-UTC-month token row, e.g. "This month". */
   tokensPerMonth: string;
   /** Note shown instead of a total on a row whose limit follows the cost limit. */
   followsCostLimit: string;
-  /** Formats the "$X spent" caption under a row's label. */
-  formatSpentCaption: (amount: string) => string;
   /** Formats the combined used/total display value for a capped row. */
   formatValueLabel: (used: string, total: string) => string;
   /** Formats the ARIA label for a capped progress row. */
@@ -36,6 +35,8 @@ export interface DeploymentLimitsLabels {
     label: string;
     used: string;
   }) => string;
+  /** Formats each period's `resetsAt` into the row's reset line. Omit it to render rows without one. */
+  formatResetTime?: FormatResetTime;
 }
 
 type StatLabelField = 'tokensPerDay' | 'tokensPerWeek' | 'tokensPerMonth';
@@ -43,26 +44,20 @@ type StatLabelField = 'tokensPerDay' | 'tokensPerWeek' | 'tokensPerMonth';
 interface DeploymentLimitMapping {
   key: keyof DeploymentLimitsResponseDto;
   labelField: StatLabelField;
-  /** Sibling cost stat for the same period, shown as a "$X spent" caption under the label. */
-  costKey: keyof DeploymentLimitsResponseDto;
 }
 
+/*
+ * Token stats for the current UTC calendar day, week, and month — the same
+ * periods the Usage page reports, each resetting at its `resetsAt` instant.
+ * The cost stats on a deployment-limits response are the caller's account-wide
+ * budget and spend across every deployment, not this deployment's own spend,
+ * so they are never shown here — per-deployment spend is only reported by
+ * GET /v1/user/usage.
+ */
 const LIMIT_STAT_MAPPINGS: DeploymentLimitMapping[] = [
-  {
-    key: 'dayTokenStats',
-    labelField: 'tokensPerDay',
-    costKey: 'dayCostStats',
-  },
-  {
-    key: 'weekTokenStats',
-    labelField: 'tokensPerWeek',
-    costKey: 'weekCostStats',
-  },
-  {
-    key: 'monthTokenStats',
-    labelField: 'tokensPerMonth',
-    costKey: 'monthCostStats',
-  },
+  { key: 'dayTokenStats', labelField: 'tokensPerDay' },
+  { key: 'weekTokenStats', labelField: 'tokensPerWeek' },
+  { key: 'monthTokenStats', labelField: 'tokensPerMonth' },
 ];
 
 const UNLIMITED_TOTAL_THRESHOLD = Number.MAX_SAFE_INTEGER;
@@ -114,31 +109,9 @@ const isUsableLimitStats = (
 const isUnlimitedTotal = (total: number): boolean =>
   total >= UNLIMITED_TOTAL_THRESHOLD;
 
-/*
- * Per-deployment cost stats are attributed spend, not a per-deployment cap
- * (see map-user-usage-to-model-limits.ts), so only `used` is read here — a
- * `total` on the same object isn't a real limit for this caption.
- */
-const isUsableCostStats = (
-  stats: LimitStatsDto | undefined,
-): stats is LimitStatsDto =>
-  stats != null && Number.isFinite(stats.total) && Number.isFinite(stats.used);
-
-const buildSpentCaption = (
-  stats: LimitStatsDto | undefined,
-  labels: DeploymentLimitsLabels,
-): string | undefined => {
-  if (!isUsableCostStats(stats)) {
-    return undefined;
-  }
-
-  return labels.formatSpentCaption(formatCost(Math.max(0, stats.used)));
-};
-
 const mapLimitStatsToRow = (
   stats: LimitStatsDto,
   label: string,
-  captionLabel: string | undefined,
   labels: DeploymentLimitsLabels,
 ): UsageLimitProgressRow => {
   const used = Math.max(0, stats.used);
@@ -153,7 +126,7 @@ const mapLimitStatsToRow = (
     label,
     used,
     total,
-    captionLabel,
+    ...buildResetFields(stats, labels.formatResetTime),
     ...(isUnlimited
       ? { isUnlimited: true, noteLabel: labels.followsCostLimit }
       : { usedLabel: formattedUsed, totalLabel: formattedTotal }),
@@ -209,15 +182,7 @@ export const mapDeploymentLimitsDtoToCatalogLimits = (
     }
 
     usableStats.push(stats);
-    const captionLabel = buildSpentCaption(dto[mapping.costKey], labels);
-    return [
-      mapLimitStatsToRow(
-        stats,
-        labels[mapping.labelField],
-        captionLabel,
-        labels,
-      ),
-    ];
+    return [mapLimitStatsToRow(stats, labels[mapping.labelField], labels)];
   });
 
   return rows.length > 0

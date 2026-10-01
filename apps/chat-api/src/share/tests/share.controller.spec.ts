@@ -124,6 +124,19 @@ describe('ShareController (integration)', () => {
       );
     });
 
+    it('returns 201 without expiresInDays when the service could not determine the expiry', async () => {
+      const { expiresInDays: _omitted, ...linkWithoutExpiry } = createdLink;
+      service.createShareLink.mockResolvedValueOnce(linkWithoutExpiry);
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/share')
+        .send(validBody)
+        .expect(201);
+
+      expect(res.body).toEqual(linkWithoutExpiry);
+      expect(res.body).not.toHaveProperty('expiresInDays');
+    });
+
     it('accepts a full prompts/{bucket}/{path} itemId', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
