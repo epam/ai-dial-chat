@@ -55,6 +55,7 @@ import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
+import { useVisualizerMessageSendHandler } from '../../hooks/conversation/useVisualizerMessageSendHandler';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   conversationsApi as configuredConversationsApi,
@@ -671,6 +672,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     }));
   }, []);
 
+  const handleVisualizerSendMessage = useVisualizerMessageSendHandler({
+    conversationId,
+    isStreaming,
+    isReadOnly,
+    handleSend,
+  });
+
   useActiveConversationBridge({
     conversation,
     conversationId,
@@ -774,6 +782,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
+          onVisualizerSendMessage={handleVisualizerSendMessage}
           stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}

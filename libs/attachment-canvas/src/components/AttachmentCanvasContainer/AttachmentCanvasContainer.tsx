@@ -45,6 +45,8 @@ export interface AttachmentCanvasContainerProps {
    * bundled worker asset.
    */
   configurePdfWorker?: () => void | Promise<void>;
+  /** Called with the message text when a `Visualizer` or `GroupedVisualizer` iframe posts `SEND_MESSAGE`. Forwarded to `VisualizerCanvasRenderer` as `onSendMessage`; when omitted, those messages are ignored. */
+  onVisualizerSendMessage?: (content: string) => void;
 }
 
 /** Context-connected container that renders `AttachmentCanvas` with download support. */
@@ -60,6 +62,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       tableDownloadFilename,
       loadPdf,
       configurePdfWorker,
+      onVisualizerSendMessage,
     }) => {
       const {
         ariaLabel = 'Attachment preview',
@@ -191,6 +194,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           codeBlockTheme={codeBlockTheme}
           configurePdfWorker={configurePdfWorker}
           loadPdf={loadPdf}
+          onVisualizerSendMessage={onVisualizerSendMessage}
         />
       );
     },

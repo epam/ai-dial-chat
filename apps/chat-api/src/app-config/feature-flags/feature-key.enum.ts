@@ -7,4 +7,5 @@ export enum FeatureKey {
   ResponsesApiEnabled = 'features.responsesApiEnabled',
   ResponsesBackgroundEnabled = 'features.responsesBackgroundEnabled',
   DefaultDeploymentPinned = 'features.defaultDeploymentPinned',
+  VisualizerSendMessages = 'features.visualizerSendMessages',
 }

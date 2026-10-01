@@ -217,6 +217,15 @@ describe('AppConfigService', () => {
       expect(result.config.applicationVisualizers).toEqual({});
     });
 
+    it('emits features.visualizerSendMessages from the resolved flag', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'features.visualizerSendMessages' ? true : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.features['visualizerSendMessages']).toBe(true);
+    });
+
     it('returns resolved values when providers succeed', async () => {
       const { service } = makeService(async (key: string) => {
         if (key === 'asr.modelId') return 'whisper-1';
@@ -1411,6 +1420,7 @@ describe('AppConfigService', () => {
         'liveChatInteraction',
         'scheduledTasksEnabled',
         'defaultDeploymentPinned',
+        'visualizerSendMessages',
       ]);
     });
 

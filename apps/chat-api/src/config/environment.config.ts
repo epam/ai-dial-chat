@@ -941,6 +941,18 @@ export class EnvironmentVariables {
   DEFAULT_DEPLOYMENT_PINNED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    /* Fail closed: this flag lets an iframe send messages as the user, so
+     * only an explicit truthy value turns it on. */
+    return ['true', '1', 'yes'].includes(String(raw).trim().toLowerCase());
+  })
+  @IsBoolean()
+  ALLOW_VISUALIZER_SEND_MESSAGES?: boolean = false;
+
+  @IsOptional()
   @IsString()
   SCHEDULER_APP_ID?: string;
 

@@ -431,6 +431,35 @@ import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
 />;
 ```
 
+### Visualizer messages (`SEND_MESSAGE`)
+
+A visualizer iframe can ask the host to send a chat message. To do so, it posts
+`${visualizerName}/SEND_MESSAGE` with payload `{ message: string }`; this is
+what `ChatVisualizerConnector.sendMessage(content)` does. The lib subscribes on
+every visualizer it mounts and drops anything other than an object with an own,
+non-blank string `message`.
+
+To receive valid messages, pass `onVisualizerSendMessage?: (content: string) => void` to
+`AttachmentCanvasContainer`, `AttachmentCanvas`, `AttachmentCanvasBody` or
+`InlineGroupedVisualizer`. It is called with the untrimmed `message` text.
+
+- **When omitted:** messages are ignored.
+- **Adding, removing or replacing the callback:** never remounts the iframe.
+- **What the host decides:** whether to send the text, into which conversation,
+  and whether to drop it, for example while a response is streaming. The lib
+  never sends anything itself.
+- **No acknowledgement** is posted back to the iframe.
+
+```tsx
+import { AttachmentCanvasContainer } from '@epam/ai-dial-attachment-canvas';
+
+<AttachmentCanvasContainer
+  onVisualizerSendMessage={
+    isVisualizerSendEnabled ? (content) => sendUserMessage(content) : undefined
+  }
+/>;
+```
+
 ## Content Types
 
 `AttachmentContentType` is the discriminant on every content descriptor.
