@@ -13,8 +13,10 @@ The endpoint:
 - SHALL accept an optional `interface_type` query parameter as a repeatable string value validated against `('chat' | 'embedding' | 'mcp' | 'custom_ui' | 'all')`; passing an unrecognised value MUST respond 400.
 - SHALL accept an optional `refresh` query parameter validated as a boolean (`true` or `false` after DTO transformation); passing any other value MUST respond 400.
 - SHALL forward the `interface_type` values to DIAL Core `GET /v1/deployments` as a single comma-joined query parameter (e.g. `interface_type=chat,mcp`) when more than one value is provided, not as repeated query keys — DIAL Core only honors the first occurrence of a repeated key.
-- SHALL call DIAL Core using the `@epam/ai-dial-typescript-sdk` client (`listDeployments`), passing the session access token.
-- SHALL map the DIAL Core response `deployments` array to `DeploymentItemDto[]` using the normalisation rules in the `DeploymentItemDto shape` requirement below.
+- SHALL call DIAL Core using the `@epam/ai-dial-typescript-sdk` client (`listDeployments`), passing the session access token and, when the session claims carry a string `job_title` (`getJobTitleClaim`), an `X-JOB-TITLE` header built by `buildJobTitleHeaders` (omitted when there is no job title).
+- SHALL map the DIAL Core response `deployments` array to `DeploymentItemDto[]` using the normalisation rules in the `DeploymentItemDto shape` requirement below, dropping entries without an `id` and entries whose `id` contains `HIDDEN_FILE` (`.dial_folder`).
+- SHALL, after cache retrieval or a fresh fetch (never stored in the cache), enrich every item with `isInstalled` (the item `id` is in `UserConfigService.getInstalledIds(accessToken, bucket).deployments`) and with `isMy` / `canEdit` / `sharedWithMe` from `computeItemOwnershipFlags` (`apps/chat-api/src/common/utils/resource-ownership.ts`), using APPLICATION resources shared with the user from DIAL Core `getSharedResources({ resourceTypes: ['APPLICATION'], with: 'me' })`; a failed shared-resources call degrades to "nothing shared" instead of failing the listing.
+- SHALL treat `interface_type=all` as no filter, and SHALL re-apply the `interface_type` filter in-process to the enriched items (matching any requested value in `interfaces`) whether they came from cache or from DIAL Core.
 - SHALL exclude toolset-typed entries (DIAL Core items with a `toolset` field present) from the mapped response, regardless of the `interface_type` filter applied — toolsets are served exclusively by the dedicated `GET /api/v1/toolsets` listing, whose payload carries fields (`auth_settings`, `endpoint`) that DIAL Core's `/v1/deployments` toolset entries do not include.
 - SHALL respond 200 with `{ deployments: DeploymentItemDto[] }` on success.
 - SHALL respond 502 when DIAL Core returns a non-2xx response.
@@ -39,7 +41,18 @@ The endpoint:
 #### Scenario: New fields present on response items
 
 - **WHEN** `GET /api/v1/deployments` returns items with DIAL Core `owner` populated
-- **THEN** each item in the response includes `owner`, `isMy`, and (for folder-nested applications) `applicationFolder`
+- **THEN** each item in the response includes `owner`, `isMy`, `canEdit`, `sharedWithMe`, `isInstalled`, and (for folder-nested applications) `applicationFolder`
+
+#### Scenario: Hidden folder marker entries are dropped
+
+- **WHEN** DIAL Core returns an entry whose `id` contains `.dial_folder`
+- **THEN** that entry is not included in the `deployments` array
+
+#### Scenario: Job title forwarded to DIAL Core
+
+- **WHEN** the session claims contain `job_title: 'Engineer'` and the deployments cache misses
+- **THEN** the DIAL Core `listDeployments` call carries an `X-JOB-TITLE` header with the encoded job title
+- **AND** no `X-JOB-TITLE` header is sent when the claim is absent
 
 #### Scenario: Backward compatibility — clients ignoring new fields are unaffected
 
@@ -101,16 +114,25 @@ The endpoint:
 `DeploymentItemDto` SHALL be a strongly typed Swagger DTO that normalises DIAL Core's `ModelOpenAi | ApplicationOpenAi | ToolsetOpenAi` union into a flat structure:
 
 - `id: string` — unique stable identifier from DIAL Core; items without an `id` SHALL be skipped during mapping
-- `displayName: string | Record<string, string>` — `display_name` from DIAL Core, falling back to `id` when absent; either a plain string or a map of locale code to translated value when the entity has additional locales configured
+- `displayName: string | Record<string, string>` — `display_name` from DIAL Core, falling back to `getResourceDisplayNameFallback(id)` (`apps/chat-api/src/common/utils/resource-name.ts`: the last `/` segment of `id`, trimmed) when absent; either a plain string or a map of locale code to translated value when the entity has additional locales configured
 - `type: 'model' | 'application' | 'toolset'` — discriminator; derived from DIAL Core `object` field (`"model"` → `'model'`, `"application"` → `'application'`); items with a `toolset` field present SHALL be mapped to `'toolset'`
 - `iconUrl?: string` — `icon_url` from DIAL Core
 - `description?: string | Record<string, string>` — `description` from DIAL Core; same plain-string-or-locale-map shape as `displayName`
 - `interfaces?: string[]` — `interfaces` from DIAL Core (list of interface types supported by the deployment)
 - `inputAttachmentTypes?: string[]` — `input_attachment_types` from DIAL Core; omitted when the source field is absent or null
 - `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
-- `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
+- `isMy?: boolean` — `true` when the session `bucket` equals the owner-bucket segment of the deployment `id` (segment 1 for `applications/{bucket}/{name}` or `toolsets/{bucket}/{name}`, otherwise segment 0); `false` otherwise; computed post-cache and never stored in the cache entry
+- `canEdit?: boolean` — `true` when `isMy`, or when the `id` is a resource shared with the user with `WRITE` permission; computed post-cache
+- `sharedWithMe?: boolean` — `true` when the item is not `isMy` and its `id` is among the resources shared with the user; computed post-cache
+- `isInstalled?: boolean` — `true` when the `id` is in the user's installed deployment ids (`UserConfigService.getInstalledIds`); computed post-cache
+- `isFeatured?: boolean` — `true` when `id` (or `reference`) is in the `FEATURED_MODEL_IDS` env list
+- `isHidden?: boolean` — `true` when any of `topics` is in the `HIDDEN_ENTITY_TAGS` env list
+- `displayVersion?: string`, `createdAt?: number`, `updatedAt?: number` — `display_version`, `created_at`, `updated_at` from DIAL Core
+- `topics?: string[]` — `description_keywords` from DIAL Core, defaulting to `[]`
+- `applicationTypeSchemaId?: string` — `application_type_schema_id`, set only for `type === 'application'` items
+- `maxInputAttachments?: number` — `max_input_attachments` when it is a number
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
-- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, the `responsesApi?: boolean` / `chatCompletion?: boolean` / `skillsSupported?: boolean` fields, and the `tools?: boolean` field (see below)
+- `features?: DeploymentFeaturesDto` — set when DIAL Core provides `features` or the item is MCP-capable; always carries `systemPrompt: boolean` and `temperature: boolean` (from `features.system_prompt` / `features.temperature`, defaulting to `false`), `folderAttachments?: boolean` when `features.folder_attachments` is non-null, the `mcp?: boolean` field, the `responsesApi?: boolean` / `chatCompletion?: boolean` / `skillsSupported?: boolean` fields, and the `tools?: boolean` field (see below)
 - `reference?: string` — `reference` from DIAL Core's raw deployment payload, forwarded verbatim; omitted when DIAL Core does not provide it. Callers MAY receive a deployment `id` elsewhere in the system (e.g. a stored conversation's `model` value) that actually holds this `reference` value instead of `id` — the frontend is responsible for matching against either field (see `deployment-reference-resolution`)
 
 `DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
@@ -145,8 +167,8 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 #### Scenario: Application item is mapped correctly
 
-- **WHEN** a DIAL Core `ApplicationOpenAi` entry has `object: 'application'`, `id: 'my-app'`, no `display_name`
-- **THEN** the mapped `DeploymentItemDto` has `type: 'application'`, `id: 'my-app'`, `displayName: 'my-app'`
+- **WHEN** a DIAL Core `ApplicationOpenAi` entry has `object: 'application'`, `id: 'applications/bucket/my-app'`, no `display_name`
+- **THEN** the mapped `DeploymentItemDto` has `type: 'application'`, `id: 'applications/bucket/my-app'`, `displayName: 'my-app'`
 
 #### Scenario: Toolset item is mapped correctly
 
@@ -158,10 +180,10 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 - **WHEN** a DIAL Core deployment entry has no `id` field
 - **THEN** it is excluded from the `deployments` array in the response
 
-#### Scenario: displayName falls back to id
+#### Scenario: displayName falls back to the last id segment
 
 - **WHEN** a source item has no `display_name`
-- **THEN** `DeploymentItemDto.displayName` equals the source `id`
+- **THEN** `DeploymentItemDto.displayName` equals the last `/` segment of the source `id` (the whole `id` when it has no `/`)
 
 #### Scenario: displayName passes through a locale map unresolved
 
@@ -286,12 +308,13 @@ The backend SHALL implement the deployments feature in `apps/chat-api/src/deploy
 
 - `deployments.controller.ts` — thin controller with `@Get() listDeployments(@Query() query: DeploymentsQueryDto, @Req() req, @Res({ passthrough: true }) res)`
 - `deployments.service.ts` — `DeploymentsService`, a thin delegation facade over `DeploymentsListingService`, `DeploymentsLookupService`, and `DeploymentsDetailsService`; `DeploymentsListingService` (`listing/deployments-listing.service.ts`) injects `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) for the shared DIAL SDK client, calls SDK `listDeployments`, and maps/caches results
-- `deployments.module.ts` — `DeploymentsModule` providing `DeploymentsService`, `DeploymentsListingService`, `DeploymentsLookupService`, `DeploymentsDetailsService`; no external domain imports needed
+- `deployments.module.ts` — `DeploymentsModule` importing `UserConfigModule` (for `UserConfigService.getInstalledIds`), registering `DeploymentsController` and `UserLimitsController` (`user-limits.controller.ts`, `GET /api/v1/user/limits` and `/usage`), providing `DeploymentsService`, `DeploymentsListingService`, `DeploymentsLookupService`, `DeploymentsDetailsService`, and exporting `DeploymentsService` and `DeploymentsDetailsService`
 - `dto/deployment-item.dto.ts` — `DeploymentItemDto` and `DeploymentsResponseDto` with `@ApiProperty` decorators
 - `dto/deployments-query.dto.ts` — `DeploymentsQueryDto` with `interface_type` field: `@IsOptional`, `@IsArray`, `@IsIn([...], { each: true })`, `@Transform` for comma-separated coercion, and `refresh?: boolean` with `@IsBoolean` plus `true`/`false` string coercion
 - `tests/deployments.controller.spec.ts`
-- `tests/deployments.service.spec.ts`
+- `tests/deployments.service.spec.ts` — facade delegation tests
 - `tests/deployments.controller.integration.spec.ts`
+- `listing/tests/deployments-listing.service.spec.ts` — listing behaviour tests
 
 `DeploymentsModule` SHALL be imported into `AppModule`.
 
@@ -303,7 +326,7 @@ The backend SHALL implement the deployments feature in `apps/chat-api/src/deploy
 #### Scenario: Controller delegates to service with parsed query
 
 - **WHEN** `listDeployments` is called with a validated `DeploymentsQueryDto`
-- **THEN** the controller extracts `sub`, `at`, and `bucket` from `req.user`, sets the appropriate `Cache-Control` header, and calls `deploymentsService.listDeployments(sub, at, bucket, query.interface_type, query.refresh)`
+- **THEN** the controller extracts `sub`, `at`, `bucket`, and `claims` from `req.user`, sets the appropriate `Cache-Control` header, and calls `deploymentsService.listDeployments(sub, at, bucket, query.interface_type, query.refresh, getJobTitleClaim(claims))`
 
 ---
 
@@ -316,30 +339,22 @@ The `listDeployments` handler SHALL be annotated:
 - `@ApiQuery` for `interface_type` with enum values and multi-value example
 - `@ApiQuery` for `refresh` as an optional boolean cache-bypass flag
 - `@ApiResponse({ status: 200, type: DeploymentsResponseDto })`
-- Standard 400, 401, 403, 429, 502, 503 `@ApiResponse` entries
+- 400, 401, 403, 502, 503 `@ApiResponse` entries (no 429 entry is declared)
 
 The `'deployments'` tag SHALL be added in `openapi.config.ts`; the `'catalog'` tag SHALL be removed.
 
-Running `npm run openapi` SHALL produce a `DeploymentsApi` class in `@epam/chat-api-client` with a `listDeployments(params?: ListDeploymentsRequest)` method typed to return `Promise<DeploymentsResponseDto>` where `ListDeploymentsRequest` contains `interfaceType?: string[]` and `refresh?: boolean`.
+Running `npm run openapi` SHALL produce a `DeploymentsApi` class in `@epam/ai-dial-chat-api-client` (`libs/chat-api-client`) with a `listDeployments(params?: ListDeploymentsRequest)` method typed to return `Promise<DeploymentsResponseDto>` where `ListDeploymentsRequest` contains `interfaceType?: Array<ListDeploymentsInterfaceTypeEnum>` and `refresh?: boolean`.
 
 #### Scenario: Generated client exposes typed listDeployments method
 
 - **WHEN** `npm run openapi` runs after adding the deployments controller
-- **THEN** `@epam/chat-api-client` exports a `DeploymentsApi` class with `listDeployments` method accepting optional `interfaceType` array and `refresh` boolean
+- **THEN** `@epam/ai-dial-chat-api-client` exports a `DeploymentsApi` class with `listDeployments` method accepting optional `interfaceType` array and `refresh` boolean
 
 ---
 
 ### Requirement: Frontend server-api wrapper for deployments
 
-`apps/chat/src/server-api/deployments.api.ts` SHALL export:
-
-```ts
-export const getDeployments = (
-  interfaceType?: string[],
-  refresh?: boolean,
-): Promise<DeploymentsResponseDto> =>
-  deploymentsApi.listDeployments({ interfaceType, refresh });
-```
+`apps/chat/src/server-api/deployments.api.ts` SHALL export `getDeployments(interfaceType?: string[], refresh?: boolean): Promise<DeploymentsResponseDto>`, which calls `deploymentsApi.listDeployments({ interfaceType, refresh })`, casting `interfaceType` to the generated `ListDeploymentsInterfaceTypeEnum` value array.
 
 `deploymentsApi` SHALL be instantiated in `api-client.ts`. Any existing `catalogApi` instance SHALL be removed.
 
@@ -362,9 +377,9 @@ export const getDeployments = (
 
 ### Requirement: Backend service tests for deployments
 
-`deployments.service.spec.ts` SHALL cover:
+`listing/tests/deployments-listing.service.spec.ts` (`DeploymentsListingService`) SHALL cover the listing behaviour; `tests/deployments.service.spec.ts` only checks that the `DeploymentsService` facade delegates. The listing spec covers:
 
-- Successful mapping of `ModelOpenAi`, `ApplicationOpenAi`, `ToolsetOpenAi` entries to `DeploymentItemDto[]`
+- Successful mapping of `ModelOpenAi`, `ApplicationOpenAi`, `ToolsetOpenAi` entries to `DeploymentItemDto[]`, excluding toolsets
 - Items without `id` are skipped
 - `displayName` falls back to `id` when `display_name` is absent
 - Quick Apps `application_properties.conversation_starters` is mapped to `conversationStarters`
@@ -378,8 +393,8 @@ All DIAL Core calls SHALL be mocked; no live network calls.
 
 #### Scenario: Service test — successful full listing
 
-- **WHEN** DIAL Core returns 2 models, 1 application, 1 toolset
-- **THEN** `listDeployments` returns `{ deployments: [DeploymentItemDto × 4] }` with correct `type` discriminators
+- **WHEN** DIAL Core returns 1 model, 1 application, 1 toolset
+- **THEN** `DeploymentsListingService.listDeployments` returns `{ deployments: [DeploymentItemDto × 2] }` with `type: 'model'` and `type: 'application'`, and no toolset entry
 
 #### Scenario: Service test — cache hit skips DIAL Core call
 
