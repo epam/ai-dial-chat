@@ -6235,6 +6235,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   conversationId?: string;
+  /**
+   * Failure stage reported by DIAL Scheduler. Only a string result.stage is exposed.
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  resultStage?: string;
 }
 
 /**

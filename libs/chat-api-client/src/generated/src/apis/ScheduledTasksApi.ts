@@ -19,6 +19,7 @@ import type {
   ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
   ScheduledTaskDto,
+  ScheduledTaskRunDto,
   ScheduledTaskValidationErrorDto,
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
@@ -34,6 +35,11 @@ export interface DeleteScheduledTaskRequest {
 
 export interface GetScheduledTaskRequest {
   scheduleId: string;
+}
+
+export interface GetScheduledTaskRunRequest {
+  scheduleId: string;
+  runId: string;
 }
 
 export interface ListScheduledTaskRunsRequest {
@@ -54,6 +60,10 @@ export interface PauseScheduledTaskRequest {
 }
 
 export interface ResumeScheduledTaskRequest {
+  scheduleId: string;
+}
+
+export interface StartScheduledTaskRequest {
   scheduleId: string;
 }
 
@@ -214,6 +224,70 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ScheduledTaskDto> {
     const response = await this.getScheduledTaskRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns one DIAL Scheduler run for an owned schedule, proxying the Scheduler using the session access token. Not cached.
+   * Get one scheduled task run
+   */
+  async getScheduledTaskRunRaw(
+    requestParameters: GetScheduledTaskRunRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ScheduledTaskRunDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling getScheduledTaskRun().',
+      );
+    }
+
+    if (requestParameters['runId'] == null) {
+      throw new runtime.RequiredError(
+        'runId',
+        'Required parameter "runId" was null or undefined when calling getScheduledTaskRun().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/runs/{runId}`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'runId'}}`,
+      encodeURIComponent(String(requestParameters['runId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ScheduledTaskRunDto>(response);
+  }
+
+  /**
+   * Returns one DIAL Scheduler run for an owned schedule, proxying the Scheduler using the session access token. Not cached.
+   * Get one scheduled task run
+   */
+  async getScheduledTaskRun(
+    requestParameters: GetScheduledTaskRunRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ScheduledTaskRunDto> {
+    const response = await this.getScheduledTaskRunRaw(
       requestParameters,
       initOverrides,
     );
@@ -441,6 +515,59 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ScheduledTaskDto> {
     const response = await this.resumeScheduledTaskRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Starts the saved DIAL Scheduler definition immediately for the authenticated session user. The request has no body, does not wait for completion, and does not change the schedule.
+   * Start a scheduled task immediately
+   */
+  async startScheduledTaskRaw(
+    requestParameters: StartScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ScheduledTaskRunDto>> {
+    if (requestParameters['scheduleId'] == null) {
+      throw new runtime.RequiredError(
+        'scheduleId',
+        'Required parameter "scheduleId" was null or undefined when calling startScheduledTask().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/scheduled-tasks/{scheduleId}/run`;
+    urlPath = urlPath.replace(
+      `{${'scheduleId'}}`,
+      encodeURIComponent(String(requestParameters['scheduleId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ScheduledTaskRunDto>(response);
+  }
+
+  /**
+   * Starts the saved DIAL Scheduler definition immediately for the authenticated session user. The request has no body, does not wait for completion, and does not change the schedule.
+   * Start a scheduled task immediately
+   */
+  async startScheduledTask(
+    requestParameters: StartScheduledTaskRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ScheduledTaskRunDto> {
+    const response = await this.startScheduledTaskRaw(
       requestParameters,
       initOverrides,
     );

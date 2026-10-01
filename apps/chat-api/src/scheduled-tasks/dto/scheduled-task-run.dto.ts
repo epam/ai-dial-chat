@@ -47,4 +47,13 @@ export class ScheduledTaskRunDto {
   @IsOptional()
   @IsString()
   conversationId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Failure stage reported by DIAL Scheduler. Only a string result.stage is exposed.',
+    example: 'credentials',
+  })
+  @IsOptional()
+  @IsString()
+  resultStage?: string;
 }

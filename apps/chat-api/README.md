@@ -1,5 +1,25 @@
 # Chat API
 
+## Scheduled task manual-run contract
+
+`POST /api/v1/scheduled-tasks/:scheduleId/run` submits the saved Scheduler
+definition without a body and returns HTTP 202 with a camelCase
+`ScheduledTaskRunDto`. It does not resume paused/completed tasks, invalidate a
+schedule-list cache, or precheck external sign-in. Automatic trigger exhaustion
+does not prohibit this manual execution; only a deleted task is rejected with 409. The endpoint uses the existing session, feature, role, and CSRF guards.
+
+`GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` returns the same DTO for
+the caller-owned run. The DTO's optional `resultStage` is a narrow string
+projection of Scheduler's `result.stage`; arbitrary Scheduler result data is
+not exposed. Start and get-one responses use the same camelCase DTO fields as
+run-history responses, including `conversationId` when available. A terminal
+credentials stage is recorded as a run error for the client to recover through
+the offline-credentials flow; it is not a failed start request and does not
+trigger an automatic retry.
+
+Rate-limited manual starts and single-run reads preserve Scheduler's valid `Retry-After` header
+(delay seconds or an HTTP date) alongside the existing mapped error body.
+
 ## Scheduled task skill contract
 
 Scheduled-task POST/PUT bodies accept optional nullable `skillUrl`, validated

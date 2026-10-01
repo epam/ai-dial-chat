@@ -52,6 +52,17 @@ from the generated source under `src/generated/` — refer to the Swagger UI at
 `/api/docs` (development builds) or the emitted OpenAPI document for the full
 list of endpoints and types.
 
+### Scheduled-task operations
+
+`scheduledTasksApi.startScheduledTask({ scheduleId })` is the generated normal
+method for the bodyless manual-run POST and resolves a `ScheduledTaskRunDto`
+after HTTP 202. `scheduledTasksApi.getScheduledTaskRun({ scheduleId, runId })`
+returns the same camelCase run DTO for a single status read. The optional
+`resultStage` field contains the server's narrow credentials-stage projection.
+Here `scheduledTasksApi` is a configured `ScheduledTasksApi` instance.
+Applications use these methods through their configured app-level API adapter;
+feature libraries do not construct this client.
+
 ## Notes
 
 - This library has no hand-authored source and no peer dependencies beyond `tslib`.
