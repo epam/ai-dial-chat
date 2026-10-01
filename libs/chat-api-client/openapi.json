@@ -4234,6 +4234,29 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/html-preview-frame": {
+      "get": {
+        "operationId": "getHtmlPreviewFrame",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Static HTML preview bootstrap document",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Bootstrap document that renders in-memory HTML under the sandboxed preview CSP",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/download": {
       "get": {
         "operationId": "downloadFile",

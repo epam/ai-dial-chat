@@ -72,6 +72,7 @@ interface HtmlCanvasContent {
   url?: string;
   isSameOriginUrl?: boolean;
   resolveSourceText?: () => Promise<string>;
+  srcdocHostUrl?: string;
 }
 ```
 
@@ -79,6 +80,7 @@ interface HtmlCanvasContent {
 - `url` — a URL to render via the iframe `src` attribute. Either this app's own same-origin file-download endpoint (when `isSameOriginUrl` is `true`) or a genuinely external site.
 - `isSameOriginUrl` — `true` when `url`'s origin matches the embedding document's own origin. It governs precedence and sandboxing (see the `HtmlContent` renderer requirement): when `true`, `url` takes precedence over `srcdoc` for rendering even if both are set, and the iframe sandbox omits `allow-same-origin`. When `false`/absent and only `url` is set, `url` renders with `allow-same-origin` (safe because it is a different origin). When neither `srcdoc` nor `url` is set, the renderer treats it as an unsupported state and shows the blocked/error panel.
 - `resolveSourceText` — lazily fetches the full HTML source text for the "View source" toggle. Set instead of an eagerly-populated `srcdoc` when `url` is set; absent when `srcdoc` is already populated. Invoked only when the toggle is switched to source view, so a preview that is never inspected as source never triggers this fetch.
+- `srcdocHostUrl` — a host-served bootstrap document used to render `srcdoc` without inheriting the embedding document's CSP. Only consulted in `srcdoc` mode (see the `HtmlContent` renderer requirement). The chat app sets it to `/api/v1/files/html-preview-frame` for HTML carried inline as attachment `data`.
 
 `HtmlCanvasContent` SHALL be added to the `AttachmentCanvasContent` discriminated union.
 
@@ -148,8 +150,9 @@ htmlViewRenderedLabel?: string;
 
 Let `isSameOriginUrl = content.isSameOriginUrl === true && content.url != null` and `isSrcdoc = !isSameOriginUrl && content.srcdoc != null`. `isSameOriginUrl` takes precedence over `srcdoc` so a same-origin download URL always renders via `src`, even when `srcdoc` is also populated (for the "View source" toggle).
 
-**`srcdoc` mode (local file attachments, no download URL):**
-- Set the iframe's `srcdoc` attribute to `content.srcdoc`.
+**`srcdoc` mode (local file attachments or inline data, no download URL):**
+- Without `content.srcdocHostUrl`: set the iframe's `srcdoc` attribute to `content.srcdoc`.
+- With `content.srcdocHostUrl`: set the iframe's `src` attribute to `content.srcdocHostUrl` and leave `srcdoc` unset, so the document carries its host response's own CSP instead of inheriting the embedding document's. On the iframe's first `load`, post `{ type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: content.srcdoc }` to its `contentWindow` with target `'*'` (the sandboxed frame has an opaque origin). Later `load` events for the same content (the host document replacing itself) SHALL NOT post again; a new `content` SHALL remount the iframe.
 - The iframe SHALL carry `sandbox="allow-scripts"` — no `allow-same-origin`, no `allow-forms`, no `allow-popups`, no `allow-navigation`.
 - The iframe SHALL fill the remaining panel body area (`w-full h-full border-none`).
 - No CSP block detection is needed for `srcdoc`; the content is always rendered.

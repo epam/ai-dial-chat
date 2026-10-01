@@ -208,6 +208,8 @@ export interface HtmlCanvasContent {
   isSameOriginUrl?: boolean;
   /** Lazily fetches the full HTML source text for the "View source" toggle. Used instead of an eagerly-populated `srcdoc` when `url` is set; absent when `srcdoc` is already populated. */
   resolveSourceText?: () => Promise<string>;
+  /** Host-served bootstrap document used to render `srcdoc` without inheriting the embedding page's CSP. When set alongside `srcdoc`, the iframe loads this URL via `src` (still `sandbox="allow-scripts"`) and posts `{ type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: srcdoc }` to it once loaded, so the HTML renders under that response's own policy. Ignored when `srcdoc` is absent or `isSameOriginUrl` selects `url`. */
+  srcdocHostUrl?: string;
 }
 
 /** Content payload for a custom-visualizer attachment rendered inside a sandboxed iframe. */

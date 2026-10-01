@@ -62,6 +62,7 @@ import {
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FilesService } from './files.service';
+import { HTML_PREVIEW_FRAME_DOCUMENT } from './html-preview-frame';
 
 @ApiTags('files')
 @Controller({ path: 'files', version: '1' })
@@ -549,6 +550,37 @@ export class FilesController {
   ): Promise<DiscardSharedResponseDto> {
     const { at } = req.user as SessionUser;
     return this.filesService.discardShared(body.items, at);
+  }
+
+  @Get('html-preview-frame')
+  @ApiOperation({
+    summary:
+      'Bootstrap document that renders in-memory HTML under the sandboxed preview CSP',
+  })
+  @ApiProduces('text/html')
+  @ApiResponse({
+    status: 200,
+    description: 'Static HTML preview bootstrap document',
+    schema: { type: 'string' },
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  getHtmlPreviewFrame(@Res() res: Response): void {
+    /*
+     * HTML with no file URL (inline attachment `data`) cannot be previewed
+     * via `/download`. The preview iframe loads this document via `src=`
+     * instead of using `srcdoc`, so the HTML it is then handed over
+     * `postMessage` renders under this response's own sandboxed policy
+     * rather than the SPA shell's enforced one.
+     */
+    const allowedIframeOrigins =
+      this.configService.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [];
+    res.setHeader(
+      'Content-Security-Policy',
+      createHtmlPreviewCspHeader(allowedIframeOrigins),
+    );
+    res.removeHeader('Content-Security-Policy-Report-Only');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.type('html').send(HTML_PREVIEW_FRAME_DOCUMENT);
   }
 
   @Get('download')

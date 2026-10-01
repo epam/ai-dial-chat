@@ -60,6 +60,8 @@ export interface AttachmentCanvasUrlResolvers {
   resolveDialUrl: (attachment: DisplayAttachment) => string | undefined;
   /** Resolves a DIAL Core file id to a fetchable metadata URL (used for cache-freshness validation). */
   resolveDialFileMetadataUrl: (fileId: string) => string | undefined;
+  /** URL of a host-served bootstrap document that renders HTML with no download URL (inline `data`) under its own response CSP instead of the embedding page's — forwarded as `HtmlCanvasContent.srcdocHostUrl`. When omitted, that HTML renders via plain `srcdoc`. */
+  htmlSrcdocHostUrl?: string;
 }
 
 /**
@@ -473,8 +475,10 @@ const extractOrigin = (url: string): string | undefined => {
  * front; `resolveSourceText` fetches it lazily, only when the "View source"
  * toggle is used, and rejects if that fetch fails. `isSameOriginUrl` reflects
  * a real comparison against the embedding document's own origin.
- * With no download URL (local file or inline data), falls back to `srcdoc`
- * only, rejecting payloads larger than 1 MiB to prevent browser truncation.
+ * With no download URL (local file or inline data), falls back to `srcdoc`,
+ * rejecting payloads larger than 1 MiB to prevent browser truncation, and
+ * forwards `resolvers.htmlSrcdocHostUrl` so that HTML can still render under
+ * its own response-level CSP.
  * Returns `null` if no source is available, or an `ErrorCanvasContent` when
  * that fallback fetch fails.
  */
@@ -504,7 +508,11 @@ export const resolveHtmlCanvasContent = async (
   if (typeof result !== 'string') return result;
 
   if (result.length > HTML_SRCDOC_SIZE_LIMIT) return null;
-  return { type: AttachmentContentType.Html, srcdoc: result };
+  return {
+    type: AttachmentContentType.Html,
+    srcdoc: result,
+    srcdocHostUrl: resolvers.htmlSrcdocHostUrl,
+  };
 };
 
 /*

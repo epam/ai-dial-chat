@@ -32,6 +32,13 @@ export const resolveDialFileMetadataUrl = (
   return `/api/v1/files/metadata?${params.toString()}`;
 };
 
+/**
+ * BFF bootstrap document that previews HTML with no file URL (inline
+ * attachment `data`) under the sandboxed preview CSP instead of the app
+ * shell's, so its inline styles and scripts run.
+ */
+export const DIAL_HTML_PREVIEW_FRAME_URL = '/api/v1/files/html-preview-frame';
+
 /** Strips a trailing `#...` fragment (e.g. a PDF `#page=N` anchor) from a DIAL file id. */
 const stripFragment = (fileId: string): string => fileId.split('#')[0];
 
