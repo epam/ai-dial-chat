@@ -79,26 +79,32 @@ Confirming a destination in the popup SHALL invoke the same `onCopyFiles(items, 
 
 ---
 
-### Requirement: Move mode disables the common source folder as a destination
+### Requirement: Copy and Move disable the source folder as a destination
 
-When the popup opens in move mode and every selected item shares the same parent folder, `destinationFolderPopupOptions.sourceFolder` SHALL be set to that common parent folder, and `disabledPathTooltip` SHALL be an i18n-resolved string explaining why that path is disabled. When the selected items do not share a single common parent folder, `sourceFolder` SHALL be `undefined` and no path is proactively disabled by the frontend (DIAL Core's `moveResource` 409 response remains the fallback for a no-op move attempt).
+`DialFileManagerShell` (`libs/chat-shared`) SHALL set `destinationFolderPopupOptions.sourceFolder` the same way in copy and move mode. While the folder the popup is pointed at is still loading, `sourceFolder` SHALL be that loading path and `disabledPathTooltip` SHALL be `labels.folderPickerLoadingTooltip`. Otherwise, when every selected item shares the same parent folder, `sourceFolder` SHALL be that common parent folder and `disabledPathTooltip` SHALL be `labels.moveSourceDisabledTooltip`. When the selected items do not share one parent folder, the shell SHALL leave `sourceFolder` `undefined`, and `DialFileManager` (`@epam/ai-dial-react-file-manager`) then falls back to its current folder path as the disabled source.
 
-Copy mode SHALL NOT set `sourceFolder` — copying an item into its own current folder is an allowed, intentional action in this capability (distinct from the dedicated duplicate feature planned separately) and is not blocked.
+Copying an item into its own folder is therefore not offered by the picker; the dedicated duplicate action covers that case. DIAL Core's `moveResource`/copy rejection remains the fallback for any other invalid destination.
 
 #### Scenario: Move disables the single common source folder
 
 - **WHEN** the user selects items that all live in `/My files/reports/` and triggers Move
-- **THEN** `/My files/reports/` is disabled as a destination in the popup, with the translated `disabledPathTooltip` shown on hover/focus
+- **THEN** `/My files/reports/` is disabled as a destination in the popup, with the translated `moveSourceDisabledTooltip` shown on hover/focus
 
-#### Scenario: Move with mixed source folders disables nothing proactively
+#### Scenario: Copy disables the single common source folder
 
-- **WHEN** the user selects items from two different parent folders and triggers Move
-- **THEN** no path is disabled in the popup; a move attempt into an invalid destination surfaces via the existing `file-manager-copy-move` partial-failure toast if DIAL Core rejects it
+- **WHEN** the user selects items that all live in `/My files/reports/` and triggers Copy
+- **THEN** `/My files/reports/` is disabled as a destination in the popup, exactly as in move mode
 
-#### Scenario: Copy does not disable the current folder
+#### Scenario: Mixed source folders fall back to the current folder
 
-- **WHEN** the user selects items in `/My files/reports/` and triggers Copy
-- **THEN** `/My files/reports/` remains selectable as a destination in the popup
+- **WHEN** the user selects items from two different parent folders and triggers Copy or Move
+- **THEN** the shell passes no `sourceFolder`, and the file manager disables its current folder path instead
+- **AND** a copy or move into another invalid destination surfaces via the existing `file-manager-copy-move` partial-failure toast if DIAL Core rejects it
+
+#### Scenario: Loading destination is disabled with the loading tooltip
+
+- **WHEN** the folder the popup is pointed at is still loading its contents
+- **THEN** that path is disabled and the tooltip reads `folderPickerLoadingTooltip` until loading finishes
 
 ---
 
