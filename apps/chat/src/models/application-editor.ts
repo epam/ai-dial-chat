@@ -42,7 +42,7 @@ export interface ApplicationSetupProps<TSetup> {
   onSubmit: () => void;
   /** Whether the page is persisting right now. */
   isSubmitting: boolean;
-  /** Reports whether the Setup can be saved right now; `false` disables the primary button in edit mode. */
+  /** Reports whether the Setup can be saved right now; `false` disables the primary button, e.g. while the Setup still loads what validation needs. */
   onReadyChange: (isReady: boolean) => void;
   /** Handle a kind whose Setup saves itself exposes to the page. */
   ref?: Ref<ApplicationSetupHandle>;
@@ -71,9 +71,19 @@ export type ApplicationEditorI18nKey = ParseKeys<'translation'>;
 
 /** Notifiable entities an application editor reports on. */
 export type ApplicationNotifiableEntity =
+  | NotifiableEntity.Agent
   | NotifiableEntity.CustomApp
   | NotifiableEntity.QuickApp
+  | NotifiableEntity.SchemaApp
   | NotifiableEntity.Toolset;
+
+/** What an application editor's success notification names. */
+export interface ApplicationNotificationTarget {
+  /** Entity whose copy is used. */
+  entity: ApplicationNotifiableEntity;
+  /** Schema display name the `SchemaApp` copy interpolates as `{{type}}`. */
+  type?: string;
+}
 
 /** i18n keys of the confirmation popup a kind may show before persisting. */
 export interface ApplicationEditorConfirmation {
@@ -100,6 +110,10 @@ export interface ApplicationEditorMessageKeys {
 export interface ApplicationEditorFormDefinition<TSetup> {
   kind: ApplicationEditorKind;
   notifiableEntity: ApplicationNotifiableEntity;
+  /** Resolves what the notifications name from the page context when it depends on it, e.g. on the schema; overrides `notifiableEntity`. */
+  getNotificationTarget?: (
+    ctx: ApplicationEditorContext,
+  ) => ApplicationNotificationTarget;
   createStrategy: ApplicationCreateStrategy;
   /** Query param holding the edited application's id. */
   idQueryParam: string;
@@ -150,6 +164,14 @@ export interface ApplicationEditorPageDefinition {
 
 /** Setup values of a kind whose configuration lives outside the page, e.g. in an embedded editor. */
 export type EmptyApplicationSetup = Record<string, never>;
+
+/** Setup values of a schema-based application configured through a form rendered from its JSON schema. */
+export interface SchemaApplicationSetup {
+  /** The application's `applicationProperties`; `undefined` until the form or the loaded application provides them. */
+  properties?: Record<string, unknown>;
+  /** Top-level property names the schema marks as required; filled in once the schema loads. */
+  requiredProperties: string[];
+}
 
 /** Setup values as the page handles them once a kind's own type is erased. */
 export type ApplicationSetupValues = object;

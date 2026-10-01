@@ -30,21 +30,21 @@ While `isPreviewing` is `true`, the Cancel and Save buttons SHALL NOT render at 
 - **THEN** neither the Cancel button nor the Save button is present in the DOM
 - **AND** only the "Exit preview" button is shown in the right-hand action group
 
-### Requirement: Preview availability scoped to the Apps editor Settings step
-`AppsEditor` SHALL pass `onPreview` to `EditorHeader` only while the current step is `AppsEditorStep.Settings`, omitting it on the General step so the button does not render there at all.
+### Requirement: Preview availability scoped to an edited quick app
+The quick-app editor (`ApplicationFormEditor` with `quickAppDefinition`) SHALL render the header's Preview toggle only in edit mode, i.e. once the application exists (`appId` is set), and never while a new application is being created, so the button does not render there at all.
 
-On the Settings step the button SHALL render but SHALL be disabled (`isPreviewDisabled`) until a saved app id (`appIdForSettings`), a `schema.editorUrl`, and the embedded editor's readiness signal are all present — the same readiness gate that governs Save (see `quick-app-authoring`). A visible-but-disabled control tells the user preview exists and is not yet available, where an absent one reads as unsupported.
+In edit mode the button SHALL render but SHALL be disabled until the Setup reports readiness through `onReadyChange` — `QuickAppSetup` reports it once the schema has an `editorUrl` and the embedded editor's readiness signal is present, the same readiness gate that governs Save (see `quick-app-authoring`). A visible-but-disabled control tells the user preview exists and is not yet available, where an absent one reads as unsupported.
 
-#### Scenario: No preview on General step
-- **WHEN** the Apps editor is on `AppsEditorStep.General`
-- **THEN** `EditorHeader` receives no `onPreview` prop and shows no preview button
+#### Scenario: No preview while creating
+- **WHEN** the quick-app editor renders without an `appId`
+- **THEN** the header shows no preview button
 
-#### Scenario: Preview available on Settings step with a saved app
-- **WHEN** the Apps editor is on `AppsEditorStep.Settings` with a non-empty `appIdForSettings`, a schema that has `editorUrl`, and the embedded editor has reported readiness
-- **THEN** `EditorHeader` receives an `onPreview` handler and shows an enabled preview button
+#### Scenario: Preview available for an edited app
+- **WHEN** the quick-app editor renders with an `appId`, a schema that has `editorUrl`, and the embedded editor has reported readiness
+- **THEN** the header shows an enabled preview button
 
 #### Scenario: Preview button is disabled before the embedded editor is ready
-- **WHEN** the Apps editor is on `AppsEditorStep.Settings` but the embedded editor has not yet reported readiness
+- **WHEN** the quick-app editor renders with an `appId` but the embedded editor has not yet reported readiness
 - **THEN** the preview button is rendered in a disabled state rather than omitted
 
 ### Requirement: Save-then-preview orchestration

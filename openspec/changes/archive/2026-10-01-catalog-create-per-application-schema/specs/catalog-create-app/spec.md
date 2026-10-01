@@ -1,10 +1,4 @@
-# Spec: catalog-create-app
-
-## Purpose
-
-Defines the catalog's create menu: which options it offers, what gates each one, and where each navigates — including the Quick App option's application-schema resolution and its hand-off into the `/apps-editor` authoring flow.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: The catalog create menu offers one option per authorable entity, each behind its own gate
 
@@ -115,6 +109,8 @@ While schemas are still loading, `schemas` is empty and no runner option is offe
 
 - **WHEN** the catalog opens an existing runner app for editing
 - **THEN** it calls `buildQuickAppEditUrl` with the app's schema id and its id
+
+## ADDED Requirements
 
 ### Requirement: The Create menu is searchable while it offers runners
 
