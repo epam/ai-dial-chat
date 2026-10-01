@@ -262,7 +262,8 @@ Discovery was completed during the proposal (see `design.md` §Context). Apply-t
     - Every changed and new S1 file passes `prettier --check`.
     - Closing this task needs either separate fixes for these four out-of-scope failures or an explicit acceptance.
     - Accepted (2026-10-01): the user explicitly accepted these four out-of-scope failures for S1 (option 1) and asked for the commit and PR.
-- [ ] 8.4 Map the evidence to every #9220 criterion in the PR description, using the table in `proposal.md` §Acceptance criteria. Include the lazy-chunk output (group 6), the test counts (groups 2–5) and the comparison summary (group 7).
+- [x] 8.4 Map the evidence to every #9220 criterion in the PR description, using the table in `proposal.md` §Acceptance criteria. Include the lazy-chunk output (group 6), the test counts (groups 2–5) and the comparison summary (group 7).
+  - Result (apply, 2026-10-01): the evidence for each criterion is in the description of [#9249](https://github.com/epam/ai-dial-chat/pull/9249).
 
 ## 9. Follow-ups (record only; out of scope)
 
