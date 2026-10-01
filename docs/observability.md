@@ -68,6 +68,7 @@ integrations.
 | [03 — Routing and streaming](examples/dashboards/03-bff-routing-streaming.json)           | Capability resolution, selected generation API, and unrecognized Responses stream events.                                                                                                                    |
 | [04 — Runtime diagnostics](examples/dashboards/04-runtime-diagnostics.json)               | Process memory, outstanding SSE operations, and retained generation registry entries, in three separate time-series panels.                                                                                  |
 | [05 — Auth and sessions](examples/dashboards/05-bff-auth-sessions.json)                   | Login redirects issued, OIDC callback outcomes and processing latency, refresh-token exchanges and coalesced callers, authorization decisions with bounded rejection reasons, and logout results.            |
+| [06 — Endpoint usage](examples/dashboards/06-bff-endpoint-traffic.json)                   | Estimated request counts per method and endpoint over a selected period, a top-ten ranking, a complete sortable table, requests/minute trends, and an API-area breakdown.                                    |
 
 In Grafana, open **Dashboards → New → Import**, upload or paste a JSON file, select the
 Prometheus data source containing the backend metrics, and import it. Repeat for the examples
@@ -87,6 +88,7 @@ Configure the dashboard variables before interpreting the panels:
 | `cluster`, `namespace`, `job`, `pod` | Deployment labels supplied by scraping or collection. Select the backend workload and its metric job. The application does not add these Kubernetes labels. `All` uses a regex matcher and can include series without the selected label.                                                                                    |
 | `http_route`, `http_method`          | HTTP filters where present. In dashboard 00, route applies to terminal measurements only: arrival and active instruments have no route label. Method values come from the arrival counter, independently of the route selection.                                                                                             |
 | `route`, `method`                    | Dashboard 01's filters for the legacy handler histogram; its method choices are scoped to the selected route.                                                                                                                                                                                                                |
+| `outcome`                            | Dashboard 06's terminal-outcome filter. All of its traffic panels also honor the Method and Endpoint selections.                                                                                                                                                                                                             |
 | `generation_api`                     | Generation API filter where present. Capability-resolution failures have no API label and are intentionally queried separately.                                                                                                                                                                                              |
 | `auth_provider`                      | Dashboard 05's identity-provider filter. Its values come from the login counter, so the list is empty until the first login redirect. Only the login, callback, and refresh instruments carry that attribute; the authorization and logout panels ignore it.                                                                 |
 | `scrape_job`                         | Dashboard 00's explicit Prometheus job for scrape health. It defaults to `dial-chat-metrics`, the reference deployment's job; replace it when the deployment scrapes the backend under another job. The `up` query uses this value instead of the application-metric `job` selection, and ignores HTTP route/method filters. |
@@ -110,6 +112,50 @@ legacy formatter requires an appropriate special-character setting or a custom e
 The runtime memory panel uses bytes and leaves stacking disabled. Its five series overlap and
 must remain separate. Multi-value variables use regex selectors; preserve that behavior when
 adapting the queries. See [Prometheus template variables](https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/).
+
+### Count requests per endpoint
+
+Import [06 — Endpoint usage](examples/dashboards/06-bff-endpoint-traffic.json) to answer
+**which request was called how many times over a selected period**. Choose the time range in
+Grafana, select one workload and scrape job, then read **All endpoints — requests in period**.
+Each row identifies the HTTP method and complete route template and shows estimated requests,
+average requests/minute, and share of the selected traffic. The default range is 24 hours with
+a five-minute refresh. Sort the table by count or use the Method, Endpoint, and Outcome
+filters to investigate particular functionality. Parameter values share one route-template row.
+Request estimates are displayed as locale-separated whole numbers (for example, `12,670`)
+instead of abbreviated thousands; underlying query values are not rounded. To update an
+existing import, use that dashboard's UID in Grafana's import form rather than creating a copy.
+
+The horizontal top ten ranks endpoint counts over the whole period. The trend uses that same
+period ranking, pinned to the selected end timestamp, so at most ten endpoint lines appear even
+when their relative popularity changes. The full table has no top-ten limit; selecting a
+low-volume endpoint exposes its trend. The trend has a labeled symmetric logarithmic axis
+(base 10, linear below 1 request/minute), keeping zero and ordinary rates visible alongside
+large spikes. Tooltips still show actual rates; the scale does not clip or normalize them.
+The API-area table shows explicit area names, estimated counts, and shares with supplementary
+bars. It is a secondary summary of the current selection, not a measurement of feature adoption.
+Areas use the first route segment after `/vN/`; matched routes without a version segment are
+grouped as `unversioned` and still have separate endpoint rows in the table.
+
+Dashboard 06 uses `increase(dial_chat_http_response_duration_count[...])`, aggregated after
+calculating each original series' increase so per-process counter resets are handled. Counts are
+**estimates**, and can be fractional because Prometheus extrapolates between scrapes. They cannot
+recover events before the first scrape or provide an exact audit trail. The average divides the
+period total by the full selected duration; the trend instead uses `rate(...) * 60` over
+`$__rate_interval`. See [Prometheus increase](https://prometheus.io/docs/prometheus/latest/querying/functions/#increase).
+
+Every request is counted when its HTTP transport **ends**, including completed, aborted, and
+error outcomes by default. A completed response may be 4xx/5xx, and an open SSE connection has
+not contributed yet. Matched routes are included, including non-versioned endpoints such as
+themes. Unmatched traffic is outside this view; use dashboard 00 for broader HTTP coverage.
+The existing telemetry exclusions still apply. No new request-start instrument is installed
+by importing this JSON.
+
+API-call volume is a useful starting point for understanding functionality usage, but automatic
+loads, background polling, retries, and failed attempts contribute too. It does not measure
+unique people, successful user actions, or feature adoption. A route without a recorded series
+does not prove that a feature is unused. Missing samples remain visible; the dashboard does not
+fill absent telemetry with zeros.
 
 ### If the scrape-health panel shows No samples
 
