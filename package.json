@@ -186,6 +186,7 @@
     "yaml": "^2.9.0"
   },
   "overrides": {
+    "axios": "^1.20.0",
     "express": "$express",
     "@epam/ai-dial-react-pdf-highlighter": "$@epam/ai-dial-react-pdf-highlighter",
     "dompurify": "3.4.15",
