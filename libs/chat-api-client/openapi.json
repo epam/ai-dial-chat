@@ -32,7 +32,7 @@
                     "buildId": {
                       "type": "string",
                       "example": "3f9a1c2b8e7d",
-                      "description": "Stable identifier for the running deployment, derived from a hash of the served frontend build. Changes when a new deployment replaces the frontend static assets, letting long-lived clients detect that a reload will pick up a newer build."
+                      "description": "Stable identifier for the running deployment, derived from a hash of the served frontend build, or of the application version when no frontend is bundled (BFF-only image). Changes when a new deployment replaces the frontend static assets or the version, letting long-lived clients detect that a reload will pick up a newer build."
                     }
                   }
                 }

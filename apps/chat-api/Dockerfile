@@ -1,9 +1,14 @@
 # syntax=docker/dockerfile:1
 
+# BFF-only image (published as ai-dial-chat-bff): the root Dockerfile minus the
+# React SPA and overlay sandbox bundles, for deployments that host the frontend
+# elsewhere. Build from the repository root: docker build -f apps/chat-api/Dockerfile .
+# Keep the node-base/deps stages in sync with the root Dockerfile and
+# apps/mcp-app-sandbox/Dockerfile when bumping the base image or npm.
+
 # ─────────────────────────────────────────────
 # Stage 0: install the package manager used during builds
 # ─────────────────────────────────────────────
-# Keep in sync with apps/chat-api/Dockerfile and apps/mcp-app-sandbox/Dockerfile when bumping the base image or npm.
 FROM node:24.21-alpine3.24 AS node-base
 
 # Pin npm for builds; remove its bundled dependencies from the final image below.
@@ -24,17 +29,12 @@ COPY --parents package.json package-lock.json apps/*/package.json libs/*/package
 RUN npm ci --ignore-scripts
 
 # ─────────────────────────────────────────────
-# Stage 2: build both apps
+# Stage 2: build the BFF only
 # ─────────────────────────────────────────────
 FROM deps AS builder
 
 # Copy the full monorepo source on top of the installed node_modules
 COPY . .
-
-# Build the React SPA → apps/chat/dist/ and overlay sandbox → apps/chat-overlay-sandbox/dist/
-# Keep Docker builds deterministic: parallel Nx build/typecheck tasks can race
-# while reading and regenerating declaration outputs in a clean image layer.
-RUN npm exec -- nx run-many --target=build --projects=@epam/chat,chat-overlay-sandbox --parallel=1
 
 # Build NestJS, generate a pruned package.json/lockfile, and copy
 # workspace packages → apps/chat-api/dist/{main.js,package.json,...,workspace_modules/}
@@ -62,15 +62,9 @@ RUN npm ci --omit=dev \
     && rm -rf /usr/local/lib/node_modules/npm \
     && rm -f /usr/local/bin/npm /usr/local/bin/npx
 
-# React SPA static files
-# static-assets.ts resolves __dirname(dist)/../../chat/dist → /app/apps/chat/dist
-COPY --from=builder /workspace/apps/chat/dist /app/apps/chat/dist
-
-# Overlay sandbox static files served by chat-api at /overlay-sandbox when enabled.
-COPY --from=builder /workspace/apps/chat-overlay-sandbox/dist /app/apps/chat-overlay-sandbox/dist
-
 WORKDIR /app
 
+# No frontend is bundled: non-API routes fall through to Nest's 404.
 EXPOSE 5000
 
 CMD ["node", "apps/chat-api/dist/main.js"]

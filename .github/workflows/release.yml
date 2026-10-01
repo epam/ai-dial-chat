@@ -68,3 +68,48 @@ jobs:
           dockerfile-path: apps/mcp-app-sandbox/Dockerfile
         env:
           IMAGE_NAME: ${{ github.repository }}-mcp-app-sandbox
+
+  # Builds & pushes the BFF-only image (apps/chat-api/Dockerfile: the root image minus
+  # the React SPA and overlay sandbox bundles) alongside `release`, for deployments that
+  # host the frontend elsewhere. Sibling job for the same reason as the sandbox job above.
+  # Unlike that job it stamps the root package.json with the computed version first, as
+  # node_release.yml does for the main image, so /api/health reports the same `version`
+  # (and version-derived `buildId`) as ai-dial-chat from the same run.
+  release_bff_image:
+    name: Build & push BFF image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+      - name: Calculate version
+        id: semantic_versioning
+        uses: epam/ai-dial-ci/actions/semantic_versioning@4.11.0
+        with:
+          promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
+      - name: Stamp release version
+        run: npm version "$NEXT_VERSION" --no-git-tag-version --allow-same-version
+        env:
+          NEXT_VERSION: ${{ steps.semantic_versioning.outputs.next-version }}
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we check it on the step
+      - if: ${{ hashFiles('apps/chat-api/Dockerfile') != '' }}
+        uses: epam/ai-dial-ci/actions/build_docker@4.11.0
+        with:
+          ghcr-username: ${{ github.actor }}
+          ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+          image-names: |
+            ${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.IMAGE_NAME }}
+          image-tags: |
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && steps.semantic_versioning.outputs.next-version || 'development' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && steps.semantic_versioning.outputs.is-latest == 'true' }}
+          push-enabled: true
+          dockerfile-path: apps/chat-api/Dockerfile
+        env:
+          IMAGE_NAME: ${{ github.repository }}-bff
