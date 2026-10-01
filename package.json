@@ -187,6 +187,7 @@
   },
   "overrides": {
     "brace-expansion@^5.0.0": "^5.0.12",
+    "axios": "^1.20.0",
     "express": "$express",
     "@epam/ai-dial-react-pdf-highlighter": "$@epam/ai-dial-react-pdf-highlighter",
     "dompurify": "3.4.16",
