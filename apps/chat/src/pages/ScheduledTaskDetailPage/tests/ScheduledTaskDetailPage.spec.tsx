@@ -349,12 +349,14 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label,
     onClick,
     className,
+    disabled,
   }: {
     label: string;
     onClick?: () => void;
     className?: string;
+    disabled?: boolean;
   }) => (
-    <button onClick={onClick} className={className}>
+    <button onClick={onClick} className={className} disabled={disabled}>
       {label}
     </button>
   ),
@@ -863,6 +865,49 @@ describe('ScheduledTaskDetailPage', () => {
     expect(startButton).toHaveProperty('disabled', true);
     await userEvent.click(startButton);
     expect(startScheduledTaskMock).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    [
+      'admin consent is revoked',
+      {
+        status: 403,
+        code: 'scheduledTaskAdminConsentRequired',
+        traceId: 'trace-consent',
+      },
+      'toolsetSignin.adminConsentRequired',
+    ],
+    [
+      'DIAL Scheduler supplies an upstream reason',
+      {
+        status: 502,
+        upstreamMessage: 'Schedule is locked by another operation',
+        traceId: 'trace-upstream',
+      },
+      'Schedule is locked by another operation',
+    ],
+  ])('reports start failures when %s', async (_name, details, message) => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    });
+    startScheduledTaskMock.mockRejectedValue(new Error('start failed'));
+    getApiErrorDetailsMock.mockResolvedValue(details);
+    renderDetailPage();
+
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.detail.startNow',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message, requestId: details.traceId }),
+      ),
+    );
   });
 
   it("passes the loaded task's nextRunTime to useScheduledTaskRuns once resolved, undefined beforehand", async () => {

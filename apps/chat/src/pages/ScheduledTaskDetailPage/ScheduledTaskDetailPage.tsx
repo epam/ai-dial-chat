@@ -97,6 +97,16 @@ const resolveCredentialsBannerState = ({
   return undefined;
 };
 
+const RUN_STATUS_LABEL_KEYS: Record<
+  ScheduledTaskRunDtoStatusEnum,
+  'success' | 'error' | 'inProgress' | 'missed'
+> = {
+  [ScheduledTaskRunDtoStatusEnum.Success]: 'success',
+  [ScheduledTaskRunDtoStatusEnum.Error]: 'error',
+  [ScheduledTaskRunDtoStatusEnum.InProgress]: 'inProgress',
+  [ScheduledTaskRunDtoStatusEnum.Missed]: 'missed',
+};
+
 const ScheduledTaskDetailPage: FC = () => {
   const { t } = useTranslation();
   const { showSuccessNotification, showErrorNotification } = useNotification();
@@ -240,6 +250,15 @@ const ScheduledTaskDetailPage: FC = () => {
     () => mergeScheduledTaskRuns(acceptedRuns, runDtos),
     [acceptedRuns, runDtos],
   );
+  const runStatusLabels = useMemo(
+    () => ({
+      success: t(ScheduledTasksI18nKeys.DetailStatusSuccess),
+      error: t(ScheduledTasksI18nKeys.DetailStatusError),
+      inProgress: t(ScheduledTasksI18nKeys.DetailStatusInProgress),
+      missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
+    }),
+    [t],
+  );
   const announcedTerminalRun = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -250,10 +269,10 @@ const ScheduledTaskDetailPage: FC = () => {
     announcedTerminalRun.current = announcementKey;
     setStartStatusAnnouncement(
       t(ScheduledTasksI18nKeys.DetailRunFinished, {
-        status: terminalRun.status,
+        status: runStatusLabels[RUN_STATUS_LABEL_KEYS[terminalRun.status]],
       }),
     );
-  }, [t, terminalRun]);
+  }, [runStatusLabels, t, terminalRun]);
 
   useEffect(() => {
     if (statusFeedback === ScheduledTaskRunStatusFeedback.Unavailable) {
@@ -380,12 +399,7 @@ const ScheduledTaskDetailPage: FC = () => {
         ScheduledTasksI18nKeys.DetailHistoryLoadingMoreLabel,
       ),
       historyShowMoreLabel: t(ButtonsI18nKeys.ShowMore),
-      runStatusLabels: {
-        success: t(ScheduledTasksI18nKeys.DetailStatusSuccess),
-        error: t(ScheduledTasksI18nKeys.DetailStatusError),
-        inProgress: t(ScheduledTasksI18nKeys.DetailStatusInProgress),
-        missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
-      },
+      runStatusLabels,
       activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
       completedFieldLabel: t(ScheduledTasksI18nKeys.DetailCompletedFieldLabel),
       activeStatusAnnouncement,
@@ -394,7 +408,7 @@ const ScheduledTaskDetailPage: FC = () => {
       startStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
-    [t, activeStatusAnnouncement, startStatusAnnouncement],
+    [t, activeStatusAnnouncement, runStatusLabels, startStatusAnnouncement],
   );
 
   const handleBack = () => {
@@ -577,14 +591,17 @@ const ScheduledTaskDetailPage: FC = () => {
       if (details.status === 409) {
         setIsStartRejectedAsDeleted(true);
       }
-      const messageKey =
-        details.status === 404
-          ? ScheduledTasksI18nKeys.DetailStartNotFound
-          : details.status === 409
-            ? ScheduledTasksI18nKeys.DetailStartDeleted
-            : ScheduledTasksI18nKeys.DetailStartError;
       showErrorNotification({
-        message: t(messageKey),
+        message:
+          details.status === 404
+            ? t(ScheduledTasksI18nKeys.DetailStartNotFound)
+            : details.status === 409
+              ? t(ScheduledTasksI18nKeys.DetailStartDeleted)
+              : resolveScheduledTaskErrorMessage(
+                  details,
+                  ScheduledTasksI18nKeys.DetailStartError,
+                  t,
+                ),
         requestId: details.traceId,
       });
     } finally {
@@ -746,23 +763,15 @@ const ScheduledTaskDetailPage: FC = () => {
         }
       />
       {runStatusMessage && (
-        <div
-          aria-live="polite"
-          role={
-            statusFeedback === ScheduledTaskRunStatusFeedback.Unavailable
-              ? 'alert'
-              : 'status'
-          }
-        >
+        <div>
           <span>{runStatusMessage}</span>
           {statusFeedback === ScheduledTaskRunStatusFeedback.Delayed && (
-            <button
-              type="button"
+            <GhostButton
+              label={t(ScheduledTasksI18nKeys.DetailRefreshRunStatus)}
               disabled={isRefreshingStatus}
               onClick={() => void refreshStatus()}
-            >
-              {t(ScheduledTasksI18nKeys.DetailRefreshRunStatus)}
-            </button>
+              className="min-h-11"
+            />
           )}
         </div>
       )}

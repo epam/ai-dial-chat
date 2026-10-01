@@ -921,7 +921,7 @@ describe('ScheduledTasksService', () => {
   });
 
   describe('startScheduledTask', () => {
-    it('posts once to the saved schedule run endpoint without a body, a consent precheck, or list invalidation', async () => {
+    it('checks consent, then posts once to the saved schedule run endpoint without a body or list invalidation', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         status: 202,
@@ -933,10 +933,7 @@ describe('ScheduledTasksService', () => {
             end_time: null,
           }),
       });
-      const externalServices = makeExternalServices({
-        authenticationType: 'DIAL_NATIVE',
-        appLevelAuthStatus: 'SIGNED_OUT',
-      });
+      const externalServices = makeExternalServices();
       const cache = makeCacheManager();
       const service = new ScheduledTasksService(
         makeDialClient(),
@@ -962,9 +959,38 @@ describe('ScheduledTasksService', () => {
           headers: expect.objectContaining({ Authorization: 'Bearer token' }),
         }),
       );
-      expect(externalServices.getExternalService).not.toHaveBeenCalled();
+      expect(externalServices.getExternalService).toHaveBeenCalledWith(
+        'token',
+        'scheduler-app',
+        'my-oauth-service',
+      );
       expect(cache.del).not.toHaveBeenCalled();
       expect(cache.set).not.toHaveBeenCalled();
+    });
+
+    it('rejects with AdminConsentRequired without calling DIAL Scheduler when consent is revoked', async () => {
+      const externalServices = makeExternalServices({
+        authenticationType: 'DIAL_NATIVE',
+        appLevelAuthStatus: 'SIGNED_OUT',
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
+        externalServices as never,
+      );
+
+      const error = await service
+        .startScheduledTask('token', 'sched_123')
+        .catch((err: unknown) => err);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect((error as ForbiddenException).getResponse()).toMatchObject({
+        statusCode: 403,
+        code: ScheduledTaskErrorCode.AdminConsentRequired,
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it.each([404, 409, 429, 502])(

@@ -857,7 +857,7 @@ On deadline/transient poll failure, the UI SHALL retain the last confirmed statu
 
 ### Requirement: Start and execution failures remain actionable
 
-POST rejection SHALL create no fabricated History row. 404 SHALL show the localized not-found message; 409 SHALL show that a deleted task cannot run and disable Start now until detail retry establishes eligibility. Other failures SHALL use existing safe error/trace handling and localized fallback; ambiguous network/5xx outcomes SHALL say acceptance could not be confirmed and recommend checking History. No automatic POST retry SHALL occur.
+POST rejection SHALL create no fabricated History row. 404 SHALL show the localized not-found message; 409 SHALL show that a deleted task cannot run and disable Start now until detail retry establishes eligibility. For every other failure, the error notification SHALL include the trace id when present and use `resolveScheduledTaskErrorMessage`: `toolsetSignin.adminConsentRequired` for `scheduledTaskAdminConsentRequired`, then a non-empty Scheduler `upstreamMessage`, then the localized `scheduledTasks.detail.startError` fallback. Ambiguous network/5xx outcomes without an upstream reason SHALL say acceptance could not be confirmed and recommend checking History. No automatic POST retry SHALL occur.
 
 An Error run with `resultStage === 'credentials'` SHALL retain its History row and show a sign-in-to-DIAL-Chat prompt instead of a generic task-failure notification. The app SHALL reuse its existing offline-credentials login behavior/banner, initiated by the user. Successful login SHALL NOT automatically rerun the task. Ordinary terminal errors SHALL continue to display Error in History.
 
@@ -882,7 +882,7 @@ The app SHALL translate all new UI strings using the `scheduledTasks.detail` key
 
 Desktop SHALL show Start now after Edit. Below 1280px, header actions SHALL wrap as needed, retain the Start now text, and use at least 44-by-44px touch targets without horizontal overflow at 360px; existing Details/Configuration/History tabs and selection SHALL remain. Acceptance SHALL be announced even when the History tab is not selected, without switching tabs or stealing focus. RTL SHALL inherit direction, use logical properties and mirror navigation arrows; the media-play symbol SHALL remain direction-independent.
 
-Keyboard Enter/Space SHALL invoke the same guarded action. Decorative icons SHALL be aria-hidden. Pending controls SHALL expose disabled/busy state, acceptance/completion SHALL use a polite live region with no repeated announcements on unchanged polls, and errors SHALL use an alert. Focus visibility and text contrast SHALL satisfy the repository AAA target. Existing HTTP observability suffices; no new analytics or client cache SHALL be introduced.
+Keyboard Enter/Space SHALL invoke the same guarded action. Decorative icons SHALL be aria-hidden. Pending controls SHALL expose disabled/busy state, acceptance/completion SHALL use a polite live region with no repeated announcements on unchanged polls, and errors SHALL use an alert. The delayed-status Refresh status control SHALL use a generation-2 `GhostButton` with a minimum 44px touch target; the status text itself SHALL not create a second live announcement. Completion announcements SHALL interpolate the localized run-status label, never the raw Scheduler status enum. Focus visibility and text contrast SHALL satisfy the repository AAA target. Existing HTTP observability suffices; no new analytics or client cache SHALL be introduced.
 
 #### Scenario: Keyboard launch keeps focus
 

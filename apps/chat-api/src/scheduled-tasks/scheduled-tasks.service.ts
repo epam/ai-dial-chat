@@ -655,6 +655,7 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
   ): Promise<ScheduledTaskRunDto> {
+    await this.assertSchedulerConsent(accessToken);
     const result = await this.fetchUpstream<UpstreamScheduleRun>(
       this.buildScheduleActionUrl(scheduleId, ScheduleAction.Run),
       'POST',

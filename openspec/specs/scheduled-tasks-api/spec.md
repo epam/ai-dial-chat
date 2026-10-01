@@ -962,7 +962,7 @@ Swagger SHALL describe these typed bodies and status codes; generation via `npm 
 
 ### Requirement: Schedule-activating operations check the DIAL_NATIVE scheduler application consent
 
-`createScheduledTask` (`POST /api/v1/scheduled-tasks`, operationId `createScheduledTask`), `updateScheduledTask` (`PUT /api/v1/scheduled-tasks/:scheduleId`, operationId `updateScheduledTask`) and `resumeScheduledTask` (`POST /api/v1/scheduled-tasks/:scheduleId/resume`, operationId `resumeScheduledTask`) SHALL, before any request to DIAL Scheduler and before model/skill validation, read the scheduler's external service `SCHEDULER_SERVICE_ID` of application `SCHEDULER_APP_ID` through `ExternalServicesService.getExternalService` (DIAL Core `GET /v1/applications/{appId}/external-services/{serviceId}`, with the application-resource fallback that method already performs) using the session bearer token. The result SHALL NOT be cached: every call re-reads it, so an administrator's revocation takes effect on the user's next operation.
+`createScheduledTask` (`POST /api/v1/scheduled-tasks`, operationId `createScheduledTask`), `updateScheduledTask` (`PUT /api/v1/scheduled-tasks/:scheduleId`, operationId `updateScheduledTask`), `resumeScheduledTask` (`POST /api/v1/scheduled-tasks/:scheduleId/resume`, operationId `resumeScheduledTask`) and `startScheduledTask` (`POST /api/v1/scheduled-tasks/:scheduleId/run`, operationId `startScheduledTask`) SHALL, before any request to DIAL Scheduler and before model/skill validation where applicable, read the scheduler's external service `SCHEDULER_SERVICE_ID` of application `SCHEDULER_APP_ID` through `ExternalServicesService.getExternalService` (DIAL Core `GET /v1/applications/{appId}/external-services/{serviceId}`, with the application-resource fallback that method already performs) using the session bearer token. The result SHALL NOT be cached: every call re-reads it, so an administrator's revocation takes effect on the user's next operation.
 
 When the service's `authenticationType` is `DIAL_NATIVE` and its `appLevelAuthStatus` is exactly `SIGNED_OUT`, the endpoint SHALL throw `ForbiddenException` with the typed body below, SHALL NOT contact DIAL Scheduler, and SHALL NOT invalidate the list cache:
 
@@ -975,7 +975,7 @@ When the service's `authenticationType` is `DIAL_NATIVE` and its `appLevelAuthSt
 }
 ```
 
-`ScheduledTaskErrorCode` SHALL gain the member `AdminConsentRequired = 'scheduledTaskAdminConsentRequired'`, published through the existing `ScheduledTaskValidationErrorDto.code` OpenAPI enum (`enumName: 'ScheduledTaskErrorCode'`) so the generated client exposes `ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired`. No new endpoint, request DTO, or response DTO is introduced; frontend callers keep using the normal (non-`Raw`) generated methods. The `403` `@ApiResponse` of create, update and resume SHALL document this case with `type: ScheduledTaskValidationErrorDto`.
+`ScheduledTaskErrorCode` SHALL gain the member `AdminConsentRequired = 'scheduledTaskAdminConsentRequired'`, published through the existing `ScheduledTaskValidationErrorDto.code` OpenAPI enum (`enumName: 'ScheduledTaskErrorCode'`) so the generated client exposes `ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired`. No new endpoint, request DTO, or response DTO is introduced; frontend callers keep using the normal (non-`Raw`) generated methods. The `403` `@ApiResponse` of create, update, resume and start SHALL document this case with `type: ScheduledTaskValidationErrorDto`.
 
 The check SHALL fail open: when the lookup throws (any HTTP or network error), or the service is not `DIAL_NATIVE`, or `appLevelAuthStatus` is absent or any value other than `SIGNED_OUT`, the BFF SHALL log a warning (lookup failure only) and continue with the operation, leaving the decision to DIAL Scheduler. `pauseScheduledTask`, `deleteScheduledTask`, and the read endpoints SHALL NOT perform the check, so a user can always stop or remove a schedule after consent is revoked. The existing `scheduledTasksEnabled` feature gate and session authentication continue to apply unchanged; no telemetry is added. A Scheduler error that still occurs after the check passes follows the "Scheduler error responses carry the upstream reason and code" requirement below.
 
@@ -985,10 +985,10 @@ The check SHALL fail open: when the lookup throws (any HTTP or network error), o
 - **WHEN** an authenticated, feature-enabled user calls `POST /api/v1/scheduled-tasks` with a valid body
 - **THEN** the response is `403` with `code: "scheduledTaskAdminConsentRequired"`, DIAL Scheduler is never called, and the list cache is not invalidated
 
-#### Scenario: Revoked consent blocks update and resume
+#### Scenario: Revoked consent blocks update, resume and start
 
 - **GIVEN** the scheduler service consent is `SIGNED_OUT`
-- **WHEN** the user calls `PUT /api/v1/scheduled-tasks/sched_123` or `POST /api/v1/scheduled-tasks/sched_123/resume`
+- **WHEN** the user calls `PUT /api/v1/scheduled-tasks/sched_123`, `POST /api/v1/scheduled-tasks/sched_123/resume` or `POST /api/v1/scheduled-tasks/sched_123/run`
 - **THEN** each response is `403` with `code: "scheduledTaskAdminConsentRequired"` and no DIAL Scheduler request is made
 
 #### Scenario: Consent is re-read on every operation
@@ -1005,7 +1005,7 @@ The check SHALL fail open: when the lookup throws (any HTTP or network error), o
 #### Scenario: Non-DIAL_NATIVE service or unreported status does not block
 
 - **WHEN** the scheduler service is `OAUTH`, or is `DIAL_NATIVE` without an `app_level_auth_status`
-- **THEN** create/update/resume proceed to DIAL Scheduler unchanged
+- **THEN** create/update/resume/start proceed to DIAL Scheduler unchanged
 
 #### Scenario: Failed consent lookup defers to DIAL Scheduler
 
@@ -1068,7 +1068,7 @@ Example — DIAL Scheduler answers create with `500 {"error":{"message":"Applica
 
 ### Requirement: Start a saved scheduled task immediately
 
-The BFF SHALL expose `POST /api/v1/scheduled-tasks/:scheduleId/run` with OpenAPI operationId/generated method `startScheduledTask`, `GetScheduledTaskDto` path validation and no request-body DTO. It SHALL send a bodyless POST to `{DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}/run`, forwarding the session access token, and return HTTP **202** with `ScheduledTaskRunDto`. Any received body SHALL NOT be forwarded or override the stored definition. The operation SHALL NOT wait for completion, perform an external-service sign-in precheck, retry the POST automatically, or mutate/resume the schedule.
+The BFF SHALL expose `POST /api/v1/scheduled-tasks/:scheduleId/run` with OpenAPI operationId/generated method `startScheduledTask`, `GetScheduledTaskDto` path validation and no request-body DTO. It SHALL send a bodyless POST to `{DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}/run`, forwarding the session access token, and return HTTP **202** with `ScheduledTaskRunDto`. Any received body SHALL NOT be forwarded or override the stored definition. The operation SHALL perform the application-consent precheck above, but SHALL NOT wait for completion, perform an external-service user-credential sign-in precheck, retry the POST automatically, or mutate/resume the schedule.
 
 Concrete request: `POST /api/v1/scheduled-tasks/sched_123/run`, with the existing session cookie and CSRF header, and no body. Given the upstream response:
 
