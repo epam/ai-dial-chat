@@ -494,9 +494,8 @@ describe('useCatalogEditNavigation', () => {
             editorUrl: EDITOR_URL,
           },
           {
-            id: 'properties-only',
-            displayName: 'Properties only',
-            properties: { prompt: { type: 'string' } },
+            id: 'editorless-runner',
+            displayName: 'No editor',
           },
         ],
       });
@@ -511,7 +510,7 @@ describe('useCatalogEditNavigation', () => {
         ['prompt', 'Create prompt'],
         ['toolset', 'Create toolset'],
         ['runner:mind-map-schema', 'Mind Map'],
-        ['runner:properties-only', 'Properties only'],
+        ['runner:editorless-runner', 'No editor'],
         ['runner:foo-quickapps', 'Quick app'],
         ['runner:foo-quickapps2', 'Quick app 2.0'],
         ['skill', 'Skill'],
