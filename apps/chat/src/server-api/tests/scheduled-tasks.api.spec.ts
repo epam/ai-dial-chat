@@ -1,6 +1,7 @@
 import {
   ScheduledTaskRunDtoStatusEnum,
   type ListScheduledTaskRunsResponseDto,
+  type ScheduledTaskRunDto,
 } from '@epam/ai-dial-chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { scheduledTasksApi } from '../api-client';
@@ -8,10 +9,12 @@ import {
   createScheduledTask,
   deleteScheduledTask,
   getScheduledTask,
+  getScheduledTaskRun,
   listScheduledTaskRuns,
   listScheduledTasks,
   pauseScheduledTask,
   resumeScheduledTask,
+  startScheduledTask,
   updateScheduledTask,
 } from '../scheduled-tasks.api';
 
@@ -187,5 +190,42 @@ describe('scheduled-tasks.api', () => {
 
     expect(spy).toHaveBeenCalledWith({ scheduleId: 'sched_123' });
     expect(result).toBeUndefined();
+  });
+
+  it('startScheduledTask delegates to the normal generated method without a request body', async () => {
+    const acceptedRun: ScheduledTaskRunDto = {
+      id: 'run_123',
+      status: ScheduledTaskRunDtoStatusEnum.InProgress,
+      startTime: '2026-09-30T09:00:00Z',
+      endTime: null,
+    };
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'startScheduledTask')
+      .mockResolvedValue(acceptedRun);
+
+    const result = await startScheduledTask('sched_123');
+
+    expect(spy).toHaveBeenCalledWith({ scheduleId: 'sched_123' });
+    expect(result).toEqual(acceptedRun);
+  });
+
+  it('getScheduledTaskRun delegates exact ids and an AbortSignal to the normal generated method', async () => {
+    const run: ScheduledTaskRunDto = {
+      id: 'run_123',
+      status: ScheduledTaskRunDtoStatusEnum.Success,
+      startTime: '2026-09-30T09:00:00Z',
+    };
+    const signal = new AbortController().signal;
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'getScheduledTaskRun')
+      .mockResolvedValue(run);
+
+    const result = await getScheduledTaskRun('sched_123', 'run_123', signal);
+
+    expect(spy).toHaveBeenCalledWith(
+      { scheduleId: 'sched_123', runId: 'run_123' },
+      { signal },
+    );
+    expect(result).toEqual(run);
   });
 });

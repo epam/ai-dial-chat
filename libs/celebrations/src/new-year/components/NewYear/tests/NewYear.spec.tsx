@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NEW_YEAR_LABELS } from '../../../constants/labels';
 import { newYearEvent as newYear } from '../../../event';
+import { NewYearScene } from '../../../types/new-year';
 import NewYearDecor from '../NewYearDecor';
 import NewYearParticles from '../NewYearParticles';
 import NewYearSleigh from '../NewYearSleigh';
 import { buildNewYearParticles } from '../particles';
-import { NewYearScene } from '../types';
 
 const envState = vi.hoisted(() => ({ mobile: false }));
 vi.mock(
@@ -80,6 +80,18 @@ describe.each([
       ).toEqual(initial);
     },
   );
+
+  it.each([
+    [NewYearScene.Snow, snow],
+    [NewYearScene.Confetti, confetti],
+  ] as const)('renders %s through the event overlay', (sceneId, count) => {
+    envState.mobile = mobile;
+    const scene = newYear.scenes.find(({ id }) => id === sceneId);
+    if (!scene) throw new Error(`Missing scene: ${sceneId}`);
+    const Scene = scene.Component;
+    render(<Scene />);
+    expect(particleElements()).toHaveLength(count);
+  });
 
   it('gives the sleigh enough time to leave before the scene deadline', () => {
     envState.mobile = mobile;

@@ -1,4 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { Badge } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import styles from './CardTag.module.scss';
 
@@ -31,19 +32,14 @@ export const CardTag: FC<CardTagProps> = ({
   badgeClassName = 'dial-tiny-text',
   colors,
 }) => (
-  <div
+  <Badge
+    label={label}
+    textClassName={badgeClassName}
     style={buildCssVars({
       '--cat-card-tag-bg': colors?.background,
       '--cat-card-tag-text': colors?.text,
       '--cat-card-tag-border': colors?.border,
     })}
-    className={mergeClasses(
-      'flex h-6 w-fit items-center justify-center whitespace-nowrap rounded-md border px-2',
-      styles.tag,
-      badgeClassName,
-      className,
-    )}
-  >
-    {label}
-  </div>
+    className={mergeClasses(styles.tag, className)}
+  />
 );

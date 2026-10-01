@@ -263,6 +263,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         return (
           <audio
             controls
+            controlsList="nodownload"
             src={content.url}
             aria-label={fileName ?? 'Audio attachment'}
             className="w-full max-w-sm"

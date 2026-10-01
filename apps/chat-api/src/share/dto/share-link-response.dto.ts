@@ -10,10 +10,12 @@ export class ShareLinkResponseDto {
   url!: string;
 
   @ApiProperty({
-    description: 'Number of days the link stays active before expiring.',
+    required: false,
+    description:
+      'Days until the DIAL Core invitation expires, rounded up. Omitted when DIAL Core does not report a usable expiry.',
     example: 3,
   })
-  expiresInDays!: number;
+  expiresInDays?: number;
 
   @ApiProperty({
     description:

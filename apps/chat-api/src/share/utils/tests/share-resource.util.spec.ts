@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   collectApplicationPromptResourceUrls,
   collectConversationResourceUrls,
+  deriveExpiresInDays,
   getInvitationRoutePath,
   isAlreadyOwnedError,
   resolveResourceKind,
@@ -326,5 +327,62 @@ describe('collectApplicationPromptResourceUrls', () => {
     expect(collectApplicationPromptResourceUrls(null)).toEqual([]);
     expect(collectApplicationPromptResourceUrls(undefined)).toEqual([]);
     expect(collectApplicationPromptResourceUrls('string')).toEqual([]);
+  });
+});
+
+describe('deriveExpiresInDays', () => {
+  const DAY = 86_400_000;
+  const T = 1_790_000_000_000;
+
+  it('returns the whole-day TTL of a freshly created invitation', () => {
+    expect(
+      deriveExpiresInDays({ createdAt: T, expireAt: T + 7 * DAY }, T),
+    ).toBe(7);
+  });
+
+  it('rounds a partial day up', () => {
+    expect(
+      deriveExpiresInDays({ createdAt: T, expireAt: T + 36 * 3_600_000 }, T),
+    ).toBe(2);
+  });
+
+  it('does not add a day when the BFF clock runs behind DIAL Core', () => {
+    expect(
+      deriveExpiresInDays({ createdAt: T, expireAt: T + 3 * DAY }, T - 5_000),
+    ).toBe(3);
+  });
+
+  it('reports remaining days when the BFF clock runs ahead of createdAt', () => {
+    expect(
+      deriveExpiresInDays({ createdAt: T, expireAt: T + 3 * DAY }, T + 2 * DAY),
+    ).toBe(1);
+  });
+
+  it('falls back to the current time when createdAt is missing', () => {
+    expect(deriveExpiresInDays({ expireAt: T + 5 * DAY }, T)).toBe(5);
+  });
+
+  it.each([undefined, Number.NaN, Number.POSITIVE_INFINITY])(
+    'returns undefined when expireAt is %s',
+    (expireAt) => {
+      expect(
+        deriveExpiresInDays({ createdAt: T, expireAt }, T),
+      ).toBeUndefined();
+    },
+  );
+
+  it('returns undefined when expireAt is not after the reference time', () => {
+    expect(
+      deriveExpiresInDays({ createdAt: T, expireAt: T }, T),
+    ).toBeUndefined();
+    expect(
+      deriveExpiresInDays({ createdAt: T, expireAt: T - DAY }, T),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when expireAt looks like epoch seconds', () => {
+    expect(
+      deriveExpiresInDays({ expireAt: Math.floor(T / 1000) + 3 * 86_400 }, T),
+    ).toBeUndefined();
   });
 });

@@ -10,7 +10,7 @@ export interface StageTypography {
   strongClassName?: string;
   /** CSS utility class applied to every heading level (`h1`–`h6`) inside expanded content. Defaults to `'dial-small-semi-text'`. */
   headingClassName?: string;
-  /** CSS utility class applied to inline code elements. Defaults to `'dial-code-text rounded-md'`. */
+  /** CSS utility class applied to inline code elements; the monospace family comes from the panel stylesheet. Defaults to `'dial-tiny-text rounded-md'`. */
   codeClassName?: string;
   /** CSS utility class applied to fenced code blocks. Defaults to `'dial-code-text'`. */
   codeBlockClassName?: string;

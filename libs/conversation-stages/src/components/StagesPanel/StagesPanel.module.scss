@@ -82,7 +82,16 @@
   color: var(--cs-code-text, var(--text-primary, #161b2d));
 }
 
+/* Sized by the same `dial-tiny-text` class as the text around it (the kit's
+   `dial-code-text` is 14px), so only the family is set here — the kit's own
+   mono stack. */
 .codeInline {
+  font-family: var(
+    --theme-font-mono,
+    var(--font-fira-code, 'Fira Code'),
+    ui-monospace,
+    monospace
+  );
   background: var(--cs-code-bg, var(--bg-layer-raised, #fcfcfc));
   border: 1px solid var(--cs-code-border, var(--stroke-secondary, #d1dbea));
   color: var(--cs-code-text, var(--text-primary, #161b2d));

@@ -2,4 +2,5 @@
 export enum ScheduleAction {
   Pause = 'pause',
   Resume = 'resume',
+  Run = 'run',
 }
