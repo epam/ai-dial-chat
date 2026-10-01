@@ -22,8 +22,11 @@ The three reset fields are optional and SHALL be treated as a present-or-all-abs
 preformatted display strings only: `resetLabel` is the visible line, `resetIsoValue` is the original
 UTC instant for a `<time dateTime>` attribute, and `resetAriaLabel` is the spoken expansion. A row
 that omits them SHALL render exactly as it did before they existed. The catalog's own adapter
-(`mapDeploymentLimitsDtoToCatalogLimits`) does not set them, so the details panel's `Limits` tab is
-unaffected by their addition.
+(`mapDeploymentLimitsDtoToCatalogLimits`) sets them on every token row whose `resetsAt` the
+host-supplied `DeploymentLimitsLabels.formatResetTime` formats successfully (see
+`chat-hooks-deployment-limits-mapping`), so the details panel's `Limits` tab shows a reset line per
+row exactly as the conversation-input popover does. The catalog adapter sets no `captionLabel`: the
+deployment-limits response carries no per-deployment spend.
 
 #### Scenario: Details panel fetches on open
 
@@ -56,11 +59,12 @@ unaffected by their addition.
 - **THEN** the rendered row is identical to its pre-change rendering, with no reset element in the
   DOM
 
-#### Scenario: The catalog details panel is unaffected
+#### Scenario: The catalog details panel shows a reset line per token row
 
-- **WHEN** a user opens a model's details panel and the `Limits` tab renders
-- **THEN** its DOM is identical to the pre-change rendering, because the catalog's adapter sets none
-  of the reset fields
+- **WHEN** a user opens a model's details panel, the `Limits` tab renders, and the deployment's
+  `dayTokenStats` / `weekTokenStats` / `monthTokenStats` each carry a `resetsAt` that formats
+- **THEN** each of the Today / This week / This month rows shows its own reset line in a
+  `<time dateTime>` element, and no row shows a "$X spent" caption
 
 ---
 

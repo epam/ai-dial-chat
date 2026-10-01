@@ -1,10 +1,4 @@
-# chat-hooks-deployment-limits-mapping Specification
-
-## Purpose
-
-A pure, labels-injected utility in `@epam/ai-dial-chat-hooks` that maps a `DeploymentLimitsResponseDto` to a `CatalogItemLimits` display model, with no i18n dependency — all user-visible strings and formatter callbacks are supplied by the caller.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: `mapDeploymentLimitsDtoToCatalogLimits` is a pure, labels-injected mapping utility owned by `chat-hooks`
 `@epam/ai-dial-chat-hooks` SHALL export `mapDeploymentLimitsDtoToCatalogLimits(dto:
@@ -104,6 +98,8 @@ When `dto` is `undefined`, or when every token stat is absent/unqualified, the f
   present
 - **THEN** the function returns `undefined`
 
+## ADDED Requirements
+
 ### Requirement: Cost stats are never read
 The function SHALL NOT read `dto.minuteCostStats`, `dto.dayCostStats`, `dto.weekCostStats`, or
 `dto.monthCostStats`, and SHALL NOT set `captionLabel` on any row. DIAL Core's deployment-limits
@@ -183,3 +179,20 @@ No new i18n keys are introduced; `catalog.details.limits.spentLabel` and
 #### Scenario: Changing language re-derives the labels
 - **WHEN** the active language changes
 - **THEN** the memoised labels object is rebuilt, so period labels and reset lines are re-localised
+
+## REMOVED Requirements
+
+### Requirement: Cost stats are currency-formatted, non-cost stats are number-formatted
+**Reason**: The mapper no longer emits cost rows or reads cost stats at all (see "Cost stats are
+never read"); only token rows remain, and they are compact-number formatted per "`valueLabel` and
+`ariaLabel` are built through the injected formatter callbacks".
+**Migration**: None for hosts — no cost row was rendered by the current mapper. A host that needs
+the account budget renders it from `GET /v1/user/limits` or uses `mapDeploymentLimitsToInput`'s cost
+group.
+
+### Requirement: `CatalogView` builds the labels object and owns the app-level call site
+**Reason**: The labels object and the call moved from `CatalogView` into `useCatalogItems` /
+`useCatalogItemDetails`; superseded by "`useCatalogItems` builds the labels object and owns the
+app-level call site".
+**Migration**: Build `DeploymentLimitsLabels` where `useCatalogItemDetails` is called and pass it as
+`deploymentLimitsLabels`.
