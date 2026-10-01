@@ -5,9 +5,9 @@ import type { AnimationConfigWithData, AnimationItem } from 'lottie-web';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  loadGiftWrappingPlayer,
+  loadLottiePlayer,
   type LottiePlayer,
-} from '../../../utils/gift-wrapping-player';
+} from '../../../../utils/lottie-player';
 import { getPenguinStarTargets } from '../../../utils/penguin-star-targets';
 import NewYearPenguinStar from '../NewYearPenguinStar';
 
@@ -27,8 +27,9 @@ vi.mock('../../../../hooks/useReducedMotion', () => ({
 vi.mock('../../../utils/penguin-star-targets', () => ({
   getPenguinStarTargets: vi.fn(),
 }));
-vi.mock('../../../utils/gift-wrapping-player', () => ({
-  loadGiftWrappingPlayer: vi.fn(),
+vi.mock('../../../../utils/lottie-player', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../utils/lottie-player')>()),
+  loadLottiePlayer: vi.fn(),
 }));
 
 const animations: {
@@ -106,7 +107,7 @@ beforeEach(() => {
     });
     return animation as unknown as AnimationItem;
   });
-  vi.mocked(loadGiftWrappingPlayer).mockReset().mockResolvedValue(player);
+  vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
 });
 afterEach(() => {
   fixture.remove();
@@ -128,7 +129,7 @@ const expectReleased = () => {
 };
 const deferPlayer = () => {
   let resolve: (value: LottiePlayer) => void = () => undefined;
-  vi.mocked(loadGiftWrappingPlayer).mockReturnValue(
+  vi.mocked(loadLottiePlayer).mockReturnValue(
     new Promise<LottiePlayer>((complete) => {
       resolve = complete;
     }),
@@ -268,7 +269,7 @@ describe('Penguin star Lottie lifecycle', () => {
         </StrictMode>,
       );
       await flush();
-      expect(loadGiftWrappingPlayer).toHaveBeenCalledOnce();
+      expect(loadLottiePlayer).toHaveBeenCalledOnce();
       expect(getPenguinStarTargets).toHaveBeenCalledOnce();
       expect(player.loadAnimation).toHaveBeenCalledOnce();
       expect(player.loadAnimation).toHaveBeenCalledWith(
@@ -351,7 +352,7 @@ describe('Penguin star Lottie lifecycle', () => {
         vi.stubGlobal('MutationObserver', undefined);
       const view = render(<NewYearPenguinStar />);
       await flush();
-      expect(loadGiftWrappingPlayer).not.toHaveBeenCalled();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
       expect(getPenguinStarTargets).not.toHaveBeenCalled();
       expect(player.loadAnimation).not.toHaveBeenCalled();
       expect(
@@ -364,9 +365,7 @@ describe('Penguin star Lottie lifecycle', () => {
   );
 
   it('shows static art when the engine import fails', async () => {
-    vi.mocked(loadGiftWrappingPlayer).mockRejectedValue(
-      new Error('Load failed'),
-    );
+    vi.mocked(loadLottiePlayer).mockRejectedValue(new Error('Load failed'));
     const view = render(<NewYearPenguinStar />);
     await flush();
     expect(
@@ -441,7 +440,7 @@ describe('Penguin star Lottie lifecycle', () => {
         fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }));
       else view.unmount();
       await flush();
-      expect(loadGiftWrappingPlayer).not.toHaveBeenCalled();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
       expect(getPenguinStarTargets).not.toHaveBeenCalled();
       expect(player.loadAnimation).not.toHaveBeenCalled();
       view.unmount();

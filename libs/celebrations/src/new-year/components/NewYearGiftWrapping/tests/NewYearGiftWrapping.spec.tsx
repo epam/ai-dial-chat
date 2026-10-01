@@ -5,9 +5,9 @@ import type { AnimationConfigWithData, AnimationItem } from 'lottie-web';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  loadGiftWrappingPlayer,
+  loadLottiePlayer,
   type LottiePlayer,
-} from '../../../utils/gift-wrapping-player';
+} from '../../../../utils/lottie-player';
 import { getGiftWrappingTarget } from '../../../utils/gift-wrapping-targets';
 import NewYearGiftWrapping from '../NewYearGiftWrapping';
 
@@ -27,8 +27,9 @@ vi.mock('../../../../hooks/useReducedMotion', () => ({
 vi.mock('../../../utils/gift-wrapping-targets', () => ({
   getGiftWrappingTarget: vi.fn(),
 }));
-vi.mock('../../../utils/gift-wrapping-player', () => ({
-  loadGiftWrappingPlayer: vi.fn(),
+vi.mock('../../../../utils/lottie-player', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../utils/lottie-player')>()),
+  loadLottiePlayer: vi.fn(),
 }));
 
 const animations: {
@@ -100,7 +101,7 @@ beforeEach(() => {
     });
     return animation as unknown as AnimationItem;
   });
-  vi.mocked(loadGiftWrappingPlayer).mockReset().mockResolvedValue(player);
+  vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
 });
 afterEach(() => {
   fixture.remove();
@@ -122,7 +123,7 @@ const expectReleased = () => {
 };
 const deferPlayer = () => {
   let resolve: (value: LottiePlayer) => void = () => undefined;
-  vi.mocked(loadGiftWrappingPlayer).mockReturnValue(
+  vi.mocked(loadLottiePlayer).mockReturnValue(
     new Promise<LottiePlayer>((complete) => {
       resolve = complete;
     }),
@@ -147,7 +148,7 @@ describe('Gift wrapping Lottie lifecycle', () => {
         </StrictMode>,
       );
       await flush();
-      expect(loadGiftWrappingPlayer).toHaveBeenCalledOnce();
+      expect(loadLottiePlayer).toHaveBeenCalledOnce();
       expect(getGiftWrappingTarget).toHaveBeenCalledOnce();
       expect(player.loadAnimation).toHaveBeenCalledOnce();
       expect(player.loadAnimation).toHaveBeenCalledWith(
@@ -230,7 +231,7 @@ describe('Gift wrapping Lottie lifecycle', () => {
         vi.stubGlobal('MutationObserver', undefined);
       const view = render(<NewYearGiftWrapping />);
       await flush();
-      expect(loadGiftWrappingPlayer).not.toHaveBeenCalled();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
       expect(getGiftWrappingTarget).not.toHaveBeenCalled();
       expect(player.loadAnimation).not.toHaveBeenCalled();
       expect(view.container.querySelector('[data-gift-static]')).not.toBeNull();
@@ -241,9 +242,7 @@ describe('Gift wrapping Lottie lifecycle', () => {
   );
 
   it('shows static art when the engine import fails', async () => {
-    vi.mocked(loadGiftWrappingPlayer).mockRejectedValue(
-      new Error('Load failed'),
-    );
+    vi.mocked(loadLottiePlayer).mockRejectedValue(new Error('Load failed'));
     const view = render(<NewYearGiftWrapping />);
     await flush();
     expect(view.container.querySelector('[data-gift-static]')).not.toBeNull();
@@ -314,7 +313,7 @@ describe('Gift wrapping Lottie lifecycle', () => {
         fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }));
       else view.unmount();
       await flush();
-      expect(loadGiftWrappingPlayer).not.toHaveBeenCalled();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
       expect(getGiftWrappingTarget).not.toHaveBeenCalled();
       expect(player.loadAnimation).not.toHaveBeenCalled();
       view.unmount();
@@ -490,6 +489,43 @@ describe('Gift wrapping Lottie lifecycle', () => {
     await flush();
     expectReleased();
     sibling.remove();
+    view.unmount();
+  });
+
+  it('interrupting renderer initialization destroys the renderer once and ignores a late DOMLoaded', async () => {
+    rendererReady = false;
+    const view = render(<NewYearGiftWrapping />);
+    await flush();
+    const domLoaded = animations[0].callbacks.get('DOMLoaded');
+    expect(domLoaded).toBeDefined();
+    act(() => window.dispatchEvent(new Event('pointerdown')));
+    expectReleased();
+    animations[0].isLoaded = true;
+    act(() => domLoaded?.());
+    expect(animations[0].play).not.toHaveBeenCalled();
+    expect(animations[0].destroy).toHaveBeenCalledOnce();
+    expect(view.container.querySelector('[data-new-year-scene]')).toBeNull();
+    expect(view.container.querySelector('[data-gift-static]')).toBeNull();
+    view.unmount();
+  });
+
+  it('a second activation renders a newly built composition', async () => {
+    const { unmount: unmountFirst } = render(<NewYearGiftWrapping />);
+    await flush();
+    const firstData = player.loadAnimation.mock.calls[0][0].animationData as {
+      layers: unknown[];
+    };
+    /* Simulate the player consuming its input in place. */
+    firstData.layers.length = 0;
+    unmountFirst();
+    const view = render(<NewYearGiftWrapping />);
+    await flush();
+    const secondData = player.loadAnimation.mock.calls[1][0].animationData as {
+      layers: unknown[];
+    };
+    expect(secondData).not.toBe(firstData);
+    expect(secondData.layers.length).toBeGreaterThan(0);
+    expect(animations[1].play).toHaveBeenCalledOnce();
     view.unmount();
   });
 });

@@ -2,9 +2,9 @@ import { useEffect, useRef, useState, type FC } from 'react';
 import { useCelebrationEnvironment } from '../../../context/CelebrationEnvironmentContext';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import {
-  loadGiftWrappingPlayer,
+  loadLottiePlayer,
   type LottiePlayer,
-} from '../../utils/gift-wrapping-player';
+} from '../../../utils/lottie-player';
 import { animatePenguinStar } from '../../utils/penguin-star-animation';
 import {
   buildPenguinStarComposition,
@@ -81,7 +81,7 @@ const NewYearPenguinStar: FC = () => {
         if (!disposed && !cancelled.current) setLoadFailed(true);
       }, 2000);
       try {
-        const player = await loadGiftWrappingPlayer();
+        const player = await loadLottiePlayer();
         clearTimeout(loadDeadline);
         if (disposed || cancelled.current || timedOut) return;
         if (document.hidden) {
