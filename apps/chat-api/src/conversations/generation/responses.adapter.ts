@@ -38,6 +38,12 @@ import {
 const GENERIC_TRUNCATED_MESSAGE =
   'Responses generation ended before completion';
 
+/** Error shown for a failed Responses generation whose error carries no message. */
+export const RESPONSES_FAILED_MESSAGE = 'Responses generation failed';
+
+/** Error shown when a Responses generation ends `incomplete` (e.g. an output limit). */
+export const RESPONSES_INCOMPLETE_MESSAGE = 'Generation ended incomplete';
+
 /**
  * Builds the Responses request and normalizes the Responses SSE event
  * stream into the same `chat.completion.chunk` shape the Chat Completions
@@ -371,7 +377,7 @@ export class ResponsesAdapter {
               message:
                 extractDialErrorMessage(
                   (event as { response?: { error?: unknown } }).response?.error,
-                ) ?? 'Responses generation failed',
+                ) ?? RESPONSES_FAILED_MESSAGE,
             };
             isDone = true;
             return;
@@ -379,7 +385,7 @@ export class ResponsesAdapter {
           case 'response.incomplete': {
             terminalSignal = {
               state: ResponsesTerminalState.Incomplete,
-              message: 'Generation ended incomplete',
+              message: RESPONSES_INCOMPLETE_MESSAGE,
             };
             isDone = true;
             return;

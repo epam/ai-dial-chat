@@ -4,6 +4,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
   ConversationGenerationService,
@@ -37,6 +38,7 @@ import {
   findPendingBackgroundMessage,
   neutralizeForeignPendingMessages,
   pickServerOwnedFields,
+  updateConversationUnlessPending,
   updatePendingBackgroundMessage,
   withServerOwnedFields,
   type BackgroundWriteOutcome,
@@ -55,7 +57,11 @@ import {
   backgroundGenerationOutcomesTotal,
 } from './generation-metrics';
 import { GENERATION_PERSISTENCE_ERROR } from './persistence-error';
-import { ResponsesAdapter } from './responses.adapter';
+import {
+  RESPONSES_FAILED_MESSAGE,
+  RESPONSES_INCOMPLETE_MESSAGE,
+  ResponsesAdapter,
+} from './responses.adapter';
 
 /** Returned when a new generation is started while another one holds the conversation. */
 export const GENERATION_ACTIVE_MESSAGE =
@@ -314,12 +320,20 @@ export const toTerminalFields = (
         backgroundGeneration: withStatus(BackgroundGenerationStatus.Stopped),
         wasStoppedByUser: true,
       };
+    case CoreResponseStatus.Incomplete:
+      return {
+        ...base,
+        content: extractOutputText(response),
+        backgroundGeneration: withStatus(BackgroundGenerationStatus.Failed),
+        streamErrorMessage: RESPONSES_INCOMPLETE_MESSAGE,
+      };
     default:
       return {
         ...base,
         content: extractOutputText(response),
         backgroundGeneration: withStatus(BackgroundGenerationStatus.Failed),
-        streamErrorMessage: response.error?.message ?? '',
+        streamErrorMessage:
+          extractDialErrorMessage(response.error) ?? RESPONSES_FAILED_MESSAGE,
       };
   }
 };
@@ -984,9 +998,10 @@ export class BackgroundGenerationService {
    * `If-Match` (see {@link mergeClientMessages} for how background messages are kept),
    * so it never overwrites a placeholder or a final answer written in between. Resolves
    * `null` when the conversation cannot be read, so the caller keeps its unconditional
-   * save. When conflicts persist, a conversation without a pending background message
-   * falls back to that unconditional save; one with a pending message (or stored without
-   * an `ETag`) cannot be protected and makes the save fail with `503`.
+   * save. When conflicts persist, {@link updateConversationUnlessPending} saves a
+   * conversation without a pending background message unconditionally; one with a
+   * pending message (or stored without an `ETag`) cannot be protected and makes the save
+   * fail with `503`.
    * @param context - conversation location and the saving request's token
    * @param conversation - body sent by the client
    */
@@ -995,18 +1010,15 @@ export class BackgroundGenerationService {
     conversation: ConversationResponseDto,
   ): Promise<ConversationResponseDto | null> {
     let isRead = false;
-    let hasPending = false;
-    let lastBody: ConversationResponseDto | undefined;
     let result: ConditionalUpdateResult;
     try {
-      result = await this.persistence.updateConversation(
+      result = await updateConversationUnlessPending(
+        this.persistence,
         context.conversationPath,
         context.token,
         context.bucket,
         (stored) => {
           isRead = true;
-          hasPending =
-            findPendingBackgroundMessage(stored?.conversation) != null;
           if (
             stored &&
             !stored.etag &&
@@ -1020,14 +1032,13 @@ export class BackgroundGenerationService {
             conversation,
             stored?.conversation,
           );
-          lastBody = {
+          return {
             ...body,
             messages: mergeClientMessages(
               (body.messages ?? []) as StoredMessage[],
               (stored?.conversation.messages ?? []) as StoredMessage[],
             ),
           } as ConversationResponseDto;
-          return lastBody;
         },
       );
     } catch (err) {
@@ -1037,22 +1048,12 @@ export class BackgroundGenerationService {
       );
       return null;
     }
-    if (result.status === ConditionalUpdateStatus.Saved) {
-      return result.conversation;
-    }
-    /* Only a pending background answer needs the fence; any other conversation keeps
-       the previous last-writer-wins save rather than failing the request. */
-    if (hasPending || !lastBody) {
+    if (result.status !== ConditionalUpdateStatus.Saved) {
       throw new ServiceUnavailableException(
         'The conversation changed concurrently; retry shortly.',
       );
     }
-    return this.persistence.saveConversation(
-      context.conversationPath,
-      context.token,
-      context.bucket,
-      lastBody,
-    );
+    return result.conversation;
   }
 
   /**

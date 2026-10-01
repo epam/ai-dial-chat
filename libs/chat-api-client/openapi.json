@@ -2184,7 +2184,7 @@
             "description": "DIAL Core error"
           },
           "503": {
-            "description": "DIAL Core unreachable"
+            "description": "DIAL Core unreachable, or the conversation kept changing while it has a pending background answer; retry shortly"
           }
         },
         "summary": "Save (overwrite) a conversation by path",
@@ -2238,7 +2238,7 @@
             "description": "DIAL Core error"
           },
           "503": {
-            "description": "DIAL Core unreachable"
+            "description": "DIAL Core unreachable, or the conversation kept changing while it has a pending background answer; retry shortly"
           }
         },
         "summary": "Rename a conversation by path",
@@ -2439,7 +2439,7 @@
             "description": "Conversation not found"
           },
           "409": {
-            "description": "Another generation is already active for this conversation and principal"
+            "description": "Another generation is already active for this conversation and principal, or the conversation has a pending background answer (started by any instance or session)"
           },
           "502": {
             "description": "DIAL Core error"

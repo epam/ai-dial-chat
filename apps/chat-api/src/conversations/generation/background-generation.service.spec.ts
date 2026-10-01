@@ -30,7 +30,11 @@ import {
   BackgroundGenerationOutcome,
   backgroundGenerationOutcomesTotal,
 } from './generation-metrics';
-import { ResponsesAdapter } from './responses.adapter';
+import {
+  RESPONSES_FAILED_MESSAGE,
+  RESPONSES_INCOMPLETE_MESSAGE,
+  ResponsesAdapter,
+} from './responses.adapter';
 
 const GEN = 'gen-1';
 const RESPONSE_ID = 'dial_gpt_r1';
@@ -1173,6 +1177,32 @@ describe('BackgroundGenerationService.saveClientConversation', () => {
     expect(store.messages[0]).toMatchObject({ rating: 1 });
   });
 
+  it('keeps a placeholder written during the last conflict instead of saving over it', async () => {
+    const store = makeStore([olderAnswer]);
+    store.failures.conflicts = 3;
+    const conditionalSave =
+      store.mocks.saveConversationIfMatch.getMockImplementation();
+    store.mocks.saveConversationIfMatch.mockImplementation(async (...args) => {
+      const result = await conditionalSave?.(...args);
+      if (store.mocks.saveConversationIfMatch.mock.calls.length === 3) {
+        store.setMessages([olderAnswer, runningStored()]);
+      }
+      return result as never;
+    });
+    const { service } = makeService({ store });
+
+    await expect(
+      service.saveClientConversation(context, {
+        id: 'bucket/conv',
+        messages: [{ ...olderAnswer, rating: 1 }],
+      } as never),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(store.mocks.saveConversation).not.toHaveBeenCalled();
+    expect(store.messages[1].backgroundGeneration?.status).toBe(
+      BackgroundGenerationStatus.Pending,
+    );
+  });
+
   it('fails with 503 when conflicts persist while an answer is pending', async () => {
     const store = makeStore([olderAnswer, runningStored()]);
     store.failures.conflicts = 3;
@@ -1315,5 +1345,28 @@ describe('toTerminalFields', () => {
       streamErrorMessage: '',
       backgroundGeneration: { status: BackgroundGenerationStatus.Failed },
     });
+  });
+
+  it('maps an incomplete job to failed with the same error text as the stateless path', () => {
+    expect(
+      toTerminalFields(stored, { id: RESPONSE_ID, status: 'incomplete' }),
+    ).toMatchObject({
+      streamErrorMessage: RESPONSES_INCOMPLETE_MESSAGE,
+      backgroundGeneration: { status: BackgroundGenerationStatus.Failed },
+    });
+  });
+
+  it('maps a failed job like the stateless path, with a fallback text', () => {
+    expect(
+      toTerminalFields(stored, {
+        id: RESPONSE_ID,
+        status: 'failed',
+        error: { message: 'quota exceeded' },
+      })?.streamErrorMessage,
+    ).toBe('quota exceeded');
+    expect(
+      toTerminalFields(stored, { id: RESPONSE_ID, status: 'failed' })
+        ?.streamErrorMessage,
+    ).toBe(RESPONSES_FAILED_MESSAGE);
   });
 });

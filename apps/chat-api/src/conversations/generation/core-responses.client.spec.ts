@@ -33,6 +33,16 @@ describe('CoreResponsesClient', () => {
     });
   });
 
+  it('maps a retrieve answer without a body to an error', async () => {
+    const client = makeClient({
+      getResponseItem: vi.fn(async () => sdkResult(200)),
+    });
+
+    expect(await client.retrieveResponse('id', 'tok')).toEqual({
+      kind: CoreResponseResultKind.Error,
+    });
+  });
+
   it('requests a replay with stream=true and an event-stream Accept header', async () => {
     const stream = new ReadableStream();
     const getResponseItem = vi.fn(async () =>

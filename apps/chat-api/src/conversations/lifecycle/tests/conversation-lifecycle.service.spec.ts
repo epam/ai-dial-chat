@@ -2,11 +2,13 @@ import {
   ConflictException,
   ForbiddenException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../../openapi/openapi-response.dto';
+import { BackgroundGenerationStatus } from '../../dto/background-generation.dto';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationLifecycleService } from '../conversation-lifecycle.service';
 
@@ -936,6 +938,78 @@ describe('ConversationLifecycleService', () => {
           }),
         }),
       );
+    });
+
+    it('falls back to the unconditional save when conflicts persist and nothing is pending', async () => {
+      const getSpy = vi
+        .spyOn(mockDialClient.client, 'getConversation')
+        .mockResolvedValue({
+          data: { ...TEST_CONVERSATION, messages: [] },
+          response: new Response(null, { headers: { etag: '"v1"' } }),
+        } as never);
+      const precondition = {
+        error: { message: 'Precondition failed' },
+        response: new Response(null, { status: 412 }),
+      } as never;
+      const saveSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValueOnce(precondition)
+        .mockResolvedValueOnce(precondition)
+        .mockResolvedValueOnce(precondition)
+        .mockResolvedValueOnce({ data: {} } as never);
+
+      const result = await service.renameConversation(
+        conversationPath,
+        'renamed',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result).toEqual({ name: 'renamed' });
+      expect(getSpy).toHaveBeenCalledTimes(4);
+      expect(saveSpy).toHaveBeenCalledTimes(4);
+      const lastCall = saveSpy.mock.calls[3][2] as {
+        headers: Record<string, string>;
+        body: unknown;
+      };
+      expect(lastCall.headers['If-Match']).toBeUndefined();
+      expect(lastCall.body).toMatchObject({ name: 'renamed' });
+    });
+
+    it('throws ServiceUnavailableException when conflicts persist while an answer is pending', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          messages: [
+            {
+              role: 'assistant',
+              content: '',
+              backgroundGeneration: {
+                generationId: 'gen-1',
+                status: BackgroundGenerationStatus.Pending,
+                startedAt: 1,
+              },
+            },
+          ],
+        },
+        response: new Response(null, { headers: { etag: '"v1"' } }),
+      } as never);
+      const saveSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({
+          error: { message: 'Precondition failed' },
+          response: new Response(null, { status: 412 }),
+        } as never);
+
+      await expect(
+        service.renameConversation(
+          conversationPath,
+          'renamed',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(saveSpy).toHaveBeenCalledTimes(3);
     });
 
     it('throws NotFoundException when the conversation to rename does not exist', async () => {

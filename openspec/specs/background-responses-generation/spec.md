@@ -153,7 +153,7 @@ Every write the backend makes to a background message after the placeholder (sav
 
 `PUT /api/v1/conversations?path=<path>` (operationId `saveConversation`, body `SaveConversationBodyDto`, response `200` with `ConversationResponseDto`) SHALL keep its contract. When the stored conversation contains a message with `backgroundGeneration.status: "pending"`, the backend SHALL save the client's body with that one message's server-owned fields replaced by the stored values (and the message re-inserted at its stored position if the body omitted it), keep the client's values for that message's client-owned fields, and write it as a conditional write with bounded re-read on a version conflict. The body's copy of the pending message is the message carrying the same `generationId` or, because a client never receives the marker during a live stream, the assistant message at the pending message's stored position. When the body has no copy of the pending message (a stale tab or device), the backend SHALL put back the stored messages from the body's end (or the pending position, whichever comes first) through the pending message, so a stale body can drop neither the question nor the answer. The response SHALL be the conversation as actually saved.
 
-Every client save of an existing conversation SHALL be a conditional write on the version it read, with bounded re-read on a version conflict, whether or not a pending message exists: an unconditional save could overwrite a placeholder or a final answer written between the read and the write. Pending markers in the body are neutralized as before, and a title LLM naming already stored is kept. A conversation that does not exist yet, a read that fails, or storage that returns no `ETag` keeps the unconditional save — except that a stored `pending` message without an `ETag` makes the save respond `503`, because it cannot be protected. A body message whose `generationId` storage already holds as `completed`, `stopped`, or `failed` SHALL take the stored server-owned fields, so a stale tab still showing it as `pending` never turns the finished answer into `failed`. When no body message carries that `generationId`, an unmarked assistant message at the stored message's position is its copy and SHALL take the stored server-owned fields too (a tab that streamed the answer and has not reloaded, saving after Stop on another device), but only while the body still lines up with storage (the same number of messages and the same preceding message): after earlier messages are deleted, positions shift, and a different answer at that position SHALL be saved as sent. When the body holds a different generation's assistant message at the pending message's position (a tab that has not seen a regenerate), the stored pending message SHALL replace it. After 3 conflicts in a row, a save whose latest read holds no `pending` background message SHALL fall back to the unconditional save (the behavior before this change), and only a save with a `pending` background message SHALL respond `503`, as other conversation endpoints do when storage is unavailable.
+Every client save of an existing conversation SHALL be a conditional write on the version it read, with bounded re-read on a version conflict, whether or not a pending message exists: an unconditional save could overwrite a placeholder or a final answer written between the read and the write. Pending markers in the body are neutralized as before, and a title LLM naming already stored is kept. A conversation that does not exist yet, a read that fails, or storage that returns no `ETag` keeps the unconditional save — except that a stored `pending` message without an `ETag` makes the save respond `503`, because it cannot be protected. A body message whose `generationId` storage already holds as `completed`, `stopped`, or `failed` SHALL take the stored server-owned fields, so a stale tab still showing it as `pending` never turns the finished answer into `failed`. When no body message carries that `generationId`, an unmarked assistant message at the stored message's position is its copy and SHALL take the stored server-owned fields too (a tab that streamed the answer and has not reloaded, saving after Stop on another device), but only while the body still lines up with storage (the same number of messages and the same preceding message): after earlier messages are deleted, positions shift, and a different answer at that position SHALL be saved as sent. When the body holds a different generation's assistant message at the pending message's position (a tab that has not seen a regenerate), the stored pending message SHALL replace it. After 3 conflicts in a row, the backend SHALL read the conversation once more: when that read holds no `pending` background message, the body merged against it SHALL be saved unconditionally (the behavior before this change); when it holds one, the save SHALL respond `503`, as other conversation endpoints do when storage is unavailable, because the conflict may come from that message's own write. Rename SHALL handle persistent conflicts the same way.
 
 Example: stored `[user, assistant{content:"", responseId:"dial_x", backgroundGeneration:{status:"pending",...}}]`; client body `[user, assistant{content:"Hel", rating:true}]` with a new `prompt` → saved and returned `[user, assistant{content:"", responseId:"dial_x", backgroundGeneration:{status:"pending",...}, rating:true}]` with the new `prompt`.
 
@@ -181,8 +181,13 @@ No new error code is introduced; the generated `chat-api-client` method and ever
 
 #### Scenario: Conflicts persist on a conversation without a pending answer
 
-- **WHEN** a client save meets a version conflict on every attempt and the latest read has no `pending` background message
+- **WHEN** a client save meets a version conflict on every attempt and the read after them has no `pending` background message
 - **THEN** the body is saved unconditionally, as before this change, and the endpoint returns `200`
+
+#### Scenario: The last conflict comes from a new placeholder
+
+- **WHEN** a client save meets a version conflict on every attempt, the last one caused by a new generation's `pending` placeholder
+- **THEN** the read after the conflicts sees the placeholder, the save responds `503`, and the placeholder is kept
 
 #### Scenario: A stale tab saves during a background generation
 
@@ -212,7 +217,8 @@ At the Core stream's terminal event, the backend SHALL retrieve the response onc
 |---|---|
 | `completed` | final output, `status: "completed"` |
 | `cancelled` | available output, `wasStoppedByUser: true`, no `streamErrorMessage`, `status: "stopped"` |
-| `failed`, `incomplete`, or the stream ended without a terminal event | available output, `streamErrorMessage` (DIAL Core text, or `''`), `status: "failed"` |
+| `failed` | available output, `streamErrorMessage` (DIAL Core text, or `Responses generation failed`, as on the stateless path), `status: "failed"` |
+| `incomplete` | available output, `streamErrorMessage: "Generation ended incomplete"` (as on the stateless path), `status: "failed"` |
 
 "Output" is the text of the response's `message` items and their `output_text` parts only; reasoning text is never saved, the same as on the live stream.
 
@@ -239,7 +245,7 @@ A finalizing write that cannot be completed (retries exhausted, token rejected, 
 #### Scenario: Upstream failure is finalized as failed
 
 - **WHEN** the Core stream ends with `response.failed`, `response.incomplete`, an in-band error, or without a terminal event
-- **THEN** the message is saved with `status: "failed"`, a `streamErrorMessage` that is DIAL Core's text or `''`, and any partial output the retrieved response contains
+- **THEN** the message is saved with `status: "failed"`, the `streamErrorMessage` the stateless path would show for the retrieved status, and any partial output the retrieved response contains
 
 ### Requirement: The completion stream ends cleanly whenever the outcome comes from storage
 

@@ -221,7 +221,11 @@ export class ConversationController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
-  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  @ApiResponse({
+    status: 503,
+    description:
+      'DIAL Core unreachable, or the conversation kept changing while it has a pending background answer; retry shortly',
+  })
   saveConversation(
     @Req() req: Request,
     @Query() query: SaveConversationQueryDto,
@@ -269,7 +273,7 @@ export class ConversationController {
   @ApiResponse({
     status: 409,
     description:
-      'Another generation is already active for this conversation and principal',
+      'Another generation is already active for this conversation and principal, or the conversation has a pending background answer (started by any instance or session)',
   })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
@@ -803,7 +807,11 @@ export class ConversationController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
-  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  @ApiResponse({
+    status: 503,
+    description:
+      'DIAL Core unreachable, or the conversation kept changing while it has a pending background answer; retry shortly',
+  })
   renameConversation(
     @Req() req: Request,
     @Query() query: ConversationPathDto,

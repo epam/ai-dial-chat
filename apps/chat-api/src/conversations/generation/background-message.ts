@@ -1,7 +1,9 @@
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
   ConditionalUpdateStatus,
+  type ConditionalUpdateResult,
   type ConversationPersistencePort,
+  type VersionedConversation,
 } from '../conversation-persistence.port';
 import { BackgroundGenerationStatus } from '../dto/background-generation.dto';
 import type { ConversationMessageDto } from '../dto/conversation-message.dto';
@@ -189,6 +191,55 @@ export const updatePendingBackgroundMessage = async (params: {
     default:
       return { result: BackgroundWriteResult.Failed };
   }
+};
+
+/**
+ * Applies `update` with `If-Match` through `updateConversation`. When conflicts persist,
+ * reads the latest version once more: one holding a pending background message stays
+ * a `Conflict`, because only `If-Match` keeps that message safe; any other one is saved
+ * from that read unconditionally, the last-writer-wins save used before fencing.
+ * @param persistence - conversation persistence port
+ * @param conversationPath - conversation path relative to `bucket`
+ * @param token - caller's bearer token
+ * @param bucket - caller's session bucket
+ * @param update - builds the body to save from the stored version
+ */
+export const updateConversationUnlessPending = async (
+  persistence: Pick<
+    ConversationPersistencePort,
+    'updateConversation' | 'readConversationWithEtag' | 'saveConversation'
+  >,
+  conversationPath: string,
+  token: string,
+  bucket: string,
+  update: (
+    stored: VersionedConversation | null,
+  ) => ConversationResponseDto | null,
+): Promise<ConditionalUpdateResult> => {
+  const result = await persistence.updateConversation(
+    conversationPath,
+    token,
+    bucket,
+    update,
+  );
+  if (result.status !== ConditionalUpdateStatus.Conflict) return result;
+  const latest = await persistence.readConversationWithEtag(
+    conversationPath,
+    token,
+    bucket,
+  );
+  if (findPendingBackgroundMessage(latest?.conversation)) return result;
+  const body = update(latest);
+  if (!body) return { status: ConditionalUpdateStatus.Skipped };
+  return {
+    status: ConditionalUpdateStatus.Saved,
+    conversation: await persistence.saveConversation(
+      conversationPath,
+      token,
+      bucket,
+      body,
+    ),
+  };
 };
 
 /**

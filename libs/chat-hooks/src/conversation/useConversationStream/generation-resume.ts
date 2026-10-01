@@ -311,8 +311,9 @@ export const createResumeIfAwaitingGeneration = ({
       removeStreamingPath(conversationPath);
       /*
        * A reload that still shows a pending background message is not a lost
-       * save: the job is still running in DIAL Core, and the stream hook resumes
-       * it again instead of warning.
+       * save: the job is still running in DIAL Core, so no warning is shown.
+       * Nothing resumes it from here; the stored message stays pending until
+       * the conversation is opened again.
        */
       const placeholderReload =
         !isBackground &&

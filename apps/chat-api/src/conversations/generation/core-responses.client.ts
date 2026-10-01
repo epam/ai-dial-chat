@@ -34,7 +34,6 @@ export interface CoreResponse {
     content?: Array<{ type?: string; text?: string }>;
   }>;
   error?: { message?: string } | null;
-  incomplete_details?: { reason?: string } | null;
 }
 
 export type CoreResponseResult =
@@ -91,6 +90,7 @@ export class CoreResponsesClient {
       }),
     );
     if (result.kind !== CoreResponseResultKind.Ok) return result;
+    if (!result.sdk.data) return { kind: CoreResponseResultKind.Error };
     return {
       kind: CoreResponseResultKind.Ok,
       response: result.sdk.data as CoreResponse,

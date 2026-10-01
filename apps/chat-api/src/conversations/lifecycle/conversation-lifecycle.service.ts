@@ -28,7 +28,10 @@ import {
 import { DuplicateConversationResponseDto } from '../dto/duplicate-conversation.dto';
 import { MessageCustomContentDto } from '../dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from '../dto/rename-conversation.dto';
-import { neutralizeForeignPendingMessages } from '../generation/background-message';
+import {
+  neutralizeForeignPendingMessages,
+  updateConversationUnlessPending,
+} from '../generation/background-message';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import type { MetadataResult } from '../types/conversation.types';
 import {
@@ -189,11 +192,13 @@ export class ConversationLifecycleService {
     const sanitisedTitle = prepareEntityName(newTitle);
 
     /* Conditional, so a rename never restores a pending background message over a final
-       answer saved between its read and its write. */
+       answer saved between its read and its write. Without a pending message, persistent
+       conflicts end in the previous last-writer-wins save. */
     let isRead = false;
     let result: ConditionalUpdateResult;
     try {
-      result = await this.persistenceService.updateConversation(
+      result = await updateConversationUnlessPending(
+        this.persistenceService,
         conversationPath,
         token,
         bucket,
