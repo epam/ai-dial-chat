@@ -920,8 +920,10 @@ const ConversationMessageItem: FC<Props> = ({
           ),
           /* Regenerate/copy/like/dislike stay mounted while a response streams,
              so they have to be disabled — otherwise a second generation or a
-             rating can be triggered mid-stream. */
-          isDisabled: isAssistantTyping,
+             rating can be triggered mid-stream. User-message Copy is
+             non-mutating and Edit/Delete are not rendered while typing, so
+             user toolbars stay enabled. */
+          isDisabled: isAssistantTyping && msg.role !== MessageRole.User,
         }}
         afterContent={
           referenceGroups.length > 0 ||

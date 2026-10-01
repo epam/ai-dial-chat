@@ -8,8 +8,10 @@ export interface MessageActionTooltips {
   delete?: string;
   /** Tooltip for the Regenerate button. */
   regenerate?: string;
-  /** Tooltip for the Copy button in its default state. */
+  /** Tooltip for the assistant Copy button in its default state. */
   copy?: string;
+  /** Tooltip for the user-message Copy button in its default state. */
+  copyMessage?: string;
   /** Tooltip shown on the Copy button immediately after copying. */
   copied?: string;
   /** Tooltip for the Copy as Markdown button in its default state. */
@@ -30,8 +32,10 @@ export interface MessageActionAriaLabels {
   deleteMessage?: string;
   /** aria-label for the Regenerate button. */
   regenerateResponse?: string;
-  /** aria-label for the Copy button. */
+  /** aria-label for the assistant Copy button. */
   copyResponse?: string;
+  /** aria-label for the user-message Copy button. */
+  copyMessage?: string;
   /** aria-label for the Copy as Markdown button. */
   copyAsMarkdown?: string;
   /** aria-label for the Like button. */
@@ -42,6 +46,8 @@ export interface MessageActionAriaLabels {
   actionsGroup?: string;
   /** Announced after copying the response text. */
   copiedStatus?: string;
+  /** Announced after copying a user message. */
+  copiedMessageStatus?: string;
   /** Announced after copying the response as Markdown. */
   copiedMarkdownStatus?: string;
 }
@@ -62,7 +68,7 @@ export interface MessageActionColors {
 
 /** Props for the `MessageActions` component. */
 export interface MessageActionsProps {
-  /** Which actions are shown. `'User'` = Edit/Delete; `'Agent'` = Regenerate/Copy/Like/Dislike. Defaults to `'User'`. */
+  /** Which actions are shown. `'User'` = Copy/Edit/Delete; `'Agent'` = Regenerate/Copy/Like/Dislike. Defaults to `'User'`. */
   role?: MessageRole;
   /** Extra class(es) on the root element. */
   className?: string;
@@ -80,7 +86,7 @@ export interface MessageActionsProps {
   onDelete?: () => void;
   /** Fires on Regenerate click. Agent role only. */
   onRegenerate?: () => void;
-  /** Fires on Copy click. Agent role only. */
+  /** Fires on Copy click. Both roles; the label set depends on `role`. */
   onCopy?: () => void;
   /** Fires on Copy Markdown click. Agent role only. */
   onCopyMarkdown?: () => void;
