@@ -474,6 +474,18 @@ export enum ScheduledTasksI18nKeys {
   DetailDeleteRetryableError = 'scheduledTasks.detail.deleteRetryableError',
   DetailDeleteGenericError = 'scheduledTasks.detail.deleteGenericError',
   DetailDeletedStateLabel = 'scheduledTasks.detail.deletedStateLabel',
+  DetailStartNow = 'scheduledTasks.detail.startNow',
+  DetailStarting = 'scheduledTasks.detail.starting',
+  DetailStartAccepted = 'scheduledTasks.detail.startAccepted',
+  DetailStartBusy = 'scheduledTasks.detail.startBusy',
+  DetailStartNotFound = 'scheduledTasks.detail.startNotFound',
+  DetailStartDeleted = 'scheduledTasks.detail.startDeleted',
+  DetailStartError = 'scheduledTasks.detail.startError',
+  DetailRunStatusUnavailable = 'scheduledTasks.detail.runStatusUnavailable',
+  DetailRunStatusDelayed = 'scheduledTasks.detail.runStatusDelayed',
+  DetailRefreshRunStatus = 'scheduledTasks.detail.refreshRunStatus',
+  DetailRunCredentialsRequired = 'scheduledTasks.detail.runCredentialsRequired',
+  DetailRunFinished = 'scheduledTasks.detail.runFinished',
   EditPageTitle = 'scheduledTasks.edit.pageTitle',
   EditLoadErrorLabel = 'scheduledTasks.edit.loadErrorLabel',
   EditInvalidScheduleLabel = 'scheduledTasks.edit.invalidScheduleLabel',
@@ -1491,6 +1503,7 @@ export enum HalloweenI18nKeys {
 }
 
 export enum NewYearI18nKeys {
+  PenguinStarToastMessage = 'newYear.penguinStarToastMessage',
   GiftWrappingToastMessage = 'newYear.giftWrappingToastMessage',
   ToastTitle = 'newYear.toastTitle',
   SnowToastMessage = 'newYear.snowToastMessage',

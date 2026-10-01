@@ -1,9 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { memo, useMemo, type FC } from 'react';
 import { useCelebrationEnvironment } from '../../../context/CelebrationEnvironmentContext';
+import { NewYearScene } from '../../types/new-year';
 import styles from './NewYear.module.scss';
 import { buildNewYearParticles } from './particles';
-import { NewYearScene } from './types';
 
 interface Props {
   scene: NewYearScene.Snow | NewYearScene.Confetti;

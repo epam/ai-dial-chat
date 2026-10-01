@@ -3,6 +3,7 @@ import type {
   CreatedScheduledTaskDto,
   ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
+  ScheduledTaskRunDto,
   ScheduledTaskDto,
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
@@ -51,6 +52,22 @@ export const resumeScheduledTask = (
 
 export const deleteScheduledTask = (scheduleId: string): Promise<void> =>
   schedulerClient.deleteScheduledTask(scheduleId);
+
+export const startScheduledTask = (
+  scheduleId: string,
+): Promise<ScheduledTaskRunDto> =>
+  scheduledTasksApi.startScheduledTask({ scheduleId });
+
+/** Gets the latest state of one accepted scheduled-task run. */
+export const getScheduledTaskRun = (
+  scheduleId: string,
+  runId: string,
+  signal?: AbortSignal,
+): Promise<ScheduledTaskRunDto> =>
+  scheduledTasksApi.getScheduledTaskRun(
+    { scheduleId, runId },
+    signal ? { signal } : undefined,
+  );
 
 export const listScheduledTaskRuns = ({
   scheduleId,

@@ -705,4 +705,23 @@ describe('fromUpstreamRun', () => {
 
     expect(result.conversationId).toBeUndefined();
   });
+
+  it('projects only a string result stage', () => {
+    const result = fromUpstreamRun({
+      ...baseUpstreamRun,
+      result: { stage: 'credentials', output: 'must not be exposed' },
+    });
+
+    expect(result).toMatchObject({ resultStage: 'credentials' });
+    expect(result).not.toHaveProperty('result');
+  });
+
+  it.each([undefined, null, {}, { stage: null }, { stage: 42 }])(
+    'omits a non-string result stage %#',
+    (result) => {
+      expect(
+        fromUpstreamRun({ ...baseUpstreamRun, result }),
+      ).not.toHaveProperty('resultStage');
+    },
+  );
 });
