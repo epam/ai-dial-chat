@@ -179,6 +179,24 @@ describe('ScheduledTaskRunHistoryList', () => {
     expect(onRunClick).toHaveBeenCalledWith(run);
   });
 
+  it('applies styles.rowFocusOutline as the focused row outline color', () => {
+    const run = buildRun({ id: 'run_1', conversationId: 'conversations/c1' });
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[run]}
+        onRunClick={vi.fn()}
+        labels={labels}
+        styles={{ rowFocusOutline: '#123456' }}
+      />,
+    );
+
+    const list = screen.getByRole('list', { name: 'History' });
+    // eslint-disable-next-line testing-library/no-node-access -- a CSS custom property has no Testing Library query
+    expect(list.style.getPropertyValue('--strhl-row-focus-outline')).toBe(
+      '#123456',
+    );
+  });
+
   it('does not render as clickable, and never invokes onRunClick, when the run has no conversationId', async () => {
     const onRunClick = vi.fn();
     render(

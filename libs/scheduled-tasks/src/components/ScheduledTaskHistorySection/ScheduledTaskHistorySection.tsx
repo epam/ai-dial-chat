@@ -105,6 +105,7 @@ export const ScheduledTaskHistorySection: FC<
         rowMinHeight: historyStyles?.rowMinHeight,
         rowHoverBackground: historyStyles?.rowHoverBackground,
         rowFocusBackground: historyStyles?.rowFocusBackground,
+        rowFocusOutline: historyStyles?.rowFocusOutline,
       }}
     />
   );

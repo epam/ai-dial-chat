@@ -38,12 +38,16 @@ export interface ScheduledTaskHistorySectionColors {
 
 export interface ScheduledTaskHistorySectionStyles {
   colors?: ScheduledTaskHistorySectionColors;
+  /** Maximum height of the scrollable History card. Fallback: `70vh`. */
   maxHeight?: string;
+  /** Minimum row height. Fallback: `32px`. */
   rowMinHeight?: string;
   /** Background of an interactive run row on hover. Defaults to `--bg-control-accent-alpha`. */
   rowHoverBackground?: string;
   /** Background of an interactive run row on keyboard focus. Defaults to `rowHoverBackground`. */
   rowFocusBackground?: string;
+  /** Outline color of an interactive run row on keyboard focus. Defaults to `--text-accent`. */
+  rowFocusOutline?: string;
 }
 
 /** Props for the {@link ScheduledTaskHistorySection} component. */
