@@ -27,6 +27,10 @@ import {
   LOCALE_CODE_VALIDATION_MESSAGE,
 } from '../../common/validators/locale-code.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
+import {
+  SEMVER_VERSION_PATTERN,
+  SEMVER_VERSION_VALIDATION_MESSAGE,
+} from '../../common/validators/semver-version.pattern';
 
 /*
  * General-step (and, optionally, Settings-step) update body. `type` is
@@ -77,9 +81,8 @@ export class UpdateApplicationBodyDto {
   @ApiPropertyOptional({ example: '1.0.0' })
   @IsString()
   @IsOptional()
-  @Matches(/^[a-zA-Z0-9._-]+$/, {
-    message:
-      'version must contain only letters, digits, dots, underscores, and dashes',
+  @Matches(SEMVER_VERSION_PATTERN, {
+    message: SEMVER_VERSION_VALIDATION_MESSAGE,
   })
   version?: string;
 

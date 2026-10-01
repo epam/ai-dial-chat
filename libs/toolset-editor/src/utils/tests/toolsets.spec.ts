@@ -272,6 +272,22 @@ describe('isToolsetFormValid', () => {
     expect(isToolsetFormValid(form)).toBe(false);
   });
 
+  it('requires a SemVer 2.0.0 version, matching DIAL Admin', () => {
+    const form = baseForm();
+
+    form.version = 'abc';
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.version = '1.2';
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.version = '1.0.0+build';
+    expect(isToolsetFormValid(form)).toBe(true);
+
+    form.version = '1.0.0-beta';
+    expect(isToolsetFormValid(form)).toBe(true);
+  });
+
   it('requires API key fields when API-key login is selected', () => {
     const form = baseForm();
     form.auth = {

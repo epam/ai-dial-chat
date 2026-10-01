@@ -6,13 +6,46 @@
   border-color: var(--shp-access-trigger-border, transparent);
 }
 
+/*
+ * The trigger is the kit `InlineSelect` button, which tints its background on
+ * hover and press and paints its own focus ring and chevron colour, all as
+ * single-class utilities. The element-qualified selector outranks them, so the
+ * pill keeps its flat fill and every `--shp-access-*` property still applies.
+ */
 button.accessTriggerBtn {
+  &[aria-expanded='true'] {
+    border-color: var(
+      --shp-access-trigger-border-focus,
+      var(--stroke-accent, #1d4ed8)
+    );
+  }
+
   @media (hover: hover) {
     &:hover {
+      background-color: var(
+        --shp-access-trigger-bg,
+        var(--bg-layer-raised, #fcfcfc)
+      );
       border-color: var(
         --shp-access-trigger-border-hover,
         var(--stroke-accent, #1d4ed8)
       );
+    }
+  }
+
+  &:active {
+    background-color: var(
+      --shp-access-trigger-bg,
+      var(--bg-layer-raised, #fcfcfc)
+    );
+  }
+
+  > svg {
+    color: var(--shp-access-chevron, var(--text-tertiary, #848e9c));
+    transition: transform 150ms ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
     }
   }
 
@@ -22,13 +55,6 @@ button.accessTriggerBtn {
       var(--shp-access-trigger-border-focus, var(--stroke-accent, #1d4ed8));
     outline-offset: -1px;
   }
-}
-
-.accessTriggerBtnOpen {
-  border-color: var(
-    --shp-access-trigger-border-focus,
-    var(--stroke-accent, #1d4ed8)
-  );
 }
 
 .accessTriggerLabel {
@@ -53,15 +79,6 @@ button.accessTriggerBtn {
 
 .anyoneWithLinkSubtitle {
   color: var(--shp-anyone-subtitle, var(--text-secondary, #57647a));
-}
-
-.accessTriggerChevron {
-  color: var(--shp-access-chevron, var(--text-tertiary, #848e9c));
-  transition: transform 150ms ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
 }
 
 /* The access rows are the kit's `Dropdown` items, which own their hover, focus

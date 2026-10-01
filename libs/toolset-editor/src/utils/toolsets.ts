@@ -6,6 +6,7 @@ import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
+  TOOLSET_METADATA_VALIDATION_OPTIONS,
   ToolsetTransportType,
 } from '../constants/toolsets';
 import type {
@@ -146,7 +147,7 @@ export const isToolsetFormValid = (
   isEditMode = false,
 ): boolean =>
   Object.keys(
-    validateDeploymentCreationFields(form, { validateVersionPattern: true }),
+    validateDeploymentCreationFields(form, TOOLSET_METADATA_VALIDATION_OPTIONS),
   ).length === 0 &&
   isValidEndpointUrl(form.endpoint) &&
   isToolsetAuthValid(form.auth, isEditMode);

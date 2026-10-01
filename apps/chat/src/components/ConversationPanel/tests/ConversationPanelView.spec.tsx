@@ -237,12 +237,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       header,
       children,
       onClose,
+      footer,
       mainButtons,
     }: {
       open: boolean;
       header?: ReactNode;
       children?: ReactNode;
       onClose?: () => void;
+      footer?: ReactNode;
       mainButtons?: Array<{
         label: ReactNode;
         disabled?: boolean;
@@ -258,6 +260,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
           {header && <h2>{header}</h2>}
           <button aria-label="Close popup" onClick={onClose} />
           {children}
+          {footer}
           {mainButtons?.map((button, index) => (
             <button
               key={index}
@@ -280,6 +283,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconDownload: () => null,
   IconFileArrowLeft: () => null,
   IconFileArrowRight: () => null,
+  IconMessageCircle: () => null,
   IconPencilMinus: () => null,
   IconPin: () => null,
   IconPinnedFilled: () => null,
@@ -375,6 +379,8 @@ vi.mock('react-i18next', async () => {
 
   return {
     useTranslation: () => translation,
+    /* Mirrors the suite-wide mock: the key itself, no markup. */
+    Trans: ({ i18nKey }: { i18nKey?: string }) => i18nKey ?? null,
   };
 });
 

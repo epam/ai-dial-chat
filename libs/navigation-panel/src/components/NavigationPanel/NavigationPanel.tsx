@@ -108,15 +108,20 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
               className="flex h-16 w-full shrink-0 items-center justify-center"
             >
               <span
-                style={{ backgroundImage: `url(${logo.iconUrl})` }}
+                /* Quoted: an inlined SVG data URL carries `'` characters,
+                   which invalidate an unquoted `url()`. */
+                style={{ backgroundImage: `url("${logo.iconUrl}")` }}
                 className="h-6 w-6 bg-contain bg-center bg-no-repeat"
               />
             </a>
           )}
           <div className="flex flex-col items-center gap-2 p-2">
             {items.map((item) => {
-              const isFilled = !!item.isActive && !!item.activeIcon;
-              const Icon = (isFilled && item.activeIcon) || item.icon;
+              /* An active item is always filled: with the dedicated
+                 `activeIcon` glyph when the host supplies one, otherwise by
+                 filling the outline `icon` in place. */
+              const hasActiveGlyph = !!item.isActive && !!item.activeIcon;
+              const Icon = (hasActiveGlyph && item.activeIcon) || item.icon;
 
               return (
                 <Fragment key={item.id}>
@@ -137,7 +142,10 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
                         styles.item,
                         'rounded-xl',
                         item.isActive && styles.itemActive,
-                        isFilled && styles.itemFilled,
+                        hasActiveGlyph && styles.itemFilled,
+                        item.isActive &&
+                          !hasActiveGlyph &&
+                          styles.itemFilledOutline,
                         NAVIGATION_PANEL_CLASS.item,
                       )}
                     />,

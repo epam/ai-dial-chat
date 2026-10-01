@@ -1,0 +1,12 @@
+// Colors only — layout and spacing come from `ResourceSummary`'s own classes.
+// A host override arrives as an inline `--rs-*` from the `styles.colors` prop,
+// which outranks these class-level defaults.
+
+.info {
+  --rs-bg: var(--bg-info, #d6e2f9);
+}
+
+.danger {
+  --rs-bg: var(--bg-control-error-alpha-active, #f7646433);
+  --rs-border: var(--stroke-error-alpha, #ae2f2f73);
+}

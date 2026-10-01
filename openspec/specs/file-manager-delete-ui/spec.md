@@ -212,46 +212,33 @@ Inside the `<div className="relative ...">` that wraps `DialFileManager`:
 
 #### Call sites: new prop values
 
-In `ConversationView` and `ConversationRoute`, add the delete props using `useTranslation`:
+Every host of the file manager's delete confirmation — `ConversationView`, `NewConversationComposer`, `SkillFileSystemModal`, and `DialFileManagerPage` — SHALL pass the same copy through `useTranslation`, and SHALL render the body with the shared `FileDeleteConfirmContent` rather than an inline block:
 
 ```tsx
 <DialFileManagerModal
   // ... existing ...
-  deleteLabel={t('dialFileManager.deleteAction')}
-  deletingLabel={t('dialFileManager.deletingLabel')}
+  deleteLabel={t(ButtonsI18nKeys.Delete)}
+  deletingLabel={t(BasicI18nKeys.DeletingStatus)}
   deleteConfirmTitle={(names) =>
     names.length === 1
-      ? t('dialFileManager.deleteConfirmTitleSingle')
-      : t('dialFileManager.deleteConfirmTitleMultiple')
+      ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
+      : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
   }
-  deleteConfirmBody={(names) => (
-    <div className="px-6 py-3 text-sm">
-      <p className="mb-3 text-secondary">
-        {names.length === 1 ? (
-          <>
-            {t('dialFileManager.deleteConfirmBodySingle')}{' '}
-            <span className="break-words text-primary">
-              &quot;{names[0].split('/').pop()}&quot;?
-            </span>
-          </>
-        ) : (
-          <>
-            {t('dialFileManager.deleteConfirmBodyMultiple')}{' '}
-            <span className="text-primary">
-              {names.length} {t('dialFileManager.deleteConfirmBodyItems')}
-            </span>
-          </>
-        )}
-      </p>
-    </div>
-  )}
-  deleteConfirmLabel={t('dialFileManager.deleteConfirmButton')}
-  deleteCancelLabel={t('buttons.cancel')}
+  deleteConfirmBody={(names) => <FileDeleteConfirmContent names={names} />}
+  deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
+  deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
 />
 ```
 
-> **Note on `names[]`**: the ui-kit passes `DialDeletedItem.sourceUrl` values as the `names` array to both `titleRenderer` and `contentRenderer`. Each entry is a DIAL resource URL (`files/{bucket}/path/file.pdf`). Use `.split('/').pop()` to extract the display filename for the single-item case, matching the legacy behavior.
+`FileDeleteConfirmContent` (`apps/chat/src/components/FileDeleteConfirmContent/FileDeleteConfirmContent.tsx`) SHALL render the shared `ConfirmationView` from `@epam/ai-dial-chat-shared` in its `ConfirmationPopupVariant.Danger` variant (see the `shared-delete-confirmation` spec), so the Files body matches every other delete surface:
 
+- **Identity card** — a `ConfirmationIdentityCard` wrapping a `ConfirmationIdentityRow` with no type label: `IconFile` and the item's name for a single item, `IconFiles` and the pluralized count (`dialFileManager.deleteConfirmItemCount`, e.g. "3 items") for several.
+- **Message** — `dialFileManager.deleteConfirmMessageSingle` / `deleteConfirmMessageMultiple`, with the name or the count bold via `CONFIRMATION_BOLD_COMPONENTS`. For several items the message is followed by a list of the selected names, capped at ten (`MAX_LISTED_NAMES`), with a trailing "… and N more" row (`dialFileManager.deleteConfirmMoreItems`) when the selection is longer, so a long selection cannot push the actions off screen.
+- **Consequences** — the single bullet `basic.consequenceCannotBeUndone` ("Cannot be undone").
+
+Names are shown as basenames: the grid reports each entry as a DIAL resource path (`files/{bucket}/path/file.pdf`), and the content uses `.split('/').pop()` so the dialog names the item, not its location.
+
+The dialog frame, title, and action buttons still belong to `@epam/ai-dial-react-file-manager`, which accepts only a title renderer and a content node. Its confirm button therefore has no trash icon and its Cancel is the package's solid neutral button, unlike the shared `ConfirmationFooter`; closing that gap needs a footer slot in that package.
 
 #### Scenario: Delete single file from grid row context menu
 
@@ -318,14 +305,12 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 
 | Key (full) | English value | Notes |
 |------------|---------------|-------|
-| `dialFileManager.deleteAction` | `"Delete"` | Action label in menus |
-| `dialFileManager.deletingLabel` | `"Deleting…"` | Loading overlay aria-label |
-| `dialFileManager.deleteConfirmTitleSingle` | `"Confirm deleting"` | Popup title, single item — no filename (legacy parity) |
-| `dialFileManager.deleteConfirmTitleMultiple` | `"Confirm deleting items"` | Popup title, multiple items |
-| `dialFileManager.deleteConfirmBodySingle` | `"Are you sure you want to delete"` | Precedes filename `"filename"?` in body |
-| `dialFileManager.deleteConfirmBodyMultiple` | `"Do you want to delete following"` | Precedes count span in body |
-| `dialFileManager.deleteConfirmBodyItems` | `"items?"` | Appended after count in multi-item body |
-| `dialFileManager.deleteConfirmButton` | `"Delete"` | Confirm button |
+| `dialFileManager.deleteConfirmTitleSingle` | `"Delete item"` | Popup title, single item |
+| `dialFileManager.deleteConfirmTitleMultiple` | `"Delete items"` | Popup title, multiple items |
+| `dialFileManager.deleteConfirmMessageSingle` | `"Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone."` | Body sentence, single item; `<bold>` maps to `CONFIRMATION_BOLD_COMPONENTS` |
+| `dialFileManager.deleteConfirmMessageMultiple` | `"Are you sure you want to delete <bold>{{count}} items</bold>? This action is permanent and cannot be undone."` | Body sentence, multiple items |
+| `dialFileManager.deleteConfirmItemCount_one` / `_other` | `"{{count}} item"` / `"{{count}} items"` | Identity-card name for a multi-item selection |
+| `dialFileManager.deleteConfirmMoreItems_one` / `_other` | `"… and {{count}} more"` | Trailing row once the listed names pass ten |
 | `dialFileManager.deleteFilesError` | `"Failed to delete files. Please try again later."` | Request failure toast message |
 | `dialFileManager.itemDeletedSuccessfully` | `"Item deleted successfully"` | Single-item success toast title |
 | `dialFileManager.itemsDeletedSuccessfully` | `"Items deleted successfully"` | Multi-item success toast title |
@@ -335,12 +320,12 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 | `dialFileManager.someItemsNotDeleted` | `"{{files}}{{rest}} were not deleted. Please try again."` | Failed-items toast message |
 | `dialFileManager.andOtherItems` | `" and {{count}} other items"` | Failed-items overflow suffix |
 
-`buttons.cancel` already exists and is reused.
+The Delete action label, the confirm button, and Cancel reuse `buttons.delete` / `buttons.cancel`; the "Deleting…" overlay label and the "Cannot be undone" bullet reuse `basic.deletingStatus` / `basic.consequenceCannotBeUndone`, shared with every other delete confirmation. `dialFileManager.deleteConfirmBodyMultiple` and `dialFileManager.deleteConfirmBodyItems` are still present in `en.json` and in `DialFileManagerI18nKeys` but no component reads them any more.
 
 #### Scenario: Delete copy is fully translated
 
 - **WHEN** the delete action, its confirmation popup, and its result toasts are rendered
-- **THEN** each string resolves through one of the listed `dialFileManager.*` keys, with Cancel reusing `buttons.cancel`
+- **THEN** each string resolves through one of the listed `dialFileManager.*` keys, with Delete, Cancel, the in-flight label, and the "Cannot be undone" bullet reusing the shared `buttons.*` / `basic.*` keys
 
 ---
 

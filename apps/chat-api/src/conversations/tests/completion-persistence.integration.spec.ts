@@ -39,6 +39,7 @@ describe('completion persistence over HTTP', () => {
   let coreTime: number;
   let writes: { body: ConversationResponseDto; authorization?: string }[];
   let terminalEvents: GenerationTerminalEvent[];
+  let coreChunks: unknown[];
   const tokenExpiresAt = 120;
   const payload = {
     id: 'response-1',
@@ -67,6 +68,7 @@ describe('completion persistence over HTTP', () => {
     coreTime = 0;
     writes = [];
     terminalEvents = [];
+    coreChunks = [payload];
     stored = {
       id: 'bucket/test-path',
       folderId: 'bucket',
@@ -108,7 +110,9 @@ describe('completion persistence over HTTP', () => {
           terminalEvents.push(event),
         );
         res.setHeader('Content-Type', 'text/event-stream');
-        res.write('data: ' + JSON.stringify(payload) + '\n\n');
+        for (const chunk of coreChunks) {
+          res.write('data: ' + JSON.stringify(chunk) + '\n\n');
+        }
         if (terminalStatus === 401) coreTime = tokenExpiresAt;
         res.end('data: [DONE]\n\n');
         return;
@@ -261,5 +265,42 @@ describe('completion persistence over HTTP', () => {
     expect(response.text).not.toContain('conversation_save_failed');
     expect(writes).toHaveLength(2);
     expect(terminalEvents).toEqual([{ type: 'done' }]);
+  });
+
+  it('persists parent references sent only on the opening delta of each sparse child', async () => {
+    const stageChunk = (stages: Record<string, unknown>[], content = '') => ({
+      id: 'response-1',
+      choices: [{ index: 0, delta: { content, custom_content: { stages } } }],
+    });
+    coreChunks = [
+      stageChunk([{ index: 4, name: 'Plan' }], 'Nested answer'),
+      stageChunk([
+        { index: 7, name: 'Search', parent_stage_index: 4 },
+        { index: 9, name: 'Read', parent_stage_index: 4 },
+      ]),
+      stageChunk([
+        { index: 7, content: 'found', status: 'completed' },
+        { index: 9, status: 'failed' },
+      ]),
+      stageChunk([{ index: 4, status: 'completed' }]),
+    ];
+
+    const response = await complete();
+
+    expect(response.text).toContain('"parent_stage_index":4');
+    expect(terminalEvents).toEqual([{ type: 'done' }]);
+    const stages = stored.messages.at(-1)?.custom_content?.stages as
+      Record<string, unknown>[] | undefined;
+    expect(stages).toEqual([
+      { index: 4, name: 'Plan', status: 'completed' },
+      {
+        index: 7,
+        name: 'Search',
+        parent_stage_index: 4,
+        content: 'found',
+        status: 'completed',
+      },
+      { index: 9, name: 'Read', parent_stage_index: 4, status: 'failed' },
+    ]);
   });
 });

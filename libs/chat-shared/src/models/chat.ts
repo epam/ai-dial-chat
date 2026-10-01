@@ -197,6 +197,14 @@ export interface Stage {
    * Rendered only when present — never inferred from `name`.
    */
   tag?: string;
+  /**
+   * `index` of the stage that produced this one, in the same message's stage
+   * array. In a streaming delta it names the parent's streaming `index` and is
+   * sent only on the chunk that opens the child; in a complete non-streaming
+   * array without indexes it names the parent's array position. Absent for a
+   * top-level stage; `0` is a valid parent.
+   */
+  parent_stage_index?: number;
 }
 
 /** A single LangChain-style tool-call request emitted by the model, present on a `ToolStateMessage` with `type: 'ai'`. */

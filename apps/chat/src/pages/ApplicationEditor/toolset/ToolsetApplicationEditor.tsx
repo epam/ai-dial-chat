@@ -100,10 +100,7 @@ const ToolsetApplicationEditor: FC = () => {
 
   const routeToolsetId = searchParams.get(ToolsetEditorQuery.Id) ?? '';
   const isEditMode = Boolean(routeToolsetId);
-  const returnUrl = useMemo(() => {
-    const raw = searchParams.get(ToolsetEditorQuery.ReturnUrl);
-    return raw?.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.Catalog;
-  }, [searchParams]);
+  const returnUrl = ROUTES.Catalog;
 
   const [initialForm, setInitialForm] = useState<ToolsetFormData | undefined>(
     undefined,
@@ -313,7 +310,7 @@ const ToolsetApplicationEditor: FC = () => {
         descriptionTooLong: t(EditorI18nKeys.FieldTooLong, {
           count: ENTITY_DESCRIPTION_MAX_LENGTH,
         }),
-        versionInvalid: t(ToolsetEditorI18nKeys.VersionInvalid),
+        versionInvalid: t(EditorI18nKeys.VersionInvalid),
         endpointRequired: t(ToolsetEditorI18nKeys.EndpointRequired),
         endpointInvalid: t(ToolsetEditorI18nKeys.EndpointInvalid),
         keyHeaderRequired: t(ToolsetEditorI18nKeys.KeyHeaderRequired),

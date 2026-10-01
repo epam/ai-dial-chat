@@ -5,13 +5,17 @@
 The Custom App editor page: its settings form, create and edit flows, validation, and the loading and saving overlays.
 ## Requirements
 ### Requirement: Custom App editor page
-The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHeader` and a new `CustomAppEditorView`. The editor has two steps: General and Settings. The General step reuses `GeneralForm`, imported from `@epam/ai-dial-toolset-editor` (the toolset-editor lib exports it precisely so non-toolset editors can share the Metadata field set). The Settings step renders `CustomAppSettingsForm`. The editor supports both **create** and **edit** modes; edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.
+The system SHALL render the Custom App editor through the generic `ApplicationEditorPage` with `kind = ApplicationEditorKind.CustomApp` (see `application-editor-registry`), on the unchanged route `ROUTES.CustomAppEditor`.
 
-`CustomAppEditor`'s page root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`flex-1` growth, not `size-full`/`h-full`), matching `AppsEditor` and `ToolsetEditor` — see the "Apps-editor page renders two steps" requirement in `app-editor-flow` for why `flex-1` is required under the mobile-only global `Header`. `CustomAppEditorView`'s own root, in turn, SHALL use `className="flex h-full min-h-0"` (`h-full`, not `flex-1`): its parent (`CustomAppEditor`'s `<div className="size-full">` content wrapper) is a plain block element, not a flex container, so `flex-1` there would have no effect and the view would fall back to content-based (`auto`) height, leaving its `shrink-0` Cancel/Next footer un-pinned from the bottom of the viewport instead of sitting flush against it.
+The editor is a single page with the shared `EntityEditor` layout:
 
-#### Scenario: Bottom Cancel/Next buttons stay pinned to the viewport bottom
-- **WHEN** the General step is shown and its content is shorter than the available height
-- **THEN** the Cancel/Next button row still renders flush against the bottom of the viewport, not immediately below the form content
+- **Header.** A back arrow and the title `customApp.createTitle` ("Create custom app") or `customApp.editTitle` ("Edit custom app"). Cancel and a Create/Save button sit at the inline end.
+- **Metadata section (left).** The shared `MetadataForm`: Avatar, Name*, Version, Description, Locales, Tags. The Name and Description placeholders come from `customApp.general.*`.
+- **Setup section (right).** `CustomAppSetup`, with the four fields specified in "CustomAppSettingsForm fields".
+
+The editor SHALL NOT render a step indicator, a Next button or a footer button bar on desktop. The editor supports both **create** and **edit** modes. Edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.
+
+Clicking Create or Save SHALL open the existing save `ConfirmationPopup` (`customApp.saveConfirm*`) before sending the request (`ApplicationCreateStrategy.AllAtOnce`).
 
 #### Scenario: Navigate to custom app editor (create)
 - **WHEN** user clicks "Custom App" in the catalog
@@ -21,13 +25,13 @@ The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHead
 - **WHEN** user clicks the Edit button on a schema-less custom app in the catalog and `OverlayFeature.CustomApps` is enabled
 - **THEN** the app navigates to the Custom App Editor with `id=<applicationId>` (edit mode)
 
-#### Scenario: General step shown first
-- **WHEN** the editor opens
-- **THEN** the General step is active and `GeneralForm` is rendered
+#### Scenario: Metadata and Setup visible together
+- **WHEN** the editor opens at desktop width
+- **THEN** the "Metadata" section with the shared fields and the "Setup" section with Features data, Attachment types, Max attachments number and Chat completion URL are visible at the same time, with no step navigation
 
-#### Scenario: Settings step renders custom form
-- **WHEN** user proceeds to the Settings step
-- **THEN** `CustomAppSettingsForm` is rendered with four fields: Features data, Attachment types, Max attachments number, Chat completion URL
+#### Scenario: Sections stack on mobile
+- **WHEN** the editor opens at mobile width
+- **THEN** Metadata renders above Setup, and Cancel/Create render in the bottom action bar
 
 ### Requirement: CustomAppSettingsForm fields
 The `CustomAppSettingsForm` SHALL contain exactly four fields rendered in this order:
@@ -85,30 +89,34 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **THEN** the create request body carries no `type` field and no `application_type_schema_id`
 
 ### Requirement: General step validation — name and version
-`CustomAppEditor` SHALL validate the General step through `validateDeploymentCreationFields` from `@epam/ai-dial-builder-form`, passing `validateVersionPattern: SEMVER_VERSION_PATTERN`, and translate its codes with `translateDeploymentCreationErrors` (`apps/chat/src/utils/entity-field-validation.ts`). The `name` field is required, at most 256 characters, and free of control characters. The `description` field is at most 2000 characters. The `version` field is checked against the shared `DeploymentCreationForm`'s exported `SEMVER_VERSION_PATTERN`, which is stricter than that library's default character-set-only version pattern: a non-empty version must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. A too-long or control-character error SHALL additionally appear as soon as the value changes (see `entity-field-limits`). The Next button SHALL stay disabled while any General field is invalid. The version-invalid error message SHALL be `"Version format is invalid (example: 0.0.1)"` (`appsEditor.generalForm.versionInvalid`).
+`CustomAppEditor` SHALL validate metadata through `useMetadataForm` with `validateVersionPattern: SEMVER_VERSION_PATTERN`. `name` is required. A non-empty version must be a SemVer 2.0.0 version (e.g. `1.0.0`, `1.0.0-beta`, `1.0.0+build`), the rule DIAL Admin applies.
+
+Each field's error SHALL appear once that field has been touched (on blur), independently of the other field. All errors SHALL appear on a submit attempt. The primary button SHALL NOT be disabled for validation reasons. Instead, a submit attempt with invalid metadata SHALL show the errors, focus the first invalid field and send no request.
+
+The version-invalid error message SHALL be `"Version must follow semantic versioning (e.g., 1.0.0)"` (`editor.versionInvalid`).
 
 #### Scenario: Name required error on blur
 - **WHEN** the Name field is blank and loses focus
 - **THEN** a name-required error is shown under the Name field
 
 #### Scenario: Version format error on blur
-- **WHEN** the Version field contains a value that is not entirely dot-separated numeric segments (e.g. contains letters) and loses focus
-- **THEN** a version-invalid error ("Version format is invalid (example: 0.0.1)") is shown under the Version field
+- **WHEN** the Version field contains a value that is not SemVer 2.0.0 (e.g. `1.2` or `abc`) and loses focus
+- **THEN** a version-invalid error ("Version must follow semantic versioning (e.g., 1.0.0)") is shown under the Version field
 
-#### Scenario: Over-long name shows while typing
-- **WHEN** the user types a 257th character into the Name field
-- **THEN** "Use 256 characters or fewer." (`editor.fieldTooLong`) is shown under the Name field without waiting for blur
+#### Scenario: Pre-release and build metadata are accepted
+- **WHEN** the Version field contains `1.0.0-beta` or `1.0.0+build` and loses focus
+- **THEN** no version error is shown
 
-#### Scenario: Next disabled while General step invalid
-- **WHEN** the Name, Description or Version field currently holds an invalid value
-- **THEN** the Next button is disabled
+#### Scenario: Submit attempt with invalid metadata
+- **WHEN** the Name or Version field holds an invalid value and the user clicks Create
+- **THEN** the errors are shown, focus moves to the first invalid field, and no request is sent
 
 ### Requirement: Save validation — name required
-`CustomAppEditor` SHALL re-check that `name` is filled when Save is activated from any step, and SHALL send no request while it is blank.
+The name-required check SHALL be performed once, by `useMetadataForm`, and SHALL NOT be duplicated in the page. Activating Create or Save while `name` is blank SHALL send no request.
 
-#### Scenario: Saving with a blank name returns to the General step
+#### Scenario: Saving with a blank name
 - **WHEN** user clicks Save and `name` is blank
-- **THEN** the editor redirects to the General step and shows a name-required error; no API call is made
+- **THEN** a name-required error is shown under Name, focus moves to Name, and no API call is made
 
 ### Requirement: Edit mode — load settings from backend
 When opening the editor in edit mode, `CustomAppEditor` SHALL pre-populate all Settings fields from the deployment details returned by `GET /api/v1/deployments/:id/details`.
@@ -154,7 +162,7 @@ On save in edit mode, `CustomAppEditor` SHALL call `PATCH /api/v1/applications/:
 
 ### Requirement: `UpdateApplicationBodyDto` — settings fields
 `UpdateApplicationBodyDto` SHALL accept the following optional settings fields:
-- `version` — string matching `/^[a-zA-Z0-9._-]+$/`
+- `version` — a SemVer 2.0.0 string matching `SEMVER_VERSION_PATTERN` (`apps/chat-api/src/common/validators/semver-version.pattern.ts`)
 - `endpoint` — URL string (protocol required, TLD not required)
 - `features` — `Record<string, unknown>` object
 - `inputAttachmentTypes` — `string[]`
@@ -208,4 +216,3 @@ Today a successful save only navigates away, so a user who saves and lands back 
 
 - **WHEN** the create or save request fails
 - **THEN** the existing error notification (with the API message and trace id) is shown, the editor stays open, and no success notification is raised
-

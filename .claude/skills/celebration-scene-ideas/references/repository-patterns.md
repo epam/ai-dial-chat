@@ -34,6 +34,16 @@ Check current pools and durations in:
 - `libs/celebrations/src/halloween/event.tsx` and `libs/celebrations/src/halloween/constants/halloween.ts`.
 - `libs/celebrations/src/new-year/event.ts`: existing Snow, Confetti and Sleigh scenes; new ideas should add a distinct action.
 
+## Lottie example
+
+The New Year gift-wrapping implementation uses local vector art and one scene-local Lottie SVG timeline. Its presence in source does not mean the current event pool selects it. Read these paths relative to the repository root:
+
+- `libs/celebrations/src/new-year/components/NewYearGiftWrapping/NewYearGiftWrapping.tsx`: activation, reduced-motion/static fallback and interruption.
+- `libs/celebrations/src/new-year/utils/gift-wrapping-composition.ts` and `gift-wrapping-rig.ts`: measured stage, shared character geometry, native vector shapes and timed props.
+- `libs/celebrations/src/new-year/utils/gift-wrapping-player.ts` and `gift-wrapping-animation.ts`: dynamic light-player import, bounded readiness, playback and cleanup.
+
+Use this example when a proposed scene benefits from a single authored character timeline. It does not imply that Lottie fits every DOM interaction or removes the need for browser profiling.
+
 ## Available element roles
 
 `CelebrationAnchors` includes `composer`, `composerAddCluster`, `composerModelSelector`, `starterList`, `historyContainer`, `historyRowLink` and `welcomeRegion`. The first five are class names; the last two are selectors. Scenes find headings and small buttons within these regions and check their eligibility; they are not separate guaranteed anchors.

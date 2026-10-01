@@ -88,7 +88,7 @@ const ConversationPanelMenu: FC<Props> = ({
               label: t(ConversationExportI18nKeys.ExportAllLabel),
               icon: (
                 <IconFileArrowRight
-                  size={DIAL_ICON_SIZE.SM}
+                  size={DIAL_ICON_SIZE.MD}
                   className="text-secondary"
                   stroke={DIAL_KIT_ICON_STROKE}
                 />

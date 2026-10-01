@@ -5,7 +5,7 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
-import { lazy, type FC, memo, type ReactNode, Suspense } from 'react';
+import { lazy, type FC, memo, type ReactNode, Suspense, useMemo } from 'react';
 import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { useCodeCopy } from '../../../hooks/useCodeCopy';
 import { CodeBlockTheme } from '../../../types/code-editor';
@@ -15,6 +15,7 @@ import {
   getFileExtensionForLanguage,
 } from '../../../utils/file-download';
 import { mergeClasses } from '../../../utils/merge-class';
+import { isSyntaxHighlightingAllowed } from '../../../utils/syntax-highlighting';
 import styles from './CodeBlock.module.scss';
 import { restrainedSyntaxTheme } from './syntax-theme';
 
@@ -103,12 +104,16 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     colors,
   }) => {
     const { isCopied, copy } = useCodeCopy(value);
+    const canHighlight = useMemo(
+      () => isSyntaxHighlightingAllowed(value),
+      [value],
+    );
     const isLightTheme = theme === CodeBlockTheme.Light;
     const handleDownload = () => {
       downloadTextFile(value, `code.${getFileExtensionForLanguage(language)}`);
     };
-    /* Rendered for language-less blocks, and as the Suspense fallback while
-     * the syntax-highlighting engine loads for a language-tagged block. */
+    /* Rendered for language-less or oversized blocks, and as the Suspense
+     * fallback while the syntax-highlighting engine loads. */
     const plainCode = (
       <pre className="p-4">
         <code className={mergeClasses('whitespace-pre', codeClassName)}>
@@ -201,7 +206,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
           )}
           dir="ltr"
         >
-          {language ? (
+          {language && canHighlight ? (
             <Suspense fallback={plainCode}>
               <LazySyntaxHighlighter
                 language={language}

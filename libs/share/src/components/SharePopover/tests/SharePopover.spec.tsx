@@ -130,7 +130,9 @@ describe('SharePopover', () => {
       />,
     );
 
-    const trigger = screen.getByRole('button', { name: 'Can edit' });
+    const trigger = screen.getByRole('button', {
+      name: 'Can edit',
+    });
     expect(trigger).toBeTruthy();
 
     await user.click(trigger);
@@ -371,7 +373,9 @@ describe('SharePopover', () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 
     const qrButton = screen.getByRole('button', { name: 'QR' });
-    const accessTrigger = screen.getByRole('button', { name: 'Can view' });
+    const accessTrigger = screen.getByRole('button', {
+      name: 'Can view',
+    });
     const linkInput = screen.getByRole('textbox', { name: 'Share link' });
     const copyButton = screen.getByRole('button', { name: 'Copy' });
 

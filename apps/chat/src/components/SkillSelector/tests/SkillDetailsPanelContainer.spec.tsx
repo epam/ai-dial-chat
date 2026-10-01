@@ -1,6 +1,12 @@
+import {
+  AttachmentCanvasProvider,
+  AttachmentContentType,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { useFavoriteApplications } from '../../../context/FavoriteApplicationsContext';
@@ -47,6 +53,39 @@ const AUTHORITATIVE_METADATA: SkillMetadataItemDto = {
 const makeManifestResponse = (body: string) =>
   new Response(body, { headers: { 'content-length': String(body.length) } });
 
+const ConversationPreviewHarness = ({ loading }: { loading: boolean }) => {
+  const [skillId, setSkillId] = useState<string | null>(null);
+  const { isOpen, openCanvas, openCanvasLoading } = useAttachmentCanvas();
+
+  return (
+    <>
+      <button
+        onClick={() =>
+          loading
+            ? openCanvasLoading('generated.txt')
+            : openCanvas(
+                {
+                  type: AttachmentContentType.PlainText,
+                  text: 'Generated file',
+                },
+                'generated.txt',
+              )
+        }
+      >
+        Preview attachment
+      </button>
+      {isOpen && <div role="region" aria-label="Attachment preview" />}
+      <button onClick={() => setSkillId(SPARSE_SHARED_SKILL.url)}>
+        View Details
+      </button>
+      <SkillDetailsPanelContainer
+        skillId={skillId}
+        onClose={() => setSkillId(null)}
+      />
+    </>
+  );
+};
+
 describe('SkillDetailsPanelContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -92,6 +131,7 @@ describe('SkillDetailsPanelContainer', () => {
         skillId={SPARSE_SHARED_SKILL.url}
         onClose={vi.fn()}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     await waitFor(() =>
@@ -108,4 +148,31 @@ describe('SkillDetailsPanelContainer', () => {
     ).toBeTruthy();
     expect(screen.getByText('jane.doe@example.com')).toBeTruthy();
   });
+
+  it.each([false, true])(
+    'closes an attachment preview when View Details opens (loading: %s)',
+    async (loading) => {
+      const user = userEvent.setup();
+      render(<ConversationPreviewHarness loading={loading} />, {
+        wrapper: AttachmentCanvasProvider,
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Preview attachment' }),
+      );
+      expect(
+        screen.getByRole('region', { name: 'Attachment preview' }),
+      ).toBeTruthy();
+
+      await user.click(screen.getByRole('button', { name: 'View Details' }));
+
+      expect(await screen.findByRole('tab', { name: 'Overview' })).toBeTruthy();
+      expect(
+        screen.queryByRole('region', {
+          name: 'Attachment preview',
+          hidden: true,
+        }),
+      ).toBeNull();
+    },
+  );
 });

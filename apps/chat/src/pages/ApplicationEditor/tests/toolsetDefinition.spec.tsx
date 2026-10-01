@@ -222,7 +222,6 @@ const renderPage = (initialEntry: string = ROUTES.ToolsetEditor) =>
           }
         />
         <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-        <Route path="/previous" element={<div>Previous screen</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -295,10 +294,10 @@ describe('ApplicationEditorPage — toolset', () => {
   it('leaves the editor when the edit target cannot be loaded', async () => {
     vi.mocked(toolsetsApi.getToolset).mockRejectedValue(new Error('missing'));
     renderPage(
-      `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}&returnUrl=%2Fprevious`,
+      `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
     );
 
-    expect(await screen.findByText('Previous screen')).toBeTruthy();
+    expect(await screen.findByText('Catalog')).toBeTruthy();
   });
 
   it('threads the translated labels and the app-owned OAuth handler into the lib editor', async () => {
@@ -486,8 +485,8 @@ describe('ApplicationEditorPage — toolset', () => {
     );
   });
 
-  it('returns to the requested screen when the save completes', async () => {
-    renderPage(`${ROUTES.ToolsetEditor}?returnUrl=%2Fprevious`);
+  it('returns to the catalog when the save completes', async () => {
+    renderPage();
 
     await user.click(
       await screen.findByRole('button', {
@@ -495,11 +494,11 @@ describe('ApplicationEditorPage — toolset', () => {
       }),
     );
 
-    expect(await screen.findByText('Previous screen')).toBeTruthy();
+    expect(await screen.findByText('Catalog')).toBeTruthy();
   });
 
-  it('falls back to the catalog route from an unsafe returnUrl when going back', async () => {
-    renderPage(`${ROUTES.ToolsetEditor}?returnUrl=//evil`);
+  it('returns to the catalog when going back', async () => {
+    renderPage();
 
     await user.click(
       await screen.findByRole('button', {

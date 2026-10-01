@@ -1,33 +1,33 @@
-import type { Stage } from '@epam/ai-dial-chat-shared';
-import { StageRow } from '../models/stage-grouping';
+import type { StageRow } from '../models/stage-grouping';
+import type { StageNode } from '../models/stage-tree';
 import { cleanStageName } from './stage-name';
 
-/** Groups consecutive stages with the same cleaned name into a `×N` group row; all others render as single rows. */
-export const groupStagesByName = (stages: Stage[]): StageRow[] => {
+/**
+ * Groups consecutive sibling nodes with the same cleaned name into a `×N`
+ * group row; all others render as single rows. Applied to one sibling list
+ * at a time, so equal names under different parents never share a group.
+ */
+export const groupStagesByName = (nodes: StageNode[]): StageRow[] => {
   const rows: StageRow[] = [];
   let index = 0;
 
-  while (index < stages.length) {
-    const stage = stages[index];
-    const cleanedName = cleanStageName(stage.name).name;
+  while (index < nodes.length) {
+    const node = nodes[index];
+    const cleanedName = cleanStageName(node.stage.name).name;
 
     let end = index + 1;
     while (
-      end < stages.length &&
-      cleanStageName(stages[end].name).name === cleanedName
+      end < nodes.length &&
+      cleanStageName(nodes[end].stage.name).name === cleanedName
     ) {
       end += 1;
     }
 
-    const run = stages.slice(index, end);
+    const run = nodes.slice(index, end);
     if (run.length > 1) {
-      rows.push({
-        key: stage.index,
-        name: cleanedName,
-        attempts: run,
-      });
+      rows.push({ key: node.stage.index, name: cleanedName, attempts: run });
     } else {
-      rows.push({ key: stage.index, stage });
+      rows.push({ key: node.stage.index, node });
     }
 
     index = end;

@@ -1,18 +1,20 @@
 import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconClockHour3 } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
-import styles from './ScheduledTaskDeleteModal.module.scss';
 
 interface Props {
   /** Whether the dialog is open. */
   open: boolean;
-  /** Display name of the task being deleted, shown in the identity row and the warning sentence. */
+  /** Display name of the task being deleted, shown in the identity card and the warning sentence. */
   taskName: string;
-  /** Whether the delete request is in flight; swaps the confirm label for a busy label and disables the actions. Defaults to `false`. */
+  /** Whether the delete request is in flight; shows a spinner, announces progress, and disables the actions. Defaults to `false`. */
   isDeleting?: boolean;
   /** Fired when the user confirms deletion. */
   onConfirm: () => void;
@@ -24,11 +26,11 @@ interface Props {
  * users-lose-access rows removed at product request. */
 const DELETE_CONSEQUENCE_KEYS = [
   ScheduledTasksI18nKeys.DetailDeleteConsequenceConversationsAccessible,
-  ScheduledTasksI18nKeys.DetailDeleteConsequenceCannotBeUndone,
+  BasicI18nKeys.ConsequenceCannotBeUndone,
 ] as const;
 
 /**
- * Delete-task confirmation dialog: the task's identity row, the warning
+ * Delete-task confirmation dialog: the task's identity card, the warning
  * sentence with the bolded task name, and the unordered consequences list.
  */
 const ScheduledTaskDeleteModal: FC<Props> = ({
@@ -43,8 +45,15 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
   return (
     <ScheduledTaskDeleteConfirmation
       open={open}
-      styles={{ popupClassName: styles.modal }}
       taskName={taskName}
+      icon={
+        <IconClockHour3
+          size={DIAL_ICON_SIZE.MD}
+          stroke={DIAL_KIT_ICON_STROKE}
+          aria-hidden
+        />
+      }
+      typeLabel={t(ScheduledTasksI18nKeys.TypeLabel)}
       title={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
       body={
         <Trans
@@ -58,7 +67,7 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
       consequences={DELETE_CONSEQUENCE_KEYS.map((key) => t(key))}
       cancelLabel={t(ButtonsI18nKeys.Cancel)}
       confirmLabel={t(ButtonsI18nKeys.Delete)}
-      pendingLabel={t(ScheduledTasksI18nKeys.DetailDeleteConfirmingLabel)}
+      pendingLabel={t(BasicI18nKeys.DeletingStatus)}
       isDeleting={isDeleting}
       onConfirm={onConfirm}
       onClose={onClose}

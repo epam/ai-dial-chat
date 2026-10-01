@@ -27,6 +27,10 @@ import {
   LOCALE_CODE_VALIDATION_MESSAGE,
 } from '../../common/validators/locale-code.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
+import {
+  SEMVER_VERSION_PATTERN,
+  SEMVER_VERSION_VALIDATION_MESSAGE,
+} from '../../common/validators/semver-version.pattern';
 
 export enum ToolsetTransport {
   Http = 'HTTP',
@@ -49,9 +53,7 @@ export enum ToolsetAuthType {
 const ENDPOINT_URL_PATTERN = /^https?:\/\/[^\s]+$/;
 const ENDPOINT_URL_MESSAGE = 'Must be a valid http(s) URL';
 
-const VERSION_PATTERN = /^[\w.+-]{1,64}$/;
-const VERSION_MESSAGE =
-  'Must contain only word characters, dots, hyphens, and plus signs (max 64 chars)';
+const VERSION_MAX_LENGTH = 64;
 
 export class ToolsetAuthSettingsBodyDto {
   @ApiProperty({ enum: ToolsetAuthType, example: ToolsetAuthType.None })
@@ -119,7 +121,10 @@ export class ToolsetBodyDto {
   @ApiPropertyOptional({ example: '0.0.1' })
   @IsString()
   @IsOptional()
-  @Matches(VERSION_PATTERN, { message: VERSION_MESSAGE })
+  @MaxLength(VERSION_MAX_LENGTH)
+  @Matches(SEMVER_VERSION_PATTERN, {
+    message: SEMVER_VERSION_VALIDATION_MESSAGE,
+  })
   version?: string;
 
   @ApiPropertyOptional({

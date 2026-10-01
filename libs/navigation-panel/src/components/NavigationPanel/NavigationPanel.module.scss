@@ -6,6 +6,33 @@
 .item {
   color: var(--np-item-text, var(--text-secondary, #57647a));
 
+  /* The glyph lifts slightly on hover/focus; the overshoot easing gives it
+     a light spring instead of a linear slide. */
+  svg {
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  &:hover svg,
+  a:focus-visible > & svg {
+    transform: translateY(-2px);
+  }
+
+  &:active svg {
+    transform: translateY(0);
+    transition-duration: 100ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transition: none;
+    }
+
+    &:hover svg,
+    a:focus-visible > & svg {
+      transform: none;
+    }
+  }
+
   /* Hover paints only the glyph: the button background stays unchanged
      unless a host opts in through `--np-item-hover-bg`. */
   &:not(.itemActive):hover {
@@ -60,4 +87,10 @@
 .item.itemFilled svg {
   fill: var(--np-item-active-icon, currentColor);
   stroke: none;
+}
+
+/* Without an `activeIcon`, the outline glyph is filled in place; the stroke
+   stays on so open paths (lines, clock hands) do not vanish. */
+.item.itemFilledOutline svg {
+  fill: var(--np-item-active-icon, currentColor);
 }

@@ -87,6 +87,13 @@ const ScheduledTaskEditPage: FC = () => {
   const [values, setValues] = useState<ScheduledTaskCreateFormValues | null>(
     null,
   );
+  /* Activity-window boundaries the form was hydrated with. The past-date rule
+   * exempts them, so an older task whose window already started stays editable
+   * while a boundary changed into the past is still rejected. */
+  const [originalWindowDates, setOriginalWindowDates] = useState<{
+    startDate?: string;
+    endDate?: string;
+  }>({});
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
@@ -134,6 +141,10 @@ const ScheduledTaskEditPage: FC = () => {
         }
         setTask(result);
         setValues({ minute: '0', ...mapped.values });
+        setOriginalWindowDates({
+          startDate: mapped.values.startDate,
+          endDate: mapped.values.endDate,
+        });
       } catch (err) {
         if (!cancelled.value) {
           if (getApiErrorStatus(err) === 404) {
@@ -206,6 +217,8 @@ const ScheduledTaskEditPage: FC = () => {
     const prepared = prepareScheduledTaskUpdateBody(values, {
       now: new Date(),
       isSkillsSupported,
+      originalStartDate: originalWindowDates.startDate,
+      originalEndDate: originalWindowDates.endDate,
     });
     if (!prepared.ok) {
       setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
@@ -249,6 +262,7 @@ const ScheduledTaskEditPage: FC = () => {
     }
   }, [
     values,
+    originalWindowDates,
     isSkillsSupported,
     showSuccessNotification,
     showErrorNotification,

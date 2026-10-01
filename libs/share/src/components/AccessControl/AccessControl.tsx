@@ -2,12 +2,12 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   type DropdownItem,
+  InlineSelect,
   MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconWorld } from '@tabler/icons-react';
-import { type CSSProperties, FC, type RefObject } from 'react';
+import { IconWorld } from '@tabler/icons-react';
+import { type CSSProperties, FC } from 'react';
 import { ShareLinkAccess } from '../../types/share';
 import styles from '../SharePopover/SharePopover.module.scss';
 
@@ -35,8 +35,6 @@ interface AccessControlProps {
   onAccessChange: (access: ShareLinkAccess[]) => void;
   /** Inline style for the menu panel, which renders in a portal outside the popover — the channel for its custom properties. */
   menuStyle?: CSSProperties;
-  /** Ref attached to the dropdown trigger button, so focus can return to it on close. */
-  triggerRef: RefObject<HTMLButtonElement | null>;
   /** CSS class applied to the primary row text. Defaults to `'dial-small-semi-text'`. */
   titleClassName?: string;
   /** CSS class applied to the secondary row text. Defaults to `'dial-small-text'`. */
@@ -58,7 +56,6 @@ export const AccessControl: FC<AccessControlProps> = ({
   onOpenChange,
   onAccessChange,
   menuStyle,
-  triggerRef,
   titleClassName = 'dial-small-semi-text',
   subtitleClassName = 'dial-small-text',
   accessTriggerLabelClassName = 'dial-small-semi-text',
@@ -79,7 +76,7 @@ export const AccessControl: FC<AccessControlProps> = ({
     className: styles.accessMenuItem,
   }));
 
-  const handleAccessItemClick = ({ key }: { key: string }) => {
+  const handleAccessSelect = ({ key }: { key: string }) => {
     onAccessChange(
       key === ShareLinkAccess.Edit
         ? [ShareLinkAccess.View, ShareLinkAccess.Edit]
@@ -121,49 +118,29 @@ export const AccessControl: FC<AccessControlProps> = ({
         </p>
       </div>
       {canEditAccess ? (
-        <Dropdown
-          matchReferenceWidth={false}
-          placement="bottom-end"
+        /* The pill is the kit trigger restyled: its border, fill and label
+           colour come from the popover's custom properties, and its open
+           border follows `aria-expanded`. Open state is controlled so the
+           popover can close the menu on Escape without closing itself. */
+        <InlineSelect
+          items={accessItems}
+          selectedKey={selectedAccess}
+          onSelect={handleAccessSelect}
           open={isOpen}
           onOpenChange={onOpenChange}
-          items={accessItems}
+          placement="bottom-end"
+          matchReferenceWidth={false}
           listClassName="min-w-[160px]"
           listStyle={menuStyle}
-          onItemClick={handleAccessItemClick}
-        >
-          <button
-            ref={triggerRef}
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={isOpen}
-            className={mergeClasses(
-              'flex h-10 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 outline-none',
-              styles.accessTriggerBtn,
-              isOpen && styles.accessTriggerBtnOpen,
-            )}
-          >
-            <span
-              className={mergeClasses(
-                styles.accessTriggerLabel,
-                accessTriggerLabelClassName,
-              )}
-            >
-              {selectedAccess === ShareLinkAccess.Edit
-                ? accessEditLabel
-                : accessViewLabel}
-            </span>
-            <IconChevronDown
-              size={DIAL_ICON_SIZE.MD}
-              stroke={DIAL_KIT_ICON_STROKE}
-              className={mergeClasses(
-                'shrink-0 transition-transform duration-150 rtl:scale-x-[-1]',
-                styles.accessTriggerChevron,
-                isOpen && 'rotate-180',
-              )}
-              aria-hidden
-            />
-          </button>
-        </Dropdown>
+          triggerClassName={mergeClasses(
+            'shrink-0 gap-1.5 whitespace-nowrap border',
+            styles.accessTriggerBtn,
+          )}
+          triggerLabelClassName={mergeClasses(
+            styles.accessTriggerLabel,
+            accessTriggerLabelClassName,
+          )}
+        />
       ) : (
         <span
           aria-label={accessAriaLabel}

@@ -41,6 +41,11 @@ export interface RawStage {
   tag?: string | null;
   /** Files produced or referenced by this stage. */
   attachments?: RawStageAttachment[] | null;
+  /**
+   * `index` of the parent stage (its array position in a complete unindexed
+   * array). Nullish means top level; `0` is a valid parent.
+   */
+  parent_stage_index?: number | null;
 }
 
 /**
@@ -79,7 +84,8 @@ const toStageAttachment = (
 /**
  * Returns a renderable `Stage` for one raw payload: `index` defaults to `0`,
  * `name` to `''`, an unrecognized `status` to `null` (still running), and
- * `content`/`tag`/`attachments` are passed through when present.
+ * `content`/`tag`/`attachments`/`parent_stage_index` are passed through when
+ * present (a parent of `0` included).
  */
 export const toStage = (stage: RawStage): Stage => ({
   index: stage.index ?? 0,
@@ -90,12 +96,18 @@ export const toStage = (stage: RawStage): Stage => ({
   ...(stage.attachments?.length && {
     attachments: stage.attachments.map(toStageAttachment),
   }),
+  ...(stage.parent_stage_index != null && {
+    parent_stage_index: stage.parent_stage_index,
+  }),
 });
 
 /**
- * Returns the normalized stages of a raw stage array or a message-like
- * payload (reading `custom_content.stages`, falling back to
- * `customContent.stages`), or `undefined` when there are none.
+ * Returns the normalized stages of a complete raw stage array or a
+ * message-like payload (reading `custom_content.stages`, falling back to
+ * `customContent.stages`), or `undefined` when there are none. An entry
+ * without an `index` takes its array position — the identity a complete
+ * non-streaming array's `parent_stage_index` refers to — while explicit
+ * (possibly sparse) indexes are kept. Not for partial stream deltas.
  */
 export const mapStages = (
   source: RawStage[] | RawStageSource | null | undefined,
@@ -106,5 +118,7 @@ export const mapStages = (
 
   if (!stages?.length) return undefined;
 
-  return stages.map(toStage);
+  return stages.map((stage, position) =>
+    toStage(stage.index == null ? { ...stage, index: position } : stage),
+  );
 };

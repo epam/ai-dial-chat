@@ -251,6 +251,7 @@ export interface UpstreamScheduleRun {
   start_time: string;
   end_time?: string | null;
   conversation_id?: string | null;
+  result?: ({ stage?: unknown } & Record<string, unknown>) | null;
 }
 
 const UPSTREAM_RUN_STATUS_MAP: Record<string, ScheduledTaskRunStatus> = {
@@ -273,15 +274,20 @@ const deriveDurationSeconds = (
 
 export const fromUpstreamRun = (
   upstream: UpstreamScheduleRun,
-): ScheduledTaskRunDto => ({
-  id: upstream.id,
-  status:
-    UPSTREAM_RUN_STATUS_MAP[upstream.status] ?? ScheduledTaskRunStatus.Missed,
-  startTime: upstream.start_time,
-  endTime: upstream.end_time,
-  durationSeconds: deriveDurationSeconds(
-    upstream.start_time,
-    upstream.end_time,
-  ),
-  conversationId: upstream.conversation_id ?? undefined,
-});
+): ScheduledTaskRunDto => {
+  const resultStage = upstream.result?.stage;
+
+  return {
+    id: upstream.id,
+    status:
+      UPSTREAM_RUN_STATUS_MAP[upstream.status] ?? ScheduledTaskRunStatus.Missed,
+    startTime: upstream.start_time,
+    endTime: upstream.end_time,
+    durationSeconds: deriveDurationSeconds(
+      upstream.start_time,
+      upstream.end_time,
+    ),
+    conversationId: upstream.conversation_id ?? undefined,
+    ...(typeof resultStage === 'string' ? { resultStage } : {}),
+  };
+};

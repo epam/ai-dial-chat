@@ -172,11 +172,11 @@ export interface CommandMenuContext {
   /** Character offset where the triggering word (prefix + query) starts in the textarea's current value. */
   caretPosition: number;
   /**
-   * Closes the menu. Pass `{ consumeQuery: true }` to also remove the trigger
-   * prefix and query from the textarea (the selection path — the `/query`
-   * text is never sent); the default close leaves the text untouched.
+   * Closes the menu. `{ consumeQuery: true }` also removes the trigger
+   * prefix and query from the textarea; `{ returnFocus: false }` skips
+   * refocusing the textarea (see the host's own doc for when to use it).
    */
-  close: (options?: { consumeQuery?: boolean }) => void;
+  close: (options?: { consumeQuery?: boolean; returnFocus?: boolean }) => void;
   /**
    * Id the menu puts on its `role="listbox"` element. The textarea references
    * it through `aria-controls` while the menu is open.

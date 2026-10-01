@@ -42,12 +42,6 @@ export const deploymentToMetadata = (
   ),
 });
 
-/** Returns a same-origin return path from a query value, or the fallback. */
-export const resolveReturnUrl = (
-  raw: string | null,
-  fallback: string,
-): string => (raw?.startsWith('/') && !raw.startsWith('//') ? raw : fallback);
-
 /** Returns the trimmed Metadata payload a quick app's embedded editor persists on save; carries `display_version`, never the backend `version`. */
 export const toTriggerSaveGeneral = (
   metadata: DeploymentCreationFormValues,

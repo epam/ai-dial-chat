@@ -106,12 +106,45 @@ describe('validateDeploymentCreationFields', () => {
     expect(errors.version).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
   });
 
-  it('accepts a dot-separated numeric version when a stricter pattern is passed', () => {
+  it.each([
+    '0.0.1',
+    '1.0.0',
+    '9999.0.9999',
+    '1.0.0-beta',
+    '1.0.0-beta.1',
+    '1.0.0-0.3.7',
+    '1.0.0-x-y-z.--',
+    '1.0.0+build',
+    '1.0.0+20130313144700',
+    '1.0.0-rc.1+build.5',
+  ])('accepts the SemVer 2.0.0 version %s', (version) => {
     const errors = validateDeploymentCreationFields(
-      { ...baseValues, version: '0.0.1' },
+      { ...baseValues, version },
       { validateVersionPattern: SEMVER_VERSION_PATTERN },
     );
     expect(errors.version).toBeUndefined();
+  });
+
+  it.each([
+    '1',
+    '1.2',
+    '1.0.0.0',
+    '01.0.0',
+    '1.00.0',
+    '9999.0000.09999',
+    'v1.0.0',
+    '1.0.0-',
+    '1.0.0-01',
+    '1.0.0-beta..1',
+    '1.0.0+',
+    '1.0.0+build+1',
+    '1.0.0_beta',
+  ])('rejects the non-SemVer version %s', (version) => {
+    const errors = validateDeploymentCreationFields(
+      { ...baseValues, version },
+      { validateVersionPattern: SEMVER_VERSION_PATTERN },
+    );
+    expect(errors.version).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
   });
 
   it('does not flag an empty version even when the pattern check is enabled', () => {

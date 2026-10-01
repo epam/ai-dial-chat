@@ -118,10 +118,25 @@ Clicking "View details" SHALL open the skill details side panel (next requiremen
 
 The "View details" action in a row's tooltip SHALL open a right-anchored side panel on the chat route showing the selected skill's details, composed from `DetailsPanel` exported by `@epam/ai-dial-catalog` (see the `skill-details-panel` delta) via a `SkillDetailsSidePanel` wrapper in `libs/skills`. The wrapper SHALL NOT wrap or mount the full `CatalogView` (no tab persistence, sort/filter, or page chrome). The host SHALL own the panel's open state and supply the `CatalogItem` (built with the existing `mapSkillToCatalogItem`), the details fetch (reusing the existing skill details resolution — manifest + file listing — not a duplicate), and close handling; the panel's content-first tab behavior for skills SHALL match the Catalog page's skill details. The panel SHALL render information-only — read-only (`isReadonly`, which withholds the favorite star and every mutating action: Share, Publish/Unpublish, Edit, Delete, "Remove from My List", "Revoke access", and the credentials actions) with the primary "Use in chat" action and Download also hidden. Selecting a skill SHALL stay with the favorites rows, the slash menu, the browse modal, and the Catalog page; favorite toggling SHALL stay with the favorites rows; the Catalog page's own `DetailsPanel` rendering SHALL keep its actions unchanged.
 
+The app-owned `SkillDetailsPanelContainer` SHALL close the global attachment canvas through `useAttachmentCanvas().closeCanvas` when a non-null skill is selected for details. This applies to "View details" from conversation skill mentions as well as the skill-selection UI, on both mobile and desktop, whether the attachment preview is displaying content or still loading. The details panel and its backdrop SHALL be visible without the previous file preview covering the panel. A mounted details container with no selected skill SHALL NOT close an attachment preview. This panel coordination SHALL remain in `apps/chat`, outside the reusable skill components.
+
 #### Scenario: Opening the side panel
 
 - **WHEN** the user clicks "View details" in a favorite row's tooltip
 - **THEN** the side panel opens anchored to the chat route's end edge, showing that skill's details with the content-first tabs and no action buttons
+
+#### Scenario: Opening skill details while a generated attachment is previewed
+
+- **GIVEN** a conversation contains a skill-generated attachment and its file preview is open
+- **WHEN** the user activates "View details" from a skill's tooltip in the conversation
+- **THEN** the attachment preview closes and the background darkens behind the visible skill details panel
+- **AND** the previous file preview does not cover the details content
+
+#### Scenario: Opening skill details while an attachment preview is loading
+
+- **GIVEN** the global attachment canvas is open in its loading state
+- **WHEN** the user activates "View details" for a skill
+- **THEN** the attachment canvas closes and its loading state clears as the skill details panel opens
 
 #### Scenario: Closing the side panel
 
@@ -266,7 +281,11 @@ The dropdown SHALL stay open while the message continues to match a `/` followed
 
 Pasting into the text area SHALL trigger the dropdown by the resulting value, not by the keystroke path: a paste made while the text area is empty whose result is exactly the trigger shape — the bare `/`, or `/` followed by a whitespace-free, slash-free query and nothing else — SHALL open the dropdown as if the same text had been typed: same query filter, same "Type to filter" empty-query hint for a bare `/`, same dismissal and selection rules. The paste SHALL insert its text as an ordinary paste; the trigger only opens the dropdown on top of the inserted text and SHALL NOT alter, trim, or consume it. Any paste whose result is not that exact shape — content containing whitespace after the query token (e.g. `/s sdf`), multiple lines, trailing text, or content not starting with `/` — SHALL be a regular paste that opens nothing. The paste trigger applies only when the text area was empty before the paste; pasting `/test` into an input that already holds text never opens the dropdown. A paste that brings the message into the trigger shape from a non-matching value re-enters the trigger for the dismissed-dropdown rule above: a dropdown dismissed earlier SHALL reopen when the user clears the input and pastes a fresh `/query`. This trigger lives in the generic `commandMenu` mechanism on `Input`, so it behaves identically on every input surface where the command menu is mounted — the new-conversation composer (main chat and AppsEditor preview) and the ongoing-conversation input.
 
-Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal. The Add-menu "Skills" item SHALL remain available alongside this entry point; selecting a favorite row, activating Browse, or opening View details from the Add menu SHALL likewise consume a `/query`-shaped run touching the caret position the Add menu was opened from — e.g. text left over from a slash-dropdown session the user dismissed with an outside click without reopening it — so that text is never left behind to be sent as an ordinary message.
+Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal, but SHALL NOT return focus to the text area: the generic `commandMenu` mechanism's `close({ consumeQuery, returnFocus })` option defaults `returnFocus` to `true` (the selection path above), but Browse SHALL pass `returnFocus: false`. Focusing the text area synchronously reruns the deferred (`requestAnimationFrame`) caret re-evaluation that decides whether the dropdown should be open — by design, the dropdown SHALL always show while the caret sits in a matching `/word` — and since the modal is about to take focus anyway via its own focus trap, refocusing the text area first only reopens the dropdown on top of the modal that is about to steal focus back. The Add-menu "Skills" item SHALL remain available alongside this entry point; selecting a favorite row, activating Browse, or opening View details from the Add menu SHALL likewise consume a `/query`-shaped run touching the caret position the Add menu was opened from — e.g. text left over from a slash-dropdown session the user dismissed with an outside click without reopening it — so that text is never left behind to be sent as an ordinary message.
+
+The consumed `/query` text SHALL be restored to the input if the "Use skill" browse modal is dismissed (X, Escape, or outside click) without a selection — from either entry point (slash dropdown or Add menu). A successful selection SHALL discard the saved text instead, since `insertAndPush` replaces it with the real `/{name}` mention. Restoring the text SHALL re-evaluate the caret's word and reopen the slash dropdown if it is again command-shaped at that position — the same re-evaluation a manual caret move or keystroke would trigger — since a purely programmatic draft change (unlike typing or clicking) does not otherwise reach that evaluation.
+
+The caret is not required to sit outside an already-selected skill's `/{name}` text to open "Use skill": both Browse entry points MAY consume an existing mention's own run exactly as they would a stray unconfirmed query, letting the user replace that skill by picking a different one from the modal. When the consumed run is an already-tracked mention rather than unconfirmed text, canceling SHALL restore it as a mention again — not as inert plain text — via `useSkillMentions`'s `restoreMention` (which re-registers the exact `{url, name}` anchor at the same position, distinct from `insertMention`'s new-selection path since it adds no trailing space and shifts no existing anchors beyond that one insertion). Both Browse call sites detect this by checking whether the consumed run's exact span already matches a tracked anchor before consuming it, since consuming through the normal diff-based `onDraftChange` path drops that anchor as an ordinary edit.
 
 #### Scenario: Typing "/" in an empty input
 
@@ -324,6 +343,45 @@ Selecting a row from the dropdown SHALL consume the slash text — the entire `/
 
 - **WHEN** the user picks a skill row in the slash dropdown (mouse or keyboard)
 - **THEN** the `/query` text is removed from the input, the dropdown closes, the skill becomes the input's selected skill rendered as `ChatSkill`, and focus is in the text area
+
+#### Scenario: Browse does not reopen the dropdown over the modal
+
+- **WHEN** the user activates Browse from the slash dropdown
+- **THEN** the `/query` text is removed, the dropdown closes and stays closed, and the "Use skill" browse modal renders with no frame where the dropdown reopens on top of it
+
+#### Scenario: Canceling the browse modal restores the consumed query
+
+- **WHEN** the user activates Browse (consuming `/query`) and then dismisses the modal without picking a skill
+- **THEN** `/query` reappears in the input at the same position, and the slash dropdown reopens over it
+
+#### Scenario: Selecting a skill discards the saved query instead of restoring it
+
+- **WHEN** the user activates Browse (consuming `/query`) and then picks a skill from the modal
+- **THEN** the input shows the selected skill's `/{name}` mention, not the original `/query` text
+
+#### Scenario: Catalog close immediately after selection preserves the committed mention
+
+- **GIVEN** Browse was opened from either the slash dropdown or the Add menu, consuming an unconfirmed `/query` or an existing tracked skill mention
+- **WHEN** the catalog reports a skill selection and then invokes its close callback in the same event, before the input re-renders
+- **THEN** the modal SHALL close with the selected skill's `/{name}` mention at the captured insertion position, and the consumed query or previous mention SHALL NOT be restored
+- **AND** surrounding text and other tracked mentions SHALL remain intact, the selected skills SHALL follow their order in the draft, and the caret override SHALL remain immediately after the inserted run, including any trailing space added by insertion
+
+#### Scenario: Repeated cancellation restores the consumed run only once
+
+- **GIVEN** Browse was opened from either entry point, consuming an unconfirmed `/query` or an existing tracked skill mention
+- **WHEN** the modal is canceled without a selection and its close callback is invoked more than once before the input re-renders
+- **THEN** the consumed run SHALL be restored exactly once at its original position, with a previously tracked mention restored as a mention
+- **AND** the original draft text and ordered skill references SHALL be preserved without duplicate text or mention anchors
+
+#### Scenario: Canceling Browse over an existing mention restores it as a mention, not plain text
+
+- **WHEN** the caret rests on or inside an already-selected skill's `/{name}` mention, the user activates Browse (from either entry point), and then cancels the modal
+- **THEN** the mention reappears unchanged — still rendered as `ChatSkill`, still present in `custom_content.skills`, not inert plain text
+
+#### Scenario: Selecting from Browse over an existing mention replaces it
+
+- **WHEN** the caret rests on an already-selected skill's `/{name}` mention, the user activates Browse, and picks a different skill from the modal
+- **THEN** the original mention is replaced by the newly selected skill's `/{name}` mention
 
 #### Scenario: Add-menu selection consumes a stray query left by an outside click
 

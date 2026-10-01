@@ -10,6 +10,16 @@ const t = ((key: string) => key) as Parameters<
   typeof validateScheduledTaskForm
 >[1];
 
+/* `validateScheduledTaskForm` reads the real clock, so window boundaries are
+   built runtime-relative — a hardcoded date becomes a past date the day after
+   it is written. */
+const localDateOnly = (offsetDays: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
 const baseValues: ScheduledTaskCreateFormValues = {
   displayName: 'Daily summary',
   repeat: ScheduledTaskRepeat.OneTime,
@@ -183,12 +193,36 @@ describe('validateScheduledTaskForm', () => {
       {
         ...baseValues,
         repeat: ScheduledTaskRepeat.Daily,
-        startDate: '2026-08-31',
-        endDate: '2026-08-01',
+        startDate: localDateOnly(10),
+        endDate: localDateOnly(5),
       },
       t,
     );
     expect(errors.endDate).toBeDefined();
+  });
+
+  it('rejects a startDate earlier than today', () => {
+    const errors = validateScheduledTaskForm(
+      {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        startDate: localDateOnly(-1),
+      },
+      t,
+    );
+    expect(errors.startDate).toBe(ScheduledTasksI18nKeys.CreateStartDateInPast);
+  });
+
+  it('rejects an endDate earlier than today', () => {
+    const errors = validateScheduledTaskForm(
+      {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        endDate: localDateOnly(-1),
+      },
+      t,
+    );
+    expect(errors.endDate).toBe(ScheduledTasksI18nKeys.CreateEndDateInPast);
   });
 
   it('accepts a valid recurring schedule with a bounded activity window', () => {
@@ -196,8 +230,21 @@ describe('validateScheduledTaskForm', () => {
       {
         ...baseValues,
         repeat: ScheduledTaskRepeat.Daily,
-        startDate: '2026-08-01',
-        endDate: '2026-08-31',
+        startDate: localDateOnly(1),
+        endDate: localDateOnly(10),
+      },
+      t,
+    );
+    expect(errors).toEqual({});
+  });
+
+  it('accepts a window starting on today', () => {
+    const errors = validateScheduledTaskForm(
+      {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        startDate: localDateOnly(0),
+        endDate: localDateOnly(10),
       },
       t,
     );
@@ -211,8 +258,8 @@ describe('validateScheduledTaskForm', () => {
         repeat: ScheduledTaskRepeat.Hourly,
         time: '',
         minute: '0',
-        startDate: '2026-08-01',
-        endDate: '2026-08-31',
+        startDate: localDateOnly(1),
+        endDate: localDateOnly(10),
       },
       t,
     );
