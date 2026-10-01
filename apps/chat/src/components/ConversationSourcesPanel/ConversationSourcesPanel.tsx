@@ -63,6 +63,7 @@ import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachme
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskSkillDisplayName } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayName';
+import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   ActiveScheduledTaskDetailState,
@@ -93,8 +94,13 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { language } = useLanguage();
   const { handleClose, isOpen } = useSourcesSidebar();
   const { messages, conversationModelId } = useSourcesSidebarData();
-  /* Nothing reads the derived lists while the panel is closed, so a stream
-     chunk does not walk every message for an invisible panel. */
+  /*
+   * The panel mounts on every `/conversations/*` route even while closed, so
+   * this is the one mount point where the sidebar's reset rule runs wherever
+   * the sidebar can be open (the reset keys on the sidebar's subject, not the
+   * route param — see the hook's JSDoc).
+   */
+  useCloseSourcesSidebarOnSubjectChange();
   const { uploaded, generated, sources } = useConversationSources(
     isOpen ? messages : EMPTY_MESSAGES,
     attachmentDisplayResolvers,

@@ -121,9 +121,13 @@ vi.mock('../../../context/NotificationContext');
 vi.mock('../../../context/overlay/OverlayContext', () => ({
   useOptionalOverlay: () => undefined,
 }));
+const sourcesSidebarMocks = vi.hoisted(() => ({
+  handleClose: vi.fn(),
+}));
+
 vi.mock('../../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => ({
-    handleClose: vi.fn(),
+    handleClose: sourcesSidebarMocks.handleClose,
     setMessages: vi.fn(),
     setConversationModelId: vi.fn(),
   }),
@@ -382,6 +386,17 @@ describe('ConversationPage — sidebar ordering on new activity', () => {
       1,
       'gpt-4o',
     );
+  });
+});
+
+describe('ConversationPage — leaving the conversations routes', () => {
+  it('closes the sources sidebar when the page unmounts', () => {
+    const { unmount } = render(<ConversationPage />);
+
+    sourcesSidebarMocks.handleClose.mockClear();
+    unmount();
+
+    expect(sourcesSidebarMocks.handleClose).toHaveBeenCalledOnce();
   });
 });
 
