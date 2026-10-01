@@ -25,6 +25,12 @@ import {
  * factories (`ooxml-highlight-surfaces.ts`) were moved behind the same dynamic
  * import as the format they serve, keeping them out of this closure.
  *
+ * It was re-measured again for the inline-HTML-preview CSP fix (Issue #9193):
+ * `HtmlContent` now hands `srcdoc` to a host document over `postMessage` and
+ * remounts the frame per content and per "View source" round-trip. That logic
+ * runs on every HTML preview mount, so it is eager-path code; the closure grew
+ * to 55,239 / 16,093 and both ceilings were reset to ~20% headroom.
+ *
  * `dist/index.css` grew from 4,015 to 8,888 bytes when the build started
  * appending the Tailwind utilities this package's components reference
  * (tools/vite-lib-tailwind-utilities.mjs). Those bytes are layout the
@@ -32,7 +38,7 @@ import {
  * rendered them unpositioned.
  *
  * Measured on this change's final build (raw / gzip):
- *   entry static JS closure  46,734 / 13,310
+ *   entry static JS closure  55,239 / 16,093
  *   dist/index.css             8,888 /  2,784
  *   dist/PdfContent-*.js        7,012 /  2,824
  *   dist/PdfContent.css        16,398 /  4,540
@@ -54,11 +60,11 @@ describe('entry static JavaScript closure size budget', () => {
   );
 
   it('stays within the eager-entry raw size budget', () => {
-    expect(raw).toBeLessThanOrEqual(57_000);
+    expect(raw).toBeLessThanOrEqual(66_500);
   });
 
   it('stays within the eager-entry gzip size budget', () => {
-    expect(gzip).toBeLessThanOrEqual(16_000);
+    expect(gzip).toBeLessThanOrEqual(19_500);
   });
 });
 
