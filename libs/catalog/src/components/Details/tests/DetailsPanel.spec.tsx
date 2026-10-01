@@ -933,6 +933,7 @@ describe('DetailsPanel — Content file selector', () => {
   });
 });
 
+/* The panel is the kit `SideDrawer`, portalled into <body>, so preview text is read from there. */
 describe('DetailsPanel — file preview', () => {
   const files: CatalogContentTreeNode[] = [
     { type: CatalogContentNodeType.File, id: 'SKILL.md', name: 'SKILL.md' },
@@ -1010,7 +1011,7 @@ describe('DetailsPanel — file preview', () => {
       text: 'print(1)',
       language: 'python',
     } satisfies CatalogContentFilePreview);
-    const { container } = renderPanel({
+    renderPanel({
       item: skillWithFiles(),
       onLoadContentFile,
       onLoadContentFilePreview,
@@ -1019,7 +1020,9 @@ describe('DetailsPanel — file preview', () => {
     await openSelector();
     await userEvent.click(screen.getByText('run.py'));
 
-    await waitFor(() => expect(container.textContent).toContain('print(1)'));
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('print(1)'),
+    );
     expect(onLoadContentFilePreview).toHaveBeenCalledWith('run.py');
     expect(onLoadContentFile).not.toHaveBeenCalled();
   });
@@ -1036,7 +1039,7 @@ describe('DetailsPanel — file preview', () => {
               text: 'run.py body',
             } satisfies CatalogContentFilePreview),
       );
-    const { container } = renderPanel({
+    renderPanel({
       item: skillWithFiles(),
       onLoadContentFilePreview,
     });
@@ -1046,7 +1049,9 @@ describe('DetailsPanel — file preview', () => {
     await openSelector('analyzer.md');
     await userEvent.click(screen.getByText('run.py'));
 
-    await waitFor(() => expect(container.textContent).toContain('run.py body'));
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('run.py body'),
+    );
 
     analyzerDeferred.resolve({
       type: CatalogContentPreviewType.Text,
@@ -1056,9 +1061,9 @@ describe('DetailsPanel — file preview', () => {
       await Promise.resolve();
     });
 
-    expect(container.textContent).toContain('run.py body');
+    expect(document.body.textContent).toContain('run.py body');
 
-    expect(container.textContent).not.toContain('stale analyzer body');
+    expect(document.body.textContent).not.toContain('stale analyzer body');
   });
 
   it('discards a pending preview request when the panel switches to a different item', async () => {
@@ -1162,7 +1167,7 @@ describe('DetailsPanel — file preview', () => {
               text: 'run.py body',
             } satisfies CatalogContentFilePreview),
       );
-    const { container } = renderPanel({
+    renderPanel({
       item: skillWithFiles(),
       onLoadContentFilePreview,
     });
@@ -1172,7 +1177,9 @@ describe('DetailsPanel — file preview', () => {
     await openSelector('analyzer.md');
     await userEvent.click(screen.getByText('run.py'));
 
-    await waitFor(() => expect(container.textContent).toContain('run.py body'));
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('run.py body'),
+    );
 
     staleDeferred.resolve({
       type: CatalogContentPreviewType.Image,

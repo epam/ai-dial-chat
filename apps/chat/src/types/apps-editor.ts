@@ -3,15 +3,8 @@ import type { LocaleTextEntryDto } from '@epam/ai-dial-chat-api-client';
 import { type ToolsetCredentialsLevel } from '@epam/ai-dial-chat-hooks';
 
 export enum AppsEditorQuery {
-  Step = 'step',
   Schema = 'schema',
-  IsCreating = 'isCreating',
   AppId = 'appId',
-}
-
-export enum AppsEditorStep {
-  General = 'general',
-  Settings = 'settings',
 }
 
 export enum AppsEditorEvent {

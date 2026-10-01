@@ -2184,7 +2184,7 @@
             "description": "DIAL Core error"
           },
           "503": {
-            "description": "DIAL Core unreachable"
+            "description": "DIAL Core unreachable, or the conversation kept changing while it has a pending background answer; retry shortly"
           }
         },
         "summary": "Save (overwrite) a conversation by path",
@@ -2238,7 +2238,7 @@
             "description": "DIAL Core error"
           },
           "503": {
-            "description": "DIAL Core unreachable"
+            "description": "DIAL Core unreachable, or the conversation kept changing while it has a pending background answer; retry shortly"
           }
         },
         "summary": "Rename a conversation by path",
@@ -2439,7 +2439,7 @@
             "description": "Conversation not found"
           },
           "409": {
-            "description": "Another generation is already active for this conversation and principal"
+            "description": "Another generation is already active for this conversation and principal, or the conversation has a pending background answer (started by any instance or session)"
           },
           "502": {
             "description": "DIAL Core error"
@@ -2475,6 +2475,9 @@
           },
           "404": {
             "description": "No active generation found for this principal for the given path and generationId"
+          },
+          "503": {
+            "description": "The stopped state of a background generation could not be saved; the generation keeps running and Stop can be retried"
           }
         },
         "summary": "Stop an active generation",
@@ -2811,6 +2814,9 @@
           },
           "404": {
             "description": "Conversation not found"
+          },
+          "409": {
+            "description": "An answer in the conversation is still being generated in the background; publish after it finishes"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -4225,6 +4231,29 @@
           }
         },
         "summary": "Discard resources shared with the caller",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/html-preview-frame": {
+      "get": {
+        "operationId": "getHtmlPreviewFrame",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Static HTML preview bootstrap document",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Bootstrap document that renders in-memory HTML under the sandboxed preview CSP",
         "tags": ["files"]
       }
     },
@@ -10337,6 +10366,36 @@
           }
         }
       },
+      "BackgroundGenerationStatus": {
+        "type": "string",
+        "enum": ["pending", "completed", "stopped", "failed"],
+        "description": "pending while the job runs or its result is not saved yet; completed, stopped or failed once the final state is saved."
+      },
+      "BackgroundGenerationDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Client-supplied generation id of the request that started the background job; identifies this message across saves.",
+            "example": "2d0b6c8e-5f7a-4c1b-9e3d-1a2b3c4d5e6f"
+          },
+          "status": {
+            "description": "pending while the job runs or its result is not saved yet; completed, stopped or failed once the final state is saved.",
+            "example": "pending",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BackgroundGenerationStatus"
+              }
+            ]
+          },
+          "startedAt": {
+            "type": "number",
+            "description": "Server time (epoch ms) at which the pending placeholder was saved.",
+            "example": 1790000000000
+          }
+        },
+        "required": ["generationId", "status", "startedAt"]
+      },
       "ConversationMessageDto": {
         "type": "object",
         "properties": {
@@ -10368,8 +10427,16 @@
           },
           "responseId": {
             "type": "string",
-            "description": "DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. Diagnostic only — never used to resume a generation (previous_response_id/conversation are never sent).",
+            "description": "DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. On the stateless path it is diagnostic only; on the background path it is also the key used to recover, replay, stop and clean up the DIAL Core job. Never sent as previous_response_id/conversation.",
             "example": "dial-gpt-4o-3c1a7e6e-...-uuid"
+          },
+          "backgroundGeneration": {
+            "description": "Present only on an assistant message produced by a DIAL Core background Responses job. Server-owned: client saves cannot change it while its status is pending.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BackgroundGenerationDto"
+              }
+            ]
           },
           "deploymentId": {
             "type": "string",
@@ -10699,6 +10766,11 @@
             "type": "string",
             "description": "Conversation path of the active generation.",
             "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
+          "content": {
+            "type": "string",
+            "description": "Answer text the client has shown so far. Saved as the stopped answer of a background generation, whose text the backend never assembles; ignored for every other generation, whose answer the backend already holds.",
+            "maxLength": 1000000
           }
         },
         "required": ["generationId", "path"]

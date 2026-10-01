@@ -3,6 +3,8 @@ export enum ApplicationEditorKind {
   Toolset = 'toolset',
   CustomApp = 'custom-app',
   QuickApp = 'quick-app',
+  /** Schema-based application configured through a form rendered from its JSON schema. */
+  SchemaApp = 'schema-app',
 }
 
 /** How an application kind persists a new application. */

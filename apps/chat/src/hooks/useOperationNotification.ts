@@ -22,6 +22,8 @@ export interface OperationNotificationParams {
    * pairs whose copy has `_one`/`_other` variants, e.g. a multi-file download.
    */
   count?: number;
+  /** Display name of the application schema, required for `NotifiableEntity.SchemaApp`, whose copy names the schema. */
+  type?: string;
 }
 
 interface UseOperationNotificationResult {

@@ -1,0 +1,23 @@
+{
+  "themes": [
+    {
+      "id": "light",
+      "displayName": "Light",
+      "colors": {
+        "bg-layer-0": "#FCFCFC"
+      }
+    },
+    {
+      "id": "dark",
+      "displayName": "Dark",
+      "colors": {
+        "bg-layer-0": "#090D13"
+      }
+    }
+  ],
+  "images": {
+    "chat-logo-light": "chat-logo-light.svg",
+    "chat-logo-dark": "chat-logo-dark.svg",
+    "chat-favicon": "chat-favicon.png"
+  }
+}

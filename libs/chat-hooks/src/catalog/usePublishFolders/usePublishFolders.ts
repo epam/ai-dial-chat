@@ -90,9 +90,9 @@ export interface UsePublishFoldersResult {
    */
   onCreatePublishFolder: (parentPath: string[], name: string) => Promise<void>;
   /**
-   * Records `folderPath` as a publish destination the user has actually used,
-   * so it keeps appearing in the tree on later publishes. Call it after a
-   * successful publish.
+   * Records `folderPath` as the most recent publish destination (moving it to
+   * the front if already remembered), so it keeps appearing in the tree on
+   * later publishes. Call it after a successful publish.
    */
   rememberPublishFolder: (folderPath: string[]) => void;
   /** Heuristic write-access check for a folder path (see the TODO above). */
@@ -204,11 +204,17 @@ export const usePublishFolders = ({
       const storedKeys = Array.isArray(rememberedFolderKeys)
         ? rememberedFolderKeys
         : [];
-      if (!folderKey || storedKeys.includes(folderKey)) {
+      /* Already the most recent destination: nothing to reorder. */
+      if (!folderKey || storedKeys[0] === folderKey) {
         return;
       }
+      /* A re-used destination moves to the front, so the cap drops the
+       * least recently used folder rather than a frequently used one. */
       onRememberedFolderKeysChange?.(
-        [folderKey, ...storedKeys].slice(0, MAX_REMEMBERED_FOLDERS),
+        [folderKey, ...storedKeys.filter((key) => key !== folderKey)].slice(
+          0,
+          MAX_REMEMBERED_FOLDERS,
+        ),
       );
     },
     [rememberedFolderKeys, onRememberedFolderKeysChange],

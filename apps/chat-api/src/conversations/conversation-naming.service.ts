@@ -23,15 +23,13 @@ import { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import { ConversationResponseDto } from '../openapi/openapi-response.dto';
 import {
+  ConditionalUpdateStatus,
   CONVERSATION_PERSISTENCE,
   type ConversationPersistencePort,
 } from './conversation-persistence.port';
 import { ConversationMessageRole } from './dto/conversation-message.dto';
 import { CONVERSATION_NAMING_SYSTEM_PROMPT } from './prompts/conversation-naming.prompt';
-import {
-  prepareEntityName,
-  qualifySessionConversationPath,
-} from './utils/conversation.utils';
+import { prepareEntityName } from './utils/conversation.utils';
 
 const SERVER_APP_CONFIG_CONTEXT = { appId: 'chat-api' };
 
@@ -330,24 +328,18 @@ export class ConversationNamingService {
     }
 
     try {
-      const refreshed = await this.conversationPersistence.getConversation(
-        qualifySessionConversationPath(conversationPath, bucket),
-        token,
-        bucket,
-      );
-      if (refreshed.llmNamingDone === true) {
-        this.logger.debug(
-          `Skipping LLM display name update for ${conversation.id}: llmNamingDone=true after refresh`,
-        );
-        return;
-      }
-
-      await this.conversationPersistence.saveConversation(
+      const isRenamed = await this.writeDisplayName(
         conversationPath,
         token,
         bucket,
-        { ...refreshed, name: sanitisedTitle, llmNamingDone: true },
+        sanitisedTitle,
       );
+      if (!isRenamed) {
+        this.logger.debug(
+          `Skipping LLM display name update for ${conversation.id}: already named, missing, or changed concurrently`,
+        );
+        return;
+      }
       this.logger.debug(
         `LLM naming completed for ${conversation.id}: "${conversation.name}" -> "${sanitisedTitle}"`,
       );
@@ -357,6 +349,33 @@ export class ConversationNamingService {
         (error as Error | undefined)?.stack,
       );
     }
+  }
+
+  /**
+   * Writes the display name onto the latest stored version with `If-Match`, re-reading
+   * on a concurrent change, so it never writes back a stale copy of the messages (a
+   * background answer may have been finalized since the naming run started).
+   * @param conversationPath - conversation path relative to `bucket`
+   * @param token - caller's bearer token
+   * @param bucket - caller's session bucket
+   * @param title - sanitised display name
+   */
+  private async writeDisplayName(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    title: string,
+  ): Promise<boolean> {
+    const result = await this.conversationPersistence.updateConversation(
+      conversationPath,
+      token,
+      bucket,
+      (stored) =>
+        stored && stored.conversation.llmNamingDone !== true
+          ? { ...stored.conversation, name: title, llmNamingDone: true }
+          : null,
+    );
+    return result.status === ConditionalUpdateStatus.Saved;
   }
 
   private async requestLlmTitle(

@@ -1,11 +1,16 @@
 // Colors are CSS-var-driven so consumers can theme the panel.
 // Layout, spacing, and border-radius live in Tailwind classes in the TSX.
 
-.backdrop {
+/*
+ * The panel is the UI kit's `SideDrawer`, which paints its backdrop, panel,
+ * header rule and title with single-class utilities; the doubled classes keep
+ * the `--cat-details-*` overrides ahead of them whichever stylesheet loads last.
+ */
+.backdrop.backdrop {
   background: var(--cat-details-backdrop, var(--bg-backdrop, #161b2d4d));
 }
 
-.panel {
+.panel.panel {
   background: var(--cat-details-bg, var(--bg-layer-raised, #fcfcfc));
   border-inline-start-color: var(
     --cat-details-border,
@@ -13,7 +18,7 @@
   );
 }
 
-.divider {
+.divider.divider {
   border-block-end: 1px solid
     var(--cat-details-divider, var(--stroke-tertiary, #e0e6f0));
 }
@@ -27,7 +32,7 @@
     transparent;
 }
 
-.publishTitle {
+.publishTitle.publishTitle {
   color: var(--cat-details-publish-title-text, var(--text-primary, #161b2d));
 }
 

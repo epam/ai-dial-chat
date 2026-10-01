@@ -14,6 +14,10 @@ import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
+  ConditionalUpdateStatus,
+  type ConditionalUpdateResult,
+} from '../conversation-persistence.port';
+import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
@@ -24,6 +28,10 @@ import {
 import { DuplicateConversationResponseDto } from '../dto/duplicate-conversation.dto';
 import { MessageCustomContentDto } from '../dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from '../dto/rename-conversation.dto';
+import {
+  neutralizeForeignPendingMessages,
+  updateConversationUnlessPending,
+} from '../generation/background-message';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import type { MetadataResult } from '../types/conversation.types';
 import {
@@ -33,8 +41,6 @@ import {
   getDeploymentKey,
   isApplicationDeploymentPath,
   prepareEntityName,
-  qualifySessionConversationPath,
-  resolveConversationLocation,
 } from '../utils/conversation.utils';
 
 const isHttpLikeError = (e: unknown): e is { status: number } =>
@@ -184,56 +190,44 @@ export class ConversationLifecycleService {
     bucket: string,
   ): Promise<RenameConversationResponseDto> {
     const sanitisedTitle = prepareEntityName(newTitle);
-    const qualifiedPath = qualifySessionConversationPath(
-      conversationPath,
-      bucket,
-    );
 
-    let stored: ConversationResponseDto;
+    /* Conditional, so a rename never restores a pending background message over a final
+       answer saved between its read and its write. Without a pending message, persistent
+       conflicts end in the previous last-writer-wins save. */
+    let isRead = false;
+    let result: ConditionalUpdateResult;
     try {
-      ({ conversation: stored } =
-        await this.persistenceService.getStoredConversation(
-          qualifiedPath,
-          token,
-          bucket,
-        ));
+      result = await updateConversationUnlessPending(
+        this.persistenceService,
+        conversationPath,
+        token,
+        bucket,
+        (stored) => {
+          isRead = true;
+          return stored
+            ? {
+                ...stored.conversation,
+                name: sanitisedTitle,
+                llmNamingDone: true,
+              }
+            : null;
+        },
+      );
     } catch (error) {
+      if (isRead) throw error;
       this.logger.error('DIAL Core rejected getConversation (rename)', error);
       throw new NotFoundException('Conversation not found');
     }
-
-    const { bucket: saveBucket, subPath } = resolveConversationLocation(
-      qualifiedPath,
-      bucket,
-    );
-
-    const { error: saveError, response: saveResponse } =
-      await this.dialClient.client.saveConversation(
-        saveBucket,
-        encodeDialResourcePath(subPath),
-        {
-          headers: getBearerAuthHeaders(token),
-          body: {
-            ...stored,
-            name: sanitisedTitle,
-            llmNamingDone: true,
-          } as never,
-        },
-      );
-
-    if (saveError != null) {
-      this.logger.error('DIAL Core rejected saveConversation (rename)', {
-        error: saveError,
-      });
-      return handleDialSdkError(
-        saveError,
-        'conversations.renameConversation',
-        this.logger,
-        saveResponse,
-      );
+    switch (result.status) {
+      case ConditionalUpdateStatus.Saved:
+        return { name: sanitisedTitle };
+      case ConditionalUpdateStatus.Skipped:
+        throw new NotFoundException('Conversation not found');
+      default:
+        throw new ServiceUnavailableException(
+          'The conversation changed concurrently; retry shortly.',
+        );
     }
-
-    return { name: sanitisedTitle };
   }
 
   async duplicateConversation(
@@ -342,6 +336,7 @@ export class ConversationLifecycleService {
           headers: getBearerAuthHeaders(token),
           body: {
             ...sourceData,
+            messages: neutralizeForeignPendingMessages(sourceData.messages),
             id: `${sessionBucket}/${decodedDestinationSubPath}`,
             folderId,
             name: uniqueTitle,

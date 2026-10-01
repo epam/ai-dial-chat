@@ -70,6 +70,11 @@ export class ConversationPublishController {
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({
+    status: 409,
+    description:
+      'An answer in the conversation is still being generated in the background; publish after it finishes',
+  })
+  @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
   })

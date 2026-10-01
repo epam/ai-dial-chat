@@ -76,12 +76,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.20
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.22
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.35
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.36
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -1044,13 +1044,15 @@ const ChatPage = ({
 | `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
 | `batchChunksPerFrame`       | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
 
-`ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
+`ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
 **Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event.
 
 When the transport reports a `StreamInterruptedError` — the connection was lost or went silent, as a laptop sleep or phone lock mid-generation causes — the hook does not show an error right away, because the backend-owned generation usually keeps running. The path stays streaming and stoppable, and the partial answer stays on screen, while the hook re-fetches the conversation through `transport.getConversation` (retrying a rejected fetch after 1, 2, 4, 8 and 16 s, or as soon as the browser reports `online`). If the server copy still ends in this turn's unresolved placeholder, the hook rejoins the generation through the same attach/watch flow as `resumeIfAwaitingGeneration`; if the answer is already saved, it shows it; otherwise it settles with `streamErrorMessage: ''`, as for any transport error. `handleStop` keeps working throughout.
 
-Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
+**Background generations.** A message whose `backgroundGeneration.status` (from `@epam/ai-dial-chat-shared`) is `BackgroundGenerationStatus.Pending` is still being produced by a server-side background job. `resumeIfAwaitingGeneration` resumes it wherever it sits in the conversation — even with a `responseId` already set or a status message after it — and applies the replayed chunks at that message's position. When a completion stream ends and the reload still shows such a message, the hook resumes through `transport.attachToGeneration` instead of settling. `canStopStreaming` is `true` while a pending background message is being resumed, and `handleStop` sends its stored `backgroundGeneration.generationId` to `transport.stopCompletion`. `handleStop` always passes the answer text shown so far as `content`; the backend saves it as the stopped answer of a background generation, whose text it does not hold, and ignores it otherwise. The hook only reads this message field; it makes no decision about which deployments run in the background.
+
+Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message) for hosts that need the same checks outside the hook.
 
 `generationPersistenceErrorMessage?: string` supplies a host-translated warning
 when the server reports a failed terminal save or a terminal reload still
@@ -2370,17 +2372,17 @@ isCustomAppSchema({ id: 'custom_app' }); // true
 
 ### getRunnerSchemas
 
-Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. `useCatalogEditNavigation` builds one Create option per returned schema.
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
 
 getRunnerSchemas([
-  { id: 'quickapps2' },
+  { id: 'quickapps2', editorUrl: 'https://editor.example/quickapps' },
   { id: 'mind-map' },
   { id: 'mind-map' },
-  { id: 'custom_app' },
-]); // [{ id: 'quickapps2' }, { id: 'mind-map' }]
+  { id: 'custom_app', editorUrl: 'https://editor.example/custom' },
+]); // [{ id: 'quickapps2', … }, { id: 'mind-map' }]
 ```
 
 ### isValidAbsoluteUrl / parseFeaturesData / isValidFeaturesData
@@ -2994,7 +2996,7 @@ const limits = mapDeploymentLimitsToInput(
 
 ### mapDeploymentLimitsDtoToCatalogLimits
 
-Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Each row carries a "spent" caption built from the sibling cost stat for the same period, and a row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
+Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Rows cover the current UTC calendar day, week, and month — the same periods the Usage page reports — and, when `labels.formatResetTime` is given, each carries the reset line built from its own `resetsAt`. A row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. The DTO's cost stats are ignored: they are the caller's account-wide budget and spend across every deployment, not the queried deployment's own spend, so no row carries a `captionLabel`. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
 
 ```ts
 import {
@@ -3004,18 +3006,18 @@ import {
 
 const labels: DeploymentLimitsLabels = {
   tokenGroup: t('catalog.details.limits.tokenGroup'),
-  tokensPerDay: t('catalog.details.limits.tokensPerDay'),
-  tokensPerWeek: t('catalog.details.limits.tokensPerWeek'),
-  tokensPerMonth: t('catalog.details.limits.tokensPerMonth'),
+  tokensPerDay: t('usage.todayTitle'),
+  tokensPerWeek: t('usage.thisWeekTitle'),
+  tokensPerMonth: t('usage.thisMonthTitle'),
   followsCostLimit: t('catalog.details.limits.followsCostLimit'),
-  formatSpentCaption: (amount) =>
-    t('catalog.details.limits.spentLabel', { amount }),
   formatValueLabel: (used, total) =>
     t('catalog.details.limits.value', { used, total }),
   formatProgressAriaLabel: ({ label, used, total }) =>
     t('catalog.details.limits.progressAriaLabel', { label, used, total }),
   formatFollowsCostLimitAriaLabel: ({ label, used }) =>
     t('catalog.details.limits.followsCostLimitAriaLabel', { label, used }),
+  // Optional; returns `{ resetsAtMs, isoValue, label, ariaLabel }` or `undefined`.
+  formatResetTime: (resetsAt) => formatResetTime(resetsAt),
 };
 
 const limits = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);
@@ -3476,12 +3478,12 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name            | Type                                   | Description                                                                                                                                                                |
-| --------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                                     |
-| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                                 |
-| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners sorted alphabetically and capped at 7, then the static options, all filtered by the search query. |
-| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                          |
+| Name            | Type                                   | Description                                                                                                                                                   |
+| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                        |
+| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                    |
+| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query. |
+| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                             |
 
 ```tsx
 import {
@@ -3498,7 +3500,6 @@ const urls: CatalogEditNavigationUrls = {
 };
 
 const labels: CatalogEditNavigationLabels = {
-  createQuickApp: t('catalog.create.quickApp'),
   createToolset: t('catalog.create.toolset'),
   createCustomApp: t('catalog.create.customApp'),
   createSkill: t('catalog.create.skill'),
@@ -4017,6 +4018,8 @@ const resolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
   resolveDialUrl: (attachment) => myResolveDisplayAttachmentUrl(attachment),
   resolveDialFileMetadataUrl: (fileId) => myResolveFileMetadataUrl(fileId),
+  // Optional: renders HTML with no download URL under its own response CSP
+  htmlSrcdocHostUrl: '/my-app/html-preview-frame',
 };
 
 const content = await resolveMarkdownCanvasContent(attachment, resolvers);

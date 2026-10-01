@@ -139,10 +139,6 @@
       },
       "limits": {
         "tokenGroup": "Token limits",
-        "tokensPerDay": "Last 24 hours",
-        "tokensPerWeek": "Last 7 days",
-        "tokensPerMonth": "Last 30 days",
-        "spentLabel": "{{amount}} spent",
         "value": "{{used}} / {{total}}",
         "followsCostLimit": "Follows cost limit",
         "followsCostLimitAriaLabel": "{{label}}: {{used}} used. Follows cost limit.",
@@ -265,7 +261,6 @@
     },
     "create": {
       "menuCaption": "Create new",
-      "quickApp": "QuickApp",
       "toolset": "Toolset",
       "customApp": "Custom App",
       "prompt": "Prompt",
@@ -1166,6 +1161,10 @@
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
+    },
+    "schemaForm": {
+      "loadFailed": "Failed to load the application settings. Please try again.",
+      "requiredMissing": "Fill in all required settings."
     }
   },
   "toolsetEditor": {
@@ -1493,6 +1492,18 @@
       "publishRequested": "Publish request for quick app \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
       "unpublishRequestedTitle": "Quick app unpublish requested",
       "unpublishRequested": "Unpublish request for quick app \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
+    },
+    "schemaApp": {
+      "createdTitle": "{{type}} created successfully",
+      "created": "You can now see {{type}} \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "{{type}} edited successfully",
+      "edited": "Changes for {{type}} \"{{name}}\" are saved.",
+      "deletedTitle": "{{type}} deleted successfully",
+      "deleted": "{{type}} \"{{name}}\" is not available anymore.",
+      "publishRequestedTitle": "{{type}} publish requested",
+      "publishRequested": "Publish request for {{type}} \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "{{type}} unpublish requested",
+      "unpublishRequested": "Unpublish request for {{type}} \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     },
     "customApp": {
       "createdTitle": "Custom app created successfully",

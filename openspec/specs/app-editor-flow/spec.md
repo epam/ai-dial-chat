@@ -27,7 +27,7 @@ const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 
 #### Scenario: Navigating to /apps-editor renders the page
 
-- **WHEN** the user navigates to `/apps-editor?step=general&schema=<id>&returnUrl=/catalog&isCreating=1`
+- **WHEN** the user navigates to `/apps-editor?schema=<id>`
 - **THEN** the `AppsEditorPage` component renders without a full-page error
 
 #### Scenario: Route is lazy-loaded
@@ -39,37 +39,30 @@ const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 
 ### Requirement: Apps-editor query param contract
 
-`apps/chat/src/types/apps-editor.ts` SHALL export the query and step enums:
+`apps/chat/src/types/apps-editor.ts` SHALL export the query enum:
 
 ```ts
 export enum AppsEditorQuery {
-  Step = 'step',
   Schema = 'schema',
-  ReturnUrl = 'returnUrl',
-  IsCreating = 'isCreating',
   AppId = 'appId',
 }
-
-export enum AppsEditorStep {
-  General = 'general',
-  Settings = 'settings',
-}
 ```
 
-`apps/chat/src/constants/apps-editor.ts` SHALL export the shared truthy query value:
+`schema` names the application schema; `appId` is present only when an existing application is edited. The editor has no steps, and it always returns to `ROUTES.Catalog`, so there is no `step`, `isCreating` or `returnUrl` param.
 
-```ts
-export const QUERY_VALUE_TRUE = '1';
-```
-
-The `AppsEditorPage` SHALL read all params exclusively via `useSearchParams` from `react-router-dom`.
+The editor SHALL read all params exclusively via `useSearchParams` from `react-router`.
 
 **RTL / UI impact**: None (constants only).
 
-#### Scenario: Step param defaults to general when absent
+#### Scenario: Create mode without an app id
 
-- **WHEN** the user navigates to `/apps-editor` without a `step` query param
-- **THEN** the page renders the General step
+- **WHEN** the user navigates to `/apps-editor?schema=<id>` without an `appId` query param
+- **THEN** the page renders in create mode
+
+#### Scenario: Legacy params are ignored
+
+- **WHEN** the URL still carries `step`, `isCreating` or `returnUrl` (e.g. an old bookmark)
+- **THEN** the page renders as if they were absent, with no error and no step UI
 
 ---
 
@@ -326,7 +319,7 @@ The external editor integration SHALL rely on the advertised query parameter: ho
 
 The Quick App editor SHALL be rendered by `ApplicationEditorPage` with `kind = ApplicationEditorKind.QuickApp` (see `application-editor-registry`) on the unchanged route `ROUTES.AppsEditor`.
 
-It uses the `schema`, `appId` and `returnUrl` query params. `step` and `isCreating` are accepted and ignored.
+It uses the `schema` and `appId` query params (see "Apps-editor query param contract"); any legacy `step`, `isCreating` or `returnUrl` param is ignored.
 
 The page renders the shared `EntityEditor` layout:
 

@@ -260,6 +260,24 @@ describe('validate', () => {
     expect(config.RESPONSES_API_ENABLED).toBe(expected);
   });
 
+  it('defaults RESPONSES_BACKGROUND_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.RESPONSES_BACKGROUND_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+    ['0', false],
+    ['no', false],
+  ])('parses RESPONSES_BACKGROUND_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      RESPONSES_BACKGROUND_ENABLED: rawValue,
+    });
+    expect(config.RESPONSES_BACKGROUND_ENABLED).toBe(expected);
+  });
+
   it('defaults DEFAULT_DEPLOYMENT_PINNED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(false);

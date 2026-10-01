@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "revision": "2026-10-01.1",
+  "defaultThemeId": "light",
+  "systemThemeIds": {
+    "light": "light",
+    "dark": "dark"
+  },
+  "themes": [
+    {
+      "id": "light",
+      "displayName": "Light",
+      "colors": {
+        "bg-layer-0": "#FCFCFC"
+      },
+      "colorScheme": "light"
+    },
+    {
+      "id": "dark",
+      "displayName": "Dark",
+      "colors": {
+        "bg-layer-0": "#090D13"
+      },
+      "colorScheme": "dark"
+    },
+    {
+      "id": "acme-night",
+      "displayName": "Acme Night",
+      "colors": {
+        "bg-layer-0": "#0C101D"
+      },
+      "colorScheme": "dark",
+      "branding": {
+        "logoAssetId": "acme-logo-a9c958b300933b28"
+      },
+      "celebrationPacks": {
+        "new-year": {
+          "packId": "acme-new-year",
+          "version": "1.0.0"
+        }
+      }
+    }
+  ],
+  "images": {
+    "chat-logo-light": "chat-logo-light.svg",
+    "chat-logo-dark": "chat-logo-dark.svg",
+    "chat-favicon": "chat-favicon.png"
+  },
+  "assets": {
+    "acme-logo-a9c958b300933b28": {
+      "path": "brands/acme/1.0.0/logo.a9c958b300933b28.svg",
+      "mediaType": "image/svg+xml",
+      "bytes": 6287,
+      "sha256": "a9c958b300933b28c3e560c84bedfc8821deb6d277ffb1a8949dc0451cdf1611"
+    }
+  },
+  "celebrationPacks": [
+    {
+      "packId": "new-year-default",
+      "version": "1.0.0",
+      "eventId": "new-year",
+      "manifest": {
+        "path": "celebrations/new-year-default/1.0.0/manifest.json",
+        "bytes": 2265,
+        "sha256": "0db7215de60ceb569f8ea821f3c261c2b3d6da3129156a165b0ef03663d417f0"
+      }
+    }
+  ],
+  "defaultCelebrationPacks": {
+    "new-year": {
+      "packId": "new-year-default",
+      "version": "1.0.0"
+    }
+  }
+}

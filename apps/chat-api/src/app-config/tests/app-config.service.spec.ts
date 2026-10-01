@@ -1372,6 +1372,7 @@ describe('AppConfigService', () => {
       expect(resolvedKeys).not.toContain('utility.modelId');
       expect(resolvedKeys).not.toContain('features.llmConversationNaming');
       expect(resolvedKeys).not.toContain('features.responsesApiEnabled');
+      expect(resolvedKeys).not.toContain('features.responsesBackgroundEnabled');
     });
 
     it('keeps the response, config, and features key order', async () => {

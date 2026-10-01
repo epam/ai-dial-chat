@@ -2,18 +2,18 @@
 
 ## Purpose
 
-The pure postMessage protocol types in `chat-shared`: message envelopes, handshake sequencing, request/response matching, events, and origin validation.
+The pure postMessage protocol types in `libs/chat-overlay` (`@epam/ai-dial-chat-overlay`): message envelopes, handshake sequencing, request/response matching, events, and origin validation.
 
 ## Requirements
 
-### Requirement: Protocol types are pure and live in libs/chat-shared
+### Requirement: Protocol types are pure and live in libs/chat-overlay
 
-`libs/chat-shared/src/types/overlay/` SHALL export: the namespace constant (`@DIAL_OVERLAY`), an `OverlayRequestType` enum covering exactly the v1 requests (`GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, `SET_TEMPERATURE`, `SET_OVERLAY_OPTIONS`) plus the conversation-list requests (`GET_CONVERSATIONS`, `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `CREATE_LOCAL_CONVERSATION`, `DELETE_CONVERSATION`, `RENAME_CONVERSATION`), an `OverlayEventType` enum covering exactly the v1 events (`INIT_READY`, `READY`, `READY_TO_INTERACT`, `SELECTED_CONVERSATION_LOADED`, `GPT_START_GENERATING`, `GPT_END_GENERATING`, `STOP_GENERATING`, `CONVERSATIONS_UPDATED`) — no new event types are introduced by this change — the `ChatOverlayOptions` interface (including the new optional `auth` field), a new `OverlayAuthUiMode` enum, `OverlayRequestErrorCode`, `OverlayRequestError`, and one response payload interface per implemented request. The `SetOverlayOptionsPayload` interface SHALL include the new optional `authProviderUiModes?: Record<string, string>` field. This module SHALL import nothing from `apps/*`, `libs/chat-overlay`, `libs/chat-api-client`, or any other lib/app — it contains only enums and interfaces, no functions with logic beyond type guards.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts` SHALL export (re-exported by `libs/chat-overlay/src/protocol.ts` and the package root `@epam/ai-dial-chat-overlay`, which `apps/chat` imports from; `libs/chat-shared` has no overlay types): the namespace constant `DIAL_OVERLAY_NAMESPACE` (`@DIAL_OVERLAY`), an `OverlayRequestType` enum covering exactly the v1 requests (`GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, `SET_TEMPERATURE`, `SET_OVERLAY_OPTIONS`) plus the conversation-list requests (`GET_CONVERSATIONS`, `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `CREATE_LOCAL_CONVERSATION`, `DELETE_CONVERSATION`, `RENAME_CONVERSATION`), an `OverlayEventType` enum covering exactly the v1 events (`INIT_READY`, `READY`, `READY_TO_INTERACT`, `SELECTED_CONVERSATION_LOADED`, `GPT_START_GENERATING`, `GPT_END_GENERATING`, `STOP_GENERATING`, `CONVERSATIONS_UPDATED`) — no new event types are introduced by this change — the `ChatOverlayOptions` interface (including the optional `auth` field and the deprecated `signInOptions` field), the `OverlayAuthUiMode` enum, the deprecated `LegacySignInOptions` interface, `OverlayRequestErrorCode`, `OverlayRequestError`, and one response payload interface per implemented request. The `SetOverlayOptionsPayload` interface SHALL include the new optional `authProviderUiModes?: Record<string, string>` field. This module SHALL have no imports at all (nothing from `apps/*`, `libs/chat-api-client`, or any other lib/app). It contains enums, interfaces, and constants, and its only functions are the pure helpers `resolveOverlayFeature` and the type guards `isOverlayMessageRequest`, `isOverlayMessageResponse`, and `isOverlayMessageEvent`.
 
 #### Scenario: Overlay types module has no runtime logic imports
 
-- **WHEN** `libs/chat-shared/src/types/overlay/overlay-protocol.ts` (or equivalent file) is inspected
-- **THEN** its only imports, if any, are other pure-type files within `libs/chat-shared/src/types/`
+- **WHEN** `libs/chat-overlay/src/protocol/overlay-protocol.ts` is inspected
+- **THEN** it has no import statements
 
 #### Scenario: Still-deferred request names are absent from the enum
 
@@ -25,9 +25,9 @@ The pure postMessage protocol types in `chat-shared`: message envelopes, handsha
 - **WHEN** `OverlayRequestType` is inspected
 - **THEN** it has members `GetConversations = '@DIAL_OVERLAY/GET_CONVERSATIONS'`, `GetSelectedConversations = '@DIAL_OVERLAY/GET_SELECTED_CONVERSATIONS'`, `SelectConversation = '@DIAL_OVERLAY/SELECT_CONVERSATION'`, `CreateConversation = '@DIAL_OVERLAY/CREATE_CONVERSATION'`, `CreateLocalConversation = '@DIAL_OVERLAY/CREATE_LOCAL_CONVERSATION'`, `DeleteConversation = '@DIAL_OVERLAY/DELETE_CONVERSATION'`, `RenameConversation = '@DIAL_OVERLAY/RENAME_CONVERSATION'`
 
-#### Scenario: OverlayAuthUiMode enum is exported from chat-shared
+#### Scenario: OverlayAuthUiMode enum is exported from chat-overlay
 
-- **WHEN** `@epam/ai-dial-chat-shared` is imported
+- **WHEN** `@epam/ai-dial-chat-overlay` is imported
 - **THEN** `OverlayAuthUiMode` is available with members `External = 'external'` and `SameWindow = 'sameWindow'`
 
 #### Scenario: SetOverlayOptionsPayload includes authProviderUiModes
@@ -38,7 +38,7 @@ The pure postMessage protocol types in `chat-shared`: message envelopes, handsha
 #### Scenario: ChatOverlayOptions includes auth field
 
 - **WHEN** `ChatOverlayOptions` is inspected
-- **THEN** it has an optional `auth?: { providerUiModes?: Record<string, OverlayAuthUiMode> }` field
+- **THEN** it has an optional `auth?: { providerUiModes?: Record<string, OverlayAuthUiMode>; autoSignInProvider?: string }` field
 
 ### Requirement: Message envelope shapes
 
@@ -229,11 +229,11 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 
 ### Requirement: Conversation-list payload and response types
 
-`libs/chat-shared/src/types/overlay/overlay-protocol.ts` SHALL export a host-agnostic `OverlayConversation` interface (`id: string`, `title: string`, `updatedAt: number`, `isPinned: boolean`, `isReadonly: boolean`, `sharedWithMe: boolean`, `publishedWithMe: boolean`) with no dependency on `@epam/chat-api-client` or any other generated/app-owned type, plus one request-payload interface per new request (`SelectConversationPayload { id }`, `DeleteConversationPayload { id }`, `RenameConversationPayload { id, newName }`, `CreateConversationPayload { deploymentId?, firstMessage? }`) and one response interface per new request: `GetConversationsResponse { conversations: OverlayConversation[] }`, `GetSelectedConversationsResponse { conversations: OverlayConversation[] }`, `SelectConversationResponse { conversation?: OverlayConversation; error?: OverlayConversationError }`, `CreateConversationResponse { conversation: OverlayConversation | null; error?: OverlayConversationError }`, `CreateLocalConversationResponse { conversation: null }`, `DeleteConversationResponse { error?: OverlayConversationError }`, `RenameConversationResponse { conversation?: OverlayConversation; error?: OverlayConversationError }`.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts` SHALL export a host-agnostic `OverlayConversation` interface (`id: string`, `title: string`, `updatedAt: number`, `isPinned: boolean`, `isReadonly: boolean`, `sharedWithMe: boolean`, `publishedWithMe: boolean`) with no dependency on `@epam/chat-api-client` or any other generated/app-owned type, plus one request-payload interface per new request (`SelectConversationPayload { id }`, `DeleteConversationPayload { id }`, `RenameConversationPayload { id, newName }`, `CreateConversationPayload { deploymentId?, firstMessage? }`) and one response interface per new request: `GetConversationsResponse { conversations: OverlayConversation[] }`, `GetSelectedConversationsResponse { conversations: OverlayConversation[] }`, `SelectConversationResponse { conversation?: OverlayConversation; error?: OverlayConversationError }`, `CreateConversationResponse { conversation: OverlayConversation | null; error?: OverlayConversationError }`, `CreateLocalConversationResponse { conversation: null }`, `DeleteConversationResponse { error?: OverlayConversationError }`, `RenameConversationResponse { conversation?: OverlayConversation; error?: OverlayConversationError }`.
 
 #### Scenario: OverlayConversation carries no generated-client dependency
 
-- **WHEN** `libs/chat-shared/src/types/overlay/overlay-protocol.ts` is inspected for its `OverlayConversation` declaration
+- **WHEN** `libs/chat-overlay/src/protocol/overlay-protocol.ts` is inspected for its `OverlayConversation` declaration
 - **THEN** it is a self-contained interface with no import from `@epam/chat-api-client` or any app-owned type
 
 #### Scenario: CreateConversationResponse allows a null conversation
@@ -276,9 +276,9 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 - **AND** it receives `RENAME_CONVERSATION` from `https://other.example.com`
 - **THEN** the app does not execute the request and sends no response for its `requestId`
 
-### Requirement: OverlayFeature enum covers the 49 transferable UI-section toggle keys
+### Requirement: OverlayFeature enum covers the 51 transferable UI-section toggle keys
 
-`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 51 members, covering the groups: applications (`code-apps`, `schema-apps`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`, `chat-settings`, `removable-tools`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `hide-navigation-menu`, `showConversationsSectionByDefault`, `hide-conversations-filter`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), skills (`skills`), user settings (`hide-user-menu`, `hide-user-settings`, `hide-keyboard-shortcuts`), voice input (`voice-input`), starters (`show-all-starters`, `starters-below-greeting`), greeting (`hide-greeting`), footer (`hide-footer-version`), agent description (`show-agent-description`), input history (`disable-input-history-navigation`), conversation export (`hide-conversation-export`), settings page (`hide-settings-page`), and header logo (`show-header-logo`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 51 members, covering the groups: applications (`code-apps`, `schema-apps`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`, `chat-settings`, `removable-tools`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `hide-navigation-menu`, `showConversationsSectionByDefault`, `hide-conversations-filter`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), skills (`skills`), user settings (`hide-user-menu`, `hide-user-settings`, `hide-keyboard-shortcuts`), voice input (`voice-input`), starters (`show-all-starters`, `starters-below-greeting`), greeting (`hide-greeting`), footer (`hide-footer-version`), agent description (`show-agent-description`), input history (`disable-input-history-navigation`), conversation export (`hide-conversation-export`), settings page (`hide-settings-page`), and header logo (`show-header-logo`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with the "Protocol types are pure" requirement.
 
 `apps/chat-api`'s `KNOWN_UI_FEATURES` SHALL mirror this membership one-to-one. It is duplicated rather than imported so the Node-only service stays independent of the browser-facing overlay package, and it SHALL be updated in the same change as any addition, removal, or rename here — a key present in only one of the two is silently unusable through `ENABLED_UI_FEATURES`.
 
@@ -291,7 +291,7 @@ mirror that map for the same reason `KNOWN_UI_FEATURES` mirrors the enum.
 
 **Feature flag:** N/A — this is the enum definition itself, not a gated feature. This repo has no `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` mechanism to gate it behind.
 
-#### Scenario: OverlayFeature has exactly 49 members
+#### Scenario: OverlayFeature has exactly 51 members
 
 - **WHEN** `Object.values(OverlayFeature)` is inspected
 - **THEN** it has exactly 51 unique string values, including `'chat-settings'`, `'removable-tools'`, `'hide-navigation-menu'`, `'voice-input'`, `'header'`, `'likes'`, `'hide-new-conversation'`, `'live-chat-interaction'`, `'prompts'`, `'skills'`, `'file-manager'`, `'hide-change-agent'`, `'hide-conversations-filter'`, `'hide-keyboard-shortcuts'`, `'show-all-starters'`, `'starters-below-greeting'`, `'hide-greeting'`, `'hide-footer-version'`, `'show-agent-description'`, `'disable-input-history-navigation'`, `'hide-conversation-export'`, `'hide-settings-page'`, and `'show-header-logo'`
@@ -347,7 +347,9 @@ mirror that map for the same reason `KNOWN_UI_FEATURES` mirrors the enum.
 
 The host-facing field SHALL NOT be accompanied by a separate enable/disable boolean: its presence enables overlay auto sign-in and its value names the provider, so the option cannot be half-specified.
 
-Both fields are optional. Existing callers SHALL compile and behave identically when they are absent. The module SHALL remain import-free, containing only enums and interfaces, consistent with its existing "pure types only" requirement.
+Both fields are optional. Existing callers SHALL compile and behave identically when they are absent. The module SHALL remain import-free, consistent with the "Protocol types are pure" requirement.
+
+`ChatOverlayOptions` SHALL also accept a deprecated `signInOptions?: LegacySignInOptions` (`{ autoSignIn?: boolean; signInProvider?: string; signInInNewWindow?: boolean }`, the old chat's shape). `ChatOverlay` folds it into `auth` through `resolveOverlayAuth` in `libs/chat-overlay/src/lib/internal/legacy-sign-in.ts`: when `autoSignIn === true` and `signInProvider` is non-blank, and `auth.autoSignInProvider` is not set, the effective `auth` gets `autoSignInProvider = signInProvider` and a `providerUiModes` entry for that provider (`External` when `signInInNewWindow` is `true`, otherwise `SameWindow`) unless the host already mapped it. Explicit `auth` values always win; otherwise `auth` is returned unchanged.
 
 No new endpoint, DTO, or generated-client operation is introduced: the app uses the existing `GET /api/v1/auth/providers` and `GET /api/v1/auth/login/:providerId` exactly as the manual login gate already does.
 
@@ -366,6 +368,13 @@ FEATURE GATE: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`, an
 
 - **WHEN** a caller constructs `auth: { providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow }, autoSignInProvider: 'keycloak' }`
 - **THEN** the type check passes without error
+
+#### Scenario: Legacy `signInOptions` is translated into `auth`
+
+- **WHEN** a host passes `signInOptions: { autoSignIn: true, signInProvider: 'keycloak' }` and no `auth.autoSignInProvider`
+- **THEN** the effective `auth` has `autoSignInProvider: 'keycloak'` and `providerUiModes.keycloak === OverlayAuthUiMode.SameWindow`
+- **AND WHEN** the host also sets `auth.autoSignInProvider`
+- **THEN** the legacy options are ignored
 
 #### Scenario: `authAutoSignInProvider` is an optional string on `SetOverlayOptionsPayload`
 
