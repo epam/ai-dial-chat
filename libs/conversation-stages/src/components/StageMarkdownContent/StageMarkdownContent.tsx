@@ -84,8 +84,10 @@ export const StageMarkdownContent: FC<Props> = memo(
               return (
                 <code
                   className={mergeClasses(
-                    'inline-block px-1.5 py-1',
-                    typography?.codeClassName ?? 'dial-code-text rounded-md',
+                    /* Inline (not inline-block) so the padding never grows the
+                       line box past the surrounding text's line-height. */
+                    'px-1 py-0.5',
+                    typography?.codeClassName ?? 'dial-tiny-text rounded-md',
                     styles.codeInline,
                   )}
                 >

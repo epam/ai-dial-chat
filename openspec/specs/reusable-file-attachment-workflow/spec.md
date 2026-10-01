@@ -2,14 +2,13 @@
 
 ## Purpose
 
-TBD - created by archiving change `extract-reusable-chat-workflows`. Update
-Purpose after archive.
+Define the reusable file attachment picker composition, including source tabs and the combined All view, selection isolation, eligibility rules, and the boundary between shared modal behavior and host integration.
 
 ## Requirements
 
 ### Requirement: Attachment picker state is a reusable composition
 
-`@epam/ai-dial-chat-hooks/file-manager` SHALL export `useFileAttachmentPicker` and named public options/result types. It SHALL compose existing file-manager hooks and own active tab, selected paths and row eligibility. It SHALL accept configured file-manager options, allowed tabs, translated tab/root labels and attachment constraints. Its returned controller and picker fields SHALL compose with the existing `FileManagerAttachModal` without casts, parent providers or raw AG Grid types. Existing `UseDialFileManagerResult` and `FileManagerController` contracts SHALL remain unchanged.
+`@epam/ai-dial-chat-hooks/file-manager` SHALL export `useFileAttachmentPicker` and named public options/result types. It SHALL compose `useDialFileManagerSections` in Attach mode and own active tab, selected paths and row eligibility. It SHALL accept configured file-manager options, allowed tabs, translated tab/root labels and attachment constraints. Its returned controller and picker fields SHALL compose with the existing `FileManagerAttachModal` without casts, parent providers or raw AG Grid types. Existing `UseDialFileManagerResult` and `FileManagerController` contracts SHALL remain unchanged.
 
 #### Scenario: Host wires the existing modal
 
@@ -19,7 +18,7 @@ Purpose after archive.
 #### Scenario: Selection is isolated between tabs
 
 - **WHEN** the host changes selection and then switches tab
-- **THEN** incoming selection sets are defensively copied and tab switching clears selection before the next tab is used
+- **THEN** incoming selection sets are defensively copied and tab switching or browsing a different source section within All clears selection before the next listing is used
 
 ### Requirement: Eligibility reuses canonical validation
 
@@ -63,3 +62,9 @@ The parent `DialFileManagerModal` SHALL delegate picker state and eligibility to
 
 - **WHEN** the user chooses files from personal, shared or organization tabs
 - **THEN** existing permission and attachment rules still apply and the app does not maintain a parallel picker state implementation
+
+#### Scenario: All combines configured sources in the attachment picker
+
+- **WHEN** All is enabled together with at least two source tabs
+- **THEN** the picker exposes All and lists the enabled source roots through its composed controller, retaining each source's permissions, eligibility, and actions
+- **AND** the app modal requests All initially while the reusable hook retains My files as its omitted-initial-tab default

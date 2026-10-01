@@ -301,7 +301,15 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const treeOptions = useMemo(
     () => ({
-      header: labels.treeHeaderByTab[activeTab],
+      header:
+        variant === DialFileManagerVariant.Attach
+          ? null
+          : labels.treeHeaderByTab[activeTab],
+      containerClassName:
+        variant === DialFileManagerVariant.Attach
+          ? 'min-h-0 h-full rounded-xl bg-layer-raised shadow-sm'
+          : undefined,
+      tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,
       activeTab,
       onTabChange,
@@ -313,6 +321,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     }),
     [
       labels.treeHeaderByTab,
+      variant,
       tabs,
       activeTab,
       onTabChange,
@@ -516,7 +525,14 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-sunken">
           <DialFileManager
             className="min-h-0 w-full grow bg-layer-sunken"
-            gridClassName="size-full"
+            contentClassName={
+              variant === DialFileManagerVariant.Attach ? 'pb-0' : undefined
+            }
+            gridClassName={
+              variant === DialFileManagerVariant.Attach
+                ? 'size-full px-5 py-4'
+                : 'size-full'
+            }
             items={items}
             path={path}
             onPathChange={onPathChange}

@@ -5,6 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { MessageActionsProps } from '../../../models/message-actions';
 import { MessageActions } from '../MessageActions';
 
+/*
+ * The 2.0 kit buttons swap native `disabled` for `aria-disabled="true"` when a
+ * tooltip is set, so the button stays focusable and the tooltip reachable.
+ */
+const isButtonDisabled = (button: HTMLElement) =>
+  button.hasAttribute('disabled') ||
+  button.getAttribute('aria-disabled') === 'true';
+
 describe('MessageActions', () => {
   describe('role=User (default)', () => {
     it('renders Edit and Delete buttons', () => {
@@ -176,9 +184,7 @@ describe('MessageActions', () => {
 
     it.each(ASSISTANT_ACTION_NAMES)('disables the %s button', (name) => {
       renderDisabledAssistantActions();
-      expect(
-        screen.getByRole('button', { name }).hasAttribute('disabled'),
-      ).toBe(true);
+      expect(isButtonDisabled(screen.getByRole('button', { name }))).toBe(true);
     });
 
     it('does not call onRegenerate when the disabled Regenerate button is clicked', async () => {
@@ -220,23 +226,21 @@ describe('MessageActions', () => {
     it('leaves the assistant actions enabled by default', () => {
       renderDisabledAssistantActions({ isDisabled: false });
       ASSISTANT_ACTION_NAMES.forEach((name) => {
-        expect(
-          screen.getByRole('button', { name }).hasAttribute('disabled'),
-        ).toBe(false);
+        expect(isButtonDisabled(screen.getByRole('button', { name }))).toBe(
+          false,
+        );
       });
     });
 
     it('disables the user Edit and Delete buttons', () => {
       render(<MessageActions onEdit={vi.fn()} onDelete={vi.fn()} isDisabled />);
       expect(
-        screen
-          .getByRole('button', { name: 'Edit message' })
-          .hasAttribute('disabled'),
+        isButtonDisabled(screen.getByRole('button', { name: 'Edit message' })),
       ).toBe(true);
       expect(
-        screen
-          .getByRole('button', { name: 'Delete message' })
-          .hasAttribute('disabled'),
+        isButtonDisabled(
+          screen.getByRole('button', { name: 'Delete message' }),
+        ),
       ).toBe(true);
     });
   });

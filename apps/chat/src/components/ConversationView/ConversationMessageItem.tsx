@@ -894,6 +894,8 @@ const ConversationMessageItem: FC<Props> = ({
         markdownClassNames={markdownClassNames}
         attachments={bubbleAttachments}
         isStreaming={isStreaming}
+        // The stages summary already shows live progress; a second "Thinking" line above it pushes the stages below the avatar.
+        hasThinkingPlaceholder={!hasStages}
         hasAlwaysVisibleActions={!isStreaming}
         actions={{
           ...buildMessageActions(

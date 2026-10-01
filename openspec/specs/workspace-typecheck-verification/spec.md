@@ -95,6 +95,19 @@ project references are absent from the working tree.
   a bundler `build` target that clears its own output directory
 - **THEN** the two targets write to different directories, so neither target's
   outputs can delete or invalidate the other's
+- **AND** every such project writes its declarations and `tsbuildinfo` under
+  `{projectRoot}/out-tsc/`, the output declared by `nx.json`'s
+  `targetDefaults.typecheck`
+
+#### Scenario: A project without a bundler may emit declarations into its package output
+
+- **WHEN** a project has no bundler `build` target and its own `tsc --build` of
+  `tsconfig.lib.json` produces its publishable package output, as
+  `libs/chat-api-client` does with `outDir: "dist"`
+- **THEN** its `typecheck` target may emit into that directory
+- **AND** the project overrides `typecheck.outputs` in its own `package.json` to
+  declare exactly the declaration files, their maps and the `tsbuildinfo` it
+  emits there, so a cache hit still restores them
 
 #### Scenario: A stale build-info cannot mask missing declarations
 
@@ -175,9 +188,11 @@ equivalent gate.
 ### Requirement: Existing checks are not weakened to reach a green gate
 
 Reaching a passing typecheck SHALL NOT be achieved by disabling or narrowing
-existing checks. `strict`, `noUnusedLocals`, `noUnusedParameters`,
-`noImplicitOverride`, `noImplicitReturns` and `noFallthroughCasesInSwitch` SHALL
-retain their current values; `skipLibCheck` SHALL NOT be changed; test files
+existing checks. `strict`, `noUnusedLocals`, `noImplicitOverride`,
+`noImplicitReturns` and `noFallthroughCasesInSwitch` SHALL remain enabled in
+`tsconfig.base.json` and SHALL NOT be disabled in a project tsconfig;
+`noUnusedParameters` is not set anywhere in the workspace, and enabling or
+leaving it unset is outside this requirement; `skipLibCheck` SHALL NOT be changed; test files
 SHALL remain included in the projects that check them; and no new blanket
 `exclude` entry, `any`, double cast or error-suppression comment SHALL be added
 to silence a diagnostic.
