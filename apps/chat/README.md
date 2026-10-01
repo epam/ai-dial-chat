@@ -1,5 +1,27 @@
 # Chat Application
 
+## Manual scheduled-task runs
+
+The feature-gated task detail page can start the saved task definition with
+**Start now**. It sends one bodyless request and immediately prepends the
+server-accepted run to History; it does not edit, resume, or otherwise change
+the saved schedule. A completed one-time trigger or an expired recurring
+window only ends automatic scheduling: a non-deleted task can still be run
+manually.
+
+While the returned run is in progress, the page checks its status every two
+seconds for at most 70 seconds. The ordinary History refresh and its pagination
+remain intact. A delayed or unavailable status keeps the last confirmed row and
+offers a GET-only status refresh; the app never retries the non-idempotent start
+request automatically. A credential-stage failure displays the existing
+offline-credentials sign-in flow. Completing that sign-in leaves the failed row
+in History and requires a new explicit Start now activation.
+
+The 70-second observation deadline also cancels a pending status read. Returning
+to a visible tab respects a Scheduler retry delay. A newly observed credentials
+failure rechecks the route's credentials state, and a failed initial History
+load retains its retry action alongside any accepted manual run.
+
 ## Scheduled task skills
 
 Create/edit compose the reusable skills field into the scheduled-task form.
