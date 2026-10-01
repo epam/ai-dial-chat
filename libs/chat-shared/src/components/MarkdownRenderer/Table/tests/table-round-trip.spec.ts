@@ -70,12 +70,20 @@ const parseTable = (markdown: string): ParsedCell[][] => {
 };
 
 /* The glyphs KaTeX draws, with the LaTeX annotation stripped, so two spellings
-   of the same formula can be compared. */
-const renderGlyphs = (tex: string): string =>
-  katex
-    .renderToString(tex, { output: 'mathml', throwOnError: true })
-    .replace(/<annotation[\s\S]*?<\/annotation>/g, '')
-    .replace(/<[^>]+>/g, '');
+   of the same formula can be compared. Read through the DOM rather than
+   stripped with regexes, so no markup survives into the comparison. */
+const renderGlyphs = (tex: string): string => {
+  const container = document.createElement('div');
+  container.innerHTML = katex.renderToString(tex, {
+    output: 'mathml',
+    throwOnError: true,
+  });
+  container
+    .querySelectorAll('annotation')
+    .forEach((annotation) => annotation.remove());
+
+  return container.textContent ?? '';
+};
 
 const createRow = (...cells: string[]) => {
   const row = document.createElement('tr');

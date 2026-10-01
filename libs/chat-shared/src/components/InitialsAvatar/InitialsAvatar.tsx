@@ -1,9 +1,5 @@
+import { Avatar, AvatarShape } from '@epam/ai-dial-ui-kit';
 import { type FC } from 'react';
-import { pickAvatarColor } from '../../utils/avatar-color';
-import { buildCssVars } from '../../utils/build-css-vars';
-import { extractInitials } from '../../utils/initials';
-import { mergeClasses } from '../../utils/merge-class';
-import styles from './InitialsAvatar.module.scss';
 
 /** Props for `InitialsAvatar`. */
 export interface InitialsAvatarProps {
@@ -13,7 +9,7 @@ export interface InitialsAvatarProps {
   size: number;
   /** Extra classes applied to the root element (e.g. `'shrink-0'`). */
   className?: string;
-  /** Extra classes applied to the initials text element (e.g. `'dial-h3-text'`). */
+  /** Type-scale class for the initials. Defaults to none: the initials are semibold at 40% of `size`. */
   textClassName?: string;
 }
 
@@ -22,33 +18,14 @@ export const InitialsAvatar: FC<InitialsAvatarProps> = ({
   name,
   size,
   className,
-  textClassName = 'dial-h3-text',
-}) => {
-  const { background, foreground } = pickAvatarColor(name);
-  const initials = extractInitials(name);
-  const fontSize = Math.round(size * 0.4);
-
-  const cssVars = buildCssVars({
-    '--ia-bg': background,
-    '--ia-fg': foreground,
-  });
-
-  return (
-    <div
-      aria-hidden="true"
-      className={mergeClasses(
-        'flex select-none items-center justify-center rounded-md',
-        styles.badge,
-        className,
-      )}
-      style={{ ...cssVars, width: size, height: size }}
-    >
-      <h3
-        className={mergeClasses(styles.initials, textClassName)}
-        style={{ fontSize }}
-      >
-        {initials}
-      </h3>
-    </div>
-  );
-};
+  textClassName,
+}) => (
+  /* Decorative: the entity it stands for is always named beside it. */
+  <Avatar
+    name={name}
+    size={size}
+    shape={AvatarShape.Square}
+    className={className}
+    textClassName={textClassName}
+  />
+);

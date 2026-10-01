@@ -6,7 +6,7 @@ The mic button and the voice bar that replaces the conversation input while a re
 ## Requirements
 ### Requirement: Mic button in ConversationInput
 
-`Input` and `ConversationInput` SHALL render the microphone GhostIconButton in the action bar when `isAudioMessageSupported` is true and assistant streaming is inactive, except during the existing send-button exit transition. The default accessible label and tooltip SHALL be `Dictate`, overridable with `micLabel`. It SHALL start dictation, remain available with existing draft text/attachments or active attachment uploads, and respect `isInputDisabled`. The button SHALL use a 24 px icon in a 40 px desktop control and at least a 44 px mobile touch target. When the library caller omits the transcription callback, the legacy audio attachment fallback SHALL remain available.
+`Input` and `ConversationInput` SHALL render the microphone GhostIconButton in the action bar when `isAudioMessageSupported` is true and assistant streaming is inactive. When the host replaces the footer actions through `renderFooterActions`, the library SHALL NOT render the microphone; that host owns any dictation trigger. The default accessible label and tooltip SHALL be `Dictate`, overridable with `micLabel`. It SHALL start dictation, remain available with existing draft text/attachments or active attachment uploads, and respect `isInputDisabled`. The button SHALL use a 24 px icon in a 40 px desktop control and at least a 44 px mobile touch target. When the library caller omits the transcription callback, the legacy audio attachment fallback SHALL remain available.
 
 #### Scenario: Dictation available
 
@@ -73,7 +73,7 @@ The waveform SHALL use the existing 200-slot ring buffer, 3 px bars and 1 px gap
 
 - **WHEN** microphone samples arrive during Recording
 - **THEN** bars animate across the waveform without showing elapsed-time text
-- **AND** the stop-square and discard controls remain available
+- **AND** the check-mark stop/confirm and discard controls remain available
 
 #### Scenario: Stop dispatches the chosen mode
 
@@ -106,7 +106,7 @@ A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws
 
 ### Requirement: Waveform full-width, buttons on separate line at every viewport width
 
-At every viewport width, the first voice-bar row SHALL contain the dot and waveform spanning the full width, and the second row SHALL contain the attach-file control aligned to the inline start and the discard/stop/spinner controls aligned to the inline end. The discard control SHALL precede the filled stop-square control during recording; only discard and the processing spinner SHALL remain during processing. An error SHALL unmount the voice bar and restore the normal input. These controls SHALL have at least 44 px touch targets. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
+At every viewport width, the first voice-bar row SHALL contain the dot and waveform spanning the full width, and the second row SHALL contain the attach-file control aligned to the inline start and the discard/stop/spinner controls aligned to the inline end. The discard control SHALL precede the primary check-mark stop/confirm control during recording; only discard and the processing spinner SHALL remain during processing. An error SHALL unmount the voice bar and restore the normal input. These controls SHALL have at least 44 px touch targets. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
 
 #### Scenario: Recording at any width
 

@@ -1,4 +1,7 @@
-.avatar {
+/* The initials badge is the kit `Avatar`, which paints a palette colour at
+   single-class specificity; the doubled class keeps the accent badge and its
+   `--np-avatar-*` overrides ahead of it. */
+.avatar.avatar {
   background: var(--np-avatar-bg, var(--bg-control-accent, #1d4ed8));
   color: var(--np-avatar-text, var(--text-control-permanent, #fcfcfc));
 }
