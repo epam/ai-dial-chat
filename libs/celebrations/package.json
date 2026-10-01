@@ -47,6 +47,17 @@
     "targets": {
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      },
+      "test-baseline-browser": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "build-storybook"
+        ],
+        "cache": false,
+        "options": {
+          "cwd": "libs/celebrations",
+          "command": "node --test browser-tests/celebrations-baseline.browser.spec.mjs"
+        }
       }
     }
   }
