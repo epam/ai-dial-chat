@@ -135,7 +135,6 @@ const DEPLOYMENT_LIMITS_LABELS: DeploymentLimitsLabels = {
   tokensPerWeek: 'Tokens/week',
   tokensPerMonth: 'Tokens/month',
   followsCostLimit: 'Follows cost limit',
-  formatSpentCaption: (amount) => `$${amount} spent`,
   formatValueLabel: (used, total) => `${used}/${total}`,
   formatProgressAriaLabel: ({ label, used, total }) =>
     `${label}: ${used}/${total}`,

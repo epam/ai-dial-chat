@@ -42,8 +42,18 @@ describe('CreateButton', () => {
     await userEvent.type(await screen.findByLabelText('Find a runner'), 'oc');
 
     expect(onChange).toHaveBeenLastCalledWith('oc');
-    expect(screen.getByText('OCR')).toBeTruthy();
-    expect(screen.queryByText('Mind map')).toBeNull();
+    expect(
+      screen.getAllByRole('menuitem').map((item) => item.textContent),
+    ).toEqual(['OCR']);
+  });
+
+  it('highlights the part of each option label that matches the query', async () => {
+    render(<SearchableCreateButton onChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+    await userEvent.type(await screen.findByLabelText('Find a runner'), 'oc');
+
+    expect(screen.getByText('OC', { selector: 'mark' })).toBeTruthy();
   });
 
   it('announces the no-results label when the search leaves no options', async () => {

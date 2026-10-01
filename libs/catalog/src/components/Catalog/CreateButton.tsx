@@ -15,7 +15,12 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, useRef, useState } from 'react';
+import {
+  CREATE_MENU_LIST_CLASS_NAME,
+  CREATE_MENU_MAX_HEIGHT_PX,
+} from '../../constants/create-menu';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
+import { highlightDropdownLabels } from '../../utils/create-menu';
 
 /** Props for the catalog Create button. */
 export interface CreateButtonProps {
@@ -53,7 +58,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
 
   if (search) {
     const searchItems: DropdownItem[] = options?.length
-      ? options
+      ? highlightDropdownLabels(options, search.value)
       : [
           {
             key: 'no-results',
@@ -70,8 +75,18 @@ export const CreateButton: FC<CreateButtonProps> = ({
       <div ref={containerRef}>
         <Dropdown
           items={searchItems}
+          maxDropdownHeight={CREATE_MENU_MAX_HEIGHT_PX}
+          /* A fixed width keeps the panel from resizing as the search changes
+             the longest visible label; long labels truncate with a tooltip.
+             The kit still caps it at the viewport's available width. */
+          placement="bottom-end"
+          matchReferenceWidth={false}
+          listClassName={CREATE_MENU_LIST_CLASS_NAME}
           menuHeader={
-            <div className="px-2 pb-1 pt-2">
+            /* The panel's own 4px inset (`p-1`) would leave a strip above a
+               `top-0` sticky row where scrolled options show through, so the
+               row sticks 4px higher to cover it. */
+            <div className="sticky -top-1 z-10 bg-layer-raised px-2 pb-1 pt-2">
               <Search
                 value={search.value}
                 placeholder={searchPlaceholder}

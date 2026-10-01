@@ -6,15 +6,15 @@ Define the DIAL file manager attach modal UI contract, including tab chrome, att
 
 ### Requirement: Tab navigation UI in DialFileManagerModal
 
-`DialFileManagerModal` SHALL render My files, Shared with me, and Organization tabs using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`. The hook is called with an i18n-translated label map and `DialFileManagerTabs.MyFiles` as the initial tab. The resulting `tabs`, `activeTab`, and `handleTabChange` are wired to `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange` respectively (they were passed under `toolbarOptions` up to `@epam/ai-dial-react-file-manager` 0.3.0-dev.2). No custom tab UI is built — the kit renders the strip as a chip row in the folders panel, above the tree it filters; its role structure is specified by the `file-manager-tabs` spec, requirement "Tab strip accessibility".
+`DialFileManagerModal` SHALL render configured All, My files, Shared with me, and Organization tabs using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`. The hook is called with an i18n-translated label map and `DialFileManagerTabs.All` as the initial tab, falling back through the shared tab configuration when All is unavailable. The resulting `tabs`, `activeTab`, and `handleTabChange` are wired to `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange` respectively (they were passed under `toolbarOptions` up to `@epam/ai-dial-react-file-manager` 0.3.0-dev.2). No custom tab UI is built — the kit renders the strip as a chip row in the folders panel, above the tree it filters; its role structure is specified by the `file-manager-tabs` spec, requirement "Tab strip accessibility".
 
 RTL: tab bar direction is handled by the ui-kit; no physical direction classes on the modal wrapper.
 
 #### Scenario: Tab strip renders in the modal folders panel
 
 - **WHEN** `DialFileManagerModal` opens
-- **THEN** three tabs are visible in the folders panel: My files, Shared with me, Organization
-- **AND** the active tab is My files
+- **THEN** the default configuration shows four tabs in the folders panel: All, My files, Shared with me, Organization
+- **AND** the active tab is All
 
 #### Scenario: Tab labels use i18n
 
@@ -25,10 +25,10 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ### Requirement: Per-tab gridOptions in DialFileManagerShell
 
-`DialFileManagerShell` SHALL derive `gridOptions` from `activeTab`:
+`DialFileManagerShell` SHALL derive `gridOptions` from the controller's browsed `sectionTab`, falling back to `activeTab` for controllers without section composition:
 
 - `visibleColumns` changes per tab (see `file-manager-tabs` spec).
-- `actionLabels` includes `Delete` only when `activeTab === DialFileManagerTabs.MyFiles`.
+- `actionLabels` includes `Delete` only when the effective source tab is `DialFileManagerTabs.MyFiles`.
 - `dateLocale` is `i18n.language`.
 - `dateOptions` is `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`.
 - `selectionMode`, `additionalGridOptions`, and row-selectability logic are unchanged from current implementation.

@@ -30,19 +30,21 @@ On mobile, `EditorLayout` moves every action (the preview toggle, Cancel and the
 - **THEN** neither the Cancel button nor the Save button is present in the DOM
 - **AND** only the "Exit preview" button is shown in the action group
 
-### Requirement: Preview availability scoped to the Apps editor Settings step
-The preview toggle SHALL be available only in edit mode of the Quick App editor (`/apps-editor` with an `appId` query param), where the Setup column renders `QuickAppSetup` with the schema's embedded editor. While not previewing, the toggle SHALL be rendered but disabled until the Setup reports readiness through `onReadyChange` — `QuickAppSetup` reports ready only when the app id is present, the schema (from the `schema` query param) has an `editorUrl`, and the embedded editor has signalled readiness. This is the same gate that disables Save (`isSubmitDisabled = isEditMode && !isSetupReady`). A visible-but-disabled control tells the user preview exists and is not yet available.
+### Requirement: Preview availability scoped to an edited quick app
+The quick-app editor (`ApplicationFormEditor` with `quickAppDefinition`) SHALL render the header's Preview toggle only in edit mode, i.e. once the application exists (`appId` is set), and never while a new application is being created, so the button does not render there at all.
 
-#### Scenario: No preview before the app exists
-- **WHEN** the Quick App editor is in create mode (no `appId` yet)
-- **THEN** no preview button is rendered
+In edit mode the button SHALL render but SHALL be disabled until the Setup reports readiness through `onReadyChange` — `QuickAppSetup` reports it once the schema has an `editorUrl` and the embedded editor's readiness signal is present, the same readiness gate that governs Save (see `quick-app-authoring`). A visible-but-disabled control tells the user preview exists and is not yet available, where an absent one reads as unsupported.
 
-#### Scenario: Preview available once the embedded editor is ready
-- **WHEN** the editor is in edit mode, the schema has `editorUrl`, and the embedded editor has reported readiness
-- **THEN** the preview button is enabled
+#### Scenario: No preview while creating
+- **WHEN** the quick-app editor renders without an `appId`
+- **THEN** the header shows no preview button
+
+#### Scenario: Preview available for an edited app
+- **WHEN** the quick-app editor renders with an `appId`, a schema that has `editorUrl`, and the embedded editor has reported readiness
+- **THEN** the header shows an enabled preview button
 
 #### Scenario: Preview button is disabled before the embedded editor is ready
-- **WHEN** the editor is in edit mode but the embedded editor has not yet reported readiness
+- **WHEN** the quick-app editor renders with an `appId` but the embedded editor has not yet reported readiness
 - **THEN** the preview button is rendered in a disabled state rather than omitted
 
 ### Requirement: Save-then-preview orchestration

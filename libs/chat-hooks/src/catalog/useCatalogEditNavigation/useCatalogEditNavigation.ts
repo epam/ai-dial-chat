@@ -14,9 +14,6 @@ import {
 import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
 
-/** Maximum number of runner options the Create menu lists at once. */
-const CREATE_MENU_RUNNER_LIMIT = 7;
-
 /** A host notification `useCatalogEditNavigation` asks to be shown for a failed delete. */
 export interface CatalogEditNavigationNotification {
   message: string;
@@ -25,7 +22,6 @@ export interface CatalogEditNavigationNotification {
 
 /** Localized copy `useCatalogEditNavigation` needs for the Create menu and delete errors. */
 export interface CatalogEditNavigationLabels {
-  createQuickApp: string;
   createToolset: string;
   createCustomApp: string;
   createSkill: string;
@@ -103,7 +99,7 @@ export interface UseCatalogEditNavigationParams {
 export interface UseCatalogEditNavigationResult {
   handleEdit: (item: CatalogItem) => void;
   handleDelete: (item: CatalogItem) => Promise<void>;
-  /** The Create dropdown's items: runners sorted by label and capped at 7, then the static options, all filtered by `createSearch.value`. */
+  /** The Create dropdown's items: runners and static options sorted together by label, all filtered by `createSearch.value`. */
   createOptions: DropdownItem[];
   /** The Create menu's search field state, or `undefined` when no runner option is offered. */
   createSearch: CatalogCreateSearch | undefined;
@@ -236,15 +232,9 @@ export const useCatalogEditNavigation = ({
       runnerSchemas
         .map((schema) => ({
           id: schema.id,
-          label: isQuickAppSchema(schema)
-            ? labels.createQuickApp
-            : schema.displayName || schema.id,
+          label: schema.displayName || schema.id,
         }))
-        .sort((a, b) =>
-          a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
-        )
         .filter((runner) => isMatch(runner.label))
-        .slice(0, CREATE_MENU_RUNNER_LIMIT)
         .forEach((runner) => {
           options.push({
             key: `runner:${runner.id}`,
@@ -306,7 +296,12 @@ export const useCatalogEditNavigation = ({
       });
     }
 
-    return options;
+    // Every label this hook builds is a string, so runners and the static options sort together.
+    return options.sort((a, b) =>
+      String(a.label ?? '').localeCompare(String(b.label ?? ''), undefined, {
+        sensitivity: 'base',
+      }),
+    );
   }, [
     createSearchQuery,
     isRunnerCreationEnabled,

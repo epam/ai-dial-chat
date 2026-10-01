@@ -2370,17 +2370,17 @@ isCustomAppSchema({ id: 'custom_app' }); // true
 
 ### getRunnerSchemas
 
-Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. `useCatalogEditNavigation` builds one Create option per returned schema.
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
 
 getRunnerSchemas([
-  { id: 'quickapps2' },
+  { id: 'quickapps2', editorUrl: 'https://editor.example/quickapps' },
   { id: 'mind-map' },
   { id: 'mind-map' },
-  { id: 'custom_app' },
-]); // [{ id: 'quickapps2' }, { id: 'mind-map' }]
+  { id: 'custom_app', editorUrl: 'https://editor.example/custom' },
+]); // [{ id: 'quickapps2', … }, { id: 'mind-map' }]
 ```
 
 ### isValidAbsoluteUrl / parseFeaturesData / isValidFeaturesData
@@ -2994,7 +2994,7 @@ const limits = mapDeploymentLimitsToInput(
 
 ### mapDeploymentLimitsDtoToCatalogLimits
 
-Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Each row carries a "spent" caption built from the sibling cost stat for the same period, and a row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
+Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Rows cover the current UTC calendar day, week, and month — the same periods the Usage page reports — and, when `labels.formatResetTime` is given, each carries the reset line built from its own `resetsAt`. A row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. The DTO's cost stats are ignored: they are the caller's account-wide budget and spend across every deployment, not the queried deployment's own spend, so no row carries a `captionLabel`. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
 
 ```ts
 import {
@@ -3004,18 +3004,18 @@ import {
 
 const labels: DeploymentLimitsLabels = {
   tokenGroup: t('catalog.details.limits.tokenGroup'),
-  tokensPerDay: t('catalog.details.limits.tokensPerDay'),
-  tokensPerWeek: t('catalog.details.limits.tokensPerWeek'),
-  tokensPerMonth: t('catalog.details.limits.tokensPerMonth'),
+  tokensPerDay: t('usage.todayTitle'),
+  tokensPerWeek: t('usage.thisWeekTitle'),
+  tokensPerMonth: t('usage.thisMonthTitle'),
   followsCostLimit: t('catalog.details.limits.followsCostLimit'),
-  formatSpentCaption: (amount) =>
-    t('catalog.details.limits.spentLabel', { amount }),
   formatValueLabel: (used, total) =>
     t('catalog.details.limits.value', { used, total }),
   formatProgressAriaLabel: ({ label, used, total }) =>
     t('catalog.details.limits.progressAriaLabel', { label, used, total }),
   formatFollowsCostLimitAriaLabel: ({ label, used }) =>
     t('catalog.details.limits.followsCostLimitAriaLabel', { label, used }),
+  // Optional; returns `{ resetsAtMs, isoValue, label, ariaLabel }` or `undefined`.
+  formatResetTime: (resetsAt) => formatResetTime(resetsAt),
 };
 
 const limits = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);
@@ -3476,12 +3476,12 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name            | Type                                   | Description                                                                                                                                                                |
-| --------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                                     |
-| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                                 |
-| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners sorted alphabetically and capped at 7, then the static options, all filtered by the search query. |
-| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                          |
+| Name            | Type                                   | Description                                                                                                                                                   |
+| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                        |
+| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                    |
+| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query. |
+| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                             |
 
 ```tsx
 import {
@@ -3498,7 +3498,6 @@ const urls: CatalogEditNavigationUrls = {
 };
 
 const labels: CatalogEditNavigationLabels = {
-  createQuickApp: t('catalog.create.quickApp'),
   createToolset: t('catalog.create.toolset'),
   createCustomApp: t('catalog.create.customApp'),
   createSkill: t('catalog.create.skill'),
