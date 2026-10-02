@@ -111,6 +111,10 @@ const labels: ConversationSourcesPanelLabels = {
 };
 ```
 
+### ConversationSourcesPanelStyles
+
+Optional style overrides: `colors` (CSS custom properties for the sources section), `typography` (heading/link/quote classes), and `sectionClassName` — extra class name(s) merged onto each files/sources section root, e.g. `'px-4'` to line the sections up with host-rendered accordions inside `additionalSections`.
+
 ## Public class names
 
 A host embedding this package cannot style it through its CSS-module locals —

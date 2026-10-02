@@ -1,6 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostButton,
   Skeleton,
@@ -19,39 +18,52 @@ import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item'
 import { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
 import styles from './ScheduledTaskRunHistoryList.module.scss';
 
+/*
+ * The run-status glyphs render at Tabler's native 2px weight — one step
+ * heavier than the `DIAL_KIT_ICON_STROKE` scale — because at 16px the 1.5
+ * outline reads thin and unclear beside the row's 14px text (design, #9047).
+ */
+const RUN_STATUS_ICON_STROKE = 2;
+
+/*
+ * The run-status glyphs render 3px above the SM scale step (16 → 19) — the
+ * size the panel design shows (design, #9047); no kit token sits there.
+ */
+const RUN_STATUS_ICON_SIZE = 19;
+
 const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
   switch (status) {
     case ScheduledTaskRunStatus.Success:
       return (
         <IconCircleCheck
-          size={DIAL_ICON_SIZE.SM}
+          size={RUN_STATUS_ICON_SIZE}
           className={styles.successIcon}
           aria-hidden
-          stroke={DIAL_KIT_ICON_STROKE}
+          stroke={RUN_STATUS_ICON_STROKE}
         />
       );
     case ScheduledTaskRunStatus.Error:
       return (
         <IconCircleX
-          size={DIAL_ICON_SIZE.SM}
+          size={RUN_STATUS_ICON_SIZE}
           className={styles.errorIcon}
           aria-hidden
-          stroke={DIAL_KIT_ICON_STROKE}
+          stroke={RUN_STATUS_ICON_STROKE}
         />
       );
     case ScheduledTaskRunStatus.InProgress:
       return (
         <span aria-hidden>
-          <Spinner size={DIAL_ICON_SIZE.SM} />
+          <Spinner size={RUN_STATUS_ICON_SIZE} />
         </span>
       );
     case ScheduledTaskRunStatus.Missed:
       return (
         <IconAlertTriangle
-          size={DIAL_ICON_SIZE.SM}
+          size={RUN_STATUS_ICON_SIZE}
           className={styles.missedIcon}
           aria-hidden
-          stroke={DIAL_KIT_ICON_STROKE}
+          stroke={RUN_STATUS_ICON_STROKE}
         />
       );
     default:
@@ -82,7 +94,9 @@ export const ScheduledTaskRunHistoryList: FC<
 }) => {
   const { colors, typography } = listStyles ?? {};
   const runTimestampClassName =
-    typography?.runTimestampClassName ?? 'dial-small-text';
+    typography?.runTimestampClassName ?? 'dial-small-paragraph-text';
+  const runTimestampUnreadClassName =
+    typography?.runTimestampUnreadClassName ?? 'dial-small-paragraph-semi-text';
   const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
   const unreadIndicatorLabel = labels.unreadIndicatorLabel ?? 'Unread';
 
@@ -142,36 +156,40 @@ export const ScheduledTaskRunHistoryList: FC<
         aria-label={accessibleName}
         aria-current={isCurrent ? 'true' : undefined}
         className={mergeClasses(
-          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full pe-2',
-          styles.rowLayout,
+          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
           isCurrent && styles.currentRun,
           isClickable && 'cursor-pointer',
           isClickable && styles.interactiveRow,
         )}
       >
-        <span className="flex items-center gap-2 truncate">
-          {/*
-           * A fixed 12x12 slot is always reserved before the timestamp so its
-           * horizontal position stays identical across rows whether or not
-           * the unread dot itself is rendered.
-           */}
-          <span className="relative flex size-3 shrink-0 items-center justify-center">
-            {run.isUnread && (
-              <span
-                className={mergeClasses(
-                  'size-[5.33px] rounded-full',
-                  styles.unreadDot,
-                )}
-                aria-hidden
-              />
+        <span className="flex min-w-0 items-center gap-2">
+          <RunStatusIcon status={run.status} />
+          <span
+            className={mergeClasses(
+              run.isUnread
+                ? runTimestampUnreadClassName
+                : runTimestampClassName,
+              'truncate',
             )}
-          </span>
-          <span className={mergeClasses(runTimestampClassName, 'truncate')}>
+          >
             {run.timestampLabel}
           </span>
         </span>
-        <span className="flex min-h-[var(--strhl-row-min-height,32px)] w-14 shrink-0 items-center justify-end">
-          <RunStatusIcon status={run.status} />
+        {/*
+         * A fixed 12x12 slot is always reserved at the row's end so the
+         * timestamp's width stays identical across rows whether or not the
+         * unread dot itself is rendered.
+         */}
+        <span className="relative flex size-3 shrink-0 items-center justify-center">
+          {run.isUnread && (
+            <span
+              className={mergeClasses(
+                'size-[5.33px] rounded-full',
+                styles.unreadDot,
+              )}
+              aria-hidden
+            />
+          )}
         </span>
       </li>
     );
@@ -182,10 +200,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <li
         key={`history-skeleton-${index}`}
         aria-hidden="true"
-        className={mergeClasses(
-          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 pe-2',
-          styles.rowLayout,
-        )}
+        className="flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 px-3"
       >
         <Skeleton
           variant={SkeletonVariant.Rectangular}

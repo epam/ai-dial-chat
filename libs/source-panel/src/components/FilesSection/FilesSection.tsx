@@ -13,6 +13,8 @@ interface FilesSectionProps {
   searchQuery?: string;
   /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
+  /** Extra class name(s) merged onto the section root. */
+  className?: string;
   /** Called when the user clicks an attachment card. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Accessible label for the attachment click action, forwarded to `AttachmentCard`. */
@@ -25,6 +27,7 @@ const FilesSection: FC<FilesSectionProps> = ({
   title,
   searchQuery,
   titleClassName = 'dial-body-semi-text',
+  className,
   onAttachmentClick,
   attachmentClickLabel,
 }) => {
@@ -33,7 +36,7 @@ const FilesSection: FC<FilesSectionProps> = ({
   }
 
   return (
-    <section className="mb-6">
+    <section className={mergeClasses('mb-6', className)}>
       <h2 className={mergeClasses(titleClassName, 'mb-3')}>{title}</h2>
       <div
         role="list"

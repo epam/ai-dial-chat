@@ -481,12 +481,26 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     expect(detailsButton.getAttribute('aria-expanded')).toBe('false');
 
     expect(historyButton.getAttribute('aria-controls')).toBeTruthy();
+    const historyRegion = screen.getByRole('region', {
+      name: 'scheduledTasks.detail.historyTitle',
+      hidden: true,
+    });
+    expect(historyRegion).toBeTruthy();
+    /* The History rows sit at a 12px start inset instead of the kit's 16px. */
+    expect(historyRegion.className).toContain('ps-3');
+    /* The title spans render as blocks with py-1 so their own 12/16 line-height beats the kit's dial-body-text strut and the element reaches the 24px design height. */
     expect(
-      screen.getByRole('region', {
-        name: 'scheduledTasks.detail.historyTitle',
-        hidden: true,
-      }),
-    ).toBeTruthy();
+      screen.getByText('scheduledTasks.detail.historyTitle').className,
+    ).toContain('block');
+    expect(
+      screen.getByText('scheduledTasks.detail.historyTitle').className,
+    ).toContain('py-1');
+    expect(
+      screen.getByText('scheduledTasks.create.detailsSectionTitle').className,
+    ).toContain('block');
+    expect(
+      screen.getByText('scheduledTasks.create.detailsSectionTitle').className,
+    ).toContain('py-1');
   });
 
   it('does not render search or download-all when only task sections are present', () => {
@@ -590,6 +604,37 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     expect(screen.getByText('Do the thing')).toBeTruthy();
   });
 
+  it('renders the Instructions text on the small scale and the field labels secondary', async () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.runId = 'run-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Weekly digest',
+      model: 'gpt-5',
+      prompt: 'Do the thing',
+    } as ScheduledTaskDto;
+    mockSidebarConversationModelId = 'gpt-4o';
+
+    render(<ConversationSourcesPanelContainer />);
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.create.detailsSectionTitle',
+      }),
+    );
+
+    expect(screen.getByText('Do the thing').className).toContain(
+      'dial-small-text',
+    );
+    expect(
+      screen.getByText('scheduledTasks.conversationPanel.modelLabel').className,
+    ).toContain('text-secondary');
+    expect(
+      screen.getByText('scheduledTasks.create.instructionsLabel').className,
+    ).toContain('text-secondary');
+  });
+
   it('a task-detail error does not hide the History section', () => {
     activeScheduledTaskMock.status = 'task-conversation';
     activeScheduledTaskMock.scheduleId = 'schedule-1';
@@ -658,7 +703,14 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     expect(detailsIndex).toBeGreaterThan(historyIndex);
   });
 
-  it('resets History to expanded and Details to collapsed when scheduleId changes', () => {
+  /*
+   * The memoized container re-renders through real context updates in
+   * production, which the plain-function context mocks here cannot simulate —
+   * so the reset-on-schedule-change behavior itself is covered by
+   * TaskHistorySection's and TaskDetailsSection's own specs; this only pins
+   * the composed default states.
+   */
+  it('composes History expanded and Details collapsed by default', () => {
     activeScheduledTaskMock.status = 'task-conversation';
     activeScheduledTaskMock.scheduleId = 'schedule-1';
     activeScheduledTaskMock.runId = 'run-1';
@@ -668,14 +720,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
       displayName: 'Weekly digest',
     } as ScheduledTaskDto;
 
-    const { rerender } = render(<ConversationSourcesPanelContainer />);
-
-    activeScheduledTaskMock.scheduleId = 'schedule-2';
-    activeScheduledTaskMock.task = {
-      id: 'schedule-2',
-      displayName: 'Other task',
-    } as ScheduledTaskDto;
-    rerender(<ConversationSourcesPanelContainer />);
+    render(<ConversationSourcesPanelContainer />);
 
     const historyButton = screen.getByRole('button', {
       name: 'scheduledTasks.detail.historyTitle',

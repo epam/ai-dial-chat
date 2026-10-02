@@ -24,9 +24,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCircleCheck: () => <svg data-icon="success" />,
-  IconCircleX: () => <svg data-icon="error" />,
-  IconAlertTriangle: () => <svg data-icon="missed" />,
+  IconCircleCheck: (props: Record<string, unknown>) => (
+    <svg data-icon="success" {...props} />
+  ),
+  IconCircleX: (props: Record<string, unknown>) => (
+    <svg data-icon="error" {...props} />
+  ),
+  IconAlertTriangle: (props: Record<string, unknown>) => (
+    <svg data-icon="missed" {...props} />
+  ),
   IconClipboardX: () => <svg data-icon="empty" />,
 }));
 
@@ -251,6 +257,80 @@ describe('ScheduledTaskRunHistoryList', () => {
         name: 'Succeeded today at 9:01 AM (99s)',
       }),
     ).toBeTruthy();
+  });
+
+  it('renders a not-yet-viewed row timestamp semibold and a viewed one regular', () => {
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[
+          buildRun({
+            id: 'run_1',
+            isUnread: true,
+            timestampLabel: 'today at 9:01 AM',
+          }),
+          buildRun({
+            id: 'run_2',
+            isUnread: false,
+            timestampLabel: 'Jul 10 at 9:46 AM',
+          }),
+        ]}
+        labels={labels}
+      />,
+    );
+
+    expect(screen.getByText('today at 9:01 AM').className).toContain(
+      'dial-small-paragraph-semi-text',
+    );
+    expect(screen.getByText('Jul 10 at 9:46 AM').className).toContain(
+      'dial-small-paragraph-text',
+    );
+  });
+
+  it('lets a host override the viewed and not-yet-viewed timestamp classes', () => {
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[buildRun({ id: 'run_1', isUnread: true })]}
+        labels={labels}
+        styles={{
+          typography: {
+            runTimestampClassName: 'custom-viewed',
+            runTimestampUnreadClassName: 'custom-unread',
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('today at 9:01 AM (99s)').className).toContain(
+      'custom-unread',
+    );
+  });
+
+  it('renders the status icon before the timestamp at Tabler weight, and the unread dot at the row end', () => {
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[buildRun({ id: 'run_1', isUnread: true })]}
+        labels={labels}
+      />,
+    );
+
+    const row = screen.getByRole('listitem', { name: /Unread$/ });
+    // eslint-disable-next-line testing-library/no-node-access -- row-internal child order has no semantic query
+    const startGroup = row.firstElementChild as HTMLElement;
+    // eslint-disable-next-line testing-library/no-node-access -- row-internal child order has no semantic query
+    const endSlot = row.lastElementChild as HTMLElement;
+
+    // eslint-disable-next-line testing-library/no-node-access -- the status icon has no accessible name; its position and stroke are the assertion
+    const icon = startGroup.querySelector('[data-icon="success"]');
+    expect(icon).toBeTruthy();
+    expect(icon?.getAttribute('stroke')).toBe('2');
+    expect(icon?.getAttribute('size')).toBe('19');
+    /* The pill carries the design's 12px horizontal padding on both sides. */
+    expect(row.className).toContain('px-3');
+    expect(row.className).not.toContain('pe-2');
+    /* The timestamp follows the icon inside the same start group. */
+    expect(startGroup.textContent).toContain('today at 9:01 AM (99s)');
+    /* The unread dot renders inside the reserved end slot. */
+    expect(endSlot.firstElementChild?.className).toContain('rounded-full');
   });
 
   it('renders the supplied footer after the rows', () => {
