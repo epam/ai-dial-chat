@@ -182,15 +182,40 @@ describe('RateService', () => {
       expect(headers).not.toHaveProperty('X-JOB-TITLE');
     });
 
-    it('never forwards the comment field to DIAL Core — it is not part of RateRequest', async () => {
+    it.each([
+      { rate: MessageRating.Like, expectedRate: true },
+      { rate: MessageRating.Dislike, expectedRate: false },
+      { rate: null, expectedRate: false },
+    ])(
+      'forwards the comment to DIAL Core for rate $rate',
+      async ({ rate, expectedRate }) => {
+        fetchSpy.mockResolvedValue({ ok: true } as Response);
+        const service = makeService();
+        const comment = 'Some comment';
+
+        await service.rateMessage({ ...validDto, rate, comment }, ACCESS_TOKEN);
+
+        const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+        expect(JSON.parse(init.body as string)).toStrictEqual({
+          responseId: validDto.responseId,
+          rate: expectedRate,
+          comment,
+        });
+      },
+    );
+
+    it('preserves an explicitly empty comment', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();
-      const dtoWithComment = { ...validDto, comment: 'Too short' };
 
-      await service.rateMessage(dtoWithComment, ACCESS_TOKEN);
+      await service.rateMessage({ ...validDto, comment: '' }, ACCESS_TOKEN);
 
       const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-      expect(JSON.parse(init.body as string)).not.toHaveProperty('comment');
+      expect(JSON.parse(init.body as string)).toStrictEqual({
+        responseId: validDto.responseId,
+        rate: true,
+        comment: '',
+      });
     });
 
     it('throws ServiceUnavailableException on network error', async () => {
