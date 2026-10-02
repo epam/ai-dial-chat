@@ -37,8 +37,12 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 }));
 
 const useConversationsMock = vi.fn();
+const refreshConversationsMock = vi.fn().mockResolvedValue(undefined);
 vi.mock('../../../context/ConversationsContext', () => ({
-  useConversations: () => useConversationsMock(),
+  useConversations: () => ({
+    refreshConversations: refreshConversationsMock,
+    ...useConversationsMock(),
+  }),
 }));
 
 const getScheduledTaskMock = vi.fn();
@@ -448,6 +452,7 @@ describe('ScheduledTaskDetailPage', () => {
   });
   beforeEach(() => {
     vi.clearAllMocks();
+    refreshConversationsMock.mockReset().mockResolvedValue(undefined);
     useAppConfigMock.mockReturnValue({ status: 'ready' });
     useDeploymentsMock.mockReturnValue({ items: [] });
     useConversationsMock.mockReturnValue({ conversations: [] });
@@ -539,6 +544,68 @@ describe('ScheduledTaskDetailPage', () => {
     ).toBe('status');
     expect(showNotificationMock).toHaveBeenCalled();
   });
+
+  it.each([true, false])(
+    'refreshes unread metadata when the manual chat appears (accepted: %s)',
+    async (hasAcceptedChat) => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Task',
+        trigger: {},
+      });
+      const run = {
+        id: 'new_run',
+        status: 'InProgress',
+        startTime: '2026-09-30T09:00:00Z',
+      };
+      const conversationId =
+        'conversations/bucket/.scheduler/sched_123/new_run';
+      startScheduledTaskMock.mockResolvedValue({
+        ...run,
+        conversationId: hasAcceptedChat ? conversationId : undefined,
+      });
+      getScheduledTaskRunMock.mockResolvedValue({
+        ...run,
+        conversationId,
+        status: 'Success',
+      });
+      refreshConversationsMock.mockImplementation(async () => {
+        useConversationsMock.mockReturnValue({
+          conversations: [{ id: conversationId, isUnread: true }],
+        });
+      });
+      renderDetailPage();
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: 'scheduledTasks.detail.startNow',
+        }),
+      );
+      expect(refreshConversationsMock).toHaveBeenCalledTimes(
+        hasAcceptedChat ? 1 : 0,
+      );
+      await screen.findByText(
+        'scheduledTasks.detail.runFinished',
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(() =>
+        expect(refreshConversationsMock).toHaveBeenCalledTimes(
+          hasAcceptedChat ? 2 : 1,
+        ),
+      );
+      expect(refreshConversationsMock).toHaveBeenLastCalledWith([
+        conversationId,
+      ]);
+      expect(
+        await screen.findByRole('button', { name: 'run:new_run:unread' }),
+      ).toBeTruthy();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'run:new_run:unread' }),
+      );
+      expect(await screen.findByText('conversation view')).toBeTruthy();
+    },
+  );
 
   it('does not notify after leaving while a start error is being decoded', async () => {
     useFeatureFlagMock.mockReturnValue(true);

@@ -526,6 +526,12 @@ History pagination and using the existing offline-credentials sign-in flow only
 when an Error row projects `resultStage: "credentials"`. Start requests are
 never retried automatically.
 
+`ConversationsContext` owns unread metadata and bounded discovery retries for
+chats observed by Start now or History. Discovery survives navigation and run
+completion, while applied list snapshots are ordered by successful request
+sequence. See the [chat behavior contract](../apps/chat/README.md#manual-scheduled-task-runs)
+for retry limits and viewed-state synchronization.
+
 Reusable selection lives in `skills` (`SkillSelectorField`), validation and
 presentation in `scheduled-tasks`, and checked request mapping in `chat-hooks`.
 Both chat and scheduled-task validation use the pure `chat-shared` skill-support
