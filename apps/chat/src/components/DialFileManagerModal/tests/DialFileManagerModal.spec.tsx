@@ -194,6 +194,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     DialFileManager: ({
       className,
       contentClassName,
+      contentHeaderClassName,
       gridClassName,
       gridOptions,
       uploadEnabled,
@@ -217,6 +218,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     }: {
       className?: string;
       contentClassName?: string;
+      contentHeaderClassName?: string;
       gridClassName?: string;
       gridOptions?: {
         additionalGridOptions?: {
@@ -287,6 +289,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         role="region"
         aria-label="file manager"
         data-content-class={contentClassName}
+        data-content-header-class={contentHeaderClassName}
         data-grid-class={gridClassName}
         data-grid-layout={gridOptions?.additionalGridOptions?.domLayout}
         data-loading={filesLoading}
@@ -636,6 +639,7 @@ describe('DialFileManagerModal', () => {
     expect(fileManager.classList.contains('grow')).toBe(true);
     expect(fileManager.classList.contains('bg-layer-sunken')).toBe(true);
     expect(fileManager.getAttribute('data-content-class')).toBe('px-0 pb-0');
+    expect(fileManager.getAttribute('data-content-header-class')).toBe('h-10');
     expect(fileManager.getAttribute('data-grid-class')).toBe(
       'size-full gap-6 px-6 py-4',
     );

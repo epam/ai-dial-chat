@@ -530,6 +530,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
                 ? 'px-0 pb-0'
                 : undefined
             }
+            contentHeaderClassName={
+              variant === DialFileManagerVariant.Attach ? 'h-10' : undefined
+            }
             gridClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'size-full gap-6 px-6 py-4'
