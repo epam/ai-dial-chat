@@ -111,4 +111,46 @@ describe('ScheduledTaskDetailsSummary', () => {
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.queryByRole('textbox')).toBeNull();
   });
+
+  it('renders field labels tiny and secondary, values small by default', () => {
+    render(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        modelDisplayName="GPT-5.1"
+        skillLabel="Skill"
+        skillDisplayName="Translate Text"
+        instructionsLabel="Instructions"
+        instructionsMarkdown="Do work"
+      />,
+    );
+
+    expect(screen.getByText('Model').className).toContain('dial-tiny-text');
+    expect(screen.getByText('Model').className).toContain('text-secondary');
+    expect(screen.getByText('GPT-5.1').className).toContain('dial-small-text');
+    expect(screen.getByText('Skill').className).toContain('dial-tiny-text');
+    expect(screen.getByText('Skill').className).toContain('text-secondary');
+    expect(screen.getByText('Translate Text').className).toContain(
+      'dial-small-text',
+    );
+  });
+
+  it('lets a host override the field label and value classes', () => {
+    render(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        instructionsLabel="Instructions"
+        modelDisplayName="GPT-5.1"
+        instructionsMarkdown="Do work"
+        styles={{
+          typography: {
+            fieldLabelClassName: 'custom-label',
+            fieldValueClassName: 'custom-value',
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Model').className).toContain('custom-label');
+    expect(screen.getByText('GPT-5.1').className).toContain('custom-value');
+  });
 });

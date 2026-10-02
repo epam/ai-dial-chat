@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 
 /** Typography overrides for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryTypography {
-  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text'`. */
+  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text text-secondary'`. */
   fieldLabelClassName?: string;
-  /** CSS class applied to the resolved model value. Defaults to `'dial-body-text'`. */
+  /** CSS class applied to the resolved field values. Defaults to `'dial-small-text'`. */
   fieldValueClassName?: string;
 }
 
