@@ -1,5 +1,8 @@
 import type { AnimationItem } from 'lottie-web';
-import type { LottiePlayer } from './gift-wrapping-player';
+import {
+  createLottieLightSvgAnimation,
+  type LottiePlayer,
+} from '../../utils/lottie-player';
 import {
   PENGUIN_STAR_MS,
   type PenguinStarComposition,
@@ -92,19 +95,7 @@ export const animatePenguinStar = (
       stop();
   };
   try {
-    animation = player.loadAnimation({
-      container: host,
-      renderer: 'svg',
-      loop: false,
-      autoplay: false,
-      animationData: plan.animationData,
-      rendererSettings: {
-        progressiveLoad: false,
-        preserveAspectRatio: 'xMidYMid meet',
-        focusable: false,
-      },
-    });
-    animation.setSubframe(true);
+    animation = createLottieLightSvgAnimation(player, host, plan.animationData);
     animation.addEventListener('DOMLoaded', ready);
     animation.addEventListener('enterFrame', onFrame);
     animation.addEventListener('complete', stop);

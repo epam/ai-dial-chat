@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import elves from '../../assets/gift-wrapping-elves.json';
+import { NEW_YEAR_SCENE_DURATIONS } from '../../constants/new-year';
+import { NewYearScene } from '../../types/new-year';
+import { GIFT_WRAPPING_TIMINGS } from '../gift-wrapping-animation';
 import {
   buildGiftWrappingComposition,
   GIFT_WRAPPING_MS,
@@ -471,6 +474,20 @@ describe('Gift wrapping composition', () => {
         buildGiftWrappingComposition(target(1280), false).animationData,
       ),
     ).toBe(before);
+  });
+
+  it('keeps the load, readiness and playback budget inside the provider lifetime', () => {
+    const { loadTimeoutMs, readyTimeoutMs, playbackMs } = GIFT_WRAPPING_TIMINGS;
+    expect({ loadTimeoutMs, readyTimeoutMs, playbackMs }).toEqual({
+      loadTimeoutMs: 2000,
+      readyTimeoutMs: 250,
+      playbackMs: GIFT_WRAPPING_MS,
+    });
+    expect(GIFT_WRAPPING_MS).toBe(16000);
+    expect(loadTimeoutMs + readyTimeoutMs + playbackMs).toBeLessThanOrEqual(
+      NEW_YEAR_SCENE_DURATIONS[NewYearScene.GiftWrapping],
+    );
+    expect(NEW_YEAR_SCENE_DURATIONS[NewYearScene.GiftWrapping]).toBe(18500);
   });
 });
 
