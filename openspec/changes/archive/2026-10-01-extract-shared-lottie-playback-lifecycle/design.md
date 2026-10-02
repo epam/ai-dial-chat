@@ -181,7 +181,7 @@ Provider deadline 18500 → unmount → hook cleanup → session.dispose()
 | `AnimationItem` and renderer nodes | session `attach` | Session at terminal: `destroy`, with `replaceChildren` as the fallback |
 | Mutation and Resize observers | adapter `onAnimationCreated` | The adapter's disposer, which the session runs at terminal |
 | Window and `visualViewport` interrupt listeners | the GiftWrapping component's own effect (scene policy) | That effect's cleanup: on ended, changed or unmount. They stay installed while the static fallback shows, as today |
-| React state (`phase`, `preparation`) | hook | Not updated after `dispose()` |
+| React state (`phase`, `preparation`) | hook | The effect cleanup clears its session's preparation, so a disabled hook reports `idle` and a re-enabled one reports `loading` until the new session prepares |
 | Scene lifetime, notification, replay | `CelebrationProvider` | Provider (unchanged) |
 
 The interrupt list stays in the scene because it is interaction policy. Cat (S4) uses a different list (`HalloweenCatScene.tsx:58-69`).

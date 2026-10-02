@@ -509,6 +509,28 @@ describe('Gift wrapping Lottie lifecycle', () => {
     view.unmount();
   });
 
+  it('disconnects the composer MutationObserver when the ResizeObserver cannot be created', async () => {
+    const mutationDisconnect = vi.spyOn(
+      MutationObserver.prototype,
+      'disconnect',
+    );
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor() {
+          throw new Error('ResizeObserver unavailable');
+        }
+      },
+    );
+    const view = render(<NewYearGiftWrapping />);
+    await flush();
+    expect(mutationDisconnect).toHaveBeenCalledOnce();
+    expect(animations[0].destroy).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(view.container.querySelector('[data-gift-static]')).not.toBeNull();
+    view.unmount();
+  });
+
   it('a second activation renders a newly built composition', async () => {
     const { unmount: unmountFirst } = render(<NewYearGiftWrapping />);
     await flush();

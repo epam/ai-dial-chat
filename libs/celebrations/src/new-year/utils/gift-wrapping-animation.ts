@@ -60,6 +60,9 @@ const watchComposer = ({
       cancel();
     } else if (relevant.length) moved();
   });
+  /* Each observer is released as soon as it exists, so a later throw in this
+     adapter cannot leave it connected. */
+  addDisposer(() => mutation.disconnect());
   mutation.observe(document.documentElement, {
     subtree: true,
     childList: true,
@@ -76,6 +79,7 @@ const watchComposer = ({
     ],
   });
   const resize = new ResizeObserver(moved);
+  addDisposer(() => resize.disconnect());
   let ancestor: HTMLElement | null = source.element;
   for (
     let depth = 0;
@@ -83,10 +87,6 @@ const watchComposer = ({
     depth++, ancestor = ancestor.parentElement
   )
     resize.observe(ancestor);
-  addDisposer(() => {
-    mutation.disconnect();
-    resize.disconnect();
-  });
 };
 
 /** The scene's contribution to its Lottie session: timings, single-use data and composer observers. */

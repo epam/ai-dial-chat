@@ -101,6 +101,25 @@ describe('useLottieSceneSession', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it('drops a disposed session preparation when disabled and re-enabled', async () => {
+    const { result, rerender, prepare } = renderSession();
+    await flush();
+    expect(result.current.phase).toBe(LottieScenePhase.Prepared);
+    rerender({ isEnabled: false, onPrepare: prepare });
+    await flush();
+    expect(result.current.phase).toBe(LottieScenePhase.Idle);
+    expect(result.current.preparation).toBeNull();
+    const resolve = deferPlayer();
+    rerender({ isEnabled: true, onPrepare: vi.fn(() => ({ id: 2 })) });
+    await flush();
+    expect(result.current.phase).toBe(LottieScenePhase.Loading);
+    expect(result.current.preparation).toBeNull();
+    await act(async () => resolve());
+    await flush();
+    expect(result.current.phase).toBe(LottieScenePhase.Prepared);
+    expect(result.current.preparation).toEqual({ id: 2 });
+  });
+
   it('ends instead of falling back when cancelled during a pending import', async () => {
     const resolve = deferPlayer();
     const { result, prepare } = renderSession();

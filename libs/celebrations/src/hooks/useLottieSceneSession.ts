@@ -48,6 +48,8 @@ export const useLottieSceneSession = <P>({
     return () => {
       session.dispose();
       if (sessionRef.current === session) sessionRef.current = null;
+      /* A disposed session's preparation must not describe the next run. */
+      setPrepared((current) => (current?.session === session ? null : current));
     };
   }, [enabled, isEnded, isFailed]);
 
