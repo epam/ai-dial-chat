@@ -406,6 +406,14 @@ describe('ScheduledTasksController (integration)', () => {
         fields: { minute: '30-10', hour: '9' },
       },
       {
+        name: 'uses `last` outside the day field',
+        fields: { minute: '0', hour: 'last' },
+      },
+      {
+        name: 'uses `last` inside a day range',
+        fields: { minute: '0', hour: '21', day: 'last-5' },
+      },
+      {
         name: 'is empty',
         fields: {},
       },
@@ -432,6 +440,28 @@ describe('ScheduledTasksController (integration)', () => {
               day_of_week: 'mon-fri',
             },
           },
+        },
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send(body)
+        .expect(201);
+
+      expect(service.createScheduledTask).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        expect.objectContaining(body),
+        TEST_USER.bucket,
+      );
+    });
+
+    it('accepts the last day of the month', async () => {
+      service.createScheduledTask.mockResolvedValue(mockSchedule);
+      const body = {
+        ...validCreateBody,
+        trigger: {
+          cron: { fields: { minute: '30', hour: '21', day: 'last' } },
         },
       };
 

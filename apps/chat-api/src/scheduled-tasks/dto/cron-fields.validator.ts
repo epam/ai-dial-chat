@@ -4,6 +4,8 @@ interface CronFieldRule {
   min: number;
   max: number;
   aliases?: readonly string[];
+  /** Standalone APScheduler expressions accepted verbatim, e.g. `last`. */
+  keywords?: readonly string[];
 }
 
 const CRON_FIELD_RULES: Record<string, CronFieldRule> = {
@@ -26,7 +28,8 @@ const CRON_FIELD_RULES: Record<string, CronFieldRule> = {
       'dec',
     ],
   },
-  day: { min: 1, max: 31 },
+  /* `last` lets the client express a local 1st that falls on the previous UTC day. */
+  day: { min: 1, max: 31, keywords: ['last'] },
   week: { min: 1, max: 53 },
   day_of_week: {
     min: 0,
@@ -56,6 +59,9 @@ const getTokenValue = (
 };
 
 const isCronSegment = (segment: string, rule: CronFieldRule): boolean => {
+  if (rule.keywords?.includes(segment.toLowerCase())) {
+    return true;
+  }
   const [range, step, ...extraStepParts] = segment.split('/');
   if (!range || extraStepParts.length > 0) {
     return false;

@@ -1,4 +1,5 @@
 import type { ScheduleTriggerDto } from '@epam/ai-dial-chat-api-client';
+import { CRON_LAST_DAY_OF_MONTH } from '../shared/cron-day-of-month';
 
 /** Display categories are independent of task editability. */
 export enum ScheduledTaskTriggerDescriptionKind {
@@ -35,6 +36,8 @@ export interface ScheduledTaskTriggerDescriptionOptions {
  * Unsupported constraints remain Custom, with the full source expression.
  * Calendar-month shifts crossing month boundaries or days 29–31 remain
  * Custom because a shifted monthly day is not equivalent around short months.
+ * The one exception is `day: 'last'` one day behind local time, which is
+ * exactly the local 1st.
  */
 export const describeScheduledTaskTrigger = (
   trigger: ScheduleTriggerDto,
@@ -98,6 +101,7 @@ export const describeScheduledTaskTrigger = (
   const hour = fields.hour;
   const minute = fields.minute;
   const day = fields.day === '*' ? undefined : fields.day;
+  const isLastDayOfMonth = day === CRON_LAST_DAY_OF_MONTH;
   const rawWeekday =
     fields.day_of_week === '*' ? undefined : fields.day_of_week;
   const weekdayNames = [
@@ -119,7 +123,7 @@ export const describeScheduledTaskTrigger = (
   const weekday = namedWeekday >= 0 ? String(namedWeekday) : rawWeekday;
   if (
     (day && weekday) ||
-    (day && !/^\d+$/.test(day)) ||
+    (day && !isLastDayOfMonth && !/^\d+$/.test(day)) ||
     (weekday && !/^\d+$/.test(weekday))
   )
     return custom();
@@ -181,6 +185,13 @@ export const describeScheduledTaskTrigger = (
       time,
       dayOfWeek: String((Number(weekday) + dayShift + 7) % 7),
     });
+  if (isLastDayOfMonth)
+    return dayShift === 1
+      ? result(ScheduledTaskTriggerDescriptionKind.Monthly, {
+          time,
+          dayOfMonth: '1',
+        })
+      : custom();
   if (day)
     return dayShift === 0 ||
       (Number(day) <= 28 &&
