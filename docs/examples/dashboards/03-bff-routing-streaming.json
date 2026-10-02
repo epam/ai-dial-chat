@@ -15,7 +15,7 @@
   "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Capability resolution failures have no generation_api label, so this dashboard intentionally has no API filter. Unknown-event series appear only after events occur. SSE gauges count outstanding subscription operations including setup/cleanup, not users, tabs, or ordinary completion responses.",
   "tags": ["dial-chat", "bff", "observability"],
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": true,
   "graphTooltip": 1,
   "style": "dark",
@@ -168,21 +168,204 @@
   "panels": [
     {
       "id": 1,
-      "title": "Scope and interpretation",
+      "title": "How to read this dashboard",
       "type": "text",
       "gridPos": {
-        "h": 5,
-        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 4
       },
       "options": {
         "mode": "markdown",
-        "content": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Capability resolution failures have no generation_api label, so this dashboard intentionally has no API filter. Unknown-event series appear only after events occur. SSE gauges count outstanding subscription operations including setup/cleanup, not users, tabs, or ordinary completion responses."
+        "content": "**Routing and SSE subscriptions.** Resolution does not prove generation started. Subscription operations are not users."
+      },
+      "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Capability resolution failures have no generation_api label, so this dashboard intentionally has no API filter. Unknown-event series appear only after events occur. SSE gauges count outstanding subscription operations including setup/cleanup, not users, tabs, or ordinary completion responses."
+    },
+    {
+      "id": 30,
+      "title": "Routing decisions in period (est.)",
+      "type": "stat",
+      "description": "Estimated count over the full selected period. Increase is calculated per source series before aggregation; rounding affects display only. Missing series remain missing.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "sum(sum by (outcome)(increase(generation_capability_resolution_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__range])))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Routing decisions in period (est.)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 8,
+        "h": 3
       }
     },
     {
-      "title": "Capability resolution outcomes / second",
+      "id": 31,
+      "title": "Routing failure share in period",
+      "type": "stat",
+      "description": "Fraction over the full selected period, with the original event population and positive denominator. No events gives no value. Includes failures without a generation API label.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "((sum(increase(generation_capability_resolution_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",outcome=\"failed\"}[$__range]))) or (0 * (sum(increase(generation_capability_resolution_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__range]))))) / (sum(increase(generation_capability_resolution_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__range])) > 0)",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Routing failure share in period"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 1,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      }
+    },
+    {
+      "id": 32,
+      "title": "SSE operations at range end",
+      "type": "stat",
+      "description": "Instant observation at the selected range end, summed across the selected processes. Missing series remain missing. Includes setup and cleanup, not users.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "sum(dial_chat_sse_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"})",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "SSE operations at range end"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      }
+    },
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Routing — resolution does not prove generation started",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "Capability lookups / second by outcome",
       "description": "resolved or failed during deployment capability lookup. No HTTP status/error-reason label currently exists.",
       "type": "timeseries",
       "datasource": {
@@ -190,10 +373,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 5
+        "y": 8,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -206,7 +389,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -247,10 +430,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -260,7 +443,7 @@
       "id": 2
     },
     {
-      "title": "Resolved capabilities / second by API",
+      "title": "Resolved lookups / second by API",
       "description": "API routing decisions before generation; a resolved decision does not imply that a generation started or completed.",
       "type": "timeseries",
       "datasource": {
@@ -268,10 +451,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
-        "y": 5
+        "y": 8,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -284,7 +467,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -325,10 +508,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -338,18 +521,18 @@
       "id": 3
     },
     {
-      "title": "Capability resolution failure fraction",
-      "description": "Includes failed events without a generation_api label. No capability-resolution traffic gives no value.",
+      "title": "Capability lookup failure share",
+      "description": "Includes failed events without a generation_api label. No capability-resolution traffic gives no value. The percentage axis scales automatically from zero to show small changes.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 14
+        "y": 17,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -362,7 +545,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -383,7 +566,7 @@
               "viz": false
             }
           },
-          "max": 1
+          "decimals": 1
         },
         "overrides": []
       },
@@ -404,10 +587,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -417,7 +600,7 @@
       "id": 4
     },
     {
-      "title": "Unrecognized Responses event types / second",
+      "title": "Unrecognized Responses events / second",
       "description": "Unexpected event types, not necessarily failed generations. An empty panel is the ordinary state: the counter is created on its first unrecognized event, and a deployment that never routes to the Responses API can never produce one. Any series here means the upstream Responses protocol emitted a type the adapter does not handle. Current label sanitizes/truncates strings but is not a finite allowlist.",
       "type": "timeseries",
       "datasource": {
@@ -425,10 +608,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
-        "y": 14
+        "y": 17,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -441,7 +624,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -482,10 +665,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -495,7 +678,20 @@
       "id": 5
     },
     {
-      "title": "Outstanding SSE subscription operations",
+      "id": 101,
+      "type": "row",
+      "title": "Subscriptions — includes setup and cleanup",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "SSE subscription operations by process and kind",
       "description": "client_channel, conversation_watch, generation_attach. Includes asynchronous setup/cleanup, excludes ordinary completion-response delivery. Not a count of concurrent users.",
       "type": "timeseries",
       "datasource": {
@@ -503,10 +699,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 24,
         "x": 0,
-        "y": 23
+        "y": 27,
+        "w": 24,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -519,7 +715,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -560,10 +756,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",

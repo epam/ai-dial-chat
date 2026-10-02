@@ -1,0 +1,922 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Application Prometheus",
+      "description": "Choose the Prometheus data source that scrapes the BFF /metrics listener and contains dial_chat_generations_active with otel_scope_name=\"dial-chat-api\". An OTLP data source may use different metric names or labels.",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "id": null,
+  "uid": null,
+  "schemaVersion": 39,
+  "version": 2,
+  "editable": true,
+  "graphTooltip": 1,
+  "style": "dark",
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "title": "DIAL BFF - Endpoint usage",
+  "description": "Which incoming API request was called how many times in a selected period? Estimated counts of ended matched API requests, with endpoint ranking, full table, trend, and API-area breakdown. Existing transport metrics only; not user/action analytics or request-start counts.",
+  "tags": ["dial-chat", "bff", "observability", "api-usage"],
+  "timezone": "browser",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "timepicker": {
+    "refresh_intervals": ["1m", "5m", "15m", "30m", "1h"]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "${DS_PROMETHEUS}",
+          "value": "${DS_PROMETHEUS}"
+        }
+      },
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\"}, cluster)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\"}, cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\"}, namespace)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\"}, namespace)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "job",
+        "label": "Scrape job",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\"}, job)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\"}, job)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "pod",
+        "label": "Pod",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\"}, pod)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\"}, pod)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "http_method",
+        "label": "Method",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\"}, http_request_method)",
+        "query": {
+          "query": "label_values(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\"}, http_request_method)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "http_route",
+        "label": "Endpoint",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\"}, http_route)",
+        "query": {
+          "query": "label_values(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\"}, http_route)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "outcome",
+        "label": "Outcome",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\"}, dial_chat_http_outcome)",
+        "query": {
+          "query": "label_values(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\"}, dial_chat_http_outcome)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request counts for the selected period",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Select a period, then compare endpoint counts below.** Counts are estimated and rounded for display. Requests count when they end; open streams appear later. Polling and retries also count. Missing samples do not mean zero use."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Requests in period (estimated)",
+      "type": "stat",
+      "description": "Estimated ended requests in the selected time range. Includes all selected outcomes. Prometheus increase extrapolates between scrapes; not an exact audit count.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 8,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum(increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range]))",
+          "legendFormat": "Requests in period (estimated)",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Average requests / minute",
+      "type": "stat",
+      "description": "Period total divided by the full selected duration in minutes. This is the average over the period, not the latest rate.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 8,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "60 * (sum(increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range]))) / $__range_s",
+          "legendFormat": "Average requests / minute",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:req/min",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Endpoints with observed traffic",
+      "type": "stat",
+      "description": "Distinct method + route pairs with positive observed increase in the selected period. Not an inventory of supported or unused features. A zero is shown only when a matching period total exists; missing telemetry stays missing.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 8,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "count(sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range])) > 0) or (0 * (sum(increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range]))))",
+          "legendFormat": "Endpoints with observed traffic",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "title": "All endpoints — requests in period",
+      "type": "table",
+      "description": "All observed endpoints, including those outside the top ten. Requests and share refer to the selected time range; average req/min uses its full duration. Sort by any numeric column; route templates combine all parameter values. Counts are estimates. An unrecorded endpoint is not evidence of an unused feature. Request estimates are rounded for display only; queries retain fractional values.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 11
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "label_replace(label_replace(label_join(sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range])), \"endpoint\", \" \", \"http_request_method\", \"http_route\"), \"api_area\", \"unversioned\", \"http_route\", \".*\"), \"api_area\", \"$1\", \"http_route\", \".*/v[0-9]+/([^/]+)(/.*)?\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "label_replace(label_replace(label_join(60 * (sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range]))) / $__range_s, \"endpoint\", \" \", \"http_request_method\", \"http_route\"), \"api_area\", \"unversioned\", \"http_route\", \".*\"), \"api_area\", \"$1\", \"http_route\", \".*/v[0-9]+/([^/]+)(/.*)?\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "C",
+          "editorMode": "code",
+          "expr": "label_replace(label_replace(label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range]))) / on() group_left() (sum(increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\"), \"api_area\", \"unversioned\", \"http_route\", \".*\"), \"api_area\", \"$1\", \"http_route\", \".*/v[0-9]+/([^/]+)(/.*)?\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Endpoint"
+            },
+            "properties": [
+              {
+                "id": "custom.minWidth",
+                "value": 450
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requests (estimated)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Average req/min"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Share"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "API area"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 190
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "http_route": true,
+              "http_request_method": true
+            },
+            "indexByName": {
+              "endpoint": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "api_area": 4
+            },
+            "renameByName": {
+              "endpoint": "Endpoint",
+              "Value #A": "Requests (estimated)",
+              "Value #B": "Average req/min",
+              "Value #C": "Share",
+              "api_area": "API area"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Requests (estimated)",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Top 10 endpoints — estimated requests",
+      "type": "bargauge",
+      "description": "Ranked by estimated ended requests over the entire selected period. Method and full route template identify each endpoint. Select an endpoint to inspect a low-volume route.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 13
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range])) > 0)",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": false,
+        "valueMode": "text",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 34,
+        "maxVizHeight": 38,
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "API areas — requests and share",
+      "type": "table",
+      "description": "Each API area shows its name, estimated requests in the selected period, and share of the selected traffic. Counts are rounded for display only. This is API-call volume, including polling and retries, not feature adoption. Routes without /vN/ are grouped as unversioned.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 13
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sort_desc(sum by (api_area) (label_replace(label_replace(label_join(sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range])), \"endpoint\", \" \", \"http_request_method\", \"http_route\"), \"api_area\", \"unversioned\", \"http_route\", \".*\"), \"api_area\", \"$1\", \"http_route\", \".*/v[0-9]+/([^/]+)(/.*)?\")))",
+          "legendFormat": "{{api_area}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "sort_desc((sum by (api_area) (label_replace(label_replace(label_join(sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range])), \"endpoint\", \" \", \"http_request_method\", \"http_route\"), \"api_area\", \"unversioned\", \"http_route\", \".*\"), \"api_area\", \"$1\", \"http_route\", \".*/v[0-9]+/([^/]+)(/.*)?\"))) / on() group_left() (sum(increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range])) > 0))",
+          "legendFormat": "{{api_area}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requests (est.)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Share"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Requests (est.)",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "api_area": 0,
+              "Value #A": 1,
+              "Value #B": 2
+            },
+            "renameByName": {
+              "api_area": "API area",
+              "Value #A": "Requests (est.)",
+              "Value #B": "Share"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Frequency over time — logarithmic scale",
+      "type": "timeseries",
+      "description": "Ended-request rate, smoothed over $__rate_interval, for a fixed top ten chosen by total requests in the selected period. Ranking is pinned to the dashboard end time. At most ten endpoint series; selecting a route re-ranks the selection. Active streams contribute after ending. Symmetric logarithmic scale (base 10, linear below 1 req/min) keeps zeros and ordinary traffic visible alongside spikes. Tooltips show actual request rates; values are never clipped.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 11
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(60 * sum by (http_request_method, http_route) (rate(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__rate_interval]))) and on (http_request_method, http_route) topk(10, sum by (http_request_method, http_route) (increase(dial_chat_http_response_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\"}[$__range] @ ${__to:date:seconds})) > 0)",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:req/min",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Requests / minute (log scale)",
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "symlog",
+              "log": 10,
+              "linearThreshold": 1
+            },
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ]
+}
