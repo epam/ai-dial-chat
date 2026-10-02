@@ -635,9 +635,9 @@ describe('DialFileManagerModal', () => {
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
     expect(fileManager.classList.contains('bg-layer-sunken')).toBe(true);
-    expect(fileManager.getAttribute('data-content-class')).toBe('pb-0');
+    expect(fileManager.getAttribute('data-content-class')).toBe('px-0 pb-0');
     expect(fileManager.getAttribute('data-grid-class')).toBe(
-      'size-full px-5 py-4',
+      'size-full gap-6 px-6 py-4',
     );
     expect(fileManager.getAttribute('data-tree-container-class')).toBe(
       'min-h-0 h-full rounded-xl bg-layer-raised shadow-sm',

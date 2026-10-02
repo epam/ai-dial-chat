@@ -36,6 +36,7 @@ import {
   createResumeIfAwaitingGeneration,
   fetchConversationForRecovery,
   hasGeneratedPayload,
+  findPendingBackgroundMessageIndex,
   isAwaitingGenerationResume,
 } from './generation-resume';
 
@@ -73,8 +74,15 @@ export interface ConversationStreamTransport {
     messageIndex?: number,
     clientChannelId?: string,
   ): void;
-  /** Requests the backend stop an active generation. */
-  stopCompletion(params: { generationId: string; path: string }): Promise<void>;
+  /**
+   * Requests the backend stop an active generation. `content` is the answer text shown
+   * so far; the backend saves it for a generation whose text it does not hold.
+   */
+  stopCompletion(params: {
+    generationId: string;
+    path: string;
+    content?: string;
+  }): Promise<void>;
   /** Opens a stream of resource-update events for `path`, until aborted via `signal`. */
   watchConversation(
     path: string,
@@ -208,6 +216,17 @@ export interface UseConversationStreamResult {
   canStopStreaming: boolean;
 }
 
+/** Generation id of the displayed conversation's pending background message, if any. */
+const findResumedBackgroundGenerationId = (
+  conversation: Conversation | null,
+): string | undefined => {
+  if (!conversation) return undefined;
+  const index = findPendingBackgroundMessageIndex(conversation);
+  return index === -1
+    ? undefined
+    : conversation.messages[index].backgroundGeneration?.generationId;
+};
+
 /**
  * Owns completion-streaming state: per-path streaming/stoppable tracking,
  * stale-chunk rejection, cross-navigation live-message buffering,
@@ -316,6 +335,7 @@ export const useConversationStream = ({
         isPathDisplayed,
         generationPersistenceErrorMessage,
         frameScheduler: batchChunksPerFrame ? frameScheduler : undefined,
+        stoppedGenerationIdsRef,
       }),
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -542,6 +562,17 @@ export const useConversationStream = ({
             if (!isPathDisplayed(conversationPath)) {
               if (buffered)
                 bufferedGenerationsRef.current.delete(conversationPath);
+              return;
+            }
+            /*
+             * The backend ended the stream while its background job is still
+             * pending (max-duration detach, or a final save it could not make):
+             * resume through attach instead of settling or warning.
+             */
+            if (findPendingBackgroundMessageIndex(refreshed) !== -1) {
+              resumeGeneration(currentConversationId, refreshed, {
+                seedMessage: buffered?.message,
+              });
               return;
             }
             if (
@@ -801,15 +832,25 @@ export const useConversationStream = ({
   );
 
   const handleStop = useCallback(() => {
-    const genId = activeGenerationIdRef.current;
-    if (!genId || !conversationId) return;
-
+    if (!conversationId) return;
     const conversationPath = getConversationPath(conversationId);
-    if (activeGenerationPathRef.current !== conversationPath) return;
+    const localGenId =
+      activeGenerationPathRef.current === conversationPath
+        ? activeGenerationIdRef.current
+        : null;
+    /*
+     * A generation resumed after a refresh has no local id; a background
+     * message carries its own, so Stop still reaches the backend for it.
+     */
+    const genId =
+      localGenId ?? findResumedBackgroundGenerationId(conversationRef.current);
+    if (!genId) return;
 
     stoppedGenerationIdsRef.current.add(genId);
     frameScheduler.flush(conversationPath);
     overlay?.notifyStopGenerating?.();
+    const content =
+      bufferedGenerationsRef.current.get(conversationPath)?.message.content;
 
     /*
      * Only signal the backend; it aborts upstream, saves the partial, and closes
@@ -817,12 +858,19 @@ export const useConversationStream = ({
      * race-free (do not reload here — it would race the backend save).
      */
     void transport
-      .stopCompletion({ generationId: genId, path: conversationPath })
+      .stopCompletion({ generationId: genId, path: conversationPath, content })
       .catch((err: unknown) => {
         const error = err instanceof Error ? err : new Error(String(err));
         onStopError?.(error);
       });
-  }, [conversationId, frameScheduler, onStopError, overlay, transport]);
+  }, [
+    conversationId,
+    conversationRef,
+    frameScheduler,
+    onStopError,
+    overlay,
+    transport,
+  ]);
 
   /* The public entry point takes no options; those are reserved for stream recovery. */
   const resumeIfAwaitingGeneration = useCallback(
@@ -842,7 +890,9 @@ export const useConversationStream = ({
     conversationId != null ? getConversationPath(conversationId) : null;
   const canStopStreaming =
     displayedConversationPath != null &&
-    stoppablePath === displayedConversationPath;
+    (stoppablePath === displayedConversationPath ||
+      (isStreaming &&
+        findResumedBackgroundGenerationId(conversationRef.current) != null));
 
   return {
     startStream,

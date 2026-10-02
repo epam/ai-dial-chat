@@ -35,9 +35,8 @@ describe('ModelSelectorControl — mobile', () => {
     await user.click(screen.getByLabelText(/Select model/));
 
     expect(await screen.findByText('overlay content')).toBeTruthy();
-    expect(screen.getByRole('dialog').getAttribute('aria-label')).toBe(
-      'Select model',
-    );
+    // The kit sheet is named by its title heading, through aria-labelledby.
+    expect(screen.getByRole('dialog', { name: 'Select model' })).toBeTruthy();
   });
 
   it('closes the sheet when the overlay calls its onClose callback', async () => {
@@ -85,9 +84,9 @@ describe('ModelSelectorControl — mobile', () => {
 
     await user.click(screen.getByLabelText(/Select model/));
 
-    expect((await screen.findByRole('dialog')).getAttribute('aria-label')).toBe(
-      'Select model',
-    );
+    expect(
+      await screen.findByRole('dialog', { name: 'Select model' }),
+    ).toBeTruthy();
     expect(screen.getByText('GPT-4o')).toBeTruthy();
   });
 });

@@ -880,6 +880,18 @@ export class EnvironmentVariables {
   RESPONSES_API_ENABLED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    /* Same raw-value coercion as RESPONSES_API_ENABLED, so the literal
+     * string "false" parses to `false`. */
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  RESPONSES_BACKGROUND_ENABLED?: boolean = false;
+
+  @IsOptional()
   @IsString()
   @Matches(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/, {
     message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
@@ -927,6 +939,18 @@ export class EnvironmentVariables {
   })
   @IsBoolean()
   DEFAULT_DEPLOYMENT_PINNED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    /* Fail closed: this flag lets an iframe send messages as the user, so
+     * only an explicit truthy value turns it on. */
+    return ['true', '1', 'yes'].includes(String(raw).trim().toLowerCase());
+  })
+  @IsBoolean()
+  ALLOW_VISUALIZER_SEND_MESSAGES?: boolean = false;
 
   @IsOptional()
   @IsString()

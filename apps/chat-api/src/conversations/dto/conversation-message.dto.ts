@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { BackgroundGenerationDto } from './background-generation.dto';
 import { MessageCustomContentDto } from './message-custom-content.dto';
 
 export enum ConversationMessageRole {
@@ -82,12 +83,22 @@ export class ConversationMessageDto {
 
   @ApiPropertyOptional({
     description:
-      'DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. Diagnostic only — never used to resume a generation (previous_response_id/conversation are never sent).',
+      'DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. On the stateless path it is diagnostic only; on the background path it is also the key used to recover, replay, stop and clean up the DIAL Core job. Never sent as previous_response_id/conversation.',
     example: 'dial-gpt-4o-3c1a7e6e-...-uuid',
   })
   @IsOptional()
   @IsString()
   responseId?: string;
+
+  @ApiPropertyOptional({
+    type: () => BackgroundGenerationDto,
+    description:
+      'Present only on an assistant message produced by a DIAL Core background Responses job. Server-owned: client saves cannot change it while its status is pending.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BackgroundGenerationDto)
+  backgroundGeneration?: BackgroundGenerationDto;
 
   @ApiPropertyOptional({
     description:

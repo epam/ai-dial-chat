@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GroupedVisualizerCanvasContent } from '../../../models/attachment-canvas';
@@ -11,6 +11,7 @@ import {
 const readyMock = vi.fn();
 const sendMock = vi.fn();
 const destroyMock = vi.fn();
+const subscriptions = new Map<string, (payload: unknown) => void>();
 
 vi.mock('@epam/ai-dial-visualizer-connector', () => ({
   VisualizerConnector: vi.fn().mockImplementation(function (root: HTMLElement) {
@@ -18,7 +19,15 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
      * node, so the fake has to create one too for the name to be assertable. */
     const iframe = document.createElement('iframe');
     root.appendChild(iframe);
-    return { ready: readyMock, send: sendMock, destroy: destroyMock };
+    return {
+      ready: readyMock,
+      send: sendMock,
+      destroy: destroyMock,
+      subscribe: (eventType: string, callback: (payload: unknown) => void) => {
+        subscriptions.set(eventType, callback);
+        return vi.fn();
+      },
+    };
   }),
 }));
 
@@ -51,6 +60,17 @@ describe('InlineGroupedVisualizer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     readyMock.mockReturnValue(new Promise(() => undefined));
+  });
+
+  it('forwards visualizer SEND_MESSAGE to onVisualizerSendMessage', () => {
+    const onVisualizerSendMessage = vi.fn();
+    renderComponent({ onVisualizerSendMessage });
+
+    act(() => {
+      subscriptions.get('my-viz/SEND_MESSAGE')?.({ message: 'Next page' });
+    });
+
+    expect(onVisualizerSendMessage).toHaveBeenCalledWith('Next page');
   });
 
   it('renders the entry title in the header', () => {

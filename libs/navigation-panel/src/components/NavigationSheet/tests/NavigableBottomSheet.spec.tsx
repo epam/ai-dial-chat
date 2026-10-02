@@ -4,25 +4,31 @@ import { describe, expect, it, vi } from 'vitest';
 import { useSheetNavigation } from '../../../hooks/useSheetNavigation';
 import { NavigableBottomSheet } from '../NavigableBottomSheet';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ElementSize: { Standard: 'standard' },
-  GhostIconButton: ({
-    'aria-label': ariaLabel,
-    onClick,
-  }: {
-    'aria-label': string;
-    onClick?: () => void;
-  }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
-  CloseButton: ({
-    ariaLabel,
-    onClose,
-  }: {
-    ariaLabel: string;
-    onClose: () => void;
-  }) => <button type="button" aria-label={ariaLabel} onClick={onClose} />,
-}));
+/* The sheet is the real kit `BottomSheet`; the rest stays stubbed. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { BottomSheet } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    BottomSheet,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+    ElementSize: { Standard: 'standard' },
+    GhostIconButton: ({
+      'aria-label': ariaLabel,
+      onClick,
+    }: {
+      'aria-label': string;
+      onClick?: () => void;
+    }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
+    CloseButton: ({
+      ariaLabel,
+      onClose,
+    }: {
+      ariaLabel: string;
+      onClose: () => void;
+    }) => <button type="button" aria-label={ariaLabel} onClick={onClose} />,
+  };
+});
 
 const sheetProps = {
   title: 'Test',

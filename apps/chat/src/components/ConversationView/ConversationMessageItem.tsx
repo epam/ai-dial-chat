@@ -169,6 +169,8 @@ interface Props {
     propertyKey?: string,
     description?: string,
   ) => void;
+  /** Sends a visualizer `SEND_MESSAGE` text; `undefined` while visualizer messages are disabled. */
+  onVisualizerSendMessage?: (content: string) => void;
   onStartEdit?: (messageIndex: number) => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
@@ -334,6 +336,7 @@ const ConversationMessageItem: FC<Props> = ({
   isAssistantTyping,
   editingMessageIndexes,
   onSelectStarter,
+  onVisualizerSendMessage,
   onStartEdit,
   onDeleteMessage,
   onRegenerateMessage,
@@ -1034,6 +1037,7 @@ const ConversationMessageItem: FC<Props> = ({
                     errorLabel={t(
                       AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
                     )}
+                    onVisualizerSendMessage={onVisualizerSendMessage}
                   />
                 ))}
               {mcpAppMatch && onOpenApp && (

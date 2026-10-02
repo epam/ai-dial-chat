@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.35`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.36`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.35
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.20 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.36
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.22 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -177,6 +177,7 @@ import type {
   Message,
   Stage,
   Annotation,
+  BackgroundGeneration,
 } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentItem,
@@ -185,12 +186,17 @@ import type {
 import type { Theme, UserProfile, DialModel } from '@epam/ai-dial-chat-shared';
 import type { EntityHeaderItem } from '@epam/ai-dial-chat-shared';
 import {
+  BackgroundGenerationStatus,
   CatalogEntityType,
   MessageRole,
   MessageRating,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 ```
+
+### Background generation marker
+
+`Message.backgroundGeneration?: BackgroundGeneration` is present only on an assistant message produced by a DIAL Core background Responses job. It carries `generationId` (the message's identity across saves), `status` (`BackgroundGenerationStatus`: `Pending`, `Completed`, `Stopped`, `Failed`) and `startedAt` (epoch ms). The backend owns it; a message whose status is `Pending` is still being generated.
 
 ### Stage parent references
 

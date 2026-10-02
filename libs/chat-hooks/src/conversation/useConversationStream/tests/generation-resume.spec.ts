@@ -1,9 +1,14 @@
 import type { Conversation } from '@epam/ai-dial-chat-shared';
-import { MessageRole, StageStatus } from '@epam/ai-dial-chat-shared';
+import {
+  BackgroundGenerationStatus,
+  MessageRole,
+  StageStatus,
+} from '@epam/ai-dial-chat-shared';
 import { describe, expect, it, vi } from 'vitest';
 import type { BufferedGeneration } from '../buffered-generation';
 import {
   createResumeIfAwaitingGeneration,
+  findPendingBackgroundMessageIndex,
   isAwaitingGenerationResume,
 } from '../generation-resume';
 import type { ConversationStreamTransport } from '../useConversationStream';
@@ -474,5 +479,201 @@ describe('createResumeIfAwaitingGeneration — options', () => {
     await vi.waitFor(() =>
       expect(transport.attachToGeneration).toHaveBeenCalledOnce(),
     );
+  });
+});
+
+describe('background generation resume', () => {
+  const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
+  const PATH = 'gpt-4o__Hello';
+  const encoder = new TextEncoder();
+  const user = {
+    role: MessageRole.User,
+    content: 'Hello',
+    timestamp: new Date().toISOString(),
+  };
+  const background = (status: BackgroundGenerationStatus) => ({
+    role: MessageRole.Assistant,
+    content: '',
+    timestamp: new Date().toISOString(),
+    responseId: 'dial_r1',
+    backgroundGeneration: { generationId: 'gen-1', status, startedAt: 1 },
+  });
+  const statusMessage = {
+    role: MessageRole.Status,
+    content: '',
+    timestamp: new Date().toISOString(),
+  };
+
+  it('treats a pending background message with a responseId as awaiting resume', () => {
+    expect(
+      isAwaitingGenerationResume(
+        makeConversation({
+          messages: [user, background(BackgroundGenerationStatus.Pending)],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it('finds a pending background message even when a status message follows it', () => {
+    const conversation = makeConversation({
+      messages: [
+        user,
+        background(BackgroundGenerationStatus.Pending),
+        statusMessage,
+      ],
+    });
+
+    expect(isAwaitingGenerationResume(conversation)).toBe(true);
+    expect(findPendingBackgroundMessageIndex(conversation)).toBe(1);
+  });
+
+  it.each([
+    BackgroundGenerationStatus.Completed,
+    BackgroundGenerationStatus.Stopped,
+    BackgroundGenerationStatus.Failed,
+  ])('does not resume a background message whose status is %s', (status) => {
+    expect(
+      isAwaitingGenerationResume(
+        makeConversation({ messages: [user, background(status)] }),
+      ),
+    ).toBe(false);
+  });
+
+  it('applies replayed chunks at the pending message and leaves the status message after it unchanged', async () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({
+      start(streamController) {
+        controller = streamController;
+      },
+    });
+    const emit = (event: unknown) =>
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+    const conversation = makeConversation({
+      messages: [
+        user,
+        background(BackgroundGenerationStatus.Pending),
+        statusMessage,
+      ],
+    });
+    let displayed: Conversation = conversation;
+    const setConversation = vi.fn((update: unknown) => {
+      displayed =
+        typeof update === 'function'
+          ? (update as (prev: Conversation) => Conversation)(displayed)
+          : (update as Conversation);
+    });
+    const bufferedGenerationsRef = {
+      current: new Map<string, BufferedGeneration>(),
+    };
+    const resume = createResumeIfAwaitingGeneration({
+      transport: {
+        streamCompletion: vi.fn(),
+        stopCompletion: vi.fn(),
+        watchConversation: vi.fn().mockRejectedValue(new Error('no watch')),
+        attachToGeneration: vi.fn().mockResolvedValue(stream),
+        getConversation: vi.fn().mockReturnValue(new Promise(() => undefined)),
+      },
+      setConversation: setConversation as never,
+      conversationRef: { current: conversation },
+      resumingPathsRef: { current: new Set<string>() },
+      bufferedGenerationsRef,
+      addStreamingPath: vi.fn(),
+      removeStreamingPath: vi.fn(),
+      isPathDisplayed: () => true,
+    });
+
+    resume(CONVERSATION_ID, conversation);
+    emit({
+      type: 'snapshot',
+      message: background(BackgroundGenerationStatus.Pending),
+    });
+    emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: 'Hello' } }] },
+    });
+    emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: ' world' } }] },
+    });
+
+    await vi.waitFor(() => {
+      expect(displayed.messages[1].content).toBe('Hello world');
+    });
+    expect(bufferedGenerationsRef.current.get(PATH)?.messageIndex).toBe(1);
+    expect(displayed.messages[2]).toEqual(statusMessage);
+    expect(displayed.messages).toHaveLength(3);
+  });
+
+  it('shows no more replayed text once the user stopped the resumed generation', async () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({
+      start(streamController) {
+        controller = streamController;
+      },
+    });
+    const emit = (event: unknown) =>
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+    const conversation = makeConversation({
+      messages: [user, background(BackgroundGenerationStatus.Pending)],
+    });
+    let displayed: Conversation = conversation;
+    const setConversation = vi.fn((update: unknown) => {
+      displayed =
+        typeof update === 'function'
+          ? (update as (prev: Conversation) => Conversation)(displayed)
+          : (update as Conversation);
+    });
+    const stoppedGenerationIdsRef = { current: new Set<string>() };
+    const resume = createResumeIfAwaitingGeneration({
+      transport: {
+        streamCompletion: vi.fn(),
+        stopCompletion: vi.fn(),
+        watchConversation: vi.fn().mockRejectedValue(new Error('no watch')),
+        attachToGeneration: vi.fn().mockResolvedValue(stream),
+        getConversation: vi.fn().mockResolvedValue(
+          makeConversation({
+            messages: [
+              user,
+              {
+                ...background(BackgroundGenerationStatus.Stopped),
+                content: 'Hello',
+              },
+            ],
+          }),
+        ),
+      },
+      setConversation: setConversation as never,
+      conversationRef: { current: conversation },
+      resumingPathsRef: { current: new Set<string>() },
+      bufferedGenerationsRef: {
+        current: new Map<string, BufferedGeneration>(),
+      },
+      addStreamingPath: vi.fn(),
+      removeStreamingPath: vi.fn(),
+      isPathDisplayed: () => true,
+      stoppedGenerationIdsRef,
+    });
+
+    resume(CONVERSATION_ID, conversation);
+    emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: 'Hello' } }] },
+    });
+    await vi.waitFor(() => {
+      expect(displayed.messages[1].content).toBe('Hello');
+    });
+    stoppedGenerationIdsRef.current.add('gen-1');
+    emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: ' world' } }] },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(displayed.messages[1].content).toBe('Hello');
+
+    emit({ type: 'stopped' });
+    await vi.waitFor(() => {
+      expect(stoppedGenerationIdsRef.current.has('gen-1')).toBe(false);
+    });
+    expect(displayed.messages[1].content).toBe('Hello');
   });
 });

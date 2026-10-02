@@ -1,141 +1,137 @@
-# Spec: conversation-sources-sidebar
+# conversation-sources-sidebar Specification
 
 ## Purpose
 
-Specifies the right-side conversation sources panel: the sidebar shell lib (`libs/sidebar`), the open/close context, the header toggle button, attachment derivation from messages, the panel-level empty state, section components, and the mount point beside `<main>`.
+Specifies the right-side conversation sources panel: the sidebar shell lib (`libs/sidebar`), the presentational panel in `libs/source-panel`, the app container that feeds it, the open/close context, the toggle button, attachment derivation from messages, the panel-level empty state, section components, and the mount point beside `<main>`.
 
 ---
 
 ## Requirements
 
-### Requirement: Sidebar contexts are produced by a shared factory
+### Requirement: Sources sidebar open state is owned by `SourcesSidebarProvider`
 
-`apps/chat/src/context/sidebar/createSidebarContext.tsx` SHALL export `createSidebarContext(displayName: string)` returning `{ Provider, useSidebar }`. The factory SHALL:
+`apps/chat/src/context/SourcesSidebarContext.tsx` SHALL define `SourcesSidebarProvider` directly (there is no shared sidebar-context factory). The provider SHALL:
 
-- Create an independent React Context whose value is `{ isOpen: boolean; open: () => void; close: () => void; toggle: () => void }`.
-- Initialise `isOpen` to `false` inside the Provider.
-- Wrap the value in `useMemo` so consumers do not re-render on unrelated parent renders.
-- Set the produced context's `displayName` to the supplied parameter.
-- Return a guarded hook that throws a clear error when used outside the Provider.
-
-`apps/chat/src/context/sidebar/RightSidebarContext.tsx` SHALL invoke the factory once and re-export `RightSidebarProvider` and `useSourcesSidebar`.
-
-#### Scenario: Factory produces independent contexts
-
-- **WHEN** `createSidebarContext` is called twice with different display names
-- **THEN** the two resulting providers and hooks operate on independent state — opening one does not change `isOpen` in the other
+- Initialise `isOpen` to `false`.
+- Expose, through `useSourcesSidebar()`, the controls value `{ isOpen, handleOpen, handleClose, setMessages, setConversationModelId }`, where `handleOpen()` sets `isOpen` to `true` and `handleClose()` sets it to `false`. There is no `toggle`.
+- Set the context `displayName` to `SourcesSidebarContext` (and `SourcesSidebarDataContext` for the data context described in "Sidebar data is published separately from sidebar controls").
+- Make `useSourcesSidebar()` throw `useSourcesSidebar must be used within a SourcesSidebarProvider` when called outside the provider.
 
 #### Scenario: Initial state is closed
 
 - **WHEN** a consumer reads `useSourcesSidebar().isOpen` immediately after mount
 - **THEN** the value is `false`
 
-#### Scenario: `open` sets isOpen to true
+#### Scenario: `handleOpen` and `handleClose` set the open state
 
-- **WHEN** a consumer calls `useSourcesSidebar().open()`
+- **WHEN** a consumer calls `useSourcesSidebar().handleOpen()`
 - **THEN** subsequent reads of `isOpen` return `true`
-
-#### Scenario: `toggle` flips the current value
-
-- **WHEN** `isOpen` is `false` and a consumer calls `toggle()`
-- **THEN** `isOpen` becomes `true`
-- **AND WHEN** `toggle()` is called again
-- **THEN** `isOpen` becomes `false`
+- **AND WHEN** the consumer then calls `handleClose()`
+- **THEN** `isOpen` returns `false`
 
 #### Scenario: Hook outside provider throws
 
-- **WHEN** `useSourcesSidebar()` is called from a component not wrapped in `RightSidebarProvider`
-- **THEN** an error is thrown describing the missing provider
+- **WHEN** `useSourcesSidebar()` is called from a component not wrapped in `SourcesSidebarProvider`
+- **THEN** an error is thrown naming `SourcesSidebarProvider`
 
 ---
 
-### Requirement: Header toggles the right sidebar
+### Requirement: `SourcesSidebarToggle` opens the right sidebar
 
-`apps/chat/src/components/Header/Header.tsx` SHALL render a right-aligned `GhostIconButton` (icon: `IconFileDescription` from `@tabler/icons-react`) that calls `useSourcesSidebar().open()` on click. The button SHALL only be rendered when the sidebar is closed (`isOpen === false`). The header SHALL keep `<Logo />` horizontally centred when the toggle is present (e.g. via `grid-cols-[1fr_auto_1fr]`). Its `aria-label` and tooltip text SHALL come from i18n key `sidebar.base.toggleOpen`.
+`apps/chat/src/components/Header/SourcesSidebarToggle.tsx` SHALL render a `GhostIconButton` (icon: `IconFileDescription` with `DIAL_KIT_ICON_STROKE`) whose `aria-label` and tooltip come from `SidebarI18nKeys.ToggleOpen` (`sidebar.base.toggleOpen`) and which sets `aria-pressed={isOpen}`. Activating it SHALL first call `useAttachmentCanvas().closeCanvas()` and then `useSourcesSidebar().handleOpen()`. The toggle SHALL render `null` when the current route does not match `${ROUTES.Conversations}/*` or when the sidebar is already open.
 
-#### Scenario: Open button is visible only when sidebar is closed
+The toggle is rendered in three places:
 
-- **WHEN** `Header` renders and `useSourcesSidebar().isOpen === false`
-- **THEN** a button with `aria-label` from `sidebar.base.toggleOpen` exists and is positioned at the right edge
-- **AND WHEN** `useSourcesSidebar().isOpen === true`
-- **THEN** no open button is rendered in the header
+- `Header.tsx` (the mobile header, `desktop:hidden`) in the end column of its `grid-cols-[1fr_auto_1fr]` row, so `<Logo />` stays in the centre column; only when the header is enabled.
+- `ChatLayout.tsx` in the end column of the desktop header row (`hidden … desktop:grid`).
+- `app.tsx` as the attachment canvas's `leftActions` on mobile.
 
-#### Scenario: Click opens the sidebar
+#### Scenario: Toggle is visible only on a conversation route while the sidebar is closed
 
-- **WHEN** the open button is clicked
-- **THEN** `useSourcesSidebar().isOpen` becomes `true`
+- **WHEN** the route matches `${ROUTES.Conversations}/*` and `useSourcesSidebar().isOpen === false`
+- **THEN** a button with `aria-label` from `sidebar.base.toggleOpen` is rendered
+- **AND WHEN** `isOpen === true` or the route is not a conversation route
+- **THEN** the toggle renders nothing
 
-#### Scenario: Logo stays centred
+#### Scenario: Click closes the canvas and opens the sidebar
 
-- **WHEN** the header renders with the toggle button visible
+- **WHEN** the toggle is clicked
+- **THEN** the attachment canvas is closed
+- **AND** `useSourcesSidebar().isOpen` becomes `true`
+
+#### Scenario: Logo stays centred in the mobile header
+
+- **WHEN** the mobile header renders with the toggle visible
 - **THEN** `<Logo />` is rendered in the centre column of the header layout
 
 ---
 
 ### Requirement: `SidebarPanel` shell lives in `libs/sidebar` and renders side-agnostic chrome
 
-A new lib at `libs/sidebar` SHALL be created with package name `@epam/ai-dial-sidebar` and module-boundary tag `type:ui`, mirroring the structure of `libs/conversation-input` (Vite build, Vitest tests, ESLint flat config, exports map including `./styles.css`). The lib SHALL declare peer dependencies on `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, `@tabler/icons-react`, and `classnames`. It SHALL NOT depend on `react-i18next` or import from `apps/**`.
+`libs/sidebar` (package `@epam/ai-dial-sidebar`, Nx tag `publishable`, Vite build, Vitest tests, exports map including `./styles.css` → `./dist/index.css`) SHALL declare `react`, `@epam/ai-dial-ui-kit`, and `@epam/ai-dial-chat-shared` as peer dependencies and `@tabler/icons-react` as a regular dependency. It SHALL NOT depend on `react-i18next` or import from `apps/**`.
 
-The lib SHALL export `SidebarPanel: FC<SidebarPanelProps>` from `libs/sidebar/src/components/SidebarPanel/SidebarPanel.tsx`. `SidebarPanelProps` SHALL be defined in `libs/sidebar/src/models/SidebarPanel.ts` with the following shape (all symbols carry JSDoc):
+The lib SHALL export `SidebarPanel: FC<SidebarPanelProps>` from `libs/sidebar/src/components/SidebarPanel/SidebarPanel.tsx`, plus the `SidebarOrientation` enum (`Left = 'left'`, `Right = 'right'`, `libs/sidebar/src/types/orientation.ts`) and the `SidebarPanelProps`, `SidebarPanelLabels`, `SidebarPanelStyles`, `SidebarPanelColors`, and `SidebarPanelTypography` types. `SidebarPanelProps` SHALL be defined in `libs/sidebar/src/models/panel-props.ts` with this shape (all symbols carry JSDoc):
 
-- `side: 'left' | 'right'` — required; controls the divider edge and close-button placement only.
-- `leftActions?: ReactNode` — rendered in the left group of the header bar (regardless of `side`).
-- `rightActions?: ReactNode` — rendered in the right group of the header bar (regardless of `side`).
-- `onClose: () => void` — called when the close button is activated.
-- `ariaLabel: string` — applied as the panel's `aria-label`. Caller supplies the localised string.
-- `closeLabel: string` — applied as the close button's `aria-label` and tooltip. Caller supplies the localised string.
-- `children: ReactNode` — body content rendered below the header bar.
-- `colors?: SidebarPanelColors` — optional overrides for `background`, `border`, `headerBorder`.
-- `typography?: SidebarPanelTypography` — optional overrides (`fontClassName`, `fontFamily`, `fontSize`).
-- `className?: string` — extra class merged onto the root.
+- `isOpen: boolean` — required; drives the open/close width animation and sets `inert` on the `<aside>` when `false`.
+- `orientation: SidebarOrientation` — required; the edge the panel anchors to.
+- `title?: ReactNode` — rendered in the header between the action groups through `EllipsisTooltip` (`titleClassName` defaults to `dial-h1-text`).
+- `leftActions?: ReactNode` / `rightActions?: ReactNode` — content of the start and end header groups.
+- `onClose?: () => void` — when provided, a close `GhostIconButton` (`IconX`) is rendered and calls it; when omitted, no close button is rendered.
+- `labels: SidebarPanelLabels` — `{ ariaLabel: string; closeLabel?: string; resizeLabel?: string }`. `ariaLabel` is the `<aside>`'s `aria-label`; `closeLabel` is the close button's `aria-label` and tooltip; `resizeLabel` (default `'Resize panel'`) labels the resize handle.
+- `children: ReactNode` — body content rendered below the header bar in a scrollable region.
+- `styles?: SidebarPanelStyles` — `colors` (`background`, `border`, `text`, `resizeHandler`), `typography` (`fontClassName`), `titleClassName`, `bodyClassName`, `className` (on the width wrapper), `headerClassName`, `headerActionsClassName`, `cssVars`.
+- `resizable?: boolean` (default `false`), `defaultWidth?: number` (default `360`), `minWidth?: number` (default `280`), `maxWidth?: number` (default `600`), `onResizeStop?: (width: number) => void` — drag-to-resize on the edge opposite `orientation`, via the ui-kit `ConditionalResizableContainer`, enabled only while open.
+- `isOverlay?: boolean` (default `false`) — keeps the panel full width in both states and slides it out of the `orientation` edge (direction-aware translate) instead of animating its width.
 
-The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` with a fixed `360 px` width, full height, a `48 px` header bar, and a vertically scrollable body. A close `GhostIconButton` (icon: `IconX`) SHALL always be present and SHALL call `onClose` when activated. Width, height, body scroll, and header-bar height SHALL be identical for both `side` values.
+The shell SHALL render an `<aside role="complementary" aria-label={labels.ariaLabel}>` (public class `dial-sb-aside`) with full height, a `48 px` header bar (public class `dial-sb-header`), and a vertically scrollable body. Unless `isOverlay` is set or `styles.className` contains `w-full`, the wrapper gets an inline width that animates between `0` (closed) and the current width (open).
 
-`side` SHALL control exactly two pieces of layout:
+`orientation` SHALL control only:
 
-- The divider class on the panel root: `border-l border-secondary` when `side === 'right'`, `border-r border-secondary` when `side === 'left'`.
-- The DOM placement of the built-in close button: appended to the right header group when `side === 'right'`; appended to the left header group as the first child when `side === 'left'`.
+- The divider: a `border-s` is added to the `<aside>` only when `orientation === SidebarOrientation.Left` and the panel is open; a Right panel has no divider class of its own.
+- The resize edge (`ResizableContainerSide.Left` for a Right panel, `Right` for a Left panel), the overlay slide direction, and a Left-only clip-path for the shadow.
 
-#### Scenario: Renders children in the body for either side
+The close button, when present, SHALL always be appended after `rightActions` in the end header group, for either orientation.
 
-- **WHEN** `SidebarPanel` receives `children` with `side="right"` or `side="left"`
+#### Scenario: Renders children in the body for either orientation
+
+- **WHEN** `SidebarPanel` receives `children` with `orientation` `Right` or `Left`
 - **THEN** the children are rendered inside the scrollable body region in both cases
 
-#### Scenario: Action slots are header-bar-relative, not side-relative
+#### Scenario: Action slots are header-bar-relative
 
-- **WHEN** `SidebarPanel` is rendered with `leftActions` and `rightActions` for either `side` value
-- **THEN** `leftActions` appear in the left header group and `rightActions` appear in the right header group, in both `side` cases
+- **WHEN** `SidebarPanel` is rendered with `leftActions` and `rightActions`
+- **THEN** `leftActions` appear in the start header group and `rightActions` appear in the end header group, for either orientation
 
-#### Scenario: Close button anchors to the outer edge
+#### Scenario: Close button is the last element of the end group
 
-- **WHEN** `side === 'right'`
-- **THEN** the close button is the last element of the right header group
-- **AND WHEN** `side === 'left'`
-- **THEN** the close button is the first element of the left header group
+- **WHEN** `onClose` is provided
+- **THEN** the close button is rendered after `rightActions` in the end header group, for either orientation
+- **AND WHEN** `onClose` is omitted
+- **THEN** no close button is rendered
 
-#### Scenario: Divider edge follows `side`
+#### Scenario: Divider appears only on an open Left panel
 
-- **WHEN** `side === 'right'`
-- **THEN** the panel root has `border-l border-secondary` and not `border-r`
-- **AND WHEN** `side === 'left'`
-- **THEN** the panel root has `border-r border-secondary` and not `border-l`
+- **WHEN** `orientation === SidebarOrientation.Left` and `isOpen === true`
+- **THEN** the `<aside>` has `border-s`
+- **AND WHEN** `orientation === SidebarOrientation.Right`
+- **THEN** the `<aside>` has no `border-s`
 
 #### Scenario: Close button calls `onClose`
 
-- **WHEN** the user clicks the close button (either `side`)
+- **WHEN** the user clicks the close button
 - **THEN** `onClose` is invoked exactly once
 
 #### Scenario: Panel exposes ARIA region
 
 - **WHEN** the panel renders
-- **THEN** it has `role="complementary"` and `aria-label` matching the `ariaLabel` prop
+- **THEN** it has `role="complementary"` and `aria-label` matching `labels.ariaLabel`
 
 #### Scenario: Theming overrides emit CSS custom properties
 
-- **WHEN** `SidebarPanel` is rendered with `colors={{ background: '#ff0000' }}`
-- **THEN** the panel root's `style` attribute contains `--sb-bg: #ff0000` (or equivalent inline form produced by `buildCssVars`)
-- **AND WHEN** `colors` and `typography` are omitted
-- **THEN** the panel root's `style` attribute contains no `--sb-*` entries and the SCSS module's CSS-variable fallbacks resolve to the project theme
+- **WHEN** `SidebarPanel` is rendered with `styles={{ colors: { background: '#ff0000' } }}`
+- **THEN** the `<aside>`'s `style` attribute contains `--sb-bg: #ff0000` (produced by `buildCssVars`)
+- **AND WHEN** `styles.colors` is omitted
+- **THEN** no `--sb-*` entries are set and the SCSS module's CSS-variable fallbacks resolve to the project theme
 
 #### Scenario: Lib has no app or i18n imports
 
@@ -146,40 +142,40 @@ The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` 
 
 ### Requirement: `ConversationSourcesPanel` renders a global empty state or the source sections
 
-`ConversationSourcesPanel` SHALL render either a global empty state or the source/task sections described below. `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` accepts no props, imports `SidebarPanel` from `@epam/ai-dial-sidebar`, obtains `messages` and `conversationModelId` from `useSourcesSidebarData()` and `isOpen`/`handleClose` from `useSourcesSidebar()` (both exported from `apps/chat/src/context/SourcesSidebarContext.tsx`), derives `uploaded`, `generated`, and `sources` through `useConversationSources(isOpen ? messages : EMPTY_MESSAGES)` where `EMPTY_MESSAGES` is a module-level constant array, so the derivation does not run while the sidebar is closed, reads `useActiveScheduledTask()` for scheduled-task state, and renders `<SidebarPanel side="right">`.
+The panel SHALL render either a global empty state or the source/task sections described below, split between an app container and a host-agnostic lib component:
 
-The panel SHALL use `useAttachmentAction()` to obtain `handleAttachmentClick` and SHALL pass it as `onAttachmentClick` to both `FilesSection` instances (Uploaded Files and Generated Files).
+- **App container** — `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` default-exports `memo(ConversationSourcesPanelContainer)`, which accepts no props. It obtains `messages` and `conversationModelId` from `useSourcesSidebarData()` and `isOpen`/`handleClose` from `useSourcesSidebar()`, derives `uploaded`, `generated`, and `sources` through `useConversationSources(isOpen ? messages : EMPTY_MESSAGES, attachmentDisplayResolvers)` (both module-level constants, so the derivation does not run while the sidebar is closed), reads `useActiveScheduledTask()` for scheduled-task state, builds the scheduled-task History/Details accordions, resolves every label with `t()`, and renders the lib's `ConversationSourcesPanel`.
+- **Lib component** — `libs/source-panel/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` (exported as `ConversationSourcesPanel` from `@epam/ai-dial-source-panel`) receives `isOpen`, `onClose`, `uploaded`, `generated`, `sources`, `onAttachmentClick`, `onSourceClick`, `onDownloadAll`, `isMobile`, `defaultWidth`/`minWidth`/`maxWidth`/`onResizeStop`, `labels`, `styles`, `title`, and `additionalSections`, and renders `<SidebarPanel orientation={SidebarOrientation.Right}>`. It owns the search query (reset to `''` when `isOpen` becomes `false`), filtering, the empty/no-results states, and the sections. It has no i18n, routing, or scheduler knowledge.
 
-The panel SHALL be considered empty when `uploaded.length === 0` AND `generated.length === 0` AND `sources.length === 0` AND the active conversation is not a scheduled-task conversation (per `useActiveScheduledTask()`). When the active conversation is a scheduled-task conversation, the panel SHALL NEVER be considered empty, even if `uploaded`, `generated`, and `sources` are all empty — the History and Details sections (see the ADDED requirements below) always render in that case.
+The container SHALL pass an `onAttachmentClick` that calls `openAttachmentCanvas(attachment)` (from `useOpenAttachmentCanvas`) and, when the canvas opens, closes the sidebar via `handleClose()`; when it does not open, it downloads the attachment through `useAttachmentAction({ resolveDownloadUrl: resolveDialFileDownloadUrl })`. The lib passes this handler to both `FilesSection` instances.
 
-When the panel is empty (per the updated definition above):
+The container SHALL pass the scheduled-task History and Details accordions as `additionalSections` only when the active conversation is a scheduled-task conversation. The lib SHALL treat the panel as globally empty when `uploaded`, `generated`, and `sources` are all empty AND `additionalSections` is not provided, so a scheduled-task conversation is never globally empty.
 
-- The header SHALL contain only the built-in close button; `leftActions` and `rightActions` SHALL not render search or download-all buttons.
-- The body SHALL render `NoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title` set to the i18n value of `basic.noData` (`"No data"`). No `icon` prop is supplied, so `NoDataContent` uses its default icon.
-- No section headings SHALL be rendered.
+When the panel is globally empty:
 
-When the panel is not empty:
+- The body SHALL render `NoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title={labels.noDataLabel}` (the container passes `t(BasicI18nKeys.Empty)`, i.e. `basic.noData`). No `icon` prop is supplied.
+- No search input, download-all button, or section headings SHALL be rendered; the header carries only the close button.
 
-- `leftActions` SHALL contain a search input (text field with `IconSearch`) whose `aria-label` is the i18n value of `sidebar.sources.search`. Typing into the input filters sources as described in the Search scenario below. The search input SHALL only render when at least one of `uploaded`, `generated`, or `sources` is non-empty; it MAY be omitted when the conversation has no searchable file/source content even if scheduled-task sections are rendering.
-- `rightActions` SHALL contain a `GhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll` whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses). When no attachment currently in `uploaded`/`generated` is downloadable, the button SHALL NOT be rendered at all (it is hidden, never shown in a disabled state). This action operates only on `uploaded`/`generated` attachments and is unaffected by scheduled-task section content.
-- Activating the enabled download-all button SHALL trigger a download of every downloadable attachment in `uploaded` and `generated`, using the same URL-resolution and download-triggering mechanism as clicking an individual attachment card. Attachments that are not downloadable via that mechanism (e.g. reference-only attachments) SHALL be silently skipped, matching single-click behavior for those attachments.
-- The body SHALL render sections in the following order:
-  1. When the active conversation is a scheduled-task conversation: the History section, then the Details section (both defined in the ADDED requirements below).
-  2. The Uploaded Files `FilesSection`.
-  3. The Generated Files `FilesSection`.
-  4. `SourcesSection` (receiving `sources={filteredSources}`, `title`, and `copyLabel`).
-- Uploaded Files, Generated Files, and Sources SHALL retain their existing individual empty behavior (rendering `null` when their own list is empty) regardless of whether scheduled-task sections are present.
+When at least one of `uploaded`, `generated`, or `sources` is non-empty:
 
-For both states:
+- A ui-kit `Search` SHALL render above the body inside a `role="search"` wrapper, with `placeholder` and `aria-label` set to `labels.searchPlaceholder` (`basic.searchPlaceholder`) and `clearLabel` set to `labels.searchClearLabel` (`basic.clearSearch`). When only `additionalSections` is present, the search input is not rendered.
+- `rightActions` SHALL contain a `GhostIconButton` with `IconDownload` and `aria-label`/tooltip `labels.downloadAllLabel` (`sidebar.sources.downloadAll`) only when `onDownloadAll` is provided. The container passes `onDownloadAll` only when at least one attachment in `uploaded`/`generated` passes `isDownloadableAttachment`; otherwise the button is not rendered (never shown disabled).
+- Activating download-all SHALL call `downloadAttachment(attachment, resolveDialFileDownloadUrl)` (from `@epam/ai-dial-chat-hooks/attachments`) for every downloadable attachment in `uploaded` and `generated`, staggered `150 ms` apart; non-downloadable attachments are skipped. It is unaffected by scheduled-task section content.
 
-- `onClose` SHALL call `useSourcesSidebar().handleClose()`.
-- `ariaLabel` SHALL be the i18n value of `sidebar.sources.ariaLabel`.
-- `closeLabel` SHALL be the i18n value of `sidebar.base.close`.
-- `SidebarPanel`'s `title` (per the ADDED "panel header" requirement below) SHALL be independent of the empty/non-empty distinction above.
+The body SHALL render, in order: `additionalSections` (History, then Details, when present), then the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection`. Each of the three file/source sections renders `null` when its own (filtered) list is empty.
+
+Search SHALL filter `uploaded` and `generated` by attachment `name`, and `sources` by `title`, `url`, or `quote`, all case-insensitively. When the query is non-empty and all three filtered lists are empty, the three sections are replaced by `PanelNoResults` (`labels.noResultsLabel`, `basic.noResults`) and a polite `role="status"` region announces the same label. `additionalSections` still render above it and are never filtered.
+
+For both states the container SHALL pass:
+
+- `onClose={handleClose}`.
+- `labels.ariaLabel` = `t(SidebarI18nKeys.AriaLabel)` (`sidebar.sources.ariaLabel`) and `labels.closeLabel` = `t(ButtonsI18nKeys.Close)` (`buttons.close`).
+- `isMobile` from `useIsMobile()`. On mobile the panel is not resizable and takes `w-full` while open. On desktop it is resizable between `312 px` and `usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH)`, starting from the width stored under `StorageKey.ConversationSourcesWidth` (default `360`), and `onResizeStop` writes the new width back.
+- `title` per the "Panel header shows the scheduled task's display name" requirement; it does not depend on the empty/non-empty distinction.
 
 #### Scenario: Global empty state when no files exist and no scheduled task is active
 
-- **WHEN** `ConversationSourcesPanel` derives empty `uploaded`, `generated`, and `sources` lists AND the active conversation is not a scheduled-task conversation
+- **WHEN** `uploaded`, `generated`, and `sources` are empty AND the active conversation is not a scheduled-task conversation
 - **THEN** the body shows centred `NoDataContent` with the `basic.noData` title and default icon
 - **AND** no section heading is rendered
 - **AND** no search or download-all button is rendered
@@ -192,19 +188,19 @@ For both states:
 
 #### Scenario: Any derived file or source switches the panel to section content
 
-- **WHEN** at least one attachment is present in `uploaded`, `generated`, or `sources`
+- **WHEN** at least one item is present in `uploaded`, `generated`, or `sources`
 - **THEN** the global empty state is not rendered
-- **AND** the search input is rendered enabled
-- **AND** the Uploaded Files, Generated Files, and Sources sections are rendered
+- **AND** the search input is rendered
+- **AND** each non-empty Uploaded Files, Generated Files, or Sources section is rendered
 
 #### Scenario: Download-all button is shown when a downloadable attachment is present
 
-- **WHEN** at least one attachment in `uploaded` or `generated` has a DIAL-hosted file URL
+- **WHEN** at least one attachment in `uploaded` or `generated` passes `isDownloadableAttachment`
 - **THEN** the download-all button in `rightActions` is rendered and enabled
 
 #### Scenario: Download-all button is hidden when nothing is downloadable
 
-- **WHEN** `uploaded` and `generated` contain only attachments without a resolvable DIAL-hosted file URL (or both lists are empty)
+- **WHEN** `uploaded` and `generated` contain no downloadable attachment (or both lists are empty)
 - **THEN** the download-all button is not rendered
 
 #### Scenario: Download-all ignores scheduled-task section content
@@ -214,21 +210,26 @@ For both states:
 
 #### Scenario: Activating download-all downloads every downloadable attachment
 
-- **WHEN** the user activates the enabled download-all button while `uploaded` has one downloadable attachment and `generated` has two downloadable attachments
-- **THEN** the same download mechanism used for individual attachment clicks is invoked once per downloadable attachment, for all three attachments
+- **WHEN** the user activates download-all while `uploaded` has one downloadable attachment and `generated` has two
+- **THEN** the attachment download is triggered once per downloadable attachment, for all three, `150 ms` apart
 
 #### Scenario: Non-downloadable attachments are skipped by download-all
 
-- **WHEN** the user activates the enabled download-all button while one attachment in `uploaded` or `generated` is not downloadable (no resolvable DIAL-hosted URL)
+- **WHEN** the user activates download-all while one attachment in `uploaded` or `generated` is not downloadable
 - **THEN** no download is triggered for that attachment
 - **AND** downloads are still triggered for the remaining downloadable attachments
 
-#### Scenario: Search filters sources by title, URL, and quote
+#### Scenario: Search filters files by name and sources by title, URL, and quote
 
 - **WHEN** the user types into the search input
-- **THEN** the `filteredSources` list retains only sources where `title`, `url`, or `quote` contains the query (case-insensitive)
-- **AND** `isNoResults` is true only when all three filtered lists (`uploaded`, `generated`, `sources`) are empty after filtering
-- **AND** the History and Details sections are unaffected by the search query and are never included in `isNoResults`
+- **THEN** `uploaded` and `generated` keep only attachments whose `name` contains the query, and `sources` keeps only sources whose `title`, `url`, or `quote` contains it (case-insensitive)
+- **AND** `PanelNoResults` is shown only when all three filtered lists are empty
+- **AND** the History and Details sections are unaffected by the search query
+
+#### Scenario: Closing the panel clears the search query
+
+- **WHEN** the user has typed a query and the panel closes
+- **THEN** the query is reset to an empty string
 
 #### Scenario: Close button closes the sidebar via context
 
@@ -248,13 +249,15 @@ For both states:
 
 #### Scenario: Panel passes click handler to both file sections
 
-- **WHEN** `ConversationSourcesPanel` renders with non-empty `uploaded` and `generated`
-- **THEN** both `FilesSection` instances receive the same `onAttachmentClick` handler from `useAttachmentAction`
+- **WHEN** the panel renders with non-empty `uploaded` and `generated`
+- **THEN** both `FilesSection` instances receive the same `onAttachmentClick` handler
 
-#### Scenario: Clicking an attachment card triggers download
+#### Scenario: Clicking an attachment card opens it in the canvas or downloads it
 
 - **WHEN** a user clicks an attachment card in the panel
-- **THEN** `handleAttachmentClick` is invoked with the corresponding `DisplayAttachment`
+- **THEN** `openAttachmentCanvas` is called with that `DisplayAttachment`
+- **AND** if the canvas opens, the sources sidebar closes
+- **AND** if it does not open, the attachment is downloaded
 
 #### Scenario: A closed sidebar does not derive sources
 
@@ -272,7 +275,7 @@ For both states:
 
 ### Requirement: Source link clicks are routed by URL and content type
 
-`ConversationSourcesPanel` SHALL wire `handleSourceClick` as `onSourceClick` on `SourcesSection`. `handleSourceClick` SHALL route each click as follows:
+`ConversationSourcesPanelContainer` SHALL pass `handleSourceClick` as `onSourceClick` to the lib `ConversationSourcesPanel`, which forwards it to `SourcesSection`. `handleSourceClick` SHALL route each click as follows:
 
 1. **External non-previewable URL** — if the URL is not a DIAL file ID and does not pass the previewability test (see below), open `window.open(url, '_blank', 'noopener,noreferrer')` immediately and return.
 2. **PDF page reference** — if `parsePdfPageReference(url)` (from `@epam/ai-dial-quotations`) returns a non-`null` `page`, build a `DisplayAttachment` with `referenceUrl` set to the full source URL (including the `#page=N` fragment), `url` left undefined, and `contentType` `MIMEType.PDF`, then call `openAttachmentCanvas(attachment)`. `useOpenAttachmentCanvas` routes such an attachment through `resolveReferencePdfContent` (→ `referenceAttachmentToPdfCanvasContent`), so the PDF canvas receives `page` and a `selectedHighlightId` for that page, exactly as an inline reference-link preview does. If the canvas opens (`true`), close the sources sidebar. If it does not open (`false`): for a DIAL file ID, trigger a download of the fragment-free base file (`parsed.baseUrl`); otherwise open `window.open(url, '_blank', 'noopener,noreferrer')` with the original, fragment-bearing URL.
@@ -280,19 +283,21 @@ For both states:
 
 The page-reference branch lives only in the app container. `libs/source-panel` stays unaware of page semantics and passes the `QuotationSource` through unchanged.
 
-**Content type resolution** — `resolveExternalSourceContentType(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`:
+Both helpers below are defined in `libs/chat-hooks/src/files/source-content.ts` and imported by the container from `@epam/ai-dial-chat-hooks/file-manager`. The module keeps its own extension and MIME tables (`OOXML_MIME_TYPE_BY_EXTENSION` for `docx`/`xlsx`/`pptx`/`csv`, `TEXT_EXTENSIONS`, `HTML_EXTENSIONS`) aligned with `@epam/ai-dial-attachment-canvas` without importing it.
 
-- Returns `contentType` unchanged if it already trustworthily identifies the source: it starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF` (`'application/pdf'`), or `isOoxmlPreviewable('', contentType)` (from `@epam/ai-dial-attachment-canvas`) recognizes it as a canonical DOCX/XLSX/PPTX/CSV MIME type.
-- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment): if its extension after the last `.` is `'pdf'` (`FileExtension.PDF`), returns `MIMEType.PDF`; otherwise, if `getOoxmlMimeType(fileName)` (from `@epam/ai-dial-attachment-canvas`) recognizes a `.docx`/`.xlsx`/`.pptx`/`.csv` extension, returns that format's canonical MIME type. Either case **overrides** the reported `contentType`.
+**Content type resolution** — `resolveExternalSourceContentType(contentType, url)`:
+
+- Returns `contentType` unchanged if it already trustworthily identifies the source: it starts with `'image/'`, starts with `'audio/'`, equals `'application/pdf'`, or (ignoring parameters and case) equals one of the canonical DOCX/XLSX/PPTX/CSV MIME types in `OOXML_MIME_TYPE_BY_EXTENSION`.
+- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment): if its lowercased extension after the last `.` is `'pdf'`, returns `'application/pdf'`; otherwise, if the extension is `docx`/`xlsx`/`pptx`/`csv`, returns that format's canonical MIME type from `OOXML_MIME_TYPE_BY_EXTENSION`. Either case **overrides** the reported `contentType`.
 - Otherwise returns `contentType` unchanged.
 
 This override exists because some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts, PDFs, Office documents, and CSV files alike — with `content-type: text/markdown` regardless of actual content. Without it, the reported `contentType` would win over a recognized document extension when building the `DisplayAttachment`, routing the canvas into the markdown/text viewer instead of the PDF or `@silurus/ooxml` renderer. The `DisplayAttachment` built in step 3 above uses this resolved content type (not the raw `QuotationSource.contentType`) for both its `contentType` and `type` (`AttachmentType.Image` vs `AttachmentType.File`) fields.
 
-**Previewability test** — `isExternalSourcePreviewable(contentType, url)` exported from `libs/chat-hooks/src/files/attachment-canvas.ts`, built on `resolveExternalSourceContentType`:
+**Previewability test** — `isExternalSourcePreviewable(contentType, url)`, built on `resolveExternalSourceContentType`:
 
-- Resolves the effective content type via `resolveExternalSourceContentType(contentType, url)`. Returns `true` if the resolved type starts with `'image/'`, starts with `'audio/'`, equals `MIMEType.PDF`, or `isOoxmlPreviewable('', resolvedType)` recognizes it as a canonical DOCX/XLSX/PPTX/CSV MIME type.
-- Otherwise, extracts the last path segment of `url` and returns `true` when `isTextPreviewable(fileName)` or `isHtmlPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.html`/`.htm`, and all other plain-text formats the canvas text renderer supports.
-- Returns `false` on invalid URLs or a last path segment with no file extension.
+- Resolves the effective content type via `resolveExternalSourceContentType(contentType, url)`. Returns `true` if the resolved type starts with `'image/'`, starts with `'audio/'`, equals `'application/pdf'`, or is one of the canonical DOCX/XLSX/PPTX/CSV MIME types.
+- Otherwise, extracts the last path segment of `url` and returns `true` when its lowercased extension is in `TEXT_EXTENSIONS` (e.g. `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.csv`, `.yaml`, source-code extensions) or `HTML_EXTENSIONS` (`.html`/`.htm`).
+- Otherwise returns `false` (including a last path segment with no file extension). A URL that does not parse as absolute is treated as a relative path, with its query and fragment stripped.
 
 Image and audio content types, and an already-correct PDF or OOXML content type, are trusted directly because web-search grounding APIs do not mislabel images/audio (or, for PDF/OOXML, because a citation annotation's own `attachment.type` field — the same authoritative marker `annotationToPdfCanvasContent` trusts — is reliable even when the source's URL carries no matching extension, e.g. an opaque citation/reference id rather than a file name).
 
@@ -352,7 +357,7 @@ Image and audio content types, and an already-correct PDF or OOXML content type,
 
 #### Scenario: External text-previewable URL opens in the canvas
 
-- **GIVEN** a `QuotationSource` with a URL whose last path segment has an extension recognised by `isTextPreviewable` (e.g. `.md`, `.markdown`, `.json`, `.txt`, `.csv`, `.xml`)
+- **GIVEN** a `QuotationSource` with a URL whose last path segment has an extension in `TEXT_EXTENSIONS` (e.g. `.md`, `.markdown`, `.json`, `.txt`, `.csv`, `.xml`)
 - **WHEN** the user clicks the source link
 - **THEN** `openAttachmentCanvas` is called
 - **AND** if the canvas opens, the sources sidebar is closed
@@ -491,41 +496,33 @@ Its shape is unchanged. For PDF sources, `url` MAY carry a `#page=N` fragment id
 
 ---
 
-### Requirement: Section components render their title, grid, and empty placeholder
+### Requirement: Section components render their title and content, or nothing when empty
 
-`UploadedFilesSection`, `GeneratedFilesSection`, and `SourcesSection` SHALL each render a `<section>` containing the section title (`<h2>` or equivalent heading) and either content or an empty-state line. Each section accepts a `title` and `emptyMessage` prop sourced from i18n by the caller.
+`libs/source-panel` SHALL render the file and source lists through two internal (not exported) components, `FilesSection` and `SourcesSection`, each rendering a `<section>` with an `<h2>` title (`titleClassName`, default `dial-body-semi-text`, overridable through `styles.typography.sectionTitleClassName`) followed by its content. Each returns `null` when its list is empty, so no title or placeholder line is rendered. Section titles render as plain text; matches are highlighted in item labels.
 
-For `UploadedFilesSection` and `GeneratedFilesSection`:
+`FilesSection` (`libs/source-panel/src/components/FilesSection/FilesSection.tsx`) is used for both Uploaded Files and Generated Files and accepts `{ attachments: DisplayAttachment[]; title: string; searchQuery?: string; titleClassName?: string; onAttachmentClick?: (attachment: DisplayAttachment) => void; attachmentClickLabel?: string }`. There is no `emptyMessage` prop. When `attachments.length > 0` it SHALL render an auto-fill grid (`role="list"`, `grid-cols-[repeat(auto-fill,minmax(84px,1fr))]`) where each cell (`role="listitem"`) wraps an `AttachmentCard` from `@epam/ai-dial-attachment-input` (no `onRemove`, no `onRetry`) that receives `searchQuery`, `labels={{ clickLabel: attachmentClickLabel }}`, and, only when `onAttachmentClick` is provided, `onClick={() => onAttachmentClick(att)}`. The container passes `attachmentClickLabel = t(AttachmentsI18nKeys.Download)` (`attachments.downloadFile`).
 
-- When `attachments.length > 0`: render a 3-column grid (`role="list"`) where each cell (`role="listitem"`) wraps an `AttachmentCard` (no `onRemove`, no `onRetry`) sized `w-full`. When an `onAttachmentClick` callback is provided to the section, the section SHALL forward `(att) => onAttachmentClick(att)` to each card's `onClick` prop and pass the i18n value of `sidebar.sources.attachment.downloadLabel` as `clickLabel`. When `onAttachmentClick` is not provided, `onClick` SHALL be omitted.
-- When `attachments.length === 0`: return `null` (no title or content rendered).
+`SourcesSection` (`libs/source-panel/src/components/SourcesSection/SourcesSection.tsx`) accepts `{ title: ReactNode; sources: QuotationSource[]; copyLabel: string; copiedLabel?: string; searchQuery?: string; typography?; colors?; onSourceClick?: (source: QuotationSource) => void }` (`copiedLabel` defaults to `'Link copied to clipboard'`). When `sources.length > 0` it SHALL render a `<ul>` where each `<li>` contains:
 
-Both `UploadedFilesSection` and `GeneratedFilesSection` SHALL accept an optional `onAttachmentClick?: (attachment: DisplayAttachment) => void` prop.
+- **Row 1** (flex, `items-center`, `justify-between`): a ui-kit `LinkButton` with `href={source.url}`, `target="_blank"`, and `aria-label={source.title}`, whose label is `<Highlight text={source.title} query={searchQuery} maxLines={1} />`; and a `GhostIconButton` with `IconCopy` and `aria-label={copyLabel}` that calls `navigator.clipboard.writeText(source.url)` and then announces `copiedLabel` in a polite `role="status"` region. When `onSourceClick` is provided, clicking the link SHALL call `e.preventDefault()` and invoke `onSourceClick(source)` instead of following the `href`.
+- **Row 2** (only when `source.quote` is present): a `<div>` with the quote typography class (default `dial-tiny-text`), `styles.quote` (color token), `line-clamp-5`, and `[&>div>*+*]:mt-1`, containing a `MarkdownRenderer` rendering `source.quote`. The `[&>div>*+*]:mt-1` selector adds vertical spacing between the block-level children of `MarkdownRenderer`'s root `<div>`.
 
-For `SourcesSection`:
+The container passes `copyLabel = t(ButtonsI18nKeys.CopyLink)` and `copiedLabel = t(ButtonsI18nKeys.Copied)`.
 
-- Accept `Props { title: string; sources: QuotationSource[]; copyLabel: string; onSourceClick?: (source: QuotationSource) => void }`.
-- When `sources.length === 0`: return `null` (no title or empty message rendered).
-- When `sources.length > 0`: render a `<ul>` where each `<li>` contains two rows:
-  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `GhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`. When `onSourceClick` is provided, clicking the `<a>` SHALL call `e.preventDefault()` and invoke `onSourceClick(source)` instead of following the `href`.
-  - **Row 2** (only when `source.quote` is present): a `<div>` with `quoteClassName` (typography), `styles.quote` (color token), `line-clamp-5`, and `[&>div>*+*]:mt-1` (spacing between block elements), containing a `MarkdownRenderer` rendering `source.quote`. The `[&>div>*+*]:mt-1` selector targets the block-level children of `MarkdownRenderer`'s root `<div>` to add consistent vertical spacing between headings, paragraphs, and lists.
+#### Scenario: Files section with attachments
 
-`SourcesSection` is located at `libs/source-panel/src/components/SourcesSection/SourcesSection.tsx`.
-
-#### Scenario: Uploaded Files section with attachments
-
-- **WHEN** `UploadedFilesSection` receives two `DisplayAttachment[]`
+- **WHEN** `FilesSection` receives two `DisplayAttachment`s
 - **THEN** the rendered DOM contains the title, a `role="list"` grid with two `role="listitem"` cells, each wrapping an `AttachmentCard` for the corresponding attachment
 
-#### Scenario: Uploaded Files section empty
+#### Scenario: Files section empty
 
-- **WHEN** `UploadedFilesSection` receives `[]`
+- **WHEN** `FilesSection` receives `[]`
 - **THEN** nothing is rendered — no title, no grid
 
-#### Scenario: Generated Files section parity
+#### Scenario: Uploaded and Generated Files share one component
 
-- **WHEN** `GeneratedFilesSection` receives the same input shapes
-- **THEN** it follows the same rendering rules as `UploadedFilesSection`
+- **WHEN** the panel renders both Uploaded Files and Generated Files
+- **THEN** both are `FilesSection` instances that differ only in `attachments` and `title`
 
 #### Scenario: Sources section renders nothing when empty
 
@@ -535,12 +532,14 @@ For `SourcesSection`:
 #### Scenario: Sources section renders link and copy button per source
 
 - **WHEN** `SourcesSection` receives two `QuotationSource` items
-- **THEN** it renders two `<li>` elements each containing an `<a>` link and a copy icon button
+- **THEN** it renders two `<li>` elements each containing a link and a copy icon button
+- **AND** each link's title is rendered through `Highlight` with the current search query
 
 #### Scenario: Copy button writes the source URL to the clipboard
 
 - **WHEN** the user clicks the copy button for a source
 - **THEN** `navigator.clipboard.writeText` is called with that source's `url`
+- **AND** `copiedLabel` is announced through the section's `role="status"` region
 
 #### Scenario: Quote row is omitted when source has no quote
 
@@ -559,7 +558,7 @@ For `SourcesSection`:
 
 #### Scenario: Cards receive click handler when `onAttachmentClick` is provided
 
-- **WHEN** `UploadedFilesSection` or `GeneratedFilesSection` is rendered with `onAttachmentClick` supplied
+- **WHEN** `FilesSection` is rendered with `onAttachmentClick` supplied
 - **THEN** each `AttachmentCard` receives an `onClick` prop
 - **AND** activating a card invokes `onAttachmentClick` with the corresponding `DisplayAttachment`
 
@@ -590,6 +589,76 @@ In either case, when `isOpen === false`, no focusable element inside the panel S
 
 - **WHEN** the user opens and closes the sidebar
 - **THEN** `<main>`'s class list and width-relevant style attributes are unchanged across the transitions
+
+---
+
+### Requirement: Sources sidebar open state is reset by the resolved schedule, not the conversation id
+
+The sources sidebar's open state SHALL NOT be reset by a change of the raw route conversation id. Instead, the reset SHALL be keyed on the resolved subject of the sidebar: the schedule that owns the active conversation. The schedule SHALL be resolvable for a conversation through three sources:
+
+- The conversation-list lookup — the `scheduleId`, resolved exactly as `ActiveScheduledTaskContext` resolves it (non-task and flag-disabled conversations resolve to none).
+- The remembered run history — the run ids the loaded `useScheduledTaskRuns` items showed for the last resolved schedule, remembered while that schedule was resolved. The `nextRunTime` background refresh picks up a freshly fired run before the conversation list does, so this memory SHALL recognize that run's conversation as belonging to the same schedule.
+- The kept last resolved `scheduleId` — a `scheduleId` that transiently resolves to `undefined` during a conversation-list reload SHALL NOT erase the kept value; it is dropped only when the conversation id changes.
+
+The reset rule SHALL be:
+
+- The active conversation resolves to **no schedule** through any source (a different task's runs never match another schedule's remembered history) → the sidebar SHALL close. This covers normal-to-normal, task-to-normal, and normal-to-task navigation, reproducing today's behavior exactly (the pre-change unconditional close of issue #7213/#7936). It covers a task conversation unknown to both the conversation list and the loaded run history — one first visited without a resolved schedule context (no hold-open limbo) — and a route that resolves to no conversation id at all (bare `/conversations`, a malformed path segment): the panel stays mounted on those routes, and the reset rule SHALL close there just as the pre-change conversation-id effect did; leaving `/conversations/*` entirely unmounts the panel, so that close stays owned by the Conversation page's unmount cleanup.
+- The resolved schedule **changes** (different task) → the sidebar SHALL close.
+- The resolved schedule is **unchanged** (switch between runs of the same task, resolved through any combination of the three sources) → the sidebar SHALL stay open; its content continues to follow the active conversation through the existing `ActiveScheduledTaskContext`/run-history behavior with no additional close logic.
+
+The close SHALL NOT be implemented as an effect keyed on `conversationId` in `Conversation.tsx`; ownership of the reset SHALL live in the sidebar/active-task context layer that already resolves the schedule. The existing unmount cleanup (closing the sidebar when leaving the `/conversations/*` routes) SHALL be preserved unchanged. The rule SHALL NOT affect the sidebar's open behavior: the sidebar still opens only by explicit user action, and the user's manual close is unaffected.
+
+#### Scenario: Switching between runs of the same task keeps the sidebar open
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user activates another run of the same task in the sidebar's own History list
+- **THEN** the sidebar stays open, its Details and History content updates to the newly active run, and no close occurs
+
+#### Scenario: Switching to a freshly fired run the run history knows but the conversation list does not
+
+- **GIVEN** the sources sidebar is open on a run of a schedule whose run history has loaded
+- **WHEN** the `nextRunTime` background refresh adds a newly fired run to the loaded run history, the conversation list has not picked the run's conversation up yet, and the user activates that run in the sidebar's own History list
+- **THEN** the sidebar stays open — the remembered run history resolves the new conversation to the same schedule
+
+#### Scenario: Same-task switch right after a scheduleId blip keeps the sidebar open
+
+- **GIVEN** the sources sidebar is open on a scheduled-task run conversation with a resolved `scheduleId`
+- **WHEN** a conversation-list reload transiently resolves the `scheduleId` to `undefined` on the same conversation, and the user then switches to another run of the same task
+- **THEN** the sidebar stays open — the blip does not erase the kept schedule, even when the previous run never appeared in the loaded run history
+
+#### Scenario: Same-task run switch via conversation panel keeps the sidebar open
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user navigates (conversation panel row, browser back/forward, or direct URL) to a different conversation of the same `scheduleId`
+- **THEN** the sidebar stays open
+
+#### Scenario: Switching to a different task closes the sidebar
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user activates another task's conversation in the conversation panel
+- **THEN** the sidebar closes (no reopen), matching the behavior of navigating to a normal conversation
+
+#### Scenario: Switching from a task conversation to a normal conversation closes the sidebar
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user navigates to a non-task conversation
+- **THEN** the sidebar closes
+
+#### Scenario: Normal-to-normal conversation switch still closes the sidebar
+
+- **WHEN** the sources sidebar is open and the user switches from one non-task conversation to another
+- **THEN** the sidebar closes (the pre-change #7213/#7936 behavior is preserved; the rule is "close when the current conversation resolves to no schedule", not "close when the schedule changed")
+
+#### Scenario: A conversation unknown to every source closes the sidebar
+
+- **WHEN** the sidebar is open and the user navigates to a conversation that resolves to no schedule through any source (the task feature flag is disabled, or the conversation has no prior resolved-schedule context — for example a direct first visit to a run whose list entry has not loaded), or to a route that resolves to no conversation id (bare `/conversations`, a malformed path segment)
+- **THEN** the sidebar closes — there is no state in which the sidebar lingers open awaiting a resolution
+
+#### Scenario: Leaving the conversations routes closes the sidebar
+
+- **WHEN** the sidebar is open and the user navigates away from `/conversations/*` (e.g. back to the Scheduled Tasks page)
+- **THEN** the existing unmount cleanup still closes the sidebar
+
+#### Scenario: The reset rule introduces no new open behavior
+
+- **WHEN** the user navigates between conversations of any kind without having opened the sidebar
+- **THEN** the sidebar remains closed; nothing auto-opens it
 
 ---
 
@@ -790,9 +859,9 @@ The Details section SHALL NOT render edit controls. It is a concise summary; the
 
 ### Requirement: History and Details sections are independently collapsible with reset-on-conversation-change defaults
 
-The History and Details sections SHALL each be wrapped in a controlled `DialAccordion` (from `@epam/ai-dial-ui-kit`), controlling `expanded` explicitly rather than relying on `defaultExpanded`. History SHALL default to expanded; Details SHALL default to collapsed. When the active scheduled-task conversation changes (a new `scheduleId`), both sections SHALL reset to these default states.
+The History and Details sections SHALL each be wrapped in a controlled 2.0 `Accordion` (from `@epam/ai-dial-ui-kit`), built by `ConversationSourcesPanelContainer` and driven by `expanded`/`onToggle` state (`isHistoryExpanded`, `isDetailsExpanded`) rather than `defaultExpanded`. History SHALL default to expanded; Details SHALL default to collapsed. When the active scheduled-task conversation changes (a new `scheduleId`), both sections SHALL reset to these default states.
 
-Each section's trigger SHALL be a keyboard-operable button exposing `aria-expanded` and associated with its controlled content region (e.g. via `aria-controls` and a matching `id`). Directional chevrons SHALL mirror correctly in RTL. When a section is collapsed, its content SHALL NOT retain focusable descendants in the tab order (verified against `DialAccordion`'s actual mount/unmount behavior; if content remains mounted while hidden, the call site SHALL apply `inert` to the collapsed content per `.claude/rules/a11y.md`). Loading and error messages inside each section SHALL use scoped `role="status"`/`role="alert"` semantics as appropriate, not a page-level equivalent.
+Each section's trigger SHALL be a keyboard-operable button exposing `aria-expanded` and associated with its controlled content region (e.g. via `aria-controls` and a matching `id`). Directional chevrons SHALL mirror correctly in RTL. When a section is collapsed, its content SHALL NOT retain focusable descendants in the tab order (the container wraps each section's content in a `<div inert={!expanded}>`, per `.claude/rules/a11y.md`). Loading and error messages inside each section SHALL use scoped `role="status"`/`role="alert"` semantics as appropriate, not a page-level equivalent.
 
 #### Scenario: Default expand/collapse state
 

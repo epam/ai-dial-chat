@@ -1,26 +1,21 @@
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-  }
-
-  to {
-    transform: translateY(0);
-  }
-}
-
-.backdrop {
+/*
+ * The sheet is the UI kit's `BottomSheet`, which paints its backdrop, panel,
+ * title and header rule with single-class utilities. The doubled classes keep
+ * the `--ci-*` custom properties — `BottomSheetShellColors` — ahead of them
+ * whichever stylesheet loads last; unset, they fall back to the same tokens.
+ */
+.backdrop.backdrop {
   background: var(--ci-backdrop, var(--bg-backdrop, #161b2d4d));
 }
 
-.sheet {
+.sheet.sheet {
   background: var(--ci-sheet-bg, var(--bg-layer-raised, #fcfcfc));
-  animation: slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.title {
+.title.title {
   color: var(--ci-sheet-text, var(--text-primary, #161b2d));
 }
 
-.divider {
-  background: var(--ci-sheet-divider, var(--stroke-tertiary, #e0e6f0));
+.divider.divider {
+  border-bottom-color: var(--ci-sheet-divider, var(--stroke-tertiary, #e0e6f0));
 }

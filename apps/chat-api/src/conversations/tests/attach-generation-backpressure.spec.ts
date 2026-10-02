@@ -86,7 +86,10 @@ const makeController = (): {
     get: () => undefined,
   } as unknown as ConfigService<EnvironmentVariables>);
   const controller = new ConversationController(
-    {} as unknown as ConversationService,
+    {
+      resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+      stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+    } as unknown as ConversationService,
     generationService,
   );
   return { controller, generationService };
@@ -241,5 +244,54 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
 
     expect(slowRes.end).toHaveBeenCalledOnce();
     expect(slowRes.destroy).not.toHaveBeenCalled();
+  });
+});
+
+describe('attachToGeneration — background replay backpressure', () => {
+  it('stops a slow reader of a background replay and aborts the DIAL Core replay', async () => {
+    const generationService = new ConversationGenerationService({
+      get: () => undefined,
+    } as unknown as ConfigService<EnvironmentVariables>);
+    let replaySignal: AbortSignal | undefined;
+    let eventsPulled = 0;
+    const events = async function* () {
+      for (let i = 0; i < 100; i++) {
+        eventsPulled++;
+        yield {
+          type: 'chunk',
+          chunk: { choices: [{ delta: { content: 'x'.repeat(64 * 1024) } }] },
+        };
+      }
+    };
+    const controller = new ConversationController(
+      {
+        resolveBackgroundAttach: vi.fn(
+          async (
+            _path: string,
+            _token: string,
+            _bucket: string,
+            signal: AbortSignal,
+          ) => {
+            replaySignal = signal;
+            return { kind: 'stream', events: events() };
+          },
+        ),
+      } as unknown as ConversationService,
+      generationService,
+    );
+    const slowRes = new FakeAttachResponse(false);
+
+    await controller.attachToGeneration(
+      {
+        user: { sid: SID, at: 'tok', bucket: 'test-bucket' },
+        authSource: AuthSource.Cookie,
+      } as unknown as Request,
+      slowRes as unknown as Response,
+      { path: PATH },
+    );
+
+    expect(eventsPulled).toBeLessThan(100);
+    expect(replaySignal?.aborted).toBe(true);
+    expect(slowRes.end).toHaveBeenCalled();
   });
 });

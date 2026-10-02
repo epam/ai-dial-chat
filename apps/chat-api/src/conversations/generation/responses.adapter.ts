@@ -38,6 +38,12 @@ import {
 const GENERIC_TRUNCATED_MESSAGE =
   'Responses generation ended before completion';
 
+/** Error shown for a failed Responses generation whose error carries no message. */
+export const RESPONSES_FAILED_MESSAGE = 'Responses generation failed';
+
+/** Error shown when a Responses generation ends `incomplete` (e.g. an output limit). */
+export const RESPONSES_INCOMPLETE_MESSAGE = 'Generation ended incomplete';
+
 /**
  * Builds the Responses request and normalizes the Responses SSE event
  * stream into the same `chat.completion.chunk` shape the Chat Completions
@@ -84,6 +90,7 @@ export class ResponsesAdapter {
     temperatureSupported: boolean;
     reasoningEfforts?: string[];
     configuration?: Record<string, unknown>;
+    isBackground?: boolean;
   }): ResponsesApiRequestBody {
     const {
       model,
@@ -92,6 +99,7 @@ export class ResponsesAdapter {
       temperatureSupported,
       reasoningEfforts,
       configuration,
+      isBackground,
     } = params;
 
     const systemInput = startConversation.prompt
@@ -111,7 +119,7 @@ export class ResponsesAdapter {
       model,
       input,
       stream: true,
-      store: false,
+      ...(isBackground ? { store: true, background: true } : { store: false }),
       ...(temperatureSupported && startConversation.temperature != null
         ? { temperature: startConversation.temperature }
         : {}),
@@ -190,77 +198,96 @@ export class ResponsesAdapter {
       message: ConversationMessageDto,
     ) => void,
     jobTitle?: string,
+    options?: {
+      isPassThrough?: boolean;
+      /**
+       * An already-open Responses event stream (a DIAL Core replay) to normalize
+       * instead of issuing `createResponse`.
+       */
+      replayBody?: ReadableStream<Uint8Array>;
+    },
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
+    /*
+     * Pass-through relays (the background path) never assemble the answer: the final
+     * text is retrieved from DIAL Core once at the end, so memory stays constant.
+     */
+    const isPassThrough = options?.isPassThrough === true;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
     const cancelUpstreamOnAbort = (): void => {
       void upstreamReader?.cancel().catch(() => undefined);
     };
 
     try {
-      const dialResult = (await this.dialClient.client.createResponse({
-        body: requestBody as never,
-        headers: {
-          ...getBearerAuthHeaders(token),
-          Accept: 'text/event-stream',
-          ...(clientChannelId
-            ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
-            : {}),
-          ...(timezone ? { [TIMEZONE_HEADER]: timezone } : {}),
-          ...buildConversationIdHeaders(conversationId),
-          ...buildJobTitleHeaders(jobTitle),
-        },
-        parseAs: 'stream',
-        signal,
-      })) as { response: globalThis.Response; error?: unknown };
+      let upstreamBody = options?.replayBody;
+      if (!upstreamBody) {
+        const dialResult = (await this.dialClient.client.createResponse({
+          body: requestBody as never,
+          headers: {
+            ...getBearerAuthHeaders(token),
+            Accept: 'text/event-stream',
+            ...(clientChannelId
+              ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
+              : {}),
+            ...(timezone ? { [TIMEZONE_HEADER]: timezone } : {}),
+            ...buildConversationIdHeaders(conversationId),
+            ...buildJobTitleHeaders(jobTitle),
+          },
+          parseAs: 'stream',
+          signal,
+        })) as { response: globalThis.Response; error?: unknown };
 
-      if (!dialResult.response.ok || !dialResult.response.body) {
-        let errorMessage = '';
+        if (!dialResult.response.ok || !dialResult.response.body) {
+          let errorMessage = '';
 
-        /* 1. SDK-parsed error — most reliable, SDK reads body before us */
-        if (dialResult.error != null) {
-          errorMessage = extractDialErrorMessage(dialResult.error) ?? '';
-        }
+          /* 1. SDK-parsed error — most reliable, SDK reads body before us */
+          if (dialResult.error != null) {
+            errorMessage = extractDialErrorMessage(dialResult.error) ?? '';
+          }
 
-        /* 2. Raw body — for cases where SDK didn't parse it */
-        if (!errorMessage) {
-          const rawBody = await dialResult.response.text().catch(() => '');
-          if (rawBody) {
-            try {
-              errorMessage = extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
-            } catch {
-              /* not JSON — fall through to plain-text below */
-            }
-            /*
-             * DIAL Core can return a plain-text body (e.g. "Upstream is
-             * missing required id") rather than a JSON error object. Treat
-             * the raw text itself as the error candidate, sanitized before
-             * it can reach a log line.
-             */
-            if (!errorMessage) {
-              errorMessage = StringUtils.sanitizeForLog(rawBody, 500);
+          /* 2. Raw body — for cases where SDK didn't parse it */
+          if (!errorMessage) {
+            const rawBody = await dialResult.response.text().catch(() => '');
+            if (rawBody) {
+              try {
+                errorMessage =
+                  extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
+              } catch {
+                /* not JSON — fall through to plain-text below */
+              }
+              /*
+               * DIAL Core can return a plain-text body (e.g. "Upstream is
+               * missing required id") rather than a JSON error object. Treat
+               * the raw text itself as the error candidate, sanitized before
+               * it can reach a log line.
+               */
+              if (!errorMessage) {
+                errorMessage = StringUtils.sanitizeForLog(rawBody, 500);
+              }
             }
           }
+
+          /*
+           * When DIAL Core provides no error text (empty body, non-JSON), leave
+           * errorMessage as '' — the frontend localizes a generic fallback via
+           * i18n. A non-null streamErrorMessage (even '') still signals the
+           * terminal error state for resume detection.
+           */
+          this.logger.error(
+            `DIAL Core rejected Responses request — status: ${dialResult.response.status}${errorMessage ? `: ${errorMessage}` : ''}`,
+          );
+          return {
+            outcome: 'rejected',
+            status: dialResult.response.status,
+            errorMessage,
+            assembledMessage,
+          };
         }
 
-        /*
-         * When DIAL Core provides no error text (empty body, non-JSON), leave
-         * errorMessage as '' — the frontend localizes a generic fallback via
-         * i18n. A non-null streamErrorMessage (even '') still signals the
-         * terminal error state for resume detection.
-         */
-        this.logger.error(
-          `DIAL Core rejected Responses request — status: ${dialResult.response.status}${errorMessage ? `: ${errorMessage}` : ''}`,
-        );
-        return {
-          outcome: 'rejected',
-          status: dialResult.response.status,
-          errorMessage,
-          assembledMessage,
-        };
+        upstreamBody = dialResult.response.body;
       }
 
-      upstreamReader = dialResult.response.body.getReader();
+      upstreamReader = upstreamBody.getReader();
       signal.addEventListener('abort', cancelUpstreamOnAbort, { once: true });
       if (signal.aborted) cancelUpstreamOnAbort();
       const decoder = new TextDecoder();
@@ -276,6 +303,7 @@ export class ResponsesAdapter {
       const pendingChunks: string[] = [];
       const writeChunk = (chunk: NormalizedStreamChunk): void => {
         pendingChunks.push(`data: ${JSON.stringify(chunk)}\n\n`);
+        if (isPassThrough) return;
         assembledMessage = applyChunkToMessage(assembledMessage, chunk);
         onChunkApplied?.(chunk, assembledMessage);
       };
@@ -349,7 +377,7 @@ export class ResponsesAdapter {
               message:
                 extractDialErrorMessage(
                   (event as { response?: { error?: unknown } }).response?.error,
-                ) ?? 'Responses generation failed',
+                ) ?? RESPONSES_FAILED_MESSAGE,
             };
             isDone = true;
             return;
@@ -357,7 +385,7 @@ export class ResponsesAdapter {
           case 'response.incomplete': {
             terminalSignal = {
               state: ResponsesTerminalState.Incomplete,
-              message: 'Generation ended incomplete',
+              message: RESPONSES_INCOMPLETE_MESSAGE,
             };
             isDone = true;
             return;

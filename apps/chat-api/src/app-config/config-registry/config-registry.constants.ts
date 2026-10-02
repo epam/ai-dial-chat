@@ -252,6 +252,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'RESPONSES_API_ENABLED',
   },
   {
+    key: 'features.responsesBackgroundEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'server',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Server-side switch for starting eligible Responses generations as DIAL Core background jobs (background: true, store: true). Requires features.responsesApiEnabled, the deployment capability features.responsesApi, and "openaiResponses" in the deployment interfaces. Affects only how new generations start: in-flight background jobs stay recoverable, stoppable and finalizable when it is off. Defaults to false. Not exposed to the frontend client-config endpoint (visibility: server). Requires DIAL Core >= 0.48.0.',
+    owner: 'chat-team',
+    envVar: 'RESPONSES_BACKGROUND_ENABLED',
+  },
+  {
     key: 'ui.activeEventId',
     type: 'config',
     valueType: 'string',
@@ -354,6 +366,20 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'when resolving the initial selection for a new chat.',
     owner: 'chat-team',
     envVar: 'DEFAULT_DEPLOYMENT_PINNED',
+  },
+  {
+    key: 'features.visualizerSendMessages',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'When enabled, a custom or application visualizer iframe may post ' +
+      '`SEND_MESSAGE` to send its text as a user message in the conversation ' +
+      'that renders it. Off by default; port of the legacy ALLOW_VISUALIZER_SEND_MESSAGES.',
+    owner: 'chat-team',
+    envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
   },
   {
     key: 'uiFeatures.enabledUiFeatures',

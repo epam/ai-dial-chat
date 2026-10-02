@@ -10,15 +10,16 @@ A user-initiated operation that mutates or exports an entity SHALL raise exactly
 | Entity | Created | Edited / saved | Deleted | Downloaded | Publish requested | Unpublish requested | Other |
 |---|---|---|---|---|---|---|---|
 | Prompt (`PromptEditor`, catalog details) | required | required | required | required | required | **new** | — |
-| Quick app (`AppsEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
-| Custom app (`CustomAppEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
-| Toolset (`ToolsetEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
-| Model / Skill (catalog details) | — | — | required | — | required | **new** | — |
+| Quick app (`ApplicationFormEditor` with the quick-app definition) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Custom app (`ApplicationFormEditor` with the custom-app definition) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Toolset (`ToolsetApplicationEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Model (catalog details) | — | — | required | — | required | **new** | — |
+| Skill (catalog details) | required (archive import, `useSkillArchiveImport`) | — | required | required (archive download, `useCatalogItemActions`) | required | **new** | — |
 | Conversation | not notified (see exclusions) | required (rename), required (duplicate) | required | required (export) | required | **new** | import, delete-all, unshare, revoke: required |
-| File | — | required (rename) | required | required (single, and a plural count for a multi-item selection) | — | — | upload, copy, move: required |
-| Folder | required | required (rename) | required | required (archive) | — | — | copy, move: required |
+| File | — | required (rename) | required | required (single, and a plural count for a multi-item selection) | — | — | upload, copy, move, duplicate: required |
+| Folder | required | required (rename) | required | required (archive) | — | — | copy, move, duplicate: required |
 
-`required` = already implemented. `**new**` = added by this change.
+`required` = already implemented. `**new**` = added by this change. File/folder copy, move, and duplicate success toasts are raised by `apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts` with `dialFileManager.*` keys (e.g. `FileDuplicatedSuccessfully`, `FolderDuplicatedSuccessfully`) rather than through the `entityNotifications` map.
 
 The `Unpublished` column is replaced by `Unpublish requested`. Unpublishing submits an admin-approval request to DIAL Core rather than removing the published copy (see `catalog-unpublish-api`), so no notification in this capability may state that an entity has been unpublished.
 
@@ -76,9 +77,9 @@ Every notification reporting a **completed** operation SHALL use `NotificationVa
 Two notifications that currently use `NotificationVariant.Info` therefore become Success:
 
 - Removing a conversation from My List (`ConversationPanelI18nKeys.UnshareSuccess*`, `ConversationPanelView`).
-- Removing an item from favourites (`FavoritesI18nKeys.Removed*`, `CatalogView.onToggleFavorite`) — the added/removed branch collapses to one `showSuccessNotification` call with different copy.
+- Removing an item from favourites (`FavoritesI18nKeys.Removed*`, raised in `apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx`) — the added/removed branch collapses to one `showSuccessNotification` call with different copy.
 
-`Info` and `Warning` remain correct for notifications that report something the user did **not** ask for, and those SHALL NOT be converted: unsupported files skipped when attaching (`DialFileManagerModal`), and attachments skipped during conversation export/import (`useConversationExport`, `useConversationImport`) — a partial outcome, not a completed operation.
+`Info` and `Warning` remain correct for notifications that report something the user did **not** ask for, and those SHALL NOT be converted: unsupported files skipped when attaching (`DialFileManagerModal`), and attachments skipped during conversation export/import (the `Warning` toasts `ConversationExportI18nKeys.WarningAttachmentSkipped` / `ConversationImportI18nKeys.WarningAttachmentSkipped`, raised in `ConversationPanelView` from the warning events of `useConversationExport` / `useConversationImport`, which come from `@epam/ai-dial-chat-hooks/conversation-transfer`) — a partial outcome, not a completed operation.
 
 #### Scenario: Removing from favourites shows a success notification
 
@@ -197,9 +198,9 @@ notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Downloaded, {
 });
 ```
 
-- The hook SHALL resolve the title and body keys from one exported map keyed by `(NotifiableEntity, EntityOperation)`, translate them with the interpolation params it is given, and call `showSuccessNotification` from `useNotification`.
+- The hook SHALL resolve the title and body keys from one exported map, `ENTITY_OPERATION_NOTIFICATIONS` in `apps/chat/src/utils/entity-notification.ts`, keyed by `(NotifiableEntity, EntityOperation)`, translate them with the interpolation params it is given, and call `showSuccessNotification` from `useNotification`.
 - It SHALL NOT set `requestId` — trace ids belong to error notifications only (see `notification-request-id`).
-- `NotifiableEntity` and `EntityOperation` SHALL be string enums in `apps/chat/src/types/` (per the repo's enum rule), and a `resolveNotifiableEntity(type: CatalogEntityType)` helper SHALL map catalog item types onto `NotifiableEntity`.
+- `NotifiableEntity` and `EntityOperation` SHALL be string enums in `apps/chat/src/types/entity-notification.ts` (per the repo's enum rule), and `resolveCatalogItemEntity(type: CatalogEntityType, deployment?)` in `apps/chat/src/utils/entity-notification.ts` SHALL map catalog item types onto the `CatalogNotifiableEntity` subset of `NotifiableEntity`, using the deployment's `applicationTypeSchemaId` to choose `QuickApp` or `CustomApp` for an agent and falling back to `Agent` when no deployment is given.
 - `EntityOperation` SHALL include `UnpublishRequested = 'unpublishRequested'`, and the map SHALL carry one entry per entity the matrix marks as unpublishable — the catalog entities and `Conversation`. It SHALL NOT carry an entry for `File` or `Folder`, which have no unpublish action.
 - A pair absent from the map SHALL be a TypeScript error, not a silent no-op, so the matrix above is enforced at compile time.
 - `notifyOperationSuccess` SHALL be wrapped in `useCallback` and depend only on `t` and `showSuccessNotification`, both of which are already referentially stable, so it is safe to list in caller dependency arrays.

@@ -62,3 +62,31 @@ export const generationStreamDuration = meter.createHistogram(
     unit: 's',
   },
 );
+
+/** Reasons a background Responses generation reached a lifecycle outcome. */
+export enum BackgroundGenerationOutcome {
+  FinalizedOrigin = 'finalized_origin',
+  FinalizedRecovery = 'finalized_recovery',
+  Stopped = 'stopped',
+  CancelUnsupported = 'cancel_unsupported',
+  Expired = 'expired',
+  InterruptedStart = 'interrupted_start',
+  SaveFailed = 'save_failed',
+  DetachedMaxDuration = 'detached_max_duration',
+  DetachedShutdown = 'detached_shutdown',
+  DeleteFailed = 'delete_failed',
+  PlaceholderFallback = 'placeholder_fallback',
+}
+
+/*
+ * One point per background-generation lifecycle outcome, tagged only with the
+ * outcome reason — never with content, principal, or response/generation ids
+ * (those go to debug logs only).
+ */
+export const backgroundGenerationOutcomesTotal = meter.createCounter(
+  'generation.background.outcomes',
+  {
+    description:
+      'Lifecycle outcomes of DIAL Core background Responses generations, by reason.',
+  },
+);

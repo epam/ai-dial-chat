@@ -36,7 +36,10 @@ export interface ResponsesApiRequestBody {
   model: string;
   input: ResponsesInputItem[];
   stream: true;
-  store: false;
+  /** `false` on the stateless path; `true` only together with `background` on the background path. */
+  store: boolean;
+  /** Present (`true`) only on the background path: DIAL Core runs the job as a stored background response. */
+  background?: true;
   temperature?: number;
   max_output_tokens?: number;
   /**

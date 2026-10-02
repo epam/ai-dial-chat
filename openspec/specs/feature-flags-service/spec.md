@@ -18,12 +18,13 @@ enum FeatureKey {
   ScheduledTasksEnabled = 'features.scheduledTasksEnabled',
   Footer = 'features.footer',
   ResponsesApiEnabled = 'features.responsesApiEnabled',
+  ResponsesBackgroundEnabled = 'features.responsesBackgroundEnabled',
 }
 ```
 
 New feature keys MUST be added to this enum before being used in any service, guard, or decorator. String values MUST match the corresponding `ConfigDefinition.key` exactly.
 
-`FeatureKey.ResponsesApiEnabled` MAY be consulted directly from a domain service via `FeatureFlagsService.isEnabled` (as `ConversationStreamingService` does), not only from a `@RequireFeature`-decorated controller route via `FeatureGuard` — both consumption paths resolve through the same `AppConfigService`-backed mechanism and share the same fail-closed failure behavior.
+`FeatureKey.ResponsesApiEnabled` and `FeatureKey.ResponsesBackgroundEnabled` MAY be consulted directly from a domain service via `FeatureFlagsService.isEnabled` (as `ConversationStreamingService` does), not only from a `@RequireFeature`-decorated controller route via `FeatureGuard` — both consumption paths resolve through the same `AppConfigService`-backed mechanism and share the same fail-closed failure behavior.
 
 **Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None.
 
@@ -37,7 +38,10 @@ New feature keys MUST be added to this enum before being used in any service, gu
 - **WHEN** `ConversationStreamingService` calls `featureFlagsService.isEnabled(FeatureKey.ResponsesApiEnabled, context)` directly (not via `@RequireFeature`/`FeatureGuard` on a controller route)
 - **THEN** the call resolves a boolean using the same registry entry and the same fail-closed behavior as any other `FeatureKey`, with no `ForbiddenException` thrown by this call path since no `FeatureGuard` is involved
 
----
+#### Scenario: ResponsesBackgroundEnabled is usable from a domain service and fails closed
+
+- **WHEN** `ConversationStreamingService` calls `featureFlagsService.isEnabled(FeatureKey.ResponsesBackgroundEnabled, context)` and resolution fails
+- **THEN** the call resolves `false` without throwing, and no `FeatureGuard` is involved
 
 ### Requirement: FeatureFlagsService.isEnabled evaluates a feature key
 

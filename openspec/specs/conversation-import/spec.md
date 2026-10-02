@@ -1,34 +1,39 @@
-# Spec: conversation-import
+# conversation-import Specification
 
 ## Purpose
 
-Client-side import of one export file (`.json` or `.dial`/`.zip`, v5 envelope, old- or new-chat origin) into the current user's conversations. Covers the file-picker entry point and accepted types, tolerant parsing of both archive JSON-entry names, bounded-concurrency attachment re-upload to `uploads/<YYYY-MM>/` with automatic ` (n)` name-collision disambiguation and path-allowlist validation, attachment-URL and renamed-title rewriting, fresh-UUID id/path regeneration for collision-free saves, a per-file job queue with cancel/retry, and success/failure/warning/unsupported-format notifications.
+Client-side import of one export file (`.json` or `.dial`/`.zip`, v5 envelope, old- or new-chat origin) into the current user's conversations, implemented by `useConversationImport` (`libs/chat-hooks/src/conversation/useConversationImport/useConversationImport.ts`, exported from `@epam/ai-dial-chat-hooks/conversation-transfer`). Covers the file-picker entry point and accepted types, tolerant parsing of both archive JSON-entry layouts, bounded-concurrency attachment re-upload to `uploads/<YYYY-MM>/` with automatic ` (n)` name-collision disambiguation and path-segment validation, attachment-URL and renamed-title rewriting, fresh-UUID id/path regeneration for collision-free saves, a per-file job queue (the UI kit's `TransferQueue`) with cancel/retry, and success/failure/warning/unsupported-format notifications.
 
 ## Requirements
 
 ### Requirement: Import entry point and accepted file types
 
-The system SHALL provide an "Import" action in the conversation panel header menu that opens a file picker accepting `.json`, `.dial`, and `.zip` files. Selecting a file SHALL start an import job without navigating away or blocking the rest of the app.
+The system SHALL provide an "Import conversations" action (`ConversationImportI18nKeys.ImportLabel`) in the conversation panel header menu (`ConversationPanelMenu`). It opens a file picker through `useImportFilePicker` and a hidden `<input type="file">` rendered by `ConversationPanelView`. On desktop the picker's `accept` is `.json,.dial,.zip,application/json,application/zip`. On mobile (`useIsMobile`) the picker is unfiltered, because mobile pickers match `accept` against the reported MIME type and exported `.dial` archives arrive as `application/octet-stream`. The hook validates the file itself. A file whose name ends in `.dial` or `.zip` (case-insensitive) is read as an archive; any other file is read as JSON. Selecting a file SHALL start an import job without navigating away or blocking the rest of the app. The import action is not hidden by `OverlayFeature.HideConversationExport`.
 
 #### Scenario: Opening the import picker
 
-- **WHEN** the user selects "Import" in the conversation panel header menu
-- **THEN** a file picker restricted to `.json`, `.dial`, and `.zip` opens
+- **WHEN** the user selects "Import conversations" in the conversation panel header menu on desktop
+- **THEN** a file picker filtered to `.json`, `.dial`, `.zip`, `application/json` and `application/zip` opens
+
+#### Scenario: Mobile picker is unfiltered
+
+- **WHEN** the user selects "Import conversations" on a mobile viewport
+- **THEN** a file picker without an `accept` filter opens, and an unparsable selection is reported as an unsupported format
 
 #### Scenario: Starting an import
 
 - **WHEN** the user selects a supported file
-- **THEN** the file is parsed and one in-progress import job (per file) is added to the ImportExportQueue, and importing begins immediately
+- **THEN** the file is parsed and one in-progress import job (per file) is added to the import `TransferQueue`, and importing begins immediately
 
-#### Scenario: Job label reflects file contents
+#### Scenario: Job subject reflects file contents
 
 - **WHEN** the imported file contains exactly one conversation
-- **THEN** the job is labeled with that conversation's name (with its source folder breadcrumb, when present)
+- **THEN** the job's `subject` is `{ kind: Single, title, sourceBreadcrumb }`, built from that conversation's name and source folder, while its row shows the selected file's name
 
-#### Scenario: Job label for a multi-conversation file
+#### Scenario: Job subject for a multi-conversation file
 
 - **WHEN** the imported file contains more than one conversation (e.g. an export-all file)
-- **THEN** the job is labeled "All conversations"
+- **THEN** the job's `subject` is `{ kind: All }`, while its row shows the selected file's name
 
 #### Scenario: Re-selecting the same file
 
@@ -56,7 +61,7 @@ The system SHALL parse the file into an export envelope `{ version, history, fol
 
 ### Requirement: Read archives produced by old and new chat
 
-For `.dial`/`.zip` files, the system SHALL locate the conversation-JSON entry under both the new-chat name `conversation.json` and the old-chat name `conversations/conversations_history.json`, and SHALL collect attachment bytes from entries under `res/<path>`. The archive's JSON entry name is what determines old-vs-new archive layout detection — both old and new chat write the same `version: 5` envelope.
+For `.dial`/`.zip` files, `parseDialArchive` (`libs/chat-hooks/src/conversation/conversation-transfer/zip-import.ts`) SHALL locate the conversation-JSON entry in this order: the new-chat root entry `conversation.json`, then any old-chat entry matching `^conversations/.*\.json$` (e.g. `conversations/conversations_history.json`), then any root-level `.json` entry. It SHALL collect attachment bytes from entries under `res/<path>`, keeping only paths that pass `isValidArchivePath` (no empty, `.` or `..` segment). An archive that cannot be unzipped, or has no such JSON entry, is an unsupported format. The archive's JSON entry name is what determines old-vs-new archive layout detection — both old and new chat write the same `version: 5` envelope.
 
 #### Scenario: New-chat archive
 
@@ -70,9 +75,9 @@ For `.dial`/`.zip` files, the system SHALL locate the conversation-JSON entry un
 
 ### Requirement: Re-upload archive attachments to a month-level folder, disambiguating name collisions
 
-For each imported conversation, the system SHALL re-upload every referenced archive attachment to `uploads/<YYYY-MM>/<safe-file-name>` in the current user's bucket, where `<YYYY-MM>` is the local year-month at import time — the same month-level folder convention used by regular (non-import) attachment uploads. Uploads use create-only mode so an existing file is never silently overwritten.
+For each imported conversation, the system SHALL re-upload every referenced archive attachment to `uploads/<YYYY-MM>/<safe-file-name>` in the current user's bucket, where `<YYYY-MM>` is the local year-month at import time — the same month-level folder convention used by regular (non-import) attachment uploads. Uploads go through the injected `FilesApi.uploadFile` with `uploadMode: 'create-only'`, so an existing file is never silently overwritten, and run at most 5 at a time.
 
-Before uploading, the system SHALL list the destination month folder once per import job and use its contents to pre-fill a per-job name registry. For every attachment about to be uploaded, if the registry already contains its file name — whether from that listing, from an earlier attachment in the same job, or recorded after a create-only conflict — the system SHALL append a ` (n)` suffix before the file extension (`report.pdf` → `report (1).pdf` → `report (2).pdf`, incrementing until free) rather than rejecting the upload. Suffix assignment SHALL be resolved in the fixed order the conversation's attachments are referenced, independent of upload completion order, and the same source file referenced by two different conversations in the archive SHALL be uploaded — and suffixed — as two separate attachments (in contrast to two references to the same file within one conversation, which SHALL still be uploaded once). If a create-only upload is nonetheless rejected as a conflict (a race with a concurrent upload outside this job), the system SHALL retry with the next available suffix up to a bounded number of attempts before giving up. An attachment whose path fails validation, cannot be found in the archive, or exhausts its conflict retries SHALL be skipped and reported as a warning while the conversation still imports.
+Before uploading, the system SHALL list the destination month folder once per import job (`FilesApi.listFiles`) and use its contents to pre-fill a per-job name registry (`createUploadPathAllocator`). A failed listing other than `401` is logged and the registry starts empty, relying on conflict retries instead. For every attachment about to be uploaded, if the registry already contains its file name — whether from that listing, from an earlier attachment in the same job, or recorded after a create-only conflict — the system SHALL append a ` (n)` suffix before the file extension (`report.pdf` → `report (1).pdf` → `report (2).pdf`, incrementing until free) rather than rejecting the upload. Suffix assignment SHALL be resolved in the fixed order the conversation's attachments are referenced, independent of upload completion order, and the same source file referenced by two different conversations in the archive SHALL be uploaded — and suffixed — as two separate attachments (in contrast to two references to the same file within one conversation, which SHALL still be uploaded once). If a create-only upload is nonetheless rejected as a conflict (a race with a concurrent upload outside this job), the system SHALL retry with the next available suffix up to 5 times (`ATTACHMENT_CONFLICT_RETRY_LIMIT`) before giving up. An attachment whose path fails validation, cannot be found in the archive, or exhausts its conflict retries SHALL be skipped and reported as a warning while the conversation still imports.
 
 #### Scenario: Attachment upload and location
 
@@ -159,7 +164,7 @@ The removal SHALL cover the same three reference sites the rewrite covers: an en
 
 ### Requirement: Save each conversation as a new conversation with a regenerated id
 
-The system SHALL rebase each imported conversation's id/path to the current user's bucket and regenerate its trailing UUID before saving, so an import never overwrites an existing conversation and no conflict/replace dialog is shown. Folder path segments in the id/`folderId` SHALL be preserved (not flattened), so the conversation retains its folder location for when the folder feature ships. Each conversation SHALL be persisted via the existing conversation save API, and the conversation list SHALL be refreshed after the import.
+The system SHALL rebase each imported conversation's id/path to the current user's bucket and regenerate its trailing UUID before saving (`rebaseConversationId`), so an import never overwrites an existing conversation and no conflict/replace dialog is shown. An old-chat raw resource id prefix `conversations/` is stripped first, so both id shapes resolve the same way. Folder path segments in the id/`folderId` SHALL be preserved (not flattened), so the conversation retains its folder location for when the folder feature ships. The filename's title segment and the conversation's `name` are both set to the sanitized imported title. Each conversation SHALL be persisted through the injected `ConversationsApi.saveConversation({ path, saveConversationBodyDto })` with `llmNamingDone: true`, so the backend's auto-naming does not overwrite the imported name. After a job with at least one saved conversation, the host's `onImported` callback (the app's `refreshConversations`) SHALL refresh the conversation list. A refresh failure does not undo the success.
 
 #### Scenario: Collision-free save
 
@@ -183,11 +188,11 @@ The system SHALL rebase each imported conversation's id/path to the current user
 
 ### Requirement: Import job queue and cancellation
 
-The system SHALL track each imported file as one job in its own `ImportExportQueue` component instance (imported from `@epam/ai-dial-conversation-panel`; see `conversation-panel-transfer-queue-ui` for the component's own contract), separate from (and stacked alongside, not merged with) the export queue instance, with in-progress, success, failed, and canceled states.
+The system SHALL track each imported file as one job in its own instance of the UI kit's `TransferQueue` (`@epam/ai-dial-ui-kit`), separate from the export queue instance and stacked with it, not merged. `ConversationPanelView` renders both in one `fixed bottom-4 end-4` container, with the import queue nearest the corner. Jobs have the `ConversationTransferJobStatus` states in progress, success, warning, failed, and canceled. A job settles as **failed** when any of its conversations failed to save, and as **warning** when every conversation saved but an attachment was skipped or dropped. The app maps jobs to rows with `toTransferQueueItems` (`apps/chat/src/utils/conversation-transfer.ts`).
 
-Each row SHALL be identified by the **selected file's name** (`file.name`), preceded by a file-type icon derived from its extension, and SHALL show a per-job determinate circular progress indicator while in progress, driven by that job's `progress.percent` per the `conversation-transfer-progress` capability. The panel SHALL NOT render an aggregate progress bar. The source-folder breadcrumb SHALL NOT be rendered — the file name is the row's only label.
+Each row SHALL be identified by the **selected file's name** (`file.name`, stored as the job's `fileName`), preceded by a file-type icon derived from its extension. While in progress it shows an indeterminate kit `Spinner`. A row never renders its own percentage. The job's `progress.percent` feeds only the aggregate `ProgressBar` the kit shows while the queue is collapsed (see `conversation-transfer-progress`). The source-folder breadcrumb SHALL NOT be rendered — the file name is the row's only label.
 
-An in-progress job SHALL be cancellable through a per-row cancel control that is revealed on row hover and always reachable by keyboard; cancelling aborts its in-flight requests (via the app's `useConversationImport` hook — the library component only calls the `onCancel` callback the app supplies) and leaves the row visible with status canceled. A failed job SHALL show a filled alert icon whose tooltip states the failure reason resolved from the job's `errorCode`; it SHALL NOT expose a retry control, though `retryJob` remains on `useConversationImport`'s public API for the host. Because this is the same `ImportExportQueue` component used for export, it also auto-closes 8 seconds after every job succeeds with none in progress, failed, or canceled — see the auto-close requirement in the conversation-export spec. The app SHALL supply the component's `labels` object and its count-based `title` via `useTranslation`; the component itself has no i18n import.
+An in-progress job SHALL be cancellable through a per-row cancel control that is revealed on row hover and always reachable by keyboard. Cancelling calls the hook's `cancelJob` through the kit's `onCancelItem`, which aborts the job's in-flight requests and leaves the row visible with status canceled. A failed job SHALL show an error icon whose tooltip and accessible name state the failure reason, resolved by the app from the job's `errorCode` with `getImportErrorKey`. It SHALL NOT expose a retry control, though `retryJob` remains on `useConversationImport`'s public API for the host. Closing the queue calls the hook's `dismissAll`, with the same close confirmation as the export queue. Because the queue is the same kit component used for export, it also auto-closes 8 seconds after every job succeeds, and does not auto-close while any job is in progress, warned, failed, or canceled — see the auto-close requirement in the conversation-export spec. The app SHALL supply the component's `labels` (shared chrome from `useTransferQueueLabels` plus the `ConversationImportI18nKeys` row strings) and its count-based `title` (`ConversationImportI18nKeys.QueueTitle`) via `useTranslation`; the kit component itself has no i18n import.
 
 #### Scenario: One job per imported file
 
@@ -199,16 +204,17 @@ An in-progress job SHALL be cancellable through a per-row cancel control that is
 - **WHEN** a single-conversation file carrying a source folder path is imported
 - **THEN** its queue row shows only the selected file's name; no folder-path breadcrumb line is rendered
 
-#### Scenario: Import progress is determinate and per row
+#### Scenario: Import progress reaches the collapsed queue, not the row
 
 - **GIVEN** an archive holding 10 attachments, 4 of which have uploaded
-- **WHEN** the queue panel renders
-- **THEN** that row's circular indicator shows a determinate value strictly between 0 and 100, reflecting only that job
+- **WHEN** the queue panel renders expanded
+- **THEN** that row shows an indeterminate spinner and no percentage
+- **AND** when the queue is collapsed, its aggregate progress bar reflects that job's `progress.percent`, which is strictly between 0 and 100
 
 #### Scenario: Import and export queues stay visually distinct
 
 - **WHEN** an import job and an export job are both active (or recently finished and not yet dismissed) at the same time
-- **THEN** two separate `ImportExportQueue` instances are shown, each with its own count-based title ("Importing 1 file" / "Exporting 1 file") passed via its `title` prop — a user exporting something never sees it appear inside a panel titled "Importing", or vice versa
+- **THEN** two separate `TransferQueue` instances are shown, each with its own count-based title ("Importing 1 file" / "Exporting 1 file") passed via its `title` prop — a user exporting something never sees it appear inside a panel titled "Importing", or vice versa
 
 #### Scenario: Cancel an in-progress import
 
@@ -218,8 +224,8 @@ An in-progress job SHALL be cancellable through a per-row cancel control that is
 #### Scenario: A failed import explains itself
 
 - **GIVEN** an import that failed because no storage bucket could be resolved
-- **WHEN** the user hovers or focuses the row's alert icon
-- **THEN** a tooltip shows the translated message for `ConversationTransferErrorCode.MissingBucket`, and the row exposes no retry button
+- **WHEN** the user hovers or focuses the row's error icon
+- **THEN** a tooltip shows the translated message for `ConversationTransferErrorCode.MissingBucket` (`conversationImport.errorMissingBucket`), the row exposes no retry button, and no toast is raised
 
 #### Scenario: Retry through the hook re-imports the file
 
@@ -228,7 +234,7 @@ An in-progress job SHALL be cancellable through a per-row cancel control that is
 
 ### Requirement: Aggregate success and failure notifications
 
-When an import operation settles, the system SHALL show a success notification naming every conversation that imported successfully and, separately, a failure notification naming every conversation that failed (`"<name>" was not imported. Please try again.`). Both notifications MAY appear together when an operation partially succeeds. An unsupported/unreadable file SHALL instead show a single unsupported-format notification.
+When an import operation settles, the system SHALL show a success notification (`showSuccessNotification`, title "Import successful", `conversationImport.success` = `{{names}} imported.`) naming the conversations that imported successfully, using their stored, sanitized names. Separately, it SHALL show a failure notification (`showErrorNotification`, title `conversationImport.failedTitle`, `conversationImport.failed` = `{{names}} was not imported. Please try again.`, with `requestId` from the first failure's trace id) naming the conversations that failed. Name lists are formatted by `formatTransferNameList`: up to 5 quoted names, then a localized "and N others" (`conversationImport.nameListWithRest`). Both notifications MAY appear together when an operation partially succeeds. An unsupported/unreadable file SHALL instead show a single unsupported-format notification (`conversationImport.unsupportedFormat`). A job that fails as `Unauthorized` or `MissingBucket` raises no toast; its row is the only feedback.
 
 #### Scenario: All conversations imported
 

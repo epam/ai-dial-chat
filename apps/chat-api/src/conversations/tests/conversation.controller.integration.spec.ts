@@ -29,7 +29,9 @@ import {
 import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
+import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import { CoreResponsesClient } from '../generation/core-responses.client';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from '../listing/conversation-listing.service';
@@ -56,12 +58,16 @@ describe('ConversationController (integration)', () => {
     deleteConversations: ReturnType<typeof vi.fn>;
     deleteAllConversations: ReturnType<typeof vi.fn>;
     markConversationViewed: ReturnType<typeof vi.fn>;
-    saveConversation: ReturnType<typeof vi.fn>;
+    resolveBackgroundAttach: ReturnType<typeof vi.fn>;
+    stopBackgroundGeneration: ReturnType<typeof vi.fn>;
+    saveClientConversation: ReturnType<typeof vi.fn>;
     getConversation: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
+      resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+      stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
       createConversation: vi.fn(),
       listConversations: vi.fn(),
       renameConversation: vi.fn(),
@@ -69,13 +75,15 @@ describe('ConversationController (integration)', () => {
       deleteConversations: vi.fn(),
       deleteAllConversations: vi.fn(),
       markConversationViewed: vi.fn(),
-      saveConversation: vi.fn(),
+      saveClientConversation: vi.fn(),
       getConversation: vi.fn(),
     };
 
     const mockGenerationService = {
       register: vi.fn().mockReturnValue(new AbortController()),
       abort: vi.fn().mockReturnValue(true),
+      hasLocalForegroundGeneration: vi.fn().mockReturnValue(false),
+      setBackground: vi.fn(),
       complete: vi.fn(),
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
@@ -270,6 +278,8 @@ describe('ConversationController (integration)', () => {
           ConversationGenerationService,
           ChatCompletionsAdapter,
           ResponsesAdapter,
+          CoreResponsesClient,
+          BackgroundGenerationService,
           {
             provide: ConversationNamingService,
             useValue: { maybeRenameAfterFirstReply: vi.fn() },
@@ -696,7 +706,7 @@ describe('ConversationController (integration)', () => {
     /* In-memory storage behind the real controller, pipe and serializer. */
     const useInMemoryStorage = () => {
       let stored: unknown;
-      service.saveConversation.mockImplementation(
+      service.saveClientConversation.mockImplementation(
         async (_path: string, _at: string, _bucket: string, body: unknown) => {
           stored = body;
           return stored;
@@ -1011,6 +1021,8 @@ describe('ConversationController (integration)', () => {
       realGenerationService.beginFinalizing(existingLease);
 
       const streamingStub = {
+        resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+        stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
         streamCompletion: vi.fn().mockImplementation(async function* (
           streamPath: string,
           _at: string,

@@ -260,6 +260,24 @@ describe('validate', () => {
     expect(config.RESPONSES_API_ENABLED).toBe(expected);
   });
 
+  it('defaults RESPONSES_BACKGROUND_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.RESPONSES_BACKGROUND_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+    ['0', false],
+    ['no', false],
+  ])('parses RESPONSES_BACKGROUND_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      RESPONSES_BACKGROUND_ENABLED: rawValue,
+    });
+    expect(config.RESPONSES_BACKGROUND_ENABLED).toBe(expected);
+  });
+
   it('defaults DEFAULT_DEPLOYMENT_PINNED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(false);
@@ -276,6 +294,32 @@ describe('validate', () => {
       DEFAULT_DEPLOYMENT_PINNED: rawValue,
     });
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(expected);
+  });
+
+  it('defaults ALLOW_VISUALIZER_SEND_MESSAGES to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['TRUE', true],
+    ['1', true],
+    ['yes', true],
+    [' true ', true],
+    ['false', false],
+    ['false ', false],
+    ['0', false],
+    ['no', false],
+    ['off', false],
+    ['disabled', false],
+    ['', false],
+  ])('parses ALLOW_VISUALIZER_SEND_MESSAGES=%j as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      ALLOW_VISUALIZER_SEND_MESSAGES: rawValue,
+    });
+    expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(expected);
   });
 
   it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {
