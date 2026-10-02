@@ -68,6 +68,8 @@ export interface ConversationSourcesPanelStyles {
   colors?: ConversationSourcesPanelColors;
   /** Typography overrides for section headings and source text. */
   typography?: ConversationSourcesPanelTypography;
+  /** Extra class name(s) merged onto each files/sources section root. Defaults to none. */
+  sectionClassName?: string;
 }
 
 /** Props for the ConversationSourcesPanel component. */

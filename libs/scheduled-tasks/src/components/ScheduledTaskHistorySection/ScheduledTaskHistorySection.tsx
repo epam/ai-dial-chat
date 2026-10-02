@@ -29,6 +29,7 @@ export const ScheduledTaskHistorySection: FC<
   onLoadMore,
   onRunClick,
   runTimestampClassName = 'dial-small-text',
+  runTimestampUnreadClassName = 'dial-small-semi-text',
   sectionTitleClassName = 'dial-body-semi-text',
   colors,
   styles: historyStyles,
@@ -100,7 +101,7 @@ export const ScheduledTaskHistorySection: FC<
       }}
       footer={footer}
       styles={{
-        typography: { runTimestampClassName },
+        typography: { runTimestampClassName, runTimestampUnreadClassName },
         colors: historyStyles?.colors ?? colors,
         rowMinHeight: historyStyles?.rowMinHeight,
         rowHoverBackground: historyStyles?.rowHoverBackground,
