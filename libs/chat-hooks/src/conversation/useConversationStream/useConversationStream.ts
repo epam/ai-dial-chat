@@ -214,6 +214,17 @@ export interface UseConversationStreamResult {
   ) => Conversation;
   isStreaming: boolean;
   canStopStreaming: boolean;
+  /** Whether the displayed conversation's terminal read failed. */
+  hasConversationReloadError: boolean;
+  /** Whether a retry of that read is in flight. */
+  isReloadingConversation: boolean;
+  /** Retries the failed read without saving or regenerating the answer. */
+  retryConversationReload: () => Promise<void>;
+}
+
+interface ConversationReloadFailure {
+  retry: () => Promise<void>;
+  isCurrent: () => boolean;
 }
 
 /** Generation id of the displayed conversation's pending background message, if any. */
@@ -278,6 +289,65 @@ export const useConversationStream = ({
   const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
   /** Newest generation id started for each path — see `isSuperseded` in `startStream`. */
   const latestGenerationIdsRef = useRef<Map<string, string>>(new Map());
+  const mountedRef = useRef(true);
+  const reloadFailuresRef = useRef(
+    new Map<string, ConversationReloadFailure>(),
+  );
+  const [reloadFailures, setReloadFailures] = useState(
+    reloadFailuresRef.current,
+  );
+  const retryingRef = useRef(new Set<ConversationReloadFailure>());
+  const [retrying, setRetrying] = useState(retryingRef.current);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    const buffers = bufferedGenerationsRef.current;
+    return () => {
+      mountedRef.current = false;
+      /* Invalidate retained read retries, but keep active generation ownership:
+       * StrictMode replays this cleanup after the host auto-starts a stream. */
+      for (const path of reloadFailuresRef.current.keys()) {
+        buffers.delete(path);
+      }
+      reloadFailuresRef.current.clear();
+    };
+  }, []);
+
+  const clearReloadError = useCallback((path: string) => {
+    if (!reloadFailuresRef.current.has(path)) return;
+    const next = new Map(reloadFailuresRef.current);
+    next.delete(path);
+    reloadFailuresRef.current = next;
+    if (mountedRef.current) setReloadFailures(next);
+  }, []);
+
+  const reportReloadError = useCallback(
+    (path: string, retry: () => Promise<void>, isCurrent: () => boolean) => {
+      if (!mountedRef.current || !isCurrent()) return;
+      const next = new Map(reloadFailuresRef.current);
+      next.set(path, { retry, isCurrent });
+      reloadFailuresRef.current = next;
+      setReloadFailures(next);
+    },
+    [],
+  );
+
+  const retryConversationReload = useCallback(async () => {
+    if (!conversationId) return;
+    const failure = reloadFailuresRef.current.get(
+      getConversationPath(conversationId),
+    );
+    if (!failure || !failure.isCurrent() || retryingRef.current.has(failure))
+      return;
+    retryingRef.current.add(failure);
+    setRetrying(new Set(retryingRef.current));
+    try {
+      await failure.retry();
+    } finally {
+      retryingRef.current.delete(failure);
+      if (mountedRef.current) setRetrying(new Set(retryingRef.current));
+    }
+  }, [conversationId]);
 
   /*
    * The host component isn't necessarily remounted when navigating between
@@ -295,18 +365,23 @@ export const useConversationStream = ({
 
   const isPathDisplayed = useCallback(
     (path: string): boolean =>
+      mountedRef.current &&
       getConversationPath(displayedConversationIdRef.current ?? '') === path,
     [],
   );
 
-  const addStreamingPath = useCallback((path: string) => {
-    setStreamingPaths((prev) => {
-      if (prev.has(path)) return prev;
-      const next = new Set(prev);
-      next.add(path);
-      return next;
-    });
-  }, []);
+  const addStreamingPath = useCallback(
+    (path: string) => {
+      clearReloadError(path);
+      setStreamingPaths((prev) => {
+        if (prev.has(path)) return prev;
+        const next = new Set(prev);
+        next.add(path);
+        return next;
+      });
+    },
+    [clearReloadError],
+  );
 
   const removeStreamingPath = useCallback((path: string) => {
     setStreamingPaths((prev) => {
@@ -336,6 +411,8 @@ export const useConversationStream = ({
         generationPersistenceErrorMessage,
         frameScheduler: batchChunksPerFrame ? frameScheduler : undefined,
         stoppedGenerationIdsRef,
+        onReloadError: reportReloadError,
+        onReloadSuccess: clearReloadError,
       }),
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -347,6 +424,8 @@ export const useConversationStream = ({
       generationPersistenceErrorMessage,
       batchChunksPerFrame,
       frameScheduler,
+      reportReloadError,
+      clearReloadError,
     ],
   );
 
@@ -451,6 +530,80 @@ export const useConversationStream = ({
         });
       };
 
+      const buffered = bufferedGenerationsRef.current.get(conversationPath);
+      const isReloadCurrent = () =>
+        mountedRef.current &&
+        !isSuperseded() &&
+        bufferedGenerationsRef.current.get(conversationPath) === buffered;
+      const reloadConversation = async () => {
+        /* The generation that superseded this one owns the displayed state
+         * and reloads it when it settles. */
+        if (!isReloadCurrent()) return;
+        /*
+         * Only refresh displayed state if the user is still viewing this
+         * conversation; otherwise leave the currently-shown chat untouched.
+         */
+        if (!isPathDisplayed(conversationPath)) {
+          if (buffered) bufferedGenerationsRef.current.delete(conversationPath);
+          return;
+        }
+        try {
+          /*
+           * Reload to confirm persistence and obtain
+           * server-persisted state (including server-computed fields
+           * like stage attachment `data`). Unlike `streamCompletion`/
+           * `watchConversation` (which take the bucket-stripped
+           * `conversationPath`), `getConversation` needs the full
+           * `{bucket}/{name}` path — already-percent-encoded segments
+           * are decoded back to raw first so the transport's own
+           * encoding doesn't double-encode them.
+           */
+          const refreshed = await transport.getConversation(
+            safeDecodeURI(currentConversationId),
+          );
+          /* Re-checked after the round trip: a re-submit during it makes this
+           * reload stale — it would restore the answer the user just replaced. */
+          if (!isReloadCurrent()) return;
+          clearReloadError(conversationPath);
+          if (!isPathDisplayed(conversationPath)) {
+            if (buffered)
+              bufferedGenerationsRef.current.delete(conversationPath);
+            return;
+          }
+          /*
+           * The backend ended the stream while its background job is still
+           * pending (max-duration detach, or a final save it could not make):
+           * resume through attach instead of settling or warning.
+           */
+          if (findPendingBackgroundMessageIndex(refreshed) !== -1) {
+            resumeGeneration(currentConversationId, refreshed, {
+              seedMessage: buffered?.message,
+            });
+            return;
+          }
+          if (
+            buffered &&
+            buffered.messageIndex === refreshed.messages.length - 1 &&
+            isAwaitingGenerationResume(refreshed) &&
+            hasGeneratedPayload(buffered.message)
+          ) {
+            preserveUnsavedAnswer();
+            return;
+          }
+          if (buffered) bufferedGenerationsRef.current.delete(conversationPath);
+          setConversation(refreshed);
+          conversationRef.current = refreshed;
+        } catch {
+          if (isReloadCurrent()) {
+            reportReloadError(
+              conversationPath,
+              reloadConversation,
+              isReloadCurrent,
+            );
+          }
+        }
+      };
+
       const completionOptions: StreamCompletionOptions = {
         signal: controller.signal,
         onChunk: (chunk) => {
@@ -520,79 +673,13 @@ export const useConversationStream = ({
         },
         onComplete: async () => {
           frameScheduler.flush(conversationPath);
-          const currentBuffer =
-            bufferedGenerationsRef.current.get(conversationPath);
-          const buffered =
-            currentBuffer?.generationId === genId ? currentBuffer : undefined;
           releaseGeneration();
           if (stoppedGenerationIdsRef.current.has(genId)) {
             stoppedGenerationIdsRef.current.delete(genId);
           } else if (!isSuperseded()) {
             overlay?.notifyGenerationEnd?.();
           }
-          /* The generation that superseded this one owns the displayed state
-           * and reloads it when it settles. */
-          if (isSuperseded()) return;
-          /*
-           * Only refresh displayed state if the user is still viewing this
-           * conversation; otherwise leave the currently-shown chat untouched.
-           */
-          if (!isPathDisplayed(conversationPath)) {
-            if (buffered)
-              bufferedGenerationsRef.current.delete(conversationPath);
-            return;
-          }
-          try {
-            /*
-             * Reload to confirm persistence and obtain
-             * server-persisted state (including server-computed fields
-             * like stage attachment `data`). Unlike `streamCompletion`/
-             * `watchConversation` (which take the bucket-stripped
-             * `conversationPath`), `getConversation` needs the full
-             * `{bucket}/{name}` path — already-percent-encoded segments
-             * are decoded back to raw first so the transport's own
-             * encoding doesn't double-encode them.
-             */
-            const refreshed = await transport.getConversation(
-              safeDecodeURI(currentConversationId),
-            );
-            /* Re-checked after the round trip: a re-submit during it makes this
-             * reload stale — it would restore the answer the user just replaced. */
-            if (isSuperseded()) return;
-            if (!isPathDisplayed(conversationPath)) {
-              if (buffered)
-                bufferedGenerationsRef.current.delete(conversationPath);
-              return;
-            }
-            /*
-             * The backend ended the stream while its background job is still
-             * pending (max-duration detach, or a final save it could not make):
-             * resume through attach instead of settling or warning.
-             */
-            if (findPendingBackgroundMessageIndex(refreshed) !== -1) {
-              resumeGeneration(currentConversationId, refreshed, {
-                seedMessage: buffered?.message,
-              });
-              return;
-            }
-            if (
-              buffered &&
-              buffered.messageIndex === refreshed.messages.length - 1 &&
-              isAwaitingGenerationResume(refreshed) &&
-              hasGeneratedPayload(buffered.message)
-            ) {
-              preserveUnsavedAnswer();
-              return;
-            }
-            if (buffered)
-              bufferedGenerationsRef.current.delete(conversationPath);
-            setConversation(refreshed);
-            conversationRef.current = refreshed;
-          } catch {
-            if (!isSuperseded()) {
-              preserveUnsavedAnswer();
-            }
-          }
+          await reloadConversation();
         },
         onError: (error: Error) => {
           frameScheduler.flush(conversationPath);
@@ -814,6 +901,8 @@ export const useConversationStream = ({
       generationConflictMessage,
       generationPersistenceErrorMessage,
       frameScheduler,
+      reportReloadError,
+      clearReloadError,
     ],
   );
 
@@ -824,11 +913,20 @@ export const useConversationStream = ({
     ): Conversation => {
       const conversationPath = getConversationPath(currentConversationId);
       const buffered = bufferedGenerationsRef.current.get(conversationPath);
+      const reloadFailure = reloadFailuresRef.current.get(conversationPath);
+      if (
+        reloadFailure?.isCurrent() &&
+        !isAwaitingGenerationResume(conversation)
+      ) {
+        clearReloadError(conversationPath);
+        bufferedGenerationsRef.current.delete(conversationPath);
+        return conversation;
+      }
       return buffered
         ? restoreBufferedMessage(conversation, buffered)
         : conversation;
     },
-    [],
+    [clearReloadError],
   );
 
   const handleStop = useCallback(() => {
@@ -894,7 +992,18 @@ export const useConversationStream = ({
       (isStreaming &&
         findResumedBackgroundGenerationId(conversationRef.current) != null));
 
+  const reloadFailure = displayedConversationPath
+    ? reloadFailures.get(displayedConversationPath)
+    : undefined;
+  const hasConversationReloadError = reloadFailure?.isCurrent() ?? false;
+
   return {
+    hasConversationReloadError,
+    isReloadingConversation:
+      !!reloadFailure &&
+      hasConversationReloadError &&
+      retrying.has(reloadFailure),
+    retryConversationReload,
     startStream,
     handleStop,
     resumeIfAwaitingGeneration,

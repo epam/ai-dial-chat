@@ -15,6 +15,9 @@ export enum ChatI18nKeys {
   StreamError = 'chat.streamError',
   GenerationConflict = 'chat.generationConflict',
   GenerationPersistenceError = 'chat.generationPersistenceError',
+  ConversationReloadErrorTitle = 'chat.conversationReloadErrorTitle',
+  ConversationReloadError = 'chat.conversationReloadError',
+  RetryConversationReload = 'chat.retryConversationReload',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
   /** TODO: remove in next release */

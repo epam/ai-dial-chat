@@ -1063,6 +1063,21 @@ stages, with this warning. Successful reloads still use the server's enriched
 answer. The buffer belongs to the mounted hook; it does not survive a page reload
 or provide durable storage, and the hook does not retry the conversation save.
 
+A rejected terminal read is separate from a save failure. Both initiating and
+attached streams retain received output without adding `streamErrorMessage` or
+reporting a synthetic persistence error to `onStreamError`. The result exposes
+`hasConversationReloadError: boolean`, `isReloadingConversation: boolean`, and
+`retryConversationReload: () => Promise<void>` for a host-owned notification.
+Retry repeats only the conversation read and reconciliation; it never starts a
+completion or saves the conversation. Concurrent retries are deduplicated.
+Successful reads clear the notification and apply server enrichment, retain
+the existing empty-placeholder warning, or resume pending background work on
+the initiating path. A newer generation invalidates the previous failure, and
+navigation prevents a late read from replacing another displayed conversation.
+`restoreBufferedGeneration` accepts a resolved server answer after a failed
+terminal read when the host loads the conversation again. These failure and
+retry states are transient and are discarded on unmount.
+
 `createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
 `GenerationPersistenceError`, even after an upstream `[DONE]` frame. The error
 class (including its static `type`) and the default message are exported from

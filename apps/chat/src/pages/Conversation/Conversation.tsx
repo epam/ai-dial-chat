@@ -360,6 +360,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     restoreBufferedGeneration,
     isStreaming,
     canStopStreaming,
+    hasConversationReloadError,
+    isReloadingConversation,
+    retryConversationReload,
   } = useConversationStream({
     conversationId,
     state: { setConversation, conversationRef },
@@ -774,6 +777,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onEditMessage={handleEditMessage}
           editingMessageIndexes={editingMessageIndexes}
           isAssistantTyping={isStreaming}
+          hasConversationReloadError={hasConversationReloadError}
+          isReloadingConversation={isReloadingConversation}
+          onRetryConversationReload={retryConversationReload}
           canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
