@@ -76,6 +76,7 @@ const ScheduledTaskSkillField: FC<
       modalTitle: t(SkillSelectorI18nKeys.ModalTitle),
       removeSkillLabel: t(SkillSelectorI18nKeys.RemoveSkillLabel),
       unsupportedTooltipLabel: t(SkillSelectorI18nKeys.UnsupportedTooltipLabel),
+      unavailableTooltipLabel: t(SkillSelectorI18nKeys.UnavailableTooltipLabel),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       clearSearchLabel: t(BasicI18nKeys.ClearSearch),
       panelLabels: {

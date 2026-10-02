@@ -356,6 +356,7 @@ export enum SkillSelectorI18nKeys {
   ModalTitle = 'skillSelector.modalTitle',
   NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
   UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
+  UnavailableTooltipLabel = 'skillSelector.unavailableTooltipLabel',
   DeletedTooltipLabel = 'skillSelector.deletedTooltipLabel',
   NotSharedTooltipLabel = 'skillSelector.notSharedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',

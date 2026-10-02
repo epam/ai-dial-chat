@@ -780,6 +780,13 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 - **THEN** the field immediately becomes invalid, Create/Save is disabled, and `skillSelector.unsupportedTooltipLabel` is displayed
 - **AND** changing to a supporting deployment or removing the skill clears that compatibility error without discarding instructions
 
+#### Scenario: Disabled field explains why it is disabled
+
+- **WHEN** the selected model or agent does not support skills
+- **THEN** the Skill field is disabled and hovering it shows a tooltip with the reason: `skillSelector.unsupportedTooltipLabel` while a skill is selected, `skillSelector.unavailableTooltipLabel` when none is
+- **AND** with no skill selected the same reason is attached to the combobox through `aria-describedby`, since a disabled control receives neither hover nor focus
+- **AND** on a touch-only device the tooltip renders nothing, so the reason is not shown visually there
+
 #### Scenario: Missing skill metadata cannot bypass validation
 
 - **WHEN** a saved skill URL is present but the catalog is loading or no longer returns that skill
@@ -793,7 +800,7 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 
 ### Requirement: Scheduled Skill UI preserves localization accessibility and responsive behavior
 
-The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` and `skillSelector.unsupportedTooltipLabel` for all unsupported messages. Existing `scheduledTasksEnabled` route gating and its resolution through the app-config registry key `features.scheduledTasksEnabled` (`FeatureKey.ScheduledTasksEnabled`) SHALL remain unchanged; no new flag/role is introduced.
+The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` and `skillSelector.unsupportedTooltipLabel` for every unsupported message about a selected skill, and translate `skillSelector.unavailableTooltipLabel` for the disabled field with no selection. Existing `scheduledTasksEnabled` route gating and its resolution through the app-config registry key `features.scheduledTasksEnabled` (`FeatureKey.ScheduledTasksEnabled`) SHALL remain unchanged; no new flag/role is introduced.
 
 The field SHALL support keyboard opening/selection/removal, Escape dismissal and focus restoration, unique label/error associations, `aria-invalid`, `aria-expanded`, and live error/status announcements. Touch removal SHALL not depend on hover. The field SHALL fit scheduler's existing container-responsive form at 360px and desktop sizes with wrapped long references, logical spacing, appropriate directional-icon mirroring, and AAA contrast. Library code SHALL inherit direction rather than read locale. Host labels/catalog callbacks SHALL have stable memoized identities; async resolution SHALL ignore stale results. No new cache or telemetry is required.
 

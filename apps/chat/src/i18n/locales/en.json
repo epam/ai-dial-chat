@@ -324,6 +324,7 @@
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
+    "unavailableTooltipLabel": "Selected model does not support skills. Select a different model to use a skill.",
     "deletedTooltipLabel": "This skill has been deleted. Its details are no longer available.",
     "notSharedTooltipLabel": "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.",
     "viewDetailsLabel": "View details",
