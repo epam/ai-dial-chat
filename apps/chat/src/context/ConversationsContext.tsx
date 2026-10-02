@@ -15,11 +15,13 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { normalizeConversationId } from '../constants/routes';
+import { useConversationDiscovery } from '../hooks/conversation/useConversationDiscovery';
 import {
   deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
@@ -31,12 +33,26 @@ import {
   renameConversation as apiRenameConversation,
   watchConversation,
 } from '../server-api/conversations.api';
-import { conversationIdsMatch } from '../utils/conversation-id-match';
+import {
+  conversationIdsMatch,
+  toPanelConversationId,
+} from '../utils/conversation-id-match';
 import { useUser } from './auth/UserContext';
 import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';
 
 const DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000;
+
+/* Viewed state is monotonic: an older list response cannot undo a local view. */
+const applyViewedState = (
+  items: ConversationListItemDto[],
+  viewedIds: ReadonlySet<string>,
+): ConversationListItemDto[] =>
+  items.map((item) =>
+    item.isUnread && viewedIds.has(toPanelConversationId(item.id))
+      ? { ...item, isUnread: false }
+      : item,
+  );
 
 /* Returns `prev` untouched when nothing changes, so React skips the update. */
 const setPinnedState = (
@@ -86,9 +102,10 @@ interface ConversationsContextType {
   duplicateConversation: (id: string) => Promise<string>;
   /**
    * Re-fetch the full conversation list in the background without hiding
-   * loaded items.
+   * loaded items. When expected ids are supplied, retry missing conversations
+   * up to five times, two seconds apart, even after leaving the calling page.
    */
-  refreshConversations: () => Promise<void>;
+  refreshConversations: (expectedIds?: readonly string[]) => Promise<void>;
   /** Updates the sidebar title for a conversation without changing its id. */
   updateConversationTitle: (id: string, title: string) => void;
   /**
@@ -133,6 +150,18 @@ export const ConversationsProvider = ({
     [],
   );
   const conversationsRef = useRef<ConversationListItemDto[]>([]);
+  const viewedIdsRef = useRef<Set<string> | null>(null);
+  const viewedWriteQueueRef = useRef<Promise<void> | null>(null);
+  const listRequestIdRef = useRef(0);
+  const appliedListRequestIdRef = useRef(0);
+  useLayoutEffect(() => {
+    viewedIdsRef.current = new Set<string>();
+    viewedWriteQueueRef.current = null;
+    conversationsRef.current = [];
+    return () => {
+      viewedIdsRef.current = null;
+    };
+  }, [userSub]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const overlay = useOptionalOverlay();
@@ -142,24 +171,55 @@ export const ConversationsProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
 
-  const refreshConversations = useCallback(async () => {
+  const refreshConversationList = useCallback(async () => {
+    const currentViewedIds = viewedIdsRef.current;
+    if (!currentViewedIds) return;
+    const requestId = ++listRequestIdRef.current;
     setError(null);
     try {
       const response = await listConversations();
-      setConversations(response.items);
+      if (
+        viewedIdsRef.current !== currentViewedIds ||
+        requestId < appliedListRequestIdRef.current
+      )
+        return;
+      appliedListRequestIdRef.current = requestId;
+      setError(null);
+      setConversations(applyViewedState(response.items, currentViewedIds));
     } catch (err) {
+      if (
+        viewedIdsRef.current !== currentViewedIds ||
+        requestId !== listRequestIdRef.current
+      )
+        return;
       setError(err instanceof Error ? err : new Error(String(err)));
     }
   }, []);
 
+  const refreshConversations = useConversationDiscovery(
+    conversations,
+    refreshConversationList,
+    userSub,
+  );
+
   const silentRefreshConversations = useCallback(async () => {
+    const currentViewedIds = viewedIdsRef.current;
+    if (!currentViewedIds) return;
+    const requestId = ++listRequestIdRef.current;
     try {
       const response = await listConversations();
-      setConversations(response.items);
+      if (
+        viewedIdsRef.current !== currentViewedIds ||
+        requestId < appliedListRequestIdRef.current
+      )
+        return;
+      appliedListRequestIdRef.current = requestId;
+      setError(null);
+      setConversations(applyViewedState(response.items, currentViewedIds));
     } catch {
       // Background refresh must not disturb the panel loading state.
     }
@@ -304,16 +364,23 @@ export const ConversationsProvider = ({
    */
   useEffect(() => {
     let cancelled = false;
+    const viewedIds = viewedIdsRef.current;
+    if (!viewedIds) return;
 
     const load = async () => {
+      const requestId = ++listRequestIdRef.current;
       setIsLoading(true);
       setError(null);
       setConversations([]);
       try {
         const response = await listConversations();
-        if (!cancelled) setConversations(response.items);
+        if (!cancelled && requestId >= appliedListRequestIdRef.current) {
+          appliedListRequestIdRef.current = requestId;
+          setError(null);
+          setConversations(applyViewedState(response.items, viewedIds));
+        }
       } catch (err) {
-        if (!cancelled)
+        if (!cancelled && requestId === listRequestIdRef.current)
           setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -341,20 +408,44 @@ export const ConversationsProvider = ({
   );
 
   const markConversationViewed = useCallback(async (id: string) => {
-    const target = conversationsRef.current.find((c) => c.id === id);
-    if (!target?.isScheduledTask || !target.isUnread) return;
-
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, isUnread: false } : c)),
+    const target = conversationsRef.current.find((c) =>
+      conversationIdsMatch(c.id, id),
     );
-    try {
-      const conversationPath = getConversationPath(normalizeConversationId(id));
-      await apiMarkConversationViewed(conversationPath);
-    } catch {
-      setConversations((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, isUnread: true } : c)),
-      );
-    }
+    if (!target?.isScheduledTask || !target.isUnread) return;
+    const currentViewedIds = viewedIdsRef.current;
+    const key = toPanelConversationId(target.id);
+    if (!currentViewedIds || currentViewedIds.has(key)) return;
+    currentViewedIds.add(key);
+
+    setConversations((prev) => applyViewedState(prev, currentViewedIds));
+    const previousWrite = viewedWriteQueueRef.current;
+    /* The backend updates one viewed-ids file. Serialize rapid navigation
+       within this provider so two read/modify/write requests cannot lose ids. */
+    const persist = async () => {
+      if (previousWrite) await previousWrite;
+      if (viewedIdsRef.current !== currentViewedIds) return;
+      try {
+        const conversationPath = getConversationPath(
+          normalizeConversationId(target.id),
+        );
+        await apiMarkConversationViewed(conversationPath);
+      } catch {
+        if (viewedIdsRef.current !== currentViewedIds) return;
+        currentViewedIds.delete(key);
+        setConversations((prev) =>
+          prev.map((c) =>
+            conversationIdsMatch(c.id, target.id)
+              ? { ...c, isUnread: true }
+              : c,
+          ),
+        );
+      }
+    };
+    const write = persist();
+    viewedWriteQueueRef.current = write;
+    await write;
+    if (viewedWriteQueueRef.current === write)
+      viewedWriteQueueRef.current = null;
   }, []);
 
   const deleteConversation = useCallback(async (id: string) => {

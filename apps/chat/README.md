@@ -45,6 +45,26 @@ to a visible tab respects a Scheduler retry delay. A newly observed credentials
 failure rechecks the route's credentials state, and a failed initial History
 load retains its retry action alongside any accepted manual run.
 
+Run history refreshes the shared conversation list to discover each chat's unread
+state. Start now also refreshes it when a conversation first appears or its run
+status changes, so a new manual run shows as unread without reloading the page.
+Opening the chat from task History, sources History, the conversation panel, or a
+direct URL marks it viewed, including when the panel is closed. Pending and
+successful viewed writes survive stale list responses for the current user;
+failed writes restore unread state and can be retried by leaving and reopening
+the chat.
+Rapidly opening several run chats queues their viewed writes within the current
+app instance; older list responses cannot replace a newer successfully loaded
+conversation snapshot. A newer failed request does not discard an older success.
+
+History and Start now pass expected chat ids to
+`ConversationsContext.refreshConversations(expectedIds?)`. Missing chats get up to
+five additional list requests, two seconds apart after each request settles.
+These requests share a retry queue in the provider and continue after a run
+finishes or the user navigates to its chat. Discovery stops when metadata arrives,
+the retry budget is exhausted, the user changes, or the provider unmounts.
+An ordinary refresh without expected ids does not start retries.
+
 ## Scheduled task skills
 
 Create/edit compose the reusable skills field into the scheduled-task form.
