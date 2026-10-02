@@ -15,7 +15,7 @@
   "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Handler observations only: guard rejections, middleware failures and static responses are outside this metric. Rates reflect handler settlement, not request arrival. Generation/subscription durations are separate. Means are used because current histogram buckets are too coarse for subsecond percentiles.",
   "tags": ["dial-chat", "bff", "observability"],
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": true,
   "graphTooltip": 1,
   "style": "dark",
@@ -224,21 +224,203 @@
   "panels": [
     {
       "id": 1,
-      "title": "Scope and interpretation",
+      "title": "How to read this dashboard",
       "type": "text",
       "gridPos": {
-        "h": 5,
-        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 4
       },
       "options": {
         "mode": "markdown",
-        "content": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Handler observations only: guard rejections, middleware failures and static responses are outside this metric. Rates reflect handler settlement, not request arrival. Generation/subscription durations are separate. Means are used because current histogram buckets are too coarse for subsecond percentiles."
+        "content": "**Handler observations.** Guard rejections and static responses are excluded. Choose one workload and scrape job."
+      },
+      "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Handler observations only: guard rejections, middleware failures and static responses are outside this metric. Rates reflect handler settlement, not request arrival. Generation/subscription durations are separate. Means are used because current histogram buckets are too coarse for subsecond percentiles."
+    },
+    {
+      "id": 30,
+      "title": "Observations in period (est.)",
+      "type": "stat",
+      "description": "Estimated count over the full selected period. Increase is calculated per source series before aggregation; rounding affects display only. Missing series remain missing. Includes only handler observations.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "sum(increase(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\"}[$__range]))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Observations in period (est.)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 8,
+        "h": 3
       }
     },
     {
-      "title": "Observed handler settlements / second by pod",
+      "id": 31,
+      "title": "Recorded 4xx in period (est.)",
+      "type": "stat",
+      "description": "Estimated count over the full selected period. Increase is calculated per source series before aggregation; rounding affects display only. Missing series remain missing. Guard rejections are excluded.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "sum(increase(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_response_status_code=~\"4..\"}[$__range]))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Recorded 4xx in period (est.)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      }
+    },
+    {
+      "id": 32,
+      "title": "Recorded 5xx in period (est.)",
+      "type": "stat",
+      "description": "Estimated count over the full selected period. Increase is calculated per source series before aggregation; rounding affects display only. Missing series remain missing.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "sum(increase(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_response_status_code=~\"5..\"}[$__range]))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Recorded 5xx in period (est.)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      }
+    },
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Handler traffic and recorded errors",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "Handler observations / second by process",
       "description": "Count of emitted handler observations per second, including streaming handlers only when they settle. Not complete ingress RPS.",
       "type": "timeseries",
       "datasource": {
@@ -246,10 +428,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 5
+        "y": 8,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -262,7 +444,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -303,10 +485,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -316,18 +498,18 @@
       "id": 2
     },
     {
-      "title": "Recorded 4xx / 5xx fraction",
-      "description": "Among recorded handler observations only. Guard failures are absent; after committed SSE headers, an exception status may differ from the wire status. No traffic gives no value.",
+      "title": "Recorded 4xx and 5xx share",
+      "description": "Among recorded handler observations only. Guard failures are absent; after committed SSE headers, an exception status may differ from the wire status. No traffic gives no value. The percentage axis scales automatically from zero to show small changes.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
-        "y": 5
+        "y": 8,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -340,7 +522,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -361,7 +543,7 @@
               "viz": false
             }
           },
-          "max": 1
+          "decimals": 1
         },
         "overrides": []
       },
@@ -395,10 +577,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -408,85 +590,7 @@
       "id": 3
     },
     {
-      "title": "Busiest routes - observed settlements / second",
-      "description": "Top ten at each evaluation step; membership can change across the displayed range.",
-      "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "unit": "reqps",
-          "min": 0,
-          "noValue": "No samples",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          }
-        },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "refId": "A",
-          "editorMode": "code",
-          "expr": "topk(10, sum by (http_route, http_request_method)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\"}[$__rate_interval])))",
-          "legendFormat": "{{http_request_method}} {{http_route}}",
-          "range": true,
-          "instant": false,
-          "format": "time_series"
-        }
-      ],
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "id": 4
-    },
-    {
-      "title": "Observed status codes / second",
+      "title": "Handler observations / second by status",
       "description": "Recorded handler status codes, not complete ingress outcomes or end-to-end operation success.",
       "type": "timeseries",
       "datasource": {
@@ -494,10 +598,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
+        "x": 0,
+        "y": 17,
         "w": 12,
-        "x": 12,
-        "y": 14
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -510,7 +614,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -551,10 +655,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -564,85 +668,7 @@
       "id": 5
     },
     {
-      "title": "Slowest successful REST handlers - mean",
-      "description": "Rate(sum)/rate(count), weighted across selected pods. Excludes known SSE routes and the synchronous chat/completions generation endpoint by suffix. A route with no samples has no mean.",
-      "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 23
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "unit": "s",
-          "min": 0,
-          "noValue": "No samples",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          }
-        },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "refId": "A",
-          "editorMode": "code",
-          "expr": "topk(10, (sum by (http_route, http_request_method)(rate(http_server_request_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval]))) / (sum by (http_route, http_request_method)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval])) > 0))",
-          "legendFormat": "{{http_request_method}} {{http_route}}",
-          "range": true,
-          "instant": false,
-          "format": "time_series"
-        }
-      ],
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "id": 6
-    },
-    {
-      "title": "REST errors - observed settlements / second",
+      "title": "REST handler errors / second",
       "description": "Controller/pipe/service failures observed by the interceptor. Missing series may mean no matching events; auth/CSRF/throttling guard rejects are not covered.",
       "type": "timeseries",
       "datasource": {
@@ -650,10 +676,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
-        "y": 23
+        "y": 17,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -666,7 +692,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -707,10 +733,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -720,7 +746,287 @@
       "id": 7
     },
     {
-      "title": "Generation / subscription handlers - mean observed duration",
+      "id": 101,
+      "type": "row",
+      "title": "Handler comparisons — snapshot at range end",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "Busiest handlers — recent rate",
+      "description": " Snapshot at the selected range end, using $__rate_interval. At most ten rows; this is not a ranking by period totals.",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 12,
+        "h": 11
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Method"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Endpoint"
+            },
+            "properties": [
+              {
+                "id": "custom.minWidth",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Rate"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "reqps"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (http_route, http_request_method)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\"}[$__rate_interval])))",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Rate",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 4,
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "http_request_method": 0,
+              "http_route": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "http_request_method": "Method",
+              "http_route": "Endpoint",
+              "Value": "Rate"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Slowest successful REST handlers — recent mean",
+      "description": "Rate(sum)/rate(count), weighted across selected pods. Excludes known SSE routes and the synchronous chat/completions generation endpoint by suffix. A route with no samples has no mean. Snapshot at the selected range end, using $__rate_interval. At most ten rows; this is not a ranking by period totals.",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 27,
+        "w": 12,
+        "h": 11
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Method"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Endpoint"
+            },
+            "properties": [
+              {
+                "id": "custom.minWidth",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean latency"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, (sum by (http_route, http_request_method)(rate(http_server_request_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval]))) / (sum by (http_route, http_request_method)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval])) > 0))",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Mean latency",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 6,
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "http_request_method": 0,
+              "http_route": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "http_request_method": "Method",
+              "http_route": "Endpoint",
+              "Value": "Mean latency"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "type": "row",
+      "title": "Duration — compare the same route and workload",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "Generation and subscriptions — mean handler duration",
       "description": "Conversation completion duration includes generation/finalization; attach measures setup, not attachment lifetime. chat/completions is a synchronous generation endpoint, not SSE. Compare routes individually.",
       "type": "timeseries",
       "datasource": {
@@ -728,10 +1034,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 32
+        "y": 39,
+        "w": 24,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -744,7 +1050,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -785,10 +1091,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -798,7 +1104,7 @@
       "id": 8
     },
     {
-      "title": "Successful REST handlers - mean by pod",
+      "title": "Successful REST handlers — mean by process",
       "description": "Per-pod mean depends on route mix and workload. A difference is a starting point for route/trace investigation, not proof that a replica is slow.",
       "type": "timeseries",
       "datasource": {
@@ -806,10 +1112,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 32
+        "x": 0,
+        "y": 48,
+        "w": 24,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -822,7 +1128,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -863,10 +1169,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
