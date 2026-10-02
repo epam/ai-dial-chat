@@ -665,6 +665,22 @@ export class EnvironmentVariables {
   @IsString()
   CUSTOM_CLIENT_VARIABLES?: string;
 
+  /*
+   * Server-only allowlist of exact GET Core paths exposed through
+   * GET /api/v1/custom-api/:operationId (see
+   * openspec/changes/add-configured-core-api-operations/design.md). JSON object,
+   * `{"version":1,"operations":[{"id":...,"method":"GET","corePath":...}]}`.
+   * Unset, empty or whitespace-only values mean no operations are enabled.
+   * Parsed and bounded by CustomApiRegistryService, not by this schema, so an
+   * invalid value fails startup there rather than here; this field is kept a
+   * permissive string so the registry service controls the exact error. Never
+   * exposed through client-config, CUSTOM_CLIENT_VARIABLES or browser build
+   * variables. Restart chat-api after changing.
+   */
+  @IsOptional()
+  @IsString()
+  CUSTOM_CORE_API_CONFIG?: string;
+
   @IsOptional()
   @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
