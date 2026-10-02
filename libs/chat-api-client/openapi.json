@@ -6913,6 +6913,63 @@
         "summary": "Refine an authoring draft",
         "tags": ["text-refinement"]
       }
+    },
+    "/api/v1/custom-api/{id}": {
+      "get": {
+        "description": "Dispatches an authenticated GET request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token. Accepts no query parameters and no request body. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain.",
+        "operationId": "getCustomApiOperation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Operation ID from the deployment-configured CUSTOM_CORE_API_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{0,63}$",
+              "example": "data-products",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The configured operation succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid operation ID, or a query/body value was supplied"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "No operation is configured for this ID"
+          },
+          "405": {
+            "description": "Only GET is supported for custom API operations"
+          },
+          "429": {
+            "description": "Local in-flight call capacity exhausted"
+          },
+          "502": {
+            "description": "DIAL Core returned an error, a redirect, or an invalid/oversized response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          },
+          "504": {
+            "description": "DIAL Core request exceeded its configured deadline"
+          }
+        },
+        "summary": "Call a deployment-configured custom Core API operation",
+        "tags": ["custom-api"]
+      }
     }
   },
   "info": {
@@ -6945,6 +7002,10 @@
     {
       "name": "deployments",
       "description": "List deployments available to the authenticated user"
+    },
+    {
+      "name": "custom-api",
+      "description": "Deployment-configured custom Core API operations (CUSTOM_CORE_API_CONFIG)"
     }
   ],
   "servers": [
@@ -13173,6 +13234,24 @@
           }
         },
         "required": ["text"]
+      },
+      "CustomApiResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Opaque JSON value returned by the configured Core operation. Documented as a free-form object; the actual value may also be an array, string, number, boolean, or null — see the generated-typing note on this field.",
+            "additionalProperties": true,
+            "example": [
+              {
+                "id": "1",
+                "display_name": "Display name",
+                "description": "some description"
+              }
+            ]
+          }
+        },
+        "required": ["data"]
       }
     }
   }

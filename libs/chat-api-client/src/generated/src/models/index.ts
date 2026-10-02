@@ -2330,6 +2330,19 @@ export type CreatedScheduledTaskDtoTriggerTypeEnum =
 /**
  *
  * @export
+ * @interface CustomApiResponseDto
+ */
+export interface CustomApiResponseDto {
+  /**
+   * Opaque JSON value returned by the configured Core operation. Documented as a free-form object; the actual value may also be an array, string, number, boolean, or null — see the generated-typing note on this field.
+   * @type {{ [key: string]: unknown }}
+   * @memberof CustomApiResponseDto
+   */
+  data: { [key: string]: unknown };
+}
+/**
+ *
+ * @export
  * @interface CustomVisualizerDto
  */
 export interface CustomVisualizerDto {

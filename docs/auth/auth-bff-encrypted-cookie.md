@@ -256,6 +256,10 @@ _Source: [`auth-diagrams/04-api-request-refresh.mmd`](./auth-diagrams/04-api-req
 
 As defense in depth for the residual window this can miss (the access token expiring at the same instant as the race), the SPA's `UserContext` performs one bounded self-heal probe — a fresh `GET /api/v1/auth/me` — before invalidating a session that was `Authenticated` a moment ago, both when any API call 401s (`onUnauthorized`) and on the focus/visibility identity-revalidation checkpoint's own 401 path. A real logout still fails the probe and invalidates exactly as before; a lost-race collision typically recovers because the winning pod's `Set-Cookie` has, in virtually all realistic timings, already landed in the browser.
 
+#### 5.2.2 Reused Verbatim by Other Domains — Custom Core API Bridge
+
+This flow is not auth-specific plumbing — every non-public route goes through the same global `SessionGuard`/`CsrfGuard` pair and the same `req.user.at` access token, regardless of domain. The disabled-by-default custom Core API bridge (`GET /api/v1/custom-api/:operationId`, `apps/chat-api/src/custom-api/`, see `apps/chat-api/README.md#custom-core-api-operations` and `openspec/changes/add-configured-core-api-operations/design.md`) is a concrete example: it introduces no new authentication mechanism, no browser-readable token endpoint, and no service/admin credential fallback. It calls Core with exactly the caller's own `req.user.at`, the same as any other authenticated BFF route, and a Core 401/403 is propagated as a sanitized error rather than retried with an elevated identity.
+
 ### 5.3 Logout (Federated)
 
 ![Federated logout](./auth-diagrams/05-logout-flow.svg)

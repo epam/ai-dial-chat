@@ -5,6 +5,7 @@ import {
   ClientChannelApi,
   Configuration,
   ConversationsApi,
+  CustomApiApi,
   DeploymentsApi,
   ExternalServicesApi,
   FilesApi,
@@ -106,3 +107,4 @@ export const offlineCredentialsApi = new OfflineCredentialsApi(config);
 export const externalServicesApi = new ExternalServicesApi(config);
 export const healthApi = new HealthApi(config);
 export const transcriptionApi = new TranscriptionApi(config);
+export const customApiApi = new CustomApiApi(config);

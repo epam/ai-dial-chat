@@ -470,6 +470,7 @@ apps/chat-api/src/
 ├── health/                 # Health check
 ├── telemetry/              # OpenTelemetry bootstrap, logger bridge, metrics
 ├── dial/                   # DIAL Core client wiring
+├── custom-api/             # Deployment-configured custom Core API bridge (disabled by default)
 ├── config/                 # class-validator env schema
 ├── constants/  common/     # Shared decorators, interceptors, constants
 └── openapi/                # Response DTOs and OpenAPI document generation
@@ -503,6 +504,7 @@ Business controllers are versioned; three infrastructure controllers are deliber
 | `/api/v1/rate`                      | Message rating                                             |
 | `/api/v1/user-config`               | Per-user preferences                                       |
 | `/api/v1/client-config`             | Client configuration document                              |
+| `/api/v1/custom-api`                | Deployment-configured custom Core API bridge (disabled by default — see [apps/chat-api/README.md](../apps/chat-api/README.md#custom-core-api-operations)) |
 | `/api/apps`                         | App metadata — unversioned                                 |
 | `/api/themes`                       | Theme configuration and icons — unversioned                |
 | `/api/health`                       | Health check — unversioned                                 |

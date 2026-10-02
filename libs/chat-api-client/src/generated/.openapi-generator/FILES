@@ -8,6 +8,7 @@ src/apis/AuthApi.ts
 src/apis/ChatApi.ts
 src/apis/ClientChannelApi.ts
 src/apis/ConversationsApi.ts
+src/apis/CustomApiApi.ts
 src/apis/DeploymentsApi.ts
 src/apis/ExternalServicesApi.ts
 src/apis/FilesApi.ts
