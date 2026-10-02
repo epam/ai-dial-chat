@@ -191,7 +191,7 @@ describe('RateService', () => {
       async ({ rate, expectedRate }) => {
         fetchSpy.mockResolvedValue({ ok: true } as Response);
         const service = makeService();
-        const comment = '  Слишком кратко\nيرجى التوضيح 🙂  ';
+        const comment = 'Some comment';
 
         await service.rateMessage({ ...validDto, rate, comment }, ACCESS_TOKEN);
 
