@@ -248,20 +248,27 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     [channelId, ensureConnected, waitForChannel, notifyGenerationSettled],
   );
 
-  const { startStream, handleStop, isStreaming, canStopStreaming } =
-    useConversationStream({
-      conversationId: conversationId ?? undefined,
-      state: { setConversation, conversationRef },
-      transport: conversationStreamTransport,
-      generation: { startGeneration, completeGeneration },
-      channel,
-      onStopError: handleStopError,
-      generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
-      generationPersistenceErrorMessage: t(
-        ChatI18nKeys.GenerationPersistenceError,
-      ),
-      onStreamError: logConversationStreamError,
-    });
+  const {
+    startStream,
+    handleStop,
+    isStreaming,
+    canStopStreaming,
+    hasConversationReloadError,
+    isReloadingConversation,
+    retryConversationReload,
+  } = useConversationStream({
+    conversationId: conversationId ?? undefined,
+    state: { setConversation, conversationRef },
+    transport: conversationStreamTransport,
+    generation: { startGeneration, completeGeneration },
+    channel,
+    onStopError: handleStopError,
+    generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
+    generationPersistenceErrorMessage: t(
+      ChatI18nKeys.GenerationPersistenceError,
+    ),
+    onStreamError: logConversationStreamError,
+  });
 
   /*
    * Skills in the preview's pre-conversation composer: the same host wiring
@@ -602,6 +609,9 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         onEditMessage={handleEditMessage}
         editingMessageIndexes={editingMessageIndexes}
         isAssistantTyping={isStreaming}
+        hasConversationReloadError={hasConversationReloadError}
+        isReloadingConversation={isReloadingConversation}
+        onRetryConversationReload={retryConversationReload}
         canStopAssistant={canStopStreaming}
         placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
         stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}

@@ -116,6 +116,7 @@ import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOve
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
+import { ConversationReloadNotification } from './ConversationReloadNotification';
 import { getInputMessageHistory } from './utils/message-display';
 
 const ConversationInput = lazy(async () => {
@@ -210,10 +211,19 @@ interface Props {
    * Never persisted as a message.
    */
   topContent?: ReactNode;
+  /** A terminal read failed; received output remains in the view. */
+  hasConversationReloadError?: boolean;
+  /** Disables read retry while its request is pending. */
+  isReloadingConversation?: boolean;
+  /** Repeats the terminal read without regenerating or saving. */
+  onRetryConversationReload?: () => Promise<void>;
 }
 
 const ConversationView: FC<Props> = ({
   messages,
+  hasConversationReloadError = false,
+  isReloadingConversation = false,
+  onRetryConversationReload,
   onSend,
   onUploadAttachment,
   onStop,
@@ -1116,6 +1126,13 @@ const ConversationView: FC<Props> = ({
                 </div>
               );
             })}
+            {hasConversationReloadError && onRetryConversationReload && (
+              <ConversationReloadNotification
+                isReloading={isReloadingConversation}
+                isStreaming={isAssistantTyping}
+                onRetry={onRetryConversationReload}
+              />
+            )}
           </div>
           <div
             ref={spacerRef}

@@ -74,6 +74,17 @@ inventory, backend domains, SSE streaming, theming token flow — see
 [`docs/architecture.md`](../../docs/architecture.md). This file covers what is
 specific to running and developing `apps/chat`.
 
+## Conversation reload recovery
+
+After a reply finishes, the conversation page and application preview reload
+the server's conversation. If that read fails, the received answer stays on
+screen with a separate "Couldn't refresh this conversation" notification.
+"Retry loading" repeats the read; it does not regenerate or save the answer.
+The action is disabled while reading or generating, and successful
+reconciliation clears the notification. Explicit backend save failures and
+reads returning an unresolved empty placeholder still use the unsaved-answer
+warning. A failed read alone establishes neither success nor failure of saving.
+
 ## Feature loading
 
 The app uses automatic chunk splitting, UI Kit `/grid` and `/editors` imports,
