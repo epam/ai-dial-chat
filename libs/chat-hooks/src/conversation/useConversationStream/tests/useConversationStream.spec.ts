@@ -5,7 +5,7 @@ import {
   type Conversation,
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useRef, useState } from 'react';
+import { StrictMode, useEffect, useRef, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
@@ -466,6 +466,66 @@ describe('useConversationStream', () => {
       ],
     };
 
+    it.each([false, true])(
+      'auto-starts once and retains reload recovery under StrictMode (channelConnected=%s)',
+      async (channelConnected) => {
+        const initial = placeholder();
+        const channel: ConversationStreamChannel = {
+          channelId: channelConnected ? 'channel-1' : null,
+          ensureConnected: vi.fn(),
+          waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+        };
+        vi.mocked(transport.getConversation).mockRejectedValue(
+          new Error('GET blocked'),
+        );
+        const { result } = renderHook(
+          () => {
+            const harness = useHookHarness({
+              transport,
+              channel,
+              conversationId: 'bucket/conv',
+              initialConversation: initial,
+            });
+            const started = useRef(false);
+            const { startStream } = harness.stream;
+            useEffect(() => {
+              if (started.current) return;
+              started.current = true;
+              startStream('bucket/conv', 'question', 1, 'gpt-4o');
+            }, [startStream]);
+            return harness;
+          },
+          { wrapper: StrictMode },
+        );
+
+        await waitFor(() =>
+          expect(transport.streamCompletion).toHaveBeenCalledOnce(),
+        );
+        expect(result.current.stream.isStreaming).toBe(true);
+        await act(async () => {
+          capturedOptions?.onChunk(chunk);
+          await capturedOptions?.onComplete();
+        });
+        expect(result.current.conversation?.messages[1].content).toBe(
+          'Visible answer',
+        );
+        expect(result.current.stream.isStreaming).toBe(false);
+        expect(result.current.stream.hasConversationReloadError).toBe(true);
+
+        const saved = makeConversation({
+          messages: [
+            initial.messages[0],
+            { ...initial.messages[1], content: 'Server-enriched answer' },
+          ],
+        });
+        vi.mocked(transport.getConversation).mockResolvedValue(saved);
+        await act(() => result.current.stream.retryConversationReload());
+        expect(result.current.conversation).toEqual(saved);
+        expect(result.current.stream.hasConversationReloadError).toBe(false);
+        expect(transport.streamCompletion).toHaveBeenCalledOnce();
+      },
+    );
+
     it.each([true, false])(
       'preserves text, stages and state after terminal failure (explicit=%s)',
       async (explicit) => {
@@ -595,9 +655,14 @@ describe('useConversationStream', () => {
         });
         expect(result.current.conversation?.messages[1]).toMatchObject({
           content: '',
-          streamErrorMessage: warning,
           custom_content: { stages: [{ name: 'Visible step' }] },
         });
+        expect(
+          result.current.conversation?.messages[1].streamErrorMessage,
+        ).toBe(readFails ? undefined : warning);
+        expect(result.current.stream.hasConversationReloadError).toBe(
+          readFails,
+        );
         expect(result.current.stream.isStreaming).toBe(false);
       },
     );
@@ -659,6 +724,363 @@ describe('useConversationStream', () => {
         });
         expect(result.current.stream.isStreaming).toBe(false);
         if (explicit) expect(transport.getConversation).not.toHaveBeenCalled();
+      },
+    );
+
+    describe.each([false, true])(
+      'terminal read recovery (attached=%s)',
+      (attached) => {
+        const startFailedRead = async (stagesOnly = false) => {
+          const initial = placeholder();
+          const receivedChunk = stagesOnly
+            ? {
+                ...chunk,
+                choices: [
+                  {
+                    ...chunk.choices[0],
+                    delta: { ...chunk.choices[0].delta, content: '' },
+                  },
+                ],
+              }
+            : chunk;
+          const onStreamError = vi.fn();
+          vi.mocked(transport.getConversation).mockRejectedValue(
+            new Error('GET blocked'),
+          );
+          if (attached) {
+            vi.mocked(transport.attachToGeneration).mockResolvedValue(
+              new ReadableStream({
+                start(controller) {
+                  for (const event of [
+                    { type: 'snapshot', message: initial.messages[1] },
+                    { type: 'chunk', chunk: receivedChunk },
+                    { type: 'done' },
+                  ]) {
+                    controller.enqueue(
+                      new TextEncoder().encode(
+                        `data: ${JSON.stringify(event)}\n\n`,
+                      ),
+                    );
+                  }
+                  controller.close();
+                },
+              }),
+            );
+          }
+          const view = renderHook(
+            ({ conversationId }) =>
+              useHookHarness({
+                transport,
+                conversationId,
+                initialConversation: initial,
+                onStreamError,
+              }),
+            { initialProps: { conversationId: 'bucket/conv' } },
+          );
+          await act(async () => {
+            if (attached)
+              view.result.current.stream.resumeIfAwaitingGeneration(
+                'bucket/conv',
+                initial,
+              );
+            else
+              view.result.current.stream.startStream(
+                'bucket/conv',
+                'question',
+                1,
+                'gpt-4o',
+              );
+          });
+          if (!attached) {
+            await act(async () => {
+              capturedOptions?.onChunk(receivedChunk);
+              await capturedOptions?.onComplete();
+            });
+          }
+          await waitFor(() =>
+            expect(view.result.current.stream.hasConversationReloadError).toBe(
+              true,
+            ),
+          );
+          return { ...view, initial, onStreamError };
+        };
+
+        it('retains stages-only output without a persistence warning', async () => {
+          const { result } = await startFailedRead(true);
+          expect(result.current.conversation?.messages[1]).toMatchObject({
+            content: '',
+            custom_content: { stages: [{ name: 'Visible step' }] },
+          });
+          expect(
+            result.current.conversation?.messages[1].streamErrorMessage,
+          ).toBeUndefined();
+          expect(result.current.stream.hasConversationReloadError).toBe(true);
+        });
+
+        it('invalidates pending and retained retry callbacks on unmount', async () => {
+          const { result, unmount, initial } = await startFailedRead();
+          let resolveRead!: (value: Conversation) => void;
+          vi.mocked(transport.getConversation).mockImplementationOnce(
+            () =>
+              new Promise((resolve) => {
+                resolveRead = resolve;
+              }),
+          );
+          const retry = result.current.stream.retryConversationReload;
+          let pending!: Promise<void>;
+          act(() => {
+            pending = retry();
+          });
+          unmount();
+          await act(async () => {
+            resolveRead(initial);
+            await pending;
+            await retry();
+          });
+          expect(transport.getConversation).toHaveBeenCalledTimes(2);
+        });
+
+        if (!attached) {
+          it('resumes pending background work after retry instead of adding a save warning', async () => {
+            const { result, initial } = await startFailedRead();
+            const pending = makeConversation({
+              messages: [
+                initial.messages[0],
+                {
+                  ...initial.messages[1],
+                  responseId: 'response-1',
+                  backgroundGeneration: {
+                    generationId: 'background-1',
+                    status: BackgroundGenerationStatus.Pending,
+                    startedAt: 1,
+                  },
+                },
+              ],
+            });
+            vi.mocked(transport.getConversation).mockResolvedValue(pending);
+            vi.mocked(transport.attachToGeneration).mockResolvedValue(
+              new ReadableStream(),
+            );
+            await act(() => result.current.stream.retryConversationReload());
+            expect(result.current.stream.hasConversationReloadError).toBe(
+              false,
+            );
+            expect(result.current.stream.isStreaming).toBe(true);
+            expect(result.current.conversation?.messages[1].content).toBe(
+              'Visible answer',
+            );
+            expect(
+              result.current.conversation?.messages[1].streamErrorMessage,
+            ).toBeUndefined();
+            expect(transport.attachToGeneration).toHaveBeenCalledOnce();
+          });
+        }
+
+        it('keeps received payload without inventing a stream error and retries only the read', async () => {
+          const { result, initial, onStreamError } = await startFailedRead();
+          expect(result.current.conversation?.messages[1]).toMatchObject({
+            content: 'Visible answer',
+            custom_content: { state: { result: 'preserve me' } },
+          });
+          expect(
+            result.current.conversation?.messages[1].streamErrorMessage,
+          ).toBeUndefined();
+          expect(result.current.stream.isStreaming).toBe(false);
+          expect(result.current.stream.canStopStreaming).toBe(false);
+          expect(onStreamError).not.toHaveBeenCalled();
+          const saved = makeConversation({
+            messages: [
+              initial.messages[0],
+              {
+                ...initial.messages[1],
+                content: 'Visible answer',
+                custom_content: { state: { server: 'enriched' } },
+              },
+            ],
+          });
+          vi.mocked(transport.getConversation).mockResolvedValue(saved);
+          await act(() => result.current.stream.retryConversationReload());
+          expect(result.current.conversation).toEqual(saved);
+          expect(result.current.stream.hasConversationReloadError).toBe(false);
+          expect(result.current.stream.isReloadingConversation).toBe(false);
+          expect(transport.streamCompletion).toHaveBeenCalledTimes(
+            attached ? 0 : 1,
+          );
+          expect(transport.getConversation).toHaveBeenLastCalledWith(
+            'bucket/conv',
+          );
+          expect(
+            result.current.stream.restoreBufferedGeneration(
+              'bucket/conv',
+              saved,
+            ),
+          ).toEqual(saved);
+        });
+
+        it('deduplicates retries and keeps the answer when another GET fails', async () => {
+          const { result } = await startFailedRead();
+          let rejectRead!: (error: Error) => void;
+          vi.mocked(transport.getConversation).mockImplementationOnce(
+            () =>
+              new Promise((_resolve, reject) => {
+                rejectRead = reject;
+              }),
+          );
+          let pending!: Promise<void>;
+          act(() => {
+            pending = result.current.stream.retryConversationReload();
+            void result.current.stream.retryConversationReload();
+          });
+          expect(transport.getConversation).toHaveBeenCalledTimes(2);
+          expect(result.current.stream.isReloadingConversation).toBe(true);
+          expect(result.current.stream.hasConversationReloadError).toBe(true);
+          await act(async () => {
+            rejectRead(new Error('still blocked'));
+            await pending;
+          });
+          expect(result.current.stream.isReloadingConversation).toBe(false);
+          expect(result.current.stream.hasConversationReloadError).toBe(true);
+          expect(result.current.conversation?.messages[1].content).toBe(
+            'Visible answer',
+          );
+          expect(
+            result.current.conversation?.messages[1].streamErrorMessage,
+          ).toBeUndefined();
+        });
+
+        it('retains placeholder protection after a successful retry', async () => {
+          const { result, initial } = await startFailedRead();
+          vi.mocked(transport.getConversation).mockResolvedValue(initial);
+          await act(() => result.current.stream.retryConversationReload());
+          expect(result.current.stream.hasConversationReloadError).toBe(false);
+          expect(result.current.conversation?.messages[1].content).toBe(
+            'Visible answer',
+          );
+          expect(
+            result.current.conversation?.messages[1].streamErrorMessage,
+          ).toContain('could not be saved');
+        });
+
+        it.each([false, true])(
+          'ignores a superseded retry (readFails=%s)',
+          async (readFails) => {
+            const { result, initial } = await startFailedRead();
+            let resolveRead!: (value: Conversation) => void;
+            let rejectRead!: (error: Error) => void;
+            vi.mocked(transport.getConversation).mockImplementationOnce(
+              () =>
+                new Promise((resolve, reject) => {
+                  resolveRead = resolve;
+                  rejectRead = reject;
+                }),
+            );
+            let pending!: Promise<void>;
+            act(() => {
+              pending = result.current.stream.retryConversationReload();
+            });
+            await act(async () => {
+              result.current.stream.startStream(
+                'bucket/conv',
+                'new question',
+                1,
+                'gpt-4o',
+              );
+            });
+            const newer = result.current.conversation;
+            await act(async () => {
+              if (readFails) rejectRead(new Error('old read failed'));
+              else resolveRead(initial);
+              await pending;
+            });
+            expect(result.current.conversation).toBe(newer);
+            expect(result.current.stream.hasConversationReloadError).toBe(
+              false,
+            );
+            expect(result.current.stream.isStreaming).toBe(true);
+          },
+        );
+
+        it('does not apply a retried conversation after navigation', async () => {
+          const { result, rerender, initial } = await startFailedRead();
+          let resolveRead!: (value: Conversation) => void;
+          vi.mocked(transport.getConversation).mockImplementationOnce(
+            () =>
+              new Promise((resolve) => {
+                resolveRead = resolve;
+              }),
+          );
+          let pending!: Promise<void>;
+          act(() => {
+            pending = result.current.stream.retryConversationReload();
+          });
+          rerender({ conversationId: 'bucket/other' });
+          const displayed = result.current.conversation;
+          expect(result.current.stream.hasConversationReloadError).toBe(false);
+          await act(async () => {
+            resolveRead(initial);
+            await pending;
+          });
+          expect(result.current.conversation).toBe(displayed);
+          expect(result.current.stream.hasConversationReloadError).toBe(false);
+        });
+
+        it.each([false, true])(
+          'restores the answer and keeps the read error when returning to a stale snapshot (hasNonAssistant=%s)',
+          async (hasNonAssistant) => {
+            const { result, rerender, initial } = await startFailedRead();
+            const stale = makeConversation({
+              messages: hasNonAssistant
+                ? [initial.messages[0], initial.messages[0]]
+                : [initial.messages[0]],
+            });
+            rerender({ conversationId: 'bucket/other' });
+            expect(result.current.stream.hasConversationReloadError).toBe(
+              false,
+            );
+            rerender({ conversationId: 'bucket/conv' });
+            let restored!: Conversation;
+            act(() => {
+              restored = result.current.stream.restoreBufferedGeneration(
+                'bucket/conv',
+                stale,
+              );
+            });
+            expect(restored.messages[1]).toMatchObject({
+              role: MessageRole.Assistant,
+              content: 'Visible answer',
+              custom_content: {
+                stages: [{ name: 'Visible step' }],
+                state: { result: 'preserve me' },
+              },
+            });
+            expect(restored.messages[1].streamErrorMessage).toBeUndefined();
+            expect(result.current.stream.hasConversationReloadError).toBe(true);
+            expect(result.current.stream.isStreaming).toBe(false);
+            expect(transport.getConversation).toHaveBeenCalledOnce();
+            expect(transport.streamCompletion).toHaveBeenCalledTimes(
+              attached ? 0 : 1,
+            );
+          },
+        );
+
+        it('accepts a saved answer when the conversation is loaded again', async () => {
+          const { result, initial } = await startFailedRead();
+          const saved = makeConversation({
+            messages: [
+              initial.messages[0],
+              { ...initial.messages[1], content: 'Saved and enriched' },
+            ],
+          });
+          let restored!: Conversation;
+          act(() => {
+            restored = result.current.stream.restoreBufferedGeneration(
+              'bucket/conv',
+              saved,
+            );
+          });
+          expect(restored).toEqual(saved);
+          expect(result.current.stream.hasConversationReloadError).toBe(false);
+        });
       },
     );
 

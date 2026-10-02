@@ -226,6 +226,14 @@ export interface ResumeIfAwaitingGenerationDeps {
   removeStreamingPath: (path: string) => void;
   isPathDisplayed: (path: string) => boolean;
   generationPersistenceErrorMessage?: string;
+  /** Records a terminal read failure and its guarded read-only retry. */
+  onReloadError?: (
+    path: string,
+    retry: () => Promise<void>,
+    isCurrent: () => boolean,
+  ) => void;
+  /** Clears a previous read failure after reconciliation. */
+  onReloadSuccess?: (path: string) => void;
   /** When set, replayed chunks are published at most once per frame through it. */
   frameScheduler?: FrameScheduler;
   /**
@@ -262,6 +270,8 @@ export const createResumeIfAwaitingGeneration = ({
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   frameScheduler,
   stoppedGenerationIdsRef,
+  onReloadError,
+  onReloadSuccess,
 }: ResumeIfAwaitingGenerationDeps) => {
   return (
     currentConversationId: string,
@@ -345,13 +355,23 @@ export const createResumeIfAwaitingGeneration = ({
     };
 
     const finalCheck = async () => {
+      if (!ownsBuffer()) return;
       try {
         const result = await transport.getConversation(
           safeDecodeURI(currentConversationId),
         );
+        if (!ownsBuffer()) return;
+        onReloadSuccess?.(conversationPath);
         finish(result);
       } catch {
-        finish(undefined, hasGeneratedPayload(resumedBuffer.message));
+        if (!ownsBuffer()) return;
+        frameScheduler?.flush(conversationPath);
+        resumingPathsRef.current.delete(conversationPath);
+        removeStreamingPath(conversationPath);
+        if (backgroundGenerationId != null) {
+          stoppedGenerationIdsRef?.current.delete(backgroundGenerationId);
+        }
+        onReloadError?.(conversationPath, finalCheck, ownsBuffer);
       }
     };
 
