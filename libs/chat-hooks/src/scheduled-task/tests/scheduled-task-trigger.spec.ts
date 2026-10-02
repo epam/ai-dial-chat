@@ -285,6 +285,71 @@ describe('mapFormValuesToCreateBody — recurring schedule timezone conversion',
     });
   });
 
+  it('maps a local 1st that falls on the previous UTC day to the last day of the month', () => {
+    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Monthly,
+      time: '00:30',
+      dayOfMonth: '1',
+    });
+
+    expect(body.trigger.cron?.fields).toEqual({
+      hour: '21',
+      minute: '30',
+      day: 'last',
+    });
+  });
+
+  it('shifts the monthly day back when the UTC conversion crosses midnight', () => {
+    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Monthly,
+      time: '00:30',
+      dayOfMonth: '15',
+    });
+
+    expect(body.trigger.cron?.fields?.day).toBe('14');
+  });
+
+  it('shifts the monthly day forward when the UTC conversion crosses midnight', () => {
+    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
+
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Monthly,
+      time: '22:00',
+      dayOfMonth: '15',
+    });
+
+    expect(body.trigger.cron?.fields).toEqual({
+      hour: '2',
+      minute: '0',
+      day: '16',
+    });
+  });
+
+  it('keeps the 31st when the form is submitted during a 30-day month', () => {
+    vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+2 in winter
+
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Monthly,
+      time: '09:00',
+      dayOfMonth: '31',
+    });
+
+    expect(body.trigger.cron?.fields).toEqual({
+      hour: '7',
+      minute: '0',
+      day: '31',
+    });
+  });
+
   it('does not shift the hourly minute at a whole-hour-offset timezone', () => {
     vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer (whole-hour offset)
 
@@ -582,6 +647,64 @@ describe('mapScheduledTaskDtoToFormValues', () => {
       expect(result.values.time).toBe('09:00');
       expect(result.values.dayOfMonth).toBe('15');
     }
+  });
+
+  it('maps the last day of the month one day behind local time back to the 1st', () => {
+    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: { cron: { fields: { hour: '21', minute: '30', day: 'last' } } },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Monthly);
+      expect(result.values.time).toBe('00:30');
+      expect(result.values.dayOfMonth).toBe('1');
+    }
+  });
+
+  it('fails closed on the last day of the month that is not one day behind local time', () => {
+    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: { cron: { fields: { hour: '6', minute: '0', day: 'last' } } },
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: UnsupportedTriggerReason.UnsupportedCronShape,
+    });
+  });
+
+  it('keeps the 31st when the task is opened during a 30-day month', () => {
+    vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+2 in winter
+
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: { cron: { fields: { hour: '7', minute: '0', day: '31' } } },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.time).toBe('09:00');
+      expect(result.values.dayOfMonth).toBe('31');
+    }
+  });
+
+  it('maps a UTC 31st one day behind local time to the 1st', () => {
+    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: { cron: { fields: { hour: '21', minute: '30', day: '31' } } },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.values.dayOfMonth).toBe('1');
   });
 
   it('round-trips a weekly recurring schedule, shifting day_of_week back across a UTC day boundary', () => {

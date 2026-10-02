@@ -168,6 +168,51 @@ describe('SkillSelectorField', () => {
     ).toBe(true);
   });
 
+  it('explains why the field is disabled when the model cannot use skills', async () => {
+    const user = userEvent.setup();
+    const reason =
+      'Selected model does not support skills. Select a different model to use a skill.';
+    const { rerender } = render(
+      field({ isSkillsSupported: false, describedById: 'host-hint' }),
+    );
+    const trigger = screen.getByRole('combobox', { name: 'Skill' });
+    expect((trigger as HTMLInputElement).disabled).toBe(true);
+    expect(trigger.getAttribute('title')).toBeNull();
+    expect(trigger.getAttribute('aria-describedby')).toBe(
+      `host-hint ${screen.getByText(reason).id}`,
+    );
+
+    await user.hover(trigger);
+    expect(await screen.findByRole('tooltip')).toHaveProperty(
+      'textContent',
+      reason,
+    );
+
+    await user.unhover(trigger);
+    rerender(field({ isSkillsSupported: true }));
+    /* The kit Dropdown remounts its trigger when `disabled` toggles. */
+    const enabledTrigger = screen.getByRole('combobox', { name: 'Skill' });
+    expect(enabledTrigger.getAttribute('aria-describedby')).toBeNull();
+    await user.hover(enabledTrigger);
+    expect(screen.queryByText(reason)).toBeNull();
+  });
+
+  it('uses the host label for the disabled-field explanation', () => {
+    render(
+      field({
+        isSkillsSupported: false,
+        labels: {
+          ...props.labels,
+          unavailableTooltipLabel: 'Pick another model',
+        },
+      }),
+    );
+    const trigger = screen.getByRole('combobox', { name: 'Skill' });
+    expect(trigger.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Pick another model').id,
+    );
+  });
+
   it('closes favorites and catalog on capability loss without changing the controlled selection', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
