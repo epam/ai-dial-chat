@@ -970,20 +970,27 @@ describe('ConversationPanelView — mark conversation viewed on open', () => {
     isUnread: true,
   };
 
-  it('calls markConversationViewed when an unread task conversation becomes active (row click / initial render)', () => {
-    const mockMarkConversationViewed = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [unreadTaskConversation],
-      markConversationViewed: mockMarkConversationViewed,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  it.each([true, false])(
+    'marks an active task conversation viewed with the panel open: %s',
+    (isOpen) => {
+      const mockMarkConversationViewed = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [unreadTaskConversation],
+        markConversationViewed: mockMarkConversationViewed,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="task1" />,
-    );
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          isOpen={isOpen}
+          activeConversationId="task1"
+        />,
+      );
 
-    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
-  });
+      expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
+    },
+  );
 
   it('calls markConversationViewed again when activeConversationId changes to another unread task conversation (direct navigation)', () => {
     const secondUnreadTask = {

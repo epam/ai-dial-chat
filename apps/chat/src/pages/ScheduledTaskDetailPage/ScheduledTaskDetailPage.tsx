@@ -116,7 +116,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
   const { items: deploymentItems } = useDeployments();
   const { language } = useLanguage();
-  const { conversations } = useConversations();
+  const { conversations, refreshConversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
   const skillDisplayName = useScheduledTaskSkillDisplayName(task?.skillUrl);
@@ -250,6 +250,26 @@ const ScheduledTaskDetailPage: FC = () => {
     () => mergeScheduledTaskRuns(acceptedRuns, runDtos),
     [acceptedRuns, runDtos],
   );
+  /* Fast status polling must also discover newly created chats, without
+     refetching the full list on every unchanged InProgress response. */
+  const acceptedConversationRuns = JSON.stringify(
+    acceptedRuns
+      .filter((run) => run.conversationId)
+      .map(({ id, status, conversationId }) => [id, status, conversationId]),
+  );
+  useEffect(() => {
+    if (isEnabled && acceptedConversationRuns !== '[]') {
+      const runs = JSON.parse(acceptedConversationRuns) as [
+        string,
+        string,
+        string,
+      ][];
+      void refreshConversations(
+        runs.map(([, , conversationId]) => conversationId),
+      );
+    }
+  }, [acceptedConversationRuns, isEnabled, refreshConversations]);
+
   const runStatusLabels = useMemo(
     () => ({
       success: t(ScheduledTasksI18nKeys.DetailStatusSuccess),

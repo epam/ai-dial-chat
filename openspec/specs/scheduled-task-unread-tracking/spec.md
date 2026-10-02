@@ -81,3 +81,68 @@ Error codes:
 
 - **WHEN** `PATCH /api/v1/conversations/viewed` is called without a `path` query param
 - **THEN** the response status is 400
+
+### Requirement: Discovered run conversations refresh shared unread metadata
+
+`ConversationsContext` SHALL own unread metadata shared by task History, sources History, and conversation rows. Under the existing `scheduledTasksEnabled` gating, the app's history adapter SHALL refresh this metadata when a successful history response contains conversation ids, including unchanged polls. Start now SHALL refresh it when an accepted run first exposes a conversation id or its status changes. Callers SHALL pass expected conversation ids to `refreshConversations(expectedIds?)`; missing metadata SHALL NOT be interpreted as proof that a chat was viewed.
+
+The provider-owned `useConversationDiscovery` SHALL retry missing expected ids up to five additional times, two seconds after each request settles. Pending canonical ids SHALL share one retry timer without overlapping retry requests or resetting the pending budget for duplicate callers. Discovery SHALL survive run completion and page navigation, stopping when metadata arrives, the budget is exhausted, the user changes, or the provider unmounts. Ordinary refreshes without expected ids SHALL NOT start retries. This synchronization introduces no new endpoints, persistent caches, strings, UI, RTL, accessibility, or telemetry contracts.
+
+#### Scenario: A manual or scheduled run exposes a chat
+
+- **WHEN** Start now or a history response exposes a run conversation
+- **THEN** the app refreshes the shared conversation metadata and displays its backend unread state without reloading the page or marking it viewed
+
+#### Scenario: Completed run metadata is temporarily missing
+
+- **WHEN** the refreshed list omits an expected chat or fails, even after the run has finished
+- **THEN** bounded discovery retries continue independently of run-status polling
+- **AND** all shared indicators update when the chat becomes available
+
+#### Scenario: Navigate before run metadata becomes visible
+
+- **WHEN** the user opens an expected chat before its metadata arrives
+- **THEN** provider-owned discovery continues after leaving task History and the active chat is marked viewed once its matching metadata loads
+
+### Requirement: Viewed state remains consistent across navigation and overlapping requests
+
+The always-mounted `useActiveConversationSync` SHALL invoke the app-owned viewed callback when the active conversation's matching identity becomes available, using canonical id matching. This SHALL cover task History, sources History, the conversation panel, and direct URLs, including when the panel is closed. The shared hook SHALL receive matching and persistence behavior through injected callbacks; host routes, auth, and persistence SHALL remain app-owned.
+
+`ConversationsContext` SHALL optimistically clear only the viewed chat's unread flag, deduplicate simultaneous views, and serialize writes within the provider. Pending and successfully viewed canonical ids SHALL override stale unread list snapshots for the current user. A failed write SHALL restore unread state without automatically retrying on list updates; leaving and revisiting the chat SHALL allow another attempt. Identity changes SHALL reset local tracking and retire previous-user asynchronous results. Serialization is scoped to one provider, not an atomicity guarantee across tabs or server instances.
+
+List loading and refresh SHALL reject responses older than the last successfully applied request. Merely starting or failing a newer request SHALL NOT invalidate an older successful response.
+
+#### Scenario: Open a run through any navigation entry point
+
+- **WHEN** a run conversation becomes active and its matching list metadata is available, including after delayed loading or with the panel closed
+- **THEN** only that chat is marked viewed and its indicators become read in every shared view
+
+#### Scenario: Stale list response follows a viewed write
+
+- **WHEN** a list response still says unread while a viewed write is pending or has succeeded
+- **THEN** the conversation remains read and no duplicate write is issued
+
+#### Scenario: Viewed write fails
+
+- **WHEN** the viewed endpoint rejects a request
+- **THEN** the indicator returns to unread without a request loop, and a later visit can retry
+
+#### Scenario: Rapidly opening different run chats
+
+- **WHEN** the user opens several run chats before their viewed writes finish
+- **THEN** their indicators update immediately and writes are serialized within the provider
+
+#### Scenario: Identity changes during discovery or persistence
+
+- **WHEN** the authenticated identity changes while a list read, discovery retry, or viewed write is pending
+- **THEN** old-user results cannot modify the new user's conversation state and remaining old-user discovery retries are cancelled
+
+#### Scenario: Conversation list responses complete out of order
+
+- **WHEN** an older list request completes after a newer request successfully updates the list
+- **THEN** it cannot replace that snapshot or remove its newly discovered run conversation
+
+#### Scenario: Newer overlapping list request fails
+
+- **WHEN** one list request succeeds and a newer overlapping request fails, in either completion order
+- **THEN** the successful snapshot remains eligible for display, including during initial loading and run-chat discovery

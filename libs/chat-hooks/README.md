@@ -4193,6 +4193,11 @@ const rawItem = getRawItem(panelItem.id); // ConversationListItemDto | undefined
 
 Keeps the panel's highlighted row in sync with the app's active conversation and marks a viewed conversation when the panel renders it. Returns the panel-space id to highlight, or `undefined` when none is active.
 
+The viewed callback runs when the matching active identity first becomes
+available, including after a delayed list load. List refreshes or an optimistic
+rollback do not repeat the write; leaving and revisiting the conversation invokes
+the callback again so the host can retry failed persistence.
+
 ```tsx
 import { useActiveConversationSync } from '@epam/ai-dial-chat-hooks';
 
@@ -4210,14 +4215,14 @@ const panelActiveConversationId = useActiveConversationSync({
 
 **Parameters** (`UseActiveConversationSyncParams`):
 
-| Name                     | Type                                | Description                                                                                |
-| ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------ |
-| `activeConversationId`   | `string \| undefined`               | The app's currently active conversation (context-space).                                   |
-| `items`                  | `ConversationListItemDto[]`         | Raw DTOs from the API.                                                                     |
-| `refreshConversations`   | `() => Promise<void>`               | Called when the active conversation is not found in `items`.                               |
-| `markConversationViewed` | `(id: string) => Promise<void>`     | Called with the matching raw DTO id when the active conversation or matching item changes. |
-| `conversationIdsMatch`   | `(a: string, b: string) => boolean` | Equality predicate for context-space ids.                                                  |
-| `toPanelConversationId`  | `(id: string) => string`            | Maps a DTO `id` to the panel-space identifier.                                             |
+| Name                     | Type                                | Description                                                                                   |
+| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `activeConversationId`   | `string \| undefined`               | The app's currently active conversation (context-space).                                      |
+| `items`                  | `ConversationListItemDto[]`         | Raw DTOs from the API.                                                                        |
+| `refreshConversations`   | `() => Promise<void>`               | Called when the active conversation is not found in `items`.                                  |
+| `markConversationViewed` | `(id: string) => Promise<void>`     | Called with the matching raw DTO id when the active conversation or matched identity changes. |
+| `conversationIdsMatch`   | `(a: string, b: string) => boolean` | Equality predicate for context-space ids.                                                     |
+| `toPanelConversationId`  | `(id: string) => string`            | Maps a DTO `id` to the panel-space identifier.                                                |
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
 

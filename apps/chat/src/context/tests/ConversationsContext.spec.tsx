@@ -2,6 +2,7 @@ import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
 } from '@epam/ai-dial-chat-api-client';
+import { useActiveConversationSync } from '@epam/ai-dial-chat-hooks';
 import {
   OverlayEventType,
   OverlayRequestType,
@@ -12,6 +13,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as userConfigApi from '../../server-api/user-config.api';
 import { AuthStatus } from '../../types/auth-status';
+import {
+  conversationIdsMatch,
+  toPanelConversationId,
+} from '../../utils/conversation-id-match';
 import {
   ConversationsProvider,
   useConversations,
@@ -776,6 +781,416 @@ describe('ConversationsContext — bumpConversationActivity', () => {
 });
 
 describe('ConversationsContext — markConversationViewed', () => {
+  it('discovers a completed run after navigation and marks its late metadata viewed', async () => {
+    vi.useFakeTimers();
+    try {
+      mockListConversations.mockResolvedValue({ items: [] });
+      mockMarkConversationViewed.mockResolvedValue(undefined);
+      const task = {
+        ...seedConversations[0],
+        id: 'conversations/bucket/.scheduler/task/run',
+        isScheduledTask: true,
+        isUnread: true,
+      };
+      const { result, rerender, unmount } = renderHook(
+        ({ activeId }) => {
+          const context = useConversations();
+          useActiveConversationSync({
+            activeConversationId: activeId,
+            items: context.conversations,
+            refreshConversations: context.refreshConversations,
+            markConversationViewed: context.markConversationViewed,
+            conversationIdsMatch,
+            toPanelConversationId,
+          });
+          return context;
+        },
+        {
+          wrapper: ConversationsProvider,
+          initialProps: { activeId: undefined as string | undefined },
+        },
+      );
+      await act(async () => undefined);
+      /* The final run status has a conversation id before list metadata exists. */
+      await act(async () => result.current.refreshConversations([task.id]));
+      rerender({ activeId: 'bucket/.scheduler/task/run' });
+      await act(async () => undefined);
+      expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+      mockListConversations.mockResolvedValue({ items: [task] });
+      await act(async () => vi.advanceTimersByTimeAsync(2_000));
+      expect(result.current.conversations[0].isUnread).toBe(false);
+      expect(mockMarkConversationViewed).toHaveBeenCalledExactlyOnceWith(
+        '.scheduler/task/run',
+      );
+      const calls = mockListConversations.mock.calls.length;
+      await act(async () => vi.advanceTimersByTimeAsync(60_000));
+      expect(mockListConversations).toHaveBeenCalledTimes(calls);
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('retries discovery after a temporary list failure', async () => {
+    vi.useFakeTimers();
+    try {
+      mockListConversations.mockResolvedValue({ items: [] });
+      const { result, unmount } = renderHook(() => useConversations(), {
+        wrapper: ConversationsProvider,
+      });
+      await act(async () => undefined);
+      mockListConversations.mockRejectedValueOnce(
+        new Error('temporary outage'),
+      );
+      await act(async () => result.current.refreshConversations(['conv1']));
+      mockListConversations.mockResolvedValue({ items: seedConversations });
+      await act(async () => vi.advanceTimersByTimeAsync(2_000));
+      expect(result.current.conversations).toEqual(seedConversations);
+      expect(result.current.error).toBeNull();
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([true, false])(
+    'keeps successful discovery when a newer refresh fails (failure first: %s)',
+    async (failureFirst) => {
+      mockListConversations.mockResolvedValue({ items: [] });
+      const { result } = renderHook(() => useConversations(), {
+        wrapper: ConversationsProvider,
+      });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      const task = {
+        ...seedConversations[0],
+        isScheduledTask: true,
+        isUnread: true,
+      };
+      let finishDiscovery!: (value: { items: (typeof task)[] }) => void;
+      let failRefresh!: (error: Error) => void;
+      mockListConversations
+        .mockReturnValueOnce(
+          new Promise((resolve) => {
+            finishDiscovery = resolve;
+          }),
+        )
+        .mockReturnValueOnce(
+          new Promise((_resolve, reject) => {
+            failRefresh = reject;
+          }),
+        );
+      let discovery!: Promise<void>;
+      let refresh!: Promise<void>;
+      act(() => {
+        discovery = result.current.refreshConversations();
+        refresh = result.current.refreshConversations();
+      });
+      const completeDiscovery = async () => {
+        finishDiscovery({ items: [task] });
+        await discovery;
+      };
+      const rejectRefresh = async () => {
+        failRefresh(new Error('temporary outage'));
+        await refresh;
+      };
+      await act(failureFirst ? rejectRefresh : completeDiscovery);
+      await act(failureFirst ? completeDiscovery : rejectRefresh);
+      expect(result.current.conversations).toEqual([task]);
+    },
+  );
+
+  it('keeps the successful initial load when an overlapping refresh fails', async () => {
+    let finishLoad!: (value: { items: typeof seedConversations }) => void;
+    mockListConversations.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishLoad = resolve;
+      }),
+    );
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    mockListConversations.mockRejectedValueOnce(new Error('temporary outage'));
+    await act(async () => result.current.refreshConversations());
+    await act(async () => {
+      finishLoad({ items: seedConversations });
+    });
+    expect(result.current.conversations).toEqual(seedConversations);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('serializes viewed writes for rapidly opened chats while clearing both indicators immediately', async () => {
+    const tasks = seedConversations
+      .slice(0, 2)
+      .map((item) => ({ ...item, isScheduledTask: true, isUnread: true }));
+    mockListConversations.mockResolvedValue({ items: tasks });
+    let finishFirst!: () => void;
+    mockMarkConversationViewed
+      .mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          finishFirst = resolve;
+        }),
+      )
+      .mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    let first!: Promise<void>;
+    let second!: Promise<void>;
+    act(() => {
+      first = result.current.markConversationViewed('conv1');
+      second = result.current.markConversationViewed('conv2');
+    });
+    expect(result.current.conversations.map((item) => item.isUnread)).toEqual([
+      false,
+      false,
+    ]);
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      finishFirst();
+      await Promise.all([first, second]);
+    });
+    expect(mockMarkConversationViewed.mock.calls.map(([id]) => id)).toEqual([
+      'conv1',
+      'conv2',
+    ]);
+  });
+
+  it('does not let an older list response remove a newly discovered run', async () => {
+    mockListConversations.mockResolvedValue({ items: [] });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    let finishOlder!: (value: { items: never[] }) => void;
+    mockListConversations.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishOlder = resolve;
+      }),
+    );
+    let older!: Promise<void>;
+    act(() => {
+      older = result.current.refreshConversations();
+    });
+    const task = {
+      ...seedConversations[0],
+      isScheduledTask: true,
+      isUnread: true,
+    };
+    mockListConversations.mockResolvedValueOnce({ items: [task] });
+    await act(async () => result.current.refreshConversations());
+    await act(async () => {
+      finishOlder({ items: [] });
+      await older;
+    });
+    expect(result.current.conversations).toEqual([task]);
+  });
+
+  it('persists a directly opened chat after metadata loads and retries a failed write only on revisit', async () => {
+    const task = {
+      ...seedConversations[0],
+      id: 'conversations/bucket/.scheduler/task/run',
+      isScheduledTask: true,
+      isUnread: true,
+    };
+    let finishLoad!: (value: { items: (typeof task)[] }) => void;
+    mockListConversations.mockReturnValue(
+      new Promise((resolve) => {
+        finishLoad = resolve;
+      }),
+    );
+    mockMarkConversationViewed
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(undefined);
+    const { result, rerender } = renderHook(
+      ({ activeId }) => {
+        const context = useConversations();
+        useActiveConversationSync({
+          activeConversationId: activeId,
+          items: context.conversations,
+          refreshConversations: context.refreshConversations,
+          markConversationViewed: context.markConversationViewed,
+          conversationIdsMatch,
+          toPanelConversationId,
+        });
+        return context;
+      },
+      {
+        wrapper: ConversationsProvider,
+        initialProps: { activeId: 'bucket/.scheduler/task/run' },
+      },
+    );
+    await act(async () => {
+      finishLoad({ items: [task] });
+    });
+    await waitFor(() =>
+      expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1),
+    );
+    expect(result.current.conversations[0].isUnread).toBe(true);
+    await act(async () => result.current.refreshConversations());
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+    rerender({ activeId: 'another-chat' });
+    rerender({ activeId: 'bucket/.scheduler/task/run' });
+    await waitFor(() =>
+      expect(result.current.conversations[0].isUnread).toBe(false),
+    );
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+  });
+
+  it('deduplicates simultaneous views and preserves read state through stale list responses', async () => {
+    const task = {
+      ...seedConversations[0],
+      id: 'conversations/bucket/.scheduler/task/run',
+      isScheduledTask: true,
+      isUnread: true,
+    };
+    mockListConversations.mockResolvedValue({ items: [task] });
+    let finishView!: () => void;
+    mockMarkConversationViewed.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finishView = resolve;
+      }),
+    );
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    let viewing!: Promise<void>;
+    act(() => {
+      viewing = result.current.markConversationViewed(task.id);
+      void result.current.markConversationViewed('bucket/.scheduler/task/run');
+    });
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+    expect(mockMarkConversationViewed).toHaveBeenCalledWith(
+      '.scheduler/task/run',
+    );
+    await act(async () => result.current.refreshConversations());
+    expect(result.current.conversations[0].isUnread).toBe(false);
+    await act(async () => {
+      finishView();
+      await viewing;
+    });
+    await act(async () => result.current.refreshConversations());
+    expect(result.current.conversations[0].isUnread).toBe(false);
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+  });
+
+  it('matches encoded route ids and only marks the selected run viewed', async () => {
+    const task = {
+      ...seedConversations[0],
+      id: 'conversations/bucket/.scheduler/task/run 1',
+      isScheduledTask: true,
+      isUnread: true,
+    };
+    mockListConversations.mockResolvedValue({
+      items: [
+        task,
+        { ...task, id: 'conversations/bucket/.scheduler/task/run2' },
+      ],
+    });
+    mockMarkConversationViewed.mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () =>
+      result.current.markConversationViewed('bucket/.scheduler/task/run%201'),
+    );
+    expect(result.current.conversations.map((item) => item.isUnread)).toEqual([
+      false,
+      true,
+    ]);
+  });
+
+  it('allows another view attempt after a failed write and refresh', async () => {
+    const task = {
+      ...seedConversations[0],
+      isScheduledTask: true,
+      isUnread: true,
+    };
+    mockListConversations.mockResolvedValue({ items: [task] });
+    mockMarkConversationViewed
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => result.current.markConversationViewed(task.id));
+    await act(async () => result.current.refreshConversations());
+    expect(result.current.conversations[0].isUnread).toBe(true);
+    await act(async () => result.current.markConversationViewed(task.id));
+    expect(result.current.conversations[0].isUnread).toBe(false);
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+  });
+
+  it("discards the previous identity's pending refresh and failed viewed write", async () => {
+    const task = {
+      ...seedConversations[0],
+      isScheduledTask: true,
+      isUnread: true,
+    };
+    mockListConversations.mockResolvedValue({ items: [task] });
+    let failView!: (error: Error) => void;
+    mockMarkConversationViewed.mockReturnValueOnce(
+      new Promise<void>((_resolve, reject) => {
+        failView = reject;
+      }),
+    );
+    const { result, rerender } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    let viewing!: Promise<void>;
+    let refreshing!: Promise<void>;
+    let finishRefresh!: (value: { items: (typeof task)[] }) => void;
+    mockListConversations.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishRefresh = resolve;
+      }),
+    );
+    act(() => {
+      viewing = result.current.markConversationViewed(task.id);
+      refreshing = result.current.refreshConversations();
+    });
+    mockListConversations.mockResolvedValue({
+      items: [{ ...task, title: 'New identity', isUnread: false }],
+    });
+    contextMocks.userSub = 'user-2';
+    rerender();
+    await waitFor(() =>
+      expect(result.current.conversations[0]?.title).toBe('New identity'),
+    );
+    await act(async () => {
+      failView(new Error('old request'));
+      finishRefresh({ items: [task] });
+      await Promise.all([viewing, refreshing]);
+    });
+    expect(result.current.conversations[0]).toMatchObject({
+      title: 'New identity',
+      isUnread: false,
+    });
+  });
+
+  it('does not carry successful viewed ids into another identity', async () => {
+    const task = {
+      ...seedConversations[0],
+      isScheduledTask: true,
+      isUnread: true,
+    };
+    mockListConversations.mockResolvedValue({ items: [task] });
+    mockMarkConversationViewed.mockResolvedValue(undefined);
+    const { result, rerender } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => result.current.markConversationViewed(task.id));
+    contextMocks.userSub = 'user-2';
+    rerender();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.conversations[0].isUnread).toBe(true);
+  });
+
   const unreadTaskConversations = [
     {
       id: 'task1',
