@@ -1,4 +1,4 @@
-import { MDMessageViewer } from '@epam/ai-dial-chat-shared';
+import { MDMessageViewer, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
 import type { ScheduledTaskDetailsSummaryProps } from '../../models/scheduled-task-details-summary-props';
 
@@ -20,9 +20,9 @@ export const ScheduledTaskDetailsSummary: FC<
   styles,
 }) => {
   const fieldLabelClassName =
-    styles?.typography?.fieldLabelClassName ?? 'dial-tiny-text';
+    styles?.typography?.fieldLabelClassName ?? 'dial-tiny-text text-secondary';
   const fieldValueClassName =
-    styles?.typography?.fieldValueClassName ?? 'dial-body-text';
+    styles?.typography?.fieldValueClassName ?? 'dial-small-text';
 
   const renderInstructionsContent = (markdown: string) =>
     renderInstructions ? (
@@ -43,7 +43,12 @@ export const ScheduledTaskDetailsSummary: FC<
       {skillDisplayName && (
         <div className="flex min-w-0 flex-col gap-2">
           <span className={fieldLabelClassName}>{skillLabel}</span>
-          <p className={`${fieldValueClassName} whitespace-normal break-all`}>
+          <p
+            className={mergeClasses(
+              fieldValueClassName,
+              'whitespace-normal break-all',
+            )}
+          >
             {skillDisplayName}
           </p>
         </div>

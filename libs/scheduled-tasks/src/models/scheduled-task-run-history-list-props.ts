@@ -41,8 +41,10 @@ export interface ScheduledTaskRunHistoryListColors {
 
 /** Typography overrides for the {@link ScheduledTaskRunHistoryList} component. */
 export interface ScheduledTaskRunHistoryListTypography {
-  /** CSS class applied to each run row's timestamp text. Defaults to `'dial-small-text'`. */
+  /** CSS class applied to each viewed run row's timestamp text. Defaults to `'dial-small-paragraph-text'`. */
   runTimestampClassName?: string;
+  /** CSS class applied to each not-yet-viewed run row's (`isUnread`) timestamp text, rendered semibold by default. Defaults to `'dial-small-paragraph-semi-text'`. */
+  runTimestampUnreadClassName?: string;
   /** CSS class applied to the error and empty-state messages. Defaults to `'dial-body-text'`. */
   subtitleClassName?: string;
 }
