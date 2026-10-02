@@ -53,6 +53,7 @@ Maintain the version-controlled JSON directly.
 | [04 — Runtime diagnostics](examples/dashboards/04-runtime-diagnostics.json)               | Memory by kind, SSE operations, and retained generations.                           |
 | [05 — Auth and sessions](examples/dashboards/05-bff-auth-sessions.json)                   | Login, callback, refresh, authorization, and logout.                                |
 | [06 — Endpoint usage](examples/dashboards/06-bff-endpoint-traffic.json)                   | Calls per method and endpoint over a selected period.                               |
+| [07 — RED overview](examples/dashboards/07-bff-red-overview.json)                         | Completed-response rate, error share, and latency, with route rankings.             |
 
 Select one workload and ingestion path. The queries expect Prometheus exporter names and
 `otel_scope_name="dial-chat-api"`; adapt selectors if a collector renames them. Kubernetes labels
@@ -78,6 +79,10 @@ Dashboards 00–05 start with summaries and named sections:
 
 Missing samples remain missing. Percentage axes scale from zero, and tables and legends scroll
 inside their panels. Dashboard 00 shows scrape states as Up/Down and keeps trace setup collapsed.
+
+Dashboard 07 includes completed streams and all statuses; its in-flight card ignores Route.
+Summary cards and bar rankings use the selected range end. Quantiles above the last finite
+60-second bucket are omitted. Use 00 for separate transport classes and aborted outcomes.
 
 ### Count requests per endpoint
 
