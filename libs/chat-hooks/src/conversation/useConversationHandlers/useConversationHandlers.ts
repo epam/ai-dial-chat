@@ -21,7 +21,10 @@ import {
 import { useCallback, useState } from 'react';
 import { useAttachmentUpload } from '../useAttachmentUpload/useAttachmentUpload';
 import { getConversationPath } from '../useConversationStream/conversation-path';
-import type { ConversationStateAccessor } from '../useConversationStream/useConversationStream';
+import type {
+  ConversationStateAccessor,
+  StartStreamOptions,
+} from '../useConversationStream/useConversationStream';
 import { attachmentsToDtos } from './attachment-to-dto';
 import { createMessagePair } from './message-factory';
 import {
@@ -39,6 +42,7 @@ export type ConversationStreamStarter = (
   customContent?: MessageCustomContent,
   generationId?: string,
   mode?: SendCompletionDtoModeEnum,
+  options?: StartStreamOptions,
 ) => void;
 
 /** Parameters for {@link useConversationHandlers}. */

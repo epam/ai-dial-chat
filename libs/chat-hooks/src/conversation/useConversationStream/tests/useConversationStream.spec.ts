@@ -2539,4 +2539,249 @@ describe('useConversationStream', () => {
       );
     });
   });
+
+  describe('a conflict on a start that opted into resumeOnConflict', () => {
+    const CONVERSATION_ID = 'bucket/conv';
+    const GENERATION_ID = 'gen-reloaded';
+    const encoder = new TextEncoder();
+    const userMessage = {
+      role: MessageRole.User,
+      content: 'question',
+      timestamp: '2026-10-02T00:00:00Z',
+    };
+    const preStart = () => makeConversation({ messages: [userMessage] });
+    const withAssistant = (
+      assistant: Partial<Conversation['messages'][number]>,
+    ) =>
+      makeConversation({
+        messages: [
+          userMessage,
+          {
+            role: MessageRole.Assistant,
+            content: '',
+            timestamp: '2026-10-02T00:00:01Z',
+            ...assistant,
+          },
+        ],
+      });
+    const placeholder = () => withAssistant({});
+
+    const makeAttachStream = () => {
+      let controller!: ReadableStreamDefaultController<Uint8Array>;
+      const stream = new ReadableStream<Uint8Array>({
+        start(streamController) {
+          controller = streamController;
+        },
+      });
+      return {
+        stream,
+        emit: (event: unknown) =>
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+          ),
+      };
+    };
+
+    /** Auto-starts the reloaded turn, which the backend rejects with a conflict. */
+    const renderAndConflict = async ({
+      resumeOnConflict = true,
+      onStreamError,
+    }: {
+      resumeOnConflict?: boolean;
+      onStreamError?: (error: Error) => void;
+    } = {}) => {
+      const view = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: CONVERSATION_ID,
+          initialConversation: placeholder(),
+          onStreamError,
+        }),
+      );
+      await act(async () => {
+        view.result.current.stream.startStream(
+          CONVERSATION_ID,
+          'question',
+          1,
+          'gpt-4o',
+          undefined,
+          GENERATION_ID,
+          SendCompletionDtoModeEnum.ContinueLastUser,
+          { resumeOnConflict },
+        );
+      });
+      await act(async () => {
+        capturedOptions?.onError(new GenerationConflictError());
+      });
+      return view;
+    };
+
+    it('waits for the running generation to save its start, joins it, and ends on the saved answer', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const attach = makeAttachStream();
+      const onStreamError = vi.fn();
+      vi.mocked(transport.getConversation)
+        .mockResolvedValueOnce(preStart())
+        .mockResolvedValueOnce(placeholder())
+        .mockResolvedValueOnce(withAssistant({ content: 'Saved answer' }));
+      transport.attachToGeneration = vi.fn().mockResolvedValue(attach.stream);
+
+      const { result } = await renderAndConflict({ onStreamError });
+
+      expect(result.current.stream.isStreaming).toBe(true);
+      expect(result.current.stream.canStopStreaming).toBe(false);
+      expect(
+        result.current.conversation?.messages[1]?.streamErrorMessage,
+      ).toBeUndefined();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      await waitFor(() =>
+        expect(transport.attachToGeneration).toHaveBeenCalledWith(
+          'conv',
+          expect.any(AbortSignal),
+        ),
+      );
+
+      await act(async () => {
+        attach.emit({
+          type: 'snapshot',
+          message: { role: MessageRole.Assistant, content: 'Saved' },
+        });
+      });
+      await waitFor(() =>
+        expect(result.current.conversation?.messages[1]?.content).toBe('Saved'),
+      );
+      expect(result.current.stream.canStopStreaming).toBe(false);
+
+      await act(async () => {
+        attach.emit({ type: 'done' });
+      });
+      await waitFor(() =>
+        expect(result.current.stream.isStreaming).toBe(false),
+      );
+      expect(result.current.conversation?.messages).toHaveLength(2);
+      expect(result.current.conversation?.messages[1]).toMatchObject({
+        content: 'Saved answer',
+      });
+      expect(
+        result.current.conversation?.messages[1]?.streamErrorMessage,
+      ).toBeUndefined();
+      expect(transport.streamCompletion).toHaveBeenCalledOnce();
+      expect(onStreamError).toHaveBeenCalledOnce();
+      expect(onStreamError).toHaveBeenCalledWith(
+        expect.any(GenerationConflictError),
+      );
+    });
+
+    it('shows the saved answer when the running generation already finished', async () => {
+      vi.mocked(transport.getConversation).mockResolvedValue(
+        withAssistant({ content: 'Saved answer' }),
+      );
+
+      const { result } = await renderAndConflict();
+
+      await waitFor(() =>
+        expect(result.current.stream.isStreaming).toBe(false),
+      );
+      expect(result.current.conversation?.messages[1]).toMatchObject({
+        content: 'Saved answer',
+      });
+      expect(
+        result.current.conversation?.messages[1]?.streamErrorMessage,
+      ).toBeUndefined();
+      expect(transport.attachToGeneration).not.toHaveBeenCalled();
+      expect(transport.streamCompletion).toHaveBeenCalledOnce();
+    });
+
+    it('falls back to the conflict message when the start never lands', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.mocked(transport.getConversation).mockResolvedValue(preStart());
+
+      const { result } = await renderAndConflict();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(31_000);
+      });
+
+      await waitFor(() =>
+        expect(result.current.stream.isStreaming).toBe(false),
+      );
+      expect(transport.getConversation).toHaveBeenCalledTimes(6);
+      expect(result.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+        DEFAULT_GENERATION_CONFLICT_MESSAGE,
+      );
+      expect(result.current.stream.canStopStreaming).toBe(false);
+      expect(transport.streamCompletion).toHaveBeenCalledOnce();
+    });
+
+    it('falls back to the conflict message when the server cannot be reached', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.mocked(transport.getConversation).mockRejectedValue(
+        new TypeError('Failed to fetch'),
+      );
+
+      const { result } = await renderAndConflict();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(31_000);
+      });
+
+      await waitFor(() =>
+        expect(result.current.stream.isStreaming).toBe(false),
+      );
+      expect(result.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+        DEFAULT_GENERATION_CONFLICT_MESSAGE,
+      );
+    });
+
+    it('does not hand over a start a newer one on the same path replaced', async () => {
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: CONVERSATION_ID,
+          initialConversation: placeholder(),
+        }),
+      );
+      await act(async () => {
+        result.current.stream.startStream(
+          CONVERSATION_ID,
+          'question',
+          1,
+          'gpt-4o',
+          undefined,
+          GENERATION_ID,
+          SendCompletionDtoModeEnum.ContinueLastUser,
+          { resumeOnConflict: true },
+        );
+      });
+      const supersededOptions = capturedOptions;
+      await act(async () => {
+        result.current.stream.startStream(
+          CONVERSATION_ID,
+          'question',
+          1,
+          'gpt-4o',
+        );
+      });
+
+      await act(async () => {
+        supersededOptions?.onError(new GenerationConflictError());
+      });
+
+      expect(transport.getConversation).not.toHaveBeenCalled();
+      expect(result.current.stream.isStreaming).toBe(true);
+      expect(
+        result.current.conversation?.messages[1]?.streamErrorMessage,
+      ).toBeUndefined();
+    });
+
+    it('still shows the conflict at once for a start that did not opt in', async () => {
+      const { result } = await renderAndConflict({ resumeOnConflict: false });
+
+      expect(result.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+        DEFAULT_GENERATION_CONFLICT_MESSAGE,
+      );
+      expect(result.current.stream.isStreaming).toBe(false);
+      expect(transport.getConversation).not.toHaveBeenCalled();
+    });
+  });
 });

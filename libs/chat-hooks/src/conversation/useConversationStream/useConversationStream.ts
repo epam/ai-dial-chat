@@ -191,6 +191,18 @@ const resolveStreamErrorMessage = (
   return '';
 };
 
+/** Per-start options of {@link UseConversationStreamResult.startStream}. */
+export interface StartStreamOptions {
+  /**
+   * Treats a `GenerationConflictError` as "this turn is already being
+   * generated" — e.g. a page reloaded before that generation saved its start
+   * state — and joins the running generation instead of showing the conflict
+   * message, which remains the fallback. Only for a start that sends no new
+   * user text; a send the user typed must keep reporting the conflict.
+   */
+  resumeOnConflict?: boolean;
+}
+
 /** Return value of {@link useConversationStream}. */
 export interface UseConversationStreamResult {
   startStream: (
@@ -201,6 +213,7 @@ export interface UseConversationStreamResult {
     customContent?: MessageCustomContent,
     generationId?: string,
     mode?: SendCompletionDtoModeEnum,
+    options?: StartStreamOptions,
   ) => void;
   handleStop: () => void;
   resumeIfAwaitingGeneration: (
@@ -365,6 +378,7 @@ export const useConversationStream = ({
       customContent?: MessageCustomContent,
       generationId?: string,
       mode: SendCompletionDtoModeEnum = SendCompletionDtoModeEnum.Append,
+      options: StartStreamOptions = {},
     ) => {
       const genId = generationId ?? generateUUID();
       const conversationPath = getConversationPath(currentConversationId);
@@ -606,6 +620,14 @@ export const useConversationStream = ({
             void recoverInterruptedStream(error);
             return;
           }
+          if (
+            error instanceof GenerationConflictError &&
+            options.resumeOnConflict &&
+            !isSuperseded()
+          ) {
+            void recoverConflictedStart(error);
+            return;
+          }
           settleAsFailed(error);
         },
       };
@@ -686,6 +708,41 @@ export const useConversationStream = ({
           () => transport.getConversation(safeDecodeURI(currentConversationId)),
           isSuperseded,
         );
+        settleFromServerCopy(server, error, false);
+      };
+
+      /*
+       * Conflict handover for a start that opted into `resumeOnConflict`: the
+       * backend is already generating this turn — typically the page was
+       * reloaded before that generation saved its start state — so join it the
+       * way recovery does instead of showing the conflict. The rejected id has
+       * nothing to stop, and a server copy that still ends in this turn's user
+       * message is waited out on the recovery schedule.
+       */
+      const recoverConflictedStart = async (error: GenerationConflictError) => {
+        if (activeGenerationIdRef.current === genId) setStoppablePath(null);
+        resumingPathsRef.current.add(conversationPath);
+        const server = await fetchConversationForRecovery(
+          () => transport.getConversation(safeDecodeURI(currentConversationId)),
+          isSuperseded,
+          (conversation) =>
+            conversation.messages.length === messageIndex &&
+            conversation.messages.at(-1)?.role === MessageRole.User,
+        );
+        settleFromServerCopy(server, error, true);
+      };
+
+      /*
+       * Classifies a recovered server copy against this turn: still generating
+       * → rejoin through the resume flow; finished → show it; anything else →
+       * settle `error` the ordinary way. A conflict also joins a pending
+       * background message wherever it sits.
+       */
+      const settleFromServerCopy = (
+        server: Conversation | null,
+        error: Error,
+        joinsPendingBackground: boolean,
+      ) => {
         if (isSuperseded()) {
           releaseGeneration();
           return;
@@ -695,7 +752,11 @@ export const useConversationStream = ({
           server != null &&
           server.messages.length - 1 === messageIndex &&
           lastMessage?.role === MessageRole.Assistant;
-        if (!server || !isSameTurn) {
+        const hasPendingBackground =
+          joinsPendingBackground &&
+          server != null &&
+          findPendingBackgroundMessageIndex(server) !== -1;
+        if (!server || (!isSameTurn && !hasPendingBackground)) {
           resumingPathsRef.current.delete(conversationPath);
           settleAsFailed(error);
           return;
@@ -706,7 +767,8 @@ export const useConversationStream = ({
           currentBuffer?.generationId === genId ? currentBuffer : undefined;
         if (isAwaitingGenerationResume(server)) {
           resumeGeneration(currentConversationId, server, {
-            seedMessage: buffered?.message,
+            /* The local partial belongs to this turn only. */
+            seedMessage: isSameTurn ? buffered?.message : undefined,
             skipDedupe: true,
             onSettled: settleRecovered,
           });

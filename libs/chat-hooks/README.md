@@ -1046,7 +1046,31 @@ const ChatPage = ({
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
-**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event.
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout.
+
+`startStream(conversationId, userContent, messageIndex, model, customContent?, generationId?, mode?, options?)` takes an optional `StartStreamOptions` as its last argument. With `{ resumeOnConflict: true }`, a `GenerationConflictError` means "this turn is already being generated": typically the page was reloaded after a new conversation's first message, before the backend saved that generation's start state. The hook then joins the running generation instead of showing `generationConflictMessage`:
+
+- It re-fetches the conversation on the same schedule as an interrupted stream (below), and waits while the server copy still ends in this turn's user message.
+- If the server copy holds this turn's unresolved placeholder, the hook rejoins the generation through the attach/watch flow.
+- If the answer is already saved, the hook shows it.
+- Otherwise it falls back to the conflict message.
+
+`canStopStreaming` is `false` throughout, because the rejected `generationId` has nothing to stop. Pass the option only for a start that sends no new user text, such as continuing a conversation whose last message is the user's. A message the user just typed must keep reporting the conflict.
+
+```tsx
+import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
+
+startStream(
+  conversation.id,
+  lastUserMessage.content,
+  conversation.messages.length,
+  'gpt-4o',
+  undefined,
+  undefined,
+  SendCompletionDtoModeEnum.ContinueLastUser,
+  { resumeOnConflict: true },
+);
+```
 
 When the transport reports a `StreamInterruptedError` — the connection was lost or went silent, as a laptop sleep or phone lock mid-generation causes — the hook does not show an error right away, because the backend-owned generation usually keeps running. The path stays streaming and stoppable, and the partial answer stays on screen, while the hook re-fetches the conversation through `transport.getConversation` (retrying a rejected fetch after 1, 2, 4, 8 and 16 s, or as soon as the browser reports `online`). If the server copy still ends in this turn's unresolved placeholder, the hook rejoins the generation through the same attach/watch flow as `resumeIfAwaitingGeneration`; if the answer is already saved, it shows it; otherwise it settles with `streamErrorMessage: ''`, as for any transport error. `handleStop` keeps working throughout.
 

@@ -514,6 +514,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
               lastMsg.custom_content,
               generateUUID(),
               CompletionMode.ContinueLastUser,
+              /*
+               * A reload can land here before the backend saved this turn's
+               * start state while it still generates it; its 409 then means
+               * "join that generation", not "conflict".
+               */
+              { resumeOnConflict: true },
             );
           }
         } else {

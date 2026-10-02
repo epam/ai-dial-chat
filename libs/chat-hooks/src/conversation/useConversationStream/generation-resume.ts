@@ -119,13 +119,15 @@ const waitForRetry = (delayMs: number): Promise<void> =>
   });
 
 /**
- * Returns the conversation from `load`, retrying rejected attempts on the
+ * Returns the conversation from `load`, retrying rejected attempts — and
+ * results `isPending` flags as not yet settled — on the
  * {@link RECOVERY_REFETCH_DELAYS_MS} schedule; `null` once every attempt has
- * failed or `shouldStop` turns true between attempts.
+ * failed or stayed pending, or `shouldStop` turns true between attempts.
  */
 export const fetchConversationForRecovery = async (
   load: () => Promise<Conversation>,
   shouldStop: () => boolean,
+  isPending?: (conversation: Conversation) => boolean,
 ): Promise<Conversation | null> => {
   for (
     let attempt = 0;
@@ -134,11 +136,13 @@ export const fetchConversationForRecovery = async (
   ) {
     if (shouldStop()) return null;
     try {
-      return await load();
+      const conversation = await load();
+      if (!isPending?.(conversation)) return conversation;
     } catch {
-      if (attempt === RECOVERY_REFETCH_DELAYS_MS.length) return null;
-      await waitForRetry(RECOVERY_REFETCH_DELAYS_MS[attempt]);
+      /* Retried below, like a pending result. */
     }
+    if (attempt === RECOVERY_REFETCH_DELAYS_MS.length) return null;
+    await waitForRetry(RECOVERY_REFETCH_DELAYS_MS[attempt]);
   }
   return null;
 };
@@ -408,6 +412,26 @@ export const createResumeIfAwaitingGeneration = ({
       } catch {
         await finalCheck();
         return;
+      }
+
+      /*
+       * The watch only reports updates made after it subscribed, so a
+       * generation that finished between the caller's last read and this
+       * subscription would otherwise wait out the whole timeout. Events
+       * arriving meanwhile stay buffered in the stream.
+       */
+      try {
+        const current = await transport.getConversation(
+          safeDecodeURI(currentConversationId),
+        );
+        if (!isAwaitingGenerationResume(current)) {
+          watchController.abort();
+          void stream.cancel().catch(() => undefined);
+          finish(current);
+          return;
+        }
+      } catch {
+        // Keep watching: a later update or the final check resolves it.
       }
 
       let resolved = false;
