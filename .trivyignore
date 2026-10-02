@@ -3,6 +3,18 @@
 CVE-2026-13149 exp:2026-12-31
 CVE-2026-14257 exp:2026-12-31
 CVE-2026-69152 exp:2026-12-31
+# CVE-2026-102276 and CVE-2026-102278 are reported against the copy of
+# brace-expansion bundled with npm in the node:24-alpine base image
+# (/usr/local/lib/node_modules/npm), which the package.json overrides can't reach.
+
+CVE-2026-102276 exp:2026-12-31
+CVE-2026-102278 exp:2026-12-31
+
+# undici
+# Reported against the copy of undici bundled with npm in the node:24-alpine
+# base image; the project's own dependency is already pinned to 7.29.1.
+
+CVE-2026-19534 exp:2026-12-31
 
 # ip-address
 
@@ -13,10 +25,6 @@ CVE-2026-69192 exp:2026-12-31
 CVE-2026-59873 exp:2026-12-31
 CVE-2026-59874 exp:2026-12-31
 CVE-2026-73566 exp:2026-12-31
-
-# undici
-
-CVE-2026-12151 exp:2026-12-31
 
 # postcss
 
