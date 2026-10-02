@@ -39,12 +39,12 @@ export class RateService {
     );
 
     try {
-      // DIAL Core's RateRequest only accepts { responseId, rate: boolean } — no
-      // modelId/conversationId/comment. modelId already selects the URL path segment
-      // above and conversationId already drives the X-CONVERSATION-ID header below.
+      /* modelId selects the URL path and conversationId is sent in the header.
+       * Preserve the optional comment in the body for DIAL Core analytics. */
       const body = {
         responseId: dto.responseId,
         rate: dto.rate === MessageRating.Like,
+        comment: dto.comment ?? undefined,
       };
 
       const response = await this.dialClient.fetchCore(url, {

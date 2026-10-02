@@ -13,7 +13,9 @@ Rating assistant messages: the BFF endpoint, the optimistic toggle, the negative
 
 `modelId` is `conversation.model.id` as set at conversation creation, which for a custom app or quick app is a multi-segment DIAL Core resource path (e.g. `applications/<bucket>/My%20App__1.0`) rather than a bare model id (e.g. `gpt-4o`). The BFF SHALL interpolate `modelId` into the outbound URL path **raw**, with no `encodeURIComponent` (or equivalent) applied to the whole string — matching how `@epam/ai-dial-typescript-sdk`'s own generated URL builders (e.g. `sendChatCompletionRequestUrl`) interpolate `deployment_name`. Encoding the entire string would turn a multi-segment id's literal `/` separators into `%2F` and 404 against DIAL Core, breaking rating for any conversation created against a custom app while leaving bare model ids (which contain no such characters) unaffected. `RateMessageDto.modelId` SHALL be validated with `@MaxLength(256)` and `@Matches(DEPLOYMENT_ID_PATTERN)` (the same allowlist regex used for `deploymentId` elsewhere, from `apps/chat-api/src/common/validators/deployment-id.pattern.ts`) so that a value flowing unencoded into a URL path stays constrained to safe characters.
 
-The outbound JSON body sent to DIAL Core SHALL conform exactly to DIAL Core's own `RateRequest` schema — `{ responseId, rate: boolean }` — and SHALL NOT include `conversationId` or `modelId` as body fields (DIAL Core has no such properties on `RateRequest`; `modelId` selects the URL path segment and `conversationId` drives the `X-CONVERSATION-ID` header only). The BFF SHALL map the browser-facing `rate` value to DIAL Core's boolean as follows: `1` (like) maps to `rate: true`; `-1` (dislike) and `null` (clear) both map to `rate: false`, since DIAL Core has no third state to represent "cleared" separately from "disliked".
+The outbound JSON body sent to DIAL Core SHALL contain `{ responseId, rate: boolean }` and SHALL additionally include `comment` whenever the validated input contains a non-null comment. The BFF SHALL preserve the comment string exactly, including Unicode, whitespace, line breaks, and an explicitly empty string; absent or null comments SHALL be omitted from the outbound JSON. The body SHALL NOT include `conversationId` or `modelId`: `modelId` selects the URL path and `conversationId` drives the `X-CONVERSATION-ID` header. The BFF SHALL map the browser-facing `rate` value to DIAL Core's boolean as follows: `1` (like) maps to `rate: true`; `-1` (dislike) and `null` (clear) both map to `rate: false`, since DIAL Core has no third state to represent "cleared" separately from "disliked".
+
+The BFF SHALL NOT discard `comment` because it is absent from DIAL Core's published `RateRequest` schema, or gate forwarding on the deployment's `supportCommentInRateResponse` feature. The published schema omits a field that Core explicitly handles. In Core commit `db16caa4`, when no `rateEndpoint` is configured, the original request body is passed to the analytics log store. When a `rateEndpoint` is configured, Core removes `comment` unless `supportCommentInRateResponse` is `true`, before forwarding the body and recording it in analytics. Restoring BFF forwarding therefore preserves the comment up to Core; its downstream retention remains Core's responsibility. This behavior is implemented in Core's `DeploymentFeatureController.handleRequestBody` and `HandleRateResponseFn.apply`, with forwarding/removal coverage in `FeaturesApiTest.testRateEndpointModel` and `testRateEndpointApplication`.
 
 The generated `RateApi.rateMessage` method, authentication, authorization, rate limit, and cache behavior SHALL remain unchanged. This change introduces no UI, i18n, RTL, accessibility, feature-flag, or telemetry event changes.
 
@@ -46,6 +48,24 @@ The generated `RateApi.rateMessage` method, authentication, authorization, rate 
 
 - **WHEN** an authenticated user sends `POST /api/v1/rate` with `{ conversationId, responseId, modelId, rate: null }`
 - **THEN** the endpoint returns HTTP 204, and the BFF calls `POST /v1/{modelId}/rate` on DIAL Core with JSON body `{ responseId, rate: false }`
+
+#### Scenario: Rating comment reaches DIAL Core unchanged
+
+- **WHEN** an authenticated user sends `POST /api/v1/rate` with `{ conversationId, responseId, modelId, rate: -1, comment: "Too short" }`
+- **THEN** the BFF calls `POST /v1/{modelId}/rate` with JSON body `{ responseId, rate: false, comment: "Too short" }`
+- **AND** the endpoint returns HTTP 204 when Core succeeds
+- **AND** the same comment-preservation rule applies to `rate: 1` and `rate: null`, including comments containing Unicode, whitespace, or line breaks
+- **AND** the BFF forwards the comment regardless of the deployment's `supportCommentInRateResponse` feature, leaving downstream filtering to Core
+
+#### Scenario: Explicitly empty comment is preserved
+
+- **WHEN** a valid rating request contains `comment: ""`
+- **THEN** the outbound JSON includes `comment: ""`
+
+#### Scenario: Absent or null comment is omitted
+
+- **WHEN** a valid rating request omits `comment` or supplies `comment: null`
+- **THEN** the outbound JSON contains only `responseId` and the mapped boolean `rate`
 
 #### Scenario: Missing required field returns 400
 
