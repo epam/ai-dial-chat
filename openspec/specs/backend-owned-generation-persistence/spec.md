@@ -451,6 +451,12 @@ No endpoint, generated-client, authorization, feature-flag, metric, or analytics
 - **WHEN** the user retries a failed terminal read and the GET returns the completed answer
 - **THEN** server-enriched data replaces the buffered answer and the reload notification disappears without a completion or save request
 
+#### Scenario: Navigation restores a stale conversation snapshot
+
+- **WHEN** a terminal read fails for an initiating or attached stream and the host later loads a stale user-only snapshot of that conversation
+- **THEN** the hook restores the complete buffered assistant message and retains the reload notification without restarting generation
+- **AND** the hook discards the buffer and clears the notification only when the loaded conversation reaches the buffered message index, has an assistant message at that index, and is not awaiting generation resume
+
 #### Scenario: Retry fails again or is clicked twice
 
 - **WHEN** a retry is pending or rejects again

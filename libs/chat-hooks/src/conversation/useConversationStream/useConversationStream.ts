@@ -301,15 +301,8 @@ export const useConversationStream = ({
 
   useEffect(() => {
     mountedRef.current = true;
-    const buffers = bufferedGenerationsRef.current;
     return () => {
       mountedRef.current = false;
-      /* Invalidate retained read retries, but keep active generation ownership:
-       * StrictMode replays this cleanup after the host auto-starts a stream. */
-      for (const path of reloadFailuresRef.current.keys()) {
-        buffers.delete(path);
-      }
-      reloadFailuresRef.current.clear();
     };
   }, []);
 
@@ -916,6 +909,10 @@ export const useConversationStream = ({
       const reloadFailure = reloadFailuresRef.current.get(conversationPath);
       if (
         reloadFailure?.isCurrent() &&
+        buffered &&
+        conversation.messages.length - 1 >= buffered.messageIndex &&
+        conversation.messages[buffered.messageIndex].role ===
+          MessageRole.Assistant &&
         !isAwaitingGenerationResume(conversation)
       ) {
         clearReloadError(conversationPath);

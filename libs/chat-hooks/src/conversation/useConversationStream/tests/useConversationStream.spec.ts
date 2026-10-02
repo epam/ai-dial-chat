@@ -838,12 +838,6 @@ describe('useConversationStream', () => {
             await retry();
           });
           expect(transport.getConversation).toHaveBeenCalledTimes(2);
-          expect(
-            result.current.stream.restoreBufferedGeneration(
-              'bucket/conv',
-              initial,
-            ),
-          ).toEqual(initial);
         });
 
         if (!attached) {
@@ -1029,6 +1023,45 @@ describe('useConversationStream', () => {
           expect(result.current.conversation).toBe(displayed);
           expect(result.current.stream.hasConversationReloadError).toBe(false);
         });
+
+        it.each([false, true])(
+          'restores the answer and keeps the read error when returning to a stale snapshot (hasNonAssistant=%s)',
+          async (hasNonAssistant) => {
+            const { result, rerender, initial } = await startFailedRead();
+            const stale = makeConversation({
+              messages: hasNonAssistant
+                ? [initial.messages[0], initial.messages[0]]
+                : [initial.messages[0]],
+            });
+            rerender({ conversationId: 'bucket/other' });
+            expect(result.current.stream.hasConversationReloadError).toBe(
+              false,
+            );
+            rerender({ conversationId: 'bucket/conv' });
+            let restored!: Conversation;
+            act(() => {
+              restored = result.current.stream.restoreBufferedGeneration(
+                'bucket/conv',
+                stale,
+              );
+            });
+            expect(restored.messages[1]).toMatchObject({
+              role: MessageRole.Assistant,
+              content: 'Visible answer',
+              custom_content: {
+                stages: [{ name: 'Visible step' }],
+                state: { result: 'preserve me' },
+              },
+            });
+            expect(restored.messages[1].streamErrorMessage).toBeUndefined();
+            expect(result.current.stream.hasConversationReloadError).toBe(true);
+            expect(result.current.stream.isStreaming).toBe(false);
+            expect(transport.getConversation).toHaveBeenCalledOnce();
+            expect(transport.streamCompletion).toHaveBeenCalledTimes(
+              attached ? 0 : 1,
+            );
+          },
+        );
 
         it('accepts a saved answer when the conversation is loaded again', async () => {
           const { result, initial } = await startFailedRead();

@@ -1075,8 +1075,11 @@ the existing empty-placeholder warning, or resume pending background work on
 the initiating path. A newer generation invalidates the previous failure, and
 navigation prevents a late read from replacing another displayed conversation.
 `restoreBufferedGeneration` accepts a resolved server answer after a failed
-terminal read when the host loads the conversation again. These failure and
-retry states are transient and are discarded on unmount.
+terminal read when the host loads the conversation again, provided the loaded
+conversation reaches the buffered turn, has an assistant message at that index,
+and is not awaiting generation resume. A stale user-only snapshot restores the
+buffered answer and keeps the reload notification. These failure and retry
+states are transient and are discarded on unmount.
 
 `createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
 `GenerationPersistenceError`, even after an upstream `[DONE]` frame. The error
