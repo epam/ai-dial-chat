@@ -14,6 +14,7 @@ import { Page } from '@playwright/test';
 export class FileManagerModal extends BaseFileManagerModal {
   private attachButton!: Button;
   private selectButton!: Button;
+  private selectFilesButton!: Button;
   private _header!: FileManagerModalHeader;
 
   constructor(page: Page) {
@@ -42,6 +43,20 @@ export class FileManagerModal extends BaseFileManagerModal {
       );
     }
     return this.selectButton;
+  }
+
+  /**
+   * Gets the "Select files" button (specific to Quick app 2.0 FileManagerModal).
+   */
+  getSelectFilesButton(): Button {
+    if (!this.selectFilesButton) {
+      this.selectFilesButton = new Button(
+        this.page,
+        'Select files',
+        this.rootLocator,
+      );
+    }
+    return this.selectFilesButton;
   }
 
   getHeader(): FileManagerModalHeader {

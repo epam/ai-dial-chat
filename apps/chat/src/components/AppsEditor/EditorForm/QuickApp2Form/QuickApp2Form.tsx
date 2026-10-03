@@ -350,6 +350,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             control={control}
             render={({ field }) => (
               <ToggleSwitchField
+                id="process-files"
                 isOn={field.value}
                 handleSwitch={() => field.onChange(!field.value)}
                 switchOnText="ON"
