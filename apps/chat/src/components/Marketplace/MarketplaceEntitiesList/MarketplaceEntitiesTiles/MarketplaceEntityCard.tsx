@@ -51,6 +51,7 @@ const CardFooter = <T extends MarketplaceEntity>({
   return (
     <>
       <EntityMarkdownDescription
+        isInlinePreview
         className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden"
         data-qa="entity-description"
       >
@@ -186,7 +187,10 @@ export const MarketplaceEntityCard = memo(
                 </div>
               </div>
               <div data-qa="entity-description" className="hidden xl:block">
-                <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+                <EntityMarkdownDescription
+                  isInlinePreview
+                  className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2"
+                >
                   {getModelShortDescription(entity, locale)}
                 </EntityMarkdownDescription>
               </div>
