@@ -33,7 +33,7 @@ export const TopicsList = ({
           <MarketplaceEntityTopic
             key={item.topic}
             topic={item.topic}
-            className="max-w-full truncate"
+            maxWidth={TOPIC_MAX_WIDTH}
             hideTooltip
           />
         ))}
