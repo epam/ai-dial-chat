@@ -63,6 +63,26 @@ Here `scheduledTasksApi` is a configured `ScheduledTasksApi` instance.
 Applications use these methods through their configured app-level API adapter;
 feature libraries do not construct this client.
 
+### Custom Core API operations
+
+`customApiApi.getCustomApiOperationRaw({ id })` and the normal
+`customApiApi.getCustomApiOperation({ id })` call the disabled-by-default
+`GET /api/v1/custom-api/:operationId` bridge (see
+`apps/chat-api/README.md#custom-core-api-operations`). The request contract is
+intentionally just the path ID — there is no query or body parameter, because
+v1 supports neither parameterized calls nor writes.
+
+`CustomApiResponseDto.data` is documented as a free-form object
+(`{ [key: string]: unknown }`, since OpenAPI has no "any JSON value"
+primitive) but the real runtime value may just as well be an array, string,
+number, boolean, or null — the operation is opaque to this generated client by
+design. **Do not treat `data`'s generated type as the real shape.** The app
+adapter (`apps/chat/src/server-api/custom-api.api.ts`) decodes the whole
+envelope as `unknown` using `getCustomApiOperationRaw` and the response's own
+`.raw.json()`, rather than trusting `CustomApiResponseDto`'s generated typing;
+follow that pattern rather than calling the normal `getCustomApiOperation`
+method directly when you need the true unknown boundary.
+
 ## Notes
 
 - This library has no hand-authored source and no peer dependencies beyond `tslib`.

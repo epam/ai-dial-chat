@@ -1,5 +1,28 @@
 # Chat Application
 
+## Custom Core API operations adapter
+
+`apps/chat/src/server-api/custom-api.api.ts` exports `callCustomApiOperation(id, signal?)`,
+a thin adapter over the generated `customApiApi.getCustomApiOperationRaw` (see
+`libs/chat-api-client/README.md#custom-core-api-operations`) for the
+deployment-configured, disabled-by-default BFF bridge documented in
+`apps/chat-api/README.md#custom-core-api-operations`. It decodes the response
+envelope's `data` field as `unknown` by reading `.raw.json()` directly, rather
+than trusting the generated client's `{ [key: string]: unknown }` typing,
+because the real value may be any JSON value — array, object, string, number,
+boolean, or null.
+
+This parent change ships no UI, no React state, and no startup request for
+this adapter — it exists so a future client-specific change can call
+`callCustomApiOperation` and add its own domain validation, presentation,
+loading/error handling, and tests. `signal` supports cancellation the same way
+other adapters in this folder do; there is no retry and no cache (every call
+reaches the BFF, which itself applies no cache). The BFF accepts no query or
+request body for this operation in v1 — parameterized calls and writes are a
+separate, not-yet-built contract extension. Local BFF concurrency bounds
+(32 total / 4 per caller in-flight) are independent of whatever business rate
+limit Core's own configured Route enforces; see the BFF README for both.
+
 ## Manual scheduled-task runs
 
 The feature-gated task detail page can start the saved task definition with

@@ -280,6 +280,7 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `MAX_GENERATION_DURATION_MS`            | `1800000`                          | Milliseconds from registry admission before an entry still in `active` receives a `max_duration` cancellation request (default 30 min). The key remains owned until its worker settles; this is not a deadline for preflight, persistence, or an upstream call that does not settle after abort. Independent of the originating client connection.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `GENERATION_FINALIZE_TIMEOUT_MS`        | `60000`                            | Milliseconds from entering terminal finalization before existing attachment listeners are notified and removed and timers cleared. On expiry, the entry becomes `settling` and retains its registry key, assembled snapshot, pending write, and generation-gauge contribution. The write is not cancelled and its worker may remain pending; same-process admission stays blocked until settlement or restart. This does not bound attachments created after the timeout. See the [lifecycle limits](../../docs/observability.md#process-memory-and-outstanding-work).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `CUSTOM_CLIENT_VARIABLES`               | `{}`                               | Public client-owned settings as a JSON object, exposed unchanged under `config.customVariables` in client-config. Arbitrary nested JSON values are supported; the BFF does not interpret keys or merge them into built-in config or feature flags. Unset, blank, malformed JSON and non-object roots fall back to `{}`. All allowed clients receive the same object, including before authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `CUSTOM_CORE_API_CONFIG`                | — (disabled)                       | Server-only allowlist of exact GET Core paths exposed through `GET /api/v1/custom-api/:operationId`. Unset, empty, or whitespace-only disables the bridge entirely. See [Custom Core API operations](#custom-core-api-operations). |
 | `DEFAULT_DEPLOYMENT_PINNED`             | `false`                            | Client-visible feature flag. When `true`, `DEFAULT_DEPLOYMENT` takes priority over the user's persisted deployment for new conversations and is pinned to the top of the picker. When `false`, the existing user-preference precedence and alphabetical ordering remain unchanged. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `ALLOW_VISUALIZER_SEND_MESSAGES`        | `false`                            | Client-visible feature flag, exposed as `features.visualizerSendMessages`. When `true`, a custom or application visualizer iframe may post `SEND_MESSAGE` with `{ message: string }`, and its text is sent as a user message in the conversation that renders it. The message is dropped while a response streams, in read-only conversations, when an overlay host enables `disabled-send`, and from a canvas opened in another conversation. Enable it only for visualizers you trust: an opted-in visualizer can send messages as the user. Only `true`, `1` and `yes` (case-insensitive) enable it; any other value, including an empty one, leaves it off. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `UI_EVENT`                              | —                                  | Start-page celebration module ID, exposed as `config.activeEventId` in client-config. Use `halloween` or `new-year`; unset or `none` disables celebrations. IDs must use lowercase kebab-case; unsupported IDs are returned unchanged and safely ignored by the frontend, so new event modules need no backend enum change. Modules replace the existing navigation/header icon and supply decorations, random click scenes, notifications, and optional secret chat phrases on `/` only. Effects clear on navigation, persist no data, play no sound, and respect reduced motion. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -660,6 +661,7 @@ maps each backend domain to its base path.
 | `offline-credentials` | `offline-credentials/` | Offline credential consent flow                                 |
 | `external-services`   | `external-services/`   | External service registry and sign-in state                     |
 | `apps`                | `app/`                 | Root application controller                                     |
+| `custom-api`          | `custom-api/`          | Deployment-configured custom Core API bridge (disabled by default) |
 
 `libs/chat-api-client` is generated from this surface. After changing any
 controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler
@@ -681,6 +683,146 @@ upstream balancer when all upstream states have status 429. Check Core logs for
 complete recording after Stop. Raising a DIAL token limit does not increase the
 provider's request quota. The configured deployment can be valid even when some
 recognition requests receive this response.
+
+### Custom Core API operations
+
+`GET /api/v1/custom-api/:operationId` is a disabled-by-default, generic bridge
+to a small, explicitly allowlisted set of exact GET paths under `DIAL_CORE_URL`
+— for example a global Route configured in Admin's Entities → Routes, such as
+`/data-products`. It exists so a client application can reach a
+deployment-specific Core catalog endpoint without adding its own business
+controller, DTOs, or public BFF release to this repository. See
+`openspec/changes/add-configured-core-api-operations/design.md` for the full
+rationale and trust-boundary analysis; this section is the operator-facing
+summary.
+
+**Who owns what:**
+
+- **Admin** owns the Route's path/method, `rewritePath`, upstream or static
+  response, and **role policy** (`userRoles`). Admin's own `/api/v1/routes`
+  management API is never called by the BFF — the BFF only ever dispatches the
+  one runtime path a Route exposes, the same way any Core client would.
+- **Core** matches the request against its configured routes in priority
+  order, enforces the route's roles (a `null` `userRoles` permits any
+  authenticated role; an empty set denies all; a non-empty set requires an
+  intersection — see `RoleBasedEntity` in `ai-dial-core`), applies its own
+  business rate limiting, and either returns a static JSON body or proxies to
+  the configured upstream. Built-in Core controllers are matched before the
+  global-route fallback, so the BFF cannot prove from a path string alone
+  which controller actually serves it.
+- **The upstream service behind a Route** (when not static) owns safe,
+  per-user response contents. A global Route checks **roles**, not per-object
+  or per-tenant permissions — if a response must be filtered per caller, that
+  authorization belongs in the upstream service, not in this BFF bridge.
+- **This BFF** owns exactly three things: (1) the exact allowlist of operation
+  IDs it will dispatch at all (`CUSTOM_CORE_API_CONFIG`), (2) translating the
+  caller's own session into the Core bearer token for that one call, and (3)
+  bounded, sanitized transport (timeouts, byte/depth limits, redirect
+  rejection, generic error mapping). It adds no second role check, no business
+  response schema, and no field filtering — Core's role check and the
+  upstream's own response safety are the only authorization layers.
+- **The calling client application** owns the operation ID it chooses to call,
+  and all domain decoding/validation/presentation of the opaque JSON it gets
+  back. A field already present in the JSON response has already reached the
+  browser; frontend validation is a correctness aid, not a confidentiality
+  boundary.
+
+**Enabling it — `CUSTOM_CORE_API_CONFIG`:**
+
+The repository and `.env.template` ship this setting blank, so the bridge is
+inert out of the box: every request to `/api/v1/custom-api/:id` returns 404
+with no Core dispatch, and startup performs no network or file read related to
+this feature. To enable one or more operations, set the environment variable
+to a JSON object and restart the BFF (no configuration file or volume mount is
+read):
+
+```dotenv
+CUSTOM_CORE_API_CONFIG='{"version":1,"operations":[{"id":"data-products","method":"GET","corePath":"/data-products"}]}'
+```
+
+The outer single quotes above are `.env` file quoting, not part of the JSON
+value — a raw deployment environment variable (Kubernetes `env`, a platform's
+environment-variable UI, etc.) should be set to the JSON text only, without
+those quotes:
+
+```json
+{
+  "version": 1,
+  "operations": [
+    { "id": "data-products", "method": "GET", "corePath": "/data-products" }
+  ]
+}
+```
+
+Rules enforced at startup, failing closed (the process does not boot on an
+invalid value, and the invalid value itself is never logged):
+
+- `version` must equal `1`; `operations` must be an array of at most 64
+  entries (an empty array is valid and equivalent to leaving the variable
+  unset).
+- The raw environment value must be at most 16 KiB measured in UTF-8 bytes,
+  checked before parsing.
+- Each entry has only `id`, `method`, `corePath`, and optional `timeoutMs` /
+  `maxResponseBytes` — no `access`, `query`, or `responseSchema` field exists
+  in this contract, and an unknown key fails startup.
+- `method` must be `"GET"`. `id` must match `^[a-z][a-z0-9-]{0,63}$` and be
+  unique within the registry. `corePath` must be one leading slash followed by
+  nonempty, slash-separated ASCII letter/digit/underscore/hyphen segments —
+  dots, percent-encoding, backslashes, doubled/trailing slashes, a full URL,
+  or a query/fragment all fail startup.
+- `timeoutMs` and `maxResponseBytes`, when set, may only **lower** the hard
+  ceilings of 10,000 ms and 1,048,576 decoded bytes, and must be positive
+  integers.
+
+The parsed registry is immutable for the life of the process — editing the
+environment variable has no effect until the BFF is restarted. Disable the
+bridge again by unsetting the variable (or setting it blank/whitespace) and
+restarting; this does not touch the Core Route itself, which remains active
+for any other client configured to reach it.
+
+**Request contract:** `GET /api/v1/custom-api/:operationId` only. No query
+parameters and no request body are accepted (400 before any Core dispatch).
+Every other verb, including `HEAD`, returns 405 without dispatching — HEAD is
+intentionally not served by implicit GET fallback. A syntactically valid but
+unconfigured/disabled ID returns 404 after normal session authentication.
+`corePath` resolves directly against `DIAL_CORE_URL` with no inserted `/v1`,
+`/openai`, `/api`, or api-version segment, preserving an intentional base path
+prefix if `DIAL_CORE_URL` itself has one (so a base of
+`https://core.example.com/dial` plus `corePath: "/data-products"` dispatches
+to exactly `https://core.example.com/dial/data-products`).
+
+**Response contract:** a successful call returns
+`200 { "data": <opaque JSON value> }` with `Content-Type: application/json`
+and `Cache-Control: private, no-store`. Both an upstream JSON response
+(`application/json` or `application/*+json`, parameters allowed) and an Admin
+**static** Response — which may omit `Content-Type` entirely — are accepted;
+any other explicit MIME type (HTML, plain text, etc.) is rejected. Upstream
+400/401/403/404/409/422/429 pass through with a generic BFF message (never the
+raw upstream body); redirects, unsupported statuses, upstream 5xx, and
+invalid/oversized/too-deep JSON become a sanitized 502; a network failure
+becomes 503; this BFF's own deadline expiry becomes 504. `Set-Cookie` and
+`Location` from the upstream are never forwarded; a legitimate BFF session
+refresh cookie issued during the same request is preserved.
+
+**Concurrency and observability:** at most 32 in-flight custom-API calls per
+BFF process, and at most 4 per verified provider/subject, with no wait queue —
+excess calls return 429 immediately. This bounds local memory only; it is not
+a cross-replica quota, and it does not replace Core's own business rate
+limiting (which remains fully in effect, and may be unconfigured — size
+ingress/replica-level controls accordingly for a replicated deployment).
+Telemetry records only the configured operation ID (an unregistered/rejected
+ID is recorded under a constant `unknown` label, never the raw value), a
+bounded result category, duration, and decoded byte count — never tokens,
+cookies, bodies, configuration contents, or full URLs.
+
+**Verifying activation:** saving a Route in Admin does not, by itself, prove
+it is live on the Core instance this BFF talks to — Admin's config export is
+scheduled independently (`ConfigExportScheduler`), and `GET
+/api/v1/custom-api/:id` returning 502/404 from Core is expected until export
+and Core's own reload have both completed. Confirm the Route is actually
+active in Core (and review its roles, `rewritePath` setting, and any path
+overlap with a higher-priority Route or built-in controller) before assuming
+this BFF-side configuration alone is sufficient.
 
 ## Project Structure
 

@@ -18,6 +18,10 @@ export const createOpenApiConfig = (port: string | number) =>
       'deployments',
       'List deployments available to the authenticated user',
     )
+    .addTag(
+      'custom-api',
+      'Deployment-configured custom Core API operations (CUSTOM_CORE_API_CONFIG)',
+    )
     .addCookieAuth('session')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
