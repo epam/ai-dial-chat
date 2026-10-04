@@ -1342,8 +1342,11 @@ describe('ConversationMessageItem — user message Copy action', () => {
       />,
     );
     expect(
-      (screen.getByRole('button', { name: 'Copy message' }) as HTMLButtonElement)
-        .disabled,
+      (
+        screen.getByRole('button', {
+          name: 'Copy message',
+        }) as HTMLButtonElement
+      ).disabled,
     ).toBe(false);
   });
 
@@ -1361,9 +1364,7 @@ describe('ConversationMessageItem — user message Copy action', () => {
         onDeleteMessage={vi.fn()}
       />,
     );
-    expect(
-      screen.queryByRole('button', { name: 'Edit message' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
   });
 

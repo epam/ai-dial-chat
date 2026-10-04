@@ -60,9 +60,7 @@ describe('MessageActions', () => {
 
     it('does not render Copy message when onCopy is not provided', () => {
       render(<MessageActions onEdit={vi.fn()} onDelete={vi.fn()} />);
-      expect(
-        screen.queryByRole('button', { name: 'Copy message' }),
-      ).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Copy message' })).toBeNull();
     });
 
     it('renders Copy message before Edit and Delete', () => {
