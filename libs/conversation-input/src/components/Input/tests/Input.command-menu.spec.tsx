@@ -233,3 +233,34 @@ describe('Input — command menu keyboard navigation', () => {
     expect(onSend).toHaveBeenCalledWith('previous message', []);
   });
 });
+
+describe('Input — selection highlight while a /query is typed', () => {
+  /*
+   * Issue #9231: an open `/query` puts the textarea in mirror mode (its own
+   * text and `::selection` are invisible), so the replacement highlight must
+   * be drawn even though no mention is tracked yet. jsdom does no layout, so
+   * `Range.getClientRects()` is stubbed to report one selected line.
+   */
+  it('draws the replacement selection highlight over a selected /query', () => {
+    const originalGetClientRects = Range.prototype.getClientRects;
+    Range.prototype.getClientRects = () =>
+      [new DOMRect(0, 0, 40, 20)] as unknown as DOMRectList;
+    try {
+      const { textarea } = renderWithMenu();
+      openMenu(textarea, 'al');
+
+      /* React's `onSelect` polyfill fires on keyup for the focused element, not on the native `select` event. */
+      textarea.focus();
+      textarea.setSelectionRange(0, textarea.value.length);
+      fireEvent.keyUp(textarea, { key: 'a', ctrlKey: true });
+
+      const highlight = document.querySelector<HTMLElement>(
+        '.bg-control-accent-alpha-active',
+      );
+      expect(highlight).toBeTruthy();
+      expect(highlight?.style.width).toBe('40px');
+    } finally {
+      Range.prototype.getClientRects = originalGetClientRects;
+    }
+  });
+});
