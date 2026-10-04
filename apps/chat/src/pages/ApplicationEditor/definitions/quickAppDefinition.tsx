@@ -22,6 +22,7 @@ import {
   defineApplicationEditor,
   resolveSchemaNotificationTarget,
 } from '../../../utils/application-editor';
+import QuickAppPreview from '../setup/QuickAppPreview';
 import QuickAppSetup from '../setup/QuickAppSetup';
 import {
   SCHEMA_APP_EMPTY_METADATA,
@@ -78,7 +79,6 @@ export const quickAppDefinition =
       savingOverlay: AppsEditorI18nKeys.SavingOverlayLabel,
       loadingOverlay: AppsEditorI18nKeys.SettingsStepLoadingLabel,
       preview: BasicI18nKeys.Preview,
-      exitPreview: AppsEditorI18nKeys.ExitPreviewButton,
     },
     getTitle: getSchemaAppTitle,
     metadataValidation: {
@@ -90,5 +90,6 @@ export const quickAppDefinition =
     defaultSetup: EMPTY_SETUP,
     validateSetup: () => ({}),
     Setup: QuickAppSetup,
+    Preview: QuickAppPreview,
     create,
   });

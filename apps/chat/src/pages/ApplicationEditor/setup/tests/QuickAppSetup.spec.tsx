@@ -36,9 +36,6 @@ vi.mock('../AppEditorIframe', () => ({
     return <div>embedded-editor</div>;
   }),
 }));
-vi.mock('../AppPreviewChat', () => ({
-  default: () => <div>preview-chat</div>,
-}));
 vi.mock('../../../../server-api/applications', () => ({
   updateApplication: vi.fn(),
 }));
@@ -63,6 +60,7 @@ const METADATA: DeploymentCreationFormValues = {
 const mockRefetchDeployments = vi.fn();
 const mockOnReadyChange = vi.fn();
 const mockOnSubmit = vi.fn();
+const mockOnPreviewReset = vi.fn();
 
 const mountSetup = ({
   appId,
@@ -85,7 +83,7 @@ const mountSetup = ({
         isEditMode={Boolean(appId)}
         appId={appId}
         metadata={METADATA}
-        isPreviewing={false}
+        onPreviewReset={mockOnPreviewReset}
         onSubmit={mockOnSubmit}
         isSubmitting={isSubmitting}
         onReadyChange={mockOnReadyChange}
@@ -162,6 +160,65 @@ describe('QuickAppSetup', () => {
     act(() => getIframeProps()?.onReadyChange?.(true));
 
     expect(mockOnReadyChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('renders no preview chat inside the Setup section', () => {
+    mountSetup({ appId: 'app' });
+
+    expect(
+      screen.queryByRole('region', {
+        name: AppsEditorI18nKeys.PreviewChatAriaLabel,
+      }),
+    ).toBeNull();
+  });
+
+  it.each([
+    ['save', (handle: ApplicationSetupHandle) => handle.save(METADATA)],
+    [
+      'startPreview',
+      (handle: ApplicationSetupHandle) => handle.startPreview?.(METADATA),
+    ],
+  ])('requests a preview reset from %s only when the save changed the configuration', async (_name, run) => {
+    const handle = mountSetup({ appId: 'app' });
+
+    for (const hasChanges of [false, true]) {
+      let promise: Promise<void> | undefined;
+      act(() => {
+        promise = run(handle.current as ApplicationSetupHandle);
+      });
+      await act(async () => {
+        getIframeProps()?.onSaveSuccess?.(hasChanges);
+        await promise;
+      });
+    }
+
+    expect(mockOnPreviewReset).toHaveBeenCalledOnce();
+  });
+
+  it('requests the preview reset before waiting for the deployments refetch', async () => {
+    let resolveRefetch: () => void = () => undefined;
+    mockRefetchDeployments.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveRefetch = resolve;
+      }),
+    );
+    const handle = mountSetup({ appId: 'app' });
+
+    let promise: Promise<void> | undefined;
+    act(() => {
+      promise = handle.current?.startPreview?.(METADATA);
+    });
+    await act(async () => {
+      getIframeProps()?.onSaveSuccess?.(true);
+    });
+
+    expect(mockOnPreviewReset).toHaveBeenCalledOnce();
+    expect(mockRefetchDeployments).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      resolveRefetch();
+      await promise;
+    });
   });
 
   it('forwards the trimmed Metadata to the embedded editor and reasserts on save', async () => {

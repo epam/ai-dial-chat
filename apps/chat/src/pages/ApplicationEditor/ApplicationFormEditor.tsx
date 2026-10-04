@@ -5,6 +5,7 @@ import {
   useMetadataForm,
 } from '@epam/ai-dial-builder-form';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopup,
   DIAL_ICON_SIZE,
@@ -12,7 +13,7 @@ import {
   GhostButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import { IconEye } from '@tabler/icons-react';
 import type { FC } from 'react';
 import {
   memo,
@@ -117,6 +118,11 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const [isSetupReady, setIsSetupReady] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  /*
+   * Bumped whenever a save reports a real configuration change, remounting
+   * the preview so the next preview starts a fresh session.
+   */
+  const [previewResetKey, setPreviewResetKey] = useState(0);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const setupRef = useRef<ApplicationSetupHandle>(null);
 
@@ -324,11 +330,41 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
 
   const handleConfirmClose = useCallback(() => setIsConfirmOpen(false), []);
 
-  const handlePreviewToggle = useCallback(async () => {
-    if (isPreviewing) {
-      setIsPreviewing(false);
-      return;
-    }
+  const handlePreviewReset = useCallback(
+    () => setPreviewResetKey((prev) => prev + 1),
+    [],
+  );
+
+  const handleExitPreview = useCallback(() => setIsPreviewing(false), []);
+
+  /*
+   * The layout renders its actions twice (header and mobile bar) and hides one
+   * with CSS, so every rendered Preview button is tracked and the visible one
+   * gets focus back when the preview closes.
+   */
+  const previewButtonsRef = useRef(new Set<HTMLButtonElement>());
+  const registerPreviewButton = useCallback((node: HTMLButtonElement | null) => {
+    if (!node) return;
+    const buttons = previewButtonsRef.current;
+    buttons.add(node);
+    return () => {
+      buttons.delete(node);
+    };
+  }, []);
+
+  const wasPreviewingRef = useRef(isPreviewing);
+  useEffect(() => {
+    const wasPreviewing = wasPreviewingRef.current;
+    wasPreviewingRef.current = isPreviewing;
+    if (!wasPreviewing || isPreviewing) return;
+    const buttons = [...previewButtonsRef.current];
+    const target =
+      buttons.find((button) => button.getClientRects().length > 0) ??
+      buttons[0];
+    target?.focus();
+  }, [isPreviewing]);
+
+  const handlePreviewStart = useCallback(async () => {
     const startPreview = setupRef.current?.startPreview;
     if (!startPreview) return;
 
@@ -341,32 +377,25 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     } finally {
       setIsSaving(false);
     }
-  }, [isPreviewing, metadata.values]);
+  }, [metadata.values]);
 
-  const { preview: previewKey, exitPreview: exitPreviewKey } =
-    definition.messageKeys;
+  const { Setup, Preview, confirmation } = definition;
+  const previewKey = definition.messageKeys.preview;
+  const hasPreview = isEditMode && Boolean(Preview) && Boolean(previewKey);
   const extraActions =
-    isEditMode && previewKey && exitPreviewKey ? (
+    hasPreview && previewKey ? (
       <GhostButton
-        label={t(isPreviewing ? exitPreviewKey : previewKey)}
+        ref={registerPreviewButton}
+        label={t(previewKey)}
         iconBefore={
-          isPreviewing ? (
-            <IconEyeOff
-              size={DIAL_ICON_SIZE.SM}
-              stroke={DIAL_KIT_ICON_STROKE}
-              aria-hidden
-            />
-          ) : (
-            <IconEye
-              size={DIAL_ICON_SIZE.SM}
-              stroke={DIAL_KIT_ICON_STROKE}
-              aria-hidden
-            />
-          )
+          <IconEye
+            size={DIAL_ICON_SIZE.SM}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+          />
         }
-        aria-pressed={isPreviewing}
-        disabled={!isPreviewing && !isSetupReady}
-        onClick={() => void handlePreviewToggle()}
+        disabled={!isSetupReady}
+        onClick={() => void handlePreviewStart()}
       />
     ) : undefined;
 
@@ -384,11 +413,17 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
         ? definition.messageKeys.editTitle
         : definition.messageKeys.createTitle,
     );
-  const { Setup, confirmation } = definition;
-
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col" inert={isBusy}>
+      {/* Hidden, not unmounted, while previewing, so the embedded editor keeps its state. */}
+      <div
+        className={mergeClasses(
+          'min-h-0 flex-1 flex-col',
+          isPreviewing ? 'hidden' : 'flex',
+        )}
+        hidden={isPreviewing}
+        inert={isBusy || isPreviewing}
+      >
         <EntityEditor
           title={title}
           onBack={handleCancel}
@@ -400,7 +435,6 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
           isSubmitting={isSaving}
           isSubmitDisabled={!isSetupReady}
           extraActions={extraActions}
-          hideStandardActions={isPreviewing}
           labels={{
             backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
             savingStatusLabel: t(EditorI18nKeys.SavingStatus),
@@ -431,7 +465,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
               isEditMode={isEditMode}
               appId={appId || undefined}
               metadata={metadata.values}
-              isPreviewing={isPreviewing}
+              onPreviewReset={handlePreviewReset}
               onSubmit={handleSubmit}
               isSubmitting={isSaving}
               onReadyChange={setIsSetupReady}
@@ -439,6 +473,25 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
           }
         />
       </div>
+      {hasPreview && Preview && (
+        /* Kept mounted while hidden, so a preview session survives going back to the editor. */
+        <div
+          className={mergeClasses(
+            'min-h-0 flex-1 flex-col',
+            isPreviewing ? 'flex' : 'hidden',
+          )}
+          hidden={!isPreviewing}
+          inert={isBusy || !isPreviewing}
+        >
+          <Preview
+            key={previewResetKey}
+            appId={appId}
+            metadata={metadata.values}
+            isVisible={isPreviewing}
+            onExit={handleExitPreview}
+          />
+        </div>
+      )}
       {/* Always mounted so screen readers announce the label when it is filled in. */}
       <span role="status" aria-live="polite" className="sr-only">
         {isBusy ? overlayLabel : ''}
