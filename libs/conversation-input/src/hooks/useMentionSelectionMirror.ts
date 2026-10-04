@@ -14,8 +14,8 @@ interface UseMentionSelectionMirrorParams {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   /** Current textarea value — a selection-rect recompute trigger. */
   message: string;
-  /** Whether any mention is currently tracked; the mirror only exists then. */
-  hasActiveMentions: boolean;
+  /** Whether the highlight mirror is rendered (a mention or a synthetic insertion is present). */
+  isMirrorActive: boolean;
 }
 
 /** Return value of {@link useMentionSelectionMirror}. */
@@ -29,8 +29,8 @@ interface UseMentionSelectionMirrorResult {
 }
 
 /*
- * The native text selection has to be re-rendered by hand while a mention is
- * tracked: the textarea's own text is invisible (`textareaMentionMode`), so
+ * The native text selection has to be re-rendered by hand while the mirror is
+ * active: the textarea's own text is invisible (`textareaMentionMode`), so
  * the browser's native `::selection` paints an opaque rectangle where
  * selected characters would be — with no visible glyph to paint over it,
  * that rectangle hides the mirror's own colored text/chips underneath
@@ -48,7 +48,7 @@ interface UseMentionSelectionMirrorResult {
 export const useMentionSelectionMirror = ({
   textareaRef,
   message,
-  hasActiveMentions,
+  isMirrorActive,
 }: UseMentionSelectionMirrorParams): UseMentionSelectionMirrorResult => {
   const mirrorRef = useRef<HTMLDivElement | null>(null);
   const [selectionRects, setSelectionRects] = useState<DOMRect[]>([]);
@@ -59,7 +59,7 @@ export const useMentionSelectionMirror = ({
     const selectionStart = textareaEl?.selectionStart;
     const selectionEnd = textareaEl?.selectionEnd;
     if (
-      !hasActiveMentions ||
+      !isMirrorActive ||
       textareaEl == null ||
       mirrorEl == null ||
       selectionStart == null ||
@@ -92,14 +92,14 @@ export const useMentionSelectionMirror = ({
           ),
       ),
     );
-  }, [hasActiveMentions, textareaRef]);
+  }, [isMirrorActive, textareaRef]);
 
   useLayoutEffect(() => {
     updateSelectionRects();
   }, [updateSelectionRects, message]);
 
   useEffect(() => {
-    if (!hasActiveMentions) return undefined;
+    if (!isMirrorActive) return undefined;
     const textareaEl = textareaRef.current;
     if (textareaEl == null || typeof ResizeObserver === 'undefined') {
       return undefined;
@@ -107,7 +107,7 @@ export const useMentionSelectionMirror = ({
     const observer = new ResizeObserver(updateSelectionRects);
     observer.observe(textareaEl);
     return () => observer.disconnect();
-  }, [hasActiveMentions, textareaRef, updateSelectionRects]);
+  }, [isMirrorActive, textareaRef, updateSelectionRects]);
 
   return { mirrorRef, selectionRects, updateSelectionRects };
 };

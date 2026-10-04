@@ -118,13 +118,16 @@ export const ChatSkill: FC<ChatSkillProps> = ({
        * Plain, selectable text span, not a `<button>` — sized to net-zero
        * extra width so the composer mirror can overlay it on the real
        * textarea text. See design.md Decision 3a (multi-skill-message-mentions)
-       * for the full rationale.
+       * for the full rationale. `inline`, not `inline-block`: the textarea
+       * may break the raw `/{name}` after any hyphen, and an atomic chip
+       * cannot, so the mirror would wrap onto an extra line the textarea
+       * never grows to show (issue #9243).
        */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click/keydown only act in click-triggered mode; hover mode's tooltip is reachable via focus alone */}
       <span
         tabIndex={0}
         className={mergeClasses(
-          'relative -me-1 -ms-1 inline-block cursor-pointer select-text rounded-full pe-1 ps-1',
+          'relative -me-1 -ms-1 inline cursor-pointer select-text rounded-full pe-1 ps-1',
           isUnsupported
             ? unsupportedClassName
             : 'hover:bg-info focus-visible:bg-info active:bg-info',

@@ -33,6 +33,7 @@ export const buildMessageActions = (
 
   if (msg.role === MessageRole.User) {
     return {
+      onCopy: () => void copyToClipboard(msg.content),
       onEdit: handlers.onEdit ? () => handlers.onEdit?.(index) : void 0,
       onEditHover: handlers.onHoverEdit,
       onDelete: handlers.onDelete ? () => handlers.onDelete?.(index) : void 0,

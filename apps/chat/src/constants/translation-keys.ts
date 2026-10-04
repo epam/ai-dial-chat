@@ -117,6 +117,8 @@ export enum ButtonsI18nKeys {
   OpenInCanvas = 'buttons.openInCanvas',
   CopyAsJson = 'buttons.copyAsJson',
   CopyText = 'buttons.copyText',
+  CopyMessage = 'buttons.copyMessage',
+  MessageCopiedStatus = 'buttons.messageCopiedStatus',
   LikeResponse = 'buttons.likeResponse',
   DislikeResponse = 'buttons.dislikeResponse',
   Save = 'buttons.save',

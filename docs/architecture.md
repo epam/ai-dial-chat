@@ -257,8 +257,8 @@ DIAL Core response — nothing is ever zeroed locally.
 `PreferencesTab` hosts the theme, language, keyboard-shortcut and "Default agent for new chats"
 preferences. The theme row is driven by `useThemeOptions`, which derives its options from whatever
 `GET /api/themes` returns rather than from a fixed light/dark/system list: one entry per configured
-theme, plus a synthetic `System` entry only where both `light` and `dark` exist. It is hidden below
-two options. The "Default agent for
+theme (`light` then `dark` first, the rest in configuration order), plus a synthetic `System`
+entry only where both `light` and `dark` exist. It is hidden below two options. The "Default agent for
 new chats" row renders only while `DEFAULT_DEPLOYMENT_PINNED` is on, since the
 pin is what gives its "Default agent" option something to refer to; in a default
 deployment (flag off) only the keyboard-shortcut row is visible. All three of

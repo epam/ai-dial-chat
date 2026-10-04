@@ -4,7 +4,7 @@ Message display components for rendering conversation history — user, assistan
 
 ## Overview
 
-`@epam/ai-dial-conversation-messages` provides the visual building blocks for rendering a chat transcript. It solves the problem of consistently displaying messages from different roles — users, assistant, and system — without duplicating bubble layout, markdown rendering, or action toolbar logic across every view that needs a conversation thread. Each role has a dedicated bubble component: `UserMessageBubble` renders plain text with collapse-on-overflow and optional attachments, `AssistantMessageBubble` renders streaming markdown with code blocks, quick-reply starters, a deployment icon, and a slot for extra content such as a stages panel, and `StatusMessageBubble` renders a full-width info banner for in-timeline notices like a model switch. The `MessageActions` toolbar provides role-appropriate actions in a consistent position relative to any bubble — edit and delete for user messages, regenerate, copy, and like/dislike for assistant messages. All components accept `styles` overrides so host applications can theme the transcript area without forking the components.
+`@epam/ai-dial-conversation-messages` provides the visual building blocks for rendering a chat transcript. It solves the problem of consistently displaying messages from different roles — users, assistant, and system — without duplicating bubble layout, markdown rendering, or action toolbar logic across every view that needs a conversation thread. Each role has a dedicated bubble component: `UserMessageBubble` renders plain text with collapse-on-overflow and optional attachments, `AssistantMessageBubble` renders streaming markdown with code blocks, quick-reply starters, a deployment icon, and a slot for extra content such as a stages panel, and `StatusMessageBubble` renders a full-width info banner for in-timeline notices like a model switch. The `MessageActions` toolbar provides role-appropriate actions in a consistent position relative to any bubble — copy, edit, and delete for user messages, regenerate, copy, and like/dislike for assistant messages. All components accept `styles` overrides so host applications can theme the transcript area without forking the components.
 
 ## Installation
 
@@ -184,7 +184,28 @@ import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 
 ### MessageActions
 
-Toolbar with per-message actions. `role` selects the action set: `MessageRole.User` (the default) shows Edit/Delete, any other role shows Regenerate/Copy/Like/Dislike. Usually passed to a bubble through its `actions` prop rather than rendered directly.
+Toolbar with per-message actions. `role` selects the action set: `MessageRole.User` (the default) shows Copy/Edit/Delete, any other role shows Regenerate/Copy/Like/Dislike. Usually passed to a bubble through its `actions` prop rather than rendered directly.
+
+`onCopy` applies to both roles; each button renders only when its handler is passed. The user-role Copy button takes its tooltip from `labels.tooltips.copyMessage`, its accessible name from `labels.ariaLabels.copyMessage` (both default to "Copy message"), and announces `labels.ariaLabels.copiedMessageStatus` (default "Message copied to clipboard") after a click. The library never touches the clipboard — the host performs the copy inside `onCopy`.
+
+```tsx
+import { MessageRole } from '@epam/ai-dial-chat-shared';
+import { MessageActions } from '@epam/ai-dial-conversation-messages';
+
+<MessageActions
+  role={MessageRole.User}
+  onCopy={() => void navigator.clipboard.writeText(message.content)}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  labels={{
+    tooltips: { copyMessage: 'Copy message', copied: 'Copied!' },
+    ariaLabels: {
+      copyMessage: 'Copy message',
+      copiedMessageStatus: 'Message copied to clipboard',
+    },
+  }}
+/>;
+```
 
 `isDisabled` disables every button in the toolbar — pass it while a response is generating so the actions cannot be triggered mid-stream.
 

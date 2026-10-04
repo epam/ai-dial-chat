@@ -1318,6 +1318,76 @@ describe('ConversationMessageItem — message action gates', () => {
   });
 });
 
+describe('ConversationMessageItem — user message Copy action', () => {
+  const writeText = vi.fn(() => Promise.resolve());
+
+  beforeEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+  });
+
+  it('renders a Copy message button on a user message', () => {
+    render(<ConversationMessageItem {...defaultProps} msg={USER_MESSAGE} />);
+    expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+  });
+
+  it('keeps Copy message enabled while the assistant is typing', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={USER_MESSAGE}
+        isAssistantTyping
+      />,
+    );
+    expect(
+      (screen.getByRole('button', { name: 'Copy message' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+  });
+
+  it('renders Copy message when edit and delete are hidden', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) =>
+        feature === OverlayFeature.HideEditUserMessage ||
+        feature === OverlayFeature.HideDeleteUserMessage,
+    );
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={USER_MESSAGE}
+        onStartEdit={vi.fn()}
+        onDeleteMessage={vi.fn()}
+      />,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Edit message' }),
+    ).toBeNull();
+    expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+  });
+
+  it('copies the full multiline content without editing or deleting the message', () => {
+    const onStartEdit = vi.fn();
+    const onDeleteMessage = vi.fn();
+    const content = 'Line one\n\n- item a\n- item b';
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...USER_MESSAGE, content }}
+        onStartEdit={onStartEdit}
+        onDeleteMessage={onDeleteMessage}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+
+    expect(writeText).toHaveBeenCalledWith(content);
+    expect(onStartEdit).not.toHaveBeenCalled();
+    expect(onDeleteMessage).not.toHaveBeenCalled();
+    expect(screen.getByText(/Line one/)).toBeTruthy();
+  });
+});
+
 describe('ConversationMessageItem — Markdown table actions', () => {
   const TABLE_MARKDOWN = '| Name | Value |\n| --- | --- |\n| Alpha | 1 |';
 

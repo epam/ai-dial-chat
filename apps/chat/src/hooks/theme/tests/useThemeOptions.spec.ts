@@ -39,8 +39,8 @@ describe('useThemeOptions', () => {
 
   it('offers Light, Dark and System when both are configured', () => {
     const { result } = renderWithThemes([
-      makeTheme(ThemeId.Light, 'Light Theme'),
       makeTheme(ThemeId.Dark, 'Dark Theme'),
+      makeTheme(ThemeId.Light, 'Light Theme'),
     ]);
 
     expect(result.current.options).toEqual([
@@ -50,7 +50,7 @@ describe('useThemeOptions', () => {
     ]);
   });
 
-  it('offers a custom theme under its display name, in configuration order', () => {
+  it('offers a custom theme under its display name, after Light and Dark', () => {
     const { result } = renderWithThemes([
       makeTheme(ThemeId.Light, 'Light Theme'),
       makeTheme(ThemeId.Dark, 'Dark Theme'),
@@ -61,6 +61,23 @@ describe('useThemeOptions', () => {
       { value: ThemeId.Light, label: SettingsI18nKeys.ThemeLight },
       { value: ThemeId.Dark, label: SettingsI18nKeys.ThemeDark },
       { value: 'contoso-night', label: 'Contoso Night' },
+      { value: ThemeId.System, label: SettingsI18nKeys.ThemeSystem },
+    ]);
+  });
+
+  it('puts Light and Dark first even when the configuration lists them later', () => {
+    const { result } = renderWithThemes([
+      makeTheme('contoso-night', 'Contoso Night'),
+      makeTheme(ThemeId.Dark, 'Dark Theme'),
+      makeTheme('contoso-day', 'Contoso Day'),
+      makeTheme(ThemeId.Light, 'Light Theme'),
+    ]);
+
+    expect(result.current.options).toEqual([
+      { value: ThemeId.Light, label: SettingsI18nKeys.ThemeLight },
+      { value: ThemeId.Dark, label: SettingsI18nKeys.ThemeDark },
+      { value: 'contoso-night', label: 'Contoso Night' },
+      { value: 'contoso-day', label: 'Contoso Day' },
       { value: ThemeId.System, label: SettingsI18nKeys.ThemeSystem },
     ]);
   });
