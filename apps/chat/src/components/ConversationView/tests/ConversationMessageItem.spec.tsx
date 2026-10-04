@@ -13,7 +13,7 @@ import {
   type MessageActionsProps,
 } from '@epam/ai-dial-conversation-messages';
 import type { AnnotationGroup } from '@epam/ai-dial-quotations';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -102,6 +102,8 @@ vi.mock('../../../hooks/attachment/useApplicationVisualizers', () => ({
 /* The real connector mounts an iframe and subscribes to window messages; the
  * handshake never settles in jsdom, so the inline frame would sit in its
  * loading state. Only the surface around it is under test here. */
+const visualizerSubscriptions = new Map<string, (payload: unknown) => void>();
+
 vi.mock('@epam/ai-dial-visualizer-connector', () => ({
   VisualizerConnector: vi.fn().mockImplementation(function (root: HTMLElement) {
     root.appendChild(document.createElement('iframe'));
@@ -109,6 +111,10 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
       ready: () => new Promise(() => undefined),
       send: vi.fn(),
       destroy: vi.fn(),
+      subscribe: (eventType: string, callback: (payload: unknown) => void) => {
+        visualizerSubscriptions.set(eventType, callback);
+        return vi.fn();
+      },
     };
   }),
 }));
@@ -1626,6 +1632,20 @@ describe('ConversationMessageItem — application visualizers', () => {
     const frame = toolbar.closest('.overflow-hidden');
 
     expect(frame?.classList.contains('border')).toBe(false);
+  });
+
+  it('forwards a SEND_MESSAGE from the inline visualizer to onVisualizerSendMessage', () => {
+    applicationVisualizersMock = registryWith();
+    const onVisualizerSendMessage = vi.fn();
+
+    renderItem({ onVisualizerSendMessage });
+    act(() => {
+      visualizerSubscriptions.get('my-viz/SEND_MESSAGE')?.({
+        message: 'Next page',
+      });
+    });
+
+    expect(onVisualizerSendMessage).toHaveBeenCalledWith('Next page');
   });
 
   it('renders no inline visualizer when the registry is empty', () => {

@@ -1,4 +1,4 @@
-# Spec: conversations-api
+# conversations-api Specification
 
 ## Purpose
 
@@ -59,7 +59,7 @@ Error codes:
 
 #### Scenario: firstMessage exceeding 50000 chars returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `firstMessage` of length 40001 and a valid `deploymentId`
+- **WHEN** `POST /api/v1/conversations` is called with `firstMessage` of length 50001 and a valid `deploymentId`
 - **THEN** the response status is 400
 
 #### Scenario: Missing deploymentId returns 400
@@ -90,9 +90,9 @@ The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shar
 
 ---
 
-### Requirement: ConversationsModule is registered in the root AppModule
+### Requirement: ConversationModule is registered in the root AppModule
 
-`ConversationsModule` SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST declare `ConversationController` in its `controllers` array and `ConversationService` in its `providers` array.
+`ConversationModule` (`apps/chat-api/src/conversations/conversation.module.ts`) SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST import `UserConfigModule`, `ScheduledTaskUnreadModule`, `AppConfigModule`, and `DeploymentsModule`; declare `ConversationController` and `ConversationPublishController` in its `controllers` array; and provide the `ConversationService` facade plus `ConversationPersistenceService` (also bound to the `CONVERSATION_PERSISTENCE` token), `ConversationListingService`, `ConversationLifecycleService`, `ConversationStreamingService`, `ConversationNamingService`, `ConversationGenerationService`, `ConversationPublishService`, `ChatCompletionsAdapter`, and `ResponsesAdapter`.
 
 #### Scenario: Module is wired into the app
 
@@ -120,8 +120,8 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 **Frontend behaviour.** `GET /api/v1/conversations?path=...`'s `path` query param MUST include the bucket — unlike `saveConversation`'s/`streamCompletion`'s `path` body field, which is bucket-stripped and operates on the user's own copy only. Callers MUST apply the normalization matching the target endpoint's contract:
 
-- For `saveConversation`, `streamCompletion`, `stopCompletion`, `deleteConversation`, `watchConversation`, `renameConversation`, `generateConversationTitle`, `duplicateConversation` (every endpoint whose contract is bucket-stripped): `apps/chat/src/utils/conversation-path.ts`'s `getConversationPath(conversationId)` strips the bucket prefix, then decodes the remainder with the shared `safeDecodeURIComponent` (`apps/chat/src/utils/string-utils.ts` — try/catch, fall back to the original string on failure).
-- For every `getConversation` call site (`useConversationStream`'s post-stream/resume refresh, `ConversationsContext`'s `watchForDisplayNameUpdate`, `useConversationExport`'s `toApiConversationPath`): call `safeDecodeURIComponent` directly on the **full** id (bucket included, no stripping), since `GET /api/v1/conversations` needs the bucket to resolve the correct DIAL Core bucket per the routing table above. There is no dedicated helper for this — a bare `safeDecodeURIComponent(conversationId)` is the whole normalization; introducing a same-signature wrapper (e.g. a `normalizeConversationIdEncoding`) around it would only rename the call with no behavior difference. The `Conversation` page's initial load passes the route's already-decoded wildcard param directly, since the router performs the equivalent single decode.
+- For `saveConversation`, `streamCompletion`, `stopCompletion`, `deleteConversation`, `watchConversation`, `renameConversation`, `generateConversationTitle`, `duplicateConversation` (every endpoint whose contract is bucket-stripped): `getConversationPath(conversationId)` (`libs/chat-hooks/src/conversation/useConversationStream/conversation-path.ts`) strips the bucket prefix, then decodes the remainder with the shared `safeDecodeURI` (`libs/chat-hooks/src/shared/string-utils.ts` — try/catch, fall back to the original string on failure; `safeDecodeURIComponent` is an alias of it).
+- For every `getConversation` call site (`useConversationStream`'s post-stream/resume refresh, `ConversationsContext`'s `watchForDisplayNameUpdate`, and `useConversationExport`, which calls a host-supplied `normalizeConversationPath` callback that `ConversationPanelView` implements as `safeDecodeURIComponent(normalizeConversationId(id))`): call `safeDecodeURIComponent` directly on the **full** id (bucket included, no stripping), since `GET /api/v1/conversations` needs the bucket to resolve the correct DIAL Core bucket per the routing table above. There is no dedicated helper for this — a bare `safeDecodeURIComponent(conversationId)` is the whole normalization; introducing a same-signature wrapper (e.g. a `normalizeConversationIdEncoding`) around it would only rename the call with no behavior difference. The `Conversation` page's initial load passes the route's already-decoded wildcard param directly, since the router performs the equivalent single decode.
 
 **Why the decode step exists at all.** `POST /api/v1/conversations`'s `deploymentId` MUST be percent-encoded by the caller when it contains reserved characters (see the `DEPLOYMENT_ID_PATTERN` requirement above); the response `id` field is built by concatenating that (possibly percent-encoded) `deploymentId` directly with an otherwise-raw message-derived name and uuid, without decoding it first — so `conversation.id` can contain a percent-encoded fragment mixed with raw text. Every caller passes the normalized result into an API client that percent-encodes the whole value exactly once. Without the decode step, an already-encoded fragment gets double-encoded on the wire (e.g. `%20` → `%2520`) and DIAL Core rejects the request with 400 — this mirrors the backend's own `encodeDialResourcePath` (decode-then-encode) normalization used when persisting. Passing the bucket-**stripped** `getConversationPath` result to `getConversation` is an equally invalid variant of this bug: it 400s specifically for Quick App conversations, whose deployment-id segment (`applications/{bucket}/{appName}`) itself contains a slash, so DIAL Core resolves the wrong resource once the leading session-bucket segment is missing.
 
@@ -225,7 +225,7 @@ The function SHALL:
 The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata and the DIAL Core sharing API (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
 
 - `limit` — integer, min 1, max 1000, **no default** (`@IsInt @Min(1) @Max(1000) @IsOptional`)
-- `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
+- `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(4096) @IsOptional`, `ListConversationsQueryDto`)
 
 **Two request modes.** When **both** `limit` and `nextToken` are omitted, the endpoint returns the **complete history**: the service follows DIAL Core's cursors itself, in pages of 1000 per bucket, until each bucket is exhausted, and the response carries no `nextToken`. This mirrors the file listing contract (see the [file-list spec](../file-list/spec.md)). When either parameter is present, the endpoint returns **one page per bucket** and a compound continuation cursor; the page size is `limit` when given and 100 when only `nextToken` is given.
 
@@ -284,7 +284,7 @@ Generated-client impact:
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
-- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer) or `nextToken` exceeds 512 chars
+- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer) or `nextToken` exceeds 4096 chars
 - `401 Unauthorized` — missing or invalid bearer token
 - `502 Bad Gateway` — user bucket DIAL Core returned an error response on any page of the walk, or DIAL Core repeated a cursor already followed for a bucket
 
@@ -418,7 +418,7 @@ See the [user-config-api spec](../user-config-api/spec.md) for `updatePin` seman
 
 ### Requirement: PATCH /api/v1/conversations renames a conversation without changing its DIAL Core path
 
-The backend SHALL expose `PATCH /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint accepts query parameter `path` (validated by `RenameConversationDto` — `@IsString @MinLength(1) @MaxLength(512)`) and a JSON body `RenameConversationBodyDto`:
+The backend SHALL expose `PATCH /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint accepts query parameter `path`, validated by the shared `ConversationPathDto` (`apps/chat-api/src/conversations/dto/conversation-path.dto.ts` — `@IsString @MinLength(1)`, no maximum length), and a JSON body `RenameConversationBodyDto` (`dto/rename-conversation.dto.ts`):
 
 ```ts
 class RenameConversationBodyDto {
@@ -538,7 +538,7 @@ No new HTTP endpoint is added for LLM naming.
 #### Scenario: Client discovers renamed title on subsequent fetch
 
 - **GIVEN** LLM naming succeeds asynchronously after the first save
-- **WHEN** the client later calls `GET /api/v1/conversations` or `GET /api/v1/conversations/:id`
+- **WHEN** the client later calls `GET /api/v1/conversations/list` or `GET /api/v1/conversations?path=...`
 - **THEN** the response reflects the updated `name` and `llmNamingDone: true`
 
 ---
@@ -576,7 +576,7 @@ The display-name resolution (`resolveListDisplayTitle`, also used by `getConvers
 #### Scenario: GET reflects manually-renamed display name when filename diverges
 
 - **GIVEN** the same manually-renamed conversation
-- **WHEN** `GET /api/v1/conversations/:id` is called for it
+- **WHEN** `GET /api/v1/conversations?path=...` is called for it
 - **THEN** the returned display title is `"New Title"`
 
 ### Requirement: Conversation list items carry the DIAL Core creation time

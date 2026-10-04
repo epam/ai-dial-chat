@@ -20,9 +20,10 @@ interface MockDropdownItem {
    `mark` + `checked`, so the test asserts the marking is delegated to it. */
 /* The trigger is the real kit `Button`, so its role, name and tooltip wiring are what a user gets. */
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const { Button } =
+  const { Avatar, Button } =
     await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
+    Avatar,
     Button,
     DIAL_KIT_ICON_STROKE: 1.5,
     DIAL_ICON_SIZE: { SM: 16 },

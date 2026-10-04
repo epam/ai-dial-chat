@@ -1,5 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID, Matches, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+
+/** Upper bound for the shown answer text; far above any real answer, it only rejects abuse. */
+const STOP_CONTENT_MAX_LENGTH = 1_000_000;
 
 export class StopCompletionDto {
   @ApiProperty({
@@ -20,4 +30,14 @@ export class StopCompletionDto {
     message: 'path contains invalid characters',
   })
   path!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Answer text the client has shown so far. Saved as the stopped answer of a background generation, whose text the backend never assembles; ignored for every other generation, whose answer the backend already holds.',
+    maxLength: STOP_CONTENT_MAX_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(STOP_CONTENT_MAX_LENGTH)
+  content?: string;
 }

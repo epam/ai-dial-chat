@@ -10,15 +10,16 @@ A user-initiated operation that mutates or exports an entity SHALL raise exactly
 | Entity | Created | Edited / saved | Deleted | Downloaded | Publish requested | Unpublish requested | Other |
 |---|---|---|---|---|---|---|---|
 | Prompt (`PromptEditor`, catalog details) | required | required | required | required | required | **new** | — |
-| Quick app (`AppsEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
-| Custom app (`CustomAppEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
-| Toolset (`ToolsetEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
-| Model / Skill (catalog details) | — | — | required | — | required | **new** | — |
+| Quick app (`ApplicationFormEditor` with the quick-app definition) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Custom app (`ApplicationFormEditor` with the custom-app definition) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Toolset (`ToolsetApplicationEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
+| Model (catalog details) | — | — | required | — | required | **new** | — |
+| Skill (catalog details) | required (archive import, `useSkillArchiveImport`) | — | required | required (archive download, `useCatalogItemActions`) | required | **new** | — |
 | Conversation | not notified (see exclusions) | required (rename), required (duplicate) | required | required (export) | required | **new** | import, delete-all, unshare, revoke: required |
-| File | — | required (rename) | required | required (single, and a plural count for a multi-item selection) | — | — | upload, copy, move: required |
-| Folder | required | required (rename) | required | required (archive) | — | — | copy, move: required |
+| File | — | required (rename) | required | required (single, and a plural count for a multi-item selection) | — | — | upload, copy, move, duplicate: required |
+| Folder | required | required (rename) | required | required (archive) | — | — | copy, move, duplicate: required |
 
-`required` = already implemented. `**new**` = added by this change.
+`required` = already implemented. `**new**` = added by this change. File/folder copy, move, and duplicate success toasts are raised by `apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts` with `dialFileManager.*` keys (e.g. `FileDuplicatedSuccessfully`, `FolderDuplicatedSuccessfully`) rather than through the `entityNotifications` map.
 
 The `Unpublished` column is replaced by `Unpublish requested`. Unpublishing submits an admin-approval request to DIAL Core rather than removing the published copy (see `catalog-unpublish-api`), so no notification in this capability may state that an entity has been unpublished.
 
@@ -76,9 +77,9 @@ Every notification reporting a **completed** operation SHALL use `NotificationVa
 Two notifications that currently use `NotificationVariant.Info` therefore become Success:
 
 - Removing a conversation from My List (`ConversationPanelI18nKeys.UnshareSuccess*`, `ConversationPanelView`).
-- Removing an item from favourites (`FavoritesI18nKeys.Removed*`, `CatalogView.onToggleFavorite`) — the added/removed branch collapses to one `showSuccessNotification` call with different copy.
+- Removing an item from favourites (`FavoritesI18nKeys.Removed*`, raised in `apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx`) — the added/removed branch collapses to one `showSuccessNotification` call with different copy.
 
-`Info` and `Warning` remain correct for notifications that report something the user did **not** ask for, and those SHALL NOT be converted: unsupported files skipped when attaching (`DialFileManagerModal`), and attachments skipped during conversation export/import (`useConversationExport`, `useConversationImport`) — a partial outcome, not a completed operation.
+`Info` and `Warning` remain correct for notifications that report something the user did **not** ask for, and those SHALL NOT be converted: unsupported files skipped when attaching (`DialFileManagerModal`), and attachments skipped during conversation export/import (the `Warning` toasts `ConversationExportI18nKeys.WarningAttachmentSkipped` / `ConversationImportI18nKeys.WarningAttachmentSkipped`, raised in `ConversationPanelView` from the warning events of `useConversationExport` / `useConversationImport`, which come from `@epam/ai-dial-chat-hooks/conversation-transfer`) — a partial outcome, not a completed operation.
 
 #### Scenario: Removing from favourites shows a success notification
 
@@ -99,7 +100,7 @@ Two notifications that currently use `NotificationVariant.Info` therefore become
 
 Every success notification SHALL consist of a title of the form `<Entity> <operation> successfully` and a one-sentence body that names the entity in double quotes, and — for publish and unpublish — the target folder in double quotes. The two request-shaped operations are the exception to the `successfully` title form: they end in `requested`, because nothing has completed yet.
 
-The strings SHALL be declared as one complete sentence per `(entity, operation)` pair. A sentence SHALL NOT be composed at runtime from an entity noun plus an operation fragment: gendered and cased locales (Arabic, which the app must support, as well as Russian and German) cannot form a correct sentence from interpolated nouns.
+The strings SHALL be declared as one complete sentence per `(entity, operation)` pair. A sentence SHALL NOT be composed at runtime from an entity noun plus an operation fragment: gendered and cased locales (Arabic, which the app must support, as well as Russian and German) cannot form a correct sentence from interpolated nouns. The one exception is the schema-app copy: its sentences are still complete per pair, but the entity is the application schema's display name, interpolated as `{{type}}`, because the runner schemas are data with no translated labels. Translators keep the whole sentence; a gendered or cased locale may phrase it around the inserted name.
 
 English copy per operation, where `<Entity>` / `<entity>` is the entity label from the table that follows:
 
@@ -114,9 +115,9 @@ English copy per operation, where `<Entity>` / `<entity>` is the entity label fr
 | Publish requested | `<Entity> publish requested` | `Publish request for <entity> "{{name}}" was submitted to folder "{{folder}}". It will appear there once an admin approves it.` |
 | Unpublish requested | `<Entity> unpublish requested` | `Unpublish request for <entity> "{{name}}" was submitted for folder "{{folder}}". It will be removed once an admin approves it.` |
 
-Entity labels: `Prompt`, `Quick app`, `Custom app`, `Agent`, `Toolset`, `Model`, `Skill`, `Conversation`, `File`, `Folder`.
+Entity labels: `Prompt`, `Quick app`, `Custom app`, `Agent`, `Toolset`, `Model`, `Skill`, `Conversation`, `File`, `Folder`, and `{{type}}` — the application schema's display name — for a schema app.
 
-An application is named by its concrete kind, not by the generic `Agent`: the editors know which one they are (`AppsEditor` → `Quick app`, `CustomAppEditor` → `Custom app`), and catalog-level operations resolve it from the item's deployment — a deployment carrying an `applicationTypeSchemaId` is a quick app, one without is a custom app. `Agent` is used only as the fallback when the item's deployment cannot be resolved from the loaded list, so the copy never guesses a kind.
+An application is named by its concrete kind, not by the generic `Agent`: `Quick app` for an app of the QuickApp schema (`isQuickAppSchema`), `Custom app` for a schema-less app, and, for an app of any other application schema, that schema's `displayName` through `NotifiableEntity.SchemaApp` with `type` set to the name. The editors resolve it from the page context — `CustomAppEditor` → `Custom app`; `AppsEditor` (both the embedded-editor and the schema-form kinds) → `resolveSchemaNotificationTarget`, returning `{ entity, type }`. Catalog-level operations (delete, publish, unpublish) resolve it from the item's deployment with `resolveCatalogItemEntity(type, deployment, schemas)` and pass `type: findSchemaDisplayName(schemas, deployment.applicationTypeSchemaId)`. `Agent` is used only as the fallback — when the item's deployment cannot be resolved, or its schema is not in the loaded list or has no display name — so the copy never guesses a kind.
 
 Batch operations (export all, import, multi-item delete/copy/move/rename) keep their existing plural copy and their existing keys; only their titles are realigned to the `<Entity> <operation> successfully` form.
 
@@ -141,6 +142,26 @@ A pair whose copy has to count items declares `_one` / `_other` variants and rec
 
 - **WHEN** any success notification in this capability is rendered
 - **THEN** its title and body each resolve from a single i18n key holding a complete sentence, with only `name` and `folder` interpolated
+
+#### Scenario: An app of a non-QuickApp schema is named by its schema
+
+- **WHEN** the user saves an app named "my app" of the schema whose `displayName` is "External app"
+- **THEN** the notification title is `"External app edited successfully"` and the body is `Changes for External app "my app" are saved.`
+
+#### Scenario: Deleting it from the catalog names the schema too
+
+- **WHEN** the user deletes that app from the catalog
+- **THEN** the notification title is `"External app deleted successfully"`
+
+#### Scenario: A QuickApp app keeps the quick app copy
+
+- **WHEN** the user saves an app of the QuickApp schema in `AppsEditor`
+- **THEN** the notification title is `"Quick app edited successfully"`
+
+#### Scenario: An unknown schema falls back to the agent copy
+
+- **WHEN** the app's schema is not in the loaded schema list
+- **THEN** the notification uses the `Agent` copy
 
 ### Requirement: Publish notifications state that approval is pending
 
@@ -177,9 +198,9 @@ notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Downloaded, {
 });
 ```
 
-- The hook SHALL resolve the title and body keys from one exported map keyed by `(NotifiableEntity, EntityOperation)`, translate them with the interpolation params it is given, and call `showSuccessNotification` from `useNotification`.
+- The hook SHALL resolve the title and body keys from one exported map, `ENTITY_OPERATION_NOTIFICATIONS` in `apps/chat/src/utils/entity-notification.ts`, keyed by `(NotifiableEntity, EntityOperation)`, translate them with the interpolation params it is given, and call `showSuccessNotification` from `useNotification`.
 - It SHALL NOT set `requestId` — trace ids belong to error notifications only (see `notification-request-id`).
-- `NotifiableEntity` and `EntityOperation` SHALL be string enums in `apps/chat/src/types/` (per the repo's enum rule), and a `resolveNotifiableEntity(type: CatalogEntityType)` helper SHALL map catalog item types onto `NotifiableEntity`.
+- `NotifiableEntity` and `EntityOperation` SHALL be string enums in `apps/chat/src/types/entity-notification.ts` (per the repo's enum rule), and `resolveCatalogItemEntity(type: CatalogEntityType, deployment?)` in `apps/chat/src/utils/entity-notification.ts` SHALL map catalog item types onto the `CatalogNotifiableEntity` subset of `NotifiableEntity`, using the deployment's `applicationTypeSchemaId` to choose `QuickApp` or `CustomApp` for an agent and falling back to `Agent` when no deployment is given.
 - `EntityOperation` SHALL include `UnpublishRequested = 'unpublishRequested'`, and the map SHALL carry one entry per entity the matrix marks as unpublishable — the catalog entities and `Conversation`. It SHALL NOT carry an entry for `File` or `Folder`, which have no unpublish action.
 - A pair absent from the map SHALL be a TypeScript error, not a silent no-op, so the matrix above is enforced at compile time.
 - `notifyOperationSuccess` SHALL be wrapped in `useCallback` and depend only on `t` and `showSuccessNotification`, both of which are already referentially stable, so it is safe to list in caller dependency arrays.
@@ -233,6 +254,8 @@ All new strings SHALL live in one `entityNotifications` namespace in `apps/chat/
 | `entityNotifications.prompt.publishRequested` | `"Publish request for prompt \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."` |
 | `entityNotifications.prompt.unpublishRequestedTitle` | `"Prompt unpublish requested"` |
 | `entityNotifications.prompt.unpublishRequested` | `"Unpublish request for prompt \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."` |
+| `entityNotifications.schemaApp.createdTitle` / `.editedTitle` / `.deletedTitle` / `.publishRequestedTitle` / `.unpublishRequestedTitle` | `"{{type}} created successfully"`, `"{{type}} edited successfully"`, `"{{type}} deleted successfully"`, `"{{type}} publish requested"`, `"{{type}} unpublish requested"` |
+| `entityNotifications.schemaApp.created` / `.edited` / `.deleted` / `.publishRequested` / `.unpublishRequested` | the quick-app sentences with `{{type}}` in place of `quick app` — e.g. `"Changes for {{type}} \"{{name}}\" are saved."` |
 | `entityNotifications.agent.*`, `entityNotifications.toolset.*`, `entityNotifications.model.*`, `entityNotifications.skill.*`, `entityNotifications.conversation.*`, `entityNotifications.file.*`, `entityNotifications.folder.*` | same operation suffixes, one sentence per pair, only for pairs the matrix marks as existing |
 
 Superseded keys SHALL be removed rather than left orphaned: `promptEditor.saveSuccessTitle`, `promptEditor.createSuccess`, `promptEditor.updateSuccess`, `catalog.publishSuccessTitle`, `catalog.publishSuccess`, `catalog.details.delete.successTitle`, `catalog.details.delete.success`. Keys whose copy is only realigned keep their names (`conversationPanel.*`, `conversationExport.*`, `conversationImport.*`, `dialFileManager.*`, `conversationPublish.successMessage`).
@@ -256,13 +279,18 @@ Strings that label the unpublish UI itself — the menu entry, confirmation copy
 - **WHEN** the catalog menu entry, the conversation menu entry, and both confirm buttons render their label
 - **THEN** all four resolve `ButtonsI18nKeys.Unpublish`, and no feature namespace re-declares the bare word
 
+#### Scenario: Schema-app keys are declared through the enum
+
+- **WHEN** the schema-app copy is resolved
+- **THEN** it uses `EntityNotificationsI18nKeys.SchemaApp*` members, each backed by an `entityNotifications.schemaApp.*` entry in `en.json`
+
 ### Requirement: RTL, accessibility, telemetry, and feature gating
 
 - **RTL / direction**: none beyond what exists. The notification container and `Notification` component already use logical layout; the copy carries no directional glyphs. Interpolated names are wrapped in ordinary double quotes and SHALL NOT be forced to `dir="ltr"` — unlike a hex request id, an entity name is user content in the user's own script.
 - **Accessibility**: no new ARIA surface. Notifications are announced by the existing container; the title and body are plain text, and the close control keeps its existing translated `aria-label`.
 - **Telemetry**: none. No new metrics or analytics events.
 - **Feature gating**: none. These notifications are not behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`; they follow whichever operations the user can already perform.
-- **Library isolation**: no new library knowledge. `libs/catalog` and the file-manager lib keep receiving operation callbacks (`onDownload`, `onDelete`, `onNotification`, …); every key, sentence, and notification decision stays in `apps/chat`.
+- **Library isolation**: no new library knowledge. `libs/catalog` keeps receiving operation callbacks (`onDownload`, `onDelete`, …) and decides nothing about notifications. The file hooks in `libs/chat-hooks` (`useDialFileMutations`, `useDialFileUploadBatch` and the rest of the `useDialFileManager` family) emit a translation-free `FileManagerNotification` through `onNotification`: the hook decides that a notification fires and picks its `NotificationVariant`, and carries a machine-readable `FileManagerNotificationReason` plus `count`/`name`/`folder`/`names`/`restCount`. The app adapter `apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts` keeps the hook's `variant` and owns every translation key and sentence (`dialFileManager.*`). Entity-operation notifications outside the file manager are decided in `apps/chat` through `notifyOperationSuccess`.
 
 #### Scenario: Entity names render in the ambient direction
 

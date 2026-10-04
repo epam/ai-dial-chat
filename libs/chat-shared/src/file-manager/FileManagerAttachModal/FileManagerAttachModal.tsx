@@ -295,6 +295,8 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
         ariaLabel={title}
         size={PopupSize.Lg}
         className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"
+        headerClassName="pb-0"
+        footerClassName="pt-0"
         onClose={onClose}
         mainButtons={[
           {

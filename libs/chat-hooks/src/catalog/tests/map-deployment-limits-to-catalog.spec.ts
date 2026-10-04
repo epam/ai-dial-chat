@@ -1,6 +1,5 @@
 import { CatalogLimitStatus } from '@epam/ai-dial-catalog';
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
-import { formatCost } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { DeploymentLimitsLabels } from '../map-deployment-limits-to-catalog';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../map-deployment-limits-to-catalog';
@@ -16,11 +15,10 @@ const fullFormat = new Intl.NumberFormat(undefined, {
 
 const labels: DeploymentLimitsLabels = {
   tokenGroup: 'Token limits',
-  tokensPerDay: 'Last 24 hours',
-  tokensPerWeek: 'Last 7 days',
-  tokensPerMonth: 'Last 30 days',
+  tokensPerDay: 'Today',
+  tokensPerWeek: 'This week',
+  tokensPerMonth: 'This month',
   followsCostLimit: 'Follows cost limit',
-  formatSpentCaption: (amount) => `${amount} spent`,
   formatValueLabel: (used, total) => `${used} / ${total}`,
   formatProgressAriaLabel: ({ label, used, total }) =>
     `${label}: ${used} of ${total} used`,
@@ -41,22 +39,22 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Token limits',
           rows: [
             {
-              label: 'Last 24 hours',
+              label: 'Today',
               used: 2500,
               total: 10000,
               usedLabel: compactFormat(2500),
               totalLabel: compactFormat(10000),
               valueLabel: `${compactFormat(2500)} / ${compactFormat(10000)}`,
-              ariaLabel: `Last 24 hours: ${fullFormat(2500)} of ${fullFormat(10000)} used`,
+              ariaLabel: `Today: ${fullFormat(2500)} of ${fullFormat(10000)} used`,
             },
             {
-              label: 'Last 30 days',
+              label: 'This month',
               used: 9000,
               total: 20000,
               usedLabel: compactFormat(9000),
               totalLabel: compactFormat(20000),
               valueLabel: `${compactFormat(9000)} / ${compactFormat(20000)}`,
-              ariaLabel: `Last 30 days: ${fullFormat(9000)} of ${fullFormat(20000)} used`,
+              ariaLabel: `This month: ${fullFormat(9000)} of ${fullFormat(20000)} used`,
             },
           ],
         },
@@ -76,7 +74,7 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
     expect(row?.totalLabel).toBe(compactFormat(2000000));
     expect(row?.totalLabel).toContain('M');
     expect(row?.ariaLabel).toBe(
-      `Last 24 hours: ${fullFormat(1900000)} of ${fullFormat(2000000)} used`,
+      `Today: ${fullFormat(1900000)} of ${fullFormat(2000000)} used`,
     );
   });
 
@@ -102,7 +100,7 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
 
     const result = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);
     expect(result?.groups[0].rows).toHaveLength(1);
-    expect(result?.groups[0].rows[0].label).toBe('Last 24 hours');
+    expect(result?.groups[0].rows[0].label).toBe('Today');
   });
 
   it('omits request stats entirely, even when present on the DTO', () => {
@@ -118,13 +116,13 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Token limits',
           rows: [
             {
-              label: 'Last 24 hours',
+              label: 'Today',
               used: 2500,
               total: 10000,
               usedLabel: compactFormat(2500),
               totalLabel: compactFormat(10000),
               valueLabel: `${compactFormat(2500)} / ${compactFormat(10000)}`,
-              ariaLabel: `Last 24 hours: ${fullFormat(2500)} of ${fullFormat(10000)} used`,
+              ariaLabel: `Today: ${fullFormat(2500)} of ${fullFormat(10000)} used`,
             },
           ],
         },
@@ -132,27 +130,78 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
     });
   });
 
-  it("adds a spent caption from the sibling period's cost stat, without a separate cost row", () => {
+  /*
+   * The cost stats are the caller's account-wide spend, not this deployment's,
+   * so they must neither caption a token row nor add a row of their own.
+   */
+  it('ignores cost stats: no spent caption and no cost row', () => {
     const dto: DeploymentLimitsResponseDto = {
       dayTokenStats: { used: 2500, total: 10000 },
       dayCostStats: { used: 0.5, total: 10 },
+      weekCostStats: { used: 0.56, total: 200 },
     };
 
     const result = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);
     expect(result?.groups).toHaveLength(1);
     expect(result?.groups[0].rows).toHaveLength(1);
-    expect(result?.groups[0].rows[0].captionLabel).toBe(
-      `${formatCost(0.5)} spent`,
-    );
+    expect(result?.groups[0].rows[0]).not.toHaveProperty('captionLabel');
   });
 
-  it('omits the spent caption when the sibling cost stat is unusable', () => {
+  it("adds each period's reset line from its own `resetsAt`, on capped and unlimited rows alike", () => {
     const dto: DeploymentLimitsResponseDto = {
-      dayTokenStats: { used: 2500, total: 10000 },
+      dayTokenStats: {
+        used: 3222,
+        total: 1000000,
+        resetsAt: '2026-10-02T00:00:00Z',
+      },
+      weekTokenStats: {
+        used: 3222,
+        total: 9223372036854776000,
+        resetsAt: '2026-10-05T00:00:00Z',
+      },
+    };
+    const formatResetTime = (resetsAt: string | undefined) =>
+      resetsAt == null
+        ? undefined
+        : {
+            resetsAtMs: Date.parse(resetsAt),
+            isoValue: resetsAt,
+            label: `Resets ${resetsAt}`,
+            ariaLabel: `Usage resets ${resetsAt}`,
+          };
+
+    const rows = mapDeploymentLimitsDtoToCatalogLimits(dto, {
+      ...labels,
+      formatResetTime,
+    })?.groups[0].rows;
+
+    expect(rows?.map((row) => row.resetLabel)).toEqual([
+      'Resets 2026-10-02T00:00:00Z',
+      'Resets 2026-10-05T00:00:00Z',
+    ]);
+    expect(rows?.[1]).toMatchObject({
+      resetIsoValue: '2026-10-05T00:00:00Z',
+      resetAriaLabel: 'Usage resets 2026-10-05T00:00:00Z',
+    });
+  });
+
+  it('leaves the reset fields absent when no formatter is given or it cannot format', () => {
+    const dto: DeploymentLimitsResponseDto = {
+      dayTokenStats: { used: 1, total: 10, resetsAt: 'not-a-date' },
     };
 
-    const result = mapDeploymentLimitsDtoToCatalogLimits(dto, labels);
-    expect(result?.groups[0].rows[0].captionLabel).toBeUndefined();
+    const withoutFormatter = mapDeploymentLimitsDtoToCatalogLimits(dto, labels)
+      ?.groups[0].rows[0];
+    const withFailingFormatter = mapDeploymentLimitsDtoToCatalogLimits(dto, {
+      ...labels,
+      formatResetTime: () => undefined,
+    })?.groups[0].rows[0];
+
+    for (const row of [withoutFormatter, withFailingFormatter]) {
+      expect(row).not.toHaveProperty('resetLabel');
+      expect(row).not.toHaveProperty('resetIsoValue');
+      expect(row).not.toHaveProperty('resetAriaLabel');
+    }
   });
 
   it('omits empty and zero-total stats', () => {
@@ -179,22 +228,22 @@ describe('mapDeploymentLimitsDtoToCatalogLimits', () => {
           label: 'Token limits',
           rows: [
             {
-              label: 'Last 24 hours',
+              label: 'Today',
               used: 210000,
               total: unlimitedTotal,
               isUnlimited: true,
               noteLabel: 'Follows cost limit',
               valueLabel: compactFormat(210000),
-              ariaLabel: `Last 24 hours: ${fullFormat(210000)} used. Follows cost limit.`,
+              ariaLabel: `Today: ${fullFormat(210000)} used. Follows cost limit.`,
             },
             {
-              label: 'Last 7 days',
+              label: 'This week',
               used: 2.5,
               total: 10,
               usedLabel: compactFormat(2.5),
               totalLabel: compactFormat(10),
               valueLabel: `${compactFormat(2.5)} / ${compactFormat(10)}`,
-              ariaLabel: `Last 7 days: ${fullFormat(2.5)} of ${fullFormat(10)} used`,
+              ariaLabel: `This week: ${fullFormat(2.5)} of ${fullFormat(10)} used`,
             },
           ],
         },

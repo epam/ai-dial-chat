@@ -143,7 +143,7 @@ const DialFileManagerModal: FC<Props> = ({
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
     tabLabels,
     allowedTabs: fileManagerTabs,
-    initialTab: DialFileManagerTabs.MyFiles,
+    initialTab: DialFileManagerTabs.All,
     allowedTypes,
     maxSelectableFileSize,
     canAttachFolders,
@@ -339,7 +339,7 @@ const DialFileManagerModal: FC<Props> = ({
       description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
     };
     return {
-      // Never shown: the attach picker does not offer the All tab.
+      // The shell uses the empty state of the source section browsed from All.
       [DialFileManagerTabs.All]: myFilesEmptyState,
       [DialFileManagerTabs.MyFiles]: myFilesEmptyState,
       [DialFileManagerTabs.Shared]: {

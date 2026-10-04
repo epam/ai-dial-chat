@@ -132,6 +132,8 @@ import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
   markdownClassNames={COMPACT_MARKDOWN_CLASS_NAMES}
   markdownUrlTransform={resolveMarkdownUrl}
   afterContent={<StagesPanel stages={stages} isStreaming={isStreaming} />}
+  // The stages already show progress, so skip the "Thinking" line above them.
+  hasThinkingPlaceholder={stages.length === 0}
   starters={starters}
   onSelectStarter={handleSelectStarter}
   deploymentIconUrl={deployment.iconUrl}

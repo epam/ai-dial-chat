@@ -136,6 +136,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   hidePdfToolbar = false,
   configurePdfWorker,
   onAppInfo,
+  onVisualizerSendMessage,
 }) => {
   const {
     colors,
@@ -263,6 +264,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         return (
           <audio
             controls
+            controlsList="nodownload"
             src={content.url}
             aria-label={fileName ?? 'Audio attachment'}
             className="w-full max-w-sm"
@@ -427,6 +429,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           <VisualizerCanvasRenderer
             content={content}
             errorLabel={visualizerErrorLabel}
+            onSendMessage={onVisualizerSendMessage}
           />
         );
       case AttachmentContentType.McpApp:
@@ -472,6 +475,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     loadErrorLabel,
     forbiddenErrorLabel,
     visualizerErrorLabel,
+    onVisualizerSendMessage,
     htmlFrameBlockedLabel,
     htmlOpenInNewTabLabel,
     isHtmlSourceView,

@@ -49,6 +49,9 @@ vi.mock('../../context/ActiveScheduledTaskContext', () => ({
   ActiveScheduledTaskProvider: ({ children }: { children: unknown }) =>
     children,
 }));
+vi.mock('../../hooks/attachment/useCanvasVisualizerMessageHandler', () => ({
+  useCanvasVisualizerMessageHandler: () => undefined,
+}));
 vi.mock('../../hooks/attachment/usePdfPreviewLoader', () => ({
   usePdfPreviewLoader: () => undefined,
 }));

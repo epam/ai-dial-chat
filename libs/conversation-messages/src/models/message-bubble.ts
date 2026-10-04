@@ -178,6 +178,8 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   onSelectStarter?: (starter: StarterOption) => void;
   /** Content rendered between the message body and the actions bar (e.g. a stages panel). */
   afterContent?: ReactNode;
+  /** When `false`, no thinking placeholder renders while streaming before the first token, so `afterContent` starts level with the avatar. Defaults to `true`. */
+  hasThinkingPlaceholder?: boolean;
   /** Deployment icon URL. When absent, no icon is rendered. */
   deploymentIconUrl?: string;
   /** Deployment name used as the icon's accessible label. */

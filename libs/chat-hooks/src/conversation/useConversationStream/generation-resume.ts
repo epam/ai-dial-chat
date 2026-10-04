@@ -1,4 +1,5 @@
 import {
+  BackgroundGenerationStatus,
   type Conversation,
   MessageRole,
   type Message,
@@ -40,15 +41,31 @@ export const hasGeneratedPayload = (message: Message): boolean => {
 };
 
 /**
- * True when the conversation's last message is an unresolved assistant
- * placeholder: the backend only persists a conversation at generation start
- * (empty placeholder) and at generation end (final content, or a partial
- * flagged `streamErrorMessage`/`wasStoppedByUser`). This can mean generation
- * is still active elsewhere, or that its terminal save failed.
+ * Index of the conversation's message that a background generation is still
+ * producing (`backgroundGeneration.status` is `pending`), or -1. It can sit
+ * anywhere, e.g. before a model-changed status message.
+ */
+export const findPendingBackgroundMessageIndex = (
+  conversation: Conversation,
+): number =>
+  conversation.messages.findIndex(
+    (message) =>
+      message.backgroundGeneration?.status ===
+      BackgroundGenerationStatus.Pending,
+  );
+
+/**
+ * True when the conversation has a pending background message, or its last
+ * message is an unresolved assistant placeholder: the backend only persists a
+ * conversation at generation start (empty placeholder) and at generation end
+ * (final content, or a partial flagged `streamErrorMessage`/`wasStoppedByUser`).
+ * This can mean generation is still active elsewhere, or that its terminal save
+ * failed.
  */
 export const isAwaitingGenerationResume = (
   conversation: Conversation,
 ): boolean => {
+  if (findPendingBackgroundMessageIndex(conversation) !== -1) return true;
   const lastMessage = conversation.messages[conversation.messages.length - 1];
   return (
     !!lastMessage &&
@@ -102,13 +119,15 @@ const waitForRetry = (delayMs: number): Promise<void> =>
   });
 
 /**
- * Returns the conversation from `load`, retrying rejected attempts on the
+ * Returns the conversation from `load`, retrying rejected attempts — and
+ * results `isPending` flags as not yet settled — on the
  * {@link RECOVERY_REFETCH_DELAYS_MS} schedule; `null` once every attempt has
- * failed or `shouldStop` turns true between attempts.
+ * failed or stayed pending, or `shouldStop` turns true between attempts.
  */
 export const fetchConversationForRecovery = async (
   load: () => Promise<Conversation>,
   shouldStop: () => boolean,
+  isPending?: (conversation: Conversation) => boolean,
 ): Promise<Conversation | null> => {
   for (
     let attempt = 0;
@@ -117,11 +136,13 @@ export const fetchConversationForRecovery = async (
   ) {
     if (shouldStop()) return null;
     try {
-      return await load();
+      const conversation = await load();
+      if (!isPending?.(conversation)) return conversation;
     } catch {
-      if (attempt === RECOVERY_REFETCH_DELAYS_MS.length) return null;
-      await waitForRetry(RECOVERY_REFETCH_DELAYS_MS[attempt]);
+      /* Retried below, like a pending result. */
     }
+    if (attempt === RECOVERY_REFETCH_DELAYS_MS.length) return null;
+    await waitForRetry(RECOVERY_REFETCH_DELAYS_MS[attempt]);
   }
   return null;
 };
@@ -209,8 +230,22 @@ export interface ResumeIfAwaitingGenerationDeps {
   removeStreamingPath: (path: string) => void;
   isPathDisplayed: (path: string) => boolean;
   generationPersistenceErrorMessage?: string;
+  /** Records a terminal read failure and its guarded read-only retry. */
+  onReloadError?: (
+    path: string,
+    retry: () => Promise<void>,
+    isCurrent: () => boolean,
+  ) => void;
+  /** Clears a previous read failure after reconciliation. */
+  onReloadSuccess?: (path: string) => void;
   /** When set, replayed chunks are published at most once per frame through it. */
   frameScheduler?: FrameScheduler;
+  /**
+   * Generation ids the user stopped. A resumed background generation in this set
+   * ignores further replayed chunks (DIAL Core does not always honour the cancel), and
+   * its id is removed when the resume settles.
+   */
+  stoppedGenerationIdsRef?: MutableRefObject<Set<string>>;
 }
 
 /**
@@ -238,6 +273,9 @@ export const createResumeIfAwaitingGeneration = ({
   isPathDisplayed,
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   frameScheduler,
+  stoppedGenerationIdsRef,
+  onReloadError,
+  onReloadSuccess,
 }: ResumeIfAwaitingGenerationDeps) => {
   return (
     currentConversationId: string,
@@ -256,7 +294,12 @@ export const createResumeIfAwaitingGeneration = ({
     resumingPathsRef.current.add(conversationPath);
     addStreamingPath(conversationPath);
 
-    const messageIndex = conversation.messages.length - 1;
+    const pendingBackgroundIndex =
+      findPendingBackgroundMessageIndex(conversation);
+    const isBackground = pendingBackgroundIndex !== -1;
+    const messageIndex = isBackground
+      ? pendingBackgroundIndex
+      : conversation.messages.length - 1;
     const resumedBuffer: BufferedGeneration = {
       generationId: RESUME_BUFFER_GENERATION_ID,
       messageIndex,
@@ -265,13 +308,29 @@ export const createResumeIfAwaitingGeneration = ({
     bufferedGenerationsRef.current.set(conversationPath, resumedBuffer);
     const ownsBuffer = () =>
       bufferedGenerationsRef.current.get(conversationPath) === resumedBuffer;
+    const backgroundGenerationId = isBackground
+      ? conversation.messages[messageIndex].backgroundGeneration?.generationId
+      : undefined;
+    const isStoppedByUser = () =>
+      backgroundGenerationId != null &&
+      (stoppedGenerationIdsRef?.current.has(backgroundGenerationId) ?? false);
 
     const finish = (result?: Conversation, persistenceFailed = false) => {
       frameScheduler?.flush(conversationPath);
+      if (backgroundGenerationId != null) {
+        stoppedGenerationIdsRef?.current.delete(backgroundGenerationId);
+      }
       if (!ownsBuffer()) return;
       resumingPathsRef.current.delete(conversationPath);
       removeStreamingPath(conversationPath);
+      /*
+       * A reload that still shows a pending background message is not a lost
+       * save: the job is still running in DIAL Core, so no warning is shown.
+       * Nothing resumes it from here; the stored message stays pending until
+       * the conversation is opened again.
+       */
       const placeholderReload =
+        !isBackground &&
         result &&
         result.messages.length - 1 === messageIndex &&
         isAwaitingGenerationResume(result) &&
@@ -300,13 +359,23 @@ export const createResumeIfAwaitingGeneration = ({
     };
 
     const finalCheck = async () => {
+      if (!ownsBuffer()) return;
       try {
         const result = await transport.getConversation(
           safeDecodeURI(currentConversationId),
         );
+        if (!ownsBuffer()) return;
+        onReloadSuccess?.(conversationPath);
         finish(result);
       } catch {
-        finish(undefined, hasGeneratedPayload(resumedBuffer.message));
+        if (!ownsBuffer()) return;
+        frameScheduler?.flush(conversationPath);
+        resumingPathsRef.current.delete(conversationPath);
+        removeStreamingPath(conversationPath);
+        if (backgroundGenerationId != null) {
+          stoppedGenerationIdsRef?.current.delete(backgroundGenerationId);
+        }
+        onReloadError?.(conversationPath, finalCheck, ownsBuffer);
       }
     };
 
@@ -334,7 +403,7 @@ export const createResumeIfAwaitingGeneration = ({
       });
 
     const applyAttachChunk = (chunk: StreamChunk) => {
-      if (!ownsBuffer()) return;
+      if (!ownsBuffer() || isStoppedByUser()) return;
       const updated = applyChunkToMessages([resumedBuffer.message], 0, chunk);
       if (updated) resumedBuffer.message = updated[0];
       if (!isPathDisplayed(conversationPath)) return;
@@ -363,6 +432,26 @@ export const createResumeIfAwaitingGeneration = ({
       } catch {
         await finalCheck();
         return;
+      }
+
+      /*
+       * The watch only reports updates made after it subscribed, so a
+       * generation that finished between the caller's last read and this
+       * subscription would otherwise wait out the whole timeout. Events
+       * arriving meanwhile stay buffered in the stream.
+       */
+      try {
+        const current = await transport.getConversation(
+          safeDecodeURI(currentConversationId),
+        );
+        if (!isAwaitingGenerationResume(current)) {
+          watchController.abort();
+          void stream.cancel().catch(() => undefined);
+          finish(current);
+          return;
+        }
+      } catch {
+        // Keep watching: a later update or the final check resolves it.
       }
 
       let resolved = false;

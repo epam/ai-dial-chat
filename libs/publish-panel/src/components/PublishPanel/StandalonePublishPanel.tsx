@@ -1,6 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CloseButton } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode, RefObject, useEffect, useMemo, useRef } from 'react';
+import { SideDrawer } from '@epam/ai-dial-ui-kit';
+import { FC, ReactNode, RefObject, useEffect, useMemo, useState } from 'react';
 import {
   PublicationRule,
   PublishFolderNode,
@@ -8,7 +8,6 @@ import {
   PublishResourceSummary,
 } from '../../models/publish';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
-import { getFocusableElements } from '../../utils/focus';
 import { derivePublishState } from '../../utils/publish-state';
 import { PublishFooter, PublishFooterLabels } from './PublishFooter';
 import { PublishPanel, PublishPanelLabels } from './PublishPanel';
@@ -171,7 +170,13 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
     '--spp-title-text': colors?.titleText,
   });
 
-  const panelRef = useRef<HTMLDivElement>(null);
+  /*
+   * A callback ref, not useRef: the kit portals the panel, so its content
+   * mounts a render after this component and the effect below must re-run.
+   */
+  const [contentElement, setContentElement] = useState<HTMLDivElement | null>(
+    null,
+  );
   const {
     title = 'Publish',
     ariaLabel = 'Publish',
@@ -198,11 +203,17 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
     ],
   );
 
+  /*
+   * The kit drawer traps focus and handles Escape. It would return focus to
+   * whatever was focused before it opened — often a menu item that is gone by
+   * then — so the host's target takes over on close or unmount. Moving focus
+   * synchronously here keeps the drawer from overriding it, since it leaves
+   * focus alone once it has left the panel.
+   */
   useEffect(() => {
-    if (!isOpen) return;
-
-    const panel = panelRef.current;
-    if (!panel) return;
+    /* The kit renders the panel; it is reached from the body content inside it. */
+    const panel = contentElement?.closest<HTMLElement>('[role="dialog"]');
+    if (!isOpen || !panel) return;
 
     const focusPanel = () => panel.focus({ preventScroll: true });
     focusPanel();
@@ -235,159 +246,85 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
         returnFocusTarget.focus({ preventScroll: true });
       }
     };
-  }, [isOpen, returnFocusRef]);
+  }, [isOpen, contentElement, returnFocusRef]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-
-      const panel = panelRef.current;
-      if (!panel) return;
-
-      /*
-       * Only wrap while focus is genuinely inside the panel. The panel renders
-       * folder-row menus and the rule source picker through portals that live
-       * outside this subtree; pulling focus back from those would make them
-       * unusable by keyboard.
-       */
-      const active = document.activeElement;
-      if (!(active instanceof HTMLElement) || !panel.contains(active)) return;
-
-      const focusable = getFocusableElements(panel);
-      if (focusable.length === 0) {
-        /* Nothing to cycle through — hold focus on the dialog itself rather
-         * than letting Tab walk out into the page behind the modal. */
-        event.preventDefault();
-        panel.focus({ preventScroll: true });
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && active === first) {
-        event.preventDefault();
-        last.focus();
-        return;
-      }
-      if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
-
+  /*
+   * The title goes in as a node so the dialog keeps its own name from
+   * `labels.ariaLabel`; a string header would name it after the title.
+   */
   return (
-    <>
-      <div
-        style={cssVars}
-        className={mergeClasses(
-          'fixed inset-0 z-[51] transition-opacity duration-300',
-          styles.backdrop,
-          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
-        )}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={ariaLabel}
-        aria-hidden={!isOpen}
-        inert={!isOpen}
-        tabIndex={-1}
-        style={cssVars}
-        className={mergeClasses(
-          'fixed inset-y-0 end-0 z-[52] flex w-full flex-col overflow-hidden',
-          'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
-          'transition-transform duration-300',
-          styles.panel,
-          isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
-        )}
-      >
-        <div className="flex shrink-0 items-center gap-2 px-[22px] py-3">
-          <div className="flex-1" />
-          <span
-            className={mergeClasses(
-              'flex-1 text-center',
-              titleClassName,
-              styles.title,
-            )}
-          >
-            {title}
-          </span>
-          <div className="flex flex-1 justify-end">
-            <CloseButton
-              onClose={onClose}
-              ariaLabel={closeAriaLabel}
-              disabled={isSubmitting}
-            />
-          </div>
-        </div>
-
-        <div className={mergeClasses('shrink-0', styles.divider)} />
-
-        <div
+    <SideDrawer
+      open={isOpen}
+      onClose={onClose}
+      header={
+        <span
           className={mergeClasses(
-            'min-h-0 flex-1 overflow-y-auto',
-            styles.content,
+            'block truncate text-center',
+            titleClassName,
+            styles.title,
           )}
         >
-          <div className="p-[22px]">
-            <PublishPanel
-              resource={resource}
-              renderSummary={renderSummary}
-              history={history}
-              isHistoryLoading={isHistoryLoading}
-              hasHistoryError={hasHistoryError}
-              folderItems={folderItems}
-              selectedFolderPath={selectedFolderPath}
-              onSelectedFolderPathChange={onSelectedFolderPathChange}
-              onCreateFolder={onCreateFolder}
-              expandedPaths={expandedPaths}
-              onExpandedPathsChange={onExpandedPathsChange}
-              loadingPaths={loadingPaths}
-              hasExistingPublicationInFolder={hasExistingPublicationInFolder}
-              hasWriteAccess={hasWriteAccess}
-              isSubmitting={isSubmitting}
-              hasSubmitError={hasSubmitError}
-              allowReplace={allowReplace}
-              author={author}
-              onAuthorChange={onAuthorChange}
-              rules={rules}
-              onRulesChange={onRulesChange}
-              ruleSourceOptions={ruleSourceOptions}
-              isRulesLoading={isRulesLoading}
-              hasRulesLoadError={hasRulesLoadError}
-              labels={panelLabels}
-              styles={panelStyles}
-            />
-          </div>
+          {title}
+        </span>
+      }
+      ariaLabel={ariaLabel}
+      closeAriaLabel={closeAriaLabel}
+      closeDisabled={isSubmitting}
+      style={cssVars}
+      overlayStyle={cssVars}
+      className={styles.panel}
+      overlayClassName={styles.backdrop}
+      headerClassName={mergeClasses('px-[22px]', styles.divider)}
+      bodyClassName="flex flex-col overflow-hidden"
+    >
+      <div
+        ref={setContentElement}
+        className={mergeClasses(
+          'min-h-0 flex-1 overflow-y-auto',
+          styles.content,
+        )}
+      >
+        <div className="p-[22px]">
+          <PublishPanel
+            resource={resource}
+            renderSummary={renderSummary}
+            history={history}
+            isHistoryLoading={isHistoryLoading}
+            hasHistoryError={hasHistoryError}
+            folderItems={folderItems}
+            selectedFolderPath={selectedFolderPath}
+            onSelectedFolderPathChange={onSelectedFolderPathChange}
+            onCreateFolder={onCreateFolder}
+            expandedPaths={expandedPaths}
+            onExpandedPathsChange={onExpandedPathsChange}
+            loadingPaths={loadingPaths}
+            hasExistingPublicationInFolder={hasExistingPublicationInFolder}
+            hasWriteAccess={hasWriteAccess}
+            isSubmitting={isSubmitting}
+            hasSubmitError={hasSubmitError}
+            allowReplace={allowReplace}
+            author={author}
+            onAuthorChange={onAuthorChange}
+            rules={rules}
+            onRulesChange={onRulesChange}
+            ruleSourceOptions={ruleSourceOptions}
+            isRulesLoading={isRulesLoading}
+            hasRulesLoadError={hasRulesLoadError}
+            labels={panelLabels}
+            styles={panelStyles}
+          />
         </div>
-
-        <PublishFooter
-          version={resource?.version}
-          hasExistingPublicationInFolder={hasExistingPublicationInFolder}
-          isSubmitDisabled={derived.isSubmitDisabled}
-          isSubmitLoading={derived.isSubmitLoading}
-          onCancel={onClose}
-          onSubmit={onSubmit}
-          labels={footerLabels}
-        />
       </div>
-    </>
+
+      <PublishFooter
+        version={resource?.version}
+        hasExistingPublicationInFolder={hasExistingPublicationInFolder}
+        isSubmitDisabled={derived.isSubmitDisabled}
+        isSubmitLoading={derived.isSubmitLoading}
+        onCancel={onClose}
+        onSubmit={onSubmit}
+        labels={footerLabels}
+      />
+    </SideDrawer>
   );
 };

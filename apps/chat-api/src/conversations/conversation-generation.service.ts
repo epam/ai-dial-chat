@@ -153,6 +153,11 @@ interface GenerationEntry {
   finalizeTimer?: NodeJS.Timeout;
   /** Guards `releaseResources` so it runs at most once per entry. */
   resourcesReleased: boolean;
+  /**
+   * The generation runs as a DIAL Core background job, so its state lives in the
+   * stored message; Stop and attach must consult storage instead of this entry.
+   */
+  isBackground: boolean;
   /** Reports this entry's lifecycle state on the generations gauge. */
   metrics: GenerationTracker;
   /**
@@ -374,6 +379,7 @@ export class ConversationGenerationService implements OnModuleDestroy {
       emitter,
       maxDurationTimer: undefined as unknown as NodeJS.Timeout,
       resourcesReleased: false,
+      isBackground: false,
       metrics: trackGeneration(GenerationGaugeState.Active),
       logLabel: `path=${path} owner=${digestOwnerKey(ownerKey)}`,
     };
@@ -473,6 +479,38 @@ export class ConversationGenerationService implements OnModuleDestroy {
     const entry = this.registry.get(this.buildKey(ownerKey, path));
     if (!entry) return undefined;
     return { assembledMessage: entry.assembledMessage, emitter: entry.emitter };
+  }
+
+  /**
+   * Records whether the lease's generation runs as a DIAL Core background job. A no-op
+   * if the lease's entry has been replaced or released.
+   * @param lease - the generation's lease
+   * @param isBackground - whether it runs on the background path
+   */
+  setBackground(lease: GenerationLease, isBackground: boolean): void {
+    const entry = this.resolveByLease(lease);
+    if (entry) entry.isBackground = isBackground;
+  }
+
+  /**
+   * Whether this instance runs a non-background generation for the principal and path
+   * (and, when given, with this generation id). Stop and attach serve such a
+   * generation from the registry alone, without reading the conversation.
+   * @param ownerKey - caller's principal key
+   * @param path - conversation path
+   * @param generationId - generation id to match, if any
+   */
+  hasLocalForegroundGeneration(
+    ownerKey: string,
+    path: string,
+    generationId?: string,
+  ): boolean {
+    const entry = this.registry.get(this.buildKey(ownerKey, path));
+    return (
+      entry != null &&
+      !entry.isBackground &&
+      (generationId == null || entry.generationId === generationId)
+    );
   }
 
   /** Public, client-addressed Stop. Unchanged signature and behaviour. */

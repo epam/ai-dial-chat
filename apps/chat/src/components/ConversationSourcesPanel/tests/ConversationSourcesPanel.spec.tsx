@@ -11,7 +11,7 @@ import {
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ConversationSourcesPanelContainer from '../ConversationSourcesPanel';
 vi.mock('../../../context/SkillsContext', () => ({
@@ -27,8 +27,13 @@ vi.mock('react-router', () => ({
 }));
 
 let mockConversations: { id: string; isUnread?: boolean }[] = [];
+const MockConversationsContext = createContext<
+  typeof mockConversations | undefined
+>(undefined);
 vi.mock('../../../context/ConversationsContext', () => ({
-  useConversations: () => ({ conversations: mockConversations }),
+  useConversations: () => ({
+    conversations: useContext(MockConversationsContext) ?? mockConversations,
+  }),
 }));
 
 const mockDownloadAttachment = vi.fn();
@@ -114,8 +119,13 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
   }),
 }));
 
+const mockRouteConversationId = vi.hoisted(() => ({
+  value: null as string | null,
+}));
+
 vi.mock('../../../context/ActiveScheduledTaskContext', () => ({
   useActiveScheduledTask: () => ({
+    routeConversationId: mockRouteConversationId.value,
     status: activeScheduledTaskMock.status,
     scheduleId: activeScheduledTaskMock.scheduleId,
     runId: activeScheduledTaskMock.runId,
@@ -245,6 +255,7 @@ const makeAttachment = (
 });
 
 const resetActiveScheduledTaskMock = () => {
+  mockRouteConversationId.value = null;
   activeScheduledTaskMock.status = 'not-a-task-conversation';
   activeScheduledTaskMock.scheduleId = undefined;
   activeScheduledTaskMock.runId = undefined;
@@ -753,7 +764,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('shows the unread indicator on a History run whose matched conversation is unread', () => {
+  it('updates the History unread indicator when the shared conversation becomes read', () => {
     activeScheduledTaskMock.status = 'task-conversation';
     activeScheduledTaskMock.scheduleId = 'schedule-1';
     activeScheduledTaskMock.runId = 'run-1';
@@ -774,13 +785,28 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
       { id: 'bucket/.scheduler/schedule-1/run-2', isUnread: true },
     ];
 
-    render(<ConversationSourcesPanelContainer />);
+    const { rerender } = render(
+      <MockConversationsContext.Provider value={mockConversations}>
+        <ConversationSourcesPanelContainer />
+      </MockConversationsContext.Provider>,
+    );
 
     expect(
       screen.getByRole('button', {
         name: /conversationPanel\.unreadIndicatorLabel$/,
       }),
     ).toBeTruthy();
+    mockConversations = [{ ...mockConversations[0], isUnread: false }];
+    rerender(
+      <MockConversationsContext.Provider value={mockConversations}>
+        <ConversationSourcesPanelContainer />
+      </MockConversationsContext.Provider>,
+    );
+    expect(
+      screen.queryByRole('button', {
+        name: /conversationPanel\.unreadIndicatorLabel$/,
+      }),
+    ).toBeNull();
   });
 });
 
@@ -890,5 +916,23 @@ describe('ConversationSourcesPanelContainer — source clicks', () => {
       'noopener,noreferrer',
     );
     expect(mockOpenAttachmentCanvas).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationSourcesPanelContainer — sidebar reset on subject change', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetActiveScheduledTaskMock();
+  });
+
+  /*
+   * The reset-on-switch matrix is the useCloseSourcesSidebarOnSubjectChange
+   * spec; this only pins the wiring — mounting the container while the
+   * sidebar is open does not close it.
+   */
+  it('does not close the sidebar on initial mount while it is open', () => {
+    render(<ConversationSourcesPanelContainer />);
+
+    expect(mockHandleClose).not.toHaveBeenCalled();
   });
 });

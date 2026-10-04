@@ -63,6 +63,8 @@ const ON_READY_TO_STREAM_ARG = 10;
 const makeGenerationService = () => ({
   register: vi.fn().mockReturnValue(new AbortController()),
   abort: vi.fn().mockReturnValue(true),
+  hasLocalForegroundGeneration: vi.fn().mockReturnValue(false),
+  setBackground: vi.fn(),
   complete: vi.fn(),
   error: vi.fn(),
   getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),

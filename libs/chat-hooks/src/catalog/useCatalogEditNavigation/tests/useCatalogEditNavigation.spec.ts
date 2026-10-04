@@ -27,7 +27,6 @@ const urls: CatalogEditNavigationUrls = {
 };
 
 const labels: CatalogEditNavigationLabels = {
-  createQuickApp: 'Create quick app',
   createToolset: 'Create toolset',
   createCustomApp: 'Create custom app',
   createSkill: 'Skill',
@@ -40,7 +39,11 @@ const labels: CatalogEditNavigationLabels = {
 const quickAppSchema: ApplicationSchemaSummaryDto = {
   id: 'foo-quickapps2',
   displayName: 'Quick app 2.0',
+  editorUrl: 'https://editor.example/quickapps',
 };
+
+const EDITOR_URL = 'https://editor.example/runner';
+const SCHEMA_ENDPOINT = 'https://runner.example/schema';
 
 const makeCatalogItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
   id: 'tool-abc123',
@@ -214,7 +217,10 @@ describe('useCatalogEditNavigation', () => {
       ];
       const { result, onNavigate } = renderEditNavigation({
         deployments,
-        schemas: [quickAppSchema, { id: 'mind-map-schema' }],
+        schemas: [
+          quickAppSchema,
+          { id: 'mind-map-schema', editorUrl: EDITOR_URL },
+        ],
       });
       const item = makeCatalogItem({
         id: 'applications/b/Mind Map__1.0',
@@ -461,15 +467,36 @@ describe('useCatalogEditNavigation', () => {
       );
     });
 
-    it('offers one create option per runner schema, deduplicated and without the custom-app schema', () => {
+    it('offers one create option per runner schema, labelled with its display name and sorted with the static options', () => {
       const { result, onNavigate } = renderEditNavigation({
         isCustomAppsEnabled: true,
         schemas: [
           quickAppSchema,
-          { id: 'mind-map-schema', displayName: 'Mind Map' },
-          { id: 'mind-map-schema', displayName: 'Mind Map' },
-          { id: 'custom_app', displayName: 'Custom app' },
-          { displayName: 'No id' },
+          {
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
+            schemaEndpoint: SCHEMA_ENDPOINT,
+          },
+          {
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
+            schemaEndpoint: SCHEMA_ENDPOINT,
+          },
+          {
+            id: 'custom_app',
+            displayName: 'Custom app',
+            editorUrl: EDITOR_URL,
+          },
+          { displayName: 'No id', editorUrl: EDITOR_URL },
+          {
+            id: 'foo-quickapps',
+            displayName: 'Quick app',
+            editorUrl: EDITOR_URL,
+          },
+          {
+            id: 'editorless-runner',
+            displayName: 'No editor',
+          },
         ],
       });
 
@@ -479,24 +506,28 @@ describe('useCatalogEditNavigation', () => {
           option.label,
         ]),
       ).toEqual([
-        ['runner:foo-quickapps2', 'Create quick app'],
-        ['runner:mind-map-schema', 'Mind Map'],
-        ['toolset', 'Create toolset'],
         ['custom-app', 'Create custom app'],
-        ['skill', 'Skill'],
         ['prompt', 'Create prompt'],
+        ['toolset', 'Create toolset'],
+        ['runner:mind-map-schema', 'Mind Map'],
+        ['runner:editorless-runner', 'No editor'],
+        ['runner:foo-quickapps', 'Quick app'],
+        ['runner:foo-quickapps2', 'Quick app 2.0'],
+        ['skill', 'Skill'],
       ]);
 
-      result.current.createOptions[1].onClick?.({
-        key: 'runner:mind-map-schema',
-        domEvent: {} as never,
-      });
+      result.current.createOptions
+        .find((option) => option.key === 'runner:mind-map-schema')
+        ?.onClick?.({
+          key: 'runner:mind-map-schema',
+          domEvent: {} as never,
+        });
       expect(onNavigate).toHaveBeenCalledWith(
         'create:quick-app:mind-map-schema',
       );
     });
 
-    it('sorts runner options alphabetically and lists at most 7 of them', () => {
+    it('lists every runner option, sorted alphabetically', () => {
       const names = [
         'Zeta',
         'alpha',
@@ -512,7 +543,11 @@ describe('useCatalogEditNavigation', () => {
         'Lambda',
       ];
       const { result } = renderEditNavigation({
-        schemas: names.map((name) => ({ id: name, displayName: name })),
+        schemas: names.map((name) => ({
+          id: name,
+          displayName: name,
+          editorUrl: EDITOR_URL,
+        })),
       });
 
       const runnerLabels = result.current.createOptions
@@ -527,6 +562,11 @@ describe('useCatalogEditNavigation', () => {
         'Gamma',
         'Iota',
         'Kappa',
+        'Lambda',
+        'Mind map',
+        'OCR',
+        'Theta',
+        'Zeta',
       ]);
     });
 
@@ -534,8 +574,8 @@ describe('useCatalogEditNavigation', () => {
       const { result } = renderEditNavigation({
         schemas: [
           quickAppSchema,
-          { id: 'mind-map', displayName: 'Mind map' },
-          { id: 'ocr', displayName: 'OCR' },
+          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
+          { id: 'ocr', displayName: 'OCR', schemaEndpoint: SCHEMA_ENDPOINT },
         ],
       });
 
@@ -565,6 +605,24 @@ describe('useCatalogEditNavigation', () => {
         isSchemaAppsEnabled: false,
       });
       expect(disabled.current.createSearch).toBeUndefined();
+    });
+
+    it('offers a runner that has only a schema endpoint', () => {
+      const { result } = renderEditNavigation({
+        schemas: [
+          {
+            id: 'external-apps',
+            displayName: 'External app',
+            schemaEndpoint: 'https://runner.example/schema',
+          },
+        ],
+      });
+
+      expect(
+        result.current.createOptions.find(
+          (option) => option.key === 'runner:external-apps',
+        )?.label,
+      ).toBe('External app');
     });
 
     it('offers a Prompt create option only when the feature is enabled', () => {

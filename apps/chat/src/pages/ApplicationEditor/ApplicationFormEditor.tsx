@@ -72,6 +72,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     () => ({ searchParams, schemas, t }),
     [searchParams, schemas, t],
   );
+  const { entity: notifiableEntity, type: notificationType } = useMemo(
+    () =>
+      definition.getNotificationTarget?.(context) ?? {
+        entity: definition.notifiableEntity,
+      },
+    [context, definition],
+  );
 
   /*
    * True once a metadata-first create has switched this session into edit
@@ -234,11 +241,10 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
         if (isMetadataFirst) {
           const newAppId = result?.id;
           if (!newAppId) throw new Error('Created application has no id');
-          notifyOperationSuccess(
-            definition.notifiableEntity,
-            EntityOperation.Created,
-            { name: metadata.values.name },
-          );
+          notifyOperationSuccess(notifiableEntity, EntityOperation.Created, {
+            name: metadata.values.name,
+            type: notificationType,
+          });
           switchToCreatedApp(newAppId);
           return;
         }
@@ -254,9 +260,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       }
       await refetchDeployments();
       notifyOperationSuccess(
-        definition.notifiableEntity,
+        notifiableEntity,
         isEditMode ? EntityOperation.Edited : EntityOperation.Created,
-        { name: metadata.values.name },
+        { name: metadata.values.name, type: notificationType },
       );
       navigate(returnUrl);
     } catch (error) {
@@ -282,6 +288,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     isMetadataFirst,
     metadata.values,
     navigate,
+    notifiableEntity,
+    notificationType,
     notifyOperationSuccess,
     refetchDeployments,
     returnUrl,
@@ -390,7 +398,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
             isEditMode ? ButtonsI18nKeys.Save : ButtonsI18nKeys.Create,
           )}
           isSubmitting={isSaving}
-          isSubmitDisabled={isEditMode && !isSetupReady}
+          isSubmitDisabled={!isSetupReady}
           extraActions={extraActions}
           hideStandardActions={isPreviewing}
           labels={{

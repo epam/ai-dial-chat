@@ -1,5 +1,28 @@
 # Chat Application
 
+## Custom Core API operations adapter
+
+`apps/chat/src/server-api/custom-api.api.ts` exports `callCustomApiOperation(id, signal?)`,
+a thin adapter over the generated `customApiApi.getCustomApiOperationRaw` (see
+`libs/chat-api-client/README.md#custom-core-api-operations`) for the
+deployment-configured, disabled-by-default BFF bridge documented in
+`apps/chat-api/README.md#custom-core-api-operations`. It decodes the response
+envelope's `data` field as `unknown` by reading `.raw.json()` directly, rather
+than trusting the generated client's `{ [key: string]: unknown }` typing,
+because the real value may be any JSON value — array, object, string, number,
+boolean, or null.
+
+This parent change ships no UI, no React state, and no startup request for
+this adapter — it exists so a future client-specific change can call
+`callCustomApiOperation` and add its own domain validation, presentation,
+loading/error handling, and tests. `signal` supports cancellation the same way
+other adapters in this folder do; there is no retry and no cache (every call
+reaches the BFF, which itself applies no cache). The BFF accepts no query or
+request body for this operation in v1 — parameterized calls and writes are a
+separate, not-yet-built contract extension. Local BFF concurrency bounds
+(32 total / 4 per caller in-flight) are independent of whatever business rate
+limit Core's own configured Route enforces; see the BFF README for both.
+
 ## Manual scheduled-task runs
 
 The feature-gated task detail page can start the saved task definition with
@@ -21,6 +44,26 @@ The 70-second observation deadline also cancels a pending status read. Returning
 to a visible tab respects a Scheduler retry delay. A newly observed credentials
 failure rechecks the route's credentials state, and a failed initial History
 load retains its retry action alongside any accepted manual run.
+
+Run history refreshes the shared conversation list to discover each chat's unread
+state. Start now also refreshes it when a conversation first appears or its run
+status changes, so a new manual run shows as unread without reloading the page.
+Opening the chat from task History, sources History, the conversation panel, or a
+direct URL marks it viewed, including when the panel is closed. Pending and
+successful viewed writes survive stale list responses for the current user;
+failed writes restore unread state and can be retried by leaving and reopening
+the chat.
+Rapidly opening several run chats queues their viewed writes within the current
+app instance; older list responses cannot replace a newer successfully loaded
+conversation snapshot. A newer failed request does not discard an older success.
+
+History and Start now pass expected chat ids to
+`ConversationsContext.refreshConversations(expectedIds?)`. Missing chats get up to
+five additional list requests, two seconds apart after each request settles.
+These requests share a retry queue in the provider and continue after a run
+finishes or the user navigates to its chat. Discovery stops when metadata arrives,
+the retry budget is exhausted, the user changes, or the provider unmounts.
+An ordinary refresh without expected ids does not start retries.
 
 ## Scheduled task skills
 
@@ -53,6 +96,17 @@ For the structural map of the whole workspace — module boundaries, context
 inventory, backend domains, SSE streaming, theming token flow — see
 [`docs/architecture.md`](../../docs/architecture.md). This file covers what is
 specific to running and developing `apps/chat`.
+
+## Conversation reload recovery
+
+After a reply finishes, the conversation page and application preview reload
+the server's conversation. If that read fails, the received answer stays on
+screen with a separate "Couldn't refresh this conversation" notification.
+"Retry loading" repeats the read; it does not regenerate or save the answer.
+The action is disabled while reading or generating, and successful
+reconciliation clears the notification. Explicit backend save failures and
+reads returning an unresolved empty placeholder still use the unsaved-answer
+warning. A failed read alone establishes neither success nor failure of saving.
 
 ## Feature loading
 

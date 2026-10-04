@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listScheduledTaskRuns } from '../../../server-api/scheduled-tasks.api';
 import { useScheduledTaskRuns } from '../useScheduledTaskRuns';
 
+const refreshConversations = vi.fn().mockResolvedValue(undefined);
+vi.mock('../../../context/ConversationsContext', () => ({
+  useConversations: () => ({ refreshConversations }),
+}));
+
 vi.mock('../../../server-api/scheduled-tasks.api', () => {
   const listScheduledTaskRuns = vi.fn();
   return {
@@ -13,6 +18,63 @@ vi.mock('../../../server-api/scheduled-tasks.api', () => {
 });
 
 describe('useScheduledTaskRuns', () => {
+  it('retries unread metadata discovery on an unchanged background poll', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(listScheduledTaskRuns).mockResolvedValue({
+        items: [
+          {
+            id: 'r1',
+            status: 'InProgress',
+            startTime: '2026-07-24T09:00:00Z',
+            conversationId: 'conversations/bucket/chat',
+          },
+        ],
+        next: null,
+      });
+      const { unmount } = renderHook(() => useScheduledTaskRuns('sched_123'));
+      await act(async () => undefined);
+      expect(refreshConversations).toHaveBeenCalledOnce();
+      await act(async () => vi.advanceTimersByTimeAsync(15_000));
+      expect(refreshConversations).toHaveBeenCalledTimes(2);
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('refreshes shared unread metadata on each history snapshot containing a chat', async () => {
+    vi.mocked(listScheduledTaskRuns).mockResolvedValue({
+      items: [
+        {
+          id: 'r1',
+          status: 'Success',
+          startTime: '2026-07-24T09:00:00Z',
+          conversationId: 'conversations/bucket/chat',
+        },
+      ],
+      next: null,
+    });
+    const { result } = renderHook(() => useScheduledTaskRuns('sched_123'));
+    await waitFor(() => expect(refreshConversations).toHaveBeenCalledOnce());
+    expect(refreshConversations).toHaveBeenCalledWith([
+      'conversations/bucket/chat',
+    ]);
+    await act(async () => result.current.refetch());
+    await waitFor(() => expect(refreshConversations).toHaveBeenCalledTimes(2));
+  });
+
+  it('does not refresh conversations for runs without a chat', async () => {
+    vi.mocked(listScheduledTaskRuns).mockResolvedValue({
+      items: [
+        { id: 'r1', status: 'InProgress', startTime: '2026-07-24T09:00:00Z' },
+      ],
+      next: null,
+    });
+    const { result } = renderHook(() => useScheduledTaskRuns('sched_123'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(refreshConversations).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -169,6 +169,8 @@ interface Props {
     propertyKey?: string,
     description?: string,
   ) => void;
+  /** Sends a visualizer `SEND_MESSAGE` text; `undefined` while visualizer messages are disabled. */
+  onVisualizerSendMessage?: (content: string) => void;
   onStartEdit?: (messageIndex: number) => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
@@ -334,6 +336,7 @@ const ConversationMessageItem: FC<Props> = ({
   isAssistantTyping,
   editingMessageIndexes,
   onSelectStarter,
+  onVisualizerSendMessage,
   onStartEdit,
   onDeleteMessage,
   onRegenerateMessage,
@@ -894,6 +897,8 @@ const ConversationMessageItem: FC<Props> = ({
         markdownClassNames={markdownClassNames}
         attachments={bubbleAttachments}
         isStreaming={isStreaming}
+        // The stages summary already shows live progress; a second "Thinking" line above it pushes the stages below the avatar.
+        hasThinkingPlaceholder={!hasStages}
         hasAlwaysVisibleActions={!isStreaming}
         actions={{
           ...buildMessageActions(
@@ -1034,6 +1039,7 @@ const ConversationMessageItem: FC<Props> = ({
                     errorLabel={t(
                       AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
                     )}
+                    onVisualizerSendMessage={onVisualizerSendMessage}
                   />
                 ))}
               {mcpAppMatch && onOpenApp && (

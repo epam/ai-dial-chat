@@ -116,6 +116,7 @@ import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOve
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
+import { ConversationReloadNotification } from './ConversationReloadNotification';
 import { getInputMessageHistory } from './utils/message-display';
 
 const ConversationInput = lazy(async () => {
@@ -149,6 +150,8 @@ interface Props {
     propertyKey?: string,
     description?: string,
   ) => void;
+  /** Sends a visualizer `SEND_MESSAGE` text; `undefined` while visualizer messages are disabled. */
+  onVisualizerSendMessage?: (content: string) => void;
   onStartEdit?: (messageIndex: number) => void;
   onCancelEdit?: (messageIndex: number) => void;
   onEditMessage?: (
@@ -208,10 +211,19 @@ interface Props {
    * Never persisted as a message.
    */
   topContent?: ReactNode;
+  /** A terminal read failed; received output remains in the view. */
+  hasConversationReloadError?: boolean;
+  /** Disables read retry while its request is pending. */
+  isReloadingConversation?: boolean;
+  /** Repeats the terminal read without regenerating or saving. */
+  onRetryConversationReload?: () => Promise<void>;
 }
 
 const ConversationView: FC<Props> = ({
   messages,
+  hasConversationReloadError = false,
+  isReloadingConversation = false,
+  onRetryConversationReload,
   onSend,
   onUploadAttachment,
   onStop,
@@ -221,6 +233,7 @@ const ConversationView: FC<Props> = ({
   onDislikeMessage,
   onAttachmentsChange,
   onSelectStarter,
+  onVisualizerSendMessage,
   onStartEdit,
   onCancelEdit,
   onEditMessage,
@@ -1004,6 +1017,7 @@ const ConversationView: FC<Props> = ({
                     fallbackCitationGroups={fallbackCitationGroups}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
+                    onVisualizerSendMessage={onVisualizerSendMessage}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}
                     onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
                     onRegenerateMessage={
@@ -1115,6 +1129,13 @@ const ConversationView: FC<Props> = ({
                 </div>
               );
             })}
+            {hasConversationReloadError && onRetryConversationReload && (
+              <ConversationReloadNotification
+                isReloading={isReloadingConversation}
+                isStreaming={isAssistantTyping}
+                onRetry={onRetryConversationReload}
+              />
+            )}
           </div>
           <div
             ref={spacerRef}

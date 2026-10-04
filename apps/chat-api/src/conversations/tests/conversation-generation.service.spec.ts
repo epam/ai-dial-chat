@@ -62,6 +62,33 @@ describe('ConversationGenerationService', () => {
     service.onModuleDestroy();
   });
 
+  describe('hasLocalForegroundGeneration', () => {
+    it('reports a local non-background generation, matching the id when given', () => {
+      service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      expect(service.hasLocalForegroundGeneration(OWNER_KEY, PATH)).toBe(true);
+      expect(
+        service.hasLocalForegroundGeneration(OWNER_KEY, PATH, GENERATION_ID),
+      ).toBe(true);
+      expect(
+        service.hasLocalForegroundGeneration(OWNER_KEY, PATH, 'other-id'),
+      ).toBe(false);
+      expect(service.hasLocalForegroundGeneration('other-owner', PATH)).toBe(
+        false,
+      );
+    });
+
+    it('does not report a generation marked as background', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.setBackground(lease, true);
+
+      expect(service.hasLocalForegroundGeneration(OWNER_KEY, PATH)).toBe(false);
+
+      service.setBackground(lease, false);
+      expect(service.hasLocalForegroundGeneration(OWNER_KEY, PATH)).toBe(true);
+    });
+  });
+
   describe('register', () => {
     it('does not let a stale persistence failure terminate a newer generation', () => {
       const oldLease = service.register(OWNER_KEY, PATH, GENERATION_ID);

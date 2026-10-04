@@ -215,6 +215,16 @@ describe('FileManagerAttachModal', () => {
     vi.clearAllMocks();
   });
 
+  it('leaves file-manager panel spacing to the shell', () => {
+    renderModal();
+
+    const classList = screen.getByRole('button', {
+      name: 'select file',
+    }).parentElement?.parentElement?.classList;
+    expect(classList?.contains('px-5')).toBe(false);
+    expect(classList?.contains('py-4')).toBe(false);
+  });
+
   describe('Attach button disabled state', () => {
     it('disables the Attach button when no paths are selected', () => {
       renderModal({ selectedPaths: new Set() });

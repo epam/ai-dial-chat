@@ -1,4 +1,4 @@
-# Spec: spa-auth-session
+# spa-auth-session Specification
 
 ## Purpose
 
@@ -61,7 +61,7 @@ The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT per
 #### Scenario: No redirect during loading
 
 - **WHEN** the bootstrap status is `loading`
-- **THEN** no redirect is performed and the gate renders `null`
+- **THEN** no redirect is performed, and `<RequireAuth>` renders a centred ui-kit `<Spinner />` outside overlay mode (`null` in overlay mode)
 
 #### Scenario: Disabled flag suppresses every automatic side effect
 
@@ -77,7 +77,16 @@ The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT per
 
 ### Requirement: All SPA API requests send the session cookie
 
-The shared `request()` helper in `apps/chat/src/server-api/base.ts` SHALL include `credentials: 'include'` on every outbound `fetch`, ensuring the `__Host-chat.sess` cookie is sent on both same-origin (dev via Vite proxy) and cross-origin (production) deployments. No call site is permitted to call `fetch` directly bypassing the helper.
+Every SPA request to the BFF SHALL be sent with `credentials: 'include'`, so the `__Host-chat.sess` cookie is sent on both same-origin (dev via Vite proxy) and cross-origin (production) deployments. Requests go through one of three paths:
+
+- **Generated client (most calls)** — the `@epam/ai-dial-chat-api-client` API instances in `apps/chat/src/server-api/api-client.ts` (`authApi`, `conversationsApi`, `deploymentsApi`, …) share one `Configuration` built by `createApiConfiguration()` with `basePath: ''`, `credentials: 'include'`, and the middleware chain `[csrfMiddleware, unauthorizedMiddleware, telemetryMiddleware]`. `getMe()` (`authApi.getCurrentUserRaw`) and `getProviders()` (`authApi.listProviders`) in `server-api/auth.api.ts` use it.
+- **`request()` helper** — the `get`/`post`/`put` helpers in `apps/chat/src/server-api/base.ts` remain for the remaining legacy paths and always set `credentials: 'include'`.
+- **Direct `fetch`** — a few call sites that need raw `fetch` options set `credentials: 'include'` themselves: `logout()` in `server-api/auth.api.ts`, the CSRF refresh probe in `base.ts`, and `client-channel.ts`'s subscribe call.
+
+#### Scenario: Generated client sends credentials
+
+- **WHEN** any call is made through an API instance from `server-api/api-client.ts`
+- **THEN** the underlying `fetch` is invoked with `credentials: 'include'`
 
 #### Scenario: GET sends credentials
 
@@ -93,7 +102,7 @@ The shared `request()` helper in `apps/chat/src/server-api/base.ts` SHALL includ
 
 ### Requirement: 401 responses surface as a typed UnauthorizedError and reset the session
 
-When the `request()` helper observes an HTTP `401` response, it SHALL throw an `UnauthorizedError` (subclass of `Error`, `status: 401`, exposes the originating URL) and SHALL invoke every listener registered through an `onUnauthorized(listener)` API exposed from the same module.
+When the `request()` helper in `server-api/base.ts` or the generated client's `unauthorizedMiddleware` (built in `api-client.ts` from `createUnauthorizedMiddleware` in `libs/chat-hooks/src/api-transport/create-unauthorized-middleware.ts`) observes an HTTP `401` response, it SHALL call `notifyUnauthorized(url)` — which clears the CSRF token and invokes every listener registered through `onUnauthorized(listener)` in `base.ts` — and SHALL throw an `UnauthorizedError` (subclass of `Error`, `status: 401`, exposes the originating URL). The middleware also treats a `403` with an invalid-CSRF body as recoverable: it refreshes the CSRF token and retries the request once, and notifies/throws `UnauthorizedError` only when the refresh reports unauthorized or the retry fails the same way.
 
 The `UserContext` provider MUST register a single listener that, before resetting `status`, first attempts a bounded self-heal probe: if `status` is currently `Authenticated`, it issues one `GET /api/v1/auth/me` using whatever session cookie the browser currently holds.
 
@@ -113,7 +122,7 @@ The `UserContext` provider MUST register a single listener that, before resettin
 
 #### Scenario: Non-401 errors are unchanged
 
-- **WHEN** an API call returns any non-OK status other than `401` (e.g. `500`, `502`)
+- **WHEN** a `request()` helper call returns any non-OK status other than `401` (e.g. `500`, `502`)
 - **THEN** the helper throws a generic `Error` with a message containing the status and URL, and the `UnauthorizedError` listeners are NOT invoked
 
 #### Scenario: Listener subscription is cleanable
@@ -125,7 +134,7 @@ The `UserContext` provider MUST register a single listener that, before resettin
 
 ### Requirement: Routing gates protected UI behind a resolved session
 
-The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login` (the provider picker) and `*` (everything else, wrapped in a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`, render `null` while `status === 'loading'` and overlay mode is not active (see `chat-overlay-app-mode` for the overlay-mode loading presentation), and, when `status === 'unauthenticated'`:
+The SPA SHALL declare three top-level routes in `apps/chat/src/main.tsx`: `/login` (the provider picker), `/overlay-close` (`<OverlayClose />`, outside the auth gate), and `*` (everything else, wrapped in `<OverlayModeGate>` and a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`. While `status === 'loading'` it renders a centred ui-kit `<Spinner />` outside overlay mode and `null` in overlay mode (see `chat-overlay-app-mode` for the overlay-mode loading presentation). When `status === 'unauthenticated'`:
 
 - outside overlay mode (`useOptionalOverlay()` returns `undefined`): call `useAuthRedirect()` with no disabling options, triggering the existing automatic redirect policy;
 - inside overlay mode (`useOptionalOverlay()` returns a defined value): call `useAuthRedirect({ disabled: true })`, so no automatic redirect is attempted, and render the overlay login gate defined in `overlay-external-login` instead of `null`.
@@ -135,10 +144,12 @@ The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login`
 - **WHEN** `<RequireAuth>` mounts with `status = 'authenticated'`
 - **THEN** it renders its `children` (the existing `<App />`)
 
-#### Scenario: Loading user sees nothing
+#### Scenario: Loading user sees a spinner
 
 - **WHEN** `<RequireAuth>` mounts with `status = 'loading'` outside overlay mode
-- **THEN** it renders `null` and does NOT trigger any redirect
+- **THEN** it renders a centred `<Spinner />`, not its `children`, and does NOT trigger any redirect
+- **AND WHEN** the same happens in overlay mode
+- **THEN** it renders `null`
 
 #### Scenario: Login route renders the picker
 
@@ -159,12 +170,12 @@ The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login`
 
 ### Requirement: Login picker page lists providers and links to the BFF login endpoint
 
-The `<LoginPage />` component SHALL own provider loading on the `/login` route, load the provider list via `GET /api/v1/auth/providers` exactly once on mount, read an optional `callbackUrl` from the route query string, and render one HTML anchor element per provider whose `href` is `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-callback-url>`. If the route query omits `callbackUrl`, the page SHALL default to the application root (`window.location.origin + '/'`). Anchors MUST NOT be React Router `<Link>` elements, because the destination is a BFF route that requires a top-level browser navigation to the IdP. While loading, a localised placeholder MUST be shown; on failure, a localised error message MUST be shown.
+The `<LoginPage />` component (`apps/chat/src/pages/auth/Login.tsx`) SHALL own provider loading on the `/login` route, load the provider list once on mount via `getProviders()` (`authApi.listProviders()`, i.e. `GET /api/v1/auth/providers`), read an optional `callbackUrl` from the route query string, and render one ui-kit `NeutralButton` with an `href` (which renders an `<a>`) per provider, whose `href` is `/api/v1/auth/login/<encoded-providerId>?callbackUrl=<encoded-callback-url>`, whose `label` is the provider's `label` as-is, and whose `iconBefore` is a `ProviderIcon`. The buttons are preceded by a `t(AuthI18nKeys.LoginDescription)` line (`auth.loginDescription`, "Sign in with:") under the `auth.loginTitle` heading. The page SHALL use `callbackUrl` only when it parses as a same-origin URL (and does not start with `//`); otherwise, or when the query omits it, it SHALL default to the application root (`window.location.origin + '/'`). Provider links MUST NOT be React Router `<Link>` elements, because the destination is a BFF route that requires a top-level browser navigation to the IdP. While loading, a localised placeholder MUST be shown; on failure, a localised error message MUST be shown.
 
 #### Scenario: Provider list rendered
 
 - **WHEN** `GET /api/v1/auth/providers` returns `[{ id: 'keycloak', label: 'Keycloak' }, { id: 'auth0', label: 'Auth0' }]`
-- **THEN** `<LoginPage />` renders two anchor elements with `href` values `/api/v1/auth/login/keycloak?callbackUrl=<encoded-callback-url>` and `/api/v1/auth/login/auth0?callbackUrl=<encoded-callback-url>`, labelled with the i18n key `auth.providerButtonLabel` interpolated with each provider's `label`
+- **THEN** `<LoginPage />` renders two links with `href` values `/api/v1/auth/login/keycloak?callbackUrl=<encoded-callback-url>` and `/api/v1/auth/login/auth0?callbackUrl=<encoded-callback-url>`, named `Keycloak` and `Auth0`
 
 #### Scenario: Callback URL preserved through provider picker
 
@@ -179,66 +190,76 @@ The `<LoginPage />` component SHALL own provider loading on the `/login` route, 
 #### Scenario: Fetch failure surfaces a localised message
 
 - **WHEN** `GET /api/v1/auth/providers` rejects with any error
-- **THEN** `<LoginPage />` renders the i18n key `auth.providersError` and logs the error via `console.error`
+- **THEN** `<LoginPage />` renders the i18n key `auth.providersError` (the error is caught and only sets the error state; it is not logged)
 
 ---
 
-### Requirement: Header user widget shows identity and offers sign-out
+### Requirement: User menu shows identity and offers sign-out behind a confirmation
 
-The header component (`apps/chat/src/components/Header/Header.tsx`) SHALL render a `<UserMenu />` widget on the right side of the bar. When `status === 'authenticated'`, the widget MUST display the user's email (from `user.claims.email`) or a fallback initial, and expose a backend-dependent sign-out affordance implemented as an HTML `<form method="POST" action="/api/v1/auth/logout">`. The form wiring is part of this change; successful logout depends on backend Slice 3 of `auth-bff-encrypted-cookie`. When `status` is anything else, the widget MUST render `null`.
+On desktop, `apps/chat/src/components/Navigation/Navigation.tsx` SHALL render the `UserMenu` from `@epam/ai-dial-navigation-panel` in the footer of the `NavigationPanel` rail, only when `status === 'authenticated'` with a `user` and `OverlayFeature.HideUserMenu` is not set. The menu's trigger is an avatar `Button` with `aria-label` `t(AuthI18nKeys.SignedInAs, { email })` (`auth.signedInAs`) and an email tooltip; the avatar uses `auth.userAvatar` as its alt text. Its 2.0 `Dropdown` holds the user's identity, the language group (when one is offered), a Settings item (`basic.settings`, omitted when `OverlayFeature.HideSettingsPage` is set), and a Log out item (`ButtonsI18nKeys.LogOut`, `buttons.logOut`). On mobile, the `NavigationSheet` profile page's Log out row triggers the same flow.
 
-#### Scenario: Authenticated state shows email and sign-out
+Both Log out entries SHALL call `openLogout()` from `useLogout()`, which opens `LogoutConfirmationModal` (a ui-kit `ConfirmationPopup` with `auth.logOutConfirmTitle`, `auth.logOutConfirmDescription`, and confirm label `buttons.logOut`). Confirming SHALL call `logout()` from `server-api/auth.api.ts`, which sends `fetch(ApiEndpoints.AUTH_LOGOUT, { method: 'POST', credentials: 'include', redirect: 'manual' })` with an `X-CSRF-Token` header when a token is held and always clears the CSRF token afterwards. The modal then logs any request failure via `console.error`, calls `useUser().reset()`, and, outside overlay mode, navigates to `ROUTES.Login`; in overlay mode the current route is kept. There is no HTML form submission.
 
-- **WHEN** the user is authenticated with `claims.email = 'u@x.io'`
-- **THEN** `<UserMenu />` renders an accessible button labelled with `u@x.io` (i18n key `auth.signedInAs` interpolation) that opens a dropdown containing a form whose submit button is labelled with the i18n key `auth.signOut`
+#### Scenario: Authenticated state shows the user menu
 
-#### Scenario: Loading or unauthenticated state hides the widget
+- **WHEN** the user is authenticated with email `u@x.io` on a desktop viewport and `OverlayFeature.HideUserMenu` is not set
+- **THEN** the rail footer renders a button named by `auth.signedInAs` interpolated with `u@x.io`, opening a dropdown that contains the Log out item
 
-- **WHEN** `status` is `'loading'` or `'unauthenticated'`
-- **THEN** `<UserMenu />` renders `null`
+#### Scenario: Unauthenticated or hidden state omits the menu
 
-#### Scenario: Sign-out submits to the BFF endpoint
+- **WHEN** `status` is not `'authenticated'`, or `OverlayFeature.HideUserMenu` is set
+- **THEN** no `UserMenu` is rendered
 
-- **WHEN** the user clicks the "Sign out" button inside the dropdown
-- **THEN** the browser performs a top-level `POST` form submission to `/api/v1/auth/logout` (no `fetch` is used)
+#### Scenario: Log out asks for confirmation first
+
+- **WHEN** the user picks Log out in the `UserMenu` or the mobile sheet
+- **THEN** `LogoutConfirmationModal` opens and no logout request has been sent yet
+
+#### Scenario: Confirming sign-out posts to the BFF and resets the session
+
+- **WHEN** the user confirms in `LogoutConfirmationModal` outside overlay mode
+- **THEN** a `fetch` `POST` to `/api/v1/auth/logout` is sent with `credentials: 'include'`, the CSRF token is cleared, `useUser().reset()` is called, and the app navigates to `/login`
+- **AND WHEN** the same happens in overlay mode
+- **THEN** the app stays on the current route
 
 ---
 
 ### Requirement: All new user-visible strings flow through react-i18next
 
-Every user-visible string introduced by this change MUST be looked up via `useTranslation()` from `react-i18next`. The corresponding keys MUST live under the `auth.*` namespace in `apps/chat/src/i18n/locales/en.json`. No hard-coded English strings are permitted in any component, page, or hook added or modified by this change.
+Every user-visible auth string MUST be looked up via `useTranslation()` from `react-i18next`, through a member of the `AuthI18nKeys` enum in `apps/chat/src/constants/translation-keys.ts` (or a shared enum such as `ButtonsI18nKeys` for generic labels like Log out). Auth-specific keys MUST live under the `auth.*` namespace in `apps/chat/src/i18n/locales/en.json`. Provider names on the login page are the BFF-supplied `label` values and are rendered as-is. No hard-coded English strings are permitted in auth components, pages, or hooks.
 
 #### Scenario: Auth namespace populated
 
-- **WHEN** the change is applied
-- **THEN** `apps/chat/src/i18n/locales/en.json` contains the keys `auth.signOut`, `auth.signedInAs`, `auth.loading`, `auth.loginTitle`, `auth.loginDescription`, `auth.providerButtonLabel`, `auth.providersError`, and `auth.userMenuLabel`
+- **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
+- **THEN** it contains the keys `auth.signedInAs`, `auth.loading`, `auth.loginTitle`, `auth.loginDescription`, `auth.providersError`, `auth.overlayLoginTitle`, `auth.overlayLoginDescription`, `auth.overlayExternalLoginBlocked`, `auth.overlayLoginTakingLonger`, `auth.overlayProviderPickerLoading`, `auth.overlayProvidersError`, `auth.logOutConfirmTitle`, `auth.logOutConfirmDescription`, `auth.loggingOutStatus`, and `auth.userAvatar`
+- **AND** the Log out label is the shared `buttons.logOut` key
 
-#### Scenario: Components use the t function
+#### Scenario: Components use the typed key enum
 
-- **WHEN** any component, page, or hook added by this change renders a user-visible string
-- **THEN** that string MUST come from a `t('auth.<element>')` call, not a string literal
+- **WHEN** any auth component, page, or hook renders a user-visible string
+- **THEN** that string comes from `t(AuthI18nKeys.<Member>)` (or a shared key enum), not a string literal or a raw key string
 
 ---
 
 ### Requirement: Auth endpoint constants in the server-api module
 
-The `ApiEndpoints` enum in `apps/chat/src/server-api/base.ts` SHALL be extended with at minimum `AUTH_ME = '/api/v1/auth/me'`, `AUTH_PROVIDERS = '/api/v1/auth/providers'`, and `AUTH_LOGOUT = '/api/v1/auth/logout'`. The dynamic login URL `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-url>` MAY be constructed inline since `providerId` and `callbackUrl` are runtime values. No call site outside `server-api/` is permitted to hard-code any static `/api/v1/auth/*` literal other than the dynamic login URL builder.
+The `ApiEndpoints` enum in `apps/chat/src/server-api/base.ts` SHALL contain `AUTH_ME = '/api/v1/auth/me'` (used by the CSRF refresh probe) and `AUTH_LOGOUT = '/api/v1/auth/logout'` (used by `logout()`). There is no `AUTH_PROVIDERS` member: the provider list is fetched through the generated client (`authApi.listProviders()` via `getProviders()`), and `getMe()` uses `authApi.getCurrentUserRaw()`. The dynamic login URL `/api/v1/auth/login/<encoded-providerId>?callbackUrl=<encoded-url>` MAY be constructed inline since `providerId` and `callbackUrl` are runtime values; it is built in three places: `hooks/auth/useAuthRedirect.ts`, `pages/auth/Login.tsx`, and `hooks/auth/useOverlayProviderLogin.ts`. No call site outside `server-api/` is permitted to hard-code any static `/api/v1/auth/*` literal other than the dynamic login URL.
 
 #### Scenario: Enum contains auth endpoints
 
-- **WHEN** the change is applied
-- **THEN** importing `ApiEndpoints` from `apps/chat/src/server-api/base.ts` exposes the three constants above with the exact path values listed
+- **WHEN** `ApiEndpoints` is imported from `apps/chat/src/server-api/base.ts`
+- **THEN** it exposes `AUTH_ME` and `AUTH_LOGOUT` with the exact path values listed, and no `AUTH_PROVIDERS`
 
 #### Scenario: No hard-coded auth paths outside server-api
 
-- **WHEN** searching the `apps/chat/src/` tree (excluding `apps/chat/src/server-api/**`) for the literal `/api/v1/auth/`
-- **THEN** the only occurrences are the dynamic login URL built from `providerId`, with no static `'/api/v1/auth/me'`, `'/api/v1/auth/providers'`, or `'/api/v1/auth/logout'` literals
+- **WHEN** searching the `apps/chat/src/` tree (excluding `apps/chat/src/server-api/**` and tests) for the literal `/api/v1/auth/`
+- **THEN** the only occurrences are the dynamic login URLs in `useAuthRedirect`, `Login`, and `useOverlayProviderLogin`, with no static `'/api/v1/auth/me'`, `'/api/v1/auth/providers'`, or `'/api/v1/auth/logout'` literals
 
 ---
 
 ### Requirement: Tests cover the auth integration surface
 
-The change SHALL ship co-located Vitest specs that cover every new module: `UserContext.spec.tsx`, `useAuthRedirect.spec.ts`, `Login.spec.tsx`, `UserMenu.spec.tsx`, and additions to `base.spec.ts`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour, not implementation details.
+The auth surface SHALL be covered by co-located Vitest specs: `apps/chat/src/context/auth/UserContext.spec.tsx`, `apps/chat/src/hooks/auth/useAuthRedirect.spec.tsx`, `apps/chat/src/pages/auth/Login.spec.tsx`, `apps/chat/src/server-api/base.spec.ts`, `apps/chat/src/server-api/auth.api.spec.ts`, `apps/chat/src/components/LogoutConfirmation/tests/LogoutConfirmationModal.spec.tsx`, and `libs/navigation-panel/src/components/UserMenu/tests/UserMenu.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour, not implementation details.
 
 #### Scenario: UserContext bootstrap paths are tested
 
@@ -258,7 +279,12 @@ The change SHALL ship co-located Vitest specs that cover every new module: `User
 #### Scenario: UserMenu role-based queries
 
 - **WHEN** the test suite for `UserMenu` runs
-- **THEN** assertions resolve the email button by `getByRole('button', { name: ... })` and the sign-out form by `getByRole('form')`, without implementation-specific selectors
+- **THEN** assertions resolve the trigger by `getByRole('button', { name: labels.trigger })` and the avatar by `getByRole('img', { name: labels.avatarAlt })`, without implementation-specific selectors
+
+#### Scenario: Logout confirmation navigation is tested
+
+- **WHEN** the test suite for `LogoutConfirmationModal` runs
+- **THEN** it covers navigating to `/login` after logout outside overlay mode and keeping the current route in overlay mode
 
 ---
 

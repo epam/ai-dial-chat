@@ -53,9 +53,9 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.30`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.36`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.20` — `SkillDetailsSidePanel`
+- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.22` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
 
 ## Components
@@ -110,6 +110,13 @@ function SkillFieldExample() {
   );
 }
 ```
+
+When `isSkillsSupported` is false the field is disabled, and hovering it shows
+a tooltip with the reason: `labels.unsupportedTooltipLabel` while a skill is
+selected, otherwise `labels.unavailableTooltipLabel` (defaults to
+`'Selected model does not support skills. Select a different model to use a skill.'`).
+With no selection the same text is also attached to the combobox through
+`aria-describedby`, alongside `describedById`.
 
 Public types: `SkillSelectorFieldProps`, `SkillSelectorFieldLabels`, and
 `SkillSelectorFieldStyles`. `styles` supports colors (`text`, `background`,

@@ -305,7 +305,7 @@ The system SHALL NOT forward an `If-None-Match` request header on this operation
 - **THEN** the system returns `422 Unprocessable Entity`
 
 ### Requirement: Create a new skill atomically
-The system SHALL expose `POST /api/v1/skills` (`operationId: createSkill`) accepting `bucket`, `path`, `skillManifest` (the complete `SKILL.md` text), `filePaths` (a JSON-encoded array of supporting-file relative paths), and zero or more repeated `files` binary parts paired 1:1 by array index with `filePaths`. The system SHALL send `If-None-Match: '*'` to DIAL Core's `uploadSkillFolder` (`PUT /v2/skills/{bucket}/{path}`) and SHALL NOT send `If-Match`. On success, it SHALL return `201 Created` with a `SkillWriteResponseDto { etag }`.
+The system SHALL expose `POST /api/v1/skills` (`operationId: createSkill`) accepting `bucket`, `path`, `skillManifest` (the complete `SKILL.md` text), `filePaths` (a JSON-encoded array of supporting-file relative paths), and zero or more repeated `files` binary parts paired 1:1 by array index with `filePaths`. The system SHALL send `If-None-Match: '*'` to DIAL Core's `uploadSkillFolder` (`PUT /v2/skills/{bucket}/{path}`) and SHALL NOT send `If-Match`. On success, it SHALL return `201 Created` with a `SkillUploadResponseDto { etag? }` (`etag` is present when DIAL Core returns one).
 
 When DIAL Core responds `412 Precondition Failed` to this create request (its real signal, per `EtagHeader.validateIfNoneMatch`, that a resource already exists at the target path), the system SHALL return `409 Conflict`, not `412`.
 
@@ -334,7 +334,7 @@ Before forwarding to DIAL Core, the system SHALL validate the request per the `s
 - **THEN** the system returns `503 Service Unavailable`
 
 ### Requirement: Update an existing skill, requiring a concrete If-Match
-The system SHALL expose `PUT /api/v1/skills` (`operationId: updateSkill`) accepting the same `bucket`/`path`/`skillManifest`/`filePaths`/`files` shape as `createSkill`, plus a **required** `If-Match` request header carrying the skill's current concrete `ETag`. If `If-Match` is absent, the system SHALL return `428 Precondition Required` without calling DIAL Core — this is a BFF-only safety rail (DIAL Core itself would treat a request with neither conditional header as an unconditional overwrite; the BFF never sends such a request through this endpoint). If `If-Match` is present, the system SHALL forward it unchanged to DIAL Core's `uploadSkillFolder` and SHALL NOT send `If-None-Match`. On success, it SHALL return `200 OK` with a `SkillWriteResponseDto { etag }` — the new aggregate ETag.
+The system SHALL expose `PUT /api/v1/skills` (`operationId: updateSkill`) accepting the same `bucket`/`path`/`skillManifest`/`filePaths`/`files` shape as `createSkill`, plus a **required** `If-Match` request header carrying the skill's current concrete `ETag`. If `If-Match` is absent, the system SHALL return `428 Precondition Required` without calling DIAL Core — this is a BFF-only safety rail (DIAL Core itself would treat a request with neither conditional header as an unconditional overwrite; the BFF never sends such a request through this endpoint). If `If-Match` is present, the system SHALL forward it unchanged to DIAL Core's `uploadSkillFolder` and SHALL NOT send `If-None-Match`. On success, it SHALL return `200 OK` with a `SkillUploadResponseDto { etag? }` (`etag` is present when DIAL Core returns one) — the new aggregate ETag.
 
 A DIAL Core `412 Precondition Failed` response (the supplied `If-Match` no longer matches the skill's current version) SHALL be surfaced unchanged as `412 Precondition Failed`.
 
@@ -442,7 +442,7 @@ The system SHALL expose `POST /api/v1/skills/grouping-folders` accepting `bucket
 
 The system SHALL NOT accept or forward an `If-Match` header on this operation — the verified DIAL Core schema declares no request header parameters for `createSkillGroupingFolder`.
 
-When one or more intermediate segments of `path` do not yet exist as grouping folders, the system SHALL create every missing intermediate folder along with the requested one (implicit parent creation), and return `201 Created` with the requested folder's `ETag` — the same outcome as when every intermediate segment already existed.
+The system SHALL make exactly one DIAL Core `createSkillGroupingFolder` call, for the requested `path`, and SHALL NOT create or check intermediate segments itself. Whether missing intermediate grouping folders are created is decided by DIAL Core; the BFF returns whatever outcome Core reports for that single call (`201 Created` with the requested folder's `ETag` on success).
 
 - **operationId**: `createSkillGroupingFolder`.
 
@@ -454,9 +454,10 @@ When one or more intermediate segments of `path` do not yet exist as grouping fo
 - **WHEN** the folder already exists, or a resource/folder name collision is detected
 - **THEN** the system returns `400 Bad Request`
 
-#### Scenario: Missing intermediate parents are created implicitly
-- **WHEN** an authenticated user calls `POST /api/v1/skills/grouping-folders?bucket=my-bucket&path=team-a/sub-team/project` and neither `team-a` nor `team-a/sub-team` exists yet
-- **THEN** the system creates `team-a`, `team-a/sub-team`, and `team-a/sub-team/project`, and returns `201 Created` with the requested folder's `ETag`
+#### Scenario: A nested path is forwarded as a single Core call
+- **WHEN** an authenticated user calls `POST /api/v1/skills/grouping-folders?bucket=my-bucket&path=team-a/sub-team/project`
+- **THEN** the system calls DIAL Core `createSkillGroupingFolder` once, for `team-a/sub-team/project`, and makes no separate call for `team-a` or `team-a/sub-team`
+- **AND** it returns Core's result for that call unchanged (`201 Created` with the folder's `ETag` on success)
 
 ### Requirement: Delete an empty grouping folder
 The system SHALL expose `DELETE /api/v1/skills/grouping-folders` accepting `bucket`, `path`, and an optional `If-Match` header, and proxy to DIAL Core `deleteSkillGroupingFolder` (`DELETE /v2/skills/{bucket}/{path}/`). The endpoint SHALL return `200 OK` with `{ success: true }`.

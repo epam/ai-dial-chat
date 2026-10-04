@@ -30,7 +30,10 @@ import {
  *    `@epam/ai-dial-chat-shared` for the request enum.
  * 8. Update `openspec/specs/custom-visualizers/spec.md` accordingly.
  */
-import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
+import {
+  VisualizerConnectorEvents,
+  VisualizerConnectorRequests,
+} from '@epam/ai-dial-shared';
 import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -40,6 +43,7 @@ import type {
   VisualizerCanvasContent,
 } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
+import { getVisualizerMessageContent } from '../../utils/visualizer';
 import styles from './VisualizerCanvasRenderer.module.scss';
 
 /** Props for the `VisualizerCanvasRenderer` component. */
@@ -54,6 +58,8 @@ export interface VisualizerCanvasRendererProps {
   frameTitle?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: VisualizerCanvasRendererColors;
+  /** Called with the `message` string when the iframe posts `${visualizerName}/SEND_MESSAGE` with a non-blank `{ message: string }` payload. When omitted, those messages are ignored. */
+  onSendMessage?: (content: string) => void;
 }
 
 /** Color overrides for `VisualizerCanvasRenderer`, applied as CSS custom properties. */
@@ -79,6 +85,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
   errorLabel = 'Failed to load visualizer',
   frameTitle,
   colors,
+  onSendMessage,
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
@@ -92,6 +99,10 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
    */
   const latestPayloadRef = useRef(content);
   latestPayloadRef.current = content;
+
+  /* Same reason: a new callback identity must not remount the iframe. */
+  const onSendMessageRef = useRef(onSendMessage);
+  onSendMessageRef.current = onSendMessage;
 
   useEffect(() => {
     const hostElement = hostRef.current;
@@ -112,6 +123,18 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
     });
 
     let isActive = true;
+
+    /* Always subscribed, so the host turning the callback on or off never
+     * remounts the iframe; without a callback the message is dropped. */
+    const unsubscribeSendMessage = connector.subscribe(
+      `${visualizerName}/${VisualizerConnectorEvents.sendMessage}`,
+      (payload) => {
+        const message = getVisualizerMessageContent(payload);
+        if (message != null) {
+          onSendMessageRef.current?.(message);
+        }
+      },
+    );
 
     const run = async (): Promise<void> => {
       await connector.ready();
@@ -154,6 +177,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
 
     return () => {
       isActive = false;
+      unsubscribeSendMessage();
       connector.destroy();
     };
   }, [url, visualizerName, requestTimeout]);

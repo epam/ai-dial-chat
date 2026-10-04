@@ -58,8 +58,11 @@ describe('publish-ready package artifact size', () => {
   });
 
   it('stays within the OOXML-free unpacked size budget', () => {
-    /* Raised from 231_000: the lazy resolveSourceText "View source" fetch (#9099) added ~100 bytes. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(231_500);
+    /* Raised from 231_000: the lazy resolveSourceText "View source" fetch (#9099) added ~100 bytes.
+     * Raised from 231_500: the srcdoc host-document postMessage flow (#9193) added ~2.4 KB.
+     * Raised from 234_000: visualizer SEND_MESSAGE support added ~2 KB, mostly the
+     * README's `onVisualizerSendMessage` section (+1.2 KB); measured at 235,399. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(236_000);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

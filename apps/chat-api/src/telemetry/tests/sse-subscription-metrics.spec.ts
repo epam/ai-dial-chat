@@ -90,9 +90,18 @@ describe('SSE subscription metrics', () => {
         { provide: ClientChannelService, useValue: { subscribe } },
         {
           provide: ConversationService,
-          useValue: { watchConversation: watch },
+          useValue: {
+            watchConversation: watch,
+            resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+            stopBackgroundGeneration: vi
+              .fn()
+              .mockResolvedValue('not_background'),
+          },
         },
-        { provide: ConversationGenerationService, useValue: { attach } },
+        {
+          provide: ConversationGenerationService,
+          useValue: { attach, hasLocalForegroundGeneration: () => false },
+        },
       ],
     })
       .overrideGuard(FeatureGuard)
@@ -334,7 +343,15 @@ describe('SSE subscription metrics', () => {
         providers: [
           ConversationGenerationService,
           { provide: ConfigService, useValue: { get: () => 1_800_000 } },
-          { provide: ConversationService, useValue: {} },
+          {
+            provide: ConversationService,
+            useValue: {
+              resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+              stopBackgroundGeneration: vi
+                .fn()
+                .mockResolvedValue('not_background'),
+            },
+          },
         ],
       }).compile();
 

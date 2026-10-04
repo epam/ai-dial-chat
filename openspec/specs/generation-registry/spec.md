@@ -2,6 +2,7 @@
 
 In-memory tracking of active generations per principal+path, enforcing one active generation per conversation and supporting stop, complete, and error transitions. The owner key is opaque to this capability — `generation-principal-ownership` defines how it is derived.
 ## Requirements
+
 ### Requirement: In-memory generation registry keyed by principal and path
 
 `ConversationGenerationService` (`apps/chat-api/src/conversations/conversation-generation.service.ts`) SHALL track generations in an in-memory map keyed by `` `${ownerKey}::${path}` ``, where `ownerKey` is the caller's principal key as defined by `generation-principal-ownership` — the cookie session id for a cookie-authenticated caller, and the verified `providerId`+`sub` pair for a header-authenticated caller. The service SHALL accept that key as an opaque `ownerKey` parameter on the public, client-addressed operations `register`, `abort` and `attach`, and SHALL NOT itself inspect the authentication mode or derive the key. Worker-facing operations address their entry through the lease returned by `register` instead.
@@ -106,6 +107,8 @@ No path other than settlement SHALL clear this timer. In particular, stale handl
 
 This bound is independent of the client's HTTP connection: it fires whether or not the originating browser connection is still open, and it is not affected by disconnect (which, per `backend-owned-generation-persistence`, has no effect on the generation). It is the traffic-independent bound on a running generation; stale handling is a backstop for entries this timer cannot cover, and is not a backstop for a process crash, which loses the timer and the registry together.
 
+For a generation on the background path defined by `background-responses-generation`, the timer SHALL instead detach: it SHALL abort only the entry's relay of the DIAL Core stream, SHALL NOT cancel the Core job, SHALL NOT write the conversation (the message stays `pending`), SHALL end the client stream without a terminal event, and SHALL release the registry entry. The job then continues in DIAL Core, bounded by Core's background-job TTL, and is resumed through attach.
+
 #### Scenario: A stalled generation is finalized without depending on client disconnect or the stale sweep
 
 - **GIVEN** a generation is registered and actively streaming, and the client remains connected throughout
@@ -128,6 +131,12 @@ This bound is independent of the client's HTTP connection: it fires whether or n
 - **GIVEN** a generation was registered, settled, and a new generation was registered for the same owner and path, reusing the same client-supplied `generationId`
 - **WHEN** the first generation's max-duration timer fires
 - **THEN** it matches no entry by internal operation identity and aborts nothing
+
+#### Scenario: A background generation is detached, not finalized, at the max duration
+
+- **GIVEN** a background generation is still running when `MAX_GENERATION_DURATION_MS` elapses
+- **WHEN** the timer fires
+- **THEN** the relay is aborted and the registry entry released, no Core cancel is sent, no conversation write is made, and the message stays `pending`
 
 ### Requirement: Each admitted generation has an internal operation identity distinct from the client generation id
 
@@ -261,6 +270,8 @@ Recovery SHALL be: the write settling — resolving or rejecting — releases th
 
 `onModuleDestroy` SHALL remain a distinct path from stale cancellation, and SHALL NOT be reused as the implementation of eviction. Because shutdown leaves no worker to await, it SHALL notify every attach subscriber with a `stopped` terminal event using the same isolated raw-listener delivery, release every entry's timer, listeners, registry key, and runtime tracking, and abort every entry's `AbortController`.
 
+For an entry on the background path defined by `background-responses-generation`, shutdown SHALL detach instead of finishing it: the relay is aborted, the client's completion stream ends cleanly, the entry is released, and no Core cancel and no conversation write are made; the message stays `pending` for recovery on another instance.
+
 Shutdown SHALL NOT be documented or reported as establishing any outcome for an in-flight persistence write. Neither process shutdown nor a process crash can establish whether a write that was already dispatched committed.
 
 #### Scenario: Shutdown releases every subscriber and resource
@@ -274,3 +285,8 @@ Shutdown SHALL NOT be documented or reported as establishing any outcome for an 
 - **WHEN** the module is destroyed while a terminal write is in flight
 - **THEN** the shutdown path neither waits for that write nor reports its outcome, and the capability does not assert whether it committed
 
+#### Scenario: Shutdown detaches a background generation
+
+- **GIVEN** a background generation is running on the instance
+- **WHEN** the module is destroyed
+- **THEN** its relay is aborted and its entry released, no Core cancel is sent, no conversation write is made, and the message stays `pending`

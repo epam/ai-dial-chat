@@ -2,8 +2,15 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
 import type { DialClientService } from '../../../dial/dial-client.service';
+import {
+  CONDITIONAL_WRITE_ATTEMPTS,
+  ConditionalUpdateStatus,
+} from '../../conversation-persistence.port';
 import { ConversationMessageRole } from '../../dto/conversation-message.dto';
-import { ConversationPersistenceService } from '../conversation-persistence.service';
+import {
+  ConversationPersistenceService,
+  runConditionalUpdate,
+} from '../conversation-persistence.service';
 
 vi.mock('../../../common/dial/dial-error.mapper', () => ({
   handleDialSdkError: vi.fn(),
@@ -425,6 +432,244 @@ describe('ConversationPersistenceService', () => {
           TEST_CONVERSATION,
         ),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('readConversationWithEtag', () => {
+    it('returns the stored conversation and its ETag', async () => {
+      vi.mocked(mockDialClient.client.getConversation).mockResolvedValue({
+        data: TEST_CONVERSATION,
+        response: new Response(null, {
+          status: 200,
+          headers: { ETag: '"abc"' },
+        }),
+      } as never);
+
+      const result = await service.readConversationWithEtag(
+        'gpt-4o__Test',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result).toEqual({
+        conversation: TEST_CONVERSATION,
+        etag: '"abc"',
+      });
+      expect(mockDialClient.client.getConversation).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__Test',
+        { headers: { Authorization: 'Bearer test-token' } },
+      );
+    });
+
+    it('resolves null when the conversation no longer exists', async () => {
+      vi.mocked(mockDialClient.client.getConversation).mockResolvedValue({
+        error: { status: 404 },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.readConversationWithEtag(
+          'gpt-4o__Test',
+          'test-token',
+          'test-bucket',
+        ),
+      ).resolves.toBeNull();
+    });
+  });
+
+  describe('saveConversationIfMatch', () => {
+    it('sends If-Match and returns the saved conversation', async () => {
+      vi.mocked(mockDialClient.client.saveConversation).mockResolvedValue({
+        data: {},
+        response: new Response(null, { status: 200 }),
+      } as never);
+
+      const result = await service.saveConversationIfMatch(
+        'gpt-4o__Test',
+        'test-token',
+        'test-bucket',
+        TEST_CONVERSATION as never,
+        '"abc"',
+      );
+
+      expect(result).toEqual({
+        isSaved: true,
+        conversation: TEST_CONVERSATION,
+      });
+      expect(mockDialClient.client.saveConversation).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__Test',
+        {
+          headers: { Authorization: 'Bearer test-token', 'If-Match': '"abc"' },
+          body: TEST_CONVERSATION,
+        },
+      );
+    });
+
+    it('reports a precondition failure (412) as not saved without throwing', async () => {
+      vi.mocked(mockDialClient.client.saveConversation).mockResolvedValue({
+        error: 'If-match condition is failed',
+        response: new Response(null, { status: 412 }),
+      } as never);
+
+      const result = await service.saveConversationIfMatch(
+        'gpt-4o__Test',
+        'test-token',
+        'test-bucket',
+        TEST_CONVERSATION as never,
+        '"stale"',
+      );
+
+      expect(result).toEqual({ isSaved: false });
+      expect(handleDialSdkError).not.toHaveBeenCalled();
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('runConditionalUpdate', () => {
+    const versioned = (etag: string | null, name = 'Test') => ({
+      conversation: { ...TEST_CONVERSATION, name } as never,
+      etag,
+    });
+    const makeIo = () => ({
+      readConversationWithEtag: vi.fn(),
+      saveConversationIfMatch: vi.fn(),
+      saveConversation: vi.fn(async (_p, _t, _b, body) => body),
+    });
+
+    it('uses a version the caller already read instead of reading again', async () => {
+      const io = makeIo();
+      io.saveConversationIfMatch.mockResolvedValue({
+        isSaved: true,
+        conversation: TEST_CONVERSATION,
+      });
+
+      const result = await runConditionalUpdate(
+        io as never,
+        'conv',
+        'tok',
+        'bucket',
+        (stored) => stored?.conversation ?? null,
+        versioned('"v1"'),
+      );
+
+      expect(result.status).toBe(ConditionalUpdateStatus.Saved);
+      expect(io.readConversationWithEtag).not.toHaveBeenCalled();
+      expect(io.saveConversationIfMatch).toHaveBeenCalledWith(
+        'conv',
+        'tok',
+        'bucket',
+        expect.anything(),
+        '"v1"',
+      );
+    });
+
+    it('re-reads and re-applies the update after a concurrent change', async () => {
+      const io = makeIo();
+      io.readConversationWithEtag.mockResolvedValue(versioned('"v2"', 'newer'));
+      io.saveConversationIfMatch
+        .mockResolvedValueOnce({ isSaved: false })
+        .mockResolvedValueOnce({
+          isSaved: true,
+          conversation: TEST_CONVERSATION,
+        });
+      const update = vi.fn((stored) => stored?.conversation ?? null);
+
+      await runConditionalUpdate(
+        io as never,
+        'conv',
+        'tok',
+        'bucket',
+        update,
+        versioned('"v1"'),
+      );
+
+      expect(update).toHaveBeenLastCalledWith(versioned('"v2"', 'newer'));
+      expect(io.saveConversationIfMatch).toHaveBeenLastCalledWith(
+        'conv',
+        'tok',
+        'bucket',
+        expect.objectContaining({ name: 'newer' }),
+        '"v2"',
+      );
+    });
+
+    it('saves unconditionally when storage returned no ETag', async () => {
+      const io = makeIo();
+      io.readConversationWithEtag.mockResolvedValue(versioned(null));
+
+      const result = await runConditionalUpdate(
+        io as never,
+        'conv',
+        'tok',
+        'bucket',
+        (stored) => stored?.conversation ?? null,
+      );
+
+      expect(result.status).toBe(ConditionalUpdateStatus.Saved);
+      expect(io.saveConversation).toHaveBeenCalled();
+      expect(io.saveConversationIfMatch).not.toHaveBeenCalled();
+    });
+
+    it('writes nothing when the update skips', async () => {
+      const io = makeIo();
+      io.readConversationWithEtag.mockResolvedValue(null);
+
+      const result = await runConditionalUpdate(
+        io as never,
+        'conv',
+        'tok',
+        'bucket',
+        () => null,
+      );
+
+      expect(result.status).toBe(ConditionalUpdateStatus.Skipped);
+      expect(io.saveConversation).not.toHaveBeenCalled();
+      expect(io.saveConversationIfMatch).not.toHaveBeenCalled();
+    });
+
+    it('reports a conflict after the attempt budget', async () => {
+      const io = makeIo();
+      io.readConversationWithEtag.mockResolvedValue(versioned('"v1"'));
+      io.saveConversationIfMatch.mockResolvedValue({ isSaved: false });
+
+      const result = await runConditionalUpdate(
+        io as never,
+        'conv',
+        'tok',
+        'bucket',
+        (stored) => stored?.conversation ?? null,
+      );
+
+      expect(result.status).toBe(ConditionalUpdateStatus.Conflict);
+      expect(io.saveConversationIfMatch).toHaveBeenCalledTimes(
+        CONDITIONAL_WRITE_ATTEMPTS,
+      );
+    });
+  });
+
+  describe('getConversationWithStoredVersion', () => {
+    it('returns the display conversation and the stored version with its ETag', async () => {
+      vi.mocked(mockDialClient.client.getConversation).mockResolvedValue({
+        data: { ...TEST_CONVERSATION, name: '' },
+        response: new Response(null, { headers: { etag: '"v7"' } }),
+      } as never);
+
+      const { conversation, stored } =
+        await service.getConversationWithStoredVersion(
+          'test-bucket/gpt-4o__Test',
+          'test-token',
+          'test-bucket',
+        );
+
+      expect(conversation.name).toBe('Test');
+      expect(stored).toEqual({
+        conversation: { ...TEST_CONVERSATION, name: '' },
+        etag: '"v7"',
+      });
     });
   });
 });

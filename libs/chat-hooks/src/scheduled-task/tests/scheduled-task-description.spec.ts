@@ -52,6 +52,27 @@ describe('describeScheduledTaskTrigger', () => {
     ).toBe(ScheduledTaskTriggerDescriptionKind.Custom);
   });
 
+  it('describes the last day of the month one day behind local time as the 1st', () => {
+    const fields = { hour: '21', minute: '30', day: 'last' };
+    expect(
+      describeScheduledTaskTrigger(
+        { cron: { fields } },
+        {
+          timeZone: 'Europe/Kyiv',
+          referenceDate: new Date('2026-07-15T12:00:00Z'),
+        },
+      ),
+    ).toMatchObject({
+      kind: ScheduledTaskTriggerDescriptionKind.Monthly,
+      time: '00:30',
+      dayOfMonth: '1',
+    });
+    expect(describeScheduledTaskTrigger({ cron: { fields } })).toMatchObject({
+      kind: ScheduledTaskTriggerDescriptionKind.Custom,
+      expression: JSON.stringify(fields),
+    });
+  });
+
   it('rejects numeric values outside valid ranges', () => {
     expect(
       describeScheduledTaskTrigger({

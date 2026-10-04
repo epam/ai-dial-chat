@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import type { FeatureFlagsService } from '../../../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../../../app-config/feature-flags/feature-key.enum';
@@ -14,6 +15,8 @@ import {
   StatusEvent,
 } from '../../dto/conversation-message.dto';
 import { CompletionMode } from '../../dto/send-completion.dto';
+import { BackgroundGenerationService } from '../../generation/background-generation.service';
+import { CoreResponsesClient } from '../../generation/core-responses.client';
 import { generationRequestsTotal } from '../../generation/generation-metrics';
 import { ResponsesAdapter } from '../../generation/responses.adapter';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
@@ -176,6 +179,8 @@ describe('ConversationStreamingService', () => {
     mockGenerationService = {
       register: vi.fn().mockReturnValue(makeLease()),
       abort: vi.fn().mockReturnValue(true),
+      hasLocalForegroundGeneration: vi.fn().mockReturnValue(false),
+      setBackground: vi.fn(),
       complete: vi.fn(),
       persistenceFailed: vi.fn(),
       error: vi.fn(),
@@ -192,6 +197,7 @@ describe('ConversationStreamingService', () => {
         type: DeploymentItemType.Model,
         modelDetails: { features: { chatCompletion: true } },
       }),
+      getDeploymentInterfaces: vi.fn().mockResolvedValue([]),
     } as unknown as DeploymentsService;
     /*
      * Defaults to enabled so existing Responses-selection tests (which cover
@@ -213,6 +219,12 @@ describe('ConversationStreamingService', () => {
       mockDeploymentsService,
       new ResponsesAdapter(mockDialClient),
       mockFeatureFlagsService,
+      new BackgroundGenerationService(
+        persistenceService,
+        new ResponsesAdapter(mockDialClient),
+        new CoreResponsesClient(mockDialClient),
+        mockGenerationService,
+      ),
     );
     vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
       data: {},
@@ -220,6 +232,144 @@ describe('ConversationStreamingService', () => {
     vi.spyOn(mockDialClient.client, 'getConversation').mockRejectedValue({
       error: { status: 404 },
     } as never);
+  });
+
+  describe('background recovery with the background flag off', () => {
+    const pendingConversation = {
+      id: 'bucket/conv',
+      name: 'conv',
+      messages: [
+        {
+          role: ConversationMessageRole.Assistant,
+          content: '',
+          timestamp: 't',
+          responseId: 'dial_r1',
+          backgroundGeneration: {
+            generationId: 'gen-1',
+            status: 'pending',
+            startedAt: 1,
+          },
+        },
+      ],
+    };
+    const sdk = () =>
+      mockDialClient.client as unknown as Record<string, unknown>;
+
+    beforeEach(() => {
+      vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: pendingConversation,
+        response: new Response(null, {
+          status: 200,
+          headers: { ETag: '"v1"' },
+        }),
+      } as never);
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
+        data: {},
+        response: new Response(null, { status: 200 }),
+      } as never);
+      Object.assign(sdk(), {
+        deleteResponseItem: vi.fn().mockResolvedValue({
+          response: new Response(null, { status: 200 }),
+        }),
+        cancelResponseItem: vi.fn().mockResolvedValue({
+          data: { id: 'dial_r1', status: 'cancelled' },
+          response: new Response(null, { status: 200 }),
+        }),
+      });
+    });
+
+    it('still finalizes a pending background message on attach', async () => {
+      Object.assign(sdk(), {
+        getResponseItem: vi.fn().mockResolvedValue({
+          data: {
+            id: 'dial_r1',
+            status: 'completed',
+            output: [{ content: [{ type: 'output_text', text: 'answer' }] }],
+          },
+          response: new Response(null, { status: 200 }),
+        }),
+      });
+
+      const plan = await service.resolveBackgroundAttach(
+        'conv',
+        'tok',
+        'bucket',
+        new AbortController().signal,
+      );
+
+      expect(plan?.kind).toBe('stream');
+      expect(mockFeatureFlagsService.isEnabled).not.toHaveBeenCalled();
+    });
+
+    it('still stops a pending background message', async () => {
+      Object.assign(sdk(), {
+        getResponseItem: vi.fn().mockResolvedValue({
+          response: new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.close();
+              },
+            }),
+            { status: 200 },
+          ),
+        }),
+      });
+
+      const result = await service.stopBackgroundGeneration(
+        'conv',
+        'tok',
+        'bucket',
+        'gen-1',
+      );
+
+      expect(result).toBe('handled');
+      expect(sdk().cancelResponseItem).toHaveBeenCalled();
+      expect(mockFeatureFlagsService.isEnabled).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('saveClientConversation', () => {
+    it('saves a client body that carries a foreign pending marker with that marker failed', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        error: { status: 404 },
+        response: new Response(null, { status: 404 }),
+      } as never);
+      const saveSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({
+          data: {},
+          response: new Response(null, { status: 200 }),
+        } as never);
+
+      await service.saveClientConversation('imported', 'tok', 'bucket', {
+        id: 'bucket/imported',
+        name: 'imported',
+        messages: [
+          {
+            role: ConversationMessageRole.Assistant,
+            content: '',
+            timestamp: 't',
+            responseId: 'dial_r1',
+            backgroundGeneration: {
+              generationId: 'gen-1',
+              status: 'pending',
+              startedAt: 1,
+            },
+          },
+        ],
+      } as never);
+
+      const body = (
+        saveSpy.mock.calls.at(-1)?.[2] as unknown as {
+          body: { messages: Array<Record<string, unknown>> };
+        }
+      ).body;
+      expect(body.messages[0]).toMatchObject({
+        streamErrorMessage: '',
+        backgroundGeneration: { status: 'failed' },
+      });
+    });
   });
 
   describe('streamCompletion', () => {
@@ -766,6 +916,281 @@ describe('ConversationStreamingService', () => {
 
       expect(sendSpy).toHaveBeenCalledOnce();
       expect(createResponseSpy).not.toHaveBeenCalled();
+    });
+
+    describe('background start', () => {
+      const userMessage = {
+        id: 'u1',
+        role: ConversationMessageRole.User,
+        content: 'Hello',
+        timestamp: '2024-01-01T00:00:00.000Z',
+      };
+      const pendingAssistant = {
+        role: ConversationMessageRole.Assistant,
+        content: '',
+        timestamp: '2024-01-01T00:00:01.000Z',
+        responseId: 'dial_r0',
+        backgroundGeneration: {
+          generationId: 'other-gen',
+          status: 'pending',
+          startedAt: 1,
+        },
+      };
+
+      it.each([
+        [CompletionMode.Append],
+        [CompletionMode.Regenerate],
+        [CompletionMode.Edit],
+      ])(
+        'rejects a %s request with 409 while a background message is pending, whatever the flags',
+        async (mode) => {
+          vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
+          vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+            data: {
+              ...baseConversation,
+              messages: [userMessage, pendingAssistant],
+            },
+          } as never);
+          const sendSpy = vi.spyOn(
+            mockDialClient.client,
+            'sendChatCompletionRequest',
+          );
+          const createResponseSpy = vi.spyOn(
+            mockDialClient.client,
+            'createResponse',
+          );
+
+          await expect(
+            runStreamCompletion(
+              'test-path',
+              'test-token',
+              'test-bucket',
+              'test-gen-id',
+              mode,
+              'Next message',
+              mode === CompletionMode.Append ? undefined : 1,
+              'gpt-4o',
+              undefined,
+              'test-session-id',
+              makeMockRes() as never,
+            ),
+          ).rejects.toBeInstanceOf(ConflictException);
+          expect(sendSpy).not.toHaveBeenCalled();
+          expect(createResponseSpy).not.toHaveBeenCalled();
+          expect(mockGenerationService.error).toHaveBeenCalled();
+        },
+      );
+
+      it('starts an eligible deployment as a background job', async () => {
+        vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(true);
+        vi.mocked(
+          mockDeploymentsService.getDeploymentDetails,
+        ).mockResolvedValue({
+          id: 'gpt-4o',
+          type: DeploymentItemType.Model,
+          modelDetails: { features: { responsesApi: true } },
+        });
+        vi.mocked(
+          mockDeploymentsService.getDeploymentInterfaces,
+        ).mockResolvedValue(['chat', 'openaiResponses']);
+        vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+          data: { ...baseConversation, messages: [userMessage] },
+          response: new Response(null, {
+            status: 200,
+            headers: { ETag: '"v1"' },
+          }),
+        } as never);
+        vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
+          data: {},
+          response: new Response(null, { status: 200 }),
+        } as never);
+        const createResponseSpy = vi
+          .spyOn(mockDialClient.client, 'createResponse')
+          .mockResolvedValue({
+            response: new Response(
+              new ReadableStream<Uint8Array>({
+                start(controller) {
+                  controller.close();
+                },
+              }),
+              { status: 200 },
+            ),
+          } as never);
+
+        await runStreamCompletion(
+          'test-path',
+          'test-token',
+          'test-bucket',
+          'test-gen-id',
+          CompletionMode.Append,
+          'Next message',
+          undefined,
+          'gpt-4o',
+          undefined,
+          'test-session-id',
+          makeMockRes() as never,
+        );
+
+        const body = createResponseSpy.mock.calls[0][0].body as Record<
+          string,
+          unknown
+        >;
+        expect(body).toMatchObject({
+          store: true,
+          background: true,
+          stream: true,
+        });
+        const [, , saveInit] = vi.mocked(mockDialClient.client.saveConversation)
+          .mock.calls[0] as unknown as [
+          string,
+          string,
+          { headers: Record<string, string>; body: { messages: unknown[] } },
+        ];
+        expect(saveInit.headers['If-Match']).toBe('"v1"');
+        expect(saveInit.body.messages.at(-1)).toMatchObject({
+          backgroundGeneration: {
+            generationId: 'test-gen-id',
+            status: 'pending',
+          },
+        });
+      });
+    });
+
+    describe('background eligibility', () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+      const responsesStream = () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(
+                new TextEncoder().encode(
+                  'data: {"type":"response.completed","response":{"id":"r1","status":"completed"}}\n\n',
+                ),
+              );
+              controller.close();
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      const flags = (enabled: Partial<Record<FeatureKey, boolean>>) =>
+        vi
+          .mocked(mockFeatureFlagsService.isEnabled)
+          .mockImplementation(async (key) => enabled[key] === true);
+
+      it('makes no interfaces lookup and sends a stateless request when the background flag is off', async () => {
+        flags({ [FeatureKey.ResponsesApiEnabled]: true });
+        vi.mocked(
+          mockDeploymentsService.getDeploymentDetails,
+        ).mockResolvedValue({
+          id: 'gpt-4o',
+          type: DeploymentItemType.Model,
+          modelDetails: { features: { responsesApi: true } },
+        });
+        vi.mocked(
+          mockDeploymentsService.getDeploymentInterfaces,
+        ).mockResolvedValue(['openaiResponses']);
+        const createResponseSpy = vi
+          .spyOn(mockDialClient.client, 'createResponse')
+          .mockResolvedValue({ response: responsesStream() } as never);
+
+        await callStream(conversation, 'Next message', 'gpt-4o');
+
+        expect(
+          mockDeploymentsService.getDeploymentInterfaces,
+        ).not.toHaveBeenCalled();
+        const body = createResponseSpy.mock.calls[0][0].body as Record<
+          string,
+          unknown
+        >;
+        expect(body.store).toBe(false);
+        expect(body).not.toHaveProperty('background');
+      });
+
+      it('uses Chat Completions without an interfaces lookup when the deployment lacks the Responses capability', async () => {
+        flags({
+          [FeatureKey.ResponsesApiEnabled]: true,
+          [FeatureKey.ResponsesBackgroundEnabled]: true,
+        });
+        vi.mocked(
+          mockDeploymentsService.getDeploymentDetails,
+        ).mockResolvedValue({
+          id: 'gpt-4o',
+          type: DeploymentItemType.Model,
+          modelDetails: { features: { responsesApi: false } },
+        });
+        vi.mocked(
+          mockDeploymentsService.getDeploymentInterfaces,
+        ).mockResolvedValue(['openaiResponses']);
+        const createResponseSpy = vi.spyOn(
+          mockDialClient.client,
+          'createResponse',
+        );
+
+        const { sendSpy } = await callStream(
+          conversation,
+          'Next message',
+          'gpt-4o',
+        );
+
+        expect(sendSpy).toHaveBeenCalledOnce();
+        expect(createResponseSpy).not.toHaveBeenCalled();
+        expect(
+          mockDeploymentsService.getDeploymentInterfaces,
+        ).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ['does not list openaiResponses', async () => ['chat']],
+        [
+          'lookup fails',
+          async () => {
+            throw new Error('Core down');
+          },
+        ],
+      ])(
+        'sends a stateless Responses request when the interfaces %s',
+        async (_label, interfaces) => {
+          flags({
+            [FeatureKey.ResponsesApiEnabled]: true,
+            [FeatureKey.ResponsesBackgroundEnabled]: true,
+          });
+          vi.mocked(
+            mockDeploymentsService.getDeploymentDetails,
+          ).mockResolvedValue({
+            id: 'gpt-4o',
+            type: DeploymentItemType.Model,
+            modelDetails: { features: { responsesApi: true } },
+          });
+          vi.mocked(
+            mockDeploymentsService.getDeploymentInterfaces,
+          ).mockImplementation(interfaces as never);
+          const createResponseSpy = vi
+            .spyOn(mockDialClient.client, 'createResponse')
+            .mockResolvedValue({ response: responsesStream() } as never);
+
+          await callStream(conversation, 'Next message', 'gpt-4o');
+
+          expect(
+            mockDeploymentsService.getDeploymentInterfaces,
+          ).toHaveBeenCalledWith('user1', 'gpt-4o', 'test-token');
+          const body = createResponseSpy.mock.calls[0][0].body as Record<
+            string,
+            unknown
+          >;
+          expect(body.store).toBe(false);
+          expect(body).not.toHaveProperty('background');
+        },
+      );
     });
 
     it('uses Chat Completions when the flag is enabled but the deployment does not support Responses', async () => {
@@ -2332,6 +2757,12 @@ describe('ConversationStreamingService', () => {
         mockDeploymentsService,
         new ResponsesAdapter(mockDialClient),
         mockFeatureFlagsService,
+        new BackgroundGenerationService(
+          persistenceService,
+          new ResponsesAdapter(mockDialClient),
+          new CoreResponsesClient(mockDialClient),
+          realGenerationService,
+        ),
       );
     });
 

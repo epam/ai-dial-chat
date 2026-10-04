@@ -1,4 +1,4 @@
-# Spec: deployment-details-api
+# deployment-details-api Specification
 
 ## Purpose
 
@@ -6,25 +6,25 @@
 ## Requirements
 ### Requirement: GET /api/v1/deployments/{deployment}/details endpoint
 
-The system SHALL expose `GET /api/v1/deployments/{deployment}/details` on the existing `DeploymentsController` (`apps/chat-api/src/deployments/deployments.controller.ts`), following the same encoded `:deployment` path-param convention already used by `:deployment/configuration` and `:deployment/limits`. The decoded value may contain structural `/` separators for DIAL resource identifiers. The endpoint fetches full per-entity data for one deployment id and returns it as `DeploymentDetailsDto`.
+The system SHALL expose `GET /api/v1/deployments/{deployment}/details` on the existing `DeploymentsController` (`apps/chat-api/src/deployments/deployments.controller.ts`), implemented by `DeploymentsDetailsService` (`apps/chat-api/src/deployments/details/deployments-details.service.ts`) behind the `DeploymentsService` facade, following the same encoded `:deployment` path-param convention already used by `:deployment/configuration` and `:deployment/limits`. The decoded value may contain structural `/` separators for DIAL resource identifiers. The endpoint fetches full per-entity data for one deployment id and returns it as `DeploymentDetailsDto`.
 
 The endpoint:
 - MUST require authentication via `SessionGuard`; respond 401 when no valid session is present.
 - MUST reject an identifier longer than 2048 characters, an empty segment, a `.` or `..` segment, or an ASCII control character with 400 before calling DIAL Core; spaces and URL-reserved characters remain valid when percent-encoded by the caller.
 - MUST percent-encode every validated `/`-separated segment independently before passing the identifier to any DIAL SDK detail method, preserving structural `/` separators.
-- SHALL resolve the deployment's type from the `deployment` id prefix, mirroring the `toolsets/`/`applications/` prefix convention already relied on by the frontend (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `TOOLSETS_PREFIX`/`APPLICATIONS_PREFIX`), rather than calling `listDeployments` — avoids an expensive full-catalog fetch just to classify one id:
+- SHALL resolve the deployment's type from the `deployment` id prefix, mirroring the `toolsets/`/`applications/` prefix convention already relied on by the frontend (`libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`'s `TOOLSETS_PREFIX`/`APPLICATIONS_PREFIX`), rather than calling `listDeployments` — avoids an expensive full-catalog fetch just to classify one id:
   - `deployment` starting with `toolsets/` → call `getToolset` directly.
   - `deployment` starting with `applications/` → call `getApplication` directly.
   - otherwise (ambiguous — root-level applications and root-level toolsets, e.g. a copied toolset without a `toolsets/` prefix, are indistinguishable from a model id by shape alone) → call `getModel` first, then `getApplication`, then `getToolset` in turn, falling through to the next on a 404.
 - SHALL treat a resolved-type call that succeeds with no response body the same as a 404 (throws `NotFoundException` rather than forwarding an empty/malformed detail object), so the id-resolution fallback chain above continues correctly.
 - SHALL respond 404 when none of the applicable calls (direct call, or for ambiguous ids, `getModel` → `getApplication` → `getToolset` in sequence) find the deployment.
-- SHALL call, based on resolved type: `this.client.getModel(deployment, { headers })` for models, `this.client.getApplication(deployment, { headers })` for applications, or `this.client.getToolset(deployment, { headers })` for toolsets — using the `@epam/ai-dial-typescript-sdk` client already shared via `AppService`/`this.client`.
+- SHALL call, based on resolved type: `this.dialClient.client.getModel(encodeDialResourcePath(deployment), …)` for models, `this.dialClient.client.getApplication(…)` for applications (plus `getCustomApplication` for `applications/{bucket}/{path}` ids), or `this.dialClient.client.getToolset(…)` for toolsets — using the `@epam/ai-dial-typescript-sdk` client shared via `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`).
 - SHALL map the SDK response into `DeploymentDetailsDto` using an explicit allowlist (see `DeploymentDetailsDto shape` requirement below); fields not on the allowlist MUST NOT be forwarded, even if present on the raw SDK response.
 - SHALL respond 200 with `DeploymentDetailsDto` on success.
 - SHALL respond 502 when DIAL Core returns a non-2xx response for the detail call.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
 - SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<userSub>:<deployment>` for 60 000 ms, so entries and in-flight request deduplication are isolated by authenticated user and deployment.
-- SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset create, update, delete, login, or logout, and after a successful application update (`ApplicationsService.updateApplication`, using the same `applicationName` string as the cache key), before the next details fetch is treated as fresh.
+- SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset update, delete, login, or logout, and after a successful application update (`ApplicationsService.updateApplication`, using the same `applicationName` string as the cache key), before the next details fetch is treated as fresh.
 - SHALL ensure an in-flight `getDeploymentDetails` fetch that was dispatched before an invalidation for the same key never repopulates the cache with its (pre-invalidation) result, and is never joined by a request made after that invalidation — see the dedicated requirement below.
 - SHALL set response header `Cache-Control: private, no-store`; client and intermediary caches MUST NOT reuse the response, while the user-scoped BFF cache remains active.
 - SHALL preserve OpenAPI `operationId: getDeploymentDetails`, path parameter `deployment: string`, response `DeploymentDetailsDto`, and normal generated `DeploymentsApi.getDeploymentDetails({ deployment })` usage; no `Raw` generated call is required because frontend callers do not consume the response header.
@@ -84,8 +84,14 @@ The endpoint:
 
 #### Scenario: Toolset write invalidates cached details
 
-- **WHEN** a toolset create, update, delete, login, or logout succeeds for a user and toolset
+- **WHEN** a toolset update, delete, login, or logout succeeds for a user and toolset
 - **THEN** the affected `deployments:details:<userSub>:<deployment>` entry is deleted before a subsequent details request can reuse it
+
+#### Scenario: Toolset create leaves the details cache untouched
+
+- **WHEN** a toolset create succeeds
+- **THEN** `invalidateCaches(userSub)` runs without a toolset name, so no `deployments:details` entry is deleted
+- **AND** this is safe because a newly created toolset has no cached details entry yet
 
 #### Scenario: Application update invalidates cached details
 
@@ -128,7 +134,9 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
 
 ### Requirement: DeploymentDetailsDto shape
 
-`DeploymentDetailsDto` SHALL be a strongly typed Swagger DTO, structurally aligned with `apps/chat/src/types/entity-details.ts`'s `ModelEntityDetails` / `AgentEntityDetails` / `ToolsetEntityDetails` split so the frontend mapping step is a field-by-field transcription. It deliberately excludes fields already returned by the list endpoint's `DeploymentItemDto` (`description`, `displayName`, `iconUrl`, `displayVersion`, `interfaces`, `topics`, `updatedAt`) — those are supplied to the UI via the already-loaded `CatalogItem`, not duplicated here.
+`DeploymentDetailsDto` SHALL be a strongly typed Swagger DTO, structurally aligned with `libs/chat-hooks/src/catalog/entity-details.ts`'s `ModelEntityDetails` / `AgentEntityDetails` / `ToolsetEntityDetails` split so the frontend mapping step is a field-by-field transcription. It excludes most fields already returned by the list endpoint's `DeploymentItemDto` (`description`, `iconUrl`, `displayVersion`, `interfaces`, `topics`, `updatedAt`) — those are supplied to the UI via the already-loaded `CatalogItem`, not duplicated here. The exception is `applicationDetails.displayName`, which the code does return.
+
+`ModelCatalogPropertiesDto` (`catalogProperties`) is `{ provider?, vendor?, license?, knowledgeCutoffDate?, parameters? }`, read as strings from DIAL Core's `catalog_properties` by `mapCatalogProperties` (`deployments/utils/deployment-mapper.util.ts`) and omitted when none of the five is present.
 
 - `id: string` — the requested deployment id
 - `type: 'model' | 'application' | 'toolset'` — resolved discriminator
@@ -137,13 +145,15 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `lifecycleStatus?: string`
   - `tokenizerModel?: string`
   - `limits?: { maxTotalTokens?: number; maxPromptTokens?: number; maxCompletionTokens?: number }`
-  - `pricing?: Record<string, string | PricingRate>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim
+  - `pricing?: Record<string, string | ModelPricingRateDto>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim
   - `features?: DeploymentFeaturesDetailsDto` (see below)
+  - `catalogProperties?: ModelCatalogPropertiesDto`
   - `owner?: string`
   - `inputAttachmentTypes?: string[]`
   - `defaultMaxTokens?: number` — from `defaults.max_tokens`
   - `createdAt?: number`
 - `applicationDetails?: ApplicationDetailsDto` — present only when `type === 'application'`:
+  - `displayName?: string` — DIAL Core `display_name`; a locale map resolves to its first string value (`resolveLocalizedValue`)
   - `applicationProperties?: Record<string, unknown>` — a **verbatim passthrough** of DIAL
     Core's stored `application_properties` object for this application (non-secret custom
     properties only — function-level secrets are excluded per the allowlist). It SHALL NOT be
@@ -172,15 +182,19 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `owner?: string`
   - `features?: DeploymentFeaturesDetailsDto`
   - `inputAttachmentTypes?: string[]`
+  - `catalogProperties?: ModelCatalogPropertiesDto`
   - `applicationTypeSchemaId?: string`
+  - `endpoint?: string` — the string `endpoint` from `getCustomApplication`, falling back to the `getApplication` payload's `endpoint`
+  - `maxInputAttachments?: number` — `max_input_attachments` when it is a number
   - `createdAt?: number`
 - `toolsetDetails?: ToolsetDetailsDto` — present only when `type === 'toolset'`:
   - `transport?: string`
   - `allowedTools?: string[]`
   - `allToolNames?: string[]` — from `GET /v1/toolset/{id}/tools` (`getToolSetTools`), a best-effort supplementary call: a failure or non-2xx response is logged and omits this field without failing the whole request
-  - `authSettings?: ToolsetAuthSettingsDto` — `{ authenticationType?, globalAuthStatus?, appLevelAuthStatus?, userLevelAuthStatus?, scopesSupported?, authorizationEndpoint?, tokenEndpoint?, apiKeyHeader?, clientId?, redirectUri?, tokenEndpointAuthMethod?, codeChallenge?, codeChallengeMethod? }` — every field DIAL Core's `auth_settings` payload exposes except `client_secret`/`code_verifier`, which are never read or forwarded. Read defensively off the raw untyped payload (`mapToolsetAuthSettings` in `deployments/utils/deployment-mapper.util.ts`), mirroring `mapDeploymentFeatures`, since the SDK's typed `ResourceAuthSettingsData` shape declares fewer fields than DIAL Core actually returns (e.g. it omits `token_endpoint`/`token_endpoint_auth_method` even though DIAL Core sends them).
+  - `authSettings?: ToolsetAuthSettingsDto` — `{ authenticationType?, dynamicallyRegistered?, globalAuthStatus?, appLevelAuthStatus?, userLevelAuthStatus?, scopesSupported?, authorizationEndpoint?, tokenEndpoint?, apiKeyHeader?, clientId?, redirectUri?, tokenEndpointAuthMethod?, codeChallenge?, codeChallengeMethod? }` — every field DIAL Core's `auth_settings` payload exposes except `client_secret`/`code_verifier`, which are never read or forwarded. Read defensively off the raw untyped payload (`mapToolsetAuthSettings` in `deployments/utils/deployment-mapper.util.ts`), mirroring `mapDeploymentFeatures`, since the SDK's typed `ResourceAuthSettingsData` shape declares fewer fields than DIAL Core actually returns (e.g. it omits `token_endpoint`/`token_endpoint_auth_method` even though DIAL Core sends them).
   - `owner?: string`
   - `features?: DeploymentFeaturesDetailsDto`
+  - `catalogProperties?: ModelCatalogPropertiesDto`
   - `createdAt?: number`
 - `DeploymentFeaturesDetailsDto` — shared feature-flag shape reused by all three detail types (DIAL Core's runtime `features` payload extends one common schema): `rate`, `mcp`, `tokenize`, `truncatePrompt`, `hasConfigurationSchema` (named to avoid an OpenAPI-generator collision with the generated client's own `Configuration` runtime class — the raw field is `configuration`), `systemPrompt`, `tools`, `seed`, `urlAttachments`, `folderAttachments`, `allowResume`, `accessibleByPerRequestKey`, `contentParts`, `temperature`, `cache`, `autoCaching`, `parallelToolCalls`, `assistantAttachmentsInRequest`, `chatCompletion`, `responsesApi`, `skillsSupported` (from DIAL Core's `skills_supported`, PR #1976 — whether the deployment accepts custom skills), `maxTokensSupported`, `maxCompletionTokensSupported`, `customTemperatureSupported`, `reasoningEfforts?: string[]` — all read defensively off the raw untyped payload (`mapDeploymentFeatures` in `deployments/utils/deployment-mapper.util.ts`) since the SDK's typed `DeploymentFeatures` shape declares fewer flags than DIAL Core actually returns. `skillsSupported` follows the same defensive boolean rule as its neighbors: absent or non-boolean source values map to `undefined`, never throw.
 
@@ -239,7 +253,7 @@ No `any` types are allowed in the success response shape.
 - **WHEN** a plain custom application (no Quick Apps schema) has a top-level DIAL Core `features` JSON and an empty or absent `application_properties`
 - **THEN** the response's `applicationDetails.customAppFeatures` carries that JSON and
   `applicationDetails.applicationProperties` is `undefined` (or omits `features` entirely) —
-  matching what `CustomAppEditor.tsx`'s Features textarea now reads
+  matching what the plain Custom App editor's Features field (`apps/chat/src/pages/ApplicationEditor/definitions/customAppDefinition.tsx`) reads
 
 #### Scenario: An application's own application_properties round-trips through read, edit, and save unchanged
 - **WHEN** a Quick App's `applicationDetails.applicationProperties` is read via `GET

@@ -12,7 +12,7 @@ How the catalog details panel fetches an item's tab data on open: the lib's host
 
 Note: this is the only async fetch-on-open mechanism in `Catalog.tsx`. An earlier `onFetchAboutContent`/`aboutContent`/`isAboutLoading` prop existed for the since-removed Summary section but was dropped as dead code (`CatalogView`'s implementation always resolved `undefined`); the `About` tab reads the static `item.description` synchronously, with no fetch or loading state of its own.
 
-The lib MUST remain host-agnostic: `onFetchDetails` accepts only a `CatalogItem` and returns only the lib's own result type — it MUST NOT know about DIAL Core endpoint paths, `@epam/ai-dial-chat-api-client`, or any backend DTO shape. All of that knowledge lives in the app-level adapter (`apps/chat/src/components/CatalogView/CatalogView.tsx`) and in the host-agnostic mappers it calls.
+The lib MUST remain host-agnostic: `onFetchDetails` accepts only a `CatalogItem` and returns only the lib's own result type — it MUST NOT know about DIAL Core endpoint paths, `@epam/ai-dial-chat-api-client`, or any backend DTO shape. All of that knowledge lives at the app edge (the `CatalogDetailsApi` adapter built in `apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`) and in `useCatalogItemDetails` and its mappers in `libs/chat-hooks/src/catalog/`.
 
 When `onFetchDetails` resolves data, it SHALL **replace** any statically-provided `item.details` for the currently open item wholesale — fetched data is considered more current, and the panel does not merge the two. A host whose fetch covers only part of the panel must therefore rebuild the rest of the sections it still wants shown; the prompt branch below is the worked example. When `onFetchDetails` is not provided, or resolves `undefined`, behavior is unchanged from today: the panel falls back to `item.details` if present, otherwise hides the corresponding tabs.
 
@@ -22,8 +22,11 @@ The three reset fields are optional and SHALL be treated as a present-or-all-abs
 preformatted display strings only: `resetLabel` is the visible line, `resetIsoValue` is the original
 UTC instant for a `<time dateTime>` attribute, and `resetAriaLabel` is the spoken expansion. A row
 that omits them SHALL render exactly as it did before they existed. The catalog's own adapter
-(`mapDeploymentLimitsDtoToCatalogLimits`) does not set them, so the details panel's `Limits` tab is
-unaffected by their addition.
+(`mapDeploymentLimitsDtoToCatalogLimits`) sets them on every token row whose `resetsAt` the
+host-supplied `DeploymentLimitsLabels.formatResetTime` formats successfully (see
+`chat-hooks-deployment-limits-mapping`), so the details panel's `Limits` tab shows a reset line per
+row exactly as the conversation-input popover does. The catalog adapter sets no `captionLabel`: the
+deployment-limits response carries no per-deployment spend.
 
 #### Scenario: Details panel fetches on open
 
@@ -56,11 +59,12 @@ unaffected by their addition.
 - **THEN** the rendered row is identical to its pre-change rendering, with no reset element in the
   DOM
 
-#### Scenario: The catalog details panel is unaffected
+#### Scenario: The catalog details panel shows a reset line per token row
 
-- **WHEN** a user opens a model's details panel and the `Limits` tab renders
-- **THEN** its DOM is identical to the pre-change rendering, because the catalog's adapter sets none
-  of the reset fields
+- **WHEN** a user opens a model's details panel, the `Limits` tab renders, and the deployment's
+  `dayTokenStats` / `weekTokenStats` / `monthTokenStats` each carry a `resetsAt` that formats
+- **THEN** each of the Today / This week / This month rows shows its own reset line in a
+  `<time dateTime>` element, and no row shows a "$X spent" caption
 
 ---
 
@@ -129,42 +133,33 @@ README and `src/index.ts` to agree in both directions.
 
 ### Requirement: `CatalogView` wires `onFetchDetails` to the new backend endpoint
 
-`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL implement `onFetchDetails` by dispatching on the opened item's `type` to the wrapper appropriate for that entity kind, branching prompt first, then skill, then the shared deployment path. All wrappers live in `apps/chat/src/server-api` and call generated `@epam/ai-dial-chat-api-client` methods — never `fetch` directly and never a new `base.ts` helper. The DTO-to-catalog mappers it calls are host-agnostic and live in `libs/chat-hooks/src/catalog/`.
+`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL take `onFetchDetails` (together with `onLoadContentFile` and `onLoadSkillDetailsFile`) from the app hook `useCatalogItems` (`apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`) and pass it to `Catalog`; it SHALL NOT contain the entity dispatch or mapping itself. `useCatalogItems` SHALL build a memoised `CatalogDetailsApi` adapter from the existing `apps/chat/src/server-api` wrappers — `getDeploymentDetails` (`deployments.ts`), `getDeploymentLimits` (`deployment-limits.ts`), `getPrompt`/`getPublicPrompt` (`prompts.api.ts`), and `downloadSkillFile`/`listSkillFiles`/`getSkillMetadata` (`skills.api.ts`) — and pass it, with `skills` (personal + shared + public), `isAdmin`, `dialCoreExternalUrl`, and the translated `skillOverviewLabels`/`promptOverviewLabels`/`deploymentLimitsLabels`, to `useCatalogItemDetails` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/catalog/useCatalogItemDetails.ts`). All wrappers call generated `@epam/ai-dial-chat-api-client` methods — never `fetch` directly — and the hook never constructs a client. The hook's `onFetchDetails` SHALL dispatch on the opened item's `type`, prompt first, then skill, then the shared deployment path, and SHALL be wrapped in `useCallback` (dependencies: `api`, `isAdmin`, `deploymentLimitsLabels`, `dialCoreExternalUrl`, `promptOverviewLabels`, `onFetchSkillDetails`) so `Catalog`'s fetch effect is not re-triggered by unrelated re-renders.
 
-**Deployment-backed items (`Model`, `Agent`, `Toolset`).** `CatalogView.tsx` SHALL call `getDeploymentDetails(id)` in `apps/chat/src/server-api/deployments.ts`, following the same pattern as the existing `getDeploymentConfiguration` wrapper, which in turn calls the generated `DeploymentsApi.getDeploymentDetails` method.
+**Deployment-backed items (`Model`, `Agent`, `Toolset`).** The hook SHALL call `api.getDeploymentDetails(item.id)` and convert the returned `DeploymentDetailsDto` into an `EntitySpecificDetails` variant (`libs/chat-hooks/src/catalog/entity-details.ts`) via `mapDeploymentDetailsDtoToEntityDetails`, which switches on `dto.type` — the discriminator the backend resolved — not on the `CatalogItem`'s `type`. The result is passed through `mapEntityDetailsToCatalogDetails` (same module, `map-entity-details-to-catalog.ts`). The returned `api` section is overridden by the Connect endpoint data (see `catalog-connect-action`), and toolsets additionally get `credentials` from `mapToolsetCredentials(item.id, data, isAdmin)`.
 
-`CatalogView.tsx` SHALL convert the returned `DeploymentDetailsDto` into the appropriate `EntitySpecificDetails` variant (`libs/chat-hooks/src/catalog/entity-details.ts`) via `mapDeploymentDetailsDtoToEntityDetails(dto: DeploymentDetailsDto): EntitySpecificDetails`, which switches on `dto.type` — the discriminator the backend has already resolved server-side — not on the `CatalogItem`'s own `type` field. The result is then passed through `mapEntityDetailsToCatalogDetails`, in the same `libs/chat-hooks/src/catalog/map-entity-details-to-catalog.ts` module, to produce the core detail sections.
+For `CatalogEntityType.Model` only, the hook SHALL call `api.getDeploymentLimits(item.id)` in parallel (its rejection caught to `undefined`) and set `limits` to `mapDeploymentLimitsDtoToCatalogLimits(limitsDto, deploymentLimitsLabels)` (`libs/chat-hooks/src/catalog/map-deployment-limits-to-catalog.ts`; see `chat-hooks-deployment-limits-mapping`). That mapper is the only place that knows DIAL Core's limit-stat field names (`dayTokenStats`, `dayCostStats`, etc.); `libs/catalog` receives only resolved display data and numeric progress values.
 
-For model catalog items only, `CatalogView.tsx` SHALL also call the existing `getDeploymentLimits(item.id)` wrapper from `apps/chat/src/server-api/deployment-limits.ts` in parallel with `getDeploymentDetails(item.id)`. The returned `DeploymentLimitsResponseDto` SHALL be converted by an app-level mapper (for example `mapDeploymentLimitsDtoToCatalogLimits`) into `CatalogItemLimits` and merged into the returned `CatalogItemTabData` as `limits`. This mapper is the only place that knows DIAL Core's limit-stat field names (`minuteTokenStats`, `dayCostStats`, etc.); `libs/catalog` receives only resolved display data and numeric progress values.
+**Prompt items (`CatalogEntityType.Prompt`).** The hook SHALL branch before the deployment path: an organisation prompt (`isOrganisationPromptItem`) calls `api.getPublicPrompt` with the bucket-relative sub-path parsed by `parsePromptResourceUrl`; a personal or shared prompt calls `api.getPrompt(item.id)` with the full `prompts/{bucket}/{path}` id unmodified. The result SHALL be `{ promptContent: { content: dto.content }, overview: buildPromptOverview(dto, promptOverviewLabels) }`. The `overview` is not optional decoration: because a fetch result replaces `item.details` wholesale, returning only `promptContent` would make the Overview tab the list mapper had already populated disappear once the panel finished loading. A prompt MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`.
 
-**Prompt items (`CatalogEntityType.Prompt`).** `CatalogView.tsx` SHALL branch before the deployment path and resolve the item's body through the prompts wrappers in `apps/chat/src/server-api/prompts.api.ts`: `getPublicPrompt` with the parsed bucket-relative sub-path for the organisation source, and `getPrompt(item.id)` for a personal or shared prompt (the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them). The result SHALL be returned as `{ promptContent: { content: dto.content }, overview }`. The `overview` is **not** optional decoration: because a fetch result replaces `item.details` wholesale, returning only `promptContent` would make the Overview tab the list mapper had already populated disappear the moment the panel finished loading. It is therefore rebuilt from the same DTO through a dedicated prompt-overview builder.
+**Skill items (`CatalogEntityType.Skill`).** The hook SHALL delegate to `useSkillItemDetails` (`libs/chat-hooks/src/catalog/useSkillItemDetails.ts`), which parses `{ bucket, path }` from `item.id` with `parseSkillResourceUrl`, records it in a ref (the Content tab's file picker reports back only a file's own path, and the panel shows one item at a time), and runs three requests with `Promise.allSettled`:
 
-A prompt MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a prompt path.
+- `downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE)` — read as text, size-capped, then parsed by the shared manifest parser, producing the Content body plus whatever summary and Specification section the manifest declares;
+- `listSkillFiles({ bucket, path, filePath: '', recursive: true })` — an options object — used for the `overview` (author, last-updated, file count, one row per file) and the Content tab's file tree;
+- `getSkillMetadata(bucket, path)` — when it fulfils, it is the authoritative source of the overview's skill metadata; the matching entry from the `skills` listing is used only when it rejects.
 
-**Skill items (`CatalogEntityType.Skill`).** `CatalogView.tsx` SHALL branch before the deployment path, parse `{ bucket, path }` out of `item.id` with `parseSkillResourceUrl` (`libs/chat-hooks/src/skill/skill-types.ts`), and resolve the panel's data through the skills wrappers in `apps/chat/src/server-api/skills.api.ts` with `Promise.allSettled`:
+A manifest that downloads but fails to parse is not a failure: the parser hands back the raw text as the body. The content and overview halves are independently optional; when neither is available the result is `undefined`. An `item.id` that `parseSkillResourceUrl` rejects SHALL resolve `undefined` with no request issued. A skill MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`.
 
-- `downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE)` — read as text, size-capped, then run through the shared manifest parser, producing the Content body plus whatever summary and Specification section the manifest declares;
-- `listSkillFiles({ bucket, path, filePath: '', recursive: true })` — an options object, not positional arguments — mapped to an `overview` section carrying author, last-updated, file count, and one row per file.
-
-A manifest that downloads but fails to **parse** is not a failure: the parser hands back the raw text as the body, so the Content tab still renders, simply without a summary or Specification section.
-
-The branch SHALL also record the opened skill's `{ bucket, path }` in a ref, because the Content tab's file picker reports back only a file's own path and needs to know which skill it belongs to. The panel shows one item at a time, so a single ref, rewritten on each open, is sufficient.
-
-Each result is independently optional: either may be omitted when its request fails, and both failing resolves `undefined`. An `item.id` that `parseSkillResourceUrl` rejects SHALL resolve `undefined` with no request issued. A skill MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a skill resource URL.
-
-The `onFetchDetails` callback SHALL be wrapped in `useCallback` (dependencies: app-level adapter inputs such as `isAdmin` and `t`) to satisfy the design's memoisation requirement and avoid re-triggering `Catalog`'s fetch effect on unrelated `CatalogView` re-renders.
-
-If a details server-api call rejects (network error or a mapped HTTP exception surfaced by the base client), `onFetchDetails` SHALL catch the error, resolve `undefined`, and log nothing beyond what the shared API client already logs — it MUST NOT throw out of the callback and break the details panel. If the model limits call rejects, the details result SHALL still be returned without `limits`; a limits-specific failure MUST NOT hide Overview/Pricing/API data. For a prompt, resolving `undefined` leaves the panel showing the `promptContent` the list mapper already seeded, so a failed refresh degrades to slightly stale content rather than an empty tab. For a skill, a partial failure returns whichever half succeeded rather than discarding both.
+If a details call rejects, `onFetchDetails` SHALL catch the error, resolve `undefined`, and log nothing beyond what the shared API client already logs — it MUST NOT throw. A model limits rejection SHALL still return the details without `limits`. For a prompt, resolving `undefined` leaves the panel showing the `promptContent` the list mapper already seeded. For a skill, a partial failure returns whichever half succeeded.
 
 #### Scenario: Successful detail fetch renders structured tabs
 
 - **WHEN** a user opens a model's details panel and `getDeploymentDetails` resolves a `DeploymentDetailsDto` with `type: 'model'` and populated `modelDetails`
-- **THEN** `CatalogView` maps it to `{ type: 'MODEL', data: ModelEntityDetails }` and then to `CatalogItemTabData`, and the panel renders the Overview/Pricing/API tabs with that data
+- **THEN** `useCatalogItemDetails` maps it to `{ type: 'MODEL', data: ModelEntityDetails }` and then to `CatalogItemTabData`, and the panel renders the Overview/Pricing/API tabs with that data
 
 #### Scenario: Model limits fetch renders Limits tab
 
-- **WHEN** a user opens a model's details panel and `getDeploymentLimits` resolves a `DeploymentLimitsResponseDto` with at least one usable stats field
-- **THEN** `CatalogView` maps the response into `CatalogItemLimits`, returns it as `details.limits`, and the panel renders the `Limits` tab
+- **WHEN** a user opens a model's details panel and `getDeploymentLimits` resolves a `DeploymentLimitsResponseDto` with at least one usable token stat
+- **THEN** the hook returns the mapped `CatalogItemLimits` as `details.limits`, and the panel renders the `Limits` tab
 
 #### Scenario: Model limits fetch failure does not hide other details
 
@@ -177,8 +172,8 @@ A row counts as unlimited when `total >= Number.MAX_SAFE_INTEGER`
 (`UNLIMITED_TOTAL_THRESHOLD` in `map-deployment-limits-to-catalog.ts`), which is
 how DIAL Core's Java `Long.MAX_VALUE` arrives once JSON has rounded it.
 
-- **WHEN** DIAL Core returns an effectively-unlimited `total` for a limit stat
-- **THEN** the app-level mapper sets `isUnlimited: true`, preserves the numeric `used`/`total` on the row, and still includes the row in the `Limits` tab
+- **WHEN** DIAL Core returns an effectively-unlimited `total` for a token limit stat
+- **THEN** the mapper sets `isUnlimited: true`, preserves the numeric `used`/`total` on the row, and still includes the row in the `Limits` tab
 - **AND** the row's `valueLabel` is the formatted **`used`** amount alone — the visible value never reads `Unlimited`, and there is no `unlimitedValue` i18n key
 - **AND** `noteLabel` is `catalog.details.limits.followsCostLimit` ("Follows cost limit"), rendered under the value, and `ariaLabel` reads "{label}: {used} used. Follows cost limit."
 - **AND** `captionLabel` carries the attributed spend ("$20.00 spent") under the row's label whenever cost stats are usable, since per-deployment cost is attributed spend rather than a cap
@@ -197,7 +192,7 @@ an unexpected shape.
 #### Scenario: Toolset detail fetch renders the Tools tab
 
 - **WHEN** a user opens a toolset's details panel and `getDeploymentDetails` resolves `type: 'toolset'` with populated `toolsetDetails`
-- **THEN** `CatalogView` maps it to `{ type: 'TOOLSET', data: ToolsetEntityDetails }`, and the panel's Overview tab reflects the toolset's `authSettings.authenticationType`
+- **THEN** the hook maps it to `{ type: 'TOOLSET', data: ToolsetEntityDetails }`, the panel's Overview tab reflects the toolset's `authSettings.authenticationType`, and `credentials` come from `mapToolsetCredentials`
 
 #### Scenario: Backend error does not crash the panel
 
@@ -208,7 +203,7 @@ an unexpected shape.
 
 - **WHEN** the opened item's `type` is `CatalogEntityType.Model`, `CatalogEntityType.Agent`, or `CatalogEntityType.Toolset`
 - **AND** the additional `getDeploymentLimits(item.id)` call is made only for `CatalogEntityType.Model`
-- **THEN** `onFetchDetails` calls the same `getDeploymentDetails(item.id)` wrapper regardless of type, and only the DTO → `EntitySpecificDetails` mapping branches on type
+- **THEN** `onFetchDetails` calls the same `getDeploymentDetails(item.id)` operation regardless of type, and only the DTO → `EntitySpecificDetails` mapping branches on type
 
 #### Scenario: Personal prompt detail fetch renders the Content tab
 
@@ -223,7 +218,7 @@ an unexpected shape.
 #### Scenario: Shared prompt detail fetch preserves the owner bucket
 
 - **WHEN** a user opens `prompts/owner-bucket/Work/summarize`
-- **THEN** `onFetchDetails` calls `getPrompt('prompts/owner-bucket/Work/summarize')`
+- **THEN** `onFetchDetails` calls `getPrompt('prompts/owner-bucket/Work/summarize')` with the full qualified id
 
 #### Scenario: Prompt fetch never reaches the deployment endpoints
 
@@ -237,8 +232,13 @@ an unexpected shape.
 
 #### Scenario: Skill detail fetch renders Content and Overview
 
-- **WHEN** a user opens a skill's details panel and both `downloadSkillFile('SKILL.md')` and `listSkillFiles` resolve
-- **THEN** `onFetchDetails` resolves `{ promptContent: { content }, overview }` and the panel renders the manifest text and the file inventory
+- **WHEN** a user opens a skill's details panel and `downloadSkillFile('SKILL.md')`, `listSkillFiles` and `getSkillMetadata` resolve
+- **THEN** `onFetchDetails` resolves `{ promptContent, overview }` with the overview built from the fetched metadata, and the panel renders the manifest text and the file inventory
+
+#### Scenario: Skill metadata failure falls back to the listing entry
+
+- **WHEN** `getSkillMetadata` rejects while `listSkillFiles` resolves
+- **THEN** the overview is built from the skill's entry in the combined `skills` listing
 
 #### Scenario: Skill fetch never reaches the deployment endpoints
 
@@ -258,7 +258,7 @@ an unexpected shape.
 #### Scenario: Unparseable skill id issues no request
 
 - **WHEN** a skill item's `id` is not a well-formed `skills/{bucket}/{path}` URL
-- **THEN** `onFetchDetails` resolves `undefined` without calling any skills wrapper
+- **THEN** `onFetchDetails` resolves `undefined` without calling any skills operation
 
 ---
 
@@ -266,14 +266,14 @@ an unexpected shape.
 
 The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client, state-ownership, i18n, RTL, feature-flag, memoisation, accessibility, and observability contract:
 
-- **State ownership**: no new React Context or hook is introduced. The fetch is triggered by `libs/catalog`'s `Catalog` component (owns `isDetailsLoading`/fetched-details state) and resolved by `CatalogView.tsx`'s `onFetchDetails` callback (owns the DTO→domain mapping); no state is lifted into `DeploymentsContext` since detail data is panel-scoped and not shared across the app.
+- **State ownership**: no new React Context or hook is introduced. The fetch is triggered by `libs/catalog`'s `Catalog` component (owns `isDetailsLoading`/fetched-details state) and resolved by the `onFetchDetails` callback of `useCatalogItemDetails` in `libs/chat-hooks` (owns the DTO→domain mapping), which `CatalogView` receives through `useCatalogItems`; no state is lifted into `DeploymentsContext` since detail data is panel-scoped and not shared across the app.
 - **Generated-client impact**: OpenAPI `operationId: 'getDeploymentDetails'` on the new controller method, exposed on the generated `DeploymentsApi` as `getDeploymentDetails({ deployment })`. Request: path param `deployment: string`. Response DTO: `DeploymentDetailsDto`. The frontend wrapper uses the normal (non-`Raw`) generated method, matching the existing `getDeploymentConfiguration`/`getDeploymentLimits` wrapper pattern. Model usage limits reuse the already-existing `getDeploymentLimits` generated method through `apps/chat/src/server-api/deployment-limits.ts`; no generated client changes are required for the UI tab.
-- **i18n**: the Limits tab introduces user-visible strings for `catalog.details.tabLimits`, period labels such as `catalog.details.limits.tokensPerDay`, `catalog.details.limits.value`, `catalog.details.limits.unlimitedValue`, and `catalog.details.limits.progressAriaLabel`. These keys MUST live in `apps/chat/src/i18n/locales/en.json` and be referenced via `CatalogI18nKeys`.
+- **i18n**: the Limits tab's user-visible strings are `catalog.details.tabLimits` and `catalog.details.limits.*` — `tokenGroup`, `tokensPerDay`, `tokensPerWeek`, `tokensPerMonth`, `spentLabel`, `value`, `followsCostLimit`, `followsCostLimitAriaLabel`, and `progressAriaLabel` (there is no `unlimitedValue` key). These keys MUST live in `apps/chat/src/i18n/locales/en.json` and be referenced via `CatalogI18nKeys`.
 - **RTL / direction impact**: the Limits tab UI MUST use logical/flexible layout utilities only; it MUST NOT introduce physical left/right classes or directional icons. Progress rows contain text and a progress bar, so no icon mirroring is required.
 - **Feature flag**: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — this is a data-completeness fix for an existing, already-shipped catalog details panel, not a new feature surface.
-- **Memoisation**: `onFetchDetails` in `CatalogView.tsx` MUST be wrapped in `useCallback`; the DTO-to-`EntitySpecificDetails` mapping functions and deployment-limits mapper MUST remain pure functions (no new memoisation needed beyond the callback itself, consistent with `mapEntityDetailsToCatalogDetails` today).
+- **Memoisation**: `onFetchDetails` in `useCatalogItemDetails` MUST be wrapped in `useCallback`, and the `CatalogDetailsApi` adapter and labels objects in `useCatalogItems` in `useMemo`; the DTO-to-`EntitySpecificDetails` mapping functions and deployment-limits mapper MUST remain pure functions (no new memoisation needed beyond the callback itself, consistent with `mapEntityDetailsToCatalogDetails` today).
 - **Accessibility**: `isDetailsLoading` renders its own `role="status"` indicator next to the tab row (`texts.detailsLoadingAriaLabel`, default `'Loading details'`). It is the panel's only loading indicator — the `About` tab's `item.description` is always available synchronously and has no loading state. Every capped limits row's progress bar MUST receive an accessible label naming the limit and the used/total value. An unlimited row renders no progress bar at all, so there is no bar to label: its `ariaLabel` ("{label}: {used} used. Follows cost limit.") carries the whole meaning, and a panel whose rows are all unlimited legitimately mounts zero `role="progressbar"` nodes.
-- **Observability**: no new metrics/telemetry are required; failures are absorbed into `onFetchDetails` resolving `undefined` (per the Non-Goals in design.md, no new logging beyond what `apps/chat/src/server-api`'s shared client already emits on error). On the backend, `deployments.service.ts` logs raw-toolset and mapped-response payloads at debug level (secrets redacted) to aid diagnosing field-mapping gaps — this is diagnostic logging, not user-facing observability.
+- **Observability**: no new metrics/telemetry are required; failures are absorbed into `onFetchDetails` resolving `undefined` (per the Non-Goals in design.md, no new logging beyond what `apps/chat/src/server-api`'s shared client already emits on error). On the backend, `apps/chat-api/src/deployments/details/deployments-details.service.ts` logs raw-toolset and mapped-response payloads at debug level (secrets redacted) to aid diagnosing field-mapping gaps — this is diagnostic logging, not user-facing observability.
 
 #### Scenario: No new context or global state
 
@@ -433,10 +433,10 @@ render every present value as a separate row in the corresponding details panel 
 for Model (`mapModelDetails`), Application (`mapAgentDetails`), and Toolset (`mapToolsetDetails`)
 alike. Missing values SHALL NOT create empty rows.
 
-The five rows reuse the same label strings already used for the Model row order ("Provider",
-"Vendor", "License", "Knowledge cutoff date", "Parameters"); no new i18n keys are introduced, and
-the existing app-level `CatalogI18nKeys` lookup (`catalog.details.modelSpecification.*`) that
-translates those label strings continues to apply unchanged to the Application and Toolset rows.
+The five rows SHALL use the fixed English labels "Provider", "Vendor", "License", "Knowledge
+cutoff date" and "Parameters" for all three entity types. No i18n keys exist for them: the mapper
+lives in `libs/chat-hooks`, which cannot import the app's `CatalogI18nKeys`, and there is no
+`catalog.details.modelSpecification.*` lookup.
 
 A valid date-only `knowledgeCutoffDate` in `YYYY-MM-DD` form SHALL be parsed as a local calendar
 date and formatted with the same locale-sensitive `toLocaleDateString()` path as the existing
@@ -493,12 +493,11 @@ memoisation is required.
 - **WHEN** a client ignores the optional `catalogProperties` field on any of the three branches
 - **THEN** all pre-existing deployment-details response fields and behavior remain unchanged
 
-### Requirement: Input/Output modalities render as friendly labels, and internal-only capability flags are hidden
+### Requirement: Input modalities render as friendly labels, and internal-only capability flags are hidden
 
 `libs/chat-hooks/src/catalog/map-entity-details-to-catalog.ts` SHALL render a model's and application's
-`inputAttachmentTypes`/`outputAttachmentTypes` (surfaced as `ModelSpecification.inputTypes`/
-`outputTypes` and `AgentConfiguration.inputAttachmentTypes`/`outputAttachmentTypes`) as
-human-readable labels via `mimeTypesToExtensionLabels` (`@epam/ai-dial-attachment-input`) rather
+`inputAttachmentTypes` (surfaced as `ModelSpecification.inputTypes` and
+`AgentConfiguration.inputAttachmentTypes`) as human-readable labels via `mimeTypesToExtensionLabels` (`@epam/ai-dial-attachment-input`) rather
 than the raw MIME type strings DIAL Core returns. A wildcard major type (`image/*`, `audio/*`,
 `video/*`, `text/*`) SHALL render as `"<Major> files"` (e.g. `"Image files"`); the catch-all
 wildcard `*/*` SHALL render as `"All files"` rather than falling through to the generic
@@ -507,12 +506,11 @@ known concrete MIME type SHALL render as its uppercased extension from `MIME_TYP
 (e.g. `application/pdf` → `"PDF"` and
 `application/vnd.openxmlformats-officedocument.wordprocessingml.document` → `"DOCX"`), while
 an unknown concrete MIME type SHALL fall back to its uppercased subtype.
-The `Specification` section's row labels for these two fields SHALL use the i18n keys
-`catalog.details.modelSpecification.inputModalities` / `.outputModalities`
-(`CatalogI18nKeys.DetailsModelInputModalities` / `DetailsModelOutputModalities`), replacing the
-previous untranslated `'Input type'`/`'Output type'` literals. The `Configuration` section's
-`Input attachments`/`Output attachments` rows (Agent only) SHALL use the same
-`mimeTypesToExtensionLabels` formatting for their values, keeping their existing labels.
+The model's `Specification` section SHALL render this as an `Input modalities` row and the
+application's `Configuration` section as an `Input attachments` row, both with the same
+`mimeTypesToExtensionLabels` formatting and both labelled with hard-coded English literals (no
+i18n keys). Output attachment types are not mapped onto `ModelSpecification`/`AgentConfiguration`
+and no output row is rendered.
 
 The model, application, and toolset `Capabilities` sections built by `mapModelDetails`/
 `mapAgentDetails`/`mapToolsetDetails` SHALL NOT render rows for `hasMcp`, `hasCaching`,
@@ -533,9 +531,9 @@ seven flags above, `hasSkills` is not deliberately hidden: it SHALL be added to
 the existing rows. `ToolsetCapabilities` SHALL NOT gain a `hasSkills` field, since the
 toolset `Capabilities` section never renders.
 
-**Feature flag:** Not gated. **RTL impact:** None (label text only). **i18n impact:** New keys
-`catalog.details.modelSpecification.inputModalities`/`.outputModalities` added to
-`translation-keys.ts`/`en.json`; the seven hidden capability rows had no i18n keys to remove
+**Feature flag:** Not gated. **RTL impact:** None (label text only). **i18n impact:** None — the
+`Input modalities`/`Input attachments` labels are untranslated literals, and no
+`catalog.details.modelSpecification.*` keys exist in `translation-keys.ts`/`en.json`; the seven hidden capability rows had no i18n keys to remove
 (they were untranslated string literals); the new `Skills` row likewise uses a plain,
 untranslated string literal, consistent with the other rows in this section.
 
@@ -678,133 +676,3 @@ field from `DeploymentItemDto`/`DialToolsetDto`.
   `DeploymentItemDto`/`DialToolsetDto` into a `CatalogItem`
 - **THEN** the resulting `CatalogItem` has no `intro` property
 
----
-
-### Requirement: `CatalogView` wires `onFetchDetails` to the new backend endpoint
-
-`CatalogView` SHALL create a stable app-level `CatalogDetailsApi` adapter from
-the existing `apps/chat/src/server-api` wrappers, pass it with resolved labels,
-configuration and skill metadata to `useCatalogItemDetails` from
-`@epam/ai-dial-chat-hooks`, and pass the returned stable `onFetchDetails`
-callback to `Catalog`. It SHALL NOT retain the entity dispatch/mapping algorithm
-inline or add direct `fetch`/client construction.
-
-**Deployment-backed items (`Model`, `Agent`, `Toolset`).** The controller SHALL
-call the injected deployment-details operation and reuse the current
-`mapDeploymentDetailsDtoToEntityDetails` and
-`mapEntityDetailsToCatalogDetails` pipeline. It SHALL preserve DTO-discriminator
-mapping, application MCP/connect endpoint precedence, credentials, admin-only
-data and all currently rendered sections. Models alone SHALL request limits in
-parallel and reuse the current `chat-hooks` deployment-limits mapper; a limits
-failure SHALL not hide otherwise successful details.
-
-**Prompts.** The controller SHALL branch before deployments and call the
-injected public operation for organisation prompts, personal operation for
-personal prompts, or the personal/shared operation with parsed owner bucket for
-qualified shared ids. Because fetched data replaces static details wholesale,
-the result SHALL contain both prompt content and the rebuilt overview. Prompt
-failure SHALL resolve `undefined` to preserve seeded list content. Prompts SHALL
-not call deployment operations.
-
-**Skills.** The controller SHALL parse `{ bucket, path }` from the qualified id,
-store it only in a private ref for subsequent file loads, and execute manifest
-download and recursive file listing with `Promise.allSettled`. Each half SHALL
-be independently optional; both failures or an invalid id resolve `undefined`,
-and invalid ids issue no request. A downloaded but unparseable manifest SHALL
-return raw text rather than fail. Skills SHALL not call deployment operations.
-
-All callbacks SHALL be `useCallback`-stable for stable inputs. Rejected details
-operations SHALL resolve `undefined` and SHALL NOT log or throw beyond the
-configured client's existing behavior.
-
-#### Scenario: Successful model fetch renders structured tabs
-
-- **WHEN** model details resolve with the model DTO discriminator
-- **THEN** the controller returns mapped Overview/Pricing/API data
-
-#### Scenario: Model limits render the Limits tab
-
-- **WHEN** model limits contain a usable stats field
-- **THEN** the existing hook-layer mapper supplies `details.limits`
-
-#### Scenario: Model limits failure preserves other details
-
-- **WHEN** details resolve and limits reject
-- **THEN** details return without limits
-
-#### Scenario: Unlimited limits remain accessible
-
-- **WHEN** DIAL Core returns its effectively unlimited total
-- **THEN** the existing mapper preserves the numeric values and emits the
-  used-only `valueLabel`, the "Follows cost limit" `noteLabel` and the
-  matching `ariaLabel`, which the row renders without a progress bar
-
-#### Scenario: Toolset details preserve credentials
-
-- **WHEN** toolset details resolve with authentication settings
-- **THEN** the mapped overview and credential/admin data match current behavior
-
-#### Scenario: Application endpoint precedence is unchanged
-
-- **WHEN** application details contain MCP and connect interface data
-- **THEN** the same current MCP/connect endpoint and credential precedence is
-  returned
-
-#### Scenario: Backend error does not crash the panel
-
-- **WHEN** a deployment detail operation rejects
-- **THEN** `onFetchDetails` resolves `undefined` and Catalog falls back to its
-  static details
-
-#### Scenario: All deployment types use the same operation
-
-- **WHEN** a Model, Agent, or Toolset is opened
-- **THEN** the injected deployment-details operation is used, and only Model
-  also requests limits
-
-#### Scenario: Personal prompt renders content and overview
-
-- **WHEN** a personal prompt is opened
-- **THEN** the personal operation receives `item.id` and the returned fetched
-  data includes Content and rebuilt Overview
-
-#### Scenario: Organisation prompt uses the public operation
-
-- **WHEN** an organisation prompt is opened
-- **THEN** only the public prompt operation is used
-
-#### Scenario: Shared prompt preserves owner bucket
-
-- **WHEN** `prompts/owner-bucket/Work/summarize` is opened
-- **THEN** the shared read receives `('Work/summarize', 'owner-bucket')`
-
-#### Scenario: Prompt never reaches deployments
-
-- **WHEN** a Prompt is opened
-- **THEN** neither deployment details nor limits is requested
-
-#### Scenario: Prompt failure degrades to seeded content
-
-- **WHEN** prompt refresh rejects and list mapping seeded content
-- **THEN** the callback resolves `undefined` and seeded content remains
-
-#### Scenario: Skill details combine manifest and inventory
-
-- **WHEN** manifest download and recursive listing both resolve
-- **THEN** returned data contains manifest content/specification and overview
-  inventory matching current mapping
-
-#### Scenario: Skill partial failure returns the successful half
-
-- **WHEN** one of manifest or inventory rejects
-- **THEN** the other half is returned without throwing
-
-#### Scenario: Unparseable manifest renders raw text
-
-- **WHEN** manifest download succeeds but parsing fails
-- **THEN** raw manifest text remains Content without summary/specification
-
-#### Scenario: Invalid skill id issues no request
-
-- **WHEN** a skill id cannot be parsed
-- **THEN** the callback resolves `undefined` without invoking a skill operation

@@ -25,6 +25,10 @@ import {
 import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
+import {
+  HTML_PREVIEW_FRAME_DOCUMENT,
+  HTML_PREVIEW_FRAME_RENDER_MESSAGE,
+} from '../html-preview-frame';
 
 const TEST_USER = {
   sub: 'user-123',
@@ -2057,5 +2061,49 @@ describe('FilesController — listSharedByMe', () => {
       .get('/api/v1/files/shared-by-me')
       .query({ bucket: 'user-bucket' })
       .expect(401);
+  });
+});
+
+describe('FilesController — html-preview-frame', () => {
+  let app: INestApplication;
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('returns the bootstrap document with the preview CSP instead of the shell policy', async () => {
+    app = await buildApp({}, { useHelmet: true });
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/html-preview-frame')
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch('text/html');
+    expect(res.headers['content-security-policy']).toBe(
+      createHtmlPreviewCspHeader([]),
+    );
+    expect(res.headers['content-security-policy']).not.toBe(
+      await getShellCspHeader(),
+    );
+    expect(res.headers['content-security-policy-report-only']).toBeUndefined();
+    expect(res.headers['cache-control']).toBe('no-cache');
+    expect(res.text).toBe(HTML_PREVIEW_FRAME_DOCUMENT);
+    expect(res.text).toContain(HTML_PREVIEW_FRAME_RENDER_MESSAGE);
+  });
+
+  it('allows the configured iframe origins as frame ancestors', async () => {
+    const allowedIframeOrigins = ['https://host.example.com'];
+    app = await buildApp({}, { allowedIframeOrigins });
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/html-preview-frame')
+      .expect(200);
+
+    expect(res.headers['content-security-policy']).toBe(
+      createHtmlPreviewCspHeader(allowedIframeOrigins),
+    );
+    expect(res.headers['content-security-policy']).toContain(
+      'https://host.example.com',
+    );
   });
 });

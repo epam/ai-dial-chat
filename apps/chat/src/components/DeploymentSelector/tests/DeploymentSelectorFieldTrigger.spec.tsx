@@ -184,7 +184,9 @@ describe('DeploymentSelectorFieldTrigger — mobile', () => {
       name: 'deploymentSelector.ariaLabel',
     });
     expect(within(sheet).getByText('overlay content')).toBeTruthy();
-    expect(screen.getAllByRole('combobox')).toHaveLength(1);
+    /* The modal sheet hides the page behind it from assistive tech, so the
+       field is counted with hidden elements: it must not be duplicated. */
+    expect(screen.getAllByRole('combobox', { hidden: true })).toHaveLength(1);
 
     breakpoint.isMobile = false;
     rerender(

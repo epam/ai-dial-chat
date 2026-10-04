@@ -3,10 +3,17 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type DeploymentIconProps, DeploymentIcon } from '../DeploymentIcon';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
+/* The initials fallback is the real kit `Avatar`; the tooltip stays stubbed. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { Avatar, AvatarShape } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    Avatar,
+    AvatarShape,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  };
+});
 
 /**
  * Stubs the global `Image` constructor used by `DeploymentIcon` to preload a

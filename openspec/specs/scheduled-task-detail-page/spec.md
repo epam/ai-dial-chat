@@ -389,6 +389,8 @@ When `onEdit` is supplied, the component SHALL render the Edit button; when omit
 
 `ScheduledTaskDetailPage` SHALL compute each run's `isUnread` by matching `run.conversationId` against the conversation items already loaded via `ConversationsContext`, using `conversationIdsMatch` (`apps/chat/src/utils/conversation-id-match.ts`) to tolerate id-format differences (a `conversations/`-prefixed resource path versus an unprefixed panel id, and URI-encoding differences) between the run's `conversationId` and a conversation list item's `id`. A run whose `conversationId` is absent, or which matches no loaded conversation item, SHALL resolve to `isUnread: false` (never `undefined` and never treated as an error). A run whose `conversationId` matches a loaded conversation item SHALL resolve to that item's own `isUnread` value exactly (`true` only when the matched item's `isUnread` is `true`). This computation SHALL NOT trigger a new fetch of the conversation list, a new fetch of run data, or persist anything — it is a pure derivation over data both contexts already hold.
 
+The app's history adapter and accepted-run effects SHALL separately refresh shared conversation metadata, with bounded discovery of missing chat ids as specified in [scheduled-task-unread-tracking](../scheduled-task-unread-tracking/spec.md). Discovery SHALL remain independent of the pure row mapping and of whether a run is still InProgress.
+
 #### Scenario: Matching conversation with isUnread true produces a dot
 
 - **GIVEN** `ConversationsContext` holds a loaded conversation item with `id: "bucket/.scheduler/sched_123/run_9f2a"` and `isUnread: true`
@@ -404,6 +406,11 @@ When `onEdit` is supplied, the component SHALL render the Edit button; when omit
 
 - **WHEN** a run has no `conversationId`
 - **THEN** the run's item passed to `ScheduledTaskRunHistoryList` has `isUnread: false`
+
+#### Scenario: Delayed metadata updates the History unread indicator
+
+- **WHEN** a run has a conversation id whose metadata becomes available after the initial list refresh, including after the run completes
+- **THEN** bounded discovery updates `ConversationsContext` and the row reflects the backend unread state without reloading the page
 
 ### Requirement: Delete confirmation dialog gates the delete request
 
@@ -796,7 +803,7 @@ For a loaded, non-deleted task, Start now SHALL execute the saved definition thr
 
 After HTTP 202, History SHALL immediately include the returned real run id, timestamp and InProgress spinner before older entries. No optimistic fabricated row SHALL be added before acceptance. Entries SHALL be deduplicated by id without discarding loaded pages or changing the underlying pagination offset. An earlier list response SHALL NOT erase the new row or downgrade its confirmed terminal status. Accepted rows SHALL remain visible even if the independent initial history request is pending or fails; history errors SHALL remain scoped with retry alongside available rows.
 
-The page SHALL NOT refetch schedule/list metadata or change its loaded trigger, Active state, next-run label or update timestamp on start. Run rows without a conversation id SHALL remain non-navigable. Once a terminal response supplies a conversation id, existing navigation/unread behavior SHALL apply without automatic navigation.
+The page SHALL NOT refetch schedule or task-list metadata or change its loaded trigger, Active state, next-run label or update timestamp on start. This restriction SHALL NOT prevent conversation-list refreshes: acceptance or status polling that exposes a conversation id, and subsequent run-status changes, SHALL trigger shared unread-metadata discovery as specified in [scheduled-task-unread-tracking](../scheduled-task-unread-tracking/spec.md). Run rows without a conversation id SHALL remain non-navigable. Once a response supplies a conversation id, existing navigation/unread behavior SHALL apply without automatic navigation.
 
 The library SHALL receive only optional `onStartNow`, `isStarting`, `isStartNowDisabled` and localized label/announcement props described in design.md. It SHALL NOT import app hooks, clients, auth, routing or i18n. Existing hosts omitting the action SHALL retain current behavior. The app SHALL memoize merged run items/labels and stabilize supplied callbacks.
 
@@ -823,7 +830,13 @@ The library SHALL receive only optional `onStartNow`, `isStarting`, `isStartNowD
 #### Scenario: Paused or completed task runs without rescheduling
 
 - **WHEN** Start now is activated for a non-deleted paused/completed task
-- **THEN** only the start endpoint is called, without resume/update/list invalidation, and the next scheduled fire is unchanged
+- **THEN** the task is started without resume/update or task-list invalidation, and the next scheduled fire is unchanged; conversation discovery remains available
+
+#### Scenario: Start now discovers a new unread chat
+
+- **WHEN** acceptance or a status response supplies the manual run's conversation id
+- **THEN** the page requests shared conversation metadata and shows the backend unread state without marking the chat viewed
+- **AND** opening that chat applies the shared viewed-state behavior even if its metadata arrives after navigation
 
 #### Scenario: Pagination overlaps with an accepted run
 

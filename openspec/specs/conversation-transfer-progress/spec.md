@@ -48,9 +48,13 @@ never the whole job.
 ### Requirement: Progress advances through fixed, kind-specific phase weights
 
 Progress SHALL be computed from three phases — **prepare**, **transfer**, and **finalize** — whose
-weights are fixed per transfer kind and sum to `100`. The transfer phase's weight SHALL be
-subdivided evenly across the units discovered for that job (attachments to download/upload, or
-conversations to fetch); the prepare and finalize weights SHALL NOT be subdivided.
+weights are fixed per transfer kind and sum to `100` (`TRANSFER_PHASE_WEIGHTS` in
+`libs/chat-hooks/src/conversation/conversation-transfer/progress.ts`). The transfer phase's weight
+SHALL be subdivided evenly across the units discovered for that job: attachments to download for
+an export with attachments, conversations to fetch for export-all, and the archive's `res/`
+attachment entries for an import. The prepare weight SHALL NOT be subdivided. The finalize weight
+is subdivided only for import, across the conversations saved; for the export kinds it is
+credited when the job settles.
 
 The weights SHALL be:
 
@@ -85,14 +89,21 @@ transfer weight is subdivided.
 
 ### Requirement: Reaching a terminal status settles progress
 
-A job reaching `Success` SHALL have `progress.percent` set to `100`, regardless of the value the
-phase arithmetic produced. A job reaching `Failed` or `Canceled` SHALL retain the last `percent`
-it reached, and SHALL NOT be advanced further.
+A job reaching `Success` or `Warning` SHALL have `progress.percent` set to `100`, regardless of
+the value the phase arithmetic produced — a warned job still delivered its file. A job reaching
+`Failed` or `Canceled` SHALL retain the last `percent` it reached, and SHALL NOT be advanced
+further. A late warning SHALL NOT relabel a job that has already left `InProgress`.
 
 #### Scenario: Success completes the ring
 
 - **GIVEN** a job whose phase arithmetic left `progress.percent` at `98`
 - **WHEN** the job's status becomes `Success`
+- **THEN** `progress.percent` is `100`
+
+#### Scenario: A warning also completes the ring
+
+- **GIVEN** an export-with-attachments job that skipped one attachment
+- **WHEN** the job settles with status `Warning`
 - **THEN** `progress.percent` is `100`
 
 #### Scenario: Cancelling freezes progress where it stopped
@@ -110,11 +121,15 @@ it reached, and SHALL NOT be advanced further.
 ### Requirement: Progress is rendered only as the collapsed-state aggregate
 
 `progress.percent` and `progress.units` SHALL be computed and carried on the job for hosts to read.
-A job's own progress SHALL NOT be rendered on its row: an `InProgress` row shows the indeterminate
-UI kit `Spinner` (see `conversation-panel-transfer-queue-ui`). The single exception is the
-collapsed queue's aggregate indicator, which SHALL derive its value from `progress.percent` across
-all jobs. Neither `libs/chat-shared` nor `libs/conversation-panel` SHALL render or construct a
-translated unit string.
+A job's own progress SHALL NOT be rendered on its row: an `InProgress` row of the UI kit's
+`TransferQueue` (`@epam/ai-dial-ui-kit`) shows the indeterminate kit `Spinner`. The app copies
+each job's `progress.percent` into `TransferQueueItem.percent` in `toTransferQueueItems`
+(`apps/chat/src/utils/conversation-transfer.ts`). The single exception is the collapsed queue's
+aggregate `ProgressBar`, shown only while the queue is collapsed and at least one job is in
+progress. Its value SHALL be the rounded, unweighted mean of those percents across all jobs. Its
+`aria-valuetext` is the host's `queueProgressValueText(settled, total)`, a count of settled jobs,
+not `progress.units`. Neither `libs/chat-shared` nor `libs/conversation-panel` SHALL render or
+construct a translated unit string.
 
 #### Scenario: The row surfaces activity, not completion
 

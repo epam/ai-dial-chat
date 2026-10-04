@@ -121,9 +121,13 @@ vi.mock('../../../context/NotificationContext');
 vi.mock('../../../context/overlay/OverlayContext', () => ({
   useOptionalOverlay: () => undefined,
 }));
+const sourcesSidebarMocks = vi.hoisted(() => ({
+  handleClose: vi.fn(),
+}));
+
 vi.mock('../../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => ({
-    handleClose: vi.fn(),
+    handleClose: sourcesSidebarMocks.handleClose,
     setMessages: vi.fn(),
     setConversationModelId: vi.fn(),
   }),
@@ -131,6 +135,9 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 
 vi.mock('../../../hooks/conversation/useActiveConversationBridge', () => ({
   useActiveConversationBridge: () => undefined,
+}));
+vi.mock('../../../hooks/conversation/useVisualizerMessageSendHandler', () => ({
+  useVisualizerMessageSendHandler: () => undefined,
 }));
 vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   useAudioTranscription: () => ({ isAudioMessageSupported: false }),
@@ -382,6 +389,17 @@ describe('ConversationPage — sidebar ordering on new activity', () => {
   });
 });
 
+describe('ConversationPage — leaving the conversations routes', () => {
+  it('closes the sources sidebar when the page unmounts', () => {
+    const { unmount } = render(<ConversationPage />);
+
+    sourcesSidebarMocks.handleClose.mockClear();
+    unmount();
+
+    expect(sourcesSidebarMocks.handleClose).toHaveBeenCalledOnce();
+  });
+});
+
 describe('ConversationPage — client-channel demand', () => {
   it('opening a conversation and reading it makes zero ensureConnected/waitForChannel calls', async () => {
     mockGetConversation.mockResolvedValueOnce(
@@ -421,6 +439,28 @@ describe('ConversationPage — client-channel demand', () => {
     const [, content, , , , , mode] = streamMocks.startStream.mock.calls[0];
     expect(content).toBe('hi');
     expect(mode).toBe(CompletionMode.ContinueLastUser);
+  });
+
+  it('lets the automatic first-message start join a generation that is already running', async () => {
+    mockGetConversation.mockResolvedValueOnce({
+      ...makeConversation(),
+      messages: [{ role: 'user', content: 'hi', timestamp: 't' }],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    render(<ConversationPage />);
+
+    await waitFor(() => expect(streamMocks.startStream).toHaveBeenCalledOnce());
+    expect(streamMocks.startStream).toHaveBeenCalledWith(
+      CONVERSATION_ID,
+      'hi',
+      1,
+      expect.any(String),
+      undefined,
+      expect.any(String),
+      CompletionMode.ContinueLastUser,
+      { resumeOnConflict: true },
+    );
   });
 
   it('a channelId transition does not re-fetch the conversation or re-enter the loading state', async () => {
