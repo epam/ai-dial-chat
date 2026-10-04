@@ -254,6 +254,7 @@ describe('Input — selection highlight while a /query is typed', () => {
       textarea.setSelectionRange(0, textarea.value.length);
       fireEvent.keyUp(textarea, { key: 'a', ctrlKey: true });
 
+      // eslint-disable-next-line testing-library/no-node-access -- the highlight is a decorative overlay with no role or text
       const highlight = document.querySelector<HTMLElement>(
         '.bg-control-accent-alpha-active',
       );
