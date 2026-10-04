@@ -1,7 +1,6 @@
 import { ConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import {
   AuthI18nKeys,
   ButtonsI18nKeys,
@@ -18,7 +17,6 @@ interface Props {
 
 const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { reset } = useUser();
   const overlay = useOptionalOverlay();
 
@@ -28,10 +26,22 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
     } catch (err) {
       console.error('Logout request failed', err);
     }
-    reset();
-    if (!overlay) {
-      navigate(ROUTES.Login);
+    if (overlay) {
+      reset();
+      return;
     }
+    /*
+     * Full document load, not a client-side navigate: the SPA route would
+     * lazy-import the Login chunk by the hash this long-lived tab was built
+     * with, which a redeploy since then has removed — the import fails and
+     * the root error boundary replaces the page (Issue #9254). A fresh
+     * index.html always references the current chunks, and it also drops
+     * every piece of the signed-out user's in-memory state. `reset()` is
+     * skipped on purpose: an Unauthenticated status would let
+     * useAuthRedirect start a single-provider SSO redirect that races
+     * this navigation and signs the user straight back in.
+     */
+    window.location.replace(ROUTES.Login);
   };
 
   return (
