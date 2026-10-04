@@ -15,6 +15,7 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 const userMessage = (content: string): Message => ({
   role: MessageRole.User,
   content,
+  timestamp: '',
 });
 
 afterEach(() => {
@@ -55,7 +56,11 @@ describe('buildMessageActions — user message', () => {
 describe('buildMessageActions — status message', () => {
   it('returns no actions', () => {
     expect(
-      buildMessageActions({ role: MessageRole.Status, content: '' }, 0, {}),
+      buildMessageActions(
+        { role: MessageRole.Status, content: '', timestamp: '' },
+        0,
+        {},
+      ),
     ).toEqual({});
   });
 });
