@@ -20,6 +20,7 @@ export interface ModelsState {
   recentModelsStatus: UploadStatus;
   isInstalledModelsInitialized: boolean;
   installedModels: InstalledModel[];
+  installingModelIds: string[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
   defaultModelReference: string;
