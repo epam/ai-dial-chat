@@ -375,6 +375,8 @@
     "openInCanvas": "Open in canvas",
     "copyAsJson": "Copy JSON",
     "copyText": "Copy text",
+    "copyMessage": "Copy message",
+    "messageCopiedStatus": "Message copied to clipboard",
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response",
     "useInChat": "Use in chat",

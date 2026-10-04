@@ -145,7 +145,9 @@ nothing, returning the element to the stylesheet's own values.
 `{ options, selectedTheme, setTheme }`, where `options` is an ordered list of
 `{ value: string; label: string }`:
 
-- one entry per theme in `config.themes`, in configuration order;
+- one entry per theme in `config.themes`, with `light` first and `dark` second whenever they are
+  configured — regardless of where the configuration lists them — and every other theme after them
+  in configuration order;
 - followed by a synthetic `{ value: 'system' }` entry **only when** the configuration contains both
   `light` and `dark`.
 
@@ -157,8 +159,13 @@ other id. A theme with no `displayName` SHALL fall back to its `id`.
 
 #### Scenario: Only light and dark are configured
 
-- **WHEN** the configuration contains themes `light` and `dark`
+- **WHEN** the configuration contains themes `light` and `dark`, in either order
 - **THEN** `options` is `[Light, Dark, System]` in that order
+
+#### Scenario: Light and Dark lead regardless of configuration order
+
+- **WHEN** the configuration lists `contoso-night`, `dark`, `contoso-day`, `light` in that order
+- **THEN** `options` is `[Light, Dark, Contoso Night, Contoso Day, System]`
 
 #### Scenario: Custom themes are offered under their display names
 

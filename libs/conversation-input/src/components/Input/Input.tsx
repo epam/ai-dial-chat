@@ -394,9 +394,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
       return () => observer.disconnect();
     }, [markerOffset, textareaRef, measureCaretAnchor]);
 
-    const { mirrorRef, selectionRects, updateSelectionRects } =
-      useMentionSelectionMirror({ textareaRef, message, hasActiveMentions });
-
     /*
      * Selection path of the command menu: removes the `/query` text from the
      * textarea so it is never sent, resets the draft-history state to match,
@@ -846,12 +843,23 @@ export const Input = forwardRef<InputHandle, InputProps>(
       return list;
     }, [markerOffset, hasCommandEmptyQueryHint, commandMenu, triggerEnd]);
 
+    /*
+     * The mirror also renders while only synthetic insertions exist (the
+     * caret marker / empty-query hint of an open `/query`), and the
+     * textarea's native selection is hidden whenever it does — so the
+     * replacement selection highlight must follow the same condition, not
+     * just `hasActiveMentions` (Issue #9231).
+     */
+    const isMirrorActive = hasActiveMentions || mirrorInsertions.length > 0;
+
+    const { mirrorRef, selectionRects, updateSelectionRects } =
+      useMentionSelectionMirror({ textareaRef, message, isMirrorActive });
+
     const textarea = (
       <textarea
         className={mergeClasses(
           styles.textarea,
-          (hasActiveMentions || mirrorInsertions.length > 0) &&
-            styles.textareaMentionMode,
+          isMirrorActive && styles.textareaMentionMode,
           typography?.fontClassName || 'dial-body-paragraph-text',
           'relative z-0 max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent pe-1 ps-1 outline-none [field-sizing:content]',
           'disabled:cursor-not-allowed',
@@ -1041,7 +1049,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
         // Bleeds 4px past each edge, canceling the ps-1/pe-1 below.
         className="relative -me-1 -ms-1 w-[calc(100%+8px)]"
       >
-        {(hasActiveMentions || mirrorInsertions.length > 0) && (
+        {isMirrorActive && (
           <div
             ref={mirrorRef}
             className={mergeClasses(

@@ -57,6 +57,62 @@ describe('MessageActions', () => {
       await user.click(screen.getByRole('button', { name: 'Delete message' }));
       expect(onDelete).toHaveBeenCalledOnce();
     });
+
+    it('does not render Copy message when onCopy is not provided', () => {
+      render(<MessageActions onEdit={vi.fn()} onDelete={vi.fn()} />);
+      expect(
+        screen.queryByRole('button', { name: 'Copy message' }),
+      ).toBeNull();
+    });
+
+    it('renders Copy message before Edit and Delete', () => {
+      render(
+        <MessageActions onCopy={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      );
+      const names = screen
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label'));
+      expect(names).toEqual(['Copy message', 'Edit message', 'Delete message']);
+    });
+
+    it('renders the toolbar when Copy is the only action', () => {
+      render(<MessageActions onCopy={vi.fn()} />);
+      expect(screen.getByRole('toolbar')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+    });
+
+    it('calls onCopy, shows the copied state, and announces the copy', async () => {
+      const onCopy = vi.fn();
+      const user = userEvent.setup();
+      render(<MessageActions onCopy={onCopy} />);
+      await user.click(screen.getByRole('button', { name: 'Copy message' }));
+      expect(onCopy).toHaveBeenCalledOnce();
+      expect(screen.getByRole('button', { name: 'Copied!' })).toBeTruthy();
+      expect(screen.getByRole('status').textContent).toBe(
+        'Message copied to clipboard',
+      );
+    });
+
+    it('applies custom Copy message labels', async () => {
+      const user = userEvent.setup();
+      render(
+        <MessageActions
+          onCopy={vi.fn()}
+          labels={{
+            tooltips: { copyMessage: 'Kopieren', copied: 'Kopiert' },
+            ariaLabels: {
+              copyMessage: 'Nachricht kopieren',
+              copiedMessageStatus: 'Nachricht kopiert',
+            },
+          }}
+        />,
+      );
+      await user.click(
+        screen.getByRole('button', { name: 'Nachricht kopieren' }),
+      );
+      expect(screen.getByRole('button', { name: 'Kopiert' })).toBeTruthy();
+      expect(screen.getByRole('status').textContent).toBe('Nachricht kopiert');
+    });
   });
 
   describe('role=Assistant', () => {
