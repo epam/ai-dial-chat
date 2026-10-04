@@ -13,6 +13,66 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Classifies the PR's changed files. Outputs:
+  # - code: anything beyond documentation changed. Jobs that build, test, lint
+  #   or scan code depend on it and are skipped (reported as passed) for a
+  #   docs-only PR; validate_agent_docs always runs.
+  # - deps: a dependency manifest or the ORT config changed. The ORT license
+  #   scan only runs then; release.yml still scans every push to development.
+  # Fails open: any API error, or a PR at the files API's 3000-file cap, sets
+  # both to true.
+  changes:
+    name: Detect docs-only changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+      deps: ${{ steps.detect.outputs.deps }}
+    steps:
+      - name: Classify changed files
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # Nothing under these paths is imported by app, lib or tool code;
+          # `.github/` is deliberately absent so workflow edits run everything.
+          DOCS_ONLY_PATTERN: '(^docs/|^openspec/|^\.claude/|^\.agents/|\.md$|^LICENSE$|^NOTICE$)'
+          # Every workspace manifest counts: workspaces resolve into the root
+          # lockfile, which is what ORT analyzes.
+          DEPS_PATTERN: '((^|/)package(-lock)?\.json$|^\.npmrc$|^\.ort\.yml$)'
+        run: |
+          if ! files=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename'); then
+            echo "::warning::Could not list PR files; running all checks."
+            { echo "code=true"; echo "deps=true"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          count=$(printf '%s\n' "$files" | grep -c . || true)
+          if [ "$count" -eq 0 ] || [ "$count" -ge 3000 ]; then
+            echo "Running all checks ($count changed files)."
+            { echo "code=true"; echo "deps=true"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          code_files=$(printf '%s\n' "$files" | grep -Ev "$DOCS_ONLY_PATTERN" | grep . || true)
+          dep_files=$(printf '%s\n' "$files" | grep -E "$DEPS_PATTERN" | grep . || true)
+          if [ -n "$code_files" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "Code changed: running build, test, lint and image jobs."
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+            echo "Docs-only PR ($count files): skipping build, test, lint and image jobs."
+          fi
+          if [ -n "$dep_files" ]; then
+            echo "deps=true" >> "$GITHUB_OUTPUT"
+            echo "Dependency manifests changed: running the ORT scan."
+          else
+            echo "deps=false" >> "$GITHUB_OUTPUT"
+            echo "No dependency manifest changed: skipping the ORT scan."
+          fi
+
   validate_agent_docs:
     name: Validate agent configuration
     runs-on: ubuntu-24.04
@@ -34,8 +94,17 @@ jobs:
       # Needs no build, so it belongs in this fast job.
       - name: Validate documentation and lib manifests
         run: npm run validate:docs
+      # Lives here rather than with lint so a docs-only PR, which skips the
+      # lint job, still has its Markdown format-checked.
+      - name: Format check (prettier)
+        if: ${{ !cancelled() }}
+        run: npm run format:check
 
   run_tests:
+    needs: changes
+    # `!= 'false'` rather than `== 'true'`: if `changes` itself fails, its
+    # output is empty and the checks still run instead of silently skipping.
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.12.0
     with:
       node-version: 24
@@ -43,10 +112,13 @@ jobs:
       # node_test.yml runs `npm run format` (prettier --write) and `npm run lint`
       # (nx lint --fix, then prettier --write again): both rewrite files on the
       # runner instead of failing, so neither job can catch a formatting or
-      # auto-fixable lint violation. The `typecheck` job below runs the
-      # non-mutating `npm run lint:check` instead.
+      # auto-fixable lint violation. The `typecheck` job below runs a
+      # non-mutating lint and validate_agent_docs a non-mutating prettier check.
       format-checks-enabled: false
       style-checks-enabled: false
+      # ORT analyzes the dependency tree only, so its result cannot change
+      # unless a manifest did; `!= 'false'` keeps it on if `changes` failed.
+      ort-enabled: ${{ needs.changes.outputs.deps != 'false' }}
     secrets: inherit
 
   # Repository-owned: run_tests delegates to epam/ai-dial-ci/.github/workflows/node_pr.yml@4.12.0,
@@ -55,7 +127,9 @@ jobs:
   # with a `lint`/`typecheck` target. Typecheck runs even when lint fails, so a
   # single PR run reports both.
   typecheck:
-    name: Workspace lint, format and typecheck (all projects)
+    name: Workspace lint and typecheck (all projects)
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -67,8 +141,8 @@ jobs:
       - name: Install dependencies
         id: install
         run: npm ci
-      - name: Lint and format check all projects
-        run: npm run lint:check
+      - name: Lint all projects
+        run: npm exec nx run-many -- -t lint --all
       - name: Typecheck all projects
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm exec nx run-many -- -t typecheck --all
@@ -78,6 +152,8 @@ jobs:
   # one Dockerfile per call. Kept as its own job so it runs in parallel with run_tests.
   docker_build_mcp_app_sandbox:
     name: Build mcp-app-sandbox image (validation only)
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -95,6 +171,8 @@ jobs:
   # same reason as docker_build_mcp_app_sandbox above.
   docker_build_bff:
     name: Build BFF image (validation only)
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -108,15 +186,17 @@ jobs:
           image-tags: test
           dockerfile-path: apps/chat-api/Dockerfile
 
-  chat_hooks_packed:
-    # Packed-package checks for @epam/ai-dial-chat-hooks, kept in one job so
-    # the library and its workspace dependencies build once: every later step
+  packed_libs:
+    # Packed-package checks for the publishable libraries, kept in one job so
+    # each library and its workspace dependencies build once: every later step
     # hits the local Nx cache instead of rebuilding on a fresh runner. Checks
-    # after the build keep running when an earlier one fails, so a single PR
-    # run reports every broken check.
-    name: chat-hooks packed-package checks
+    # keep running when an earlier one fails, so a single PR run reports every
+    # broken check.
+    name: Packed library checks (chat-hooks, publish-lib)
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
@@ -124,66 +204,69 @@ jobs:
           node-version: 24
           cache: npm
       - name: Install dependencies
+        id: install
         run: npm ci
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-      - name: Build @epam/ai-dial-chat-hooks and its workspace dependencies
+      # Unit tests for tools/publish-lib's package.json transformation; they
+      # need no build, so they run even when the build below fails.
+      - name: Publish package.json transformation unit tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run publish:lib:test
+      # The four libraries the coherent-release test installs together;
+      # chat-hooks is one of them, so its checks below reuse this build.
+      - name: Build the packed libraries and their workspace dependencies
         id: build
-        run: npm exec nx run @epam/ai-dial-chat-hooks:build
-      # Three representative packed consumers; the complete matrix is
-      # available through the test-packed target.
-      - name: Packed-package smoke
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm exec nx run-many -- -t build -p @epam/ai-dial-chat-shared @epam/ai-dial-chat-hooks @epam/ai-dial-catalog @epam/ai-dial-publish-panel
+      # Packed libraries from one release install together and typecheck, and
+      # the manifest audit rejects mixed internal versions.
+      - name: Coherent-release install / negative mixed-release test
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: npm run publish:lib:coherent-release-test
+      # Three representative packed chat-hooks consumers; the complete matrix
+      # is available through the test-packed target.
+      - name: chat-hooks packed-package smoke
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke
       # Root and subpath bundle sizes and dependency isolation.
-      - name: Per-export cold-load probes
+      - name: chat-hooks per-export cold-load probes
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-cold-load-probes
       # Source vs packed application JS/CSS sizes, plus a module-origin audit
       # for unexpected bundled dependencies.
-      - name: Application-mode packed/source parity
+      - name: chat-hooks application-mode packed/source parity
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-parity
       # Browser startup requests, deferred feature mounting and reopening,
       # OAuth events, markdown reload recovery, styles, and mobile RTL rendering.
-      - name: Browser-observed startup parity
+      - name: chat-hooks browser-observed startup parity
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-browser-parity
 
-  build_celebrations_storybook:
-    # Builds the lib-local Storybook so a broken story fails the PR; the
-    # output is not deployed.
-    name: celebrations Storybook build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 24
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Build @epam/ai-dial-celebrations Storybook
-        run: npm exec nx run @epam/ai-dial-celebrations:build-storybook
-
-  publish_lib_coherent_release:
-    # Checks that packed libraries from one release install together and
-    # typecheck, and that the manifest audit rejects mixed internal versions.
-    name: publish-lib coherent release install
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 24
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Build the four in-scope libraries
-        run: npm exec nx run-many -- -t build -p @epam/ai-dial-chat-shared @epam/ai-dial-chat-hooks @epam/ai-dial-catalog @epam/ai-dial-publish-panel
-      - name: Publish package.json transformation unit tests
-        run: npm run publish:lib:test
-      - name: Coherent-release install / negative mixed-release test
-        run: npm run publish:lib:coherent-release-test
+  # Disabled: the celebrations Storybook is not deployed or consumed by any
+  # release step, and the `typecheck` job already type-checks and lints every
+  # story (libs/celebrations/tsconfig.json references tsconfig.storybook.json).
+  # Building it only adds Storybook config / Vite import / CSS errors, which
+  # almost always come from changes inside libs/celebrations itself — not worth
+  # a full `npm ci` runner on every PR. Run it locally when touching the lib:
+  #   npm exec nx run @epam/ai-dial-celebrations:build-storybook
+  # To bring it back, uncomment the job and gate it on a celebrations-affected
+  # output from the `changes` job instead of running it on every PR.
+  #
+  # build_celebrations_storybook:
+  #   name: celebrations Storybook build
+  #   needs: changes
+  #   if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
+  #   runs-on: ubuntu-24.04
+  #   timeout-minutes: 15
+  #   steps:
+  #     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+  #     - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+  #       with:
+  #         node-version: 24
+  #         cache: npm
+  #     - name: Install dependencies
+  #       run: npm ci
+  #     - name: Build @epam/ai-dial-celebrations Storybook
+  #       run: npm exec nx run @epam/ai-dial-celebrations:build-storybook

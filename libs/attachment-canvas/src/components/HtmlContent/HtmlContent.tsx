@@ -10,11 +10,11 @@ import {
   useRef,
   useState,
 } from 'react';
+import { HTML_PREVIEW_FRAME_RENDER_MESSAGE } from '../../constants/html-preview';
 import type {
   AttachmentCanvasLabels,
   HtmlCanvasContent,
 } from '../../models/attachment-canvas';
-import { HTML_PREVIEW_FRAME_RENDER_MESSAGE } from '../../constants/html-preview';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { CodeContent } from '../CodeContent/CodeContent';
 import styles from './HtmlContent.module.scss';
