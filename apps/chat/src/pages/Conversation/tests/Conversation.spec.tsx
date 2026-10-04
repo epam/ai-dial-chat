@@ -441,6 +441,28 @@ describe('ConversationPage — client-channel demand', () => {
     expect(mode).toBe(CompletionMode.ContinueLastUser);
   });
 
+  it('lets the automatic first-message start join a generation that is already running', async () => {
+    mockGetConversation.mockResolvedValueOnce({
+      ...makeConversation(),
+      messages: [{ role: 'user', content: 'hi', timestamp: 't' }],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    render(<ConversationPage />);
+
+    await waitFor(() => expect(streamMocks.startStream).toHaveBeenCalledOnce());
+    expect(streamMocks.startStream).toHaveBeenCalledWith(
+      CONVERSATION_ID,
+      'hi',
+      1,
+      expect.any(String),
+      undefined,
+      expect.any(String),
+      CompletionMode.ContinueLastUser,
+      { resumeOnConflict: true },
+    );
+  });
+
   it('a channelId transition does not re-fetch the conversation or re-enter the loading state', async () => {
     mockGetConversation.mockResolvedValueOnce(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -4,10 +4,11 @@ import {
   MessageRole,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BufferedGeneration } from '../buffered-generation';
 import {
   createResumeIfAwaitingGeneration,
+  fetchConversationForRecovery,
   findPendingBackgroundMessageIndex,
   isAwaitingGenerationResume,
 } from '../generation-resume';
@@ -675,5 +676,194 @@ describe('background generation resume', () => {
       expect(stoppedGenerationIdsRef.current.has('gen-1')).toBe(false);
     });
     expect(displayed.messages[1].content).toBe('Hello');
+  });
+});
+
+describe('createResumeIfAwaitingGeneration — watch fallback', () => {
+  const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
+  const encoder = new TextEncoder();
+
+  const finishedConversation = () =>
+    makeConversation({
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Hello',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          role: MessageRole.Assistant,
+          content: 'Final answer',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
+
+  /** A watch stream the test pushes resource-update events into; never ends on its own. */
+  const makeWatchStream = () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({
+      start(streamController) {
+        controller = streamController;
+      },
+    });
+    return {
+      stream,
+      emitUpdate: () =>
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ action: 'UPDATE' })}\n\n`),
+        ),
+    };
+  };
+
+  const makeHarness = (
+    getConversation: ConversationStreamTransport['getConversation'],
+  ) => {
+    const watch = makeWatchStream();
+    let watchSignal: AbortSignal | undefined;
+    const transport: ConversationStreamTransport = {
+      streamCompletion: vi.fn(),
+      stopCompletion: vi.fn(),
+      attachToGeneration: vi.fn().mockRejectedValue(new Error('no attach')),
+      watchConversation: vi.fn((_path: string, signal: AbortSignal) => {
+        watchSignal = signal;
+        return Promise.resolve(watch.stream);
+      }),
+      getConversation,
+    };
+    const setConversation = vi.fn();
+    const resume = createResumeIfAwaitingGeneration({
+      transport,
+      setConversation,
+      conversationRef: { current: null },
+      resumingPathsRef: { current: new Set<string>() },
+      bufferedGenerationsRef: {
+        current: new Map<string, BufferedGeneration>(),
+      },
+      addStreamingPath: vi.fn(),
+      removeStreamingPath: vi.fn(),
+      isPathDisplayed: () => true,
+    });
+    return {
+      transport,
+      setConversation,
+      resume,
+      watch,
+      getWatchSignal: () => watchSignal,
+    };
+  };
+
+  it('finishes as soon as the watch opens when the generation had already finished', async () => {
+    const finished = finishedConversation();
+    const { resume, setConversation, getWatchSignal } = makeHarness(
+      vi.fn().mockResolvedValue(finished),
+    );
+    const onSettled = vi.fn();
+
+    resume(CONVERSATION_ID, makeConversation(), { onSettled });
+
+    await vi.waitFor(() => expect(onSettled).toHaveBeenCalledOnce());
+    expect(setConversation).toHaveBeenCalledWith(finished);
+    expect(getWatchSignal()?.aborted).toBe(true);
+  });
+
+  it('keeps watching when the generation is still running once the watch opens', async () => {
+    const finished = finishedConversation();
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(makeConversation())
+      .mockResolvedValue(finished);
+    const { resume, setConversation, watch } = makeHarness(getConversation);
+    const onSettled = vi.fn();
+
+    resume(CONVERSATION_ID, makeConversation(), { onSettled });
+    await vi.waitFor(() => expect(getConversation).toHaveBeenCalledOnce());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onSettled).not.toHaveBeenCalled();
+
+    watch.emitUpdate();
+
+    await vi.waitFor(() => expect(onSettled).toHaveBeenCalledOnce());
+    expect(setConversation).toHaveBeenCalledWith(finished);
+  });
+
+  it('keeps watching when the check made once the watch opens fails', async () => {
+    const finished = finishedConversation();
+    const getConversation = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue(finished);
+    const { resume, setConversation, watch } = makeHarness(getConversation);
+    const onSettled = vi.fn();
+
+    resume(CONVERSATION_ID, makeConversation(), { onSettled });
+    await vi.waitFor(() => expect(getConversation).toHaveBeenCalledOnce());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onSettled).not.toHaveBeenCalled();
+
+    watch.emitUpdate();
+
+    await vi.waitFor(() => expect(onSettled).toHaveBeenCalledOnce());
+    expect(setConversation).toHaveBeenCalledWith(finished);
+  });
+});
+
+describe('fetchConversationForRecovery — pending results', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const userOnly = () =>
+    makeConversation({
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Hello',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
+  const isUserLast = (conversation: Conversation) =>
+    conversation.messages.at(-1)?.role === MessageRole.User;
+
+  it('retries a pending result on the backoff schedule and returns the first settled one', async () => {
+    vi.useFakeTimers();
+    const settled = makeConversation();
+    const load = vi
+      .fn()
+      .mockResolvedValueOnce(userOnly())
+      .mockResolvedValueOnce(userOnly())
+      .mockResolvedValue(settled);
+
+    const result = fetchConversationForRecovery(load, () => false, isUserLast);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(load).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(load).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await expect(result).resolves.toBe(settled);
+    expect(load).toHaveBeenCalledTimes(3);
+  });
+
+  it('returns null when the result is still pending after the last attempt', async () => {
+    vi.useFakeTimers();
+    const load = vi.fn().mockResolvedValue(userOnly());
+
+    const result = fetchConversationForRecovery(load, () => false, isUserLast);
+    await vi.advanceTimersByTimeAsync(31_000);
+
+    await expect(result).resolves.toBeNull();
+    expect(load).toHaveBeenCalledTimes(6);
+  });
+
+  it('returns the first result unchanged when no predicate is given', async () => {
+    const first = userOnly();
+    const load = vi.fn().mockResolvedValue(first);
+
+    await expect(fetchConversationForRecovery(load, () => false)).resolves.toBe(
+      first,
+    );
+    expect(load).toHaveBeenCalledOnce();
   });
 });
