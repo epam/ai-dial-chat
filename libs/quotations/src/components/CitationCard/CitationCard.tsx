@@ -289,8 +289,8 @@ export const CitationCard: FC<CitationCardProps> = ({
                     content={quote}
                     classNames={{
                       p: mergeClasses(quoteClassName, styles.quote),
-                      ul: mergeClasses(quoteClassName, 'ps-3'),
-                      ol: mergeClasses(quoteClassName, 'ps-3'),
+                      ul: mergeClasses(quoteClassName, 'ps-[1.5em]'),
+                      ol: quoteClassName,
                       strong: quoteStrongClassName,
                     }}
                   />
