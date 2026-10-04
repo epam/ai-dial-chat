@@ -29,6 +29,8 @@ export interface CitationDropdownProps {
   isPreviewable?: (annotation: Annotation) => boolean;
   /** Called when the user clicks "Open in browser" for an annotation. */
   onOpenInBrowser: (annotation: Annotation) => void;
+  /** Whether the card shows the "Download" button for a previewable file. Defaults to `true`. */
+  isDownloadEnabled?: boolean;
   /** Whether the host's preview panel is open; a marker click then previews the active annotation directly instead of showing the card. Defaults to `false`. */
   isPreviewOpen?: boolean;
   /** Optional icon rendered before the marker's label. */
@@ -51,6 +53,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   onPreview,
   isPreviewable,
   onOpenInBrowser,
+  isDownloadEnabled = true,
   isPreviewOpen = false,
   icon,
   headerIcon,
@@ -100,6 +103,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
         onIndexChange={(i) => citationCard.setActiveIndex(group.groupKey, i)}
         onPreview={handlePreview}
         onOpenInBrowser={onOpenInBrowser}
+        isDownloadEnabled={isDownloadEnabled}
         headerIcon={headerIcon}
         labels={cardLabels}
         typography={cardTypography}
@@ -111,6 +115,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       citationCard,
       handlePreview,
       onOpenInBrowser,
+      isDownloadEnabled,
       headerIcon,
       cardLabels,
       cardTypography,

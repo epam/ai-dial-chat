@@ -553,6 +553,7 @@ const ConversationMessageItem: FC<Props> = ({
           t(CitationsI18nKeys.PopupSwitcher, { current, total }),
         preview: t(BasicI18nKeys.Preview),
         openInBrowser: t(CitationsI18nKeys.PopupOpenInBrowser),
+        download: t(ButtonsI18nKeys.Download),
         showMore: t(ButtonsI18nKeys.ShowMore),
         showLess: t(ButtonsI18nKeys.ShowLess),
       };
@@ -978,6 +979,7 @@ const ConversationMessageItem: FC<Props> = ({
                           openInBrowser: t(
                             CitationsI18nKeys.PopupOpenInBrowser,
                           ),
+                          download: t(ButtonsI18nKeys.Download),
                           showMore: t(ButtonsI18nKeys.ShowMore),
                           showLess: t(ButtonsI18nKeys.ShowLess),
                         }}

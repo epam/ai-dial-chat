@@ -47,6 +47,7 @@ const defaultLabels = {
     `${current} / ${total}`,
   preview: 'Preview',
   openInBrowser: 'Open in browser',
+  download: 'Download',
   showMore: 'Show more',
   showLess: 'Show less',
 };
@@ -128,13 +129,36 @@ describe('CitationCard', () => {
     expect(onOpenInBrowser).toHaveBeenCalledWith(group.annotations[0]);
   });
 
-  it('shows only Preview, with no Download or Open in browser, for a previewable file', () => {
-    render(<CitationCard {...defaultProps()} />);
+  it('shows Preview and Download, with no Open in browser, for a previewable file', async () => {
+    const onOpenInBrowser = vi.fn();
+    const props = defaultProps({ onOpenInBrowser });
+    render(<CitationCard {...props} />);
     expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
     expect(
       screen.queryByRole('button', { name: 'Open in browser' }),
     ).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(onOpenInBrowser).toHaveBeenCalledWith(props.group.annotations[0]);
+  });
+
+  it('hides Download for a previewable file when isDownloadEnabled is false', () => {
+    render(<CitationCard {...defaultProps({ isDownloadEnabled: false })} />);
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('keeps Open in browser for a web link when isDownloadEnabled is false', () => {
+    render(
+      <CitationCard
+        {...defaultProps({
+          group: makeGroup(1, 'text/html'),
+          isDownloadEnabled: false,
+        })}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Open in browser' }),
+    ).toBeTruthy();
   });
 
   it('shows the file extension in the header for a previewable file', () => {
