@@ -276,7 +276,6 @@ export const CitationCard: FC<CitationCardProps> = ({
                   isQuoteExpanded
                     ? 'max-h-[min(20rem,50vh)] overflow-y-auto'
                     : 'line-clamp-6',
-                  hasSwitcher && 'min-h-[3lh]',
                 )}
               >
                 {quote && (
