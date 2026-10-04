@@ -1,4 +1,4 @@
-# app-preview-chat Specification
+с# app-preview-chat Specification
 
 ## Purpose
 
@@ -263,7 +263,7 @@ While the preview pane is shown, `EntityEditor`'s Cancel and Save buttons are no
 - **THEN** the Cancel and Save buttons are rendered again, Save enabled only if the embedded editor is ready to save
 
 ### Requirement: Accessibility and i18n for the preview surface
-The preview button SHALL expose an accessible name via i18n (not a bare icon with no label), with its icons marked `aria-hidden`, and the preview chat pane SHALL be a `role="region"` labelled `AppsEditorI18nKeys.PreviewChatAriaLabel`, using the same ARIA conventions as the main conversation view (`role="log"` + `aria-live="polite"` for the message list). All new user-visible strings SHALL be added to `translation-keys.ts` under `AppsEditorI18nKeys` and to every locale file in `apps/chat/src/i18n/locales/`, including `ar.json`.
+The preview button SHALL expose an accessible name via i18n (not a bare icon with no label), with its icons marked `aria-hidden`, and the preview chat pane SHALL be a `role="region"` labelled `AppsEditorI18nKeys.PreviewChatAriaLabel`, using the same ARIA conventions as the main conversation view (`role="log"` + `aria-live="polite"` for the message list). All new user-visible strings SHALL be added to `translation-keys.ts` under `AppsEditorI18nKeys` and to `apps/chat/src/i18n/locales/en.json`.
 
 Keys: `AppsEditorI18nKeys.ExitPreviewButton` (`appsEditor.exitPreviewButton`), `AppsEditorI18nKeys.PreviewChatPlaceholder` (`appsEditor.previewChat.placeholder`), `AppsEditorI18nKeys.PreviewChatAriaLabel` (`appsEditor.previewChat.ariaLabel`), `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`). The "Preview" label itself reuses the shared `BasicI18nKeys.Preview` (`basic.preview`) rather than an editor-specific key.
 

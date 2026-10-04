@@ -225,7 +225,7 @@ The function SHALL:
 The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata and the DIAL Core sharing API (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
 
 - `limit` — integer, min 1, max 1000, **no default** (`@IsInt @Min(1) @Max(1000) @IsOptional`)
-- `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
+- `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(4096) @IsOptional`, `ListConversationsQueryDto`)
 
 **Two request modes.** When **both** `limit` and `nextToken` are omitted, the endpoint returns the **complete history**: the service follows DIAL Core's cursors itself, in pages of 1000 per bucket, until each bucket is exhausted, and the response carries no `nextToken`. This mirrors the file listing contract (see the [file-list spec](../file-list/spec.md)). When either parameter is present, the endpoint returns **one page per bucket** and a compound continuation cursor; the page size is `limit` when given and 100 when only `nextToken` is given.
 
@@ -284,7 +284,7 @@ Generated-client impact:
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
-- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer) or `nextToken` exceeds 512 chars
+- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer) or `nextToken` exceeds 4096 chars
 - `401 Unauthorized` — missing or invalid bearer token
 - `502 Bad Gateway` — user bucket DIAL Core returned an error response on any page of the walk, or DIAL Core repeated a cursor already followed for a bucket
 
@@ -418,7 +418,7 @@ See the [user-config-api spec](../user-config-api/spec.md) for `updatePin` seman
 
 ### Requirement: PATCH /api/v1/conversations renames a conversation without changing its DIAL Core path
 
-The backend SHALL expose `PATCH /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint accepts query parameter `path` (validated by `RenameConversationDto` — `@IsString @MinLength(1) @MaxLength(512)`) and a JSON body `RenameConversationBodyDto`:
+The backend SHALL expose `PATCH /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint accepts query parameter `path`, validated by the shared `ConversationPathDto` (`apps/chat-api/src/conversations/dto/conversation-path.dto.ts` — `@IsString @MinLength(1)`, no maximum length), and a JSON body `RenameConversationBodyDto` (`dto/rename-conversation.dto.ts`):
 
 ```ts
 class RenameConversationBodyDto {

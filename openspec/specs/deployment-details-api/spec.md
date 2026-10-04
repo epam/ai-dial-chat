@@ -24,7 +24,7 @@ The endpoint:
 - SHALL respond 502 when DIAL Core returns a non-2xx response for the detail call.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
 - SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<userSub>:<deployment>` for 60 000 ms, so entries and in-flight request deduplication are isolated by authenticated user and deployment.
-- SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset create, update, delete, login, or logout, and after a successful application update (`ApplicationsService.updateApplication`, using the same `applicationName` string as the cache key), before the next details fetch is treated as fresh.
+- SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset update, delete, login, or logout, and after a successful application update (`ApplicationsService.updateApplication`, using the same `applicationName` string as the cache key), before the next details fetch is treated as fresh.
 - SHALL ensure an in-flight `getDeploymentDetails` fetch that was dispatched before an invalidation for the same key never repopulates the cache with its (pre-invalidation) result, and is never joined by a request made after that invalidation — see the dedicated requirement below.
 - SHALL set response header `Cache-Control: private, no-store`; client and intermediary caches MUST NOT reuse the response, while the user-scoped BFF cache remains active.
 - SHALL preserve OpenAPI `operationId: getDeploymentDetails`, path parameter `deployment: string`, response `DeploymentDetailsDto`, and normal generated `DeploymentsApi.getDeploymentDetails({ deployment })` usage; no `Raw` generated call is required because frontend callers do not consume the response header.
@@ -84,8 +84,14 @@ The endpoint:
 
 #### Scenario: Toolset write invalidates cached details
 
-- **WHEN** a toolset create, update, delete, login, or logout succeeds for a user and toolset
+- **WHEN** a toolset update, delete, login, or logout succeeds for a user and toolset
 - **THEN** the affected `deployments:details:<userSub>:<deployment>` entry is deleted before a subsequent details request can reuse it
+
+#### Scenario: Toolset create leaves the details cache untouched
+
+- **WHEN** a toolset create succeeds
+- **THEN** `invalidateCaches(userSub)` runs without a toolset name, so no `deployments:details` entry is deleted
+- **AND** this is safe because a newly created toolset has no cached details entry yet
 
 #### Scenario: Application update invalidates cached details
 

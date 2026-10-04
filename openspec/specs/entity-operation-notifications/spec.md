@@ -290,7 +290,7 @@ Strings that label the unpublish UI itself — the menu entry, confirmation copy
 - **Accessibility**: no new ARIA surface. Notifications are announced by the existing container; the title and body are plain text, and the close control keeps its existing translated `aria-label`.
 - **Telemetry**: none. No new metrics or analytics events.
 - **Feature gating**: none. These notifications are not behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`; they follow whichever operations the user can already perform.
-- **Library isolation**: no new library knowledge. `libs/catalog` and the file-manager lib keep receiving operation callbacks (`onDownload`, `onDelete`, `onNotification`, …); every key, sentence, and notification decision stays in `apps/chat`.
+- **Library isolation**: no new library knowledge. `libs/catalog` keeps receiving operation callbacks (`onDownload`, `onDelete`, …) and decides nothing about notifications. The file hooks in `libs/chat-hooks` (`useDialFileMutations`, `useDialFileUploadBatch` and the rest of the `useDialFileManager` family) emit a translation-free `FileManagerNotification` through `onNotification`: the hook decides that a notification fires and picks its `NotificationVariant`, and carries a machine-readable `FileManagerNotificationReason` plus `count`/`name`/`folder`/`names`/`restCount`. The app adapter `apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts` keeps the hook's `variant` and owns every translation key and sentence (`dialFileManager.*`). Entity-operation notifications outside the file manager are decided in `apps/chat` through `notifyOperationSuccess`.
 
 #### Scenario: Entity names render in the ambient direction
 

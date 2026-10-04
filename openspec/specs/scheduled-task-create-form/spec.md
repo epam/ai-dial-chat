@@ -6,14 +6,14 @@ The create and edit routes for scheduled tasks and the shared form component beh
 ## Requirements
 ### Requirement: New task navigates to a dedicated create route
 
-The Scheduled Tasks list page's primary "create" action SHALL navigate to a new route, `ROUTES.ScheduledTaskCreate` (`/scheduled-tasks/new`), passing the current list URL as a `returnUrl` query parameter, instead of invoking a no-op handler. The route SHALL be lazy-loaded and registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTasks`. State is owned by the `ScheduledTaskCreatePage` component (local `useState`) — no new React Context is introduced.
+The Scheduled Tasks list page's primary "create" action SHALL navigate to `ROUTES.ScheduledTaskCreate` (`/scheduled-tasks/new`) with no query parameters. The route SHALL be lazy-loaded and registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTasks`. State is owned by the `ScheduledTaskCreatePage` component (local `useState`) — no new React Context is introduced.
 
 **Feature flag:** reuses `scheduledTasksEnabled` (no new flag). **RTL impact:** page mirrors per logical-property rules (see RTL requirement below). **i18n impact:** see i18n requirement below. **Telemetry:** none in this iteration.
 
-#### Scenario: Create button navigates with returnUrl
+#### Scenario: Create button navigates to the create route
 
 - **WHEN** `scheduledTasksEnabled` is `true` and the user activates the **New task** button on `/scheduled-tasks`
-- **THEN** the app navigates to `/scheduled-tasks/new?returnUrl=%2Fscheduled-tasks`
+- **THEN** the app navigates to `/scheduled-tasks/new` with no query string
 
 #### Scenario: Flag disabled hides the create route
 
@@ -25,38 +25,33 @@ The Scheduled Tasks list page's primary "create" action SHALL navigate to a new 
 - **WHEN** the JS bundle is evaluated without navigating to `/scheduled-tasks/new`
 - **THEN** the create-task page code is NOT included in the initial bundle
 
-### Requirement: Cancel returns to returnUrl; valid submit calls the BFF create endpoint
+### Requirement: Cancel returns to the list; valid submit calls the BFF create endpoint
 
-The create-task page SHALL read a `returnUrl` query parameter (default `ROUTES.ScheduledTasks` when absent or invalid). Cancel SHALL discard in-progress form state, perform no network call, and navigate to `returnUrl`.
+The create-task page SHALL always return to the fixed list route `ROUTES.ScheduledTasks`; it reads no `returnUrl` (or other) query parameter. Cancel and the back control SHALL discard in-progress form state, perform no network call, and navigate to `ROUTES.ScheduledTasks`.
 
-A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/ai-dial-chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt` (possibly empty with a skill), optional `skillUrl`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `returnUrl`. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
+A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/ai-dial-chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt` (possibly empty with a skill), optional `skillUrl`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `ROUTES.ScheduledTasks` with `state: { refresh: true }`, which makes the list page refetch. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
 
 **Dependency:** requires `add-scheduled-tasks-api` (`POST /api/v1/scheduled-tasks` + `scheduled-tasks.api.ts` wrapper) to be implemented first.
 
 #### Scenario: Cancel discards changes and returns
 
 - **WHEN** the user has typed into the display name field and activates Cancel
-- **THEN** the app navigates to `returnUrl` and no notification or network call occurs
+- **THEN** the app navigates to `ROUTES.ScheduledTasks` and no notification or network call occurs
 
 #### Scenario: Valid submit persists via BFF and returns
 
 - **WHEN** all required fields pass validation and the user activates Create
-- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, skillUrl?, description? }` (no `stream` field), shows a success notification on 201, and navigates to `returnUrl`
+- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, skillUrl?, description? }` (no `stream` field), shows a success notification on 201, and navigates to `ROUTES.ScheduledTasks` with `state.refresh` set
 
 #### Scenario: Submit failure keeps the form open
 
 - **WHEN** the user activates Create and the BFF returns 400 or 502
-- **THEN** an error notification is shown, the user remains on the create form with their input preserved, and no navigation to `returnUrl` occurs
+- **THEN** an error notification is shown, the user remains on the create form with their input preserved, and no navigation occurs
 
-#### Scenario: Missing returnUrl falls back to the list route
+#### Scenario: A query parameter does not change the return route
 
-- **WHEN** the create route is opened without a `returnUrl` query parameter
-- **THEN** Cancel and a successful submit both navigate to `ROUTES.ScheduledTasks`
-
-#### Scenario: Invalid returnUrl falls back to the list route
-
-- **WHEN** the create route is opened with an empty, absolute, protocol-relative, backslash-containing, or control-character-containing `returnUrl`
-- **THEN** Cancel and a successful submit both navigate to `ROUTES.ScheduledTasks`
+- **WHEN** the create route is opened with any query string, including `?returnUrl=/catalog`
+- **THEN** Cancel and a successful submit still navigate to `ROUTES.ScheduledTasks`
 
 #### Scenario: Non-empty description is included in the submit body
 
@@ -730,7 +725,7 @@ Both pages SHALL pass support resolved for the draft model into shared preparati
 
 ### Requirement: Edit loading failures are distinct from unsupported schedules
 
-Edit state SHALL distinguish loading, ready, not-found, load-error and unsupported. Unsupported SHALL only follow a successful DTO failing reverse mapping. Task identity changes SHALL reset stale state and guard late responses. Retry SHALL reload the current task. Existing feature and returnUrl policy SHALL be preserved.
+Edit state SHALL distinguish loading, ready, not-found, load-error and unsupported. Unsupported SHALL only follow a successful DTO failing reverse mapping. Task identity changes SHALL reset stale state and guard late responses. Retry SHALL reload the current task. The feature-flag gate is unchanged, and the edit page always returns to the task's detail route (`getScheduledTaskDetailRoute(scheduleId)`), reading no query parameter.
 
 #### Scenario: Network failure offers retry
 
