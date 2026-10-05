@@ -92,6 +92,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       uploadValidationMessages,
       selectedPaths,
       onSelectedPathsChange,
+      className,
     }: {
       items?: { path: string }[];
       gridOptions?: {
@@ -113,10 +114,12 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       maxSelectableFileSize?: number;
       maxFileSize?: number;
       uploadValidationMessages?: { oversizedFiles?: string };
+      className?: string;
     }) => (
       <div
         role="region"
         aria-label="file manager"
+        className={className}
         data-tab-count={treeOptions?.tabs?.length}
         data-max-selectable-file-size={maxSelectableFileSize}
         data-max-file-size={maxFileSize}
@@ -284,6 +287,13 @@ describe('DialFileManagerPage', () => {
         actionProfile: DialFileManagerActionProfile.Full,
       }),
     );
+  });
+
+  it('renders the file manager on the base layer background', () => {
+    render(<DialFileManagerPage />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.classList.contains('bg-layer-base')).toBe(true);
+    expect(manager.classList.contains('bg-layer-sunken')).toBe(false);
   });
 
   it('does not render an Attach button or attach footer', () => {
