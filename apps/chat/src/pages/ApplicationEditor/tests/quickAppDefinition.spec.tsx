@@ -365,6 +365,31 @@ describe('ApplicationEditorPage — quick app', () => {
       });
     };
 
+    it('hides Preview for an external application that only has an embedded editor', () => {
+      const externalSchema = {
+        id: 'https://example.com/schemas/external-app',
+        displayName: 'External app',
+        editorUrl: 'https://external.example.com',
+      };
+      vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
+        schemas: [SCHEMA, externalSchema],
+        items: [],
+        isLoading: false,
+        refetchDeployments: mockRefetchDeployments,
+      } as unknown as ReturnType<
+        typeof DeploymentsContextModule.useDeployments
+      >);
+
+      renderPage(
+        `schema=${externalSchema.id}&appId=${encodeURIComponent(APP_ID)}`,
+      );
+
+      expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBeTruthy();
+      expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      expect(queryAction(BasicI18nKeys.Preview)).toBeUndefined();
+      expect(screen.queryByText('preview-chat')).toBeNull();
+    });
+
     it('renders the Preview button as a plain action, not a toggle', () => {
       renderPage(editSearch);
 

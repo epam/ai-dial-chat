@@ -81,7 +81,7 @@ The greeting element SHALL be memoised (`useMemo`) on the greeting text, icon UR
 ## MODIFIED Requirements
 
 ### Requirement: EditorHeader preview button
-`ApplicationFormEditor` (`apps/chat/src/pages/ApplicationEditor/ApplicationFormEditor.tsx`) SHALL render the Preview button as a 2.0 `GhostButton` passed to `EntityEditor` (`@epam/ai-dial-builder-form`) through its `extraActions` prop, which `EntityEditor` places before its standard Cancel (`NeutralButton`) and submit (`PrimaryButton`) actions in the header action group. The button SHALL render only when the editor is in edit mode (a non-empty app id query param), the editor definition supplies a `Preview` component, and its `messageKeys` supply a `preview` key. Today only `quickAppDefinition` does (`BasicI18nKeys.Preview`). When those conditions are not met, no Preview button SHALL render.
+`ApplicationFormEditor` (`apps/chat/src/pages/ApplicationEditor/ApplicationFormEditor.tsx`) SHALL render the Preview button as a 2.0 `GhostButton` passed to `EntityEditor` (`@epam/ai-dial-builder-form`) through its `extraActions` prop, which `EntityEditor` places before its standard Cancel (`NeutralButton`) and submit (`PrimaryButton`) actions in the header action group. The button SHALL render only when the editor is in edit mode (a non-empty app id query param), the editor definition supplies a `Preview` component, its `messageKeys` supply a `preview` key, and its optional `isPreviewAvailable(ctx)` does not return `false`. Today only `quickAppDefinition` supplies a preview (`BasicI18nKeys.Preview`). Because every schema with an `editorUrl` opens through `quickAppDefinition`, its `isPreviewAvailable` SHALL return `true` only for the Quick Apps schema (`isQuickAppSchema` from `@epam/ai-dial-chat-hooks`, matched against the `schema` query param and the loaded schema list). An external application edited through its own embedded editor SHALL get no Preview button and no mounted preview page. When those conditions are not met, no Preview button SHALL render.
 
 The button SHALL only enter preview. It is not a toggle: it SHALL always show the `basic.preview` label with a leading `IconEye` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`), and it SHALL NOT expose `aria-pressed`. Because the whole `EntityEditor` is hidden while previewing (see "Preview is a full-page mode"), the button is never visible in preview mode. Leaving preview is done only through the preview page's "Back to setup" button. `ApplicationEditorMessageKeys.exitPreview` is removed.
 
@@ -90,6 +90,11 @@ On mobile, `EditorLayout` moves every action (the Preview button, Cancel and the
 #### Scenario: Preview button hidden when the definition has no preview or the app is not yet created
 - **WHEN** `ApplicationFormEditor` renders in create mode, or for a definition without a `Preview` component or a `preview` message key
 - **THEN** no Preview button is present in the DOM
+
+#### Scenario: Preview button hidden for an external application with an embedded editor
+- **WHEN** `ApplicationFormEditor` renders in edit mode for a schema that has an `editorUrl` but is not the Quick Apps schema
+- **THEN** the embedded editor, Cancel and Save render as usual
+- **AND** no Preview button is present in the DOM and no preview page is mounted
 
 #### Scenario: Preview button shown in edit mode
 - **WHEN** `ApplicationFormEditor` renders the Quick App definition in edit mode and `isPreviewing` is `false`

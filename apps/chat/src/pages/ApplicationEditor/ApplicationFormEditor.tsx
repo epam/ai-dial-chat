@@ -381,7 +381,11 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
 
   const { Setup, Preview, confirmation } = definition;
   const previewKey = definition.messageKeys.preview;
-  const hasPreview = isEditMode && Boolean(Preview) && Boolean(previewKey);
+  const hasPreview =
+    isEditMode &&
+    Boolean(Preview) &&
+    Boolean(previewKey) &&
+    (definition.isPreviewAvailable?.(context) ?? true);
   const extraActions =
     hasPreview && previewKey ? (
       <GhostButton

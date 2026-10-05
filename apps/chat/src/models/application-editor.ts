@@ -155,6 +155,8 @@ export interface ApplicationEditorFormDefinition<TSetup> {
   Setup: ComponentType<ApplicationSetupProps<TSetup>>;
   /** Full-page preview of an edited application; absent for kinds without a preview. */
   Preview?: ComponentType<ApplicationPreviewProps>;
+  /** Whether `Preview` applies to the application being edited, e.g. only to some schemas of the kind; defaults to `true`. */
+  isPreviewAvailable?: (ctx: ApplicationEditorContext) => boolean;
   /** Creates the application. Calls `apps/chat/src/server-api` wrappers only. */
   create: (
     metadata: DeploymentCreationFormValues,

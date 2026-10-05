@@ -326,7 +326,7 @@ The page renders the shared `EntityEditor` layout:
 - **Header.**
   - Back arrow.
   - Title: `appsEditor.createTitle` or `appsEditor.editTitle`, interpolating the schema `displayName`, with `appsEditor.defaultTypeName` as the fallback.
-  - A Preview / Exit preview `GhostButton` in `extraActions`, with `aria-pressed` reflecting `isPreviewing`.
+  - In edit mode, an enter-only Preview `GhostButton` in `extraActions` (no `aria-pressed`; see `app-preview-chat` "EditorHeader preview button").
   - Cancel.
   - A Create button in create mode, or a Save button in edit mode.
 - **Metadata section (left).** The shared `MetadataForm` with every field (see `quick-app-authoring` "Metadata section fields").
@@ -357,7 +357,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 - Preview triggers a save with no `general` payload. On `SaveSuccess`, `isPreviewing` becomes true.
 - When `hasChanges` is true, the page first awaits `refetchDeployments()`, with the saving overlay kept visible. A rejected refetch is logged and does not block preview.
-- While previewing, `hideStandardActions` hides Cancel and Save, and Exit preview returns to the editor.
+- While previewing, the whole `EntityEditor` is hidden (still mounted, `inert`) and the definition's `Preview` component (`QuickAppPreview`) fills the page. Its "Back to setup" button returns to the editor (see `app-preview-chat` "Preview is a full-page mode").
 
 **Other**
 
@@ -369,7 +369,7 @@ A create failure raises an error notification with the API detail, falling back 
 - **WHEN** the page mounts with `?schema=<id>&returnUrl=/catalog` and no `appId`
 - **THEN** the Metadata section renders the shared fields
 - **AND** the Setup section shows "Create the application to configure its setup."
-- **AND** the header shows Create, with no Preview enabled
+- **AND** the header shows Create, with no Preview button
 
 #### Scenario: Create switches to edit mode and loads the editor iframe
 - **WHEN** the user fills Name and clicks Create, and `POST /api/v1/applications` returns `{ id: "new-id" }`
@@ -391,7 +391,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 #### Scenario: Preview awaits a fresh deployment list when settings changed
 - **WHEN** the user clicks Preview and the save reports `hasChanges: true`
-- **THEN** the saving overlay stays visible until `refetchDeployments()` settles, then `isPreviewing` becomes true, and only Exit preview is shown in the header
+- **THEN** the saving overlay stays visible until `refetchDeployments()` settles, then `isPreviewing` becomes true, the editor is hidden, and the full-page preview with "Back to setup" is shown
 
 #### Scenario: Legacy step param is ignored
 - **WHEN** the page mounts with `?step=settings&schema=<id>&appId=<appId>`
@@ -403,21 +403,21 @@ A create failure raises an error notification with the API detail, falling back 
 
 ### Requirement: Quick-app Setup section
 
-`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a `forwardRef` component implementing `ApplicationSetupHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `triggerPreviewSave()` forwards to `triggerSave()` with no payload.
+`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a `forwardRef` component implementing `ApplicationSetupHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `startPreview(metadata)` forwards to `triggerSave()` with no payload.
 
 It SHALL render the following:
 
 - Without `appId` (create mode): the `applicationEditor.setupPendingCreate` placeholder.
-- With `appId` and `schema.editorUrl`: `AppEditorIframe`, kept mounted and hidden while `AppPreviewChat` is shown as an absolutely positioned sibling during preview.
+- With `appId` and `schema.editorUrl`: `AppEditorIframe` only. `QuickAppSetup` SHALL NOT render `AppPreviewChat`. The preview chat is rendered at page level by `QuickAppPreview` (see `app-preview-chat` "Preview is a full-page mode"), and the iframe stays mounted while preview is shown because the whole `EntityEditor` is only hidden.
 - With `appId` but no `schema.editorUrl`: the `appsEditor.settingsStep.noEditorPlaceholder` placeholder.
 
-It SHALL report iframe readiness through `onReadyChange`, which gates the Save button and Preview (see `quick-app-authoring`).
+It SHALL report iframe readiness through `onReadyChange`, which gates the Save button and Preview (see `quick-app-authoring`). It SHALL call `onPreviewReset` when a save reports `hasChanges: true` (see `app-preview-chat` "Preview session resets when the saved configuration actually changed"). `ApplicationSetupProps` no longer carries `isPreviewing`.
 
 On mobile, the Setup section SHALL give the iframe a minimum height of 640 px so it stays usable below the stacked Metadata section.
 
 #### Scenario: Schema with editorUrl renders iframe once the app exists
 - **WHEN** `schema.editorUrl` is set and `appId` is `"abc"`
-- **THEN** `AppEditorIframe` is rendered
+- **THEN** `AppEditorIframe` is rendered and no preview chat region is rendered inside the Setup section
 
 #### Scenario: Schema without editorUrl renders placeholder
 - **WHEN** `appId` is set and `schema.editorUrl` is undefined
@@ -426,6 +426,11 @@ On mobile, the Setup section SHALL give the iframe a minimum height of 640 px so
 #### Scenario: No appId renders the pending-create placeholder
 - **WHEN** `appId` is undefined
 - **THEN** the pending-create placeholder renders and no iframe is mounted
+
+#### Scenario: A real change requests a preview reset
+- **WHEN** `startPreview` or `save` receives `SaveSuccess` with `hasChanges: true` and the reassertion succeeds
+- **THEN** `onPreviewReset` is called exactly once
+- **AND** with `hasChanges: false` it is not called
 
 ### Requirement: Unit tests for the quick-app definition
 

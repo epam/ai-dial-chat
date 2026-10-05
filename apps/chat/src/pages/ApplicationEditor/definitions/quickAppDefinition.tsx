@@ -34,6 +34,14 @@ import {
 
 const EMPTY_SETUP: EmptyApplicationSetup = {};
 
+/* Any schema with an embedded editor opens here; only the Quick Apps one can be previewed. */
+const isPreviewAvailable = (ctx: ApplicationEditorContext) => {
+  const schemaId = getSchemaId(ctx);
+  return isQuickAppSchema(
+    ctx.schemas.find((schema) => schema.id === schemaId) ?? { id: schemaId },
+  );
+};
+
 const create = async (
   metadata: DeploymentCreationFormValues,
   _setup: EmptyApplicationSetup,
@@ -91,5 +99,6 @@ export const quickAppDefinition =
     validateSetup: () => ({}),
     Setup: QuickAppSetup,
     Preview: QuickAppPreview,
+    isPreviewAvailable,
     create,
   });

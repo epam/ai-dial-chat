@@ -114,6 +114,6 @@ All paths are relative to `apps/chat/src/`. No `libs/*` changes. If one ever loo
 ## 5. Docs and close-out
 
 - [x] 5.1 Use the `dial-docs` skill to check whether `docs/` describes the Quick App preview (for example `docs/product-requirements.md`). Update any described behaviour (Exit preview toggle, preview inside the Setup column) in this same change. `docs/architecture.md` needs no update (no new context, route, lib or app).
-- [ ] 5.2 Fix the stray leading `с` character on line 1 of `openspec/specs/app-preview-chat/spec.md` when syncing specs (out-of-scope typo found during planning; it is fixed only as part of the spec sync).
+- [x] 5.2 Fix the stray leading `с` character on line 1 of `openspec/specs/app-preview-chat/spec.md` when syncing specs (out-of-scope typo found during planning; it is fixed only as part of the spec sync).
 - [ ] 5.3 Run `npm run verify:full` once to close the change.
 - [ ] 5.4 Follow-up (not in this change): confirm the banner copy "Usage is following your limits." with product/design (suggested: "Usage counts toward your limits.") and whether the greeting should carry actions.
