@@ -93,6 +93,10 @@ describe('isValidSkillRelativePath', () => {
     expect(isValidSkillRelativePath('sub/.dial-folder')).toBe(false);
   });
 
+  it('accepts a .dial_folder marker path so Core-exported archives re-import', () => {
+    expect(isValidSkillRelativePath('docs/.dial_folder')).toBe(true);
+  });
+
   it('rejects files as the first path segment', () => {
     expect(isValidSkillRelativePath('files/x')).toBe(false);
   });

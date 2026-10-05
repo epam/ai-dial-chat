@@ -78,6 +78,14 @@ describe('validateSkillFileBatch', () => {
     expect(results[0].error).toBe(messages.pathInvalid);
   });
 
+  it('rejects a staged file named after the empty-folder marker', async () => {
+    const candidate = buildCandidate('docs/.dial_folder');
+    const { results } = await validateSkillFileBatch([candidate], baseContext);
+
+    expect(results[0].status).toBe(SkillFileValidationStatus.Invalid);
+    expect(results[0].error).toBe(messages.pathInvalid);
+  });
+
   it('rejects duplicate paths within the staged batch', async () => {
     const a = buildCandidate('notes.md');
     const b = buildCandidate('notes.md');

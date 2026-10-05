@@ -5,10 +5,34 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { MARKER_NAME } from '../../files/files.constants';
 import {
   SKILL_MANIFEST_FILE,
   isValidSkillRelativePath,
 } from '../utils/skill-path.util';
+
+const MARKER_PATH_SUFFIX = `/${MARKER_NAME}`;
+
+/**
+ * Applies the shared skill path-safety rules to a supporting path, plus the
+ * empty-folder marker rule: `.dial_folder` is accepted only as the final
+ * segment of a zero-byte part under a non-empty folder path. A non-empty
+ * marker, a root-level marker, or `.dial_folder` in any other position is
+ * rejected, so the name never carries content that DIAL listings hide.
+ */
+const isValidSupportingPath = (
+  relativePath: string,
+  byteLength: number,
+): boolean => {
+  const segments = relativePath.split('/');
+  const markerIndex = segments.indexOf(MARKER_NAME);
+  if (markerIndex === -1) return isValidSkillRelativePath(relativePath);
+  if (markerIndex !== segments.length - 1 || markerIndex === 0) return false;
+  if (byteLength !== 0) return false;
+  return isValidSkillRelativePath(
+    relativePath.slice(0, -MARKER_PATH_SUFFIX.length),
+  );
+};
 
 export interface UploadedSkillFile {
   buffer: Buffer;
@@ -71,13 +95,13 @@ export class SkillsPackageService {
     }
 
     const seenPaths = new Set<string>();
-    for (const relativePath of filePaths) {
+    for (const [index, relativePath] of filePaths.entries()) {
       if (relativePath === SKILL_MANIFEST_FILE) {
         throw new BadRequestException(
           `filePaths must not include ${SKILL_MANIFEST_FILE} — it is supplied via skillManifest`,
         );
       }
-      if (!isValidSkillRelativePath(relativePath)) {
+      if (!isValidSupportingPath(relativePath, files[index].buffer.length)) {
         throw new BadRequestException(
           `Invalid supporting file path: ${relativePath}`,
         );

@@ -33,7 +33,7 @@ describe('extractSkillArchive', () => {
     expect(entry.file.type).toBe('text/markdown');
   });
 
-  it('skips directory, macOS metadata and .DS_Store entries', async () => {
+  it('skips directory, macOS metadata, .DS_Store and empty-folder marker entries', async () => {
     const entries = await extractSkillArchive(
       zipFile({
         'a.md': strToU8('a'),
@@ -41,6 +41,7 @@ describe('extractSkillArchive', () => {
         '__MACOSX/._a.md': strToU8('meta'),
         '.DS_Store': strToU8('meta'),
         'dir/.DS_Store': strToU8('meta'),
+        'docs/.dial_folder': new Uint8Array(0),
       }),
     );
 

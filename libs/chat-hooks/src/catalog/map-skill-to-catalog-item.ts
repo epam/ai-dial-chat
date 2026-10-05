@@ -17,7 +17,7 @@ import {
   safeDecodeURIComponent,
   stripSurroundingSlashes,
 } from '../shared/string-utils';
-import { SKILL_MANIFEST_FILE } from '../skill/skill';
+import { SKILL_FOLDER_MARKER, SKILL_MANIFEST_FILE } from '../skill/skill';
 import type { SkillAboutDetails } from '../skill/skill-manifest';
 import { SKILL_MANIFEST_MAX_BYTES, SkillSource } from '../skill/skill-types';
 import type { DeploymentFolderLabels } from './map-deployment-to-catalog-item';
@@ -357,7 +357,9 @@ const sortContentTree = (
  * itself) contributes no node. Every folder entry is attached under its own
  * stripped path so an empty grouping folder still appears; every file entry
  * attaches under the folder chain its stripped path implies, synthesizing
- * any intermediate folder the listing never enumerated on its own. A file
+ * any intermediate folder the listing never enumerated on its own. An
+ * empty-folder marker (`.dial_folder`) only proves its folder exists and
+ * never becomes a file node. A file
  * node's `id` is the listing entry's own (unstripped) path, so it round-trips
  * back to `downloadSkillFile` without being re-derived; a folder node's `id`
  * is the stripped path and only keys client-side expand/collapse state.
@@ -380,6 +382,10 @@ export const buildSkillContentTree = (
 
     const lastSlash = displayPath.lastIndexOf('/');
     const parentPath = lastSlash === -1 ? '' : displayPath.slice(0, lastSlash);
+    if (entry.name === SKILL_FOLDER_MARKER) {
+      getOrCreateFolderChain(parentPath, folderNodesByPath, roots);
+      continue;
+    }
     const parentItems = getOrCreateFolderChain(
       parentPath,
       folderNodesByPath,

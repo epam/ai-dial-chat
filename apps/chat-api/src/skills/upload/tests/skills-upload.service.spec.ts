@@ -189,6 +189,49 @@ describe('SkillsUploadService', () => {
       expect(headers['If-None-Match']).toBeUndefined();
     });
 
+    it('forwards a zero-byte empty-folder marker to DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadSkillFolder.mockResolvedValue({
+        error: undefined,
+        response: makeResponse(200, { etag: '"def456"' }),
+      });
+
+      await service.updateSkill(
+        'my-bucket',
+        'team-a/docs-helper',
+        manifest,
+        JSON.stringify(['docs/.dial_folder']),
+        [{ buffer: Buffer.alloc(0), mimetype: 'application/octet-stream' }],
+        '"prev-etag"',
+        'token',
+      );
+
+      const body = sdkClient.uploadSkillFolder.mock.calls[0][2]
+        .body as FormData;
+      const parts = body.getAll('file') as File[];
+      expect(parts.map((part) => part.name)).toEqual([
+        'SKILL.md',
+        'docs/.dial_folder',
+      ]);
+    });
+
+    it('rejects a non-empty marker before calling DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+
+      await expect(
+        service.updateSkill(
+          'my-bucket',
+          'team-a/docs-helper',
+          manifest,
+          JSON.stringify(['docs/.dial_folder']),
+          [singleFile],
+          '"prev-etag"',
+          'token',
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(sdkClient.uploadSkillFolder).not.toHaveBeenCalled();
+    });
+
     it('maps a stale 412 to PreconditionFailedException (unchanged)', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.uploadSkillFolder.mockResolvedValue({
