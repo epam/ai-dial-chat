@@ -512,11 +512,11 @@ Business controllers are versioned; three infrastructure controllers are deliber
 
 #### Scheduled tasks
 
-Scheduled-task create/update accepts an optional nullable `skillUrl` alongside
+Scheduled-task create/update accepts an optional `skillUrls: string[]` alongside
 the required-string prompt. PUT reads authoritative detail before merging:
-omission preserves a skill, null removes it. The scheduled-tasks service resolves
+omission preserves saved skills, an empty array removes all skills; null is rejected. The scheduled-tasks service resolves
 session-scoped deployment capabilities through the deployments facade before
-saving a skill-bearing task. The mapper writes the encoded reference into the
+saving a skill-bearing task. The mapper writes every encoded reference into the
 first user message's `custom_content.skills` in the Scheduler completion payload;
 this repository contains no task-run worker. Sparse lists need not include that
 payload. See the [API contract](../apps/chat-api/README.md#scheduled-task-skill-contract).

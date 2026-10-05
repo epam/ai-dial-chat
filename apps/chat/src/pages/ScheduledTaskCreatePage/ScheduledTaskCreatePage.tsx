@@ -59,8 +59,6 @@ const ScheduledTaskCreatePage: FC = () => {
 
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
-  const skillLabelId = useId();
-  const skillErrorId = useId();
   const navigate = useNavigate();
   const { key: draftKey } = useLocation();
   const { showSuccessNotification, showErrorNotification } = useNotification();
@@ -79,14 +77,16 @@ const ScheduledTaskCreatePage: FC = () => {
    * below continues to block a selected skill until support is confirmed. */
   useEffect(() => {
     setErrors((previous) =>
-      previous.skillUrl ? { ...previous, skillUrl: undefined } : previous,
+      previous.skillUrls ? { ...previous, skillUrls: undefined } : previous,
     );
   }, [isSkillsSupported]);
   const effectiveErrors = {
     ...errors,
-    skillUrl: isSkillSelectionUnsupported(values?.skillUrl, isSkillsSupported)
+    skillUrls: values?.skillUrls?.some((url) =>
+      isSkillSelectionUnsupported(url, isSkillsSupported),
+    )
       ? t(SkillSelectorI18nKeys.UnsupportedTooltipLabel)
-      : errors.skillUrl,
+      : errors.skillUrls,
   };
 
   const returnUrl = ROUTES.ScheduledTasks;
@@ -101,8 +101,8 @@ const ScheduledTaskCreatePage: FC = () => {
       setValues((prev) => ({ ...prev, [field]: value }));
       setErrors((prev) => {
         const next = { ...prev };
-        if (field === 'modelId' || field === 'skillUrl') delete next.skillUrl;
-        if (field === 'prompt' || field === 'skillUrl') delete next.prompt;
+        if (field === 'modelId' || field === 'skillUrls') delete next.skillUrls;
+        if (field === 'prompt' || field === 'skillUrls') delete next.prompt;
         delete next[field as keyof ScheduledTaskCreateFormErrors];
         const liveError = getLiveScheduledTaskFieldError(field, value, t);
         if (liveError) {
@@ -189,17 +189,14 @@ const ScheduledTaskCreatePage: FC = () => {
       labels={labels}
       values={values}
       errors={effectiveErrors}
-      skillLabelId={skillLabelId}
-      skillErrorId={skillErrorId}
       skillSelector={
         <ScheduledTaskSkillField
-          value={values.skillUrl}
-          onChange={(value) => handleFieldChange('skillUrl', value)}
+          fieldLabel={labels.skillLabel}
+          value={values.skillUrls ?? []}
+          onChange={(value) => handleFieldChange('skillUrls', value)}
           isSkillsSupported={isSkillsSupported}
           isDisabled={isSubmitting}
-          isInvalid={Boolean(effectiveErrors.skillUrl)}
-          labelledById={skillLabelId}
-          describedById={effectiveErrors.skillUrl ? skillErrorId : undefined}
+          error={effectiveErrors.skillUrls}
         />
       }
       modelSelector={

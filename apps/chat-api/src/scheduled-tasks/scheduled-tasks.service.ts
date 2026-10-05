@@ -677,7 +677,8 @@ export class ScheduledTasksService {
     const saved = await this.getScheduledTask(accessToken, scheduleId);
     const effectiveBody = {
       ...body,
-      skillUrl: body.skillUrl === undefined ? saved.skillUrl : body.skillUrl,
+      skillUrls:
+        body.skillUrls === undefined ? saved.skillUrls : body.skillUrls,
     };
     await this.validateConfiguration(effectiveBody, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
@@ -746,7 +747,7 @@ export class ScheduledTasksService {
     accessToken: string,
     bucket: string,
   ): Promise<void> {
-    if (!body.prompt.trim() && !body.skillUrl) {
+    if (!body.prompt.trim() && !body.skillUrls?.length) {
       throw new BadRequestException({
         statusCode: 400,
         error: 'Bad Request',
@@ -755,7 +756,7 @@ export class ScheduledTasksService {
         message: 'Choose a skill or write instructions.',
       });
     }
-    if (!body.skillUrl) return;
+    if (!body.skillUrls?.length) return;
 
     const unavailable = {
       code: ScheduledTaskErrorCode.DeploymentUnavailable,
@@ -791,7 +792,7 @@ export class ScheduledTasksService {
         statusCode: 400,
         error: 'Bad Request',
         code: ScheduledTaskErrorCode.SkillUnsupported,
-        field: 'skillUrl',
+        field: 'skillUrls',
         message:
           'Selected model does not support skills. Remove the skill or select different model to proceed.',
       });

@@ -62,71 +62,60 @@ import '@epam/ai-dial-skills/styles.css';
 
 ### `SkillSelectorField`
 
-Controlled field for forms whose selected skill belongs to the host draft.
-It uses the same UI-kit input as model/agent fields and opens a searchable
-favorites dropdown. Browse opens the catalog; the trailing clear button removes
-the current selection without opening either popup. The field owns only popup
-visibility and the search query. A missing
-`displayName` falls back to the full reference. Browsing requires explicit
-`isSkillsSupported`; an unsupported selection remains removable.
-`isDisabled` disables both actions. `isInvalid`, `labelledById`, and
-`describedById` connect host validation to the control. The host renders inline
-errors and provides feature gating, metadata, and catalog content.
+Controlled array field for forms whose selected skills belong to the host
+draft. It renders the UI kit's multiple `Select` with every skill the host
+passes as a checkbox option and the built-in tags for selected values. There are
+no favorites, no Browse action and no catalog dialog. The kit shows the search
+input only for more than eight options. A missing display name falls back to the
+full reference. Adding requires explicit `isSkillsSupported`; unsupported
+selections remain removable. `isDisabled` makes the whole control inert. The UI-kit Select
+owns the visible `labels.fieldLabel`, optional `error`, invalid state, and their
+accessible association. The host provides feature gating and the skill list.
 
-Pass host-resolved `favorites` (`FavoriteSkillItem[]`), optional
-`onToggleFavorite` and `onViewDetails` callbacks, and translated
-`labels.panelLabels`, `labels.searchPlaceholder`, and `labels.clearSearchLabel`.
-Omitted favorites show the empty hint and Browse. Omitted action callbacks hide
-their star/details actions. `renderOverlay(panel, isOpen, onClose)` can replace
-the dropdown with a host-owned mobile sheet using the same panel.
+Pass host-resolved `skills` (`SkillSelectorOption[]`: `id` and `name`) and
+translated `labels.fieldLabel`, `labels.placeholder`,
+`labels.unsupportedTooltipLabel`, `labels.searchPlaceholder`,
+`labels.emptyLabel`, and `labels.noMatchingSkillsLabel`.
 
 ```tsx
 import { useState } from 'react';
 import { SkillSelectorField } from '@epam/ai-dial-skills';
 
 function SkillFieldExample() {
-  const [value, onChange] = useState<string>();
+  const [value, onChange] = useState<string[]>([]);
   return (
-    <>
-      <span id="example-skill-label">Skill</span>
-      <SkillSelectorField
-        value={value}
-        onChange={onChange}
-        favorites={[{ id: 'skills/public/report', name: 'Report' }]}
-        isSkillsSupported
-        labelledById="example-skill-label"
-        labels={{
-          placeholder: 'Choose a skill',
-          modalTitle: 'Use skill',
-          removeSkillLabel: 'Remove skill',
-          unsupportedTooltipLabel:
-            'Selected model does not support skills. Remove the skill or select different model to proceed.',
-        }}
-        renderCatalogContent={(select) => (
-          <button onClick={() => select('skills/public/report')}>Report</button>
-        )}
-      />
-    </>
+    <SkillSelectorField
+      value={value}
+      onChange={onChange}
+      skills={[{ id: 'skills/public/report', name: 'Report' }]}
+      isSkillsSupported
+      labels={{
+        fieldLabel: 'Skills',
+        placeholder: 'Choose a skill',
+        unsupportedTooltipLabel:
+          'Selected model does not support skills. Remove the skill or select different model to proceed.',
+      }}
+    />
   );
 }
 ```
 
-When `isSkillsSupported` is false the field is disabled, and hovering it shows
-a tooltip with the reason: `labels.unsupportedTooltipLabel` while a skill is
-selected, otherwise `labels.unavailableTooltipLabel` (defaults to
+When `isSkillsSupported` is false, adding is disabled and hovering the field
+shows a tooltip with the reason: `labels.unsupportedTooltipLabel` while a skill
+is selected, otherwise `labels.unavailableTooltipLabel` (defaults to
 `'Selected model does not support skills. Select a different model to use a skill.'`).
-With no selection the same text is also attached to the combobox through
-`aria-describedby`, alongside `describedById`.
+With no selection the same text is supplied as the Select caption so it is
+associated with the combobox through `aria-describedby`.
 
-Public types: `SkillSelectorFieldProps`, `SkillSelectorFieldLabels`, and
-`SkillSelectorFieldStyles`. `styles` supports colors (`text`, `background`,
+Public types: `SkillSelectorFieldProps`, `SkillSelectorFieldLabels`,
+`SkillSelectorFieldStyles`, and `SkillSelectorOption`. `styles` supports colors (`text`, `background`,
 `border`, `error`), `typography.fontClassName`, `triggerClassName`, and `cssVars`.
 `SKILLS_CLASS.selectorField` is the stable root class
 `dial-skills-selector-field`. The existing stylesheet export includes its theme.
 
 `FavoriteSkillsPanel` also accepts `className` and `rowClassName` for layout
 composition. Its optional favorite/details callbacks hide their actions when
-omitted. The form field uses full-width panels and 44px minimum-height rows.
+omitted.
 
 The chat overlay's compatibility signal also depends on the selected reference,
 independently of catalog loading or deletion; unresolved selections keep a
@@ -605,3 +594,12 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+### Multiple skill selection
+
+`SkillSelectorField` accepts `value: string[]`,
+`onChange: (value: string[]) => void`, and optional `displayNames` keyed by
+reference. The host supplies `labels.fieldLabel` as the Select's accessible
+name. Unavailable metadata falls back to the URL. Unsupported models disable
+adding but allow removal; submission makes the Select inert and disables all
+actions. `SkillSelectorFieldProps` is the single exported field contract.

@@ -4,7 +4,7 @@ import { IsValidSkillPathLength } from '../dto/skill-path-length.validator';
 
 class SkillReference {
   @IsValidSkillPathLength()
-  skillUrl!: unknown;
+  skillUrls!: unknown;
 }
 
 describe('scheduled skill path length', () => {
@@ -13,9 +13,9 @@ describe('scheduled skill path length', () => {
     (character) => {
       for (const encode of [(path: string) => path, encodeURIComponent]) {
         const reference = new SkillReference();
-        reference.skillUrl = `skills/public/${encode(character.repeat(1024))}`;
+        reference.skillUrls = `skills/public/${encode(character.repeat(1024))}`;
         expect(validateSync(reference)).toEqual([]);
-        reference.skillUrl = `skills/public/${encode(character.repeat(1025))}`;
+        reference.skillUrls = `skills/public/${encode(character.repeat(1025))}`;
         expect(validateSync(reference)).toHaveLength(1);
       }
     },
@@ -23,9 +23,9 @@ describe('scheduled skill path length', () => {
 
   it.each([42, null, 'skills/public/%', 'skills/public/%FF'])(
     'rejects unmeasurable reference %j without throwing',
-    (skillUrl) => {
+    (skillUrls) => {
       const reference = new SkillReference();
-      reference.skillUrl = skillUrl;
+      reference.skillUrls = skillUrls;
       expect(validateSync(reference)).toHaveLength(1);
     },
   );

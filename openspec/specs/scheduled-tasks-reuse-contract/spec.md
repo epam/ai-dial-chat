@@ -33,7 +33,7 @@ Define the public validation, request lifecycle, presentation and stylesheet con
 - **WHEN** a valid daily draft retains an old hourly-minute value and has empty description
 - **THEN** validation succeeds; a description above 500 characters instead returns its own error.
 
-Validation options SHALL additionally accept `isSkillsSupported?: boolean`. Skill-bearing values require explicit true; instruction-only callers remain compatible without that option. The pure shared `isSkillSelectionUnsupported` predicate SHALL determine capability errors from the reference, not metadata. `SkillUnsupported` SHALL identify `skillUrl`; `InstructionsOrSkillRequired` SHALL identify `prompt` when both content alternatives are absent. Stable codes SHALL be string-enum members translated by the host.
+Validation options SHALL additionally accept `isSkillsSupported?: boolean`. Skill-bearing values require explicit true; instruction-only callers remain compatible without that option. The pure shared `isSkillSelectionUnsupported` predicate SHALL determine capability errors from the reference, not metadata. `SkillUnsupported` SHALL identify `skillUrls`; `InstructionsOrSkillRequired` SHALL identify `prompt` when both content alternatives are absent. Stable codes SHALL be string-enum members translated by the host.
 
 #### Scenario: Configuration validation matrix
 
@@ -44,7 +44,6 @@ Validation options SHALL additionally accept `isSkillsSupported?: boolean`. Skil
 
 - **WHEN** an existing host omits the support option
 - **THEN** instruction-only behavior is preserved and adding a skill returns `SkillUnsupported`
-
 ### Requirement: Checked preparation never silently changes schedule frequency
 
 `@epam/ai-dial-chat-hooks/scheduled-tasks` SHALL export checked create/update body preparation using the shared validator before existing conversion. Failure SHALL return field error codes without a body. Success SHALL preserve the existing UTC, weekday, description and activity-window semantics. Existing unchecked mapper signatures SHALL remain compatible and document their validated-input precondition.
@@ -210,4 +209,3 @@ The existing packed `tools/scheduled-tasks-consumer-fixture` SHALL exercise skil
 
 - **WHEN** a host omits all new optional props and submits an instruction-only task
 - **THEN** existing code typechecks and the established form/validation behavior remains available
-

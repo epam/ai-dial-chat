@@ -1,26 +1,21 @@
-import type { CSSProperties, ReactNode } from 'react';
-import type { FavoriteSkillItem } from './favorite-skill-item';
-import type { FavoriteSkillsPanelLabels } from './favorite-skills-panel-props';
-import type { SkillCatalogModalProps } from './skill-catalog-modal-props';
+import type { CSSProperties } from 'react';
 
 /** Translated text for a controlled skill field. */
 export interface SkillSelectorFieldLabels {
+  /** Visible and accessible field label. */
+  fieldLabel: string;
   /** Empty selection text. */
   placeholder: string;
-  /** Browse dialog title. */
-  modalTitle: string;
-  /** Accessible name of the removal control. */
-  removeSkillLabel: string;
   /** Explanation shown when the selected model cannot use skills. */
   unsupportedTooltipLabel: string;
   /** Explanation shown when the field is disabled because the model cannot use skills and no skill is selected. Defaults to 'Selected model does not support skills. Select a different model to use a skill.'. */
   unavailableTooltipLabel?: string;
-  /** Favorites panel text; omitted entries use the panel's English defaults. */
-  panelLabels?: FavoriteSkillsPanelLabels;
-  /** Favorites search label and placeholder. Defaults to 'Search skills'. */
+  /** Search input placeholder. Defaults to 'Search skills'. */
   searchPlaceholder?: string;
-  /** Accessible search clear label. Defaults to 'Clear search'. */
-  clearSearchLabel?: string;
+  /** Text shown when no skill is available. Defaults to 'No skills available'. */
+  emptyLabel?: string;
+  /** Text shown when the search matches no skill. Defaults to 'No matching skills'. */
+  noMatchingSkillsLabel?: string;
 }
 
 /** Per-instance theme and typography overrides for the skill field. */
@@ -47,42 +42,34 @@ export interface SkillSelectorFieldStyles {
   cssVars?: CSSProperties;
 }
 
-/** Host-controlled selection; catalog data and rendering belong to the caller. */
+/** One skill offered by the field's option list. */
+export interface SkillSelectorOption {
+  /** Stable skill reference: the `skills/{bucket}/{path}` resource URL. */
+  id: string;
+  /** Display name. */
+  name: string;
+}
+
+/** Host-controlled multiple selection; the skill list belongs to the caller. */
 export interface SkillSelectorFieldProps {
-  /** Selected reference, independent of catalog loading. */
-  value?: string;
-  /** Called to replace or remove the selected reference. */
-  onChange: (value: string | undefined) => void;
-  /** Resolved name; defaults to the full selected reference. */
-  displayName?: string;
-  /** Host-resolved favorite skills. Defaults to an empty list. */
-  favorites?: FavoriteSkillItem[];
-  /** Removes a skill from favorites; omitted hides the star action. */
-  onToggleFavorite?: (id: string) => void;
-  /** Opens host-owned skill details; omitted hides the details tooltip. */
-  onViewDetails?: (item: FavoriteSkillItem) => void;
-  /** Optional popup presentation, such as a mobile sheet. Defaults to a dropdown. */
-  renderOverlay?: (
-    panel: ReactNode,
-    isOpen: boolean,
-    onClose: () => void,
-  ) => ReactNode;
+  /** Host-resolved skills offered as checkbox options. Defaults to an empty list. */
+  skills?: SkillSelectorOption[];
   /** Explicit skill support for the selected model. */
   isSkillsSupported: boolean;
   /** Disables all controls. Defaults to false. */
   isDisabled?: boolean;
-  /** Host validation state. Defaults to false. */
-  isInvalid?: boolean;
-  /** ID of the host-rendered label. */
-  labelledById: string;
-  /** ID of host-rendered feedback. */
-  describedById?: string;
+  /** Host validation message rendered and associated by the UI-kit Select. */
+  error?: string;
   /** Translated visible and accessible text. */
   labels: SkillSelectorFieldLabels;
-  /** Catalog content that calls back with the selected reference. */
-  renderCatalogContent: SkillCatalogModalProps['renderContent'];
   /** Additional classes applied to the root. */
   className?: string;
   /** Theme and typography overrides. */
   styles?: SkillSelectorFieldStyles;
+  /** Selected references in display order. */
+  value: string[];
+  /** Called with the complete selection after adding or removing a skill. */
+  onChange: (value: string[]) => void;
+  /** Host-resolved names keyed by reference; missing entries display the URL. */
+  displayNames?: Record<string, string>;
 }

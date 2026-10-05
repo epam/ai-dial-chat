@@ -234,7 +234,7 @@ describe('ScheduledTaskDetailView', () => {
         displayName="Task"
         runs={[]}
         instructionsMarkdown=""
-        skillDisplayName="skills/public/deleted"
+        skillDisplayNames={['skills/public/deleted']}
       />,
     );
     expect(screen.getByText('skills/public/deleted')).toBeTruthy();
@@ -1188,6 +1188,19 @@ describe('ScheduledTaskDetailView', () => {
       ).toBeTruthy();
       expect(screen.getByRole('heading', { name: 'History' })).toBeTruthy();
       expect(screen.getByText('GPT-4o')).toBeTruthy();
+    });
+
+    it('keeps desktop section overflow inside independently scrolling columns', () => {
+      useIsMobileMock.mockReturnValue(false);
+      renderView();
+
+      const details = screen.getByRole('group', { name: 'Details' });
+      expect(details.classList).toContain('overflow-y-auto');
+      /* The desktop body is a structural wrapper with no semantic role. */
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(details.parentElement?.classList).toContain(
+        'desktop:overflow-hidden',
+      );
     });
 
     it('renders no count badges on the tabs', () => {

@@ -163,10 +163,12 @@ export const toUpstreamSchedulePayload = (
         {
           role: 'user',
           content: body.prompt,
-          ...(body.skillUrl
+          ...(body.skillUrls?.length
             ? {
                 custom_content: {
-                  skills: [{ url: encodeDialResourcePath(body.skillUrl) }],
+                  skills: [...new Set(body.skillUrls)].map((url) => ({
+                    url: encodeDialResourcePath(url),
+                  })),
                 },
               }
             : {}),
@@ -240,9 +242,10 @@ export const fromUpstreamSchedule = (
   description: upstream.description,
   model: upstream.properties?.payload?.model,
   prompt: upstream.properties?.payload?.messages?.[0]?.content,
-  skillUrl:
-    upstream.properties?.payload?.messages?.[0]?.custom_content?.skills?.[0]
-      ?.url,
+  skillUrls:
+    upstream.properties?.payload?.messages?.[0]?.custom_content?.skills?.map(
+      (skill) => skill.url,
+    ) ?? (upstream.properties?.payload ? [] : undefined),
 });
 
 export interface UpstreamScheduleRun {

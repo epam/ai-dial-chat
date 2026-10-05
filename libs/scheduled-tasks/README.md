@@ -152,7 +152,7 @@ execution, eligibility, errors, translations, and live announcements. Below
 1280px header actions wrap while retaining their text and 44px targets. The
 back arrow mirrors in RTL, while the Start now play icon does not.
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout; below it (mobile and tablet) they render as a tab row — Details active by default — with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
 
 ```tsx
 import {
@@ -240,13 +240,13 @@ itself.
 
 ### Optional skill configuration
 
-`ScheduledTaskCreateForm` accepts `skillSelector?: ReactNode`, `skillLabelId`,
-`skillErrorId`, and `labels.skillLabel`. The slot appears above Instructions;
-the host passes the same IDs as the control's `labelledById` / `describedById`.
-`values.skillUrl?: string` holds the selection and `errors.skillUrl?: string`
-holds a localized error. Errors stay visible even when the slot is hidden.
-Model remains in Details. Selection and catalog integration belong to the host;
-`SkillSelectorField` from the skills package can supply the control.
+`ScheduledTaskCreateForm` accepts `skillSelector?: ReactNode` and
+`labels.skillLabel`. The slot appears above Instructions; the host-composed
+selector owns its visible label and associated error. When the slot is absent,
+the form still renders `errors.skillUrls` as a live form-level error.
+`values.skillUrls?: string[]` holds the selection and `errors.skillUrls?: string`
+holds a localized error. Model remains in Details. Selection belongs to the
+host; `SkillSelectorField` from the skills package supplies the array control.
 
 Instructions only, skill only, or both satisfy the content requirement. Save is
 disabled for empty content or a skill error. Pass `isSkillsSupported: true` to
@@ -258,9 +258,9 @@ remains exported for compatibility. Revalidate on model or selection changes
 and use checked request preparation before submission.
 
 `ScheduledTaskConfigurationSection` and `ScheduledTaskDetailsSummary` accept
-optional `skillLabel` / `skillDisplayName`. `ScheduledTaskDetailView` accepts
-`skillDisplayName` and `labels.skillLabel`. Supply a resolved name or the full
-reference as fallback. Skill appears before Instructions as plain text; absent
+optional `skillLabel` / `skillDisplayNames`. `ScheduledTaskDetailView` accepts
+`skillDisplayNames` and `labels.skillLabel`. Supply `skillDisplayNames: string[]`, using the full reference as fallback
+for each unresolved name. Skill appears before Instructions as plain text; absent
 skills and empty instructions render no field. Libraries perform no lookup.
 
 Use the pure validation entry before an app submits a task. It returns typed

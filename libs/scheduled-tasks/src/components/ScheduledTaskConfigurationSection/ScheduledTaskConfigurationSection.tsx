@@ -11,14 +11,14 @@ export const ScheduledTaskConfigurationSection: FC<
   ScheduledTaskConfigurationSectionProps
 > = ({
   skillLabel,
-  skillDisplayName,
+  skillDisplayNames,
   instructionsLabel,
   instructionsMarkdown,
   renderInstructions,
   fieldLabelClassName = 'dial-tiny-text',
 }) => (
   <div className="flex min-w-0 flex-col gap-5">
-    {skillDisplayName && (
+    {Boolean(skillDisplayNames?.length) && (
       <div
         role="group"
         aria-label={skillLabel}
@@ -29,7 +29,13 @@ export const ScheduledTaskConfigurationSection: FC<
         >
           {skillLabel}
         </span>
-        <p className="whitespace-normal break-all">{skillDisplayName}</p>
+        <p className="whitespace-normal break-all">
+          {skillDisplayNames?.map((name, index) => (
+            <span className="block" key={`${index}:${name}`}>
+              {name}
+            </span>
+          ))}
+        </p>
       </div>
     )}
     {instructionsMarkdown && (

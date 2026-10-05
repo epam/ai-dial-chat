@@ -37,8 +37,8 @@ export interface ScheduledTaskCreateFormValues {
   description?: string;
   /** Prompt text; may be empty when a skill is selected. */
   prompt: string;
-  /** Optional selected skill reference, independent of its display metadata. */
-  skillUrl?: string;
+  /** Optional selected skill references, independent of its display metadata. */
+  skillUrls?: string[];
 }
 
 /** Validation error messages keyed by {@link ScheduledTaskCreateFormValues} field. */
@@ -66,7 +66,7 @@ export interface ScheduledTaskCreateFormErrors {
   /** Error shown under the prompt field. */
   prompt?: string;
   /** Error shown under the skill field, or at form level when the slot is hidden. */
-  skillUrl?: string;
+  skillUrls?: string;
 }
 
 /** Localized labels used by the {@link ScheduledTaskCreateForm} component. */
@@ -206,10 +206,6 @@ export interface ScheduledTaskCreateFormProps {
   modelLabelId: string;
   /** Optional host-composed skill control, rendered above Instructions. */
   skillSelector?: ReactNode;
-  /** ID of the skill label; also pass to the control's aria-labelledby. */
-  skillLabelId?: string;
-  /** ID of the skill error; also pass to the control's aria-describedby. */
-  skillErrorId?: string;
   /** Called with the changed field key and its new value whenever any field is edited. */
   onFieldChange: <K extends keyof ScheduledTaskCreateFormValues>(
     field: K,

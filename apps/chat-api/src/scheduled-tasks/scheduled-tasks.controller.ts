@@ -542,7 +542,7 @@ export class ScheduledTasksController {
     summary: 'Update a scheduled task',
     description:
       'Updates an existing DIAL Scheduler schedule for the authenticated session user. ' +
-      'Omitting skillUrl preserves the saved reference; null removes it. ' +
+      'Omitting skillUrls preserves saved references; [] removes them. ' +
       'Invalidates the scheduled tasks list cache on success.',
   })
   @ApiBody({ type: UpdateScheduledTaskBodyDto })

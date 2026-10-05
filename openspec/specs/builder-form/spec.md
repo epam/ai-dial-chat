@@ -26,12 +26,13 @@ Specifies `libs/builder-form`'s host-agnostic builder/editor form building block
 - **THEN** none are found; back-navigation is exposed only via `onBack` callback prop
 
 ### Requirement: BuilderFormContainer — page shell
-`BuilderFormContainer` SHALL render a full-height scrollable page shell: a header (back control, title, cancel/submit action pair, with a `role="status"` region announcing `labels.submittingLabel` while `isSubmitting` is `true`) above a three-column body — `left`, the main column (`children`), and `metadata`. Side columns are full width on mobile and a fixed 400 px on desktop; supplying `left` without `metadata` reserves an empty end column of the same width so the main column stays optically centered. The container SHALL hold no state of its own; all strings, disabled flags, and callbacks are host-supplied.
+`BuilderFormContainer` SHALL render a full-height, non-scrolling page shell: a header (back control, title, cancel/submit action pair, with a `role="status"` region announcing `labels.submittingLabel` while `isSubmitting` is `true`) above a three-column body — `left`, the main column (`children`), and `metadata`. The header SHALL use the same responsive padding as the scheduled-task detail header: `px-4 py-2` below desktop and `px-8 py-0` with a 64 px height at desktop. On mobile the stacked body SHALL own the single vertical scrollbar. On desktop the body SHALL be a non-wrapping clipped row and each populated column SHALL scroll independently, keeping the page root and header fixed. Side columns are full width on mobile and a fixed 400 px on desktop; supplying `left` without `metadata` reserves an empty end column of the same width so the main column stays optically centered. The container SHALL hold no state of its own; all strings, disabled flags, and callbacks are host-supplied.
 
 #### Scenario: Default responsive shell
 
 - **WHEN** a host provides left content and main children without layout overrides
 - **THEN** side columns span the available width below 1280px and occupy 400px from 1280px, with a matching reserved end column when metadata is absent
+- **AND** the mobile body owns one scrollbar while desktop left/main columns scroll independently without moving the header
 - **AND** the header and mobile footer expose one visible action pair at their respective breakpoints, independent of host utility CSS.
 
 ### Requirement: EditorLayout — header row

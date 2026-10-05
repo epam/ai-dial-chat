@@ -6,7 +6,7 @@ import { BuilderFormBody } from '../BuilderFormBody/BuilderFormBody';
 import { BuilderFormHeader } from '../BuilderFormHeader/BuilderFormHeader';
 import styles from './BuilderFormContainer.module.scss';
 
-/** Full-height scrollable builder form page shell: a header above the form content and a mobile-only sticky action footer below it. */
+/** Full-height builder form shell with fixed chrome and responsive body/column scrolling. */
 export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
   labels,
   onBack,
@@ -34,7 +34,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
         ...cssVars,
       }}
       className={mergeClasses(
-        'flex h-full w-full flex-col overflow-y-auto',
+        'flex h-full min-h-0 w-full flex-col overflow-hidden',
         className,
         styles.container,
       )}

@@ -20,15 +20,17 @@ vi.mock(
       onChange,
       isSkillsSupported,
     }: {
-      value?: string;
-      onChange: (value: string | undefined) => void;
+      value: string[];
+      onChange: (value: string[]) => void;
       isSkillsSupported: boolean;
     }) => (
       <input
-        aria-label="skillUrl"
+        aria-label="skillUrls"
         aria-invalid={!isSkillsSupported}
-        value={value ?? ''}
-        onChange={(event) => onChange(event.target.value || undefined)}
+        value={value.join(',')}
+        onChange={(event) =>
+          onChange(event.target.value ? event.target.value.split(',') : [])
+        }
       />
     ),
   }),
@@ -215,13 +217,13 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       {skillSelector}
-      {errors.skillUrl && <span>{errors.skillUrl}</span>}
+      {errors.skillUrls && <span>{errors.skillUrls}</span>}
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.startDate && <span>{errors.startDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button
         onClick={onSubmit}
-        disabled={isSubmitting || Boolean(errors.skillUrl)}
+        disabled={isSubmitting || Boolean(errors.skillUrls)}
       >
         {labels.createButtonLabel}
       </button>
@@ -306,7 +308,7 @@ describe('ScheduledTaskEditPage', () => {
   it('allows retry after support recovers', async () => {
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
-      skillUrl: 'skills/public/report',
+      skillUrls: ['skills/public/report'],
     });
     updateScheduledTaskMock.mockRejectedValueOnce(new Error('Unsupported'));
     getApiErrorDetailsMock.mockResolvedValue({
@@ -363,13 +365,13 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
       prompt: '',
-      skillUrl: 'skills/public/report',
+      skillUrls: ['skills/public/report', 'skills/public/summary'],
     });
     updateScheduledTaskMock.mockResolvedValue(baseTask);
     renderEditPage();
     await screen.findByRole('button', { name: 'buttons.save' });
-    expect((screen.getByLabelText('skillUrl') as HTMLInputElement).value).toBe(
-      'skills/public/report',
+    expect((screen.getByLabelText('skillUrls') as HTMLInputElement).value).toBe(
+      'skills/public/report,skills/public/summary',
     );
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
     await vi.waitFor(() =>
@@ -377,16 +379,16 @@ describe('ScheduledTaskEditPage', () => {
         'sched_123',
         expect.objectContaining({
           prompt: '',
-          skillUrl: 'skills/public/report',
+          skillUrls: ['skills/public/report', 'skills/public/summary'],
         }),
       ),
     );
   });
 
-  it('sends null on explicit removal and keeps the draft on deployment lookup failure', async () => {
+  it('sends an empty array on explicit removal and keeps the draft on deployment lookup failure', async () => {
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
-      skillUrl: 'skills/public/report',
+      skillUrls: ['skills/public/report'],
     });
     updateScheduledTaskMock.mockRejectedValue(
       new Error('Deployment unavailable'),
@@ -396,7 +398,7 @@ describe('ScheduledTaskEditPage', () => {
       code: 'scheduledTaskDeploymentUnavailable',
     });
     renderEditPage();
-    fireEvent.change(await screen.findByLabelText('skillUrl'), {
+    fireEvent.change(await screen.findByLabelText('skillUrls'), {
       target: { value: '' },
     });
     fireEvent.change(screen.getByLabelText('displayName'), {
@@ -407,7 +409,7 @@ describe('ScheduledTaskEditPage', () => {
       expect(updateScheduledTaskMock).toHaveBeenCalledWith(
         'sched_123',
         expect.objectContaining({
-          skillUrl: null,
+          skillUrls: [],
           displayName: 'Retained draft',
         }),
       ),
@@ -424,7 +426,7 @@ describe('ScheduledTaskEditPage', () => {
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
       model: 'unsupported',
-      skillUrl: 'skills/public/report',
+      skillUrls: ['skills/public/report'],
     });
     renderEditPage();
     expect(

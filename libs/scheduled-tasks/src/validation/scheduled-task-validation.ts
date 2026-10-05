@@ -150,14 +150,18 @@ export const validateScheduledTaskFormValues = (
   if (!values.modelId.trim()) {
     errors.modelId = ScheduledTaskValidationErrorCode.ModelRequired;
   }
-  if (!values.prompt.trim() && !values.skillUrl?.trim()) {
+  if (!values.prompt.trim() && !values.skillUrls?.length) {
     errors.prompt =
       ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired;
   } else {
     setTextFieldError('prompt', values.prompt);
   }
-  if (isSkillSelectionUnsupported(values.skillUrl, isSkillsSupported)) {
-    errors.skillUrl = ScheduledTaskValidationErrorCode.SkillUnsupported;
+  if (
+    values.skillUrls?.some((url) =>
+      isSkillSelectionUnsupported(url, isSkillsSupported),
+    )
+  ) {
+    errors.skillUrls = ScheduledTaskValidationErrorCode.SkillUnsupported;
   }
   setTextFieldError('description', values.description);
 

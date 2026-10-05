@@ -10,6 +10,24 @@ const labels = {
 };
 
 describe('BuilderFormHeader', () => {
+  it('matches the scheduled-task detail header padding at mobile and desktop breakpoints', () => {
+    render(
+      <BuilderFormHeader
+        labels={labels}
+        onBack={vi.fn()}
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+    /* The header wrapper has no semantic role of its own. */
+    const heading = screen.getByRole('heading', { name: 'Task editor' });
+    // eslint-disable-next-line testing-library/no-node-access
+    const header = heading.closest('.px-4');
+    expect(header?.classList).toContain('py-2');
+    expect(header?.classList).toContain('desktop:px-8');
+    expect(header?.classList).toContain('desktop:py-0');
+  });
+
   it('uses the default icon when omitted and renders a supplied icon node', () => {
     const { rerender } = render(
       <BuilderFormHeader

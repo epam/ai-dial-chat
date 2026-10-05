@@ -50,7 +50,7 @@ import {
   useOfflineCredentialsLogin,
 } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
-import { useScheduledTaskSkillDisplayName } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayName';
+import { useScheduledTaskSkillDisplayNames } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
 import {
   mergeScheduledTaskRuns,
   ScheduledTaskRunStatusFeedback,
@@ -119,7 +119,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const { conversations, refreshConversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
-  const skillDisplayName = useScheduledTaskSkillDisplayName(task?.skillUrl);
+  const skillDisplayNames = useScheduledTaskSkillDisplayNames(task?.skillUrls);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
@@ -733,7 +733,7 @@ const ScheduledTaskDetailPage: FC = () => {
         completedLabel={completedLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
-        skillDisplayName={skillDisplayName}
+        skillDisplayNames={skillDisplayNames}
         runs={runItems}
         runsIsLoading={runsIsLoading && mergedRunDtos.length === 0}
         runsIsLoadingMore={runsIsLoadingMore}

@@ -4,7 +4,7 @@
 
 Presentational building blocks shared by DIAL's builder/editor form pages — the surfaces where a user composes or edits an entity (a scheduled task, a deployment, a toolset, a prompt, a skill) through a titled page with a back control and save/cancel actions. The package provides:
 
-- `BuilderFormContainer` — a full-height scrollable form page shell with a header and a three-column body;
+- `BuilderFormContainer` — a full-height form page shell with fixed chrome and a responsive, scroll-owning three-column body;
 - `EditorLayout` and `EditorSection` — a two-column editor shell with a header row and a bordered card wrapper for named field groups;
 - `AddAvatar` and `AvatarPickerModal` — the avatar preview control and the host-wired file-manager modal behind it;
 - `DeploymentCreationForm`, `DeploymentLocalesField`, and `validateDeploymentCreationFields` — the shared General-step field set (avatar, name, description, version, topics, per-locale translations) and its validation;
@@ -42,15 +42,15 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 ### BuilderFormContainer
 
-The whole builder form page shell — full height, scrollable, with the page background applied.
+The whole builder form page shell — full height, non-scrolling, with the page background applied. Its body owns scrolling so the header and mobile action footer remain fixed.
 
-It renders the header itself: a back control, the title, and a cancel/submit action pair, where submit is the primary action and both actions disable independently (e.g. submit disabled while required fields are empty, cancel disabled while a submission is in flight). Header styling is forwarded through `styles.header`.
+It renders the header itself: a back control, the title, and a cancel/submit action pair, where submit is the primary action and both actions disable independently (e.g. submit disabled while required fields are empty, cancel disabled while a submission is in flight). Its responsive vertical and inline padding matches the scheduled-task detail header. Header styling is forwarded through `styles.header`.
 
 The action pair is placed per breakpoint: in the header at the desktop breakpoint, and in a sticky footer pinned over the bottom of the scrolling form at mobile widths, so it stays thumb-reachable while the form scrolls. Both copies render the same actions from the same props — exactly one is visible (and in the tab order) at any width. The footer paints the page background and an elevation shadow (`--shadow-xs-1`/`--shadow-xs-2`) so scrolled content never shows through it, and its two actions split the row equally. At mobile the header row — back control and title — reads as the first row of the form rather than a page bar: its divider is drawn above the row (under the app shell's floating header) instead of below it.
 
 `isSubmitDisabled` covers both "not ready yet" and "already submitting", so it cannot on its own tell a user which of the two is happening. `isSubmitting` supplies the difference: it puts a spinner in the submit button, sets `aria-busy` on it, and announces `labels.submittingLabel` (default `'Submitting'`) through the header's `role="status"` region. The button's accessible name stays `labels.submitButtonLabel` throughout — the spinner is `aria-hidden`. Set both flags while a submit is in flight.
 
-Below the header it lays out a three-column body: `left`, the main column (`children`), and `metadata`. Side columns are full width on mobile and a fixed 360px on desktop, with the main column taking the rest. Supplying `left` without `metadata` reserves an empty end column of the same width, so the main column stays optically centered. Column content carries its own padding, borders, and `flex-1` — the container supplies only the column widths and the row/stack direction.
+Below the header it lays out a three-column body: `left`, the main column (`children`), and `metadata`. On mobile the stacked body is the single vertical scroll container. On desktop the body is a non-wrapping clipped row and each populated column owns its vertical overflow, matching `EditorLayout`; the page root and header never scroll. Side columns are full width on mobile and a fixed 400px on desktop, with the main column taking the rest. Supplying `left` without `metadata` reserves an empty end column of the same width, so the main column stays optically centered. Column content carries its own padding, borders, and `flex-1`.
 
 The `styles.cssVars` escape hatch sets arbitrary CSS custom properties on the root, so vars read anywhere inside the form cascade from one place.
 

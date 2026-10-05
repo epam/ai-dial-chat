@@ -22,7 +22,7 @@ describe('scheduled task skill persistence and validation', () => {
     model: 'model',
     prompt: '',
     trigger: { date: '2026-12-01T09:00:00Z' },
-    skillUrl: 'skills/public/report',
+    skillUrls: ['skills/public/report', 'skills/public/summary'],
   };
   const setup = (support: boolean | undefined = true) => {
     let saved = {
@@ -36,7 +36,9 @@ describe('scheduled task skill persistence and validation', () => {
             {
               role: 'user',
               content: '',
-              custom_content: { skills: [{ url: body.skillUrl }] },
+              custom_content: {
+                skills: body.skillUrls.map((url) => ({ url })),
+              },
             },
           ],
         },
@@ -73,34 +75,34 @@ describe('scheduled task skill persistence and validation', () => {
           { ...body, model },
           'bucket',
         ),
-      ).toMatchObject({ prompt: '', skillUrl: body.skillUrl });
+      ).toMatchObject({ prompt: '', skillUrls: body.skillUrls });
       expect(deployments.resolveDeploymentItem).toHaveBeenCalledWith(
         model,
         'token',
         'bucket',
       );
       expect(await service.getScheduledTask('token', 'task')).toMatchObject({
-        skillUrl: body.skillUrl,
+        skillUrls: body.skillUrls,
       });
       expect(
         await service.updateScheduledTask('user', 'token', 'task', {
           ...body,
-          skillUrl: undefined,
+          skillUrls: undefined,
         }),
-      ).toMatchObject({ skillUrl: body.skillUrl });
+      ).toMatchObject({ skillUrls: body.skillUrls });
       expect(
         await service.updateScheduledTask('user', 'token', 'task', {
           ...body,
-          skillUrl: 'skills/public/other',
+          skillUrls: ['skills/public/other'],
         }),
-      ).toMatchObject({ skillUrl: 'skills/public/other' });
+      ).toMatchObject({ skillUrls: ['skills/public/other'] });
       expect(
         await service.updateScheduledTask('user', 'token', 'task', {
           ...body,
           prompt: 'Instructions',
-          skillUrl: null,
+          skillUrls: [],
         }),
-      ).toMatchObject({ prompt: 'Instructions', skillUrl: undefined });
+      ).toMatchObject({ prompt: 'Instructions', skillUrls: [] });
       const sent = JSON.parse(fetchMock.mock.calls.at(-1)![1].body);
       expect(sent.properties.payload.messages[0]).not.toHaveProperty(
         'custom_content',
@@ -120,14 +122,14 @@ describe('scheduled task skill persistence and validation', () => {
       ).rejects.toMatchObject({
         response: {
           code: ScheduledTaskErrorCode.SkillUnsupported,
-          field: 'skillUrl',
+          field: 'skillUrls',
         },
       });
       expect(fetchMock).not.toHaveBeenCalled();
       await expect(
         service.updateScheduledTask('user', 'token', 'task', {
           ...body,
-          skillUrl: undefined,
+          skillUrls: undefined,
         }),
       ).rejects.toMatchObject({
         response: { code: ScheduledTaskErrorCode.SkillUnsupported },
@@ -145,7 +147,7 @@ describe('scheduled task skill persistence and validation', () => {
       service.createScheduledTask('user', 'token', {
         ...body,
         prompt: '  ',
-        skillUrl: null,
+        skillUrls: [],
       }),
     ).rejects.toMatchObject({
       response: { code: ScheduledTaskErrorCode.InstructionsOrSkillRequired },
@@ -153,7 +155,7 @@ describe('scheduled task skill persistence and validation', () => {
     await expect(
       service.updateScheduledTask('user', 'token', 'task', {
         ...body,
-        skillUrl: null,
+        skillUrls: [],
       }),
     ).rejects.toMatchObject({
       response: { code: ScheduledTaskErrorCode.InstructionsOrSkillRequired },
@@ -167,7 +169,7 @@ describe('scheduled task skill persistence and validation', () => {
     await service.createScheduledTask('user', 'token', {
       ...body,
       prompt: 'Instructions',
-      skillUrl: undefined,
+      skillUrls: undefined,
     });
     expect(deployments.resolveDeploymentItem).not.toHaveBeenCalled();
   });

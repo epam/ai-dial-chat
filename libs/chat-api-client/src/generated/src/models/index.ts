@@ -2139,11 +2139,11 @@ export interface CreateScheduledTaskBodyDto {
    */
   prompt: string;
   /**
-   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
-   * @type {string}
+   * DIAL skill references with paths of at most 1024 decoded characters each. Omission preserves saved skills on update; an empty array removes them.
+   * @type {Array<string>}
    * @memberof CreateScheduledTaskBodyDto
    */
-  skillUrl?: string | null;
+  skillUrls?: Array<string>;
   /**
    *
    * @type {string}
@@ -2311,10 +2311,10 @@ export interface CreatedScheduledTaskDto {
   prompt?: string;
   /**
    *
-   * @type {string}
+   * @type {Array<string>}
    * @memberof CreatedScheduledTaskDto
    */
-  skillUrl?: string;
+  skillUrls?: Array<string>;
 }
 
 /**
@@ -6221,10 +6221,10 @@ export interface ScheduledTaskDto {
   prompt?: string;
   /**
    *
-   * @type {string}
+   * @type {Array<string>}
    * @memberof ScheduledTaskDto
    */
-  skillUrl?: string;
+  skillUrls?: Array<string>;
 }
 
 /**
@@ -7879,11 +7879,11 @@ export interface UpdateScheduledTaskBodyDto {
    */
   prompt: string;
   /**
-   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
-   * @type {string}
+   * DIAL skill references with paths of at most 1024 decoded characters each. Omission preserves saved skills on update; an empty array removes them.
+   * @type {Array<string>}
    * @memberof UpdateScheduledTaskBodyDto
    */
-  skillUrl?: string | null;
+  skillUrls?: Array<string>;
   /**
    *
    * @type {string}
@@ -8027,10 +8027,10 @@ export interface UpdatedScheduledTaskDto {
   prompt?: string;
   /**
    *
-   * @type {string}
+   * @type {Array<string>}
    * @memberof UpdatedScheduledTaskDto
    */
-  skillUrl?: string;
+  skillUrls?: Array<string>;
 }
 
 /**

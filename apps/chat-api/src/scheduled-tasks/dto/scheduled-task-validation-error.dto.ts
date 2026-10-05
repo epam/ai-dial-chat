@@ -20,7 +20,7 @@ export class ScheduledTaskValidationErrorDto {
   })
   code?: ScheduledTaskErrorCode;
 
-  @ApiPropertyOptional({ example: 'skillUrl' })
+  @ApiPropertyOptional({ example: 'skillUrls' })
   field?: string;
 
   @ApiPropertyOptional({

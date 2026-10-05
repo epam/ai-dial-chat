@@ -67,7 +67,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   completedLabel,
   nextRunLabel,
   instructionsMarkdown,
-  skillDisplayName,
+  skillDisplayNames,
   renderInstructions,
   runs,
   runsIsLoading = false,
@@ -158,7 +158,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     <ScheduledTaskConfigurationSection
       instructionsLabel={labels.instructionsLabel}
       skillLabel={labels.skillLabel}
-      skillDisplayName={skillDisplayName}
+      skillDisplayNames={skillDisplayNames}
       instructionsMarkdown={instructionsMarkdown}
       renderInstructions={renderInstructions}
       fieldLabelClassName={fieldLabelClassName}
@@ -219,7 +219,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex h-full w-full flex-col overflow-y-auto',
+        'flex h-full min-h-0 w-full flex-col overflow-hidden',
         styles.container,
         className,
       )}
@@ -415,7 +415,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       {!isLoading &&
         !error &&
         (isMobile ? (
-          <div className="flex flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             <Tabs
               ariaLabel={labels.tabsAriaLabel ?? 'Scheduled task sections'}
               className="px-8"
@@ -441,14 +441,13 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
             style={
               {
                 flexDirection: 'row',
-                flexWrap: 'wrap',
                 '--st-details-width': layout?.detailsWidth,
                 '--st-history-width': layout?.historyWidth,
                 '--st-history-max-height': layout?.historyMaxHeight,
                 '--st-configuration-min-width': layout?.configurationMinWidth,
               } as CSSProperties
             }
-            className="flex flex-1"
+            className="flex min-h-0 flex-1 overflow-y-auto desktop:overflow-hidden"
           >
             <div
               role="group"
@@ -458,7 +457,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                 maxWidth: '100%',
               }}
               className={mergeClasses(
-                'flex w-full flex-col gap-5 border-e px-8 py-6',
+                'flex min-h-0 w-full flex-col gap-5 overflow-y-auto border-e px-8 py-6',
                 styles.detailsColumn,
               )}
             >
@@ -471,7 +470,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                 flex: `1 1 ${layout?.configurationMinWidth ?? '320px'}`,
                 minWidth: 0,
               }}
-              className="flex w-full min-w-0 flex-col gap-5 px-8 py-6"
+              className="flex min-h-0 w-full min-w-0 flex-col gap-5 overflow-y-auto px-8 py-6"
             >
               <h2 className={sectionTitleClassName}>
                 {labels.configurationTitle}
@@ -484,7 +483,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                 flex: `0 1 calc(${layout?.historyWidth ?? '360px'} + 48px)`,
                 minWidth: 0,
               }}
-              className="flex w-full items-start justify-center p-6"
+              className="flex min-h-0 w-full items-start justify-center overflow-y-auto p-6"
             >
               {buildHistorySection(ScheduledTaskHistorySectionVariant.Card)}
             </div>

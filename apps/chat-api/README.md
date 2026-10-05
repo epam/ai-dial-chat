@@ -22,13 +22,16 @@ Rate-limited manual starts and single-run reads preserve Scheduler's valid `Retr
 
 ## Scheduled task skill contract
 
-Scheduled-task POST/PUT bodies accept optional nullable `skillUrl`, validated
-as a DIAL `skills/{bucket}/{path}` resource reference. The 1024-character path
+Scheduled-task POST/PUT bodies accept optional `skillUrls: string[]`, validated
+per entry as a DIAL `skills/{bucket}/{path}` resource reference. The 1024-character path
 limit is measured after percent-decoding, so a saved encoded Unicode reference
 remains valid on update. Raw-reference safety checks still apply. `prompt` remains a
 required string; it may be empty when an effective skill exists. POST
-omission/null means no skill. PUT first reads authoritative detail: omission
-preserves the saved reference, null removes it, and a string replaces it.
+omission or [] means no skills; null is rejected. PUT first reads authoritative
+detail: omission preserves saved references, [] removes all skills, and a
+nonempty array replaces the complete selection. Identical references are
+deduplicated in selection order. This replaces the old single-reference field
+and requires callers to migrate together with the app/BFF release.
 
 Skill-bearing writes resolve model/agent capabilities with the session token
 and bucket through DeploymentsService's lookup facade and require
@@ -37,10 +40,10 @@ and bucket through DeploymentsService's lookup facade and require
 or `scheduledTaskDeploymentUnavailable`; failed validation never mutates a
 schedule or invalidates its list cache.
 
-The mapper encodes the resource exactly as chat and writes it to
+The mapper encodes every resource exactly as chat and writes the array to
 `properties.payload.messages[0].custom_content.skills: [{ url }]` in the
 Scheduler completion payload. Detail/create/update responses expose optional
-`skillUrl`; sparse list responses may omit it. There is no local Scheduler
+`skillUrls`; sparse list responses may omit it. There is no local Scheduler
 worker. The Scheduler integration contract covers persistence, explicit removal,
 and forwarding skills with optional instructions through the existing offline
 execution flow, as defined in the

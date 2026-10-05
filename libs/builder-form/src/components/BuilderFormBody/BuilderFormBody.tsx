@@ -5,9 +5,12 @@ import styles from './BuilderFormBody.module.scss';
 
 /* Shared width of the start/end columns, so every builder form lines its side
  * columns up on the same grid. */
-const SIDE_COLUMN_CLASS_NAME = mergeClasses('flex flex-col', styles.sideColumn);
+const SIDE_COLUMN_CLASS_NAME = mergeClasses(
+  'flex flex-col desktop:min-h-0 desktop:overflow-y-auto',
+  styles.sideColumn,
+);
 
-/** Builder form body split into start, main, and end columns — stacked on mobile, side by side on desktop. */
+/** Builder form body with one mobile scroller and independently scrolling desktop columns. */
 export const BuilderFormBody: FC<BuilderFormBodyProps> = ({
   left,
   children,
@@ -17,25 +20,22 @@ export const BuilderFormBody: FC<BuilderFormBodyProps> = ({
   const hasReservedEndColumn =
     left != null && metadata == null && layout?.reserveEndColumn !== false;
   const sideStyle: CSSProperties | undefined = layout
-    ? {
-        flex: `0 1 ${layout.sideColumnWidth ?? '400px'}`,
-        width: '100%',
-        minWidth: `min(100%, ${layout.sideColumnWidth ?? '400px'})`,
-        maxWidth: '100%',
-      }
+    ? ({
+        '--bfb-side-column-width': layout.sideColumnWidth ?? '400px',
+      } as CSSProperties)
     : undefined;
   const bodyStyle: CSSProperties | undefined = layout
     ? {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
         columnGap: layout.columnGap ?? '0px',
-        alignItems: 'stretch',
       }
     : undefined;
 
   return (
     <div
-      className={mergeClasses('flex min-w-0 flex-1', styles.body)}
+      className={mergeClasses(
+        'flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto desktop:flex-row desktop:overflow-hidden',
+        styles.body,
+      )}
       style={bodyStyle}
     >
       {left != null && (
@@ -43,14 +43,7 @@ export const BuilderFormBody: FC<BuilderFormBodyProps> = ({
           {left}
         </div>
       )}
-      <div
-        className="flex w-full min-w-0 flex-1 flex-col"
-        style={
-          layout
-            ? { flex: '1 1 320px', minWidth: 'min(100%, 320px)' }
-            : undefined
-        }
-      >
+      <div className="flex w-full min-w-0 flex-1 flex-col desktop:min-h-0 desktop:overflow-y-auto">
         {children}
       </div>
       {metadata != null && (

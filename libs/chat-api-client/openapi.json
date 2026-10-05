@@ -6216,7 +6216,7 @@
         "tags": ["scheduled-tasks"]
       },
       "put": {
-        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Omitting skillUrl preserves the saved reference; null removes it. Invalidates the scheduled tasks list cache on success.",
+        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Omitting skillUrls preserves saved references; [] removes them. Invalidates the scheduled tasks list cache on success.",
         "operationId": "updateScheduledTask",
         "parameters": [
           {
@@ -12734,9 +12734,12 @@
             "type": "string",
             "example": "Summarize my inbox"
           },
-          "skillUrl": {
-            "type": "string",
-            "example": "skills/public/daily-summary"
+          "skillUrls": {
+            "example": ["skills/public/daily-summary"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "displayName", "trigger"]
@@ -12822,7 +12825,7 @@
           },
           "field": {
             "type": "string",
-            "example": "skillUrl"
+            "example": "skillUrls"
           },
           "upstreamMessage": {
             "type": "string",
@@ -12858,11 +12861,13 @@
             "description": "Instructions; may be empty when the effective task has a skill.",
             "maxLength": 50000
           },
-          "skillUrl": {
-            "type": "string",
-            "nullable": true,
-            "example": "skills/public/daily-summary",
-            "description": "DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it."
+          "skillUrls": {
+            "example": ["skills/public/daily-summary"],
+            "description": "DIAL skill references with paths of at most 1024 decoded characters each. Omission preserves saved skills on update; an empty array removes them.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "description": {
             "type": "string",
@@ -12935,9 +12940,12 @@
             "type": "string",
             "example": "Summarize my inbox"
           },
-          "skillUrl": {
-            "type": "string",
-            "example": "skills/public/daily-summary"
+          "skillUrls": {
+            "example": ["skills/public/daily-summary"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "displayName", "trigger"]
@@ -13039,11 +13047,13 @@
             "description": "Instructions; may be empty when the effective task has a skill.",
             "maxLength": 50000
           },
-          "skillUrl": {
-            "type": "string",
-            "nullable": true,
-            "example": "skills/public/daily-summary",
-            "description": "DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it."
+          "skillUrls": {
+            "example": ["skills/public/daily-summary"],
+            "description": "DIAL skill references with paths of at most 1024 decoded characters each. Omission preserves saved skills on update; an empty array removes them.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "description": {
             "type": "string",
@@ -13116,9 +13126,12 @@
             "type": "string",
             "example": "Summarize my inbox"
           },
-          "skillUrl": {
-            "type": "string",
-            "example": "skills/public/daily-summary"
+          "skillUrls": {
+            "example": ["skills/public/daily-summary"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "displayName", "trigger"]

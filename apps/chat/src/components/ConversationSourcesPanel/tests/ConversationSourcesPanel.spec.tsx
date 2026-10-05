@@ -348,7 +348,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
       id: 'schedule-1',
       displayName: 'Task',
       prompt: '',
-      skillUrl: 'skills/public/deleted',
+      skillUrls: ['skills/public/deleted'],
     } as ScheduledTaskDto;
     render(<ConversationSourcesPanelContainer />);
     await userEvent.click(

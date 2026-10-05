@@ -172,8 +172,8 @@ export interface ScheduledTaskDetailViewProps {
   completedLabel?: string;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
-  /** Resolved skill name or full saved reference; omit to hide the field. */
-  skillDisplayName?: string;
+  /** Resolved skill names or full saved references, in selection order; omit or pass [] to hide the field. */
+  skillDisplayNames?: string[];
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
   /** Pre-formatted "Next run" label shown under the History title, e.g. "Next run: Jul 31 at 9:00 AM". Omit to hide (e.g. when the schedule is paused or inactive). */

@@ -19,15 +19,17 @@ vi.mock(
       onChange,
       isSkillsSupported,
     }: {
-      value?: string;
-      onChange: (value: string | undefined) => void;
+      value: string[];
+      onChange: (value: string[]) => void;
       isSkillsSupported: boolean;
     }) => (
       <input
-        aria-label="skillUrl"
+        aria-label="skillUrls"
         aria-invalid={!isSkillsSupported}
-        value={value ?? ''}
-        onChange={(event) => onChange(event.target.value || undefined)}
+        value={value.join(',')}
+        onChange={(event) =>
+          onChange(event.target.value ? event.target.value.split(',') : [])
+        }
       />
     ),
   }),
@@ -190,7 +192,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       {skillSelector}
-      {errors.skillUrl && <span>{errors.skillUrl}</span>}
+      {errors.skillUrls && <span>{errors.skillUrls}</span>}
       <textarea
         aria-label="prompt"
         value={values.prompt}
@@ -241,7 +243,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button
         onClick={onSubmit}
-        disabled={isSubmitting || Boolean(errors.skillUrl)}
+        disabled={isSubmitting || Boolean(errors.skillUrls)}
       >
         {labels.createButtonLabel}
       </button>
@@ -348,7 +350,7 @@ describe('ScheduledTaskCreatePage', () => {
     );
     const view = render(page());
     await fillValidForm();
-    fireEvent.change(screen.getByLabelText('skillUrl'), {
+    fireEvent.change(screen.getByLabelText('skillUrls'), {
       target: { value: 'skills/public/report' },
     });
     const submit = screen.getByRole('button', { name: 'buttons.create' });
@@ -378,8 +380,8 @@ describe('ScheduledTaskCreatePage', () => {
     createScheduledTaskMock.mockResolvedValue({ id: 'task' });
     renderAtRoute('/scheduled-tasks/new');
     await fillValidForm();
-    fireEvent.change(screen.getByLabelText('skillUrl'), {
-      target: { value: 'skills/public/report' },
+    fireEvent.change(screen.getByLabelText('skillUrls'), {
+      target: { value: 'skills/public/report,skills/public/summary' },
     });
     fireEvent.change(screen.getByLabelText('prompt'), {
       target: { value: '' },
@@ -395,8 +397,8 @@ describe('ScheduledTaskCreatePage', () => {
       screen.getByRole('button', { name: 'buttons.create' }),
     );
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
-    expect((screen.getByLabelText('skillUrl') as HTMLInputElement).value).toBe(
-      'skills/public/report',
+    expect((screen.getByLabelText('skillUrls') as HTMLInputElement).value).toBe(
+      'skills/public/report,skills/public/summary',
     );
     await userEvent.selectOptions(screen.getByLabelText('modelId'), 'gpt-4o');
     await userEvent.click(
@@ -405,7 +407,7 @@ describe('ScheduledTaskCreatePage', () => {
     await vi.waitFor(() =>
       expect(createScheduledTaskMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          skillUrl: 'skills/public/report',
+          skillUrls: ['skills/public/report', 'skills/public/summary'],
           prompt: '',
         }),
       ),
@@ -424,7 +426,7 @@ describe('ScheduledTaskCreatePage', () => {
     });
     renderAtRoute('/scheduled-tasks/new');
     await fillValidForm();
-    fireEvent.change(screen.getByLabelText('skillUrl'), {
+    fireEvent.change(screen.getByLabelText('skillUrls'), {
       target: { value: 'skills/public/report' },
     });
     await userEvent.click(

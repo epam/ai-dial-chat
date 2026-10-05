@@ -29,7 +29,7 @@ The Scheduled Tasks list page's primary "create" action SHALL navigate to `ROUTE
 
 The create-task page SHALL always return to the fixed list route `ROUTES.ScheduledTasks`; it reads no `returnUrl` (or other) query parameter. Cancel and the back control SHALL discard in-progress form state, perform no network call, and navigate to `ROUTES.ScheduledTasks`.
 
-A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/ai-dial-chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt` (possibly empty with a skill), optional `skillUrl`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `ROUTES.ScheduledTasks` with `state: { refresh: true }`, which makes the list page refetch. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
+A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/ai-dial-chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt` (possibly empty with a skill), optional `skillUrls`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `ROUTES.ScheduledTasks` with `state: { refresh: true }`, which makes the list page refetch. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
 
 **Dependency:** requires `add-scheduled-tasks-api` (`POST /api/v1/scheduled-tasks` + `scheduled-tasks.api.ts` wrapper) to be implemented first.
 
@@ -41,7 +41,7 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 #### Scenario: Valid submit persists via BFF and returns
 
 - **WHEN** all required fields pass validation and the user activates Create
-- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, skillUrl?, description? }` (no `stream` field), shows a success notification on 201, and navigates to `ROUTES.ScheduledTasks` with `state.refresh` set
+- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, skillUrls?, description? }` (no `stream` field), shows a success notification on 201, and navigates to `ROUTES.ScheduledTasks` with `state.refresh` set
 
 #### Scenario: Submit failure keeps the form open
 
@@ -51,7 +51,7 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 #### Scenario: A query parameter does not change the return route
 
 - **WHEN** the create route is opened with any query string, including `?returnUrl=/catalog`
-- **THEN** Cancel and a successful submit still navigate to `ROUTES.ScheduledTasks`
+- **THEN** Cancel and a successful submit both navigate to `ROUTES.ScheduledTasks`
 
 #### Scenario: Non-empty description is included in the submit body
 
@@ -67,7 +67,6 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 
 - **WHEN** the user enters a `description` longer than 500 characters and activates Create
 - **THEN** the page shows a validation error, no `POST` request is sent, and the Create action does not proceed
-
 ### Requirement: ScheduledTaskCreateForm lib component matches the BFF create contract
 
 `libs/scheduled-tasks` SHALL export a `ScheduledTaskCreateForm` component accepting `labels`, `values`, `errors`, `modelSelector` (`ReactNode`), `modelLabelId` (`string`), `onFieldChange`, `onCancel`, `onBack`, `onSubmit`, and optional `isSubmitting` (default `false`). `modelLabelId` is applied as the `id` of the Model or Agent field's `Label` element; the host generates it (e.g. via React `useId()`) rather than a hardcoded literal, and passes the same value as `modelSelector`'s own `aria-labelledby` target, so two concurrently-mounted form instances (or any future host reusing the component) never collide on a shared DOM id.
@@ -75,29 +74,31 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 The form SHALL render inside the shared `BuilderFormContainer` shell (`@epam/ai-dial-builder-form`) as a full-width header followed by a responsive two-column body:
 
 - **Header** — start side: a back control (arrow icon, mirrored in RTL via `rtl:scale-x-[-1]`) that calls `onBack` when activated, followed by the page title (`labels.pageTitle`). End side: Cancel (`labels.cancelButtonLabel`, calls `onCancel`) and the submit action (`labels.createButtonLabel`, calls `onSubmit`), in that order — shown at the `desktop` breakpoint; at `mobile` the pair moves to the form's sticky footer (see "Create-task form chrome adapts to mobile").
-- **Details column** — a `role="group"` region labeled `labels.detailsSectionTitle` (with a visible `h2` title and `labels.detailsSectionSubtitle`), holding, in order, Display name, Description, Model or Agent, and Repeat with its conditional schedule fields.
+- **Details column** — a `role="group"` region labeled `labels.detailsSectionTitle`, holding Display name, Description, Repeat and its conditional schedule fields, and Model or Agent.
 - **Configuration column** — a `role="group"` region labeled `labels.configurationSectionTitle`, holding Skill and Instructions.
 
 At the `desktop` breakpoint the two columns SHALL render side by side, Details narrower than Configuration. At `mobile` they SHALL stack full-width, Details above Configuration. Only Tailwind logical properties and the project's named breakpoints (`mobile`, `desktop`) MAY be used for this layout.
 
+The page shell SHALL keep its header outside the scrolling region and use the same responsive header spacing as the detail view (`px-4 py-2` below desktop; `px-8 py-0` with a 64 px height at desktop). The stacked mobile body SHALL own one vertical scrollbar; at desktop the body SHALL be a non-wrapping clipped row whose Details and Configuration columns scroll independently, matching the agent editor layout and preventing document-level scrolling.
+
 It SHALL render:
 
 - **Display name** — required text input (`values.displayName`)
-- **Description** — optional textarea (`values.description`), rendered between Display name and Model or Agent, with `maxLength={500}` (`DESCRIPTION_MAX_LENGTH`), a `{length}/500` caption shown when the field is non-empty, and `errors.description` as its inline error
-- **Model or Agent** — a required field rendering the host-supplied `modelSelector` element in place of a lib-owned selection control, under the kit's `Label` (`id={modelLabelId}`, `label={labels.modelOrAgentLabel}`, `required`), with `errors.modelId` rendered below the control. The lib performs no deployment lookup, filtering, or catalog navigation itself — it only renders whatever `modelSelector` the host passes.
-- **Repeat** — a single 2.0 `Select` (`@epam/ai-dial-ui-kit`) bound to `values.repeat: ScheduledTaskRepeat` (`'oneTime' | 'hourly' | 'daily' | 'weekly' | 'monthly'`), replacing the separate "Schedule type" (once/recurring) and "Frequency" (daily/weekly/monthly) dropdowns. It is NOT wrapped in a `<fieldset>`/`<legend>` with a visible "Schedule" section heading — the schedule controls render as a plain grouped block inside the Details column, which already carries its own `role="group"`/`aria-label` (`labels.detailsSectionTitle`)
+- **Description** — optional textarea (`values.description`), rendered between Display name and Repeat, with `maxLength={500}` and accessible feedback (e.g. a character count or inline validation message per `errors.description`) shown when the field is non-empty
+- **Repeat** — a single dropdown (`DialSelectField`) bound to `values.repeat: ScheduledTaskRepeat` (`'oneTime' | 'hourly' | 'daily' | 'weekly' | 'monthly'`), replacing the separate "Schedule type" (once/recurring) and "Frequency" (daily/weekly/monthly) dropdowns. It is NOT wrapped in a `<fieldset>`/`<legend>` with a visible "Schedule" section heading — the schedule controls render as a plain grouped block inside the Details column, which already carries its own `role="group"`/`aria-label` (`labels.detailsSectionTitle`)
 - **Run at** — the internal `ScheduledTaskRunAtField` component (`libs/scheduled-tasks/src/components/ScheduledTaskRunAtField`, not re-exported from the package index), wrapping a `Calendar` control (`mode={CalendarMode.DateTime}`, imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat === 'oneTime'`, bound to `values.runAt` (a `datetime-local`-style string) through the field's own `runAtToCalendarValue`/`calendarValueToRunAt` adaptation, with `errors.runAt` rendered below the control in the same inline-error pattern via the field's `errorClassName` prop. The field sets the earliest selectable moment to its mount time — a `minDate` pinned once per mount — so days strictly before the mount date render unselectable in the picker's month grid and activating them fires no `onFieldChange('runAt', …)`; the mount date itself and future days remain selectable. The earliest selectable moment is "now", not "now + lead": the page's existing submit-time lead validation (`runAt` must lead "now") is unchanged and still rejects `now`-ish selections at submit
-- **Time** — a required `Calendar` control (`mode={CalendarMode.Time}`, `showTimezone`, imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat` is `'daily'`, `'weekly'`, or `'monthly'` (NOT shown for `'hourly'`), bound to `values.time` (`HH:mm` local wall-clock string); a blur check against `TIME_OF_DAY_PATTERN` shows an inline error before submit, and full validation happens at the app edge
+- **Time** — a `Calendar` control (`mode={CalendarMode.Time}`, imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat` is `'daily'`, `'weekly'`, or `'monthly'` (NOT shown for `'hourly'`), bound to `values.time` (`HH:mm` local wall-clock string, validated at app edge)
 - **Day of week** — a `Calendar` control (`mode={CalendarMode.Weekday}`, imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat === 'weekly'`, bound to `values.dayOfWeek` via `dayOfWeekToCalendarValue`/`calendarValueToDayOfWeek` (`libs/scheduled-tasks/src/utils/calendar-value.ts`), which convert between `Calendar`'s ISO weekday value (`"1"`=Monday..`"7"`=Sunday) and `values.dayOfWeek`'s APScheduler-convention string (`"0"`=Monday..`"6"`=Sunday)
 - **Day of month** — shown when `values.repeat === 'monthly'` (`values.dayOfMonth`)
-- **Minute** — a required `NumberInput` (`integer`, `min={0}`, `max={59}`) shown when `values.repeat === 'hourly'`, bound to `values.minute` (stored as a `"0"`-`"59"` string, `''` when cleared); no `Time`, `Day of week`, or `Day of month` field is rendered for `'hourly'`
-- **Skill** - optional host-composed slot in Configuration above Instructions with `skillSelector`, `skillLabelId`, `skillErrorId`, `labels.skillLabel`, `values.skillUrl`, and `errors.skillUrl`
+- **Minute** — a required text input (matching the `Day of month` field's `Input` pattern) shown when `values.repeat === 'hourly'`, bound to `values.minute` (a `"0"`-`"59"` string); no `Time`, `Day of week`, or `Day of month` field is rendered for `'hourly'`
+- **Model or Agent** — a required field rendering the host-supplied `modelSelector` element in place of a lib-owned selection control, wrapped in the lib's own required-label/error markup (the "Model or Agent" label, a required marker, and `errors.modelId` rendered below the control) using the same visual pattern already used for `Calendar` fields without a built-in `labelProps` (see `withRequiredMarker`). The lib performs no deployment lookup, filtering, or catalog navigation itself — it only renders whatever `modelSelector` the host passes.
+- **Skill** - optional host-composed slot in Configuration above Instructions with `skillSelector`, `labels.skillLabel`, `values.skillUrls`, and `errors.skillUrls`; the composed UI-kit Select owns its label/error association
 - **Instructions** - markdown editor (`values.prompt`), required only when no skill is selected
 - **Cancel / Create** actions
 
 `values` SHALL NOT include a `stream` field, and the form MUST NOT render a stream toggle — scheduled task runs are always non-streaming background executions and this is not a user-configurable option.
 
-`description` is optional and MUST NOT participate in the Create-button required-field guard. The Create action SHALL be disabled while `isSubmitting` is `true`, while a description/instructions text refinement is in progress, while trimmed `displayName` or `values.modelId` is empty, while both trimmed `prompt` and `values.skillUrl` are empty, while `errors.skillUrl` is present, or — when the Time field is shown — while `values.time` is empty or the Time field has an error (minimum client-side guard; full validation uses shared checked preparation at the app boundary). `values.modelId` itself continues to be owned and set by the host via the `modelSelector` element's own `onSelect` callback (bound to `onFieldChange('modelId', ...)` by the host, outside the lib) — the lib's required-field guard reads `values.modelId` exactly as it did before this change; only the rendered control changed.
+`description` is optional and MUST NOT participate in the Create-button required-field guard. The Create action SHALL be disabled while `isSubmitting` is `true` or while `displayName` or `values.modelId` is empty, while both trimmed `prompt` and `values.skillUrls` are empty, or while `errors.skillUrls` is present (minimum client-side guard; full validation uses shared checked preparation at the app boundary). `values.modelId` itself continues to be owned and set by the host via the `modelSelector` element's own `onSelect` callback (bound to `onFieldChange('modelId', ...)` by the host, outside the lib) — the lib's required-field guard reads `values.modelId` exactly as it did before this change; only the rendered control changed.
 
 The `Run at` and `Time` `Calendar` controls' `onChange` callbacks (inside `ScheduledTaskRunAtField` for `runAt`, in the form for `time`) MUST adapt the ui-kit's `CalendarValue` (`Date | string | null`) into calls to `onFieldChange('runAt', ...)` / `onFieldChange('time', ...)` using the same value shapes the page already consumes (`values.runAt` as a `Date`-constructible value, `values.time` as an `"HH:mm"` string) — this is a UI-control swap, not a change to the `values`/`onFieldChange` contract.
 
@@ -151,7 +152,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: Hourly repeat renders a Minute field and no time, weekday, or month-day fields
 
 - **WHEN** `values.repeat === 'hourly'`
-- **THEN** the "Minute" `NumberInput` renders bound to `values.minute`, and no Time, Day of week, or Day of month field renders
+- **THEN** the "Minute" `Input` renders bound to `values.minute`, and no Time, Day of week, or Day of month field renders
 
 #### Scenario: Daily, Weekly, and Monthly repeat values use the Calendar Time control
 
@@ -191,7 +192,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: Details and Configuration render as two distinct regions
 
 - **WHEN** `ScheduledTaskCreateForm` renders
-- **THEN** the Display name, Description, Model or Agent, and Repeat fields render, in that order, inside the group labeled `labels.detailsSectionTitle`, and the Skill and Instructions fields render inside the group labeled `labels.configurationSectionTitle`
+- **THEN** the Display name, Description, Repeat, and Model or Agent fields render inside the group labeled `labels.detailsSectionTitle`, and the Skill and Instructions fields render inside the group labeled `labels.configurationSectionTitle`
 
 #### Scenario: Instructions editor updates the prompt value
 
@@ -207,7 +208,6 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 - **WHEN** the viewport matches the `mobile` breakpoint
 - **THEN** Details renders full-width above Configuration, both stacked in that order
-
 ### Requirement: Page maps form values to BFF trigger shape
 
 `ScheduledTaskCreatePage` SHALL use `@epam/ai-dial-chat-hooks/scheduled-tasks` checked preparation to convert form `values` to the BFF `trigger` field before calling `createScheduledTask`, branching on `values.repeat`:
@@ -534,11 +534,9 @@ Any new i18n keys this wiring requires (e.g. the placeholder, if not already cov
 
 `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` SHALL export a reverse mapping function that converts a `ScheduledTaskDto` into `ScheduledTaskCreateFormValues`, inverting `buildCronFields`/`buildCronWindowBoundary`'s UTC→local conversion using the same reference-`Date`-plus-getters technique (browser timezone/DST handling, not manual offset arithmetic). The function SHALL return a discriminated result — success with mapped `values`, or failure with a reason — rather than a value that may itself be invalid. `trigger.cron.fields` MUST be evaluated by presence of a non-`null` value per key, not by key presence alone — DIAL Scheduler always returns every cron field key, using `null` for ones that are not set.
 
-A monthly `day` SHALL be converted by subtracting the same UTC calendar-day shift from the stored number, never by rolling a `Date` to that UTC day: `day: 'last'` one day behind local time maps to `dayOfMonth = '1'`, a UTC `1` one day ahead maps to `'31'`, a UTC `31` one day behind maps to `'1'` (tasks saved before `'last'` was emitted), and `'last'` with any other shift, or a value outside `1`–`31`, fails closed with `UnsupportedCronShape`.
+Before applying the existing numeric-hour parsing, the mapper SHALL check for the Hourly shape: when `fields.hour === '*'`, `fields.minute` is present with a purely-numeric value, and neither `day` nor `day_of_week` is present, the mapper SHALL succeed with `values.repeat = 'hourly'` and `values.minute` set to the local minute-of-hour equivalent of the stored UTC minute (via a reference `Date` set with `setUTCHours(0, utcMinute)`, reading back `getMinutes()` — the inverse of the forward `setHours(0, minute)` → `getUTCMinutes()` conversion), with no `time`/`dayOfWeek`/`dayOfMonth` field set. Any other non-numeric `hour` value (cron range/list/step expressions, or `*` combined with a `day`/`day_of_week`) continues to fail closed, same as today.
 
-Before applying the existing numeric-hour parsing, the mapper SHALL check for the Hourly shape: when `fields.hour === '*'`, `fields.minute` is present with a purely-numeric value, and neither `day` nor `day_of_week` is present, the mapper SHALL succeed with `values.repeat = 'hourly'` and `values.minute` set to the local minute-of-hour equivalent of the stored UTC minute (via a reference `Date` set with `setUTCHours(0, utcMinute)`, reading back `getMinutes()` — the inverse of the forward `setHours(0, minute)` → `getUTCMinutes()` conversion), with no `dayOfWeek`/`dayOfMonth` field set and `time` set to the `DEFAULT_TIME_PLACEHOLDER` `'09:00'` (the same placeholder a one-time task maps with, and the create page's `DEFAULT_VALUES.time`), so switching Repeat to a time-based cadence on the edit page starts from a sensible time. Any other non-numeric `hour` value (cron range/list/step expressions, or `*` combined with a `day`/`day_of_week`) continues to fail closed, same as today.
-
-For the remaining (non-Hourly) shapes, mapping SHALL fail when: the task's `trigger` shape (cron fields with a set, non-`null` value outside `hour`/`minute`/`day`/`day_of_week`, or both `day` and `day_of_week` set) falls outside what `ScheduledTaskCreateFormValues`'s `repeat`-driven fields can express; `triggerType` does not correspond to a `repeat` value the form supports; or `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrl` are empty on the DTO. On mapping failure, `ScheduledTaskEditPage` SHALL render a localized, non-destructive error message and SHALL NOT mount `ScheduledTaskCreateForm` in an editable/submittable state — the original task's trigger is never read, coerced, and re-submitted.
+For the remaining (non-Hourly) shapes, mapping SHALL fail when: the task's `trigger` shape (cron fields with a set, non-`null` value outside `hour`/`minute`/`day`/`day_of_week`, or both `day` and `day_of_week` set) falls outside what `ScheduledTaskCreateFormValues`'s `repeat`-driven fields can express; `triggerType` does not correspond to a `repeat` value the form supports; or `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrls` are empty on the DTO. On mapping failure, `ScheduledTaskEditPage` SHALL render a localized, non-destructive error message and SHALL NOT mount `ScheduledTaskCreateForm` in an editable/submittable state — the original task's trigger is never read, coerced, and re-submitted.
 
 #### Scenario: Once-schedule task round-trips through reverse mapping
 
@@ -548,7 +546,7 @@ For the remaining (non-Hourly) shapes, mapping SHALL fail when: the task's `trig
 #### Scenario: Hourly task round-trips through reverse mapping at a whole-hour offset
 
 - **WHEN** a task's `trigger.cron.fields` is `{ hour: '*', minute: '15' }` and the viewer's browser timezone is UTC+2
-- **THEN** the reverse mapper succeeds with `values.repeat = 'hourly'`, `values.minute = '15'` (unchanged — a whole-hour offset does not shift the minute), `values.time = '09:00'` (the placeholder), and no `dayOfWeek` or `dayOfMonth` value is set
+- **THEN** the reverse mapper succeeds with `values.repeat = 'hourly'`, `values.minute = '15'` (unchanged — a whole-hour offset does not shift the minute), and no `time`, `dayOfWeek`, or `dayOfMonth` value is set
 
 #### Scenario: Hourly task round-trips through reverse mapping at a sub-hour offset
 
@@ -587,17 +585,16 @@ For the remaining (non-Hourly) shapes, mapping SHALL fail when: the task's `trig
 
 #### Scenario: Missing required fields fails closed
 
-- **WHEN** a task's `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrl` are empty
+- **WHEN** a task's `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrls` are empty
 - **THEN** the reverse mapper returns a failure result, and the edit page shows the same non-destructive error with Save unavailable, without submitting a partial update
 
 #### Scenario: Skill-only task hydrates without catalog metadata
 
-- **WHEN** an otherwise supported task has `prompt: ""` and a saved `skillUrl`
+- **WHEN** an otherwise supported task has `prompt: ""` and a saved `skillUrls`
 - **THEN** mapping succeeds with the same reference and empty prompt, independently of skill metadata resolution
-
 ### Requirement: Edit page submits via PUT and preserves input on failure
 
-On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rules as the create page, map the current form `values` to `UpdateScheduledTaskBodyDto` (identical shape to `CreateScheduledTaskBodyDto`) using the same trigger-building logic as `mapFormValuesToCreateBody`, and call `updateScheduledTask(scheduleId, body)` (`PUT /api/v1/scheduled-tasks/:scheduleId`) through `apps/chat/src/server-api/scheduled-tasks.api.ts`. The Save action SHALL be disabled while a submission is in flight (`isSubmitting`) to prevent duplicate submissions. On success (**200 OK**), the page SHALL show a localized success notification and navigate to `getScheduledTaskDetailRoute(scheduleId)`. On failure, all user-entered form values SHALL be preserved, an error notification SHALL be shown (including the request/trace id when available, per the existing notification pattern), `isSubmitting` SHALL be reset so Save is re-enabled, and no navigation SHALL occur. A task-not-found **404** SHALL render the same NotFoundPage treatment as an initial task-load 404; a response carrying `scheduledTaskDeploymentUnavailable` SHALL preserve the draft and show a model error instead; a response carrying a field-mapped code (`scheduledTaskSkillUnsupported`, `scheduledTaskInstructionsOrSkillRequired`) SHALL show the inline field error instead of a notification. **400**, **403**, **409**, **429**, **502**, and **503** otherwise SHALL all surface through that same single error-notification path, whose message `resolveScheduledTaskErrorMessage` chooses: `toolsetSignin.adminConsentRequired` for `scheduledTaskAdminConsentRequired`, else the response's `upstreamMessage` from DIAL Scheduler, else the localized `scheduledTasks.edit.errorNotification`; the BFF's generic `message` is never displayed, matching `ScheduledTaskCreatePage`'s single-catch-all error handling. **401** SHALL trigger the app's existing unauthenticated-session handling in the API client layer, which intercepts it before it reaches this page's catch block in the normal flow.
+On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rules as the create page, map the current form `values` to `UpdateScheduledTaskBodyDto` (identical shape to `CreateScheduledTaskBodyDto`) using the same trigger-building logic as `mapFormValuesToCreateBody`, and call `updateScheduledTask(scheduleId, body)` (`PUT /api/v1/scheduled-tasks/:scheduleId`) through `apps/chat/src/server-api/scheduled-tasks.api.ts`. The Save action SHALL be disabled while a submission is in flight (`isSubmitting`) to prevent duplicate submissions. On success (**200 OK**), the page SHALL show a localized success notification and navigate to `getScheduledTaskDetailRoute(scheduleId)`. On failure, all user-entered form values SHALL be preserved, an error notification SHALL be shown (including the request/trace id when available, per the existing notification pattern), `isSubmitting` SHALL be reset so Save is re-enabled, and no navigation SHALL occur. A task-not-found **404** SHALL render the same NotFoundPage treatment as an initial task-load 404; a response carrying `scheduledTaskDeploymentUnavailable` SHALL preserve the draft and show a model error instead. **400**, **403**, **429**, **502**, and **503** SHALL all surface through that same single error-notification path — the notification's message text comes from the server's own error body via `getApiErrorDetails`, so it already differs meaningfully per status without the page hardcoding four separate copy variants, matching `ScheduledTaskCreatePage`'s existing single-catch-all error handling. **401** SHALL trigger the app's existing unauthenticated-session handling in the API client layer, which intercepts it before it reaches this page's catch block in the normal flow.
 
 #### Scenario: Back and Cancel both return to the detail page without a network call
 
@@ -611,8 +608,8 @@ On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rul
 
 #### Scenario: Submit failure preserves entered values and re-enables Save
 
-- **WHEN** the user activates Save and `updateScheduledTask` rejects with a 400, 403, 429, 502, or 503 that carries no field-mapped code
-- **THEN** an error notification is shown with the message chosen by `resolveScheduledTaskErrorMessage` (admin-consent key, else `upstreamMessage`, else `scheduledTasks.edit.errorNotification`) and a trace id when present, the form remains open with all entered values unchanged, `isSubmitting` returns to `false`, and no navigation occurs
+- **WHEN** the user activates Save and `updateScheduledTask` rejects with a 400, 403, 429, 502, or 503
+- **THEN** an error notification is shown with the server's error message and a trace id when present, the form remains open with all entered values unchanged, `isSubmitting` returns to `false`, and no navigation occurs
 
 #### Scenario: Duplicate submission is prevented while a save is in flight
 
@@ -624,13 +621,12 @@ On submit, `ScheduledTaskEditPage` SHALL run the same client-side validation rul
 - **WHEN** `updateScheduledTask` rejects with a 404 (task deleted or inaccessible between load and save)
 - **THEN** the edit page renders `NotFoundPage`
 
-The shared update mapper SHALL include the hydrated `skillUrl`, or explicit `null` after removal, and allow empty prompt with a skill. Skill compatibility/content errors returned by the BFF SHALL be displayed without losing draft state. A hidden feature-gated field SHALL not be cleared during hydration or serialization.
+The shared update mapper SHALL include the hydrated `skillUrls`, or explicit `[]` after removal, and allow empty prompt with a skill. Skill compatibility/content errors returned by the BFF SHALL be displayed without losing draft state. A hidden feature-gated field SHALL not be cleared during hydration or serialization.
 
 #### Scenario: Edit removes a skill explicitly
 
 - **WHEN** a user removes the skill, retains nonblank instructions, and saves
-- **THEN** the PUT body includes `skillUrl: null`, and a subsequent detail/edit read has no skill
-
+- **THEN** the PUT body includes `skillUrls: []`, and a subsequent detail/edit read has no skill
 ### Requirement: Edit-task strings flow through react-i18next
 
 Every user-visible string on the edit-task page (page title, Save button label, loading/error/not-found/unsupported-trigger messages, success/error notifications) MUST be resolved via `useTranslation().t()` in the app and passed into `ScheduledTaskCreateForm` as plain strings. Field-level labels come from `useScheduledTaskFormLabels('edit')`, which reuses the create page's `scheduledTasks.create.*` field-level keys (display name, description, schedule, model, instructions labels are identical between create and edit) and selects `ButtonsI18nKeys.Save` for the submit label (the create mode selects `ButtonsI18nKeys.Create`). The load-error state uses `scheduledTasks.edit.loadErrorLabel` with a retry reusing `scheduledTasks.list.retryLabel`; the unsupported-trigger state uses `scheduledTasks.edit.invalidScheduleLabel` with a back action reusing `scheduledTasks.create.backButtonLabel`. Edit-specific keys under `scheduledTasks.edit.*` exist only for copy with no existing generic equivalent: the page title, the load error, the unsupported-trigger message, and the success/error notifications.
@@ -744,23 +740,22 @@ Edit state SHALL distinguish loading, ready, not-found, load-error and unsupport
 
 ### Requirement: Scheduled task configuration exposes a controlled optional Skill field
 
-Create and edit SHALL render Skill above Instructions. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode`, `skillLabelId`, `skillErrorId`, and `labels.skillLabel`, and render its own label/error markup only when the slot is supplied. The host SHALL provide unique matching label/error IDs to the composed control. The library SHALL add `skillUrl?: string` to form values and `skillUrl?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
+Create and edit SHALL render Skill above Instructions. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode` and render it without duplicating the composed control's label/error markup. The host-composed UI-kit Select SHALL receive `labels.skillLabel` and `errors.skillUrls` so its own label and error are associated with its combobox. When the slot is absent, the form SHALL still render `errors.skillUrls` as a live form-level error. The library SHALL add `skillUrls?: string[]` to form values and `skillUrls?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
 
-Existing page-local controlled form values SHALL own selection. `SkillSelectorField` from `@epam/ai-dial-skills` SHALL report replacement/removal through `onFieldChange('skillUrl', value)` via the app adapter. No new context or second uncontrolled selection state SHALL be introduced. The library minimum save guard SHALL accept nonblank instructions or a nonempty skill, and SHALL reject a skill field error; checked preparation remains mandatory before writing.
+Existing page-local controlled form values SHALL own selection. `SkillSelectorField` from `@epam/ai-dial-skills` SHALL report append/removal through `onFieldChange('skillUrls', value)` via the app adapter. No new context or second uncontrolled selection state SHALL be introduced. The library minimum save guard SHALL accept nonblank instructions or a nonempty skill array, and SHALL reject a skill field error; checked preparation remains mandatory before writing.
 
 #### Scenario: Select replace and remove on create and edit
 
-- **WHEN** a user selects a skill, replaces it, or removes it in either form
-- **THEN** the controlled draft has at most one matching reference and the control immediately reflects the value
+- **WHEN** a user selects or removes skills in either form
+- **THEN** the controlled draft keeps the ordered references, ignores duplicate selections, and the control immediately reflects the value
 - **AND** removing the last skill with blank instructions disables save
 
-#### Scenario: Favorites picker matches the model field
+#### Scenario: Skill picker lists all skills
 
 - **WHEN** the user opens the Skill field
-- **THEN** the app supplies favorites from personal, shared, and public skill collections using the existing favorites context, without changing chat's selection
-- **AND** desktop uses an anchored dropdown and mobile uses the existing bottom-sheet shell, both with search, favorites, and a Browse button for the skill-only catalog
-- **AND** the input uses the model selector's UI-kit styling with a trailing clear button
-- **AND** favorite rows do not expose the hover tooltip or View details action on task forms
+- **THEN** the app supplies every personal, shared, and public skill (deduplicated by reference) as a checkbox option, without favorites filtering, a Browse action, or a change to chat's selection
+- **AND** every breakpoint uses the responsive UI-kit `Select` multiple popover with search
+- **AND** the input uses the model selector's UI-kit styling and renders selected skills with the Select's built-in removable tags
 - **AND** the Skill field and Instructions editor share the same available width and 996px maximum width
 
 #### Scenario: Instructions only skill only and combined content
@@ -778,8 +773,9 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 #### Scenario: Disabled field explains why it is disabled
 
 - **WHEN** the selected model or agent does not support skills
-- **THEN** the Skill field is disabled and hovering it shows a tooltip with the reason: `skillSelector.unsupportedTooltipLabel` while a skill is selected, `skillSelector.unavailableTooltipLabel` when none is
-- **AND** with no skill selected the same reason is attached to the combobox through `aria-describedby`, since a disabled control receives neither hover nor focus
+- **THEN** an empty Skill field is disabled; with saved selections, opening and adding are prevented while the UI-kit tags remain removable
+- **AND** hovering it shows a tooltip with the reason: `skillSelector.unsupportedTooltipLabel` while at least one skill is selected, `skillSelector.unavailableTooltipLabel` when none is
+- **AND** with no skill selected the same reason is passed as the Select caption, which associates it with the combobox through `aria-describedby`
 - **AND** on a touch-only device the tooltip renders nothing, so the reason is not shown visually there
 
 #### Scenario: Missing skill metadata cannot bypass validation
@@ -792,7 +788,6 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 - **WHEN** a save returns `scheduledTaskSkillUnsupported` and deployment support subsequently changes from false to true
 - **THEN** the stale server error clears and the unchanged draft can be submitted again
 - **AND** unrelated rerenders do not clear a server rejection while capability data remains unchanged
-
 ### Requirement: Scheduled Skill UI preserves localization accessibility and responsive behavior
 
 The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` and `skillSelector.unsupportedTooltipLabel` for every unsupported message about a selected skill, and translate `skillSelector.unavailableTooltipLabel` for the disabled field with no selection. Existing `scheduledTasksEnabled` route gating and its resolution through the app-config registry key `features.scheduledTasksEnabled` (`FeatureKey.ScheduledTasksEnabled`) SHALL remain unchanged; no new flag/role is introduced.

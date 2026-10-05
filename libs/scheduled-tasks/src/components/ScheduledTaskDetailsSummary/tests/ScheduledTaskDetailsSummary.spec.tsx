@@ -12,21 +12,42 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 });
 
 describe('ScheduledTaskDetailsSummary', () => {
+  it('shows all skill names and URL fallbacks in order, hiding an empty selection', () => {
+    const { container, rerender } = render(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        skillLabel="Skills"
+        instructionsLabel="Instructions"
+        skillDisplayNames={['Report', 'skills/public/deleted']}
+      />,
+    );
+    expect(container.textContent).toBe('SkillsReportskills/public/deleted');
+    rerender(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        skillLabel="Skills"
+        instructionsLabel="Instructions"
+        skillDisplayNames={[]}
+      />,
+    );
+    expect(screen.queryByText('Skills')).toBeNull();
+  });
+
   it.each(['Resolved skill', 'skills/public/deleted'])(
     'renders Skill between Model and Instructions: %s',
-    (skillDisplayName) => {
+    (skillDisplayNames) => {
       const { container, rerender } = render(
         <ScheduledTaskDetailsSummary
           modelLabel="Model"
           modelDisplayName="Model A"
           skillLabel="Skill"
-          skillDisplayName={skillDisplayName}
+          skillDisplayNames={[skillDisplayNames]}
           instructionsLabel="Instructions"
           instructionsMarkdown="Do work"
         />,
       );
       expect(container.textContent).toBe(
-        `ModelModel ASkill${skillDisplayName}InstructionsDo work`,
+        `ModelModel ASkill${skillDisplayNames}InstructionsDo work`,
       );
       rerender(
         <ScheduledTaskDetailsSummary
