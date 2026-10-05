@@ -1,21 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUser } from '../../../context/auth/UserContext';
 import { useOptionalOverlay } from '../../../context/overlay/OverlayContext';
 import { logout } from '../../../server-api/auth.api';
 import { AuthStatus } from '../../../types/auth-status';
 import LogoutConfirmationModal from '../LogoutConfirmationModal';
 
-const navigateMock = vi.fn();
 const resetMock = vi.fn();
+const replaceSpy = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
-}));
-
-vi.mock('react-router', () => ({
-  useNavigate: () => navigateMock,
 }));
 
 vi.mock('../../../context/auth/UserContext', () => ({
@@ -61,6 +57,11 @@ describe('LogoutConfirmationModal', () => {
     } as ReturnType<typeof useUser>);
     vi.mocked(useOptionalOverlay).mockReturnValue(undefined);
     vi.mocked(logout).mockResolvedValue(undefined);
+    vi.stubGlobal('location', { replace: replaceSpy });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('keeps the current route after logout in overlay mode', async () => {
@@ -73,18 +74,35 @@ describe('LogoutConfirmationModal', () => {
 
     await vi.waitFor(() => expect(logout).toHaveBeenCalledOnce());
     expect(resetMock).toHaveBeenCalledOnce();
-    expect(navigateMock).not.toHaveBeenCalled();
+    expect(replaceSpy).not.toHaveBeenCalled();
   });
 
-  it('navigates to login after logout outside overlay mode', async () => {
+  /*
+   * A full document load picks up the current chunk hashes; a client-side
+   * navigate would lazy-import a Login chunk a redeploy may have removed
+   * (Issue #9254).
+   */
+  it('loads the login page as a fresh document outside overlay mode', async () => {
     render(<LogoutConfirmationModal isOpen onClose={vi.fn()} />);
 
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.logOut' }),
     );
 
-    await vi.waitFor(() => expect(logout).toHaveBeenCalledOnce());
-    expect(resetMock).toHaveBeenCalledOnce();
-    expect(navigateMock).toHaveBeenCalledWith('/login');
+    await vi.waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/login'));
+    expect(logout).toHaveBeenCalledOnce();
+    expect(resetMock).not.toHaveBeenCalled();
+  });
+
+  it('still loads the login page when the logout request fails', async () => {
+    vi.mocked(logout).mockRejectedValue(new Error('network'));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(<LogoutConfirmationModal isOpen onClose={vi.fn()} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.logOut' }),
+    );
+
+    await vi.waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/login'));
   });
 });
