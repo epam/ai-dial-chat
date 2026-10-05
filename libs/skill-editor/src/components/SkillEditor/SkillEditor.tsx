@@ -500,7 +500,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       items.push({
         key: 'upload-files',
         label:
-          t.uploadFilesLabel ?? t.addUploadLabel ?? 'Upload files from device',
+          t.uploadFilesLabel ?? 'Upload files from device',
         icon: menuIcon(IconUpload),
         onClick: () =>
           openUploadDialog({
@@ -537,7 +537,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       pickFromFileSystem,
       t.createFolderLabel,
       t.uploadFilesLabel,
-      t.addUploadLabel,
       t.uploadArchiveLabel,
       t.openFileSystemLabel,
       startDraft,

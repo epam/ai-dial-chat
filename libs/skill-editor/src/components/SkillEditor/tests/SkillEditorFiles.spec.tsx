@@ -969,6 +969,26 @@ describe('SkillEditor — node menu', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('renders Delete as a danger item and leaves the Add entries neutral', () => {
+    renderEditor(
+      {
+        files: [
+          { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+        ],
+      },
+      fullFileActions(),
+    );
+
+    for (const item of screen.getAllByRole('menuitem', { name: 'Delete' })) {
+      expect(item.className).toBe('text-error');
+    }
+    for (const item of screen.getAllByRole('menuitem', {
+      name: 'Create folder',
+    })) {
+      expect(item.className).toBe('');
+    }
+  });
+
   it('labels the Delete entry with a host deleteLabel', () => {
     renderEditor(
       {

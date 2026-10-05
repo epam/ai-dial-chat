@@ -159,10 +159,6 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   filesHeading?: string;
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */
   filesTreeAriaLabel?: string;
-  /**
-   * @deprecated Use `uploadFilesLabel`. Still used as its fallback.
-   */
-  addUploadLabel?: string;
   /** Label of the Files pane's Add dropdown trigger. Defaults to `'Add'`. */
   addLabel?: string;
   /** Add-menu entry that creates a folder inline. Defaults to `'Create folder'`. */

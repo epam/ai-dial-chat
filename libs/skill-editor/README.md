@@ -250,7 +250,6 @@ file-tree entries are `addLabel`, `createFolderLabel`, `uploadFilesLabel`,
 `uploadArchiveDialogTitle`, `uploadArchiveDropZoneLabel`,
 `uploadArchiveDropZoneMobileLabel`, `uploadArchiveErrorMessage`,
 `uploadArchiveEmptyMessage` and `uploadArchiveExtractingAriaLabel`.
-`addUploadLabel` is a deprecated fallback for `uploadFilesLabel`.
 `styles.typography.menuIconClassName`
 colors the Add-menu icons (`'text-secondary'` by default);
 the Delete entry renders as a danger (red) item, and `removeIconClassName`
