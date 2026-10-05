@@ -33,23 +33,9 @@ import type { ToolsetOAuthLoginResult } from '../../models/toolset-oauth-login';
 import { ToolsetOAuthLoginStatus } from '../../models/toolset-oauth-login';
 import { isToolsetAuthValid, isValidEndpointUrl } from '../../utils/toolsets';
 
-/*
- * OAuth defaults to WithConfig when no client is configured yet, so a
- * brand-new toolset can't be saved with an empty OAuth registration — the
- * config fields only render in WithConfig mode. Once a client exists (e.g.
- * loaded from a saved toolset), WithLogin becomes the default so switching
- * back to OAuth just reauthenticates against the existing config.
- */
-const defaultWithLoginFor = (
-  type: ToolsetAuthTypes,
-  hasExistingOAuthConfig: boolean,
-): WithLogin => {
-  if (type === ToolsetAuthTypes.None) return WithLogin.WithoutLogin;
-  if (type === ToolsetAuthTypes.OAuth && !hasExistingOAuthConfig) {
-    return WithLogin.WithConfig;
-  }
-  return WithLogin.WithLogin;
-};
+// OAuth defaults to standard login (dynamic client registration); custom login is opt-in.
+const defaultWithLoginFor = (type: ToolsetAuthTypes): WithLogin =>
+  type === ToolsetAuthTypes.None ? WithLogin.WithoutLogin : WithLogin.WithLogin;
 
 const segmentLabelFor = (
   type: ToolsetAuthTypes,
@@ -94,7 +80,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
     if (isControlsDisabled || type === auth.authenticationType) return;
     onAuthChange({
       authenticationType: type,
-      withLogin: defaultWithLoginFor(type, Boolean(auth.clientId?.trim())),
+      withLogin: defaultWithLoginFor(type),
     });
   };
 

@@ -314,12 +314,12 @@ describe('AuthSection', () => {
       ).toBe('false');
     });
 
-    it('defaults a fresh OAuth selection to WithConfig so config fields are visible immediately', async () => {
+    it('defaults a fresh OAuth selection to standard login', async () => {
       const onAuthChange = vi.fn();
       renderSection({ onAuthChange });
       await user.click(screen.getByRole('radio', { name: 'OAuth' }));
       expect(onAuthChange).toHaveBeenCalledWith(
-        expect.objectContaining({ withLogin: WithLogin.WithConfig }),
+        expect.objectContaining({ withLogin: WithLogin.WithLogin }),
       );
     });
 
