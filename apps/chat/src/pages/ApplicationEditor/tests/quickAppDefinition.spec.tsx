@@ -418,7 +418,7 @@ describe('ApplicationEditorPage — quick app', () => {
           name: AppsEditorI18nKeys.EditTitle,
         }),
       ).toBeNull();
-      expect(document.activeElement).toBe(backToSetup);
+      expect(backToSetup.matches(':focus')).toBe(true);
     });
 
     it('returns to the same embedded editor on Back to setup and focuses Preview', async () => {
@@ -433,8 +433,10 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBe(editorBefore);
       expect(mockTriggerSave).toHaveBeenCalledOnce();
       expect(
-        screen.getAllByRole('button', { name: BasicI18nKeys.Preview }),
-      ).toContain(document.activeElement);
+        screen
+          .getAllByRole('button', { name: BasicI18nKeys.Preview })
+          .some((button) => button.matches(':focus')),
+      ).toBe(true);
       expect(
         screen.queryByRole('button', {
           name: AppsEditorI18nKeys.PreviewBackToSetup,

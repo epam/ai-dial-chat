@@ -80,7 +80,7 @@ describe('QuickAppPreview', () => {
 
   it('focuses Back to setup when the preview becomes visible', () => {
     const { rerender } = renderPreview({ isVisible: false });
-    expect(document.activeElement).not.toBe(getBackButton());
+    expect(getBackButton().matches(':focus')).toBe(false);
 
     rerender(
       <MemoryRouter initialEntries={[`/apps-editor?schema=${SCHEMA.id}`]}>
@@ -93,12 +93,14 @@ describe('QuickAppPreview', () => {
       </MemoryRouter>,
     );
 
-    expect(document.activeElement).toBe(getBackButton());
+    expect(getBackButton().matches(':focus')).toBe(true);
   });
 
   it('mirrors the back arrow in RTL', () => {
     renderPreview();
 
+    /* The arrow is aria-hidden, so no accessible query reaches it; this asserts a CSS class. */
+    // eslint-disable-next-line testing-library/no-node-access
     const icon = getBackButton().querySelector('svg');
     expect(icon?.getAttribute('class')).toContain('rtl:scale-x-[-1]');
   });
