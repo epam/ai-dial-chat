@@ -679,15 +679,9 @@ gate. For every other item the argument is always `false`. It is cleared on
 every open, including immediately after a publication that carried it.
 
 Its copy travels through the existing `publishLabels` prop as
-`credentialsLabel` and `credentialsHint`.
-
-`historySharedCredentialsLabel` travels the same way, for the marker
-`PublishHistoryList` puts on a past publication that carried shared
-credentials — but **it has no visible effect today**: `PublishPanel` keeps its
-versions-history section behind a `TODO`, so the marker (like
-`historyLoadingLabel` and `historyErrorLabel` beside it) only appears once
-that section is re-enabled. The data path is wired and unit-tested; supplying
-the label now simply means nothing else has to change then.
+`credentialsLabel` and `credentialsHint`. The publish sub-view shows no
+versions history; `getPublishHistory` is still called, because its result
+drives the Unpublish action.
 
 ```tsx
 <DetailsPanel
@@ -705,9 +699,6 @@ the label now simply means nothing else has to change then.
   publishLabels={{
     credentialsLabel: t('catalog.publish.credentialsLabel'),
     credentialsHint: t('catalog.publish.credentialsHint'),
-    historySharedCredentialsLabel: t(
-      'catalog.publish.historySharedCredentials',
-    ),
   }}
 />
 ```

@@ -51,10 +51,6 @@ interface Props {
    * one request. Defaults to an empty list.
    */
   history?: PublishHistoryEntry[];
-  /** Whether the handed-down history lookup is still in flight. Default: `false`. */
-  isHistoryLoading?: boolean;
-  /** Whether the handed-down history lookup failed. Default: `false`. */
-  hasHistoryError?: boolean;
 }
 
 /**
@@ -72,8 +68,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
   onClose,
   returnFocusRef,
   history = EMPTY_HISTORY,
-  isHistoryLoading = false,
-  hasHistoryError = false,
 }) => {
   const { t } = useTranslation();
   const { notifyOperationSuccess } = useOperationNotification();
@@ -145,9 +139,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
     <StandalonePublishPanel
       isOpen={isOpen}
       resource={resource}
-      history={history}
-      isHistoryLoading={isHistoryLoading}
-      hasHistoryError={hasHistoryError}
       folderItems={publishFlow.folderItems}
       selectedFolderPath={publishFlow.selectedFolderPath}
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}

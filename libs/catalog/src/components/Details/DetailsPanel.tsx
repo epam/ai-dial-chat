@@ -290,8 +290,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const [publishHistory, setPublishHistory] = useState<PublishHistoryEntry[]>(
     [],
   );
-  const [isPublishHistoryLoading, setIsPublishHistoryLoading] = useState(false);
-  const [hasPublishHistoryError, setHasPublishHistoryError] = useState(false);
   /* Distinguishes "resolved, zero folders" from "not looked up yet" — the
    * Unpublish entry is withheld in the second case and hidden in the first. */
   const [isPublishHistoryResolved, setIsPublishHistoryResolved] =
@@ -490,8 +488,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     }
     const requestedItemId = item.id;
     publishHistoryRequestedItemIdRef.current = requestedItemId;
-    setIsPublishHistoryLoading(true);
-    setHasPublishHistoryError(false);
 
     const resolve = async () => {
       try {
@@ -500,12 +496,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           return;
         setPublishHistory(entries);
         setIsPublishHistoryResolved(true);
-        setIsPublishHistoryLoading(false);
       } catch {
         if (publishHistoryRequestedItemIdRef.current !== requestedItemId)
           return;
-        setHasPublishHistoryError(true);
-        setIsPublishHistoryLoading(false);
         /* Cleared so the next Manage-menu or publish open retries the lookup. */
         publishHistoryRequestedItemIdRef.current = null;
       }
@@ -613,8 +606,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setIsPublishOpen(false);
     publishFlow.reset();
     setPublishHistory([]);
-    setHasPublishHistoryError(false);
-    setIsPublishHistoryLoading(false);
     setIsPublishHistoryResolved(false);
     publishHistoryRequestedItemIdRef.current = null;
     setSelectedUnpublishFolder(null);
@@ -1212,9 +1203,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 type: item.type,
                 iconUrl: item.iconUrl,
               }}
-              history={publishHistory}
-              isHistoryLoading={isPublishHistoryLoading}
-              hasHistoryError={hasPublishHistoryError}
               folderItems={publishFlow.folderItems}
               selectedFolderPath={publishFlow.selectedFolderPath}
               onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}

@@ -1561,12 +1561,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               onClose={handleClosePublishPanel}
               returnFocusRef={rowActionsTriggerRef}
               history={publishPanelHistory.entries}
-              isHistoryLoading={
-                publishPanelHistory.status === PublishHistoryStatus.Loading
-              }
-              hasHistoryError={
-                publishPanelHistory.status === PublishHistoryStatus.Failed
-              }
             />
           </Suspense>
         )}

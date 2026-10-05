@@ -140,7 +140,7 @@ The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) whe
 
 The fetch is load-bearing beyond the publish panel: it is the only source of the folder list the Unpublish action needs, and it is what makes that action visible at all (see `catalog-unpublish-flow`). While it returned a frozen `[]`, `Unpublish` could never appear for any catalog entity.
 
-The publish sub-view SHALL NOT render a versions-history list: `PublishPanel` has no history section, so the fetched history is consumed only by the Unpublish action. `PublishPanel` still declares `history`/`isHistoryLoading`/`hasHistoryError` and the `history*` labels, but does not read them; `PublishHistoryList` remains exported from `@epam/ai-dial-publish-panel` for custom layouts and is not rendered by the app.
+The publish sub-view SHALL NOT render a versions-history list: `PublishPanel` has no history section and takes no history props, so the fetched history is consumed by `usePublishFlow` (existing-publication detection) and by the Unpublish action. `PublishHistoryList` remains exported from `@epam/ai-dial-publish-panel` for custom layouts and is not rendered by the app.
 
 Submit success: `CatalogView`'s `onPublishSuccess` SHALL raise its notification through `useOperationNotification` (see `entity-operation-notifications`) with the item's resolved `NotifiableEntity` and `EntityOperation.PublishRequested`, passing the entity name and the selected destination folder. The copy SHALL state that a publish request was submitted and appears once an admin approves it — the endpoint creates an admin-pending DIAL Core publication, exactly as the conversation publish flow already reports. The previous `CatalogI18nKeys.PublishSuccess*` pair (`"Published"` / `"\"{{name}}\" published to {{folder}}"`) SHALL be deleted, since it claimed an outcome the backend does not deliver.
 
@@ -382,11 +382,11 @@ The eligibility decision SHALL be made inside `libs/catalog` from `item.credenti
 - **WHEN** the publisher selects that folder
 - **THEN** the checkbox stays cleared
 
-### Requirement: Catalog publish history shows which publications carried shared credentials
+### Requirement: Catalog publish history records which publications carried shared credentials
 
-`getPublishHistory` (`useCatalogPublishing`) SHALL map the endpoint's `publishCredentials` field onto `PublishHistoryEntry` via `mapPublishHistoryEntryDto`. `CatalogView` passes a translated `historySharedCredentialsLabel` (`catalog.publish.historySharedCredentials`, on `CatalogI18nKeys` and in `en.json`) through `publishLabels`, but `PublishPanel` renders no history, so the marker is not shown anywhere in the app today; `PublishHistoryList` would render it as `sharedCredentialsLabel` in a custom layout (see `publish-panel-library`).
+`getPublishHistory` (`useCatalogPublishing`) SHALL map the endpoint's `publishCredentials` field onto `PublishHistoryEntry` via `mapPublishHistoryEntryDto`. The app renders no history list, so no marker is shown; `PublishHistoryList` renders it through its `sharedCredentialsLabel` prop in a custom layout (see `publish-panel-library`).
 
-The synthesised single-entry history a public copy's own id produces (`isPublicCatalogEntityId`) SHALL leave `publishCredentials` unset, since that path never calls the endpoint and has no publication record to read it from. Absent reads as `false`, so the marker simply does not appear.
+The synthesised single-entry history a public copy's own id produces (`isPublicCatalogEntityId`) SHALL leave `publishCredentials` unset, since that path never calls the endpoint and has no publication record to read it from. Absent reads as `false`.
 
 #### Scenario: A publication made with shared credentials is marked in history
 
@@ -396,7 +396,7 @@ The synthesised single-entry history a public copy's own id produces (`isPublicC
 #### Scenario: A publication made without shared credentials is unmarked
 
 - **WHEN** the history endpoint reports an entry with `publishCredentials: false`
-- **THEN** the mapped entry is `false` and the row carries no marker
+- **THEN** the mapped entry is `false`
 
 #### Scenario: A public copy's synthesised history entry carries no flag
 

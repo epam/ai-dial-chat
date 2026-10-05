@@ -17,7 +17,6 @@ import {
   PublicationRule,
   PublishCalloutKind,
   PublishFolderNode,
-  PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
@@ -50,8 +49,6 @@ export interface PublishPanelLabels {
   credentialsLabel?: string;
   /** Caption below the credentials opt-in, stating what ticking it does. Default explains members will use the resource without authorising and that the credential itself is never shown to them. */
   credentialsHint?: string;
-  /** Label above the publish history list. Default: `'Versions history'`. */
-  historyLabel?: string;
   /** Warning callout body shown when the folder already has this version; `{version}` and `{folder}` are replaced, with the folder name rendered bold. */
   replaceWarning?: string;
   /** Error callout body shown when the user lacks write access; `{folder}` is replaced, with the folder name rendered bold. */
@@ -72,12 +69,6 @@ export interface PublishPanelLabels {
   createFolderInvalidNameError?: string;
   /** Inline error shown while creating a folder whose name duplicates a sibling. */
   createFolderDuplicateNameError?: string;
-  /** Message shown while publish history is loading. */
-  historyLoadingLabel?: string;
-  /** Message shown when publish history failed to load. */
-  historyErrorLabel?: string;
-  /** Label marking a history entry that carried shared credentials. Default: `'Shared credentials'`. */
-  historySharedCredentialsLabel?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
   /** Version tag text in the entity-header summary row; `{version}` is replaced. Default: `'Version {version} · current'`. */
@@ -89,26 +80,18 @@ export interface PublishPanelLabels {
 /** Props for {@link PublishPanel}. */
 export interface PublishPanelProps {
   /**
-   * Display metadata for the summary row and for version-derived behavior:
-   * the replace-warning callout's version substitution, and whether the
-   * publish-history section is shown at all (only when `version` is set).
-   * A `type` renders the entity-header row; otherwise the row is title-only,
-   * unless `renderSummary` replaces it.
+   * Display metadata for the summary row and for the replace-warning
+   * callout's version substitution. A `type` renders the entity-header row;
+   * otherwise the row is title-only, unless `renderSummary` replaces it.
    */
   resource?: PublishResourceSummary;
   /**
    * Renders a custom summary row in place of the default title-only row built
    * from `resource.title`. Ignored when `resource.type` is set. Pass
-   * `resource` alongside this so version-derived behavior (callout, history
-   * section) keeps working.
+   * `resource` alongside this so the callout's version substitution keeps
+   * working.
    */
   renderSummary?: () => ReactNode;
-  /** Previously published entries for this item. */
-  history: PublishHistoryEntry[];
-  /** Whether `history` is currently being fetched. Default: `false`. */
-  isHistoryLoading?: boolean;
-  /** Whether the most recent history fetch failed. Default: `false`. */
-  hasHistoryError?: boolean;
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /**
@@ -183,7 +166,7 @@ export interface PublishPanelProps {
   labels?: PublishPanelLabels;
   /** Typography class for the default summary title (unused when `renderSummary` or `resource.type` is passed). Default: `'dial-body-semi-text'`. */
   summaryTitleClassName?: string;
-  /** Typography class for the "Publish to folder" and "Versions history" section headings. Default: `'dial-body-semi-text'`. */
+  /** Typography class for the "Publish to folder" section heading. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
   /** Style overrides. */
   styles?: PublishPanelStyles;

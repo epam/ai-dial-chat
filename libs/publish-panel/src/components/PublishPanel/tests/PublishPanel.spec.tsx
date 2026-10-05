@@ -7,7 +7,6 @@ import { PUBLISH_PANEL_CLASS } from '../../../constants/public-class-names';
 import {
   PublicationRuleFunction,
   PublishFolderNode,
-  PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../../models/publish';
 import { PublishPanel } from '../PublishPanel';
@@ -81,19 +80,10 @@ const folderItems: PublishFolderNode[] = [
   },
 ];
 
-const history: PublishHistoryEntry[] = [
-  {
-    version: '4.0.0',
-    publishedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    folderPath: ['Shared', 'Data Science', 'Published models'],
-  },
-];
-
 const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
   render(
     <PublishPanel
       resource={resource}
-      history={history}
       folderItems={folderItems}
       onSelectedFolderPathChange={vi.fn()}
       onCreateFolder={vi.fn()}
@@ -233,7 +223,7 @@ describe('PublishPanel', () => {
     expect(screen.getByRole('button', { name: 'Discard folder' })).toBeTruthy();
   });
 
-  it('renders the access-rules section between the folder block and history', () => {
+  it('renders the access-rules section inside the folder block', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.getByText('Allow access if all match')).toBeTruthy();
   });
@@ -279,11 +269,6 @@ describe('PublishPanel', () => {
     );
 
     expect(onRulesChange).toHaveBeenCalledWith([]);
-  });
-
-  it('hides the history section until a folder is selected', () => {
-    renderPanel();
-    expect(screen.queryByText('Versions history')).toBeNull();
   });
 
   it('shows the replace-warning callout when the version already exists in the folder, with the folder name bold', () => {
@@ -335,11 +320,6 @@ describe('PublishPanel', () => {
       isSubmitting: true,
     });
     expect(screen.queryByText(/Everyone with access/)).toBeNull();
-  });
-
-  it('does not show history from a different folder', () => {
-    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
-    expect(screen.queryByText('Version 4.0.0')).toBeNull();
   });
 
   describe('root selection', () => {

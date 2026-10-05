@@ -395,16 +395,6 @@ describe('PublishConversationPanelContainer', () => {
     expect(screen.getByText('existing:true')).toBeTruthy();
   });
 
-  it('does not treat a loading or failed history as an existing publication', async () => {
-    await renderContainer({ isHistoryLoading: true, hasHistoryError: true });
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
-
-    expect(screen.getByText('existing:false')).toBeTruthy();
-  });
-
   it('sources ruleSourceOptions from useAppConfig, not a hardcoded list', async () => {
     useAppConfigMock.mockReturnValue({
       config: { publicationFilterSources: ['roles', 'department'] },

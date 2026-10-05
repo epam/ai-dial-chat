@@ -4,7 +4,7 @@ Publish-to-folder UI and state flow shared by catalog entity publish and convers
 
 ## Overview
 
-`@epam/ai-dial-publish-panel` implements the "Publish to folder" experience used across AI DIAL Chat: a destination-folder picker with search and inline folder creation, a publish-history list, a pinned submit/cancel footer, and the `usePublishFlow` hook that manages folder selection, optimistic folder creation, and submit state. The library has no knowledge of any specific host domain model — it only knows `PublishFlowItem` (anything with an optional `version`) and `PublishResourceSummary` (a title/icon/version-only display shape). A host that needs a richer entity-specific summary (e.g. an icon and type badge for a catalog entity) supplies it via the `renderSummary` render-slot instead of the library reaching into a host-specific type. This is what lets both `libs/catalog`'s `DetailsPanel` (versioned catalog entities: Applications, Toolsets, Models) and `apps/chat`'s conversation publish flow (unversioned conversations) share the exact same folder-picker, history-list, and submit UX without either one depending on the other's domain models.
+`@epam/ai-dial-publish-panel` implements the "Publish to folder" experience used across AI DIAL Chat: a destination-folder picker with search and inline folder creation, a pinned submit/cancel footer, a standalone `PublishHistoryList`, and the `usePublishFlow` hook that manages folder selection, optimistic folder creation, and submit state. The library has no knowledge of any specific host domain model — it only knows `PublishFlowItem` (anything with an optional `version`) and `PublishResourceSummary` (a title/icon/version-only display shape). A host that needs a richer entity-specific summary (e.g. an icon and type badge for a catalog entity) supplies it via the `renderSummary` render-slot instead of the library reaching into a host-specific type. This is what lets both `libs/catalog`'s `DetailsPanel` (versioned catalog entities: Applications, Toolsets, Models) and `apps/chat`'s conversation publish flow (unversioned conversations) share the exact same folder-picker and submit UX without either one depending on the other's domain models.
 
 Use this library whenever a host application needs the "publish to a folder, optionally as a new version" UX; use the lower-level `PublishFoldersTree`/`PublishHistoryList` directly only when assembling a custom layout around them.
 
@@ -37,14 +37,13 @@ optional.
 
 ### PublishPanel
 
-Scrollable body of the Publish flow: entity summary row, destination folder picker with search, callouts, author, credentials and access rules. It does not render publish history; `history`, `isHistoryLoading`, `hasHistoryError` and the `history*` labels are accepted but not read. Use `PublishHistoryList` directly to show history in a custom layout.
+Scrollable body of the Publish flow: entity summary row, destination folder picker with search, callouts, author, credentials and access rules. It does not render publish history; use `PublishHistoryList` directly to show history in a custom layout.
 
 ```tsx
 import { PublishPanel } from '@epam/ai-dial-publish-panel';
 
 <PublishPanel
   resource={{ title: 'Q3 planning notes' }}
-  history={history}
   folderItems={folderItems}
   selectedFolderPath={selectedFolderPath}
   onSelectedFolderPathChange={setSelectedFolderPath}
@@ -85,7 +84,6 @@ through. The checkbox is disabled while `isSubmitting` is `true`.
 ```tsx
 <PublishPanel
   resource={{ title: item.name, version: item.version }}
-  history={history}
   folderItems={folderItems}
   onSelectedFolderPathChange={setSelectedFolderPath}
   onCreateFolder={handleCreateFolder}
@@ -145,7 +143,6 @@ import { StandalonePublishPanel } from '@epam/ai-dial-publish-panel';
 <StandalonePublishPanel
   isOpen={isOpen}
   resource={resource}
-  history={history}
   folderItems={folderItems}
   selectedFolderPath={selectedFolderPath}
   onSelectedFolderPathChange={setSelectedFolderPath}
@@ -230,7 +227,7 @@ displays or accepts a credential value.
 <PublishHistoryList
   entries={folderHistory}
   currentVersion={currentVersion}
-  sharedCredentialsLabel={t('catalog.publish.historySharedCredentials')}
+  sharedCredentialsLabel="Shared credentials"
 />
 ```
 

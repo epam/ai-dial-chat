@@ -185,7 +185,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     publishLabels?: {
       credentialsLabel?: string;
       credentialsHint?: string;
-      historySharedCredentialsLabel?: string;
     };
     ruleSourceOptions?: string[];
     onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
@@ -242,9 +241,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         </output>
         <output aria-label="Publish credentials hint">
           {publishLabels?.credentialsHint ?? ''}
-        </output>
-        <output aria-label="Publish history shared credentials label">
-          {publishLabels?.historySharedCredentialsLabel ?? ''}
         </output>
         <button type="button" onClick={() => onActiveTabChange?.('PROMPT')}>
           switch to Prompts tab
@@ -802,7 +798,7 @@ describe('CatalogView', () => {
       ]);
     });
 
-    /* `t` echoes the key here; what matters is that the app supplies all three. */
+    /* `t` echoes the key here; what matters is that the app supplies both. */
     it('supplies the credentials labels the publish panel needs', () => {
       render(<CatalogView />);
 
@@ -812,10 +808,6 @@ describe('CatalogView', () => {
       expect(
         screen.getByLabelText('Publish credentials hint').textContent,
       ).toBe(CatalogI18nKeys.PublishCredentialsHint);
-      expect(
-        screen.getByLabelText('Publish history shared credentials label')
-          .textContent,
-      ).toBe(CatalogI18nKeys.PublishHistorySharedCredentials);
     });
   });
 
