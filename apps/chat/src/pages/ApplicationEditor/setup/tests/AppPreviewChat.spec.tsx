@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppsEditorI18nKeys } from '../../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../../context/DeploymentsContext';
 import { useAppConfig as mockUseAppConfig } from '../../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
@@ -132,7 +133,12 @@ vi.mock('../../../../server-api/api-client', () => ({
 }));
 
 vi.mock('../../../../components/ConversationView/ConversationView', () => ({
-  default: () => <div>conversation-view</div>,
+  default: ({ topContent }: { topContent?: ReactNode }) => (
+    <div>
+      {topContent}
+      <div>conversation-view</div>
+    </div>
+  ),
 }));
 
 vi.mock(
@@ -143,13 +149,16 @@ vi.mock(
       introText,
       isInputDisabled,
       message,
+      placeholder,
     }: {
       children?: ReactNode;
       introText?: string;
       isInputDisabled?: boolean;
       message?: string;
+      placeholder?: string;
     }) => (
       <div>
+        <output aria-label="Placeholder">{placeholder ?? ''}</output>
         <output aria-label="Intro text">{introText ?? ''}</output>
         <output aria-label="Input disabled">
           {String(isInputDisabled ?? false)}
@@ -245,6 +254,77 @@ describe('AppPreviewChat', () => {
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
     );
+  });
+
+  const getGreeting = () =>
+    screen.getByRole('group', {
+      name: AppsEditorI18nKeys.PreviewGreetingAriaLabel,
+    });
+
+  it('renders the greeting above the composer while keeping the starters', () => {
+    render(
+      <AppPreviewChat
+        appId="applications/bucket/My App"
+        appDisplayName="Design Review Agent"
+      />,
+    );
+
+    expect(getGreeting().textContent).toContain(
+      AppsEditorI18nKeys.PreviewGreeting,
+    );
+    expect(screen.getByLabelText('Intro text').textContent).toBe(
+      'Choose how to start',
+    );
+    expect(screen.getByRole('button', { name: 'Draft' })).toBeTruthy();
+    expect(screen.getByLabelText('Placeholder').textContent).toBe(
+      AppsEditorI18nKeys.PreviewChatPlaceholder,
+    );
+  });
+
+  it('falls back to the app initials when the greeting has no icon', () => {
+    render(
+      <AppPreviewChat
+        appId="applications/bucket/My App"
+        appDisplayName="Design Review Agent"
+      />,
+    );
+
+    expect(getGreeting().textContent).toContain('DR');
+  });
+
+  it('keeps the greeting first after the conversation starts and never sends it', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: [
+        {
+          id: 'applications/bucket/My App',
+          displayName: 'My App',
+          type: 'application',
+          conversationStarters: {
+            autoSubmit: true,
+            starters: [{ title: 'Draft', text: 'Write a draft' }],
+          },
+        },
+      ],
+    } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
+    mockCreateConversation.mockResolvedValue({
+      id: 'bucket/applications/bucket/My App__1.0__Write a draft__uuid',
+      messages: [],
+    } as never);
+
+    render(<AppPreviewChat appId="applications/bucket/My App" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Draft' }));
+
+    const view = await screen.findByText('conversation-view');
+    expect(
+      getGreeting().compareDocumentPosition(view) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    await waitFor(() => expect(streamMocks.startStream).toHaveBeenCalledOnce());
+    const sent = JSON.stringify([
+      mockCreateConversation.mock.calls,
+      streamMocks.startStream.mock.calls,
+    ]);
+    expect(sent).not.toContain(AppsEditorI18nKeys.PreviewGreeting);
   });
 
   it('opening AppsEditor without running a preview completion makes zero subscribe calls', () => {
