@@ -41,12 +41,18 @@ Before redirecting (when not disabled), it MUST compute an application `callback
 - Exactly one provider → top-level browser navigation to `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-current-url>` via `window.location.assign`.
 - More than one provider → client-side navigation to `/login?callbackUrl=<encoded-current-url>` via React Router `navigate(..., { replace: true })`, where the user picks a provider.
 
-The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT perform a provider-list redirect on the `/login` route itself, and MUST NOT loop when the BFF immediately re-issues a `401`. After one automatic single-provider attempt for a given callback URL in the current tab, a subsequent unauthenticated bootstrap MUST fall back to `/login?callbackUrl=...` instead of starting another automatic provider redirect. The SPA MUST only generate same-origin callback URLs; the BFF remains authoritative for final validation.
+The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT perform a provider-list redirect on the `/login` route itself, and MUST NOT loop when the BFF immediately re-issues a `401`. After one automatic single-provider attempt for a given callback URL in the current tab, a subsequent unauthenticated bootstrap within 60 seconds (`AUTH_REDIRECT_ATTEMPT_TTL_MS`) MUST fall back to `/login?callbackUrl=...` instead of starting another automatic provider redirect. The attempt is recorded in `sessionStorage` under `chat.auth.redirectAttempt` (`AUTH_REDIRECT_ATTEMPT_STORAGE_KEY`) as `{ callbackUrl, createdAt }`; it is cleared once the user is authenticated, and after it expires another automatic provider redirect for the same callback URL is allowed. The SPA MUST only generate same-origin callback URLs; the BFF remains authoritative for final validation.
 
 #### Scenario: Single provider auto-redirect
 
 - **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns one entry, and the hook was not called with `disabled: true`
 - **THEN** the SPA performs `window.location.assign('/api/v1/auth/login/<id>?callbackUrl=<encoded-current-url>')` exactly once during that session
+
+#### Scenario: Repeat unauthenticated bootstrap falls back to the picker
+
+- **WHEN** an automatic single-provider redirect for the same callback URL was recorded in `chat.auth.redirectAttempt` less than 60 seconds ago and the bootstrap again finishes with `status = 'unauthenticated'`
+- **THEN** the SPA navigates to `/login?callbackUrl=<encoded-current-url>` instead of calling `window.location.assign` again
+- **AND** once the recorded attempt is older than 60 seconds, the automatic provider redirect is allowed again
 
 #### Scenario: Multi-provider navigation to picker
 
@@ -259,7 +265,7 @@ The `ApiEndpoints` enum in `apps/chat/src/server-api/base.ts` SHALL contain `AUT
 
 ### Requirement: Tests cover the auth integration surface
 
-The auth surface SHALL be covered by co-located Vitest specs: `apps/chat/src/context/auth/UserContext.spec.tsx`, `apps/chat/src/hooks/auth/useAuthRedirect.spec.tsx`, `apps/chat/src/pages/auth/Login.spec.tsx`, `apps/chat/src/server-api/base.spec.ts`, `apps/chat/src/server-api/auth.api.spec.ts`, `apps/chat/src/components/LogoutConfirmation/tests/LogoutConfirmationModal.spec.tsx`, and `libs/navigation-panel/src/components/UserMenu/tests/UserMenu.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour, not implementation details.
+The auth surface SHALL be covered by co-located Vitest specs: `apps/chat/src/context/auth/UserContext.spec.tsx`, `apps/chat/src/hooks/auth/useAuthRedirect.spec.tsx`, `apps/chat/src/pages/auth/Login.spec.tsx`, `apps/chat/src/server-api/tests/base.spec.ts`, `apps/chat/src/server-api/tests/auth.api.spec.ts`, `apps/chat/src/components/LogoutConfirmation/tests/LogoutConfirmationModal.spec.tsx`, and `libs/navigation-panel/src/components/UserMenu/tests/UserMenu.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour, not implementation details.
 
 #### Scenario: UserContext bootstrap paths are tested
 

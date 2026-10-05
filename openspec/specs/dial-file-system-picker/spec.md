@@ -69,16 +69,14 @@ The edit-message attach (+) menu (`EditMessageInput`, rendered while a message i
 
 ### Requirement: Open FileManager in modal
 
-The system SHALL open a `DialPopup` modal (title `"Attach files"`, i18n key `basic.attachFiles`) when the user selects "DIAL file system" from the attachment menu. The modal SHALL render `DialFileManager` from `@epam/ai-dial-react-file-manager` as its body and use `!h-[min(800px,100dvh)]`, matching the legacy file-manager modal's 800px cap and overriding the ui-kit's desktop auto-height.
+The system SHALL open a modal (title `"Attach files"`, i18n key `basic.attachFiles`) when the user selects "DIAL file system" from the attachment menu. The app's `DialFileManagerModal` (`apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) builds the translated labels and the picker state (`useFileAttachmentPicker` from `@epam/ai-dial-chat-hooks`) and renders `FileManagerAttachModal` from `@epam/ai-dial-chat-shared/file-manager`, which renders the ui-kit 2.0 `Popup` with `DialFileManagerShell` (and through it `DialFileManager` from `@epam/ai-dial-react-file-manager`) as its body.
 
-- Modal state (`isDialFileManagerOpen`) is owned by `ConversationView`.
-- `DialFileManagerModal` is lazy-loaded via `React.lazy` + `Suspense` in `ConversationView`.
-- `DialPopup` is used with `size={PopupSize.Lg}` and `closeOnOutsideClick={true}`.
+- Modal state (`isDialFileManagerOpen`) is owned by `ConversationView` for an existing conversation and by `NewConversationComposer` (through `useDialFileManagerState`) for a new chat; both lazy-load `DialFileManagerModal` via `React.lazy` + `Suspense`.
+- `Popup` is used with `size={PopupSize.Lg}` and `className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"`, matching the legacy file-manager modal's 800px cap and overriding the ui-kit's desktop auto-height. No `closeOnOutsideClick` prop is passed.
+- The Attach button is the popup's single `mainButtons` entry (`ButtonVariant.Primary`).
 - Closing the modal does NOT modify `message` text or the local `attachments` list in `Input`.
-- The popup and file-manager surface use `bg-layer-sunken`.
-- The footer action container uses `px-6 py-4`.
-- The ui-kit popup body SHALL use `flex min-h-0 flex-col`; the file-manager wrapper and manager SHALL use `grow`, matching the legacy modal layout. Row count SHALL NOT resize the modal.
-- `DialFileManager.gridClassName` SHALL be `"size-full"` and `gridOptions.additionalGridOptions.domLayout` SHALL be `"normal"` so the AG Grid viewport consumes the available manager height instead of using row-driven auto-height.
+- The popup body wrapper uses `flex h-full min-h-0 flex-col`; the shell's file-manager wrapper and `DialFileManager` use `grow`. Row count SHALL NOT resize the modal.
+- For the Attach variant, `DialFileManager.gridClassName` SHALL be `"size-full gap-6 px-6 py-4"` (other variants use `"size-full"`) and `gridOptions.additionalGridOptions.domLayout` SHALL be `"normal"` so the AG Grid viewport consumes the available manager height instead of using row-driven auto-height.
 
 #### Scenario: Opening the modal
 
@@ -89,26 +87,25 @@ The system SHALL open a `DialPopup` modal (title `"Attach files"`, i18n key `bas
 #### Scenario: Closing the modal
 
 - **GIVEN** the DIAL file system modal is open
-- **WHEN** the user clicks the close button (or clicks outside the modal)
+- **WHEN** the user clicks the close button
 - **THEN** the modal closes; the message draft and any existing attachments are unchanged
 
 ---
 
 ### Requirement: Load files through `useDialFileManager`
 
-The system SHALL provide a `useDialFileManager(options: { bucket: string; rootLabel?: string })` hook in `apps/chat/src/hooks/files/useDialFileManager.ts` that:
+The system SHALL load listings through `useDialFileManager` in `libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts` (`@epam/ai-dial-chat-hooks`). The hook takes an injected, already-configured `filesApi` plus `bucket`, `rootLabel`, `activeTab`, `variant`, `actionProfile`, `labels` and notification callbacks, and composes the listing (`useDialFileListing`), upload, mutation, sharing and metadata sub-hooks into one controller result consumed by `DialFileManagerShell`. Listing is owned by `useDialFileListing` (`libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts`), which:
 
-- Calls `listFiles({ bucket, path: folderPath })` from `apps/chat/src/server-api/files.api.ts` inside a `useEffect` with a `cancelled` flag.
+- Fetches the current folder for the active tab (for My files, `DialFilesApi.listFiles` for `bucket` and the current folder path) inside a `useEffect` with a `cancelled` flag.
 - Caches each visited folder response by API path and rebuilds an accumulated `DialFile[]` hierarchy so loaded parent and sibling folders remain available during navigation.
-- Exposes `{ items, isLoading, error, path, onPathChange, retry }`.
+- Exposes, among other fields, `items`, `isLoading`, `error`, `path`, `onPathChange` and `retry`, which `useDialFileManager` passes through.
 - On unmount or dependency change, sets `cancelled = true` to prevent `setState` after unmount.
 - `retryCounter` (internal number state) is incremented by `retry()` to re-trigger the `useEffect`.
+- On a `404` for a non-root folder, falls back to the parent folder instead of surfacing an error.
 
-**State owner**: `useDialFileManager` (not a React Context — single modal instance scope).
+**State owner**: `useDialFileManager` / `useDialFileListing` (not a React Context — single modal instance scope).
 
-**Server API**: `listFiles` delegates to generated `filesApi.listFiles(...)` from `@epam/chat-api-client`. No direct `fetch`, no `base.ts` helpers.
-
-**Dependency on `add-files-list-api`**: `listFiles` and `filesApi.listFiles` are introduced by that change. This hook MUST NOT hand-edit generated files or add `/api/v1/files/list` as a hardcoded string.
+**Server API**: the app supplies `filesApi` as `dialFilesApiAdapter` (`apps/chat/src/server-api/dial-files-api.adapter.ts`, a `DialFilesApi` over the generated `@epam/ai-dial-chat-api-client` client) via `useDialFileManagerHostOptions`; the hooks never construct a client. No direct `fetch`, no `base.ts` helpers, and no hardcoded `/api/v1/files/list` string.
 
 **Memoisation**: `onPathChange` MUST be wrapped in `useCallback`; `items` reference is stable between re-renders when the data has not changed.
 
@@ -134,15 +131,9 @@ The system SHALL provide a `useDialFileManager(options: { bucket: string; rootLa
 
 `DialFileManager` SHALL be rendered with `actionProfile = DialFileManagerActionProfile.Attach`. This profile scopes down — but does not eliminate — mutation actions: Upload, Create folder, Delete, Rename, and Download remain reachable so the user can manage files while picking what to attach; Move, Copy, and permission-management actions are excluded because they imply a destination/ownership context the attach flow does not have.
 
-The following props MUST be omitted (not passed), because their actions are gated off by `actionProfile = Attach` (via `isCopyMoveDuplicateAllowed` / `isShareActionsAllowed` in `dial-file-manager-path.util.ts`):
+`DialFileManagerShell` always passes `onMoveToFiles`, `onCopyFiles`, `onUnshareFiles`, `onRemoveFilesAccess` and `onGetInfo` from the controller. Under `actionProfile = Attach` their actions are hidden by leaving their entries out of `actionLabels`: Copy/Move/Duplicate via `isCopyMoveDuplicateAllowed`, Unshare/Remove access via `isShareActionsAllowed` (both in `libs/chat-hooks/src/files/dial-file-manager-path.util.ts`), and Info is labelled only for `DialFileManagerActionProfile.Full`.
 
-- `onMoveToFiles`
-- `onCopyFiles`
-- `onUnshareFiles`
-- `onRemoveFilesAccess`
-- `onGetInfo`
-
-The following props SHALL be passed, wired from `useDialFileManager`:
+`DialFileManagerShell` SHALL pass, among others, the following props wired from the `useDialFileManager` controller:
 
 | Prop | Value |
 |------|-------|
@@ -159,10 +150,9 @@ The following props SHALL be passed, wired from `useDialFileManager`:
 | `onDeleteFiles` / `deleteConfirmationOptions` | wired; reachable as a row/bulk action on the "My files" tab |
 | `onRenameValidate` | wired; reachable as a row action when `uploadEnabled` is `true` |
 | `onDownloadFiles` | wired; reachable as a row/bulk action unconditionally |
-| `emptyStateTitle` | `t(DialFileManagerI18nKeys.Empty)` |
-| `emptyStateDescription` | `""` |
+| `emptyStateTitle` / `emptyStateDescription` | from the shell's empty-state selection (see the empty-state requirement) |
 
-`bulkActionsToolbarOptions` derives from the same action set, matching the excluded-props list above.
+`bulkActionsToolbarOptions` derives from the same `actionLabels`, so the hidden actions above are absent there too.
 
 Only rows with `nodeType === DialFileNodeType.ITEM` SHALL be selectable for attaching. The modal footer SHALL contain an "Attach" primary button (i18n key `dialFileManager.attach`) disabled while no files are selected or files are loading. Selecting the Attach button attaches the current selection; it does not depend on whether Upload/Create-folder/Delete/Rename/Download were used beforehand in the same session.
 
@@ -214,8 +204,11 @@ The modal SHALL render a distinct loading, empty, and error state, and the error
 - `filesLoading={true}` is passed to `DialFileManager`, which renders a built-in skeleton.
 - i18n key: none needed — `DialFileManager` handles the skeleton UI internally.
 
+**Tabs**
+- The modal opens on the All tab (`initialTab: DialFileManagerTabs.All`) and offers the All, My files, Shared and Organization tabs, filtered by the app config's `fileManagerTabs`.
+
 **Empty folder state**
-- When `items.length === 0 && !isLoading && !error`, `DialFileManager` shows `emptyStateTitle` (i18n key `dialFileManager.empty`, English: `"This folder is empty"`).
+- When `items.length === 0 && !isLoading && !error`, `DialFileManager` shows an empty state chosen by `DialFileManagerShell`: an empty search shows `searchEmptyStateTitle` (`basic.noResults`); an empty subfolder shows `folderEmptyStateTitle` (i18n key `dialFileManager.empty`, English: `"This folder is empty"`) with an empty description; a tab root shows that tab's entry from `emptyStateByTab` (`dialFileManager.myFiles.emptyStateTitle`/`emptyStateDescription` for My files and All, and the matching `dialFileManager.shared.*` and `dialFileManager.organization.*` keys).
 
 **Error state**
 - When `error != null`, the modal body renders a `role="alert"` error card with the message (i18n key `dialFileManager.error`) and a retry button (i18n key `dialFileManager.retry`).
@@ -233,7 +226,7 @@ The modal SHALL render a distinct loading, empty, and error state, and the error
 
 #### Scenario: Empty folder
 
-- **GIVEN** the current folder has no items
+- **GIVEN** the current subfolder has no items
 - **WHEN** `listFiles` returns `{ items: [] }`
 - **THEN** `DialFileManager` shows the empty state with title "This folder is empty"
 
@@ -276,7 +269,7 @@ The `DialFileManager` rendered in this modal SHALL expose only a subset of mutat
 - Rename (row action, when `uploadEnabled` is `true`)
 - Download (row/bulk action, unconditional)
 
-**NOT reachable** (props omitted; excluded from `actionLabels` / `bulkActionsToolbarOptions`):
+**NOT reachable** (handlers are still passed, but the actions are excluded from `actionLabels` / `bulkActionsToolbarOptions`):
 
 - Move
 - Copy
@@ -318,20 +311,20 @@ The picker SHALL be fully translated, keyboard-operable, direction-agnostic, and
 All `aria-label` values in `DialFileManagerModal` go through `t()`. No English strings are hardcoded in the app component.
 
 **Accessibility**:
-- `DialPopup` provides `role="dialog"` with `aria-labelledby` bound to the title. No extra ARIA needed on the container.
+- `Popup` provides `role="dialog"`, labelled by the title (`ariaLabel={title}`). No extra ARIA needed on the container.
 - Error card: `role="alert"` so screen readers announce the failure.
 - Retry button: focusable `Button` with a visible text label.
-- Focus is trapped inside `DialPopup` while open (ui-kit built-in).
+- Focus is trapped inside `Popup` while open (ui-kit built-in).
 - Keyboard navigation: `DialFileManager` provides built-in keyboard support for tree and grid navigation.
 
 **RTL**:
 - All directional Tailwind classes in `DialFileManagerModal` use logical properties (`ms-*`, `ps-*`, `start-*`, `text-start`).
 - No physical `left-*` / `right-*` in `DialFileManagerModal`.
-- `DialPopup` and `DialFileManager` inherit `dir` from `<html>` and handle RTL internally.
+- `Popup` and `DialFileManager` inherit `dir` from `<html>` and handle RTL internally.
 - `ExtraMenuItem.icon` (`IconFile`) is symmetric; it does not need RTL mirroring.
 
 **Responsive**:
-- `DialPopup` with `size={PopupSize.Lg}` renders full-width on small viewports and a centered constrained dialog on wider ones (ui-kit behavior).
+- `Popup` with `size={PopupSize.Lg}` renders full-width on small viewports and a centered constrained dialog on wider ones (ui-kit behavior).
 - The popup height is capped with `min(800px, 100dvh)`.
 - Only project-defined Tailwind breakpoints (`mobile`, `desktop`) are used for any custom overrides.
 - `sm:` / `md:` / `lg:` / `xl:` Tailwind prefixes are NOT introduced.
@@ -383,7 +376,7 @@ interface Props {
 }
 ```
 
-**BREAKING change (internal only):** All callers of `DialFileManagerModal` within the same repo (`ConversationRoute`, `ConversationView`, `useDialFileManagerState`) MUST be updated to accept `AttachResult` in the same commit as the modal change.
+All in-repo callers of `DialFileManagerModal` SHALL accept `AttachResult`: `ConversationView`, `NewConversationComposer` (via `useDialFileManagerState`), `SkillFileSystemModal`, and `useApplicationAvatarPicker`.
 
 #### Scenario: Callers receive AttachResult on attach
 

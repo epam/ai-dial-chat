@@ -1,4 +1,4 @@
-# Spec: file-manager-copy-move
+# file-manager-copy-move Specification
 
 ## Purpose
 
@@ -18,7 +18,7 @@ The BFF SHALL expose `POST /api/v1/files/copy` that accepts a batch of file/fold
 
 #### Request DTO
 
-**`CopyItemNodeType`** (string enum, `apps/chat-api/src/files/dto/copy-files.dto.ts`):
+**`CopyItemNodeType`** (`apps/chat-api/src/files/dto/copy-files.dto.ts`) is an alias of the shared `DialFileNodeType` string enum (`apps/chat-api/src/files/dto/dial-file-node-type.ts`), kept under its own exported name so the Swagger schema name is unchanged:
 ```
 Item   = 'item'
 Folder = 'folder'
@@ -30,7 +30,7 @@ Folder = 'folder'
 |-------|------|-------------|-------------|
 | `bucket` | `string` | `@IsString @IsNotEmpty @Matches(BUCKET_NAME_PATTERN) @MaxLength(256)` | DIAL Core bucket |
 | `sourcePath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative source path within bucket |
-| `destinationPath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative destination path within bucket |
+| `destinationPath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @IsNotReservedMarkerPath() @MaxLength(1024)` | Relative destination path within bucket; a `.dial_folder` marker destination is rejected |
 | `overwrite` | `boolean?` | `@IsOptional @IsBoolean` | When `true`, replace an existing destination resource. Omitted or `false` keeps the conflict behavior — DIAL Core rejects the transfer and the BFF reports `"Conflict"` (see **Upstream error mapping**). |
 | `nodeType` | `CopyItemNodeType` | `@IsEnum(CopyItemNodeType)` | `'item'` or `'folder'` |
 | `name` | `string` | `@IsString @IsNotEmpty @MaxLength(255)` | Display name (last segment) for error messages |
@@ -73,9 +73,9 @@ async copyFiles(
 
 #### Generated-client impact
 
-- **operationId**: `filesControllerCopyFiles` → generated SDK method `filesApi.copyFiles({ copyFilesDto })`.
+- **operationId**: `copyFiles` (`operationIdFactory` in `apps/chat-api/src/openapi/openapi.config.ts` returns the handler name) → generated SDK method `filesApi.copyFiles({ copyFilesDto }, init?)`.
 - **Request DTO**: `CopyFilesDto` with `CopyItemDto.overwrite?: boolean`. **Response DTO**: `CopyFilesResponseDto`.
-- **Frontend caller**: `apps/chat/src/server-api/files.api.ts` exposes `copyFiles(items: CopyItemDto[]): Promise<CopyFilesResponseDto>` using the normal (non-`Raw`) generated method.
+- **Frontend caller**: `createFilesApiClient` (`libs/chat-hooks/src/files/create-files-api.ts`) implements `copyFiles(items, signal)` on the normal (non-`Raw`) generated method, forwarding `signal` for cancellation; `apps/chat/src/server-api/files.api.ts` re-exports it as `copyFiles`.
 
 #### Upstream error mapping
 
@@ -199,7 +199,7 @@ The BFF SHALL expose `POST /api/v1/files/move`, distinct from `POST /api/v1/file
 
 #### Request/Response DTOs
 
-**`MoveItemNodeType`**, **`MoveItemDto`**, **`MoveFilesDto`**, **`MoveItemResultDto`**, **`MoveFilesResponseDto`** (`apps/chat-api/src/files/dto/move-files.dto.ts`) are structurally identical to `CopyItemNodeType`/`CopyItemDto`/`CopyFilesDto`/`CopyItemResultDto`/`CopyFilesResponseDto` above, substituting "move" for "copy" throughout. `MoveItemDto.overwrite?: boolean` has the same validation and default behavior as `CopyItemDto.overwrite`.
+**`MoveItemNodeType`** (also an alias of `DialFileNodeType`), **`MoveItemDto`**, **`MoveFilesDto`**, **`MoveItemResultDto`**, **`MoveFilesResponseDto`** (`apps/chat-api/src/files/dto/move-files.dto.ts`) are structurally identical to `CopyItemNodeType`/`CopyItemDto`/`CopyFilesDto`/`CopyItemResultDto`/`CopyFilesResponseDto` above, substituting "move" for "copy" throughout. `MoveItemDto.overwrite?: boolean` has the same validation and default behavior as `CopyItemDto.overwrite`.
 
 #### Controller signature
 
@@ -220,9 +220,9 @@ async moveFiles(
 
 #### Generated-client impact
 
-- **operationId**: `filesControllerMoveFiles` → `filesApi.moveFiles({ moveFilesDto })`.
+- **operationId**: `moveFiles` → `filesApi.moveFiles({ moveFilesDto }, init?)`.
 - **Request DTO**: `MoveFilesDto` with `MoveItemDto.overwrite?: boolean`. **Response DTO**: `MoveFilesResponseDto`.
-- **Frontend caller**: `apps/chat/src/server-api/files.api.ts` exposes `moveFiles(items: MoveItemDto[]): Promise<MoveFilesResponseDto>` using the normal (non-`Raw`) generated method.
+- **Frontend caller**: `createFilesApiClient` implements `moveFiles(items, signal)` on the normal (non-`Raw`) generated method; `apps/chat/src/server-api/files.api.ts` re-exports it as `moveFiles`.
 
 **Example request**:
 ```json
@@ -326,15 +326,15 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 ### Requirement: onCopyFiles wired on useDialFileManager
 
-`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `onCopyFiles(items: DialCopiedItem[], destinationFolder: string)`, wired to ui-kit's `DialFileManager.onCopyFiles` prop, that maps `DialCopiedItem[]` to `CopyItemDto[]` (via `virtualPathToApiPath`, same resolution as `onMoveToFiles`) and calls the `copyFiles` server-api wrapper.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts`, `@epam/ai-dial-chat-hooks`) SHALL expose `onCopyFiles(items: DialCopiedItem[], destinationFolder: string)`, wired to the file manager's `DialFileManager.onCopyFiles` prop. The implementation lives in `useDialFileMutations` (`libs/chat-hooks/src/files/useDialFileMutations/useDialFileMutations.ts`) and is re-exported by `useDialFileManager`. It maps `DialCopiedItem[]` to `CopyItemDto[]` (via `virtualPathToApiPath`, same resolution as `onMoveToFiles`) and calls the injected `filesApi.copyFiles(dtos, signal)`. A call is ignored when the item list is empty or a copy or move is already in flight.
 
-**State ownership**: `useDialFileManager` owns `isCopying` state; no new context is introduced.
+**State ownership**: `useDialFileMutations` owns `isCopying` state (surfaced through `useDialFileManager`); no new context is introduced.
 
 **Cache invalidation**: on completion (success or partial failure), the hook SHALL invalidate its per-folder listing cache entries for both the source and destination parent folders of every copied item, and increment `retryCounter` to force a re-fetch of the currently visible folder — identical invalidation shape to `onDeleteFiles`/`onMoveToFiles`.
 
-**Notifications**: full failure and partial failure surface via `onNotification` (`NotificationVariant.Error`), matching the `RenameError`/`RenamePartialError` pattern. Any successful copied items surface a success notification via `onNotification` (`NotificationVariant.Success`) using the same title/message shape as delete: single item reports the copied destination name and destination folder; multiple items report the successful item count and destination folder.
+**Notifications**: the lib has no `t`; it emits structured events that the app adapter (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`) translates. Full failure and partial failure surface via `onNotification({ variant: NotificationVariant.Error, reason })` with `FileManagerNotificationReason.CopyFailed` or `CopyPartiallyFailed` (with the failed `count`), which the adapter maps to `CopyError` / `CopyPartialError`. When at least one item succeeds, the hook calls `onOperationSuccess({ kind, name, count, isFolder, destinationFolderName })` with `FileOperationKind.FileCopied` (one success) or `FilesCopied` (several) — or `FileDuplicated`/`FilesDuplicated` for a same-folder batch, see `file-manager-duplicate` — and the adapter's `handleFileOperationSuccess` shows the success toast: single item reports the copied destination name and destination folder; multiple items report the successful item count and destination folder.
 
-**Memoisation**: `onCopyFiles` SHALL be a `useCallback` with dependencies `[bucket, rootLabel, onNotification, t]`, matching `onMoveToFiles`'s dependency shape.
+**Memoisation**: `onCopyFiles` SHALL be a `useCallback` with dependencies `[bucket, rootLabel, onNotification, onOperationSuccess, filesApi, isCopying, isMoving, invalidateFolders, bumpRetry]`.
 
 **Path normalisation**: `sourcePath`/`destinationPath` derived from `item.sourceUrl`/`item.destinationUrl` via `virtualPathToApiPath` SHALL have consecutive slashes collapsed to one before being sent to the BFF — ui-kit paste/cut-paste interactions can construct a destination virtual path by concatenating a folder path (already ending in `/`) with a leading `/` + item name, producing `folder//name`, which DIAL Core rejects as a malformed resource path.
 
@@ -343,7 +343,7 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 #### Scenario: Copy succeeds, cache is invalidated, and success toast is shown
 
 - **WHEN** `onCopyFiles` is called with items that all succeed
-- **THEN** the source and destination folder cache entries are cleared, `retryCounter` increments, and `onNotification` is called with `NotificationVariant.Success`
+- **THEN** the source and destination folder cache entries are cleared, `retryCounter` increments, and `onOperationSuccess` is called with `FileOperationKind.FileCopied` or `FilesCopied`
 
 #### Scenario: Single copy success toast names the copied destination
 
@@ -363,7 +363,7 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 #### Scenario: Partial copy failure shows toast
 
 - **WHEN** `onCopyFiles` is called and `copyFiles` returns a mix of successful and failed results
-- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a message reporting the failed count
+- **THEN** `onNotification` is called once with `NotificationVariant.Error`, `reason: FileManagerNotificationReason.CopyPartiallyFailed` and the failed `count`, which the app renders as `dialFileManager.copyPartialError`
 
 #### Scenario: Double-slash destination path is collapsed before the request is sent
 
@@ -379,16 +379,18 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 ### Requirement: onMoveToFiles dispatches rename vs cross-folder move by folder equality
 
-`useDialFileManager.onMoveToFiles` SHALL partition the `DialCopiedItem[]` it receives into two groups based on whether each item's source parent folder equals its destination parent folder (both derived from `item.sourceUrl`/`item.destinationUrl`):
+`onMoveToFiles` (implemented in `useDialFileMutations`, re-exported by `useDialFileManager`) SHALL partition the `DialCopiedItem[]` it receives into two groups based on whether each item's source parent folder equals its destination parent folder (both derived from `item.sourceUrl`/`item.destinationUrl`):
 
 - Same parent folder → build `RenameItemDto[]` and call the existing `renameFiles` server-api wrapper — **behavior unchanged** from before this change.
 - Different parent folder → build `MoveItemDto[]` and call the new `moveFiles` server-api wrapper.
 
 Both groups run when both are non-empty; a single call to `onMoveToFiles` MAY produce both a `renameFiles` and a `moveFiles` request. Failure notifications from both groups SHALL be merged into a single toast reporting the total failed count across both operations, mirroring the existing partial-failure toast copy.
 
-Successful cross-folder moves SHALL surface a success notification via `onNotification` (`NotificationVariant.Success`). Single-item success reports the moved destination name and destination folder; multi-item success reports the successful moved item count and destination folder. Same-folder rename remains silent on success and keeps the existing rename behavior.
+Failures are reported through `onNotification` with `FileManagerNotificationReason.MoveFailed`/`MovePartiallyFailed` when any move failed, otherwise `RenameFailed`/`RenamePartiallyFailed`. A user-aborted move counts neither as failed nor toward the total.
 
-**State ownership**: `useDialFileManager` owns a new `isMoving` state distinct from the existing `isRenaming`; the modal/shell shows the copy/move operation loader (see below) whenever `isCopying || isMoving` is true, and continues to show the existing inline-rename spinner overlay whenever `isRenaming` is true and `isMoving` is false (same-folder rename does not open the new operation-loader modal — it keeps today's lightweight overlay).
+Successful cross-folder moves SHALL surface a success event via `onOperationSuccess` with `FileOperationKind.FileMoved` (one success) or `FilesMoved` (several), which the app adapter turns into a toast. Single-item success reports the moved destination name and destination folder; multi-item success reports the successful moved item count and destination folder. A fully successful single-item same-folder rename emits `onOperationSuccess({ kind: FileOperationKind.FileRenamed, name, isFolder })`, shown by the app as the standard renamed toast; a multi-item rename batch stays silent on success.
+
+**State ownership**: `useDialFileMutations` owns an `isMoving` state distinct from the existing `isRenaming`; the modal/shell shows the copy/move operation loader (see below) whenever `isCopying || isMoving` is true, and continues to show the existing inline-rename spinner overlay whenever `isRenaming` is true and `isMoving` is false (same-folder rename does not open the new operation-loader modal — it keeps today's lightweight overlay).
 
 **Cache invalidation**: for the cross-folder-move group, invalidate cache entries for both source and destination parent folders of every moved item (same shape as `onDeleteFiles`). For the rename group, invalidation is unchanged from current behavior.
 
@@ -401,7 +403,7 @@ Successful cross-folder moves SHALL surface a success notification via `onNotifi
 #### Scenario: Same-folder rename is unaffected
 
 - **WHEN** `onMoveToFiles` is called with items whose source and destination share the same parent folder
-- **THEN** `renameFiles` is called and `moveFiles` is not called; behavior matches this capability before the change
+- **THEN** `renameFiles` is called and `moveFiles` is not called, and a fully successful single-item rename emits `onOperationSuccess` with `FileOperationKind.FileRenamed`
 
 #### Scenario: Cross-folder move calls the new endpoint
 
@@ -432,13 +434,13 @@ Successful cross-folder moves SHALL surface a success notification via `onNotifi
 
 ### Requirement: Operation loader modal for copy/move with cancel
 
-`DialFileManagerShell` SHALL render an `OperationLoaderModal` (new component at `apps/chat/src/components/DialFileManagerModal/OperationLoaderModal.tsx`) whenever `isCopying` or `isMoving` (cross-folder move only) is `true`. The modal SHALL display a title, a descriptive text, and a cancel action.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) SHALL render an `OperationLoaderModal` (`libs/chat-shared/src/file-manager/OperationLoaderModal/OperationLoaderModal.tsx`) whenever `isCopying` or `isMoving` (cross-folder move only) is `true`. The modal SHALL display a title (`operationLoaderCopyTitle` / `operationLoaderMoveTitle`), a descriptive text (`copyingLabel` / `movingLabel`), and a cancel action whose label is `operationLoaderCancelLabel`, which the app's `DialFileManagerModal` supplies as `t(ButtonsI18nKeys.Cancel)`.
 
 **Cancel semantics**: clicking cancel aborts the in-flight request from the browser via `AbortController` and immediately clears `isCopying`/`isMoving` and hides the modal. This SHALL NOT guarantee that DIAL Core stops processing already-dispatched `copyResource`/`moveResource` calls server-side (see design.md D7) — no error toast is shown for a user-initiated cancel.
 
 **Accessibility**: the modal container SHALL use `aria-live="polite"` for the status text, matching the existing download/delete/rename overlay pattern in `DialFileManagerShell`. The cancel control SHALL be reachable via keyboard (native button, no custom tabindex handling needed).
 
-**RTL**: the modal reuses ui-kit's `DialPopup`/`Spinner` layout and the existing i18n-driven text; no physical-direction Tailwind classes are introduced, so no RTL-specific handling is required beyond inheriting `dir` from `<html>`.
+**RTL**: the modal is built on the ui-kit 2.0 `Popup` (`closeOnOutsideClick={false}`, `hideClose`, Cancel in `mainButtons`) and `Spinner` and the existing i18n-driven text; no physical-direction Tailwind classes are introduced, so no RTL-specific handling is required beyond inheriting `dir` from `<html>`.
 
 #### Scenario: Operation loader shown during copy
 
@@ -464,7 +466,7 @@ Successful cross-folder moves SHALL surface a success notification via `onNotifi
 
 ### Requirement: i18n keys for copy/move
 
-The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching members added to `DialFileManagerI18nKeys` in `apps/chat/src/constants/translation-keys.ts`:
+The following keys SHALL exist in `apps/chat/src/i18n/locales/en.json` with matching members in `DialFileManagerI18nKeys` in `apps/chat/src/constants/translation-keys.ts`. The operation loader's cancel label has no dedicated key; it reuses `ButtonsI18nKeys.Cancel`.
 
 | Key | English value (example) |
 |-----|--------------------------|
@@ -491,14 +493,13 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 | `dialFileManager.movePartialError` | `{{count}} item(s) could not be moved` |
 | `dialFileManager.operationLoaderCopyTitle` | `Copying files` |
 | `dialFileManager.operationLoaderMoveTitle` | `Moving files` |
-| `dialFileManager.operationLoaderCancelLabel` | `Cancel` |
 
 No raw string literal keys are passed to `t()` anywhere in this change — every key above is referenced through its `DialFileManagerI18nKeys` enum member.
 
 #### Scenario: Copy error message uses i18n key
 
 - **WHEN** a copy fully fails
-- **THEN** the notification message is produced via `t(DialFileManagerI18nKeys.CopyError)`, not a hardcoded string
+- **THEN** the hook emits `FileManagerNotificationReason.CopyFailed` and the app adapter produces the message via `t(DialFileManagerI18nKeys.CopyError)`, not a hardcoded string
 
 ---
 

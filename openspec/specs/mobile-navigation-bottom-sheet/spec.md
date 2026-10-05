@@ -35,7 +35,7 @@ interface BottomSheetShellProps {
 }
 ```
 
-The component renders via `createPortal`, shows a semi-transparent backdrop, locks body scroll while open, closes on Escape and backdrop click, manages dialog focus (initial focus, Tab trapping, focus restoration), and renders an optional header (back button · centred title · close button) when `title` is provided.
+The component is a thin themed wrapper over the UI kit's `BottomSheet` (`@epam/ai-dial-ui-kit`): it maps `isOpen`/`onClose`/`title`/`aria-label`/`onBack` to the kit's `open`/`onClose`/`title`/`ariaLabel`/`onBack`, `backLabel`/`closeLabel` to `backAriaLabel`/`closeAriaLabel`, and applies `colors` as `--ci-backdrop`/`--ci-sheet-bg`/`--ci-sheet-text`/`--ci-sheet-divider` CSS variables (via `buildCssVars`) on both the panel and the backdrop, with the caller's `style` merged onto the panel after them. The kit's `BottomSheet` owns the portal, the semi-transparent backdrop, body-scroll locking, Escape and backdrop-click dismissal, dialog focus management, and the optional header (back button · centred title · close button) shown when `title` is provided.
 
 #### Scenario: An open sheet locks the page behind it
 - **WHEN** `BottomSheetShell` is rendered with `isOpen`

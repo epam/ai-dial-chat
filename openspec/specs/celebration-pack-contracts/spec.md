@@ -147,7 +147,7 @@ A v1 manifest SHALL NOT declare a secret phrase, decoration behaviors, scripts, 
 
 ### Requirement: Stable identifiers
 
-**[Contract]** `eventId`, `packId` and scene `id` SHALL match `^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$` and be at most 64 characters. This is the same rule `UI_EVENT` already enforces (`apps/chat-api/src/config/environment.config.ts:884-887`).
+**[Contract]** `eventId`, `packId` and scene `id` SHALL match `^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$` and be at most 64 characters. This is the same rule `UI_EVENT` already enforces (the `@Matches` on `UI_EVENT` in `apps/chat-api/src/config/environment.config.ts`).
 
 - `version` SHALL be strict semver `MAJOR.MINOR.PATCH` without pre-release or build metadata.
 - `assetId` SHALL match `^[a-z0-9][a-z0-9-]{0,95}$`, SHALL end with the first 16 hex characters of its SHA-256, and SHALL be unique across the whole catalog (the catalog `assets` registry plus every listed manifest).
@@ -355,7 +355,7 @@ export interface CelebrationAssetLoaders {
 
 ### Requirement: Legacy theme endpoints stay compatible
 
-**[Invariant]** `GET /api/themes` SHALL keep returning the upstream `config.json` unchanged, with its current `Cache-Control: public, max-age=300`. `GET /api/themes/icon?iconName=` SHALL keep its name allowlist and its SVG `Content-Security-Policy` (`apps/chat-api/src/themes/theme.controller.ts:42-70,85-146`) while v1 endpoints are added beside them. Today's behavior is verified by `apps/chat-api/src/themes/tests/theme.controller.spec.ts` and `theme.service.spec.ts`.
+**[Invariant]** `GET /api/themes` SHALL keep returning the upstream `config.json` unchanged, with its current `Cache-Control: public, max-age=300`. `GET /api/themes/icon?iconName=` SHALL keep its name allowlist and its SVG `Content-Security-Policy` (`getThemes` and `getThemeIcon` in `apps/chat-api/src/themes/theme.controller.ts`) while v1 endpoints are added beside them. Today's behavior is verified by `apps/chat-api/src/themes/tests/theme.controller.spec.ts` and `theme.service.spec.ts`.
 
 #### Scenario: v1 delivery added
 - **WHEN** S2 adds the `/api/v1/themes*` endpoints

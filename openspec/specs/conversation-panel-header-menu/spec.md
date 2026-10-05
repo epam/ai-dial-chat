@@ -1,4 +1,4 @@
-# Spec: conversation-panel-header-menu
+# conversation-panel-header-menu Specification
 
 ## Purpose
 
@@ -12,7 +12,7 @@ The overflow menu in the conversation panel header and the "Delete all conversat
 
 ### Requirement: `ConversationPanelProps` exposes a `headerActions` slot for app-defined header controls
 
-`ConversationPanelProps` in `libs/conversation-panel/src/models/ConversationPanel.ts` SHALL include:
+`ConversationPanelProps` in `libs/conversation-panel/src/models/panel-props.ts` SHALL include:
 
 ```ts
 headerActions?: ReactNode;
@@ -37,7 +37,7 @@ The library SHALL NOT import API clients, server-api wrappers, app contexts, rou
 #### Scenario: architecture guard — library does not import host integration details
 
 - **WHEN** `libs/conversation-panel` is linted and type-checked
-- **THEN** no import of `@epam/chat-api-client`, `apps/chat/src/server-api`, `ConversationsContext`, `ROUTES`, `useNavigate`, `useTranslation`, or `process.env` is present in any lib source file
+- **THEN** no import of `@epam/ai-dial-chat-api-client`, `apps/chat/src/server-api`, `ConversationsContext`, `ROUTES`, `useNavigate`, `useTranslation`, or `process.env` is present in any lib source file
 
 ---
 
@@ -49,7 +49,7 @@ The library SHALL NOT import API clients, server-api wrappers, app contexts, rou
 deleteAllConversations: () => Promise<ConversationDeletionResultDto>;
 ```
 
-`ConversationDeletionResultDto` is imported from `'@epam/chat-api-client'`.
+`ConversationDeletionResultDto` is imported from `'@epam/ai-dial-chat-api-client'`.
 
 The implementation SHALL:
 1. Call `deleteAllConversations` from `apps/chat/src/server-api/conversations.api.ts`.
@@ -90,12 +90,12 @@ The implementation SHALL:
 
 ---
 
-### Requirement: Conversation panel header renders an overflow trigger and its three dropdown items
+### Requirement: Conversation panel header renders an overflow trigger and its dropdown items
 
 `ConversationPanelMenu` in `apps/chat/src/components/ConversationPanel/ConversationPanelMenu.tsx` SHALL:
 
-1. Render a `GhostIconButton` (`ElementSize.Small`) with `IconDotsVertical` and `aria-label={t(ConversationPanelI18nKeys.PanelActionsLabel)}` as the overflow trigger. While the menu is open the icon takes `text-accent` and the button `bg-control-accent-alpha-hover`; otherwise the icon is `text-secondary`.
-2. Wrap the trigger in `Dropdown` with `placement="bottom-end"` and exactly these items, in order:
+1. Render a `GhostIconButton` (`ElementSize.Standard`) with `IconDotsVertical` and `aria-label={t(ConversationPanelI18nKeys.PanelActionsLabel)}` as the overflow trigger. While the menu is open the icon takes `text-accent` and the button `bg-control-accent-alpha-hover`; otherwise the icon is `text-secondary`.
+2. Wrap the trigger in `Dropdown` with `placement="bottom-end"` and these items, in order. `export-all` is present only when `onExportAll` is passed; `ConversationPanelView` omits it when conversation export is hidden, which leaves two items:
 
    | `key` | Label | Icon | Action |
    |---|---|---|---|
@@ -108,18 +108,23 @@ The implementation SHALL:
 
 The danger styling of the delete item is carried by `className: 'text-error'` on the item plus the `text-error` icon, not by a `danger` flag.
 
-Only `delete-all` is owned by this capability. The export and import entries are specified by `conversation-export` and `conversation-import` respectively; they are listed here so that the menu's full contents are stated in one place, because a count assertion over this dropdown necessarily sees all three.
+Only `delete-all` is owned by this capability. The export and import entries are specified by `conversation-export` and `conversation-import` respectively; they are listed here so that the menu's full contents are stated in one place, because a count assertion over this dropdown necessarily sees all of them.
 
 #### Scenario: overflow trigger is visible and accessible
 
 - **WHEN** `ConversationPanelView` is rendered
 - **THEN** a button with accessible name matching `ConversationPanelI18nKeys.PanelActionsLabel` is present in the panel header
 
-#### Scenario: dropdown contains exactly three items
+#### Scenario: dropdown contains three items when export is available
 
-- **WHEN** the overflow trigger is activated
+- **WHEN** conversation export is not hidden and the overflow trigger is activated
 - **THEN** the dropdown shows exactly three items, in order: "Export conversations", "Import conversations", "Delete all conversations"
 - **AND** only the last is styled as a danger action
+
+#### Scenario: export-all is omitted when export is hidden
+
+- **WHEN** conversation export is hidden and the overflow trigger is activated
+- **THEN** the dropdown shows two items, in order: "Import conversations", "Delete all conversations"
 
 #### Scenario: clicking "Delete all conversations" opens the confirmation popup
 
@@ -141,9 +146,9 @@ Only `delete-all` is owned by this capability. The export and import entries are
 The `ConfirmationPopup` SHALL:
 - Use `variant={ConfirmationPopupVariant.Danger}`.
 - Display `header={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}` and `description` containing the localized warning text.
-- Display `confirmLabel={t(ConversationPanelI18nKeys.DeleteAllConfirmButton)}` and `cancelLabel={t(ButtonsI18nKeys.Cancel)}`.
-- Set `isLoading={isDeletingAll}` and `disableConfirmButton={isDeletingAll}` during an in-flight request.
-- Prevent the popup from being closed while `isDeletingAll` is true (cancel/close handlers return early when `isDeletingAll`).
+- Display `confirmLabel={t(ButtonsI18nKeys.DeleteAll)}` and `cancelLabel={t(ButtonsI18nKeys.Cancel)}`.
+- Take its open, running, and error state from `useAsyncConfirmDialog` (`@epam/ai-dial-chat-hooks`): `open={isPending}`, and `isLoading` / `disableConfirmButton` bound to the hook's `isRunning` during an in-flight request.
+- Prevent the popup from being closed while the request is running (cancel/close handlers return early when `isRunning`).
 
 #### Scenario: confirm button is disabled while deletion is in progress
 
@@ -153,7 +158,7 @@ The `ConfirmationPopup` SHALL:
 
 #### Scenario: closing the popup while deletion is in progress has no effect
 
-- **WHEN** the API call is in flight (`isDeletingAll` is true)
+- **WHEN** the API call is in flight (`isRunning` is true)
 - **WHEN** the cancel button or the popup close button is clicked
 - **THEN** the popup remains open and `deleteAllConversations` is not called a second time
 
@@ -165,7 +170,7 @@ On a complete success the panel SHALL clear and, when a conversation was open, t
 
 After the API returns with `failed.length === 0`:
 - The popup is closed.
-- If `activeConversationId` is non-null, the app navigates to `ROUTES.ROOT`.
+- If `activeConversationId` is non-null, the app navigates to `ROUTES.Root`.
 - No error notification is shown.
 
 The same applies to the already-empty-bucket case (`requested: 0, deleted: 0, alreadyAbsent: 0, failed: []`).
@@ -176,7 +181,7 @@ Navigation MUST be triggered by checking `activeConversationId` directly — NOT
 
 - **GIVEN** `activeConversationId` is set to a valid conversation ID
 - **WHEN** the delete-all API call succeeds with `failed.length === 0`
-- **THEN** `navigate(ROUTES.ROOT)` is called
+- **THEN** `navigate(ROUTES.Root)` is called
 
 #### Scenario: no navigation when no active conversation
 
@@ -189,7 +194,7 @@ Navigation MUST be triggered by checking `activeConversationId` directly — NOT
 - **GIVEN** `activeConversationId` is set
 - **AND** the `conversations` state is empty (post-refresh) at the time the delete-all callback runs
 - **WHEN** the delete-all API call succeeds
-- **THEN** `navigate(ROUTES.ROOT)` is still called
+- **THEN** `navigate(ROUTES.Root)` is still called
 
 ---
 
@@ -199,15 +204,15 @@ A partial failure SHALL be reported through a dismissible notification rather th
 
 After the API returns with `failed.length > 0 && (deleted > 0 || alreadyAbsent > 0)`:
 - The popup is closed.
-- A `Notification` with `variant={NotificationVariant.Error}` is shown with text from `ConversationPanelI18nKeys.DeleteAllPartialError`.
-- If `activeConversationId` is non-null, the app navigates to `ROUTES.ROOT`.
+- An error notification is raised through `showErrorNotification` from `NotificationContext` with text from `ConversationPanelI18nKeys.DeleteAllPartialError`, and is rendered by the app-level `NotificationContainer`.
+- If `activeConversationId` is non-null, the app navigates to `ROUTES.Root`.
 - The notification is closable and dismisses when its close button is clicked.
 
 #### Scenario: partial failure shows a dismissable error notification
 
 - **WHEN** the API returns `{ deleted: 2, failed: [{ code: 'UPSTREAM_ERROR' }] }`
 - **THEN** the popup is closed
-- **AND** a `Notification` with the partial-error message is displayed
+- **AND** an error notification with the partial-error message is displayed
 - **AND** clicking the notification's close button dismisses it
 
 ---
@@ -218,9 +223,9 @@ A total failure SHALL keep the popup open with an inline error so the user can r
 
 After the API returns with `failed.length > 0 && deleted === 0 && alreadyAbsent === 0`:
 - The popup remains open.
-- An inline error message from `ConversationPanelI18nKeys.DeleteAllError` is shown inside the popup description.
+- An inline error message from `ConversationPanelI18nKeys.DeleteAllError` (the `useAsyncConfirmDialog` `error`) is shown inside the popup description.
 - No navigation occurs.
-- No `Notification` is shown.
+- No notification is shown.
 - The conversation list is unchanged.
 
 After the API call throws (network error or server error before per-item results):
@@ -237,30 +242,33 @@ After the API call throws (network error or server error before per-item results
 
 - **WHEN** the API call throws a network error
 - **THEN** the popup remains open with the inline error message
-- **AND** `isDeletingAll` is reset to false so the confirm button is enabled again
+- **AND** `isRunning` is reset to false so the confirm button is enabled again
 
 ---
 
 ### Requirement: i18n — all user-visible strings use translation keys
 
-All new user-visible strings are accessed via `t()` with keys from `ConversationPanelI18nKeys`. Hardcoded English strings SHALL NOT appear in JSX or `aria-label` values in `apps/`. The `en.json` locale file provides the English defaults.
+All user-visible strings SHALL be accessed via `t()` with keys from `ConversationPanelI18nKeys` (and `ButtonsI18nKeys` for the shared button labels). Hardcoded English strings SHALL NOT appear in JSX or `aria-label` values in `apps/`. The `en.json` locale file provides the English defaults.
 
-New keys:
+Keys:
 
 | Key | English value |
 |---|---|
 | `conversationPanel.panelActionsLabel` | `"Conversation panel actions"` |
-| `conversationPanel.deleteAllChatsLabel` | `"Delete all conversations"` |
-| `conversationPanel.deleteAllConfirmTitle` | `"Delete All Conversations?"` |
-| `conversationPanel.deleteAllConfirmDescription` | `"All conversations will be permanently deleted. This action cannot be undone."` |
-| `conversationPanel.deleteAllConfirmButton` | `"Delete all"` |
-| `conversationPanel.deleteAllError` | `"Failed to delete all conversations. Please try again."` |
-| `conversationPanel.deleteAllPartialError` | `"Some conversations could not be deleted. The list has been refreshed."` |
+| `conversationPanel.deleteAll.deleteAllChatsLabel` | `"Delete all conversations"` |
+| `conversationPanel.deleteAll.deleteAllConfirmTitle` | `"Delete All Conversations?"` |
+| `conversationPanel.deleteAll.deleteAllConfirmDescription` | `"All conversations will be permanently deleted. This action cannot be undone."` |
+| `conversationPanel.deleteAll.deleteAllError` | `"Failed to delete all conversations. Please try again."` |
+| `conversationPanel.deleteAll.deleteAllPartialError` | `"Some conversations could not be deleted. The list has been refreshed."` |
+| `conversationPanel.deleteAll.deleteAllSuccessTitle` | `"All conversations deleted"` |
+| `conversationPanel.deleteAll.deleteAllSuccess` | `"All conversations have been deleted successfully."` |
+
+The confirm button reuses `buttons.deleteAll` (`ButtonsI18nKeys.DeleteAll`, `"Delete all"`); there is no `deleteAllConfirmButton` key.
 
 #### Scenario: translation keys are present in en.json
 
 - **WHEN** `en.json` is loaded
-- **THEN** all 7 keys listed above resolve to their English values
+- **THEN** all 8 keys listed above, and `buttons.deleteAll`, resolve to their English values
 
 #### Scenario: no hardcoded English in apps/ JSX
 
@@ -274,7 +282,7 @@ New keys:
 The menu and its notification SHALL be positioned logically, so both follow the writing direction:
 
 - `Dropdown` uses `placement="bottom-end"` so the menu opens at the logical end of the trigger (left in RTL, right in LTR).
-- The `Notification` for partial error uses `start-4` (not `left-4`) in its `className`.
+- The partial-error notification adds no positioning of its own; it is rendered by the shared `NotificationContainer`.
 
 #### Scenario: dropdown placement is logically correct in RTL
 
@@ -292,7 +300,7 @@ The whole delete-all flow SHALL be reachable and operable by keyboard alone:
 - `Dropdown` handles arrow-key navigation among items and Escape to close.
 - After the dropdown closes (Escape or item selection), focus returns to the trigger.
 - `ConfirmationPopup` is a modal dialog: focus is trapped while open and restored to the trigger (or to an appropriate element) on close.
-- `disableConfirmButton={isDeletingAll}` provides an accessible disabled state; the button has `disabled` attribute during in-flight requests.
+- `disableConfirmButton={isRunning}` provides an accessible disabled state; the button has `disabled` attribute during in-flight requests.
 - The trigger `aria-label` is translated (never hardcoded English).
 
 #### Scenario: trigger has a translated accessible label
@@ -345,23 +353,23 @@ Tests for `deleteAllConversations` SHALL be added in a new or updated spec file 
 Tests in `apps/chat/src/components/ConversationPanel/tests/ConversationPanelView.spec.tsx` SHALL cover:
 
 - Overflow trigger renders with the accessible label from `PanelActionsLabel`.
-- Opening the dropdown shows exactly three items, with "Delete all conversations" last.
+- Opening the dropdown shows the items, with "Delete all conversations" last.
 - Clicking the delete item opens the confirmation popup; API is not called.
 - Cancelling the popup calls neither the API nor `navigate`.
-- Confirming: complete success — popup closes, `navigate(ROUTES.ROOT)` called when `activeConversationId` is set.
+- Confirming: complete success — popup closes, `navigate(ROUTES.Root)` called when `activeConversationId` is set.
 - Confirming: complete success with no active conversation — `navigate` not called.
-- Confirming: complete success when the conversations list is empty at callback time — `navigate(ROUTES.ROOT)` is still called (guards against stale-closure regression).
+- Confirming: complete success when the conversations list is empty at callback time — `navigate(ROUTES.Root)` is still called (guards against stale-closure regression).
 - Confirming: total failure — popup stays open with inline error; list unchanged.
 - Confirming: partial failure — popup closes, notification appears, `navigate` called.
 - Confirming: thrown error — popup stays open with inline error.
 - In-flight state: confirm button disabled after first click; second click does not issue a second call.
 - Notification close button dismisses the partial-error notification.
-- `isDeletingAll` resets to false after the request resolves (success or failure).
+- The running state resets to false after the request resolves (success or failure).
 - Single delete: navigates to root when the deleted conversation is the active one.
 - Single delete: does not navigate when the deleted conversation is not the active one.
 
 #### Scenario: View suite covers the full delete-all interaction
 
 - **WHEN** the `ConversationPanelView` test suite is executed
-- **THEN** it asserts the overflow trigger, the three dropdown items, and that opening the confirmation issues no API call
+- **THEN** it asserts the overflow trigger, the dropdown items, and that opening the confirmation issues no API call
 - **AND** it asserts each confirm outcome — complete success, partial failure, total failure, and thrown error — together with the in-flight guard against a double submit
