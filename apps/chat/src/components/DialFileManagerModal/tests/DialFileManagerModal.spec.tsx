@@ -640,7 +640,7 @@ describe('DialFileManagerModal', () => {
       'size-full gap-6 px-6 py-4',
     );
     expect(fileManager.getAttribute('data-tree-container-class')).toBe(
-      'min-h-0 h-full rounded-xl bg-layer-raised shadow-sm',
+      'min-h-0 h-full w-[360px] shrink-0 rounded-xl bg-layer-raised shadow-sm',
     );
     expect(fileManager.getAttribute('data-grid-layout')).toBe('normal');
     expect(fileManager.getAttribute('data-show-hidden-files-toggle')).toBe(
