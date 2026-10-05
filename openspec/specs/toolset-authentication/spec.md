@@ -65,6 +65,12 @@ and whether a login is triggered on save.
 - **THEN** the configuration can be saved without submitting credentials and without
   triggering a login
 
+#### Scenario: Switching to OAuth defaults to standard login
+- **WHEN** a user switches the authentication type to OAuth
+- **THEN** the login mode becomes "with login" (DIAL Core dynamic client registration), so no client
+  configuration fields are required, and "with login & config" is used only when the user selects
+  it explicitly
+
 #### Scenario: Reopen an OAuth toolset with dynamic client registration
 - **WHEN** the editor loads a saved OAuth toolset that Core marks as dynamically registered
 - **THEN** the login mode is restored as "with login", even though the returned OAuth settings
