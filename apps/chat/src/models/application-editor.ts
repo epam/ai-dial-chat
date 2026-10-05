@@ -36,8 +36,8 @@ export interface ApplicationSetupProps<TSetup> {
   appId?: string;
   /** Current Metadata values, read-only for the Setup component. */
   metadata: DeploymentCreationFormValues;
-  /** Whether the header's preview mode is on. */
-  isPreviewing: boolean;
+  /** Asks the page to discard the preview session, e.g. after a save that changed the configuration. */
+  onPreviewReset: () => void;
   /** Runs the page's primary action, the same as the header's Create/Save button. */
   onSubmit: () => void;
   /** Whether the page is persisting right now. */
@@ -54,6 +54,18 @@ export interface ApplicationSetupHandle {
   save: (metadata: DeploymentCreationFormValues) => Promise<void>;
   /** Saves the Setup for a preview; resolves once the preview can open. */
   startPreview?: (metadata: DeploymentCreationFormValues) => Promise<void>;
+}
+
+/** Props every kind's full-page Preview component receives from `ApplicationEditorPage`. */
+export interface ApplicationPreviewProps {
+  /** Id of the edited application. */
+  appId: string;
+  /** Current Metadata values, read-only for the Preview component. */
+  metadata: DeploymentCreationFormValues;
+  /** Whether the preview is the visible surface of the page. */
+  isVisible: boolean;
+  /** Leaves preview and returns to the editor. */
+  onExit: () => void;
 }
 
 /** Page context a definition can read to resolve kind-specific values. */
@@ -101,9 +113,8 @@ export interface ApplicationEditorMessageKeys {
   loadFailed: ApplicationEditorI18nKey;
   savingOverlay: ApplicationEditorI18nKey;
   loadingOverlay: ApplicationEditorI18nKey;
-  /** Header Preview toggle labels; set only by kinds that support a preview. */
+  /** Header Preview button label; set only by kinds that support a preview. */
   preview?: ApplicationEditorI18nKey;
-  exitPreview?: ApplicationEditorI18nKey;
 }
 
 /** An application kind rendered through the shared Metadata | Setup page. */
@@ -142,6 +153,10 @@ export interface ApplicationEditorFormDefinition<TSetup> {
   needsConfirmation?: (setup: TSetup) => boolean;
   confirmation?: ApplicationEditorConfirmation;
   Setup: ComponentType<ApplicationSetupProps<TSetup>>;
+  /** Full-page preview of an edited application; absent for kinds without a preview. */
+  Preview?: ComponentType<ApplicationPreviewProps>;
+  /** Whether `Preview` applies to the application being edited, e.g. only to some schemas of the kind; defaults to `true`. */
+  isPreviewAvailable?: (ctx: ApplicationEditorContext) => boolean;
   /** Creates the application. Calls `apps/chat/src/server-api` wrappers only. */
   create: (
     metadata: DeploymentCreationFormValues,

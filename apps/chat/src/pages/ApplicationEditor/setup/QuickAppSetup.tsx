@@ -1,5 +1,4 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
@@ -31,7 +30,6 @@ import {
 import { toTriggerSaveGeneral } from '../../../utils/application-editor';
 import type { AppEditorIframeHandle } from './AppEditorIframe';
 import AppEditorIframe from './AppEditorIframe';
-import AppPreviewChat from './AppPreviewChat';
 
 /**
  * Safety-net timeout for a triggered save. If neither `SaveSuccess` nor
@@ -56,8 +54,7 @@ interface PendingSave {
 
 const QuickAppSetup: FC<Props> = ({
   appId,
-  metadata,
-  isPreviewing,
+  onPreviewReset,
   onSubmit,
   isSubmitting,
   onReadyChange,
@@ -78,11 +75,6 @@ const QuickAppSetup: FC<Props> = ({
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
   const [saveError, setSaveError] = useState('');
-  /*
-   * Bumped whenever a save reports a real configuration change, remounting
-   * the preview pane so the next preview starts a fresh session.
-   */
-  const [previewResetKey, setPreviewResetKey] = useState(0);
 
   // Without an app there is nothing to save yet, so the page's Create stays available.
   const isReady = appId ? hasEditor && isEditorReady : true;
@@ -213,13 +205,13 @@ const QuickAppSetup: FC<Props> = ({
       save: async (values) => {
         const hasChanges = await runSave(toTriggerSaveGeneral(values));
         await reassertSkillsSupport(values);
-        if (hasChanges) setPreviewResetKey((prev) => prev + 1);
+        if (hasChanges) onPreviewReset();
       },
       startPreview: async (values) => {
         const hasChanges = await runSave();
         await reassertSkillsSupport(values);
         if (hasChanges) {
-          setPreviewResetKey((prev) => prev + 1);
+          onPreviewReset();
           /*
            * The remounted preview pane reads the deployment list on its first
            * render, so wait for fresh data instead of flashing the stale
@@ -238,7 +230,7 @@ const QuickAppSetup: FC<Props> = ({
         }
       },
     }),
-    [refetchDeployments, reassertSkillsSupport, runSave],
+    [onPreviewReset, refetchDeployments, reassertSkillsSupport, runSave],
   );
 
   const handleUpdated = useCallback(() => {
@@ -274,9 +266,7 @@ const QuickAppSetup: FC<Props> = ({
       {saveError && <ErrorMessageNotification message={saveError} />}
       <div className="relative min-h-0 flex-1">
         {/* Absolutely positioned, so the iframe gets a definite height to fill. */}
-        <div
-          className={mergeClasses('absolute inset-0', isPreviewing && 'hidden')}
-        >
+        <div className="absolute inset-0">
           <AppEditorIframe
             ref={iframeRef}
             schema={schema}
@@ -286,20 +276,6 @@ const QuickAppSetup: FC<Props> = ({
             onSaveError={handleSaveError}
             onReadyChange={setIsEditorReady}
             onLoggedOutChange={setIsLoggedOut}
-          />
-        </div>
-        {/* Kept mounted and hidden, so a preview session survives toggling back to the editor. */}
-        <div
-          className={mergeClasses(
-            'absolute inset-0',
-            !isPreviewing && 'hidden',
-          )}
-        >
-          <AppPreviewChat
-            key={previewResetKey}
-            appId={appId}
-            appDisplayName={metadata.name || schema.displayName}
-            appIconUrl={metadata.iconUrl || schema.iconUrl}
           />
         </div>
       </div>

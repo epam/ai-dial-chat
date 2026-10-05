@@ -356,28 +356,92 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
     });
 
-    it('opens the preview after a save without Metadata and hides the standard actions', async () => {
+    const enterPreview = async () => {
+      await user.click(getAction(BasicI18nKeys.Preview));
+      await waitFor(() => expect(mockTriggerSave).toHaveBeenCalledOnce());
+      act(() => getIframeProps()?.onSaveSuccess?.(true));
+      return screen.findByRole('button', {
+        name: AppsEditorI18nKeys.PreviewBackToSetup,
+      });
+    };
+
+    it('hides Preview for an external application that only has an embedded editor', () => {
+      const externalSchema = {
+        id: 'https://example.com/schemas/external-app',
+        displayName: 'External app',
+        editorUrl: 'https://external.example.com',
+      };
+      vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
+        schemas: [SCHEMA, externalSchema],
+        items: [],
+        isLoading: false,
+        refetchDeployments: mockRefetchDeployments,
+      } as unknown as ReturnType<
+        typeof DeploymentsContextModule.useDeployments
+      >);
+
+      renderPage(
+        `schema=${externalSchema.id}&appId=${encodeURIComponent(APP_ID)}`,
+      );
+
+      expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBeTruthy();
+      expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      expect(queryAction(BasicI18nKeys.Preview)).toBeUndefined();
+      expect(screen.queryByText('preview-chat')).toBeNull();
+    });
+
+    it('renders the Preview button as a plain action, not a toggle', () => {
+      renderPage(editSearch);
+
+      expect(
+        getAction(BasicI18nKeys.Preview).hasAttribute('aria-pressed'),
+      ).toBe(false);
+    });
+
+    it('opens a full-page preview after a save without Metadata and hides the editor', async () => {
       renderPage(editSearch);
       await typeName();
       act(() => getIframeProps()?.onReadyChange?.(true));
 
-      await user.click(getAction(BasicI18nKeys.Preview));
-      await waitFor(() => expect(mockTriggerSave).toHaveBeenCalledOnce());
+      const backToSetup = await enterPreview();
+
       expect(mockTriggerSave).toHaveBeenCalledWith(undefined);
-
-      act(() => getIframeProps()?.onSaveSuccess?.(true));
-
-      const exitPreview = await waitFor(() =>
-        getAction(AppsEditorI18nKeys.ExitPreviewButton),
-      );
-      expect(exitPreview.getAttribute('aria-pressed')).toBe('true');
       expect(mockRefetchDeployments).toHaveBeenCalled();
-      expect(queryAction(ButtonsI18nKeys.Save)).toBeUndefined();
       expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
+      expect(screen.getByText('preview-chat')).toBeTruthy();
+      expect(queryAction(BasicI18nKeys.Preview)).toBeUndefined();
+      expect(queryAction(ButtonsI18nKeys.Save)).toBeUndefined();
+      expect(queryAction(ButtonsI18nKeys.Cancel)).toBeUndefined();
+      expect(
+        screen.queryByRole('heading', {
+          level: 1,
+          name: AppsEditorI18nKeys.EditTitle,
+        }),
+      ).toBeNull();
+      expect(backToSetup.matches(':focus')).toBe(true);
+    });
 
-      await user.click(exitPreview);
+    it('returns to the same embedded editor on Back to setup and focuses Preview', async () => {
+      renderPage(editSearch);
+      await typeName();
+      act(() => getIframeProps()?.onReadyChange?.(true));
+      const editorBefore = screen.getByText(`embedded-editor-${APP_ID}`);
+
+      await user.click(await enterPreview());
 
       expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBe(editorBefore);
+      expect(mockTriggerSave).toHaveBeenCalledOnce();
+      expect(
+        screen
+          .getAllByRole('button', { name: BasicI18nKeys.Preview })
+          .some((button) => button.matches(':focus')),
+      ).toBe(true);
+      expect(
+        screen.queryByRole('button', {
+          name: AppsEditorI18nKeys.PreviewBackToSetup,
+        }),
+      ).toBeNull();
     });
 
     it('opens a legacy Settings-step link in edit mode', () => {

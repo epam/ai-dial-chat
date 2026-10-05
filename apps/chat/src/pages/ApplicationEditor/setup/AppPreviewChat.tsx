@@ -27,6 +27,7 @@ import {
   useComposerSeed,
   useComposerSeedSource,
 } from '@epam/ai-dial-conversation-input';
+import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
@@ -128,6 +129,24 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       iconUrl: resolveCatalogIconUrl(appIconUrl),
     }),
     [appId, appDisplayName, appIconUrl],
+  );
+
+  /* Shown first in the preview but never part of the conversation, so it is never sent to the model. */
+  const greeting = useMemo(
+    () => (
+      <AssistantMessageBubble
+        text={t(AppsEditorI18nKeys.PreviewGreeting)}
+        responseFormat={ResponseFormat.PlainText}
+        deploymentIconUrl={fixedModel.iconUrl}
+        deploymentDisplayName={appDisplayName}
+        labels={{
+          assistantMessageAriaLabel: t(
+            AppsEditorI18nKeys.PreviewGreetingAriaLabel,
+          ),
+        }}
+      />
+    ),
+    [appDisplayName, fixedModel.iconUrl, t],
   );
 
   const appDeployment = useMemo(
@@ -555,6 +574,9 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         aria-label={t(AppsEditorI18nKeys.PreviewChatAriaLabel)}
         className="relative flex size-full flex-col overflow-y-auto"
       >
+        <div className="mx-auto w-full max-w-[760px] shrink-0 px-6 pt-7">
+          {greeting}
+        </div>
         <Suspense fallback={null}>
           <NewConversationComposer
             deployments={[fixedModel]}
@@ -620,6 +642,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         onTranscribeAudio={handleTranscribeAudio}
         conversation={conversation}
         onConversationChange={handleConversationChange}
+        topContent={greeting}
       />
 
       <ConfirmationPopup
