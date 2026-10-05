@@ -1044,13 +1044,39 @@ const ChatPage = ({
 | `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
 | `batchChunksPerFrame`       | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
 
-`ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
+`ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
-**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event.
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout.
+
+`startStream(conversationId, userContent, messageIndex, model, customContent?, generationId?, mode?, options?)` takes an optional `StartStreamOptions` as its last argument. With `{ resumeOnConflict: true }`, a `GenerationConflictError` means "this turn is already being generated": typically the page was reloaded after a new conversation's first message, before the backend saved that generation's start state. The hook then joins the running generation instead of showing `generationConflictMessage`:
+
+- It re-fetches the conversation on the same schedule as an interrupted stream (below), and waits while the server copy still ends in this turn's user message.
+- If the server copy holds this turn's unresolved placeholder, the hook rejoins the generation through the attach/watch flow.
+- If the answer is already saved, the hook shows it.
+- Otherwise it falls back to the conflict message.
+
+`canStopStreaming` is `false` throughout, because the rejected `generationId` has nothing to stop. Pass the option only for a start that sends no new user text, such as continuing a conversation whose last message is the user's. A message the user just typed must keep reporting the conflict.
+
+```tsx
+import { SendCompletionDtoModeEnum } from '@epam/ai-dial-chat-api-client';
+
+startStream(
+  conversation.id,
+  lastUserMessage.content,
+  conversation.messages.length,
+  'gpt-4o',
+  undefined,
+  undefined,
+  SendCompletionDtoModeEnum.ContinueLastUser,
+  { resumeOnConflict: true },
+);
+```
 
 When the transport reports a `StreamInterruptedError` — the connection was lost or went silent, as a laptop sleep or phone lock mid-generation causes — the hook does not show an error right away, because the backend-owned generation usually keeps running. The path stays streaming and stoppable, and the partial answer stays on screen, while the hook re-fetches the conversation through `transport.getConversation` (retrying a rejected fetch after 1, 2, 4, 8 and 16 s, or as soon as the browser reports `online`). If the server copy still ends in this turn's unresolved placeholder, the hook rejoins the generation through the same attach/watch flow as `resumeIfAwaitingGeneration`; if the answer is already saved, it shows it; otherwise it settles with `streamErrorMessage: ''`, as for any transport error. `handleStop` keeps working throughout.
 
-Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
+**Background generations.** A message whose `backgroundGeneration.status` (from `@epam/ai-dial-chat-shared`) is `BackgroundGenerationStatus.Pending` is still being produced by a server-side background job. `resumeIfAwaitingGeneration` resumes it wherever it sits in the conversation — even with a `responseId` already set or a status message after it — and applies the replayed chunks at that message's position. When a completion stream ends and the reload still shows such a message, the hook resumes through `transport.attachToGeneration` instead of settling. `canStopStreaming` is `true` while a pending background message is being resumed, and `handleStop` sends its stored `backgroundGeneration.generationId` to `transport.stopCompletion`. `handleStop` always passes the answer text shown so far as `content`; the backend saves it as the stopped answer of a background generation, whose text it does not hold, and ignores it otherwise. The hook only reads this message field; it makes no decision about which deployments run in the background.
+
+Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message) for hosts that need the same checks outside the hook.
 
 `generationPersistenceErrorMessage?: string` supplies a host-translated warning
 when the server reports a failed terminal save or a terminal reload still
@@ -1060,6 +1086,24 @@ and resumed generation keep their received text and custom content, including
 stages, with this warning. Successful reloads still use the server's enriched
 answer. The buffer belongs to the mounted hook; it does not survive a page reload
 or provide durable storage, and the hook does not retry the conversation save.
+
+A rejected terminal read is separate from a save failure. Both initiating and
+attached streams retain received output without adding `streamErrorMessage` or
+reporting a synthetic persistence error to `onStreamError`. The result exposes
+`hasConversationReloadError: boolean`, `isReloadingConversation: boolean`, and
+`retryConversationReload: () => Promise<void>` for a host-owned notification.
+Retry repeats only the conversation read and reconciliation; it never starts a
+completion or saves the conversation. Concurrent retries are deduplicated.
+Successful reads clear the notification and apply server enrichment, retain
+the existing empty-placeholder warning, or resume pending background work on
+the initiating path. A newer generation invalidates the previous failure, and
+navigation prevents a late read from replacing another displayed conversation.
+`restoreBufferedGeneration` accepts a resolved server answer after a failed
+terminal read when the host loads the conversation again, provided the loaded
+conversation reaches the buffered turn, has an assistant message at that index,
+and is not awaiting generation resume. A stale user-only snapshot restores the
+buffered answer and keeps the reload notification. These failure and retry
+states are transient and are discarded on unmount.
 
 `createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
 `GenerationPersistenceError`, even after an upstream `[DONE]` frame. The error
@@ -4016,6 +4060,8 @@ const resolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
   resolveDialUrl: (attachment) => myResolveDisplayAttachmentUrl(attachment),
   resolveDialFileMetadataUrl: (fileId) => myResolveFileMetadataUrl(fileId),
+  // Optional: renders HTML with no download URL under its own response CSP
+  htmlSrcdocHostUrl: '/my-app/html-preview-frame',
 };
 
 const content = await resolveMarkdownCanvasContent(attachment, resolvers);
@@ -4189,6 +4235,11 @@ const rawItem = getRawItem(panelItem.id); // ConversationListItemDto | undefined
 
 Keeps the panel's highlighted row in sync with the app's active conversation and marks a viewed conversation when the panel renders it. Returns the panel-space id to highlight, or `undefined` when none is active.
 
+The viewed callback runs when the matching active identity first becomes
+available, including after a delayed list load. List refreshes or an optimistic
+rollback do not repeat the write; leaving and revisiting the conversation invokes
+the callback again so the host can retry failed persistence.
+
 ```tsx
 import { useActiveConversationSync } from '@epam/ai-dial-chat-hooks';
 
@@ -4206,14 +4257,14 @@ const panelActiveConversationId = useActiveConversationSync({
 
 **Parameters** (`UseActiveConversationSyncParams`):
 
-| Name                     | Type                                | Description                                                                                |
-| ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------ |
-| `activeConversationId`   | `string \| undefined`               | The app's currently active conversation (context-space).                                   |
-| `items`                  | `ConversationListItemDto[]`         | Raw DTOs from the API.                                                                     |
-| `refreshConversations`   | `() => Promise<void>`               | Called when the active conversation is not found in `items`.                               |
-| `markConversationViewed` | `(id: string) => Promise<void>`     | Called with the matching raw DTO id when the active conversation or matching item changes. |
-| `conversationIdsMatch`   | `(a: string, b: string) => boolean` | Equality predicate for context-space ids.                                                  |
-| `toPanelConversationId`  | `(id: string) => string`            | Maps a DTO `id` to the panel-space identifier.                                             |
+| Name                     | Type                                | Description                                                                                   |
+| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `activeConversationId`   | `string \| undefined`               | The app's currently active conversation (context-space).                                      |
+| `items`                  | `ConversationListItemDto[]`         | Raw DTOs from the API.                                                                        |
+| `refreshConversations`   | `() => Promise<void>`               | Called when the active conversation is not found in `items`.                                  |
+| `markConversationViewed` | `(id: string) => Promise<void>`     | Called with the matching raw DTO id when the active conversation or matched identity changes. |
+| `conversationIdsMatch`   | `(a: string, b: string) => boolean` | Equality predicate for context-space ids.                                                     |
+| `toPanelConversationId`  | `(id: string) => string`            | Maps a DTO `id` to the panel-space identifier.                                                |
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
 

@@ -55,6 +55,7 @@ import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
+import { useVisualizerMessageSendHandler } from '../../hooks/conversation/useVisualizerMessageSendHandler';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   conversationsApi as configuredConversationsApi,
@@ -275,20 +276,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   }, [conversation, conversationId, restoreToolConfiguration, toolIds]);
 
   /*
-   * Switching to another conversation resets the sidebar, matching how the
-   * history panel and the attachment canvas behave on navigation. Route
-   * changes within `/conversations/*` do not unmount this page, so the reset
-   * has to be keyed on the id rather than left to the unmount cleanup below.
-   */
-  useEffect(() => {
-    handleCloseSourcesSidebar();
-  }, [conversationId, handleCloseSourcesSidebar]);
-
-  /*
    * Cleanup must run only on unmount. Both callbacks are stable, so keeping
    * `conversation?.messages` out of the deps stops the sources sidebar from
    * closing on every message mutation (stream chunk, the post-stream
    * conversation refetch, send, regenerate, edit, delete, status message).
+   * Resets within `/conversations/*` are owned by
+   * `useCloseSourcesSidebarOnSubjectChange` (mounted in the sources panel),
+   * which closes the sidebar only when its subject changes — not on every
+   * conversation-id change, so switching between runs of the same task keeps
+   * it open (issue #8840).
    */
   useEffect(
     () => () => {
@@ -364,6 +360,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     restoreBufferedGeneration,
     isStreaming,
     canStopStreaming,
+    hasConversationReloadError,
+    isReloadingConversation,
+    retryConversationReload,
   } = useConversationStream({
     conversationId,
     state: { setConversation, conversationRef },
@@ -518,6 +517,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
               lastMsg.custom_content,
               generateUUID(),
               CompletionMode.ContinueLastUser,
+              /*
+               * A reload can land here before the backend saved this turn's
+               * start state while it still generates it; its 409 then means
+               * "join that generation", not "conflict".
+               */
+              { resumeOnConflict: true },
             );
           }
         } else {
@@ -671,6 +676,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     }));
   }, []);
 
+  const handleVisualizerSendMessage = useVisualizerMessageSendHandler({
+    conversationId,
+    isStreaming,
+    isReadOnly,
+    handleSend,
+  });
+
   useActiveConversationBridge({
     conversation,
     conversationId,
@@ -771,9 +783,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onEditMessage={handleEditMessage}
           editingMessageIndexes={editingMessageIndexes}
           isAssistantTyping={isStreaming}
+          hasConversationReloadError={hasConversationReloadError}
+          isReloadingConversation={isReloadingConversation}
+          onRetryConversationReload={retryConversationReload}
           canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
+          onVisualizerSendMessage={handleVisualizerSendMessage}
           stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}

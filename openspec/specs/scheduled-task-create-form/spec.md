@@ -6,14 +6,14 @@ The create and edit routes for scheduled tasks and the shared form component beh
 ## Requirements
 ### Requirement: New task navigates to a dedicated create route
 
-The Scheduled Tasks list page's primary "create" action SHALL navigate to a new route, `ROUTES.ScheduledTaskCreate` (`/scheduled-tasks/new`), passing the current list URL as a `returnUrl` query parameter, instead of invoking a no-op handler. The route SHALL be lazy-loaded and registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTasks`. State is owned by the `ScheduledTaskCreatePage` component (local `useState`) — no new React Context is introduced.
+The Scheduled Tasks list page's primary "create" action SHALL navigate to `ROUTES.ScheduledTaskCreate` (`/scheduled-tasks/new`) with no query parameters. The route SHALL be lazy-loaded and registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTasks`. State is owned by the `ScheduledTaskCreatePage` component (local `useState`) — no new React Context is introduced.
 
 **Feature flag:** reuses `scheduledTasksEnabled` (no new flag). **RTL impact:** page mirrors per logical-property rules (see RTL requirement below). **i18n impact:** see i18n requirement below. **Telemetry:** none in this iteration.
 
-#### Scenario: Create button navigates with returnUrl
+#### Scenario: Create button navigates to the create route
 
 - **WHEN** `scheduledTasksEnabled` is `true` and the user activates the **New task** button on `/scheduled-tasks`
-- **THEN** the app navigates to `/scheduled-tasks/new?returnUrl=%2Fscheduled-tasks`
+- **THEN** the app navigates to `/scheduled-tasks/new` with no query string
 
 #### Scenario: Flag disabled hides the create route
 
@@ -25,38 +25,33 @@ The Scheduled Tasks list page's primary "create" action SHALL navigate to a new 
 - **WHEN** the JS bundle is evaluated without navigating to `/scheduled-tasks/new`
 - **THEN** the create-task page code is NOT included in the initial bundle
 
-### Requirement: Cancel returns to returnUrl; valid submit calls the BFF create endpoint
+### Requirement: Cancel returns to the list; valid submit calls the BFF create endpoint
 
-The create-task page SHALL read a `returnUrl` query parameter (default `ROUTES.ScheduledTasks` when absent or invalid). Cancel SHALL discard in-progress form state, perform no network call, and navigate to `returnUrl`.
+The create-task page SHALL always return to the fixed list route `ROUTES.ScheduledTasks`; it reads no `returnUrl` (or other) query parameter. Cancel and the back control SHALL discard in-progress form state, perform no network call, and navigate to `ROUTES.ScheduledTasks`.
 
-A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/ai-dial-chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt` (possibly empty with a skill), optional `skillUrl`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `returnUrl`. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
+A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/ai-dial-chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt` (possibly empty with a skill), optional `skillUrl`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `ROUTES.ScheduledTasks` with `state: { refresh: true }`, which makes the list page refetch. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
 
 **Dependency:** requires `add-scheduled-tasks-api` (`POST /api/v1/scheduled-tasks` + `scheduled-tasks.api.ts` wrapper) to be implemented first.
 
 #### Scenario: Cancel discards changes and returns
 
 - **WHEN** the user has typed into the display name field and activates Cancel
-- **THEN** the app navigates to `returnUrl` and no notification or network call occurs
+- **THEN** the app navigates to `ROUTES.ScheduledTasks` and no notification or network call occurs
 
 #### Scenario: Valid submit persists via BFF and returns
 
 - **WHEN** all required fields pass validation and the user activates Create
-- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, skillUrl?, description? }` (no `stream` field), shows a success notification on 201, and navigates to `returnUrl`
+- **THEN** the app sends `POST /api/v1/scheduled-tasks` with `{ displayName, trigger, model, prompt, skillUrl?, description? }` (no `stream` field), shows a success notification on 201, and navigates to `ROUTES.ScheduledTasks` with `state.refresh` set
 
 #### Scenario: Submit failure keeps the form open
 
 - **WHEN** the user activates Create and the BFF returns 400 or 502
-- **THEN** an error notification is shown, the user remains on the create form with their input preserved, and no navigation to `returnUrl` occurs
+- **THEN** an error notification is shown, the user remains on the create form with their input preserved, and no navigation occurs
 
-#### Scenario: Missing returnUrl falls back to the list route
+#### Scenario: A query parameter does not change the return route
 
-- **WHEN** the create route is opened without a `returnUrl` query parameter
-- **THEN** Cancel and a successful submit both navigate to `ROUTES.ScheduledTasks`
-
-#### Scenario: Invalid returnUrl falls back to the list route
-
-- **WHEN** the create route is opened with an empty, absolute, protocol-relative, backslash-containing, or control-character-containing `returnUrl`
-- **THEN** Cancel and a successful submit both navigate to `ROUTES.ScheduledTasks`
+- **WHEN** the create route is opened with any query string, including `?returnUrl=/catalog`
+- **THEN** Cancel and a successful submit still navigate to `ROUTES.ScheduledTasks`
 
 #### Scenario: Non-empty description is included in the submit body
 
@@ -221,9 +216,9 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - `repeat === 'hourly'`: `trigger = { cron: { fields: { hour: '*', minute } } }`, where `minute` is the UTC-equivalent minute-of-hour of the user-entered local `values.minute`, computed via `buildCronFields` using a reference `Date` set to local hour `0`/local `minute` and reading back `getUTCMinutes()`. `hour` itself is always the literal `'*'` and is never converted — only whole-hour-offset timezones make the hour boundary itself timezone-invariant; the sub-hour offset (relevant for timezones like UTC+5:30/UTC+5:45) is carried entirely in the `minute` conversion
 - `repeat === 'daily'`: `trigger = { cron: { fields: { hour, minute } } }`, where `hour`/`minute` are the UTC equivalent of the local `time` the user entered, computed via `buildCronFields` in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` using the browser's IANA timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`)
 - `repeat === 'weekly'`: include `day_of_week` as the UTC-equivalent weekday (shifted ±1, mod 7, relative to the locally-selected `dayOfWeek`, whenever the local→UTC hour conversion crosses a calendar-day boundary), alongside the UTC `hour`/`minute`
-- `repeat === 'monthly'`: include `day` as the UTC-equivalent day-of-month derived from the same conversion, alongside the UTC `hour`/`minute`
+- `repeat === 'monthly'`: include `day` as the local `dayOfMonth` shifted by the UTC calendar-day shift (−1, 0, or +1) of the same conversion, alongside the UTC `hour`/`minute`. The shift is applied to the number, never by rolling a `Date` to that day, so a day the current month lacks (e.g. the 31st in November) is not carried into the next month. A local 1st shifted back emits the APScheduler expression `day: 'last'`, because the UTC predecessor of the 1st is the previous month's last day, whose number varies; a local 31st shifted forward emits `day: '1'`
 
-This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/`'weekly'`/`'monthly'` fields, MUST remain in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, reused by app adapters under the existing configured-client/type exception, not duplicated in app pages or presentation libraries. `buildCronFields` MUST use a single reference `Date` and read back UTC getters from it rather than computing the UTC offset by hand: for `'daily'`/`'weekly'`/`'monthly'`, the reference is constructed from the local `hour`/`minute` (rolled to the matching local weekday/day-of-month for weekly/monthly) and `getUTCHours()`/`getUTCMinutes()`/`getUTCDay()`/`getUTCDate()` are read back; for `'hourly'`, the reference is constructed from local hour `0`/local `minute` and only `getUTCMinutes()` is read back, with `hour` always emitted as the literal `'*'`.
+This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/`'weekly'`/`'monthly'` fields, MUST remain in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, reused by app adapters under the existing configured-client/type exception, not duplicated in app pages or presentation libraries. `buildCronFields` MUST use a single reference `Date` and read back UTC getters from it rather than computing the UTC offset by hand: for `'daily'`/`'weekly'`/`'monthly'`, the reference is constructed from the local `hour`/`minute` (rolled to the matching local weekday for weekly) and `getUTCHours()`/`getUTCMinutes()`/`getUTCDay()` are read back, with the monthly `day` derived from the reference's UTC calendar-day shift as described above; for `'hourly'`, the reference is constructed from local hour `0`/local `minute` and only `getUTCMinutes()` is read back, with `hour` always emitted as the literal `'*'`.
 
 #### Scenario: One-time repeat sends trigger.date
 
@@ -249,6 +244,16 @@ This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/
 
 - **WHEN** the user selects Repeat = Weekly with local time `23:30` on Monday in a timezone at UTC+2, so the UTC equivalent falls on Tuesday `21:30`
 - **THEN** the POST body's `trigger.cron.fields.day_of_week` reflects Tuesday (the UTC calendar day), not Monday (the locally-selected day)
+
+#### Scenario: Monthly repeat on the 1st maps to the last UTC day of the month
+
+- **WHEN** the user selects Repeat = Monthly with local time `00:30` on day `1` in a timezone at UTC+3, so the UTC equivalent falls on the previous calendar day at `21:30`
+- **THEN** the POST body's `trigger.cron.fields` is `{ hour: '21', minute: '30', day: 'last' }`, not the number of whichever month preceded the submission
+
+#### Scenario: Monthly day survives a submission during a shorter month
+
+- **WHEN** the user selects Repeat = Monthly with day `31` and local time `09:00` while the current month has 30 days
+- **THEN** the POST body's `trigger.cron.fields.day` is the UTC-equivalent of the 31st, not `'1'` of the following month
 
 #### Scenario: Daily repeat at a timezone-neutral moment is a no-op conversion
 
@@ -529,6 +534,8 @@ Any new i18n keys this wiring requires (e.g. the placeholder, if not already cov
 
 `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` SHALL export a reverse mapping function that converts a `ScheduledTaskDto` into `ScheduledTaskCreateFormValues`, inverting `buildCronFields`/`buildCronWindowBoundary`'s UTC→local conversion using the same reference-`Date`-plus-getters technique (browser timezone/DST handling, not manual offset arithmetic). The function SHALL return a discriminated result — success with mapped `values`, or failure with a reason — rather than a value that may itself be invalid. `trigger.cron.fields` MUST be evaluated by presence of a non-`null` value per key, not by key presence alone — DIAL Scheduler always returns every cron field key, using `null` for ones that are not set.
 
+A monthly `day` SHALL be converted by subtracting the same UTC calendar-day shift from the stored number, never by rolling a `Date` to that UTC day: `day: 'last'` one day behind local time maps to `dayOfMonth = '1'`, a UTC `1` one day ahead maps to `'31'`, a UTC `31` one day behind maps to `'1'` (tasks saved before `'last'` was emitted), and `'last'` with any other shift, or a value outside `1`–`31`, fails closed with `UnsupportedCronShape`.
+
 Before applying the existing numeric-hour parsing, the mapper SHALL check for the Hourly shape: when `fields.hour === '*'`, `fields.minute` is present with a purely-numeric value, and neither `day` nor `day_of_week` is present, the mapper SHALL succeed with `values.repeat = 'hourly'` and `values.minute` set to the local minute-of-hour equivalent of the stored UTC minute (via a reference `Date` set with `setUTCHours(0, utcMinute)`, reading back `getMinutes()` — the inverse of the forward `setHours(0, minute)` → `getUTCMinutes()` conversion), with no `dayOfWeek`/`dayOfMonth` field set and `time` set to the `DEFAULT_TIME_PLACEHOLDER` `'09:00'` (the same placeholder a one-time task maps with, and the create page's `DEFAULT_VALUES.time`), so switching Repeat to a time-based cadence on the edit page starts from a sensible time. Any other non-numeric `hour` value (cron range/list/step expressions, or `*` combined with a `day`/`day_of_week`) continues to fail closed, same as today.
 
 For the remaining (non-Hourly) shapes, mapping SHALL fail when: the task's `trigger` shape (cron fields with a set, non-`null` value outside `hour`/`minute`/`day`/`day_of_week`, or both `day` and `day_of_week` set) falls outside what `ScheduledTaskCreateFormValues`'s `repeat`-driven fields can express; `triggerType` does not correspond to a `repeat` value the form supports; or `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrl` are empty on the DTO. On mapping failure, `ScheduledTaskEditPage` SHALL render a localized, non-destructive error message and SHALL NOT mount `ScheduledTaskCreateForm` in an editable/submittable state — the original task's trigger is never read, coerced, and re-submitted.
@@ -718,7 +725,7 @@ Both pages SHALL pass support resolved for the draft model into shared preparati
 
 ### Requirement: Edit loading failures are distinct from unsupported schedules
 
-Edit state SHALL distinguish loading, ready, not-found, load-error and unsupported. Unsupported SHALL only follow a successful DTO failing reverse mapping. Task identity changes SHALL reset stale state and guard late responses. Retry SHALL reload the current task. Existing feature and returnUrl policy SHALL be preserved.
+Edit state SHALL distinguish loading, ready, not-found, load-error and unsupported. Unsupported SHALL only follow a successful DTO failing reverse mapping. Task identity changes SHALL reset stale state and guard late responses. Retry SHALL reload the current task. The feature-flag gate is unchanged, and the edit page always returns to the task's detail route (`getScheduledTaskDetailRoute(scheduleId)`), reading no query parameter.
 
 #### Scenario: Network failure offers retry
 
@@ -768,6 +775,13 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 - **THEN** the field immediately becomes invalid, Create/Save is disabled, and `skillSelector.unsupportedTooltipLabel` is displayed
 - **AND** changing to a supporting deployment or removing the skill clears that compatibility error without discarding instructions
 
+#### Scenario: Disabled field explains why it is disabled
+
+- **WHEN** the selected model or agent does not support skills
+- **THEN** the Skill field is disabled and hovering it shows a tooltip with the reason: `skillSelector.unsupportedTooltipLabel` while a skill is selected, `skillSelector.unavailableTooltipLabel` when none is
+- **AND** with no skill selected the same reason is attached to the combobox through `aria-describedby`, since a disabled control receives neither hover nor focus
+- **AND** on a touch-only device the tooltip renders nothing, so the reason is not shown visually there
+
 #### Scenario: Missing skill metadata cannot bypass validation
 
 - **WHEN** a saved skill URL is present but the catalog is loading or no longer returns that skill
@@ -781,7 +795,7 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 
 ### Requirement: Scheduled Skill UI preserves localization accessibility and responsive behavior
 
-The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` and `skillSelector.unsupportedTooltipLabel` for all unsupported messages. Existing `scheduledTasksEnabled` route gating and its resolution through the app-config registry key `features.scheduledTasksEnabled` (`FeatureKey.ScheduledTasksEnabled`) SHALL remain unchanged; no new flag/role is introduced.
+The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` and `skillSelector.unsupportedTooltipLabel` for every unsupported message about a selected skill, and translate `skillSelector.unavailableTooltipLabel` for the disabled field with no selection. Existing `scheduledTasksEnabled` route gating and its resolution through the app-config registry key `features.scheduledTasksEnabled` (`FeatureKey.ScheduledTasksEnabled`) SHALL remain unchanged; no new flag/role is introduced.
 
 The field SHALL support keyboard opening/selection/removal, Escape dismissal and focus restoration, unique label/error associations, `aria-invalid`, `aria-expanded`, and live error/status announcements. Touch removal SHALL not depend on hover. The field SHALL fit scheduler's existing container-responsive form at 360px and desktop sizes with wrapped long references, logical spacing, appropriate directional-icon mirroring, and AAA contrast. Library code SHALL inherit direction rather than read locale. Host labels/catalog callbacks SHALL have stable memoized identities; async resolution SHALL ignore stale results. No new cache or telemetry is required.
 

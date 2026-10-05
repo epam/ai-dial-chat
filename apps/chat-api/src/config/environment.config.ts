@@ -665,6 +665,22 @@ export class EnvironmentVariables {
   @IsString()
   CUSTOM_CLIENT_VARIABLES?: string;
 
+  /*
+   * Server-only allowlist of exact GET Core paths exposed through
+   * GET /api/v1/custom-api/:operationId (see
+   * openspec/changes/add-configured-core-api-operations/design.md). JSON object,
+   * `{"version":1,"operations":[{"id":...,"method":"GET","corePath":...}]}`.
+   * Unset, empty or whitespace-only values mean no operations are enabled.
+   * Parsed and bounded by CustomApiRegistryService, not by this schema, so an
+   * invalid value fails startup there rather than here; this field is kept a
+   * permissive string so the registry service controls the exact error. Never
+   * exposed through client-config, CUSTOM_CLIENT_VARIABLES or browser build
+   * variables. Restart chat-api after changing.
+   */
+  @IsOptional()
+  @IsString()
+  CUSTOM_CORE_API_CONFIG?: string;
+
   @IsOptional()
   @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
@@ -880,6 +896,18 @@ export class EnvironmentVariables {
   RESPONSES_API_ENABLED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    /* Same raw-value coercion as RESPONSES_API_ENABLED, so the literal
+     * string "false" parses to `false`. */
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  RESPONSES_BACKGROUND_ENABLED?: boolean = false;
+
+  @IsOptional()
   @IsString()
   @Matches(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/, {
     message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
@@ -927,6 +955,18 @@ export class EnvironmentVariables {
   })
   @IsBoolean()
   DEFAULT_DEPLOYMENT_PINNED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    /* Fail closed: this flag lets an iframe send messages as the user, so
+     * only an explicit truthy value turns it on. */
+    return ['true', '1', 'yes'].includes(String(raw).trim().toLowerCase());
+  })
+  @IsBoolean()
+  ALLOW_VISUALIZER_SEND_MESSAGES?: boolean = false;
 
   @IsOptional()
   @IsString()

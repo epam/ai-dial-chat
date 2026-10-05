@@ -72,7 +72,11 @@ describe('POST /conversations/completions/attach (integration)', () => {
   let generationService: ConversationGenerationService;
 
   beforeEach(async () => {
-    const mockService = { streamCompletion: vi.fn() };
+    const mockService = {
+      streamCompletion: vi.fn(),
+      resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+      stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
@@ -224,7 +228,11 @@ describe('POST /conversations/completions/attach — header-authenticated caller
 
   beforeEach(async () => {
     principal = HEADER_USER;
-    const mockService = { streamCompletion: vi.fn() };
+    const mockService = {
+      streamCompletion: vi.fn(),
+      resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
+      stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],

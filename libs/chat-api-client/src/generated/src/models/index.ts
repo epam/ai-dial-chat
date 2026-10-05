@@ -809,6 +809,45 @@ export interface AttachmentResourceDto {
 /**
  *
  * @export
+ * @interface BackgroundGenerationDto
+ */
+export interface BackgroundGenerationDto {
+  /**
+   * Client-supplied generation id of the request that started the background job; identifies this message across saves.
+   * @type {string}
+   * @memberof BackgroundGenerationDto
+   */
+  generationId: string;
+  /**
+   * pending while the job runs or its result is not saved yet; completed, stopped or failed once the final state is saved.
+   * @type {BackgroundGenerationStatus}
+   * @memberof BackgroundGenerationDto
+   */
+  status: BackgroundGenerationStatus;
+  /**
+   * Server time (epoch ms) at which the pending placeholder was saved.
+   * @type {number}
+   * @memberof BackgroundGenerationDto
+   */
+  startedAt: number;
+}
+
+/**
+ * pending while the job runs or its result is not saved yet; completed, stopped or failed once the final state is saved.
+ * @export
+ */
+export const BackgroundGenerationStatus = {
+  Pending: 'pending',
+  Completed: 'completed',
+  Stopped: 'stopped',
+  Failed: 'failed',
+} as const;
+export type BackgroundGenerationStatus =
+  (typeof BackgroundGenerationStatus)[keyof typeof BackgroundGenerationStatus];
+
+/**
+ *
+ * @export
  * @interface CellAddressDto
  */
 export interface CellAddressDto {
@@ -1467,11 +1506,17 @@ export interface ConversationMessageDto {
    */
   streamErrorMessage?: string;
   /**
-   * DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. Diagnostic only — never used to resume a generation (previous_response_id/conversation are never sent).
+   * DIAL Responses API id for this message, set only when the generation was routed through the Responses adapter. On the stateless path it is diagnostic only; on the background path it is also the key used to recover, replay, stop and clean up the DIAL Core job. Never sent as previous_response_id/conversation.
    * @type {string}
    * @memberof ConversationMessageDto
    */
   responseId?: string;
+  /**
+   * Present only on an assistant message produced by a DIAL Core background Responses job. Server-owned: client saves cannot change it while its status is pending.
+   * @type {BackgroundGenerationDto}
+   * @memberof ConversationMessageDto
+   */
+  backgroundGeneration?: BackgroundGenerationDto;
   /**
    * Deployment that produced this message. Present on assistant and status messages.
    * @type {string}
@@ -2282,6 +2327,19 @@ export const CreatedScheduledTaskDtoTriggerTypeEnum = {
 export type CreatedScheduledTaskDtoTriggerTypeEnum =
   (typeof CreatedScheduledTaskDtoTriggerTypeEnum)[keyof typeof CreatedScheduledTaskDtoTriggerTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface CustomApiResponseDto
+ */
+export interface CustomApiResponseDto {
+  /**
+   * Opaque JSON value returned by the configured Core operation. Documented as a free-form object; the actual value may also be an array, string, number, boolean, or null — see the generated-typing note on this field.
+   * @type {{ [key: string]: unknown }}
+   * @memberof CustomApiResponseDto
+   */
+  data: { [key: string]: unknown };
+}
 /**
  *
  * @export
@@ -6841,6 +6899,12 @@ export interface StopCompletionDto {
    * @memberof StopCompletionDto
    */
   path: string;
+  /**
+   * Answer text the client has shown so far. Saved as the stopped answer of a background generation, whose text the backend never assembles; ignored for every other generation, whose answer the backend already holds.
+   * @type {string}
+   * @memberof StopCompletionDto
+   */
+  content?: string;
 }
 
 /**

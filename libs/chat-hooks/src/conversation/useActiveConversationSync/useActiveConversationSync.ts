@@ -31,7 +31,8 @@ export interface UseActiveConversationSyncParams {
  * 1. If the active conversation is not present in the list, requests a
  *    refresh. The list and refresh callback are intentionally excluded from
  *    the dependency array to avoid a refresh-loop on every list update.
- * 2. Marks the active conversation as viewed whenever it or the list changes.
+ * 2. Marks the active conversation as viewed when its matching identity becomes
+ *    available. List refreshes and persistence rollback do not retry the write.
  */
 export const useActiveConversationSync = ({
   activeConversationId,
@@ -60,25 +61,18 @@ export const useActiveConversationSync = ({
     // dependency array to avoid re-triggering on every list update.
   }, [panelActiveConversationId, conversationIdsMatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /*
-   * Effect 2: single shared entry point for marking a scheduler-created
-   * conversation as viewed -- fires whenever the active conversation changes,
-   * whether the user navigated by clicking a history panel row or via direct
-   * URL navigation. markConversationViewed itself no-ops for non-scheduler
-   * or already-read items.
-   */
+  const activeItemId = panelActiveConversationId
+    ? items.find((item) =>
+        conversationIdsMatch(item.id, panelActiveConversationId),
+      )?.id
+    : undefined;
+
+  /* Persist once per matching active identity, including late-loaded metadata.
+     A rollback changes the list, but must not cause an automatic retry loop. */
   useEffect(() => {
-    if (!panelActiveConversationId) return;
-    const activeItem = items.find((item) =>
-      conversationIdsMatch(item.id, panelActiveConversationId),
-    );
-    if (activeItem) void markConversationViewed(activeItem.id);
-  }, [
-    panelActiveConversationId,
-    items,
-    markConversationViewed,
-    conversationIdsMatch,
-  ]);
+    if (panelActiveConversationId && activeItemId)
+      void markConversationViewed(activeItemId);
+  }, [panelActiveConversationId, activeItemId, markConversationViewed]);
 
   return panelActiveConversationId;
 };

@@ -9,6 +9,7 @@ import {
   GhostButton,
   Input,
   Search,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconX } from '@tabler/icons-react';
 import { useEffect, useId, useRef, useState, type FC } from 'react';
@@ -20,6 +21,8 @@ import { SkillCatalogModal } from '../SkillCatalogModal/SkillCatalogModal';
 import styles from './SkillSelectorField.module.scss';
 
 const EMPTY_FAVORITES: FavoriteSkillItem[] = [];
+const DEFAULT_UNAVAILABLE_TOOLTIP_LABEL =
+  'Selected model does not support skills. Select a different model to use a skill.';
 
 /** Controlled skill input with favorites, catalog browsing, and explicit removal. */
 export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
@@ -45,12 +48,24 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
   const [query, setQuery] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const unavailableHintId = useId();
   const triggerRef = useRef<HTMLInputElement>(null);
   const wasOpen = useRef(false);
   const unsupported = isSkillSelectionUnsupported(value, isSkillsSupported);
   const canSelect = isSkillsSupported && !isDisabled;
   const open = isOpen && canSelect;
   const catalogOpen = isCatalogOpen && canSelect;
+  /* A disabled control receives no hover or focus, so the reason it is
+   * disabled is shown by a tooltip on its wrapper and announced through a
+   * description; with a selection, the host's error already explains it. */
+  const unsupportedReason = value
+    ? labels.unsupportedTooltipLabel
+    : (labels.unavailableTooltipLabel ?? DEFAULT_UNAVAILABLE_TOOLTIP_LABEL);
+  const isUnavailableHintShown = !isSkillsSupported && !value;
+  const triggerDescribedBy =
+    [describedById, isUnavailableHintShown ? unavailableHintId : undefined]
+      .filter(Boolean)
+      .join(' ') || undefined;
   const focusTrigger = () => {
     if (triggerRef.current && !triggerRef.current.disabled)
       triggerRef.current.focus();
@@ -137,22 +152,16 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
       aria-expanded={open}
       aria-controls={open ? panelId : undefined}
       aria-labelledby={labelledById}
-      aria-describedby={describedById}
+      aria-describedby={triggerDescribedBy}
       aria-invalid={isInvalid || unsupported}
       disabled={!canSelect}
       invalid={isInvalid || unsupported}
       value={value ? displayName || value : ''}
       placeholder={labels.placeholder}
-      title={
-        !isSkillsSupported
-          ? labels.unsupportedTooltipLabel
-          : value
-            ? displayName || value
-            : undefined
-      }
+      title={isSkillsSupported && value ? displayName || value : undefined}
       containerClassName="w-full min-w-0"
       wrapperClassName={mergeClasses(
-        'cursor-pointer',
+        canSelect ? 'cursor-pointer' : 'cursor-not-allowed',
         '--ssf-bg' in cssVars && styles.background,
         '--ssf-border' in cssVars && styles.border,
         (isInvalid || unsupported) && styles.invalid,
@@ -160,6 +169,8 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
       )}
       className={mergeClasses(
         'min-w-0 cursor-pointer text-ellipsis',
+        /* Lets the wrapper's tooltip receive hover over the disabled input. */
+        !canSelect && 'pointer-events-none',
         '--ssf-text' in cssVars && styles.value,
         fieldStyles?.typography?.fontClassName ?? 'dial-small-text',
       )}
@@ -216,34 +227,45 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
       className={mergeClasses('min-w-0', className, SKILLS_CLASS.selectorField)}
       style={cssVars}
     >
-      {renderOverlay ? (
-        <>
-          {/* Keyboard interaction is handled by the combobox. */}
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- combobox owns keyboard activation */}
-          <div
+      <Tooltip
+        tooltip={unsupportedReason}
+        hideTooltip={isSkillsSupported}
+        triggerClassName="block w-full min-w-0"
+      >
+        {renderOverlay ? (
+          <>
+            {/* Keyboard interaction is handled by the combobox. */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- combobox owns keyboard activation */}
+            <div
+              className="w-full min-w-0"
+              onClick={() => handleOpenChange(!open)}
+            >
+              {trigger}
+            </div>
+            {renderOverlay(panel, open, () => handleOpenChange(false))}
+          </>
+        ) : (
+          <Dropdown
+            open={open}
+            onOpenChange={handleOpenChange}
+            disabled={!canSelect}
             className="w-full min-w-0"
-            onClick={() => handleOpenChange(!open)}
+            listClassName="w-[min(var(--reference-width),calc(100vw-2rem))] max-w-full"
+            renderOverlay={() => (
+              <div role="dialog" aria-labelledby={labelledById}>
+                {panel}
+              </div>
+            )}
+            initialFocus={0}
           >
             {trigger}
-          </div>
-          {renderOverlay(panel, open, () => handleOpenChange(false))}
-        </>
-      ) : (
-        <Dropdown
-          open={open}
-          onOpenChange={handleOpenChange}
-          disabled={!canSelect}
-          className="w-full min-w-0"
-          listClassName="w-[min(var(--reference-width),calc(100vw-2rem))] max-w-full"
-          renderOverlay={() => (
-            <div role="dialog" aria-labelledby={labelledById}>
-              {panel}
-            </div>
-          )}
-          initialFocus={0}
-        >
-          {trigger}
-        </Dropdown>
+          </Dropdown>
+        )}
+      </Tooltip>
+      {isUnavailableHintShown && (
+        <span id={unavailableHintId} className="sr-only">
+          {unsupportedReason}
+        </span>
       )}
       {catalogOpen && (
         <SkillCatalogModal

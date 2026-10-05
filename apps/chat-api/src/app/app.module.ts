@@ -11,6 +11,7 @@ import { ClientChannelModule } from '../client-channel/client-channel.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
+import { CustomApiModule } from '../custom-api/custom-api.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { DialCoreModule } from '../dial/dial-core.module';
 import { ExternalServicesModule } from '../external-services/external-services.module';
@@ -68,6 +69,7 @@ import { createAppCacheOptions } from './cache.config';
     OfflineCredentialsModule,
     SkillsModule,
     TextRefinementModule,
+    CustomApiModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

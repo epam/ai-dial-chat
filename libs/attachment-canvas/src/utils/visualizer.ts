@@ -96,3 +96,24 @@ export const partitionAttachmentsForApplicationVisualizer = (
 
   return { claimed, unclaimed };
 };
+
+/**
+ * Returns the `message` string of a visualizer `SEND_MESSAGE` payload, or
+ * `undefined` when the payload is not an object with an own non-blank string
+ * `message`. The returned string is not trimmed.
+ */
+export const getVisualizerMessageContent = (
+  payload: unknown,
+): string | undefined => {
+  if (
+    payload == null ||
+    typeof payload !== 'object' ||
+    !Object.prototype.hasOwnProperty.call(payload, 'message')
+  ) {
+    return undefined;
+  }
+  const { message } = payload as { message: unknown };
+  return typeof message === 'string' && message.trim() !== ''
+    ? message
+    : undefined;
+};

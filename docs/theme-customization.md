@@ -94,11 +94,13 @@ page; it is independent of the light/dark theme choice.
 ### Theme ids and the theme picker
 
 The picker lives on **Settings → Preferences** and offers **every theme in the
-configuration**, in the order the file lists them — whatever ids they use:
+configuration**, whatever ids they use. `light` and `dark` always come first, in
+that order, wherever the file lists them; any other theme follows in the order
+the file lists it:
 
 | Configured themes                | Picker shows                           |
 | -------------------------------- | -------------------------------------- |
-| `light` and `dark`               | Light, Dark, System                    |
+| `light` and `dark` (any order)   | Light, Dark, System                    |
 | `light`, `dark`, `contoso-night` | Light, Dark, Contoso Night, System     |
 | `light` and `contoso-night`      | Light, Contoso Night (no System entry) |
 | one theme only                   | no picker at all                       |

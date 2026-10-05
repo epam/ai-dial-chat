@@ -15,7 +15,7 @@
   "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. These counters measure the BFF's own decisions, not users or sessions: the BFF is stateless and has no server-side active-session count. One browser session produces many authorization decisions. Login starts count issued redirects, not successful sign-ins, and the time a user spends on the identity provider is outside every duration here. Only login, callback, and refresh carry a provider attribute; the Identity provider filter does not apply to the authorization and logout panels. Public routes make no authorization decision and are not counted.",
   "tags": ["dial-chat", "bff", "observability"],
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": true,
   "graphTooltip": 1,
   "style": "dark",
@@ -196,17 +196,200 @@
   "panels": [
     {
       "id": 1,
-      "title": "Scope and interpretation",
+      "title": "How to read this dashboard",
       "type": "text",
       "gridPos": {
-        "h": 5,
-        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 4
       },
       "options": {
         "mode": "markdown",
-        "content": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. These counters measure the BFF's own decisions, not users or sessions: the BFF is stateless and has no server-side active-session count. One browser session produces many authorization decisions. Login starts count issued redirects, not successful sign-ins, and the time a user spends on the identity provider is outside every duration here. Only login, callback, and refresh carry a provider attribute; the Identity provider filter does not apply to the authorization and logout panels. Public routes make no authorization decision and are not counted."
+        "content": "**Auth operations.** Provider filters sign-in and refresh. Authorization and logout include all providers."
+      },
+      "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. These counters measure the BFF's own decisions, not users or sessions: the BFF is stateless and has no server-side active-session count. One browser session produces many authorization decisions. Login starts count issued redirects, not successful sign-ins, and the time a user spends on the identity provider is outside every duration here. Only login, callback, and refresh carry a provider attribute; the Identity provider filter does not apply to the authorization and logout panels. Public routes make no authorization decision and are not counted."
+    },
+    {
+      "id": 30,
+      "title": "Login redirects in period (est.)",
+      "type": "stat",
+      "description": "Estimated count over the full selected period. Increase is calculated per source series before aggregation; rounding affects display only. Missing series remain missing. Redirects issued, not successful sign-ins.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "sum(sum by (dial_chat_auth_provider)(increase(dial_chat_auth_login_started_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__range])))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Login redirects in period (est.)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      }
+    },
+    {
+      "id": 31,
+      "title": "Callback success share in period",
+      "type": "stat",
+      "description": "Fraction over the full selected period, with the original event population and positive denominator. No events gives no value. Denominator is processed callbacks, not login starts.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "((sum(increase(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__range]))) or (0 * (sum(increase(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__range]))))) / (sum(increase(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__range])) > 0)",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Callback success share in period"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 1,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      }
+    },
+    {
+      "id": 32,
+      "title": "Refresh exchanges in period (est.)",
+      "type": "stat",
+      "description": "Estimated count over the full selected period. Increase is calculated per source series before aggregation; rounding affects display only. Missing series remain missing. Exchanges performed, excluding coalesced callers.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "expr": "sum(sum by (dial_chat_auth_outcome)(increase(dial_chat_auth_refresh_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__range])))",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "time_series",
+          "legendFormat": "Refresh exchanges in period (est.)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      }
+    },
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Sign-in — selected identity providers",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
       }
     },
     {
@@ -218,10 +401,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 5
+        "y": 8,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -234,7 +417,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -275,10 +458,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -288,7 +471,7 @@
       "id": 2
     },
     {
-      "title": "Callback outcomes / second",
+      "title": "Processed callbacks / second by outcome",
       "description": "Terminal outcome of callbacks the BFF processed. validation_rejected is a refused callback (IdP error, missing or mismatched state, expired transaction cookie, unknown provider); exchange_failed is a failed code exchange with the IdP; internal_error is a BFF-side fault. Keep them apart: an IdP outage and a wave of stale callback links look nothing alike.",
       "type": "timeseries",
       "datasource": {
@@ -296,10 +479,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
-        "y": 5
+        "y": 8,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -312,7 +495,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -353,10 +536,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -366,18 +549,18 @@
       "id": 3
     },
     {
-      "title": "Callback success fraction (of processed callbacks)",
-      "description": "Denominator is callbacks that reached this BFF, not login starts. A user who never returned from the IdP is absent from both sides. No callbacks gives no value.",
+      "title": "Callback success share",
+      "description": "Denominator is callbacks that reached this BFF, not login starts. A user who never returned from the IdP is absent from both sides. No callbacks gives no value. The percentage axis scales automatically from zero to show small changes.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 14
+        "y": 17,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -390,7 +573,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -411,7 +594,7 @@
               "viz": false
             }
           },
-          "max": 1
+          "decimals": 1
         },
         "overrides": []
       },
@@ -432,10 +615,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -445,7 +628,7 @@
       "id": 4
     },
     {
-      "title": "Callback processing latency - mean, p50, p95",
+      "title": "Successful callback processing — latency",
       "description": "Successful callbacks only, so failed exchanges cannot distort it. Covers the BFF's own work: code exchange, optional userinfo lookup, bucket fetch, session encryption. Excludes the user's time on the IdP. Quantiles aggregate buckets and are hidden above the last finite 60s bucket.",
       "type": "timeseries",
       "datasource": {
@@ -453,10 +636,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
-        "y": 14
+        "y": 17,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -469,7 +652,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -536,10 +719,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -549,7 +732,7 @@
       "id": 5
     },
     {
-      "title": "Callbacks per login start (approximate funnel)",
+      "title": "Callbacks / redirects — approximate ratio",
       "description": "Approximate only. The two events are minutes apart and can land in different windows or on different pods; extra tabs, retried callbacks, and abandoned logins all move this ratio. Do not read it as a login success rate.",
       "type": "timeseries",
       "datasource": {
@@ -557,10 +740,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 23
+        "y": 26,
+        "w": 24,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -573,7 +756,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -614,10 +797,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -625,6 +808,19 @@
         }
       },
       "id": 6
+    },
+    {
+      "id": 101,
+      "type": "row",
+      "title": "Token refresh — selected identity providers",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      }
     },
     {
       "title": "Refresh exchanges / second by outcome",
@@ -635,10 +831,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
+        "x": 0,
+        "y": 36,
         "w": 12,
-        "x": 12,
-        "y": 23
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -651,7 +847,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -692,10 +888,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -705,7 +901,7 @@
       "id": 7
     },
     {
-      "title": "Refresh exchange latency - mean, p95",
+      "title": "Successful refresh exchanges — latency",
       "description": "Refreshed exchanges only. This latency sits inside the request that triggered the refresh, so it is part of that request's HTTP duration. Failures are excluded to keep fast rejections from flattering it.",
       "type": "timeseries",
       "datasource": {
@@ -713,10 +909,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
+        "x": 12,
+        "y": 36,
         "w": 12,
-        "x": 0,
-        "y": 32
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -729,7 +925,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -783,10 +979,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -796,7 +992,7 @@
       "id": 8
     },
     {
-      "title": "Coalesced refresh callers / second",
+      "title": "Refresh callers joined vs. exchanges / second",
       "description": "Callers that joined a refresh already running for the same session on the same pod. The mutex is per pod, so concurrent requests on different replicas each perform their own exchange and appear as exchanges, not coalesced callers.",
       "type": "timeseries",
       "datasource": {
@@ -804,10 +1000,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 32
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -820,7 +1016,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -874,10 +1070,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -887,7 +1083,20 @@
       "id": 9
     },
     {
-      "title": "Authorization decisions / second by source and outcome",
+      "id": 102,
+      "type": "row",
+      "title": "Authorization — all providers",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 54,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "Authorization decisions / second",
       "description": "One decision per guarded request, by credential source. Not a count of users or sessions: one session drives many decisions. Public routes are not counted. Source none means no strategy claimed the request.",
       "type": "timeseries",
       "datasource": {
@@ -895,10 +1104,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 41
+        "y": 55,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -911,7 +1120,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -952,10 +1161,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -965,18 +1174,18 @@
       "id": 10
     },
     {
-      "title": "Authorization rejection fraction by source",
-      "description": "Per-source rejection share. Expected rejections exist in normal operation: an expired cookie on a returning tab, or an unauthenticated first request. A change in the mix matters more than the level.",
+      "title": "Authorization rejection share by source",
+      "description": "Per-source rejection share. Expected rejections exist in normal operation: an expired cookie on a returning tab, or an unauthenticated first request. A change in the mix matters more than the level. The percentage axis scales automatically from zero to show small changes.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
-        "y": 41
+        "y": 55,
+        "w": 12,
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -989,7 +1198,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -1010,7 +1219,7 @@
               "viz": false
             }
           },
-          "max": 1
+          "decimals": 1
         },
         "overrides": []
       },
@@ -1044,10 +1253,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -1057,53 +1266,81 @@
       "id": 11
     },
     {
-      "title": "Authorization rejection reasons / second",
-      "description": "Bounded reasons derived from the codes the strategies already return. bucket_unavailable is the exception: the credential was valid and DIAL Core failed, so it is an upstream problem, not a rejected caller. Top ten at each timestamp.",
-      "type": "timeseries",
+      "title": "Top rejection reasons — recent rate",
+      "description": "Bounded reasons derived from the codes the strategies already return. bucket_unavailable is the exception: the credential was valid and DIAL Core failed, so it is an upstream problem, not a rejected caller. Snapshot at the selected range end, using $__rate_interval. At most ten rows; this is not a ranking by period totals.",
+      "type": "table",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 0,
-        "y": 50
+        "y": 64,
+        "w": 24,
+        "h": 11
       },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "ops",
+          "unit": "none",
           "min": 0,
           "noValue": "No samples",
           "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
             },
-            "axisPlacement": "auto",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
+            "filterable": true
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Credential source"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Rejection reason"
+            },
+            "properties": [
+              {
+                "id": "custom.minWidth",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Rate"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "ops"
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -1115,27 +1352,61 @@
           "editorMode": "code",
           "expr": "topk(10, sum by (dial_chat_auth_source, dial_chat_auth_reason)(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_outcome=\"rejected\"}[$__rate_interval])))",
           "legendFormat": "{{dial_chat_auth_source}} / {{dial_chat_auth_reason}}",
-          "range": true,
-          "instant": false,
-          "format": "time_series"
+          "range": false,
+          "instant": true,
+          "format": "table"
         }
       ],
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Rate",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
         }
       },
-      "id": 12
+      "id": 12,
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "dial_chat_auth_source": 0,
+              "dial_chat_auth_reason": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "dial_chat_auth_source": "Credential source",
+              "dial_chat_auth_reason": "Rejection reason",
+              "Value": "Rate"
+            }
+          }
+        }
+      ]
     },
     {
-      "title": "Logout operations / second",
+      "id": 103,
+      "type": "row",
+      "title": "Logout and revocation — all providers",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 75,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "Logout operations / second by result",
       "description": "What the BFF did locally, paired with its separate best-effort revocation. cookie_cleared does not confirm a federated logout at the identity provider; header_noop had no session to clear; origin_rejected was refused by the CSRF origin check and never reached revocation.",
       "type": "timeseries",
       "datasource": {
@@ -1143,10 +1414,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
+        "x": 0,
+        "y": 76,
         "w": 12,
-        "x": 12,
-        "y": 50
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -1159,7 +1430,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -1200,10 +1471,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",
@@ -1213,18 +1484,18 @@
       "id": 13
     },
     {
-      "title": "Revocation failure fraction (of attempted revocations)",
-      "description": "Denominator excludes not_attempted, which is the common case: no revocation endpoint advertised, no refresh token stored, or an unreadable cookie. Revocation is best effort and never fails the logout, so this tracks IdP reachability, not user impact.",
+      "title": "Failed share of attempted revocations",
+      "description": "Denominator excludes not_attempted, which is the common case: no revocation endpoint advertised, no refresh token stored, or an unreadable cookie. Revocation is best effort and never fails the logout, so this tracks IdP reachability, not user impact. The percentage axis scales automatically from zero to show small changes.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 9,
+        "x": 12,
+        "y": 76,
         "w": 12,
-        "x": 0,
-        "y": 59
+        "h": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -1237,7 +1508,7 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "fillOpacity": 0,
             "showPoints": "never",
             "spanNulls": false,
@@ -1258,7 +1529,7 @@
               "viz": false
             }
           },
-          "max": 1
+          "decimals": 1
         },
         "overrides": []
       },
@@ -1279,10 +1550,10 @@
       ],
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": ["lastNotNull", "max"]
         },
         "tooltip": {
           "mode": "multi",

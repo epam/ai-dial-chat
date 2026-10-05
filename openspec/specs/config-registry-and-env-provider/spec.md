@@ -32,7 +32,9 @@ The registry SHALL include a `dialCore.externalUrl` entry: `type='config'`, `val
 
 The registry SHALL include a `features.responsesApiEnabled` entry: `type='feature'`, `valueType='boolean'`, `visibility='server'`, `defaultValue=false`, `critical=false`, `envVar='RESPONSES_API_ENABLED'`, and no `allowedRolesEnvVar` (role-based rollout via `RESPONSES_API_ENABLED_ROLES` is explicitly out of scope for this entry). This flag SHALL NOT be included in `AppConfigService.getClientConfig`'s response under any circumstance, by virtue of its `visibility='server'` classification — the same mechanism that already excludes `features.llmConversationNaming`.
 
-**Feature flag:** Not gated. The registry entry itself has no user-visible flag; it declares the `features.responsesApiEnabled` key consumed elsewhere.
+The registry SHALL include a `features.responsesBackgroundEnabled` entry: `type='feature'`, `valueType='boolean'`, `visibility='server'`, `defaultValue=false`, `critical=false`, `envVar='RESPONSES_BACKGROUND_ENABLED'`, and no `allowedRolesEnvVar`. It SHALL NOT be included in `AppConfigService.getClientConfig`'s response under any circumstance. Its description SHALL state that it only affects how new generations start and that in-flight background jobs remain recoverable when it is disabled.
+
+**Feature flag:** Not gated. The registry entries themselves have no user-visible flag; they declare the `features.responsesApiEnabled` and `features.responsesBackgroundEnabled` keys consumed elsewhere.
 
 **RTL impact:** None.
 
@@ -73,7 +75,16 @@ The registry SHALL include a `features.responsesApiEnabled` entry: `type='featur
 - **WHEN** `AppConfigService.getClientConfig(context)` is called, in any state of `RESPONSES_API_ENABLED`
 - **THEN** the returned DTO's `features` map does not contain a `responsesApiEnabled` (or `features.responsesApiEnabled`) key
 
----
+
+#### Scenario: Registry contains the responsesBackgroundEnabled feature key with server-only visibility
+
+- **WHEN** the registry is imported
+- **THEN** it MUST contain an entry with `key='features.responsesBackgroundEnabled'`, `type='feature'`, `valueType='boolean'`, `visibility='server'`, `critical=false`, `envVar='RESPONSES_BACKGROUND_ENABLED'`, `defaultValue=false`, and no `allowedRolesEnvVar`
+
+#### Scenario: responsesBackgroundEnabled is excluded from the client-config response
+
+- **WHEN** `AppConfigService.getClientConfig(context)` is called, in any state of `RESPONSES_BACKGROUND_ENABLED`
+- **THEN** the returned DTO's `features` map does not contain a `responsesBackgroundEnabled` (or `features.responsesBackgroundEnabled`) key
 
 ### Requirement: AppConfigEvalContext carries resolution context
 

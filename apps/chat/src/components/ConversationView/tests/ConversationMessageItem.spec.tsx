@@ -13,7 +13,7 @@ import {
   type MessageActionsProps,
 } from '@epam/ai-dial-conversation-messages';
 import type { AnnotationGroup } from '@epam/ai-dial-quotations';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -102,6 +102,8 @@ vi.mock('../../../hooks/attachment/useApplicationVisualizers', () => ({
 /* The real connector mounts an iframe and subscribes to window messages; the
  * handshake never settles in jsdom, so the inline frame would sit in its
  * loading state. Only the surface around it is under test here. */
+const visualizerSubscriptions = new Map<string, (payload: unknown) => void>();
+
 vi.mock('@epam/ai-dial-visualizer-connector', () => ({
   VisualizerConnector: vi.fn().mockImplementation(function (root: HTMLElement) {
     root.appendChild(document.createElement('iframe'));
@@ -109,6 +111,10 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
       ready: () => new Promise(() => undefined),
       send: vi.fn(),
       destroy: vi.fn(),
+      subscribe: (eventType: string, callback: (payload: unknown) => void) => {
+        visualizerSubscriptions.set(eventType, callback);
+        return vi.fn();
+      },
     };
   }),
 }));
@@ -1085,7 +1091,7 @@ describe('ConversationMessageItem — inline citations', () => {
    * `annotationsToPdfHighlights` never gathers more than one entry.
    */
   it.each([0, 1, 2, 3])(
-    'reproduces issue #8822: repeated PDF citation %i supports preview without a download action',
+    'reproduces issue #8822: repeated PDF citation %i supports preview and download',
     async (markerIndex) => {
       const message: Message = {
         role: MessageRole.Assistant,
@@ -1177,10 +1183,11 @@ describe('ConversationMessageItem — inline citations', () => {
       expect(screen.queryAllByRole('dialog')).toHaveLength(0);
       mockOpenCanvas.mockClear();
       await userEvent.click(marker);
-      expect(
-        screen.queryByRole('button', { name: ButtonsI18nKeys.Download }),
-      ).toBeNull();
-      expect(clickSpy).not.toHaveBeenCalled();
+      await userEvent.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.Download }),
+      );
+      expect(clickSpy).toHaveBeenCalledOnce();
+      clickSpy.mockClear();
 
       clickSpy.mockRestore();
     },
@@ -1309,6 +1316,77 @@ describe('ConversationMessageItem — message action gates', () => {
     );
     expect(capturedActions?.onLike).toBeUndefined();
     expect(capturedActions?.onDislike).toBeUndefined();
+  });
+});
+
+describe('ConversationMessageItem — user message Copy action', () => {
+  const writeText = vi.fn(() => Promise.resolve());
+
+  beforeEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+  });
+
+  it('renders a Copy message button on a user message', () => {
+    render(<ConversationMessageItem {...defaultProps} msg={USER_MESSAGE} />);
+    expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+  });
+
+  it('keeps Copy message enabled while the assistant is typing', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={USER_MESSAGE}
+        isAssistantTyping
+      />,
+    );
+    expect(
+      (
+        screen.getByRole('button', {
+          name: 'Copy message',
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+  });
+
+  it('renders Copy message when edit and delete are hidden', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) =>
+        feature === OverlayFeature.HideEditUserMessage ||
+        feature === OverlayFeature.HideDeleteUserMessage,
+    );
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={USER_MESSAGE}
+        onStartEdit={vi.fn()}
+        onDeleteMessage={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+  });
+
+  it('copies the full multiline content without editing or deleting the message', () => {
+    const onStartEdit = vi.fn();
+    const onDeleteMessage = vi.fn();
+    const content = 'Line one\n\n- item a\n- item b';
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...USER_MESSAGE, content }}
+        onStartEdit={onStartEdit}
+        onDeleteMessage={onDeleteMessage}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+
+    expect(writeText).toHaveBeenCalledWith(content);
+    expect(onStartEdit).not.toHaveBeenCalled();
+    expect(onDeleteMessage).not.toHaveBeenCalled();
+    expect(screen.getByText(/Line one/)).toBeTruthy();
   });
 });
 
@@ -1556,6 +1634,20 @@ describe('ConversationMessageItem — application visualizers', () => {
     const frame = toolbar.closest('.overflow-hidden');
 
     expect(frame?.classList.contains('border')).toBe(false);
+  });
+
+  it('forwards a SEND_MESSAGE from the inline visualizer to onVisualizerSendMessage', () => {
+    applicationVisualizersMock = registryWith();
+    const onVisualizerSendMessage = vi.fn();
+
+    renderItem({ onVisualizerSendMessage });
+    act(() => {
+      visualizerSubscriptions.get('my-viz/SEND_MESSAGE')?.({
+        message: 'Next page',
+      });
+    });
+
+    expect(onVisualizerSendMessage).toHaveBeenCalledWith('Next page');
   });
 
   it('renders no inline visualizer when the registry is empty', () => {

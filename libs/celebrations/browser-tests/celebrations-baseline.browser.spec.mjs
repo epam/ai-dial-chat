@@ -11,11 +11,16 @@
  * libs/celebrations, e.g. `node --test --test-name-pattern='^cat baseline'
  * browser-tests/celebrations-baseline.browser.spec.mjs`.
  *
- * Output: tmp/celebrations-baseline/<revision>/ (Git-ignored).
+ * Output: tmp/celebrations-baseline/<captureId>/ (Git-ignored). The capture ID
+ * is the revision for a clean working tree, otherwise
+ * `<revision>-wt-<fingerprint>`, so uncommitted work never lands in a revision
+ * directory. A directory holding `artefacts.sha256` is finalized and is never
+ * written again.
  */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { arch, cpus, platform, release } from 'node:os';
 import { resolve } from 'node:path';
@@ -25,11 +30,31 @@ import { chromium } from 'playwright';
 
 const workspace = resolve(import.meta.dirname, '../../..');
 const storybook = resolve(import.meta.dirname, '../storybook-static');
-const revision = execFileSync('git', ['rev-parse', '--short=9', 'HEAD'], {
-  cwd: workspace,
-  encoding: 'utf8',
-}).trim();
-const output = resolve(workspace, 'tmp/celebrations-baseline', revision);
+const git = (...args) =>
+  execFileSync('git', args, { cwd: workspace, maxBuffer: 512 * 1024 * 1024 });
+const revision = git('rev-parse', '--short=9', 'HEAD').toString().trim();
+
+/* Tracked differences from HEAD plus every untracked, non-ignored file. */
+const fingerprintWorkingTree = () => {
+  const diff = git('diff', 'HEAD', '--binary');
+  const untracked = git('ls-files', '--others', '--exclude-standard', '-z')
+    .toString()
+    .split('\0')
+    .filter(Boolean)
+    .sort();
+  if (diff.length === 0 && untracked.length === 0) return null;
+  const hash = createHash('sha256').update(diff);
+  for (const path of untracked)
+    hash.update(`\0${path}\0`).update(readFileSync(resolve(workspace, path)));
+  return hash.digest('hex').slice(0, 8);
+};
+const fingerprint = fingerprintWorkingTree();
+const captureId = fingerprint ? `${revision}-wt-${fingerprint}` : revision;
+const output = resolve(workspace, 'tmp/celebrations-baseline', captureId);
+if (existsSync(resolve(output, 'artefacts.sha256')))
+  throw new Error(
+    `${output} is a finalized capture (artefacts.sha256 exists); change the working tree or commit to get a new capture identity`,
+  );
 const SEED = 9219;
 const CYCLES = 20;
 
@@ -604,21 +629,29 @@ const mergeResults = async (key, value) => {
   await writeFile(file, JSON.stringify({ ...previous, [key]: value }, null, 2));
 };
 
+/* Each scene records its own provenance, so a partial rerun cannot relabel
+   older scene results with newer environment metadata. */
 const withBrowser = async (run) => {
   const { server, base } = await startServer();
   const browser = await chromium.launch();
   try {
-    await mergeResults('environment', {
+    const environment = {
+      captureId,
       revision,
+      dirty: fingerprint !== null,
+      fingerprint,
+      storybookIndexMtime: statSync(
+        resolve(storybook, 'index.json'),
+      ).mtime.toISOString(),
       browser: `chromium ${browser.version()}`,
       os: `${platform()} ${release()} ${arch()}`,
       cpu: cpus()[0]?.model ?? 'unknown',
       cpuCount: cpus().length,
       node: process.version,
       seed: SEED,
-      recordedAt: new Date().toISOString(),
-    });
-    return await run(browser, base);
+      startedAt: new Date().toISOString(),
+    };
+    return await run(browser, base, environment);
   } finally {
     await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));
@@ -666,7 +699,7 @@ for (const scene of Object.keys(SCENES))
     `${scene} baseline: matrix, cancellation and ${CYCLES}+${CYCLES} cycles`,
     { timeout: 3_600_000 },
     async () => {
-      await withBrowser(async (browser, base) => {
+      await withBrowser(async (browser, base, environment) => {
         const cells = {};
         for (const cell of matrixFor(scene)) {
           cells[cell.id] = {
@@ -693,6 +726,7 @@ for (const scene of Object.keys(SCENES))
           cancel: await runCycles(browser, base, scene, 'cancel'),
         };
         await mergeResults(scene, {
+          environment: { ...environment, finishedAt: new Date().toISOString() },
           cells: Object.fromEntries(
             Object.entries(cells).map(([id, { metrics }]) => [id, metrics]),
           ),

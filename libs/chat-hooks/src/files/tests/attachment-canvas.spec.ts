@@ -591,6 +591,27 @@ describe('resolveHtmlCanvasContent', () => {
     });
   });
 
+  it('forwards the host document URL for srcdoc content when the host supplies one', async () => {
+    const result = await resolveHtmlCanvasContent(
+      makeLocalAttachment('page.html', '<html><body>Local</body></html>'),
+      { ...resolvers, htmlSrcdocHostUrl: '/html-preview-frame' },
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Html,
+      srcdoc: '<html><body>Local</body></html>',
+      srcdocHostUrl: '/html-preview-frame',
+    });
+  });
+
+  it('does not use the host document URL when the attachment has a download URL', async () => {
+    const result = await resolveHtmlCanvasContent(
+      makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
+      { ...resolvers, htmlSrcdocHostUrl: '/html-preview-frame' },
+    );
+    expect(result).not.toHaveProperty('srcdocHostUrl');
+    expect(result).toMatchObject({ url: '/download?path=path/page.html' });
+  });
+
   it('returns null when there is no DIAL download URL and the text is oversized', async () => {
     const result = await resolveHtmlCanvasContent(
       makeLocalAttachment('page.html', oversizedHtml),

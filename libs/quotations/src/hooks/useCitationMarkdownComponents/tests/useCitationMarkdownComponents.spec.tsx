@@ -61,6 +61,7 @@ const buildLabelsForGroup = (group: AnnotationGroup) => ({
       `${current} / ${total}`,
     preview: 'Preview',
     openInBrowser: 'Open in browser',
+    download: 'Download',
     showMore: 'Show more',
     showLess: 'Show less',
   },

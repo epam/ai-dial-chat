@@ -526,11 +526,13 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           <DialFileManager
             className="min-h-0 w-full grow bg-layer-sunken"
             contentClassName={
-              variant === DialFileManagerVariant.Attach ? 'pb-0' : undefined
+              variant === DialFileManagerVariant.Attach
+                ? 'px-0 pb-0'
+                : undefined
             }
             gridClassName={
               variant === DialFileManagerVariant.Attach
-                ? 'size-full px-5 py-4'
+                ? 'size-full gap-6 px-6 py-4'
                 : 'size-full'
             }
             items={items}

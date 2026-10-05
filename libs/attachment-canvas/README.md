@@ -431,6 +431,35 @@ import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
 />;
 ```
 
+### Visualizer messages (`SEND_MESSAGE`)
+
+A visualizer iframe can ask the host to send a chat message. To do so, it posts
+`${visualizerName}/SEND_MESSAGE` with payload `{ message: string }`; this is
+what `ChatVisualizerConnector.sendMessage(content)` does. The lib subscribes on
+every visualizer it mounts and drops anything other than an object with an own,
+non-blank string `message`.
+
+To receive valid messages, pass `onVisualizerSendMessage?: (content: string) => void` to
+`AttachmentCanvasContainer`, `AttachmentCanvas`, `AttachmentCanvasBody` or
+`InlineGroupedVisualizer`. It is called with the untrimmed `message` text.
+
+- **When omitted:** messages are ignored.
+- **Adding, removing or replacing the callback:** never remounts the iframe.
+- **What the host decides:** whether to send the text, into which conversation,
+  and whether to drop it, for example while a response is streaming. The lib
+  never sends anything itself.
+- **No acknowledgement** is posted back to the iframe.
+
+```tsx
+import { AttachmentCanvasContainer } from '@epam/ai-dial-attachment-canvas';
+
+<AttachmentCanvasContainer
+  onVisualizerSendMessage={
+    isVisualizerSendEnabled ? (content) => sendUserMessage(content) : undefined
+  }
+/>;
+```
+
 ## Content Types
 
 `AttachmentContentType` is the discriminant on every content descriptor.
@@ -457,8 +486,19 @@ import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
 
 `HtmlCanvasContent` renders three ways depending on which fields are set:
 
-- **`srcdoc` only** — a locally picked file with no backing download URL.
-  Rendered via `srcDoc` in a sandboxed iframe (`sandbox="allow-scripts"`).
+- **`srcdoc` only** — a locally picked file or inline HTML with no backing
+  download URL. Rendered via `srcDoc` in a sandboxed iframe
+  (`sandbox="allow-scripts"`). A `srcdoc` document inherits the embedding
+  page's CSP, so under a strict policy its inline `<script>`/`<style>` are
+  refused.
+- **`srcdoc` + `srcdocHostUrl`** — the same content, rendered without
+  inheriting the embedding page's CSP. The iframe loads `srcdocHostUrl` via
+  `src` (still `sandbox="allow-scripts"`) and, once it loads, posts it
+  `{ type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: srcdoc }` with target
+  `'*'` (the sandboxed frame has an opaque origin). The host serves that
+  document with its own preview-scoped CSP; it should accept the message only
+  from `window.parent` and replace itself with `html` (e.g. `document.write`).
+  The HTML is posted once per content; a new `content` remounts the frame.
 - **`url` + `isSameOriginUrl: true`** (with `resolveSourceText`, not
   `srcdoc`) — an attachment backed by this app's own file-download endpoint.
   Rendered via `src` with `sandbox="allow-scripts"` and no
@@ -487,6 +527,18 @@ const sameOriginPreview: HtmlCanvasContent = {
   isSameOriginUrl: true,
   resolveSourceText: () => fetchHtmlText(downloadUrl), // lazy, only for "View source"
 };
+
+const inlinePreview: HtmlCanvasContent = {
+  type: AttachmentContentType.Html,
+  srcdoc: inlineHtml,
+  srcdocHostUrl: '/my-app/html-preview-frame', // host-served, own CSP
+};
+```
+
+The message type is exported so a host's bootstrap document can match it:
+
+```ts
+import { HTML_PREVIEW_FRAME_RENDER_MESSAGE } from '@epam/ai-dial-attachment-canvas';
 ```
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by

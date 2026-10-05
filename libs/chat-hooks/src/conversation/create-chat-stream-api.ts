@@ -215,6 +215,7 @@ export interface ChatStreamApi {
   stopCompletion: (dto: {
     generationId: string;
     path: string;
+    content?: string;
   }) => Promise<void>;
 }
 
@@ -239,6 +240,7 @@ export const createChatStreamApi = (
   const stopCompletion = async (dto: {
     generationId: string;
     path: string;
+    content?: string;
   }): Promise<void> => {
     const response = await doFetch(`${completionsBasePath}/completions/stop`, {
       method: 'POST',

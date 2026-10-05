@@ -147,4 +147,20 @@ describe('ChatSkill', () => {
     expect(chip.className).toContain('text-accent');
     expect(chip.className).not.toContain('bg-error');
   });
+
+  it('lays the chip out inline so it wraps at the same points as the raw textarea text', () => {
+    render(
+      <ChatSkill
+        name="qa-dev-rs-haiku-0923"
+        path="skills/bucket/qa-dev-rs-haiku-0923"
+        onViewDetails={vi.fn()}
+      />,
+    );
+
+    const chipClasses = screen
+      .getByLabelText('/qa-dev-rs-haiku-0923')
+      .className.split(' ');
+    expect(chipClasses).toContain('inline');
+    expect(chipClasses).not.toContain('inline-block');
+  });
 });

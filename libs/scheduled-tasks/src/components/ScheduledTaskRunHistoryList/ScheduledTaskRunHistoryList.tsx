@@ -95,6 +95,7 @@ export const ScheduledTaskRunHistoryList: FC<
     '--strhl-unread-dot': colors?.unreadDotColor,
     '--strhl-row-hover-bg': listStyles?.rowHoverBackground,
     '--strhl-row-focus-bg': listStyles?.rowFocusBackground,
+    '--strhl-row-focus-outline': listStyles?.rowFocusOutline,
   });
 
   const renderRow = (run: ScheduledTaskRunItem) => {

@@ -46,6 +46,7 @@ function makeService() {
     }),
     getToolset: vi.fn(),
     getToolSetTools: vi.fn(),
+    getDeploymentInfo: vi.fn(),
   };
 
   const dialClient = {
@@ -1243,6 +1244,75 @@ describe('DeploymentsDetailsService', () => {
         'deployments:details:user1:toolsets/search-tool',
       );
       expect(cached).toEqual(freshResult);
+    });
+  });
+
+  describe('getDeploymentInterfaces', () => {
+    it('returns the deployment interfaces and caches them under their own key', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      sdkClient.getDeploymentInfo.mockResolvedValue(
+        okResponse({
+          id: 'gpt-4.1-nano',
+          interfaces: ['chat', 'openaiResponses'],
+        }),
+      );
+
+      const first = await service.getDeploymentInterfaces(
+        'user1',
+        'gpt-4.1-nano',
+        'token',
+      );
+      const second = await service.getDeploymentInterfaces(
+        'user1',
+        'gpt-4.1-nano',
+        'token',
+      );
+
+      expect(first).toEqual(['chat', 'openaiResponses']);
+      expect(second).toEqual(['chat', 'openaiResponses']);
+      expect(sdkClient.getDeploymentInfo).toHaveBeenCalledTimes(1);
+      expect(sdkClient.getDeploymentInfo).toHaveBeenCalledWith('gpt-4.1-nano', {
+        headers: { Authorization: 'Bearer token' },
+      });
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'deployments:interfaces:user1:gpt-4.1-nano',
+        ['chat', 'openaiResponses'],
+        60 * 1000,
+      );
+    });
+
+    it('is invalidated together with the deployment details', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentInfo.mockResolvedValue(
+        okResponse({ interfaces: ['openaiResponses'] }),
+      );
+
+      await service.getDeploymentInterfaces('user1', 'gpt-4.1-nano', 'token');
+      await service.invalidateDetailsCache('user1', 'gpt-4.1-nano');
+      await service.getDeploymentInterfaces('user1', 'gpt-4.1-nano', 'token');
+
+      expect(sdkClient.getDeploymentInfo).toHaveBeenCalledTimes(2);
+    });
+
+    it('resolves an error answer to no interfaces without caching it', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      sdkClient.getDeploymentInfo.mockResolvedValue(errResponse(503));
+
+      await expect(
+        service.getDeploymentInterfaces('user1', 'gpt-4.1-nano', 'token'),
+      ).resolves.toEqual([]);
+      expect(cacheManager.set).not.toHaveBeenCalled();
+    });
+
+    it('resolves a transport failure to no interfaces', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentInfo.mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+
+      await expect(
+        service.getDeploymentInterfaces('user1', 'gpt-4.1-nano', 'token'),
+      ).resolves.toEqual([]);
     });
   });
 });

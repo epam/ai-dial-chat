@@ -192,6 +192,33 @@ renderer requirement for the sandbox rationale.
 - **THEN** the response's CSP headers are the global security-headers
   middleware's unmodified output
 
+### Requirement: In-memory HTML previews load a preview-scoped bootstrap document
+
+HTML with no file URL (an attachment carried inline as `data`) SHALL NOT be
+previewed through the iframe `srcdoc` attribute when the host supplies a
+bootstrap document, because a `srcdoc` document inherits the chat document's
+enforced CSP. `GET /api/v1/files/html-preview-frame` SHALL return a static
+bootstrap document whose `Content-Security-Policy` is
+`createHtmlPreviewCspHeader()`'s value, with no
+`Content-Security-Policy-Report-Only` header. The document SHALL accept a single
+`{ type: 'dial-html-preview:render', html }` message, only from its parent
+window, and replace itself with `html` via `document.write`, so the HTML renders
+under that response's sandboxed policy.
+
+#### Scenario: Inline HTML attachment renders its inline styles and scripts
+- **WHEN** an assistant message carries a `text/html` attachment with `data` and
+  no `url`, and the user opens its preview
+- **THEN** the preview iframe loads `/api/v1/files/html-preview-frame` via `src`
+  with `sandbox="allow-scripts"` and receives the HTML over `postMessage`
+- **AND** the HTML's inline `<style>` and `<script>` are not refused by the chat
+  document's CSP
+
+#### Scenario: Bootstrap document carries the preview CSP
+- **WHEN** `GET /api/v1/files/html-preview-frame` is requested
+- **THEN** the response's `Content-Security-Policy` header is
+  `createHtmlPreviewCspHeader()`'s value, not the global enforced/report-only
+  policy
+
 ### Requirement: Static routing compatibility
 
 The server SHALL preserve asset MIME types and missing-asset 404s, API route

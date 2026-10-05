@@ -128,8 +128,12 @@ No new i18n keys: recovery reuses the typing indicator, and the fallback reuses 
 - **THEN** no re-fetch is made and no state is written
 
 #### Scenario: Other errors keep today's behavior
-- **WHEN** `onError` receives a `GenerationConflictError`, `GenerationPersistenceError`, `StreamUpstreamError`, or any other error that is not a `StreamInterruptedError`
+- **WHEN** `onError` receives a `GenerationPersistenceError`, `StreamUpstreamError`, a `GenerationConflictError` for a start that did not pass `resumeOnConflict`, or any other error that is not a `StreamInterruptedError`
 - **THEN** it is settled exactly as before this change, with no re-fetch
+
+#### Scenario: An opted-in conflict uses the conflict handover, not this recovery
+- **WHEN** `onError` receives a `GenerationConflictError` for a start that passed `resumeOnConflict: true`
+- **THEN** it follows `chat-hooks-conversation-stream`'s "A conflict on an opted-in start joins the running generation", which shares this requirement's re-fetch schedule and classification, and is not settled immediately
 
 ### Requirement: Stop remains available during recovery
 

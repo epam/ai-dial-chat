@@ -169,6 +169,8 @@ interface Props {
     propertyKey?: string,
     description?: string,
   ) => void;
+  /** Sends a visualizer `SEND_MESSAGE` text; `undefined` while visualizer messages are disabled. */
+  onVisualizerSendMessage?: (content: string) => void;
   onStartEdit?: (messageIndex: number) => void;
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
@@ -334,6 +336,7 @@ const ConversationMessageItem: FC<Props> = ({
   isAssistantTyping,
   editingMessageIndexes,
   onSelectStarter,
+  onVisualizerSendMessage,
   onStartEdit,
   onDeleteMessage,
   onRegenerateMessage,
@@ -550,6 +553,7 @@ const ConversationMessageItem: FC<Props> = ({
           t(CitationsI18nKeys.PopupSwitcher, { current, total }),
         preview: t(BasicI18nKeys.Preview),
         openInBrowser: t(CitationsI18nKeys.PopupOpenInBrowser),
+        download: t(ButtonsI18nKeys.Download),
         showMore: t(ButtonsI18nKeys.ShowMore),
         showLess: t(ButtonsI18nKeys.ShowLess),
       };
@@ -922,8 +926,10 @@ const ConversationMessageItem: FC<Props> = ({
           ),
           /* Regenerate/copy/like/dislike stay mounted while a response streams,
              so they have to be disabled — otherwise a second generation or a
-             rating can be triggered mid-stream. */
-          isDisabled: isAssistantTyping,
+             rating can be triggered mid-stream. User-message Copy is
+             non-mutating and Edit/Delete are not rendered while typing, so
+             user toolbars stay enabled. */
+          isDisabled: isAssistantTyping && msg.role !== MessageRole.User,
         }}
         afterContent={
           referenceGroups.length > 0 ||
@@ -975,6 +981,7 @@ const ConversationMessageItem: FC<Props> = ({
                           openInBrowser: t(
                             CitationsI18nKeys.PopupOpenInBrowser,
                           ),
+                          download: t(ButtonsI18nKeys.Download),
                           showMore: t(ButtonsI18nKeys.ShowMore),
                           showLess: t(ButtonsI18nKeys.ShowLess),
                         }}
@@ -1034,6 +1041,7 @@ const ConversationMessageItem: FC<Props> = ({
                     errorLabel={t(
                       AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
                     )}
+                    onVisualizerSendMessage={onVisualizerSendMessage}
                   />
                 ))}
               {mcpAppMatch && onOpenApp && (

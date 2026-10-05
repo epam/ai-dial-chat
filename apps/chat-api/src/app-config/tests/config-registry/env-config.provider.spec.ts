@@ -349,6 +349,33 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.responsesBackgroundEnabled', () => {
+    it('returns true when RESPONSES_BACKGROUND_ENABLED is true', async () => {
+      const { provider } = makeProvider({ RESPONSES_BACKGROUND_ENABLED: true });
+      expect(
+        await provider.resolve('features.responsesBackgroundEnabled', ctx),
+      ).toBe(true);
+    });
+
+    it('returns false when RESPONSES_BACKGROUND_ENABLED is false', async () => {
+      const { provider } = makeProvider({
+        RESPONSES_BACKGROUND_ENABLED: false,
+      });
+      expect(
+        await provider.resolve('features.responsesBackgroundEnabled', ctx),
+      ).toBe(false);
+    });
+
+    it('returns undefined when RESPONSES_BACKGROUND_ENABLED is absent (falls through to the registry default of false)', async () => {
+      const { provider } = makeProvider({
+        RESPONSES_BACKGROUND_ENABLED: undefined,
+      });
+      expect(
+        await provider.resolve('features.responsesBackgroundEnabled', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('ui.activeEventId', () => {
     it.each(['halloween', 'new-year', 'product-launch-2027'])(
       'returns the configured event ID %s without a backend allowlist',

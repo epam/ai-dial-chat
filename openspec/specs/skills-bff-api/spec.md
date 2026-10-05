@@ -442,7 +442,7 @@ The system SHALL expose `POST /api/v1/skills/grouping-folders` accepting `bucket
 
 The system SHALL NOT accept or forward an `If-Match` header on this operation — the verified DIAL Core schema declares no request header parameters for `createSkillGroupingFolder`.
 
-When one or more intermediate segments of `path` do not yet exist as grouping folders, the system SHALL create every missing intermediate folder along with the requested one (implicit parent creation), and return `201 Created` with the requested folder's `ETag` — the same outcome as when every intermediate segment already existed.
+The system SHALL make exactly one DIAL Core `createSkillGroupingFolder` call, for the requested `path`, and SHALL NOT create or check intermediate segments itself. Whether missing intermediate grouping folders are created is decided by DIAL Core; the BFF returns whatever outcome Core reports for that single call (`201 Created` with the requested folder's `ETag` on success).
 
 - **operationId**: `createSkillGroupingFolder`.
 
@@ -454,9 +454,10 @@ When one or more intermediate segments of `path` do not yet exist as grouping fo
 - **WHEN** the folder already exists, or a resource/folder name collision is detected
 - **THEN** the system returns `400 Bad Request`
 
-#### Scenario: Missing intermediate parents are created implicitly
-- **WHEN** an authenticated user calls `POST /api/v1/skills/grouping-folders?bucket=my-bucket&path=team-a/sub-team/project` and neither `team-a` nor `team-a/sub-team` exists yet
-- **THEN** the system creates `team-a`, `team-a/sub-team`, and `team-a/sub-team/project`, and returns `201 Created` with the requested folder's `ETag`
+#### Scenario: A nested path is forwarded as a single Core call
+- **WHEN** an authenticated user calls `POST /api/v1/skills/grouping-folders?bucket=my-bucket&path=team-a/sub-team/project`
+- **THEN** the system calls DIAL Core `createSkillGroupingFolder` once, for `team-a/sub-team/project`, and makes no separate call for `team-a` or `team-a/sub-team`
+- **AND** it returns Core's result for that call unchanged (`201 Created` with the folder's `ETag` on success)
 
 ### Requirement: Delete an empty grouping folder
 The system SHALL expose `DELETE /api/v1/skills/grouping-folders` accepting `bucket`, `path`, and an optional `If-Match` header, and proxy to DIAL Core `deleteSkillGroupingFolder` (`DELETE /v2/skills/{bucket}/{path}/`). The endpoint SHALL return `200 OK` with `{ success: true }`.

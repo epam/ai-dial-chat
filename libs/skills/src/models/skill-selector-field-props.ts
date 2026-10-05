@@ -13,6 +13,8 @@ export interface SkillSelectorFieldLabels {
   removeSkillLabel: string;
   /** Explanation shown when the selected model cannot use skills. */
   unsupportedTooltipLabel: string;
+  /** Explanation shown when the field is disabled because the model cannot use skills and no skill is selected. Defaults to 'Selected model does not support skills. Select a different model to use a skill.'. */
+  unavailableTooltipLabel?: string;
   /** Favorites panel text; omitted entries use the panel's English defaults. */
   panelLabels?: FavoriteSkillsPanelLabels;
   /** Favorites search label and placeholder. Defaults to 'Search skills'. */

@@ -26,8 +26,12 @@ import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { UiFeaturesProvider } from './context/UiFeaturesContext';
 import { UserConfigProvider } from './context/UserConfigContext';
+import { VisualizerMessageProvider } from './context/VisualizerMessageContext';
 import './i18n/config';
 import './styles.scss';
+import { registerChunkLoadRecovery } from './utils/chunk-load-recovery';
+
+registerChunkLoadRecovery();
 
 const LoginPage = lazy(() => import('./pages/auth/Login'));
 const OverlayClose = lazy(() => import('./pages/auth/OverlayClose'));
@@ -80,7 +84,9 @@ root.render(
                                                   <PromptsProvider>
                                                     <SkillsProvider>
                                                       <ConversationsProvider>
-                                                        <App />
+                                                        <VisualizerMessageProvider>
+                                                          <App />
+                                                        </VisualizerMessageProvider>
                                                       </ConversationsProvider>
                                                     </SkillsProvider>
                                                   </PromptsProvider>

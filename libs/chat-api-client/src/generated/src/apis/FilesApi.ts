@@ -492,6 +492,45 @@ export class FilesApi extends runtime.BaseAPI {
   }
 
   /**
+   * Bootstrap document that renders in-memory HTML under the sandboxed preview CSP
+   */
+  async getHtmlPreviewFrameRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/html-preview-frame`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    if (this.isJsonMime(response.headers.get('content-type'))) {
+      return new runtime.JSONApiResponse<string>(response);
+    } else {
+      return new runtime.TextApiResponse(response);
+    }
+  }
+
+  /**
+   * Bootstrap document that renders in-memory HTML under the sandboxed preview CSP
+   */
+  async getHtmlPreviewFrame(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<string> {
+    const response = await this.getHtmlPreviewFrameRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.
    * List files and folders
    */

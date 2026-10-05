@@ -592,6 +592,76 @@ In either case, when `isOpen === false`, no focusable element inside the panel S
 
 ---
 
+### Requirement: Sources sidebar open state is reset by the resolved schedule, not the conversation id
+
+The sources sidebar's open state SHALL NOT be reset by a change of the raw route conversation id. Instead, the reset SHALL be keyed on the resolved subject of the sidebar: the schedule that owns the active conversation. The schedule SHALL be resolvable for a conversation through three sources:
+
+- The conversation-list lookup — the `scheduleId`, resolved exactly as `ActiveScheduledTaskContext` resolves it (non-task and flag-disabled conversations resolve to none).
+- The remembered run history — the run ids the loaded `useScheduledTaskRuns` items showed for the last resolved schedule, remembered while that schedule was resolved. The `nextRunTime` background refresh picks up a freshly fired run before the conversation list does, so this memory SHALL recognize that run's conversation as belonging to the same schedule.
+- The kept last resolved `scheduleId` — a `scheduleId` that transiently resolves to `undefined` during a conversation-list reload SHALL NOT erase the kept value; it is dropped only when the conversation id changes.
+
+The reset rule SHALL be:
+
+- The active conversation resolves to **no schedule** through any source (a different task's runs never match another schedule's remembered history) → the sidebar SHALL close. This covers normal-to-normal, task-to-normal, and normal-to-task navigation, reproducing today's behavior exactly (the pre-change unconditional close of issue #7213/#7936). It covers a task conversation unknown to both the conversation list and the loaded run history — one first visited without a resolved schedule context (no hold-open limbo) — and a route that resolves to no conversation id at all (bare `/conversations`, a malformed path segment): the panel stays mounted on those routes, and the reset rule SHALL close there just as the pre-change conversation-id effect did; leaving `/conversations/*` entirely unmounts the panel, so that close stays owned by the Conversation page's unmount cleanup.
+- The resolved schedule **changes** (different task) → the sidebar SHALL close.
+- The resolved schedule is **unchanged** (switch between runs of the same task, resolved through any combination of the three sources) → the sidebar SHALL stay open; its content continues to follow the active conversation through the existing `ActiveScheduledTaskContext`/run-history behavior with no additional close logic.
+
+The close SHALL NOT be implemented as an effect keyed on `conversationId` in `Conversation.tsx`; ownership of the reset SHALL live in the sidebar/active-task context layer that already resolves the schedule. The existing unmount cleanup (closing the sidebar when leaving the `/conversations/*` routes) SHALL be preserved unchanged. The rule SHALL NOT affect the sidebar's open behavior: the sidebar still opens only by explicit user action, and the user's manual close is unaffected.
+
+#### Scenario: Switching between runs of the same task keeps the sidebar open
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user activates another run of the same task in the sidebar's own History list
+- **THEN** the sidebar stays open, its Details and History content updates to the newly active run, and no close occurs
+
+#### Scenario: Switching to a freshly fired run the run history knows but the conversation list does not
+
+- **GIVEN** the sources sidebar is open on a run of a schedule whose run history has loaded
+- **WHEN** the `nextRunTime` background refresh adds a newly fired run to the loaded run history, the conversation list has not picked the run's conversation up yet, and the user activates that run in the sidebar's own History list
+- **THEN** the sidebar stays open — the remembered run history resolves the new conversation to the same schedule
+
+#### Scenario: Same-task switch right after a scheduleId blip keeps the sidebar open
+
+- **GIVEN** the sources sidebar is open on a scheduled-task run conversation with a resolved `scheduleId`
+- **WHEN** a conversation-list reload transiently resolves the `scheduleId` to `undefined` on the same conversation, and the user then switches to another run of the same task
+- **THEN** the sidebar stays open — the blip does not erase the kept schedule, even when the previous run never appeared in the loaded run history
+
+#### Scenario: Same-task run switch via conversation panel keeps the sidebar open
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user navigates (conversation panel row, browser back/forward, or direct URL) to a different conversation of the same `scheduleId`
+- **THEN** the sidebar stays open
+
+#### Scenario: Switching to a different task closes the sidebar
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user activates another task's conversation in the conversation panel
+- **THEN** the sidebar closes (no reopen), matching the behavior of navigating to a normal conversation
+
+#### Scenario: Switching from a task conversation to a normal conversation closes the sidebar
+
+- **WHEN** the sources sidebar is open on a scheduled-task run conversation and the user navigates to a non-task conversation
+- **THEN** the sidebar closes
+
+#### Scenario: Normal-to-normal conversation switch still closes the sidebar
+
+- **WHEN** the sources sidebar is open and the user switches from one non-task conversation to another
+- **THEN** the sidebar closes (the pre-change #7213/#7936 behavior is preserved; the rule is "close when the current conversation resolves to no schedule", not "close when the schedule changed")
+
+#### Scenario: A conversation unknown to every source closes the sidebar
+
+- **WHEN** the sidebar is open and the user navigates to a conversation that resolves to no schedule through any source (the task feature flag is disabled, or the conversation has no prior resolved-schedule context — for example a direct first visit to a run whose list entry has not loaded), or to a route that resolves to no conversation id (bare `/conversations`, a malformed path segment)
+- **THEN** the sidebar closes — there is no state in which the sidebar lingers open awaiting a resolution
+
+#### Scenario: Leaving the conversations routes closes the sidebar
+
+- **WHEN** the sidebar is open and the user navigates away from `/conversations/*` (e.g. back to the Scheduled Tasks page)
+- **THEN** the existing unmount cleanup still closes the sidebar
+
+#### Scenario: The reset rule introduces no new open behavior
+
+- **WHEN** the user navigates between conversations of any kind without having opened the sidebar
+- **THEN** the sidebar remains closed; nothing auto-opens it
+
+---
+
 ### Requirement: All sidebar user-visible strings come from i18n
 
 All user-visible strings in the right sidebar (toggle aria-label, panel aria-label, close label, section titles, search and download-all aria-labels, attachment click label, and the new History/Details section strings) SHALL be sourced from i18n keys. Sidebar-specific strings live under `sidebar.base.*` and `sidebar.sources.*` in `apps/chat/src/i18n/locales/en.json`; the all-empty "No data" string reuses `basic.noData`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.

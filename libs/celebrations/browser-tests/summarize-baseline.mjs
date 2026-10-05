@@ -1,22 +1,51 @@
 #!/usr/bin/env node
 /*
  * Prints the S0 browser-baseline tables from the harness output in
- * tmp/celebrations-baseline/<revision>/ (results.json, per-cell metrics.json,
+ * tmp/celebrations-baseline/<captureId>/ (results.json, per-cell metrics.json,
  * cycles.json) and writes <root>/artefacts.sha256, a shasum list of every
- * binary artefact, printing only that list's own digest.
- * Usage (repository root): node libs/celebrations/browser-tests/summarize-baseline.mjs <revision>
+ * binary artefact, printing only that list's own digest. An existing
+ * artefacts.sha256 is never rewritten with different content, and scenes
+ * captured at different revisions or working-tree fingerprints are rejected.
+ * Usage (repository root): node libs/celebrations/browser-tests/summarize-baseline.mjs <captureId>
  */
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, relative } from 'node:path';
 
-const revision = process.argv[2];
-if (!revision) {
-  console.error('Usage: summarize-baseline.mjs <revision>');
+const SCENES = ['sleigh', 'gift-wrapping', 'cat'];
+const captureId = process.argv[2];
+if (!captureId) {
+  console.error('Usage: summarize-baseline.mjs <captureId>');
   process.exit(2);
 }
-const root = join('tmp/celebrations-baseline', revision);
+const root = join('tmp/celebrations-baseline', captureId);
 const results = JSON.parse(readFileSync(join(root, 'results.json'), 'utf8'));
+
+/* Captures from S1 on carry provenance per scene; the 1cfb11468 layout has
+   one top-level record. */
+const sceneEnvironments = SCENES.filter(
+  (scene) => results[scene]?.environment,
+).map((scene) => [scene, results[scene].environment]);
+const identities = new Map(
+  sceneEnvironments.map(([scene, { revision, fingerprint }]) => [
+    scene,
+    `${revision}/${fingerprint ?? 'clean'}`,
+  ]),
+);
+if (new Set(identities.values()).size > 1) {
+  console.error(
+    `Mixed provenance in ${root}: ${[...identities]
+      .map(([scene, identity]) => `${scene} at ${identity}`)
+      .join(', ')}`,
+  );
+  process.exit(1);
+}
 const fixed = (value, digits = 1) =>
   value === null || value === undefined ? '—' : Number(value).toFixed(digits);
 const kib = (bytes) => (bytes ? `${bytes.toLocaleString('en-US')} B` : '0');
@@ -42,15 +71,27 @@ const state = (sample) => {
 const lines = [];
 const out = (line = '') => lines.push(line);
 
-const env = results.environment;
 out('## Environment');
 out();
-out('| Item | Value |');
-out('| --- | --- |');
-for (const [key, value] of Object.entries(env)) out(`| ${key} | ${value} |`);
-out();
+if (results.environment) {
+  out('| Item | Value |');
+  out('| --- | --- |');
+  for (const [key, value] of Object.entries(results.environment))
+    out(`| ${key} | ${value} |`);
+  out();
+}
+if (sceneEnvironments.length) {
+  const keys = [
+    ...new Set(sceneEnvironments.flatMap(([, env]) => Object.keys(env))),
+  ];
+  out(`| Scene | ${keys.join(' | ')} |`);
+  out(`| --- |${keys.map(() => ' --- |').join('')}`);
+  for (const [scene, env] of sceneEnvironments)
+    out(`| ${scene} | ${keys.map((key) => env[key] ?? '—').join(' | ')} |`);
+  out();
+}
 
-for (const scene of ['sleigh', 'gift-wrapping', 'cat']) {
+for (const scene of SCENES) {
   const data = results[scene];
   if (!data) {
     out(`## ${scene}`);
@@ -138,7 +179,14 @@ const manifest = binaries
       `${createHash('sha256').update(readFileSync(path)).digest('hex')}  ${relative(root, path)}`,
   )
   .join('\n');
-writeFileSync(join(root, 'artefacts.sha256'), `${manifest}\n`);
+const manifestPath = join(root, 'artefacts.sha256');
+if (!existsSync(manifestPath)) writeFileSync(manifestPath, `${manifest}\n`);
+else if (readFileSync(manifestPath, 'utf8') !== `${manifest}\n`) {
+  console.error(
+    `${manifestPath} is finalized and differs from the artefacts on disk; it was left unchanged`,
+  );
+  process.exit(1);
+}
 out('## Binary artefacts');
 out();
 out(

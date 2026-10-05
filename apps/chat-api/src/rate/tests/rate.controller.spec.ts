@@ -135,11 +135,20 @@ describe('RateController (integration)', () => {
       await request(app.getHttpServer()).post('/rate').send({}).expect(400);
     });
 
-    it('accepts optional comment field', async () => {
+    it('passes the optional comment through validation to the service', async () => {
       await request(app.getHttpServer())
         .post('/rate')
         .send({ ...VALID_BODY, comment: 'Response was helpful' })
         .expect(204);
+
+      expect(service.rateMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...VALID_BODY,
+          comment: 'Response was helpful',
+        }),
+        TEST_USER.at,
+        undefined,
+      );
     });
   });
 });
