@@ -3,8 +3,8 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
+  GhostButton,
   Label,
-  LinkButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconPhoto, IconPlus } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -59,7 +59,7 @@ export const AddAvatar: FC<AddAvatarProps> = ({
         </div>
 
         <div className="flex flex-col gap-3">
-          <LinkButton
+          <GhostButton
             size={ElementSize.Small}
             iconBefore={
               <IconPlus
