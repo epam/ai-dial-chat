@@ -48,6 +48,7 @@ import {
   IconPlus,
   IconTrashX,
   IconUpload,
+  type TablerIcon,
 } from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
@@ -85,6 +86,7 @@ import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
 import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
 import { SkillFilesPane } from '../../types/skill-files-pane';
 import { buildDialFileTree, resolveAddTarget } from '../../utils/file-tree';
+import { renderIcon } from '../../utils/icon';
 import { SkillFileDropOverlay } from '../SkillFileDropOverlay/SkillFileDropOverlay';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog/SkillFileUploadDialog';
 import styles from './SkillEditor.module.scss';
@@ -343,8 +345,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const titleClassName = typography.titleClassName ?? 'dial-body-semi-text';
   const helperTextClassName =
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
-  const removeIconClassName =
-    typography.removeIconClassName ?? 'text-secondary';
+  const removeIconClassName = typography.removeIconClassName;
   const menuIconClassName = typography.menuIconClassName ?? 'text-secondary';
 
   const cssVars = buildCssVars({
@@ -356,8 +357,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const refinementStyles = {
     feedbackClassName: mergeClasses(
-      styles.refineFeedback,
-      typography.refineFeedbackClassName ?? 'dial-small-text',
+      // Unset overrides keep the kit CaptionText input-caption styling.
+      colors?.refineActionText && styles.refineFeedback,
+      typography.refineFeedbackClassName,
       SKILL_EDITOR_CLASS.refineFeedback,
     ),
     errorClassName: styles.refineError,
@@ -484,14 +486,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const buildAddMenuItems = useCallback(
     (targetFolderPath: string, pane: SkillFilesPane): DropdownItem[] => {
-      const menuIcon = (Icon: typeof IconPlus) => (
-        <Icon
-          size={DIAL_ICON_SIZE.SM}
-          className={menuIconClassName}
-          aria-hidden
-          stroke={DIAL_KIT_ICON_STROKE}
-        />
-      );
+      const menuIcon = (Icon: TablerIcon) =>
+        renderIcon(Icon, menuIconClassName);
       const items: DropdownItem[] = [];
       if (onCreateFolder) {
         items.push({
@@ -581,6 +577,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       if (node.kind === SkillFileNodeKind.Folder) {
         items.push({
           key: 'add-child',
+          icon: renderIcon(IconPlus),
           label: t.addChildLabel ?? 'Add child',
           children: buildAddMenuItems(
             resolveAddTarget(SkillAddSource.Child, node),
@@ -591,6 +588,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       items.push(
         {
           key: 'add-sibling',
+          icon: renderIcon(IconPlus),
           label: t.addSiblingLabel ?? 'Add sibling',
           children: buildAddMenuItems(
             resolveAddTarget(SkillAddSource.Sibling, node),
@@ -599,15 +597,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         },
         {
           key: 'delete',
-          label: t.deleteLabel ?? t.removeLabel ?? 'Delete',
-          icon: (
-            <IconTrashX
-              size={DIAL_ICON_SIZE.SM}
-              className={removeIconClassName}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ),
+          label: t.deleteLabel ?? 'Delete',
+          danger: true,
+          icon: renderIcon(IconTrashX, removeIconClassName),
           onClick: () => handleRemoveNode(item.path),
         },
       );
@@ -618,7 +610,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       t.addChildLabel,
       t.addSiblingLabel,
       t.deleteLabel,
-      t.removeLabel,
       removeIconClassName,
       buildAddMenuItems,
       handleRemoveNode,

@@ -84,9 +84,9 @@ For an authenticated completion request, the BFF SHALL add an `X-JOB-TITLE` head
 - **WHEN** the caller's `job_title` contains bytes outside the safe HTTP field-value range (e.g. non-ASCII characters)
 - **THEN** the outbound `X-JOB-TITLE` value is percent-encoded the same way `X-CONVERSATION-ID` already is, and the request is not rejected by the HTTP client for an invalid header byte
 
-### Requirement: Models list and default-model requests to DIAL Core carry the caller's job title
+### Requirement: Models list requests to DIAL Core carry the caller's job title
 
-The `GET /api/v1/deployments` endpoint's single underlying DIAL Core `listDeployments` call — which backs both the models list and the default-model value embedded in that same response — SHALL include `X-JOB-TITLE` with the caller's session `job_title` value when present, omitted when absent. This header is not part of the deployments list cache key: a cache hit SHALL continue to skip the DIAL Core call (and therefore this header) exactly as it does today, since the header does not affect the returned deployment data.
+The `GET /api/v1/deployments` endpoint's single underlying DIAL Core `listDeployments` call — which backs the models list returned as `DeploymentsResponseDto` (`{ deployments: DeploymentItemDto[] }`, with no default-model field) — SHALL include `X-JOB-TITLE` with the caller's session `job_title` value when present, omitted when absent. This header is not part of the deployments list cache key: a cache hit SHALL continue to skip the DIAL Core call (and therefore this header) exactly as it does today, since the header does not affect the returned deployment data.
 
 #### Scenario: Deployments list request forwards job title
 

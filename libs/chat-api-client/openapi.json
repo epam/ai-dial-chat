@@ -328,7 +328,7 @@
         "tags": ["applications"]
       },
       "post": {
-        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
+        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list and deployments list caches on success.",
         "operationId": "createApplication",
         "parameters": [],
         "requestBody": {
@@ -358,8 +358,14 @@
           "401": {
             "description": "Not authenticated — valid session cookie required"
           },
+          "403": {
+            "description": "Caller lacks permission to create applications in their bucket"
+          },
           "409": {
             "description": "Application name already taken"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response or an empty bucket"
           },
           "503": {
             "description": "DIAL Core is unavailable or timed out"

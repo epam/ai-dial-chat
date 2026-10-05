@@ -8,7 +8,7 @@ Backend feature keys, `FeatureFlagsService.isEnabled`, and the route guard built
 
 ### Requirement: FeatureKey enum enumerates all feature keys
 
-The system SHALL define a `FeatureKey` string enum in `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts` containing at least:
+The system SHALL define a `FeatureKey` string enum in `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts` containing:
 
 ```typescript
 enum FeatureKey {
@@ -19,6 +19,8 @@ enum FeatureKey {
   Footer = 'features.footer',
   ResponsesApiEnabled = 'features.responsesApiEnabled',
   ResponsesBackgroundEnabled = 'features.responsesBackgroundEnabled',
+  DefaultDeploymentPinned = 'features.defaultDeploymentPinned',
+  VisualizerSendMessages = 'features.visualizerSendMessages',
 }
 ```
 
@@ -51,12 +53,13 @@ New feature keys MUST be added to this enum before being used in any service, gu
 async isEnabled(key: FeatureKey, context: AppConfigEvalContext): Promise<boolean>
 ```
 
-It SHALL delegate to `AppConfigService.resolveValue(key, context)` and cast the result to `boolean`. It MUST reject calls for keys that are not `type='feature'` in the registry by throwing `BadRequestException` with a descriptive message.
+It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for keys that are missing or not `type='feature'` by throwing `BadRequestException` (`Key "<key>" is not a valid feature flag key`). It SHALL then delegate to `AppConfigService.isEnabled(key, context)`, which resolves the value through `CompositeConfigProvider.resolve` and returns `value === true` (no cast).
 
 **Failure behavior:**
-- If resolution fails or returns `undefined`, return `false` (fail closed).
-- If the resolved value is not a boolean and the key has `critical=true`, return `false` and log at `error` level.
-- If the resolved value is not a boolean and `critical=false`, return `false` and log at `warn` level.
+- If the resolved value is `undefined` or any non-`true` value (including non-boolean values), return `false` (fail closed) without logging; there is no `critical`-based branching at this layer.
+- If `CompositeConfigProvider.resolve` throws, `AppConfigService.isEnabled` logs at `error` level and returns `false`.
+- If `AppConfigService.isEnabled` throws anything other than `BadRequestException`, `FeatureFlagsService` logs at `warn` level and returns `false`; a `BadRequestException` is rethrown.
+- `critical`-based `error`/`warn` logging exists only in `CompositeConfigProvider`, for provider exceptions.
 
 **Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None.
 
@@ -69,6 +72,11 @@ It SHALL delegate to `AppConfigService.resolveValue(key, context)` and cast the 
 
 - **WHEN** `ASR_MODEL` is not set and `featureFlagsService.isEnabled(FeatureKey.AsrEnabled, ctx)` is called
 - **THEN** it returns `false`
+
+#### Scenario: Non-boolean value returns false
+
+- **WHEN** the resolved value for a feature key is a non-boolean such as the string `'true'`
+- **THEN** `featureFlagsService.isEnabled` returns `false` because only `value === true` enables the feature
 
 #### Scenario: Returns false on resolution failure
 

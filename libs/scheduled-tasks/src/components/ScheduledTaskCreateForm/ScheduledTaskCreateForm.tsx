@@ -155,8 +155,9 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
   const refinementStyles = {
     feedbackClassName: mergeClasses(
-      styles.refineFeedback,
-      typography?.refineFeedbackClassName ?? 'dial-small-text',
+      // Unset overrides keep the kit CaptionText input-caption styling.
+      colors?.refineActionText && styles.refineFeedback,
+      typography?.refineFeedbackClassName,
       SCHEDULED_TASKS_CLASS.refineFeedback,
     ),
     errorClassName: styles.refineError,

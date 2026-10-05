@@ -22,7 +22,7 @@
 }
 
 .refineFeedback {
-  color: var(--stcf-refine-action-text, var(--text-primary, #161b2d));
+  color: var(--stcf-refine-action-text);
 }
 .refineError {
   color: var(--stcf-refine-error-text, var(--text-error, #8b2020));

@@ -151,6 +151,10 @@ describe('text refinement authoring', () => {
     expect(group('Description').getByRole('status').textContent).toContain(
       'Original text restored.',
     );
+    /* The status keeps the kit input-caption styling by default. */
+    const caption = group('Description').getByText('Original text restored.');
+    expect(caption.className).toContain('dial-tiny-text');
+    expect(caption.className).toContain('text-secondary');
     await userEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
     expect(submit).toHaveBeenCalledWith(
       expect.objectContaining({ description: 'Original' }),
