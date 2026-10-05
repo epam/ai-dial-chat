@@ -418,6 +418,8 @@ const {
       'This skill has been deleted. Its details are no longer available.',
     notSharedTooltipLabel:
       "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.",
+    unsupportedTooltipLabel:
+      "Selected model does not support skills. Remove the skill or select different model to proceed.",
   },
   renderCatalogContent: (onSelect, onClose) => (
     <CatalogView onSelect={onSelect} onClose={onClose} />
@@ -567,7 +569,7 @@ elements therefore carry a stable public class.
 | Key              | Class                         | Element                                                                |
 | ---------------- | ----------------------------- | ---------------------------------------------------------------------- |
 | `favoritesPanel` | `dial-skills-favorites-panel` | The `FavoriteSkillsPanel` root, which carries the themed CSS variables |
-| `chip`           | `dial-skills-chip`            | The `/name` chip a `ChatSkill` renders inside the composer             |
+| `chip`           | `dial-skills-chip`            | The inline `/name` span a `ChatSkill` renders (composer and history)   |
 
 ```tsx
 import { SKILLS_CLASS } from '@epam/ai-dial-skills';

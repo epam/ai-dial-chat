@@ -73,6 +73,7 @@ export const useSkillSelectorOverlay = ({
     emptyQueryHintLabel = 'Type to filter',
     deletedTooltipLabel,
     notSharedTooltipLabel,
+    unsupportedTooltipLabel,
     panelLabels,
   } = labels ?? {};
 
@@ -165,7 +166,10 @@ export const useSkillSelectorOverlay = ({
             isUnsupported={!isSkillsSupported}
             detailsTrigger={activeMentionDetailsTrigger}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              unsupportedTooltipLabel,
+            }}
           />
         ),
       })),
@@ -176,6 +180,7 @@ export const useSkillSelectorOverlay = ({
       historyChipLabelClassName,
       activeMentionDetailsTrigger,
       panelLabels,
+      unsupportedTooltipLabel,
     ],
   );
 

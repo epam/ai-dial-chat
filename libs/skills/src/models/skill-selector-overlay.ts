@@ -47,6 +47,11 @@ export interface SkillSelectorOverlayLabels {
    * Defaults to `ChatSkill`'s own default text.
    */
   notSharedTooltipLabel?: string;
+  /**
+   * Tooltip message shown on an active `/name` mention while the selected
+   * model does not support skills. Defaults to `ChatSkill`'s own default text.
+   */
+  unsupportedTooltipLabel?: string;
   /** Labels forwarded to the favorites panel rendered as the overlay. */
   panelLabels?: FavoriteSkillsPanelLabels;
 }
