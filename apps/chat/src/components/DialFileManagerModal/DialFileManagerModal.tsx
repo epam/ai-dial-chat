@@ -1,11 +1,11 @@
 import { mimeTypesToExtensionLabels } from '@epam/ai-dial-attachment-input';
 import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
   mimeTypesToAttachmentExtensionLabels,
   useFileAttachmentPicker,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
   formatFileSize,
   isHiddenPath,
   type AttachResult,

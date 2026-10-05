@@ -1,12 +1,14 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import type {
+  UseDialFileManagerResult,
+  UseDialFileManagerSectionsResult,
+} from '@epam/ai-dial-chat-hooks';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
-  type UseDialFileManagerResult,
-  type UseDialFileManagerSectionsResult,
-} from '@epam/ai-dial-chat-hooks';
-import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+  FileUploadStatus,
+} from '@epam/ai-dial-chat-shared';
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,

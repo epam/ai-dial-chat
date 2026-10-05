@@ -281,6 +281,9 @@
           "404": {
             "description": "Schema not found"
           },
+          "429": {
+            "description": "DIAL Core rate limit exceeded"
+          },
           "502": {
             "description": "DIAL Core returned an error response"
           },
@@ -1455,6 +1458,17 @@
           "404": {
             "description": "Toolset or resource not found"
           },
+          "429": {
+            "description": "DIAL Core rate-limited the request",
+            "headers": {
+              "Retry-After": {
+                "description": "Upstream retry delay, when provided by DIAL Core",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "502": {
             "description": "DIAL Core returned an error response"
           }
@@ -1510,6 +1524,17 @@
           "404": {
             "description": "Deployment not found"
           },
+          "429": {
+            "description": "DIAL Core rate-limited the request",
+            "headers": {
+              "Retry-After": {
+                "description": "Upstream retry delay, when provided by DIAL Core",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "502": {
             "description": "DIAL Core's proxied tools/list failed"
           }
@@ -1564,6 +1589,17 @@
           },
           "404": {
             "description": "Deployment not found"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request",
+            "headers": {
+              "Retry-After": {
+                "description": "Upstream retry delay, when provided by DIAL Core",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "502": {
             "description": "DIAL Core's proxied tools/list failed"
@@ -1621,6 +1657,17 @@
           },
           "404": {
             "description": "Toolset not found"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request",
+            "headers": {
+              "Retry-After": {
+                "description": "Upstream retry delay, when provided by DIAL Core",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "502": {
             "description": "DIAL Core's proxied tools/call failed"
@@ -3796,6 +3843,9 @@
           "401": {
             "description": "Not authenticated"
           },
+          "429": {
+            "description": "DIAL Core rate limit exceeded"
+          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4175,6 +4225,9 @@
           "404": {
             "description": "A resource does not exist"
           },
+          "429": {
+            "description": "DIAL Core rate limit exceeded"
+          },
           "502": {
             "description": "DIAL Core returned an error"
           },
@@ -4222,6 +4275,9 @@
           },
           "404": {
             "description": "A resource does not exist"
+          },
+          "429": {
+            "description": "DIAL Core rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error"

@@ -1,3 +1,4 @@
+import { DialFileManagerActionProfile } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileNodeType,
@@ -9,7 +10,6 @@ import {
   type DialFileManagerSection,
   type SharedRootMeta,
 } from './dial-file-manager.model';
-import { DialFileManagerActionProfile } from './file-manager-variant';
 
 export const hasForbiddenNameSymbols = (
   name: string,

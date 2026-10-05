@@ -23,6 +23,17 @@ import {
 import { McpAppRateLimitException } from './mcp-app-rate-limit.exception';
 import { McpAppService } from './mcp-app.service';
 
+const RATE_LIMITED_RESPONSE = {
+  status: 429,
+  description: 'DIAL Core rate-limited the request',
+  headers: {
+    'Retry-After': {
+      description: 'Upstream retry delay, when provided by DIAL Core',
+      schema: { type: 'string' },
+    },
+  },
+};
+
 /** Runs `call`, forwarding DIAL Core's `Retry-After` when it rejects with 429. */
 const withRetryAfter = async <T>(
   res: Response,
@@ -62,6 +73,7 @@ export class McpAppController {
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset or resource not found' })
+  @ApiResponse(RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -102,6 +114,7 @@ export class McpAppController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
+  @ApiResponse(RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/list failed",
@@ -139,6 +152,7 @@ export class McpAppController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
+  @ApiResponse(RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/list failed",
@@ -180,6 +194,7 @@ export class McpAppController {
       'Caller lacks permission, or toolName is not exposed by this toolset',
   })
   @ApiResponse({ status: 404, description: 'Toolset not found' })
+  @ApiResponse(RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/call failed",

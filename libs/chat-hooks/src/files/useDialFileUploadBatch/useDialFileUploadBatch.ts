@@ -2,11 +2,12 @@ import type {
   ListFilesItemDto,
   UploadArchiveEntryResultDto,
 } from '@epam/ai-dial-chat-api-client';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
 import type {
   FileUploadBatchState,
   FileUploadEntry,
+  FileUploadValidationResult,
 } from '@epam/ai-dial-chat-shared';
-import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
 import type {
   DialFile,
   DialUploadFileItem,
@@ -20,10 +21,7 @@ import {
   UPLOAD_CONCURRENCY,
   type SharedRootMeta,
 } from '../dial-file-manager.model';
-import type {
-  FileManagerNotification,
-  FileUploadValidationResult,
-} from '../dial-file-manager.types';
+import type { FileManagerNotification } from '../dial-file-manager.types';
 import { FileManagerNotificationReason } from '../dial-file-manager.types';
 import { DialFilesApiUploadMode } from '../dial-files-api';
 import type { DialFilesApi } from '../dial-files-api';

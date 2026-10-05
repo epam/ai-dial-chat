@@ -1,3 +1,4 @@
+import { DialFileManagerActionProfile } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
@@ -25,7 +26,6 @@ import {
   withRoutableRootLabels,
 } from '../dial-file-manager-path.util';
 import type { SharedRootMeta } from '../dial-file-manager.model';
-import { DialFileManagerActionProfile } from '../file-manager-variant';
 
 const makeFile = (overrides: Partial<DialFile>): DialFile => ({
   id: 'id',

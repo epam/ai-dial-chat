@@ -32,6 +32,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { PROMPT_EDITOR_CLASS } from '../../constants/public-class-names';
@@ -192,6 +193,19 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     if (isSaving) return;
     onSubmit(values);
   }, [isSaving, onSubmit, values]);
+
+  /* MetadataForm moves focus to an invalid Name or Description itself; this
+   * covers the case where only Instructions is invalid. Focus moves only when
+   * that error appears, so editing with the error shown never steals focus. */
+  const isOnlyContentInvalid =
+    errors?.content != null && !errors?.name && !errors?.description;
+  const wasOnlyContentInvalidRef = useRef(false);
+  useEffect(() => {
+    if (isOnlyContentInvalid && !wasOnlyContentInvalidRef.current) {
+      document.getElementById(contentEditorId)?.focus();
+    }
+    wasOnlyContentInvalidRef.current = isOnlyContentInvalid;
+  }, [isOnlyContentInvalid, contentEditorId]);
 
   const title = isEditMode
     ? (labels?.editTitle ?? 'Edit prompt')

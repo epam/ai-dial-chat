@@ -1,5 +1,5 @@
 import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -186,6 +186,40 @@ describe('PromptEditor', () => {
 
     expect(screen.getByText('Name is required')).toBeTruthy();
     expect(screen.getByText('Prompt is too long')).toBeTruthy();
+  });
+
+  it('moves focus to Instructions when it is the only invalid field', async () => {
+    const { rerender } = renderEditor();
+    const instructions = await screen.findByRole('textbox', {
+      name: /Instructions/,
+    });
+
+    rerender(
+      <PromptEditor
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        errors={{ content: 'Prompt is required' }}
+      />,
+    );
+
+    await waitFor(() => expect(document.activeElement).toBe(instructions));
+  });
+
+  it('leaves focus to the metadata form when Name is invalid too', async () => {
+    const { rerender } = renderEditor();
+    const instructions = await screen.findByRole('textbox', {
+      name: /Instructions/,
+    });
+
+    rerender(
+      <PromptEditor
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        errors={{ name: 'Name is required', content: 'Prompt is required' }}
+      />,
+    );
+
+    expect(document.activeElement).not.toBe(instructions);
   });
 
   it('blocks submission and announces status while saving', async () => {

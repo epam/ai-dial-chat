@@ -1,9 +1,9 @@
+import type { UseDialFileManagerSectionsResult } from '@epam/ai-dial-chat-hooks';
+import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
-  type UseDialFileManagerSectionsResult,
-} from '@epam/ai-dial-chat-hooks';
-import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,

@@ -3,6 +3,7 @@ import type {
   ListFilesItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
+import { getParentFolderPath } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
@@ -31,10 +32,7 @@ import {
   type FileManagerNotification,
 } from '../dial-file-manager.types';
 import type { DialFilesApi } from '../dial-files-api';
-import {
-  getParentFolderPath,
-  virtualPathToApiPath,
-} from '../resolve-dial-file-api-path';
+import { virtualPathToApiPath } from '../resolve-dial-file-api-path';
 
 /** Options accepted by `useDialFileListing`. */
 export interface UseDialFileListingOptions {
