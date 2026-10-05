@@ -1,5 +1,5 @@
 import { NoDataContent } from '@epam/ai-dial-ui-kit';
-import { memo, type FC } from 'react';
+import { memo, type FC, type ReactNode } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import styles from './PanelEmptyState.module.scss';
@@ -20,6 +20,8 @@ export interface PanelEmptyStateProps {
   labelClassName?: string;
   /** CSS class applied to the empty-state container. */
   containerClassName?: string;
+  /** Decorative illustration above the label. Defaults to the kit's `NoDataContent` document mark. */
+  icon?: ReactNode;
 }
 
 /** Centered empty-state block for use inside a sidebar panel body. */
@@ -29,6 +31,7 @@ export const PanelEmptyState: FC<PanelEmptyStateProps> = memo(
     colors,
     labelClassName = 'dial-tiny-text',
     containerClassName,
+    icon,
   }) => {
     const cssVars = buildCssVars({
       '--pes-label-color': colors?.label,
@@ -38,6 +41,7 @@ export const PanelEmptyState: FC<PanelEmptyStateProps> = memo(
       <div style={cssVars}>
         <NoDataContent
           title={label}
+          icon={icon}
           titleClassName={mergeClasses(styles.label, labelClassName)}
           className={containerClassName}
         />

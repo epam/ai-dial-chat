@@ -17,7 +17,7 @@ import {
   Search,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
+import { IconArrowsSort, IconClockHour3, IconPlus } from '@tabler/icons-react';
 import {
   FC,
   useCallback,
@@ -31,6 +31,10 @@ import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 import styles from './ScheduledTasks.module.scss';
+
+/* The kit's default document mark reads as a broken file here, so the empty
+ * state shows the feature's own clock glyph at illustration weight. */
+const EMPTY_STATE_ICON = <IconClockHour3 size={48} stroke={1} aria-hidden />;
 
 const getStatusMessage = (
   isLoading: boolean,
@@ -234,7 +238,12 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           </p>
         );
       }
-      return <PanelEmptyState label={labels.emptyStateLabel} />;
+      return (
+        <PanelEmptyState
+          label={labels.emptyStateLabel}
+          icon={EMPTY_STATE_ICON}
+        />
+      );
     }
 
     return (
