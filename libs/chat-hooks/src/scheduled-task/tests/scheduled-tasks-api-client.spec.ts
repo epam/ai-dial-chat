@@ -19,7 +19,7 @@ describe('createScheduledTasksApiClient', () => {
       displayName: 'Report',
       model: 'model',
       prompt: '',
-      skillUrl: 'skills/public/report',
+      skillUrls: ['skills/public/report'],
       trigger: { date: '2026-12-01T09:00:00Z' },
     };
     configuredClient.createScheduledTask.mockResolvedValue({
@@ -27,20 +27,20 @@ describe('createScheduledTasksApiClient', () => {
       ...body,
     });
     expect(await api.createScheduledTask(body)).toMatchObject({
-      skillUrl: body.skillUrl,
+      skillUrls: body.skillUrls,
       prompt: '',
     });
     await api.updateScheduledTask('task', {
       ...body,
       prompt: 'Instructions',
-      skillUrl: null,
+      skillUrls: [],
     });
     expect(configuredClient.updateScheduledTask).toHaveBeenCalledWith({
       scheduleId: 'task',
       updateScheduledTaskBodyDto: {
         ...body,
         prompt: 'Instructions',
-        skillUrl: null,
+        skillUrls: [],
       },
     });
   });

@@ -326,6 +326,7 @@
     "emptyQueryHint": "Type to filter",
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
+    "noSkillsLabel": "No skills available",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
     "unavailableTooltipLabel": "Selected model does not support skills. Select a different model to use a skill.",
     "deletedTooltipLabel": "This skill has been deleted. Its details are no longer available.",
@@ -772,8 +773,8 @@
       "submittingLabel": "Creating",
       "successNotification": "Scheduled task created",
       "errorNotification": "Failed to create the scheduled task",
-      "skillLabel": "Skill",
-      "skillPlaceholder": "Choose a skill",
+      "skillLabel": "Skills",
+      "skillPlaceholder": "Choose skills",
       "instructionsOrSkillRequired": "Choose a skill or write instructions."
     },
     "detail": {

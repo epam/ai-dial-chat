@@ -417,7 +417,7 @@ describe('mapFormValuesToUpdateBody', () => {
 
     expect(mapFormValuesToUpdateBody(values)).toEqual({
       ...mapFormValuesToCreateBody(values),
-      skillUrl: null,
+      skillUrls: [],
     });
   });
 });
@@ -428,12 +428,12 @@ describe('mapScheduledTaskDtoToFormValues', () => {
       mapScheduledTaskDtoToFormValues({
         ...baseDto,
         prompt: '',
-        skillUrl: 'skills/public/report',
+        skillUrls: ['skills/public/report'],
         trigger: { cron: { fields: { hour: '9', minute: '0' } } },
       }),
     ).toMatchObject({
       ok: true,
-      values: { prompt: '', skillUrl: 'skills/public/report' },
+      values: { prompt: '', skillUrls: ['skills/public/report'] },
     });
   });
   afterEach(() => {

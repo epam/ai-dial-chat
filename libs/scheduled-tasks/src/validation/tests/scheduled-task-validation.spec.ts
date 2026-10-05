@@ -22,19 +22,24 @@ describe('validateScheduledTaskFormValues', () => {
   it.each([true, false, undefined])(
     'validates the complete content matrix with support %s',
     (isSkillsSupported) => {
-      for (const skillUrl of [undefined, 'skills/public/report']) {
+      for (const skillUrls of [
+        undefined,
+        [],
+        ['skills/public/report'],
+        ['skills/public/report', 'skills/public/summary'],
+      ]) {
         for (const prompt of ['', 'Instructions']) {
           const errors = validateScheduledTaskFormValues(
-            { ...values, skillUrl, prompt },
+            { ...values, skillUrls, prompt },
             { now, isSkillsSupported },
           );
-          expect(errors.skillUrl).toBe(
-            skillUrl && isSkillsSupported !== true
+          expect(errors.skillUrls).toBe(
+            skillUrls?.length && isSkillsSupported !== true
               ? ScheduledTaskValidationErrorCode.SkillUnsupported
               : undefined,
           );
           expect(errors.prompt).toBe(
-            !prompt && !skillUrl
+            !prompt && !skillUrls?.length
               ? ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired
               : undefined,
           );

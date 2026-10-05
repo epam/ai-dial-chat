@@ -583,39 +583,39 @@ Selection SHALL be determined by the stored skill reference, not a successful ca
 
 ### Requirement: Controlled skill field is reusable outside chat inputs
 
-`@epam/ai-dial-skills` SHALL export `SkillSelectorField` and its props with controlled `value?: string`, `onChange`, optional resolved `displayName`, `isSkillsSupported`, disabled/invalid state, label/error IDs, injected labels, and `renderCatalogContent(onSelect, onClose)`. It SHALL accept host-resolved `favorites`, optional favorite/details callbacks, and `renderOverlay` for mobile presentation. It SHALL own popup/focus state and the search query only, reuse the existing skills catalog modal, and never import application providers or construct network requests. It SHALL display the saved reference while metadata is unavailable, replace selection rather than append, and provide an explicit accessible remove action. Browse entry points SHALL be disabled when deployment support is not true; an existing selected value SHALL remain removable.
+`@epam/ai-dial-skills` SHALL export the array-only `SkillSelectorField` and its props with controlled `value: string[]`, `onChange(value: string[])`, optional resolved `displayNames`, host-supplied `skills`, `isSkillsSupported`, disabled/error state, and injected labels. It SHALL render the UI kit's multiple `Select` with searchable checkbox options and built-in removable tags, and SHALL NOT expose a parallel single-value component or custom picker implementation. It SHALL own only Select open/search state and never import application providers or construct network requests. Saved references missing from the supplied skills SHALL remain visible through their resolved display name or raw URL fallback.
 
-`@epam/ai-dial-chat-shared` SHALL export a pure `isSkillSelectionUnsupported(skillUrl, isSkillsSupported)` predicate; the controlled field, chat overlay hook, and scheduler validator SHALL use it. The predicate SHALL depend on reference presence and strict support, not resolved metadata or feature flags. The chat hook SHALL apply its existing enabled-flow gate around the result. Existing overlay API signatures SHALL remain compatible.
+The Select SHALL own its visible label and error rendering. Until the UI kit exposes the combobox's ARIA attributes directly, the wrapper SHALL bridge the effective description and invalid state onto the rendered combobox. An unsupported empty field SHALL be disabled and expose the reason as its caption; when saved references exist, opening and adding SHALL remain disabled while tag removal remains available. Full submission disablement SHALL make all descendant actions inert.
+
+`@epam/ai-dial-chat-shared` SHALL export a pure `isSkillSelectionUnsupported(skillUrl, isSkillsSupported)` predicate; the controlled field, chat overlay hook, and scheduler validator SHALL use it. The predicate SHALL depend on reference presence and strict support, not resolved metadata or feature flags. The chat hook SHALL apply its existing enabled-flow gate around the result. Existing chat-overlay API signatures SHALL remain compatible.
 
 #### Scenario: Controlled external hydration
 
-- **WHEN** a host changes the field value from one saved reference to another while catalog data is unavailable
-- **THEN** the displayed selection follows the new prop immediately without waiting for a second selection state to synchronize
+- **WHEN** a host replaces the selected array while one or more references are absent from the supplied skills
+- **THEN** every selected value follows the new prop immediately and remains visible through its display-name or URL fallback
 
-#### Scenario: Choose a favorite or browse the catalog
+#### Scenario: Choose from the full skill list
 
 - **WHEN** the supported field is activated
-- **THEN** an input styled consistently with the model/agent selector opens searchable host-supplied favorites, an empty-state hint when appropriate, and a Browse action
-- **AND** selecting a favorite replaces the controlled reference and closes the panel; Browse opens the existing skill-only catalog
-- **AND** search matches use the shared `Highlight` component and no matches are announced as a live status
+- **THEN** the UI-kit multiple Select opens a searchable checkbox list containing every host-supplied skill, without favorites filtering or a Browse catalog action
+- **AND** search matches use the shared `Highlight` component and the UI kit announces empty results
 
 #### Scenario: Clear without opening the picker
 
-- **WHEN** the trailing clear button is activated
-- **THEN** `onChange(undefined)` removes the selection without opening the dropdown or catalog
-- **AND** clearing remains available when the model cannot use skills, unless the entire field is disabled
+- **WHEN** a selected tag's remove action is activated
+- **THEN** `onChange` receives the remaining ordered references without opening the Select
 
 #### Scenario: Mobile picker presentation
 
-- **WHEN** a host supplies `renderOverlay` for a mobile sheet
-- **THEN** the same favorites, search, Browse, and selection behavior is rendered in that sheet, with keyboard dismissal and focus return
+- **WHEN** the field is rendered on mobile or tablet
+- **THEN** the responsive UI-kit Select popover remains within the viewport and exposes the same keyboard selection and removal behavior
 
 #### Scenario: Unsupported reference remains removable
 
-- **WHEN** a selected reference has no catalog item and support is false
-- **THEN** the field reports unsupported state, displays the reference, disables browsing, and still supports removal
+- **WHEN** one or more selected references have no supplied option and support is false
+- **THEN** the field reports the unsupported state, displays every reference, prevents opening or adding, and still supports removal unless the entire field is disabled
 
 #### Scenario: Keyboard and search behavior is retained
 
-- **WHEN** a user browses and filters catalog skills using the keyboard
-- **THEN** the injected catalog retains its shared `Highlight` matched-text rendering and selection semantics, Escape restores focus, and selection invokes `onChange` once with one reference
+- **WHEN** a keyboard user opens and filters the supplied skills
+- **THEN** matched text uses the shared `Highlight`, option activation updates the full array once, and tag removal updates it with only that reference removed

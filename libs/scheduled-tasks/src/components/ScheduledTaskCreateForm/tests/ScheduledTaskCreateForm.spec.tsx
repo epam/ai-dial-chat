@@ -315,17 +315,15 @@ const getCancelButtons = () =>
   screen.getAllByRole('button', { name: 'Cancel' });
 
 describe('ScheduledTaskCreateForm', () => {
-  it('renders an opaque skill slot and allows skill-only saves unless invalid, including hidden skills', () => {
+  it('renders a self-labelled skill slot and allows skill-only saves unless invalid, including hidden skills', () => {
     const props = buildFormProps({
       values: {
         ...baseValues,
         displayName: 'Task',
         modelId: 'model',
-        skillUrl: 'skills/public/report',
+        skillUrls: ['skills/public/report'],
       },
-      skillLabelId: 'skill-label',
-      skillErrorId: 'skill-error',
-      skillSelector: <button aria-labelledby="skill-label">Pick</button>,
+      skillSelector: <button aria-label="Skill">Pick</button>,
     });
     props.labels.skillLabel = 'Skill';
     const { rerender } = render(<ScheduledTaskCreateForm {...props} />);
@@ -338,7 +336,7 @@ describe('ScheduledTaskCreateForm', () => {
       <ScheduledTaskCreateForm
         {...props}
         skillSelector={undefined}
-        errors={{ skillUrl: 'Unsupported' }}
+        errors={{ skillUrls: 'Unsupported' }}
       />,
     );
     expect(screen.queryByRole('button', { name: 'Skill' })).toBeNull();

@@ -144,7 +144,7 @@ Example response (with `?limit=20&offset=0&search=daily&sort=firstToRun`):
 }
 ```
 
-or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and a string `prompt` are required; `displayName` is `@MaxLength(256)` and rejects control characters (`@Matches(/^[^\p{Cc}]*$/u)`), and `prompt` is `@MaxLength(50000)` (bounds from `apps/chat-api/src/common/validators/entity-field-limits.ts`, see `entity-field-limits`); `skillUrl` is optional and nullable, and empty/whitespace-only prompt is allowed only with an effective skill; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `service_id` or `stream` field — both are fixed/derived server-side (see below) and are not client-controllable.
+or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and a string `prompt` are required; `displayName` is `@MaxLength(256)` and rejects control characters (`@Matches(/^[^\p{Cc}]*$/u)`), and `prompt` is `@MaxLength(50000)` (bounds from `apps/chat-api/src/common/validators/entity-field-limits.ts`, see `entity-field-limits`); `skillUrls` is an optional string array and rejects null, and empty/whitespace-only prompt is allowed only with an effective skill; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `service_id` or `stream` field — both are fixed/derived server-side (see below) and are not client-controllable.
 
 The service SHALL build the upstream body server-side with `service_id` set from `SCHEDULER_SERVICE_ID` (read once at `ScheduledTasksService` construction; see the "SCHEDULER_APP_ID and SCHEDULER_SERVICE_ID environment configuration" requirement) and `properties`:
 
@@ -231,7 +231,6 @@ Skill-bearing requests SHALL additionally meet the server capability-validation 
 
 - **WHEN** a valid request includes `prompt: ""` and one valid skill reference with an explicitly supporting model/agent
 - **THEN** it succeeds with 201 and persists the message-level skill extension
-
 ### Requirement: Get scheduled task by id
 
 `GET /api/v1/scheduled-tasks/:scheduleId` SHALL validate `scheduleId` against the allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, proxy `GET {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, and return `ScheduledTaskDto` (`id`, `displayName`, `trigger`, `description`, and any additional narrowly-typed fields confirmed against a live upstream response). This endpoint is NOT cached.
@@ -398,7 +397,7 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 
 ### Requirement: Update scheduled task
 
-`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional nullable `skillUrl`, optional `description` (≤500 chars); no client-supplied `service_id` or `stream`), apply the same server-side `service_id` (from `SCHEDULER_SERVICE_ID`)/`target_type`/`url`/`api_version`/`create_conversation`/`stream`/`extra_headers`/`retry`/`timeout`/`payload`/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
+`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional array `skillUrls?: string[]`, optional `description` (≤500 chars); no client-supplied `service_id` or `stream`), apply the same server-side `service_id` (from `SCHEDULER_SERVICE_ID`)/`target_type`/`url`/`api_version`/`create_conversation`/`stream`/`extra_headers`/`retry`/`timeout`/`payload`/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
 
 #### Scenario: Valid update succeeds and invalidates list cache
 
@@ -420,13 +419,12 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 - **WHEN** the update body fails the same validation as create (missing field, both/neither trigger variant, `description` over 500 characters, a client-supplied `service_id` and/or `stream` field, or a `target_type` other than `chat_completion` if present)
 - **THEN** the response is `400 Bad Request`
 
-Before validation the service SHALL resolve the effective skill from authoritative existing detail: omitted `skillUrl` preserves it; null removes it; a string replaces it. Validate effective content and authoritative model support before any upstream mutation.
+Before validation the service SHALL resolve the effective skill from authoritative existing detail: omitted `skillUrls` preserves it; [] removes all skills; a nonempty array replaces the selection. Validate effective content and authoritative model support before any upstream mutation.
 
 #### Scenario: Clearing the only content fails
 
-- **WHEN** PUT removes a saved skill with `skillUrl: null` and leaves prompt empty/whitespace
+- **WHEN** PUT removes a saved skill with `skillUrls: []` and leaves prompt empty/whitespace
 - **THEN** the server returns typed 400 for missing instructions-or-skill and does not alter the saved task
-
 ### Requirement: Scheduled task active state field
 
 `ScheduledTaskDto` SHALL include an optional `isActive: boolean` field, computed in `fromUpstreamSchedule` (`apps/chat-api/src/scheduled-tasks/scheduled-tasks.mapper.ts`) as `upstream.next_run_time != null` whenever the upstream response carries a `trigger` or `trigger_type` (i.e., there is a basis to decide); `isActive` SHALL be `undefined` when the upstream response gives no such basis. This derivation is a documented assumption pending confirmation of an authoritative upstream active/paused field (see design.md "Decision 1" and "Open Questions") — it MUST NOT be silently replaced with a different, undocumented heuristic, and mapping MUST NOT throw regardless of which optional upstream fields are present or absent.
@@ -856,7 +854,7 @@ The scheduled completion SHALL carry one selected skill in `properties.payload.m
 
 ### Requirement: Skill reference round-trips through existing scheduled task operations
 
-`CreateScheduledTaskBodyDto` and `UpdateScheduledTaskBodyDto` SHALL add optional nullable `skillUrl`; `ScheduledTaskDto`, `CreatedScheduledTaskDto`, `UpdatedScheduledTaskDto`, and list items SHALL expose optional string `skillUrl`. At most one skill is authored. POST absent/null means no skill; PUT absent preserves the authoritative saved skill, while PUT null explicitly removes it. `prompt` SHALL remain a required string and MAY be empty only when an effective skill exists. Whitespace-only instructions without a skill SHALL fail. Resource references SHALL use existing DIAL skill-path validation and reject invalid types, empty values, traversal, controls, and external HTTP URLs while supporting valid Unicode/space/encoded path segments.
+`CreateScheduledTaskBodyDto` and `UpdateScheduledTaskBodyDto` SHALL add optional array `skillUrls?: string[]`; `ScheduledTaskDto`, `CreatedScheduledTaskDto`, `UpdatedScheduledTaskDto`, and list items SHALL expose optional string-array `skillUrls`. Several skills may be authored in selection order, with identical references deduplicated. POST absent/[] means no skills; null is rejected; PUT absent preserves the authoritative saved skill, while PUT [] explicitly removes all skills. `prompt` SHALL remain a required string and MAY be empty only when an effective skill exists. Whitespace-only instructions without a skill SHALL fail. Resource references SHALL use existing DIAL skill-path validation and reject invalid types, empty values, traversal, controls, and external HTTP URLs while supporting valid Unicode/space/encoded path segments.
 
 The BFF SHALL serialize the effective reference to `properties.payload.messages[0].custom_content.skills: [{ url }]`, with `encodeDialResourcePath` parity to chat, and map it back on reads. It SHALL NOT put skills at completion-root `custom_content`, add hidden prompt text, or send UI metadata. Clearing a skill SHALL remove the extension in the replaced upstream payload. Sparse list summaries SHALL stay sparse; omission SHALL NOT clear a saved detail/draft. Detail/edit SHALL fetch authoritative detail before editing.
 
@@ -877,7 +875,7 @@ Concrete POST/PUT request for a skill-only task:
   "trigger": { "cron": { "fields": { "hour": "9", "minute": "0" } } },
   "model": "skills-capable-model",
   "prompt": "",
-  "skillUrl": "skills/public/daily-summary"
+  "skillUrls": ["skills/public/daily-summary"]
 }
 ```
 
@@ -890,11 +888,11 @@ Concrete success/detail response (other optional metadata can also be present):
   "trigger": { "cron": { "fields": { "hour": "9", "minute": "0" } } },
   "model": "skills-capable-model",
   "prompt": "",
-  "skillUrl": "skills/public/daily-summary"
+  "skillUrls": ["skills/public/daily-summary"]
 }
 ```
 
-A populated list response SHALL wrap such records in `{"items":[...],"count":1,"limit":20,"offset":0,"next":null,"previous":null}`; upstream summaries without payload SHALL not invent a `skillUrl`. Removal uses the same full PUT body with nonblank `prompt` and `"skillUrl": null`.
+A populated list response SHALL wrap such records in `{"items":[...],"count":1,"limit":20,"offset":0,"next":null,"previous":null}`; upstream summaries without payload SHALL not invent a `skillUrls`. Removal uses the same full PUT body with nonblank `prompt` and `"skillUrls": []`.
 
 No new endpoint, role, telemetry, or cache SHALL be introduced. Existing session/CSRF and `scheduledTasksEnabled` authorization SHALL apply. The host-only selection flag SHALL not remove saved data. Existing 400/401/403/404/502/503 behavior SHALL remain; successful writes SHALL invalidate the per-user list epoch, rejected writes SHALL not. List cache remains `scheduled-tasks:list:{userSub}:{epoch}:{normalizedQuery}`, 30s TTL; its epoch has 24h TTL, and detail is uncached. Frontend calls SHALL continue through configured `scheduledTasksApi`, `createScheduledTasksApiClient`, and app `server-api` wrappers using normal methods, not `Raw` or direct fetch.
 
@@ -905,9 +903,9 @@ No new endpoint, role, telemetry, or cache SHALL be introduced. Existing session
 
 #### Scenario: Legacy update preserves and explicit removal clears
 
-- **WHEN** an older client omits `skillUrl` on PUT
+- **WHEN** a client omits `skillUrls` on PUT
 - **THEN** the BFF merges the saved skill before validation and does not erase it
-- **AND WHEN** a subsequent valid PUT sends `skillUrl: null`
+- **AND WHEN** a subsequent valid PUT sends `skillUrls: []`
 - **THEN** the saved extension and subsequent detail skill are absent
 
 #### Scenario: Sparse list cannot erase a skill
@@ -921,10 +919,9 @@ The runs checks in `listScheduledTasks` SHALL execute inside the existing `withC
 - **WHEN** a selected resource has spaces, Unicode, or already-encoded segments
 - **THEN** the Scheduler completion reference matches chat's encoding without double encoding and resolves to the same resource after read/edit
 - **AND** the 1024-character path limit is measured on the decoded path, so encoding expansion does not prevent later updates
-
 ### Requirement: Server validates the effective model and skill before persistence
 
-For each skill-bearing create/update, including a skill preserved by PUT omission, `ScheduledTasksService` SHALL resolve model/agent capability using session-scoped authoritative deployment data and require `features.skillsSupported === true`. A client capability claim or feature-hidden field SHALL NOT bypass validation. A false/missing support flag SHALL raise `BadRequestException` with typed code `scheduledTaskSkillUnsupported` and field `skillUrl`. Empty effective content SHALL use `scheduledTaskInstructionsOrSkillRequired` and field `prompt`. Unknown/inaccessible deployments SHALL retain typed 404/403 semantics, with `scheduledTaskDeploymentUnavailable` distinguishing a deployment from a missing schedule. Lookup upstream failure/timeout SHALL produce 502/503; no writes occur in any failure case.
+For each skill-bearing create/update, including a skill preserved by PUT omission, `ScheduledTasksService` SHALL resolve model/agent capability using session-scoped authoritative deployment data and require `features.skillsSupported === true`. A client capability claim or feature-hidden field SHALL NOT bypass validation. A false/missing support flag SHALL raise `BadRequestException` with typed code `scheduledTaskSkillUnsupported` and field `skillUrls`. Empty effective content SHALL use `scheduledTaskInstructionsOrSkillRequired` and field `prompt`. Unknown/inaccessible deployments SHALL retain typed 404/403 semantics, with `scheduledTaskDeploymentUnavailable` distinguishing a deployment from a missing schedule. Lookup upstream failure/timeout SHALL produce 502/503; no writes occur in any failure case.
 
 Concrete unsupported response:
 
@@ -933,7 +930,7 @@ Concrete unsupported response:
   "statusCode": 400,
   "error": "Bad Request",
   "code": "scheduledTaskSkillUnsupported",
-  "field": "skillUrl",
+  "field": "skillUrls",
   "message": "Selected model does not support skills. Remove the skill or select different model to proceed."
 }
 ```
@@ -947,7 +944,7 @@ Swagger SHALL describe these typed bodies and status codes; generation via `npm 
 
 #### Scenario: Omitted skill still participates in validation
 
-- **WHEN** PUT changes a saved skill-bearing task to an unsupported model while omitting `skillUrl`
+- **WHEN** PUT changes a saved skill-bearing task to an unsupported model while omitting `skillUrls`
 - **THEN** the server rejects the effective combination rather than dropping or overlooking the saved skill
 
 #### Scenario: Capability changed after the client loaded
@@ -959,7 +956,6 @@ Swagger SHALL describe these typed bodies and status codes; generation via `npm 
 
 - **WHEN** deployment resolution returns 404 or fails with 502/503 during save
 - **THEN** no task mutation occurs and the client retains the form, distinguishes deployment-unavailable from task-not-found, and allows retry/correction
-
 ### Requirement: Schedule-activating operations check the DIAL_NATIVE scheduler application consent
 
 `createScheduledTask` (`POST /api/v1/scheduled-tasks`, operationId `createScheduledTask`), `updateScheduledTask` (`PUT /api/v1/scheduled-tasks/:scheduleId`, operationId `updateScheduledTask`), `resumeScheduledTask` (`POST /api/v1/scheduled-tasks/:scheduleId/resume`, operationId `resumeScheduledTask`) and `startScheduledTask` (`POST /api/v1/scheduled-tasks/:scheduleId/run`, operationId `startScheduledTask`) SHALL, before any request to DIAL Scheduler and before model/skill validation where applicable, read the scheduler's external service `SCHEDULER_SERVICE_ID` of application `SCHEDULER_APP_ID` through `ExternalServicesService.getExternalService` (DIAL Core `GET /v1/applications/{appId}/external-services/{serviceId}`, with the application-resource fallback that method already performs) using the session bearer token. The result SHALL NOT be cached: every call re-reads it, so an administrator's revocation takes effect on the user's next operation.

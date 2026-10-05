@@ -42,7 +42,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
          * row reads as the first row of the form content sitting under the
          * app shell's floating header rather than as a page bar.
          */
-        'flex h-16 items-center justify-between gap-6',
+        'flex min-h-16 shrink-0 items-center justify-between gap-2 px-4 py-2 desktop:h-16 desktop:flex-nowrap desktop:px-8 desktop:py-0',
         styles.header,
       )}
     >

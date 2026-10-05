@@ -726,9 +726,9 @@ When the loaded task has `isCompleted: true` (a finished one-time schedule, or a
 
 ### Requirement: Skill display covers reusable summaries and the active Configuration view
 
-`ScheduledTaskDetailsSummary` and `ScheduledTaskConfigurationSection` SHALL accept optional localized `skillLabel` and resolved `skillDisplayName`; `ScheduledTaskDetailView` SHALL forward its optional skill value and label to Configuration. The host SHALL pass the skill's resolved display name or full raw reference, independent of catalog loading/failure. No skill SHALL produce no Skill field. Values SHALL be plain text, without a details link. Libraries SHALL perform no lookup or navigation.
+`ScheduledTaskDetailsSummary` and `ScheduledTaskConfigurationSection` SHALL accept optional localized `skillLabel` and resolved `skillDisplayNames: string[]`; `ScheduledTaskDetailView` SHALL forward its optional skill value and label to Configuration. The host SHALL pass the skill's resolved display name or full raw reference, independent of catalog loading/failure. No skill SHALL produce no Skill field. Values SHALL be plain text, without a details link. Libraries SHALL perform no lookup or navigation.
 
-The full detail page SHALL render Skill above Instructions in Configuration on desktop and in the mobile Configuration tab, preserving Model in Details. The conversation sources panel SHALL pass the same saved-task metadata to the reusable summary, ordered Model, Skill, Instructions. Skill-only tasks SHALL render without an empty Instructions block or an empty Configuration section. Lookup failure SHALL NOT replace task content with an error screen. The existing detail task state remains the source of truth; no new context is added.
+The full detail page SHALL render Skill above Instructions in Configuration on desktop and in the mobile Configuration tab, preserving Model in Details. The conversation sources panel SHALL pass the same saved-task metadata to the reusable summary, ordered Model, Skill, Instructions. Skill-only tasks SHALL render without an empty Instructions block or an empty Configuration section. Lookup failure SHALL NOT replace task content with an error screen. The page root SHALL clip overflow: the active mobile tab owns the body scrollbar, while the desktop body is a non-wrapping clipped row whose Details, Configuration, and History columns scroll independently beneath the fixed header. The existing detail task state remains the source of truth; no new context is added.
 
 #### Scenario: Present skill resolves to a readable name
 
@@ -749,7 +749,6 @@ The full detail page SHALL render Skill above Instructions in Configuration on d
 
 - **WHEN** a skill-only task is viewed in a narrow RTL Configuration tab
 - **THEN** the Skill field remains visible, wraps its name/reference, inherits direction, and no empty instructions field is shown
-
 ### Requirement: Detail view body renders section tabs at mobile and tablet
 
 `ScheduledTaskDetailView` SHALL branch its body layout on the app-wide mobile boundary (`useIsMobile` from `@epam/ai-dial-chat-shared`, `(max-width: 1279px)`), mounting exactly one layout's subtree at a time — never mounting both layouts and hiding one with CSS.

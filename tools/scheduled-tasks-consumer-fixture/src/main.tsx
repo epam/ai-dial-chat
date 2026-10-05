@@ -48,7 +48,10 @@ const prepared = prepareScheduledTaskCreateBody(
 if (!validation.prompt || !prepared.ok || descriptor.time !== '09:00')
   throw new Error('Packed scheduler contracts failed');
 
-const skillDraft = { ...values, skillUrl: 'skills/public/report' };
+const skillDraft = {
+  ...values,
+  skillUrls: ['skills/public/report', 'skills/public/summary'],
+};
 const skillPrepared = prepareScheduledTaskCreateBody(skillDraft, {
   now: new Date(),
   isSkillsSupported: true,
@@ -61,19 +64,23 @@ if (
   !skillPrepared.ok ||
   skillPrepared.body.prompt !== '' ||
   !removed.ok ||
-  removed.body.skillUrl !== null
+  removed.body.skillUrls?.length !== 0
 )
   throw new Error('Packed skill preparation failed');
 const hydrated = mapScheduledTaskDtoToFormValues({
   id: 'task',
   ...skillPrepared.body,
-  skillUrl: skillDraft.skillUrl,
+  skillUrls: skillDraft.skillUrls,
 });
-if (!hydrated.ok || hydrated.values.skillUrl !== skillDraft.skillUrl)
+if (
+  !hydrated.ok ||
+  JSON.stringify(hydrated.values.skillUrls) !==
+    JSON.stringify(skillDraft.skillUrls)
+)
   throw new Error('Packed skill hydration failed');
 
 const Fixture = () => {
-  const [skillUrl, setSkillUrl] = useState<string>();
+  const [skillUrls, setSkillUrls] = useState<string[]>([]);
   const [sortKey, setSortKey] = useState(ScheduledTasksSortKey.FirstToRun);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deploymentId, setDeploymentId] = useState<string | null>('model-a');
@@ -190,41 +197,38 @@ const Fixture = () => {
             description: '',
             modelId: deploymentId ?? '',
             prompt: '',
-            skillUrl,
+            skillUrls,
             repeat: ScheduledTaskRepeat.Daily,
             time: '09:00',
           }}
           styles={{ layout: { detailsWidth: '280px', columnGap: '24px' } }}
           errors={
-            skillUrl && deploymentId !== 'model-a'
-              ? { skillUrl: 'Unsupported model' }
+            skillUrls.length > 0 && deploymentId !== 'model-a'
+              ? { skillUrls: 'Unsupported model' }
               : {}
           }
-          skillLabelId="fixture-skill-label"
-          skillErrorId="fixture-skill-error"
           skillSelector={
             <SkillSelectorField
-              value={skillUrl}
-              onChange={setSkillUrl}
+              value={skillUrls}
+              onChange={setSkillUrls}
               isSkillsSupported={deploymentId === 'model-a'}
-              labelledById="fixture-skill-label"
-              favorites={[{ id: 'skills/public/report', name: 'Report' }]}
-              describedById="fixture-skill-error"
+              skills={[
+                { id: 'skills/public/report', name: 'Report' },
+                {
+                  id: 'skills/public/' + 'long-reference-'.repeat(18),
+                  name: 'Select long skill',
+                },
+              ]}
+              error={
+                skillUrls.length > 0 && deploymentId !== 'model-a'
+                  ? 'Unsupported model'
+                  : undefined
+              }
               labels={{
+                fieldLabel: 'Skills',
                 placeholder: 'Choose skill',
-                modalTitle: 'Use skill',
-                removeSkillLabel: 'Remove skill',
                 unsupportedTooltipLabel: 'Unsupported model',
               }}
-              renderCatalogContent={(select) => (
-                <button
-                  onClick={() =>
-                    select('skills/public/' + 'long-reference-'.repeat(18))
-                  }
-                >
-                  Select long skill
-                </button>
-              )}
             />
           }
           modelLabelId="fixture-model-label"
@@ -290,7 +294,7 @@ const Fixture = () => {
           modelLabel="Model A"
           repeatsLabel="Daily"
           instructionsMarkdown="Packed instructions"
-          skillDisplayName={skillUrl}
+          skillDisplayNames={skillUrls}
           runs={[]}
           renderInstructions={(text) => <p>{text}</p>}
         />

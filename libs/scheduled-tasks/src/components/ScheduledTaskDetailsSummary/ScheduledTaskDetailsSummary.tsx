@@ -12,7 +12,7 @@ export const ScheduledTaskDetailsSummary: FC<
 > = ({
   modelLabel,
   skillLabel,
-  skillDisplayName,
+  skillDisplayNames,
   instructionsLabel,
   modelDisplayName,
   instructionsMarkdown,
@@ -40,11 +40,15 @@ export const ScheduledTaskDetailsSummary: FC<
         </div>
       )}
 
-      {skillDisplayName && (
+      {Boolean(skillDisplayNames?.length) && (
         <div className="flex min-w-0 flex-col gap-2">
           <span className={fieldLabelClassName}>{skillLabel}</span>
           <p className={`${fieldValueClassName} whitespace-normal break-all`}>
-            {skillDisplayName}
+            {skillDisplayNames?.map((name, index) => (
+              <span className="block" key={`${index}:${name}`}>
+                {name}
+              </span>
+            ))}
           </p>
         </div>
       )}

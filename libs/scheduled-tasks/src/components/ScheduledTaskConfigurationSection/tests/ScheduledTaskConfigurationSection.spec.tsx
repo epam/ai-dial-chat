@@ -52,7 +52,7 @@ describe('ScheduledTaskConfigurationSection', () => {
     render(
       <ScheduledTaskConfigurationSection
         skillLabel="Skill"
-        skillDisplayName="skills/public/deleted"
+        skillDisplayNames={['skills/public/deleted']}
         instructionsLabel="Instructions"
         instructionsMarkdown=""
       />,

@@ -1,12 +1,17 @@
-import { maxLength, registerDecorator } from 'class-validator';
+import {
+  maxLength,
+  registerDecorator,
+  type ValidationOptions,
+} from 'class-validator';
 
 /** Measures the resource path independently of its wire encoding. */
-export const IsValidSkillPathLength = () => {
+export const IsValidSkillPathLength = (options?: ValidationOptions) => {
   return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'isValidSkillPathLength',
       target: object.constructor,
       propertyName,
+      options,
       validator: {
         validate(value: unknown) {
           if (typeof value !== 'string') return false;
@@ -18,7 +23,7 @@ export const IsValidSkillPathLength = () => {
           }
         },
         defaultMessage() {
-          return 'skillUrl path must not exceed 1024 decoded characters';
+          return 'skillUrls path must not exceed 1024 decoded characters';
         },
       },
     });

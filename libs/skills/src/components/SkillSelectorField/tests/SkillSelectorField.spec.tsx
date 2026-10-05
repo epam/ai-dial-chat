@@ -1,262 +1,136 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { SKILLS_CLASS } from '../../../constants/public-class-names';
 import type { SkillSelectorFieldProps } from '../../../models/skill-selector-field-props';
 import { SkillSelectorField } from '../SkillSelectorField';
 
+const skills = [
+  { id: 'skills/public/report', name: 'Report' },
+  { id: 'skills/public/summary', name: 'Summary' },
+];
+
 const props: SkillSelectorFieldProps = {
+  value: [],
   onChange: vi.fn(),
   isSkillsSupported: true,
-  labelledById: 'skill-label',
-  favorites: [
-    { id: 'skills/public/report', name: 'Report' },
-    { id: 'skills/public/summary', name: 'Summary' },
-  ],
+  skills,
   labels: {
+    fieldLabel: 'Skills',
     placeholder: 'Choose a skill',
-    modalTitle: 'Use skill',
-    removeSkillLabel: 'Remove skill',
     unsupportedTooltipLabel: 'Unsupported',
+    searchPlaceholder: 'Search skills',
   },
-  renderCatalogContent: (onSelect, onClose) => (
-    <>
-      <button onClick={() => onSelect('skills/public/catalog')}>
-        Pick catalog skill
-      </button>
-      <button onClick={onClose}>Cancel catalog</button>
-    </>
-  ),
 };
 
+/* The kit shows the search input only for more than 8 options. */
+const manySkills = [
+  ...skills,
+  ...Array.from({ length: 9 }, (_, index) => ({
+    id: `skills/public/extra-${index}`,
+    name: `Extra ${index}`,
+  })),
+];
+
 const field = (overrides: Partial<SkillSelectorFieldProps> = {}) => (
-  <>
-    <span id="skill-label">Skill</span>
-    <SkillSelectorField {...props} {...overrides} />
-  </>
+  <SkillSelectorField {...props} {...overrides} />
 );
 
 describe('SkillSelectorField', () => {
-  it('does not steal focus when another field dismisses the dropdown', async () => {
-    const user = userEvent.setup();
-    render(
-      <>
-        {field()}
-        <input aria-label="Task name" />
-      </>,
-    );
-    await user.click(screen.getByRole('combobox', { name: 'Skill' }));
-    const otherInput = screen.getByRole('textbox', { name: 'Task name' });
-    await user.click(otherInput);
-    expect(otherInput.matches(':focus')).toBe(true);
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-  it('filters favorites, selects and replaces the draft, then clears without opening the menu', async () => {
+  it('lists every skill as an option and toggles selection in RTL', async () => {
     const user = userEvent.setup();
     const Host = () => {
-      const [value, onChange] = useState<string>();
-      return field({ value, onChange });
+      const [value, onChange] = useState<string[]>([]);
+      return (
+        <div dir="rtl">{field({ value, onChange, skills: manySkills })}</div>
+      );
     };
     render(<Host />);
-    const trigger = screen.getByRole('combobox', {
-      name: 'Skill',
-    }) as HTMLInputElement;
-    expect(
-      screen.getByRole('group', { name: 'Skill' }).getAttribute('class'),
-    ).toContain(SKILLS_CLASS.selectorField);
-    await user.click(trigger);
-    expect(
-      screen.queryByRole('button', { name: 'Pick catalog skill' }),
-    ).toBeNull();
+    const trigger = screen.getByRole('combobox', { name: 'Skills' });
+    trigger.focus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.queryByRole('button', { name: 'Browse' })).toBeNull();
+    expect(screen.getByRole('option', { name: 'Summary' })).toBeTruthy();
     await user.type(
       screen.getByRole('textbox', { name: 'Search skills' }),
       'rep',
     );
-    expect(screen.queryByRole('button', { name: 'Summary' })).toBeNull();
-    const report = screen.getByRole('button', { name: 'Report' });
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(1);
+    const [report] = options;
     expect(within(report).getByRole('mark').textContent).toBe('Rep');
-    await user.click(report);
-    expect(trigger.value).toBe('skills/public/report');
-    await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
-
+    report.focus();
     await user.keyboard('{Enter}');
-    await user.click(screen.getByRole('button', { name: 'Summary' }));
-    expect(trigger.value).toBe('skills/public/summary');
-    await user.click(screen.getByRole('button', { name: 'Remove skill' }));
-    expect(trigger.value).toBe('');
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Remove skill' })).toBeNull();
-    expect(trigger.matches(':focus')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Remove Report' })).toBeTruthy();
+
+    screen.getByRole('button', { name: 'Remove Report' }).focus();
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('button', { name: 'Remove Report' })).toBeNull();
   });
 
-  it('opens the catalog only through Browse and returns focus after selection or cancellation', async () => {
+  it('shows the empty label when no skill is available', async () => {
+    const user = userEvent.setup();
+    render(
+      field({ skills: [], labels: { ...props.labels, emptyLabel: 'None' } }),
+    );
+    await user.click(screen.getByRole('combobox', { name: 'Skills' }));
+    expect(screen.getByText('None')).toBeTruthy();
+  });
+
+  it('retains removable unsupported references while preventing additions', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(field({ onChange, favorites: [] }));
-    const trigger = screen.getByRole('combobox', { name: 'Skill' });
-    await user.click(trigger);
-    expect(screen.getByText('Star a skill to pin it here')).toBeTruthy();
-    await user.click(screen.getByRole('button', { name: 'Browse' }));
-    await user.click(
-      await screen.findByRole('button', { name: 'Pick catalog skill' }),
-    );
-    expect(onChange).toHaveBeenCalledWith('skills/public/catalog');
-    await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
-    await user.click(trigger);
-    await user.click(screen.getByRole('button', { name: 'Browse' }));
-    await user.click(
-      await screen.findByRole('button', { name: 'Cancel catalog' }),
-    );
-    await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
-    expect(onChange).toHaveBeenCalledTimes(1);
-  });
-
-  it('announces no matches while keeping Browse available and closes with Escape', async () => {
-    const user = userEvent.setup();
-    render(field());
-    const trigger = screen.getByRole('combobox', { name: 'Skill' });
-    trigger.focus();
-    await user.keyboard('{ArrowDown}');
-    await user.type(
-      screen.getByRole('textbox', { name: 'Search skills' }),
-      'missing',
-    );
-    expect(screen.getByRole('status').textContent).toBe('No matching skills');
-    expect(screen.getByRole('button', { name: 'Browse' })).toBeTruthy();
-    await user.keyboard('{Escape}');
-    await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
-    expect(trigger.getAttribute('aria-expanded')).toBe('false');
-  });
-
-  it('keeps a raw reference and removal available while unsupported, but disables all actions during submission', async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    const { rerender } = render(
+    render(
       field({
-        value: 'skills/public/missing',
+        value: ['skills/public/missing', 'skills/public/summary'],
+        displayNames: { 'skills/public/summary': 'Summary' },
         onChange,
         isSkillsSupported: false,
-        describedById: 'skill-error',
       }),
     );
-    const trigger = screen.getByRole('combobox', {
-      name: 'Skill',
-    }) as HTMLInputElement;
-    expect(trigger.value).toBe('skills/public/missing');
-    expect(trigger.disabled).toBe(true);
-    expect(trigger.getAttribute('aria-invalid')).toBe('true');
-    expect(trigger.getAttribute('aria-describedby')).toBe('skill-error');
-    await user.click(screen.getByRole('button', { name: 'Remove skill' }));
-    expect(onChange).toHaveBeenCalledWith(undefined);
-    expect(trigger.value).toBe('skills/public/missing');
+    const trigger = screen.getByRole('combobox', { name: /^Skills/ });
+    expect((trigger as HTMLInputElement).disabled).toBe(false);
+    await user.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    await user.click(
+      screen.getByRole('button', { name: 'Remove skills/public/missing' }),
+    );
+    expect(onChange).toHaveBeenCalledWith(['skills/public/summary']);
+  });
 
-    rerender(
+  it('makes every action inert while submitting', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
       field({
-        value: 'skills/public/other',
-        displayName: 'Other skill',
+        value: ['skills/public/report'],
+        onChange,
         isDisabled: true,
       }),
     );
-    expect(trigger.value).toBe('Other skill');
-    expect(
-      (
-        screen.getByRole('button', {
-          name: 'Remove skill',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
-  });
-
-  it('explains why the field is disabled when the model cannot use skills', async () => {
-    const user = userEvent.setup();
-    const reason =
-      'Selected model does not support skills. Select a different model to use a skill.';
-    const { rerender } = render(
-      field({ isSkillsSupported: false, describedById: 'host-hint' }),
-    );
-    const trigger = screen.getByRole('combobox', { name: 'Skill' });
+    const trigger = screen.getByRole('combobox', { name: /^Skills/ });
     expect((trigger as HTMLInputElement).disabled).toBe(true);
-    expect(trigger.getAttribute('title')).toBeNull();
-    expect(trigger.getAttribute('aria-describedby')).toBe(
-      `host-hint ${screen.getByText(reason).id}`,
-    );
-
-    await user.hover(trigger);
-    expect(await screen.findByRole('tooltip')).toHaveProperty(
-      'textContent',
-      reason,
-    );
-
-    await user.unhover(trigger);
-    rerender(field({ isSkillsSupported: true }));
-    /* The kit Dropdown remounts its trigger when `disabled` toggles. */
-    const enabledTrigger = screen.getByRole('combobox', { name: 'Skill' });
-    expect(enabledTrigger.getAttribute('aria-describedby')).toBeNull();
-    await user.hover(enabledTrigger);
-    expect(screen.queryByText(reason)).toBeNull();
-  });
-
-  it('uses the host label for the disabled-field explanation', () => {
-    render(
-      field({
-        isSkillsSupported: false,
-        labels: {
-          ...props.labels,
-          unavailableTooltipLabel: 'Pick another model',
-        },
-      }),
-    );
-    const trigger = screen.getByRole('combobox', { name: 'Skill' });
-    expect(trigger.getAttribute('aria-describedby')).toBe(
-      screen.getByText('Pick another model').id,
-    );
-  });
-
-  it('closes favorites and catalog on capability loss without changing the controlled selection', async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    const { rerender } = render(field({ onChange }));
-    await user.click(screen.getByRole('combobox', { name: 'Skill' }));
-    rerender(field({ onChange, isSkillsSupported: false }));
-    expect(screen.queryByRole('dialog')).toBeNull();
-    rerender(field({ onChange }));
-    expect(screen.queryByRole('dialog')).toBeNull();
-    await user.click(screen.getByRole('combobox', { name: 'Skill' }));
-    await user.click(screen.getByRole('button', { name: 'Browse' }));
-    rerender(field({ onChange, isSkillsSupported: false }));
-    expect(screen.queryByRole('dialog')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Remove Report' }));
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('uses the same favorites and Browse actions inside a host-provided sheet', async () => {
+  it('explains why an empty unsupported field is disabled', async () => {
     const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(
-      field({
-        onChange,
-        renderOverlay: (panel, open, close) =>
-          open ? (
-            <section role="dialog" aria-label="Mobile skills">
-              {panel}
-              <button onClick={close}>Close sheet</button>
-            </section>
-          ) : null,
-      }),
+    render(field({ isSkillsSupported: false }));
+    const trigger = screen.getByRole('combobox', { name: 'Skills' });
+    expect((trigger as HTMLInputElement).disabled).toBe(true);
+    expect(trigger.getAttribute('aria-describedby')).toBeTruthy();
+    await user.hover(trigger);
+    expect(await screen.findByRole('tooltip')).toBeTruthy();
+  });
+
+  it('associates a host validation error with the combobox', () => {
+    render(field({ error: 'Choose supported skills' }));
+    const trigger = screen.getByRole('combobox', { name: 'Skills' });
+    expect(trigger.getAttribute('aria-describedby')).toBeTruthy();
+    expect(trigger.getAttribute('aria-invalid')).toBe('true');
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Choose supported skills',
     );
-    const trigger = screen.getByRole('combobox', { name: 'Skill' });
-    trigger.focus();
-    await user.keyboard(' ');
-    await user.click(
-      within(screen.getByRole('dialog', { name: 'Mobile skills' })).getByRole(
-        'button',
-        { name: 'Report' },
-      ),
-    );
-    expect(onChange).toHaveBeenCalledWith('skills/public/report');
-    expect(screen.queryByRole('dialog')).toBeNull();
-    await user.click(trigger);
-    await user.click(screen.getByRole('button', { name: 'Close sheet' }));
-    await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
   });
 });

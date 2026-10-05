@@ -205,7 +205,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onRetry,
     description,
     modelLabel,
-    skillDisplayName,
+    skillDisplayNames,
     repeatsLabel,
     activeWindowLabel,
     completedLabel,
@@ -250,7 +250,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onRetry?: () => void;
     description?: string;
     modelLabel?: string;
-    skillDisplayName?: string;
+    skillDisplayNames?: string[];
     repeatsLabel?: string;
     activeWindowLabel?: string;
     completedLabel?: string;
@@ -273,7 +273,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {isDeleted && <span>{labels.deletedStateLabel}</span>}
       <span>description:{description}</span>
       <span>modelLabel:{modelLabel}</span>
-      <span>skill:{skillDisplayName}</span>
+      <span>skill:{skillDisplayNames}</span>
       <span>repeatsLabel:{repeatsLabel}</span>
       <span>activeWindowLabel:{activeWindowLabel}</span>
       {completedLabel && <span>completedLabel:{completedLabel}</span>}
@@ -444,7 +444,7 @@ describe('ScheduledTaskDetailPage', () => {
       id: 'sched_123',
       displayName: 'Task',
       prompt: '',
-      skillUrl: 'skills/public/deleted',
+      skillUrls: ['skills/public/deleted'],
       trigger: { cron: { fields: { hour: '9', minute: '0' } } },
     });
     renderDetailPage();

@@ -14,7 +14,7 @@
     flex-direction: row;
   }
   .sideColumn.sideColumn {
-    width: 400px;
+    width: var(--bfb-side-column-width, 400px);
     flex-shrink: 0;
   }
   .reservedColumn.reservedColumn {

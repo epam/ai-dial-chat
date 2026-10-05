@@ -62,7 +62,7 @@ import {
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { useScheduledTaskSkillDisplayName } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayName';
+import { useScheduledTaskSkillDisplayNames } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
 import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
@@ -111,8 +111,8 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const activeScheduledTask = useActiveScheduledTask();
-  const skillDisplayName = useScheduledTaskSkillDisplayName(
-    activeScheduledTask.task?.skillUrl,
+  const skillDisplayNames = useScheduledTaskSkillDisplayNames(
+    activeScheduledTask.task?.skillUrls,
   );
   const { items: deploymentItems } = useDeployments();
   const { conversations } = useConversations();
@@ -219,7 +219,7 @@ const ConversationSourcesPanelContainer: FC = () => {
         modelLabel={t(ScheduledTasksI18nKeys.ConversationPanelModelLabel)}
         instructionsLabel={t(ScheduledTasksI18nKeys.CreateInstructionsLabel)}
         skillLabel={t(ScheduledTasksI18nKeys.CreateSkillLabel)}
-        skillDisplayName={skillDisplayName}
+        skillDisplayNames={skillDisplayNames}
         modelDisplayName={modelDisplayName}
         instructionsMarkdown={activeScheduledTask.task?.prompt}
         renderInstructions={(markdown) => (

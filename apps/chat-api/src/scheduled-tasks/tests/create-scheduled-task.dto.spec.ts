@@ -42,3 +42,27 @@ describe('CreateScheduledTaskBodyDto — text limits', () => {
     ).toEqual(['prompt']);
   });
 });
+
+describe('scheduled-task skill arrays', () => {
+  it.each([
+    undefined,
+    [],
+    ['skills/public/report'],
+    ['skills/public/report', 'skills/public/summary'],
+  ])('accepts omitted, empty and valid arrays %j', async (skillUrls) => {
+    expect(await invalidProperties({ ...BASE_BODY, skillUrls })).toEqual([]);
+  });
+  it.each([
+    null,
+    'skills/public/report',
+    42,
+    {},
+    ['skills/public/report', 42],
+    ['skills/public/report', 'skills/public/../secret'],
+    ['skills/public/report', 'skills/public/%00secret'],
+  ])('rejects malformed array or invalid entry %j', async (skillUrls) => {
+    expect(await invalidProperties({ ...BASE_BODY, skillUrls })).toEqual([
+      'skillUrls',
+    ]);
+  });
+});

@@ -20,8 +20,12 @@ const values: ScheduledTaskCreateFormValues = {
 const options = { now: new Date('2026-09-22T10:00:00.000Z') };
 
 describe('scheduled task request preparation', () => {
-  it('prepares skill-only content only with support and emits null for a cleared edit', () => {
-    const draft = { ...values, prompt: '', skillUrl: 'skills/public/report' };
+  it('prepares skill-only content only with support and emits an empty array for a cleared edit', () => {
+    const draft = {
+      ...values,
+      prompt: '',
+      skillUrls: ['skills/public/report', 'skills/public/summary'],
+    };
     expect(prepareScheduledTaskCreateBody(draft, options).ok).toBe(false);
     expect(
       prepareScheduledTaskCreateBody(draft, {
@@ -30,14 +34,14 @@ describe('scheduled task request preparation', () => {
       }),
     ).toMatchObject({
       ok: true,
-      body: { prompt: '', skillUrl: draft.skillUrl },
+      body: { prompt: '', skillUrls: draft.skillUrls },
     });
     expect(prepareScheduledTaskUpdateBody(values, options)).toMatchObject({
       ok: true,
-      body: { skillUrl: null },
+      body: { skillUrls: [] },
     });
     const create = prepareScheduledTaskCreateBody(values, options);
-    if (create.ok) expect(create.body).not.toHaveProperty('skillUrl');
+    if (create.ok) expect(create.body).not.toHaveProperty('skillUrls');
   });
   it('fails closed instead of serializing an empty monthly day', () => {
     expect(
@@ -66,5 +70,21 @@ describe('scheduled task request preparation', () => {
       ok: false,
       errors: { dayOfWeek: ScheduledTaskValidationErrorCode.DayOfWeekInvalid },
     });
+  });
+});
+
+it('deduplicates multi-skill requests in order and preserves all skills on hydration', () => {
+  const skillUrls = [
+    'skills/public/report',
+    'skills/public/summary',
+    'skills/public/report',
+  ];
+  const result = prepareScheduledTaskCreateBody(
+    { ...values, skillUrls },
+    { ...options, isSkillsSupported: true },
+  );
+  expect(result).toMatchObject({
+    ok: true,
+    body: { skillUrls: skillUrls.slice(0, 2) },
   });
 });

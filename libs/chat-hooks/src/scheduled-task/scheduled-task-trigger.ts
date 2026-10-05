@@ -166,7 +166,9 @@ export const mapFormValuesToCreateBody = (
     trigger,
     model: values.modelId,
     prompt: values.prompt.trim(),
-    ...(values.skillUrl ? { skillUrl: values.skillUrl } : {}),
+    ...(values.skillUrls?.length
+      ? { skillUrls: [...new Set(values.skillUrls)] }
+      : {}),
     ...(trimmedDescription ? { description: trimmedDescription } : {}),
   };
 };
@@ -179,7 +181,7 @@ export const mapFormValuesToUpdateBody = (
   values: ScheduledTaskCreateFormValues,
 ): UpdateScheduledTaskBodyDto => ({
   ...mapFormValuesToCreateBody(values),
-  skillUrl: values.skillUrl || null,
+  skillUrls: [...new Set(values.skillUrls ?? [])],
 });
 
 /**
@@ -311,7 +313,7 @@ export const mapScheduledTaskDtoToFormValues = (
   if (
     !dto.model ||
     typeof dto.prompt !== 'string' ||
-    (!dto.prompt.trim() && !dto.skillUrl)
+    (!dto.prompt.trim() && !dto.skillUrls?.length)
   ) {
     return {
       ok: false,
@@ -331,12 +333,12 @@ export const mapScheduledTaskDtoToFormValues = (
 
   const base: Pick<
     ScheduledTaskCreateFormValues,
-    'displayName' | 'modelId' | 'prompt' | 'description' | 'skillUrl'
+    'displayName' | 'modelId' | 'prompt' | 'description' | 'skillUrls'
   > = {
     displayName: dto.displayName,
     modelId: dto.model,
     prompt: dto.prompt,
-    ...(dto.skillUrl ? { skillUrl: dto.skillUrl } : {}),
+    skillUrls: [...new Set(dto.skillUrls ?? [])],
     ...(dto.description ? { description: dto.description } : {}),
   };
 

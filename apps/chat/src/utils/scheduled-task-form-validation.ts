@@ -135,7 +135,7 @@ export const mapScheduledTaskApiError = (
 ): ScheduledTaskCreateFormErrors | undefined => {
   if (code === ScheduledTaskErrorCode.ScheduledTaskSkillUnsupported)
     return mapScheduledTaskValidationErrors(
-      { skillUrl: ScheduledTaskValidationErrorCode.SkillUnsupported },
+      { skillUrls: ScheduledTaskValidationErrorCode.SkillUnsupported },
       t,
     );
   if (code === ScheduledTaskErrorCode.ScheduledTaskInstructionsOrSkillRequired)

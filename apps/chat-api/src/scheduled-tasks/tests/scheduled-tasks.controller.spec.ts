@@ -224,7 +224,7 @@ describe('ScheduledTasksController (integration)', () => {
         const body = {
           ...validCreateBody,
           prompt: '',
-          skillUrl: `skills/public/${path}`,
+          skillUrls: [`skills/public/${path}`],
         };
         const saved = fromUpstreamSchedule({
           id: mockSchedule.id,
@@ -248,13 +248,13 @@ describe('ScheduledTasksController (integration)', () => {
           .expect(200);
         await request(app.getHttpServer())
           .put(`/api/v1/scheduled-tasks/${saved.id}`)
-          .send({ ...body, skillUrl: detail.body.skillUrl })
+          .send({ ...body, skillUrls: detail.body.skillUrls })
           .expect(200);
         expect(service.updateScheduledTask).toHaveBeenCalledWith(
           TEST_USER.sub,
           TEST_USER.at,
           saved.id,
-          expect.objectContaining({ skillUrl: saved.skillUrl }),
+          expect.objectContaining({ skillUrls: saved.skillUrls }),
           TEST_USER.bucket,
         );
       },
@@ -263,7 +263,10 @@ describe('ScheduledTasksController (integration)', () => {
     it.each(['a'.repeat(1025), encodeURIComponent('\u044f'.repeat(1025))])(
       'rejects a path over the decoded length limit %# on create and update',
       async (path) => {
-        const body = { ...validCreateBody, skillUrl: `skills/public/${path}` };
+        const body = {
+          ...validCreateBody,
+          skillUrls: [`skills/public/${path}`],
+        };
         await request(app.getHttpServer())
           .post('/api/v1/scheduled-tasks')
           .send(body)
@@ -282,7 +285,7 @@ describe('ScheduledTasksController (integration)', () => {
         statusCode: 400,
         error: 'Bad Request',
         code: 'scheduledTaskSkillUnsupported',
-        field: 'skillUrl',
+        field: 'skillUrls',
         message:
           'Selected model does not support skills. Remove the skill or select different model to proceed.',
       };
@@ -291,7 +294,7 @@ describe('ScheduledTasksController (integration)', () => {
       );
       const response = await request(app.getHttpServer())
         .post('/api/v1/scheduled-tasks')
-        .send({ ...validCreateBody, skillUrl: 'skills/public/report' })
+        .send({ ...validCreateBody, skillUrls: ['skills/public/report'] })
         .expect(400);
       expect(response.body).toEqual(error);
     });
@@ -307,10 +310,10 @@ describe('ScheduledTasksController (integration)', () => {
       'skills/public/   ',
       42,
       {},
-    ])('rejects invalid skill reference %j', async (skillUrl) => {
+    ])('rejects invalid skill reference %j', async (skillUrls) => {
       await request(app.getHttpServer())
         .post('/api/v1/scheduled-tasks')
-        .send({ ...validCreateBody, skillUrl })
+        .send({ ...validCreateBody, skillUrls: [skillUrls] })
         .expect(400);
       expect(service.createScheduledTask).not.toHaveBeenCalled();
     });
@@ -321,21 +324,22 @@ describe('ScheduledTasksController (integration)', () => {
       'skills/public/\u062a\u0642\u0631\u064a\u0631',
     ])(
       'accepts skill-only DTO %s and passes the session bucket',
-      async (skillUrl) => {
+      async (url) => {
+        const skillUrls = [url];
         service.createScheduledTask.mockResolvedValue({
           ...mockSchedule,
           prompt: '',
-          skillUrl,
+          skillUrls,
         });
         const response = await request(app.getHttpServer())
           .post('/api/v1/scheduled-tasks')
-          .send({ ...validCreateBody, prompt: '', skillUrl })
+          .send({ ...validCreateBody, prompt: '', skillUrls })
           .expect(201);
-        expect(response.body.skillUrl).toBe(skillUrl);
+        expect(response.body.skillUrls).toEqual(skillUrls);
         expect(service.createScheduledTask).toHaveBeenCalledWith(
           TEST_USER.sub,
           TEST_USER.at,
-          expect.objectContaining({ prompt: '', skillUrl }),
+          expect.objectContaining({ prompt: '', skillUrls }),
           TEST_USER.bucket,
         );
       },

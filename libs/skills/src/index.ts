@@ -54,4 +54,5 @@ export type {
   SkillSelectorFieldProps,
   SkillSelectorFieldLabels,
   SkillSelectorFieldStyles,
+  SkillSelectorOption,
 } from './models/skill-selector-field-props';

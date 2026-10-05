@@ -2,6 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDefined,
+  IsArray,
+  ValidateIf,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -52,22 +54,24 @@ export class CreateScheduledTaskBodyDto {
   prompt!: string;
 
   @ApiPropertyOptional({
-    type: String,
-    nullable: true,
-    example: 'skills/public/daily-summary',
+    type: [String],
+    example: ['skills/public/daily-summary'],
     description:
-      'DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.',
+      'DIAL skill references with paths of at most 1024 decoded characters each. Omission preserves saved skills on update; an empty array removes them.',
   })
-  @IsOptional()
-  @IsString()
-  @IsValidSkillPathLength()
-  @IsValidFilePath()
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsArray()
+  @IsString({ each: true })
+  @IsValidSkillPathLength({ each: true })
+  @IsValidFilePath({ each: true })
   @Matches(/^skills\/[\w.-]{1,256}\/(?=.*\S).+$/u, {
-    message: 'skillUrl must be a skills/{bucket}/{path} resource reference',
+    message:
+      'skillUrls must contain skills/{bucket}/{path} resource references',
+    each: true,
   })
-  @Matches(/^[^\p{Cc}]*$/u)
-  @Matches(/^(?!.*%(?:0[0-9a-f]|1[0-9a-f]|7f)).*$/i)
-  skillUrl?: string | null;
+  @Matches(/^[^\p{Cc}]*$/u, { each: true })
+  @Matches(/^(?!.*%(?:0[0-9a-f]|1[0-9a-f]|7f)).*$/i, { each: true })
+  skillUrls?: string[];
 
   @ApiPropertyOptional({
     example: 'Summarizes unread inbox items every morning',

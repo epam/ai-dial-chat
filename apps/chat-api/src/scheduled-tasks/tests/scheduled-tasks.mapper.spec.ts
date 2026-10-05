@@ -39,24 +39,53 @@ describe('buildScheduledTaskChatCompletionUrl', () => {
 });
 
 describe('toUpstreamSchedulePayload', () => {
+  it('forwards all unique skills in order and reads the full array', () => {
+    const payload = toUpstreamSchedulePayload(
+      {
+        displayName: 'Several skills',
+        model: 'model',
+        prompt: '',
+        trigger: { date: '2026-12-01T09:00:00Z' },
+        skillUrls: [
+          'skills/public/report',
+          'skills/public/my summary',
+          'skills/public/report',
+        ],
+      },
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
+    );
+    expect(
+      payload.properties.payload.messages[0].custom_content?.skills,
+    ).toEqual([
+      { url: 'skills/public/report' },
+      { url: 'skills/public/my%20summary' },
+    ]);
+    expect(fromUpstreamSchedule({ id: 'task', ...payload }).skillUrls).toEqual([
+      'skills/public/report',
+      'skills/public/my%20summary',
+    ]);
+  });
+
   it.each([
     'skills/public/my report',
     'skills/public/my%20report',
     'skills/public/\u062a\u0642\u0631\u064a\u0631',
-  ])('encodes and reads a message-level skill: %s', (skillUrl) => {
+  ])('encodes and reads a message-level skill: %s', (skillUrls) => {
     const payload = toUpstreamSchedulePayload(
       {
         displayName: 'Skill task',
         model: 'model',
         prompt: '',
-        skillUrl,
+        skillUrls: [skillUrls],
         trigger: { date: '2026-12-01T09:00:00Z' },
       },
       DIAL_CORE_URL,
       DIAL_API_VERSION,
       SCHEDULER_SERVICE_ID,
     );
-    const expectedUrl = skillUrl
+    const expectedUrl = skillUrls
       .split('/')
       .map((part) => encodeURIComponent(decodeURIComponent(part)))
       .join('/');
@@ -69,7 +98,7 @@ describe('toUpstreamSchedulePayload', () => {
     ]);
     expect(payload.properties.payload).not.toHaveProperty('custom_content');
     const mapped = fromUpstreamSchedule({ id: 'task', ...payload });
-    expect(mapped).toMatchObject({ prompt: '', skillUrl: expectedUrl });
+    expect(mapped).toMatchObject({ prompt: '', skillUrls: [expectedUrl] });
     expect(
       toUpstreamSchedulePayload(
         { ...mapped, model: 'model', prompt: '', trigger: mapped.trigger },
@@ -85,7 +114,7 @@ describe('toUpstreamSchedulePayload', () => {
       fromUpstreamSchedule({
         id: 'task',
         display_name: 'Task',
-      } as UpstreamScheduleResponse).skillUrl,
+      } as UpstreamScheduleResponse).skillUrls,
     ).toBeUndefined();
   });
   it('builds the fixed chat_completion body for a date trigger, using the configured service_id', () => {

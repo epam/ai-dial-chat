@@ -3,9 +3,10 @@
 ## Scheduled task skills
 
 The existing root and `./scheduled-tasks` preparation/mapping exports carry
-optional `skillUrl`. Pass `{ now, isSkillsSupported }` to checked create/update
+optional `skillUrls: string[]`. Pass `{ now, isSkillsSupported }` to checked create/update
 preparation; skill-bearing drafts require support strictly equal to `true`.
-Create omits an unset reference; update emits `null` for a cleared selection.
+Create omits an empty selection; update emits `[]` for a cleared selection.
+Both mappers deduplicate references in selection order.
 Unchecked update mapping therefore expects a complete, hydrated draft.
 `mapScheduledTaskDtoToFormValues` accepts empty instructions when a saved skill
 exists. A missing prompt still fails mapping. Hydrate edits from detail GET,
