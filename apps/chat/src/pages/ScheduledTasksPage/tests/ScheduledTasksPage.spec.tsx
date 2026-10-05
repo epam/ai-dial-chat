@@ -76,7 +76,12 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       title: string;
       createButtonLabel: string;
       retryLabel: string;
-      cardLabels?: { newBadgeLabel?: string; completedBadgeLabel?: string };
+      loadMoreErrorLabel?: string;
+      cardLabels?: {
+        newBadgeLabel?: string;
+        pausedBadgeLabel?: string;
+        completedBadgeLabel?: string;
+      };
     };
     onCreateClick: () => void;
     items: { id: string; isCompleted?: boolean }[];
@@ -103,6 +108,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <button onClick={() => onSearchQueryChange('daily')}>set search</button>
       <button onClick={onLoadMore}>load more</button>
       <span>completedBadgeLabel:{labels.cardLabels?.completedBadgeLabel}</span>
+      <span>pausedBadgeLabel:{labels.cardLabels?.pausedBadgeLabel}</span>
+      <span>loadMoreErrorLabel:{labels.loadMoreErrorLabel}</span>
       {items.map((item) => (
         <div key={item.id}>
           <button onClick={() => onCardClick?.(item.id)}>card:{item.id}</button>
@@ -552,6 +559,14 @@ describe('ScheduledTasksPage — completed state', () => {
     expect(
       screen.getByText(
         'completedBadgeLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('pausedBadgeLabel:scheduledTasks.card.pausedBadgeLabel'),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'loadMoreErrorLabel:scheduledTasks.list.loadMoreErrorLabel',
       ),
     ).toBeTruthy();
   });

@@ -139,14 +139,17 @@ const ConversationPanelMenu: FC<Props> = ({
           throw new Error();
         }
 
+        if (activeConversationId) {
+          navigate(ROUTES.Root);
+        }
+
+        /* A partial failure reports only the error; "All conversations
+         * deleted" would contradict it. */
         if (deletionResult.failed.length > 0) {
           showErrorNotification({
             message: t(ConversationPanelI18nKeys.DeleteAllPartialError),
           });
-        }
-
-        if (activeConversationId) {
-          navigate(ROUTES.Root);
+          return;
         }
 
         showSuccessNotification({

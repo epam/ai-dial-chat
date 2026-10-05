@@ -371,13 +371,17 @@ export class ChatOverlayManager {
     return this.getEntry(overlayId).overlay.renameConversation(id, newName);
   }
 
-  /** Updates theme/model/conversation options for `overlayId`. */
+  /** Updates theme/model/conversation/feature/auth options for `overlayId`. */
   setOverlayOptions(
     overlayId: string,
     options: Partial<
       Pick<
         ChatOverlayOptions,
-        'theme' | 'modelId' | 'overlayConversationId' | 'enabledFeatures'
+        | 'theme'
+        | 'modelId'
+        | 'overlayConversationId'
+        | 'enabledFeatures'
+        | 'auth'
       >
     >,
   ): Promise<SetOverlayOptionsResponse> {

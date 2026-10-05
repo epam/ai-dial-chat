@@ -137,6 +137,22 @@ export const redactToolsetAuthSettings = (raw: unknown): unknown => {
 };
 
 /**
+ * Redacts `function.env` before logging a raw DIAL Core application
+ * response — function environment variables can hold secrets and must never
+ * appear in logs, even at debug level.
+ */
+export const redactApplicationFunctionEnv = (raw: unknown): unknown => {
+  if (!isRecord(raw) || !isRecord(raw.function) || !('env' in raw.function)) {
+    return raw;
+  }
+
+  const { env, ...safeFunction } = raw.function;
+  void env;
+
+  return { ...raw, function: safeFunction };
+};
+
+/**
  * DIAL Core's runtime `features` payload includes more flags than the
  * `DeploymentFeatures` SDK type declares (e.g. chat_completion, responses_api,
  * reasoning_efforts), so this reads defensively off the raw object instead of
@@ -268,7 +284,9 @@ export const mapToDeploymentItem = (
     description: raw.description,
     displayVersion: raw.display_version,
     reference: raw.reference,
-    isFeatured: featuredIds.has(raw.id || raw.reference || ''),
+    isFeatured:
+      featuredIds.has(raw.id) ||
+      (raw.reference != null && featuredIds.has(raw.reference)),
     isHidden: topics.some((tag) => hiddenTags.has(tag)),
     updatedAt: raw.updated_at,
     createdAt: raw.created_at,

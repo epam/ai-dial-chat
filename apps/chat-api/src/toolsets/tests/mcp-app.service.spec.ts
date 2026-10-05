@@ -11,6 +11,7 @@ import {
   MCP_SESSION_ID_HEADER,
 } from '../constants/mcp-protocol';
 import { McpDeploymentKindDto } from '../dto/mcp-app.dto';
+import { McpAppRateLimitException } from '../mcp-app-rate-limit.exception';
 import { McpAppService } from '../mcp-app.service';
 
 const TOKEN = 'token';
@@ -371,5 +372,39 @@ describe('McpAppService — getResource', () => {
     await expect(
       service.getResource(TOOLSET_ID, 'ui://widget/1', TOKEN),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('keeps Retry-After when DIAL Core rate-limits the request', async () => {
+    const { service, getApplicationMcpResources } = makeService();
+    getApplicationMcpResources.mockResolvedValueOnce({
+      error: {},
+      response: {
+        status: 429,
+        headers: {
+          get: (name: string) =>
+            name.toLowerCase() === 'retry-after' ? '30' : null,
+        },
+      } as unknown as Response,
+    });
+
+    const error = await service
+      .getResource(TOOLSET_ID, 'ui://widget/1', TOKEN)
+      .catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(McpAppRateLimitException);
+    expect((error as McpAppRateLimitException).getStatus()).toBe(429);
+    expect((error as McpAppRateLimitException).retryAfter).toBe('30');
+  });
+
+  it('rate-limits without Retry-After when DIAL Core sends none', async () => {
+    const { service, getApplicationMcpResources } = makeService();
+    getApplicationMcpResources.mockResolvedValueOnce(failure(429));
+
+    const error = await service
+      .getResource(TOOLSET_ID, 'ui://widget/1', TOKEN)
+      .catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(McpAppRateLimitException);
+    expect((error as McpAppRateLimitException).retryAfter).toBeUndefined();
   });
 });

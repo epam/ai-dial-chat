@@ -155,7 +155,12 @@ export class FilesBatchOperationsService {
       return { success: false, error: expandFailedError };
     }
 
-    const childResults = await Promise.all(children.map(runChild));
+    /* Children run one at a time so a large folder does not open one DIAL
+     * Core request per file at once (see the file-manager-copy-move spec). */
+    const childResults: TChildResult[] = [];
+    for (const child of children) {
+      childResults.push(await runChild(child));
+    }
     return { success: true, childResults };
   }
 

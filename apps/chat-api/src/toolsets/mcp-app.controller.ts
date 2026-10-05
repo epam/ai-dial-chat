@@ -20,7 +20,23 @@ import {
   McpAppToolCallRequestDto,
   McpAppToolCallResponseDto,
 } from './dto/mcp-app.dto';
+import { McpAppRateLimitException } from './mcp-app-rate-limit.exception';
 import { McpAppService } from './mcp-app.service';
+
+/** Runs `call`, forwarding DIAL Core's `Retry-After` when it rejects with 429. */
+const withRetryAfter = async <T>(
+  res: Response,
+  call: () => Promise<T>,
+): Promise<T> => {
+  try {
+    return await call();
+  } catch (error) {
+    if (error instanceof McpAppRateLimitException && error.retryAfter) {
+      res.setHeader('Retry-After', error.retryAfter);
+    }
+    throw error;
+  }
+};
 
 @ApiTags('toolsets')
 @Controller({ path: 'toolsets', version: '1' })
@@ -33,7 +49,7 @@ export class McpAppController {
     summary: "Fetch a toolset's MCP Apps ui:// resource",
     description:
       "Raw-passthrough proxy of DIAL Core's " +
-      'GET /v1/deployments/{deployment_name}/mcp/resources?uri=... — the ' +
+      'GET /v1/deployments/{deployment_name}/mcp/resources?uri=... â€” the ' +
       "response body is Core's resource body unchanged, forwarded with " +
       'Content-Type/Content-Security-Policy/X-Content-Type-Options from ' +
       'Core. Cached server-side for 30 seconds per toolset+resourceUri.',
@@ -42,7 +58,7 @@ export class McpAppController {
   @ApiResponse({ status: 400, description: 'Invalid resourceUri' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated — valid session cookie required',
+    description: 'Not authenticated â€” valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset or resource not found' })
@@ -57,10 +73,8 @@ export class McpAppController {
     @Query() query: GetMcpAppResourceDto,
   ): Promise<void> {
     const { at } = req.user as SessionUser;
-    const { body, headers } = await this.mcpAppService.getResource(
-      params.toolsetName,
-      query.resourceUri,
-      at,
+    const { body, headers } = await withRetryAfter(res, () =>
+      this.mcpAppService.getResource(params.toolsetName, query.resourceUri, at),
     );
     res.set(headers);
     res.send(body);
@@ -85,7 +99,7 @@ export class McpAppController {
   @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated — valid session cookie required',
+    description: 'Not authenticated â€” valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
   @ApiResponse({
@@ -94,13 +108,12 @@ export class McpAppController {
   })
   async listMcpAppTools(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Query() query: ListMcpAppToolsQueryDto,
   ): Promise<ListMcpAppToolsResponseDto> {
     const { at } = req.user as SessionUser;
-    const tools = await this.mcpAppService.listAppTools(
-      query.deploymentId,
-      query.kind,
-      at,
+    const tools = await withRetryAfter(res, () =>
+      this.mcpAppService.listAppTools(query.deploymentId, query.kind, at),
     );
     return { tools };
   }
@@ -116,14 +129,14 @@ export class McpAppController {
     description:
       "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the " +
       'given deployment (toolset or application) and returns every tool ' +
-      "name, unfiltered — used to populate the toolset editor's " +
+      "name, unfiltered â€” used to populate the toolset editor's " +
       '"Allowed tools" picker.',
   })
   @ApiResponse({ status: 200, type: ListMcpToolNamesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated — valid session cookie required',
+    description: 'Not authenticated â€” valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
   @ApiResponse({
@@ -132,13 +145,12 @@ export class McpAppController {
   })
   async listMcpToolNames(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Query() query: ListMcpAppToolsQueryDto,
   ): Promise<ListMcpToolNamesResponseDto> {
     const { at } = req.user as SessionUser;
-    const toolNames = await this.mcpAppService.listToolNames(
-      query.deploymentId,
-      query.kind,
-      at,
+    const toolNames = await withRetryAfter(res, () =>
+      this.mcpAppService.listToolNames(query.deploymentId, query.kind, at),
     );
     return { toolNames };
   }
@@ -150,7 +162,7 @@ export class McpAppController {
     description:
       'Validates toolName against the tools the MCP session currently ' +
       'exposes, then forwards a tools/call JSON-RPC request through DIAL ' +
-      "Core's existing generic MCP proxy for this toolset. Not cached — " +
+      "Core's existing generic MCP proxy for this toolset. Not cached â€” " +
       'every call is a live, potentially side-effecting tool invocation.',
   })
   @ApiResponse({
@@ -160,7 +172,7 @@ export class McpAppController {
   @ApiResponse({ status: 400, description: 'Malformed body' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated — valid session cookie required',
+    description: 'Not authenticated â€” valid session cookie required',
   })
   @ApiResponse({
     status: 403,
@@ -174,16 +186,19 @@ export class McpAppController {
   })
   async callMcpAppTool(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Param() params: GetToolsetDto,
     @Body() body: McpAppToolCallRequestDto,
   ): Promise<McpAppToolCallResponseDto> {
     const { at } = req.user as SessionUser;
-    const result = await this.mcpAppService.callTool(
-      params.toolsetName,
-      body.toolName,
-      body.arguments,
-      body.kind,
-      at,
+    const result = await withRetryAfter(res, () =>
+      this.mcpAppService.callTool(
+        params.toolsetName,
+        body.toolName,
+        body.arguments,
+        body.kind,
+        at,
+      ),
     );
     return { result };
   }

@@ -393,6 +393,7 @@ export enum ScheduledTasksI18nKeys {
   ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
   ListLoadMoreErrorLabel = 'scheduledTasks.list.loadMoreErrorLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
+  CardPausedBadgeLabel = 'scheduledTasks.card.pausedBadgeLabel',
   CardCompletedBadgeLabel = 'scheduledTasks.card.completedBadgeLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
   CardScheduleDailyAt = 'scheduledTasks.card.scheduleDailyAt',

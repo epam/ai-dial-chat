@@ -721,6 +721,7 @@
     },
     "card": {
       "newBadgeLabel": "NEW",
+      "pausedBadgeLabel": "Paused",
       "completedBadgeLabel": "Completed",
       "editActionLabel": "Edit",
       "scheduleDailyAt": "Every day at {{time}}",

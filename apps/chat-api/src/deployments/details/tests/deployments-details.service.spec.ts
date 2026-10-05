@@ -589,6 +589,38 @@ describe('DeploymentsDetailsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
+    it('logs the raw DIAL Core application response with function.env redacted', async () => {
+      const debugSpy = vi
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => undefined);
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/my-app',
+          function: {
+            runtime: 'python3.11',
+            status: 'DEPLOYED',
+            env: { API_KEY: 'super-secret-env-value' },
+          },
+        }),
+      );
+
+      await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+
+      const logged = debugSpy.mock.calls.map((call) => String(call[0]));
+      expect(
+        logged.some((line) => line.includes('DIAL Core application details')),
+      ).toBe(true);
+      expect(logged.join('\n')).not.toContain('super-secret-env-value');
+      expect(logged.join('\n')).toContain('python3.11');
+
+      debugSpy.mockRestore();
+    });
+
     it('maps skills_supported to features.skillsSupported in details', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getApplication.mockResolvedValue(
