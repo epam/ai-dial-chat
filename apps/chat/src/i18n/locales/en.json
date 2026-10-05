@@ -1148,11 +1148,15 @@
     "createTitle": "Create {{type}}",
     "editTitle": "Edit {{type}}",
     "defaultTypeName": "quick app",
-    "exitPreviewButton": "Exit preview",
     "savingOverlay": "Saving in progress…",
     "previewChat": {
-      "placeholder": "Send a message to preview this application…",
-      "ariaLabel": "Application preview chat"
+      "placeholder": "Send a test message",
+      "ariaLabel": "Application preview chat",
+      "backToSetup": "Back to setup",
+      "bannerLabel": "Preview mode",
+      "bannerText": "You are previewing <bold>{{name}}</bold>. Send a message to test how it responds. Usage is following your limits.",
+      "greeting": "Test your QuickApp here. Send a message or upload a document to see how it responds.",
+      "greetingAriaLabel": "Greeting from the application"
     },
     "generalForm": {
       "namePlaceholder": "Enter application name",
