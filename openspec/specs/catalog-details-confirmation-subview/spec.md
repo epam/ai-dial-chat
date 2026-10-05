@@ -121,6 +121,12 @@ Message defaults emphasize the item name with `<strong>`. The chat app's `Catalo
 
 In the Manage ("...") menu, Delete SHALL be the last entry, after Remove from My List and Revoke access, so the destructive action never sits next to an entry a misclick can reach. Delete and Remove from My List both use the `IconTrashX` glyph, and Delete carries the menu's danger treatment.
 
+#### Scenario: Delete is the last Manage entry
+
+- **GIVEN** an owned item (`isMyApp: true`) the host can share, publish, and revoke access to, with a positive recipient count
+- **WHEN** the Manage menu is opened
+- **THEN** "Revoke access" is directly followed by "Delete", and "Delete" is the last entry
+
 #### Scenario: Clicking Delete does not delete
 
 - **WHEN** "Delete" is clicked in the Manage menu
