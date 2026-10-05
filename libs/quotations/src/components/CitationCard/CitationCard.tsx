@@ -46,6 +46,8 @@ export interface CitationCardLabels {
   preview: string;
   /** Label for the "Open in browser" button. */
   openInBrowser: string;
+  /** Label for the "Download" button. */
+  download: string;
   /** Label for the toggle that expands a quote cut off at the collapsed height. */
   showMore: string;
   /** Label for the toggle that collapses an expanded quote. */
@@ -91,11 +93,13 @@ export interface CitationCardProps {
   /**
    * Called when the user clicks the "Preview" button. Omit when the group has
    * nothing previewable (e.g. reference-only chunks) — the "Preview" button is
-   * hidden and an "Open in browser" button is shown instead.
+   * hidden and the remaining button is always labelled "Open in browser".
    */
   onPreview?: (annotation: Annotation) => void;
-  /** Called when the user clicks the "Open in browser" button, shown for web links and non-previewable sources. */
+  /** Called when the user clicks the "Open in browser"/"Download" button. */
   onOpenInBrowser: (annotation: Annotation) => void;
+  /** Whether a previewable file shows the "Download" button. Web links keep "Open in browser" regardless. Defaults to `true`. */
+  isDownloadEnabled?: boolean;
   /**
    * Optional icon rendered before the header text (the file extension for a
    * previewable file, otherwise the source name). When omitted, a previewable
@@ -117,6 +121,7 @@ export const CitationCard: FC<CitationCardProps> = ({
   onIndexChange,
   onPreview,
   onOpenInBrowser,
+  isDownloadEnabled = true,
   headerIcon,
   labels,
   typography,
@@ -284,8 +289,8 @@ export const CitationCard: FC<CitationCardProps> = ({
                     content={quote}
                     classNames={{
                       p: mergeClasses(quoteClassName, styles.quote),
-                      ul: mergeClasses(quoteClassName, 'ps-3'),
-                      ol: mergeClasses(quoteClassName, 'ps-3'),
+                      ul: mergeClasses(quoteClassName, 'ps-[1.5em]'),
+                      ol: quoteClassName,
                       strong: quoteStrongClassName,
                     }}
                   />
@@ -314,9 +319,9 @@ export const CitationCard: FC<CitationCardProps> = ({
             onClick={() => onPreview(annotation)}
           />
         )}
-        {isWebLink && (
+        {(isWebLink || isDownloadEnabled) && (
           <PrimaryButton
-            label={labels.openInBrowser}
+            label={isWebLink ? labels.openInBrowser : labels.download}
             size={ElementSize.Small}
             onClick={() => onOpenInBrowser(annotation)}
           />
