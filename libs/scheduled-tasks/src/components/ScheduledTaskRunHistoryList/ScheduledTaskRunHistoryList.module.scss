@@ -35,8 +35,7 @@
     --strhl-row-focus-bg,
     var(--strhl-row-hover-bg, var(--bg-control-accent-alpha, #2764d90f))
   );
-  outline: 2px solid
-    var(--strhl-row-focus-outline, var(--text-accent, #1d4ed8));
+  outline: 2px solid var(--strhl-row-focus-outline, var(--text-accent, #1d4ed8));
   outline-offset: -2px;
 }
 
