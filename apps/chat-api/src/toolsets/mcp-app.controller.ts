@@ -49,7 +49,7 @@ export class McpAppController {
     summary: "Fetch a toolset's MCP Apps ui:// resource",
     description:
       "Raw-passthrough proxy of DIAL Core's " +
-      'GET /v1/deployments/{deployment_name}/mcp/resources?uri=... â€” the ' +
+      'GET /v1/deployments/{deployment_name}/mcp/resources?uri=... — the ' +
       "response body is Core's resource body unchanged, forwarded with " +
       'Content-Type/Content-Security-Policy/X-Content-Type-Options from ' +
       'Core. Cached server-side for 30 seconds per toolset+resourceUri.',
@@ -58,7 +58,7 @@ export class McpAppController {
   @ApiResponse({ status: 400, description: 'Invalid resourceUri' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated â€” valid session cookie required',
+    description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset or resource not found' })
@@ -99,7 +99,7 @@ export class McpAppController {
   @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated â€” valid session cookie required',
+    description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
   @ApiResponse({
@@ -129,14 +129,14 @@ export class McpAppController {
     description:
       "Calls DIAL Core's generic MCP JSON-RPC proxy's tools/list for the " +
       'given deployment (toolset or application) and returns every tool ' +
-      "name, unfiltered â€” used to populate the toolset editor's " +
+      "name, unfiltered — used to populate the toolset editor's " +
       '"Allowed tools" picker.',
   })
   @ApiResponse({ status: 200, type: ListMcpToolNamesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated â€” valid session cookie required',
+    description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
   @ApiResponse({
@@ -162,7 +162,7 @@ export class McpAppController {
     description:
       'Validates toolName against the tools the MCP session currently ' +
       'exposes, then forwards a tools/call JSON-RPC request through DIAL ' +
-      "Core's existing generic MCP proxy for this toolset. Not cached â€” " +
+      "Core's existing generic MCP proxy for this toolset. Not cached — " +
       'every call is a live, potentially side-effecting tool invocation.',
   })
   @ApiResponse({
@@ -172,7 +172,7 @@ export class McpAppController {
   @ApiResponse({ status: 400, description: 'Malformed body' })
   @ApiResponse({
     status: 401,
-    description: 'Not authenticated â€” valid session cookie required',
+    description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({
     status: 403,

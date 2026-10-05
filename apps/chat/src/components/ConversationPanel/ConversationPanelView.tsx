@@ -163,7 +163,7 @@ const SCHEDULED_TASK_ICON = (
     className="flex size-6 items-center justify-center rounded-lg bg-blue p-1 text-blue"
     aria-hidden
   >
-    <IconClockHour3 size={16} />
+    <IconClockHour3 size={16} stroke={DIAL_KIT_ICON_STROKE} />
   </span>
 );
 
