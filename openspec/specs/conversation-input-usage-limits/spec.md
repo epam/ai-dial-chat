@@ -290,8 +290,8 @@ byte-identical label objects is the duplication this removes. Its remaining prop
 `deploymentId` and `isGenerationInProgress`.
 
 i18n keys under `conversationInput.usageLimits.*`: `tokenGroup`, `costGroup`, `periodDay`,
-`periodWeek`, `periodMonth`, `value`, `progressAriaLabel`, plus the pre-existing `popoverTitle`,
-`error`, and `triggerAriaLabel`. The
+`periodWeek`, `periodMonth`, `value`, `progressAriaLabel`, `fullUsageLink` (the footer link label,
+"See all usage"), plus the pre-existing `popoverTitle`, `error`, and `triggerAriaLabel`. The
 three period labels SHALL be shared by both groups rather than duplicated per group, since they name
 a calendar period and not what is being metered. `triggerAriaLabel` SHALL name the reported period
 without naming tokens, the worst capped row now being a cost row as readily as a token one.
@@ -304,7 +304,9 @@ introduced. The control is not gated behind `ENABLED_FEATURES` or `ENABLED_FEATU
 shown whenever the selected deployment has a usable limit.
 
 **RTL:** the popover uses logical properties only (`start-*`/`end-*`, `ms-*`/`me-*`,
-`ps-*`/`pe-*`) and contains no directional icon, so nothing is mirrored. **Memoisation:** the
+`ps-*`/`pe-*`). Its only directional icon is the footer link's trailing `IconChevronRight`
+(`aria-hidden`), which SHALL be mirrored with `rtl:scale-x-[-1]`; the dial is not mirrored (see
+above). **Memoisation:** the
 `CatalogItemLimits` value SHALL be produced inside a `useMemo`, and the `formatResetTime` callback
 SHALL be `useCallback`-stable on the active locale and `t`, so the memo does not recompute every
 render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`, the panel keeps
@@ -314,8 +316,8 @@ render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`
 #### Scenario: Three periods render as three rows
 
 - **WHEN** the user opens the popover for a deployment with day, week, and month limits
-- **THEN** the popover shows the title and three rows, each with its own progress bar, used/total
-  figures, and spent caption
+- **THEN** the popover shows the title and three rows, each with its own progress bar and used/total
+  figures, and no row shows a spent caption
 
 #### Scenario: The popover is titled with the deployment
 
@@ -372,7 +374,8 @@ render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`
 
 - **WHEN** the popover renders under `dir="rtl"`
 - **THEN** the panel anchors to the opposite edge through logical properties, with no physical
-  `left`/`right` class and no mirrored icon
+  `left`/`right` class, and the only mirrored icon is the footer link's chevron
+  (`rtl:scale-x-[-1]`)
 
 ---
 
@@ -392,7 +395,8 @@ user does not arrive at the destination with a dialog still mounted over it.
 
 `libs/catalog` SHALL gain nothing for this: the link is an app-built `ReactNode` passed through the
 existing prop, and the library SHALL NOT import a router, learn a route, or grow a new prop. Its
-label SHALL come from app-owned i18n under `conversationInput.usageLimits.*`.
+label SHALL come from app-owned i18n (`conversationInput.usageLimits.fullUsageLink`), followed by an
+`aria-hidden` `IconChevronRight` mirrored in RTL.
 
 #### Scenario: The link reaches the Usage tab in one step
 

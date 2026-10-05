@@ -22,18 +22,26 @@ Resolving a conversation or message `model.id` that holds a DIAL Core reference 
 
 ### Requirement: Deployment lookup matches by id or reference
 
-`apps/chat/src/utils/deployment-id.ts` SHALL export `findDeploymentByIdOrReference(deployments: DeploymentItemDto[], idOrReference: string | null | undefined): DeploymentItemDto | undefined`. It SHALL return the first deployment whose `id` equals `idOrReference`; if none matches, it SHALL return the first deployment whose `reference` equals `idOrReference`; if neither matches (or `idOrReference` is null/undefined/empty), it SHALL return `undefined`.
+`libs/chat-hooks/src/catalog/deployment-id.ts` SHALL export (re-exported from `@epam/ai-dial-chat-hooks`, which is where apps import it) `findDeploymentByIdOrReference(deployments: DeploymentItemDto[], idOrReference: string | null | undefined): DeploymentItemDto | undefined`. It SHALL return the first deployment whose `id` equals `idOrReference`; if none matches, it SHALL return the first deployment whose `reference` equals `idOrReference`; if neither matches (or `idOrReference` is null/undefined/empty), it SHALL return `undefined`.
 
-Every existing frontend call site that previously resolved a deployment via `deployments.find((d) => d.id === someId)`, or via a `Map<id, T>` lookup keyed only by `id`, against a value that may originate from a conversation's `model.id`, a message's `model.id`, or a URL/query-param deployment id SHALL be updated to call `findDeploymentByIdOrReference` instead:
+Every existing frontend call site that previously resolved a deployment via `deployments.find((d) => d.id === someId)`, or via a `Map<id, T>` lookup keyed only by `id`, against a value that may originate from a conversation's `model.id`, a message's `model.id`, or a URL/query-param deployment id SHALL call `findDeploymentByIdOrReference` instead. Today's call sites are:
 - `apps/chat/src/components/CatalogView/CatalogView.tsx`
-- `apps/chat/src/pages/ToolsetEditor/CustomAppEditor.tsx`
-- `apps/chat/src/pages/AppsEditor/AppsEditor.tsx`
 - `apps/chat/src/components/ConversationView/ConversationView.tsx`
-- `apps/chat/src/hooks/conversation/useAudioTranscription.ts`
+- `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx`
 - `apps/chat/src/components/DeploymentSelector/useDeploymentSelectorOverlay.tsx`
-- `apps/chat/src/pages/AppsEditor/AppPreviewChat.tsx`
+- `apps/chat/src/components/DeploymentSelector/useDeploymentSelectorFieldOverlay.tsx`
+- `apps/chat/src/context/DeploymentsContext.tsx`
+- `apps/chat/src/context/IsolatedModelViewContext.tsx`
+- `apps/chat/src/hooks/application-editor/useEditedApplication.ts`
+- `apps/chat/src/hooks/conversation/useAudioTranscription.ts`
+- `apps/chat/src/hooks/overlay/useOverlayPendingModel.ts`
+- `apps/chat/src/hooks/scheduled-tasks/useScheduledTaskSkillSupport.ts`
+- `apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`
+- `apps/chat/src/pages/ApplicationEditor/setup/AppPreviewChat.tsx`
 - `apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx`
-- `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx`
+- `libs/chat-hooks/src/catalog/useCatalogEditNavigation/useCatalogEditNavigation.ts`
+
+The conversation history panel's row-icon lookup lives in `libs/chat-hooks`'s `useConversationPanelItems`, which builds `byId` and `byReference` `Map`s in one pass (each key keeps its first deployment) and tries `byId` before `byReference`, reproducing `findDeploymentByIdOrReference`'s precedence in O(1) per row.
 
 Memoized lookups (`useMemo`) that call `findDeploymentByIdOrReference` SHALL keep `deployments`/`items` and the id/reference value in their dependency array, unchanged from the prior `.find()`-based or `Map`-based memoization.
 
@@ -70,7 +78,7 @@ Memoized lookups (`useMemo`) that call `findDeploymentByIdOrReference` SHALL kee
 #### Scenario: Conversation history panel resolves a row's icon by reference
 
 - **WHEN** the conversation history panel renders a row whose underlying conversation's `model.id` (read via `getModelIdFromConversationId`) equals a fetched deployment's `reference` rather than its `id`
-- **THEN** that row's `iconUrl` and `iconTooltip` resolve to that deployment's `iconUrl`/`displayName` via `findDeploymentByIdOrReference`, instead of rendering with no icon
+- **THEN** that row's `iconUrl` and `iconTooltip` resolve to that deployment's `iconUrl`/`displayName` via `useConversationPanelItems`'s id-then-reference lookup, instead of rendering with no icon
 
 ### Requirement: Resolved deployment id, not the raw possibly-reference value, feeds REST calls and downstream lib props
 

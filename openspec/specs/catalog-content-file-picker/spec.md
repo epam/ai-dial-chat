@@ -66,7 +66,7 @@ The lib SHALL NOT rely on `name` being unique across the tree. Two file nodes MA
 
 `ContentTab` SHALL render the file selector **only** when `files`, counted recursively across every folder, contains two or more `CatalogContentFileNode` entries. A tree with zero or one file node overall, or an absent `files` array, SHALL render the body alone, exactly as the tab does when no picker capability is in play — a selector offering a single option, however deep it sits, is noise, since that file is already the body.
 
-When rendered, the selector SHALL be a `Dropdown` (from `@epam/ai-dial-ui-kit`) whose trigger is built from `InlineSelectTrigger`, showing the currently displayed file's `name` as its label, with a file-count text beside it counting file nodes only (folders excluded from the count). The overlay content is a hierarchical tree of folder and file rows, rendered by the lib itself.
+When rendered, the selector SHALL be a `Dropdown` (from `@epam/ai-dial-ui-kit`) whose trigger is built from `InlineSelectTrigger`, showing the currently displayed file's `name` as its label, with a file-count text beside it counting file nodes only (folders excluded from the count). The overlay content is a hierarchical tree of folder and file rows, rendered by the lib's built-in `ContentFileTree` by default. A host MAY replace that tree by passing `renderContentFileTree` on `Catalog` (forwarded to `DetailsPanel.renderContentFileTree` and on to `ContentTab`'s `renderFileTree`); it receives `CatalogContentFileTreeRenderProps` (`nodes`, `selectedFileId`, `expandedFolderIds`, `onToggleFolder`, `onSelectFile`, `onClose`, `ariaLabel`, `rowNameClassName`), exported from `index.ts`. Expansion and selection stay owned by the panel; the host tree only reports intent through those callbacks. `libs/skills` and `apps/chat` supply one.
 
 Before the user picks anything, "the currently displayed file" SHALL be the node named by `selectedFileId` — the trigger's label and the body SHALL both reflect that node from the moment the Content tab first renders, not only after some later interaction. The lib does not decide which id that is; it only renders whatever `selectedFileId` the host supplied. For a skill, the host resolves the manifest node's actual opaque listing id, which may be the relative `SKILL_MANIFEST_FILE` value or a Core-prefixed path ending in `/files/SKILL.md`.
 
@@ -92,6 +92,11 @@ The Content tab SHALL keep its existing structure otherwise: the selector sits a
 - **WHEN** `promptContent.files` is absent or empty
 - **THEN** the tab renders exactly as it does with no picker capability in play
 
+#### Scenario: A host-supplied tree replaces the built-in one
+
+- **WHEN** the selector opens and `renderContentFileTree` is set
+- **THEN** the overlay renders the host's node, called with `CatalogContentFileTreeRenderProps`, instead of `ContentFileTree`
+
 ---
 
 ### Requirement: The tree renders every folder and file hierarchically, with per-level indentation
@@ -104,7 +109,7 @@ The indentation step SHALL be applied once to the `role="group"` element wrappin
 
 An expanded folder's `items` SHALL be visible, each rendered per this same rule recursively; a collapsed folder's `items` SHALL NOT be rendered at all (not merely hidden), so a large collapsed subtree costs nothing to keep in the DOM. An empty folder (`items: []`) SHALL still render its own row, with a disclosure chevron that toggles between states but reveals no children.
 
-Within a single folder's `items` (including the top-level `files` array), entries SHALL be ordered case-insensitively by `name`, with folder and file nodes interleaved in that one order — **except** that at the top level only, a node whose `id` equals `selectedFileId` at the time the tree was supplied SHALL be ordered first regardless of name, preserving the existing rule that the manifest (or whichever file the panel opens on) heads the list.
+`ContentFileTree` SHALL render nodes in the order the host supplied them; the lib does not sort. Ordering is the host adapter's job: for skills, `sortContentTree` in `libs/chat-hooks/src/catalog/map-skill-to-catalog-item.ts` orders each folder's children by `name` with `localeCompare`, folders and files interleaved, recursing into every folder, and at the root only pins the node whose `name` equals `SKILL_MANIFEST_FILE` first.
 
 #### Scenario: Folder shown collapsed by default has no visible children
 
@@ -125,6 +130,11 @@ Within a single folder's `items` (including the top-level `files` array), entrie
 
 - **WHEN** a file node sits two folders deep
 - **THEN** its row's indentation is twice the single-level indentation step
+
+#### Scenario: Rows keep the supplied order
+
+- **WHEN** the host supplies top-level nodes `zeta.md`, `SKILL.md`, `alpha.md` in that order
+- **THEN** the tree renders the rows in that same order
 
 ---
 

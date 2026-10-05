@@ -7,7 +7,7 @@ Specifies opening, replacing, and closing an attachment-canvas preview of a Skil
 
 ### Requirement: Selecting a supporting file previews it via the shared attachment-canvas pipeline
 
-`apps/chat/src/pages/SkillEditor/SkillEditor.tsx` SHALL own an effect over `libs/skill-editor`'s `selectedPath` (received via `onSelectedPathChange`) that, when the selected path resolves to a `SkillFileTreeNode` with `kind: File` (excluding the synthetic `SKILL.md` node), converts that node's in-memory bytes into an `Attachment` (`libs/chat-shared/src/models/chat.ts`) and calls `useOpenAttachmentCanvas().openAttachmentCanvas(attachment, canvasAttachmentId)`. No new BFF or DIAL Core request SHALL be made to service this preview — the bytes already live in `SkillEditor.tsx`'s `filesContentRef` (create-mode uploads or edit-mode unpacked ZIP entries).
+`apps/chat/src/pages/SkillEditor/SkillEditor.tsx` SHALL call the app hook `useSkillFilePreviewSync` (`apps/chat/src/hooks/attachment/useSkillFilePreviewSync.ts`) with `libs/skill-editor`'s `selectedPath` (received via `onSelectedPathChange`), the memoized `canvasAttachmentId`, `files`, and `filesContentRef`. That hook owns the selection effect: when the selected path resolves to a `SkillFileTreeNode` with `kind: File` (excluding the synthetic `SKILL.md` node), it converts that node's in-memory bytes into an `Attachment` (`libs/chat-shared/src/models/chat.ts`) with `skillFileToAttachment` from `@epam/ai-dial-chat-hooks/skill-editor` and calls `openAttachmentCanvas(attachment, canvasAttachmentId, shouldCommit)` from `useOpenAttachmentCanvas(resolvers, options)`, where `shouldCommit` is the mounted-and-latest-generation guard. No new BFF or DIAL Core request SHALL be made to service this preview — the bytes already live in `SkillEditor.tsx`'s `filesContentRef` (create-mode uploads or edit-mode unpacked ZIP entries).
 
 The converted `Attachment`'s `id` SHALL be the file's full relative path (e.g. `agents/analyzer.md`), not a basename or content-derived hash. The `canvasAttachmentId` passed to `openAttachmentCanvas` — the caller-scoped key the canvas uses to decide which selection its state belongs to — SHALL additionally be scoped to the edited resource, composed from the resource's bucket, the skill's path (or a stable create-mode marker when there is none), and the file's full relative path. The same value SHALL be the one the inline preview component compares against the canvas's `attachmentId` to decide whether the displayed content is its own. Two files sharing a basename in different folders, and two files sharing a full relative path in different skills or buckets, SHALL therefore never be mistaken for one another.
 
@@ -131,7 +131,7 @@ The Skill Editor page SHALL be able to open, update, and close attachment-canvas
 
 ### Requirement: Accessibility, RTL, i18n, and cross-cutting behavior
 
-Selecting a file via keyboard (arrow keys + Enter, per `skill-editor-library`'s existing keyboard support) SHALL open its preview identically to a pointer click. The rendered preview region SHALL expose an accessible region name (via `AttachmentCanvasBody`'s existing labeling, applied by the app's content-only wrapper — see the "no Download or Close control" requirement above). Preview loading SHALL be announced via the existing `aria-live="polite"` status pattern `attachment-canvas` already uses; preview failures SHALL use the existing alert/error content type, not a new error surface. No new keyboard focus trap SHALL be introduced when a preview opens inline in the main pane. The preview body relies on `AttachmentCanvasBody`'s existing RTL handling; since the Skill Editor renders no header of its own around it, there are no app-level directional icons to mirror. All new user-visible strings SHALL use existing `attachment-canvas` i18n keys where the copy is identical, and new `skillEditor.*` keys only where it is genuinely Skill-Editor-specific — no hardcoded strings in JSX. This capability is not gated behind any `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` key; it activates for every user who can already reach `/skill-editor`. The app-level file→attachment conversion SHALL be memoized (`useMemo`/`useCallback` as appropriate) keyed on the selected path and its underlying bytes reference, so unrelated re-renders of `SkillEditor.tsx` do not re-derive or re-open the preview.
+Selecting a file via keyboard (arrow keys + Enter, per `skill-editor-library`'s existing keyboard support) SHALL open its preview identically to a pointer click. The rendered preview region SHALL expose an accessible region name (via `AttachmentCanvasBody`'s existing labeling, applied by the app's content-only wrapper — see the "no Download or Close control" requirement above). Preview loading SHALL be announced via the existing `aria-live="polite"` status pattern `attachment-canvas` already uses; preview failures SHALL use the existing alert/error content type, not a new error surface. No new keyboard focus trap SHALL be introduced when a preview opens inline in the main pane. The preview body relies on `AttachmentCanvasBody`'s existing RTL handling; since the Skill Editor renders no header of its own around it, there are no app-level directional icons to mirror. All new user-visible strings SHALL use existing `attachment-canvas` i18n keys where the copy is identical, and new `skillEditor.*` keys only where it is genuinely Skill-Editor-specific — no hardcoded strings in JSX. This capability is not gated behind any `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` key; it activates for every user who can already reach `/skill-editor`. Unrelated re-renders of `SkillEditor.tsx` SHALL NOT re-open the preview: `canvasAttachmentId` is memoized with `useMemo`, and the file→attachment conversion (`skillFileToAttachment`) runs only inside `useSkillFilePreviewSync`'s `openPreview` callback, which the selection effect skips when the canvas already holds (or is loading) that id, when the id is already in flight, or when it is the recorded failure.
 
 #### Scenario: Keyboard selection opens the preview
 - **WHEN** a keyboard-only user moves file-tree selection to a supporting file via arrow keys and Enter
@@ -153,17 +153,14 @@ The shared `SkillFilePreview` component SHALL pass the application-owned
 (`apps/chat/src/components/SkillFilePreview/SkillFilePreview.tsx`) is what the
 Skill Editor mounts in `libs/skill-editor`'s `supportingFileContent` slot.
 
-Today it passes no such prop. `PdfContent` therefore initialises its
-preparation state to `Ready`, mounts `DocumentPreview` with no gate, and
-leaves in place the `workerSrc` that `@epam/pdf-highlighter-kit` assigns at
-module-evaluation time —
-`https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs`, applied under
-an `if (!workerSrc)` guard in its `core/pdf-engine.js`. Selecting a PDF
-supporting file in Skill Builder consequently depends on outbound access to
-that CDN, or on the page-level chat attachment canvas having already run the
-app's initializer in the same page session. Since the app's initializer
-assigns `workerSrc` unconditionally and runs after the vendor module has
-evaluated, passing the prop is sufficient to take ownership of the value.
+It does so today, together with `loadPdf` from `usePdfPreviewLoader`.
+Without the prop, `PdfContent` would leave in place the `workerSrc` that
+`@epam/pdf-highlighter-kit` assigns at module-evaluation time (an unpkg CDN
+URL, applied under an `if (!workerSrc)` guard), so a Skill Builder PDF preview
+would depend on outbound CDN access or on the chat canvas having run the
+app's initializer first. Since the app's initializer assigns `workerSrc`
+unconditionally and runs after the vendor module has evaluated, passing the
+prop is sufficient to take ownership of the value.
 
 The initializer SHALL stay at the application edge:
 `@epam/ai-dial-attachment-canvas` receives it only as an injected callback,

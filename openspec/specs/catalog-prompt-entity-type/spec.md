@@ -67,12 +67,18 @@ Tab derivation behaviour of `buildCatalogTabs` is unchanged: a tab appears only 
 export interface CatalogItemPromptContent {
   /** The item's full text body, already resolved by the host. */
   content: string;
+  /** Summary shown above the body. Takes precedence over `CatalogItem.description`. */
+  description?: string;
+  /** Folder/file tree the tab can switch between; a selector renders when it holds two or more file nodes, at any depth. */
+  files?: CatalogContentTreeNode[];
+  /** Id of the file `content` was resolved from; the selector opens on it. */
+  selectedFileId?: string;
 }
 ```
 
 and an optional `promptContent?: CatalogItemPromptContent` field on `CatalogItemTabData`. `CatalogItemPromptContent` SHALL be exported from `index.ts`, since it is reachable through the public `CatalogItemTabData` / `CatalogItemDetailsFetchResult` types.
 
-`DetailsPanel` SHALL render a `Content` tab when `details.promptContent` is non-null, and hide it when absent — the same gating rule already applied to `overview`, `pricing`, `limits`, `api`, and `tools`. It is positioned after `About` for types that have one, and **first** for a prompt, which has none. The tab body SHALL render the text read-only as markdown in a scrollable container (`overflow` on its own element, never on the page body). It carries no copy control: the body is selectable text, and a copy affordance duplicated what the platform already offers.
+`DetailsPanel` SHALL always render a `Content` tab for the content-first entity types (`CONTENT_FIRST_ENTITY_TYPES`: `CatalogEntityType.Prompt` and `CatalogEntityType.Skill`), even before or without a resolved body, so the tab the panel opens on never shifts as details resolve. For every other type it renders the `Content` tab only when `details.promptContent` is non-null — the same gating rule applied to `overview`, `pricing`, `limits`, `api`, and `tools`. It is positioned after `About` for types that have one, and **first** for a content-first type, which has none. The tab shows `promptContent.description` when set, otherwise `item.description`, above the body. The tab body SHALL render the text read-only as markdown in a scrollable container (`overflow` on its own element, never on the page body). It carries no copy control: the body is selectable text, and a copy affordance duplicated what the platform already offers.
 
 `ItemDetailsTexts` SHALL gain `tabContentLabel?: string` (default `'Details'`). No copy-related label is declared — an earlier revision added `copyContentAriaLabel` and `contentCopiedStatusLabel` for a copy button that has since been removed, and a label nothing reads is dead public API.
 
@@ -88,7 +94,7 @@ The tab body MUST use logical CSS properties (`ps-*`/`pe-*`, `text-start`) so it
 
 #### Scenario: Content tab is hidden when promptContent is absent
 
-- **WHEN** the details panel opens for an item whose `details.promptContent` is `undefined`
+- **WHEN** the details panel opens for a non-content-first item (e.g. a Model) whose `details.promptContent` is `undefined`
 - **THEN** the tab row contains no `Content` tab
 
 #### Scenario: The Content tab offers no copy control
@@ -172,7 +178,7 @@ The revoke predicate was added late: `libs/catalog` gained the owner-side `onRev
 
 ### Requirement: A prompt's details panel shows exactly two tabs
 
-`DetailsPanel` currently pushes the `About` tab unconditionally as the first tab. For `CatalogEntityType.Prompt` it SHALL be omitted, leaving `Content` (the body) followed by `Overview`, in that order.
+`DetailsPanel` currently pushes the `About` tab unconditionally as the first tab. For the content-first types `CatalogEntityType.Prompt` and `CatalogEntityType.Skill` it SHALL be omitted, leaving `Content` (the body) followed by `Overview`, in that order.
 
 The rationale is non-duplication, not capability: the `Content` tab renders the item's `description` above the body, and the storage metadata is carried by `Overview`, so an About tab would repeat them. Because this is a display rule rather than a host capability, it SHALL be a type check inside the lib — consistent with `ENTITY_TYPE_COLOR`, `TAB_ORDER`, and `Header`'s primary-action rule — and SHALL NOT add a host predicate.
 
@@ -188,10 +194,10 @@ Every other entity type SHALL keep the `About` tab exactly as before.
 - **AND** no `About` tab is rendered
 - **AND** the prompt body is shown by default, because `Content` is the first tab
 
-#### Scenario: A prompt with no resolved body shows only Overview
+#### Scenario: A prompt with no resolved body still opens on Details
 
 - **WHEN** the details panel opens for a Prompt item whose `details` carry `overview` but no `promptContent`
-- **THEN** no `Content` tab is rendered
+- **THEN** the tab row still contains `Details` followed by `Overview`, with `Details` active and an empty body
 
 #### Scenario: Other entity types keep About
 

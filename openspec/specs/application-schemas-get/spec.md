@@ -66,10 +66,10 @@ Status translation is delegated to the shared `mapDialHttpStatus` / `handleDialF
 
 ## Generated Client
 
-After OpenAPI regeneration, `ApplicationsApi` (or `ApplicationSchemasApi`) exposes:
+The controller documents the 200 response as an inline free-form object, so no named response DTO is generated. The generated `ApplicationsApi` exposes:
 
 ```ts
-applicationsApi.getApplicationSchema({ id: string }): Promise<object>
+applicationsApi.getApplicationSchema({ id: string }): Promise<{ [key: string]: unknown }>
 ```
 
 Frontend server-api wrapper: `apps/chat/src/server-api/application-schemas.ts`
@@ -158,4 +158,4 @@ Swagger annotations SHALL declare `operationId: getApplicationSchema` so that re
 #### Scenario: Regeneration produces the typed method
 
 - **WHEN** `npm run openapi` runs against the annotated controller
-- **THEN** `libs/chat-api-client` exposes `getApplicationSchema({ id })` returning `ApplicationSchemaDto`
+- **THEN** `libs/chat-api-client` exposes `ApplicationsApi.getApplicationSchema({ id })` returning `Promise<{ [key: string]: unknown }>`, with no named `ApplicationSchemaDto`

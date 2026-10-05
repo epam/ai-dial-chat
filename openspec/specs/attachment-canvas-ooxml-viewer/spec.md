@@ -112,7 +112,7 @@ These fields are the **entire** library boundary contract for Office and CSV pre
 
 A viewer returned by a `from*()` factory has type `Omit<Viewer, 'load'>`; the renderer SHALL NOT attempt to call `load` on it. Because `destroy()` on such a viewer deliberately leaves the borrowed engine alive, the renderer SHALL destroy the engine itself after destroying the viewer.
 
-The `chart-ex` renderer, `enableTextSelection`, `refitOnResize`, and `onError` options SHALL continue to be passed in both modes, so a highlighted document renders identically to a plain one apart from the overlay.
+The `chart-ex` renderer, `enableTextSelection`, `refitOnResize`, and `onError` options SHALL continue to apply in both modes, so a highlighted document renders identically to a plain one apart from the overlay. In shared-parse mode `chartEx` is passed to the engine load (`DocxDocument.load(url, { chartEx })` / `PptxPresentation.load(url, { chartEx })`) rather than to the `fromDocument`/`fromPresentation` viewer options; those viewer options carry `enableTextSelection`, `refitOnResize`, `onError`, plus geometry callbacks (`onScaleChange` and `onVisiblePageChange` for DOCX / `onVisibleSlideChange` for PPTX) that re-measure the highlight rectangles.
 
 The rect-resolution math (`libs/attachment-canvas/src/utils/ooxml-highlight-geometry.ts`) and the per-format highlight-surface factories (`libs/attachment-canvas/src/utils/ooxml-highlight-surfaces.ts`) SHALL be loaded via dynamic `import()` inside the acquisition path, alongside the format-specific `@silurus/ooxml` entry point — never as a static top-level import in `OoxmlContent.tsx` — so a consumer who never opens a highlighted document pays nothing for this code in the library's eager entry (see the "package boundary" bundle-size regression budget in `tests/package-boundary/bundle-budgets.spec.ts`).
 
@@ -140,7 +140,7 @@ The rect-resolution math (`libs/attachment-canvas/src/utils/ooxml-highlight-geom
 
 ### Requirement: `AttachmentCanvasBody` forwards highlight props and labels to `OoxmlContent`
 
-`AttachmentCanvasBody` SHALL pass `content.highlights` and `content.selectedHighlightId` to `OoxmlContent` when rendering the `Ooxml` branch, alongside the existing `content`, `fileName`, `loadErrorLabel`, `formulaLabel`, and `formulaLabelClassName` props.
+`AttachmentCanvasBody` SHALL make `content.highlights` and `content.selectedHighlightId` available to `OoxmlContent` when rendering the `Ooxml` branch; they travel inside the `content` prop (which `OoxmlContent` destructures), not as separate props, alongside `fileName`, `loadErrorLabel`, `formulaLabel`, `formulaLabelClassName`, `highlightsLabel`, and `highlightNavigatedLabel`.
 
 `AttachmentCanvasLabels` SHALL gain `ooxmlHighlightsLabel?: string` and `ooxmlHighlightNavigatedLabel?: string`, both defaulting in the library to `'Cited locations'` and `'Scrolled to the cited location'` respectively. Both SHALL be added to the `AttachmentCanvasBodyLabels` `Pick` list and forwarded to `OoxmlContent`, so a host-supplied value actually reaches the element that renders it rather than leaving the child on its English default.
 
@@ -378,12 +378,14 @@ interface OoxmlContentProps {
   loadErrorLabel: string;
   formulaLabel: string;
   formulaLabelClassName: string;
+  highlightsLabel?: string;          // defaults to 'Cited locations'
+  highlightNavigatedLabel?: string;  // defaults to 'Scrolled to the cited location'
 }
 ```
 
 The component MUST NOT read from any app-level context, call `useTranslation`, or construct any URL.
 
-**Lifecycle.** A single `useEffect` keyed on `[content.format, content.url]` — the two inputs that require a fresh viewer — SHALL:
+**Lifecycle.** The main `useEffect` keyed on `[content.format, content.url, hasHighlights]` — the inputs that require a fresh viewer (`hasHighlights` switches the acquisition mode) — SHALL do the steps below. Two further effects do not reload the viewer: one keyed on `[highlights]` re-measures highlight rectangles against the open surface, and one keyed on `[selectedHighlightId, isLoading]` navigates to the selected citation once. The main effect SHALL:
 
 1. Return early when the container ref is `null`.
 2. Set `isLoading` to `true` and `hasError` to `false`.
@@ -544,6 +546,9 @@ The formula/value field SHALL have a fixed height whether its content is empty o
   fileName={fileName}
   loadErrorLabel={loadErrorLabel}
   formulaLabel={xlsxFormulaLabel}
+  formulaLabelClassName={typography?.xlsxFormulaLabelClassName ?? 'dial-italic-text'}
+  highlightsLabel={ooxmlHighlightsLabel}
+  highlightNavigatedLabel={ooxmlHighlightNavigatedLabel}
 />
 ```
 
@@ -591,7 +596,7 @@ The download button MUST remain available in every document-renderer state, incl
 
 ### Requirement: object URLs for Office and CSV content are revoked
 
-`libs/attachment-canvas/src/context/AttachmentCanvasContext.tsx`'s `getRevocableObjectUrl` SHALL include `AttachmentContentType.Ooxml` alongside `Image`, `Audio`, and `Pdf` in the set of content types whose `url` is revoked when the canvas closes or its content is replaced.
+`getRevocableObjectUrl` (defined in `libs/attachment-canvas/src/utils/content.ts` and used by `libs/attachment-canvas/src/context/AttachmentCanvasContext.tsx`) SHALL include `AttachmentContentType.Ooxml` alongside `Image`, `Audio`, and `Pdf` in the set of content types whose `url` is revoked when the canvas closes or its content is replaced.
 
 **Rationale:** the app-layer resolver can produce an object URL from a fetched blob or a locally-picked `File`. Documents and spreadsheets can be large, so a leaked blob costs disproportionately more memory than a leaked icon. This is a correctness requirement, not tidiness.
 

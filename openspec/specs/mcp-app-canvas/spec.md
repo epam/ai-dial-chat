@@ -13,8 +13,8 @@ Defines the `McpApp` canvas content type and `McpAppCanvasRenderer`: rendering a
 `libs/attachment-canvas/src/models/attachment-canvas.ts` SHALL add a new member to the `AttachmentCanvasContent` discriminated union:
 
 ```ts
-import { McpUiHostContext } from '@modelcontextprotocol/ext-apps/app-bridge';
-import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { McpUiHostContext } from '@mcp-ui/client';
+import type { CallToolResult, Implementation } from '@modelcontextprotocol/sdk/types.js';
 
 interface McpAppCanvasContent {
   type: AttachmentContentType.McpApp;
@@ -23,6 +23,7 @@ interface McpAppCanvasContent {
   toolInput?: Record<string, unknown>;        // seed: arguments of the matched tool call, from resolveMcpAppToolCallSeed
   toolResult?: CallToolResult;                // seed: result of the matched tool call, from resolveMcpAppToolCallSeed
   hostContext?: McpUiHostContext;             // UI context sent to the View on ui/initialize; built by the app layer — see mcp-app-trigger requirement
+  hostInfo?: Implementation;                  // host identity (name/version) sent on ui/initialize; omitted ⇒ { name: 'MCP-UI Host', version: '1.0.0' }
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>; // proxies to chat-api; app-level adapter, no MCP/session knowledge in this type
   onOpenLink?: (url: string) => boolean | void;              // decides whether a ui/open-link URL is opened; omitted ⇒ renderer opens http(s) URLs in a new tab itself
   onRequestDisplayMode?: (mode: McpAppDisplayMode) => McpAppDisplayMode | void; // answers a ui/request-display-mode request with the mode actually applied
@@ -32,7 +33,7 @@ interface McpAppCanvasContent {
 
 `McpAppDisplayMode` (`NonNullable<McpUiHostContext['displayMode']>`, i.e. the MCP Apps protocol's `'inline' | 'fullscreen' | 'pip'` union) is exported from `libs/attachment-canvas`'s public barrel alongside `McpAppCanvasContent`. The original spec's `toolName: string` field is **removed** — after the renderer swap below, nothing reads it (its doc comment's claim of being "forwarded on every onToolCall" was drift); the mounted app is addressed by its seed and `onToolCall`'s own `name` argument, never by a host-side tool-name field.
 
-`html` is the body of `chat-api`'s raw-passthrough mirror of DIAL Core's `GET /v1/deployments/{deploymentId}/mcp/resources?uri=...` (see `mcp-app-proxy-api`), fetched via JS by `useOpenMcpAppCanvas` (see `mcp-app-trigger`) — not loaded as an iframe `src` (see `design.md` D3 for why: `@mcp-ui/client`'s `AppFrame` needs HTML content, not a URL). `sandboxUrl` points at the new `mcp-app-sandbox-proxy` app (see that capability) and is passed to `AppFrame`'s `sandbox` prop. `CallToolResult` is imported from `@modelcontextprotocol/sdk/types.js` — the MCP protocol's own result shape for a `tools/call`, not a host-specific type. `McpUiHostContext` is imported from `@modelcontextprotocol/ext-apps/app-bridge` — the MCP Apps protocol type for the `ui/initialize` response payload; `@modelcontextprotocol/ext-apps` is added as a **peer dependency** of `libs/attachment-canvas` alongside `@mcp-ui/client` (it is already a transitive dep through `@mcp-ui/client`, but the type import requires it to be declared as a direct peer so version changes don't silently break the type contract).
+`html` is the body of `chat-api`'s raw-passthrough mirror of DIAL Core's `GET /v1/deployments/{deploymentId}/mcp/resources?uri=...` (see `mcp-app-proxy-api`), fetched via JS by `useOpenMcpAppCanvas` (see `mcp-app-trigger`) — not loaded as an iframe `src` (see `design.md` D3 for why: `@mcp-ui/client`'s `AppFrame` needs HTML content, not a URL). `sandboxUrl` points at the new `mcp-app-sandbox-proxy` app (see that capability) and is passed to `AppFrame`'s `sandbox` prop. `CallToolResult` is imported from `@modelcontextprotocol/sdk/types.js` — the MCP protocol's own result shape for a `tools/call`, not a host-specific type. `McpUiHostContext` (the MCP Apps protocol type for the `ui/initialize` response payload) is imported as a type from `@mcp-ui/client`, and `Implementation` (the `hostInfo` shape) from `@modelcontextprotocol/sdk/types.js`. `@mcp-ui/client`, `@modelcontextprotocol/ext-apps` and `@modelcontextprotocol/sdk` are all declared under `dependencies` (not `peerDependencies`) of `libs/attachment-canvas`, so a host installs the lib without adding them itself.
 
 `isDownloadable(content)` SHALL return `false` for an `McpAppCanvasContent` value — there is no underlying file to download.
 
@@ -89,7 +90,7 @@ interface McpAppCanvasContent {
 **Added** (`design.md` D13). The mounted app's `ui/open-link` request (`params: { url }` — e.g. a draw.io app asking the host to open `https://app.diagrams.net/?...#create=...`) SHALL be handled by `McpAppCanvasRenderer`'s host-owned `AppBridge`:
 
 - When `content.onOpenLink` is provided, it is called with the requested `url`; the app receives an error result (`{ isError: true }`) exactly when the callback returns `false`, and a success result otherwise.
-- When `content.onOpenLink` is omitted, the renderer's own default applies: the URL is parsed with `new URL`; only `http:`/`https:` protocols are opened — `window.open(url, '_blank', 'noopener,noreferrer')` — and every other scheme (e.g. `javascript:`, `data:`) is rejected. A parse failure or a `null` return from `window.open` (browser pop-up blocker) is also an error result.
+- When `content.onOpenLink` is omitted, the renderer's own default applies: the URL is parsed with `new URL`; only `http:`/`https:` protocols are opened — `window.open(url, '_blank', 'noopener,noreferrer')` — and every other scheme (e.g. `javascript:`, `data:`) is rejected. A `new URL` parse failure or a `window.open` call that throws is also an error result. The return value of `window.open` is deliberately ignored: `noopener` makes it `null` even when the tab opened, so a blocked pop-up is not detected and still yields a success result.
 
 The scheme allowlist exists because the guest app is untrusted content — a `javascript:` URL must never reach `window.open`. `noopener`/`noreferrer` prevent the opened page from holding a reference back to the host window.
 
@@ -110,9 +111,14 @@ The scheme allowlist exists because the guest app is untrusted content — a `ja
 - **WHEN** `content.onOpenLink` is provided and returns `false` for a requested URL
 - **THEN** the app receives an error result (`{ isError: true }`)
 
-#### Scenario: a blocked pop-up is reported as an error result
+#### Scenario: a null window.open return is not treated as an error
 
-- **WHEN** `window.open` returns `null` for an otherwise-allowed `http(s)` URL (browser pop-up blocker)
+- **WHEN** `window.open` returns `null` for an otherwise-allowed `http(s)` URL (as it does whenever `noopener` is set)
+- **THEN** the app receives a success result
+
+#### Scenario: a throwing window.open is reported as an error result
+
+- **WHEN** `window.open` throws for an otherwise-allowed `http(s)` URL
 - **THEN** the app receives an error result (`{ isError: true }`)
 
 ---
@@ -167,7 +173,7 @@ The two consuming surfaces map the request as follows:
 - A fixed `width`/`height` replaces the iframe's current inline dimensions (its `100%`-wide default or any earlier app-reported size).
 - `maxWidth`/`maxHeight` are applied as CSS clamps (`style.maxWidth`/`style.maxHeight`) and only bound the existing dimensions.
 - Notifications without `containerDimensions` (or with it absent/undefined) leave the iframe untouched.
-- The `.fullscreenFrame` stylesheet rule (`!important`) keeps winning in the fullscreen canvas, so a request never shrinks that surface.
+- In the fullscreen canvas no app-requested sizing is applied: the handler skips the request and clears any `style.maxWidth`/`style.maxHeight` left from an earlier inline request, because the `.fullscreenFrame` rule's `100% !important` on `width`/`height` does not cancel max-clamps. A request therefore never shrinks that surface.
 
 This is renderer-internal mechanics — like `size-changed` handling, it is not a `McpAppCanvasContent` callback; the host has no policy decision to make about an app sizing itself. The handler queries the iframe from the renderer's own container at invocation time (`AppFrame` creates the iframe in its own mount effect, which may run after the renderer's bridge-creation effect).
 
@@ -189,7 +195,8 @@ This is renderer-internal mechanics — like `size-changed` handling, it is not 
 #### Scenario: the fullscreen canvas ignores the request
 
 - **WHEN** an app mounted in the fullscreen canvas sends `containerDimensions: { width: 670, height: 382 }`
-- **THEN** the `.fullscreenFrame` `!important` rule keeps the iframe filling 100% of the canvas panel
+- **THEN** the requested width and height are not applied and any inline `maxWidth`/`maxHeight` on the iframe is cleared
+- **AND** the `.fullscreenFrame` `!important` rule keeps the iframe filling 100% of the canvas panel
 
 ---
 
@@ -217,7 +224,7 @@ There is no tool-declared permissions payload in DIAL Core's Phase 1 contract (n
 
 ### Requirement: `AttachmentCanvas` switch handles McpApp variant
 
-`libs/attachment-canvas/src/components/AttachmentCanvas/AttachmentCanvas.tsx` SHALL extend its switch over `AttachmentContentType` with a `case AttachmentContentType.McpApp` branch that renders `<McpAppCanvasRenderer content={content} />` inside the panel body. The panel chrome (header, close button, resize handle, keyboard/ARIA behaviour) SHALL be identical to the chrome used for other content types.
+`libs/attachment-canvas/src/components/AttachmentCanvasBody/AttachmentCanvasBody.tsx` (the panel body `AttachmentCanvas` renders) SHALL extend its switch over `AttachmentContentType` with a `case AttachmentContentType.McpApp` branch that renders `<McpAppCanvasRenderer content={content} onAppInfo={onAppInfo} />`. `AttachmentCanvas` passes `onAppInfo` (its `setMcpAppInfo` state setter) only for McpApp content, so the header can show the app's self-reported identity. The panel chrome (header, close button, resize handle, keyboard/ARIA behaviour) SHALL be identical to the chrome used for other content types.
 
 **Feature flag:** none. The variant is reachable only when the app builds an `McpAppCanvasContent` from a resolved stage UI resource.
 
@@ -226,3 +233,8 @@ There is no tool-declared permissions payload in DIAL Core's Phase 1 contract (n
 - **WHEN** `AttachmentCanvas` is rendered with an `McpAppCanvasContent`
 - **THEN** the panel body contains a mounted `McpAppCanvasRenderer`
 - **AND** the panel header renders the `fileName` as usual — **revised** (tasks.md item 18.2): the caller passes the matched tool's `mcpToolName`, not a fixed "MCP App" label, so the header identifies which tool the mounted app corresponds to
+
+#### Scenario: header appends the app's reported name and version
+
+- **WHEN** the mounted MCP app reports its `appInfo` through `onAppInfo`
+- **THEN** the panel header renders `fileName`, a decorative divider, the app's `name`, and its `version` when present
