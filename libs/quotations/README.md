@@ -51,7 +51,10 @@ import { CitationMarker } from '@epam/ai-dial-quotations';
 
 Popup card displaying a citation's title, quoted excerpt, and navigation controls.
 
-A previewable file shows only the "Preview" button, and its header shows the
+A previewable file shows "Preview" and "Download" (which calls
+`onOpenInBrowser`; pass `isDownloadEnabled={false}` to hide it — the same flag
+exists on `CitationDropdown` and the `useCitationMarkdownComponents`
+callbacks), and its header shows the
 file extension (e.g. `.pdf`) after a file-type icon — the UI kit's `FileIcon`
 glyph for that extension, the same one a file manager row shows, unless the
 host passes its own `headerIcon`. A web link, or a
@@ -81,6 +84,7 @@ import { CitationCard } from '@epam/ai-dial-quotations';
     formatSwitcherText: (current, total) => `${current} / ${total}`,
     preview: 'Preview',
     openInBrowser: 'Open in browser',
+    download: 'Download',
     showMore: 'Show more',
     showLess: 'Show less',
   }}
@@ -168,6 +172,7 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
         formatSwitcherText: (current, total) => `${current} / ${total}`,
         preview: 'Preview',
         openInBrowser: 'Open in browser',
+        download: 'Download',
         showMore: 'Show more',
         showLess: 'Show less',
       },

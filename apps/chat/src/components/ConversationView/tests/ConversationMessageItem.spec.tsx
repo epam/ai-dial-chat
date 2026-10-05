@@ -1091,7 +1091,7 @@ describe('ConversationMessageItem — inline citations', () => {
    * `annotationsToPdfHighlights` never gathers more than one entry.
    */
   it.each([0, 1, 2, 3])(
-    'reproduces issue #8822: repeated PDF citation %i supports preview without a download action',
+    'reproduces issue #8822: repeated PDF citation %i supports preview and download',
     async (markerIndex) => {
       const message: Message = {
         role: MessageRole.Assistant,
@@ -1183,10 +1183,11 @@ describe('ConversationMessageItem — inline citations', () => {
       expect(screen.queryAllByRole('dialog')).toHaveLength(0);
       mockOpenCanvas.mockClear();
       await userEvent.click(marker);
-      expect(
-        screen.queryByRole('button', { name: ButtonsI18nKeys.Download }),
-      ).toBeNull();
-      expect(clickSpy).not.toHaveBeenCalled();
+      await userEvent.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.Download }),
+      );
+      expect(clickSpy).toHaveBeenCalledOnce();
+      clickSpy.mockClear();
 
       clickSpy.mockRestore();
     },
@@ -1342,8 +1343,11 @@ describe('ConversationMessageItem — user message Copy action', () => {
       />,
     );
     expect(
-      (screen.getByRole('button', { name: 'Copy message' }) as HTMLButtonElement)
-        .disabled,
+      (
+        screen.getByRole('button', {
+          name: 'Copy message',
+        }) as HTMLButtonElement
+      ).disabled,
     ).toBe(false);
   });
 
@@ -1361,9 +1365,7 @@ describe('ConversationMessageItem — user message Copy action', () => {
         onDeleteMessage={vi.fn()}
       />,
     );
-    expect(
-      screen.queryByRole('button', { name: 'Edit message' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
   });
 

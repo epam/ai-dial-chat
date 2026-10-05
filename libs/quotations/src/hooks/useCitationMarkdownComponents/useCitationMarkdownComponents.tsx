@@ -24,6 +24,8 @@ export interface UseCitationMarkdownComponentsCallbacks {
   isPreviewable?(annotation: Annotation): boolean;
   /** Called when a citation marker's open-in-browser action is invoked. */
   onOpenInBrowser(annotation: Annotation): void;
+  /** Whether citation cards show the "Download" button for a previewable file. Defaults to `true`. */
+  isDownloadEnabled?: boolean;
   /** Whether the host's preview panel is open; a marker click then previews directly instead of showing the card. Defaults to `false`. */
   isPreviewOpen?: boolean;
   /** Builds the translated label bundles used by a given citation group's card and marker. */
@@ -115,6 +117,7 @@ export const useCitationMarkdownComponents = (
     onPreview,
     isPreviewable,
     onOpenInBrowser,
+    isDownloadEnabled = true,
     isPreviewOpen = false,
     buildLabels,
   } = callbacks;
@@ -153,6 +156,7 @@ export const useCitationMarkdownComponents = (
           onPreview={(annotation) => onPreview(annotation, group)}
           isPreviewable={isPreviewable}
           onOpenInBrowser={onOpenInBrowser}
+          isDownloadEnabled={isDownloadEnabled}
           isPreviewOpen={isPreviewOpen}
           cardLabels={cardLabels}
           markerLabels={markerLabels}
@@ -216,6 +220,7 @@ export const useCitationMarkdownComponents = (
     onPreview,
     isPreviewable,
     onOpenInBrowser,
+    isDownloadEnabled,
     isPreviewOpen,
     buildLabels,
     isCompactTypography,

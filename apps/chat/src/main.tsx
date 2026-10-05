@@ -29,6 +29,9 @@ import { UserConfigProvider } from './context/UserConfigContext';
 import { VisualizerMessageProvider } from './context/VisualizerMessageContext';
 import './i18n/config';
 import './styles.scss';
+import { registerChunkLoadRecovery } from './utils/chunk-load-recovery';
+
+registerChunkLoadRecovery();
 
 const LoginPage = lazy(() => import('./pages/auth/Login'));
 const OverlayClose = lazy(() => import('./pages/auth/OverlayClose'));

@@ -39,6 +39,7 @@ const cardLabels = {
     `${current} / ${total}`,
   preview: 'Preview',
   openInBrowser: 'Open in browser',
+  download: 'Download',
   showMore: 'Show more',
   showLess: 'Show less',
 };
@@ -137,9 +138,8 @@ describe('CitationDropdown', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
-    expect(
-      screen.queryByRole('button', { name: 'Open in browser' }),
-    ).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(onOpenInBrowser).toHaveBeenLastCalledWith(pdfAnnotation);
 
     await userEvent.click(screen.getByRole('button', { name: 'Previous' }));
     expect(screen.queryByRole('button', { name: 'Preview' })).toBeNull();

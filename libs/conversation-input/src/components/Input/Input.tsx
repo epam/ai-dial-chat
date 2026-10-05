@@ -870,13 +870,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
         onChange={(e) => {
           setMessage(e.target.value);
           historyNav.notifyChange();
-          /*
-           * React types `ChangeEvent`'s `nativeEvent` as bare `Event`; the
-           * runtime event behind a textarea's change is an `InputEvent`, so
-           * narrow with `instanceof` to read `isComposing` and `inputType` — a
-           * non-InputEvent can't be mid-composition or a paste, hence the
-           * defaults.
-           */
+
           const inputEvent =
             e.nativeEvent instanceof InputEvent ? e.nativeEvent : undefined;
           handleValueChange(
@@ -892,30 +886,11 @@ export const Input = forwardRef<InputHandle, InputProps>(
         onKeyDown={handleKeyDown}
         onKeyUp={handleTextareaKeyUp}
         onPaste={handlePaste}
-        /*
-         * No suppression needed: a tracked mention's `/{name}` text is part of
-         * `message` itself, so the textarea is never empty while one is
-         * present and the native placeholder already stays hidden.
-         */
         placeholder={placeholder}
         aria-label={ariaLabel}
-        /*
-         * The list-autocomplete wiring of the command menu. The textarea keeps
-         * its implicit `textbox` role — ARIA allows no `combobox` role on a
-         * `<textarea>`, and `aria-expanded` is not a textbox attribute — so the
-         * relationship is carried by `aria-autocomplete`, `aria-controls`, and
-         * `aria-activedescendant`, all of which a textbox supports.
-         */
         aria-autocomplete={commandMenu == null ? undefined : 'list'}
         aria-controls={isMenuOpen ? commandMenuListboxId : undefined}
         aria-activedescendant={activeCommandOptionId ?? undefined}
-        /*
-         * When a mention is active, the mirror's `ChatSkill` chip (rendered
-         * un-hidden, see `renderHighlightedText`/`HighlightedTextRange.render`)
-         * already exposes the mention's name and description to assistive
-         * tech, with its own focus stop and tooltip. Hiding the textarea's
-         * raw `/{name}` text avoids announcing that same mention twice.
-         */
         aria-hidden={hasActiveMentions ? true : undefined}
         disabled={isInputDisabled}
         readOnly={isVoiceActive}
@@ -1008,41 +983,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
         </>
       );
 
-    /*
-     * The highlighted-run mirror overlays the textarea exactly: same typography,
-     * same wrapping, same box — the real textarea's text is transparent
-     * (`textareaMentionMode`) so only the mirror's text is visible, while the
-     * textarea itself still owns the caret, selection, and all native editing.
-     * Because the mirror renders the identical characters in the identical
-     * font, no width/position mismatch is possible between a highlighted run
-     * and the real text underneath it. The same mirror also carries the
-     * command menu's empty-query hint, spliced in as inline content. The div
-     * itself is no longer blanket-`aria-hidden` (still `pointer-events-none`
-     * by default) — `renderHighlightedText` applies `aria-hidden` and
-     * `pointer-events-auto`/`none` per segment instead, so a `render`-backed
-     * mention range (real, non-duplicated content) stays interactive and
-     * announced while every plain-text/highlight segment around it stays
-     * inert and hidden, as before.
-     *
-     * This wrapper div is rendered UNCONDITIONALLY — never gated behind
-     * `hasActiveMentions`/`hasCommandHintConfigured` — precisely because both
-     * flip during live typing (a mention is added or removed mid-draft, a
-     * command-menu hint appears/disappears with every keystroke). Toggling the
-     * textarea's own ancestor depth in response to live state changes React's
-     * reconciliation of it: the `<textarea>` unmounts and remounts as a new DOM
-     * node the moment the wrapper appears, discarding focus, native undo
-     * history and the caret mid-typing. Keeping the wrapper permanent and only
-     * toggling its *content* (the mirror div) avoids that entirely, at the
-     * cost of one always-present, layout-inert `relative` div when neither
-     * overlay is active — a byte-for-byte no-op for that case.
-     *
-     * `z-10` (against the textarea's own `z-0`) makes the stacking explicit
-     * rather than relying on positioned-vs-static paint order: the mirror
-     * renders the only actually-visible text while a mention is tracked, so
-     * it must sit above the (invisible-text) textarea. It is not what makes
-     * text selection render correctly, though — see `updateSelectionRects`'s
-     * doc for why that needs its own, separate handling.
-     */
     const textareaArea = (
       <div
         ref={textareaAreaRef}
