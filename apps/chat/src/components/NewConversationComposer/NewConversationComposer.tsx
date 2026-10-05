@@ -18,6 +18,7 @@ import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   formatFileSize,
+  mergeClasses,
   ResponseFormat,
   type Attachment,
   type DeploymentItem,
@@ -60,6 +61,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
+import { ComposerLayout } from '../../types/conversation-composer';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
 import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
@@ -169,6 +171,8 @@ interface Props {
   toolsChipLabels?: ToolsChipLabels;
   /** Rendered below the composer input (e.g. starter buttons). */
   children?: ReactNode;
+  /** `Inline` drops the greeting and pins the input to the bottom. Defaults to `Welcome`. */
+  layout?: ComposerLayout;
 }
 
 const NewConversationComposer: FC<Props> = ({
@@ -200,6 +204,7 @@ const NewConversationComposer: FC<Props> = ({
   toolsMenuTitle,
   toolsChipLabels,
   children,
+  layout = ComposerLayout.Welcome,
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -401,9 +406,11 @@ const NewConversationComposer: FC<Props> = ({
   const isAgentDescriptionEnabled = useUiFeature(
     OverlayFeature.ShowAgentDescription,
   );
-  const agentDescription = isAgentDescriptionEnabled
-    ? resolvedSelectedDeployment?.description?.trim()
-    : undefined;
+  const isInlineLayout = layout === ComposerLayout.Inline;
+  const agentDescription =
+    isAgentDescriptionEnabled && !isInlineLayout
+      ? resolvedSelectedDeployment?.description?.trim()
+      : undefined;
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
   const { resolvers, options } = useAttachmentCanvasResolvers();
@@ -517,11 +524,16 @@ const NewConversationComposer: FC<Props> = ({
           otherwise a long agent description scrolls under the logo
           (Issue #9036). */}
       <div
-        className="relative flex flex-auto shrink-0 flex-col items-center justify-center overflow-hidden px-4 py-14 [container-type:inline-size] desktop:px-8 desktop:py-16"
+        className={mergeClasses(
+          'relative flex flex-auto shrink-0 flex-col items-center overflow-hidden [container-type:inline-size]',
+          isInlineLayout
+            ? 'justify-end px-6'
+            : 'justify-center px-4 py-14 desktop:px-8 desktop:py-16',
+        )}
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
-        {isCelebrationEnabled && <CelebrationDecor />}
+        {isCelebrationEnabled && !isInlineLayout && <CelebrationDecor />}
         {agentDescription && (
           <Suspense fallback={null}>
             <AgentDescription content={agentDescription} />
@@ -537,7 +549,7 @@ const NewConversationComposer: FC<Props> = ({
           /* `ConversationInput` renders the description only under a
              greeting, so `hide-greeting` removes both. */
           welcomeText={
-            isGreetingHidden
+            isGreetingHidden || isInlineLayout
               ? undefined
               : getTimeOfDayGreeting(
                   new Date().getHours(),
@@ -562,7 +574,9 @@ const NewConversationComposer: FC<Props> = ({
                   firstName || undefined,
                 )
           }
-          descriptionText={welcomeScreenDescription ?? undefined}
+          descriptionText={
+            isInlineLayout ? undefined : (welcomeScreenDescription ?? undefined)
+          }
           belowWelcomeSlot={isStartersBelowGreeting ? startersBlock : undefined}
           placeholder={placeholder}
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}

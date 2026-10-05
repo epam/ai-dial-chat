@@ -11,15 +11,22 @@ The Catalog Details Panel SHALL show a credentials action for `Toolset` items wh
 logged-out warning icon) for toolsets whose `authenticationType` is `NONE`. The action label and behavior SHALL be
 resolved from four states, matching the legacy Marketplace decision tree:
 - **Manage credentials** / **Manage API keys**: the current user is an admin and the toolset is public. The label depends on the toolset's own `authenticationType`: an `ApiKey` toolset reads **"Manage API keys"**, every other authenticating type reads **"Manage credentials"**. Both resolve through the same `manageCredentialsActionLabel` override, which receives the `authenticationType` and defaults to that pair — so an assertion on this state MUST branch on the authentication type rather than expecting the generic wording.
-- **Login with my creds**: the user is not an admin, the toolset is public, and the user is not
-  personally (`USER`-level) signed in.
+- **Login with my creds** (`CredentialsUiState.LoginWithMyCreds`): the user is not an admin, the
+  toolset is public, and the user is not personally (`USER`-level) signed in. This state has no
+  label of its own: it renders the same label as the **Log in** state.
 - **Log in**: none of the above, and the toolset is not signed in at `USER` or `GLOBAL` level.
 - **Log out**: the toolset is signed in at `USER` or `GLOBAL` level (and the user is not in the
   admin+public "Manage credentials" case).
 
+Outside the "Manage credentials" state, the label depends on the authentication type. An `OAUTH`
+toolset shows **"Log in"** (Log in / Login with my creds) or **"Log out"** (Log out). An `API_KEY`
+toolset shows **"API key"** (Log in / Login with my creds) or **"Change API key"** (Log out), and
+the action opens a personal API-key popover (`CredentialsApiKeyOverlay`, `USER` level) instead of
+logging in or out directly.
+
 Label/text overrides flow through `ItemDetailsTexts` fields (`manageCredentialsActionLabel`,
-`loginWithMyCredsActionLabel`, `loginActionLabel`, `logoutActionLabel`), each defaulting to
-English text.
+`loginActionLabel`, `logoutActionLabel`, `apiKeyActionLabel`, `changeApiKeyActionLabel`), each
+defaulting to English text. There is no `loginWithMyCredsActionLabel` override.
 
 #### Scenario: No auth toolset shows no credentials UI
 - **WHEN** a user opens the Details Panel for a toolset with `authenticationType: NONE`
@@ -37,36 +44,51 @@ English text.
 - **THEN** the panel shows a "Manage credentials" action regardless of sign-in state at either
   level
 
-#### Scenario: Non-admin on public toolset not signed in personally sees Login with my creds
-- **WHEN** a non-admin user opens the Details Panel for a public toolset where they are not
+#### Scenario: Non-admin on public OAuth toolset not signed in personally sees Log in
+- **WHEN** a non-admin user opens the Details Panel for a public `OAUTH` toolset where they are not
   signed in at `USER` level (regardless of `GLOBAL` status)
-- **THEN** the panel shows "Login with my creds"
+- **THEN** the panel shows "Log in", and clicking it starts a `USER`-level login
+
+#### Scenario: API-key toolset shows API key or Change API key
+- **WHEN** a user outside the admin+public case opens the Details Panel for an `API_KEY` toolset
+- **THEN** the action reads "API key" when the toolset is not signed in, or "Change API key" when
+  it is, and clicking it opens the personal API-key popover
 
 #### Scenario: Signed out toolset shows Log in
 - **WHEN** a user opens the Details Panel for a toolset that is not public, or where the user is
   an admin on a private toolset, and the toolset is signed out at both `USER` and `GLOBAL` level
-- **THEN** the panel shows "Log in"
+- **THEN** the panel shows "Log in" for an `OAUTH` toolset ("API key" for an `API_KEY` toolset)
 
 #### Scenario: Signed-in toolset shows Log out
 - **WHEN** a user opens the Details Panel for a toolset signed in at `USER` or `GLOBAL` level,
   outside the admin+public case
-- **THEN** the panel shows "Log out"
+- **THEN** the panel shows "Log out" for an `OAUTH` toolset ("Change API key" for an `API_KEY`
+  toolset)
 
 ### Requirement: Admin + public two-level "Manage credentials" section
-When the credentials action resolves to "Manage credentials", the Details Panel SHALL show two
-independently expandable sections — "My credentials" (`USER` level) and "Entire organization
-credentials" (`GLOBAL` level) — each displaying its own signed-in status, login form, and logout
-control. For all other cases, the panel SHALL show a single section scoped to the resolved level
-with no level chooser.
+Clicking the action SHALL open the `CredentialsManagementPanel` sub-screen of the Details Panel
+when it resolves to "Manage credentials" / "Manage API keys". The sub-screen shows
+an identity card for the item, a description, and two `CredentialsRow` entries: "Personal
+credentials" (`USER` level) and "Organization credentials" (`GLOBAL` level). Each row shows its
+own status ("Signed in" / "Signed out"), a checkmark when that level is the one in effect, a login
+action ("Log in" for OAuth, an API-key input with "Add" for `API_KEY`), and, once signed in, "Log
+out" (OAuth) or "Delete" for the configured key (`API_KEY`). Personal credentials take
+precedence: the organization row's checkmark is hidden while the personal row is signed in. The
+rows are not collapsible sections. In every other case there is no level chooser: the header
+action acts on the `USER` level, or on the signed-in level for "Log out".
 
 #### Scenario: Admin sees both credential levels independently
-- **WHEN** an admin expands "Manage credentials" on a public toolset
-- **THEN** both "My credentials" and "Entire organization credentials" sections are shown, each
-  independently expandable, each showing its own signed-in status
+- **WHEN** an admin clicks "Manage credentials" on a public toolset
+- **THEN** the `CredentialsManagementPanel` sub-screen opens with a "Personal credentials" row and
+  an "Organization credentials" row, each showing its own signed-in status and its own actions
 
-#### Scenario: Non-admin sees a single section
-- **WHEN** a non-admin user expands "Log in", "Login with my creds", or "Log out"
-- **THEN** only one section is shown, scoped to the resolved level, with no level selector
+#### Scenario: Personal credentials take precedence in the checkmark
+- **WHEN** both the `USER` and `GLOBAL` levels are signed in
+- **THEN** only the "Personal credentials" row shows the active checkmark
+
+#### Scenario: Non-admin sees no level chooser
+- **WHEN** a non-admin user clicks "Log in", "API key", "Change API key", or "Log out"
+- **THEN** no management sub-screen opens, and the action applies to a single resolved level
 
 ### Requirement: Signed-in detection uses either credentials level
 A toolset SHALL be considered signed in if its `USER`-level status **or** its `GLOBAL`-level
@@ -80,19 +102,20 @@ warning icon, and the level resolved for a direct "Log out" action.
   icon
 
 ### Requirement: API key login submission with level and header hint
-For toolsets with `authenticationType: API_KEY`, the active section SHALL present an API key
-input showing a hint naming the configured key header (default:
-`Enter your API key value for "{header}" header`) and, on submit, SHALL call the toolset login
-endpoint with `credentialsLevel` set to the level of the section submitted (`USER` or `GLOBAL`).
+For `authenticationType: API_KEY` toolsets, the system SHALL present, in the personal API-key
+popover and in each `CredentialsManagementPanel` row, an API key input showing a hint naming the
+configured key header (default: `Enter your API key value for "{header}" header`) and, on submit
+("Add"), SHALL call the toolset login endpoint with `credentialsLevel` set to the level of the
+popover or row submitted (`USER` or `GLOBAL`).
 
 #### Scenario: Submit API key at USER level
-- **WHEN** a user enters an API key in the "My credentials" / "Login with my creds" / single
-  "Log in" section scoped to `USER` and submits
+- **WHEN** a user enters an API key in the personal API-key popover or the "Personal
+  credentials" row and submits
 - **THEN** the system calls `POST /api/v1/toolsets/{toolsetName}/login` with
   `credentialsLevel: USER` and the entered `apiKey`
 
 #### Scenario: Admin submits API key at GLOBAL level
-- **WHEN** an admin expands "Entire organization credentials", enters an API key, and submits
+- **WHEN** an admin enters an API key in the "Organization credentials" row and submits
 - **THEN** the system calls `POST /api/v1/toolsets/{toolsetName}/login` with
   `credentialsLevel: GLOBAL` and the entered `apiKey`
 
@@ -102,12 +125,14 @@ endpoint with `credentialsLevel` set to the level of the section submitted (`USE
 - **THEN** the API key input shows the hint `Enter your API key value for "X-Api-Key" header`
 
 ### Requirement: OAuth login opens in a new window at the resolved level
-For toolsets with `authenticationType: OAUTH`, the active section SHALL present a "Log in"
-button that initiates the OAuth handshake with `credentialsLevel` set to the level of the
-section (`USER` or `GLOBAL`) by opening a same-origin popup window synchronously (so a blocked
+For `authenticationType: OAUTH` toolsets, the system SHALL present, in the header action or a
+`CredentialsManagementPanel` row, a "Log in" button that initiates the OAuth handshake with `credentialsLevel` set
+to the level of the header action (`USER`) or of the row (`USER` or `GLOBAL`) by opening a same-origin popup window synchronously (so a blocked
 popup can be reliably detected), then navigating that popup to the provider's authorization page,
 leaving the Catalog tab or Toolset Editor tab on its current page. The authorize URL SHALL
-use the HTTP or HTTPS scheme; the system SHALL reject other schemes before opening a popup. The
+use HTTPS, or plain HTTP only for a loopback host; the system SHALL reject any other scheme, and
+plain HTTP to a non-loopback host, before opening a popup (`buildToolsetAuthorizeUrl` in
+`libs/chat-hooks/src/oauth/authorize-url.ts` returns `null`). The
 system SHALL sever the popup's `window.opener` relationship before navigating away from the
 same-origin placeholder. The authorize URL SHALL
 include `code_challenge`/`code_challenge_method` when the toolset's stored OAuth configuration
@@ -118,8 +143,7 @@ complete the login call with the stored `credentialsLevel`, report a typed succe
 result to the tab that initiated the flow, and close the popup.
 
 #### Scenario: Initiate OAuth login from Catalog at GLOBAL level
-- **WHEN** an admin clicks "Log in" in the "Entire organization credentials" section of an OAuth
-  toolset
+- **WHEN** an admin clicks "Log in" in the "Organization credentials" row of an OAuth toolset
 - **THEN** the system opens a same-origin popup synchronously, persists redirect state scoped to
   the flow with `credentialsLevel: GLOBAL`, navigates the popup to the provider authorization URL
   (including `code_challenge`/`code_challenge_method` when configured), and the Catalog tab
@@ -138,8 +162,8 @@ result to the tab that initiated the flow, and close the popup.
   redirect state for that attempt
 
 #### Scenario: Unsafe authorization endpoint
-- **WHEN** a toolset OAuth configuration contains a non-HTTP(S) authorization endpoint such as a
-  `javascript:` or `data:` URL
+- **WHEN** a toolset OAuth configuration contains an authorization endpoint such as a
+  `javascript:` or `data:` URL, or a plain `http:` URL on a non-loopback host
 - **THEN** the system rejects the configuration and does not open or navigate a popup
 
 ### Requirement: FAILED credential state is cleared before a new login attempt
@@ -152,24 +176,33 @@ block re-authentication.
 - **THEN** the system calls the logout endpoint for that level before calling the login endpoint
 
 ### Requirement: Logout confirmation
-Logging out at any credentials level SHALL require confirmation via a confirmation dialog
-before the logout endpoint is called. Clicking a resolved "Log out" action outside the
-admin+public case opens this confirmation directly, without first expanding a section.
+Logging out at any credentials level SHALL require confirmation before the logout endpoint is
+called, except for the "Delete" action in the personal API-key popover. The confirmation is an
+in-panel `ConfirmationView` sub-view of the Details Panel (`DetailsConfirmationKind.Logout`,
+holding the pending level), not a modal dialog. The level is the one passed by a
+`CredentialsManagementPanel` row, or the signed-in level from `getSignedInLevel` for the header's
+"Log out" action. Deleting a configured API key from a `CredentialsManagementPanel` row uses a
+separate `DetailsConfirmationKind.DeleteApiKey` confirmation. The "Delete" action in the personal
+API-key popover calls logout directly, without a confirmation step.
 
 #### Scenario: Confirm logout
-- **WHEN** a user clicks "Log out" and confirms the dialog
+- **WHEN** a user clicks "Log out" and confirms in the confirmation sub-view
 - **THEN** the system calls `POST /api/v1/toolsets/{toolsetName}/logout` with the resolved
   `credentialsLevel`
 
 #### Scenario: Cancel logout
-- **WHEN** a user clicks "Log out" and cancels the dialog
+- **WHEN** a user clicks "Log out" and cancels the confirmation sub-view
 - **THEN** no logout request is sent and the signed-in state is unchanged
 
-#### Scenario: Direct logout confirmation without expanding a section
+#### Scenario: Header Log out opens the confirmation directly
 - **WHEN** a non-admin user (or an admin on a private toolset) clicks the header's "Log out"
-  action
-- **THEN** the confirmation dialog opens immediately, without first requiring the section to be
-  expanded
+  action on an OAuth toolset
+- **THEN** the confirmation sub-view opens immediately for the signed-in level
+
+#### Scenario: Delete an organization API key
+- **WHEN** an admin clicks "Delete" on the configured key in the "Organization credentials" row
+- **THEN** a `DeleteApiKey` confirmation sub-view opens for the `GLOBAL` level before any logout
+  request is sent
 
 ### Requirement: Success and error notifications after login/logout
 After a login or logout call completes, the system SHALL show a notification: on success, a
@@ -320,12 +353,16 @@ to the lib's own types, `onLogin`/`onLogout` callbacks carrying an explicit `lev
 overrides). All admin/public/level decision logic (`getCredentialsUiState`,
 `getCredentialsBadgeState`, `getSignedInLevel`) SHALL be pure functions operating only on the
 lib's own `CatalogItemCredentials` shape. `libs/catalog` SHALL NOT import API clients,
-auth/session context, routing, or app-specific enums; all such integration knowledge SHALL be
-resolved in `apps/chat` (mappers, `CatalogView.tsx`) before being passed into the lib.
+auth/session context, routing, or app-specific enums. The DIAL-Core-to-lib mapping (including
+`isManageableByAdmin` and the credentials status mapping in
+`libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`) and the login/logout
+orchestration (`useCatalogToolsetCredentials`, the OAuth popup and handshake) live in
+`libs/chat-hooks`; `apps/chat`'s `CatalogView.tsx` wires them up and passes the results into
+`libs/catalog`.
 
 #### Scenario: Lib renders and decides from plain props only
-- **WHEN** `CredentialsSection`, `Header`, and `CredentialsBadge` are implemented in
-  `libs/catalog`
+- **WHEN** `CredentialsManagementPanel`, `CredentialsRow`, `Header`, and `CredentialsBadge` are
+  implemented in `libs/catalog`
 - **THEN** their source, and the pure decision helpers they call, import no
   `@epam/chat-api-client`, no `server-api` module, no router, and no app-owned enum/type — only
   `CatalogItem`/`CatalogItemCredentials` fields, callback props, and text props

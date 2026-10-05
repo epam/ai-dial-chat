@@ -47,7 +47,7 @@ import '@epam/ai-dial-skill-editor/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-ui-kit` `^0.15.0-dev.36`
-- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.22`
+- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.24`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -170,9 +170,10 @@ from every source go through `fileActions.validateBatch` and
 
 An inline folder name is rejected when it is empty, contains `/` or `\`, is
 `.`/`..`, or matches a sibling (or `SKILL.md` at the root); after that,
-`fileActions.validateFolderPath` may reject it with a host message. A folder
-exists only in the editor until a file is added to it — the host decides whether
-an empty folder survives a save.
+`fileActions.validateFolderPath` may reject it with a host message. The library
+treats a folder as a plain node in `files` whether or not anything is under it;
+persisting it is the host's concern. The DIAL Chat host keeps an empty folder
+across Save and reload through a storage marker the library never sees.
 
 **Delete** removes the node (a folder with everything under it) immediately,
 with no confirmation, and calls `fileActions.onRemoveNode(path)`. The library

@@ -1,4 +1,4 @@
-# Spec: conversation-share
+# conversation-share Specification
 
 ## Purpose
 
@@ -17,10 +17,10 @@ interface Props {
 
 The container itself only needs the resource path to create the link; the caller (`ConversationPanelView`) is responsible for tracking which conversation ID the open popover belongs to in its own state.
 
-`ConversationPanelView` SHALL host the container inside a `DialPopup` (`size={PopupSize.Sm}`, `dividers={false}`, `hideClose`, `headerClassName="hidden"`), matching the centered-modal pattern already used by `RenameConversationPopup`/the delete `DialConfirmationPopup` in the same file — not the anchored `DialDropdown` pattern used by the catalog `ShareButton`, since `ConversationPanelView` has no ref to the row's "..." trigger (owned by `libs/conversation-panel`) to anchor to, and `SharePopover` has no close control of its own. `DialPopup` unconditionally renders its own header row even with no `header` prop, producing a visible empty bar above `SharePopover`'s own title/QR-toggle row; `hideClose` + `headerClassName="hidden"` collapse that native header entirely so `SharePopover`'s own header is the only one shown. Dismissal relies on `DialPopup`'s default `closeOnOutsideClick` and `SharePopover`'s own Escape handling — there is no dedicated close (X) button.
+`ConversationPanelView` SHALL host the container inside the 2.0 kit `Popup` (`size={PopupSize.Sm}`, `hideClose`, `headerClassName="hidden"`), rendered only when `OverlayFeature.ConversationsSharing` is enabled — a centered modal, not an anchored dropdown, since `ConversationPanelView` has no ref to the row's "..." trigger (owned by `libs/conversation-panel`) to anchor to, and `SharePopover` has no close control of its own. `Popup` renders its own header row even with no `header` prop; `hideClose` + `headerClassName="hidden"` collapse it so `SharePopover`'s own title/QR-toggle row is the only header shown. Dismissal relies on the `Popup`'s outside-click close and `SharePopover`'s own Escape handling — there is no dedicated close (X) button.
 
 The container SHALL:
-1. Call `useShareLink(conversationPath)` (unchanged, from `apps/chat/src/hooks/useShareLink/useShareLink.ts`) to resolve `{ data, isLoading, error, setAccess }`.
+1. Call `useShareLink(shareApi, conversationPath)` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/useShareLink/useShareLink.ts`), passing the app's configured `shareApi` from `apps/chat/src/server-api/api-client.ts`, to resolve `{ data, isLoading, error }`.
 2. Render `<SharePopover>` from `@epam/ai-dial-share` with `url={data?.url}`, `isLoading`, `error`, `access={[ShareLinkAccess.View]}`, `canEditAccess={false}`, `onClose`, and a fully translated `labels` object (mirroring `SharePopoverContainer`'s `labels` shape).
 3. NOT pass `onAccessChange` (or pass a no-op) since `canEditAccess={false}` means the access dropdown is never rendered.
 4. NOT import `@epam/ai-dial-catalog` or any catalog-specific type.
@@ -28,7 +28,7 @@ The container SHALL:
 #### Scenario: Opening the popover creates a view-only link
 
 - **WHEN** `ShareConversationPopoverContainer` mounts with a valid `conversationPath`
-- **THEN** `useShareLink` is called with `conversationPath` as `itemId`
+- **THEN** `useShareLink` is called with the app's `shareApi` and `conversationPath` as `itemId`
 - **AND** the rendered `SharePopover` receives `canEditAccess={false}`
 
 #### Scenario: Loading state is shown while the link is being created
@@ -48,7 +48,7 @@ The container SHALL:
 
 ### Requirement: Conversation share reuses the existing generic share-link endpoint
 
-No new backend endpoint is introduced. `ShareConversationPopoverContainer` SHALL call the existing `getShareLink(itemId, access)` utility (`apps/chat/src/utils/share-link.ts`), which POSTs to `POST /api/v1/share` via `createShareLink` (`apps/chat/src/server-api/share.api.ts`), passing the conversation's DIAL Core resource path as `itemId` and `access: [ShareLinkAccess.View]`.
+No new backend endpoint is introduced. `ShareConversationPopoverContainer` SHALL reach `POST /api/v1/share` through `useShareLink(shareApi, itemId)`, which calls the injected generated client's `shareApi.createShareLink({ createShareLinkDto: { itemId, access } })` directly, passing the conversation's DIAL Core resource path as `itemId` and `access: [ShareLinkAccess.View]`.
 
 The backend `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) `@ApiOperation.description` SHALL be updated to state it creates a share link "for a DIAL Core resource (catalog entity or conversation)", replacing the catalog-only wording. `CreateShareLinkDto` and response DTOs are unchanged. Conversation-specific related-resource resolution is defined below; non-conversation resources continue to be proxied directly without an additional lookup.
 
@@ -69,7 +69,7 @@ The backend `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`)
 
 ### Requirement: Sharing an application includes its attached prompt resources
 
-Before calling DIAL Core's `shareResource`, `ShareService.createShareLink` SHALL load a quick app whose resolved resource URL starts with `applications/`. The read SHALL parse `applications/{bucket}/{path}` via `parseDialApplicationResource` (`apps/chat-api/src/common/utils/dial-application-resource.ts`) into the `bucket`/`path` pair, call `getCustomApplication(bucket, path)`, and forward the caller's bearer token — the same resolution `buildApplicationDetails` already uses.
+Before calling DIAL Core's `shareResource`, `ShareInvitationService.createShareLink` (`apps/chat-api/src/share/invitation/share-invitation.service.ts`, to which the `ShareService` facade delegates) SHALL load a quick app whose resolved resource URL starts with `applications/`. The read SHALL parse `applications/{bucket}/{path}` via `parseDialApplicationResource` (`apps/chat-api/src/common/utils/dial-application-resource.ts`) into the `bucket`/`path` pair, call `getCustomApplication(bucket, path)`, and forward the caller's bearer token — the same resolution `buildApplicationDetails` already uses.
 
 The service SHALL collect unique DIAL prompt resource URLs from `application_properties.skills[]` entries whose `type` is exactly `'dial-prompt'`. Only entries whose `url` is a DIAL Core prompt resource url (`prompts/{bucket}/{path}`, per `isPromptResourceUrl`) are shareable. The `orchestrator.system_prompt` (`type: 'custom'`, inline content), `contexts[]` (file resources), `tool_sets[]`, and every other skill kind carry no separate DIAL resource and SHALL NOT be added to the sharing request. Deduplication is by exact url string, in first-seen order.
 
@@ -212,13 +212,19 @@ The frontend SHALL register `ROUTES.ConversationSharedInvitation = '/conversatio
 
 ### Requirement: Only owned, non-readonly conversations can be shared
 
-Sharing is offered only for conversations where `isReadonlyItem` is `false` (i.e. not `isReadonly`, `sharedWithMe`, or `publishedWithMe`). A conversation already shared with the current user (readonly) SHALL NOT expose a Share action, since only the owner's bucket path is guaranteed valid as an `itemId` for `POST /api/v1/share`.
+Sharing is offered only for conversations where `isReadonlyItem` is `false` (i.e. not `isReadonly`, `sharedWithMe`, or `publishedWithMe`), and only when the `OverlayFeature.ConversationsSharing` UI feature is enabled — the same flag also gates the share popup and the Revoke access action. A conversation already shared with the current user (readonly) SHALL NOT expose a Share action, since only the owner's bucket path is guaranteed valid as an `itemId` for `POST /api/v1/share`.
 
 #### Scenario: Owned conversation is shareable
 
-- **GIVEN** a conversation with `isReadonly: false`, `sharedWithMe: false`, `publishedWithMe: false`
+- **GIVEN** `OverlayFeature.ConversationsSharing` is enabled and a conversation has `isReadonly: false`, `sharedWithMe: false`, `publishedWithMe: false`
 - **WHEN** the panel row's action menu is opened
 - **THEN** a "Share" action is present
+
+#### Scenario: Sharing feature disabled hides Share
+
+- **GIVEN** `OverlayFeature.ConversationsSharing` is disabled
+- **WHEN** the action menu of an owned conversation is opened
+- **THEN** no "Share" action is present
 
 #### Scenario: Shared-with-me conversation is not shareable
 
@@ -228,21 +234,20 @@ Sharing is offered only for conversations where `isReadonlyItem` is `false` (i.e
 
 ### Requirement: i18n — all new user-visible strings use translation keys
 
-New user-visible strings (menu label, any conversation-share-specific popover copy) SHALL be added to `ConversationPanelI18nKeys` (or a dedicated `ShareI18nKeys` entry if reusing existing share-popover keys) in `apps/chat/src/constants/translation-keys.ts`, with English defaults added to `apps/chat/src/i18n/locales/en.json`. No hardcoded English string literals SHALL appear in the new container or the modified `ConversationPanelView.tsx`.
+User-visible strings for conversation sharing SHALL resolve through `ShareI18nKeys` in `apps/chat/src/constants/translation-keys.ts`, with English defaults in `apps/chat/src/i18n/locales/en.json`. No hardcoded English string literals SHALL appear in the container or in `ConversationPanelView.tsx`. The Share menu item reuses the existing share-popover title, `t(ShareI18nKeys.Title)`; there is no `conversationPanel.shareLabel` key.
 
-New keys:
+The one conversation-specific key:
 
 | Key | English value |
 |---|---|
-| `conversationPanel.shareLabel` | `"Share"` |
 | `share.visibilityNoteConversation` | `"This conversation and its updates will be visible to users with the link."` |
 
 `ShareConversationPopoverContainer` SHALL pass `labels.visibilityNote` as `t(ShareI18nKeys.VisibilityNoteConversation)`, not the generic deployment-worded `ShareI18nKeys.VisibilityNote` ("This deployment and its updates will be visible..."). It SHALL NOT pass `visibilityNoteEdit`, since `canEditAccess` is always `false` for conversations and that string is only ever shown when edit access is both allowed and selected.
 
 #### Scenario: Share menu label resolves via i18n
 
-- **WHEN** `en.json` is loaded
-- **THEN** `conversationPanel.shareLabel` resolves to `"Share"`
+- **WHEN** the conversation row's action menu renders the Share item
+- **THEN** its label is `t(ShareI18nKeys.Title)`
 
 ### Requirement: `getConversationRoute` rejects path-traversal segments
 
@@ -270,7 +275,7 @@ New keys:
 
 ### Requirement: RTL — share popover trigger and dropdown item follow logical positioning
 
-The new "Share" `DropdownItem` icon and menu entry SHALL use the same layout primitives as existing menu items (`pin`, `rename`, `duplicate`, `delete`) in `ConversationRow`/`DialDropdown`, which are already logical-property-based (`placement="bottom-end"`). No new physical-direction classes are introduced. The reused `SharePopover` component already follows RTL rules per its own spec/implementation in `libs/share`.
+The "Share" `DropdownItem` icon and menu entry SHALL use the same layout primitives as existing menu items (`pin`, `rename`, `duplicate`, `delete`) rendered by the 2.0 kit `Dropdown` in `ConversationRow`, which are already logical-property-based. No new physical-direction classes are introduced. The reused `SharePopover` component already follows RTL rules per its own spec/implementation in `libs/share`.
 
 #### Scenario: Share menu item is positioned consistently with other actions in RTL
 
@@ -280,7 +285,7 @@ The new "Share" `DropdownItem` icon and menu entry SHALL use the same layout pri
 
 ### Requirement: Accessibility — Share action and popover are keyboard and screen-reader accessible
 
-The "Share" `DropdownItem` SHALL be reachable via the same keyboard navigation (arrow keys, Enter/Space, Escape) as existing row actions, since it is rendered through the same `DialDropdown`. The rendered `SharePopover` SHALL use its existing accessible labels (`accessAriaLabel`, `linkAriaLabel`, `qrCodeAriaLabel`, etc.), all supplied via i18n from `ShareConversationPopoverContainer`, matching `SharePopoverContainer`'s pattern.
+The "Share" `DropdownItem` SHALL be reachable via the same keyboard navigation (arrow keys, Enter/Space, Escape) as existing row actions, since it is rendered through the same 2.0 kit `Dropdown`. The rendered `SharePopover` SHALL use its existing accessible labels (`accessAriaLabel`, `linkAriaLabel`, `qrCodeAriaLabel`, etc.), all supplied via i18n from `ShareConversationPopoverContainer`, matching `SharePopoverContainer`'s pattern.
 
 #### Scenario: Share item is keyboard-activatable
 
@@ -364,11 +369,11 @@ Cache keys invalidated: `deployments:list:<userSub>` and `deployments:list:<user
 
 ### Requirement: Frontend refetches deployment/toolset/skill lists before navigating past an accepted invitation
 
-`SharedInvitationPage` (`apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx`) SHALL call `useDeployments()`'s `refetchDeployments()` and `refetchToolsets()`, and `useSkills()`'s `refetchSkills()`, (via a single `Promise.all`, awaited) after a successful `acceptInvitation` and before calling `navigate(getTargetRoute(itemId), { replace: true })`. These calls remain a consistency backstop; they are no longer the mechanism the details panel depends on to find the newly-shared item (see "Accepting an invitation resolves and returns the shared item's summary" below).
+`SharedInvitationPage` (`apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx`) SHALL call `useDeployments()`'s `refetchDeployments()` and `refetchToolsets()`, `useSkills()`'s `refetchSkills()`, and `usePrompts()`'s `refetchPrompts()` (via a single `Promise.all`, awaited) after a successful `acceptInvitation` and before calling `navigate(getTargetRoute(itemId), { replace: true })`. These calls remain a consistency backstop; they are no longer the mechanism the details panel depends on to find the newly-shared item (see "Accepting an invitation resolves and returns the shared item's summary" below).
 
 `SharedInvitationPage` SHALL call `useDeployments()`'s `mergeSharedItem(item)` with the `sharedDeployment`/`sharedToolset` value from `acceptInvitation`'s response, and `useSkills()`'s `mergeSharedSkill(item)` with the response's `sharedSkill` value, **after** the `Promise.all` refetch above has resolved and **before** calling `navigate(...)`, whenever the corresponding field is present. This order is required, not incidental: `refetchDeployments`/`refetchToolsets`/`refetchSkills` fully replace the respective context's item arrays with whatever DIAL Core's bulk list returns, so merging before (or in parallel with) the refetch lets a stale bulk-list response — one that has not yet propagated the just-granted share — silently overwrite the merged item and remove it again. Running the merge after the refetch guarantees the backend-resolved item always wins. When none of `sharedDeployment`/`sharedToolset`/`sharedSkill` is present (the backend could not resolve the item, e.g. an upstream propagation gap — see the new requirement below), `SharedInvitationPage` SHALL still proceed with the existing refetch-then-navigate behavior unchanged.
 
-`SkillsContext` (`apps/chat/src/context/SkillsContext.tsx`) SHALL expose a `mergeSharedSkill(item: SkillMetadataItemDto): void` method on its context value, mirroring `DeploymentsContext`'s `mergeSharedItem`. Calling it SHALL upsert `item` into `sharedWithMe` (replacing any existing entry with the same `url`, or appending a new entry) via the existing `setSharedWithMe` setter. `mergeSharedSkill` SHALL NOT issue any network request itself.
+`SkillsContext` (`apps/chat/src/context/SkillsContext.tsx`) SHALL expose a `mergeSharedSkill(item: SkillMetadataItemDto): void` method on its context value, mirroring `DeploymentsContext`'s `mergeSharedItem`. It is implemented in `useSkillsState` (`libs/chat-hooks/src/skill/useSkillsState/useSkillsState.ts`) and re-exposed by the context. Calling it SHALL upsert `item` into `sharedWithMe` (removing any existing entry with the same `url`, then appending the item). `mergeSharedSkill` SHALL NOT issue any network request itself.
 
 `CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL treat the `itemId` search param (`CatalogQuery.ItemId`) it reads into `initialDetailsItemId` as a one-shot signal: after reading a non-empty value for a render, it SHALL clear that param from the URL via `setSearchParams` with `{ replace: true }`, so the param does not linger in the address bar once consumed.
 
@@ -411,13 +416,16 @@ Cache keys invalidated: `deployments:list:<userSub>` and `deployments:list:<user
 
 ### Requirement: Accepting an invitation resolves and returns the shared item's summary
 
-`ShareInvitationService.acceptInvitation` (`apps/chat-api/src/share/invitation/share-invitation.service.ts`) SHALL, after successfully accepting the invitation and invalidating the list caches, resolve the shared `itemId`'s type and summary using the same prefix convention already used by `DeploymentsService.getDeploymentDetails` (`toolsets/` prefix → toolset; `applications/` prefix → application; otherwise ambiguous — try `getModel` → `getApplication` → `getToolset` in turn, falling through to the next on a 404).
+`ShareInvitationService.acceptInvitation` (`apps/chat-api/src/share/invitation/share-invitation.service.ts`, behind the `ShareService` facade) SHALL, after successfully accepting the invitation and invalidating the list caches, resolve the shared `itemId`'s summary in its private `resolveSharedItemSummary`, dispatching on the id:
 
-For a `toolsets/`-prefixed id, `ShareService` SHALL call a new `ToolsetsService.resolveToolsetItem(id, accessToken): Promise<DialToolsetDto | null>` and set `AcceptInvitationResponseDto.sharedToolset` to its result. For every other id, `ShareService` SHALL call a new `DeploymentsService.resolveDeploymentItem(id, accessToken): Promise<DeploymentItemDto | null>` (extracted from, and reusing, `fetchDeploymentDetails`'s existing prefix-dispatch/ambiguous-fallback logic, mapped through the existing `mapToDeploymentItem`) and set `AcceptInvitationResponseDto.sharedDeployment` to its result.
+- `skills/` prefix → `skillsLookupService.resolveSkillItem(itemId, accessToken, bucket, grantedPermissions)`, returned as `sharedSkill`.
+- A prompt resource url (`isPromptResourceUrl`) → `{}`; the frontend picks prompts up from its own prompts refetch.
+- `toolsets/` prefix → `ToolsetsService.resolveToolsetItem(userSub, accessToken, itemId)`, returned as `sharedToolset`.
+- Anything else → `DeploymentsService.resolveDeploymentItem(itemId, accessToken, bucket)`, returned as `sharedDeployment`. When that finds nothing and the id is not `applications/`-prefixed, it falls back to a toolset lookup and returns `sharedToolset` on a match.
 
-`AcceptInvitationResponseDto` (`apps/chat-api/src/share/dto/accept-invitation-response.dto.ts`) SHALL gain two new optional fields: `sharedDeployment?: DeploymentItemDto` and `sharedToolset?: DialToolsetDto`, each documented with `@ApiPropertyOptional`. The existing required `itemId` field is unchanged.
+`AcceptInvitationResponseDto` (`apps/chat-api/src/share/dto/accept-invitation-response.dto.ts`) SHALL carry three optional fields: `sharedDeployment?: DeploymentItemDto`, `sharedToolset?: DialToolsetDto`, and `sharedSkill?: SkillMetadataItemDto`. The required `itemId` field is unchanged.
 
-This resolution SHALL be best-effort: if the underlying DIAL Core call(s) fail, time out, or return no match, `resolveDeploymentItem`/`resolveToolsetItem` SHALL resolve `null` rather than throwing, and `acceptInvitation` SHALL still respond 200 with `itemId` set and both `sharedDeployment`/`sharedToolset` omitted — a resolution failure here MUST NOT fail the whole accept-invitation call, since the invitation was already successfully accepted upstream.
+This resolution SHALL be best-effort: if a lookup fails, throws, or returns no match, `resolveSharedItemSummary` logs a warning and returns `{}`, and `acceptInvitation` SHALL still respond 200 with `itemId` set and the summary fields omitted — a resolution failure here MUST NOT fail the whole accept-invitation call, since the invitation was already successfully accepted upstream.
 
 This change requires regenerating the OpenAPI spec (`npm run openapi`, `npm run openapi:check`) and rebuilding `chat-api-client` so the new optional response fields are available to the frontend.
 
@@ -428,17 +436,27 @@ This change requires regenerating the OpenAPI spec (`npm run openapi`, `npm run 
 
 #### Scenario: Accepted application/model invitation returns the deployment summary
 
-- **WHEN** `acceptInvitation` succeeds for an invitation whose `itemId` starts with `applications/`, or is an unprefixed model/application id
+- **WHEN** `acceptInvitation` succeeds for an invitation whose `itemId` starts with `applications/`, or is an unprefixed model/application id that `resolveDeploymentItem` finds
 - **THEN** the response includes `sharedDeployment` populated from `DeploymentsService.resolveDeploymentItem`, and `sharedToolset` is omitted
+
+#### Scenario: Accepted skill invitation returns the skill summary
+
+- **WHEN** `acceptInvitation` succeeds for an invitation whose `itemId` starts with `skills/`
+- **THEN** the response includes `sharedSkill` populated from `skillsLookupService.resolveSkillItem`
+
+#### Scenario: Accepted prompt invitation returns no summary
+
+- **WHEN** `acceptInvitation` succeeds for an invitation whose `itemId` is a prompt resource url
+- **THEN** the response carries `itemId` only, with no `sharedDeployment`, `sharedToolset`, or `sharedSkill`
 
 #### Scenario: Resolution failure does not fail the accept call
 
 - **WHEN** the underlying DIAL Core call(s) used to resolve the item's summary fail or return no match
-- **THEN** `acceptInvitation` still responds 200 with `itemId` set, and both `sharedDeployment` and `sharedToolset` are omitted from the response
+- **THEN** `acceptInvitation` still responds 200 with `itemId` set, and `sharedDeployment`, `sharedToolset`, and `sharedSkill` are omitted from the response
 
 ### Requirement: DeploymentsContext exposes a synchronous merge for a freshly-shared item
 
-`DeploymentsContext` (`apps/chat/src/context/DeploymentsContext.tsx`) SHALL expose a new `mergeSharedItem(item: DeploymentItemDto | DialToolsetDto): void` method on its context value. Calling it with a `DeploymentItemDto` SHALL upsert that item into `rawDeployments` (replacing any existing entry with the same `id`, or prepending a new entry) via the existing `setRawDeployments` setter. Calling it with a `DialToolsetDto` SHALL upsert into `toolsets` the same way via `setToolsets`. `mergeSharedItem` SHALL NOT issue any network request itself and SHALL NOT interact with `deploymentsRequestIdRef`/`toolsetsRequestIdRef` — it is a synchronous local-state write, independent of `refetchDeployments`/`refetchToolsets`.
+`DeploymentsContext` (`apps/chat/src/context/DeploymentsContext.tsx`) SHALL expose a new `mergeSharedItem(item: DeploymentItemDto | DialToolsetDto): void` method on its context value. Calling it with a `DeploymentItemDto` SHALL upsert that item into `rawDeployments` via the existing `setRawDeployments` setter — removing any existing entry with the same `id`, adding the item, and re-sorting the list with `sortDeployments` — so its position follows the normal sort order rather than the front of the list. Calling it with a `DialToolsetDto` SHALL upsert into `toolsets` the same way via `setToolsets` and `sortToolsets`. `mergeSharedItem` SHALL NOT issue any network request itself and SHALL NOT interact with `deploymentsRequestIdRef`/`toolsetsRequestIdRef` — it is a synchronous local-state write, independent of `refetchDeployments`/`refetchToolsets`.
 
 #### Scenario: Merging a new deployment item makes it immediately visible
 

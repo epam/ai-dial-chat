@@ -42,14 +42,13 @@ This is a client-side UI gate only; it does not replace server-side write-access
 
 ### Requirement: Standalone publish panel is a right-side slide-in, sized and animated like the catalog details panel
 
-`PublishConversationPanelContainer` SHALL render `StandalonePublishPanel` (`libs/publish-panel/src/components/PublishPanel/StandalonePublishPanel.tsx`), which owns the panel chrome: a right-side slide-in panel matching `libs/catalog`'s `DetailsPanel` dimensions and animation: full width on mobile, `desktop:w-[540px]` with `desktop:rounded-ts-xl desktop:rounded-bs-xl` on desktop, `fixed inset-y-0 end-0`, `translate-x-0`/`translate-x-full rtl:-translate-x-full` transform toggling on open/close, and a backdrop (`fixed inset-0`) that dismisses the panel on click. The panel root SHALL use `role="dialog"`, `aria-modal="true"`, and an `aria-label` the container supplies from i18n (`labels.ariaLabel` = `conversationPublish.panelAriaLabel`).
+`PublishConversationPanelContainer` SHALL render `StandalonePublishPanel` (`libs/publish-panel/src/components/PublishPanel/StandalonePublishPanel.tsx`), which renders the ui-kit 2.0 `SideDrawer` rather than hand-rolled chrome. The kit drawer supplies the panel geometry — `fixed inset-y-0 end-0`, full width on mobile, `desktop:w-[540px] desktop:rounded-s-xl desktop:border-s` on desktop, `translate-x-0`/`translate-x-full rtl:-translate-x-full` keyed on `open` — plus a backdrop overlay that dismisses on outside press, `role="dialog"`, `aria-modal="true"`, and the `aria-label` the container supplies from i18n (`labels.ariaLabel` = `conversationPublish.panelAriaLabel`). `StandalonePublishPanel` only overrides colours through its `--spp-*` SCSS module classes.
 
-Unlike the catalog publish sub-view (which is nested inside `DetailsPanel` and hides its Close button behind a Back-to-details affordance), this panel is standalone — there is no details view behind it. Its header SHALL render, left-to-right in LTR (logical order: flex spacer, then title, then close):
-1. A flex spacer (`flex-1`, no Back button — a Back control would have nothing to go "back" to)
-2. The title, passed as `labels.title` = `t(ButtonsI18nKeys.Publish)` ("Publish")
-3. The ui-kit 2.0 `CloseButton` (aria-label `labels.closeAriaLabel` = `ButtonsI18nKeys.Close`) that calls `onClose`
+Unlike the catalog publish sub-view (which is nested inside `DetailsPanel` and hides its Close button behind a Back-to-details affordance), this panel is standalone — there is no details view behind it, so no `onBack` is passed and the drawer renders no Back control. The header SHALL contain:
+1. The title, passed to `SideDrawer`'s `header` as a node (a centered, truncating `span` showing `labels.title` = `t(ButtonsI18nKeys.Publish)`, "Publish"), so the dialog keeps its name from `labels.ariaLabel`
+2. The drawer's built-in `CloseButton` (aria-label `labels.closeAriaLabel` = `ButtonsI18nKeys.Close`) that calls `onClose`
 
-`onClose` SHALL clear `pendingPublishConversation` in `ConversationPanelView`. While a publish request is in flight (`isSubmitting`), the `CloseButton` SHALL be disabled, matching `DetailsPanel`'s existing Back-button-disabled-while-submitting behavior for its publish sub-view.
+`onClose` SHALL clear `pendingPublishConversation` in `ConversationPanelView`. While a publish request is in flight (`isSubmitting`), the Close button SHALL be disabled via `SideDrawer`'s `closeDisabled={isSubmitting}`.
 
 #### Scenario: Panel header has Close but no Back
 - **WHEN** the conversation publish panel is open
@@ -66,7 +65,7 @@ Unlike the catalog publish sub-view (which is nested inside `DetailsPanel` and h
 
 ### Requirement: Cancel, Close, and Escape all dismiss the panel identically
 
-The pinned footer's "Cancel" button SHALL call the same `onClose` handler as the header's Close button (not a separate "go back" handler, since there is no intermediate view). Pressing Escape while the panel is open SHALL also call `onClose`, matching `DetailsPanel`'s existing Escape-to-close `keydown` listener pattern. All three dismissal paths SHALL clear `pendingPublishConversation` and reset any in-progress folder-selection/history state owned by the publish flow hook.
+The pinned footer's "Cancel" button SHALL call the same `onClose` handler as the header's Close button (not a separate "go back" handler, since there is no intermediate view). Pressing Escape while the panel is open SHALL also call `onClose`; Escape handling and the focus trap come from the kit `SideDrawer` (floating-ui `useDismiss`/`FloatingFocusManager`), not from a panel-owned `keydown` listener. All dismissal paths SHALL clear `pendingPublishConversation`; because `ConversationPanelView` renders the container only while `pendingPublishConversation !== null`, clearing it unmounts the container and discards the publish flow hook's folder-selection/rules/author state.
 
 #### Scenario: Cancel button dismisses the panel
 - **WHEN** the user clicks "Cancel" in the pinned footer
@@ -219,7 +218,7 @@ The panel root SHALL expose `role="dialog"`, `aria-modal="true"`, and `aria-labe
 
 ### Requirement: Publish panel wires the shared access-rules editor and includes rules in the publish request
 
-`PublishConversationPanelContainer` SHALL pass `usePublishFlow`'s `rules`/`setRules` into `StandalonePublishPanel`'s new `rules`/`onRulesChange` props, and SHALL pass `ruleSourceOptions` sourced from `useAppConfig().config.publicationFilterSources` (see the `config-registry-and-env-provider`/`client-config-endpoint` capabilities). The `onPublish` callback (`PublishConversationPanelContainer.tsx:76-78`) SHALL forward the `rules` argument now supplied by `usePublishFlow.handleSubmit` to `publishConversation`, which SHALL include it in the request body sent to `POST /api/v1/conversations/publish` (see `conversation-publish-api`).
+`PublishConversationPanelContainer` SHALL pass `usePublishFlow`'s `rules`/`setRules` into `StandalonePublishPanel`'s new `rules`/`onRulesChange` props, and SHALL pass `ruleSourceOptions` sourced from `useAppConfig().config.publicationFilterSources` (see the `config-registry-and-env-provider`/`client-config-endpoint` capabilities). The `onPublish` callback passed to `usePublishFlow` in `PublishConversationPanelContainer.tsx` SHALL forward the `rules` argument now supplied by `usePublishFlow.handleSubmit` to `publishConversation`, which SHALL include it in the request body sent to `POST /api/v1/conversations/publish` (see `conversation-publish-api`).
 
 #### Scenario: Rules entered in the panel reach the publish call
 - **GIVEN** the user has added one rule (`source: 'role'`, `function: 'CONTAIN'`, `targets: ['engineering']`) and selected a destination folder
@@ -289,8 +288,8 @@ Feature gating: none.
 #### Scenario: Author resets when the panel closes
 
 - **GIVEN** the user edited the author without submitting
-- **WHEN** the panel closes and `publishFlow.reset()` runs
-- **THEN** reopening the panel shows the signed-in user's display name again
+- **WHEN** the panel closes, clearing `pendingPublishConversation` and unmounting `PublishConversationPanelContainer`
+- **THEN** reopening the panel remounts it with fresh `usePublishFlow` state and shows the signed-in user's display name again
 
 #### Scenario: Unpublish request carries no author
 

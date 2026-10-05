@@ -33,6 +33,7 @@ import {
   mapCatalogProperties,
   mapDeploymentFeatures,
   mapToolsetAuthSettings,
+  redactApplicationFunctionEnv,
   redactToolsetAuthSettings,
   toAdditionalProperties,
 } from '../utils/deployment-mapper.util';
@@ -386,7 +387,7 @@ export class DeploymentsDetailsService {
     }
     const raw = result.data;
     this.logger.debug(
-      `DIAL Core application details for "${deployment}": ${JSON.stringify(raw)}`,
+      `DIAL Core application details for "${deployment}": ${JSON.stringify(redactApplicationFunctionEnv(raw))}`,
     );
     const rawRecord = raw as unknown as Record<string, unknown>;
 

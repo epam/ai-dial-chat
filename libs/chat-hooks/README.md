@@ -77,7 +77,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.22
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.24
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -3644,7 +3644,7 @@ const { handleLogin, handleLogout } = useCatalogToolsetCredentials({
 
 ### isValidSkillRelativePath / normalizeSkillName / buildSkillManifest / buildSkillManifestFromFrontmatter / parseSkillManifest / unpackSkillArchive
 
-Client-side skill-authoring helpers: validates a relative file path against the backend's naming rules (inline feedback only — the server stays authoritative), normalizes a skill name to the DIAL naming convention, builds/parses a `SKILL.md`'s YAML frontmatter plus instructions body, and unpacks a whole-skill ZIP archive.
+Client-side skill-authoring helpers: validates a relative file path against the backend's naming rules (inline feedback only — the server stays authoritative), normalizes a skill name to the DIAL naming convention, builds/parses a `SKILL.md`'s YAML frontmatter plus instructions body, and unpacks a whole-skill ZIP archive into its manifest text, its `files` map, and the `folders` its empty-folder markers stand for.
 
 ```ts
 import {
@@ -3714,7 +3714,7 @@ const attachment = skillFileToAttachment(fileTreeNode, {
 
 ### nameFromPath / skillFileBytesToBlob / buildSkillManifestForSubmit / buildSkillFilesPayload
 
-Small file-tree and submit-payload helpers shared by skill-editing UI: resolves a skill-relative path's display name (its final segment), wraps raw supporting-file bytes in a `Blob` (copying them so the source buffer can be reused) ahead of an upload request, builds `SKILL.md` for a create/edit submission (reassigning onto the loaded/imported frontmatter when one exists, otherwise building fresh), and builds the ordered `filePaths`/`files` payload `createSkill`/`updateSkill` expect from the editor's file tree and in-memory content map.
+Small file-tree and submit-payload helpers shared by skill-editing UI: resolves a skill-relative path's display name (its final segment), wraps raw supporting-file bytes in a `Blob` (copying them so the source buffer can be reused) ahead of an upload request, builds `SKILL.md` for a create/edit submission (reassigning onto the loaded/imported frontmatter when one exists, otherwise building fresh), and builds the ordered `filePaths`/`files` payload `createSkill`/`updateSkill` expect from the editor's file tree and in-memory content map. A folder node with no descendants is sent as a zero-byte `<folder>/.dial_folder` marker after the real files, so an empty folder survives the save.
 
 ```ts
 import {
@@ -3737,6 +3737,21 @@ const { filePaths, files } = buildSkillFilesPayload(
   fileTreeNodes,
   filesContent,
 );
+```
+
+### SKILL_FOLDER_MARKER / isSkillFolderMarkerPath / skillFolderMarkerParent
+
+The empty-folder marker name (`.dial_folder`, the same `HIDDEN_FILE` DIAL uses for empty folders elsewhere) and the helpers that recognise a marker path and resolve the folder it stands for. `buildSkillFilesPayload` writes markers, `unpackSkillArchive` and `useSkillEditorLoad` turn them back into folder nodes, `buildSkillContentTree` hides them, and `isValidSkillRelativePath` rejects the name for user input.
+
+```ts
+import {
+  isSkillFolderMarkerPath,
+  skillFolderMarkerParent,
+} from '@epam/ai-dial-chat-hooks';
+
+isSkillFolderMarkerPath('docs/.dial_folder'); // true
+isSkillFolderMarkerPath('.dial_folder'); // false — a root marker stands for no folder
+skillFolderMarkerParent('docs/.dial_folder'); // 'docs'
 ```
 
 ### useSkillEditorLoad
@@ -3844,7 +3859,7 @@ const {
 
 Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), creating empty folders, expanding `.zip` archives for staging, and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
 
-The returned `fileActions` also carries `onCreateFolder` (adds a folder node, ignoring an existing path), `validateFolderPath` (`messages.pathInvalid` for a path `isValidSkillRelativePath` rejects), and `extractArchive` (reads a `.zip` with `fflate`, skipping directory, `__MACOSX/` and `.DS_Store` entries; path and size limits apply afterwards through `validateBatch`). The optional `pickFromFileSystem` param is passed through unchanged as `fileActions.pickFromFileSystem` — the host owns the picker, buckets and downloads.
+The returned `fileActions` also carries `onCreateFolder` (adds a folder node, ignoring an existing path), `validateFolderPath` (`messages.pathInvalid` for a path `isValidSkillRelativePath` rejects), and `extractArchive` (reads a `.zip` with `fflate`, skipping directory, `__MACOSX/`, `.DS_Store` and `.dial_folder` marker entries; path and size limits apply afterwards through `validateBatch`). The optional `pickFromFileSystem` param is passed through unchanged as `fileActions.pickFromFileSystem` — the host owns the picker, buckets and downloads.
 
 ```ts
 import { useSkillFileActions } from '@epam/ai-dial-chat-hooks';

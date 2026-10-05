@@ -160,7 +160,7 @@ Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/cha
 - an `onRevokeShare` callback was supplied by the host, and
 - the item's `isMyApp` is `true`.
 
-The entry SHALL render after the owner-side Delete entry, use the label `texts.revokeShareLabel` (English default `'Revoke access'`), and use `IconUserOff` from `@tabler/icons-react` at `DIAL_ICON_SIZE.SM` with `aria-hidden`, visually distinguishing it from Delete's `IconTrash` while sharing Delete's `danger: true` treatment. Because the entry is gated on ownership and "Remove from My List" is gated on `sharedWithMe`, the two never render together.
+The entry SHALL render before the owner-side Delete entry (Delete is always the last Manage entry — see `catalog-details-confirmation-subview`), use the label `texts.revokeShareLabel` (English default `'Revoke access'`), and use `IconUserOff` from `@tabler/icons-react` at `DIAL_ICON_SIZE.SM` with `aria-hidden`, visually distinguishing it from Delete's `IconTrashX` while sharing Delete's `danger: true` treatment. Because the entry is gated on ownership and "Remove from My List" is gated on `sharedWithMe`, the two never render together.
 
 Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onRevokeShare` directly.
 
@@ -181,7 +181,7 @@ Resolving on menu open, rather than reading a value carried on the item, is what
 
 - **GIVEN** a catalog item with `isMyApp: true` and a host-supplied `onRevokeShare`
 - **WHEN** the details panel's Manage menu is opened
-- **THEN** the menu includes a "Revoke access" entry after the Delete entry, and no "Remove from My List" entry
+- **THEN** the menu includes a "Revoke access" entry immediately before the Delete entry, Delete is the last entry, and there is no "Remove from My List" entry
 
 #### Scenario: Shared-with-me item does not expose the action
 

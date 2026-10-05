@@ -640,11 +640,6 @@ const CatalogView: FC<Props> = ({
           folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
             query: '{query}',
           }),
-          historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
-          historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
-          historySharedCredentialsLabel: t(
-            CatalogI18nKeys.PublishHistorySharedCredentials,
-          ),
           credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
           credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),

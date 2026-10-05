@@ -133,7 +133,7 @@ Any part changing SHALL cancel the active scene and pending loads, and SHALL rel
 - Under reduced motion, only the poster SHALL be requested.
 - Repeated activations SHALL reuse cached immutable data and SHALL clone it before playback.
 
-**[Invariant]** Scenes already choose a static fallback under reduced motion and do not load the player (`libs/celebrations/src/hooks/useReducedMotion.ts`, `NewYearGiftWrapping.tsx:36,143-160`), verified by `libs/celebrations/src/new-year/components/NewYearGiftWrapping/tests/NewYearGiftWrapping.spec.tsx`.
+**[Invariant]** Scenes already choose a static fallback under reduced motion and do not load the player (`libs/celebrations/src/hooks/useReducedMotion.ts`; in `NewYearGiftWrapping.tsx`, `useLottieSceneSession({ enabled: !reduced && … })` keeps the player unloaded and the `stationary` branch renders the static fallback), verified by `libs/celebrations/src/new-year/components/NewYearGiftWrapping/tests/NewYearGiftWrapping.spec.tsx`.
 
 #### Scenario: Event shown but never clicked
 - **WHEN** the New Year decoration renders and the user never activates it
@@ -169,7 +169,7 @@ All failures SHALL leave ordinary chat usable. This extends the existing invaria
 - Pack resolution state (catalog, manifests, policy and the resolved descriptors) SHALL live in an app-owned hook used by `CelebrationHost`. It SHALL NOT live in a new React context unless S2 shows that more than one consumer needs it.
 - Playback state SHALL stay in `CelebrationProvider`.
 - The composed `events` registry, the labels object and the asset loaders SHALL be memoised (`useMemo` / `useCallback`) on their primitive inputs, so that a parent render does not change the provider's inputs.
-- Fetches SHALL use an `AbortController` and a cancelled flag, following `apps/chat/src/hooks/favicon/useFavicon.ts`.
+- Fetches SHALL use an `AbortController` and a cancelled flag.
 
 Telemetry is out of scope for S0. S8 (#9227) defines app-owned outcome diagnostics through narrow library callbacks.
 

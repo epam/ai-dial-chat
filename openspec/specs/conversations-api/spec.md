@@ -13,10 +13,12 @@ Request body (`CreateConversationDto`):
 ```
 {
   "firstMessage": "<string, @IsString, @MaxLength(50000)>",
-  "deploymentId": "<string, @IsString, @MinLength(1), @MaxLength(256), @Matches(/^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/)>",
+  "deploymentId": "<string, @IsString, @MinLength(1), @MaxLength(256), @Matches(DEPLOYMENT_ID_PATTERN)>",
   "custom_content"?: "<MessageCustomContentDto, optional>"
 }
 ```
+
+`DEPLOYMENT_ID_PATTERN` (`apps/chat-api/src/common/validators/deployment-id.pattern.ts`) is `/^(?:[\w.\-:@/()]|%[\dA-Fa-f]{2})+$/`: word characters, `.`, `-`, `:`, `@`, `/`, `(`, `)`, and valid `%XX` bytes.
 
 `firstMessage` may be an empty string when `custom_content` carries `attachments`, `form_value`, or `configuration_value`; at least one of `firstMessage` (non-empty) or a non-empty `custom_content` field MUST be present (enforced by `@IsMessageOrAttachmentsPresent`).
 
@@ -69,7 +71,7 @@ Error codes:
 
 #### Scenario: deploymentId with disallowed characters returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `deploymentId` containing characters outside `[\w.\-:@/]` or invalid percent-encoding (e.g. `"bad id!"`)
+- **WHEN** `POST /api/v1/conversations` is called with `deploymentId` containing characters outside `[\w.\-:@/()]` or invalid percent-encoding (e.g. `"bad id!"`)
 - **THEN** the response status is 400 with a validation error referencing `deploymentId`
 
 ---
@@ -92,7 +94,7 @@ The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shar
 
 ### Requirement: ConversationModule is registered in the root AppModule
 
-`ConversationModule` (`apps/chat-api/src/conversations/conversation.module.ts`) SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST import `UserConfigModule`, `ScheduledTaskUnreadModule`, `AppConfigModule`, and `DeploymentsModule`; declare `ConversationController` and `ConversationPublishController` in its `controllers` array; and provide the `ConversationService` facade plus `ConversationPersistenceService` (also bound to the `CONVERSATION_PERSISTENCE` token), `ConversationListingService`, `ConversationLifecycleService`, `ConversationStreamingService`, `ConversationNamingService`, `ConversationGenerationService`, `ConversationPublishService`, `ChatCompletionsAdapter`, and `ResponsesAdapter`.
+`ConversationModule` (`apps/chat-api/src/conversations/conversation.module.ts`) SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST import `UserConfigModule`, `ScheduledTaskUnreadModule`, `AppConfigModule`, and `DeploymentsModule`; declare `ConversationController` and `ConversationPublishController` in its `controllers` array; and provide the `ConversationService` facade plus `ConversationPersistenceService` (also bound to the `CONVERSATION_PERSISTENCE` token), `ConversationListingService`, `ConversationLifecycleService`, `ConversationStreamingService`, `ConversationNamingService`, `ConversationGenerationService`, `ConversationPublishService`, `ChatCompletionsAdapter`, `ResponsesAdapter`, `CoreResponsesClient`, and `BackgroundGenerationService`.
 
 #### Scenario: Module is wired into the app
 
@@ -116,14 +118,14 @@ path = "name"                       →  getConversation(sessionBucket, "name") 
 
 DIAL Core's sharing mechanism grants READ access to the resource at its original path using the requesting user's auth token, so no special headers or bucket substitution are needed for shared or public conversations.
 
-`resolveConversationLocation` in `apps/chat-api/src/conversations/utils/conversation.utils.ts` is the single implementation point for this routing logic, shared by `ConversationPersistenceService`, `ConversationLifecycleService`, and `ConversationStreamingService`. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
+`resolveConversationLocation` in `apps/chat-api/src/conversations/utils/conversation.utils.ts` is the single implementation point for this routing logic, called directly by `ConversationPersistenceService`, `ConversationStreamingService`, and `ShareInvitationService`; `ConversationListingService` reaches it through `ConversationPersistenceService.getStoredConversation`. `ConversationLifecycleService` does not use it (`duplicateConversation` splits the bucket off the source path inline, and create/delete use the session bucket), and `ConversationPublishService` deliberately reads from the session bucket only. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
 
 **Frontend behaviour.** `GET /api/v1/conversations?path=...`'s `path` query param MUST include the bucket — unlike `saveConversation`'s/`streamCompletion`'s `path` body field, which is bucket-stripped and operates on the user's own copy only. Callers MUST apply the normalization matching the target endpoint's contract:
 
 - For `saveConversation`, `streamCompletion`, `stopCompletion`, `deleteConversation`, `watchConversation`, `renameConversation`, `generateConversationTitle`, `duplicateConversation` (every endpoint whose contract is bucket-stripped): `getConversationPath(conversationId)` (`libs/chat-hooks/src/conversation/useConversationStream/conversation-path.ts`) strips the bucket prefix, then decodes the remainder with the shared `safeDecodeURI` (`libs/chat-hooks/src/shared/string-utils.ts` — try/catch, fall back to the original string on failure; `safeDecodeURIComponent` is an alias of it).
 - For every `getConversation` call site (`useConversationStream`'s post-stream/resume refresh, `ConversationsContext`'s `watchForDisplayNameUpdate`, and `useConversationExport`, which calls a host-supplied `normalizeConversationPath` callback that `ConversationPanelView` implements as `safeDecodeURIComponent(normalizeConversationId(id))`): call `safeDecodeURIComponent` directly on the **full** id (bucket included, no stripping), since `GET /api/v1/conversations` needs the bucket to resolve the correct DIAL Core bucket per the routing table above. There is no dedicated helper for this — a bare `safeDecodeURIComponent(conversationId)` is the whole normalization; introducing a same-signature wrapper (e.g. a `normalizeConversationIdEncoding`) around it would only rename the call with no behavior difference. The `Conversation` page's initial load passes the route's already-decoded wildcard param directly, since the router performs the equivalent single decode.
 
-**Why the decode step exists at all.** `POST /api/v1/conversations`'s `deploymentId` MUST be percent-encoded by the caller when it contains reserved characters (see the `DEPLOYMENT_ID_PATTERN` requirement above); the response `id` field is built by concatenating that (possibly percent-encoded) `deploymentId` directly with an otherwise-raw message-derived name and uuid, without decoding it first — so `conversation.id` can contain a percent-encoded fragment mixed with raw text. Every caller passes the normalized result into an API client that percent-encodes the whole value exactly once. Without the decode step, an already-encoded fragment gets double-encoded on the wire (e.g. `%20` → `%2520`) and DIAL Core rejects the request with 400 — this mirrors the backend's own `encodeDialResourcePath` (decode-then-encode) normalization used when persisting. Passing the bucket-**stripped** `getConversationPath` result to `getConversation` is an equally invalid variant of this bug: it 400s specifically for Quick App conversations, whose deployment-id segment (`applications/{bucket}/{appName}`) itself contains a slash, so DIAL Core resolves the wrong resource once the leading session-bucket segment is missing.
+**Why the decode step exists at all.** `POST /api/v1/conversations`'s `deploymentId` MUST be percent-encoded by the caller when it contains reserved characters (see `DEPLOYMENT_ID_PATTERN` in the `POST /api/v1/conversations` requirement); the response `id` field is built by concatenating that (possibly percent-encoded) `deploymentId` directly with an otherwise-raw message-derived name and uuid, without decoding it first — so `conversation.id` can contain a percent-encoded fragment mixed with raw text. Every caller passes the normalized result into an API client that percent-encodes the whole value exactly once. Without the decode step, an already-encoded fragment gets double-encoded on the wire (e.g. `%20` → `%2520`) and DIAL Core rejects the request with 400 — this mirrors the backend's own `encodeDialResourcePath` (decode-then-encode) normalization used when persisting. Passing the bucket-**stripped** `getConversationPath` result to `getConversation` is an equally invalid variant of this bug: it 400s specifically for Quick App conversations, whose deployment-id segment (`applications/{bucket}/{appName}`) itself contains a slash, so DIAL Core resolves the wrong resource once the leading session-bucket segment is missing.
 
 #### Scenario: getConversationPath decodes an already-percent-encoded deployment-id fragment
 
@@ -239,7 +241,7 @@ class ConversationListItemDto {
   sharedWithMe: boolean;    // True when the conversation was shared with the current user
   publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
   isPinned: boolean;        // True when the user has pinned this conversation
-  isReadonly: boolean;      // True when the caller does not have WRITE permission on this exact resource
+  isReadonly: boolean;      // User-bucket items: true when the caller lacks WRITE permission; public and shared items: always true
   isScheduledTask: boolean; // True when the resource path matches the .scheduler reserved-segment pattern
   scheduleId?: string;      // Present only when isScheduledTask === true; the scheduler task id from the path
   runId?: string;           // Present only when isScheduledTask === true; the scheduler run id from the path
@@ -252,7 +254,7 @@ class ConversationListResponseDto {
 }
 ```
 
-**Four-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
+**Five-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
 1. `getConversationMetadata(bucket, '', { recursive: true, limit, permissions: true, token: userCursor })` — user's own conversations
 2. `getConversationMetadata('public', '', { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
@@ -261,9 +263,9 @@ class ConversationListResponseDto {
 
 **Cursor following in complete-history mode.** The personal and public bucket walks are independent — each follows its own `nextToken` chain to exhaustion, so an empty intermediate page that still carries a cursor does not end that bucket's walk. Each bucket's walk keeps the set of cursors it has already requested; if DIAL Core returns a cursor that bucket has already followed, the service throws `BadGatewayException` rather than looping forever. In paged mode no cursor following happens: exactly one request per bucket is issued.
 
-Items from all three data sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
+Items from all three data sources are merged and sorted by `updatedAt` descending (a stable sort). `FOLDER` items are filtered out from bucket and shared results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`. Before the merge, shared items are pre-sorted by share date descending (the latest `acceptedAt` in `sharedBy`, 0 when absent), then by `name`, then by `url`, so their order among themselves is deterministic across reloads.
 
-**Ownership flags.** Items from the `'public'` bucket always have `publishedWithMe: true` forced, regardless of the DIAL Core flag value. Items from `getSharedResources` always have `sharedWithMe: true` forced. User-bucket items pass through the DIAL Core `sharedWithMe`/`publishedWithMe` flags unchanged.
+**Ownership flags.** Items from the `'public'` bucket always have `publishedWithMe: true` forced, regardless of the DIAL Core flag value. Items from `getSharedResources` always have `sharedWithMe: true` and `isReadonly: true` forced (public-bucket items are also always `isReadonly: true`). User-bucket items pass through the DIAL Core `sharedWithMe`/`publishedWithMe` flags unchanged.
 
 **No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status, unread status, and permissions are never affected by publishing.
 
@@ -297,6 +299,12 @@ Error codes:
 
 - **WHEN** the public bucket returns an item with `publishedWithMe` absent or `false`
 - **THEN** the response item SHALL have `publishedWithMe: true`
+
+#### Scenario: Shared items are ordered by share date and are read-only
+
+- **WHEN** `getSharedResources` returns two conversations, one accepted later than the other
+- **THEN** both items have `isReadonly: true` and `updatedAt: 0`
+- **AND** the more recently accepted share is listed before the other
 
 #### Scenario: Shared resource items always have sharedWithMe: true
 
@@ -432,7 +440,7 @@ class RenameConversationBodyDto {
 The service method `renameConversation(path, newTitle, at, bucket)` SHALL preserve the conversation identity — it MUST NOT change the storage path or filename, and MUST NOT call `client.moveResource`. It SHALL:
 1. Sanitise `newTitle` through `prepareEntityName` to strip disallowed characters and truncate to 255 UTF-8 bytes.
 2. Load the stored conversation body at the given `path` and `bucket` (404 if it does not exist).
-3. Persist the conversation at the **same** `path` with `name` set to the sanitised title and `llmNamingDone: true`, leaving all other fields (including the filename-derived id) unchanged.
+3. Persist the conversation at the **same** `path` with `name` set to the sanitised title and `llmNamingDone: true`, leaving all other fields (including the filename-derived id) unchanged. Steps 2-3 run through `updateConversationUnlessPending` (`apps/chat-api/src/conversations/generation/background-message.ts`): the write is an `If-Match` conditional update on the read version's ETag. When conflicts persist, the latest version is read once more; if it holds no pending background message it is saved unconditionally (last writer wins), otherwise the rename fails with 503 so it never overwrites a final background answer.
 4. Return `{ name: string }` — the sanitised stored display name.
 
 Because the path is unchanged, the rename flow MUST NOT perform pin migration (`migratePin`) and MUST NOT run a post-move display-name sync (`syncStoredDisplayNameAfterPathRename`); both existed only to compensate for the previous path change and are removed from this flow.
@@ -456,7 +464,7 @@ Error codes:
 - `401 Unauthorized` — missing or invalid bearer token
 - `404 Not Found` — source conversation does not exist in DIAL Core
 - `502 Bad Gateway` — DIAL Core returned an unexpected error
-- `503 Service Unavailable` — DIAL Core unreachable
+- `503 Service Unavailable` — DIAL Core unreachable, or the conversation kept changing while it holds a pending background answer
 
 #### Scenario: Valid request returns 200 with name and unchanged path
 
@@ -484,6 +492,12 @@ Error codes:
 
 - **WHEN** the conversation at `path` does not exist in DIAL Core
 - **THEN** the response status is 404
+
+#### Scenario: Rename conflicting with a pending background answer returns 503
+
+- **GIVEN** the stored conversation holds a pending background message and keeps changing between read and conditional write
+- **WHEN** `PATCH /api/v1/conversations?path=...` is called
+- **THEN** the response status is 503 and the stored conversation is not overwritten
 
 #### Scenario: Integration test covers PATCH 200 and 400 paths
 
@@ -521,9 +535,27 @@ The service SHALL always persist the conversation at `{deploymentId}__{baseName}
 
 ---
 
+### Requirement: PUT /api/v1/conversations saves client bodies without overwriting a pending background answer
+
+`PUT /api/v1/conversations` (`saveConversation` handler) SHALL call `ConversationService.saveClientConversation`, bound to `ConversationStreamingService.saveClientConversation`. That method MUST first try `BackgroundGenerationService.saveClientConversation`, which applies the client body to the latest stored version through `updateConversationUnlessPending` with `If-Match`: it keeps the stored LLM display name (`withStoredLlmDisplayName`), merges client messages with stored background messages (`mergeClientMessages`), and neutralizes every other pending background marker. When the stored version cannot be read, it resolves `null` and the streaming service falls back to `ConversationPersistenceService.saveConversation` with `neutralizeForeignPendingMessages` applied to the client messages (foreign pending markers become `failed`). When conflicts persist on a version that holds a pending background message, or a pending version was read without an `ETag`, the save fails with `503 Service Unavailable`.
+
+#### Scenario: Client save keeps a stored background message
+
+- **GIVEN** the stored conversation holds a pending background message written after the client loaded it
+- **WHEN** the client sends `PUT /api/v1/conversations?path=...` with its older body
+- **THEN** the body is saved with `If-Match` and the stored background message is kept
+
+#### Scenario: Client save cannot be applied safely
+
+- **GIVEN** the conversation keeps changing while it holds a pending background message
+- **WHEN** the client sends `PUT /api/v1/conversations?path=...`
+- **THEN** the response status is 503
+
+---
+
 ### Requirement: saveConversation may trigger backend-only LLM rename after first reply
 
-`ConversationPersistenceService.saveConversation` (invoked via the `ConversationService` facade) SHALL, after a successful DIAL Core persist, optionally invoke LLM conversation naming as defined in the [llm-conversation-naming spec](../llm-conversation-naming/spec.md).
+`ConversationPersistenceService.saveConversation` and its `If-Match` variant `saveConversationIfMatch` (both reached from `PUT /api/v1/conversations` through the save path above) SHALL, after a successful DIAL Core persist, optionally invoke LLM conversation naming as defined in the [llm-conversation-naming spec](../llm-conversation-naming/spec.md).
 
 The rename is fire-and-forget: the `saveConversation` response MUST return immediately with the conversation as saved, without waiting for the LLM or rename to complete.
 

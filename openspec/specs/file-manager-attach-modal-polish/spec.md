@@ -142,7 +142,7 @@ Feature flag: none.
 
 `FileManagerAttachModal` SHALL retain its fixed responsive height of `min(800px, 100dvh)` and sunken background. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
 
-In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners and a subtle shadow. It SHALL remove the file-manager content's bottom padding and apply grid padding through `contentClassName="pb-0"` and `gridClassName="size-full px-5 py-4"`. Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
+In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's bottom padding and apply grid padding through `contentClassName="pb-0"` and `gridClassName="size-full px-5 py-4"`. Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
 
 #### Scenario: Attach chrome and grid spacing
 

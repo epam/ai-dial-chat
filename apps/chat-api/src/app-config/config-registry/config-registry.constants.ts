@@ -93,7 +93,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: null,
     critical: false,
     description:
-      'Host application identifier sent to MCP App Views in hostContext.userAgent. Defaults to "ai-dial-chat" when MCP_APP_USER_AGENT is not configured.',
+      "Host application identifier sent to MCP App Views in hostContext.userAgent. When MCP_APP_USER_AGENT is not configured, the client falls back to the browser's navigator.userAgent.",
     owner: 'chat-team',
     envVar: 'MCP_APP_USER_AGENT',
   },

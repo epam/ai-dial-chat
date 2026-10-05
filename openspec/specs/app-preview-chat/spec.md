@@ -257,7 +257,11 @@ Selecting a starter with submit enabled SHALL create or append to the preview co
 
 `AppPreviewChat` never becomes the globally selected deployment in `DeploymentsContext`, so nothing there fetches per-entity details for it. `AppPreviewChat` SHALL therefore call `getDeploymentDetails(appId)` itself, directly, on mount and whenever `appId` changes — in parallel with (not sequenced after) `useDeployments().items` resolving the same app from the full deployments list. Its result SHALL be used only as an early source for `features.skillsSupported` (via `modelDetails.features` / `applicationDetails.features`), feeding the preview composer's `useSkillSelectorOverlay({ isSkillsSupported })`; a rejected or still-pending call SHALL NOT surface an error and SHALL leave that flag `false` until either it or the list resolves.
 
-Before either the deployments list or this direct fetch has resolved the app, `AppPreviewChat` SHALL render a centered `Spinner` in place of the pre-conversation composer, so the composer never renders with an unresolved skills-support flag that would otherwise flip a moment later. The spinner SHALL clear as soon as *either* source resolves the app (the list's `findDeploymentByIdOrReference` match, or the direct fetch settling) — whichever comes first — even if the other is still in flight or ultimately fails.
+Before either the deployments list or this direct fetch has resolved the app, `AppPreviewChat` SHALL render a centered `Spinner` in place of the pre-conversation composer, so the composer never renders with an unresolved skills-support flag that would otherwise flip a moment later. The spinner SHALL clear as soon as *either* source resolves the app (the list's `findDeploymentByIdOrReference` match, or the direct fetch resolving with details) — whichever comes first — even if the other is still in flight. The condition is `!appDeployment && !appDeploymentDetails && (isDeploymentsLoading || isAppDetailsLoading)`: a direct fetch that rejects or settles without a result does not clear the spinner on its own, so it stays up until the deployments list finishes loading (and clears once both sources have finished loading, even without a match).
+
+#### Scenario: Rejected direct fetch keeps the spinner until the list finishes
+- **WHEN** the direct `getDeploymentDetails(appId)` call rejects while the deployments list is still loading
+- **THEN** the spinner stays up until `isDeploymentsLoading` becomes `false`
 
 #### Scenario: Spinner shown before either source has resolved the app
 - **WHEN** `AppPreviewChat` mounts, `useDeployments().items` does not yet contain `appId`, and the direct `getDeploymentDetails(appId)` call has not yet settled
@@ -265,7 +269,7 @@ Before either the deployments list or this direct fetch has resolved the app, `A
 - **AND** no starter buttons, intro text, or skill-selector state are shown yet
 
 #### Scenario: Spinner clears as soon as either source resolves
-- **WHEN** the direct `getDeploymentDetails(appId)` call resolves (or, symmetrically, the deployments list resolves the app) while the other source is still pending
+- **WHEN** the direct `getDeploymentDetails(appId)` call resolves with details (or, symmetrically, the deployments list resolves the app) while the other source is still pending
 - **THEN** the spinner is replaced by the pre-conversation composer immediately, without waiting for the still-pending source
 - **AND** the still-pending source, once it settles, only refines features/starters behind the scenes and does not reintroduce the spinner
 

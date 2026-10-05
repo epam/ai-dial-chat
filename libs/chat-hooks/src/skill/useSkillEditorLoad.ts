@@ -15,9 +15,12 @@ import {
   stripTrailingSlashes,
 } from '../shared/string-utils';
 import {
+  isSkillFolderMarkerPath,
   nameFromPath,
   parseSkillManifest,
+  SKILL_FOLDER_MARKER,
   SKILL_MANIFEST_FILE,
+  skillFolderMarkerParent,
   unpackSkillArchive,
 } from './skill';
 import type { SkillFileContent } from './skill-file-preview';
@@ -59,6 +62,7 @@ interface LoadedSkill {
   etag: string;
   manifestText: string;
   files: Map<string, Uint8Array>;
+  folders: string[];
 }
 
 class InvalidSkillArchiveError extends Error {}
@@ -108,8 +112,10 @@ const loadSkillArchive = async (
 
   try {
     const buffer = await response.arrayBuffer();
-    const { manifestText, files } = unpackSkillArchive(new Uint8Array(buffer));
-    return { etag, manifestText, files };
+    const { manifestText, files, folders } = unpackSkillArchive(
+      new Uint8Array(buffer),
+    );
+    return { etag, manifestText, files, folders };
   } catch {
     throw new InvalidSkillArchiveError('Skill ZIP is invalid');
   }
@@ -137,15 +143,20 @@ const loadSkillFiles = async (
   const etag = manifestResponse.headers.get('etag') ?? manifestItem?.etag;
   if (!etag) throw new MissingSkillEtagError('Skill ETag is missing');
 
-  const fileItems = listing.items
+  const itemPaths = listing.items
     .filter((item) => item.nodeType === 'item')
-    .map((item) => ({ item, path: resolveSkillFilePath(item, skillPath) }))
+    .map((item) => resolveSkillFilePath(item, skillPath))
     .filter(
-      (entry): entry is { item: SkillMetadataItemDto; path: string } =>
-        entry.path != null && entry.path !== SKILL_MANIFEST_FILE,
+      (path): path is string => path != null && path !== SKILL_MANIFEST_FILE,
     );
+  const folders = itemPaths
+    .filter(isSkillFolderMarkerPath)
+    .map(skillFolderMarkerParent);
+  const filePaths = itemPaths.filter(
+    (path) => nameFromPath(path) !== SKILL_FOLDER_MARKER,
+  );
   const downloadedFiles = await Promise.all(
-    fileItems.map(async ({ path }) => {
+    filePaths.map(async (path) => {
       const response = await client.downloadSkillFile(bucket, skillPath, path);
       return [path, new Uint8Array(await response.arrayBuffer())] as const;
     }),
@@ -155,6 +166,7 @@ const loadSkillFiles = async (
     etag,
     manifestText: await manifestResponse.text(),
     files: new Map(downloadedFiles),
+    folders,
   };
 };
 
@@ -276,13 +288,21 @@ export const useSkillEditorLoad = ({
         filesContentRef.current = new Map(
           [...loadedSkill.files].map(([path, bytes]) => [path, { bytes }]),
         );
-        setFiles(
-          [...loadedSkill.files.keys()].map((path) => ({
+        const fileNodes: SkillFileTreeNode[] = [
+          ...loadedSkill.files.keys(),
+        ].map((path) => ({
+          path,
+          name: nameFromPath(path),
+          kind: SkillFileNodeKind.File,
+        }));
+        const folderNodes: SkillFileTreeNode[] = loadedSkill.folders
+          .filter((path) => !loadedSkill.files.has(path))
+          .map((path) => ({
             path,
             name: nameFromPath(path),
-            kind: SkillFileNodeKind.File,
-          })),
-        );
+            kind: SkillFileNodeKind.Folder,
+          }));
+        setFiles([...fileNodes, ...folderNodes]);
         setLoadedValues({
           name: typeof frontmatter.name === 'string' ? frontmatter.name : '',
           description:

@@ -1,4 +1,6 @@
+import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
 import { renderHook, waitFor } from '@testing-library/react';
+import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it, vi } from 'vitest';
 import type { SkillEditorLoadClient } from '../useSkillEditorLoad';
 import {
@@ -89,5 +91,70 @@ describe('useSkillEditorLoad — missing version tag', () => {
     );
     expect(result.current.loadedValues?.name).toBe('docs-helper');
     expect(result.current.etagRef.current).toBe('"manifest-file-etag"');
+  });
+});
+
+describe('useSkillEditorLoad — empty-folder markers', () => {
+  it('restores a marked folder from the archive without loading the marker', async () => {
+    const zipped = zipSync({
+      'SKILL.md': strToU8(MANIFEST),
+      'docs/.dial_folder': new Uint8Array(0),
+    });
+    const client: SkillEditorLoadClient = {
+      ...makeClient(),
+      downloadSkill: vi.fn().mockResolvedValue({
+        headers: { get: () => '"skill-etag"' },
+        arrayBuffer: () => Promise.resolve(zipped.buffer),
+      } as unknown as Response),
+    };
+    const { result } = renderLoad(client);
+
+    await waitFor(() =>
+      expect(result.current.loadState).toBe(SkillEditorLoadState.Loaded),
+    );
+    expect(result.current.files).toEqual([
+      { path: 'docs', name: 'docs', kind: SkillFileNodeKind.Folder },
+    ]);
+    expect(result.current.filesContentRef.current.size).toBe(0);
+  });
+
+  it('restores a marked folder from the listing without downloading the marker', async () => {
+    const client: SkillEditorLoadClient = {
+      downloadSkill: vi.fn().mockResolvedValue({
+        headers: { get: () => '"skill-etag"' },
+        arrayBuffer: () => Promise.reject(new Error('not a zip')),
+      } as unknown as Response),
+      downloadSkillFile: vi
+        .fn()
+        .mockResolvedValue(makeResponse(MANIFEST, '"manifest-file-etag"')),
+      listSkillFiles: vi.fn().mockResolvedValue({
+        items: [
+          {
+            name: 'SKILL.md',
+            nodeType: 'item',
+            parentPath: 'docs-helper/files',
+          },
+          {
+            name: '.dial_folder',
+            nodeType: 'item',
+            parentPath: 'docs-helper/files/docs',
+          },
+        ],
+      }),
+    };
+    const { result } = renderLoad(client);
+
+    await waitFor(() =>
+      expect(result.current.loadState).toBe(SkillEditorLoadState.Loaded),
+    );
+    expect(result.current.files).toEqual([
+      { path: 'docs', name: 'docs', kind: SkillFileNodeKind.Folder },
+    ]);
+    expect(client.downloadSkillFile).toHaveBeenCalledOnce();
+    expect(client.downloadSkillFile).toHaveBeenCalledWith(
+      'bucket-1',
+      'docs-helper',
+      'SKILL.md',
+    );
   });
 });

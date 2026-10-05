@@ -77,16 +77,19 @@ describe('useSkillFileActions', () => {
     expect(result.current.files).toEqual([existing]);
   });
 
-  it.each(['files', 'docs/.dial-folder', 'v'])(
-    'rejects the reserved folder path %j',
-    (path) => {
-      const { result } = renderActions();
+  it.each([
+    'files',
+    'docs/.dial-folder',
+    'v',
+    '.dial_folder',
+    'docs/.dial_folder',
+  ])('rejects the reserved folder path %j', (path) => {
+    const { result } = renderActions();
 
-      expect(result.current.fileActions.validateFolderPath?.(path)).toBe(
-        'invalid',
-      );
-    },
-  );
+    expect(result.current.fileActions.validateFolderPath?.(path)).toBe(
+      'invalid',
+    );
+  });
 
   it('accepts an ordinary nested folder path', () => {
     const { result } = renderActions();

@@ -831,6 +831,9 @@ describe('ConversationPanelView — delete-all header action', () => {
       variant: 'error',
       message: PARTIAL_ERROR,
     });
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 

@@ -822,6 +822,35 @@ describe('FilesBatchOperationsService', () => {
       data: { items, ...(nextToken != null ? { nextToken } : {}) },
     });
 
+    it('copies folder children one at a time, never in parallel', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata.mockResolvedValue(
+        makeFileMetadataPage(
+          ['a.pdf', 'b.pdf', 'c.pdf'].map((name) => ({
+            url: `files/user-files/reports/${name}`,
+            name,
+            nodeType: 'item',
+            contentLength: 1,
+          })),
+        ),
+      );
+      let inFlight = 0;
+      let maxInFlight = 0;
+      sdkClient.copyResource.mockImplementation(async () => {
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        inFlight -= 1;
+        return okCopy();
+      });
+
+      await service.copyFiles([folderItem()], 'token');
+
+      expect(sdkClient.copyResource).toHaveBeenCalledTimes(3);
+      expect(maxInFlight).toBe(1);
+    });
+
     it('copies all children including .dial_folder marker on success', async () => {
       const { service, sdkClient } = makeService();
 

@@ -1,16 +1,18 @@
 import { inferMimeTypeFromPath } from '@epam/ai-dial-chat-shared';
 import type { SkillFileSourceEntry } from '@epam/ai-dial-skill-editor';
 import { unzipSync } from 'fflate';
-import { nameFromPath } from './skill';
+import { nameFromPath, SKILL_FOLDER_MARKER } from './skill';
 
 /** Archive metadata written by macOS Finder, never part of a skill. */
 const MAC_METADATA_PREFIX = '__MACOSX/';
 const MAC_FOLDER_INFO_NAME = '.DS_Store';
 
+// An empty-folder marker is DIAL storage metadata, not a file to stage.
 const isSkippedEntry = (path: string): boolean =>
   path.endsWith('/') ||
   path.startsWith(MAC_METADATA_PREFIX) ||
-  nameFromPath(path) === MAC_FOLDER_INFO_NAME;
+  nameFromPath(path) === MAC_FOLDER_INFO_NAME ||
+  nameFromPath(path) === SKILL_FOLDER_MARKER;
 
 /*
  * `File.arrayBuffer()` is unavailable in some test environments (jsdom);

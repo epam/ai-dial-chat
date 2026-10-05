@@ -49,7 +49,7 @@ Peers:
 
 - `react` ^19.2.8
 - `@epam/ai-dial-ui-kit` ^0.15.0-dev.36
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.22 \*
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.24 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -591,12 +591,20 @@ import { InitialsAvatar } from '@epam/ai-dial-chat-shared';
 
 ### PanelEmptyState
 
-Generic empty-state placeholder used inside panels.
+Generic empty-state placeholder used inside panels. Without `icon` it shows the
+kit's default `NoDataContent` document mark; pass a decorative feature
+illustration to replace it.
 
 ```tsx
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import { IconClockHour3 } from '@tabler/icons-react';
 
 <PanelEmptyState label="No conversations" />;
+
+<PanelEmptyState
+  label="No scheduled tasks yet"
+  icon={<IconClockHour3 size={48} stroke={1} aria-hidden />}
+/>;
 ```
 
 ### ItemHeader

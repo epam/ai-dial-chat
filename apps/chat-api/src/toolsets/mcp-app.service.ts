@@ -24,6 +24,7 @@ import {
   MCP_SESSION_ID_HEADER,
 } from './constants/mcp-protocol';
 import { McpAppToolSummaryDto, McpDeploymentKindDto } from './dto/mcp-app.dto';
+import { McpAppRateLimitException } from './mcp-app-rate-limit.exception';
 
 /** Response headers DIAL Core's `mcp/resources` endpoint sets and this service forwards verbatim. */
 const FORWARDED_RESOURCE_HEADERS = [
@@ -177,6 +178,7 @@ export class McpAppService {
           );
 
         if (error != null) {
+          this.throwIfRateLimited(response);
           mapDialHttpStatus(
             response.status,
             `get mcp-app resource for toolset "${toolsetId}"`,
@@ -473,10 +475,21 @@ export class McpAppService {
         : await this.dialClient.client.postApplicationMcp(encodedId, init);
 
     if (error != null) {
+      this.throwIfRateLimited(response);
       mapDialHttpStatus(response.status, context, this.logger);
     }
 
     return { text: (data as unknown as string) ?? '', response };
+  }
+
+  /** Keeps DIAL Core's `Retry-After` on a 429 so the controller can forward it. */
+  private throwIfRateLimited(response: Response): void {
+    if (response.status !== 429) return;
+    const retryAfter = response.headers.get('retry-after');
+    this.logger.warn(
+      `DIAL Core rate-limited an MCP App request, retryAfter=${retryAfter ?? 'unspecified'}`,
+    );
+    throw new McpAppRateLimitException(retryAfter);
   }
 
   private async rpcRequest<T>(

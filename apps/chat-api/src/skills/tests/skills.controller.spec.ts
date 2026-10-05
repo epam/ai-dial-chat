@@ -510,6 +510,25 @@ describe('SkillsController (integration)', () => {
       );
     });
 
+    it('passes a zero-byte empty-folder marker part through to the service', async () => {
+      service.createSkill.mockResolvedValue({ etag: '"abc123"' });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/skills')
+        .field('bucket', 'my-bucket')
+        .field('path', 'team-a/docs-helper')
+        .field('skillManifest', 'manifest')
+        .field('filePaths', JSON.stringify(['docs/.dial_folder']))
+        .attach('files', Buffer.alloc(0), '.dial_folder')
+        .expect(201);
+
+      const files = service.createSkill.mock.calls[0][4] as {
+        buffer: Buffer;
+      }[];
+      expect(files).toHaveLength(1);
+      expect(files[0].buffer.length).toBe(0);
+    });
+
     /*
      * The controller here mocks SkillsService entirely, so this exercises
      * routing/status-code propagation only — the real path-safety/limit

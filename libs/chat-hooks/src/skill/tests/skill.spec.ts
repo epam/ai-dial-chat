@@ -1,12 +1,16 @@
+import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
 import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import {
+  buildSkillFilesPayload,
   buildSkillManifest,
   buildSkillManifestFromFrontmatter,
+  isSkillFolderMarkerPath,
   isValidSkillRelativePath,
   normalizeSkillName,
   parseSkillManifest,
+  skillFolderMarkerParent,
   startsWithFrontmatterBlock,
   unpackSkillArchive,
 } from '../skill';
@@ -42,6 +46,11 @@ describe('isValidSkillRelativePath', () => {
 
   it('rejects a reserved entry name anywhere in the path', () => {
     expect(isValidSkillRelativePath('a/.dial-resource/b')).toBe(false);
+  });
+
+  it('rejects the .dial_folder marker name anywhere in the path', () => {
+    expect(isValidSkillRelativePath('docs/.dial_folder')).toBe(false);
+    expect(isValidSkillRelativePath('.dial_folder/probe')).toBe(false);
   });
 
   it('rejects a reserved first segment', () => {
@@ -173,6 +182,21 @@ describe('unpackSkillArchive', () => {
     expect([...files.keys()]).toEqual(['agents/analyzer.md']);
   });
 
+  it('returns nested empty-folder markers as folders and drops a root marker', () => {
+    const zipped = zipSync({
+      'SKILL.md': strToU8('---\nname: x\ndescription: y\n---\n'),
+      'docs/.dial_folder': new Uint8Array(0),
+      'a/b/.dial_folder': new Uint8Array(0),
+      '.dial_folder': new Uint8Array(0),
+      'notes.md': strToU8('notes'),
+    });
+
+    const { files, folders } = unpackSkillArchive(new Uint8Array(zipped));
+
+    expect([...files.keys()]).toEqual(['notes.md']);
+    expect(folders).toEqual(['docs', 'a/b']);
+  });
+
   it('throws when there is no root SKILL.md entry', () => {
     const zipped = zipSync({ 'notes.md': strToU8('notes') });
 
@@ -190,6 +214,71 @@ describe('unpackSkillArchive', () => {
     const { manifestText } = unpackSkillArchive(new Uint8Array(zipped));
 
     expect(manifestText).toBe(manifest);
+  });
+});
+
+describe('isSkillFolderMarkerPath / skillFolderMarkerParent', () => {
+  it('recognises a nested marker and returns its folder', () => {
+    expect(isSkillFolderMarkerPath('docs/.dial_folder')).toBe(true);
+    expect(skillFolderMarkerParent('a/b/.dial_folder')).toBe('a/b');
+  });
+
+  it('does not treat a root-level or look-alike name as a marker', () => {
+    expect(isSkillFolderMarkerPath('.dial_folder')).toBe(false);
+    expect(isSkillFolderMarkerPath('docs/x.dial_folder')).toBe(false);
+    expect(isSkillFolderMarkerPath('docs/readme.md')).toBe(false);
+  });
+});
+
+describe('buildSkillFilesPayload', () => {
+  const file = (path: string) => ({
+    path,
+    name: path.split('/').pop() ?? path,
+    kind: SkillFileNodeKind.File,
+  });
+  const folder = (path: string) => ({
+    path,
+    name: path.split('/').pop() ?? path,
+    kind: SkillFileNodeKind.Folder,
+  });
+
+  it('appends a zero-byte marker after the files for an empty folder', () => {
+    const content = new Map([['a.md', { bytes: strToU8('a') }]]);
+
+    const { filePaths, files } = buildSkillFilesPayload(
+      [folder('docs'), file('a.md')],
+      content,
+    );
+
+    expect(filePaths).toEqual(['a.md', 'docs/.dial_folder']);
+    expect(files.map((blob) => blob.size)).toEqual([1, 0]);
+  });
+
+  it('marks only the deepest empty folder of a chain', () => {
+    const { filePaths } = buildSkillFilesPayload(
+      [folder('a'), folder('a/b')],
+      new Map(),
+    );
+
+    expect(filePaths).toEqual(['a/b/.dial_folder']);
+  });
+
+  it('adds no marker for a folder that has a file', () => {
+    const { filePaths } = buildSkillFilesPayload(
+      [folder('docs'), file('docs/readme.md')],
+      new Map(),
+    );
+
+    expect(filePaths).toEqual(['docs/readme.md']);
+  });
+
+  it('does not treat a sibling with a shared name prefix as a descendant', () => {
+    const { filePaths } = buildSkillFilesPayload(
+      [folder('doc'), file('docs/readme.md')],
+      new Map(),
+    );
+
+    expect(filePaths).toEqual(['docs/readme.md', 'doc/.dial_folder']);
   });
 });
 

@@ -36,7 +36,6 @@ const renderPanel = (
     <StandalonePublishPanel
       isOpen
       resource={{ title: 'Q3 planning notes' }}
-      history={[]}
       folderItems={[]}
       onSelectedFolderPathChange={vi.fn()}
       onCreateFolder={vi.fn()}

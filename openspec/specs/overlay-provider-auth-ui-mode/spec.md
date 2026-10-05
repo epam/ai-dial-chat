@@ -1,4 +1,4 @@
-# Spec: overlay-provider-auth-ui-mode
+# overlay-provider-auth-ui-mode Specification
 
 ## Purpose
 
@@ -8,9 +8,11 @@ Per-provider auth UI modes for the overlay and the provider-picker login gate th
 
 ### Requirement: `OverlayAuthUiMode` enum and `auth` option on `ChatOverlayOptions`
 
-`libs/chat-shared/src/types/overlay/overlay-protocol.ts` SHALL export a new string enum `OverlayAuthUiMode` with members `External = 'external'` and `SameWindow = 'sameWindow'`. `ChatOverlayOptions` SHALL gain an optional `auth` field of type `{ providerUiModes?: Record<string, OverlayAuthUiMode> }`. `SetOverlayOptionsPayload` SHALL gain an optional `authProviderUiModes` field of type `Record<string, string>` (opaque strings on the wire). Both new fields are optional; existing callers compile and behave identically when they are absent.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts` (published as `@epam/ai-dial-chat-overlay`, which the chat app imports `OverlayAuthUiMode` from) SHALL export a string enum `OverlayAuthUiMode` with members `External = 'external'` and `SameWindow = 'sameWindow'`. `ChatOverlayOptions` SHALL have an optional `auth` field of type `{ providerUiModes?: Record<string, OverlayAuthUiMode>; autoSignInProvider?: string }`. `SetOverlayOptionsPayload` SHALL have an optional `authProviderUiModes` field of type `Record<string, string>` (opaque strings on the wire) and an optional `authAutoSignInProvider?: string`. All of these fields are optional; existing callers compile and behave identically when they are absent.
 
-No imports may be added to `libs/chat-shared`; the file contains only enums and interfaces.
+`ChatOverlayOptions` also accepts a deprecated `signInOptions?: LegacySignInOptions` (`{ autoSignIn?, signInProvider?, signInInNewWindow? }`). `ChatOverlay` folds it into `auth` via `resolveOverlayAuth` (`libs/chat-overlay/src/lib/internal/legacy-sign-in.ts`): when `autoSignIn` is `true` and `signInProvider` is non-blank, and `auth.autoSignInProvider` is not set, the provider becomes `autoSignInProvider` and is added to `providerUiModes` as `SameWindow` (or `External` when `signInInNewWindow` is `true`); a mode the host already set for that provider in `auth.providerUiModes` wins.
+
+The protocol file has no imports; it contains only enums, interfaces, and type guards.
 
 FEATURE GATE: This capability is not gated behind `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES`. It is an overlay integration option.
 
@@ -35,6 +37,11 @@ RTL: not applicable to type definitions.
 
 - **WHEN** `SetOverlayOptionsPayload` is inspected
 - **THEN** the `authProviderUiModes` field is optional (`authProviderUiModes?: Record<string, string>`)
+
+#### Scenario: Legacy signInOptions are folded into auth
+
+- **WHEN** a host passes `signInOptions: { autoSignIn: true, signInProvider: 'keycloak' }` and no `auth.autoSignInProvider`
+- **THEN** `ChatOverlay` sends `authAutoSignInProvider: 'keycloak'` and `authProviderUiModes` containing `keycloak: 'sameWindow'`
 
 ---
 
@@ -89,10 +96,10 @@ Memoization: the `authProviderUiModes` value in the context must be referentiall
 
 A new hook `apps/chat/src/hooks/auth/useOverlayProviderLogin.ts` SHALL orchestrate the provider-aware overlay login flow. It SHALL:
 
-1. Fetch providers via `getProviders()` (from `apps/chat/src/server-api/auth.api.ts`) once on mount, using a cancellation flag in `useEffect` to prevent setState-on-unmount.
+1. Fetch providers via `getProviders()` (from `apps/chat/src/server-api/auth.api.ts`) once on mount, using a cancellation flag in `useEffect` to prevent setState-on-unmount — but only when provider-mode configuration is present (`hasProviderConfiguration`: `authProviderUiModes` is defined and has at least one key). Without it, no fetch is made and `providers` stays `null` with `isLoadingProviders` `false`.
 2. Read `authProviderUiModes` from `useOptionalOverlay()`.
 3. Resolve the mode for each provider: look up the provider ID in `authProviderUiModes`; if absent or if the mapped string does not equal `'sameWindow'`, use `External`.
-4. Expose: `providers: ProviderInfoDto[] | null`, `isLoadingProviders: boolean`, `hasProviderError: boolean`, `retryLoadProviders: () => void`, `openProviderLogin: (providerId: string) => void`, `openLogin: () => void`, `externalLoginStatus: OverlayExternalLoginStatus` (delegated from `useOverlayExternalLogin` when the resolved mode is `External`).
+4. Expose: `hasProviderConfiguration: boolean`, `providers: ProviderInfoDto[] | null`, `isLoadingProviders: boolean`, `hasProviderError: boolean`, `retryLoadProviders: () => void`, `openProviderLogin: (providerId: string) => void`, `openLogin: () => void`, `externalLoginStatus: OverlayExternalLoginStatus` (delegated from `useOverlayExternalLogin` when the resolved mode is `External`).
 5. `openProviderLogin(providerId)` SHALL:
    - Resolve the mode for that provider ID.
    - For `External`: call `openLogin()` from `useOverlayExternalLogin` logic with a BFF URL targeting that specific provider: `/api/v1/auth/login/${encodeURIComponent(providerId)}?callbackUrl=${encodeURIComponent(`${window.location.origin}/overlay-close`)}`. `window.open` MUST be called synchronously in the event handler, not after any `await`.
@@ -103,7 +110,7 @@ Provider IDs MUST be encoded with `encodeURIComponent` when embedded in URL path
 
 State ownership: `useOverlayProviderLogin` owns provider-fetch state. External attempt state is delegated to `useOverlayExternalLogin` (called unconditionally to respect React hook rules).
 
-Accessibility: the hook's exposed state drives `aria-busy` and `disabled` on the login gate container and buttons.
+Accessibility: the hook's exposed state drives `aria-busy` on the login gate container and `disabled` on the login buttons.
 
 i18n keys: see the UI requirement below.
 
@@ -111,9 +118,14 @@ RTL: not applicable to hook logic.
 
 #### Scenario: Providers are fetched on mount
 
-- **WHEN** `useOverlayProviderLogin` mounts
+- **WHEN** `useOverlayProviderLogin` mounts and `authProviderUiModes` has at least one entry
 - **THEN** it calls `getProviders()` once
 - **AND** `isLoadingProviders` is `true` during the fetch and `false` after
+
+#### Scenario: No provider configuration skips the fetch
+
+- **WHEN** `useOverlayProviderLogin` mounts and `authProviderUiModes` is `undefined` or empty
+- **THEN** `getProviders()` is not called, `hasProviderConfiguration` is `false`, and `isLoadingProviders` is `false`
 
 #### Scenario: Provider with sameWindow mode triggers iframe navigation
 
@@ -161,14 +173,16 @@ RTL: not applicable to hook logic.
 
 `apps/chat/src/components/OverlayLoginGate/OverlayLoginGate.tsx` SHALL call `useOverlayProviderLogin` instead of `useOverlayExternalLogin` directly.
 
-**Branch A — no provider-mode configuration** (context `authProviderUiModes` is `undefined` or empty AND no providers have been fetched in this session because the config-absent path skips the fetch): render the existing single "Log in" button. No provider picker UI is shown. Behavior is identical to the current implementation.
+The gate branches on the hook's `hasProviderConfiguration`.
+
+**Branch A — no provider-mode configuration** (`hasProviderConfiguration` is `false`: context `authProviderUiModes` is `undefined` or empty, so the hook skips the provider fetch): render the existing single "Log in" button. No provider picker UI is shown. Behavior is identical to the current implementation.
 
 **Branch B — provider-mode configuration present**: render a provider picker:
 
-- While `isLoadingProviders` is `true`: show loading text (i18n key `auth.overlayProviderPickerLoading`), disable the container, set `aria-busy="true"`.
+- While `isLoadingProviders` is `true`: show loading text (i18n key `auth.overlayProviderPickerLoading`) and set `aria-busy="true"` on the section; no provider buttons are rendered yet (the container itself is not disabled).
 - On error: show error text (i18n key `auth.overlayProvidersError`) and a retry button (label from `buttons.retry`). The retry button calls `retryLoadProviders()`.
 - Empty provider list: render the same single "Log in" button fallback as Branch A.
-- Populated provider list: render one button per provider. Each button shows the provider's `label` and an icon (`src` from `https://authjs.dev/img/providers/${providerId.replace(/[1-9]\d*$/, '')}.svg`, hidden on error, `aria-hidden="true"`). Each button's `onClick` calls `openProviderLogin(provider.id)` synchronously.
+- Populated provider list: render one button per provider. Each button shows the provider's `label` and an icon rendered by the shared `ProviderIcon` component (`apps/chat/src/components/ProviderIcon/ProviderIcon.tsx`; `src` from `getProviderIconUrl`: `https://authjs.dev/img/providers/${encodeURIComponent(providerId.replace(/[1-9]\d*$/, ''))}.svg`, empty `alt`, `aria-hidden="true"`, hidden on load error). Each button's `onClick` calls `openProviderLogin(provider.id)` synchronously.
 
 External attempt status feedback (blocked, taking-longer messages) from `externalLoginStatus` is displayed below the provider list, matching the existing logic in `OverlayLoginGate`.
 
@@ -191,11 +205,12 @@ RTL: all layout uses logical Tailwind spacing utilities (`ms-*`, `me-*`, `ps-*`,
 - **THEN** a single "Log in" button is rendered, not a provider list
 - **AND** no provider fetch is triggered
 
-#### Scenario: Loading state shows loading text and disables container
+#### Scenario: Loading state shows loading text and marks the section busy
 
 - **WHEN** `authProviderUiModes` has entries and providers are still loading
 - **THEN** loading text (`auth.overlayProviderPickerLoading`) is visible
 - **AND** the section has `aria-busy="true"`
+- **AND** no provider buttons are rendered
 
 #### Scenario: Error state shows alert and retry button
 
@@ -266,30 +281,32 @@ No token, session ID, cookie value, or credential SHALL appear in any `postMessa
 
 ### Requirement: Sandbox and integration examples
 
-The `libs/chat-overlay` sandbox (`libs/chat-overlay/sandbox/` or README) SHALL include an example demonstrating two providers with different modes:
+`libs/chat-overlay/README.md` SHALL include an example demonstrating two providers with different modes:
 
 ```ts
 const overlay = new ChatOverlay('#chat-root', {
   domain: 'https://chat.example.com',
   auth: {
     providerUiModes: {
-      'azure-ad': OverlayAuthUiMode.External,
-      'my-oidc': OverlayAuthUiMode.SameWindow,
+      entra: OverlayAuthUiMode.External,
+      keycloak: OverlayAuthUiMode.SameWindow,
     },
+    /* Optional: start this provider's login with no user interaction. */
+    autoSignInProvider: 'keycloak',
   },
 });
 ```
 
-The example MUST include a comment clarifying that `SameWindow` is explicit opt-in and that the host is responsible for verifying the provider's iframe compatibility before using it.
+The example MUST include a comment clarifying that `SameWindow` is explicit opt-in and that the host is responsible for verifying the provider's iframe compatibility before using it. There is no `libs/chat-overlay/sandbox/` directory; the interactive sandbox is the separate `apps/chat-overlay-sandbox` app, whose `AuthUiModeCase` (`apps/chat-overlay-sandbox/src/cases/AuthUiModeCase/AuthUiModeCase.tsx`) lets the tester edit `auth.providerUiModes` (defaults `keycloak` → `SameWindow`, `auth0` → `External`) and shows a `role="note"` stating that same-window login is an explicit opt-in and iframe compatibility must be verified.
 
 #### Scenario: Example compiles without error
 
-- **WHEN** the sandbox or README TypeScript example is type-checked
+- **WHEN** the README TypeScript example is type-checked
 - **THEN** it produces no TypeScript errors
 
 #### Scenario: Example comment states iframe compatibility is not guaranteed
 
-- **WHEN** the sandbox or README example is inspected
+- **WHEN** the README example is inspected
 - **THEN** it contains a comment explaining that SameWindow requires the host to verify iframe compatibility for the configured provider
 
 ---

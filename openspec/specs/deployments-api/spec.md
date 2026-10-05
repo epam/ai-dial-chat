@@ -381,7 +381,7 @@ Running `npm run openapi` SHALL produce a `DeploymentsApi` class in `@epam/ai-di
 
 - Successful mapping of `ModelOpenAi`, `ApplicationOpenAi`, `ToolsetOpenAi` entries to `DeploymentItemDto[]`, excluding toolsets
 - Items without `id` are skipped
-- `displayName` falls back to `id` when `display_name` is absent
+- `displayName` falls back to `getResourceDisplayNameFallback(id)` (the trimmed last `/` segment of `id`) when `display_name` is absent
 - Quick Apps `application_properties.conversation_starters` is mapped to `conversationStarters`
 - Cache hit — returns cached value without calling DIAL Core
 - `interface_type` filter applied after cache hit — correct item count returned

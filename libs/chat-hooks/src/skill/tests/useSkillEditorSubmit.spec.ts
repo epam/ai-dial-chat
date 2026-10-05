@@ -1,4 +1,7 @@
-import type { SkillEditorValues } from '@epam/ai-dial-skill-editor';
+import {
+  SkillFileNodeKind,
+  type SkillEditorValues,
+} from '@epam/ai-dial-skill-editor';
 import { act, renderHook } from '@testing-library/react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -318,5 +321,25 @@ describe('useSkillEditorSubmit retryable failures', () => {
     });
 
     expect(client.createSkill).not.toHaveBeenCalled();
+  });
+});
+
+describe('useSkillEditorSubmit empty folders', () => {
+  it('sends an empty folder as a zero-byte marker on an edit save', async () => {
+    const { client, params } = makeHarness(true);
+    params.files = [
+      { path: 'docs', name: 'docs', kind: SkillFileNodeKind.Folder },
+    ];
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+
+    expect(client.updateSkill).toHaveBeenCalledOnce();
+    const [, , , filePaths, blobs] = vi.mocked(client.updateSkill).mock
+      .calls[0];
+    expect(filePaths).toEqual(['docs/.dial_folder']);
+    expect(blobs.map((blob) => blob.size)).toEqual([0]);
   });
 });

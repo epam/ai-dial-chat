@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { OverlayFeature } from '../../protocol';
+import { OverlayAuthUiMode, OverlayFeature } from '../../protocol';
 import { ChatOverlay } from '../ChatOverlay';
 import { ChatOverlayManager } from '../ChatOverlayManager';
 
@@ -223,6 +223,24 @@ describe('ChatOverlayManager', () => {
     expect(setOverlayOptionsSpy).toHaveBeenCalledWith({
       enabledFeatures: ['header'],
     });
+
+    setOverlayOptionsSpy.mockRestore();
+  });
+
+  it('forwards auth through setOverlayOptions to the underlying ChatOverlay instance', () => {
+    manager = new ChatOverlayManager();
+    manager.createOverlay({ overlayId: 'test', domain: DOMAIN });
+
+    const setOverlayOptionsSpy = vi
+      .spyOn(ChatOverlay.prototype, 'setOverlayOptions')
+      .mockResolvedValue({ applied: true });
+    const auth = {
+      providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+    };
+
+    void manager.setOverlayOptions('test', { auth });
+
+    expect(setOverlayOptionsSpy).toHaveBeenCalledWith({ auth });
 
     setOverlayOptionsSpy.mockRestore();
   });

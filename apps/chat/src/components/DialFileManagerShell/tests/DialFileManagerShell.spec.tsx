@@ -24,6 +24,7 @@ interface CapturedActionLabels {
 interface CapturedTreeOptions extends CapturedActionLabels {
   activeTab?: DialFileManagerTabs;
   header?: string;
+  containerClassName?: string;
   loadedPaths?: Set<string>;
   loadingPaths?: Set<string>;
 }
@@ -872,6 +873,23 @@ describe('DialFileManagerShell', () => {
           ?.uploadArchive,
       ).toBeUndefined();
     });
+  });
+
+  /*
+   * The attach container replaces the package's default panel class, so it
+   * must carry the fixed width itself or long folder names widen the panel.
+   */
+  it('keeps the attach-mode folders panel at a fixed, non-shrinking width', () => {
+    renderShell({}, new Set(), {
+      activeTab: DialFileManagerTabs.MyFiles,
+      variant: DialFileManagerVariant.Attach,
+      actionProfile: DialFileManagerActionProfile.Attach,
+    });
+    const classes =
+      capturedDialFileManagerProps.current?.treeOptions?.containerClassName?.split(
+        ' ',
+      );
+    expect(classes).toEqual(expect.arrayContaining(['w-[360px]', 'shrink-0']));
   });
 
   describe('search placeholder', () => {

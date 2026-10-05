@@ -101,7 +101,7 @@ export class ClientConfigDto {
 
   @ApiPropertyOptional({
     description:
-      'Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to "ai-dial-chat" on the client.',
+      "Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — the client then falls back to the browser's navigator.userAgent.",
     type: String,
     nullable: true,
   })

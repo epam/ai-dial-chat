@@ -4,8 +4,8 @@
 
 Publishing a catalog entity: folder-tree destination picking, inline folder creation, access rules, and submission against real backend data.
 ## Requirements
-### Requirement: Folder selection uses the ui-kit folder tree
-The catalog publish panel SHALL present the destination-folder picker using ui-kit's `DialFoldersTree` component (`showFiles={false}`, with the per-row "Add child"/"Add sibling" context menu described below) rendered inside the shared `PublishFoldersTree` wrapper (exported from `@epam/ai-dial-publish-panel`), instead of the bespoke `PublishFolderPicker` tree. Selection SHALL remain single-folder: selecting a new folder replaces the prior selection.
+### Requirement: Folder selection uses the file-manager folder tree
+The catalog publish panel SHALL present the destination-folder picker using the `DialFoldersTree` component from `@epam/ai-dial-react-file-manager` (a peer dependency of `libs/publish-panel`) (`showFiles={false}`, with the per-row "Add child"/"Add sibling" context menu described below) rendered inside the shared `PublishFoldersTree` wrapper (exported from `@epam/ai-dial-publish-panel`), instead of the bespoke `PublishFolderPicker` tree. Selection SHALL remain single-folder: selecting a new folder replaces the prior selection.
 
 State ownership: `@epam/ai-dial-publish-panel`'s `usePublishFlow` hook (relocated from `libs/catalog/src/utils/use-publish-flow.ts`, now published as part of the shared publish-panel library) owns `selectedFolderPath`; `usePublishFolders` in `libs/chat-hooks/src/catalog/usePublishFolders/usePublishFolders.ts` (exported from `@epam/ai-dial-chat-hooks`) owns the folder-tree data and logic (`folderItems`, `expandedPaths`, `loadingPaths`, `loadedPaths`, lazy loading, local folder creation, remembered destinations) and is memoised with `useMemo`/`useCallback` so `PublishPanel` does not re-render on every host render. The app-level `apps/chat/src/hooks/publish/usePublishFolders.ts` is a thin wrapper that supplies `listPublicFiles` and persists remembered destinations in `localStorage` under `StorageKey.PublishDestinationFolders`.
 
@@ -63,7 +63,7 @@ i18n keys: `CatalogI18nKeys.PublishFolderSearchPlaceholder`, `CatalogI18nKeys.Pu
 - **WHEN** the user confirms a new folder name
 - **THEN** the folder is rendered in its name-ordered position among its siblings, not appended to the end of the list
 
-### Requirement: Inline folder creation via the ui-kit tree
+### Requirement: Inline folder creation via the file-manager tree
 Creating a new folder SHALL use `DialFoldersTree`'s built-in inline create-folder row (`onCreateFolderSave`, `onCreateFolderCancel`, `createdFolderPath`) instead of the bespoke picker's custom create row. `PublishFoldersTree` SHALL pass the target parent folder path through `createdFolderPath` and SHALL NOT insert a synthetic new-folder node into `items`; `DialFoldersTree` owns the temporary editable row beneath that parent. On save, the app-level `onCreatePublishFolder` callback SHALL be invoked with the parent path and new folder name; the new folder SHALL be merged into the in-memory tree and auto-selected immediately.
 
 `onCreatePublishFolder` (`usePublishFolders` in `libs/chat-hooks`, surfaced to the app through `apps/chat/src/hooks/publish/usePublishFolders.ts`) SHALL NOT call the backend folder-creation endpoint. The folder exists only in the client-side tree until the user actually submits Publish, at which point the real publish request writes to the nested `folderPath`; DIAL Core storage creates any missing path segments implicitly, the same way writing a file to a new prefix does. This avoids leaving an orphaned empty folder on the backend when the user picks a new-folder name and then cancels or navigates away without publishing — unlike `useDialFileManager`'s "New folder" action (File Manager), which does create a real, immediately-persisted folder resource, since that flow's whole purpose is managing folders as first-class content.
@@ -90,7 +90,7 @@ Publishing creates a DIAL Core publication *request*, so a destination folder pi
 - **THEN** the destination is not remembered
 
 ### Requirement: Per-row "Add sibling" / "Add child" folder creation
-In addition to the trailing "Create new folder" button, `PublishFoldersTree` SHALL expose a per-row context menu (`DialFoldersTree`'s `getContextMenuItems` prop) with two actions: "Add child" (creates the new folder inside the clicked folder) and "Add sibling" (creates the new folder as a sibling of the clicked folder, one level up). This mirrors the file manager's own "Add sibling"/"Add child" folder-creation actions (`useFolderCreation`'s `startTreeSiblingFolderCreation`/`startTreeChildFolderCreation` internal to `@epam/ai-dial-ui-kit`'s `FileManager`, not exported from the package) — reimplemented against the tree's public context-menu API rather than importing the internal hook. "Add sibling" SHALL be omitted for the root node, which has no parent to create a sibling under. Both actions resolve a unique default name and validate exactly like the trailing button (see the two requirements above) — there is no separate code path.
+In addition to the trailing "Create new folder" button, `PublishFoldersTree` SHALL expose a per-row context menu (`DialFoldersTree`'s `getContextMenuItems` prop) with two actions: "Add child" (creates the new folder inside the clicked folder) and "Add sibling" (creates the new folder as a sibling of the clicked folder, one level up). This mirrors the file manager's own "Add sibling"/"Add child" folder-creation actions (`useFolderCreation`'s `startTreeSiblingFolderCreation`/`startTreeChildFolderCreation` internal to `@epam/ai-dial-react-file-manager`'s `FileManager`, not exported from the package) — reimplemented against the tree's public context-menu API rather than importing the internal hook. "Add sibling" SHALL be omitted for the root node, which has no parent to create a sibling under. Both actions resolve a unique default name and validate exactly like the trailing button (see the two requirements above) — there is no separate code path.
 
 #### Scenario: User adds a child folder via the context menu
 - **WHEN** the user opens the context menu on a folder row and selects "Add child"
@@ -105,7 +105,7 @@ In addition to the trailing "Create new folder" button, `PublishFoldersTree` SHA
 - **THEN** only "Add child" is offered — "Add sibling" is not, since the root has no parent
 
 ### Requirement: Inline folder creation validates the name client-side
-Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the confirmed name via `validateFolderName` (exported from `@epam/ai-dial-publish-panel`, relocated from `libs/catalog/src/utils/publish-folder-tree.ts`) and reject: an empty (post-trim) name, a name containing `..` or any of the forbidden characters `/ \ : ; , = { } &  "`, and a name duplicating a sibling folder (case-insensitive). This mirrors the backend's `IsValidFilePath` path-traversal rule so an invalid destination is rejected in the UI instead of only failing the network request. The same validator SHALL be wired as `DialFoldersTree`'s `onRenameValidate` prop, which the ui-kit also invokes for the create-folder row, so the input shows an inline error and blocks Save while invalid.
+Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the confirmed name via `validateFolderName` (exported from `@epam/ai-dial-publish-panel`, relocated from `libs/catalog/src/utils/publish-folder-tree.ts`) and reject: an empty (post-trim) name, a name containing `..` or any of the forbidden characters `/ \ : ; , = { } &  "`, and a name duplicating a sibling folder (case-insensitive). This mirrors the backend's `IsValidFilePath` path-traversal rule so an invalid destination is rejected in the UI instead of only failing the network request. The same validator SHALL be wired as `DialFoldersTree`'s `onRenameValidate` prop, which the file-manager tree also invokes for the create-folder row, so the input shows an inline error and blocks Save while invalid.
 
 #### Scenario: User enters a path-traversal or forbidden-character folder name
 - **WHEN** the user types `../EscapeFolder` (or any name containing `..` or a forbidden character) into the inline create row and confirms
@@ -140,17 +140,17 @@ The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) whe
 
 The fetch is load-bearing beyond the publish panel: it is the only source of the folder list the Unpublish action needs, and it is what makes that action visible at all (see `catalog-unpublish-flow`). While it returned a frozen `[]`, `Unpublish` could never appear for any catalog entity.
 
-Loading/empty/error states: while history is loading, `PublishHistoryList` SHALL show a loading state; on fetch failure it SHALL show an inline error state distinct from the empty-history state. Both states are reachable again once the fetch is restored.
+The publish sub-view SHALL NOT render a versions-history list: `PublishPanel` has no history section and takes no history props, so the fetched history is consumed by `usePublishFlow` (existing-publication detection) and by the Unpublish action. `PublishHistoryList` remains exported from `@epam/ai-dial-publish-panel` for custom layouts and is not rendered by the app.
 
 Submit success: `CatalogView`'s `onPublishSuccess` SHALL raise its notification through `useOperationNotification` (see `entity-operation-notifications`) with the item's resolved `NotifiableEntity` and `EntityOperation.PublishRequested`, passing the entity name and the selected destination folder. The copy SHALL state that a publish request was submitted and appears once an admin approves it — the endpoint creates an admin-pending DIAL Core publication, exactly as the conversation publish flow already reports. The previous `CatalogI18nKeys.PublishSuccess*` pair (`"Published"` / `"\"{{name}}\" published to {{folder}}"`) SHALL be deleted, since it claimed an outcome the backend does not deliver.
 
 Submit failure: `CatalogView` SHALL supply an `onPublishError` handler, threaded down as `CatalogProps.onPublishError` → `DetailsPanelProps.onPublishError` → `usePublishFlow` the same way `onPublishSuccess` already is, so a rejected publish produces an error notification in addition to the inline submit-error callout ([GitHub issue #7898](https://github.com/epam/ai-dial-chat/issues/7898)). It SHALL reuse the same shared `usePublishErrorNotification` hook and shared `publish.*` i18n namespace as the conversation publish flow (see `conversation-publish-flow`), including the offline branch that swaps in `publish.networkErrorMessage` and omits `requestId`. `CatalogView` SHALL also pass the translated `publishLabels.submitError` (`publish.submitErrorCallout`), so the callout no longer renders the publish-panel library's hardcoded English default.
 
-Accessibility: the publish history list SHALL expose `role="list"`/`role="listitem"` semantics (or equivalent list semantics already implemented) so screen readers announce entry count; the submit-error callout SHALL use `role="alert"`.
+Accessibility: the submit-error callout SHALL use `role="alert"`.
 
 #### Scenario: Publish succeeds
 - **WHEN** the user submits a publish request and the backend returns success
-- **THEN** `onPublishSuccess` fires, a success notification titled `"<Entity> publish requested"` is shown through `useOperationNotification`, its body names the entity and destination folder and states an admin must approve it, and the publish history list refreshes to include the new entry
+- **THEN** `onPublishSuccess` fires, a success notification titled `"<Entity> publish requested"` is shown through `useOperationNotification`, and its body names the entity and destination folder and states an admin must approve it
 
 #### Scenario: Publish notification names the entity kind
 - **WHEN** a toolset is published and, separately, a prompt is published
@@ -166,11 +166,15 @@ Accessibility: the publish history list SHALL expose `role="list"`/`role="listit
 
 #### Scenario: History is fetched from the endpoint, not stubbed
 - **WHEN** the publish sub-view or the Manage menu triggers a history lookup for an entity
-- **THEN** `getCatalogPublishHistory` is called for that entity and its mapped entries populate `PublishHistoryList`, with no code path resolving to a hardcoded empty array
+- **THEN** `getCatalogPublishHistory` is called for that entity and its mapped entries are returned to the catalog, with no code path resolving to a hardcoded empty array
+
+#### Scenario: The publish sub-view shows no versions history
+- **WHEN** the user opens the publish sub-view and selects a destination folder
+- **THEN** no versions-history list is rendered, whatever `history` contains
 
 #### Scenario: Publish history fails to load
 - **WHEN** `getPublishHistory` rejects
-- **THEN** `PublishHistoryList` renders an inline error state instead of an empty-history message, and the `Unpublish` menu entry stays hidden (see `catalog-unpublish-flow`)
+- **THEN** the `Unpublish` menu entry stays hidden (see `catalog-unpublish-flow`)
 
 ### Requirement: Catalog entity summary is supplied to the shared publish panel as resource metadata
 `DetailsPanel` SHALL supply the publish summary to the shared `PublishPanel` (from `@epam/ai-dial-publish-panel`) as the `resource` prop — `{ title: item.name, version: item.version, type: item.type, iconUrl: item.iconUrl }` — plus the version-tag colors through `styles.colors` (`summaryVersionTagBorder`/`summaryVersionTagBackground`/`summaryVersionTagText`, from `detailsColors`), rather than passing a `CatalogItem` or a `renderSummary` slot. `DetailsPanel` SHALL remain the only place in `libs/catalog` that maps a `CatalogItem` to that summary; `PublishPanel` SHALL NOT receive a `CatalogItem`. Because `resource.type` is set, `PublishPanel` builds the entity-header row itself (`ResourceSummary` with type, name, version and icon) and ignores any `renderSummary`, which only replaces the title-only row used when `resource.type` is absent.
@@ -378,23 +382,21 @@ The eligibility decision SHALL be made inside `libs/catalog` from `item.credenti
 - **WHEN** the publisher selects that folder
 - **THEN** the checkbox stays cleared
 
-### Requirement: Catalog publish history shows which publications carried shared credentials
+### Requirement: Catalog publish history records which publications carried shared credentials
 
-`getPublishHistory` (`useCatalogPublishing`) SHALL map the endpoint's `publishCredentials` field onto `PublishHistoryEntry` via `mapPublishHistoryEntryDto`, and `CatalogView` SHALL pass a translated `historySharedCredentialsLabel` through `publishLabels`, which `PublishPanel` forwards to `PublishHistoryList` as `sharedCredentialsLabel` so it marks those entries (see `publish-panel-library`). The i18n key SHALL be `catalog.publish.historySharedCredentials`, registered on `CatalogI18nKeys` and added to `apps/chat/src/i18n/locales/en.json`.
+`getPublishHistory` (`useCatalogPublishing`) SHALL map the endpoint's `publishCredentials` field onto `PublishHistoryEntry` via `mapPublishHistoryEntryDto`. The app renders no history list, so no marker is shown; `PublishHistoryList` renders it through its `sharedCredentialsLabel` prop in a custom layout (see `publish-panel-library`).
 
-The synthesised single-entry history a public copy's own id produces (`isPublicCatalogEntityId`) SHALL leave `publishCredentials` unset, since that path never calls the endpoint and has no publication record to read it from. Absent reads as `false`, so the marker simply does not appear.
-
-This requirement delivers the data path and the rendering; it SHALL NOT re-enable the publish-history section that `PublishPanel` currently keeps behind a `TODO`, which is separate scope. The marker becomes visible when that section is re-enabled.
+The synthesised single-entry history a public copy's own id produces (`isPublicCatalogEntityId`) SHALL leave `publishCredentials` unset, since that path never calls the endpoint and has no publication record to read it from. Absent reads as `false`.
 
 #### Scenario: A publication made with shared credentials is marked in history
 
 - **WHEN** the history endpoint reports an entry with `publishCredentials: true`
-- **THEN** `mapPublishHistoryEntryDto` carries it onto the `PublishHistoryEntry`, and `PublishHistoryList` renders that row with the shared-credentials label
+- **THEN** `mapPublishHistoryEntryDto` carries it onto the `PublishHistoryEntry` as `true`
 
 #### Scenario: A publication made without shared credentials is unmarked
 
 - **WHEN** the history endpoint reports an entry with `publishCredentials: false`
-- **THEN** the mapped entry is `false` and the row carries no marker
+- **THEN** the mapped entry is `false`
 
 #### Scenario: A public copy's synthesised history entry carries no flag
 

@@ -11,7 +11,7 @@ Lets a user who received shared access to a catalog application, toolset, skill,
 - the item's `isMyApp` is not `true`, and
 - the item's `sharedWithMe` is `true`.
 
-`isMyApp` and `sharedWithMe` are mutually exclusive for a given item, so the owner-side Delete entry and this entry never render together. The entry's label SHALL come from `texts.unshareLabel` (default `'Remove from My List'`) and its icon SHALL be `IconTrash`, matching the Delete entry's icon treatment. Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onUnshare` directly.
+`isMyApp` and `sharedWithMe` are mutually exclusive for a given item, so the owner-side Delete entry and this entry never render together. The entry's label SHALL come from `texts.unshareLabel` (default `'Remove from My List'`) and its icon SHALL be `IconTrashX`, matching the Delete entry's icon treatment. Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onUnshare` directly.
 
 `DetailsPanel` SHALL own the confirmation step and present it as an in-place sub-view — see the `catalog-details-confirmation-subview` capability for the shared mechanics. While the awaited `onUnshare` is pending the confirm button SHALL show a loading state and reject duplicate submissions. On success the whole details panel closes; on rejection the panel returns to its details content and stays open, leaving failure feedback to the host. The sub-view SHALL also close when the displayed item changes.
 

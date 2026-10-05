@@ -4,7 +4,6 @@ import { FC, ReactNode, RefObject, useEffect, useMemo, useState } from 'react';
 import {
   PublicationRule,
   PublishFolderNode,
-  PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
@@ -38,12 +37,6 @@ export interface StandalonePublishPanelProps {
    * See `PublishPanel`'s `renderSummary` prop.
    */
   renderSummary?: () => ReactNode;
-  /** Previously published entries for this item. */
-  history: PublishHistoryEntry[];
-  /** Whether `history` is currently being fetched. Default: `false`. */
-  isHistoryLoading?: boolean;
-  /** Whether the most recent history fetch failed. Default: `false`. */
-  hasHistoryError?: boolean;
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /** Currently selected destination folder path. `undefined` means nothing selected; `[]` means the bucket root. */
@@ -124,14 +117,11 @@ export interface StandalonePublishPanelColors {
   titleText?: string;
 }
 
-/** Standalone end-edge slide-in panel for the Publish flow: full-screen backdrop, entity summary, folder picker, history list, and pinned footer. */
+/** Standalone end-edge slide-in panel for the Publish flow: full-screen backdrop, entity summary, folder picker, and pinned footer. */
 export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isOpen,
   resource,
   renderSummary,
-  history,
-  isHistoryLoading = false,
-  hasHistoryError = false,
   folderItems,
   selectedFolderPath,
   onSelectedFolderPathChange,
@@ -288,9 +278,6 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
           <PublishPanel
             resource={resource}
             renderSummary={renderSummary}
-            history={history}
-            isHistoryLoading={isHistoryLoading}
-            hasHistoryError={hasHistoryError}
             folderItems={folderItems}
             selectedFolderPath={selectedFolderPath}
             onSelectedFolderPathChange={onSelectedFolderPathChange}

@@ -107,6 +107,66 @@ describe('SkillsPackageService', () => {
     ).toThrow(BadRequestException);
   });
 
+  describe('empty-folder marker', () => {
+    it('forwards a zero-byte marker under a folder as its own part', async () => {
+      const formData = service.validateAndBuildFormData(
+        manifest,
+        JSON.stringify(['a.md', 'docs/.dial_folder']),
+        [makeFile('a'), makeFile('')],
+      );
+
+      const parts = formData.getAll('file') as File[];
+      expect(parts.map((p) => p.name)).toEqual([
+        'SKILL.md',
+        'a.md',
+        'docs/.dial_folder',
+      ]);
+      expect(parts[2].size).toBe(0);
+    });
+
+    it('rejects a marker with content', () => {
+      expect(() =>
+        service.validateAndBuildFormData(
+          manifest,
+          JSON.stringify(['docs/.dial_folder']),
+          [makeFile('hello')],
+        ),
+      ).toThrow('Invalid supporting file path: docs/.dial_folder');
+    });
+
+    it.each(['.dial_folder', '.dial_folder/a.md', 'a/.dial_folder/b'])(
+      'rejects the misplaced marker path %s',
+      (path) => {
+        expect(() =>
+          service.validateAndBuildFormData(manifest, JSON.stringify([path]), [
+            makeFile(''),
+          ]),
+        ).toThrow(BadRequestException);
+      },
+    );
+
+    it('rejects a marker under an unsafe folder path', () => {
+      expect(() =>
+        service.validateAndBuildFormData(
+          manifest,
+          JSON.stringify(['../docs/.dial_folder']),
+          [makeFile('')],
+        ),
+      ).toThrow(BadRequestException);
+    });
+
+    it('counts a marker toward the file-count limit', () => {
+      configOverrides['SKILL_UPLOAD_MAX_FILES'] = 1;
+      expect(() =>
+        service.validateAndBuildFormData(
+          manifest,
+          JSON.stringify(['docs/.dial_folder']),
+          [makeFile('')],
+        ),
+      ).toThrow(BadRequestException);
+    });
+  });
+
   it('rejects a duplicate supporting path', () => {
     expect(() =>
       service.validateAndBuildFormData(

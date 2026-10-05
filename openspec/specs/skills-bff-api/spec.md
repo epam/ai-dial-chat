@@ -278,7 +278,7 @@ The system SHALL NOT expose `downloadSkillGroupingFolder` as its own route. When
 The system SHALL NOT forward an `If-None-Match` request header on this operation — the verified DIAL Core schema declares no request header parameters for `downloadSkillFolder`, despite documenting a `304 Not Modified` response.
 
 - **operationId**: `downloadSkill`.
-- **Streaming**: `Readable.fromWeb`, `pipeline()`, response destruction on pipeline failure, upstream cancellation via `abortOnDisconnect` on client disconnect — following `apps/chat-api/src/files/files.controller.ts:409-435` (`downloadArchive`) and `:597-618` (`downloadFile`).
+- **Streaming**: `Readable.fromWeb`, `pipeline()`, response destruction on pipeline failure, upstream cancellation via `abortOnDisconnect` on client disconnect — following the `downloadArchive` and `downloadFile` handlers in `apps/chat-api/src/files/files.controller.ts`.
 
 #### Scenario: Successful whole-skill download
 - **WHEN** an authenticated user calls `GET /api/v1/skills/download?bucket=my-bucket&path=team-a/docs-helper`

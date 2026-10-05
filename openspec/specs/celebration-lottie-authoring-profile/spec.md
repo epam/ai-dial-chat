@@ -77,7 +77,7 @@ Masks and track mattes are allowed only after they render correctly in the pinne
 - The stage size is the composition's `w` × `h`.
 - Authoring is left-to-right.
 
-The runtime SHALL map stage coordinates to the viewport through the placement template only. It SHALL NOT stretch non-uniformly, and it SHALL NOT read layout on every frame. Geometry SHALL be measured once during preparation. A later change in layout, direction, variant or reduced-motion SHALL cancel the scene instead of re-mapping it mid-flight. This matches today's interrupt-on-`resize`/`scroll` behavior in `NewYearGiftWrapping.tsx:56-71` and `HalloweenCatScene.tsx:58-68`.
+The runtime SHALL map stage coordinates to the viewport through the placement template only. It SHALL NOT stretch non-uniformly, and it SHALL NOT read layout on every frame. Geometry SHALL be measured once during preparation. A later change in layout, direction, variant or reduced-motion SHALL cancel the scene instead of re-mapping it mid-flight. This matches today's interrupt-on-`resize`/`scroll` behavior in the interrupt-listener effects of `NewYearGiftWrapping.tsx` (which runs GiftWrapping through `useLottieSceneSession` and calls its `cancel`) and `HalloweenCatScene.tsx`.
 
 #### Scenario: A narrow phone
 - **WHEN** a `viewport-stage-v1` scene with a 1440 × 900 stage plays in a 360 × 780 viewport
@@ -149,7 +149,7 @@ A unit test asserts that 2000 + 250 + 16000 ≤ 18500.
 
 **[Contract]** A scene SHALL declare 1–8 `variants`. Each variant is `{ when: { layout?: 'mobile' | 'desktop', direction?: 'ltr' | 'rtl', colorScheme?: 'light' | 'dark' }, animationAssetId }`.
 
-- The host supplies the inputs: `isMobile` (already a provider prop), the document direction, and the resolved color scheme (`appearance-override-contract`).
+- The host supplies the inputs: `isMobile` (already a provider prop), the document direction, and the resolved color scheme.
 - The runtime SHALL pick the variant that matches the most conditions. A missing condition matches anything.
 - Ties SHALL resolve by declaration order. A scene with no match SHALL be treated as unsupported.
 

@@ -1,16 +1,16 @@
 # skill-sharing Specification
 
 ## Purpose
-Frontend `CatalogView` wiring that exposes Share (owner-only), Unshare/"Remove from My List" (recipient-only), and Revoke access (owner-only) for Skill catalog items, reusing the generic `SharePopoverContainer`/`useShareLink`/`libs/catalog` Header controls with no skill-specific UI code. Sharing eligibility is ownership-based (`isMyApp`) and independent of the permission-based Edit action (`isEditable`/`canEdit`).
+Frontend catalog wiring (`CatalogView` via the `useCatalogSharing` hook) that exposes Share (owner-only), Unshare/"Remove from My List" (recipient-only), and Revoke access (owner-only) for Skill catalog items, reusing the generic `SharePopoverContainer`/`useShareLink`/`libs/catalog` Header controls with no skill-specific UI code. Sharing eligibility is ownership-based (`isMyApp`) and independent of the permission-based Edit action (`isEditable`/`canEdit`).
 
 ## Requirements
 ### Requirement: Skill Share action visibility is ownership-based
 
-`CatalogView.isShareVisible` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL return `Boolean(item.isMyApp)` for `item.type === CatalogEntityType.Skill`, mirroring the existing `Prompt` branch's ownership check rather than the `Toolset`/`Application` branches' feature-flag check.
+`isShareVisible` from the `useCatalogSharing` hook (`apps/chat/src/hooks/useCatalogSharing/useCatalogSharing.ts`, consumed by `CatalogView`) SHALL return `Boolean(item.isMyApp)` for `item.type === CatalogEntityType.Skill`, mirroring the `Prompt` branch's ownership check rather than the `Toolset`/`Application` branches' feature-flag check (`OverlayFeature.ToolsetsSharing`/`OverlayFeature.ApplicationsSharing`).
 
-A skill's Share eligibility SHALL depend only on `item.isMyApp` (personal-bucket ownership, computed in `mapSkillToCatalogItem` — `apps/chat/src/utils/map-skill-to-catalog-item.ts:72`), never on `item.isEditable`/`canEdit` (the `WRITE` permission bit). A skill shared to the current user with `WRITE` permission SHALL NOT expose the Share action merely because it is editable.
+A skill's Share eligibility SHALL depend only on `item.isMyApp` (personal-bucket ownership, computed in `mapSkillToCatalogItem` — `libs/chat-hooks/src/catalog/map-skill-to-catalog-item.ts` — as `isPersonal && (skill.isMy ?? true)`), never on `item.isEditable`/`canEdit` (the `WRITE` permission bit). A skill shared to the current user with `WRITE` permission SHALL NOT expose the Share action merely because it is editable.
 
-`libs/catalog`'s built-in Share gating (`shouldShowShare = item.isMyApp === true` in `ShareButton.tsx`) already enforces this rule uniformly for every `CatalogEntityType`; this requirement makes `CatalogView`'s per-type override consistent with it for Skill specifically, replacing the current unconditional `return false`.
+`libs/catalog`'s built-in Share gating enforces the same rule uniformly for every `CatalogEntityType`: `shouldShowShare = item.isMyApp === true` in `ShareButton.tsx`, and `shouldShowShareAction = !isReadonly && item.isMyApp === true && (isShareVisible?.(item) ?? true)` in `Header.tsx` for the Manage-menu arrangement. The host's Skill branch is consistent with it.
 
 #### Scenario: Owned skill exposes Share
 
@@ -38,9 +38,9 @@ A skill's Share eligibility SHALL depend only on `item.isMyApp` (personal-bucket
 
 ### Requirement: Skill sharing reuses the generic catalog sharing infrastructure with no skill-specific code
 
-Sharing a skill SHALL go through the exact same components and calls used for applications and toolsets today: `SharePopoverContainer` (`apps/chat/src/components/SharePopoverContainer/SharePopoverContainer.tsx`), `useShareLink` (`apps/chat/src/hooks/useShareLink/useShareLink.ts`), and `createShareLink`/`getShareLink` (`apps/chat/src/server-api/share.api.ts`, `apps/chat/src/utils/share-link.ts`).
+Sharing a skill SHALL go through the exact same components and calls used for applications and toolsets today: `SharePopoverContainer` (`apps/chat/src/components/SharePopoverContainer/SharePopoverContainer.tsx`), which calls `useShareLink(shareApi, item.id)` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/useShareLink/useShareLink.ts`); the hook calls the generated client's `createShareLink({ createShareLinkDto: { itemId, access } })` on the `shareApi` instance configured in `apps/chat/src/server-api/api-client.ts`.
 
-`SharePopoverContainer` SHALL NOT resolve a `resourceKind` for `CatalogEntityType.Skill` — its `item.id` is already the fully-qualified `skills/{ownerBucket}/{skillPath}` DIAL Core resource URL (set in `mapSkillToCatalogItem`, `map-skill-to-catalog-item.ts:52`), so no server-side bucket qualification is needed, unlike the `Prompt` branch which supplies `CreateShareLinkDtoResourceKindEnum.Prompt` for its bucket-relative path.
+`SharePopoverContainer` SHALL pass `item.id` through unmodified for every entity type — a skill's `item.id` is already the fully-qualified `skills/{ownerBucket}/{skillPath}` DIAL Core resource URL (`id: skill.url` in `mapSkillToCatalogItem`). `CreateShareLinkDto` carries only `itemId` and `access`; there is no `resourceKind` field and no per-type branch in the container.
 
 `SharePopoverContainer.EDITABLE_ACCESS_TYPES` already includes `CatalogEntityType.Skill`; this requirement does not change that set, only confirms the popover's edit-access dropdown is available when a skill share link is created.
 
@@ -49,11 +49,11 @@ Sharing a skill SHALL go through the exact same components and calls used for ap
 #### Scenario: Creating a share link for an owned skill
 
 - **WHEN** the owner of a personal skill opens the Share popover and requests a link
-- **THEN** `createShareLink` is called with `itemId = item.id` (the full `skills/{bucket}/{path}` URL) and no `resourceKind`, identically to the existing Application/Toolset flow
+- **THEN** `createShareLink` is called with `createShareLinkDto: { itemId: item.id, access }` (the full `skills/{bucket}/{path}` URL), identically to the Application/Toolset flow
 
 #### Scenario: No skill-specific code exists in the sharing path
 
-- **WHEN** `libs/catalog`, `SharePopoverContainer.tsx`, `useShareLink.ts`, and `apps/chat/src/server-api/share.api.ts` are searched for a `Skill`-specific conditional branch related to resource-path construction
+- **WHEN** `libs/catalog`, `SharePopoverContainer.tsx`, `libs/chat-hooks/src/useShareLink/useShareLink.ts`, and `apps/chat/src/server-api/share.api.ts` are searched for a `Skill`-specific conditional branch related to resource-path construction
 - **THEN** none is found; the only `Skill`-aware line in this path is `SharePopoverContainer.EDITABLE_ACCESS_TYPES`'s existing membership check, unchanged by this capability
 
 ### Requirement: Skill sharing stays behind the existing Skills feature gate
@@ -76,7 +76,7 @@ When `OverlayFeature.Skills` is disabled, no skill catalog items are rendered at
 
 ### Requirement: Edit and Share are independent actions for skills
 
-A skill's Edit action visibility SHALL continue to be governed exclusively by `item.isEditable` (`!isPublic && (skill.canEdit ?? isPersonal)`, `map-skill-to-catalog-item.ts:74`), unchanged by this capability. Edit and Share SHALL be evaluated independently: a skill's Share visibility (ownership-based, per the first requirement in this capability) has no bearing on its Edit visibility (permission-based), and vice versa.
+A skill's Edit action visibility SHALL continue to be governed exclusively by `item.isEditable` (`!isPublic && (skill.canEdit ?? isPersonal)` in `mapSkillToCatalogItem`), unchanged by this capability. Edit and Share SHALL be evaluated independently: a skill's Share visibility (ownership-based, per the first requirement in this capability) has no bearing on its Edit visibility (permission-based), and vice versa.
 
 #### Scenario: Writable shared skill exposes Edit but not Share
 
@@ -115,9 +115,14 @@ RTL, mobile, keyboard, and WCAG 2.1 AAA behavior of the Share popover, the Manag
 
 ### Requirement: Tests for skill sharing visibility
 
-`apps/chat/src/components/CatalogView/tests/CatalogView.spec.tsx` SHALL cover `isShareVisible`, `isUnshareVisible`, and `isRevokeShareVisible` for `CatalogEntityType.Skill` across: an owned skill (all three visible, subject to `sharedWithMe`/ownership as applicable), a writable shared skill (`isEditable: true`, `isMyApp: false` — Share and Revoke not visible, Unshare visible), a read-only shared skill (`isEditable: false`, `isMyApp: false` — same visibility as writable-shared for these three predicates, since none of them read `isEditable`), and a public skill (none of the three visible).
+`apps/chat/src/hooks/useCatalogSharing/tests/useCatalogSharing.spec.ts` SHALL cover `isShareVisible` for `CatalogEntityType.Skill` across an owned skill (visible), a writable shared skill (`isEditable: true`, `isMyApp: false` — hidden), a read-only shared skill (hidden), and a public skill (hidden). `isUnshareVisible` and `isRevokeShareVisible` are unconditional `() => true` for every item type and are covered as such; the ownership rules for Unshare (`isMyApp !== true && sharedWithMe === true`) and Revoke access (`isMyApp === true`, plus a non-zero recipients count once resolved) are enforced by `libs/catalog`'s `Header.tsx`, not by the host predicates.
 
-#### Scenario: Predicate test matrix passes for every ownership/permission combination
+#### Scenario: Share predicate test matrix passes for every ownership/permission combination
 
-- **WHEN** `CatalogView.spec.tsx`'s skill-sharing test cases are run
-- **THEN** `isShareVisible`, `isUnshareVisible`, and `isRevokeShareVisible` each return the expected boolean for owned, writable-shared, read-only-shared, and public skill fixtures
+- **WHEN** `useCatalogSharing.spec.ts`'s skill-sharing test cases are run
+- **THEN** `isShareVisible` returns `true` for the owned skill fixture and `false` for the writable-shared, read-only-shared, and public skill fixtures
+
+#### Scenario: Unshare and Revoke predicates are unconditional
+
+- **WHEN** `isUnshareVisible` and `isRevokeShareVisible` are called for any catalog item type, skills included
+- **THEN** both return `true`, leaving the ownership gating to `libs/catalog`'s `Header`

@@ -10,7 +10,7 @@ The canvas side panel: its chrome, open and auto-close behavior, layout, and the
 
 The `AttachmentCanvas` side panel opens to the right of the main conversation area when a user activates an attachment. It renders file content in a resizable, closeable panel that stays alongside the conversation. Content type is resolved from the `DisplayAttachment` and passed to the panel as a typed payload.
 
-Ownership note used throughout this document: the dispatch hook and every renderer live in `libs/attachment-canvas`; the content resolvers live in `libs/chat-hooks` and are host-agnostic — the genuinely app-specific parts (DIAL URL construction, auth) are injected into them as an `AttachmentCanvasUrlResolvers` object. `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts` is the only app-side piece: it binds each resolver to the app's URL resolvers and hands the resulting callbacks to the hook. Where this document names a resolver, its real signature therefore takes that `resolvers` argument in addition to the attachment.
+Ownership note used throughout this document: the dispatch hook and every renderer live in `libs/attachment-canvas`; the content resolvers live in `libs/chat-hooks` and are host-agnostic — the genuinely app-specific parts (DIAL URL construction, auth) are injected into them as an `AttachmentCanvasUrlResolvers` object. `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts` is the only app-side piece: it returns `{ resolvers, options }`, where `resolvers` is a `UseOpenAttachmentCanvasResolvers` object (`resolveImageContent`, `resolveTextContent`, `resolveMarkdownContent`, `resolveCodeContent`, `resolveHtmlContent`, `resolvePdfContent`, `resolveOoxmlContent`, `resolveJsonContent`, `resolveVisualizerContent`, `resolveReferencePdfContent`, `resolveContentUrl`, `hasTextSource`) binding each `@epam/ai-dial-chat-hooks` resolver to the app's `attachmentCanvasUrlResolvers`, and `options` is `{ customVisualizers, themeId, onBeforeOpen }`; callers pass both to `useOpenAttachmentCanvas(resolvers, options)`. Where this document names a `resolveXCanvasContent` resolver, its real signature therefore takes that URL-resolvers argument in addition to the attachment.
 
 ---
 
@@ -34,12 +34,12 @@ Ownership note used throughout this document: the dispatch hook and every render
 2. `useOpenAttachmentCanvas` (`libs/attachment-canvas/src/hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas.ts`) resolves content from the `DisplayAttachment` (fetching file bytes if needed).
 3. Hook calls `openCanvas(content, fileName, attachmentId)` from `useAttachmentCanvas()`. For message attachments, `attachmentId` is a message-scoped composite key (`` `${messageIndex}:${attachment.id}` ``, built by `ConversationView.tsx`) rather than the raw `DisplayAttachment.id` — `id` alone is derived from content and can recur across different messages. Other callers (edit-message tray, `ConversationSourcesPanel`) omit the override and get the raw `attachment.id` default.
 4. `AttachmentCanvasContext` updates `isOpen = true`, `content`, `fileName`, and `attachmentId`. The context treats `attachmentId` as an opaque key — it has no knowledge of the composite-key format.
-5. `AttachmentCanvasContainer` (rendered in `app.tsx`) re-renders the panel open.
+5. `AttachmentCanvasContainer` (rendered in `app.tsx` only when `isConversationRoute && isAttachmentsManagerEnabled`) re-renders the panel open.
 6. `ConversationView.tsx` reads `attachmentId` back from `useAttachmentCanvas()` and passes it to each `ConversationMessageItem` as `selectedAttachmentKey`. Each `ConversationMessageItem` strips its own `` `${index}:` `` prefix (or renders `undefined` if the key doesn't match its own message index) before forwarding a message-scoped `selectedAttachmentId` through `MessageBubble` → `AttachmentGroup`, so only the tile that actually opened the canvas renders selected, even if another message has an attachment with the same content-derived `id` (see `attachment-input-lib` spec, "AttachmentCard, AttachmentGroup, and MessageBubble support a selected-tile visual state").
 
 #### Auto-close
 
-The canvas closes when the URL `pathname` changes (conversation switch, catalog navigation, new chat). Implemented via a `useEffect` in `apps/chat/src/app/app.tsx` that calls `closeCanvas()` on every `pathname` change.
+The canvas closes when the URL `pathname` changes (conversation switch, catalog navigation, new chat). Implemented via a `useEffect` keyed on `pathname` in `apps/chat/src/hooks/conversation-panel/useConversationPanelRouteState.ts` (called from `app.tsx` with `onCloseCanvas: closeCanvas`), which calls `onCloseCanvas()` on every `pathname` change.
 
 #### Layout
 
@@ -50,12 +50,12 @@ The canvas closes when the URL `pathname` changes (conversation switch, catalog 
 - **Resizability**: enabled on desktop, disabled on mobile (`isMobile` prop from `useIsMobile()`).
 - **Width defaults**: ~50% of the space between the minimum content area and the maximum panel width on desktop, full viewport on mobile. 600 px min. Width is not persisted between sessions.
 - **Resize constraint shared with sidebar**: both `AttachmentCanvas` and `ConversationSourcesPanel` derive their `maxWidth` from the shared `usePanelMaxWidth(minContentAreaWidth)` hook exported from `@epam/ai-dial-chat-hooks`, reactive to window resize. The app passes `MIN_CONTENT_AREA_WIDTH` (400 px, from `apps/chat/src/constants/layout.ts`) so the chat area always retains that much space. The reserved width is a host decision and is therefore a parameter, not a constant baked into the hook. The sidebar has its own `minWidth` of 312 px; the canvas has a separate `minWidth` of 600 px.
-- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. The primary path is synchronous: `useOpenAttachmentCanvas` calls `closePanel()` and `closeSourcesPanel()` at the start of `openAttachmentCanvas`, before any async content resolution, so panels disappear on click rather than after the file fetch completes. `SourcesSidebarToggle` calls `closeCanvas()` synchronously before `handleOpen()` for the reverse direction. A `useEffect` in `app.tsx` that watches `isCanvasOpen` acts as a safety net for the few call sites that call `openCanvas` directly (citation preview, collapsed stage attachments).
-- **Conversation panel**: The conversation history panel (`isPanelOpen`, managed by `ConversationPanelContext`) and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. `useOpenAttachmentCanvas` calls `closePanel()` synchronously before async content resolution; `togglePanel` in `app.tsx` calls `closeCanvas()` before opening the panel. The `isCanvasOpen` safety-net effect in `app.tsx` covers direct `openCanvas` call sites.
+- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. The primary path is synchronous: `useOpenAttachmentCanvas` calls the host-supplied `onBeforeOpen?.()` option before `openCanvasLoading`/`openCanvas` for `Image`, `File`, `Pasted` and `Prompt` attachments (never for `Audio`), before any async content resolution, so panels disappear on click rather than after the file fetch completes. The app's `onBeforeOpen` (from `useAttachmentCanvasResolvers`) calls `closePanel()` and `closeSourcesPanel()`. `SourcesSidebarToggle` calls `closeCanvas()` synchronously before `handleOpen()` for the reverse direction. A `useEffect` in `useConversationPanelRouteState` that watches `isCanvasOpen` acts as a safety net for the few call sites that call `openCanvas` directly (citation preview, collapsed stage attachments).
+- **Conversation panel**: The conversation history panel (`isPanelOpen`, managed by `ConversationPanelContext`) and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. `onBeforeOpen` calls `closePanel()` synchronously before async content resolution; `togglePanel` (returned by `useConversationPanelRouteState`) calls `onCloseCanvas()` before opening the panel. The `isCanvasOpen` safety-net effect in the same hook covers direct `openCanvas` call sites.
 
 #### i18n
 
-All app-level strings are in `AttachmentCanvasI18nKeys` (`apps/chat/src/constants/translation-keys.ts`):
+Canvas-specific strings are in `AttachmentCanvasI18nKeys` (`apps/chat/src/constants/translation-keys.ts`). The panel-chrome and body labels `app.tsx` passes to `AttachmentCanvasContainer` include:
 
 | Key | en.json value |
 |---|---|
@@ -65,19 +65,24 @@ All app-level strings are in `AttachmentCanvasI18nKeys` (`apps/chat/src/constant
 | `UnsupportedLabel` | `"Preview is not supported for this file"` |
 | `LoadErrorLabel` | `"Failed to load file"` |
 | `ForbiddenErrorLabel` | `"You don't have permission to access this file"` |
-| `CopyAsMarkdown` | `"Copy as Markdown"` |
-| `Copied` | `"Copied!"` |
 | `HtmlFrameBlocked` | `"This page cannot be displayed in preview"` |
 | `HtmlOpenInNewTab` | `"Open in new tab"` |
 | `HtmlViewSource` | `"View source"` |
 | `HtmlViewRendered` | `"View rendered"` |
+| `PdfThumbnailsLabel` / `PdfShowThumbnailsLabel` / `PdfHideThumbnailsLabel` / `PdfPageNumberLabel` | `"Thumbnails"` / `"Show thumbnails"` / `"Hide thumbnails"` / `"Page number"` |
+| `PdfContentLoadingLabel` / `PdfContentErrorLabel` | `"Loading the PDF viewer…"` / `"Failed to load the PDF viewer"` |
+| `CodeContentLoadingLabel` / `CodeContentErrorLabel` | `"Loading syntax highlighting…"` / `"Failed to load syntax highlighting"` |
+| `XlsxFormulaLabel` | `"Formula"` |
+| `OoxmlHighlightsLabel` / `OoxmlHighlightNavigatedLabel` | `"Cited locations"` / `"Scrolled to the cited location"` |
+
+Copy, table and retry labels come from the shared `ButtonsI18nKeys` instead: `CopyText`, `CopyAsMarkdown`, `CopyAsJson` and `Copied` for the copy buttons, `Copy`/`Copied`/`DownloadAsCsv` for the standalone table, `Retry` for the PDF and code retry buttons, and `Reload` for the MCP App reload button.
 
 Lib-level string props use English defaults and are overridden by the app via `AttachmentCanvasContainer`.
 
 #### Accessibility
 
 - `SidebarPanel` renders with `role="complementary"` and `aria-label` from the `ariaLabel` prop.
-- `aria-hidden="true"` is set on the panel when closed.
+- `inert` is set on the panel (`inert={!isOpen}`) when closed, which removes it from the accessibility tree and keyboard focus without the `aria-hidden` focus-trap risk.
 - Close, download, and copy buttons carry `aria-label` strings passed as props.
 - Keyboard: all header buttons are reachable via Tab.
 
@@ -88,7 +93,7 @@ Lib-level string props use English defaults and are overridden by the app via `A
 
 #### Feature flag
 
-None. The canvas is always available to authenticated users.
+The canvas is not gated by `ENABLED_FEATURES`, but `app.tsx` renders `AttachmentCanvasContainer` only when `isConversationRoute && isAttachmentsManagerEnabled`, where `isAttachmentsManagerEnabled = useUiFeature(OverlayFeature.AttachmentsManager)`.
 
 ---
 
@@ -96,9 +101,9 @@ None. The canvas is always available to authenticated users.
 
 `useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. The top-level `switch` on `attachment.type` handles `Image`, `Audio`, `File`, `Pasted`, and `Prompt` before any extension/MIME routing runs:
 
-- **`Image`** — `resolveImageCanvasContent` (synchronous); closes panels before calling `openCanvas`.
+- **`Image`** — `resolveImageCanvasContent` (synchronous); calls `onBeforeOpen?.()` before `openCanvas` (only when content resolved).
 - **`Audio`** — uses `attachment.playUrl ?? attachment.url`; if neither is present returns `false`. Calls `openCanvas` directly with `{ type: AttachmentContentType.Audio, url, mimeType: attachment.contentType || undefined }`. Does not close other panels (audio canvas is additive).
-- **`File`** — calls `closePanel()`, `closeSourcesPanel()`, and `openCanvasLoading(attachment.name)` synchronously, then delegates to `openFileCanvas` (async). If `openFileCanvas` returns `false` the loading state is cleared by calling `closeCanvas()`.
+- **`File`** — calls `onBeforeOpen?.()` and `openCanvasLoading(attachment.name, canvasAttachmentId)` synchronously, then delegates to `openFileCanvas` (async). If `openFileCanvas` returns `false` the loading state is cleared by calling `closeCanvas()` (only while this request still owns the canvas).
 - **`Pasted` / `Prompt`** — same synchronous close+loading pattern, then `resolveTextCanvasContent`.
 
 For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas/src/hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas.ts`) first checks whether the attachment is reference-only (`attachment.url == null && attachment.referenceUrl != null` — a RAG/search-grounding chunk). When true, it calls `referenceAttachmentToPdfCanvasContent({ type: attachment.contentType, url: attachment.referenceUrl, title: attachment.name })`; if that returns a non-`null` `PdfCanvasContent` (the `referenceUrl` targets a `.pdf`, optionally with a `#page=N` fragment), the canvas opens with it immediately and no further routing runs. If it returns `null`, routing falls through unchanged — this applies uniformly to `CollapsedGroup` stage attachments and the plain attachment tray, so a reference-only PDF-page chunk (e.g. `reference_url: 'files/{bucket}/report.pdf#page=81'`) opens the actual referenced PDF at the referenced page instead of rendering its own `data`/`contentType` as Markdown or plain text. Otherwise, it checks for a missing `contentType` with inline data (see "No-type inline-data fallback" below), then runs MIME-type routing (for stage attachments that carry a `contentType` but no file extension), then extension-based routing (lowercased):
@@ -115,10 +120,11 @@ For `AttachmentType.File` attachments, `openFileCanvas` (`libs/attachment-canvas
 | `md`, `markdown` extension | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `json` extension | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` (parse failure) |
 | `pdf` extension | `resolvePdfCanvasContent` | `PdfCanvasContent` |
-| `image/*` MIME | `resolveImageCanvasContent` | `ImageCanvasContent` |
 | `html`, `htm` extension | `resolveHtmlCanvasContent` | `HtmlCanvasContent` |
 | Other text-previewable (see `TEXT_EXTENSIONS`, excluding `html`/`htm`) | `resolveCodeCanvasContent` | `CodeCanvasContent` |
 | Everything else | `createUnsupportedCanvasContent` | `UnsupportedCanvasContent` |
+
+`openFileCanvas` has no `image/*` branch: image attachments are typed `AttachmentType.Image` upstream (for example `attachment-dto-to-display.ts` maps an `image/*` type to `AttachmentType.Image`) and are handled by the top-level `Image` case above.
 
 Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch. The `html`/`htm` branch runs before the generic `isTextPreviewable` branch. The `isTextPreviewable` branch routes to `resolveCodeCanvasContent` (returning `CodeCanvasContent`) rather than `resolveTextCanvasContent`.
 
@@ -174,6 +180,7 @@ Some attachments (e.g. an LLM-revised image prompt saved back onto the conversat
 | `Audio` | `url: string; mimeType?: string` | Native `<audio controls>` with optional `<source type>` child; centered, `w-full max-w-sm` |
 | `PlainText` | `text: string` | `<pre>` with `whitespace-pre-wrap break-words` |
 | `Markdown` | `text: string` | `MarkdownRenderer` from `@epam/ai-dial-chat-shared`, neutral defaults |
+| `MarkdownTable` | `text: string` (a single table serialized back to Markdown) | `MarkdownRenderer` filling the panel, with the table's own copy / download-as-CSV actions. Opened directly with `openCanvas` by a message table's "open in canvas" action (`ConversationMessageItem.tsx`, title `ChatI18nKeys.MarkdownTableTitle`), never through attachment routing |
 | `Json` | `value: unknown` | `react-json-view-lite` `JsonView`, container has `dir="ltr"` |
 | `Pdf` | `url: string; highlights?: InputHighlightData[]; selectedHighlightId?: string` | `PdfContent` (collapsible thumbnails section/panel + `DocumentPreview` from `@epam/ai-dial-react-pdf-highlighter`) |
 | `Code` | `text: string; language?: string` | `CodeContent` (`react-syntax-highlighter` `Prism` inside `dir="ltr"`) |
@@ -242,18 +249,9 @@ Precedence (via `resolveAttachmentText`): inline base64 `attachment.data` (decod
 
 DIAL Core extracts text from referenced documents (e.g. PDFs) server-side and stores it in `data` on stage attachments when saving the conversation. The SSE stream does **not** include `data` on stage attachment chunks.
 
-To make server-computed `data` available in React state during a session, `useConversationStream.onComplete` reloads the conversation from the server after `saveConversation` succeeds:
+To make server-computed `data` available in React state during a session, `useConversationStream` (`libs/chat-hooks/src/conversation/useConversationStream/useConversationStream.ts`) calls `reloadConversation()` from `onComplete`. The client does not save the conversation itself; `reloadConversation` fetches the server-persisted copy with `transport.getConversation(...)` and, when it is still current, sets it as the displayed conversation (`setConversation(refreshed)` and `conversationRef.current = refreshed`).
 
-```ts
-await saveConversation(conversationPath, final);
-if (!abortRef.current) {
-  const refreshed = await getConversation(conversationPath);
-  setConversation(refreshed);
-  conversationRef.current = refreshed;
-}
-```
-
-The reload is guarded by `!abortRef.current` to skip if the user has already started a new stream.
+The reload is skipped or discarded when it is no longer current: `isReloadCurrent()` (component still mounted, generation not superseded by a newer submit, buffered generation unchanged) is checked before and after the round trip, and `isPathDisplayed(conversationPath)` skips it when the user is viewing another conversation. If the refreshed conversation still has a pending background generation, the hook resumes that generation instead of settling.
 
 `DisplayAttachment.data?: string` carries this inline content through `toDisplayAttachment` to the canvas resolvers. Per the DTO contract (`MessageAttachment.data`, `libs/chat-shared/src/models/chat.ts`), `data` is documented as base64-encoded — but in practice some backends put already-decoded plain text in this field for text-based content types (e.g. OCR'd markdown containing non-Latin1 characters, which is not valid base64). The canvas resolvers therefore never assume `data` is valid base64: they attempt to base64-decode it and fall back to using it as-is (raw text, or raw bytes for binary content) when decoding fails (see "Shared content resolution helpers" below).
 
@@ -272,7 +270,7 @@ The reload is guarded by `!abortRef.current` to skip if the user has already sta
   Used by `resolvePdfCanvasContent` only. Images skip this helper entirely (see "Image rendering" above). Fetching the DIAL URL eagerly (rather than handing the raw URL to the PDF viewer) lets the canvas detect a `403` before rendering — the resulting `blob:` object URL is then consumed by `DocumentPreview` from the in-memory blob store, so this does not add a second network round-trip.
 - **`resolveAttachmentText(attachment): Promise<string | ErrorCanvasContent | undefined>`** — resolves an attachment's textual content, in this precedence order:
   1. Inline `attachment.data`, passed to `base64ToText(data)`.
-  2. `resolveDialUrl(attachment)` fetched via `fetch(...)`; returns the response text on success, or an `ErrorCanvasContent` on a non-OK response or thrown network error (same classification as above).
+  2. `resolveDialUrl(attachment)` fetched via the module-level `fetchDialText` helper (LRU-cached — see "LRU fetch cache" below); returns the response text on success, or an `ErrorCanvasContent` on a non-OK response or thrown network error (same classification as above).
   3. Local `attachment.file.text()`.
   4. Otherwise `undefined`.
   Used by `resolveTextCanvasContent`, `resolveMarkdownCanvasContent`, and `resolveJsonCanvasContent`.
@@ -283,12 +281,12 @@ Every `resolveXCanvasContent` wrapper checks its helper's result: an `ErrorCanva
 
 That same module maintains two module-level LRU caches (from the `lru-cache` package, v10+) keyed by DIAL download URL:
 
-- **`blobCache`** — `LRUCache<string, Promise<Blob>>`, max 10 entries. Used by `resolvePdfCanvasContent` via `resolveAttachmentBlobUrl`. Each canvas open creates a fresh `URL.createObjectURL(blob)` from the cached `Blob` (zero network, trivial memory).
-- **`textCache`** — `LRUCache<string, Promise<string>>`, max 50 entries. Used by `resolveMarkdownCanvasContent`, `resolveJsonCanvasContent`, and `resolveTextCanvasContent` via `resolveAttachmentText`.
+- **`blobCache`** — `LRUCache<string, CachedAttachmentEntry<Blob>>`, max 10 entries, filled by `fetchDialBlob`. Used by `resolvePdfCanvasContent` via `resolveAttachmentBlobUrl`. Each canvas open creates a fresh `URL.createObjectURL(blob)` from the cached `Blob`.
+- **`textCache`** — `LRUCache<string, CachedAttachmentEntry<string>>`, max 50 entries, filled by `fetchDialText`. Used by `resolveMarkdownCanvasContent`, `resolveJsonCanvasContent`, and `resolveTextCanvasContent` via `resolveAttachmentText`.
 
-Both caches store the `Promise` itself so that concurrent opens of the same URL share one in-flight fetch rather than issuing duplicate requests. A rejected promise is removed from the cache immediately, allowing the next open to retry the network.
+Each entry is `{ etag, promise }`: the content-fetch `Promise` itself (so concurrent opens of the same URL share one in-flight fetch) plus the ETag it was validated against. Every lookup first calls `fetchCurrentEtag`, which fetches the file's metadata from `resolvers.resolveDialFileMetadataUrl(fileId)` and reads its `etag`; a cached body is served only on an exact ETag match, otherwise the entry is replaced by a fresh fetch. When no ETag can be determined (no metadata URL, failed or non-2xx metadata call, or no `etag` field), the cache is bypassed entirely — no read and no write — and the content is fetched directly. So a reopen of a cached URL costs one metadata request but no content download. A rejected content fetch is removed from the cache immediately, allowing the next open to retry the network.
 
-`clearAttachmentCache()` (exported from `@epam/ai-dial-chat-hooks`) clears both caches. It is called in the `pathname` `useEffect` in `apps/chat/src/app/app.tsx` on every navigation (conversation switch, catalog, new chat), bounding cached data to the current conversation session.
+`clearAttachmentCache()` (exported from `@epam/ai-dial-chat-hooks`) clears both caches. It is called in a `pathname` `useEffect` in `apps/chat/src/app/app.tsx` on every navigation (conversation switch, catalog, new chat), bounding cached data to the current conversation session.
 
 Images do **not** use these caches — `resolveImageCanvasContent` is synchronous and returns the BFF URL directly (see "Image rendering" above). The browser's own HTTP cache deduplicates the `<img src>` request made by the canvas with the identical `<img>` element already rendered in the conversation view.
 
@@ -415,7 +413,7 @@ PDF is downloadable. `isDownloadable` returns `true` for `PdfCanvasContent`. `do
 
 ### Citation preview
 
-When a user clicks "Preview" in a `CitationDropdown`, `useCitationMarkdownComponents.onPreview` opens the canvas with the full source file.
+When a user clicks "Preview" in a `CitationDropdown`, `useCitationMarkdownComponents`'s `onPreview` (bound to `handleCitationPreview` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) opens the canvas with the full source file: PDF sources through `annotationToPdfCanvasContent`, then Office sources through `annotationToOoxmlCanvasContent`, then the generic fallback below.
 
 #### PDF sources (highlights)
 
@@ -428,9 +426,9 @@ When `annotation.body.source.attachment.type === 'application/pdf'`:
 5. `openCanvas` is called directly with `PdfCanvasContent { type: Pdf, url, highlights, selectedHighlightId }` and the resolved `fileName`.
 6. Annotations whose `body.selector` carries no recognised PDF selector produce no highlight and are silently skipped.
 
-#### Non-PDF sources
+#### Other sources
 
-`annotationToDisplayAttachment` converts the annotation's `AttachmentResource` to a `DisplayAttachment` and calls `onAttachmentPreview` — the generic canvas open path.
+When neither the PDF nor the Office mapper returns content, `annotationToDisplayAttachment` converts the annotation's `AttachmentResource` to a `DisplayAttachment` and passes it to the message item's `handleAttachmentClick` — the generic canvas open path when the host supplied an attachment-click handler, otherwise a download.
 
 #### Selector type
 
@@ -456,7 +454,7 @@ interface PdfBBoxSelector {
 
 ### Requirement: The canvas panel opens beside the conversation and closes on navigation
 
-Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the conversation layout, keyed by the `attachmentId` the caller supplies. The panel SHALL close whenever the URL `pathname` changes, and SHALL be mutually exclusive with both `ConversationSourcesPanel` and the conversation history panel — opening any one of the three closes the other two, synchronously, before any content is fetched.
+Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the conversation layout, keyed by the `attachmentId` the caller supplies. The panel SHALL close whenever the URL `pathname` changes, and SHALL be mutually exclusive with both `ConversationSourcesPanel` and the conversation history panel — opening any one of the three closes the other two, synchronously, before any content is fetched. For the canvas this runs through the host's `onBeforeOpen` option of `useOpenAttachmentCanvas`, which is called for image, file, pasted and prompt attachments but not for audio; the pathname auto-close, the `togglePanel` canvas close and the `isCanvasOpen` safety net live in `useConversationPanelRouteState`.
 
 #### Scenario: Activating an attachment opens the panel
 
@@ -486,9 +484,9 @@ Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the 
 - **THEN** the width is clamped between 600 px and `usePanelMaxWidth()`, leaving at least 400 px of chat area
 - **AND** on mobile the panel fills the viewport and is not resizable
 
-### Requirement: The canvas is an accessible, always-available panel
+### Requirement: The canvas is an accessible panel
 
-`SidebarPanel` SHALL render with `role="complementary"` and the `ariaLabel` prop as its accessible name, SHALL be `aria-hidden` while closed, and SHALL expose every header control by keyboard with an `aria-label` supplied as a prop. All app-level strings SHALL come from `AttachmentCanvasI18nKeys`, with the lib carrying English defaults. The capability SHALL NOT be gated behind a feature flag.
+`SidebarPanel` SHALL render with `role="complementary"` and the `ariaLabel` prop as its accessible name, SHALL be `inert` while closed, and SHALL expose every header control by keyboard with an `aria-label` supplied as a prop. App-level strings SHALL come from i18n — canvas-specific ones from `AttachmentCanvasI18nKeys`, copy/retry/reload labels from `ButtonsI18nKeys` — with the lib carrying English defaults. The capability SHALL NOT be gated behind `ENABLED_FEATURES`; the app renders the canvas only on conversation routes and only when the `OverlayFeature.AttachmentsManager` UI feature is enabled.
 
 #### Scenario: The panel is a named landmark
 
@@ -498,7 +496,12 @@ Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the 
 #### Scenario: A closed panel is hidden from assistive tech
 
 - **WHEN** the canvas is closed
-- **THEN** the panel carries `aria-hidden="true"`
+- **THEN** the panel's `role="complementary"` element carries `inert`, so neither it nor its controls are focusable or exposed to assistive tech
+
+#### Scenario: The canvas follows the AttachmentsManager UI feature
+
+- **WHEN** `OverlayFeature.AttachmentsManager` is disabled, or the current route is not a conversation route
+- **THEN** `AttachmentCanvasContainer` is not rendered
 
 ### Requirement: Content type routing resolves a typed payload before rendering
 
@@ -761,9 +764,11 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 | `Html` | `content.url` | `MIMEType.HTML` (`'text/html'`) |
 | `Unsupported`, `Error` | `content.url` | — |
 | `PlainText`, `Code` | — | `MIMEType.Plain` (`'text/plain'`) |
-| `Markdown` | — | `MIMEType.Markdown` (`'text/markdown'`) |
+| `Markdown`, `MarkdownTable` | — | `MIMEType.Markdown` (`'text/markdown'`) |
 | `Json` | — | `MIMEType.JSON` (`'application/json'`) |
-| `Visualizer`, `McpApp` | — | — (these are not downloadable) |
+| `Visualizer`, `GroupedVisualizer`, `McpApp` | — | — (these are not downloadable) |
+
+`MarkdownTable` gets a Markdown MIME here, but `isDownloadable` returns `false` for it, so the generic download button is hidden; a standalone table downloads through its own inline CSV action. `Html` is downloadable only when `content.url != null`.
 
 `ensureDownloadFilename` derives the extension with three-priority logic: (1) when the supplied name already contains a `.`, it is returned unchanged; (2) when a URL is available, its last path segment's extension is appended to the name; (3) when a MIME type is available and present in `MIME_TYPE_EXT_MAP` (from `libs/chat-shared/src/constants/mime-types.ts`), that extension is appended; (4) when none of the above applies, the name is returned unchanged and the download proceeds without an extension.
 

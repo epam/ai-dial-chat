@@ -93,6 +93,9 @@ vi.mock('@tabler/icons-react', () => ({
   IconArrowsSort: () => <svg />,
   IconCalendarTime: () => <svg />,
   IconCheck: () => <svg />,
+  IconClockHour3: ({ stroke }: { stroke?: number }) => (
+    <span>clock-hour-3 icon, stroke {stroke}</span>
+  ),
   IconChevronDown: () => <svg />,
   IconChevronUp: () => <svg />,
   IconChevronRight: () => <svg />,
@@ -228,6 +231,18 @@ describe('ScheduledTasks', () => {
     expect(
       screen.getAllByText('No scheduled tasks yet').length,
     ).toBeGreaterThan(0);
+  });
+
+  it('illustrates the empty state with the scheduled-task clock at illustration weight', () => {
+    renderScheduledTasks({ items: [] });
+
+    expect(screen.getByText('clock-hour-3 icon, stroke 1')).toBeTruthy();
+  });
+
+  it('shows no clock illustration in the no-results state', () => {
+    renderScheduledTasks({ items: [], searchQuery: 'missing' });
+
+    expect(screen.queryByText(/clock-hour-3 icon/)).toBeNull();
   });
 
   it('renders the no-results state, not the empty state, when the server returns zero matches for an active search', () => {

@@ -666,7 +666,7 @@ The close SHALL NOT be implemented as an effect keyed on `conversationId` in `Co
 
 All user-visible strings in the right sidebar (toggle aria-label, panel aria-label, close label, section titles, search and download-all aria-labels, attachment click label, and the new History/Details section strings) SHALL be sourced from i18n keys. Sidebar-specific strings live under `sidebar.base.*` and `sidebar.sources.*` in `apps/chat/src/i18n/locales/en.json`; the all-empty "No data" string reuses `basic.noData`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.
 
-New History/Details/task-summary strings introduced for scheduled-task conversations SHALL reuse existing `scheduledTasks.detail.*` keys, shared button keys, and run-status keys wherever their meaning matches (e.g. status labels, the "no runs" empty state, retry button text) instead of duplicating equivalent English strings under `sidebar.*`. Keys with no existing equivalent (e.g. the "History"/"Details" section titles as they appear in this panel, the load-more `aria-live` status text) SHALL be added under `scheduledTasks.conversationPanel.*`.
+New History/Details/task-summary strings introduced for scheduled-task conversations SHALL reuse existing `scheduledTasks.detail.*` keys, shared button keys, and run-status keys wherever their meaning matches (e.g. status labels, the "no runs" empty state, retry button text) instead of duplicating equivalent English strings under `sidebar.*`. The History/Details section titles reuse `scheduledTasks.detail.historyTitle` and `scheduledTasks.create.detailsSectionTitle`. Only strings with no existing equivalent live under `scheduledTasks.conversationPanel.*`, which today holds `modelLabel` and `currentRunLabel`; there is no load-more status string.
 
 #### Scenario: New keys added to en.json
 
@@ -687,7 +687,7 @@ New History/Details/task-summary strings introduced for scheduled-task conversat
 
 ### Requirement: Panel header shows the scheduled task's display name with a conversation-title fallback
 
-For a scheduled-task conversation, `SidebarPanel`'s `title` SHALL show the fetched `ScheduledTaskDto.displayName` once `taskState === 'success'`. While `taskState === 'loading'` or on `taskState === 'error'`, `title` SHALL fall back to the conversation's own title. For non-scheduled-task conversations, `title` SHALL be omitted/unchanged from current behavior.
+For a scheduled-task conversation, `SidebarPanel`'s `title` SHALL show the fetched `ScheduledTaskDto.displayName` once `taskState === 'success'`. In every other `taskState` (`'idle'`, `'loading'`, `'error'`, or `'unavailable'` after a `404`), `title` SHALL fall back to the conversation's own title. For non-scheduled-task conversations, `title` SHALL be omitted/unchanged from current behavior.
 
 `libs/source-panel`'s `ConversationSourcesPanelProps` SHALL gain an optional `title?: ReactNode`, passed through unchanged to the underlying `SidebarPanel`'s existing `title` prop. This prop SHALL carry no scheduler-specific typing or defaults inside the lib — it is a plain, host-agnostic `ReactNode` slot.
 
@@ -698,7 +698,7 @@ For a scheduled-task conversation, `SidebarPanel`'s `title` SHALL show the fetch
 
 #### Scenario: Header falls back to conversation title while loading or on error
 
-- **WHEN** the active conversation is a scheduled-task conversation and `taskState` is `'loading'` or `'error'`
+- **WHEN** the active conversation is a scheduled-task conversation and `taskState` is `'loading'`, `'error'`, or `'unavailable'`
 - **THEN** the panel header shows the conversation's title instead of a task name
 
 ---
@@ -818,9 +818,10 @@ Unlike `ScheduledTaskDetailView`'s own History card (which keeps its existing sc
 
 ### Requirement: Details section shows resolved model and rendered instructions
 
-For a scheduled-task conversation, the panel SHALL render a Details section built from a shared, host-agnostic presentational component (`ScheduledTaskDetailsSummary`, `libs/scheduled-tasks`) showing:
+For a scheduled-task conversation, the panel SHALL render a Details section built from a shared, host-agnostic presentational component (`ScheduledTaskDetailsSummary`, `libs/scheduled-tasks`) showing, in order:
 
 - **Model**: the deployment that executed THIS run — the run conversation's own model id (`conversation.assistantModelId || conversation.model.id`, the same value the Conversation page passes as `initialModelId`), published through `SourcesSidebarContext` alongside the messages the page already publishes — resolved to its deployment display name via the deployments context (`findDeploymentByIdOrReference` + `resolveLocalizedText`), falling back to the raw model id when unresolved. The schedule's current `model` SHALL NOT be the source: it names the deployment of the latest saved settings, which a later edit may have changed after this run fired (issue #9045). While the run conversation is still loading (no model id published yet), the Model field SHALL be omitted rather than showing another value.
+- **Skill**: when the task has a `skillUrl`, the skill's display name from `useScheduledTaskSkillDisplayName` (a listed own/shared/public skill's name, else the name from `getSkillMetadata`, else the raw `skillUrl`) under the `scheduledTasks.create.skillLabel` label; the row is omitted when the task has no skill.
 - **Instructions**: the task's prompt/instructions rendered through the same shared markdown renderer (`MDMessageViewer` from `@epam/ai-dial-chat-shared`) used by `ScheduledTaskDetailView` and chat assistant messages — raw markdown SHALL NOT be shown as plain text, and no separate markdown implementation SHALL be introduced.
 
 The Details section SHALL NOT render edit controls. It is a concise summary; the "Task details" navigation (see `scheduled-task-conversation-context`) remains the path to the full task view.
@@ -849,6 +850,11 @@ The Details section SHALL NOT render edit controls. It is a concise summary; the
 
 - **WHEN** the task's instructions contain markdown syntax (e.g. lists, bold text)
 - **THEN** the Details section renders that formatting via `MDMessageViewer`, not as an escaped/plain-text string
+
+#### Scenario: Skill row shows the task's skill
+
+- **WHEN** the scheduled task has a `skillUrl`
+- **THEN** the Details section shows a Skill row with the skill's resolved display name, falling back to the raw `skillUrl` when it cannot be resolved
 
 #### Scenario: No edit affordance is present
 
@@ -911,7 +917,7 @@ Task-detail failure, run-history failure, and attachment/source-derivation issue
 - A `getScheduledTask` failure SHALL NOT hide the History section, the existing file/source sections, or the conversation.
 - A run-history failure SHALL NOT hide the Details section.
 - An attachment/source rendering issue SHALL NOT hide the History or Details sections.
-- A `404` from `getScheduledTask` (task deleted) SHALL be treated as "task unavailable": the conversation and existing sections remain visible, and the Details/History sections show a localized "unavailable" state rather than an app-level error.
+- A `404` from `getScheduledTask` (task deleted) SHALL be treated as "task unavailable" (`ActiveScheduledTaskDetailState.Unavailable`): the conversation and existing sections remain visible, the Details section shows the localized `scheduledTasks.conversationBanner.unavailableLabel` text (in a `role="alert"` paragraph, with no retry button) rather than an app-level error, the History section keeps rendering its own run list, and the panel title falls back to the conversation title. A non-404 task failure (`Error`) shows the same text plus a retry button.
 - `401`/`403`/`429`/`502`/`503` responses SHALL follow the existing API error/notification conventions without redirecting away from the conversation.
 - Each section's retry action SHALL retry only its own failed request (task detail vs. run history), not the other.
 
@@ -919,7 +925,7 @@ Task-detail failure, run-history failure, and attachment/source-derivation issue
 
 - **WHEN** `getScheduledTask` responds with `404`
 - **THEN** the conversation and existing Uploaded/Generated/Sources sections remain visible
-- **AND** the Details section (and the panel title, per the header-fallback requirement) show a localized "unavailable" state instead of the task name/content
+- **AND** the Details section shows the localized "unavailable" text instead of the task content, the History section still renders its run list, and the panel title shows the conversation title (per the header-fallback requirement)
 
 #### Scenario: Run-history failure does not hide Details
 

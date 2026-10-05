@@ -126,8 +126,9 @@ Two exceptions, and only these two:
   filled set, so passing it is dead code. Leave it off.
 - **Empty-state illustrations** — a 48px+ illustration above an empty-state
   message stays at `stroke={1}`; 1.5 reads as a fence at that size. The kit
-  makes the same exception for its own `NoDataContent`, which draws that
-  illustration itself — `PanelEmptyState` takes no icon.
+  makes the same exception for its own `NoDataContent`, which draws a generic
+  document mark by default; `PanelEmptyState` forwards an optional `icon` to
+  replace it with a feature illustration.
 
 The border half of the same scale is plain Tailwind: `border` (1px) for
 controls, standalone dividers and table frames, `border-2` for active/selected

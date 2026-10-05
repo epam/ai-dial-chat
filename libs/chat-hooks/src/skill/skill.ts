@@ -2,6 +2,7 @@ import {
   ENTITY_DESCRIPTION_MAX_LENGTH,
   ENTITY_INSTRUCTIONS_MAX_LENGTH,
   ENTITY_NAME_MAX_LENGTH,
+  HIDDEN_FILE,
   exceedsMaxLength,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -39,7 +40,29 @@ export const SKILL_UPLOAD_MAX_TOTAL_BYTES = 16_777_216;
  */
 export const SKILL_UPLOAD_MAX_FILES = 100;
 
-const RESERVED_ENTRY_NAMES = new Set(['.dial-resource', '.dial-folder']);
+/**
+ * Zero-byte object written at `<folder>/.dial_folder` so an otherwise empty
+ * skill folder survives a save — DIAL Core storage has no directory objects,
+ * so a folder only exists as a file's path prefix.
+ */
+export const SKILL_FOLDER_MARKER = HIDDEN_FILE;
+
+const SKILL_FOLDER_MARKER_SUFFIX = `/${SKILL_FOLDER_MARKER}`;
+
+/** Whether a skill-relative path is a folder marker (`<folder>/.dial_folder`, never a root-level `.dial_folder`). */
+export const isSkillFolderMarkerPath = (path: string): boolean =>
+  path.endsWith(SKILL_FOLDER_MARKER_SUFFIX) &&
+  path.length > SKILL_FOLDER_MARKER_SUFFIX.length;
+
+/** Returns the folder path a marker path stands for (`docs/.dial_folder` → `docs`). */
+export const skillFolderMarkerParent = (markerPath: string): string =>
+  markerPath.slice(0, -SKILL_FOLDER_MARKER_SUFFIX.length);
+
+const RESERVED_ENTRY_NAMES = new Set([
+  '.dial-resource',
+  '.dial-folder',
+  SKILL_FOLDER_MARKER,
+]);
 const RESERVED_FIRST_SEGMENTS = new Set(['files', 'v']);
 const WINDOWS_DRIVE_PATTERN = /^[a-zA-Z]:/;
 // eslint-disable-next-line no-control-regex -- intentional: rejects NUL/control characters in a skill path
@@ -49,7 +72,10 @@ const CONTROL_CHAR_PATTERN = /[\x00-\x1f]/;
  * Client-side mirror of the backend's `isValidSkillRelativePath`
  * (`apps/chat-api/src/skills/utils/skill-path.util.ts`), used only for
  * immediate inline feedback — the server remains authoritative and may still
- * reject a path this function accepts.
+ * reject a path this function accepts. It additionally reserves the
+ * `.dial_folder` marker name so a user can never upload or name a folder
+ * after it; the save payload's generated markers never pass through here
+ * (the server accepts them only as a zero-byte final segment).
  */
 export const isValidSkillRelativePath = (relativePath: string): boolean => {
   if (relativePath === '' || relativePath.startsWith('/')) return false;
@@ -238,15 +264,18 @@ export const parseSkillManifest = (
 export interface UnpackedSkillArchive {
   /** The root `SKILL.md` entry's decoded text content. */
   manifestText: string;
-  /** Every non-manifest entry, keyed by relative path. */
+  /** Every non-manifest, non-marker entry, keyed by relative path. */
   files: Map<string, Uint8Array>;
+  /** Folder paths restored from `<folder>/.dial_folder` marker entries. */
+  folders: string[];
 }
 
 /**
  * Unpacks a whole-skill ZIP (as downloaded from `GET /api/v1/skills/download`
  * — DIAL Core's whole-resource `GET` is the one place this contract still
- * uses a ZIP, per design.md) into its manifest text and every other entry's
- * bytes. Throws if the archive has no root `SKILL.md` entry.
+ * uses a ZIP, per design.md) into its manifest text, every other entry's
+ * bytes, and the folders its empty-folder markers stand for. Throws if the
+ * archive has no root `SKILL.md` entry.
  */
 export const unpackSkillArchive = (bytes: Uint8Array): UnpackedSkillArchive => {
   const entries = unzipSync(bytes);
@@ -258,14 +287,22 @@ export const unpackSkillArchive = (bytes: Uint8Array): UnpackedSkillArchive => {
   }
 
   const files = new Map<string, Uint8Array>();
+  const folders: string[] = [];
   for (const [path, content] of Object.entries(entries)) {
     if (path === SKILL_MANIFEST_FILE || path.endsWith('/')) continue;
+    if (isSkillFolderMarkerPath(path)) {
+      folders.push(skillFolderMarkerParent(path));
+      continue;
+    }
+    // A root-level marker stands for no folder, and the server would refuse to save it back.
+    if (path === SKILL_FOLDER_MARKER) continue;
     files.set(path, content);
   }
 
   return {
     manifestText: new TextDecoder().decode(manifestBytes),
     files,
+    folders,
   };
 };
 
@@ -311,7 +348,10 @@ export interface SkillFilesPayload {
 /**
  * Builds the ordered supporting-file paths and `Blob` payload
  * `createSkill`/`updateSkill` expect from the editor's file tree and
- * in-memory content map.
+ * in-memory content map. Every folder node with no descendant node gets a
+ * zero-byte `<folder>/.dial_folder` marker after the real files, so the
+ * empty folder survives the whole-skill write; a folder with content needs
+ * none, and a marker it had before is dropped by that same write.
  */
 export const buildSkillFilesPayload = (
   files: SkillFileTreeNode[],
@@ -320,12 +360,22 @@ export const buildSkillFilesPayload = (
   const fileNodes = files.filter(
     (node) => node.kind === SkillFileNodeKind.File,
   );
+  const markerPaths = files
+    .filter(
+      (folder) =>
+        folder.kind === SkillFileNodeKind.Folder &&
+        !files.some((node) => node.path.startsWith(`${folder.path}/`)),
+    )
+    .map((folder) => `${folder.path}${SKILL_FOLDER_MARKER_SUFFIX}`);
   return {
-    filePaths: fileNodes.map((node) => node.path),
-    files: fileNodes.map((node) =>
-      skillFileBytesToBlob(
-        filesContent.get(node.path)?.bytes ?? new Uint8Array(0),
+    filePaths: [...fileNodes.map((node) => node.path), ...markerPaths],
+    files: [
+      ...fileNodes.map((node) =>
+        skillFileBytesToBlob(
+          filesContent.get(node.path)?.bytes ?? new Uint8Array(0),
+        ),
       ),
-    ),
+      ...markerPaths.map(() => new Blob([])),
+    ],
   };
 };

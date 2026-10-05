@@ -30,7 +30,7 @@ export interface PublicationRule {
 
 ### Requirement: Rules section renders in the Publish sidebar for all three publishable types
 
-`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL render a new access-rules section immediately after the folder-selection block (after the existing callout, i.e. after line 257 in the current file) and before the publish-history section (before line 259), inside the same scrollable body — never inside the pinned `PublishFooter`. This section SHALL render identically regardless of which host (`PublishConversationPanelContainer` or `DetailsPanel`) supplies it, since both wire the same controlled props.
+`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL render the access-rules section inside the destination-folder block, after the callout, the author field and the credentials checkbox, as the last element of the same scrollable body — never inside the pinned `PublishFooter`. This section SHALL render identically regardless of which host (`PublishConversationPanelContainer` or `DetailsPanel`) supplies it, since both wire the same controlled props.
 
 `PublishPanelProps` SHALL gain three new required props:
 ```ts
@@ -46,7 +46,7 @@ plus new optional fields on `PublishPanelLabels` for the section heading, chip s
 
 #### Scenario: Section renders below the folder-selection callout
 - **WHEN** a replace-warning or no-access callout is shown below the folder picker
-- **THEN** the access-rules section still renders below that callout and above the history section (or above the footer, when history is not shown)
+- **THEN** the access-rules section still renders below that callout and above the footer
 
 ### Requirement: Users can add, remove, and clear rules
 

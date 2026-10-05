@@ -307,7 +307,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           : labels.treeHeaderByTab[activeTab],
       containerClassName:
         variant === DialFileManagerVariant.Attach
-          ? 'min-h-0 h-full rounded-xl bg-layer-raised shadow-sm'
+          ? 'min-h-0 h-full w-[360px] shrink-0 rounded-xl bg-layer-raised shadow-sm'
           : undefined,
       tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,

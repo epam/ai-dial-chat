@@ -17,7 +17,6 @@ import {
   PublicationRule,
   PublishCalloutKind,
   PublishFolderNode,
-  PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
@@ -27,9 +26,6 @@ import {
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
-// TODO: will implement later — re-enable along with the versions history
-// section below.
-// import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 import styles from './PublishPanel.module.scss';
 
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
@@ -53,8 +49,6 @@ export interface PublishPanelLabels {
   credentialsLabel?: string;
   /** Caption below the credentials opt-in, stating what ticking it does. Default explains members will use the resource without authorising and that the credential itself is never shown to them. */
   credentialsHint?: string;
-  /** Label above the publish history list. Default: `'Versions history'`. */
-  historyLabel?: string;
   /** Warning callout body shown when the folder already has this version; `{version}` and `{folder}` are replaced, with the folder name rendered bold. */
   replaceWarning?: string;
   /** Error callout body shown when the user lacks write access; `{folder}` is replaced, with the folder name rendered bold. */
@@ -75,12 +69,6 @@ export interface PublishPanelLabels {
   createFolderInvalidNameError?: string;
   /** Inline error shown while creating a folder whose name duplicates a sibling. */
   createFolderDuplicateNameError?: string;
-  /** Message shown while publish history is loading. */
-  historyLoadingLabel?: string;
-  /** Message shown when publish history failed to load. */
-  historyErrorLabel?: string;
-  /** Label marking a history entry that carried shared credentials. Default: `'Shared credentials'`. */
-  historySharedCredentialsLabel?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
   /** Version tag text in the entity-header summary row; `{version}` is replaced. Default: `'Version {version} · current'`. */
@@ -92,26 +80,18 @@ export interface PublishPanelLabels {
 /** Props for {@link PublishPanel}. */
 export interface PublishPanelProps {
   /**
-   * Display metadata for the summary row and for version-derived behavior:
-   * the replace-warning callout's version substitution, and whether the
-   * publish-history section is shown at all (only when `version` is set).
-   * A `type` renders the entity-header row; otherwise the row is title-only,
-   * unless `renderSummary` replaces it.
+   * Display metadata for the summary row and for the replace-warning
+   * callout's version substitution. A `type` renders the entity-header row;
+   * otherwise the row is title-only, unless `renderSummary` replaces it.
    */
   resource?: PublishResourceSummary;
   /**
    * Renders a custom summary row in place of the default title-only row built
    * from `resource.title`. Ignored when `resource.type` is set. Pass
-   * `resource` alongside this so version-derived behavior (callout, history
-   * section) keeps working.
+   * `resource` alongside this so the callout's version substitution keeps
+   * working.
    */
   renderSummary?: () => ReactNode;
-  /** Previously published entries for this item. */
-  history: PublishHistoryEntry[];
-  /** Whether `history` is currently being fetched. Default: `false`. */
-  isHistoryLoading?: boolean;
-  /** Whether the most recent history fetch failed. Default: `false`. */
-  hasHistoryError?: boolean;
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /**
@@ -186,24 +166,16 @@ export interface PublishPanelProps {
   labels?: PublishPanelLabels;
   /** Typography class for the default summary title (unused when `renderSummary` or `resource.type` is passed). Default: `'dial-body-semi-text'`. */
   summaryTitleClassName?: string;
-  /** Typography class for the "Publish to folder" and "Versions history" section headings. Default: `'dial-body-semi-text'`. */
+  /** Typography class for the "Publish to folder" section heading. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
   /** Style overrides. */
   styles?: PublishPanelStyles;
 }
 
-/** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, and publish history. */
+/** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, author, credentials and access rules. */
 export const PublishPanel: FC<PublishPanelProps> = ({
   resource,
   renderSummary,
-  // TODO: will implement later — history, isHistoryLoading, hasHistoryError
-  // are unused while the versions history section below is commented out.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  history,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isHistoryLoading = false,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  hasHistoryError = false,
   folderItems,
   selectedFolderPath,
   onSelectedFolderPathChange,
@@ -255,8 +227,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 
   const {
     folderLabel = 'Publish to folder',
-    // TODO: will implement later — historyLabel is unused while the versions
-    // history section below is commented out.
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
@@ -267,9 +237,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
-    // TODO: will implement later — historyLoadingLabel, historyErrorLabel,
-    // historySharedCredentialsLabel are unused while the versions history
-    // section below is commented out.
     rootFolderLabel = 'Organization',
     summaryVersionLabel,
     accessRulesLabels,
@@ -315,16 +282,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   const folderName = isFolderSelected
     ? (selectedFolderPath[selectedFolderPath.length - 1] ?? rootFolderLabel)
     : '';
-
-  // TODO: will implement later — re-enable along with the versions history
-  // section below.
-  // const folderHistory = useMemo(() => {
-  //   if (!isFolderSelected) {
-  //     return [];
-  //   }
-  //   const key = selectedFolderPath.join('/');
-  //   return history.filter((entry) => entry.folderPath.join('/') === key);
-  // }, [history, selectedFolderPath, isFolderSelected]);
 
   const defaultSummary = renderSummary ? (
     renderSummary()
@@ -467,31 +424,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           />
         </div>
       </div>
-
-      {/* TODO: will implement later — versions history section is disabled
-          for now, keep the markup below for when it's re-enabled. */}
-      {/* {isFolderSelected && resource?.version != null && (
-        <div>
-          <div
-            className={mergeClasses(
-              'mb-2',
-              headingClassName,
-              styles.sectionHeading,
-            )}
-          >
-            {historyLabel}
-          </div>
-          <PublishHistoryList
-            entries={folderHistory}
-            isLoading={isHistoryLoading}
-            hasError={hasHistoryError}
-            currentVersion={resource.version}
-            loadingLabel={historyLoadingLabel}
-            errorLabel={historyErrorLabel}
-            sharedCredentialsLabel={historySharedCredentialsLabel}
-          />
-        </div>
-      )} */}
     </div>
   );
 };
