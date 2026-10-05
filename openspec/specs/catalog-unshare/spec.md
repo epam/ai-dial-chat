@@ -7,17 +7,19 @@ Lets a user who received shared access to a catalog application, toolset, skill,
 ### Requirement: Recipient-side "Remove from My List" action in the catalog details panel
 
 `Header` (`libs/catalog/src/components/Details/Header/Header.tsx`) SHALL append a "Remove from My List" entry to the details panel's "Manage" dropdown when, and only when, all of the following hold:
+- the header is not `isReadonly`,
 - an `onUnshare` callback was supplied by the host,
-- the item's `isMyApp` is not `true`, and
-- the item's `sharedWithMe` is `true`.
+- the item's `isMyApp` is not `true`,
+- the item's `sharedWithMe` is `true`, and
+- the host's optional `isUnshareVisible(item)` returns `true` (treated as `true` when `isUnshareVisible` is absent).
 
-`isMyApp` and `sharedWithMe` are mutually exclusive for a given item, so the owner-side Delete entry and this entry never render together. The entry's label SHALL come from `texts.unshareLabel` (default `'Remove from My List'`) and its icon SHALL be `IconTrashX`, matching the Delete entry's icon treatment. Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onUnshare` directly.
+`isMyApp` and `sharedWithMe` are mutually exclusive for a given item, so the owner-side Delete entry and this entry never render together. The entry's label SHALL come from `texts.unshareLabel` (default `'Remove from My List'`) and its icon SHALL be `IconTrashX` (the same icon as the Delete entry), but unlike Delete the entry SHALL NOT carry the `danger` flag. Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onUnshare` directly.
 
 `DetailsPanel` SHALL own the confirmation step and present it as an in-place sub-view — see the `catalog-details-confirmation-subview` capability for the shared mechanics. While the awaited `onUnshare` is pending the confirm button SHALL show a loading state and reject duplicate submissions. On success the whole details panel closes; on rejection the panel returns to its details content and stays open, leaving failure feedback to the host. The sub-view SHALL also close when the displayed item changes.
 
-`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL implement `onUnshare` by calling `discardSharedCatalogItem(item.id)`, then refetching toolsets for a `Toolset` item, skills for a `Skill` item (via `refetchSkills()` from `useSkills()`), prompts for a `Prompt` item (via `refetchPrompts()`), and deployments otherwise, clearing `selectedItemId` when the removed item was selected, and showing a success notification. A rejection from the discard call SHALL surface an error notification (with the request's trace id) and be re-thrown so the panel stays open; a rejection from the subsequent refetch SHALL NOT downgrade the already-succeeded mutation to an error.
+The app SHALL implement `onUnshare` as `handleUnshare` in the `useCatalogSharing` hook (`apps/chat/src/hooks/useCatalogSharing/useCatalogSharing.ts`), which `CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) destructures and forwards to the details panel as `onUnshare`. `handleUnshare` SHALL call `discardSharedCatalogItem(item.id)`, then refetching toolsets for a `Toolset` item, skills for a `Skill` item (via `refetchSkills()` from `useSkills()`), prompts for a `Prompt` item (via `refetchPrompts()`), and deployments otherwise, clearing `selectedItemId` when the removed item was selected, and showing a success notification. A rejection from the discard call SHALL surface an error notification (with the request's trace id) and be re-thrown so the panel stays open; a rejection from the subsequent refetch SHALL NOT downgrade the already-succeeded mutation to an error.
 
-`CatalogView.isUnshareVisible` SHALL NOT unconditionally exclude `CatalogEntityType.Skill` or `CatalogEntityType.Prompt`. It SHALL return `true` for both (subject to `Header`'s built-in `isMyApp`/`sharedWithMe` gate above, which already applies uniformly across entity types), since `DiscardSharedCatalogItemDto`'s allowlist accepts `prompts/{bucket}/{path}` directly, the same way it already accepts `skills/{bucket}/{path}` — no backend change is required by this capability to support it, because `PromptResponseDto.id` is now a full resource path (see `prompts-api`).
+The `isUnshareVisible` callback returned by `useCatalogSharing` (and forwarded by `CatalogView`) SHALL NOT unconditionally exclude `CatalogEntityType.Skill` or `CatalogEntityType.Prompt`. It SHALL return `true` for every item (`useCallback(() => true, [])`), skills and prompts included (subject to `Header`'s built-in `isMyApp`/`sharedWithMe` gate above, which already applies uniformly across entity types), since `DiscardSharedCatalogItemDto`'s allowlist accepts `prompts/{bucket}/{path}` directly, the same way it already accepts `skills/{bucket}/{path}` — no backend change is required by this capability to support it, because `PromptResponseDto.id` is now a full resource path (see `prompts-api`).
 
 #### Scenario: Shared item exposes the action
 
@@ -30,6 +32,12 @@ Lets a user who received shared access to a catalog application, toolset, skill,
 - **GIVEN** a catalog item with `isMyApp: true`
 - **WHEN** the details panel's Manage menu is opened
 - **THEN** the menu includes the owner-side Delete entry and no "Remove from My List" entry
+
+#### Scenario: Read-only header or host rule hides the action
+
+- **GIVEN** a catalog item with `isMyApp: false` and `sharedWithMe: true`, and a host-supplied `onUnshare`
+- **WHEN** the header is rendered with `isReadonly: true`, or the host's `isUnshareVisible(item)` returns `false`
+- **THEN** the Manage menu includes no "Remove from My List" entry
 
 #### Scenario: Confirmation precedes the API call
 
@@ -76,18 +84,18 @@ The system SHALL expose `POST /api/v1/share/discard` on the existing `ShareContr
 
 The endpoint SHALL:
 - Require a valid session; respond `401 Unauthorized` when no session is present.
-- Accept `DiscardSharedCatalogItemDto { itemId: string }` validated via NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform); `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and an `@Matches` allowlist restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, `skills/{bucket}/{path}`, **or `prompts/{bucket}/{path}`**. Other DIAL resource types and incomplete paths SHALL be rejected before calling DIAL Core. Because the shared `@Matches` pattern's trailing segment is unrestricted (it also matches deeper nested paths), a `skills/`-prefixed `itemId` containing a `/files/` segment SHALL be additionally rejected by a supplementary validator on `DiscardSharedCatalogItemDto`, so only whole-skill URLs (never a single in-skill file URL) are accepted — skills remain whole-resource units for sharing. `DiscardSharedCatalogItemDto` carries no `resourceKind` or `bucket` field — every `itemId`, prompts included, is a self-sufficient full resource path, and no per-resource-type qualification step exists on this DTO.
+- Accept `DiscardSharedCatalogItemDto { itemId: string }` validated via NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform); `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and the custom `@IsCatalogResourcePath()` allowlist decorator (`CATALOG_RESOURCE_PATH_PATTERN` in `apps/chat-api/src/share/dto/catalog-resource-path.validator.ts`) restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, `skills/{bucket}/{path}`, **or `prompts/{bucket}/{path}`**. Other DIAL resource types and incomplete paths SHALL be rejected before calling DIAL Core. Because `CATALOG_RESOURCE_PATH_PATTERN`'s trailing segment is unrestricted (it also matches deeper nested paths), a `skills/`-prefixed `itemId` containing a `/files/` segment SHALL be additionally rejected by an `@Matches(NOT_A_SKILL_FILE_PATTERN)` check on `DiscardSharedCatalogItemDto`, so only whole-skill URLs (never a single in-skill file URL) are accepted — skills remain whole-resource units for sharing. `DiscardSharedCatalogItemDto` carries no `resourceKind` or `bucket` field — every `itemId`, prompts included, is a self-sufficient full resource path, and no per-resource-type qualification step exists on this DTO.
 - Use the session `accessToken` as the Bearer credential when calling DIAL Core.
-- Call SDK `discardSharedResources({ headers, body: { resources: [{ url: itemId }] } })` with no bucket/path reconstruction — `itemId` is passed through unmodified as the resource `url`, matching the existing `createShareLink` pattern (`apps/chat-api/src/share/invitation/share-invitation.service.ts`).
-- Rely on DIAL Core to enforce that the resource is currently shared with the caller; a resource not shared with the caller SHALL surface as `403 Forbidden` via `mapDialHttpStatus`, not a silent 200.
-- Resolve the DIAL Core `resourceTypes` filter used by the pre-discard "was this shared with me" check (`ShareManagementService.isSharedWithCaller`, `apps/chat-api/src/share/management/share-management.service.ts`) via `RESOURCE_KIND_BY_PREFIX` (`apps/chat-api/src/share/utils/share-resource.util.ts`), which SHALL include a `['skills/', 'SKILL']` entry and a `['prompts/', 'PROMPT']` entry alongside the existing `applications/` → `APPLICATION`, `toolsets/` → `TOOL_SET`, and `conversations/` → `CONVERSATION` entries.
+- Derive the resource url as `resourceUrl = toShareResourceUrl(itemId)` (`apps/chat-api/src/share/utils/share-resource.util.ts`), with no bucket/path reconstruction: a `prompts/` id is re-encoded to DIAL Core's canonical percent-encoded form via `encodeDialResourcePath`, and every other kind passes through unchanged. Call SDK `discardSharedResources({ headers, body: { resources: [{ url: resourceUrl }] } })`.
+- Enforce "shared with the caller" in the BFF, because DIAL Core answers `200` (an idempotent no-op) when discarding a resource that was never shared with the caller: before calling discard, `ShareManagementService.isSharedWithCaller` (`apps/chat-api/src/share/management/share-management.service.ts`) calls `getSharedResources({ resourceTypes: [<kind>], with: 'me' })` and matches `resourceUrl` or its decoded form against the returned `resources[].url`. `discardSharedResources` is still called; if it succeeds but the pre-check found the resource not shared, the service SHALL throw `ForbiddenException('Resource is not shared with the caller')` (`403`), not return a silent 200. A failing pre-check call is mapped like any other DIAL Core failure.
+- Resolve the DIAL Core `resourceTypes` filter used by the pre-discard `isSharedWithCaller` check via `RESOURCE_KIND_BY_PREFIX` (`apps/chat-api/src/share/utils/share-resource.util.ts`), which SHALL include a `['skills/', 'SKILL']` entry and a `['prompts/', 'PROMPT']` entry alongside the existing `applications/` → `APPLICATION`, `toolsets/` → `TOOL_SET`, and `conversations/` → `CONVERSATION` entries.
 - On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, mirroring the existing invalidation call in `ShareInvitationService.acceptInvitation`. This invalidation runs unconditionally regardless of `itemId` type; conversations, skills, and prompts have no equivalent server-side list cache today, so for those `itemId` types this invalidation is a harmless no-op.
 - Respond `200 OK` with `DiscardSharedCatalogItemResponseDto { success: true }` on success.
-- Map upstream failures via the fetch-shaped `mapDialHttpStatus`/`handleDialFetchError` pair (consistent with the share domain's other methods): DIAL Core 400 → 400, 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
+- Map upstream failures via the fetch-shaped `mapDialHttpStatus`/`handleDialFetchError` pair (consistent with the share domain's other methods): DIAL Core 400 → `404 Not Found` (`NotFoundException('Resource does not exist')`, since `DiscardSharedCatalogItemDto` already rejects malformed ids, so a DIAL Core 400 can only mean the well-formed id resolves to no resource), 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
 - Not cache the mutation response itself.
 - Log structured success/failure messages (e.g. `Discard shared resource started`, `Discard shared resource completed: success=true`, `DIAL Core returned <status> for share.discardShared`) without the access token, invitation links, full resource path, or any other user data beyond a safe operation identifier.
 
-Controller handler name / OpenAPI operationId: **`discardSharedCatalogItem`** → generated client method `discardSharedCatalogItem()`. The `@ApiOperation.description` SHALL read "Discards the caller's own access to a shared catalog entity (application or toolset), a skill, a prompt, or a conversation".
+Controller handler name / OpenAPI operationId: **`discardSharedCatalogItem`** → generated client method `discardSharedCatalogItem()`. The `@ApiOperation.description` SHALL read "Discards the authenticated user's own access to a shared catalog entity (application or toolset), a skill, a conversation, or a prompt, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation."
 
 **Example request:**
 ```http
@@ -114,7 +122,7 @@ Note: the backend/generated DTOs are named `DiscardSharedCatalogItemDto`/`Discar
 #### Scenario: Discarding a resource not shared with the caller
 
 - **WHEN** the `itemId` refers to a resource DIAL Core does not consider shared with the calling user
-- **THEN** DIAL Core's error response is mapped to `403 Forbidden`; neither cache is invalidated
+- **THEN** the pre-discard `getSharedResources({ with: 'me' })` check finds no matching url, DIAL Core's `200` no-op answer to `discardSharedResources` is not passed through, the endpoint responds `403 Forbidden`, and neither cache is invalidated
 
 #### Scenario: Invalid itemId shape rejected
 
@@ -128,7 +136,7 @@ Note: the backend/generated DTOs are named `DiscardSharedCatalogItemDto`/`Discar
 
 #### Scenario: Resource does not exist
 
-- **WHEN** DIAL Core returns a not-found status for the given `itemId`
+- **WHEN** DIAL Core returns `400` or `404` from `discardSharedResources` for a well-formed `itemId`
 - **THEN** the endpoint responds `404 Not Found`
 
 #### Scenario: DIAL Core upstream error
@@ -159,10 +167,10 @@ Note: the backend/generated DTOs are named `DiscardSharedCatalogItemDto`/`Discar
 #### Scenario: Prompt itemId is now accepted directly, with no resourceKind or bucket field
 
 - **WHEN** an authenticated user calls `POST /api/v1/share/discard` with `{ itemId: "prompts/owner-bucket/Work/AI/summarize" }` for a prompt actually shared with them
-- **THEN** the endpoint accepts the request (no `resourceKind` or `bucket` field is present or needed), resolves the `PROMPT` resource kind via `RESOURCE_KIND_BY_PREFIX`, calls DIAL Core `discardSharedResources` with that itemId unmodified, and responds `200 { success: true }`
+- **THEN** the endpoint accepts the request (no `resourceKind` or `bucket` field is present or needed), resolves the `PROMPT` resource kind via `RESOURCE_KIND_BY_PREFIX`, calls DIAL Core `discardSharedResources` with that itemId re-encoded through `toShareResourceUrl` (DIAL Core's percent-encoded form), and responds `200 { success: true }`
 
 #### Scenario: Individual skill files cannot be discarded independently
 
 - **WHEN** an `itemId` identifies a single file inside a skill rather than the whole skill (e.g. `skills/owner-bucket/team-a/docs-helper/files/notes.md`)
-- **THEN** the supplementary `/files/`-segment validator rejects it with `400 Bad Request`, since only whole-skill URLs are accepted — skills remain whole-resource units for sharing
+- **THEN** the `NOT_A_SKILL_FILE_PATTERN` `@Matches` check rejects it with `400 Bad Request`, since only whole-skill URLs are accepted — skills remain whole-resource units for sharing
 

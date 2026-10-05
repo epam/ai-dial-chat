@@ -19,7 +19,12 @@ notifications; routing, i18n, and API dispatch stay with the host.
 The hook SHALL receive `loginToolset`, `logoutToolset`, and `getToolset` as injected callbacks and
 SHALL NOT import any `server-api` module, app context, or client configuration — following
 `useFavoriteEntitiesState`'s injected-callback contract. It SHALL NOT render, translate, or raise
-notifications; mapping an outcome to user-visible feedback belongs to the caller.
+notifications; mapping an outcome to user-visible feedback belongs to the caller. On every success
+branch (API-key success, OAuth handshake success, and a cancellation upgraded to success by the
+backend re-check) the hook SHALL also call `emitToolsetLoginSuccess({ toolsetId, credentialsLevel })`
+(`libs/chat-hooks/src/shared/toolset-login-events.ts`), an in-document `EventTarget` broadcast that
+other React trees in the same window receive through `subscribeToolsetLoginSuccess`; this broadcast
+carries no user-visible text and is not a notification.
 
 #### Scenario: API access is injected
 
@@ -32,6 +37,13 @@ notifications; mapping an outcome to user-visible feedback belongs to the caller
 - **WHEN** any branch completes
 - **THEN** the hook resolves an outcome value and shows nothing itself, so a deliberate cancellation
   stays silent while a blocked popup can be surfaced by the caller
+
+#### Scenario: Success is broadcast in-document
+
+- **WHEN** a login resolves success on any path
+- **THEN** `emitToolsetLoginSuccess` dispatches the toolset id and credentials level to every
+  `subscribeToolsetLoginSuccess` listener in the current window, and no failure, popup-blocked, or
+  cancelled outcome is broadcast
 
 #### Scenario: Stable callback identity
 
@@ -116,7 +128,8 @@ server-side is never reported as cancelled.
 `@epam/ai-dial-chat-hooks` SHALL publish a callback-completion hook that runs inside the OAuth popup:
 it reads the redirect state from the popup's own `sessionStorage`, clears it, removes the
 authorization code from the visible URL before any request, validates the returned `state` against
-the stored one, performs the exchange through an injected callback, then reports the outcome into the
+the stored one (skipping that check when the stored redirect state carries no `state` field),
+performs the exchange through an injected callback, then reports the outcome into the
 popup URL and over the flow channel until acknowledged, closing the popup afterwards. It SHALL run
 its effect once per mount even under StrictMode double-invocation, and SHALL expose the in-progress /
 failed state so the host page can render and announce it.
@@ -128,8 +141,13 @@ failed state so the host page can render and announce it.
 
 #### Scenario: State mismatch
 
-- **WHEN** the returned `state` does not match the stored redirect state
+- **WHEN** the stored redirect state carries a `state` and the returned `state` does not match it
 - **THEN** no exchange is attempted and a state-mismatch failure is reported
+
+#### Scenario: Stored redirect state without a state field
+
+- **WHEN** the stored redirect state has no `state` field
+- **THEN** the state check is skipped and the exchange proceeds
 
 #### Scenario: Missing code or redirect state
 
@@ -140,6 +158,12 @@ failed state so the host page can render and announce it.
 
 - **WHEN** the injected exchange rejects
 - **THEN** a login-request-failed outcome is reported
+
+#### Scenario: Exchange reports a host-side failure reason
+
+- **WHEN** the injected exchange resolves a `ToolsetOAuthFailureReason` instead of `null` (for a
+  host-side validation the hook cannot perform, such as an unparseable resource id)
+- **THEN** a failure with that reason is reported; resolving `null` reports success
 
 #### Scenario: Authorization code scrubbed before the request
 

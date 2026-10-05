@@ -1,15 +1,17 @@
 import {
   IconClockHour3,
-  IconClockHour3Filled,
   IconFolderOpen,
-  IconFolderOpenFilled,
   IconLayoutGrid,
-  IconLayoutGridFilled,
   IconMessageCircle,
-  IconMessageCircleFilled,
 } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { ROUTES } from '../types/routes';
+import {
+  IconClockHour3CustomFilled,
+  IconFolderOpenCustomFilled,
+  IconLayoutGridCustomFilled,
+  IconMessageCircleCustomFilled,
+} from './icons/filled-icons';
 import { NavigationI18nKeys } from './translation-keys';
 
 export interface NavigationItem {
@@ -28,26 +30,26 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
     path: ROUTES.Root,
     matchPaths: [ROUTES.Conversations],
     icon: IconMessageCircle,
-    activeIcon: IconMessageCircleFilled,
+    activeIcon: IconMessageCircleCustomFilled,
     labelKey: NavigationI18nKeys.Home,
   },
   {
     path: ROUTES.ScheduledTasks,
     icon: IconClockHour3,
-    activeIcon: IconClockHour3Filled,
+    activeIcon: IconClockHour3CustomFilled,
     labelKey: NavigationI18nKeys.ScheduledTasks,
     featureFlag: 'scheduledTasksEnabled',
   },
   {
     path: ROUTES.Catalog,
     icon: IconLayoutGrid,
-    activeIcon: IconLayoutGridFilled,
+    activeIcon: IconLayoutGridCustomFilled,
     labelKey: NavigationI18nKeys.Catalog,
   },
   {
     path: ROUTES.FileManager,
     icon: IconFolderOpen,
-    activeIcon: IconFolderOpenFilled,
+    activeIcon: IconFolderOpenCustomFilled,
     labelKey: NavigationI18nKeys.FileManager,
   },
 ];

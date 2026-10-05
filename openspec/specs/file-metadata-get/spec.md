@@ -105,12 +105,13 @@ Authorization: (session cookie)
 
 | Status | Condition                                                       |
 |--------|-----------------------------------------------------------------|
-| 400    | Missing/empty `bucket` or `path`; `path` contains `..`, starts with `/`, has trailing `/`, or has forbidden characters |
-| 401    | No valid session                                                |
+| 400    | Missing/empty `bucket` or `path`; `path` contains `..`, starts with `/`, has trailing `/`, or has forbidden characters; or DIAL Core returns 400 |
+| 401    | No valid session, or DIAL Core returns 401                      |
 | 403    | DIAL Core returns 403 (user lacks READ permission on file)      |
 | 404    | DIAL Core returns 404, including an empty 404 response body (file does not exist) |
+| 405, 409, 412, 413, 422 | DIAL Core returns the same status; passed through unchanged |
 | 429    | DIAL Core rate limit exceeded                                             |
-| 502    | DIAL Core returns a non-OK, non-mapped HTTP status (4xx other than above, or 5xx) |
+| 502    | DIAL Core returns a 5xx status, or any other unmapped status    |
 | 503    | No HTTP response from DIAL Core: unreachable, connection failure, or timeout |
 
 ---
@@ -159,6 +160,12 @@ Authorization: (session cookie)
 - **WHEN** DIAL Core responds with status 429
 - **THEN** the server returns `429 Too Many Requests`
 
+#### Scenario: Mapped DIAL Core 4xx keeps its status
+
+- **WHEN** DIAL Core responds with status 400, 401, 405, 409, 412, 413, or 422
+- **THEN** `handleDialSdkError` → `mapDialHttpStatus` (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) returns the same status to the caller
+- **AND** the response is not `502 Bad Gateway`
+
 #### Scenario: DIAL Core returns 5xx
 
 - **WHEN** DIAL Core responds with a 5xx status
@@ -176,8 +183,9 @@ Authorization: (session cookie)
 
 #### Scenario: Frontend wrapper returns typed FileMetadataResponseDto
 
-- **WHEN** `getFileMetadata({ bucket, path })` is called in `apps/chat/src/server-api/files.api.ts`
-- **THEN** it delegates to `filesApi.getFileMetadata({ bucket, path })` (generated client)
+- **WHEN** `getFileMetadata({ bucket, path })` exported from `apps/chat/src/server-api/files.api.ts` is called
+- **THEN** it is the `getFileMetadata` of `createFilesApiClient(filesApi, uploadFileWithProgress)` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/files/create-files-api.ts`), re-exported unchanged
+- **AND** that function delegates to `filesApi.getFileMetadata({ bucket, path })` (generated client)
 - **AND** returns a `Promise<FileMetadataResponseDto>`
 
 #### Scenario: Existing listFiles behavior is unchanged
