@@ -75,6 +75,7 @@ import {
   saveConversation,
 } from '../../../server-api/conversations.api';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import { ComposerLayout } from '../../../types/conversation-composer';
 import { buildNetworkUploadErrorNotification } from '../../../utils/attachment-network-error-notification';
 import {
   conversationStreamTransport,
@@ -582,6 +583,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             deployments={[fixedModel]}
             selectedDeploymentId={appId}
             isModelSelectorDisabled
+            layout={ComposerLayout.Inline}
             selectedDeployment={appDeployment}
             isInputDisabled={quickAppStarters.isChatMessageInputDisabled}
             placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}

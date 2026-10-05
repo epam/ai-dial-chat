@@ -1,7 +1,7 @@
+import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
 import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
-import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
 import {
   buildSkillFilesPayload,
   buildSkillManifest,
