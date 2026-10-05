@@ -40,6 +40,7 @@ const QuickAppPreview: FC<Props> = ({ appId, metadata, isVisible, onExit }) => {
       <h1 className="sr-only">{t(AppsEditorI18nKeys.PreviewBannerLabel)}</h1>
       <div className="flex items-center gap-2 border-b border-tertiary px-4 py-2 desktop:px-8 desktop:pb-3 desktop:pt-3">
         <GhostIconButton
+          ref={backButtonRef}
           icon={
             <IconArrowNarrowLeft
               size={DIAL_ICON_SIZE.LG}
