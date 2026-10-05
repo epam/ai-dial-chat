@@ -432,9 +432,9 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
       expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBe(editorBefore);
       expect(mockTriggerSave).toHaveBeenCalledOnce();
-      expect(screen.getAllByRole('button', { name: BasicI18nKeys.Preview })).toContain(
-        document.activeElement,
-      );
+      expect(
+        screen.getAllByRole('button', { name: BasicI18nKeys.Preview }),
+      ).toContain(document.activeElement);
       expect(
         screen.queryByRole('button', {
           name: AppsEditorI18nKeys.PreviewBackToSetup,

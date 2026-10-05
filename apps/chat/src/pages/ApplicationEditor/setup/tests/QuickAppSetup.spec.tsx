@@ -178,22 +178,25 @@ describe('QuickAppSetup', () => {
       'startPreview',
       (handle: ApplicationSetupHandle) => handle.startPreview?.(METADATA),
     ],
-  ])('requests a preview reset from %s only when the save changed the configuration', async (_name, run) => {
-    const handle = mountSetup({ appId: 'app' });
+  ])(
+    'requests a preview reset from %s only when the save changed the configuration',
+    async (_name, run) => {
+      const handle = mountSetup({ appId: 'app' });
 
-    for (const hasChanges of [false, true]) {
-      let promise: Promise<void> | undefined;
-      act(() => {
-        promise = run(handle.current as ApplicationSetupHandle);
-      });
-      await act(async () => {
-        getIframeProps()?.onSaveSuccess?.(hasChanges);
-        await promise;
-      });
-    }
+      for (const hasChanges of [false, true]) {
+        let promise: Promise<void> | undefined;
+        act(() => {
+          promise = run(handle.current as ApplicationSetupHandle);
+        });
+        await act(async () => {
+          getIframeProps()?.onSaveSuccess?.(hasChanges);
+          await promise;
+        });
+      }
 
-    expect(mockOnPreviewReset).toHaveBeenCalledOnce();
-  });
+      expect(mockOnPreviewReset).toHaveBeenCalledOnce();
+    },
+  );
 
   it('requests the preview reset before waiting for the deployments refetch', async () => {
     let resolveRefetch: () => void = () => undefined;

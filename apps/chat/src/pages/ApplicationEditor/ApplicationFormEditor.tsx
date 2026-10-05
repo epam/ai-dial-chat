@@ -343,14 +343,17 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
    * gets focus back when the preview closes.
    */
   const previewButtonsRef = useRef(new Set<HTMLButtonElement>());
-  const registerPreviewButton = useCallback((node: HTMLButtonElement | null) => {
-    if (!node) return;
-    const buttons = previewButtonsRef.current;
-    buttons.add(node);
-    return () => {
-      buttons.delete(node);
-    };
-  }, []);
+  const registerPreviewButton = useCallback(
+    (node: HTMLButtonElement | null) => {
+      if (!node) return;
+      const buttons = previewButtonsRef.current;
+      buttons.add(node);
+      return () => {
+        buttons.delete(node);
+      };
+    },
+    [],
+  );
 
   const wasPreviewingRef = useRef(isPreviewing);
   useEffect(() => {
