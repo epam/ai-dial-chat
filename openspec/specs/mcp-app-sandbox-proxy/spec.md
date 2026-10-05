@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines `apps/mcp-app-sandbox`, the isolated-origin Nx app that serves the MCP Apps double-iframe sandbox-proxy page `@mcp-ui/client` requires to render untrusted tool-supplied HTML, with Referer validation, a fixed restrictive CSP, and no-store caching.
+Defines `apps/mcp-app-sandbox`, the isolated-origin Nx app that serves the MCP Apps double-iframe sandbox-proxy page `@mcp-ui/client` requires to render untrusted tool-supplied HTML, with server-side Origin/Referer validation, a deliberately permissive CSP that relies on origin isolation plus a `frame-ancestors` lock to the validated host, and no-store caching.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ It MUST be deployed at an origin distinct from `apps/chat`'s (different hostname
 - The self-test that verifies the browser actually enforced `sandbox` isolation on this page (throws if `window.top` is unexpectedly accessible).
 - Creation of the inner iframe that ultimately holds the tool-supplied HTML, with its `sandbox` attribute hardcoded to `"allow-scripts allow-same-origin allow-forms"` by this page's own inline script (`apps/mcp-app-sandbox/src/app/sandbox-page.ts`). A `params.sandbox` string override channel exists over `postMessage` (`ui/notifications/sandbox-resource-ready`), but as of the installed `@mcp-ui/client` version, `AppFrame` never sends that field — see the requirement below for the full finding. There is no per-render override reaching this default from `apps/chat` today (corrects the `mcp-app-canvas` spec's earlier claim that `apps/chat`'s renderer overrides this to `allow-scripts`).
 
-No query-param-driven per-tool CSP configuration is implemented in v1 (see the CSP requirement below) — unlike the reference implementation's `?csp=` support.
+No query-param-driven per-tool CSP configuration is implemented (see the CSP requirement below) — unlike the reference implementation's `?csp=` support.
 
 #### Scenario: Route returns a self-contained HTML document
 
@@ -40,35 +40,49 @@ No query-param-driven per-tool CSP configuration is implemented in v1 (see the C
 
 ### Requirement: Server-side Referer validation against an env-configured allowlist
 
-The app SHALL validate the incoming request's `Referer` header against a new env var, `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS` (comma-separated origin list), registered in this app's own `EnvironmentVariables` class and validated at boot per `nestjs-best-practices.md`. This is a deliberate strengthening over the reference implementation, which validates `document.referrer` client-side against a hardcoded regex — validating server-side means an operator can configure the allowlist without rebuilding the app, and the *validated* origin (not a client-trusted value) is what gets embedded into the served script for the client-side postMessage-origin checks.
+The app SHALL validate the incoming request's host origin against a new env var, `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS` (comma-separated origin list), registered in this app's own `EnvironmentVariables` class and validated at boot per `nestjs-best-practices.md`. `SandboxService.validateRefererOrigin` checks the `Origin` header first: when it is present, it must itself be in the allowlist, and `Referer` is ignored (this closes a bypass where a request supplies an allowlisted `Referer` while its actual `Origin` is not the chat host). Only when `Origin` is absent is the origin of the `Referer` header checked. This is a deliberate strengthening over the reference implementation, which validates `document.referrer` client-side against a hardcoded regex — validating server-side means an operator can configure the allowlist without rebuilding the app, and the *validated* origin (from `Origin` or `Referer`, not a client-trusted value) is what gets embedded into the served script for the client-side postMessage-origin checks and into the CSP's `frame-ancestors`.
 
-- Missing `Referer` header, or a `Referer` whose origin is not in the allowlist → `403 ForbiddenException`, and the sandbox HTML is not served.
+- `Origin` present but not in the allowlist, or (with no `Origin`) a missing, unparseable, or unlisted `Referer` → `403 ForbiddenException`, and the sandbox HTML is not served.
 - `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS` unset or empty at boot → the app still boots (consistent with the "absence isn't failure" posture used elsewhere in this change), but every request is rejected with `403` until it's configured — there is no insecure default that serves the page to an unvalidated origin.
 
 #### Scenario: Request from an allowed host origin succeeds
 
-- **WHEN** a request's `Referer` header's origin matches an entry in `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS`
+- **WHEN** a request's `Origin` header, or (when `Origin` is absent) its `Referer` header's origin, matches an entry in `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS`
 - **THEN** the response is `200` with the sandbox HTML
 
 #### Scenario: Request from an unlisted origin is rejected
 
-- **WHEN** a request's `Referer` header's origin does not match any configured entry, or the header is absent
+- **WHEN** a request's `Origin` header is present but not listed, or `Origin` is absent and the `Referer` header's origin is not listed or the header is absent
 - **THEN** the response is `403` and no HTML is returned
+
+#### Scenario: Unlisted Origin wins over an allowlisted Referer
+
+- **WHEN** a request carries an allowlisted `Referer` but an `Origin` header that is not in the allowlist
+- **THEN** the response is `403`
 
 ---
 
-### Requirement: Fixed, restrictive CSP and no-store caching
+### Requirement: Fixed, permissive CSP locked to the validated host, and no-store caching
 
-The response SHALL carry a `Content-Security-Policy` HTTP header (never a `<meta>` tag — tamper-proof, matching the reference implementation's own stated rationale) built from a fixed, maximally-restrictive policy for v1: `default-src 'self'`, images/fonts/styles limited to `'self' data: blob:`, `frame-src 'none'`, `object-src 'none'`, `base-uri 'none'`. There is no per-tool/per-request `csp` query-param override in v1, unlike the reference implementation's `buildCspHeader`.
+The response SHALL carry a `Content-Security-Policy` HTTP header (never a `<meta>` tag — tamper-proof, matching the reference implementation's own stated rationale) built by `buildSandboxCspHeader(validatedOrigin)` in `apps/mcp-app-sandbox/src/app/csp.ts`. The policy is fixed except for `frame-ancestors`, and is deliberately **permissive**, not restrictive:
 
-**Non-goal / documented follow-up**: a tool UI that needs to load images/fonts/connect to a third-party domain beyond same-origin will not render correctly under this default. Plumbing an operator- or per-toolset-configured CSP domain allowlist through to this endpoint is deferred, not silently unsupported forever.
+```
+sandbox allow-scripts allow-same-origin allow-forms allow-popups; default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; object-src 'none'; base-uri 'none'; frame-ancestors <validatedOrigin>;
+```
 
-The response SHALL also carry `Cache-Control: no-store` — the served script embeds the request-validated host origin, so it must never be served from a shared/browser cache across different validated requests.
+- Permissive directives: `default-src *` (any origin for scripts, styles, images, fonts, connections, and frames — there is no `frame-src` or `script-src` restriction), `'unsafe-inline'` and `'unsafe-eval'` (inline script/style and `eval` are allowed), `data:` and `blob:` sources, and a CSP `sandbox` directive that includes `allow-same-origin` and `allow-popups`.
+- Restrictive directives: `object-src 'none'`, `base-uri 'none'`, and `frame-ancestors` set to the single validated host origin, so only that host can embed the page.
+
+The stated reason, from the code comment on `csp.ts`: the sandbox CSP cannot restrict script/resource origins because it is not known what the MCP app will load. Isolation comes instead from the `sandbox` directive together with the distinct deployment origin (`allow-same-origin` grants the sandbox proxy's own isolated origin, not the chat app's, so chat cookies, `localStorage`, `sessionStorage`, IndexedDB, and DOM stay inaccessible) and from the dynamic `frame-ancestors <hostOrigin>` lock. The security trade-off is that untrusted tool HTML can load and execute content from any origin inside that isolated origin.
+
+There is no per-tool/per-request `csp` query-param override, unlike the reference implementation's `buildCspHeader`.
+
+The response SHALL also carry `Cache-Control: no-store` — the served script and the `frame-ancestors` value embed the request-validated host origin, so the response must never be served from a shared/browser cache across different validated requests. The controller also sets `X-Content-Type-Options: nosniff` and `Cross-Origin-Resource-Policy: cross-origin`.
 
 #### Scenario: Response headers are set correctly
 
-- **WHEN** a validated request receives the `200` sandbox HTML response
-- **THEN** the response includes a `Content-Security-Policy` header matching the fixed v1 policy
+- **WHEN** a validated request from host origin `https://chat.example.com` receives the `200` sandbox HTML response
+- **THEN** the response includes a `Content-Security-Policy` header equal to the policy above with `frame-ancestors https://chat.example.com;`
 - **AND** the response includes `Cache-Control: no-store`
 
 ---
@@ -102,10 +116,12 @@ Sandbox permissions SHALL NOT be configurable per render, and `allow-popups` SHA
 
 Per the HTML sandboxing spec, a nested browsing context's effective permissions are capped by every sandboxed ancestor. Consequently, adding `allow-popups` to only the inner iframe (item 2, the only lever this repo can edit directly) would **not** be sufficient on its own — the outer vendored iframe (item 1) would still block it. Enabling popups end-to-end would require patching `@mcp-ui/client`'s bundled output (no `patch-package` tooling exists in this repo today) in addition to changing this app's own default, or an upstream change to `@mcp-ui/client` that exposes the outer iframe's `sandbox` attribute as a configurable prop.
 
-**Status:** documented limitation, not fixed. No `allow-popups` support is implemented anywhere in the pipeline as of this change.
+The response CSP's own `sandbox` directive (see the CSP requirement) does include `allow-popups`, and `@mcp-ui/client`'s `SandboxConfig` type declares a `permissions` field documented as overriding the iframe `sandbox` attribute. Neither changes the outcome: the installed `@mcp-ui/client` (7.1.1) `AppFrame` implementation still sets the outer iframe's `sandbox` attribute to the hardcoded string and never reads `permissions`, and this app's inner iframe default omits `allow-popups`.
+
+**Status:** documented limitation, not fixed. Popups are blocked end-to-end because both iframe `sandbox` attributes omit `allow-popups`, even though the proxy page's CSP `sandbox` directive includes it.
 
 #### Scenario: a tool app's popup call is blocked
 
 - **WHEN** the mounted app calls `window.open(...)` (e.g. to open an external link in a new tab)
-- **THEN** the browser blocks the popup because neither the outer nor the inner sandboxed iframe includes `allow-popups`
+- **THEN** the browser blocks the popup because neither the outer nor the inner sandboxed iframe's `sandbox` attribute includes `allow-popups`, regardless of the `allow-popups` token in the proxy page's CSP `sandbox` directive
 - **AND** no prop passed by `apps/chat`'s `McpAppCanvasRenderer` can change this outcome
