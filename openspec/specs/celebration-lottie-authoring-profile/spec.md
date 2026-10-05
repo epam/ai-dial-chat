@@ -149,7 +149,7 @@ A unit test asserts that 2000 + 250 + 16000 ≤ 18500.
 
 **[Contract]** A scene SHALL declare 1–8 `variants`. Each variant is `{ when: { layout?: 'mobile' | 'desktop', direction?: 'ltr' | 'rtl', colorScheme?: 'light' | 'dark' }, animationAssetId }`.
 
-- The host supplies the inputs: `isMobile` (already a provider prop), the document direction, and the resolved color scheme (`appearance-override-contract`).
+- The host supplies the inputs: `isMobile` (already a provider prop), the document direction, and the resolved color scheme.
 - The runtime SHALL pick the variant that matches the most conditions. A missing condition matches anything.
 - Ties SHALL resolve by declaration order. A scene with no match SHALL be treated as unsupported.
 

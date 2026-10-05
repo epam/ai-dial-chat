@@ -34,7 +34,7 @@ The browser SHALL NOT fetch C1 resources from the themes host. `libs/celebration
 
 - `schemaVersion`: integer. Absent means a legacy catalog.
 - `revision`: string, 1 to 64 characters of `[A-Za-z0-9._-]`.
-- `defaultThemeId`, `systemThemeIds`: see `appearance-override-contract`.
+- `defaultThemeId`: must name a configured theme. `systemThemeIds: { light, dark }`: both must name configured themes. An invalid reference is dropped by the BFF and the rest of the catalog is still served. Neither field is read by the code yet.
 - `assets`: a registry of branding assets keyed by asset ID.
 - `celebrationPacks`: the published packs, as `{ packId, version, eventId, manifest: { path, bytes, sha256 } }`.
 - `defaultCelebrationPacks`: maps `eventId` to `{ packId, version }`.
