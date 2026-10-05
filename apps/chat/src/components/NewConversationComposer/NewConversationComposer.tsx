@@ -687,11 +687,6 @@ const NewConversationComposer: FC<Props> = ({
           downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
           deleteLabel={t(ButtonsI18nKeys.Delete)}
           deletingLabel={t(BasicI18nKeys.DeletingStatus)}
-          deleteConfirmTitle={(names) =>
-            names.length === 1
-              ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
-              : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
-          }
           deleteConfirmBody={(names) => (
             <FileDeleteConfirmContent names={names} />
           )}

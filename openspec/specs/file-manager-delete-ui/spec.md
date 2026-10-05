@@ -112,7 +112,7 @@ interface Props {
   // ... existing ...
   deleteLabel: string;
   deletingLabel: string;
-  deleteConfirmTitle: (names: string[]) => ReactNode;
+  deleteConfirmTitle?: (names: string[], items: DialFile[]) => ReactNode;
   deleteConfirmBody: (names: string[]) => ReactNode;
   deleteConfirmLabel: string;
   deleteCancelLabel: string;
@@ -212,18 +212,13 @@ Inside the `<div className="relative ...">` that wraps `DialFileManager`:
 
 #### Call sites: new prop values
 
-Every host of the file manager's delete confirmation — `ConversationView`, `NewConversationComposer`, `SkillFileSystemModal`, and `DialFileManagerPage` — SHALL pass the same copy through `useTranslation`, and SHALL render the body with the shared `FileDeleteConfirmContent` rather than an inline block:
+Every host of the file manager's delete confirmation — `ConversationView`, `NewConversationComposer`, `SkillFileSystemModal`, and `DialFileManagerPage` — SHALL pass the same copy through `useTranslation`, and SHALL render the body with the shared `FileDeleteConfirmContent` rather than an inline block. The hosts pass no `deleteConfirmTitle`: `DialFileManagerModal` and `DialFileManagerPage` title the dialog with `getFileDeleteConfirmTitle` (`apps/chat/src/components/FileDeleteConfirmContent/file-delete-confirm-title.ts`), which reads the `nodeType` of the items the file manager passes as the renderer's second argument — "Delete folder" (`dialFileManager.deleteConfirmTitleFolder`) or "Delete file" (`dialFileManager.deleteConfirmTitleFile`) for one item, "Delete items" (`dialFileManager.deleteConfirmTitleMultiple`) for several — and name the close control with `buttons.close`. A host that passes `deleteConfirmTitle` (`AvatarPickerModal`) keeps its own title:
 
 ```tsx
 <DialFileManagerModal
   // ... existing ...
   deleteLabel={t(ButtonsI18nKeys.Delete)}
   deletingLabel={t(BasicI18nKeys.DeletingStatus)}
-  deleteConfirmTitle={(names) =>
-    names.length === 1
-      ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
-      : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
-  }
   deleteConfirmBody={(names) => <FileDeleteConfirmContent names={names} />}
   deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
   deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
@@ -238,7 +233,7 @@ Every host of the file manager's delete confirmation — `ConversationView`, `Ne
 
 Names are shown as basenames: the grid reports each entry as a DIAL resource path (`files/{bucket}/path/file.pdf`), and the content uses `.split('/').pop()` so the dialog names the item, not its location.
 
-The dialog frame, title, and action buttons still belong to `@epam/ai-dial-react-file-manager`, which accepts only a title renderer and a content node. Its confirm button therefore has no trash icon and its Cancel is the package's solid neutral button, unlike the shared `ConfirmationFooter`; closing that gap needs a footer slot in that package.
+The dialog frame and action buttons belong to `@epam/ai-dial-react-file-manager` (from `0.3.0-dev.25`): it shows the header close control, a text Cancel, and a danger Delete led by a trash icon, matching the shared `ConfirmationFooter`. It passes the items with their `nodeType` to `titleRenderer` and `contentRenderer`, and names the close control from `closeLabel` (`DialFileManagerShellLabels.deleteCloseLabel`).
 
 #### Scenario: Delete single file from grid row context menu
 
@@ -305,7 +300,9 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 
 | Key (full) | English value | Notes |
 |------------|---------------|-------|
-| `dialFileManager.deleteConfirmTitleSingle` | `"Delete item"` | Popup title, single item |
+| `dialFileManager.deleteConfirmTitleSingle` | `"Delete item"` | Popup title, single item — `AvatarPickerModal` only |
+| `dialFileManager.deleteConfirmTitleFile` | `"Delete file"` | Popup title, one file |
+| `dialFileManager.deleteConfirmTitleFolder` | `"Delete folder"` | Popup title, one folder |
 | `dialFileManager.deleteConfirmTitleMultiple` | `"Delete items"` | Popup title, multiple items |
 | `dialFileManager.deleteConfirmMessageSingle` | `"Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone."` | Body sentence, single item; `<bold>` maps to `CONFIRMATION_BOLD_COMPONENTS` |
 | `dialFileManager.deleteConfirmMessageMultiple` | `"Are you sure you want to delete <bold>{{count}} items</bold>? This action is permanent and cannot be undone."` | Body sentence, multiple items |
