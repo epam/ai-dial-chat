@@ -1396,12 +1396,8 @@
       "totalCountExceeded": "This would exceed the maximum number of files allowed in a skill.",
       "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
-    "saveSuccessTitle": "Skill created",
-    "updateSuccessTitle": "Skill updated",
-    "createSuccess": "\"{{name}}\" has been created.",
     "editTitle": "Edit skill",
     "saveLabel": "Save",
-    "updateSuccess": "\"{{name}}\" has been updated.",
     "loadErrorForbidden": "You don't have access to this skill.",
     "loadErrorNotFound": "This skill could not be found.",
     "conflictMessage": "Someone else changed this skill since you opened it.",
@@ -1549,6 +1545,8 @@
     "skill": {
       "createdTitle": "Skill created successfully",
       "created": "You can now see skill \"{{name}}\" in the catalog and My collection.",
+      "editedTitle": "Skill edited successfully",
+      "edited": "Changes for skill \"{{name}}\" are saved.",
       "deletedTitle": "Skill deleted successfully",
       "deleted": "Skill \"{{name}}\" is not available anymore.",
       "downloadedTitle": "Skill downloaded successfully",
