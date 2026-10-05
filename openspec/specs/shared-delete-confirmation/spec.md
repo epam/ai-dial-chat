@@ -10,7 +10,7 @@ Defines the one delete confirmation every surface that deletes a single resource
 
 A delete confirmation SHALL present, in this order:
 
-1. **Identity card** — the resource as a red-tinted card (`ConfirmationPopupVariant.Danger`): its icon, its type, and its name.
+1. **Identity card** — the resource as a red-tinted card (`ConfirmationPopupVariant.Danger`): its icon, its type, and its name. The scheduled task dialog and the Files body show the name only, with no icon or type, per design.
 2. **Message** — one sentence naming the resource in bold and ending in "This action is permanent and cannot be undone."
 3. **Consequences** — a short bulleted list whose last bullet is "Cannot be undone" (`basic.consequenceCannotBeUndone`).
 4. **Actions** — a text Cancel beside a red Delete carrying a leading `IconTrashX`.
