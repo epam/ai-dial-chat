@@ -286,13 +286,6 @@ describe('PublishPanel', () => {
     expect(screen.queryByText('Versions history')).toBeNull();
   });
 
-  // TODO: will implement later — versions history section is commented out
-  // in PublishPanel; re-enable once it comes back.
-  it.skip('shows the history section once a folder is selected', () => {
-    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
-    expect(screen.getByText('Versions history')).toBeTruthy();
-  });
-
   it('shows the replace-warning callout when the version already exists in the folder, with the folder name bold', () => {
     renderPanel({
       selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
@@ -344,52 +337,12 @@ describe('PublishPanel', () => {
     expect(screen.queryByText(/Everyone with access/)).toBeNull();
   });
 
-  // TODO: will implement later — versions history section is commented out
-  // in PublishPanel; re-enable once it comes back.
-  it.skip('renders the empty-history message when there is no publish history for the selected folder', () => {
-    renderPanel({
-      selectedFolderPath: ['Shared', 'Data Science'],
-    });
-    expect(
-      screen.getByText(
-        'Not published to this folder yet — this will be the first version here.',
-      ),
-    ).toBeTruthy();
-  });
-
-  // TODO: will implement later — versions history section is commented out
-  // in PublishPanel; re-enable once it comes back.
-  it.skip('renders history rows only for the selected folder', () => {
-    renderPanel({
-      selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
-    });
-    expect(screen.getByText('Version 4.0.0')).toBeTruthy();
-  });
-
   it('does not show history from a different folder', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.queryByText('Version 4.0.0')).toBeNull();
   });
 
   describe('root selection', () => {
-    // TODO: will implement later — versions history section is commented out
-    // in PublishPanel; re-enable once it comes back.
-    it.skip('shows the history section when the root ([]) is selected', () => {
-      renderPanel({ selectedFolderPath: [] });
-      expect(screen.getByText('Versions history')).toBeTruthy();
-    });
-
-    // TODO: will implement later — versions history section is commented out
-    // in PublishPanel; re-enable once it comes back.
-    it.skip('shows the empty-history message for the root when there is no root history', () => {
-      renderPanel({ selectedFolderPath: [] });
-      expect(
-        screen.getByText(
-          'Not published to this folder yet — this will be the first version here.',
-        ),
-      ).toBeTruthy();
-    });
-
     it('uses the root folder label in the no-access callout when the root is selected', () => {
       const { container } = renderPanel({
         selectedFolderPath: [],

@@ -27,9 +27,6 @@ import {
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
-// TODO: will implement later — re-enable along with the versions history
-// section below.
-// import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 import styles from './PublishPanel.module.scss';
 
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
@@ -192,18 +189,10 @@ export interface PublishPanelProps {
   styles?: PublishPanelStyles;
 }
 
-/** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, and publish history. */
+/** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, author, credentials and access rules. */
 export const PublishPanel: FC<PublishPanelProps> = ({
   resource,
   renderSummary,
-  // TODO: will implement later — history, isHistoryLoading, hasHistoryError
-  // are unused while the versions history section below is commented out.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  history,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isHistoryLoading = false,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  hasHistoryError = false,
   folderItems,
   selectedFolderPath,
   onSelectedFolderPathChange,
@@ -255,8 +244,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 
   const {
     folderLabel = 'Publish to folder',
-    // TODO: will implement later — historyLabel is unused while the versions
-    // history section below is commented out.
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
@@ -267,9 +254,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
-    // TODO: will implement later — historyLoadingLabel, historyErrorLabel,
-    // historySharedCredentialsLabel are unused while the versions history
-    // section below is commented out.
     rootFolderLabel = 'Organization',
     summaryVersionLabel,
     accessRulesLabels,
@@ -315,16 +299,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   const folderName = isFolderSelected
     ? (selectedFolderPath[selectedFolderPath.length - 1] ?? rootFolderLabel)
     : '';
-
-  // TODO: will implement later — re-enable along with the versions history
-  // section below.
-  // const folderHistory = useMemo(() => {
-  //   if (!isFolderSelected) {
-  //     return [];
-  //   }
-  //   const key = selectedFolderPath.join('/');
-  //   return history.filter((entry) => entry.folderPath.join('/') === key);
-  // }, [history, selectedFolderPath, isFolderSelected]);
 
   const defaultSummary = renderSummary ? (
     renderSummary()
@@ -467,31 +441,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           />
         </div>
       </div>
-
-      {/* TODO: will implement later — versions history section is disabled
-          for now, keep the markup below for when it's re-enabled. */}
-      {/* {isFolderSelected && resource?.version != null && (
-        <div>
-          <div
-            className={mergeClasses(
-              'mb-2',
-              headingClassName,
-              styles.sectionHeading,
-            )}
-          >
-            {historyLabel}
-          </div>
-          <PublishHistoryList
-            entries={folderHistory}
-            isLoading={isHistoryLoading}
-            hasError={hasHistoryError}
-            currentVersion={resource.version}
-            loadingLabel={historyLoadingLabel}
-            errorLabel={historyErrorLabel}
-            sharedCredentialsLabel={historySharedCredentialsLabel}
-          />
-        </div>
-      )} */}
     </div>
   );
 };

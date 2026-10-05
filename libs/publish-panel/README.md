@@ -37,7 +37,7 @@ optional.
 
 ### PublishPanel
 
-Scrollable body of the Publish flow: entity summary row, destination folder picker with search, callouts, and publish history.
+Scrollable body of the Publish flow: entity summary row, destination folder picker with search, callouts, author, credentials and access rules. It does not render publish history; `history`, `isHistoryLoading`, `hasHistoryError` and the `history*` labels are accepted but not read. Use `PublishHistoryList` directly to show history in a custom layout.
 
 ```tsx
 import { PublishPanel } from '@epam/ai-dial-publish-panel';

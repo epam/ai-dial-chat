@@ -140,17 +140,17 @@ The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) whe
 
 The fetch is load-bearing beyond the publish panel: it is the only source of the folder list the Unpublish action needs, and it is what makes that action visible at all (see `catalog-unpublish-flow`). While it returned a frozen `[]`, `Unpublish` could never appear for any catalog entity.
 
-Loading/empty/error states: while history is loading, `PublishHistoryList` SHALL show a loading state; on fetch failure it SHALL show an inline error state distinct from the empty-history state. Both states are reachable again once the fetch is restored.
+The publish sub-view SHALL NOT render a versions-history list: `PublishPanel` has no history section, so the fetched history is consumed only by the Unpublish action. `PublishPanel` still declares `history`/`isHistoryLoading`/`hasHistoryError` and the `history*` labels, but does not read them; `PublishHistoryList` remains exported from `@epam/ai-dial-publish-panel` for custom layouts and is not rendered by the app.
 
 Submit success: `CatalogView`'s `onPublishSuccess` SHALL raise its notification through `useOperationNotification` (see `entity-operation-notifications`) with the item's resolved `NotifiableEntity` and `EntityOperation.PublishRequested`, passing the entity name and the selected destination folder. The copy SHALL state that a publish request was submitted and appears once an admin approves it — the endpoint creates an admin-pending DIAL Core publication, exactly as the conversation publish flow already reports. The previous `CatalogI18nKeys.PublishSuccess*` pair (`"Published"` / `"\"{{name}}\" published to {{folder}}"`) SHALL be deleted, since it claimed an outcome the backend does not deliver.
 
 Submit failure: `CatalogView` SHALL supply an `onPublishError` handler, threaded down as `CatalogProps.onPublishError` → `DetailsPanelProps.onPublishError` → `usePublishFlow` the same way `onPublishSuccess` already is, so a rejected publish produces an error notification in addition to the inline submit-error callout ([GitHub issue #7898](https://github.com/epam/ai-dial-chat/issues/7898)). It SHALL reuse the same shared `usePublishErrorNotification` hook and shared `publish.*` i18n namespace as the conversation publish flow (see `conversation-publish-flow`), including the offline branch that swaps in `publish.networkErrorMessage` and omits `requestId`. `CatalogView` SHALL also pass the translated `publishLabels.submitError` (`publish.submitErrorCallout`), so the callout no longer renders the publish-panel library's hardcoded English default.
 
-Accessibility: the publish history list SHALL expose `role="list"`/`role="listitem"` semantics (or equivalent list semantics already implemented) so screen readers announce entry count; the submit-error callout SHALL use `role="alert"`.
+Accessibility: the submit-error callout SHALL use `role="alert"`.
 
 #### Scenario: Publish succeeds
 - **WHEN** the user submits a publish request and the backend returns success
-- **THEN** `onPublishSuccess` fires, a success notification titled `"<Entity> publish requested"` is shown through `useOperationNotification`, its body names the entity and destination folder and states an admin must approve it, and the publish history list refreshes to include the new entry
+- **THEN** `onPublishSuccess` fires, a success notification titled `"<Entity> publish requested"` is shown through `useOperationNotification`, and its body names the entity and destination folder and states an admin must approve it
 
 #### Scenario: Publish notification names the entity kind
 - **WHEN** a toolset is published and, separately, a prompt is published
@@ -166,11 +166,15 @@ Accessibility: the publish history list SHALL expose `role="list"`/`role="listit
 
 #### Scenario: History is fetched from the endpoint, not stubbed
 - **WHEN** the publish sub-view or the Manage menu triggers a history lookup for an entity
-- **THEN** `getCatalogPublishHistory` is called for that entity and its mapped entries populate `PublishHistoryList`, with no code path resolving to a hardcoded empty array
+- **THEN** `getCatalogPublishHistory` is called for that entity and its mapped entries are returned to the catalog, with no code path resolving to a hardcoded empty array
+
+#### Scenario: The publish sub-view shows no versions history
+- **WHEN** the user opens the publish sub-view and selects a destination folder
+- **THEN** no versions-history list is rendered, whatever `history` contains
 
 #### Scenario: Publish history fails to load
 - **WHEN** `getPublishHistory` rejects
-- **THEN** `PublishHistoryList` renders an inline error state instead of an empty-history message, and the `Unpublish` menu entry stays hidden (see `catalog-unpublish-flow`)
+- **THEN** the `Unpublish` menu entry stays hidden (see `catalog-unpublish-flow`)
 
 ### Requirement: Catalog entity summary is supplied to the shared publish panel as resource metadata
 `DetailsPanel` SHALL supply the publish summary to the shared `PublishPanel` (from `@epam/ai-dial-publish-panel`) as the `resource` prop — `{ title: item.name, version: item.version, type: item.type, iconUrl: item.iconUrl }` — plus the version-tag colors through `styles.colors` (`summaryVersionTagBorder`/`summaryVersionTagBackground`/`summaryVersionTagText`, from `detailsColors`), rather than passing a `CatalogItem` or a `renderSummary` slot. `DetailsPanel` SHALL remain the only place in `libs/catalog` that maps a `CatalogItem` to that summary; `PublishPanel` SHALL NOT receive a `CatalogItem`. Because `resource.type` is set, `PublishPanel` builds the entity-header row itself (`ResourceSummary` with type, name, version and icon) and ignores any `renderSummary`, which only replaces the title-only row used when `resource.type` is absent.
@@ -380,16 +384,14 @@ The eligibility decision SHALL be made inside `libs/catalog` from `item.credenti
 
 ### Requirement: Catalog publish history shows which publications carried shared credentials
 
-`getPublishHistory` (`useCatalogPublishing`) SHALL map the endpoint's `publishCredentials` field onto `PublishHistoryEntry` via `mapPublishHistoryEntryDto`, and `CatalogView` SHALL pass a translated `historySharedCredentialsLabel` through `publishLabels`, which `PublishPanel` forwards to `PublishHistoryList` as `sharedCredentialsLabel` so it marks those entries (see `publish-panel-library`). The i18n key SHALL be `catalog.publish.historySharedCredentials`, registered on `CatalogI18nKeys` and added to `apps/chat/src/i18n/locales/en.json`.
+`getPublishHistory` (`useCatalogPublishing`) SHALL map the endpoint's `publishCredentials` field onto `PublishHistoryEntry` via `mapPublishHistoryEntryDto`. `CatalogView` passes a translated `historySharedCredentialsLabel` (`catalog.publish.historySharedCredentials`, on `CatalogI18nKeys` and in `en.json`) through `publishLabels`, but `PublishPanel` renders no history, so the marker is not shown anywhere in the app today; `PublishHistoryList` would render it as `sharedCredentialsLabel` in a custom layout (see `publish-panel-library`).
 
 The synthesised single-entry history a public copy's own id produces (`isPublicCatalogEntityId`) SHALL leave `publishCredentials` unset, since that path never calls the endpoint and has no publication record to read it from. Absent reads as `false`, so the marker simply does not appear.
-
-This requirement delivers the data path and the rendering; it SHALL NOT re-enable the publish-history section that `PublishPanel` currently keeps behind a `TODO`, which is separate scope. The marker becomes visible when that section is re-enabled.
 
 #### Scenario: A publication made with shared credentials is marked in history
 
 - **WHEN** the history endpoint reports an entry with `publishCredentials: true`
-- **THEN** `mapPublishHistoryEntryDto` carries it onto the `PublishHistoryEntry`, and `PublishHistoryList` renders that row with the shared-credentials label
+- **THEN** `mapPublishHistoryEntryDto` carries it onto the `PublishHistoryEntry` as `true`
 
 #### Scenario: A publication made without shared credentials is unmarked
 
