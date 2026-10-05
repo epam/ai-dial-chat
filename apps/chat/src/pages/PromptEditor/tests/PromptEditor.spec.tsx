@@ -14,6 +14,9 @@ import {
 } from '../../../server-api/prompts.api';
 import PromptEditor from '../PromptEditor';
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ status: 'ready', config: {} }),
+}));
 vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-builder-form')>();

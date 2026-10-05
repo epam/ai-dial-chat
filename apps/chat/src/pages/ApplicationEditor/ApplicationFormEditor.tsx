@@ -4,8 +4,13 @@ import {
   MetadataForm,
   useMetadataForm,
 } from '@epam/ai-dial-builder-form';
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  TextRefinementField,
+  useTextRefinement,
+} from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopup,
   DIAL_ICON_SIZE,
@@ -14,7 +19,7 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconEye } from '@tabler/icons-react';
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 import {
   memo,
   useCallback,
@@ -36,6 +41,8 @@ import { useApplicationAvatarPicker } from '../../hooks/application-editor/useAp
 import { useEditedApplication } from '../../hooks/application-editor/useEditedApplication';
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
+import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import type {
   ApplicationEditorContext,
   ApplicationEditorFormDefinition,
@@ -173,6 +180,33 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     [metadataFormLabels, avatarPickerLabels],
   );
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+
+  const onRefineDescription = useTextRefinementCallback(
+    TextRefinementPurpose.ApplicationDescription,
+  );
+  const refinementLabels = useTextRefinementLabels();
+  const { setValues: setMetadataValues } = metadata;
+  const descriptionRefinement = useTextRefinement({
+    value: metadata.values.description,
+    onChange: (description) => setMetadataValues({ description }),
+    onRefine: onRefineDescription,
+    disabled: isSaving,
+    resetKey: appId,
+  });
+  const renderRefinableDescription = onRefineDescription
+    ? (textarea: ReactNode, fieldId: string) => (
+        <TextRefinementField
+          isEnabled
+          fieldId={fieldId}
+          label={metadataFormLabels.description.label}
+          labels={refinementLabels}
+          refinement={descriptionRefinement}
+          disabled={descriptionRefinement.isPending || isSaving}
+        >
+          {textarea}
+        </TextRefinementField>
+      )
+    : undefined;
 
   const metadataErrors = useMemo(
     () => translateDeploymentCreationErrors(metadata.visibleErrorCodes, t),
@@ -440,7 +474,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
             isEditMode ? ButtonsI18nKeys.Save : ButtonsI18nKeys.Create,
           )}
           isSubmitting={isSaving}
-          isSubmitDisabled={!isSetupReady}
+          isSubmitDisabled={!isSetupReady || descriptionRefinement.isPending}
           extraActions={extraActions}
           labels={{
             backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
@@ -458,6 +492,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
               onVersionBlur={handleVersionBlur}
               avatarPicker={avatarPicker}
               availableLocaleOptions={localeOptions}
+              renderDescription={renderRefinableDescription}
               labels={metadataLabels}
               focusRequestKey={metadata.submitAttemptCount}
             />

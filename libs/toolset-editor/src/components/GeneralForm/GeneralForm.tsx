@@ -58,6 +58,7 @@ export const GeneralForm: FC<GeneralFormProps> = ({
   onChange,
   onNameBlur,
   onVersionBlur,
+  renderDescription,
   labels,
 }) => {
   const resolveAttachedIconUrl = useCallback(
@@ -110,6 +111,7 @@ export const GeneralForm: FC<GeneralFormProps> = ({
       onVersionBlur={onVersionBlur}
       avatarPicker={avatarPicker}
       availableLocaleOptions={availableLocaleOptions}
+      renderDescription={renderDescription}
       labels={metadataLabels}
     />
   );

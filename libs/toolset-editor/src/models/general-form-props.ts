@@ -4,7 +4,7 @@ import type {
   DeploymentCreationFormLabels,
   DeploymentCreationFormLocaleOption,
 } from '@epam/ai-dial-builder-form';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type {
   DeploymentGeneralFormData,
   ToolsetFormErrors,
@@ -50,6 +50,8 @@ export interface GeneralFormProps {
   onNameBlur?: () => void;
   /** Called when the Version field loses focus. */
   onVersionBlur?: () => void;
+  /** Wraps the Description textarea; see `MetadataFormProps.renderDescription`. */
+  renderDescription?: (textarea: ReactNode, fieldId: string) => ReactNode;
   /** Pre-translated labels; each group falls back to English defaults. */
   labels?: GeneralFormLabels;
 }

@@ -1,3 +1,4 @@
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import type {
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
@@ -46,6 +47,8 @@ import { useApplicationAvatarPicker } from '../../../hooks/application-editor/us
 import { useMetadataLabels } from '../../../hooks/application-editor/useMetadataLabels';
 import { useToolsetEditorOAuthLogin } from '../../../hooks/toolsets/useToolsetEditorOAuthLogin';
 import { useOperationNotification } from '../../../hooks/useOperationNotification';
+import { useTextRefinementCallback } from '../../../hooks/useTextRefinementCallback';
+import { useTextRefinementLabels } from '../../../hooks/useTextRefinementLabels';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import {
   createToolset,
@@ -287,9 +290,14 @@ const ToolsetApplicationEditor: FC = () => {
   const metadataFormLabels = useMetadataLabels(getMetadataLabelOverrides);
 
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+  const onRefineDescription = useTextRefinementCallback(
+    TextRefinementPurpose.ToolsetDescription,
+  );
+  const refinementLabels = useTextRefinementLabels();
 
   const labels = useMemo<ToolsetEditorLabels>(
     () => ({
+      refinement: refinementLabels,
       layout: {
         createTitle: t(ToolsetEditorI18nKeys.CreateTitle),
         editTitle: t(ToolsetEditorI18nKeys.EditTitle),
@@ -394,7 +402,7 @@ const ToolsetApplicationEditor: FC = () => {
         },
       },
     }),
-    [t, metadataFormLabels, avatarPickerLabels],
+    [t, metadataFormLabels, avatarPickerLabels, refinementLabels],
   );
 
   if (isLoading || !initialForm) {
@@ -423,6 +431,7 @@ const ToolsetApplicationEditor: FC = () => {
       allowedMimeTypes={allowedMimeTypes}
       maxFileSizeBytes={maxFileSizeBytes}
       availableLocaleOptions={localeOptions}
+      onRefineDescription={onRefineDescription}
       labels={labels}
     />
   );

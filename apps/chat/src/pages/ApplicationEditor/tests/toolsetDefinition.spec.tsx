@@ -1,4 +1,7 @@
-import { ResponseError } from '@epam/ai-dial-chat-api-client';
+import {
+  ResponseError,
+  TextRefinementPurpose,
+} from '@epam/ai-dial-chat-api-client';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import {
   ToolsetAuthTypes,
@@ -45,7 +48,10 @@ vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'b' } }),
 }));
 vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: mockAppConfig }),
+  useAppConfig: () => ({ status: 'ready', config: mockAppConfig }),
+}));
+vi.mock('../../../server-api/text-refinement.api', () => ({
+  refineText: (...args: unknown[]) => mockRefineText(...args),
 }));
 vi.mock('../../../hooks/useOperationNotification', () => ({
   useOperationNotification: () => ({
@@ -74,6 +80,10 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     onOAuthLogin: unknown;
     labels?: { layout?: { createLabel?: string } };
     buildMcpUrl?: (toolsetId: string) => string;
+    onRefineDescription?: (
+      value: string,
+      signal: AbortSignal,
+    ) => Promise<string>;
     listToolNames?: (toolsetId: string) => Promise<string[]>;
     onPersist: (
       form: { name: string },
@@ -104,6 +114,19 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         <span>{props.toolsetId}</span>
         <span>{props.onOAuthLogin ? 'oauth-handler' : 'no-oauth-handler'}</span>
         <span>{props.labels?.layout?.createLabel}</span>
+        {props.onRefineDescription && (
+          <button
+            type="button"
+            onClick={() =>
+              void props.onRefineDescription?.(
+                'Draft',
+                new AbortController().signal,
+              )
+            }
+          >
+            adapter-refine
+          </button>
+        )}
         <span>
           {props.buildMcpUrl
             ? props.buildMcpUrl('toolsets/b/my__1.0.0')
@@ -197,7 +220,11 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
 const mockShowNotification = vi.fn();
 const mockRefetchToolsets = vi.fn();
 const mockNotifyOperationSuccess = vi.fn();
-const mockAppConfig = { dialCoreExternalUrl: 'https://dial-core.example.com' };
+const mockRefineText = vi.fn();
+const mockAppConfig = {
+  dialCoreExternalUrl: 'https://dial-core.example.com',
+  aiTextRefinementAvailable: false,
+};
 
 const NEW_TOOLSET_ID = 'toolsets/b/my__0.0.1';
 const EDIT_TOOLSET_ID = 'toolsets/b/my__1.0.0';
@@ -247,6 +274,29 @@ describe('ApplicationEditorPage — toolset', () => {
       createNotificationContextValue(mockShowNotification),
     );
     mockAppConfig.dialCoreExternalUrl = 'https://dial-core.example.com';
+    mockAppConfig.aiTextRefinementAvailable = false;
+  });
+
+  it('omits description refinement when the capability is unavailable', async () => {
+    renderPage();
+
+    await screen.findByRole('button', { name: 'adapter-persist' });
+    expect(screen.queryByRole('button', { name: 'adapter-refine' })).toBeNull();
+  });
+
+  it('refines the description with the toolset purpose', async () => {
+    mockAppConfig.aiTextRefinementAvailable = true;
+    renderPage();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'adapter-refine' }),
+    );
+
+    expect(mockRefineText).toHaveBeenCalledWith(
+      TextRefinementPurpose.ToolsetDescription,
+      'Draft',
+      expect.any(AbortSignal),
+    );
   });
 
   it('seeds create mode with a collision-free default name derived from existing toolsets', async () => {

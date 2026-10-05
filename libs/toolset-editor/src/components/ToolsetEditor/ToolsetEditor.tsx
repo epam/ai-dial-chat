@@ -12,8 +12,10 @@ import {
 import {
   ENTITY_DESCRIPTION_MAX_LENGTH,
   ENTITY_NAME_MAX_LENGTH,
+  TextRefinementField,
+  useTextRefinement,
 } from '@epam/ai-dial-chat-shared';
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TOOLSET_EDITOR_CLASS } from '../../constants/public-class-names';
 import { TOOLSET_METADATA_VALIDATION_OPTIONS } from '../../constants/toolsets';
@@ -83,6 +85,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   allowedMimeTypes,
   maxFileSizeBytes,
   availableLocaleOptions,
+  onRefineDescription,
   labels,
 }) => {
   const isEditMode = Boolean(toolsetId);
@@ -362,6 +365,28 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     labels,
   ]);
 
+  const descriptionRefinement = useTextRefinement({
+    value: metadataValues.description,
+    onChange: (description) => handleChange({ description }),
+    onRefine: onRefineDescription,
+    disabled: isSaving,
+    resetKey: seed.key,
+  });
+  const renderRefinableDescription = onRefineDescription
+    ? (textarea: ReactNode, fieldId: string) => (
+        <TextRefinementField
+          isEnabled
+          fieldId={fieldId}
+          label={labels?.general?.form?.description.label ?? 'Description'}
+          labels={labels?.refinement}
+          refinement={descriptionRefinement}
+          disabled={descriptionRefinement.isPending || isSaving}
+        >
+          {textarea}
+        </TextRefinementField>
+      )
+    : undefined;
+
   const isSaveDisabled = useMemo(
     () => !isToolsetFormValid(form, isEditMode),
     [form, isEditMode],
@@ -438,7 +463,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
           : (labels?.layout?.createLabel ?? 'Create')
       }
       isSubmitting={isSaving}
-      isSubmitDisabled={isSaveDisabled}
+      isSubmitDisabled={isSaveDisabled || descriptionRefinement.isPending}
       metadataSectionClassName={TOOLSET_EDITOR_CLASS.metadataSection}
       setupSectionClassName={TOOLSET_EDITOR_CLASS.setupSection}
       labels={{
@@ -459,6 +484,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
           maxFileSizeBytes={maxFileSizeBytes}
           availableLocaleOptions={availableLocaleOptions}
           onChange={handleChange}
+          renderDescription={renderRefinableDescription}
           labels={labels?.general}
         />
       }

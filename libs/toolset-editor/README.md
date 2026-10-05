@@ -147,8 +147,16 @@ is omitted, the "Allowed tools" field falls back from the Select to a
 free-text tag input.
 
 `labels` is a nested `ToolsetEditorLabels` object whose `layout`, `general`,
-`settings`, and `validation` groups are each optional and replaced as a
-whole; an omitted group falls back to the library's English defaults.
+`settings`, `validation`, and `refinement` groups are each optional and
+replaced as a whole; an omitted group falls back to the library's English
+defaults.
+
+The optional `onRefineDescription` callback,
+`(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
+AI action (and Undo) beside the Description label; omit it to hide the action.
+The host owns transport, availability, and translations, passing the copy
+through `labels.refinement` (`TextRefinementLabels` from
+`@epam/ai-dial-chat-shared`). Save is disabled while a request is pending.
 
 ### `GeneralForm`
 

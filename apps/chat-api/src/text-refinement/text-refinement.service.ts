@@ -23,10 +23,13 @@ import {
   TEXT_REFINEMENT_LIMITS,
   TextRefinementPurpose,
 } from './dto/refine-text.dto';
+import { APPLICATION_DESCRIPTION_PROMPT } from './prompts/application-description.prompt';
+import { PROMPT_DESCRIPTION_PROMPT } from './prompts/prompt-description.prompt';
 import { SCHEDULED_TASK_DESCRIPTION_PROMPT } from './prompts/scheduled-task-description.prompt';
 import { SCHEDULED_TASK_INSTRUCTIONS_PROMPT } from './prompts/scheduled-task-instructions.prompt';
 import { SKILL_DESCRIPTION_PROMPT } from './prompts/skill-description.prompt';
 import { SKILL_INSTRUCTIONS_PROMPT } from './prompts/skill-instructions.prompt';
+import { TOOLSET_DESCRIPTION_PROMPT } from './prompts/toolset-description.prompt';
 
 @Injectable()
 export class TextRefinementService {
@@ -81,6 +84,10 @@ export class TextRefinementService {
         SCHEDULED_TASK_DESCRIPTION_PROMPT,
       [TextRefinementPurpose.ScheduledTaskInstructions]:
         SCHEDULED_TASK_INSTRUCTIONS_PROMPT,
+      [TextRefinementPurpose.ApplicationDescription]:
+        APPLICATION_DESCRIPTION_PROMPT,
+      [TextRefinementPurpose.ToolsetDescription]: TOOLSET_DESCRIPTION_PROMPT,
+      [TextRefinementPurpose.PromptDescription]: PROMPT_DESCRIPTION_PROMPT,
     }[dto.purpose];
     const promptKey = {
       [TextRefinementPurpose.SkillDescription]:
@@ -91,6 +98,12 @@ export class TextRefinementService {
         'TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT',
       [TextRefinementPurpose.ScheduledTaskInstructions]:
         'TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT',
+      [TextRefinementPurpose.ApplicationDescription]:
+        'TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT',
+      [TextRefinementPurpose.ToolsetDescription]:
+        'TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT',
+      [TextRefinementPurpose.PromptDescription]:
+        'TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT',
     } as const;
     const prompt = resolvePrompt(
       this.config.get(promptKey[dto.purpose], { infer: true }),

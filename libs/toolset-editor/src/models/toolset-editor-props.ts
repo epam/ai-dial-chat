@@ -2,6 +2,10 @@ import type {
   AvatarPickerFileManagerModalProps,
   DeploymentCreationFormLocaleOption,
 } from '@epam/ai-dial-builder-form';
+import type {
+  TextRefinementCallback,
+  TextRefinementLabels,
+} from '@epam/ai-dial-chat-shared';
 import type { ComponentType } from 'react';
 import type { GeneralFormLabels } from './general-form-props';
 import type { SettingsFormLabels } from './settings-form-props';
@@ -66,6 +70,8 @@ export interface ToolsetEditorLayoutLabels {
  * defaults.
  */
 export interface ToolsetEditorLabels {
+  /** Refine-with-AI action, status, and error copy for the Description field. */
+  refinement?: TextRefinementLabels;
   /** Header/action/section labels. */
   layout?: ToolsetEditorLayoutLabels;
   /** Labels threaded to the embedded general (metadata) form. */
@@ -151,6 +157,8 @@ export interface ToolsetEditorProps {
   maxFileSizeBytes: number;
   /** Locale options offered by the "Add locale" popup. */
   availableLocaleOptions: DeploymentCreationFormLocaleOption[];
+  /** Optional Description rewrite callback; omission hides the Refine with AI action. */
+  onRefineDescription?: TextRefinementCallback;
   /** Pre-translated labels; each group falls back to English defaults. */
   labels?: ToolsetEditorLabels;
 }

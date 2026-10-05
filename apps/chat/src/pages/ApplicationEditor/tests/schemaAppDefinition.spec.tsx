@@ -28,6 +28,9 @@ const { mockNotifyOperationSuccess } = vi.hoisted(() => ({
   mockNotifyOperationSuccess: vi.fn(),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ status: 'ready', config: {} }),
+}));
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
   updateApplication: vi.fn(),
