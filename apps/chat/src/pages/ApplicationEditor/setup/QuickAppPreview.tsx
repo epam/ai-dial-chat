@@ -1,7 +1,6 @@
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  GhostButton,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
