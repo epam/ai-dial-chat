@@ -106,6 +106,12 @@ export interface UseSkillSelectorOverlayOptions {
    */
   activeMentionDetailsTrigger?: ChatSkillDetailsTrigger;
   /**
+   * Trigger used by history chips (sent user and assistant messages). Unset
+   * retains `ChatSkill`'s hover-and-focus default; pass `'click'` on touch
+   * layouts, where hover never fires.
+   */
+  historyDetailsTrigger?: ChatSkillDetailsTrigger;
+  /**
    * Renders the browse modal's picker content (e.g. a host catalog view);
    * receives the selection and close callbacks to wire into it, and is
    * mounted only while the modal is open.

@@ -97,6 +97,7 @@ export const useSkillSelectorOverlay = ({
       emptyQueryHintLabel: t(SkillSelectorI18nKeys.EmptyQueryHint),
       deletedTooltipLabel: t(SkillSelectorI18nKeys.DeletedTooltipLabel),
       notSharedTooltipLabel: t(SkillSelectorI18nKeys.NotSharedTooltipLabel),
+      unsupportedTooltipLabel: t(SkillSelectorI18nKeys.UnsupportedTooltipLabel),
       panelLabels: {
         myCollectionLabel: t(PromptSelectorI18nKeys.MyCollectionLabel),
         emptyHintLabel: t(SkillSelectorI18nKeys.EmptyHint),
@@ -128,6 +129,8 @@ export const useSkillSelectorOverlay = ({
     onToggleFavorite: handleToggleFavorite,
     labels,
     historyChipLabelClassName,
+    /* Touch screens never fire hover, so a tap must open the chip's tooltip (issue #9250). */
+    historyDetailsTrigger: isMobile ? 'click' : undefined,
     renderCatalogContent,
     detailsPanelComponent: SkillDetailsPanelContainer,
   });

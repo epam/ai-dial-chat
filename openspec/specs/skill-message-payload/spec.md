@@ -240,6 +240,11 @@ A failed description fetch for a **resolved** skill (the url matched a pool, onl
 - **WHEN** a history message's skill url matches no loaded listing entry, and the url's bucket segment differs from the viewer's own bucket
 - **THEN** the tooltip shows a lock icon with "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you."
 
+#### Scenario: Tapping a history chip on mobile
+
+- **WHEN** the viewport is mobile and the user taps a history skill chip (resolved or unresolved)
+- **THEN** its tooltip opens exactly as hover opens it on desktop — the app passes `historyDetailsTrigger: 'click'` on mobile because touch screens never fire hover
+
 #### Scenario: Description fetch fails for a resolved skill
 
 - **WHEN** a history message's skill url matches a loaded listing entry, but the lazy description fetch for it fails or has not settled

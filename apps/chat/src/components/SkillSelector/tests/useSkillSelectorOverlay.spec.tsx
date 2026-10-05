@@ -4,6 +4,7 @@ import { useSkillSelectorOverlay } from '../useSkillSelectorOverlay';
 
 const state = vi.hoisted(() => ({
   useHostOverlay: vi.fn(() => ({ seedSkillMentions: vi.fn() })),
+  isMobile: false,
 }));
 
 vi.mock('@epam/ai-dial-skills', () => ({
@@ -23,7 +24,7 @@ vi.mock('../../../context/SkillsContext', () => ({
   useSkills: () => ({ skills: [], sharedWithMe: [], publicSkills: [] }),
 }));
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
-  useIsMobile: () => false,
+  useIsMobile: () => state.isMobile,
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -32,6 +33,25 @@ vi.mock('react-i18next', () => ({
 describe('useSkillSelectorOverlay', () => {
   beforeEach(() => {
     state.useHostOverlay.mockClear();
+    state.isMobile = false;
+  });
+
+  it('keeps hover-triggered history chips on desktop', () => {
+    renderHook(() => useSkillSelectorOverlay({ isSkillsSupported: true }));
+
+    expect(state.useHostOverlay).toHaveBeenCalledWith(
+      expect.objectContaining({ historyDetailsTrigger: undefined }),
+    );
+  });
+
+  it('opens history chip tooltips on tap on mobile', () => {
+    state.isMobile = true;
+
+    renderHook(() => useSkillSelectorOverlay({ isSkillsSupported: true }));
+
+    expect(state.useHostOverlay).toHaveBeenCalledWith(
+      expect.objectContaining({ historyDetailsTrigger: 'click' }),
+    );
   });
 
   it('keeps hover-triggered details for active conversation mentions', () => {

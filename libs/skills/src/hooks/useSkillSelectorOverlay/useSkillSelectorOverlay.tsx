@@ -63,6 +63,7 @@ export const useSkillSelectorOverlay = ({
   labels,
   historyChipLabelClassName,
   activeMentionDetailsTrigger,
+  historyDetailsTrigger,
   renderCatalogContent,
   detailsPanelComponent: DetailsPanelComponent,
 }: UseSkillSelectorOverlayOptions): UseSkillSelectorOverlayResult => {
@@ -325,6 +326,7 @@ export const useSkillSelectorOverlay = ({
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
             unresolvedReason={unresolvedReason}
+            detailsTrigger={historyDetailsTrigger}
             onViewDetails={setDetailsSkillId}
             labels={{
               viewDetailsLabel: panelLabels?.viewDetailsLabel,
@@ -346,6 +348,7 @@ export const useSkillSelectorOverlay = ({
       resolveName,
       skillByUrl,
       historyChipLabelClassName,
+      historyDetailsTrigger,
       panelLabels,
       viewerBucket,
       deletedTooltipLabel,
@@ -380,6 +383,7 @@ export const useSkillSelectorOverlay = ({
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
             unresolvedReason={unresolvedReason}
+            detailsTrigger={historyDetailsTrigger}
             onViewDetails={setDetailsSkillId}
             labels={{
               viewDetailsLabel: panelLabels?.viewDetailsLabel,
@@ -393,6 +397,7 @@ export const useSkillSelectorOverlay = ({
     [
       skillByUrl,
       historyChipLabelClassName,
+      historyDetailsTrigger,
       panelLabels,
       viewerBucket,
       deletedTooltipLabel,

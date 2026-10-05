@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { ChatSkillProps } from '../../../models/chat-skill-props';
 import type { SkillListingEntry } from '../../../models/favorite-skill-item';
 import type { SkillCatalogModalProps } from '../../../models/skill-catalog-modal-props';
 import type { UseSkillSelectorOverlayOptions } from '../../../models/skill-selector-overlay';
@@ -155,13 +156,44 @@ describe('useSkillSelectorOverlay', () => {
 
     const activeChip = assertDefined(
       result.current.activeMentions[0].render,
-    )() as ReactElement;
+    )() as ReactElement<ChatSkillProps>;
     const historyChip = result.current.renderHistorySkills([
       { url: abcSkill.url },
-    ]) as ReactElement[];
+    ]) as ReactElement<ChatSkillProps>[];
 
     expect(activeChip.props).toMatchObject({ detailsTrigger: 'click' });
-    expect(historyChip[0].props).not.toHaveProperty('detailsTrigger');
+    expect(historyChip[0].props.detailsTrigger).toBeUndefined();
+  });
+
+  it('forwards the history trigger only to history chips', () => {
+    const { result } = renderHook(() =>
+      useSkillSelectorOverlay({
+        ...baseOptions,
+        historyDetailsTrigger: 'click',
+      }),
+    );
+
+    act(() => {
+      result.current.seedSkillMentions('/abc', [{ url: abcSkill.url }]);
+    });
+
+    const activeChip = assertDefined(
+      result.current.activeMentions[0].render,
+    )() as ReactElement<ChatSkillProps>;
+    const historyChips = result.current.renderHistorySkills([
+      { url: abcSkill.url },
+    ]) as ReactElement<ChatSkillProps>[];
+    const segmentChip = assertDefined(
+      result.current.renderHistorySkillSegments('/abc', [
+        { url: abcSkill.url },
+      ]),
+    ).find(
+      (segment) => typeof segment !== 'string',
+    ) as ReactElement<ChatSkillProps>;
+
+    expect(activeChip.props.detailsTrigger).toBeUndefined();
+    expect(historyChips[0].props).toMatchObject({ detailsTrigger: 'click' });
+    expect(segmentChip.props).toMatchObject({ detailsTrigger: 'click' });
   });
 
   it('tracks a mention selected via the slash command menu', () => {
@@ -460,7 +492,7 @@ describe('useSkillSelectorOverlay', () => {
 
       const historyChips = result.current.renderHistorySkills([
         { url: 'skills/bucket/gone' },
-      ]) as ReactElement[];
+      ]) as ReactElement<ChatSkillProps>[];
 
       expect(historyChips[0].props).toMatchObject({
         unresolvedReason: SkillUnresolvedReason.Deleted,
@@ -472,7 +504,7 @@ describe('useSkillSelectorOverlay', () => {
 
       const historyChips = result.current.renderHistorySkills([
         { url: 'skills/other-bucket/foreign' },
-      ]) as ReactElement[];
+      ]) as ReactElement<ChatSkillProps>[];
 
       expect(historyChips[0].props).toMatchObject({
         unresolvedReason: SkillUnresolvedReason.NotShared,
@@ -484,7 +516,7 @@ describe('useSkillSelectorOverlay', () => {
 
       const historyChips = result.current.renderHistorySkills([
         { url: abcSkill.url },
-      ]) as ReactElement[];
+      ]) as ReactElement<ChatSkillProps>[];
 
       expect(
         historyChips[0].props as { unresolvedReason?: string },
