@@ -277,4 +277,4 @@ No analytics events are introduced. Load failures are logged via `console.error`
 
 ### Cache
 
-No additional cache. `getUserConfig()` issues one `GET /api/v1/user-config` call per `UserConfigProvider` mount (one per authenticated session). The backend service issues one DIAL Core read per controller call; this is pre-existing behaviour unchanged by this spec.
+No additional cache. `getUserConfig()` issues one `GET /api/v1/user-config` call per `UserConfigProvider` mount and per authenticated-identity (`useUser().user?.sub`) change while mounted. The backend service issues one DIAL Core read per controller call; this is pre-existing behaviour unchanged by this spec.

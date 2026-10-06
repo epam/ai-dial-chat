@@ -171,7 +171,7 @@ Attachments that carry a `url` (with or without a `reference_url`) SHALL continu
 
 ### Requirement: `Conversation` page passes attachments to message bubbles
 
-`apps/chat/src/components/ConversationView/ConversationMessageItem.tsx` (rendered per message by `ConversationView`) SHALL map each message's API attachment DTOs to `DisplayAttachment[]` with `attachmentDtosToDisplayAttachments(msg.custom_content?.attachments, attachmentDisplayResolvers)` before passing them as the `attachments` prop to the message bubble, which renders `UserMessageBubble` or `AssistantMessageBubble` by role.
+`apps/chat/src/components/ConversationView/ConversationMessageItem.tsx` (rendered per message by `ConversationView`) SHALL map each message's API attachment DTOs to `DisplayAttachment[]` with `attachmentDtosToDisplayAttachments(..., attachmentDisplayResolvers)` (resolvers from `apps/chat/src/utils/attachment-display-resolvers.ts`) before passing them as the `attachments` prop to `MessageBubble`, which renders `UserMessageBubble` or `AssistantMessageBubble` by role. The normal (non-editing) render passes the filtered list described by the two exclusion requirements in this spec (`nonReferenceDisplayAttachments`, minus any visualizer-claimed attachments) for both roles; only the edit-mode `Suspense` fallback bubble and the message editor's `initialAttachments` receive the unfiltered `allDisplayAttachments`.
 
 #### Scenario: Persisted user message with attachments renders cards
 

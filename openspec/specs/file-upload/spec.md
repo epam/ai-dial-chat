@@ -22,7 +22,7 @@ The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffe
 | `file` | binary | Required; max size enforced by multer |
 | `bucket` | string | Required; `@Matches(BUCKET_NAME_PATTERN)` (`/^[\w.-]+$/`), up to 256 characters |
 | `path` | string | Required; `@IsValidFilePath()`, up to 1024 characters |
-| `uploadMode` | `'overwrite' \| 'create-only'` | Optional; `@IsOptional()`, `@IsIn(['overwrite', 'create-only'])`; defaults to `'overwrite'` |
+| `uploadMode` | `'overwrite' \| 'create-only'` | Optional; `@IsOptional()`, `@IsString()`, `@IsIn(['overwrite', 'create-only'])`; defaults to `'overwrite'` |
 
 **Upload mode → DIAL Core header mapping:**
 | `uploadMode` | DIAL Core header |
