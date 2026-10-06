@@ -51,8 +51,8 @@
   "dependencies": {
     "@tabler/icons-react": "^3.44.0",
     "classnames": "2.5.1",
-    "dompurify": "3.4.15",
-    "katex": "^0.16.22",
+    "dompurify": "3.4.16",
+    "katex": "^0.19.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.1",
     "rehype-katex": "^7.0.1",
