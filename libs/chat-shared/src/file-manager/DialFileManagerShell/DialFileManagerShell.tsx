@@ -380,12 +380,14 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     () => ({
       cancelLabel: labels.deleteCancelLabel,
       confirmLabel: labels.deleteConfirmLabel,
+      closeLabel: labels.deleteCloseLabel,
       titleRenderer: labels.deleteConfirmTitle,
       contentRenderer: labels.deleteConfirmBody,
     }),
     [
       labels.deleteCancelLabel,
       labels.deleteConfirmLabel,
+      labels.deleteCloseLabel,
       labels.deleteConfirmTitle,
       labels.deleteConfirmBody,
     ],

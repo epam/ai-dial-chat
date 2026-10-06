@@ -1,6 +1,4 @@
 import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
-import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
-import { IconClockHour3 } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import {
@@ -30,8 +28,9 @@ const DELETE_CONSEQUENCE_KEYS = [
 ] as const;
 
 /**
- * Delete-task confirmation dialog: the task's identity card, the warning
- * sentence with the bolded task name, and the unordered consequences list.
+ * Delete-task confirmation dialog: an identity card carrying only the task
+ * name (no icon or type label, per design), the warning sentence with the
+ * bolded task name, and the unordered consequences list.
  */
 const ScheduledTaskDeleteModal: FC<Props> = ({
   open,
@@ -46,14 +45,6 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
     <ScheduledTaskDeleteConfirmation
       open={open}
       taskName={taskName}
-      icon={
-        <IconClockHour3
-          size={DIAL_ICON_SIZE.MD}
-          stroke={DIAL_KIT_ICON_STROKE}
-          aria-hidden
-        />
-      }
-      typeLabel={t(ScheduledTasksI18nKeys.TypeLabel)}
       title={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
       body={
         <Trans

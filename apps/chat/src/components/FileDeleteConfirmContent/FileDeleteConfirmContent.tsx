@@ -3,12 +3,7 @@ import {
   ConfirmationIdentityRow,
   ConfirmationView,
 } from '@epam/ai-dial-chat-shared';
-import {
-  ConfirmationPopupVariant,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-} from '@epam/ai-dial-ui-kit';
-import { IconFile, IconFiles } from '@tabler/icons-react';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
@@ -49,22 +44,8 @@ const FileDeleteConfirmContent: FC<Props> = ({ names }) => {
       variant={ConfirmationPopupVariant.Danger}
       identity={
         <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+          {/* Name only, per design: no glyph and no type label. */}
           <ConfirmationIdentityRow
-            icon={
-              isSingle ? (
-                <IconFile
-                  size={DIAL_ICON_SIZE.MD}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  aria-hidden
-                />
-              ) : (
-                <IconFiles
-                  size={DIAL_ICON_SIZE.MD}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  aria-hidden
-                />
-              )
-            }
             name={
               isSingle
                 ? displayNames[0]
