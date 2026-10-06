@@ -1236,9 +1236,9 @@ describe('Input — message length cap', () => {
   });
 });
 
-/* Issue #8754: a picked prompt used to arrive on the `message` channel, which
+/* [#8754](https://github.com/epam/ai-dial-chat/issues/8754): a picked prompt used to arrive on the `message` channel, which
  * replaces the whole textarea value, so any draft was destroyed with no undo.
- * Issue #8781: the insert then had to survive as an *undoable* edit. */
+ * [#8781](https://github.com/epam/ai-dial-chat/issues/8781): the insert then had to survive as an *undoable* edit. */
 describe('Input — textInsertion', () => {
   const renderWithInsertion = (revision: number, text: string) =>
     render(<Input textInsertion={{ text, revision }} />);
@@ -1342,7 +1342,7 @@ describe('Input — textInsertion', () => {
     expect(textarea.value).toBe('aXYb');
   });
 
-  /* Issue #8781: the menu the prompt was picked in returns focus to its own
+  /* [#8781](https://github.com/epam/ai-dial-chat/issues/8781): the menu the prompt was picked in returns focus to its own
      opener from a microtask queued as it unmounts, which used to leave the
      caret outside the composer — and the undo shortcut with nothing to act on. */
   it('keeps the caret in the composer when the closing menu returns focus to its opener', async () => {
@@ -1411,7 +1411,7 @@ describe('Input — textInsertion', () => {
 
   /* Browsers that cannot insert into a textarea through the editing pipeline
      (Firefox) only take the value programmatically, which drops their undo
-     history — so the hook owes the user that one undo itself (issue #8781).
+     history — so the hook owes the user that one undo itself ([#8781](https://github.com/epam/ai-dial-chat/issues/8781)).
      jsdom has no `execCommand` at all, which is exactly that case. */
   describe('when the browser cannot put the insert on its undo stack', () => {
     const insertIntoDraft = async (draft: string, text = 'PROMPT') => {
