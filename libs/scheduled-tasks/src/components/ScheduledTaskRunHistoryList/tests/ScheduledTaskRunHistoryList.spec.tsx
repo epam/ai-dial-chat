@@ -1,3 +1,4 @@
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -305,7 +306,7 @@ describe('ScheduledTaskRunHistoryList', () => {
     );
   });
 
-  it('renders the status icon before the timestamp at Tabler weight, and the unread dot at the row end', () => {
+  it('renders the status icon before the timestamp at the kit stroke scale, and the unread dot at the row end', () => {
     render(
       <ScheduledTaskRunHistoryList
         items={[buildRun({ id: 'run_1', isUnread: true })]}
@@ -322,8 +323,8 @@ describe('ScheduledTaskRunHistoryList', () => {
     // eslint-disable-next-line testing-library/no-node-access -- the status icon has no accessible name; its position and stroke are the assertion
     const icon = startGroup.querySelector('[data-icon="success"]');
     expect(icon).toBeTruthy();
-    expect(icon?.getAttribute('stroke')).toBe('2');
-    expect(icon?.getAttribute('size')).toBe('19');
+    expect(icon?.getAttribute('stroke')).toBe(`${DIAL_KIT_ICON_STROKE}`);
+    expect(icon?.getAttribute('size')).toBe(`${DIAL_ICON_SIZE.MD}`);
     /* The pill carries the design's 12px horizontal padding on both sides. */
     expect(row.className).toContain('px-3');
     expect(row.className).not.toContain('pe-2');
