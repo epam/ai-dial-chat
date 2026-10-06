@@ -4,9 +4,12 @@ import classNames from 'classnames';
 
 import { stopBubbling } from '@/src/constants/chat';
 
+import { ShrinkWrappedTooltipContent } from '@/src/components/Common/ShrinkWrappedTooltipContent';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { DialLinkButton, ElementSize } from '@epam/ai-dial-ui-kit';
+
+const TOOLTIP_MAX_WIDTH = 198;
 
 interface OverflowIndicatorProps {
   count: number;
@@ -41,16 +44,17 @@ export const OverflowIndicator = ({
   return (
     <Tooltip
       tooltip={
-        <div
-          className="my-1 flex max-w-[198px] flex-wrap gap-2"
+        <ShrinkWrappedTooltipContent
+          maxWidth={TOOLTIP_MAX_WIDTH}
           onClick={stopBubbling}
         >
           {tooltipContent}
-        </div>
+        </ShrinkWrappedTooltipContent>
       }
       open={open}
       onOpenChange={setOpen}
       placement={placement}
+      triggerClassName="inline-flex self-start"
       isTriggerClickable
       isHoverDisabled
     >
