@@ -4,12 +4,15 @@ import {
   MDMessageViewer,
   type MarkdownRendererClassNames,
 } from '@epam/ai-dial-chat-shared';
-import { ScheduledTaskDetailsSummary } from '@epam/ai-dial-scheduled-tasks';
-import { Accordion, GhostButton } from '@epam/ai-dial-ui-kit';
-import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import {
+  ScheduledTaskConversationDetailsSection,
+  ScheduledTaskConversationDetailsState,
+} from '@epam/ai-dial-scheduled-tasks';
+import { memo, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
+  ChatI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
@@ -42,6 +45,23 @@ const INSTRUCTIONS_CLASS_NAMES: MarkdownRendererClassNames = {
   mathBlock: 'my-4',
 };
 
+/* Maps the app's fetch status to the lib section's display state; idle/loading resolve to the summary branch. */
+const DETAIL_STATE_MAP: Record<
+  ActiveScheduledTaskDetailState,
+  ScheduledTaskConversationDetailsState
+> = {
+  [ActiveScheduledTaskDetailState.Idle]:
+    ScheduledTaskConversationDetailsState.Ready,
+  [ActiveScheduledTaskDetailState.Loading]:
+    ScheduledTaskConversationDetailsState.Ready,
+  [ActiveScheduledTaskDetailState.Success]:
+    ScheduledTaskConversationDetailsState.Ready,
+  [ActiveScheduledTaskDetailState.Error]:
+    ScheduledTaskConversationDetailsState.Error,
+  [ActiveScheduledTaskDetailState.Unavailable]:
+    ScheduledTaskConversationDetailsState.Unavailable,
+};
+
 interface Props {
   /** Resolved task details, or `null` while loading/failed. */
   task: ScheduledTaskDto | null;
@@ -54,10 +74,10 @@ interface Props {
 }
 
 /*
- * Details accordion of a task conversation's sources panel: the run's own
- * Model/Skill/Instructions summary, or the scoped unavailable/retry state
- * while the task's details cannot load. Owns the deployment-name resolution
- * and the expanded-state reset on schedule change.
+ * App adapter for the lib's Details accordion: owns the deployment-name
+ * resolution, the skill display names, and the localized labels, and hands
+ * the resolved values to the host-agnostic
+ * `ScheduledTaskConversationDetailsSection`.
  */
 const TaskDetailsSection: FC<Props> = ({
   task,
@@ -70,12 +90,6 @@ const TaskDetailsSection: FC<Props> = ({
   const { conversationModelId } = useSourcesSidebarData();
   const { items: deploymentItems } = useDeployments();
   const skillDisplayNames = useScheduledTaskSkillDisplayNames(task?.skillUrls);
-
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  useEffect(() => {
-    setIsExpanded(false);
-  }, [scheduleId]);
 
   /*
    * The section describes this run, so its Model field must show the
@@ -96,57 +110,41 @@ const TaskDetailsSection: FC<Props> = ({
       : conversationModelId;
   }, [conversationModelId, deploymentItems, language]);
 
-  const content =
-    taskState === ActiveScheduledTaskDetailState.Error ||
-    taskState === ActiveScheduledTaskDetailState.Unavailable ? (
-      <div className="flex flex-col items-start gap-2">
-        <p role="alert" className="dial-body-text text-secondary">
-          {t(ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel)}
-        </p>
-        {taskState === ActiveScheduledTaskDetailState.Error && (
-          <GhostButton
-            label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
-            onClick={onRetry}
-          />
-        )}
-      </div>
-    ) : (
-      <ScheduledTaskDetailsSummary
-        modelLabel={t(ScheduledTasksI18nKeys.ConversationPanelModelLabel)}
-        instructionsLabel={t(ScheduledTasksI18nKeys.CreateInstructionsLabel)}
-        skillLabel={t(ScheduledTasksI18nKeys.CreateSkillLabel)}
-        skillDisplayNames={skillDisplayNames}
-        modelDisplayName={modelDisplayName}
-        instructionsMarkdown={task?.prompt}
-        renderInstructions={(markdown) => (
-          <MDMessageViewer
-            content={markdown}
-            classNames={INSTRUCTIONS_CLASS_NAMES}
-            codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
-            codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
-            codeBlockDownloadLabel={t(ButtonsI18nKeys.Download)}
-          />
-        )}
-      />
-    );
+  const labels = useMemo(
+    () => ({
+      title: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
+      modelLabel: t(ScheduledTasksI18nKeys.ConversationPanelModelLabel),
+      instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
+      skillLabel: t(ScheduledTasksI18nKeys.CreateSkillLabel),
+      unavailableLabel: t(
+        ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel,
+      ),
+      retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+    }),
+    [t],
+  );
 
   return (
-    <Accordion
-      title={
-        /*
-         * `block` breaks the title out of the kit's `dial-body-text` strut
-         * (line-height 24) so its own 12/16 line-height applies; `py-1` grows
-         * the block to the design's 24px title height, text centered.
-         */
-        <span className="dial-tiny-semi-text block truncate py-1">
-          {t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle)}
-        </span>
-      }
-      expanded={isExpanded}
-      onToggle={setIsExpanded}
-    >
-      {content}
-    </Accordion>
+    <ScheduledTaskConversationDetailsSection
+      scheduleId={scheduleId}
+      state={DETAIL_STATE_MAP[taskState]}
+      onRetry={onRetry}
+      modelDisplayName={modelDisplayName}
+      skillDisplayNames={skillDisplayNames}
+      instructionsMarkdown={task?.prompt}
+      renderInstructions={(markdown) => (
+        <MDMessageViewer
+          content={markdown}
+          classNames={INSTRUCTIONS_CLASS_NAMES}
+          codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
+          codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
+          codeBlockDownloadLabel={t(ButtonsI18nKeys.Download)}
+          tableScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableTable)}
+          mathScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableFormula)}
+        />
+      )}
+      labels={labels}
+    />
   );
 };
 

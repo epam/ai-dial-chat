@@ -1,5 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostButton,
   Skeleton,
@@ -18,52 +19,39 @@ import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item'
 import { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
 import styles from './ScheduledTaskRunHistoryList.module.scss';
 
-/*
- * The run-status glyphs render at Tabler's native 2px weight — one step
- * heavier than the `DIAL_KIT_ICON_STROKE` scale — because at 16px the 1.5
- * outline reads thin and unclear beside the row's 14px text (design, #9047).
- */
-const RUN_STATUS_ICON_STROKE = 2;
-
-/*
- * The run-status glyphs render 3px above the SM scale step (16 → 19) — the
- * size the panel design shows (design, #9047); no kit token sits there.
- */
-const RUN_STATUS_ICON_SIZE = 19;
-
 const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
   switch (status) {
     case ScheduledTaskRunStatus.Success:
       return (
         <IconCircleCheck
-          size={RUN_STATUS_ICON_SIZE}
+          size={DIAL_ICON_SIZE.MD}
           className={styles.successIcon}
           aria-hidden
-          stroke={RUN_STATUS_ICON_STROKE}
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       );
     case ScheduledTaskRunStatus.Error:
       return (
         <IconCircleX
-          size={RUN_STATUS_ICON_SIZE}
+          size={DIAL_ICON_SIZE.MD}
           className={styles.errorIcon}
           aria-hidden
-          stroke={RUN_STATUS_ICON_STROKE}
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       );
     case ScheduledTaskRunStatus.InProgress:
       return (
         <span aria-hidden>
-          <Spinner size={RUN_STATUS_ICON_SIZE} />
+          <Spinner size={DIAL_ICON_SIZE.MD} />
         </span>
       );
     case ScheduledTaskRunStatus.Missed:
       return (
         <IconAlertTriangle
-          size={RUN_STATUS_ICON_SIZE}
+          size={DIAL_ICON_SIZE.MD}
           className={styles.missedIcon}
           aria-hidden
-          stroke={RUN_STATUS_ICON_STROKE}
+          stroke={DIAL_KIT_ICON_STROKE}
         />
       );
     default:

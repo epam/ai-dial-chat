@@ -26,7 +26,7 @@ RTL: `py-1` is direction-agnostic; no mirroring is needed.
 
 ### Requirement: History run rows lead with the status icon and distinguish not-yet-viewed runs
 
-Each run row in the History section SHALL render its status icon at the row start at 19px with stroke 2 (the design-approved `RUN_STATUS_ICON_SIZE` / `RUN_STATUS_ICON_STROKE` constants), with the timestamp following it and the unread dot in a fixed 12px slot at the row end.
+Each run row in the History section SHALL render its status icon at the row start at the kit MD icon size (`DIAL_ICON_SIZE.MD`) with the kit-wide icon weight (`DIAL_KIT_ICON_STROKE`), with the timestamp following it and the unread dot in a fixed 12px slot at the row end.
 
 The row (pill) SHALL carry `px-3` (12px) horizontal padding on both sides, replacing the former end-only padding and its SCSS start-padding override.
 
@@ -39,7 +39,7 @@ RTL: `ps-3` and `px-3` are logical utilities; the row order flips with `dir` aut
 #### Scenario: Status icon leads the row
 
 - **WHEN** a run row renders
-- **THEN** the status icon is the first element inside the row's start group, before the timestamp, at 19px with `stroke` 2
+- **THEN** the status icon is the first element inside the row's start group, before the timestamp, at `DIAL_ICON_SIZE.MD` with the `DIAL_KIT_ICON_STROKE` weight
 
 #### Scenario: Not-yet-viewed rows render semibold
 
@@ -83,7 +83,7 @@ The Instructions markdown SHALL render its text at `dial-small-text` (14px/20px)
 
 ### Requirement: Each task section owns its accordion state
 
-The History and Details sections SHALL be owned by `TaskHistorySection` and `TaskDetailsSection` components that read their data as props from the container (the single context consumer) and own their expanded state, resetting it on a `scheduleId` change — History to expanded, Details to collapsed. Reset coverage lives in each section's own spec.
+The History and Details sections SHALL render through `ScheduledTaskConversationHistorySection` and `ScheduledTaskConversationDetailsSection` in `libs/scheduled-tasks`, which own the accordion and its expanded state, resetting it on a `scheduleId` change — History to expanded, Details to collapsed. The app's `TaskHistorySection` and `TaskDetailsSection` adapters read their data as props from the container (the single context consumer) and feed the lib sections. Reset coverage lives in each section's own spec.
 
 #### Scenario: Sections reset on schedule change
 
