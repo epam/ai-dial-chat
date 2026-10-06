@@ -79,6 +79,7 @@ export function ToggleSwitch({
       {additionalText && (
         <span
           className={classNames(disabled && 'text-controls-primary-disable')}
+          data-qa="toggle-label"
         >
           {additionalText}
         </span>

@@ -77,6 +77,27 @@ export class ChatMessages extends BaseElement {
       `~${ChatSelectors.stageContent}`,
     );
 
+  public messageStageAttachment = (
+    messagesIndex: number,
+    stageIndex: number,
+    attachmentTitle: string,
+  ) =>
+    this.messageStageContent(messagesIndex, stageIndex)
+      .locator(ChatSelectors.attachmentTitle)
+      .filter({ hasText: new RegExp(`^${attachmentTitle}$`) });
+
+  public getMessageStageAttachmentContent(
+    messagesIndex: number,
+    stageIndex: number,
+    attachmentTitle: string,
+  ) {
+    return this.messageStageAttachment(
+      messagesIndex,
+      stageIndex,
+      attachmentTitle,
+    ).locator(`~${ChatSelectors.attachmentContent}`);
+  }
+
   public messageStageContentElement = (
     messagesIndex: number,
     stageIndex: number,
