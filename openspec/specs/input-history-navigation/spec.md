@@ -10,9 +10,9 @@ Recalling previously sent messages in the conversation input with the arrow keys
 
 `ConversationInput` SHALL accept an optional prop `messageHistory?: readonly string[]` containing the user-authored messages for the current conversation in chronological order (oldest at index 0, most recent at the last index). The host (app) is responsible for deriving this list from its conversation state and passing it in. When omitted or empty, keyboard history navigation is disabled.
 
-- **State owner:** `ConversationView.tsx` derives `messageHistory` from the active conversation's messages filtered to `role === 'user'` and maps to their `content` strings.
-- **App-level adapter contract:** `ConversationView` owns the filtering/mapping; `ConversationInput` receives a plain `string[]`.
-- **Feature gate:** None — always enabled when `messageHistory` is provided.
+- **State owner:** `ConversationView.tsx` derives `messageHistory` with `getInputMessageHistory(messages, isInputHistoryNavigationDisabled)` (`apps/chat/src/components/ConversationView/utils/message-display.ts`), which filters the conversation's messages to `role === MessageRole.User` and maps them to their `content` strings.
+- **App-level adapter contract:** `ConversationView` owns the filtering/mapping; `ConversationInput` receives a plain `string[]` (or `undefined`), which it forwards to `Input`.
+- **Feature gate:** the overlay UI feature `OverlayFeature.DisableInputHistoryNavigation` (`'disable-input-history-navigation'`, read with `useUiFeature`). When it is enabled, `getInputMessageHistory` returns `undefined`, so navigation is disabled; otherwise it is always enabled when `messageHistory` is provided.
 - **No new i18n keys** — no user-visible strings introduced.
 - **RTL impact:** None — this is behavioural, not layout.
 - **Accessibility:** Keyboard-only interaction; no ARIA additions required.
@@ -127,10 +127,10 @@ When the user submits a message (`onSend` fires), the navigation index SHALL res
 
 ### Requirement: useInputHistoryNavigation hook is unit-testable
 
-The lib SHALL export a `useInputHistoryNavigation` hook from `libs/conversation-input/src/hooks/useInputHistoryNavigation.ts`. The hook SHALL expose:
+The lib SHALL export a `useInputHistoryNavigation(messageHistory)` hook from the module `libs/conversation-input/src/hooks/useInputHistoryNavigation.ts` (an internal module consumed by `Input.tsx`; it is not re-exported from the package root). The hook SHALL expose:
 
 - `navigate(direction: 'up' | 'down', currentValue: string, cursorPos: number): string | null` — returns the new textarea value, or `null` if the key should not be intercepted (cursor not on first/last line, or no history available in that direction).
-- `notifyChange(newValue: string): void` — call on every textarea onChange to reset history mode when the user edits.
+- `notifyChange(): void` — takes no arguments; call on every textarea onChange to reset history mode when the user edits.
 - `reset(): void` — call on send to clear navigation state.
 
 **Memoisation:** The hook's returned object SHALL be stable (same reference) between renders when no navigation state changes, to avoid unnecessary Input re-renders.

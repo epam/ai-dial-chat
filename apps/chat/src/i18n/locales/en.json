@@ -914,6 +914,8 @@
     "tooManyFilesSelected": "Too many files selected",
     "tooManyFilesDescription": "You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.",
     "deleteConfirmTitleSingle": "Delete item",
+    "deleteConfirmTitleFile": "Delete file",
+    "deleteConfirmTitleFolder": "Delete folder",
     "deleteConfirmTitleMultiple": "Delete items",
     "deleteConfirmMessageSingle": "Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone.",
     "deleteConfirmMessageMultiple": "Are you sure you want to delete <bold>{{count}} items</bold>? This action is permanent and cannot be undone.",

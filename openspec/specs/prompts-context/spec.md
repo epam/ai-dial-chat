@@ -8,7 +8,7 @@
 
 ### Requirement: `PromptsContext` owns all prompt and prompt-folder state
 
-`apps/chat/src/context/PromptsContext.tsx` SHALL define a React Context following the `ThemeContext` reference pattern: `createContext<PromptsContextType | undefined>(undefined)`, a provider whose value is wrapped in `useMemo`, and a `usePrompts` consumer hook that throws a clear error when used outside the provider.
+`apps/chat/src/context/PromptsContext.tsx` SHALL define a React Context following the `ThemeContext` reference pattern: `createContext<PromptsContextType | undefined>(undefined)`, a provider whose value is wrapped in `useMemo`, and a `usePrompts` consumer hook that throws a clear error when used outside the provider. The fetch and state logic SHALL live in the host-agnostic `usePromptsState({ listPrompts })` hook from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/prompt/usePromptsState/usePromptsState.ts`); the provider injects the app's `listPrompts` from `apps/chat/src/server-api/prompts.api.ts` and maps the hook's `refetch` to `refetchPrompts`.
 
 No prompt state SHALL be added to `DeploymentsContext`. Prompts share no lifecycle with deployments, and folding them in would re-render every deployment consumer on a prompt mutation.
 
@@ -28,7 +28,7 @@ interface PromptsContextType {
 }
 ```
 
-The provider SHALL be mounted in `apps/chat/src/app/app.tsx` above every consumer (`CatalogView` and the `PromptEditor` route), alongside the existing app-level providers.
+The provider SHALL be mounted in `apps/chat/src/main.tsx` inside the authenticated route tree (between `FavoriteApplicationsProvider` and `SkillsProvider`), above every consumer (`CatalogView`, the `PromptEditor` route, `SharedInvitation`, and `usePromptSelectorOverlay`), alongside the existing app-level providers.
 
 #### Scenario: Provider loads every prompt namespace on mount
 
@@ -110,7 +110,7 @@ This is required for correctness, not simplicity: a folder rename rewrites the `
 
 - **State ownership**: `PromptsContext` SHALL be the single owner of prompt list, folder list, shared-with-me, and organisation-prompt state. Details-panel content state stays panel-scoped inside `libs/catalog`'s `Catalog` component, per `catalog-item-details-fetch`. Editor form state stays local to `PromptEditor`.
 - **Memoisation**: the context value MUST be `useMemo`'d on its constituent state; `refetchPrompts` MUST be `useCallback`'d and `refetchPublicPrompts` MUST reference that same callback, so consumers can list either as an effect dependency without re-triggering.
-- **Feature flag**: the provider itself is not gated and performs the aggregate fetch when mounted. Consumption is gated by `OverlayFeature.Prompts` at the `CatalogView` and route level; disabling the feature hides prompt UI but does not change provider lifecycle.
+- **Feature flag**: the provider itself is not gated and performs the aggregate fetch when mounted. Consumption is gated by `OverlayFeature.Prompts` in `CatalogView`, `usePromptSelectorOverlay`, and the `PromptEditor` route; disabling the feature hides prompt UI but does not change provider lifecycle.
 - **i18n**: this capability introduces no user-visible strings; error presentation belongs to its consumers.
 - **RTL / direction impact**: none — no UI is rendered by this capability.
 - **Accessibility**: none directly; loading and error presentation belong to consumers.

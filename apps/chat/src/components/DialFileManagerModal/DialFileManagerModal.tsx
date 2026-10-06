@@ -34,6 +34,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
+import { getFileDeleteConfirmTitle } from '../FileDeleteConfirmContent/file-delete-confirm-title';
 
 interface Props {
   isOpen: boolean;
@@ -56,7 +57,8 @@ interface Props {
   downloadingLabel: string;
   deleteLabel: string;
   deletingLabel: string;
-  deleteConfirmTitle: (names: string[]) => ReactNode;
+  /** Delete confirmation title. Omitted titles one item "Delete folder" or "Delete file" by its `nodeType`, and several "Delete items". */
+  deleteConfirmTitle?: (names: string[], items: DialFile[]) => ReactNode;
   deleteConfirmBody: (names: string[]) => ReactNode;
   deleteConfirmLabel: string;
   deleteCancelLabel: string;
@@ -426,8 +428,11 @@ const DialFileManagerModal: FC<Props> = ({
         DialFileManagerI18nKeys.OperationLoaderMoveTitle,
       ),
       operationLoaderCancelLabel: t(ButtonsI18nKeys.Cancel),
-      deleteConfirmTitle,
+      deleteConfirmTitle:
+        deleteConfirmTitle ??
+        ((_names, items) => getFileDeleteConfirmTitle(t, items)),
       deleteConfirmBody,
+      deleteCloseLabel: t(ButtonsI18nKeys.Close),
       deleteConfirmLabel,
       deleteCancelLabel,
       ...uploadQueueLabels,

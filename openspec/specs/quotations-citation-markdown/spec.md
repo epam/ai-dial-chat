@@ -14,7 +14,7 @@ conversion, or `@epam/ai-dial-attachment-canvas`.
 
 ### Requirement: Citation-aware markdown hook exported from the package root
 
-`@epam/ai-dial-quotations` SHALL export a hook (`useCitationMarkdownComponents`) that, given raw markdown content, a list of `AnnotationGroup`s (which may mix URL-keyed groups and `cit`-id-keyed groups), a callbacks object (`onPreview`, `onOpenInBrowser`, `buildLabels`), and an `isStreaming: boolean`, returns `{ processedContent: string; markdownComponents: Components }` for `react-markdown`. The hook SHALL NOT import `react-i18next`, any application context, any attachment-canvas hook, or any application DTO-conversion helper.
+`@epam/ai-dial-quotations` SHALL export a hook (`useCitationMarkdownComponents`) that, given raw markdown content, a list of `AnnotationGroup`s (which may mix URL-keyed groups and `cit`-id-keyed groups), a callbacks object (`UseCitationMarkdownComponentsCallbacks`: required `onPreview`, `onOpenInBrowser`, `buildLabels`, plus optional `isPreviewable(annotation)` (defaults to allowing preview), `isDownloadEnabled` (defaults to `true`) and `isPreviewOpen` (defaults to `false`), all forwarded to each `CitationDropdown`), and the positional parameters `isStreaming = false`, `isCompactTypography = false`, and `fallbackGroups` (in that order), returns `{ processedContent: string; markdownComponents: Components }` for `react-markdown`. The hook SHALL NOT import `react-i18next`, any application context, any attachment-canvas hook, or any application DTO-conversion helper.
 
 The hook SHALL additionally accept an optional pool of **fallback** `AnnotationGroup`s, supplied by the host, which are groups not belonging to this message. The pool's only effect SHALL be on `data-id` resolution, described below. It SHALL be optional and default to an empty pool, so every existing call site keeps its current behaviour.
 
@@ -24,7 +24,7 @@ The hook SHALL additionally accept an optional pool of **fallback** `AnnotationG
 
 The fallback pool SHALL NOT participate in `processedContent` at all. Sentinel injection places markers at character offsets **into this message's text** (`injectCitationSentinels` falls back to `content.length` for a group with no `text_character_range` offset), so admitting foreign groups there would inject phantom markers into unrelated content. `processedContent` SHALL therefore be byte-identical with and without a non-empty pool.
 
-`markdownComponents` includes a `cit` override when a supported element is present or groups are non-empty. It looks the element's `data-id` prop up against an `html_tag`-selector group — first among `groups`, and only when that finds nothing, among the fallback pool — and renders the existing citation dropdown for a match; an element matching neither is serialized back to visible literal text. The message's own groups SHALL always win a collision on the same id.
+`markdownComponents` includes a `cit` override when a supported element is present, `groups` is non-empty, or the fallback pool is non-empty (the `p`/`li` overrides are added whenever `groups` or the pool is non-empty). It looks the element's `data-id` prop up against an `html_tag`-selector group — first among `groups`, and only when that finds nothing, among the fallback pool — and renders the existing citation dropdown for a match; an element matching neither is serialized back to visible literal text. The message's own groups SHALL always win a collision on the same id.
 
 Because a pool-only match still needs a `cit` override to exist, the empty-overrides fast path SHALL be taken only when `groups` is empty, the pool is empty, and the content has no `<cit` markup.
 
@@ -77,7 +77,7 @@ The hook SHALL achieve this without changing citation data: it SHALL NOT dedupli
 
 Consequently:
 
-- Activating any marker SHALL open exactly one card, anchored to that marker's own trigger element.
+- Activating any marker SHALL open exactly one card, anchored to that marker's own trigger element — except when the host passes `isPreviewOpen: true` and the displayed annotation is previewable, in which case activating the marker calls `onPreview` directly for that annotation and opens no card.
 - At most one citation card SHALL be present in the document at any time within one message.
 - Activating a different occurrence SHALL transfer the open card to it.
 - `onPreview` and `onOpenInBrowser` SHALL each be invoked **exactly once** per user activation, with the `Annotation` the open card is currently displaying, and with that annotation reference-identical to the object held in the `groups` array the hook was given.
@@ -150,10 +150,13 @@ Each callback SHALL be invoked exactly once per user activation. Where several m
 
 The hook SHALL call the host-supplied `buildLabels(group): { cardLabels;
 markerLabels }` to obtain all translated strings for a given citation
-group, memoizing the resulting override map so that `p`/`li` overrides only
-change identity when `groups`, `buildLabels`, `onPreview`, `onOpenInBrowser`,
-or `isCompactTypography` change — never on citation-card open/close
-interaction state.
+group, memoizing the resulting override map so that the overrides only
+change identity when `groups`, the fallback pool, `buildLabels`, `onPreview`,
+`isPreviewable`, `onOpenInBrowser`, `isDownloadEnabled`, `isPreviewOpen`,
+`isCompactTypography`, or the presence of a supported `<cit` element in
+`processedContent` change — never on citation-card open/close interaction
+state (which lives in `CitationCardContext`). A caller that omits the fallback
+pool gets a shared empty array, so omitting it does not break the memo.
 
 #### Scenario: Stable component references across unrelated re-renders
 
@@ -162,13 +165,13 @@ interaction state.
 - **THEN** `markdownComponents` retains the same object identity as the
   previous render
 
-#### Scenario: Component references change only when groups transition between empty and non-empty
+#### Scenario: Component references change when the groups reference changes
 
-- **WHEN** `groups` changes from an empty array to a non-empty array (or vice
-  versa) between renders
-- **THEN** `markdownComponents` is recomputed; a change to `groups`'
-  contents alone (same emptiness) with the same `buildLabels` reference does
-  not otherwise change unrelated overrides' identity
+- **WHEN** the host passes a different `groups` array reference between renders
+  (including a transition between empty and non-empty)
+- **THEN** `markdownComponents` is recomputed and gets a new object identity
+- **AND** passing the same `groups` reference with the same callbacks keeps the
+  previous identity
 
 ### Requirement: Out-of-range or malformed annotation input is handled defensively
 

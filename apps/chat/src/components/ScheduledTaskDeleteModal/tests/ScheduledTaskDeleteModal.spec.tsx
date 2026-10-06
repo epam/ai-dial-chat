@@ -32,11 +32,11 @@ describe('ScheduledTaskDeleteModal', () => {
     ).toBeTruthy();
   });
 
-  it('identifies the task by type and name', () => {
+  it('identifies the task by name only, without a type label', () => {
     renderModal();
 
-    expect(screen.getByText('scheduledTasks.typeLabel')).toBeTruthy();
     expect(screen.getByText('Daily summary')).toBeTruthy();
+    expect(screen.queryByText('scheduledTasks.typeLabel')).toBeNull();
   });
 
   it('renders the warning sentence and the consequences list', () => {

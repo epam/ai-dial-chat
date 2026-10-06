@@ -7,7 +7,7 @@ Carrying a request/trace ID on error notifications, and the copy control that su
 ## Requirements
 
 ### Requirement: Notification model carries an optional request ID
-`NotificationItem` and `ShowNotificationOptions` in `apps/chat/src/context/NotificationContext.tsx` SHALL gain an optional `requestId?: string` field,
+`NotificationItem` in `apps/chat/src/context/NotificationContext.tsx` SHALL carry an optional `requestId?: string` field (inherited by `ShowNotificationOptions`, which is `Omit<NotificationItem, 'id'>`, and by the variant helpers' `ShowVariantNotificationOptions`),
 holding the validated 32-hex trace ID resolved via `getApiErrorDetails`. Callers that do not have a
 valid trace ID (client-only/validation errors, or any non-error notification) SHALL omit this
 field, and existing calls to `showNotification` that don't pass `requestId` SHALL continue to work
@@ -20,8 +20,8 @@ unchanged.
 
 #### Scenario: A failed API call attaches its resolved trace ID
 - **WHEN** a call site catches an API error, resolves `{ message, traceId }` via
-  `getApiErrorDetails`, and calls `showNotification({ variant: Error, message, requestId: traceId })`
-  with a defined `traceId`
+  `getApiErrorDetails` (`libs/chat-hooks/src/api-error/api-error.ts`), and calls
+  `showErrorNotification({ message, requestId: traceId })` with a defined `traceId`
 - **THEN** the resulting `NotificationItem` carries that `requestId`
 
 ### Requirement: Error notifications with a request ID render a Copy row
