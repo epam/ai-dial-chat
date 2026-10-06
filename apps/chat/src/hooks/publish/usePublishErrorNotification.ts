@@ -34,7 +34,7 @@ const UNPUBLISH_COPY: PublishErrorCopy = {
  * `operation` picks the copy. It defaults to publish, but an unpublish caller
  * must pass `EntityOperation.UnpublishRequested`: a failed unpublish used to be
  * reported as "Publish failed", which is what the user saw in
- * [GH #8445](https://github.com/epam/ai-dial-chat/issues/8445) after clicking
+ * [#8445](https://github.com/epam/ai-dial-chat/issues/8445) after clicking
  * Unpublish.
  */
 export const usePublishErrorNotification = (): ((

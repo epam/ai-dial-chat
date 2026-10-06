@@ -1018,10 +1018,10 @@ export class EnvironmentVariables {
    * Skills domain limits (see openspec/changes/archive/2026-08-13-fix-skill-editor-core-contract/design.md).
    * Defaults match DIAL Core's own real, verified `ComplexResourceService.Settings`
    * (maxFiles=100, maxFileSizeBytes=1 MiB, maxTotalBytes=16 MiB — read directly from
-   * epam/ai-dial-core's source, not the epic issue's "~" approximations). The former
-   * `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP Multer ingress cap) has been removed: no
-   * ZIP is ever uploaded on the create/update path since this change, so it has no
-   * remaining meaning. A deployment that still sets it has that value silently ignored
+   * epam/ai-dial-core's source, not the epic issue's "~" approximations). There is no
+   * `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP Multer ingress cap): no ZIP is uploaded
+   * on the create/update path, so such a cap has nothing to bound. A deployment that
+   * still sets it has that value silently ignored
    * (class-transformer only maps decorated properties) rather than the boot failing.
    */
   @IsOptional()

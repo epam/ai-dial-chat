@@ -529,7 +529,7 @@ const NewConversationComposer: FC<Props> = ({
           of the absolutely positioned header (48px on mobile and in the
           overlay, 64px on desktop) without shifting the centered layout —
           otherwise a long agent description scrolls under the logo
-          (Issue #9036). */}
+          ([#9036](https://github.com/epam/ai-dial-chat/issues/9036)). */}
       <div
         className={mergeClasses(
           'relative flex flex-auto shrink-0 flex-col items-center overflow-hidden [container-type:inline-size]',

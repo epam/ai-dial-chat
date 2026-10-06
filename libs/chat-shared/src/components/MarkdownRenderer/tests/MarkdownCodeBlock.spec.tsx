@@ -425,7 +425,7 @@ const closestWithClass = (from: Element, className: string): Element | null =>
 describe('MarkdownCodeBlock — public class names', () => {
   /*
    * A lost public class fails silently: the build passes and a host's
-   * stylesheet simply stops applying. Issue #8707 asked for this hook on the
+   * stylesheet simply stops applying. [#8707](https://github.com/epam/ai-dial-chat/issues/8707) asked for this hook on the
    * fenced-code block, so it is asserted rather than left to review.
    */
   it('stamps the block container and its header', () => {

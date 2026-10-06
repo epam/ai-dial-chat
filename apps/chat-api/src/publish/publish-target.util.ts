@@ -65,7 +65,7 @@ export const getPublicationsListScope = (bucket: string): string =>
  * name that legitimately contains a percent escape: a folder literally named
  * `test%20folder` decoded to `test folder`, so the published copy landed in a
  * folder of that name and the skill card's breadcrumb showed a space
- * (Issue #8974). Encoding without the pre-decode sends
+ * ([#8974](https://github.com/epam/ai-dial-chat/issues/8974)). Encoding without the pre-decode sends
  * `public/test%2520folder/`, which Core stores back under the author's
  * literal name.
  */

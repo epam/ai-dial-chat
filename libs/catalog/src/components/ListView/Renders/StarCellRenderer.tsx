@@ -14,7 +14,7 @@ export const StarCellRenderer: FC<
   /*
    * Resyncs local optimistic state when the caller's `favoriteIds` reverts
    * after a failed toggle request — without this, the star stays stuck on
-   * whatever the user last clicked (issue #7924). Depends on the primitive
+   * whatever the user last clicked ([#7924](https://github.com/epam/ai-dial-chat/issues/7924)). Depends on the primitive
    * `id`/`isStarred` values, not the `data` object reference, so an
    * ag-grid-issued row refresh that recreates `data` with the same values
    * does not retrigger the resync.

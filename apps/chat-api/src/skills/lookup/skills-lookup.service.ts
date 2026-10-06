@@ -53,7 +53,7 @@ export class SkillsLookupService {
    * frontend's `mapSkillToCatalogItem` (`skill.canEdit ?? isPersonal`) then
    * renders an edit-shared skill read-only — overwriting, through
    * `mergeSharedSkill`, the correctly-flagged entry the post-accept refetch
-   * had just produced (GH #8839).
+   * had just produced ([#8839](https://github.com/epam/ai-dial-chat/issues/8839)).
    *
    * `grantedPermissions` come from the invitation itself rather than from a
    * `getSharedResources` round-trip: the invitation is what just granted the

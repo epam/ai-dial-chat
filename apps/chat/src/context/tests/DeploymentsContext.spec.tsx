@@ -1497,7 +1497,7 @@ describe('DeploymentsContext', () => {
     });
 
     /*
-     * Issue #8889: the control that writes this preference is offered only
+     * [#8889](https://github.com/epam/ai-dial-chat/issues/8889): the control that writes this preference is offered only
      * where an agent is pinned, so an explicitly chosen "Last used agent" has
      * to outrank the pin — otherwise picking the mode does nothing.
      */

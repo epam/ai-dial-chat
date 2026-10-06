@@ -1233,7 +1233,7 @@ describe('CatalogView', () => {
       );
     });
 
-    /* Issue #9143: a prompt re-created at the same path must not come back starred. */
+    /* [#9143](https://github.com/epam/ai-dial-chat/issues/9143): a prompt re-created at the same path must not come back starred. */
     it('removes a deleted prompt from favourites', async () => {
       enablePrompts();
       mockPrompts();
@@ -1433,7 +1433,7 @@ describe('CatalogView', () => {
       ).toBeTruthy();
     });
 
-    /* Issue #9143: a skill re-created at the same path must not come back starred. */
+    /* [#9143](https://github.com/epam/ai-dial-chat/issues/9143): a skill re-created at the same path must not come back starred. */
     it('removes a deleted skill from favourites', async () => {
       enableSkills();
       mockSkills();

@@ -16,7 +16,7 @@ export * from './OperationLoaderModal/OperationLoaderModal';
  * exporting them here would put that import in the closure of every host that
  * imports this package at all — which is what made the "optional peer, scoped
  * to `./file-manager`" promise in the README untrue
- * ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)). Both
+ * ([#8719](https://github.com/epam/ai-dial-chat/issues/8719)). Both
  * components are exported from the `./file-manager` entry
  * (`src/entry-points/file-manager.ts`), which is where a host that installs
  * the grid imports them from. Everything left in this barrel touches the grid

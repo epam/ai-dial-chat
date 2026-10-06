@@ -537,7 +537,7 @@ describe('DetailsPanel — publish credentials opt-in', () => {
     );
   });
 
-  /* GH #5074: the option survived a publish and the next open started ticked. */
+  /* [#5074](https://github.com/epam/ai-dial-chat/issues/5074): the option survived a publish and the next open started ticked. */
   it('clears the option when the panel is reopened after a publish', async () => {
     const eligibleItem = toolsetWithCredentials({
       authenticationType: ToolsetAuthenticationType.OAuth,

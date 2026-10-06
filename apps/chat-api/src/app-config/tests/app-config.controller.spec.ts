@@ -129,7 +129,7 @@ describe('AppConfigController (integration)', () => {
     });
 
     /* A cached response keeps serving the previous deployment's announcements
-       and feature flags after a redeploy (issue #8827). */
+       and feature flags after a redeploy ([#8827](https://github.com/epam/ai-dial-chat/issues/8827)). */
     it('forbids caching the response', async () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 

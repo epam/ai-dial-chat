@@ -73,7 +73,7 @@ describe('useConversationPublishHistory', () => {
   });
 
   /*
-   * GH #8445: whether a conversation is published changes outside this tab —
+   * [#8445](https://github.com/epam/ai-dial-chat/issues/8445): whether a conversation is published changes outside this tab —
    * an administrator approving an unpublish request removes the folder
    * server-side. A cache with no expiry went on offering Unpublish for a copy
    * Core had already deleted.

@@ -624,7 +624,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
    * caller may remove — resolves its history up front. Whether "Unpublish"
    * joins the Manage menu decides whether the header shows a menu at all or
    * promotes a lone action to a button, and that decision has to be settled
-   * before the pointer arrives rather than flip under it (GH #8989, where an
+   * before the pointer arrives rather than flip under it ([#8989](https://github.com/epam/ai-dial-chat/issues/8989), where an
    * Organization copy's only action sat behind `...`). Declared after the
    * reset above so a new item's request is not cleared in the same commit.
    */

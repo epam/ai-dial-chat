@@ -56,7 +56,7 @@ describe('SkillsLookupService', () => {
   });
 
   /*
-   * Ownership flags on the post-accept summary (GH #8839): the frontend reads
+   * Ownership flags on the post-accept summary ([#8839](https://github.com/epam/ai-dial-chat/issues/8839)): the frontend reads
    * `canEdit` — not `permissions` — to decide whether the catalog offers Edit,
    * and this summary overwrites the refetched listing entry, so an unset
    * `canEdit` here renders an edit-shared skill read-only.

@@ -5,7 +5,7 @@
  * locals, DOM order, or ARIA attributes. They carry no declarations of their
  * own; they exist only as stable selectors.
  *
- * Issue #8707 asked for `dial-cm-code-block` for the fenced-code block. That
+ * [#8707](https://github.com/epam/ai-dial-chat/issues/8707) asked for `dial-cm-code-block` for the fenced-code block. That
  * name is not available: `dial-cm-` belongs to `@epam/ai-dial-conversation-
  * messages`, while `MarkdownCodeBlock` is rendered from this package, and one
  * prefix shared by two libs is the collision the directory-name grammar exists

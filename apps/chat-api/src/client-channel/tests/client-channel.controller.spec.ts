@@ -116,7 +116,7 @@ describe('ClientChannelController (integration)', () => {
 
     /* Firefox keeps the fetch() promise pending until the first body byte
      * arrives, which stalls `waitForChannel` (and with it the completion
-     * request) until an upstream event happens to show up — see issue #8587. */
+     * request) until an upstream event happens to show up — see [#8587](https://github.com/epam/ai-dial-chat/issues/8587). */
     it('writes the init comment before any upstream event arrives', async () => {
       service.subscribe.mockResolvedValue({
         stream: streamOf([]),

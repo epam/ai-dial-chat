@@ -34,7 +34,7 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
      * Full document load, not a client-side navigate: the SPA route would
      * lazy-import the Login chunk by the hash this long-lived tab was built
      * with, which a redeploy since then has removed — the import fails and
-     * the root error boundary replaces the page (Issue #9254). A fresh
+     * the root error boundary replaces the page ([#9254](https://github.com/epam/ai-dial-chat/issues/9254)). A fresh
      * index.html always references the current chunks, and it also drops
      * every piece of the signed-out user's in-memory state. `reset()` is
      * skipped on purpose: an Unauthenticated status would let

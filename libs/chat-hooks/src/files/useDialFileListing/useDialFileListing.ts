@@ -682,7 +682,7 @@ export const useDialFileListing = ({
        * Results are the unfiltered recursive listing: `DialFileManager` calls
        * `onSearchFiles` once per search session and applies the name filter
        * for every later query itself. Pre-filtering here by the first query
-       * would leave nothing for a replacement query to match (issue #9125).
+       * would leave nothing for a replacement query to match ([#9125](https://github.com/epam/ai-dial-chat/issues/9125)).
        */
       searchDebounceRef.current = setTimeout(() => {
         searchDebounceRef.current = null;

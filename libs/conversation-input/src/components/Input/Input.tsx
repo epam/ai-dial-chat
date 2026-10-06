@@ -851,7 +851,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * caret marker / empty-query hint of an open `/query`), and the
      * textarea's native selection is hidden whenever it does — so the
      * replacement selection highlight must follow the same condition, not
-     * just `hasActiveMentions` (Issue #9231).
+     * just `hasActiveMentions` ([#9231](https://github.com/epam/ai-dial-chat/issues/9231)).
      */
     const isMirrorActive = hasActiveMentions || mirrorInsertions.length > 0;
 

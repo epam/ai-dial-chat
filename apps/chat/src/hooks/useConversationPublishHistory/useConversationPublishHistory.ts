@@ -35,7 +35,7 @@ const IDLE_ENTRY: PublishHistoryEntryState = {
  * exactly that — the folder disappears from history server-side while a cache
  * with no expiry keeps offering Unpublish for a copy Core has deleted, which
  * then fails with "Target resource does not exists"
- * ([GH #8445](https://github.com/epam/ai-dial-chat/issues/8445)).
+ * ([#8445](https://github.com/epam/ai-dial-chat/issues/8445)).
  */
 const PUBLISH_HISTORY_TTL_MS = 60 * 1000;
 

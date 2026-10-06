@@ -129,7 +129,7 @@ export const useSkillSelectorOverlay = ({
     onToggleFavorite: handleToggleFavorite,
     labels,
     historyChipLabelClassName,
-    /* Touch screens never fire hover, so a tap must open the chip's tooltip (issue #9250). */
+    /* Touch screens never fire hover, so a tap must open the chip's tooltip ([#9250](https://github.com/epam/ai-dial-chat/issues/9250)). */
     historyDetailsTrigger: isMobile ? 'click' : undefined,
     renderCatalogContent,
     detailsPanelComponent: SkillDetailsPanelContainer,

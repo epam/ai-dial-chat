@@ -57,7 +57,7 @@ const TWO_PARAGRAPHS_MARKDOWN = 'Paragraph one.\n\nParagraph two.';
 const LIST_MARKDOWN = '- Item one\n- Item two\n- Item three';
 
 /* Runs past nine so the markers that overflowed a too-narrow start padding
-   (issue #8655) are the ones under test. */
+   ([#8655](https://github.com/epam/ai-dial-chat/issues/8655)) are the ones under test. */
 const ORDERED_LIST_MARKDOWN = Array.from(
   { length: 17 },
   (_, index) => `${index + 1}. Item ${index + 1}`,
@@ -547,7 +547,7 @@ describe('MarkdownRenderer', () => {
     expect(scrollContainer?.className).toContain('min-w-0');
   });
 
-  /* Issue #8951: a one-line `$$…$$` owning its whole line was rejected as a math
+  /* [#8951](https://github.com/epam/ai-dial-chat/issues/8951): a one-line `$$…$$` owning its whole line was rejected as a math
      block (its closing fence lands in the meta field, which may not hold a `$`)
      and fell back to inline math. Inline math has no `display="block"`, so it
      never reached the scroll container, and a formula with no internal break
@@ -656,7 +656,7 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByText('Price is $50 and $100')).toBeTruthy();
   });
 
-  /* Issue #8753: `$$\begin{aligned}` … `\end{aligned}$$` used to open a fenced math
+  /* [#8753](https://github.com/epam/ai-dial-chat/issues/8753): `$$\begin{aligned}` … `\end{aligned}$$` used to open a fenced math
    * block that never closed, so every heading and paragraph after it was consumed as
    * raw LaTeX — roughly the last tenth of a long answer. */
   it('keeps a display block from swallowing the headings and prose after it', async () => {
@@ -679,7 +679,7 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByText('The derivation ends here.')).toBeTruthy();
   });
 
-  /* Issue #8753: escaping the currency-shaped `$0` on its own left its partner free to
+  /* [#8753](https://github.com/epam/ai-dial-chat/issues/8753): escaping the currency-shaped `$0` on its own left its partner free to
    * open the next span, so the English words were typeset and both formulas printed as
    * source. Every formula on the line must typeset, whichever character it opens on. */
   it('typesets a formula that opens on a digit without shifting the rest of the line', async () => {
@@ -693,7 +693,7 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByText(/and then/)).toBeTruthy();
   });
 
-  /* Issue #8753, retest: `$1 - \frac{3}{p} …$` reads as a price for exactly one character,
+  /* [#8753](https://github.com/epam/ai-dial-chat/issues/8753), retest: `$1 - \frac{3}{p} …$` reads as a price for exactly one character,
    * so its opening delimiter was escaped, its partner was stranded, and the whole formula
    * reached the reader as source. */
   it('typesets a digit-first formula that continues into LaTeX markup', async () => {

@@ -1110,7 +1110,7 @@ describe('ConversationMessageItem — inline citations', () => {
   });
 
   /*
-   * Fixture trimmed from a user-confirmed reproduction of issue #8822: the
+   * Fixture trimmed from a user-confirmed reproduction of [#8822](https://github.com/epam/ai-dial-chat/issues/8822): the
    * assistant response's `content`/`custom_content.annotations`, source URL
    * replaced with a test value, execution history/model state omitted.
    * Findings from that payload (recorded in task 4.1 of

@@ -117,7 +117,7 @@ describe('usePublishErrorNotification', () => {
   });
 
   /*
-   * GH #8445: a failed Unpublish was reported as "Publish failed", which is
+   * [#8445](https://github.com/epam/ai-dial-chat/issues/8445): a failed Unpublish was reported as "Publish failed", which is
    * what the user saw in the notification after clicking Unpublish.
    */
   describe('for an unpublish request', () => {

@@ -97,7 +97,7 @@ describe('getLastDeploymentId', () => {
   it('prefers a later assistant deploymentId over an earlier model_changed event', () => {
     /*
      * The regenerate-after-switch timeline once the truncation dropped the
-     * status marker that used to sit at the end (issue #8712): the regenerated
+     * status marker that used to sit at the end ([#8712](https://github.com/epam/ai-dial-chat/issues/8712)): the regenerated
      * answer is the only record of the model the user picked.
      */
     const messages: Message[] = [

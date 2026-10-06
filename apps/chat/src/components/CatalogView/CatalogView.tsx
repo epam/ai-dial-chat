@@ -513,7 +513,7 @@ const CatalogView: FC<Props> = ({
       /*
        * A deleted item's id stays in the user-config favourites unless it is
        * removed here, and an item re-created later at the same resource path
-       * would come back already starred (Issue #9143). The delete itself has
+       * would come back already starred ([#9143](https://github.com/epam/ai-dial-chat/issues/9143)). The delete itself has
        * succeeded, so a failed cleanup is only logged.
        */
       if (!favoriteIds.has(item.id)) return;

@@ -267,7 +267,7 @@ export const annotationsToPdfHighlights = (
  * unique beyond the list it came from, which is why it is the last resort — a
  * caller gathering one citation group at a time would otherwise give every
  * single-annotation group the same id, and the canvas could not tell two
- * citations of one document apart (issue #8907). Ids are never persisted and
+ * citations of one document apart ([#8907](https://github.com/epam/ai-dial-chat/issues/8907)). Ids are never persisted and
  * never sent over the wire.
  */
 export const annotationHighlightId = (

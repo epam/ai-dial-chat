@@ -121,7 +121,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
        * for the full rationale. `inline`, not `inline-block`: the textarea
        * may break the raw `/{name}` after any hyphen, and an atomic chip
        * cannot, so the mirror would wrap onto an extra line the textarea
-       * never grows to show (issue #9243).
+       * never grows to show ([#9243](https://github.com/epam/ai-dial-chat/issues/9243)).
        */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click/keydown only act in click-triggered mode; hover mode's tooltip is reachable via focus alone */}
       <span

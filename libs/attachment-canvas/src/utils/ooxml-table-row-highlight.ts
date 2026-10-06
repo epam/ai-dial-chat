@@ -14,9 +14,8 @@ import {
 } from './ooxml-highlight-geometry';
 
 /*
- * TODO(#8863): Remove text-based table-row resolution after the backend emits
+ * TODO([#8863](https://github.com/epam/ai-dial-chat/issues/8863)): Remove text-based table-row resolution after the backend emits
  * precise cell ranges and persisted anchors no longer need the workaround.
- * https://github.com/epam/ai-dial-chat/issues/8863
  * Only whole rows with matching cell boundaries qualify; no document-wide
  * substring search or fallback for stale structural ranges is performed.
  */

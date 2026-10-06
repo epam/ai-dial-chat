@@ -117,7 +117,7 @@ describe('PublishService', () => {
     });
 
     /*
-     * The round trip the Author field exists for (GH #8727): Core always
+     * The round trip the Author field exists for ([#8727](https://github.com/epam/ai-dial-chat/issues/8727)): Core always
      * records its own token-derived `author`, so reading that first made the
      * submitted display author unobservable in every response this API hands
      * back.
@@ -726,7 +726,7 @@ describe('PublishService', () => {
     });
 
     /* History is the surface a re-publish is judged from, so it must name the
-       author the publisher chose, not the account Core recorded (GH #8727). */
+       author the publisher chose, not the account Core recorded ([#8727](https://github.com/epam/ai-dial-chat/issues/8727)). */
     it('reports each publication submitted display author', async () => {
       const { service, dialClient, cacheManager } = makeService();
       cacheManager.get.mockResolvedValue(undefined);

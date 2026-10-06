@@ -206,7 +206,7 @@ export class ShareInvitationService {
    * resource urls it references via `skills[]` (`type: 'dial-prompt'`), so the
    * attached prompts are granted alongside the app itself — otherwise the
    * recipient hits "Access denied to the prompt" when they open the shared
-   * app (issue #8529). Reuses the same `applications/{bucket}/{path}` →
+   * app ([#8529](https://github.com/epam/ai-dial-chat/issues/8529)). Reuses the same `applications/{bucket}/{path}` →
    * `getCustomApplication` resolution `buildApplicationDetails` uses.
    *
    * Best-effort: the pre-read MUST NOT block sharing the application itself.

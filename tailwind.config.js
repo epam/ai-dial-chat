@@ -49,9 +49,9 @@ const controlsBgColors = {
   'control-error': 'var(--bg-control-error, #AE2F2F)', // red-800
   'control-error-hover': 'var(--bg-control-error-hover, #BF3939)', // red-700
   'control-error-active': 'var(--bg-control-error-active, #CC4545)', // red-600
-  'control-error-alpha-hover': 'var(--bg-control-error-alpha-hover, #F764641A)', // red-800 alpha-10
+  'control-error-alpha-hover': 'var(--bg-control-error-alpha-hover, #F764641A)', // red-400 alpha-10
   'control-error-alpha-active':
-    'var(--bg-control-error-alpha-active, #F7646433)', // red-800 alpha-20
+    'var(--bg-control-error-alpha-active, #F7646433)', // red-400 alpha-20
 
   'control-disable-primary': 'var(--bg-control-disable-primary, #DCE0E8)', // grey-300
   'control-disable-secondary': 'var(--bg-control-disable-secondary, #ACB3C3)', // grey-450
@@ -98,7 +98,7 @@ const borderColors = {
   focus: 'var(--stroke-focus, #161B2D)', // grey-1000
   'accent-focus': 'var(--stroke-accent-focus, #6785FB)', // blue-200
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
-  'control-disable-primary': 'var(--stroke-control-disable-primary,  #848E9C)', // grey-600
+  'control-disable-primary': 'var(--stroke-control-disable-primary, #848E9C)', // grey-600
 };
 
 const textColors = {
@@ -107,7 +107,7 @@ const textColors = {
   secondary: 'var(--text-secondary, #57647a)', // grey-800
   tertiary: 'var(--text-tertiary, #848e9c)', // grey-600
   accent: 'var(--text-accent, #1D4ED8)', // blue-500
-  error: 'var(--text-error, #AE2F2F)', // red-500
+  error: 'var(--text-error, #AE2F2F)', // red-800
   warning: 'var(--text-warning, #7F6300)', // yellow-800
   'warning-icon': 'var(--text-warning-icon, #EEC840)', // yellow-500
   info: 'var(--text-info, #1D4ED8)', // blue-500
