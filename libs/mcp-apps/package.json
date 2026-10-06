@@ -21,7 +21,7 @@
   "dependencies": {
     "@tabler/icons-react": "^3.44.0",
     "@mcp-ui/client": "^7.1.1",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@epam/ai-dial-attachment-canvas": "*"
   },
   "peerDependencies": {
