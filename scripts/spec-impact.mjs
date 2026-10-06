@@ -219,7 +219,9 @@ export const formatSummary = (impacts, meta) => {
     ...impacts.slice(0, meta.limit).map((impact) => {
       const examples = impact.changedFiles
         .slice(0, 3)
-        .map((file) => `\`${file.replace(/\|/g, '\\|')}\``)
+        .map(
+          (file) => `\`${file.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')}\``,
+        )
         .join(', ');
       const more =
         impact.changedFiles.length > 3
