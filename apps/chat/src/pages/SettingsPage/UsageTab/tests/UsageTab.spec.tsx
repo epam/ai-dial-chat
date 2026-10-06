@@ -7,6 +7,7 @@ import type {
   ModelLimitsLabels,
 } from '@epam/ai-dial-usage-dashboard';
 import { act, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageI18nKeys } from '../../../../constants/translation-keys';
 import { useFeatureFlag } from '../../../../context/AppConfigContext';
@@ -132,9 +133,7 @@ describe('UsageTab', () => {
       screen.getByRole('heading', { name: UsageI18nKeys.PageTitle }),
     ).toBeTruthy();
     expect(screen.getByText(UsageI18nKeys.PageDescription)).toBeTruthy();
-    expect(
-      screen.getByRole('img', { name: UsageI18nKeys.Loading }),
-    ).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe(UsageI18nKeys.Loading);
     expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
     expect(screen.queryByText(UsageI18nKeys.ThisWeekTitle)).toBeNull();
     expect(screen.queryByText(UsageI18nKeys.ThisMonthTitle)).toBeNull();
@@ -155,9 +154,7 @@ describe('UsageTab', () => {
 
     render(<UsageTab />);
 
-    expect(
-      screen.getByRole('img', { name: UsageI18nKeys.Loading }),
-    ).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe(UsageI18nKeys.Loading);
     expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
     expect(screen.queryByText(UsageI18nKeys.ModelLimitsEmptyState)).toBeNull();
   });
@@ -228,6 +225,97 @@ describe('UsageTab', () => {
     rerender(<UsageTab />);
 
     expect(showNotification).toHaveBeenCalledOnce();
+  });
+
+  describe('status announcements', () => {
+    it('exposes a single status region, with the visual spinner hidden from assistive tech', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: undefined,
+        isLoading: true,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      const [status] = screen.getAllByRole('status');
+      expect(screen.getAllByRole('status')).toHaveLength(1);
+      expect(status.getAttribute('aria-live')).toBe('polite');
+      expect(status.textContent).toBe(UsageI18nKeys.Loading);
+      expect(
+        screen.queryByRole('img', { name: UsageI18nKeys.Loading }),
+      ).toBeNull();
+    });
+
+    it('announces completion in the same region once loading ends', () => {
+      type UsageDataResult = ReturnType<typeof useUsageData>;
+      /* State-backed so the memoized tab re-renders when the result changes. */
+      let setUsageData: (next: UsageDataResult) => void = () => undefined;
+      mockUseUsageData.mockImplementation(() => {
+        const [result, setResult] = useState<UsageDataResult>({
+          usage: undefined,
+          isLoading: true,
+          usageError: undefined,
+        });
+        setUsageData = setResult;
+        return result;
+      });
+
+      render(<UsageTab />);
+      const status = screen.getByRole('status');
+      expect(status.textContent).toBe(UsageI18nKeys.Loading);
+
+      mockUseDeployments.mockReturnValue(
+        createDeploymentsContextValue({
+          items: [
+            {
+              id: 'gpt-4o',
+              displayName: 'GPT-4o',
+              type: DeploymentItemDtoTypeEnum.Model,
+            },
+          ],
+        }),
+      );
+      act(() => {
+        setUsageData({
+          usage: {
+            deployments: { 'gpt-4o': { dayTokenStats: usableStats } },
+            dayCostStats: usableStats,
+          },
+          isLoading: false,
+          usageError: undefined,
+        });
+      });
+
+      expect(screen.getByRole('status')).toBe(status);
+      expect(status.textContent).toBe(UsageI18nKeys.Loaded);
+    });
+
+    it('announces the empty state alongside completion when there are no model rows', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: { deployments: {} },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(screen.getByRole('status').textContent).toBe(
+        `${UsageI18nKeys.Loaded} ${UsageI18nKeys.ModelLimitsEmptyState}`,
+      );
+    });
+
+    it('leaves the region empty on failure, so the error notification is the only announcement', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: undefined,
+        isLoading: false,
+        usageError: new Error('usage down'),
+      });
+
+      render(<UsageTab />);
+
+      expect(screen.getByRole('status').textContent).toBe('');
+      expect(showNotification).toHaveBeenCalledOnce();
+    });
   });
 
   describe('Model limits section', () => {
@@ -573,9 +661,9 @@ describe('UsageTab', () => {
 
       render(<UsageTab />);
 
-      expect(
-        screen.queryByRole('img', { name: UsageI18nKeys.Loading }),
-      ).toBeNull();
+      const { textContent } = screen.getByRole('status');
+      expect(textContent).toContain(UsageI18nKeys.Loaded);
+      expect(textContent).not.toContain(UsageI18nKeys.Loading);
       expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
     });
 

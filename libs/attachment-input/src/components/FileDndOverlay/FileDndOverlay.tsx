@@ -55,7 +55,13 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
       style={cssVars}
     >
       <div className="flex flex-col items-center text-center">
-        <Icon size={100} className={resolvedIconClassName} aria-hidden />
+        {/* A 100px illustration, so it takes the empty-state stroke of 1. */}
+        <Icon
+          size={100}
+          stroke={1}
+          className={resolvedIconClassName}
+          aria-hidden
+        />
         <span
           className={mergeClasses(
             'mt-5',

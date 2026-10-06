@@ -1608,6 +1608,7 @@
     "resetsAtAriaLabel": "Usage resets {{dateTime}}",
     "fullLoadError": "We couldn't load your usage data. Please try again later.",
     "loading": "Loading usage data…",
+    "loaded": "Usage data loaded.",
     "modelLimitsHeading": "Model tokens limits",
     "modelLimitsEmptyState": "No models to show yet.",
     "spentLabel": "{{amount}} spent",

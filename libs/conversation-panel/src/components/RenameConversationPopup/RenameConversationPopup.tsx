@@ -157,14 +157,23 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
                 aria-label={labels.renameWithAiLabel}
                 tooltipProps={{ tooltip: labels.renameWithAiLabel }}
                 disabled={isGenerating || isSaving}
+                aria-busy={isGenerating}
                 onClick={handleGenerateWithAi}
                 icon={
+                  /*
+                   * Both glyphs are decorative inside the labelled button; the
+                   * kit Spinner is a status region of its own, so it is wrapped
+                   * rather than nested as a live region inside the control.
+                   */
                   isGenerating ? (
-                    <Spinner size={DIAL_ICON_SIZE.MD} />
+                    <span className="flex" aria-hidden>
+                      <Spinner size={DIAL_ICON_SIZE.MD} />
+                    </span>
                   ) : (
                     <IconSparkles
                       size={DIAL_ICON_SIZE.MD}
                       stroke={DIAL_KIT_ICON_STROKE}
+                      aria-hidden
                     />
                   )
                 }

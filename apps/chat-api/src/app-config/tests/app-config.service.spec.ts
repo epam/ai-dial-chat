@@ -1348,7 +1348,6 @@ describe('AppConfigService', () => {
         appId: 'chat-ui',
         userId: 'user-1',
         roles: ['viewer'],
-        environment: 'test',
       };
       const { service, compositeProvider } = makeService(async () => undefined);
 

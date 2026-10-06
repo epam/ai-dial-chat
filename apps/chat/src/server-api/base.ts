@@ -6,9 +6,7 @@ export enum ApiEndpoints {
   MODELS = '/api/v1/models',
   AUTH_ME = '/api/v1/auth/me',
   AUTH_LOGOUT = '/api/v1/auth/logout',
-  TRANSCRIPTION = '/api/v1/transcription',
   CLIENT_CHANNEL = '/api/v1/client-channel',
-  EXTERNAL_SERVICES = '/api/v1/external-services',
 }
 
 export class UnauthorizedError extends Error {

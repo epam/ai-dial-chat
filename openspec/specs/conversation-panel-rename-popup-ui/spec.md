@@ -92,9 +92,15 @@ value SHALL be replaced with the sanitized generated name. On failure, the compo
 propagate the failure into the `error` prop's display slot. Closing and reopening the popup SHALL
 invalidate an earlier in-flight generation so its result cannot overwrite the new session's title.
 
+The trigger is a `GhostIconButton` named by `labels.renameWithAiLabel`, so its glyphs are decorative: `IconSparkles` SHALL carry `aria-hidden`, and the in-flight kit `Spinner` (itself a `role="status"` region) SHALL be wrapped in an `aria-hidden` element so no live region nests inside the control. The in-flight state SHALL instead be exposed on the trigger as `aria-busy={isGenerating}`.
+
 #### Scenario: Generation in progress disables the trigger and shows a spinner
 - **WHEN** `onGenerateWithAi()` has been called and has not yet settled
-- **THEN** the AI-generation trigger is disabled and shows a loading indicator
+- **THEN** the AI-generation trigger is disabled, has `aria-busy="true"`, and shows a loading indicator hidden from assistive tech
+
+#### Scenario: Trigger glyphs are decorative
+- **WHEN** the popup renders the AI-generation trigger
+- **THEN** its `IconSparkles` glyph has `aria-hidden="true"`, and the button's accessible name is `labels.renameWithAiLabel` alone
 
 #### Scenario: A second generation attempt is ignored while one is in flight
 - **WHEN** the user activates the AI-generation trigger while a previous call has not settled

@@ -15,12 +15,18 @@ import { ContentTab, type ContentTabProps } from '../Content';
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   InlineSelectTrigger: ({
+    id,
     label,
     onClick,
   }: {
+    id?: string;
     label: string;
     onClick?: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
+  }) => (
+    <button id={id} onClick={onClick}>
+      {label}
+    </button>
+  ),
   Dropdown: ({
     children,
     open,
@@ -206,6 +212,28 @@ describe('ContentTab — file selector', () => {
 
     expect(screen.getByRole('button')).toBeTruthy();
     expect(screen.getByText('2 files')).toBeTruthy();
+  });
+
+  it('names the preview region after the selected file, via the trigger', () => {
+    render(
+      <ContentTab
+        content="Body"
+        files={nestedFiles}
+        selectedFileId="scripts/run.py"
+      />,
+    );
+
+    const region = screen.getByRole('region', { name: 'run.py' });
+    expect(region.getAttribute('aria-labelledby')).toBe(
+      screen.getByRole('button').id,
+    );
+    expect(region.textContent).toContain('Body');
+  });
+
+  it('exposes no unnamed region when there is no file choice', () => {
+    render(<ContentTab content="Body" />);
+
+    expect(screen.queryByRole('region')).toBeNull();
   });
 
   it('shows the open file basename on the trigger', () => {

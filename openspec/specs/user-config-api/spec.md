@@ -261,7 +261,7 @@ Error codes: unchanged from v1.
 
 ### Requirement: UserConfigModule is imported by ConversationModule and AppModule
 
-`UserConfigModule` SHALL be listed in `ConversationModule.imports` and `AppModule.imports` (it is also imported by `DeploymentsModule` and `ToolsetsModule`). `UserConfigModule` exports `UserConfigService`. `getPinnedIds` and `migratePin` operate on `config.conversations.pinnedIds`.
+`UserConfigModule` SHALL be listed in `ConversationModule.imports` and `AppModule.imports` (it is also imported by `DeploymentsModule` and `ToolsetsModule`). `UserConfigModule` exports `UserConfigService`. `getPinnedIds` and `updatePin` operate on `config.conversations.pinnedIds`.
 
 #### Scenario: Pin cleanup on conversation delete uses conversations.pinnedIds
 

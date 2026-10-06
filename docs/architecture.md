@@ -357,18 +357,16 @@ Behaviour applied automatically:
 
 `server-api/` holds one module per backend domain (`conversations.api.ts`, `skills.api.ts`, `files.api.ts`, …). The `ApiEndpoints` enum in `base.ts` centralises the URL constants used by the hand-written helpers; domains covered by the generated client go through `api-client.ts` instead.
 
-| Key                 | URL                         |
-| ------------------- | --------------------------- |
-| `THEMES`            | `/api/themes`               |
-| `THEME_ICON`        | `/api/themes/icon`          |
-| `CHAT_COMPLETIONS`  | `/api/v1/chat/completions`  |
-| `CONVERSATIONS`     | `/api/v1/conversations`     |
-| `MODELS`            | `/api/v1/models`            |
-| `AUTH_ME`           | `/api/v1/auth/me`           |
-| `AUTH_LOGOUT`       | `/api/v1/auth/logout`       |
-| `TRANSCRIPTION`     | `/api/v1/transcription`     |
-| `CLIENT_CHANNEL`    | `/api/v1/client-channel`    |
-| `EXTERNAL_SERVICES` | `/api/v1/external-services` |
+| Key                | URL                        |
+| ------------------ | -------------------------- |
+| `THEMES`           | `/api/themes`              |
+| `THEME_ICON`       | `/api/themes/icon`         |
+| `CHAT_COMPLETIONS` | `/api/v1/chat/completions` |
+| `CONVERSATIONS`    | `/api/v1/conversations`    |
+| `MODELS`           | `/api/v1/models`           |
+| `AUTH_ME`          | `/api/v1/auth/me`          |
+| `AUTH_LOGOUT`      | `/api/v1/auth/logout`      |
+| `CLIENT_CHANNEL`   | `/api/v1/client-channel`   |
 
 ### SSE streaming
 

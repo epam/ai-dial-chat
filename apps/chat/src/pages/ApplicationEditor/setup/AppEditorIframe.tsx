@@ -580,12 +580,14 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             </Popup>
           )}
         {isUiLoading && (
-          <div
-            className="absolute inset-0 flex items-center justify-center bg-layer-sunken"
-            aria-label={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}
-            aria-live="polite"
-          >
-            <Spinner />
+          <div className="absolute inset-0 flex items-center justify-center bg-layer-sunken">
+            {/*
+             * The kit Spinner is itself the role="status" live region; naming
+             * its image here exposes the label without nesting a second one.
+             */}
+            <Spinner
+              ariaLabel={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}
+            />
           </div>
         )}
         <iframe

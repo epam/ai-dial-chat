@@ -1478,6 +1478,7 @@ export enum UsageI18nKeys {
   ResetsAtAriaLabel = 'usage.resetsAtAriaLabel',
   FullLoadError = 'usage.fullLoadError',
   Loading = 'usage.loading',
+  Loaded = 'usage.loaded',
   ModelLimitsHeading = 'usage.modelLimitsHeading',
   ModelLimitsEmptyState = 'usage.modelLimitsEmptyState',
   SpentLabel = 'usage.spentLabel',

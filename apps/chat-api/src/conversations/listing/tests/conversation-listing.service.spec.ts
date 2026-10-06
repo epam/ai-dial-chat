@@ -15,7 +15,6 @@ describe('ConversationListingService', () => {
   let mockUserConfigService: {
     getPinnedIds: ReturnType<typeof vi.fn>;
     updatePin: ReturnType<typeof vi.fn>;
-    migratePin: ReturnType<typeof vi.fn>;
   };
   let mockScheduledTaskUnreadService: {
     getViewedIds: ReturnType<typeof vi.fn>;
@@ -44,7 +43,6 @@ describe('ConversationListingService', () => {
     mockUserConfigService = {
       getPinnedIds: vi.fn().mockResolvedValue([]),
       updatePin: vi.fn().mockResolvedValue(undefined),
-      migratePin: vi.fn().mockResolvedValue(undefined),
     };
     mockScheduledTaskUnreadService = {
       getViewedIds: vi.fn().mockResolvedValue([]),

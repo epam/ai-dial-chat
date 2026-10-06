@@ -233,6 +233,22 @@ const UsageTab: FC = () => {
     [usage, activeLocale, t, formatResetTime],
   );
 
+  /*
+   * The one live region for this tab. It stays mounted so every change is
+   * announced; the kit Spinner (itself a status region) is hidden from
+   * assistive tech below so the loading text is announced only once. A fetch
+   * failure clears it: the error notification already carries that message.
+   */
+  let statusMessage = '';
+  if (isLoading) {
+    statusMessage = t(UsageI18nKeys.Loading);
+  } else if (usageError == null) {
+    statusMessage =
+      modelLimitRows.length === 0
+        ? `${t(UsageI18nKeys.Loaded)} ${t(UsageI18nKeys.ModelLimitsEmptyState)}`
+        : t(UsageI18nKeys.Loaded);
+  }
+
   return (
     <div className="flex size-full min-h-0 flex-col">
       <div className="flex flex-col gap-2 px-8 py-3">
@@ -243,9 +259,12 @@ const UsageTab: FC = () => {
           {t(UsageI18nKeys.PageDescription)}
         </p>
       </div>
+      <p role="status" aria-live="polite" className="sr-only">
+        {statusMessage}
+      </p>
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-8 py-4">
         {isLoading ? (
-          <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-1 items-center justify-center" aria-hidden>
             <Spinner fullWidth={false} ariaLabel={t(UsageI18nKeys.Loading)} />
           </div>
         ) : (
