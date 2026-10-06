@@ -6,15 +6,15 @@ Define folder-selection behavior for the DIAL file manager attach modal when a s
 
 ### Requirement: Folder rows are selectable when canAttachFolders is enabled
 
-When `canAttachFolders` is `true`, `DialFileManagerModal` SHALL allow selection of `DialFileNodeType.FOLDER` rows in the grid. The `isRowSelectable` predicate SHALL return `true` for folder rows, except for hidden-path folders (any path segment starts with `.`), which remain non-selectable regardless of `canAttachFolders`.
+When `canAttachFolders` is `true`, `DialFileManagerModal` (`apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) SHALL allow selection of `DialFileNodeType.FOLDER` rows in the grid. It forwards `canAttachFolders` to `useFileAttachmentPicker` (`libs/chat-hooks`), whose `isRowSelectable` predicate (passed through to `FileManagerAttachModal`) SHALL return `true` for folder rows, except for hidden-path folders (any path segment starts with `.`), which remain non-selectable regardless of `canAttachFolders`.
 
 When `canAttachFolders` is `false` (the default), folder rows SHALL remain non-selectable — this preserves current behavior.
 
-The `filesByPath` map inside the modal SHALL be extended to also index `DialFileNodeType.FOLDER` nodes so folder selections can be resolved to `DialFile` items.
+The `filesByPath` map inside `FileManagerAttachModal` (`libs/chat-shared/src/file-manager/FileManagerAttachModal/FileManagerAttachModal.tsx`) SHALL index both `DialFileNodeType.ITEM` and `DialFileNodeType.FOLDER` nodes (plus `searchResults`) so folder selections can be resolved to `DialFile` items.
 
 RTL: none
 Feature flag: none — controlled by the `canAttachFolders` prop
-Memoisation: `isRowSelectable` inside `useMemo` grid options; `filesByPath` in `useMemo`.
+Memoisation: `isRowSelectable` is a `useCallback` in `useFileAttachmentPicker`; `filesByPath` in `useMemo`.
 
 #### Scenario: Folder row selectable when canAttachFolders is true
 
@@ -35,7 +35,7 @@ Memoisation: `isRowSelectable` inside `useMemo` grid options; `filesByPath` in `
 
 ### Requirement: onAttach returns both files and folder paths
 
-`DialFileManagerModal` SHALL change the `onAttach` callback signature from `(files: DialFile[]) => void` to `(result: AttachResult) => void` where:
+`DialFileManagerModal` SHALL expose an `onAttach` callback of signature `(result: AttachResult) => void`, where `AttachResult` is exported from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/file-manager/attach-result.ts`; an identical app-local copy also exists at `apps/chat/src/components/DialFileManagerModal/types/attach-result.ts`):
 
 ```ts
 interface AttachResult {
@@ -46,13 +46,11 @@ interface AttachResult {
 
 When `canAttachFolders` is `false`, `folderPaths` SHALL always be an empty array (`[]`).
 
-`useDialFileManagerState.handleAttach` SHALL be updated to accept `AttachResult` and forward `folderPaths` to call sites. Conversion of folder paths to `Attachment` objects is deferred to a follow-up (folder attachments are not yet part of the conversation model).
-
-`ConversationRoute.handleAttachDialFiles` and `ConversationView.handleAttachDialFiles` SHALL both be updated to accept `AttachResult` and pass `result.files` to `dialFilesToAttachments`.
+`useDialFileManagerState.handleAttach` (`apps/chat/src/hooks/files/useDialFileManagerState.ts`, used by `NewConversationComposer` as `handleAttachDialFiles`) and `ConversationView.handleAttachDialFiles` SHALL both accept `AttachResult` and pass `result.files` to `dialFilesToAttachments`.
 
 RTL: none
 Feature flag: none
-Memoisation: `handleAttach` in `useCallback` inside `DialFileManagerModal`.
+Memoisation: `handleAttach` in `useCallback` inside `FileManagerAttachModal`.
 
 #### Scenario: files-only attach when canAttachFolders is false
 
@@ -68,11 +66,11 @@ Memoisation: `handleAttach` in `useCallback` inside `DialFileManagerModal`.
 
 ### Requirement: Parent-folder dedup removes nested selections
 
-When `canAttachFolders` is `true` and the user selects both a folder and a file (or nested folder) that is inside that folder, `DialFileManagerModal` SHALL remove the nested item from the result. Only the highest-level (outermost) selected folder in any given ancestry chain is kept.
+When `canAttachFolders` is `true` and the user selects both a folder and a file (or nested folder) that is inside that folder, the attach modal SHALL remove the nested item from the result. Only the highest-level (outermost) selected folder in any given ancestry chain is kept.
 
 Dedup logic: a selected item (file or folder) is excluded from the result if any other selected folder path is a proper prefix of its path. A "proper prefix" check uses a trailing `/` separator to avoid false matches (e.g., `files/bucket/foo/` must not match `files/bucket/foobar/file.txt`).
 
-This dedup runs inside `handleAttach` in `DialFileManagerModal` before calling `onAttach`.
+This dedup runs on the virtual grid paths inside `handleAttach` in `FileManagerAttachModal` before calling `onAttach`; each surviving folder is then converted by the host-supplied `resolveFolderPath` (in `DialFileManagerModal`: a `files/<bucket>/<path>/` DIAL path with `.`/`..` segments stripped and a trailing `/`) to produce `folderPaths`. Hidden-path items are skipped, files rejected by `isFileTypeAllowed` are dropped (triggering `onSkippedUnsupportedFiles`), and when `existingAttachmentsAmount` + files + folders exceeds `maximumAttachmentsAmount`, `onCountLimitExceeded` is called instead of `onAttach`.
 
 RTL: none
 Feature flag: none
@@ -102,7 +100,7 @@ Memoisation: dedup runs inside `handleAttach` (in `useCallback`), not on every r
 
 ### Requirement: canAttachFolders derived from selected deployment at call sites
 
-`ConversationRoute` and `ConversationView` SHALL read `selectedDeployment?.features?.folderAttachments` and pass it as `canAttachFolders` to `DialFileManagerModal`. When `folderAttachments` is absent or `false` on the selected deployment, `canAttachFolders` SHALL default to `false`.
+`NewConversationComposer` (rendered by `ConversationRoute`) and `ConversationView` SHALL read `selectedDeployment?.features?.folderAttachments` and pass it as `canAttachFolders` to `DialFileManagerModal`. When `folderAttachments` is absent or `false` on the selected deployment, `canAttachFolders` SHALL default to `false`.
 
 State ownership: `DeploymentsContext` selected deployment state (existing); no new state introduced at the call sites.
 Feature flag: `features.folderAttachments` from the selected deployment object, mapped from DIAL Core `features.folder_attachments`.
@@ -123,11 +121,11 @@ Memoisation: none required — value is read from the selected deployment object
 
 ### Requirement: handleAttachDialFiles forwards folderPaths as folder Attachments
 
-Both `ConversationRoute.handleAttachDialFiles` and `ConversationView.handleAttachDialFiles` SHALL accept `AttachResult` and map `result.folderPaths` to `Attachment` objects with `type: AttachmentType.File` (equivalent to how `dialFilesToAttachments` maps files to attachments). DIAL Core resolves folder contents server-side regardless of client-side attachment type value. The resulting folder attachments SHALL be merged with file attachments before being added to the conversation.
+Both `useDialFileManagerState.handleAttach` (the `NewConversationComposer` handler) and `ConversationView.handleAttachDialFiles` SHALL accept `AttachResult` and map `result.folderPaths` through `dialFolderPathToAttachment` (`@epam/ai-dial-chat-hooks`) to `Attachment` objects with `type: AttachmentType.File`, `id`/`url` set to the folder path, and `name` set to its decoded last segment. DIAL Core resolves folder contents server-side regardless of client-side attachment type value. The resulting folder attachments SHALL be merged with file attachments before being added to the conversation.
 
 RTL: none.
 Feature flag: none — behavior is conditional on `folderPaths.length > 0`.
-Memoisation: both handlers are `useCallback`; add `folderPaths` mapping inside the existing callback.
+Memoisation: both handlers are `useCallback`; the `folderPaths` mapping lives inside the existing callback.
 
 #### Scenario: File-only attach result — folderPaths empty
 

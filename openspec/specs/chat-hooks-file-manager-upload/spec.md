@@ -16,7 +16,7 @@ failure/completion reporting through injected callbacks.
 uploads a batch of files with `UPLOAD_CONCURRENCY` (3) parallel workers
 pulling from a shared cursor, tracking each file's status
 (`Queued → Uploading → Completed | Failed | Cancelled`) and progress
-percentage in `uploadBatchState`, via the injected `DialFilesApi.uploadFile`.
+percentage in `uploadBatchState`, via the injected `DialFilesApi.uploadFile`. A batch started while another is still on screen is appended to the existing `uploadBatchState.files`.
 
 #### Scenario: At most three files upload concurrently
 
@@ -52,10 +52,12 @@ listing snapshot.
 
 ### Requirement: Cancellation aborts remaining queued and in-flight work
 
-`cancelUpload` SHALL abort the batch's shared `AbortController`; workers
-SHALL mark not-yet-started queued files `Cancelled` and distinguish an
-aborted in-flight upload (`Cancelled`) from one that failed for another
-reason (`Failed`).
+The hook SHALL keep one `AbortController` per queued or uploading file,
+keyed by entry id. `cancelUpload` SHALL abort every outstanding
+controller, and `cancelUploadFile(id)` SHALL abort just that file's;
+workers SHALL mark not-yet-started queued files whose controller is aborted
+`Cancelled` and distinguish an aborted in-flight upload (`Cancelled`) from
+one that failed for another reason (`Failed`).
 
 #### Scenario: Cancelling a batch marks queued files Cancelled, not Failed
 
@@ -82,29 +84,35 @@ some failures (partial failure with a count), and a request-level rejection
 
 ### Requirement: A sanitized filename that loses its archive extension still routes to archive extraction
 
-The hook SHALL detect the case where a single `.zip`-content file's display
-name was sanitized in a way that removes the `.zip` suffix, and SHALL still
+The hook SHALL detect the case where a single file whose original
+`fileContent.name` ends in `.zip` has a sanitized display name (`name`)
+that no longer ends in `.zip`, and SHALL still
 route that file through archive-extraction upload rather than a plain
 file upload.
 
 #### Scenario: Sanitization removing the .zip suffix still triggers archive extraction
 
-- **WHEN** a single uploaded file has ZIP content but its sanitized display
-  name no longer ends in `.zip`
-- **THEN** the hook uploads it via `onUploadArchive`'s path, not a plain
-  file upload
+- **WHEN** `onUploadFiles` receives a single file whose `fileContent.name`
+  ends in `.zip` but whose sanitized display name no longer does
+- **THEN** the hook uploads it via the same archive-extraction path
+  `onUploadArchive` uses, not a plain file upload
 
 ### Requirement: Upload failures and completion are reported through injected callbacks, not app services
 
 The hook SHALL NOT import `react-i18next` or any application notification
-service; on batch completion it SHALL report success or failure counts
-through `onNotification` with a structured reason, and SHALL always
-invalidate the destination folder and clear its internal upload state in a
-`finally`-equivalent path regardless of outcome.
+service; on plain-file batch completion it SHALL report through
+`onNotification` a structured reason — `UploadFailed` when no file
+succeeded and at least one failed, or `UploadCompleted` (with the
+destination `folder`) when at least one succeeded — and no notification
+when every file in the batch was cancelled. It SHALL always invalidate the
+destination folder (`invalidateFolders` + `bumpRetry`) after the batch
+settles regardless of outcome. Settled entries SHALL stay in
+`uploadBatchState` until the host calls `clearUploadBatch`.
 
 #### Scenario: Batch completion always invalidates the destination folder
 
 - **WHEN** a plain-file upload batch completes, whether every file
   succeeded, some failed, or the batch was cancelled
-- **THEN** the destination folder's cache entry is invalidated and
-  `uploadBatchState` is cleared
+- **THEN** the destination folder's cache entry is invalidated, and the
+  settled entries remain in `uploadBatchState` until `clearUploadBatch` is
+  called

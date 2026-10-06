@@ -78,7 +78,7 @@ The operator-configurable file-manager tab list, from the config registry throug
 
 ### Requirement: ClientConfigResponseDto exposes fileManagerTabs
 
-`ClientConfigDto` (`apps/chat-api/src/app-config/dto/client-config-response.dto.ts`) SHALL expose `fileManagerTabs!: string[]`, populated by `AppConfigService.getClientConfig` from the resolved `fileManager.availableTabs` value. Its Swagger `example` SHALL be `['all', 'my_files', 'shared', 'organization']`.
+`ClientConfigDto` (`apps/chat-api/src/app-config/dto/client-config-response.dto.ts`) SHALL expose `fileManagerTabs!: string[]`, populated during `AppConfigService.getClientConfig` by the `fileManager.availableTabs` → `fileManagerTabs` mapping in `apps/chat-api/src/app-config/client-config.mapper.ts` (`applyClientConfigValue`), which forwards the resolved array and falls back to the mapper's own `DEFAULT_FILE_MANAGER_TABS` when the resolved value is not an array. Its Swagger `example` SHALL be `['all', 'my_files', 'shared', 'organization']`.
 
 #### Generated-client impact
 
@@ -141,11 +141,11 @@ Error codes are unchanged from the existing endpoint.
 - `tabs` is `allTabs` filtered to enabled ids.
 - `DialFileManagerTabs.All` is additionally removed unless at least two of `my_files`/`shared`/`organization` are enabled.
 
-**Active-tab correction:** the hook SHALL run a `useEffect` that, whenever `activeTab` is not among the rendered `tabs`, calls `onTabChange` with the first rendered id in the fixed priority `all` → `my_files` → `shared` → `organization`. It falls back to `my_files` when none is rendered.
+**Active-tab correction:** the hook SHALL run a `useEffect` that, whenever `activeTab` is not enabled (by the configured list plus the All rule above), calls `onTabChange` with the first enabled id in the fixed priority `all` → `my_files` → `shared` → `organization` (`TAB_PRIORITY_ORDER`). It falls back to `my_files` when none is enabled.
 
-**State ownership**: the hook owns no persistent state beyond the correction effect. `activeTab` remains owned by the host's `useDialFileManagerTabs` call. The configured list arrives as the `fileManagerTabs` parameter; the hook reads no context.
+**State ownership**: the hook owns no persistent state beyond the correction effect. `activeTab` remains owned by the host's `useDialFileManagerTabs` call. The configured list arrives as the `fileManagerTabs` parameter; the hook reads no context. Its callers are `DialFileManagerPage` (passing `useAppConfig().config.fileManagerTabs` directly) and `useFileAttachmentPicker` in `libs/chat-hooks` (passing its `allowedTabs` option, which `DialFileManagerModal` sets from `fileManagerTabs`).
 
-**Memoisation**: `tabs` is `useMemo`'d on `allTabs` and `fileManagerTabs`.
+**Memoisation**: `tabs` is `useMemo`'d on `allTabs` and the `isTabEnabled` callback, which is `useCallback`'d on `fileManagerTabs`.
 
 #### Scenario: Default config renders four tabs with All first
 

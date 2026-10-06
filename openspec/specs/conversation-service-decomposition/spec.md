@@ -11,22 +11,22 @@ The conversation domain SHALL be decomposed into four focused injectable service
 
 - `ConversationPersistenceService` SHALL own DIAL Core get/save primitives and display-name preservation, and SHALL implement the existing `ConversationPersistencePort` interface.
 - `ConversationListingService` SHALL own list retrieval, metadata computation, and display-name enrichment for list items.
-- `ConversationLifecycleService` SHALL own create, delete, rename, duplicate, pin, and bulk-delete mutations.
-- `ConversationStreamingService` SHALL own model completion streaming and conversation watch, and SHALL NOT depend on `express.Response` or any other HTTP-transport type.
-- `ConversationService` SHALL act as a facade that delegates every public method to exactly one of the four services above, and SHALL NOT contain business logic beyond delegation.
+- `ConversationLifecycleService` SHALL own create, delete, rename, duplicate, pin, and bulk-delete (`deleteConversations`, `deleteAllConversations`) mutations.
+- `ConversationStreamingService` SHALL own model completion streaming (`streamCompletion`, an async generator that calls an `onReadyToStream` callback before it yields), conversation watch, background-generation attach resolution and stop (`resolveBackgroundAttach`, `stopBackgroundGeneration`), and `saveClientConversation`, and SHALL NOT depend on `express.Response` or any other HTTP-transport type.
+- `ConversationService` SHALL act as a facade that delegates every public method to exactly one service, and SHALL NOT contain business logic beyond delegation. Pure 1:1 delegates to the four services above are bound property references; the two remaining methods each carry one line of glue and delegate to an already-independent service: `generateTitle` qualifies the path and calls `ConversationNamingService.generateTitle`, and `markConversationViewed` builds the conversation URL and calls `ScheduledTaskUnreadService.markViewed`.
 
 #### Scenario: Facade delegates a persistence call
 - **WHEN** `ConversationController` calls `ConversationService.getConversation(path, token, bucket)`
 - **THEN** the facade delegates to `ConversationPersistenceService.getConversation(path, token, bucket)` and returns its result unchanged
-- **AND** `ConversationPersistenceService.getStoredConversation` (a lower-level read used internally by `ConversationListingService` and `ConversationLifecycleService`) is not exposed on the facade
+- **AND** `ConversationPersistenceService.getStoredConversation` (a lower-level read used internally by `ConversationPersistenceService` itself and by `ConversationListingService`) is not exposed on the facade
 
 #### Scenario: Facade delegates a listing call
 - **WHEN** `ConversationController` calls `ConversationService.listConversations(...)`
 - **THEN** the facade delegates to `ConversationListingService.listConversations(...)` and returns its result unchanged
 
 #### Scenario: Facade delegates a lifecycle call
-- **WHEN** `ConversationController` calls `ConversationService.deleteConversation(id)`
-- **THEN** the facade delegates to `ConversationLifecycleService.deleteConversation(id)` and returns its result unchanged
+- **WHEN** `ConversationController` calls `ConversationService.deleteConversation(path, token, bucket)`
+- **THEN** the facade delegates to `ConversationLifecycleService.deleteConversation(path, token, bucket)` and returns its result unchanged
 
 #### Scenario: Streaming service has no HTTP dependency
 - **WHEN** `ConversationStreamingService.streamCompletion(...)` is invoked
@@ -43,6 +43,6 @@ The decomposition SHALL NOT change any observable REST or SSE contract: request/
 - **WHEN** a client calls the streaming completion endpoint before and after the service split
 - **THEN** the sequence of SSE events written to the wire is byte-for-byte identical for the same input conversation and model response
 
-#### Scenario: Cache key and TTL preserved
-- **WHEN** `ConversationListingService` (post-split) serves a cached list response
-- **THEN** it uses the same cache key naming and TTL that `ConversationService` used pre-split, and invalidates on the same triggering events
+#### Scenario: Listing stays uncached
+- **WHEN** `ConversationListingService` (post-split) serves a list response
+- **THEN** it reads DIAL Core on every request — no conversation-list cache key or TTL exists in the conversation domain (the only cache in `apps/chat-api/src/conversations` is `ConversationPublishService`'s publish-history cache)

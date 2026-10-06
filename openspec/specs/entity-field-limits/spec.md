@@ -10,8 +10,13 @@ Name, description and instructions length limits and control-character rules sha
 with the pure helpers `exceedsMaxLength(value, maxLength)` and `hasControlCharacters(value)`
 (true for any Unicode `Cc` character: line break, tab, NUL, …). Every entity editor (prompts,
 skills, toolsets, Quick Apps, Custom Apps, scheduled tasks) SHALL take its name, description and
-instructions limits from these constants rather than restating the numbers. The one exception is
-the scheduled-task description, which keeps its own 500-character `DESCRIPTION_MAX_LENGTH`.
+instructions limits from these constants rather than restating the numbers. There are two exceptions:
+the scheduled-task description, which keeps its own 500-character `DESCRIPTION_MAX_LENGTH`
+(`libs/scheduled-tasks/src/constants/scheduled-task-create-form.ts`), and the prompt editor,
+whose `PROMPT_NAME_MAX_LENGTH` (256), `PROMPT_DESCRIPTION_MAX_LENGTH` (2000) and
+`PROMPT_CONTENT_MAX_LENGTH` (50000) in `libs/chat-hooks/src/prompt/prompt.ts` spell the numbers
+out because that module ships in the `./utils` entry, which must load without `chat-shared`
+installed; `libs/chat-hooks/src/prompt/tests/prompt.spec.ts` pins them to the shared constants.
 
 `apps/chat-api/src/common/validators/entity-field-limits.ts` SHALL declare the same three
 numbers for the BFF DTOs, because an app cannot import a frontend package. A change to one side
@@ -44,6 +49,13 @@ The app SHALL translate these errors through two shared keys:
 | --- | --- |
 | `editor.fieldTooLong` (`EditorI18nKeys.FieldTooLong`) | `Use {{count}} characters or fewer.`, with `count` the exceeded limit |
 | `editor.nameControlCharacters` (`EditorI18nKeys.NameControlCharacters`) | `Remove line breaks, tabs and other control characters.` |
+
+The prompt editor is the exception: it keeps its own `PromptEditorI18nKeys` keys
+(`promptEditor.error.nameTooLong`, `promptEditor.error.descriptionTooLong`,
+`promptEditor.error.contentTooLong`, with the English text `Use 256 characters or fewer.`,
+`Use 2000 characters or fewer.` and `Use 50000 characters or fewer.`), and its name rule is the
+`PROMPT_NAME_PATTERN` allowlist (`promptEditor.error.nameInvalid`) rather than the control-character
+check.
 
 Libs SHALL return codes or call host-supplied messages rather than render this text themselves
 (AGENTS.md §Library isolation). Direction impact: none; the errors reuse the kit's existing field

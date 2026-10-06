@@ -6,11 +6,11 @@ Pure server-side assembly of DIAL SSE chunks into a conversation message, mirror
 
 ### Requirement: Server-side SSE chunk assembler
 
-`applyChunkToMessage` (`apps/chat-api/src/conversations/utils/apply-chunk.server.ts`) SHALL merge a parsed DIAL SSE chunk into a `ConversationMessageDto`, mirroring the frontend `apply-chunk.ts`. It MUST be a pure function with no imports from `apps/chat`.
+`applyChunkToMessage` (`apps/chat-api/src/conversations/utils/apply-chunk.server.ts`) SHALL merge a parsed DIAL SSE chunk into a `ConversationMessageDto`, mirroring the frontend `apply-chunk.ts` (`libs/chat-hooks/src/conversation/useConversationStream/apply-chunk.ts`). It MUST be a pure function with no imports from `apps/chat`.
 
 It SHALL handle: `delta.content` (string concatenation), `delta.custom_content.attachments` (accumulate), `delta.custom_content.stages` (merge by index, concatenate `name` and `content`), `delta.custom_content.annotations` (merge by `index` when both entries carry one, otherwise by `target.selector.id` when both are `html_tag`-selector annotations — never collapsing two distinct entries that both lack an `index` and are not matching `html_tag` ids; concatenate `body.title`/`body.quote` on a match), `delta.custom_fields.annotations` (raw wire-format annotations — normalized via `normalizeRawAnnotationsServer` against the accumulated attachment list, then merged into `custom_content.annotations` using the same rule, so a reload of the saved conversation still resolves citation pills), `delta.custom_content.form_schema` (replace, last wins), `delta.custom_content.state` (replace, last wins — the DIAL stateful-app contract only cares about the latest value), and `chunk.id` / `delta.responseId` (set the message response id).
 
-`normalizeRawAnnotationsServer(raw: unknown[], attachments: MessageAttachment[]): AnnotationDto[]` is a server-local pure function (no shared import with `libs/quotations`) that recognizes both the attachment-index + `pdf_region` wire shape and the `html_tag` + flat `body.source.url` wire shape, mirroring `normalizeRawAnnotations` in `libs/quotations/src/utils/annotation.ts`. It is called with the union of the message's already-accumulated attachments and this chunk's incoming attachments, so an `attachment_index` reference can resolve even when the referenced attachment arrived in an earlier chunk.
+`normalizeRawAnnotationsServer(raw: unknown[], attachments: AttachmentDto[]): AnnotationDto[]` (`apps/chat-api/src/conversations/utils/apply-chunk-annotations.server.ts`, alongside `mergeAnnotations`; stage merging lives in `apply-chunk-stages.server.ts`) is a server-local pure function (no shared import with `libs/chat-shared` or `libs/quotations`) that recognizes both the attachment-index + `pdf_region` wire shape and the `html_tag` + flat `body.source.url` wire shape, mirroring `normalizeRawAnnotations` in `libs/chat-shared/src/utils/annotation.ts` (consumed by the frontend `apply-chunk.ts` and by `libs/quotations/src/utils/annotation.ts`). It is called with the union of the message's already-accumulated attachments and this chunk's incoming attachments, so an `attachment_index` reference can resolve even when the referenced attachment arrived in an earlier chunk.
 
 For the `html_tag` shape, the server infers recognized document MIME types from the URL extension, including PDF, HTML/XHTML, DOCX, XLSX, and PPTX, and falls back to PDF only when the extension is not recognized.
 
@@ -77,26 +77,26 @@ The server SHALL preserve optional `body.selector` and supplied annotation index
 
 Office range selectors SHALL survive the backend's validation pipeline and appear in the generated OpenAPI client, so a citation's document location reaches the frontend instead of being discarded.
 
-`AnnotationSelectorDto` (`apps/chat-api/src/conversations/dto/annotation.dto.ts`) is currently a **closed field allowlist** — `type`, `start`, `end`, `page`, `x1`, `y1`, `x2`, `y2`, `tag`, `id` — and `apps/chat-api/src/main.ts` installs `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`. An annotation carrying `story`, `path`, `slide`, `shape_id`, or `sheet` therefore has those fields **stripped**, or — on the conversation-save request path — causes the entire save to be **rejected with 400**. This is a DTO gap; it SHALL NOT be addressed by adding an endpoint.
+`apps/chat-api/src/main.ts` installs `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`, so any selector field missing from `AnnotationSelectorDto` (`apps/chat-api/src/conversations/dto/annotation.dto.ts`) would be stripped or would reject the save with 400. The Office fields are therefore declared on the DTO itself; this SHALL NOT be addressed by adding an endpoint.
 
-`AnnotationSelectorDto` SHALL be widened with the Office selector fields, each optional and each validated:
+`AnnotationSelectorDto` SHALL declare, besides `type`, `page`, `x1`, `y1`, `x2`, `y2`, `tag` and `id`, the Office selector fields, each optional and each validated:
 
 - `story?: string`
-- `path?: number[]` — validated as an array of integers
-- `slide?: number`
+- `path?: number[]` — validated as an array of integers (`@IsArray()` + `@IsInt({ each: true })`)
+- `slide?: number` — validated as an integer
 - `shape_id?: string`
 - `sheet?: string`
 - `text?: string` — the cited text, compared against the resolved range for DOCX/PPTX
-- `start` and `end` — currently `@IsNumber()`, and SHALL be widened to also accept the nested `{ row: number; col: number }` address shape used by `excel_rc_range`, while continuing to accept a number for the existing character-range and Office text-range selectors. `end` SHALL additionally accept `null`, which the contract uses for a single-cell range.
+- `start?: number | CellAddressDto` and `end?: number | CellAddressDto | null` — validated by the custom `IsNumberOrCellAddress` constraint (with `@Type(() => CellAddressDto)`), which accepts a number for the character-range and Office text-range selectors or a nested `CellAddressDto` (`{ row?: number; col?: number }`, integers, re-validated with whitelist/`forbidNonWhitelisted`) for `excel_rc_range`. `end` additionally accepts `null` (via `@IsOptional()`), which the contract uses for a single-cell range.
 
-The DTO SHALL remain an **open shape** — `type` plus every known optional field — rather than becoming a discriminated union, matching the comment already on the class and mirroring `AnnotationSelector` in `chat-shared`. Widening only ever accepts more input than before, so payloads that validate today continue to validate.
+The DTO SHALL remain an **open shape** — `type` plus every known optional field — rather than becoming a discriminated union, matching the comment on the class and mirroring `AnnotationSelector` in `chat-shared`. The Office fields only ever accept more input than the earlier PDF/character-range allowlist, so those payloads continue to validate.
 
-Every added field SHALL carry `@ApiPropertyOptional` metadata so it appears in `libs/chat-api-client/openapi.json` with a strong type, and the client SHALL be regenerated and rebuilt.
+Every Office field SHALL carry `@ApiPropertyOptional` metadata (`start`/`end` as a `oneOf` of `number` and a `CellAddressDto` `$ref`, registered via `@ApiExtraModels(CellAddressDto)`) so it appears in `libs/chat-api-client/openapi.json` with a strong type in the generated client.
 
-Server-side normalization in `apps/chat-api/src/conversations/utils/apply-chunk-annotations.server.ts` requires no change to preserve these selectors: `normalizeBodySelector` retains any selector object with a string `type`, so an Office selector already passes through streaming assembly untouched. This SHALL be verified by test rather than assumed.
+Server-side normalization in `apps/chat-api/src/conversations/utils/apply-chunk-annotations.server.ts` preserves these selectors: `normalizeBodySelector` retains any selector object with a string `type`, so an Office selector passes through streaming assembly untouched. This SHALL be verified by test (`apply-chunk-annotations.server.spec.ts`) rather than assumed.
 
 **Endpoint impact**: none. No new route, no changed HTTP method, path, status code, authorization, rate limit, or cache behaviour. The affected requests are the existing conversation create/save and fetch operations under `/api/v1/conversations`.
-**Generated-client impact**: no new `operationId` and no new SDK method. The regenerated `AnnotationSelectorDto` model gains the optional fields; existing frontend callers are unchanged and continue to use the same generated methods.
+**Generated-client impact**: no new `operationId` and no new SDK method. The generated `AnnotationSelectorDto` model carries the optional fields; existing frontend callers are unchanged and continue to use the same generated methods.
 **Cache**: unchanged — annotations are not separately cached.
 **i18n**: none — backend DTO.
 **RTL**: none — backend DTO.
@@ -135,7 +135,7 @@ Server-side normalization in `apps/chat-api/src/conversations/utils/apply-chunk-
 
 #### Scenario: Office selector fields appear in the generated client
 
-- **WHEN** `npm run openapi` and `npm run openapi:check` run after the DTO change
+- **WHEN** `npm run openapi` and `npm run openapi:check` run against the current DTO
 - **THEN** `libs/chat-api-client/openapi.json` contains the new optional fields on the annotation selector schema and the check passes
 
 ### Requirement: Stage parent references survive assembly and persistence

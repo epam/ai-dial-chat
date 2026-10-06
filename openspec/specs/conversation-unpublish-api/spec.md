@@ -1,11 +1,11 @@
 # conversation-unpublish-api Specification
 
 ## Purpose
-TBD - created by archiving change add-unpublish-my-resources. Update Purpose after archive.
+Backend endpoint `POST /api/v1/conversations/unpublish` that submits a DIAL Core `DELETE`-action publication request to remove an owned conversation from one published folder, pending administrator approval.
 ## Requirements
 ### Requirement: Conversation unpublish endpoint submits a DELETE-action publication
 
-The backend SHALL expose `POST /api/v1/conversations/unpublish?path=<conversation-path>` in `apps/chat-api/src/conversations/` (`conversation-publish.controller.ts`, `conversation-publish.service.ts`, new `dto/unpublish-conversation.dto.ts`), mirroring the existing `POST /api/v1/conversations/publish` shape: the conversation is addressed by the bucket-relative `path` query param (no `conversations/` prefix — the same convention rename/delete/duplicate use), and the body carries only `folderPath`.
+The backend SHALL expose `POST /api/v1/conversations/unpublish?path=<conversation-path>` in `apps/chat-api/src/conversations/` (`conversation-publish.controller.ts`, `conversation-publish.service.ts`, `dto/unpublish-conversation.dto.ts`, `dto/unpublish-conversation-result.dto.ts`), mirroring the existing `POST /api/v1/conversations/publish` shape: the conversation is addressed by the bucket-relative `path` query param (no `conversations/` prefix — the same convention rename/delete/duplicate use), and the body carries only `folderPath`.
 
 The service SHALL call Core's `createPublication` through `DialClientService` with a single `DELETE` resource and persist nothing:
 

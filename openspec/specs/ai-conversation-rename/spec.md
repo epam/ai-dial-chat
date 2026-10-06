@@ -107,12 +107,17 @@ Unlike automatic naming (which authenticates with the operator-configured `DIAL_
 
 ### Requirement: Endpoint failure handling
 
-The endpoint SHALL translate upstream/LLM failures into typed HTTP exceptions rather than returning `null` or an empty name, using the shared `mapDialHttpStatus` / `handleDialFetchError` DIAL Core error mapping used elsewhere in `chat-api` so the same upstream status always maps to the same exception type across domains. Upstream DIAL Core rejections that indicate the calling user's token is not authorized for the configured `UTILITY_MODEL` deployment (upstream HTTP 401 or 403) SHALL be surfaced as HTTP 401 or 403 respectively, distinct from other upstream failures (timeouts, network errors, or upstream 5xx), which SHALL continue to surface as HTTP 503 or 502 respectively.
+The endpoint SHALL translate upstream/LLM failures into typed HTTP exceptions rather than returning `null` or an empty name, using the shared `mapDialHttpStatus` / `handleDialFetchError` DIAL Core error mapping used elsewhere in `chat-api` so the same upstream status always maps to the same exception type across domains. Upstream DIAL Core rejections that indicate the calling user's token is not authorized for the configured `UTILITY_MODEL` deployment (upstream HTTP 401 or 403) SHALL be surfaced as HTTP 401 or 403 respectively, distinct from other upstream failures: timeouts and network errors (via `handleDialFetchError`) SHALL surface as HTTP 503, and upstream 5xx responses (via `mapDialHttpStatus`) SHALL surface as HTTP 502.
 
 #### Scenario: Upstream LLM failure
 
-- **WHEN** the DIAL Core / utility-model call fails with a network error or an upstream 5xx response
+- **WHEN** the DIAL Core / utility-model call responds with an upstream 5xx response
 - **THEN** the system responds with HTTP 502 and logs the failure context, including the upstream status, without leaking secrets
+
+#### Scenario: Utility-model call fails with a network error
+
+- **WHEN** the DIAL Core / utility-model request throws a network error before a response is received
+- **THEN** the system responds with HTTP 503 and logs the failure context without leaking secrets
 
 #### Scenario: Upstream rejects the calling user's access to the utility model
 
@@ -122,7 +127,7 @@ The endpoint SHALL translate upstream/LLM failures into typed HTTP exceptions ra
 
 ### Requirement: AI rename control in the rename modal
 
-The rename conversation modal (`RenameConversationPopup`) SHALL present an "AI rename" icon button at the end of the title input row. The control SHALL always be available in the modal (no feature-flag gating in this change).
+The rename conversation modal (`RenameConversationPopup`, exported by `libs/conversation-panel`) SHALL present an "AI rename" icon button at the end of the title input row. The control SHALL always be available in the modal (no feature-flag gating in this change).
 
 #### Scenario: Control is visible
 
@@ -132,7 +137,7 @@ The rename conversation modal (`RenameConversationPopup`) SHALL present an "AI r
 #### Scenario: Clicking triggers generation
 
 - **WHEN** the user clicks the AI rename button
-- **THEN** the modal calls `POST /api/v1/conversations/generate-title` for the current conversation
+- **THEN** the modal invokes its `onGenerateWithAi` callback, which the host (`ConversationPanelView` via `ConversationsContext.generateConversationTitle` and the `generateConversationTitle` wrapper in `apps/chat/src/server-api/conversations.api.ts`) wires to `POST /api/v1/conversations/generate-title` for the current conversation
 
 ### Requirement: AI rename in-flight and result behavior
 

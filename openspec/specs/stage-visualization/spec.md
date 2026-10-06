@@ -8,7 +8,7 @@ The `conversation-stages` library: merging streamed stages into a conversation a
 
 ### Requirement: `libs/conversation-stages` exposes the stage renderers
 
-The `@epam/ai-dial-conversation-stages` library SHALL exist at `libs/conversation-stages/`. It SHALL export `StagesPanel`, `CollapsedGroup`, and their public props, labels, color, style, and typography types. The library SHALL declare `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and `@tabler/icons-react` as peer dependencies.
+The `@epam/ai-dial-conversation-stages` library SHALL exist at `libs/conversation-stages/`. It SHALL export `StagesPanel`, `CollapsedGroup`, their public props, labels, color, style, and typography types, and the `CONVERSATION_STAGES_CLASS` public class-name constant. The library SHALL declare `react`, `@epam/ai-dial-ui-kit`, and `@epam/ai-dial-chat-shared` as peer dependencies, and `@tabler/icons-react` and `@epam/ai-dial-attachment-input` (whose `AttachmentCard` renders stage attachment tiles) as runtime `dependencies`.
 
 #### Scenario: CollapsedGroup is importable in apps/chat
 - **WHEN** `apps/chat` imports `CollapsedGroup` from `@epam/ai-dial-conversation-stages`
@@ -38,7 +38,7 @@ The `Stage` interface in `libs/chat-shared` SHALL include `content?: string` in 
 
 ### Requirement: Streaming assembly merges incoming stages into `custom_content`
 
-`applyChunkToMessages` in `libs/chat-hooks/src/conversation/useConversationStream/apply-chunk.ts` SHALL read `chunk.choices[0]?.delta?.custom_content?.stages` on every chunk. If stages are present, it MUST:
+`applyChunkToMessages` in `libs/chat-hooks/src/conversation/useConversationStream/apply-chunk.ts` SHALL read `chunk.choices[0]?.delta?.custom_content?.stages` on every chunk. If stages are present, it MUST merge them through the exported `mergeStages(existing, incoming)` helper in the same file, which SHALL:
 1. Upsert each incoming stage into `message.custom_content.stages` by `index`, merging an existing entry and appending a new index.
 2. Append `stage.name` and `stage.content` deltas to the existing values for that index.
 3. Apply an incoming `status` only to the stage with the matching index; it MUST NOT infer a completed status from the arrival of another stage.
@@ -268,7 +268,7 @@ If any duration-bearing stage lacks a valid start timestamp, the components SHAL
 
 ### Requirement: `CollapsedGroup` is rendered in assistant messages that have stages
 
-In `ConversationMessageItem.tsx`, the `messageHasStages` utility SHALL return `true` only when `message.role` is `MessageRole.Assistant` and `message.custom_content?.stages?.length > 0`. For each message where this returns `true`, a `CollapsedGroup` SHALL be rendered in the corresponding `MessageBubble`'s `afterContent`, receiving a memoized `mapStages(message.custom_content.stages)` result, including parent metadata and positional identities for complete unindexed arrays. The memo SHALL depend on the original stage-array reference. It SHALL NOT rewrite the stored message or alter other custom content. `ConversationMessageItem` remains the app adapter supplying translated labels and `onAttachmentClick`; neither UI library nor mapper SHALL import app contexts, endpoint paths, SDK setup, routing or persistence. Its `isStreaming` prop SHALL come from `isStreamingMessage`, so it is `true` only for the last assistant message while `isAssistantTyping` is `true`.
+In `ConversationMessageItem.tsx`, the `messageHasStages` utility (imported from `@epam/ai-dial-chat-hooks`, `libs/chat-hooks/src/conversation/message-utils.ts`) SHALL return `true` only when `message.role` is `MessageRole.Assistant` and `message.custom_content?.stages?.length > 0`. For each message where this returns `true`, a `CollapsedGroup` SHALL be rendered in the corresponding `MessageBubble`'s `afterContent`, receiving a memoized `mapStages(message.custom_content.stages)` result, including parent metadata and positional identities for complete unindexed arrays. The memo SHALL depend on the original stage-array reference. It SHALL NOT rewrite the stored message or alter other custom content. `ConversationMessageItem` remains the app adapter supplying translated labels and `onAttachmentClick`; neither UI library nor mapper SHALL import app contexts, endpoint paths, SDK setup, routing or persistence. Its `isStreaming` prop SHALL come from `isStreamingMessage`, so it is `true` only for the last assistant message while `isAssistantTyping` is `true`.
 
 #### Scenario: Assistant message with stages shows CollapsedGroup
 - **WHEN** an assistant message has at least one entry in `custom_content.stages`

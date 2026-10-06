@@ -13,7 +13,7 @@ When `AttachmentCard` renders a non-image attachment in the error state (`status
 - **Error surface.** The tile root SHALL carry the error style token, and SHALL NOT carry the hover style token, so a tile the user cannot act on does not respond as if it were actionable.
 - **Corner-action spacing.** The tile's action buttons are absolutely positioned in the trailing top corner, so exactly one of the two text blocks must reserve room for them. In the normal state that is the **name**; in the error state it is the **file-type row**, because the error state swaps the download action for a retry action that sits alongside remove, and the type row is the one that would otherwise collide with the pair.
 - **Announced status.** An `sr-only` `role="status"` `aria-live="polite"` element SHALL carry the error text, and each corner action SHALL reference it by id, so the failure reaches assistive technology even though it is conveyed visually by color alone.
-- **Disabled affordances.** Download SHALL be suppressed in the error state; retry SHALL be offered instead, except when the failure reason is an unsupported file type, which retrying cannot fix.
+- **Disabled affordances.** Download SHALL be suppressed in the error state; retry SHALL be offered instead (when `onRetry` is supplied), except when the failure reason is `AttachmentErrorReason.UnsupportedType` or `AttachmentErrorReason.FileTooLarge`, which retrying cannot fix.
 
 **Text truncation.** Both text blocks truncate with CSS, not JavaScript, and expose the full value through the native `title` attribute rather than a tooltip component:
 
@@ -47,11 +47,11 @@ No new SCSS tokens are introduced. `styles.nameText` continues to style the file
 - **THEN** an `sr-only` `role="status"` element carries the error text
 - **AND** each corner action button references that element by id
 
-#### Scenario: Retry replaces download, except for an unsupported type
+#### Scenario: Retry replaces download, except for an unsupported type or oversized file
 
 - **WHEN** a non-image attachment is in the error state with a retryable reason
 - **THEN** the retry action is rendered and the download action is not
-- **AND** when the reason is an unsupported file type, no retry action is offered
+- **AND** when the reason is an unsupported file type or a file that is too large, no retry action is offered
 
 #### Scenario: Long filename wraps and exposes the full value
 

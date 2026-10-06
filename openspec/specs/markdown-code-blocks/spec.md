@@ -11,6 +11,8 @@ Fenced code blocks in rendered markdown: language detection, the copy action, th
 The system SHALL render fenced code blocks (produced by react-markdown from ` ```lang … ``` ` and ` ``` … ``` ` markdown) using `MarkdownCodeBlock`, a dedicated component that owns its full container. The container MUST include:
 - A visible frame (rounded border, background).
 - A compact sticky header with the language label (start) and action icon buttons (end). The header MUST share the same background as the code body. There MUST be no divider between the header and the code body.
+- Two header action buttons (when not streaming): a download `GhostIconButton` (`IconDownload`, `aria-label` = `downloadLabel`, default `'Download code'`, saving `code.{ext}` via `downloadTextFile` with the extension from `getFileExtensionForLanguage`, hidden when `hideDownload` is `true`) followed by the copy button.
+- Syntax highlighting through a lazily loaded `react-syntax-highlighter` `Prism` renderer (`restrainedSyntaxTheme`) when `language` is non-empty and `isSyntaxHighlightingAllowed(value)` is `true`; otherwise (and as the `Suspense` fallback) the code renders as plain `<pre><code class="whitespace-pre">`.
 - A scrollable body with `max-h-[60vh] overflow-auto`.
 - `dir="ltr"` on the scrollable body to preserve code direction on RTL pages.
 
@@ -97,7 +99,7 @@ The copy button MUST be keyboard-focusable (rendered via `GhostIconButton`) and 
 
 ### Requirement: Copied feedback
 
-After a successful copy the system SHALL:
+After a successful copy (`copyToClipboard` resolves `true`; a failed copy changes nothing) the system SHALL:
 1. Switch the copy button icon from `IconCopy` to `IconCheck`.
 2. Announce `copiedLabel` (default `'Copied!'`) through the block's own
    `role="status" aria-live="polite"` region, which is empty at rest.
@@ -216,7 +218,7 @@ Introducing `MarkdownCodeBlock` MUST NOT alter the rendering of GFM tables. `Mar
 
 ### Requirement: Hide copy button during streaming
 
-When `isStreaming` is `true` the copy button MUST NOT be rendered. The code content is still visible and updating. The copy button appears once `isStreaming` becomes `false`.
+When `isStreaming` is `true` the copy button (and the download button) MUST NOT be rendered. The code content is still visible and updating. The buttons appear once `isStreaming` becomes `false`.
 
 #### Scenario: Streaming message behavior
 
@@ -231,8 +233,8 @@ When `isStreaming` is `true` the copy button MUST NOT be rendered. The code cont
 
 | Key | Default value | Usage |
 |-----|---------------|-------|
-| `buttons.copy` (existing) | `"Copy"` | Passed as `codeBlockCopyLabel` from app to `MDMessageViewer` |
-| `buttons.copied` (existing) | `"Copied!"` | Passed as `codeBlockCopiedLabel` from app to `MDMessageViewer` |
+| `buttons.copy` (existing, `ButtonsI18nKeys.Copy`) | `"Copy"` | Passed as `labels.codeBlockCopyLabel` by `ConversationMessageItem`, forwarded through `AssistantMessageBubble` to `MDMessageViewer` |
+| `buttons.copied` (existing, `ButtonsI18nKeys.Copied`) | `"Copied!"` | Passed as `labels.codeBlockCopiedLabel` by `ConversationMessageItem`, forwarded through `AssistantMessageBubble` to `MDMessageViewer` |
 
 No new keys are introduced. The lib defaults to English strings (`'Copy code'` / `'Copied!'`).
 

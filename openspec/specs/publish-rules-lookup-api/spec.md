@@ -11,9 +11,9 @@ The backend SHALL expose `GET /api/v1/publish/rules?folderPath=<path>` in `apps/
 `PublishRulesService.getRules` SHALL NOT persist anything — it is a pure pass-through read of DIAL Core's own `getPublicationRules` response, called via `DialClientService` (`this.dialClient.client.getPublicationRules({ headers, body: { url } })`), identical in spirit to how `publish.service.ts` calls `createPublication`.
 
 The service SHALL:
-1. Build `url: "public/{folderPath}/"` using the same shared target-folder construction utility (`publish-target.util.ts`, extracted per `conversation-publish-api`) already used for `createPublication`, so folder-path encoding stays consistent across the publish and rules-lookup calls.
+1. Build `url: "public/{folderPath}/"` with `getPublicTargetFolder(folderPath)` from the shared `publish-target.util.ts` already used for `createPublication`, which percent-encodes every path segment (`encodePlainDialResourcePath`), so folder-path encoding stays consistent across the publish and rules-lookup calls.
 2. Call `this.dialClient.client.getPublicationRules({ headers: getBearerAuthHeaders(accessToken), body: { url } })`.
-3. Decode the response's `rules` map keys and return **only** the entry whose decoded, normalized key matches the requested `folderPath` exactly — every other key in the response (any ancestor folder's rules) SHALL be discarded server-side, never returned to the client. A folder with no rules of its own SHALL yield `rules: []`, not 404.
+3. Decode the response's `rules` map keys (`stripPublicTargetFolder`: strip the leading `public/` and trailing slash, decode each segment) and return **only** the entry whose decoded, normalized key matches the requested `folderPath` exactly — every other key in the response (any ancestor folder's rules) SHALL be discarded server-side, never returned to the client. A folder with no rules of its own SHALL yield `rules: []`, not 404.
 
 Request:
 ```
@@ -22,7 +22,7 @@ GET /api/v1/publish/rules?folderPath=Organization/Data%20Science/Shared%20chats
 
 Core call made by the service (via `DialClientService.client.getPublicationRules`):
 ```json
-{ "url": "public/Organization/Data Science/Shared chats/" }
+{ "url": "public/Organization/Data%20Science/Shared%20chats/" }
 ```
 
 Response (200), folder has its own rules:
@@ -41,7 +41,7 @@ Response (200), folder has no rules of its own:
 
 `folderPath` SHALL be validated with `class-validator` reusing the existing `IsValidFilePath` decorator, exactly as `PublishConversationDto.folderPath`/`PublishCatalogEntityDto.folderPath` are, to block path traversal before being forwarded to Core.
 
-Generated-client impact: new OpenAPI `operationId: getPublishRules`; request via a query DTO (`folderPath: string`); response DTO `PublishRulesResultDto { rules: PublishRuleDto[] }`, reusing the existing `PublishRuleDto` defined for the publish request bodies (same shape, no duplicate type). Frontend caller: new `apps/chat/src/server-api/publish-rules.api.ts` thin wrapper using the normal (non-`Raw`) generated method.
+Generated-client impact: new OpenAPI `operationId: getPublishRules`; request via a query DTO (`GetPublishRulesQueryDto { folderPath: string }`, `dto/get-publish-rules-query.dto.ts`); response DTO `PublishRulesResultDto { rules: PublishRuleDto[] }`, reusing the existing `PublishRuleDto` defined for the publish request bodies (same shape, no duplicate type). The controller is `PublishRulesController.getRules`, which wraps the service's `PublishRuleDto[]` in `{ rules }`. Frontend caller: `apps/chat/src/server-api/publish-rules.api.ts` exports `getPublishRules = createPublishApiClient(publishApi).getPublishRules`; the thin request logic lives in `libs/chat-hooks/src/catalog/create-publish-api.ts`, which calls the normal (non-`Raw`) generated `publishApi.getPublishRules({ folderPath })` and returns `response.rules` as `PublicationRule[]`.
 
 Caching: none. This is a live, interaction-scoped lookup fired once per folder-selection click, not a background-refreshed list; caching would risk surfacing stale rules immediately after another user changes them, at exactly the moment accuracy matters for a publisher deciding whether to add redundant rules.
 
@@ -66,11 +66,12 @@ Authorization: caller SHALL be authenticated (existing session guard). No additi
 
 #### Scenario: Upstream failure
 - **WHEN** the Core `getPublicationRules` call fails unexpectedly (network error, 5xx, timeout)
-- **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`) and logs the failure without logging request bodies containing tokens
+- **THEN** a thrown SDK call (network error, timeout) is logged with `logger.error` (message and stack only, no request bodies or tokens) and rethrown as `BadGatewayException('Failed to reach DIAL Core')`
+- **AND** a non-OK upstream response is mapped through `mapDialHttpStatus` on `result.response.status` (every 5xx → `BadGatewayException`; Core 4xx statuses map to their matching Nest exception); `handleDialSdkError` is not used, so no path currently throws `ServiceUnavailableException`
 
 #### Scenario: Core rejects the request with a structured error
-- **WHEN** `getPublicationRules` resolves with a structured error response (`result.error`)
-- **THEN** the service calls `mapDialHttpStatus` with `result.error` and `extractDialErrorMessage(result.error)`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder
+- **WHEN** `getPublicationRules` resolves with a non-OK response or a structured error response (`result.error`)
+- **THEN** the service calls `mapDialHttpStatus` with `result.response.status`, `result.error`, and `extractDialErrorMessage(result.error)`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder
 
 #### Scenario: Unauthenticated request is rejected
 - **WHEN** the endpoint is called without a valid session

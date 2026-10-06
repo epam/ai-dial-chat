@@ -64,7 +64,7 @@ identity provider.
 
 `dial.chat.auth.refresh.duration` SHALL record exactly one data point per refresh-token exchange
 actually performed against the identity provider, with `dial.chat.auth.outcome` in `refreshed`,
-`race_absorbed`, `invalid_grant`, `upstream_error`. A request that joins an exchange already in
+`race_absorbed`, `invalid_grant`, `session_expired` (the exchange returned a token set but completed after the session deadline, so the session is not renewed), `upstream_error`. A request that joins an exchange already in
 flight for the same session SHALL increment `dial.chat.auth.refresh.coalesced` and SHALL NOT
 contribute a duration observation.
 

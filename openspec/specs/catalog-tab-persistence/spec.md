@@ -67,8 +67,8 @@ i18n keys needed: none. RTL/accessibility: the existing `Tabs` component already
 #### Scenario: Omitted tabs are still derived from items
 
 - **WHEN** `Catalog` is rendered with only an Agent item and no `tabs` prop
-- **THEN** the tab row includes Agents
-- **AND** it does not include Models, Prompts, or any other type absent from `items`
+- **THEN** the derived tab list contains only Agents (no Models, Prompts, or any other type absent from `items`)
+- **AND** because fewer than two tabs render no tab row, no tab row is shown while `activeTab` still resolves to the Agent tab
 
 #### Scenario: Host tabs are not relabelled by titles.tabLabels
 
@@ -81,9 +81,9 @@ i18n keys needed: none. RTL/accessibility: the existing `Tabs` component already
 
 A custom hook `useCatalogActiveTabPreference` SHALL be created at `apps/chat/src/hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference.ts`, built on top of the existing `apps/chat/src/hooks/useLocalStorage.ts` hook — mirroring `useCatalogSortFilterPreference`'s shape.
 
-`apps/chat/src/types/storage-key.ts` SHALL gain a new `StorageKey.CatalogActiveTab` member.
+`apps/chat/src/types/storage-key.ts` SHALL gain a new `StorageKey.CatalogActiveTab` member (value `'catalogActiveTab'`; `useLocalStorage` uses the key verbatim, with no prefix).
 
-The hook SHALL accept the list of currently available tab ids (`string[]`, derived by the caller from `buildCatalogTabs`), and SHALL:
+The hook SHALL accept the list of currently available tab ids (`string[]`, derived by the caller via `deriveAvailableTabIds`, see below), and SHALL:
 
 - Call `useLocalStorage<string | null>(StorageKey.CatalogActiveTab, null)` to obtain the persisted tab id and its setter.
 - Resolve the effective active tab in this order: (1) the persisted `localStorage` value, if it is present in the available tab ids; (2) the first available tab id, or `undefined` if the available tab id list is empty.
@@ -99,17 +99,17 @@ RTL impact: none.
 
 #### Scenario: No persisted value on first visit
 
-- **WHEN** the hook is called with `availableTabIds: ['model', 'agent', 'prompt']` and `localStorage` has no `dial:catalog:activeTab` entry
+- **WHEN** the hook is called with `availableTabIds: ['model', 'agent', 'prompt']` and `localStorage` has no `catalogActiveTab` entry
 - **THEN** `activeTab` is `'model'` (the first available tab id)
 
 #### Scenario: Persisted tab is restored
 
-- **WHEN** the hook is called with `availableTabIds: ['model', 'agent', 'prompt']` and `localStorage.getItem('dial:catalog:activeTab')` returns `JSON.stringify('agent')`
+- **WHEN** the hook is called with `availableTabIds: ['model', 'agent', 'prompt']` and `localStorage.getItem('catalogActiveTab')` returns `JSON.stringify('agent')`
 - **THEN** `activeTab` is `'agent'`
 
 #### Scenario: Stale persisted tab id falls back to first available tab
 
-- **WHEN** the hook is called with `availableTabIds: ['model', 'agent']` and `localStorage.getItem('dial:catalog:activeTab')` returns `JSON.stringify('skill')` (a tab not present in `availableTabIds`)
+- **WHEN** the hook is called with `availableTabIds: ['model', 'agent']` and `localStorage.getItem('catalogActiveTab')` returns `JSON.stringify('skill')` (a tab not present in `availableTabIds`)
 - **THEN** `activeTab` is `'model'`
 
 #### Scenario: setActiveTab persists the new value
@@ -131,51 +131,13 @@ RTL impact: none.
 
 ### Requirement: CatalogView wires the persisted tab into Catalog
 
-`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL use `useCatalogActiveTabPreference` (passing the current `buildCatalogTabs` output's ids) to obtain `activeTab` and `setActiveTab`.
-
-- `CatalogView` SHALL only forward `activeTab` and an `onActiveTabChange` callback to `Catalog` when it is not rendered in selector mode (`isSelectorMode` is falsy); in selector mode both SHALL be `undefined` so `Catalog` falls back to its own internal, session-only tab state. `CatalogView` SHALL still call `useCatalogActiveTabPreference` unconditionally (the hook read is harmless), but its value is only wired to `Catalog` outside selector mode.
-- Outside selector mode, `CatalogView` SHALL pass `activeTab={activeTab}` to `Catalog`, and its `onActiveTabChange` handler SHALL call `setActiveTab(tabId)` — no URL/query-param update is involved.
-- `CatalogModal` (`apps/chat/src/components/DeploymentSelector/CatalogModal.tsx`) renders `CatalogView` with `isSelectorMode`; because of the selector-mode gating above, `CatalogModal` SHALL NOT be changed and its tab selection remains uncontrolled and session-only (resets whenever the modal is closed and reopened).
-
-Memoisation: the `availableTabIds` array passed into `useCatalogActiveTabPreference` SHALL be derived via the existing `buildCatalogTabs` memoized tab list (`.map(t => t.id)`, wrapped in its own `useMemo` keyed on the existing `tabs` memo).
-
-Feature flag: none required.
-
-Accessibility: no change — the tab list already carries its existing ARIA semantics; this requirement only changes which value drives `activeTabId`.
-
-#### Scenario: Refresh restores the last-used tab
-
-- **WHEN** `CatalogView` mounts and `useCatalogActiveTabPreference` resolves `activeTab: 'prompt'` from `localStorage`
-- **THEN** the rendered `Catalog` shows the Prompts tab as active, with no additional user interaction
-
-#### Scenario: First-ever visit defaults to Models
-
-- **WHEN** `CatalogView` mounts with no persisted `localStorage` value
-- **THEN** the rendered `Catalog` shows the Models tab as active (the first entry in `buildCatalogTabs`'s output)
-
-#### Scenario: Switching tabs persists the new value
-
-- **WHEN** the user clicks the "Agents" tab
-- **THEN** `localStorage` is updated via `setActiveTab` to the Agent tab's id
-
-#### Scenario: Editing an item and returning restores the origin tab
-
-- **WHEN** the user is on the Prompts tab (so `localStorage`'s persisted value is `'prompt'`), clicks Edit on a prompt, and the editor navigates back to the bare `ROUTES.Catalog` on save/cancel
-- **THEN** `CatalogView` remounts, `useCatalogActiveTabPreference` resolves `activeTab: 'prompt'` from the unchanged `localStorage` value, and the rendered `Catalog` shows the Prompts tab as active
-
-#### Scenario: CatalogModal is unaffected
-
-- **WHEN** `CatalogModal` is rendered
-- **THEN** it does not read from or write to `localStorage` for tab selection, and its tab selection resets when the modal is closed and reopened
-
----
-
-### Requirement: CatalogView wires the persisted tab into Catalog
-
-`CatalogView` SHALL use `useCatalogActiveTabPreference` to obtain `activeTab`
-and `setActiveTab`. The available tab ids supplied to that app-owned hook SHALL
-be derived through `deriveAvailableTabIds(visibleCatalogItems, tabOrder)` from
-`@epam/ai-dial-chat-hooks`. The pure helper SHALL include only entity types
+`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL use
+`useCatalogActiveTabPreference` to obtain `activeTab` and `setActiveTab`. The
+available tab ids supplied to that app-owned hook SHALL be the `availableTabIds`
+returned by `useCatalogItems` (`apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`),
+which derives them through `deriveAvailableTabIds(visibleCatalogItems, CATALOG_TAB_ORDER)`
+from `@epam/ai-dial-chat-hooks` (`CATALOG_TAB_ORDER` in `apps/chat/src/types/catalog.ts`:
+Model, Agent, Toolset, Skill, Prompt). The pure helper SHALL include only entity types
 present in the current visible items, preserve the supplied tab order, and read
 no storage, context, route, translation, or feature flag.
 

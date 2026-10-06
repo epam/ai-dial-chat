@@ -96,7 +96,7 @@ There SHALL be no server-side normalisation or defaulting — in particular no f
 The backend SHALL implement the applications feature in `apps/chat-api/src/applications/` following the established domain pattern:
 
 - `applications.controller.ts` — thin controller. `@Get() listApplications(@Req() req)` is the listing route; the same controller also hosts the application create/update/delete/get routes owned by their own capabilities.
-- `applications.service.ts` — `ApplicationsService` injects `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) for the shared DIAL SDK client, the cache manager, and `DeploymentsService`. Listing is a single SDK call wrapped in the shared `withCachedDialRequest` helper — no raw `fetch`, no `AbortController`, no pagination loop.
+- `applications.service.ts` — `ApplicationsService` injects `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) for the shared DIAL SDK client, the cache manager, `DeploymentsService`, and `DeploymentsDetailsService` (the last two serve the write routes' cache invalidation). Listing is a single SDK call wrapped in the shared `withCachedDialRequest` helper — no raw `fetch`, no `AbortController`, no pagination loop.
 - `applications.module.ts` — `ApplicationsModule`, importing `DeploymentsModule` and exporting `ApplicationsService`
 - `dto/application.dto.ts` — `ApplicationDto` and `ApplicationsResponseDto` with `@ApiProperty` decorators; sibling DTO files cover the write routes
 - `tests/applications.controller.spec.ts`

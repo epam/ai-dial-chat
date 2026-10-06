@@ -10,7 +10,7 @@ Ensures `DeploymentIcon`'s failed-image fallback state is scoped to the specific
 
 `DeploymentIcon` (`libs/chat-shared/src/components/DeploymentIcon/DeploymentIcon.tsx`) SHALL only render its fallback (`fallback` prop or `InitialsAvatar`) due to an image load failure when the currently displayed image source is the same source whose load actually failed (whether the failure was detected during background preload — see `deployment-icon-preload-swap` — or by the rendered `<img>` element itself). A newly displayed source SHALL NOT render the fallback on account of a previous, different source's load failure.
 
-This is an internal state-management guarantee for `DeploymentIcon`; the component's public props (`src`, `size`, `initialsName`, `fallback`, `badgeClassName`, `tooltip`) are unchanged.
+This is an internal state-management guarantee for `DeploymentIcon`; the component's public props (`src`, `size`, `initialsName`, `fallback`, `labels.tooltip`, and `styles` with `styles.colors.background` and `styles.badgeClassName`) are unchanged.
 
 #### Scenario: Switching from a failed icon to a working icon shows the working icon, not the fallback
 

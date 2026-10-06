@@ -8,7 +8,7 @@ The operator-gated iframe → chat `SEND_MESSAGE` channel that lets a custom or 
 
 ### Requirement: `ALLOW_VISUALIZER_SEND_MESSAGES` operator flag
 
-`chat-api` SHALL accept an optional boolean environment variable `ALLOW_VISUALIZER_SEND_MESSAGES`, validated at boot on `EnvironmentVariables` with the same boolean transform as `DEFAULT_DEPLOYMENT_PINNED`: unset → `false`; `"false"`, `"0"`, `"no"` (case-insensitive) → `false`; any other value → `true`.
+`chat-api` SHALL accept an optional boolean environment variable `ALLOW_VISUALIZER_SEND_MESSAGES`, validated at boot on `EnvironmentVariables` (`@IsBoolean()`, default `false`) with its own fail-closed `@Transform`: unset → `false`; a value that, trimmed and lowercased, is `"true"`, `"1"`, or `"yes"` → `true`; any other value (including `"false"`, `"0"`, `"no"`, `"off"`, `"disabled"`, and the empty string) → `false`.
 
 The config registry SHALL expose it as a feature entry with key `features.visualizerSendMessages`, `type: 'feature'`, `valueType: 'boolean'`, `visibility: 'client'`, `defaultValue: false`, `envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES'`, and no `allowedRolesEnvVar`. `FeatureKey` SHALL gain `VisualizerSendMessages = 'features.visualizerSendMessages'`.
 
@@ -98,7 +98,7 @@ The lib SHALL NOT read feature flags, conversation state, or any send API; wheth
 
 The chat app SHALL pass a visualizer message callback to the visualizer surfaces **only** when `useFeatureFlag('visualizerSendMessages')` is `true`; otherwise it SHALL pass `undefined`.
 
-State ownership: a new app context `VisualizerMessageContext` (`apps/chat/src/context/VisualizerMessageContext.tsx`) SHALL hold a ref-backed registration `{ conversationId, send }` published by the Conversation page (`apps/chat/src/pages/Conversation/Conversation.tsx`). Its value SHALL be memoised (`useMemo`), its consumer hook SHALL throw outside the provider, and registration SHALL be cleared when the page unmounts or the conversation changes. The context renders nothing.
+State ownership: a new app context `VisualizerMessageContext` (`apps/chat/src/context/VisualizerMessageContext.tsx`, `VisualizerMessageProvider` mounted in `apps/chat/src/main.tsx` around `<App />`) SHALL hold a ref-backed registration `{ conversationId, send }` (`VisualizerMessageSender`) published by the Conversation page (`apps/chat/src/pages/Conversation/Conversation.tsx`) through `useVisualizerMessageSendHandler` (`apps/chat/src/hooks/conversation/useVisualizerMessageSendHandler.ts`). The context value exposes `registerSender`, `getRegisteredConversationId`, and `sendMessage(content, sourceConversationId?)`. Its value SHALL be memoised (`useMemo`), its consumer hook `useVisualizerMessage` SHALL throw outside the provider, and registration SHALL be cleared when the page unmounts or the conversation changes. The context renders nothing.
 
 When the callback fires with `content`, the host SHALL call the Conversation page's `handleSend(content, [])`, the same path as typing and sending. The message is a `user` message with no attachments and no skills, which matches legacy. The callback SHALL drop the message, without error and without UI, when any of these holds:
 
@@ -113,7 +113,7 @@ It SHALL NOT be dropped merely because the deployment sets `isChatMessageInputDi
 Surfaces:
 
 - **Inline:** `ConversationView` SHALL pass the callback to `ConversationMessageItem`, which forwards it to `InlineGroupedVisualizer` as `onVisualizerSendMessage`. This covers application visualizers rendered inline.
-- **Canvas:** `apps/chat/src/app/app.tsx` SHALL pass the callback to `AttachmentCanvasContainer` as `onVisualizerSendMessage`. This covers custom and application visualizers opened in the canvas panel.
+- **Canvas:** `apps/chat/src/app/app.tsx` SHALL pass the callback returned by `useCanvasVisualizerMessageHandler` (`apps/chat/src/hooks/attachment/useCanvasVisualizerMessageHandler.ts`, which binds each opened canvas content to the conversation registered when it opened) to `AttachmentCanvasContainer` as `onVisualizerSendMessage`. This covers custom and application visualizers opened in the canvas panel.
 
 Observability: no telemetry event is emitted. The send is indistinguishable from a typed message in conversation history, which matches legacy.
 

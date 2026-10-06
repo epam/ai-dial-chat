@@ -8,7 +8,7 @@ Cache identity, ETag-based revalidation, invalidation, and concurrency rules for
 
 ### Requirement: Cache identity is the full resource id, never the display filename alone
 
-The shared attachment blob/text caches in `libs/chat-hooks/src/files/attachment-canvas.ts` SHALL key every cache entry by the resolved DIAL download URL, which is derived from the attachment's full `files/{bucket}/{path}` resource id (via `resolveDialFileDownloadUrl`/`resolveDialFileBucketAndPath`), never from the attachment's display `name` alone. Two attachments that resolve to different `files/{bucket}/{path}` ids SHALL always occupy distinct cache entries, even when their display names are identical.
+The shared attachment blob/text caches in `libs/chat-hooks/src/files/attachment-canvas.ts` SHALL key every cache entry by the resolved DIAL download URL returned by the host-injected `resolvers.resolveDialUrl(attachment)` (`AttachmentCanvasUrlResolvers`), which is derived from the attachment's full `files/{bucket}/{path}` resource id in its `url` or `referenceUrl` (in `apps/chat`, `resolveDialUrl` in `apps/chat/src/utils/dial-file.ts` delegates to `resolveDialFileDownloadUrl`/`resolveDialFileBucketAndPath`), never from the attachment's display `name` alone. Two attachments that resolve to different `files/{bucket}/{path}` ids SHALL always occupy distinct cache entries, even when their display names are identical.
 
 #### Scenario: Two different resources sharing a filename do not share a cache entry
 
@@ -17,7 +17,7 @@ The shared attachment blob/text caches in `libs/chat-hooks/src/files/attachment-
 
 ### Requirement: A cached body is reused only after its ETag is revalidated as current
 
-Before returning a cached blob/text `Promise` for a given DIAL download URL, `fetchDialBlob`/`fetchDialText` SHALL revalidate freshness by fetching the resource's current metadata through `resolvers.resolveDialFileMetadataUrl(fileId)` and comparing the returned `etag` against the `etag` stored on the cache entry created when that body was fetched. The cached `Promise` SHALL be returned only on an exact match; on any mismatch, on a cache miss, or when the stored entry has no `etag`, the function SHALL discard the stale entry (if any), issue a fresh content fetch, and store the new `{ etag, promise }` pair — captured from the metadata call that immediately preceded the content fetch — before the content fetch settles.
+Before returning a cached blob/text `Promise` for a given DIAL download URL, `fetchDialBlob`/`fetchDialText` SHALL revalidate freshness by fetching the resource's current metadata through `resolvers.resolveDialFileMetadataUrl(fileId)` (where `fileId` is the attachment's `files/` id from `url`, else `referenceUrl`, with any `#` fragment stripped) and comparing the returned `etag` against the `etag` stored on the cache entry created when that body was fetched. The cached `Promise` SHALL be returned only on an exact match; on any mismatch, on a cache miss, or when the stored entry has no `etag`, the function SHALL discard the stale entry (if any), issue a fresh content fetch, and store the new `{ etag, promise }` pair — captured from the metadata call that immediately preceded the content fetch — before the content fetch settles.
 
 #### Scenario: Unchanged resource reuses the cached body without re-fetching content
 
@@ -73,9 +73,9 @@ When a resource changes again while an older revalidate-and-fetch sequence for t
 
 ### Requirement: Local-file and inline-data attachment paths never use these caches
 
-Attachments resolved from a locally-picked `File` object or from inline base64 `data` SHALL continue to bypass `blobCache`/`textCache` and the metadata-based freshness check entirely, exactly as before this change.
+Attachments resolved from a locally-picked `File` object or from inline base64 `data` SHALL continue to bypass `blobCache`/`textCache` and the metadata-based freshness check entirely, exactly as before this change. Inline `data` always wins on the text path. A non-empty local `File` takes precedence over a DIAL url on the blob path, while a 0-byte placeholder `File` does not; the text path is DIAL-first, so an attachment that also carries a DIAL `files/` url is fetched (and cached) through that url.
 
 #### Scenario: Locally-picked file bypasses the cache and metadata check
 
-- **WHEN** an attachment carries a `file` (a locally-picked `File` object)
+- **WHEN** an attachment carries a `file` (a locally-picked `File` object) and no DIAL `files/` url
 - **THEN** its content resolves directly from that `File` with no metadata call and no cache read or write

@@ -18,7 +18,7 @@ Adds a syntax-highlighted code viewer to `AttachmentCanvas` as a new `Code` cont
 
 `libs/attachment-canvas/src/types/attachment-canvas.ts` SHALL add `Code = 'code'` to the `AttachmentContentType` enum.
 
-**i18n impact:** none — the `Code` type reuses the existing `copyTextLabel` / `copiedTextLabel` labels.
+**i18n impact:** the `Code` type reuses the existing `copyTextLabel` / `copiedTextLabel` labels; the lazy-loaded highlighter's loading/error/retry strings arrive through `AttachmentCanvasLabels.codeContentLoadingLabel` / `codeContentErrorLabel` / `codeContentRetryLabel` (see the `CodeContent` requirement).
 
 **RTL impact:** none — the code block is wrapped in `dir="ltr"` (source code is always LTR, same pattern as the JSON viewer).
 
@@ -101,13 +101,14 @@ Minimum required mappings:
 
 ### Requirement: `CodeContent` renderer component
 
-`libs/attachment-canvas/src/components/CodeContent/CodeContent.tsx` SHALL render eligible `content.text` using `react-syntax-highlighter`'s `Prism` renderer.
+`libs/attachment-canvas/src/components/CodeContent/CodeContent.tsx` SHALL render eligible `content.text` using `react-syntax-highlighter`'s `Prism` renderer, loaded through a dynamic `import('react-syntax-highlighter')` wrapped in `React.lazy` so the highlighter stays out of the initial bundle.
 
 Behaviour:
 - Wrap the highlighter in `<div dir="ltr">` to force LTR text direction regardless of the app's locale.
 - The container SHALL be scrollable (`overflow-auto`) and fill the panel body (`h-full`). The highlighted branch SHALL pass `wrapLongLines`, so a long source line wraps instead of forcing a horizontal scroll.
 - When `content.language` is `undefined` or `'plaintext'`, or `isSyntaxHighlightingAllowed(content.text)` returns false, the component SHALL render the text as an unstyled monospace `<pre>` block (same visual as the current `PlainText` renderer) — no highlighting, no Prism runtime cost.
 - The `codeBlockTheme` prop (forwarded from `AttachmentCanvasProps`, defaulting to `CodeBlockTheme.Light`) SHALL select the highlight style from the shared `restrainedSyntaxTheme` exported by `@epam/ai-dial-chat-shared` — the same palette the markdown code block uses, so the two surfaces cannot drift apart. Light/dark differences that the Prism style itself does not carry SHALL be applied through the component's own SCSS module rather than by branching to a second Prism theme.
+- The lazy highlighter SHALL be wrapped in `LazyContentBoundary`: while the engine loads, and if its import fails, the component SHALL render the same plain-text `<pre>` fallback; the failure state SHALL offer a retry that re-creates the `lazy()` reference. The loading/error/retry strings come from the optional `labels` prop (`CodeContentLabels`: `loadingLabel`, `errorLabel`, `retryLabel`, all with English defaults), which `AttachmentCanvasBody` fills from `AttachmentCanvasLabels.codeContentLoadingLabel` / `codeContentErrorLabel` / `codeContentRetryLabel`.
 - The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags).
 
 `CodeContent` is not exclusive to `CodeCanvasContent`: `HtmlContent` reuses it to render the HTML source view (see the `attachment-canvas-html-viewer` capability), so its props must stay free of `Code`-specific assumptions.
@@ -117,6 +118,7 @@ Props interface (`CodeContentProps`):
 interface CodeContentProps {
   content: CodeCanvasContent;
   codeBlockTheme?: CodeBlockTheme;
+  labels?: CodeContentLabels;
 }
 ```
 
@@ -144,7 +146,7 @@ interface CodeContentProps {
 ### Requirement: `AttachmentCanvas` switch handles `Code` variant
 
 The content-type switch that selects a renderer SHALL carry a `case AttachmentContentType.Code` branch. That switch lives in `libs/attachment-canvas/src/components/AttachmentCanvasBody/AttachmentCanvasBody.tsx`, which `AttachmentCanvas` renders inside the panel chrome, and the branch renders
-`<CodeContent content={content} codeBlockTheme={codeBlockTheme} />`.
+`<CodeContent content={content} codeBlockTheme={codeBlockTheme} labels={...} />`, where `labels` maps `codeContentLoadingLabel` / `codeContentErrorLabel` / `codeContentRetryLabel` to `loadingLabel` / `errorLabel` / `retryLabel`.
 
 The panel chrome (header, close, resize, keyboard/ARIA) SHALL be identical to other content types.
 
@@ -212,7 +214,7 @@ parse-failure fallback, inline-data no-type fallback) are NOT changed.
 `isExternalSourcePreviewable` is NOT changed by this requirement (HTML extensions are handled
 separately in the HTML viewer spec).
 
-**i18n impact:** none new — existing `AttachmentCanvasI18nKeys.CopyText` / `AttachmentCanvasI18nKeys.Copied` keys are reused via `AttachmentCanvasContainer`.
+**i18n impact:** none new — the existing `ButtonsI18nKeys.CopyText` / `ButtonsI18nKeys.Copied` keys are reused for `copyTextLabel` / `copiedTextLabel`, passed to `AttachmentCanvasContainer` in `apps/chat/src/app/app.tsx`.
 
 **RTL impact:** none — the `dir="ltr"` wrapper inside `CodeContent` is sufficient.
 
