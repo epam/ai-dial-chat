@@ -1,4 +1,5 @@
 import type { FileManagerSelectableNode } from '@epam/ai-dial-chat-shared';
+import { DialFileManagerVariant } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
@@ -6,7 +7,6 @@ import {
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UseDialFileManagerResult } from '../../dial-file-manager.types';
-import { DialFileManagerVariant } from '../../file-manager-variant';
 import { useDialFileManagerSections } from '../../useDialFileManagerSections/useDialFileManagerSections';
 import {
   useFileAttachmentPicker,

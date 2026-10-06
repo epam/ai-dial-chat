@@ -22,6 +22,14 @@ side effects, allowing unused publishing UI to be removed from eager consumers.
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-publish-panel/styles.css';
+```
+
+`@epam/ai-dial-catalog/styles.css` already includes these styles, so a host that renders the publish flow only through the catalog skips this import.
+
 ## Peer Dependencies
 
 - `react`

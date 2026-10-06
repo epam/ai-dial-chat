@@ -14,11 +14,10 @@ export const SKILLS_CLASS = {
   /** The favorite-skills panel root, which carries the themed CSS variables. */
   favoritesPanel: 'dial-skills-favorites-panel',
   /**
-   * The `/name` chip a `ChatSkill` renders inside the composer, additive to
-   * the `dial-kit-base-button` that `@epam/ai-dial-ui-kit` draws. The chip's
-   * height is its label line, so a host changing its padding should keep the
-   * vertical padding at zero or the chip stops aligning with the input's first
-   * text line.
+   * The inline `/name` span a `ChatSkill` renders in both the composer and
+   * conversation history. It is sized to the raw `/name` text so the composer
+   * mirror stays aligned with the textarea, so a host changing its padding
+   * should keep the net inline width and the vertical padding at zero.
    */
   chip: 'dial-skills-chip',
 } as const;

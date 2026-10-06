@@ -301,6 +301,7 @@ export class FilesController {
   @ApiResponse({ status: 200, type: ListFilesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid query parameters' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'DIAL Core rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -514,6 +515,7 @@ export class FilesController {
     description: 'Caller does not own one or more resources',
   })
   @ApiResponse({ status: 404, description: 'A resource does not exist' })
+  @ApiResponse({ status: 429, description: 'DIAL Core rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,
@@ -539,6 +541,7 @@ export class FilesController {
     description: 'Resource is not shared with the caller',
   })
   @ApiResponse({ status: 404, description: 'A resource does not exist' })
+  @ApiResponse({ status: 429, description: 'DIAL Core rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
   @ApiResponse({
     status: 503,

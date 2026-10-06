@@ -250,10 +250,10 @@ file-tree entries are `addLabel`, `createFolderLabel`, `uploadFilesLabel`,
 `uploadArchiveDialogTitle`, `uploadArchiveDropZoneLabel`,
 `uploadArchiveDropZoneMobileLabel`, `uploadArchiveErrorMessage`,
 `uploadArchiveEmptyMessage` and `uploadArchiveExtractingAriaLabel`.
-`addUploadLabel` and `removeLabel` are deprecated fallbacks for
-`uploadFilesLabel` and `deleteLabel`. `styles.typography.menuIconClassName`
+`styles.typography.menuIconClassName`
 colors the Add-menu icons (`'text-secondary'` by default);
-`removeIconClassName` colors the Delete icon.
+the Delete entry renders as a danger (red) item, and `removeIconClassName`
+overrides its icon color.
 
 `styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`) and then to a hard-coded hex when no theme is present:
 
@@ -317,7 +317,7 @@ Optional label overrides (English defaults):
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 
-`styles.colors.refineActionText` and `refineErrorText` set `--se-refine-action-text` and `--se-refine-error-text`; defaults use `--text-primary` / `--text-error` with standalone fallbacks `#161b2d` / `#8b2020`. `refineActionText` colors the status feedback; the Refine and Undo buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` defaults to `dial-small-text`. Direction is inherited; label rows wrap, and feedback uses live regions.
+`styles.colors.refineActionText` and `refineErrorText` set `--se-refine-action-text` and `--se-refine-error-text`; `refineErrorText` defaults to `--text-error` with standalone fallback `#8b2020`. `refineActionText` colors the status feedback; unset, the status keeps the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`), the same as input captions. The Refine and Undo buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` has no default; the kit caption class applies when it is unset. Direction is inherited; label rows wrap, and feedback uses live regions.
 
 | Public class key | Class                               | Element        |
 | ---------------- | ----------------------------------- | -------------- |

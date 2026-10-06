@@ -12,8 +12,10 @@ keeps presentational card rendering in `libs/usage-dashboard` while DTO interpre
 ## Requirements
 
 ### Requirement: Usage tab renders the aggregate limit cards
-The system SHALL provide a `Usage` tab/page component, registered as the sole entry in the
-`SettingsTabs` config, that renders a page header (title and one-line description) followed by up
+The system SHALL provide a `Usage` tab/page component
+(`apps/chat/src/pages/SettingsPage/UsageTab/UsageTab.tsx`), registered as the `SettingsTabs.Usage`
+entry in `useSettingsTabConfig` (`apps/chat/src/hooks/useSettingsTabConfig.tsx`) after the default
+`SettingsTabs.Preferences` entry, that renders a page header (title and one-line description) followed by up
 to three aggregate cost-limit cards — Today (`dayCostStats`), This week (`weekCostStats`), This
 month (`monthCostStats`) — via the `@epam/ai-dial-usage-dashboard` library's
 `UsageLimitCardGroup`'s `cards` prop, mapped from `useUsageData`'s result through the
@@ -21,8 +23,11 @@ month (`monthCostStats`) — via the `@epam/ai-dial-usage-dashboard` library's
 render unconditionally, independent of `isLoading`. Its title SHALL be an `<h2>` — `SettingsPage`
 (`apps/chat/src/pages/SettingsPage/SettingsPage.tsx`) already renders the page's sole `<h1>` — with
 both title and description text sourced from localized `UsageI18nKeys` entries, never hardcoded.
-While `isLoading` is `true`, the cards region SHALL render a loading state (no stale/zeroed card
-data). The container SHALL include an `aria-live="polite"` region (visually hidden unless
+Below the cards it renders `ModelLimitsSection`, fed by `mapUserUsageToModelLimits` and
+`mapOverallCostLimitsToPeriodStatuses`. The cards region SHALL render a loading state (a kit
+`Spinner` labelled by `UsageI18nKeys.Loading`; no stale/zeroed card data) while the initial usage
+fetch is in flight (`isLoading` with no resolved `usage` yet) or `useDeployments()` is still
+loading; a `refreshToken`-triggered re-fetch keeps the previous figures on screen instead. The container SHALL include an `aria-live="polite"` region (visually hidden unless
 announcing) used to announce loading completion and error notifications (see "Deduplicated error
 notifications on fetch failure" below).
 
@@ -166,7 +171,9 @@ All DTO interpretation — generated field selection, the unlimited-sentinel che
 `libs/chat-hooks/src/usage/`, exported from `@epam/ai-dial-chat-hooks`'s `./usage` entry point — the
 narrow, explicitly justified location recorded in AGENTS.md §Library isolation. It SHALL NOT live in
 `libs/usage-dashboard` or any other hand-authored library outside that recorded exception. The
-`Usage` tab component imports those adapters from `@epam/ai-dial-chat-hooks` and imports
+`Usage` tab component imports those adapters (`mapUsageDataToDashboard`,
+`mapUserUsageToModelLimits`, `mapOverallCostLimitsToPeriodStatuses`) from the
+`@epam/ai-dial-chat-hooks/usage` entry point (and `useUsageData` from the package root) and imports
 `UsageLimitCardGroup` / `ModelLimitsSection` and their normalized display types from
 `@epam/ai-dial-usage-dashboard`, passing app-owned callbacks (`resolveCatalogIconUrl`,
 `resolveLocalizedText`, `formatUsageResetTime`) into the adapters so host-specific URL construction,

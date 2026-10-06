@@ -14,7 +14,7 @@ A user-initiated operation that mutates or exports an entity SHALL raise exactly
 | Custom app (`ApplicationFormEditor` with the custom-app definition) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
 | Toolset (`ToolsetApplicationEditor`) | required | required | required (catalog) | — | required (catalog) | **new** (catalog) | — |
 | Model (catalog details) | — | — | required | — | required | **new** | — |
-| Skill (catalog details) | required (archive import, `useSkillArchiveImport`) | — | required | required (archive download, `useCatalogItemActions`) | required | **new** | — |
+| Skill (`SkillEditor`, catalog details) | required (`SkillEditor` save, archive import `useSkillArchiveImport`) | required (`SkillEditor` save) | required | required (archive download, `useCatalogItemActions`) | required | **new** | — |
 | Conversation | not notified (see exclusions) | required (rename), required (duplicate) | required | required (export) | required | **new** | import, delete-all, unshare, revoke: required |
 | File | — | required (rename) | required | required (single, and a plural count for a multi-item selection) | — | — | upload, copy, move, duplicate: required |
 | Folder | required | required (rename) | required | required (archive) | — | — | copy, move, duplicate: required |
@@ -258,7 +258,7 @@ All new strings SHALL live in one `entityNotifications` namespace in `apps/chat/
 | `entityNotifications.schemaApp.created` / `.edited` / `.deleted` / `.publishRequested` / `.unpublishRequested` | the quick-app sentences with `{{type}}` in place of `quick app` — e.g. `"Changes for {{type}} \"{{name}}\" are saved."` |
 | `entityNotifications.agent.*`, `entityNotifications.toolset.*`, `entityNotifications.model.*`, `entityNotifications.skill.*`, `entityNotifications.conversation.*`, `entityNotifications.file.*`, `entityNotifications.folder.*` | same operation suffixes, one sentence per pair, only for pairs the matrix marks as existing |
 
-Superseded keys SHALL be removed rather than left orphaned: `promptEditor.saveSuccessTitle`, `promptEditor.createSuccess`, `promptEditor.updateSuccess`, `catalog.publishSuccessTitle`, `catalog.publishSuccess`, `catalog.details.delete.successTitle`, `catalog.details.delete.success`. Keys whose copy is only realigned keep their names (`conversationPanel.*`, `conversationExport.*`, `conversationImport.*`, `dialFileManager.*`). Conversation publish success has no `conversationPublish.*` key; it uses `entityNotifications.conversation.publishRequested*`.
+Superseded keys SHALL be removed rather than left orphaned: `promptEditor.saveSuccessTitle`, `promptEditor.createSuccess`, `promptEditor.updateSuccess`, `skillEditor.saveSuccessTitle`, `skillEditor.updateSuccessTitle`, `skillEditor.createSuccess`, `skillEditor.updateSuccess`, `catalog.publishSuccessTitle`, `catalog.publishSuccess`, `catalog.details.delete.successTitle`, `catalog.details.delete.success`. Keys whose copy is only realigned keep their names (`conversationPanel.*`, `conversationExport.*`, `conversationImport.*`, `dialFileManager.*`). Conversation publish success has no `conversationPublish.*` key; it uses `entityNotifications.conversation.publishRequested*`.
 
 The `unpublishRequested` pair SHALL exist only for entities the matrix marks as unpublishable; no `entityNotifications.file.unpublishRequested` or `entityNotifications.folder.unpublishRequested` key may be added.
 

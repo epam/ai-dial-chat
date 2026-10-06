@@ -137,7 +137,7 @@ No new i18n keys: recovery reuses the typing indicator, and the fallback reuses 
 
 ### Requirement: Stop remains available during recovery
 
-Recovery starts from a locally-started generation whose `generationId` the hook knows. So, unlike a resume that starts on page load, `canStopStreaming` SHALL stay `true` for the path throughout recovery, including after the handover to attach/watch. `handleStop` SHALL keep calling `transport.stopCompletion({ generationId, path })`, and recovery SHALL settle through the resume flow's terminal handling once the backend confirms the stop (the attach `stopped` event, or a watch update, followed by the reload).
+Recovery starts from a locally-started generation whose `generationId` the hook knows. So, unlike a resume that starts on page load, `canStopStreaming` SHALL stay `true` for the path throughout recovery, including after the handover to attach/watch. `handleStop` SHALL keep calling `transport.stopCompletion({ generationId, path, content })`, where `content` is the buffered message text for the path (sent so the backend can save a background generation's stopped answer; `ConversationStreamTransport.stopCompletion` declares it `content?: string`), and recovery SHALL settle through the resume flow's terminal handling once the backend confirms the stop (the attach `stopped` event, or a watch update, followed by the reload).
 
 #### Scenario: User stops during recovery
 - **WHEN** recovery has handed over to attach and the user activates Stop

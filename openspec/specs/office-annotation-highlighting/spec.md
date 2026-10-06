@@ -183,7 +183,7 @@ The clicked annotation SHALL be identified within the returned list by reference
 
 It SHALL:
 
-- Return `null` when the annotation has no source attachment, or when the source's MIME type / URL extension does not resolve to `OoxmlFileType.Docx`, `Xlsx`, or `Pptx`. It SHALL return `null` for CSV, so CSV keeps its current plain preview.
+- Return `null` when the annotation has no source attachment URL, or when `getOoxmlFileType(source.title ?? source.url, source.type)` — the source's MIME type plus the extension of its title (falling back to its URL) — does not resolve to `OoxmlFileType.Docx`, `Xlsx`, or `Pptx`. It SHALL return `null` for CSV, so CSV keeps its current plain preview.
 - Resolve the file URL through the injected resolvers — `resolveDialFileDownloadUrl` for a DIAL file id (`isDialFileId`), otherwise the source URL as-is — mirroring `annotationToPdfCanvasContent`. It SHALL return `null` when no URL resolves.
 - Gather same-source annotations per the requirement above, call `libs/quotations`'s `annotationToOfficeHighlightLocations` per annotation, and build one `OoxmlHighlight` per annotation that yields at least one location — translating each `OfficeHighlightLocation` into `OoxmlHighlightLocation` by assigning the matching `OoxmlHighlightKind` value (this translation is this mapper's responsibility; see the `message-annotations` capability's normalisation requirement) — dropping annotations that yield none.
 - Set `selectedHighlightId` to the clicked annotation's highlight id, and SHALL omit `selectedHighlightId` when the clicked annotation produced no highlight — never silently selecting a different annotation's highlight.
@@ -241,7 +241,7 @@ Resolution SHALL:
 - Prefer `run.highlightBounds` over `x`/`y`/`w`/`h` when it is present, since it is the vendor's own highlight geometry for that run.
 - **Merge adjacent rectangles on the same visual line** — rectangles whose vertical extents coincide within a small tolerance and which touch or overlap horizontally SHALL become one rectangle, so a multi-run sentence renders as one band rather than a row of boxes.
 - Produce one rectangle group per page when a range spans a page boundary.
-- Skip a run whose `transform` is set, since a transformed run's axis-aligned rectangle would be wrong.
+- Skip a run whose `transform` is set, since a transformed run's axis-aligned rectangle would be wrong. Such a run contributes no rectangle but still contributes its characters to offset accounting, because it is source text the selector's offsets address.
 
 **Resolved rectangle geometry SHALL be scale-free.** A rectangle SHALL be expressed as fractions of its page box — each of left, top, width, and height as a ratio of the page's width or height — and SHALL NOT be stored or returned in absolute CSS pixels at the viewer's current scale. This mirrors the representation the vendor's own highlight layer uses, where each edge is written as a percentage of the page box, and it is what makes a rectangle's shape independent of zoom. Therefore:
 
@@ -959,7 +959,7 @@ Resolution SHALL be bounded to what is displayed or navigated to: runs SHALL be 
 
 When `annotationToOoxmlCanvasContent` builds `highlights` over the annotations returned by `gatherSameSourceAnnotations`, the minted `id` of each `OoxmlHighlight` SHALL be unique within that list. The same invariant SHALL hold for the PDF sibling path, whose ids must stay comparable with the Office path's.
 
-The current minting rule, `String(annotation.index ?? positionInList)`, mixes a wire-supplied `index` with an array position and therefore admits collisions — for example an entry carrying `index: 1` alongside an entry with no `index` at position 1, or a wire payload that repeats an `index`. A collision is user-visible: `OoxmlContent` applies the selected treatment to **every** rectangle whose `highlightId` equals `selectedHighlightId`, so two passages in different parts of the document are both emphasised, while navigation resolves only the first match and scrolls to one of them.
+The current minting rule, `annotationHighlightId(annotation, positionInList)` in `libs/quotations/src/utils/annotation.ts`, uses `String(annotation.index)` when the wire supplied one, otherwise a hash of the annotation's own identity (its `html_tag` `cit` id plus a digest of its normalised selectors), and falls back to the array position only for an annotation carrying neither. The identity hash keeps an entry with no `index` from colliding with a positional id in practice, but the rule still admits collisions — most directly a wire payload that repeats an `index`, which mints the same id for both entries. A collision is user-visible: `OoxmlContent` applies the selected treatment to **every** rectangle whose `highlightId` equals `selectedHighlightId`, so two passages in different parts of the document are both emphasised, while navigation resolves only the first match and scrolls to one of them.
 
 Uniqueness SHALL be achieved without weakening the existing stability contract: an `annotation.index` SHALL continue to be used as the id wherever it is unambiguous within the gathered list, so ids stay stable across reopenings and comparable with `annotationsToPdfHighlights`. Only a colliding entry SHALL be disambiguated.
 

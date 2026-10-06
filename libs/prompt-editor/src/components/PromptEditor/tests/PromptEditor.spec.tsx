@@ -166,7 +166,7 @@ describe('PromptEditor', () => {
     });
   });
 
-  it('does not validate on its own — the host owns the storage contract', async () => {
+  it('does not validate on its own â€” the host owns the storage contract', async () => {
     const onSubmit = vi.fn();
     renderEditor({ onSubmit });
 
@@ -186,6 +186,40 @@ describe('PromptEditor', () => {
 
     expect(screen.getByText('Name is required')).toBeTruthy();
     expect(screen.getByText('Prompt is too long')).toBeTruthy();
+  });
+
+  it('moves focus to Instructions when it is the only invalid field', async () => {
+    const { rerender } = renderEditor();
+    const instructions = await screen.findByRole('textbox', {
+      name: /Instructions/,
+    });
+
+    rerender(
+      <PromptEditor
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        errors={{ content: 'Prompt is required' }}
+      />,
+    );
+
+    await waitFor(() => expect(instructions.matches(':focus')).toBe(true));
+  });
+
+  it('leaves focus to the metadata form when Name is invalid too', async () => {
+    const { rerender } = renderEditor();
+    const instructions = await screen.findByRole('textbox', {
+      name: /Instructions/,
+    });
+
+    rerender(
+      <PromptEditor
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        errors={{ name: 'Name is required', content: 'Prompt is required' }}
+      />,
+    );
+
+    expect(instructions.matches(':focus')).toBe(false);
   });
 
   it('blocks submission and announces status while saving', async () => {

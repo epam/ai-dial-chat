@@ -7,7 +7,7 @@
 }
 
 .refineFeedback {
-  color: var(--se-refine-action-text, var(--text-primary, #161b2d));
+  color: var(--se-refine-action-text);
 }
 .refineError {
   color: var(--se-refine-error-text, var(--text-error, #8b2020));

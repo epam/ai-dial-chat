@@ -4,7 +4,7 @@
 }
 
 .item {
-  color: var(--np-item-text, var(--text-secondary, #57647a));
+  color: var(--np-item-text, var(--text-primary, #161b2d));
 
   /* The glyph lifts slightly on hover/focus; the overshoot easing gives it
      a light spring instead of a linear slide. */

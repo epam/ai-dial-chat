@@ -1,4 +1,8 @@
-import { isUploadInProgress } from '@epam/ai-dial-chat-shared';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+  isUploadInProgress,
+} from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerActions,
@@ -20,11 +24,7 @@ import type {
   UseDialFileManagerOptions,
   UseDialFileManagerResult,
 } from '../dial-file-manager.types';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-  deriveActionProfile,
-} from '../file-manager-variant';
+import { deriveActionProfile } from '../file-manager-variant';
 import { useDialFileListing } from '../useDialFileListing/useDialFileListing';
 import { useDialFileMetadata } from '../useDialFileMetadata/useDialFileMetadata';
 import { useDialFileMutations } from '../useDialFileMutations/useDialFileMutations';

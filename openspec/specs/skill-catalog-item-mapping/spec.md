@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the app-level types and pure mapping that turn DIAL Core skill metadata into a `CatalogItem`: the `SkillSource` enum, the `skills/{bucket}/{path}` resource-URL parser, the field-by-field mapping contract, and how a skill's catalog folder path is derived.
+Defines the `@epam/ai-dial-chat-hooks` types and pure mapping (`libs/chat-hooks/src/skill/skill-types.ts`, `libs/chat-hooks/src/catalog/map-skill-to-catalog-item.ts`) that turn DIAL Core skill metadata into a `CatalogItem`: the `SkillSource` enum, the `skills/{bucket}/{path}` resource-URL parser, the field-by-field mapping contract, and how a skill's catalog folder path is derived.
 ## Requirements
 ### Requirement: `SkillSource` enum and skill resource URL helpers
 
@@ -62,13 +62,13 @@ A skill whose listing entry carries no `description` (older Core, the shared-wit
 
 ### Requirement: Folder path derives from source label plus grouping-folder segments
 
-The source label SHALL be Personal for `SkillSource.Personal`, Shared for `SkillSource.SharedWithMe`, and Public for `SkillSource.Public`, followed by decoded `parentPath` segments. Root-level skills contain only their source label.
+The source label SHALL be the host-supplied `folderLabels.personal` for `SkillSource.Personal`, `folderLabels.shared` for `SkillSource.SharedWithMe`, and `folderLabels.public` for `SkillSource.Public`, followed by the skill's grouping-folder segments. The segments SHALL be the percent-decoded folder segments of `skill.url` (everything between `skills/{bucket}/` and the skill name) when their count matches the `parentPath` segment count, so an encoded `parentPath` (`test%20folder`) and a folder literally named `test%20folder` (URL `test%2520folder`) both show their real name; otherwise the `parentPath` segments are used verbatim. Root-level skills contain only their source label.
 
-This requirement governs the `CatalogItem.folder` data, not how the List view lays it out. The catalog List view's Folder cell (`libs/catalog/src/components/ListView/Renders/FolderCellRenderer.tsx`) SHALL show the folder icon and only the deepest segment as visible text, and SHALL expose the full path — segments joined with ` / ` — in a hover tooltip and in a screen-reader-only node. A breadcrumb of every segment does not fit the column: each segment shrinks to an equal share and the row reads `Personal > ana… > f..`, so the deepest folder, which identifies the row, keeps the width.
+This requirement governs the `CatalogItem.folder` data, not how the List view lays it out. The catalog List view's Folder cell (`libs/catalog/src/components/ListView/Renders/FolderCellRenderer.tsx`) SHALL show the folder icon and only the deepest segment as visible text, and, when the folder has more than one segment, SHALL expose the full path — segments joined with ` / ` — in a hover tooltip and in a screen-reader-only node. A breadcrumb of every segment does not fit the column: each segment shrinks to an equal share and the row reads `Personal > ana… > f..`, so the deepest folder, which identifies the row, keeps the width.
 
 #### Scenario: Shared skill folder label
 
-- **WHEN** a shared skill has `parentPath: 'analysis/'`
+- **WHEN** a shared skill has `url: 'skills/<bucket>/analysis/<name>'` and `parentPath: 'analysis/'`
 - **THEN** its folder is `[<Shared label>, 'analysis']`
 
 #### Scenario: Nested skill folder in the List view

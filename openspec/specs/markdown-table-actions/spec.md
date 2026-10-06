@@ -15,8 +15,13 @@ Markdown table actions SHALL be available only when the host supplies localized 
 - **THEN** the table exposes a Copy control and a Download as CSV control
 
 #### Scenario: Other Markdown renderers do not inherit actions
-- **WHEN** a Markdown table renders without table action labels, including catalog, source, scheduled-task, and attachment-canvas previews
+- **WHEN** a Markdown table renders without table action labels, including catalog, source, scheduled-task, and attachment-canvas Markdown file previews (`AttachmentContentType.Markdown`)
 - **THEN** the table renders without table actions
+
+#### Scenario: Canvas-opened table keeps Copy and Download
+- **WHEN** the attachment canvas renders `AttachmentContentType.MarkdownTable` content
+- **THEN** the table exposes Copy and Download as CSV using the canvas's `tableCopyLabel`, `tableCopiedLabel`, and `tableDownloadCsvLabel` labels (supplied by the app from `buttons.copy`, `buttons.copied`, and `buttons.downloadAsCsv`) and the optional `tableDownloadFilename`
+- **AND** it does not expose Open in Canvas
 
 #### Scenario: Streaming table hides actions
 - **WHEN** the message that contains the table is still streaming
@@ -56,7 +61,7 @@ The Copy action SHALL write the table to the system clipboard as both `text/html
 
 ### Requirement: Table data is serialized predictably
 
-Table serialization SHALL use visible header and body cell text. Cell values SHALL be trimmed plain text; inline formatting SHALL NOT be preserved. CSV SHALL use commas, quote non-empty values, and escape embedded double quotes by doubling them. Markdown SHALL produce a pipe-delimited table with a left-aligned separator row.
+Table serialization (`serializeMarkdownTableRows` in `libs/chat-shared/src/components/MarkdownRenderer/Table/table-serialization.ts`) SHALL use visible header and body cell text, trimmed; inline formatting SHALL NOT be preserved. Each KaTeX formula (`.katex`) in a cell SHALL be replaced by its `application/x-tex` annotation source instead of its rendered text. Markdown and CSV SHALL each apply their own cell format: Markdown SHALL escape backslashes and then pipes in non-formula text, wrap each formula as `$$…$$`, and rewrite pipes inside the formula to `\vert` (for `|`) or `\Vert` (for `\|`); CSV SHALL leave text unescaped and carry each formula as bare LaTeX. CSV SHALL use commas, quote non-empty values, and escape embedded double quotes by doubling them. Markdown SHALL produce a pipe-delimited table with a left-aligned separator row.
 
 #### Scenario: CSV preserves values containing commas and quotes
 - **WHEN** a table cell contains `Draft "final", v2`
@@ -66,9 +71,18 @@ Table serialization SHALL use visible header and body cell text. Cell values SHA
 - **WHEN** a table contains a header row and body rows
 - **THEN** the Markdown representation contains the header row, a `| :-- |` separator row, and the body rows
 
+#### Scenario: Pipes and backslashes are escaped in Markdown
+- **WHEN** a table cell's text contains `a \| b`
+- **THEN** the Markdown representation of that cell is `a \\\| b`
+
+#### Scenario: Formula cells carry their LaTeX source
+- **WHEN** a table cell contains a KaTeX formula rendered from `|x|`
+- **THEN** the Markdown representation of that cell is `$$\vert x\vert$$`
+- **AND** the CSV representation of that cell is `"|x|"`
+
 ### Requirement: CSV download uses a browser download
 
-Download as CSV SHALL download the same serialized rows as Copy would produce for plain-text targets, prefixed with a UTF-8 byte-order mark and using the `text/csv;charset=utf-8` media type. The default filename SHALL be `table.csv`; a host MAY override it. No filename-editing dialog SHALL be required.
+Download as CSV SHALL download the visible table rows serialized with the CSV format (not the Markdown pipe table that Copy writes as `text/plain`), prefixed with a UTF-8 byte-order mark and using the `text/csv;charset=utf-8` media type. The default filename SHALL be `table.csv`; a host MAY override it. No filename-editing dialog SHALL be required.
 
 #### Scenario: CSV download opens with correct encoding
 - **WHEN** a user activates Download as CSV
@@ -80,7 +94,7 @@ Download as CSV SHALL download the same serialized rows as Copy would produce fo
 
 ### Requirement: A selected table can open in the existing canvas
 
-When a host supplies both the optional Open in Canvas label and an `onOpenInCanvas(markdown: string)` callback, `MarkdownTable` SHALL provide the selected table's serialized Markdown to that callback when the user activates the Open in Canvas control. The shared renderer SHALL NOT import, configure, or otherwise depend on the attachment-canvas package. The application SHALL adapt the callback to the existing attachment canvas by opening `MarkdownCanvasContent` containing only the selected table and a localized canvas title. No new endpoint, generated-client operation, cache, telemetry event, rate limit, or feature flag is required.
+When a host supplies both the optional Open in Canvas label and an `onOpenInCanvas(markdown: string)` callback, `MarkdownTable` SHALL provide the selected table's serialized Markdown to that callback when the user activates the Open in Canvas control. The shared renderer SHALL NOT import, configure, or otherwise depend on the attachment-canvas package. The application SHALL adapt the callback to the existing attachment canvas by opening `MarkdownTableCanvasContent` (`{ type: AttachmentContentType.MarkdownTable, text }`, enum value `markdown_table`) containing only the selected table and a localized canvas title; the canvas renders this content type in its own renderer branch, separate from `MarkdownCanvasContent`. No new endpoint, generated-client operation, cache, telemetry event, rate limit, or feature flag is required.
 
 #### Scenario: Open in Canvas expands only the selected table
 - **WHEN** a completed assistant message contains one or more Markdown tables and a user activates Open in Canvas for one table
@@ -89,7 +103,7 @@ When a host supplies both the optional Open in Canvas label and an `onOpenInCanv
 
 #### Scenario: Canvas expansion follows visible-table serialization
 - **WHEN** a visible table contains formatted cell content or a source alignment marker
-- **THEN** the Markdown passed to the host callback contains the same trimmed cell text and left-aligned table structure as Copy
+- **THEN** the Markdown passed to the host callback contains the same Markdown serialization (trimmed, escaped cell text and left-aligned table structure) as Copy
 - **AND THEN** it does not claim to preserve source-only inline formatting or alignment
 
 #### Scenario: Streaming table cannot open in canvas
@@ -98,7 +112,7 @@ When a host supplies both the optional Open in Canvas label and an `onOpenInCanv
 
 ### Requirement: Table controls and scrolling are accessible
 
-Each action control SHALL have a stable accessible name and a UI-kit tooltip using its localized action label. Tooltips SHALL NOT replace or change the button's accessible name. Decorative icons SHALL be hidden from assistive technology, and successful copy feedback SHALL be announced through a polite live region without changing the activated button's accessible name. The scrollable table region SHALL remain a labelled, keyboard-reachable region only while it actually overflows horizontally. A table is never height-bounded; it grows to its natural height and does not scroll vertically.
+Each action control SHALL have a stable accessible name and a UI-kit tooltip using its localized action label. Tooltips SHALL NOT replace or change the button's accessible name. Decorative icons SHALL be hidden from assistive technology, and successful copy feedback SHALL be announced through a polite live region without changing the activated button's accessible name. The scrollable table region SHALL remain a labelled, keyboard-reachable region only while it actually overflows horizontally. A table in a chat message is never height-bounded; it grows to its natural height and does not scroll vertically. A table opened in the attachment canvas (`AttachmentContentType.MarkdownTable`) is the exception: its `tableWrapper` and `tableScrollContainer` are bounded with `max-h-full`, so the table fills the canvas panel and scrolls inside its own wrapper.
 
 #### Scenario: Action buttons show tooltips
 - **WHEN** a user hovers or focuses a table action button
@@ -113,8 +127,12 @@ Each action control SHALL have a stable accessible name and a UI-kit tooltip usi
 - **THEN** its scroll container has an accessible region name and can receive keyboard focus
 
 #### Scenario: A tall table is never clipped or made vertically scrollable
-- **WHEN** a table has more rows than fit in the visible viewport
+- **WHEN** a table in a chat message has more rows than fit in the visible viewport
 - **THEN** the table grows to its full height alongside the rest of the message instead of scrolling within a bounded region
+
+#### Scenario: A tall table in the canvas scrolls inside its wrapper
+- **WHEN** a table opened in the attachment canvas has more rows than fit in the panel
+- **THEN** the table is bounded to the panel height with `max-h-full` and scrolls within its own wrapper
 
 ### Requirement: Table action labels are localized at the application edge
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define how conversations derive display names and storage paths in DIAL Core. Both create and duplicate use unsuffixed titles instead of numeric title deduplication, and every newly materialized conversation receives a fresh trailing UUID segment. Existing paths without a UUID remain readable for backward compatibility.
+Define how conversations derive display names and storage paths in DIAL Core. Both create and duplicate use unsuffixed titles instead of numeric title deduplication. A created conversation always receives a fresh trailing UUID segment; a duplicated one receives a fresh UUID segment only when its clean destination path is already taken. Existing paths without a UUID remain readable for backward compatibility.
 
 ## Requirements
 
@@ -114,7 +114,7 @@ For versioned or multi-segment deployment IDs, the invariant is the fresh traili
 
 ---
 
-### Requirement: `duplicateConversation` path always ends with a fresh UUID segment
+### Requirement: `duplicateConversation` path gains a fresh UUID segment only on collision
 
 The DIAL Core storage filename for a **duplicated** conversation SHALL be `{deploymentKey}__{baseName}`, or `{deploymentKey}__{baseName}__{uuid}` when a resource already exists at the former. `{deploymentKey}` is the deployment segment recovered from the source filename (which may itself be multi-part for a versioned application deployment), `{baseName}` is the sanitised display name, and `{uuid}` is `generateUUID()` generated at duplicate time. `conversation.name` SHALL remain the unsuffixed `{baseName}` in both cases.
 

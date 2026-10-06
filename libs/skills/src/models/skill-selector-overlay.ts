@@ -47,6 +47,11 @@ export interface SkillSelectorOverlayLabels {
    * Defaults to `ChatSkill`'s own default text.
    */
   notSharedTooltipLabel?: string;
+  /**
+   * Tooltip message shown on an active `/name` mention while the selected
+   * model does not support skills. Defaults to `ChatSkill`'s own default text.
+   */
+  unsupportedTooltipLabel?: string;
   /** Labels forwarded to the favorites panel rendered as the overlay. */
   panelLabels?: FavoriteSkillsPanelLabels;
 }
@@ -100,6 +105,12 @@ export interface UseSkillSelectorOverlayOptions {
    * `ChatSkill`'s hover-and-focus default; history chips are unaffected.
    */
   activeMentionDetailsTrigger?: ChatSkillDetailsTrigger;
+  /**
+   * Trigger used by history chips (sent user and assistant messages). Unset
+   * retains `ChatSkill`'s hover-and-focus default; pass `'click'` on touch
+   * layouts, where hover never fires.
+   */
+  historyDetailsTrigger?: ChatSkillDetailsTrigger;
   /**
    * Renders the browse modal's picker content (e.g. a host catalog view);
    * receives the selection and close callbacks to wire into it, and is

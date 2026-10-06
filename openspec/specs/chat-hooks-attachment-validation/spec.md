@@ -13,7 +13,10 @@ app-owned deployment object) and an optional `maxFileSizeBytes?: number`,
 and returns `inputAttachmentTypes`,
 `isAttachmentsAllowed`, `fileAccept`, and a `validateAttachment` function
 that classifies a given `Attachment` as allowed or rejected against
-exactly those types and that size limit.
+exactly those types and that size limit. MIME matching uses
+`isMimeTypeAllowed` from `@epam/ai-dial-attachment-input`, which honours
+wildcard entries (`*`, `*/*`, `image/*`) and ignores MIME parameters; the
+size check reads `attachment.file.size`.
 
 `validateAttachment` SHALL check MIME type and file size independently:
 a MIME-type rejection SHALL be returned before a size check runs, so a file
@@ -113,8 +116,10 @@ translated text.
 The hook SHALL treat a newly-passed `allowedMimeTypes` array as unchanged
 when its contents are identical (same length, same entries in the same
 order) to the previous one, re-anchoring to the previous array reference
-instead. `validateAttachment`, `fileAccept`, and `inputAttachmentTypes`
-SHALL only change identity when the resolved MIME types actually change.
+instead. `fileAccept` and `inputAttachmentTypes` SHALL only change identity
+when the resolved MIME types actually change; `validateAttachment` SHALL
+only change identity when the resolved MIME types, `maxFileSizeBytes`,
+`debounceMs`, or the `onValidationError` callback identity change.
 
 This protects callers that recompute `allowedMimeTypes` from derived state
 (e.g. a deployment's `inputAttachmentTypes` falling back to `[]`) and would

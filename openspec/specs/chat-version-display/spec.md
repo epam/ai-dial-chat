@@ -34,8 +34,10 @@ constant, statically imported from the workspace root `package.json`, is used. T
 always a non-empty string.
 
 `resolveAppVersion` and `PACKAGE_VERSION` SHALL be the only source of a version string in
-`apps/chat-api`. Any other surface that reports a version — currently `GET /api/health` (see the
-`chat-api-backend` capability) — SHALL resolve it through that helper rather than reading
+`apps/chat-api`. Every other surface that reports a version SHALL resolve it through that helper —
+today `GET /api/health` (see the `chat-api-backend` capability), the `%%VERSION%%` token substituted
+into the footer HTML message, and `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`),
+which derives the DIAL Core client's `User-Agent` from it — rather than reading
 `package.json` from disk or re-implementing the fallback, so a single deployment cannot report two
 different versions on two endpoints.
 
@@ -162,8 +164,10 @@ invalid, `500` on an unexpected resolution failure); this change introduces no n
 `FooterMessage` (`apps/chat/src/components/FooterMessage/FooterMessage.tsx`) SHALL render the
 chat version as a text label at the inline-end of the footer region whenever
 `useAppConfig().status` is `UserConfigStatus.Ready` and `config.appVersion` is a non-empty
-string after trimming. The label SHALL NOT depend on the `footer` feature flag or on
-`footerHtmlMessage`. A `config.appVersion` that is absent or blank SHALL hide the label, never
+string after trimming, unless the overlay UI feature `OverlayFeature.HideFooterVersion`
+(`'hide-footer-version'`, from `@epam/ai-dial-chat-overlay`, read via `useUiFeature`) is enabled,
+which hides the label so an embedding host can suppress it. The label SHALL NOT depend on the
+`footer` feature flag or on `footerHtmlMessage`. A `config.appVersion` that is absent or blank SHALL hide the label, never
 raise — `FooterMessage` renders on every conversation route, so cosmetic chrome must not be
 able to crash it.
 
@@ -201,8 +205,15 @@ alignment unshifted by the label's width.
   `aria-label` on the visible run — ARIA prohibits naming the implicit `generic` role of a bare
   `<span>`. No `aria-live` region (the value never changes within a session); contrast inherits
   the strip's existing secondary/muted treatment
-- **Feature flag**: none — deliberately ungated
+- **Feature flag**: not gated by `footer` or `ENABLED_FEATURES`; the only switch is the overlay UI
+  feature `hide-footer-version`
 - **Observability**: none
+
+#### Scenario: Embedding host hides the version label
+
+- **WHEN** `config.appVersion` is `"0.45.0"`, `footerHtmlMessage` is `''`, and the overlay UI
+  feature `hide-footer-version` is enabled
+- **THEN** no version label renders and `FooterMessage` renders `null`
 
 #### Scenario: Version renders with no footer message configured
 
@@ -259,9 +270,10 @@ alignment unshifted by the label's width.
 
 ### Requirement: Version string is normalised for display
 
-`apps/chat/src/utils/footer-message.ts` SHALL export a `formatAppVersion` arrow function that
-trims the input and prefixes it with a lowercase `v` unless the trimmed value already begins
-with `v` or `V`. It SHALL be used by `FooterMessage` for the visible glyph run. The unprefixed
+`libs/chat-hooks/src/conversation/footer-message.ts` SHALL export a `formatAppVersion` arrow
+function (re-exported from `@epam/ai-dial-chat-hooks`) that trims the input and prefixes it with
+a lowercase `v` unless the trimmed value already begins with `v` or `V`. `FooterMessage` SHALL
+import it from `@epam/ai-dial-chat-hooks` and use it for the visible glyph run. The unprefixed
 (trimmed) version value SHALL be used for the screen-reader text interpolation.
 
 #### Scenario: Bare version gets a v prefix

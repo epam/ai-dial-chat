@@ -21,7 +21,10 @@ an `/api` path, CSRF handling, or import an app `server-api` module.
 #### Scenario: Stop delegates to the injected transport
 - **WHEN** `handleStop` is called while a generation is active and
   stoppable
-- **THEN** the only call made is `transport.stopCompletion({ generationId, path })`
+- **THEN** the only call made is
+  `transport.stopCompletion({ generationId, path, content })`, where
+  `content` is the buffered answer text shown so far (the backend saves it
+  for a generation whose text it does not hold)
 
 ### Requirement: A generation conflict is shown as a host-supplied message
 The hook SHALL show only host-supplied or upstream-supplied text in `streamErrorMessage`.
@@ -41,6 +44,14 @@ When the transport reports a `StreamUpstreamError` — DIAL Core sent an
 in-band `{ error: { message } }` SSE chunk — the hook SHALL write that
 error's `message` to `streamErrorMessage`, because it is upstream text
 intended for the user.
+
+When the transport reports a `GenerationPersistenceError` — the backend
+sent an in-band error chunk with `error.type === 'conversation_save_failed'`
+(`GenerationPersistenceError.type`) — the hook SHALL write its
+`generationPersistenceErrorMessage` parameter (defaulting to
+`DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE`) to `streamErrorMessage` and
+keep the received answer in the buffer, as
+`backend-owned-generation-persistence` defines.
 
 When the transport reports a `StreamInterruptedError` — the network
 connection carrying the stream was lost or stalled while the backend-owned
@@ -63,10 +74,12 @@ or report it. The lib itself SHALL NOT log it or choose a logging
 destination.
 
 `libs/chat-hooks` SHALL export `StreamUpstreamError` (an `Error` subclass
-with `name === 'StreamUpstreamError'`) and `StreamInterruptedError` (an
-`Error` subclass with `name === 'StreamInterruptedError'`) alongside
-`GenerationConflictError`. The built-in `createChatStreamApi` transport
-SHALL raise `StreamUpstreamError` for every in-band SSE error chunk, and
+with `name === 'StreamUpstreamError'`), `StreamInterruptedError` (an
+`Error` subclass with `name === 'StreamInterruptedError'`) and
+`GenerationPersistenceError` alongside `GenerationConflictError`. The
+built-in `createChatStreamApi` transport SHALL raise `StreamUpstreamError`
+for every in-band SSE error chunk except one whose `error.type` is
+`conversation_save_failed` (raised as `GenerationPersistenceError`), and
 `StreamInterruptedError` for the network-level failures listed in
 `generation-stream-recovery`.
 
@@ -147,7 +160,12 @@ path is displayed. It SHALL expose
 `restoreBufferedGeneration(conversationId, conversation)`, which returns the
 conversation unchanged when no buffer exists and otherwise restores the
 buffered message at its recorded index. Completion and error callbacks SHALL
-clear the buffer because the backend's terminal save is then authoritative.
+clear the buffer because the backend's terminal save is then authoritative,
+except where the received answer must survive: a `GenerationPersistenceError`,
+a terminal reload that still shows the unsaved placeholder, or a rejected
+terminal reload keep the buffer (see `backend-owned-generation-persistence`),
+and a reload that shows a pending background message hands it to the resume
+flow.
 
 #### Scenario: Earlier and background stages are restored
 - **WHEN** stage chunks arrive before and while their conversation is hidden
@@ -227,13 +245,18 @@ subsequent `chunk` event through the same merge logic `startStream`'s
 `onChunk` uses, and treat a terminal event (`done`/`error`/`stopped`) the same
 way the hook already treats a live generation's own completion/error signal —
 including performing the existing reload via `transport.getConversation`
-rather than trusting the locally-accumulated replayed content. If
-`attachToGeneration` fails outright (attach not found, network error, or any
-unexpected response), or the attach stream ends without a terminal event
-before `GENERATION_RESUME_WATCH_TIMEOUT_MS` elapses, the hook SHALL fall back
-to the pre-existing behavior: watch for a resume/finalization signal via
-`transport.watchConversation`, and perform a final `transport.getConversation`
-check on timeout or stream end regardless of outcome.
+rather than trusting the locally-accumulated replayed content (a terminal
+`error` event whose `errorType` is `conversation_save_failed` instead keeps the
+replayed answer with the persistence warning, without a reload). The attach
+stream has no timeout: it waits for a genuine terminal event, so a
+long-running generation is never abandoned. If `attachToGeneration` fails
+outright (attach not found, network error, or any unexpected response), or
+the attach stream ends without a terminal event, the hook SHALL fall back to
+the pre-existing behavior: watch for a resume/finalization signal via
+`transport.watchConversation`, bounded by
+`GENERATION_RESUME_WATCH_TIMEOUT_MS` (5 minutes), and perform a final
+`transport.getConversation` check on timeout or stream end regardless of
+outcome.
 
 #### Scenario: Awaiting-generation conversation is marked streaming
 
@@ -279,8 +302,8 @@ check on timeout or stream end regardless of outcome.
 
 #### Scenario: Resume times out and still resolves
 
-- **WHEN** no qualifying event arrives (via attach or the fallback watch)
-  before the resume timeout
+- **WHEN** the hook is on the fallback watch path and no qualifying event
+  arrives before `GENERATION_RESUME_WATCH_TIMEOUT_MS`
 - **THEN** the hook performs one final `transport.getConversation` check
   and clears the path from streaming-paths regardless of the result
 
@@ -376,7 +399,7 @@ When a completion stream or an attach stream ends and the hook's reload via `tra
 
 ### Requirement: Stop is available for a resumed background generation
 
-While the hook is resuming a conversation that contains a message with `backgroundGeneration.status: "pending"` — after a page load, a refresh, or navigation back — `canStopStreaming` SHALL be `true` for that path, and `handleStop` SHALL call `transport.stopCompletion({ generationId, path })` with `generationId` taken from the message's `backgroundGeneration.generationId`. The resume SHALL then settle through its existing terminal handling (the attach `stopped` event or a watch update, followed by the reload). For a resumed message without `backgroundGeneration`, Stop availability SHALL stay as before this change.
+While the hook is resuming a conversation that contains a message with `backgroundGeneration.status: "pending"` — after a page load, a refresh, or navigation back — `canStopStreaming` SHALL be `true` for that path, and `handleStop` SHALL call `transport.stopCompletion({ generationId, path, content })` with `generationId` taken from the message's `backgroundGeneration.generationId`. The resume SHALL then settle through its existing terminal handling (the attach `stopped` event or a watch update, followed by the reload). For a resumed message without `backgroundGeneration`, Stop availability SHALL stay as before this change.
 
 The hook SHALL only read the id from the conversation it is given; it SHALL NOT decide eligibility or call DIAL Core. **UI / i18n / RTL / a11y impact:** none new — the existing Stop control, its label, and its keyboard behavior are reused.
 

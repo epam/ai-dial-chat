@@ -151,6 +151,8 @@ available on that same element.
 | `dial-ci-tools-chips`           | The `<div>` that wraps the `ToolsChips` row inside the action row                                    |
 | `dial-ci-footer-actions`        | The trailing cluster holding the model selector, mic, and send/stop buttons (today `ms-auto …`)       |
 | `dial-ci-model-selector-button` | Every `<button>` that carries `styles.modelSelectorButton`, in all three branches of `ModelSelectorControl` |
+| `dial-ci-model-selector-icon`   | The `<span>` wrapping the selected deployment's `DeploymentIcon` inside the trigger, in every branch     |
+| `dial-ci-model-selector-caret`  | The trigger's decorative `IconChevronDown`, in every branch                                          |
 
 `dial-ci-wrapper` SHALL be additive to the existing `inputClassName` and `className`
 props, which keep their current behaviour.
@@ -200,9 +202,9 @@ props, which keep their current behaviour.
 
 | Class                              | Element                                                                                                |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `dial-ci-model-menu`               | The floating menu root — appended to every `Dropdown` `listClassName` in `ModelSelectorControl.tsx`, and to the `BottomSheetShell` `className` in the mobile branch |
-| `dial-ci-model-menu-search`        | The sticky search header `<div>` built by `useModelSelector`'s `menuHeader`                            |
-| `dial-ci-model-menu-item`          | Every deployment row, via `DropdownItem.className`                                                     |
+| `dial-ci-model-menu`               | The menu root in all three presentations — appended to every `Dropdown` `listClassName` in `ModelSelectorControl.tsx`; on mobile, stamped on the sheet root by `ModelSelectorBottomSheet.tsx` (default) or on the `BottomSheetShell` `className` when a host supplies `modelPickerOverlay` |
+| `dial-ci-model-menu-search`        | The sticky search header `<div>` built by `useModelSelector`'s `menuHeader`, and the search header of `ModelSelectorBottomSheet` |
+| `dial-ci-model-menu-item`          | Every deployment row, via `DropdownItem.className` (desktop) and in `ModelSelectorBottomSheet` (mobile) |
 | `dial-ci-model-menu-item-selected` | The row matching `selectedDeploymentId`, additive to `dial-ci-model-menu-item`                         |
 
 This requirement SHALL be satisfied without any change to `@epam/ai-dial-ui-kit`:
@@ -215,9 +217,8 @@ behaviour; `dial-ci-model-menu-search` is appended in addition to whatever it su
 A class for the selected row's **check indicator** is explicitly NOT in scope. The
 check is drawn entirely by `@epam/ai-dial-ui-kit` from `DropdownItem`'s
 `mark: MenuItemMark.Check` plus `checked`, so no element in this repository owns it.
-Hosts needing to restyle the check SHALL target the selected row through
-`dial-ci-model-menu-item-selected`; a `dial-kit-*` class on the mark itself belongs to
-the ui-kit follow-up.
+The kit itself marks the check as `DIAL_KIT_CLASS.menuItemCheck`; hosts restyle it
+through that kit class, or through the selected row's `dial-ci-model-menu-item-selected`.
 
 #### Scenario: Menu root is addressable when open
 
@@ -414,7 +415,7 @@ on the wrong element.
 
 ### Requirement: Every library with host-addressable elements carries the contract
 
-The contract SHALL cover all 25 libraries under `libs/*` that render host-addressable
+The contract SHALL cover all 26 libraries under `libs/*` that render host-addressable
 UI, not only the five issue #8707 named. Each SHALL own a
 `src/constants/public-class-names.ts`, export its record from `src/index.ts`, and
 document it in its `README.md`:
@@ -425,6 +426,7 @@ document it in its `README.md`:
 | `libs/attachment-input` | `ATTACHMENT_INPUT_CLASS` |
 | `libs/builder-form` | `BUILDER_FORM_CLASS` |
 | `libs/catalog` | `CATALOG_CLASS` |
+| `libs/celebrations` | `CELEBRATIONS_CLASS` |
 | `libs/chat-shared` | `CHAT_SHARED_CLASS` |
 | `libs/conversation-input` | `CONVERSATION_INPUT_CLASS` |
 | `libs/conversation-messages` | `CONVERSATION_MESSAGES_CLASS` |
@@ -457,8 +459,10 @@ utility packages — are exempt and SHALL NOT be given an empty record.
 
 #### Scenario: No class name is written as a literal in a component
 
-- **WHEN** any library's `src/**/*.tsx` is searched for a `dial-` string literal
-- **THEN** no match exists outside `constants/public-class-names.ts` and test files
+- **WHEN** any library's `src/**/*.tsx` is searched for a string literal starting with its
+  own `dial-<lib-prefix>-` public-class prefix
+- **THEN** no match exists outside `constants/public-class-names.ts` and test files; kit
+  classes such as the `dial-small-text` typography utility may still appear as literals
 
 ---
 

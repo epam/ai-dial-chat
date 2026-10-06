@@ -82,21 +82,21 @@ The backend SHALL expose `POST /api/v1/prompts`. The endpoint accepts `CreatePro
 
 ```
 {
-  "name":         "<string @IsString @MinLength(1) @MaxLength(256) @Matches(/^[^/]+$/)>",
+  "name":         "<string @IsString @MinLength(1) @MaxLength(256) @Matches(PROMPT_NAME_PATTERN)>",
   "description":  "<string | undefined @IsString @MaxLength(2000) @IsOptional>",
   "content":      "<string @IsString @MaxLength(50000)>",
-  "folderId":     "<string | undefined @IsString @Matches(/^[a-zA-Z0-9 _.\-/]*$/) @IsOptional>"
+  "folderId":     "<string | undefined @IsOptional @IsString @Matches(OPTIONAL_PROMPT_PATH_PATTERN)>"
 }
 ```
 
-`name` MUST NOT contain a `/` (names with slashes would corrupt the path).
+`name` MUST NOT contain a `/` (names with slashes would corrupt the path). Both patterns live in `apps/chat-api/src/prompts/constants/prompt-path.constants.ts`: `PROMPT_NAME_PATTERN` (`/^(?!\.{1,2}$)[a-zA-Z0-9 _.-]+$/`) allows only letters, digits, spaces, `_`, `.`, and `-` and rejects `.`/`..`; `OPTIONAL_PROMPT_PATH_PATTERN` accepts an empty string or slash-separated segments from the same character set, rejecting `.`/`..` traversal segments and `//`.
 
 On success, the service:
 1. Derives the storage path as `{folderId ? folderId + '/' : ''}{name}`.
-2. Rejects with 409 if a prompt at that path already exists.
-3. Creates the DIAL prompt resource `prompts/{sessionBucket}/{path}` via the SDK using a
-   create-only precondition.
-4. Reads the resulting Core metadata for `createdAt` and `updatedAt`.
+2. Creates the DIAL prompt resource `prompts/{sessionBucket}/{path}` via the SDK using a
+   create-only precondition (`If-None-Match: *`); there is no separate existence pre-check.
+3. Rejects with 409 when DIAL Core answers that precondition with 412 (a prompt at that path already exists).
+4. Takes `createdAt` and `updatedAt` from the save response's `ITEM` metadata, reading the prompt metadata separately only when the save response carries none.
 5. Returns HTTP 201 with `PromptResponseDto`, whose `id` is the full resource path `prompts/{sessionBucket}/{path}`.
 
 Error codes:

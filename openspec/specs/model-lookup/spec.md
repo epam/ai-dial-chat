@@ -56,10 +56,11 @@ The endpoint:
 - **WHEN** DIAL Core responds with `429 Too Many Requests`
 - **THEN** the BFF returns `429 Too Many Requests` to the caller
 
-#### Scenario: Upstream is unreachable or times out
+#### Scenario: Upstream is unreachable
 
-- **WHEN** DIAL Core does not respond within `DIAL_CORE_TIMEOUT_MS` milliseconds
+- **WHEN** the request to DIAL Core fails at the network level (connection refused, DNS failure, `fetch failed`, or a timeout/abort error)
 - **THEN** the BFF returns `503 Service Unavailable`
+- **AND** no BFF-side request timeout is configured for this route (there is no `DIAL_CORE_TIMEOUT_MS` variable), so a slow upstream is awaited until the network layer fails
 
 #### Scenario: Upstream returns unexpected 5xx
 
@@ -77,13 +78,13 @@ The endpoint:
 
 The `:modelName` path parameter MUST be validated with an allowlist regex to prevent path-traversal and injection.
 
-Allowed characters: `[a-zA-Z0-9_\-.:@]` (covers known DIAL deployment name formats including dotted names like `anthropic.claude-3-5` and at-prefixed names like `@model`). Slash-separated namespaced names must be URL-encoded by the caller (`/` → `%2F`) before being sent as the path param.
+Allowed characters: `[a-zA-Z0-9_\-.:@]` (covers known DIAL deployment name formats including dotted names like `anthropic.claude-3-5` and at-prefixed names like `@model`), enforced by `GetModelDto.modelName`'s `@Matches(/^[a-zA-Z0-9_\-.:@]+$/)` in `apps/chat-api/src/models/dto/get-model.dto.ts`. A slash is not allowed: Express decodes `%2F` back to `/` before validation, so slash-separated namespaced names are rejected whether or not the caller URL-encodes them.
 
 Any character outside the allowlist SHALL cause the BFF to return `400 Bad Request` before making any upstream call.
 
 #### Scenario: Valid model name passes validation
 
-- **WHEN** the path param is `gpt-4o`, `anthropic.claude-3-5`, or `@org/model:tag`
+- **WHEN** the path param is `gpt-4o`, `anthropic.claude-3-5`, or `@model:tag`
 - **THEN** the request proceeds to upstream proxying
 
 #### Scenario: Invalid model name is rejected

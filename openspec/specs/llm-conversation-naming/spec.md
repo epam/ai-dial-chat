@@ -97,10 +97,19 @@ The system prompt for LLM conversation naming SHALL live in `apps/chat-api/src/c
 
 The prompt SHALL instruct the model to return only a short title (no quotes, labels, or markdown), use the same language as the user's message, and avoid generic titles.
 
+Operators MAY replace the built-in prompt with the optional server-only `CONVERSATION_NAMING_SYSTEM_PROMPT` environment variable (declared on `EnvironmentVariables` and documented in `apps/chat-api/.env.template` and `apps/chat-api/README.md`). The naming service SHALL resolve the system message with `resolvePrompt(configService.get('CONVERSATION_NAMING_SYSTEM_PROMPT'), CONVERSATION_NAMING_SYSTEM_PROMPT)`, so an unset, empty, or whitespace-only value falls back to the built-in constant.
+
 #### Scenario: Prompt is imported by naming service
 
+- **GIVEN** the `CONVERSATION_NAMING_SYSTEM_PROMPT` environment variable is unset or blank
 - **WHEN** `ConversationNamingService` builds a chat completion request
-- **THEN** the system message content equals `CONVERSATION_NAMING_SYSTEM_PROMPT`
+- **THEN** the system message content equals the `CONVERSATION_NAMING_SYSTEM_PROMPT` constant
+
+#### Scenario: Operator override replaces the built-in prompt
+
+- **GIVEN** the `CONVERSATION_NAMING_SYSTEM_PROMPT` environment variable is set to a nonblank value
+- **WHEN** `ConversationNamingService` builds a chat completion request
+- **THEN** the system message content equals that environment value, not appended to the built-in constant
 
 ---
 
@@ -110,7 +119,7 @@ The prompt SHALL instruct the model to return only a short title (no quotes, lab
 
 - `stream: false`
 - `Api-Key` request header from `DIAL_API_KEY` (not the user's session bearer token)
-- One system message (`CONVERSATION_NAMING_SYSTEM_PROMPT`)
+- One system message (the resolved naming system prompt)
 - One user message containing the first user message `content` and first assistant message `content`, separated by `\n\n---\n\n`, using plain text only (no attachments or custom_content in the LLM request)
 
 The model response `choices[0].message.content` SHALL be passed through `prepareEntityName` before rename.
@@ -126,7 +135,7 @@ The model response `choices[0].message.content` SHALL be passed through `prepare
 
 `ConversationNamingService` SHALL:
 
-- Run asynchronously without blocking the `saveConversation` HTTP response (`void` fire-and-forget from `ConversationPersistenceService.saveConversation`).
+- Run asynchronously without blocking the `saveConversation` HTTP response (`void` fire-and-forget via `ConversationNamingService.maybeRenameAfterFirstReply`, called from `ConversationPersistenceService.saveConversation` and from its `If-Match` conditional save path whenever the saved body does not carry `llmNamingDone: true`).
 - Enforce a configurable timeout (`UTILITY_NAMING_TIMEOUT_MS`, default `10000`) via `AbortController`.
 - On any error (timeout, DIAL error, empty LLM response, or save failure): log at `warn` or `error` and leave `conversation.name` unchanged; MUST NOT throw to the save caller.
 - Track in-flight renames per conversation id to skip duplicate concurrent attempts.
@@ -195,13 +204,19 @@ LLM naming MUST NOT run on: create (`POST /conversations`), duplicate, regenerat
 
 ### Requirement: Successful LLM naming updates display name in place
 
-After a successful LLM response, the naming service SHALL reload the conversation, then call `saveConversation` at the **same storage path** with `{ name: sanitisedTitle, llmNamingDone: true }`. It MUST NOT call `renameConversation` or `moveResource`; the storage path and `conversation.id` remain unchanged.
+After a successful LLM response, the naming service SHALL write the display name through `ConversationPersistencePort.updateConversation` — a conditional update that reads the latest stored version and saves `{ ...stored, name: sanitisedTitle, llmNamingDone: true }` at the **same storage path** with `If-Match`, re-reading and re-applying on a concurrent change (`412`). The update SHALL be skipped (no write) when the stored conversation is missing or already carries `llmNamingDone: true`. It MUST NOT call `renameConversation` or `moveResource`; the storage path and `conversation.id` remain unchanged, and it never writes back a stale copy of the messages.
 
 #### Scenario: LLM title updates conversation display name without path change
 
 - **GIVEN** LLM returns `"Docker networking basics"`
-- **WHEN** the in-place save succeeds
+- **WHEN** the conditional in-place save succeeds
 - **THEN** `conversation.name` becomes `"Docker networking basics"`, the storage path is unchanged, and `llmNamingDone` is `true`
+
+#### Scenario: Stored conversation already named is not overwritten
+
+- **GIVEN** the stored conversation acquired `llmNamingDone: true` (for example from a manual rename) while the LLM call was in flight
+- **WHEN** the naming service applies its conditional update
+- **THEN** no write is made and the stored `name` is kept
 
 ---
 

@@ -39,11 +39,11 @@ The microphone button SHALL use Dictate as its default accessible label and tool
 
 ### Requirement: Host-owned recognition routing
 
-The library SHALL accept an optional file-and-AbortSignal-to-text callback without API, environment, provider or storage details. The app SHALL prefer configured ASR and otherwise use the selected audio-capable deployment. The voice-input flag and complete-recording size limit SHALL be enforced in new chat, existing conversation and app preview.
+The voice-input library SHALL accept an optional file-and-AbortSignal-to-text callback without API, environment, provider or storage details. The `useTranscribeAudio` hook in `libs/chat-hooks` (`src/conversation/useTranscribeAudio`) SHALL produce that callback: it rejects a file larger than `maxSizeBytes` with `AudioTranscriptionErrorReason.TooLarge` before upload, uploads the complete file through the supplied `filesApi.uploadFile` under `uploads/<YYYY-MM>/`, then prefers the configured ASR model (`transcriptionApi.transcribeAudio`) and otherwise uses the selected deployment (`transcribeWithDeployment`), and rejects with `AudioTranscriptionErrorReason.Unavailable` when no bucket, ASR model or deployment is available. The app hook `useAudioTranscription` (`apps/chat/src/hooks/conversation/useAudioTranscription.ts`) SHALL only pass the already-configured API clients, the effective ASR model, the selected deployment and the `transcribeSizeLimitBytes` config to `useTranscribeAudio`, and map each `AudioTranscriptionErrorReason` to a translated `voiceRecording.*` message. The voice-input flag and complete-recording size limit SHALL be enforced in new chat, existing conversation and app preview.
 
 #### Scenario: Complete file exceeds the limit
 - **WHEN** the recorded file is larger than the configured transcription size limit
-- **THEN** the app reports an error before upload and preserves the draft
+- **THEN** `useTranscribeAudio` rejects with `AudioTranscriptionErrorReason.TooLarge` before upload, the app reports the translated `voiceRecording.tooLarge` error and preserves the draft
 
 #### Scenario: Library caller omits recognition
 - **WHEN** no transcription callback is supplied and the user stops recording
@@ -64,15 +64,19 @@ Discard and unmount SHALL stop media resources, abort pending recognition and ig
 
 ### Requirement: Bounded temporary failure recovery
 
-The app SHALL surface recognition HTTP 429/503 failures immediately as an unavailable/busy error so the normal input is restored without waiting through a provider cooldown. It SHALL retry recognition of the same uploaded file only for temporary HTTP 502/504 failures, with at most two retries and 6 seconds of accumulated retry waiting per recording. The ASR endpoint SHALL continue to return HTTP 503 for upstream 429/503 and preserve Retry-After when supplied. For 502/504, the app SHALL honor a valid Retry-After delay with a one-second minimum, otherwise wait 2 seconds before the first retry and 4 seconds before the second; a delay beyond the remaining budget SHALL end processing with an unavailable error.
+`withTranscriptionRetry` (`libs/chat-hooks/src/conversation/useTranscribeAudio/transcription-retry.ts`), which `useTranscribeAudio` wraps around each recognition request, SHALL surface recognition HTTP 429/503 failures immediately as `AudioTranscriptionErrorReason.Busy` so the normal input is restored without waiting through a provider cooldown. It SHALL retry recognition of the same uploaded file only for temporary HTTP 502/504 failures, with at most two retries (`MAX_RETRIES = 2`) and 6 seconds (`MAX_TOTAL_WAIT_MS = 6000`) of accumulated retry waiting per recording. The ASR endpoint SHALL continue to return HTTP 503 for upstream 429/503 and preserve Retry-After when supplied. For 502/504, the retry SHALL honor a valid Retry-After delay with a one-second minimum, otherwise wait 2 seconds before the first retry and 4 seconds before the second; exhausting the retry count or a delay beyond the remaining budget SHALL end processing with `AudioTranscriptionErrorReason.Busy`. The app SHALL show `Busy` as the translated `voiceRecording.busy` message ("Speech recognition is temporarily unavailable. Please try again later."), distinct from `voiceRecording.unavailable` ("Voice input is not available.").
 
 #### Scenario: Rate limit or upstream unavailability
 - **WHEN** recognition receives HTTP 429 or 503
-- **THEN** no frontend retry delay starts and the input immediately displays the unavailable/busy error
+- **THEN** no frontend retry delay starts and the input immediately displays the `voiceRecording.busy` error
 
 #### Scenario: Gateway failure then success
 - **WHEN** recognition receives HTTP 502 or 504 followed by success within the retry budget
 - **THEN** the app reuses the uploaded file and inserts its text once
+
+#### Scenario: Retry budget exhausted
+- **WHEN** recognition keeps receiving HTTP 502 or 504 after two retries, or the next delay would exceed the 6-second budget
+- **THEN** processing ends with `AudioTranscriptionErrorReason.Busy` and the input displays the `voiceRecording.busy` error
 
 #### Scenario: Cancellation during a retry delay
 - **WHEN** the user cancels while recognition is waiting to retry

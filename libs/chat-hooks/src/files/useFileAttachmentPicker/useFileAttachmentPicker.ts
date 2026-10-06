@@ -3,6 +3,7 @@ import {
   isHiddenPath,
   type FileManagerSelectableNode,
 } from '@epam/ai-dial-chat-shared';
+import { DialFileManagerVariant } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
@@ -17,7 +18,6 @@ import type {
   UseDialFileManagerOptions,
   UseDialFileManagerResult,
 } from '../dial-file-manager.types';
-import { DialFileManagerVariant } from '../file-manager-variant';
 import { useDialFileManagerSections } from '../useDialFileManagerSections/useDialFileManagerSections';
 import { useDialFileManagerTabConfig } from '../useDialFileManagerTabConfig/useDialFileManagerTabConfig';
 

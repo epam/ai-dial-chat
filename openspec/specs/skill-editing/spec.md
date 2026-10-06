@@ -1,7 +1,7 @@
 # skill-editing Specification
 
 ## Purpose
-Specifies `apps/chat/src/pages/SkillEditor/SkillEditor.tsx`'s edit-mode behavior: the `?id=...` route, ETag-gated load, frontmatter/file preservation, save via `updateSkill` with no ZIP rebuild, stale-edit conflict handling, immutable Name/path, dirty-navigation guard, and edit-specific labels.
+Specifies `apps/chat/src/pages/SkillEditor/SkillEditor.tsx`'s edit-mode behavior: the `?id=...` route, ETag-gated load, frontmatter/file preservation, save via `updateSkill` with no ZIP rebuild, stale-edit conflict handling, immutable Name/path, dirty-navigation guard, and edit-specific labels. The page wires its load, submit and file-action logic through `useSkillEditorLoad`, `useSkillEditorSubmit` and `useSkillFileActions` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/skill/`), passing the `apps/chat/src/server-api/skills.api.ts` wrappers in as already-configured clients.
 
 ## Requirements
 
@@ -82,7 +82,7 @@ On edit-mode load, the page SHALL call the existing `downloadSkill()` wrapper (`
 ---
 
 ### Requirement: Frontmatter and supporting files are unpacked and preserved for editing
-On successful load, the page SHALL unpack the downloaded ZIP with `fflate`, parse the root `SKILL.md`'s YAML frontmatter with the `yaml` package's `parse` function keeping the entire parsed object (not just `name`/`description`), and load every other entry into an in-memory `Map<relativePath, Uint8Array>`. The file tree presented to `libs/skill-editor` SHALL be built from these real file paths, any parent folders inferred from those paths, and one `SkillFileNodeKind.Folder` node per folder marker.
+On successful load, the page SHALL unpack the downloaded ZIP with `fflate`, parse the root `SKILL.md`'s YAML frontmatter with the `yaml` package's `parse` function keeping the entire parsed object (not just `name`/`description`), and load every other entry into an in-memory `Map<relativePath, Uint8Array>` (`unpackSkillArchive` in `libs/chat-hooks/src/skill/skill.ts`); `useSkillEditorLoad` then keeps it as `filesContentRef`, a `Map<relativePath, SkillFileContent>` whose entries hold those bytes as `{ bytes }`. The file tree presented to `libs/skill-editor` SHALL be built from these real file paths, any parent folders inferred from those paths, and one `SkillFileNodeKind.Folder` node per folder marker.
 
 A folder marker is an entry whose final path segment is `.dial_folder` (`HIDDEN_FILE` from `@epam/ai-dial-chat-shared`). `unpackSkillArchive` SHALL return markers separately from `files`, as a list of folder paths (the marker path without `/.dial_folder`). Markers SHALL NOT enter the content map or the file nodes. A root-level `.dial_folder` entry (no folder before it) stands for no folder and SHALL be dropped entirely, so it cannot become a file that the server would then refuse on save. The same rule SHALL apply on the listing fallback (`loadSkillFiles`): a `nodeType: 'item'` entry that resolves to a marker path SHALL become a folder path and SHALL NOT be downloaded. `useSkillEditorLoad` SHALL set `files` to the file nodes followed by a folder node for each marker folder path that is not already a file path. Its parent folders are still inferred by `buildDialFileTree`.
 
@@ -185,7 +185,7 @@ The Back control while a supporting file is selected is **not** a navigation and
 - **THEN** the page asks for confirmation before navigating to `returnUrl`, exactly as it does from the `SKILL.md` view
 
 ### Requirement: Edit-specific labels and success notification
-In edit mode, the page SHALL render an edit-specific title and Save-button label (distinct from create mode's "Create skill" title and Create button) and, on a successful save, SHALL show a success notification distinct from the create-success notification in both its title and its message (e.g. title "Skill updated" vs. "Skill created", message "\"{{name}}\" has been updated." vs. "\"{{name}}\" has been created."). The edit-mode notification's title SHALL use a dedicated i18n key distinct from create mode's title key — reusing the create-mode title key for an edit-mode save is a defect, not an acceptable shortcut.
+In edit mode, the page SHALL render an edit-specific title and Save-button label (distinct from create mode's "Create skill" title and Create button) and, on a successful save, SHALL show a success notification distinct from the create-success notification in both its title and its message (title "Skill edited successfully" vs. "Skill created successfully", message "Changes for skill \"{{name}}\" are saved." vs. "You can now see skill \"{{name}}\" in the catalog and My collection."). Both come from the shared entity-operation map (`ENTITY_OPERATION_NOTIFICATIONS[NotifiableEntity.Skill]`, keys `entityNotifications.skill.created*` / `entityNotifications.skill.edited*`, see `entity-operation-notifications`): the page builds `useSkillEditorSubmit`'s `saveSuccessTitle`/`createSuccess`/`updateSuccessTitle`/`updateSuccess` messages from those keys, and routes the hook's `onNotify` to `showSuccessNotification` / `showErrorNotification` by variant. The edit-mode notification's title SHALL use a dedicated i18n key distinct from create mode's title key — reusing the create-mode title key for an edit-mode save is a defect, not an acceptable shortcut.
 
 #### Scenario: Edit mode shows Save, not Create
 - **WHEN** the page renders in edit mode
@@ -193,7 +193,7 @@ In edit mode, the page SHALL render an edit-specific title and Save-button label
 
 #### Scenario: Successful edit save shows an update notification
 - **WHEN** an edit save succeeds
-- **THEN** the shown notification's title and message both reflect an update ("Skill updated"), not a creation ("Skill created")
+- **THEN** the shown notification's title and message both reflect an edit ("Skill edited successfully"), not a creation ("Skill created successfully")
 
 ---
 

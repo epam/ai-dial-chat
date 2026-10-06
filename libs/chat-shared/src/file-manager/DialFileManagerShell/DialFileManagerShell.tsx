@@ -22,6 +22,7 @@ import {
   type FC,
 } from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
+import { mergeClasses } from '../../utils/merge-class';
 import type { FileManagerController } from '../file-manager-controller';
 import {
   DialFileManagerActionProfile,
@@ -497,6 +498,13 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     labels,
   );
 
+  /* The standalone File storage page sits on the base layer; the attach
+     modal keeps the sunken surface behind its raised tree panel. */
+  const surfaceClassName =
+    variant === DialFileManagerVariant.Standalone
+      ? 'bg-layer-base'
+      : 'bg-layer-sunken';
+
   const emptyStateCopy = useMemo((): EmptyStateCopy => {
     if (searchResults != null && !isSearching) {
       return { title: labels.searchEmptyStateTitle, description: '' };
@@ -524,9 +532,14 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           <PrimaryButton label={labels.retryLabel} onClick={retry} />
         </div>
       ) : (
-        <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-sunken">
+        <div
+          className={mergeClasses(
+            'relative flex min-h-0 w-full grow overflow-auto',
+            surfaceClassName,
+          )}
+        >
           <DialFileManager
-            className="min-h-0 w-full grow bg-layer-sunken"
+            className={mergeClasses('min-h-0 w-full grow', surfaceClassName)}
             contentClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'px-0 pb-0'

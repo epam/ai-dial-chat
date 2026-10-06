@@ -11,7 +11,7 @@ TBD - created by archiving change add-conversation-unshare. Update Purpose after
 
 For `sharedWithMe === true` rows, the action menu SHALL contain exactly Pin, Duplicate, Export, Remove from My List — replacing the existing readonly-row set (Pin, Duplicate, Export with no removal action) by adding Remove from My List, and continuing to omit Rename/Share/the owner-side Delete for these rows (unchanged from the existing `isReadonlyItem` gating).
 
-State owned by this requirement: a new `pendingUnshareId: string | null` piece of local state in `ConversationPanelView`, mirroring the existing `pendingDeleteId` state used by the owner-side delete flow.
+State owned by this requirement: a dedicated `useAsyncConfirmDialog<string>()` instance (from `@epam/ai-dial-chat-hooks`) in `ConversationPanelView`, destructured as `pendingUnshareId`, `isUnsharePending`, `isUnsharing`, `unshareError`, `openUnshareDialog`, `closeUnshareDialog` and `confirmUnshareDialog`, separate from the instance that drives the owner-side delete flow.
 
 #### Scenario: Shared-with-me row menu includes Remove from My List
 
@@ -23,7 +23,7 @@ State owned by this requirement: a new `pendingUnshareId: string | null` piece o
 
 - **GIVEN** a conversation with `sharedWithMe: false`, `publishedWithMe: false`, `isReadonly: false`
 - **WHEN** the panel row's action menu is opened
-- **THEN** the menu includes the existing owner-side actions (Pin, Rename, Duplicate, Export, Share, Publish, Delete) and clicking that Delete triggers the existing owner-delete confirmation, not the unshare confirmation
+- **THEN** the menu includes the existing owner-side actions (Pin, Rename, Duplicate, Export, and Delete, plus Share, Publish or Unpublish, and Revoke access when their own feature-flag and state conditions hold) and no Remove from My List action, and clicking that Delete triggers the existing owner-delete confirmation, not the unshare confirmation
 
 #### Scenario: Published-with-me (not shared-with-me) row menu does not include Remove from My List
 
@@ -33,9 +33,9 @@ State owned by this requirement: a new `pendingUnshareId: string | null` piece o
 
 ### Requirement: Remove from My List action label and icon
 
-The unshare `DropdownItem` SHALL use `label={t(ButtonsI18nKeys.RemoveFromMyList)}` (English value "Remove from My List") and `icon={<IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}`, matching the icon already used by the owner-side Delete action in the same file. Per the repo's i18n dedup convention (`.claude/rules/all-ts.md` §"Avoid duplicate translation values"), this generic action label lives in the shared `ButtonsI18nKeys` namespace (`buttons.removeFromMyList`) so the catalog's recipient-side removal action can reuse the same key; it is deliberately distinct from `ButtonsI18nKeys.Delete`, which denotes owner-side destruction of the resource for everyone. `IconTrashX` is direction-neutral and requires no `rtl:scale-x-[-1]` mirroring.
+The unshare action (key `unshare`) SHALL use `label={t(ButtonsI18nKeys.RemoveFromMyList)}` (English value "Remove from My List") and `icon={<IconTrashX size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />}` with no colour class — the same glyph and size as the owner-side Delete action in the same file, which additionally carries `text-error`. Per the repo's i18n dedup convention (`.claude/rules/all-ts.md` §"Avoid duplicate translation values"), this generic action label lives in the shared `ButtonsI18nKeys` namespace (`buttons.removeFromMyList`) so the catalog's recipient-side removal action can reuse the same key; it is deliberately distinct from `ButtonsI18nKeys.Delete`, which denotes owner-side destruction of the resource for everyone. `IconTrashX` is direction-neutral and requires no `rtl:scale-x-[-1]` mirroring.
 
-Clicking the action SHALL only call `setPendingUnshareId(contextId)` — it SHALL NOT call the discard API directly.
+Clicking the action SHALL only call `openUnshareDialog(contextId, rowActionsTriggerRef.current)` (the menu trigger is passed as the focus-return target) — it SHALL NOT call the discard API directly.
 
 #### Scenario: Clicking Remove from My List opens confirmation without calling the API
 
@@ -44,9 +44,9 @@ Clicking the action SHALL only call `setPendingUnshareId(contextId)` — it SHAL
 
 ### Requirement: Confirmation popup before discarding access
 
-`ConversationPanelView` SHALL render a `DialConfirmationPopup` (from `@epam/ai-dial-ui-kit`) bound to `pendingUnshareId`, structurally parallel to the existing owner-side delete `DialConfirmationPopup` in the same file (its own `isUnsharing`/`unshareError` local state, not shared with the owner-delete triplet):
+`ConversationPanelView` SHALL render a 2.0 `ConfirmationPopup` (from `@epam/ai-dial-ui-kit`) driven by the unshare `useAsyncConfirmDialog` instance, structurally parallel to the owner-side delete `ConfirmationPopup` in the same file but with its own pending/running/error state:
 
-- `open={!!pendingUnshareId}`
+- `open={isUnsharePending}`
 - `header={t(ConversationPanelI18nKeys.UnshareConfirmTitle)}` (English default "Remove from My List?")
 - `description` interpolates the conversation's title via `t(ConversationPanelI18nKeys.UnshareConfirmMessage, { name: pendingUnshareTitle })` (English default: `Remove "{{name}}" from your list? You'll need a new invitation to access it again.`), followed by an inline error line (`role="alert"`) when `unshareError` is set, mirroring the existing delete popup's error rendering
 - `confirmLabel={t(ButtonsI18nKeys.RemoveFromMyList)}` ("Remove from My List") — same shared key as the menu action's label, per the i18n dedup convention
@@ -55,12 +55,12 @@ Clicking the action SHALL only call `setPendingUnshareId(contextId)` — it SHAL
 - `isLoading={isUnsharing}`
 - `onConfirm={handleConfirmUnshare}`, `onCancel`/`onClose={handleCloseUnshareDialog}`
 
-`handleCloseUnshareDialog` SHALL no-op while `isUnsharing` is `true` (matching `handleCloseDeleteDialog`'s existing guard), otherwise clear `pendingUnshareId` and `unshareError`.
+`handleCloseUnshareDialog` SHALL no-op while `isUnsharing` is `true`, otherwise call `closeUnshareDialog()`, which clears `pendingUnshareId` and `unshareError`. `confirmUnshareDialog` provides the re-entry guard: it no-ops while a run is in flight or nothing is pending.
 
 #### Scenario: Confirm calls discard exactly once and disables the dialog while pending
 
 - **WHEN** a user clicks the confirm button in the open unshare popup
-- **THEN** the discard API is called exactly once, `isUnsharing` becomes `true` for the duration of the call (confirm/cancel controls disabled per `DialConfirmationPopup`'s `isLoading` behavior), and a second rapid click does not invoke the discard call again
+- **THEN** the discard API is called exactly once, `isUnsharing` becomes `true` for the duration of the call (confirm/cancel controls disabled per `ConfirmationPopup`'s `isLoading` behavior), and a second rapid click does not invoke the discard call again
 
 #### Scenario: Cancel, close, or Escape makes no API call
 
@@ -74,12 +74,13 @@ Clicking the action SHALL only call `setPendingUnshareId(contextId)` — it SHAL
 
 ### Requirement: Successful discard refreshes the list, notifies, and navigates away from an active discarded conversation
 
-`handleConfirmUnshare` SHALL:
-1. Call `discardSharedCatalogItem(pendingUnshareId)` (existing wrapper from `apps/chat/src/server-api/share.api.ts`, unchanged signature).
+`handleConfirmUnshare` SHALL run the following inside `confirmUnshareDialog(run, onError)`:
+1. Call `discardSharedCatalogItem(idToUnshare)` with the pending id (existing wrapper from `apps/chat/src/server-api/share.api.ts`, unchanged signature).
 2. On success, call `refreshConversations()` from `ConversationsContext`; if this refresh call rejects, the discard is still treated as successful (see next requirement) — no mutation error is surfaced and no retry is invited.
-3. Show a success notification: `title={t(ConversationPanelI18nKeys.UnshareSuccessTitle)}` ("Removed"), `message={t(ConversationPanelI18nKeys.UnshareSuccess, { name: pendingUnshareTitle })}` (`"{{name}}" was removed from your list.`).
-4. Close the popup (`setPendingUnshareId(null)`, clear `unshareError`, `isUnsharing = false`).
-5. If the discarded conversation id matches `panelActiveConversationId` (via the existing `conversationIdsMatch` helper, same comparison already used by `handleConfirmDelete`), call `navigate(ROUTES.Root)`.
+3. Show a success notification: `showSuccessNotification` with `title={t(ConversationPanelI18nKeys.UnshareSuccessTitle)}` ("Removed from My List"), `message={t(ConversationPanelI18nKeys.UnshareSuccess, { name: pendingUnshareTitle })}` (`"{{name}}" was removed from your list.`).
+4. If the discarded conversation id matches `panelActiveConversationId` (via the existing `conversationIdsMatch` helper, same comparison already used by `handleConfirmDelete`), call `navigate(ROUTES.Root)`.
+
+When `run` resolves, `confirmUnshareDialog` closes the popup (clears the pending id and error, resets `isUnsharing`).
 
 #### Scenario: Successful discard of a non-active conversation removes it from the panel and notifies
 
@@ -103,7 +104,7 @@ If `discardSharedCatalogItem` resolves successfully but the subsequent `refreshC
 ### Requirement: Failed discard keeps the item and shows an error
 
 If `discardSharedCatalogItem` itself rejects (e.g. the BFF responds 403/404/429/502/503), `handleConfirmUnshare` SHALL:
-- Set `unshareError` to `t(ConversationPanelI18nKeys.UnshareError, { name: pendingUnshareTitle })` (`Failed to remove "{{name}}". Please try again.`) and keep the popup open, with the error rendered inline via `role="alert"` — mirroring the existing single-conversation owner-delete flow's `handleConfirmDelete` pattern in this file (inline popup error, no separate error-title notification).
+- Set `unshareError` (via `confirmUnshareDialog`'s `onError` callback) to `t(ConversationPanelI18nKeys.UnshareError, { name: pendingUnshareTitle })` (`Failed to remove "{{name}}". Please try again.`) and keep the popup open, with the error rendered inline via `role="alert"` — mirroring the existing single-conversation owner-delete flow's `handleConfirmDelete` pattern in this file (inline popup error, no separate error-title notification).
 - NOT call `refreshConversations()`.
 - NOT navigate away.
 - Leave the conversation in the panel's list.
@@ -121,7 +122,7 @@ New keys SHALL be added to `ConversationPanelI18nKeys` (`apps/chat/src/constants
 |---|---|---|
 | `UnshareConfirmTitle` | `conversationPanel.unshare.unshareConfirmTitle` | `"Remove from My List?"` |
 | `UnshareConfirmMessage` | `conversationPanel.unshare.unshareConfirmMessage` | `Remove "{{name}}" from your list? You'll need a new invitation to access it again.` |
-| `UnshareSuccessTitle` | `conversationPanel.unshare.unshareSuccessTitle` | `"Removed"` |
+| `UnshareSuccessTitle` | `conversationPanel.unshare.unshareSuccessTitle` | `"Removed from My List"` |
 | `UnshareSuccess` | `conversationPanel.unshare.unshareSuccess` | `"{{name}}" was removed from your list.` |
 | `UnshareError` | `conversationPanel.unshare.unshareError` | `Failed to remove "{{name}}". Please try again.` |
 
@@ -145,7 +146,7 @@ The menu action's and confirm button's "Remove from My List" label uses the shar
 
 The Remove from My List menu item and its confirmation popup SHALL use only logical Tailwind/CSS properties, consistent with the rest of `ConversationRow`'s action menu (`placement="bottom-end"`, no physical-direction classes introduced). `IconTrashX` is symmetric and MUST NOT be flipped with `rtl:scale-x-[-1]`. The interpolated conversation title in the confirmation message uses i18next placeholder substitution (`{{name}}`), not string concatenation, so bidi rendering of mixed-direction titles is handled by the browser's Unicode bidi algorithm.
 
-The confirmation popup is reachable and fully operable via keyboard (Tab to the Remove from My List menu item, Enter/Space to activate, Tab to the popup's confirm/cancel buttons, Enter/Space/Escape to complete or cancel), using the same accessible dialog semantics `DialConfirmationPopup` already provides for the owner-side delete popup in this file. Any inline error text rendered inside the popup uses `role="alert"` so it is announced to assistive technology without requiring focus to move.
+The confirmation popup is reachable and fully operable via keyboard (Tab to the Remove from My List menu item, Enter/Space to activate, Tab to the popup's confirm/cancel buttons, Enter/Space/Escape to complete or cancel), using the same accessible dialog semantics `ConfirmationPopup` already provides for the owner-side delete popup in this file. Any inline error text rendered inside the popup uses `role="alert"` so it is announced to assistive technology without requiring focus to move.
 
 #### Scenario: Full flow is keyboard-operable
 

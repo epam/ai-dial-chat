@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Preferences tab of the Settings page: its registration through the shell extension point and the language, keyboard-shortcut, and default-agent selectors it renders.
+The Preferences tab of the Settings page: its registration through the shell extension point and the theme, language, keyboard-shortcut, and default-agent selectors it renders.
 
 ## Requirements
 
@@ -17,16 +17,17 @@ to the `entries` array in `apps/chat/src/hooks/useSettingsTabConfig.tsx`. The en
 - `item.icon`: `<IconAdjustmentsHorizontal size={DIAL_ICON_SIZE.MD} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />`
 - `Component`: `PreferencesTab` (`apps/chat/src/pages/SettingsPage/PreferencesTab/PreferencesTab.tsx`)
 
-The entry SHALL be placed **before** the existing `Usage` entry, and `SettingsPage`'s initial state
-SHALL be `useState<SettingsTabs>(SettingsTabs.Preferences)` to match, so `Preferences` is both the
-top row and the row selected on mount.
+The entry SHALL be placed **before** the existing `Usage` entry (labeled `t(BasicI18nKeys.Usage)`).
+`SettingsPage` holds no tab state of its own: the active tab is the `:tab` segment of
+`ROUTES.SettingsTab` (`/settings/:tab`, built by `getSettingsTabRoute`), and a bare `/settings` or an
+unknown tab id `<Navigate replace>`s to `items[0]` — so `Preferences`, being the first entry, is both
+the top row and the tab a bare `/settings` opens. Selecting a row navigates to that tab's route.
 
-No change SHALL be made to `SettingsPage.tsx`'s rendering logic beyond that initial value, to the
-`/settings` route registration in `apps/chat/src/app/app.tsx`, or to `libs/settings-panel`.
-
-The tab is behind no feature flag, because the Settings page itself is behind none — the
-`settingsPageEnabled` flag was removed along with its `SETTINGS_PAGE_ENABLED` environment variable
-and config-registry entry (see `settings-page-shell`). No new flag is introduced.
+The tab is behind no feature flag of its own — the `settingsPageEnabled` flag was removed along with
+its `SETTINGS_PAGE_ENABLED` environment variable and config-registry entry (see
+`settings-page-shell`). The only gate on the whole page is the overlay's
+`OverlayFeature.HideSettingsPage`, under which `renderSettingsRoutes`
+(`apps/chat/src/app/settings-routes.tsx`) redirects both settings paths to `ROUTES.Root`.
 
 **Memoisation:** the entry is added inside the existing `useMemo(..., [t])`; no new dependency.
 
@@ -37,8 +38,8 @@ and config-registry entry (see `settings-page-shell`). No new flag is introduced
 #### Scenario: Settings rail shows two rows
 
 - **WHEN** a signed-in user opens `/settings`
-- **THEN** the `SettingsPanel` rail renders exactly two rows, `Preferences` then `Usage`, each
-  labeled through an i18n key
+- **THEN** the page redirects to `/settings/preferences` and the `SettingsPanel` rail renders exactly
+  two rows, `Preferences` then `Usage`, each labeled through an i18n key
 - **AND** `Preferences` is the selected row, and its pane is rendered
 
 #### Scenario: Returning to Preferences swaps the pane back
@@ -47,64 +48,52 @@ and config-registry entry (see `settings-page-shell`). No new flag is introduced
 - **THEN** the right-hand pane renders `PreferencesTab` and the `Preferences` row reports
   `aria-selected="true"`
 
-#### Scenario: Active row highlight becomes visible with two tabs
+#### Scenario: Active row is highlighted
 
 - **WHEN** the rail renders two items
-- **THEN** `SettingsPanel`'s `isVisuallyActive = isActive && items.length > 1` guard resolves `true`
-  for the active row and that row is visually highlighted — a state no shipping build rendered while
-  only one tab existed
+- **THEN** `SettingsPanel` passes `activeId` to the UI kit's vertical `Tabs` as `activeTabId`, and the
+  active row is visually highlighted
 
 #### Scenario: Preferences is reachable in every deployment
 
 - **WHEN** any signed-in user navigates directly to `/settings` and selects the `Preferences` row
-- **THEN** `PreferencesTab` mounts — no configuration can make the tab unreachable
+- **THEN** `PreferencesTab` mounts — only `OverlayFeature.HideSettingsPage`, which hides the whole
+  Settings page, can make the tab unreachable
 
 ---
 
-### Requirement: The theme selector is parked, not shipped
+### Requirement: Preferences tab renders a theme selector over the configured themes
 
-`PreferencesTab` SHALL NOT render a theme row. The implementation is retained **commented out**,
-under four blocks marked `THEME SELECTOR` in
-`apps/chat/src/pages/SettingsPage/PreferencesTab/PreferencesTab.tsx` (the header note and imports,
-the `THEME_LABEL_KEYS` map, the hook call plus `isThemeRowShown` and `themeOptions`, and the JSX
-row), parked for an upcoming theming feature rather than deleted.
+`PreferencesTab` SHALL render a theme row as a `Select` labeled `t(SettingsI18nKeys.Theme)`, built from
+`useThemeOptions()` (`apps/chat/src/hooks/theme/useThemeOptions.ts`): `options` = the hook's
+`options`, `value` = `selectedTheme`, `onChange` calling `setTheme`.
 
-This is a deliberate exception to the repository's general preference against commented-out code:
-the row is finished and correct but has nothing to show, because only the light theme ships. Keeping
-it in one piece means re-enabling it is uncommenting, not rewriting.
+`useThemeOptions` builds one option per theme in `useTheme().themes`, with `light` and `dark` always
+first (a stable sort, so any other theme keeps its configuration order). Each option is labeled from
+the `ThemeId`-keyed i18n keys (`settings.themeLight`, `settings.themeDark`) with a `displayName`
+(then raw id) fallback for an unrecognised id. A synthetic `ThemeId.System` option labeled
+`t(SettingsI18nKeys.ThemeSystem)` is appended only when both `light` and `dark` are configured.
 
-Consequences that SHALL hold while it is parked:
+The row SHALL render **only when** the hook returns two or more options **and**
+`OverlayFeature.HideUserSettings` is off — a single option is not a choice. It is the first row of
+the tab, above the language row.
 
-- `useThemeOptions` (`apps/chat/src/hooks/theme/useThemeOptions.ts`) returns to **zero call sites**.
-  It SHALL NOT be deleted — it is the parked row's entry point.
-- The `settings.theme`, `settings.themeLight`, `settings.themeDark` and `settings.themeSystem` i18n
-  keys SHALL remain in `en.json` and `SettingsI18nKeys`, unused, for the same reason.
-- `PreferencesTab` SHALL NOT import `useThemeOptions` or `ThemeId`, so no unused-import lint error is
-  introduced.
-- The tab's empty state SHALL be driven by the three live rows only (language, keyboard shortcut,
-  "Default agent for new chats").
+#### Scenario: No theme row with a single theme
 
-When the row is re-enabled it SHALL behave as originally specified: a `Select` labeled
-`t(SettingsI18nKeys.Theme)`, `value` = `selectedTheme`, `onChange` calling `setTheme`, one option per
-entry of `themes` labeled from the `ThemeId`-keyed i18n keys with a `displayName` fallback for an
-unrecognised id, rendered only when `themes` holds two or more entries and
-`OverlayFeature.HideUserSettings` is off.
-
-#### Scenario: No theme row is rendered
-
-- **WHEN** `PreferencesTab` renders, with any number of themes served
+- **GIVEN** the themes host serves only `light`
+- **WHEN** `PreferencesTab` renders
 - **THEN** no control labeled `settings.theme` is present
 
-#### Scenario: The parked code does not break the build
+#### Scenario: Light and dark offer a System option
 
-- **WHEN** `apps/chat` is typechecked and linted
-- **THEN** no unused import, unused variable, or unreachable-code diagnostic arises from the parked
-  blocks
+- **GIVEN** the themes host serves `dark` then `light`
+- **WHEN** `PreferencesTab` renders
+- **THEN** a select labeled `settings.theme` offers `Light`, `Dark`, `System` in that order
 
-#### Scenario: useThemeOptions survives with no callers
+#### Scenario: Selecting a theme applies it
 
-- **WHEN** the repository is searched for `useThemeOptions` call sites
-- **THEN** none are found outside the parked blocks, and the hook is still exported
+- **WHEN** the user selects a different theme option
+- **THEN** `setTheme` is called with that option's id
 
 ---
 
@@ -324,17 +313,22 @@ than rendering blank.
 the rows. The `<h2>` sits under the shell's existing `sr-only` `<h1>`, so heading order is
 `h1 → h2`.
 
+While the client config is still `UserConfigStatus.Loading` or `useDeployments().isLoading` is true,
+the body SHALL render a `Spinner` (`ariaLabel` = `t(BasicI18nKeys.Loading)`) instead of any row, so
+rows whose visibility depends on network data do not pop in late.
+
 When **every** row is suppressed — reachable for an overlay host with
-`OverlayFeature.HideUserSettings` enabled — the body SHALL render the shared empty state rather than
-an empty pane.
+`OverlayFeature.HideUserSettings` enabled — the body SHALL render the shared empty state
+(`NoDataContent` titled `t(BasicI18nKeys.Empty)`) rather than an empty pane.
 
 All spacing SHALL use direction-agnostic or logical Tailwind utilities (`gap-*`, `px-*`, and
 `ps-*`/`pe-*` for any one-sided spacing); physical `pl-*`/`pr-*`/`ml-*`/`mr-*`/`text-left`/`text-right`
 SHALL NOT be used. The tab renders no directional icons, so no icon mirroring is required.
 
-**Memoisation:** each live row's `options` array SHALL be built inside a `useMemo` keyed on its own
-inputs (`t`, plus `SUPPORTED_LANGUAGES` / `preference` / `items` and `searchQuery` respectively), so
-a keystroke in the search field does not rebuild the other rows' options.
+**Memoisation:** each `Select` row's `options` array SHALL be built inside a `useMemo` — the theme
+options inside `useThemeOptions` (`[t, themes]`), the language options with no dependencies, the
+keyboard options on `[t]`, and the default-agent mode options inside `DefaultAgentSelect` on `[t]`.
+The default-agent row's search lives in the deployment-selector panel, not in `PreferencesTab`.
 
 #### Scenario: Heading structure
 
@@ -357,5 +351,6 @@ a keystroke in the search field does not rebuild the other rows' options.
 #### Scenario: Each select is programmatically labeled
 
 - **WHEN** the tab renders any row
-- **THEN** that row's `Select` exposes an accessible name from its `labelProps.label`, and the
-  control is reachable and operable by keyboard alone
+- **THEN** each `Select` row exposes an accessible name from its `labelProps.label`, the
+  default-agent trigger is named by its `Label` through `labelledById`, and every control is
+  reachable and operable by keyboard alone

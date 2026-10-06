@@ -1,4 +1,6 @@
 import type {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
   FileUploadValidationResult,
   FileUploadBatchState,
 } from '@epam/ai-dial-chat-shared';
@@ -14,12 +16,6 @@ import type {
 import type { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { DialFilesApi } from './dial-files-api';
 import type { DownloadDestinationHandlers } from './download-destination';
-import type {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from './file-manager-variant';
-
-export type { FileUploadValidationResult } from '@epam/ai-dial-chat-shared';
 
 /**
  * Library-owned identifier for why a file-manager hook is surfacing an

@@ -76,8 +76,6 @@ export const virtualPathToApiPath = (
   return collapsed && !collapsed.endsWith('/') ? `${collapsed}/` : collapsed;
 };
 
-export { getParentFolderPath } from '@epam/ai-dial-chat-shared';
-
 const looksLikeVirtualDialPath = (path: string, rootLabel: string): boolean =>
   path.startsWith('/') ||
   path === rootLabel ||

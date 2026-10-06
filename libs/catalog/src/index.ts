@@ -1,3 +1,7 @@
+/* The catalog renders the publish flow, so its documented stylesheet includes
+ * the CSS Modules of its publish-panel dependency. */
+import '@epam/ai-dial-publish-panel/styles.css';
+
 // Headless catalog enums and catalog-item-mapping functions — see
 // `./entry-points/mapping.ts`; import `@epam/ai-dial-catalog/mapping`
 // directly to avoid resolving the catalog/publish-panel UI.

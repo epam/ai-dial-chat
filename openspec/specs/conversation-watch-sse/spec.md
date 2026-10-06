@@ -23,18 +23,18 @@ The backend SHALL expose a versioned endpoint:
 { "path": "deploymentId__ConvName" }
 ```
 
-`path` is the conversation sub-path (bucket-stripped), validated with `@IsString()` and `@Matches(/^[^./\\][^./\\]*([/][^./\\][^./\\]*)*$/)` allowlist regex.
+`path` is the conversation sub-path (bucket-stripped), validated with `@IsString()`, `@MinLength(1)` and `@Matches(/^(?!.*\.\.)(?!.*\\)[\s\S]+$/)`, which rejects only `..` sequences and backslashes; single dots (for example a Quick App `__0.0.1__` version segment) are accepted.
 
 **SSE event format** (each event forwarded verbatim from DIAL Core):
 
 ```
-data: {"url":"files/bucket/deploymentId__ConvName","action":"UPDATE","timestamp":1719000000000}
+data: {"url":"conversations/bucket/deploymentId__ConvName","action":"UPDATE","timestamp":1719000000000}
 
 ```
 
 The backend SHALL:
 
-1. Build the DIAL Core resource URL as `files/{bucket}/{subPath}` where `bucket` is the session bucket and `subPath` is derived from `path` via `resolveConversationLocation`.
+1. Build the DIAL Core resource URL as `conversations/{bucket}/{encodeDialResourcePath(subPath)}` via `buildConversationUrl`, where `bucket` and `subPath` come from `resolveConversationLocation(qualifySessionConversationPath(path, sessionBucket), sessionBucket)`.
 2. Construct an `AbortController` and register `res.on('close', ...)` before calling `ConversationService.watchConversation` (before the first `await` of upstream setup), so a browser disconnect during that call aborts it immediately rather than being observed only after it resolves.
 3. Call `this.client.subscribeToResources({ body: { resources: [{ url }] }, headers: getBearerAuthHeaders(at), signal })`, passing the controller's `AbortSignal` through `ConversationService.watchConversation` and `ConversationStreamingService.watchConversation` to the DIAL Core SDK call.
 4. Set response headers: `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`, then flush.
@@ -53,7 +53,7 @@ No i18n keys, no RTL impact, no caching, no analytics events for this endpoint.
 #### Scenario: Watch endpoint opens SSE stream to DIAL Core
 
 - **WHEN** an authenticated client sends `POST /api/v1/conversations/watch` with `{ "path": "gpt-4o__Chat" }`
-- **THEN** the response is `200 text/event-stream` and the server proxies DIAL Core resource events for `files/{bucket}/gpt-4o__Chat` to the client
+- **THEN** the response is `200 text/event-stream` and the server proxies DIAL Core resource events for `conversations/{bucket}/gpt-4o__Chat` to the client
 
 #### Scenario: Invalid path is rejected
 
@@ -94,7 +94,7 @@ No i18n keys, no RTL impact, no caching, no analytics events for this endpoint.
 1. Call `conversationsApi.watchConversationRaw({ watchConversationBodyDto: { path } })` (generated client Raw variant) to get the `Response`, where `path` is the bucket-stripped, decode-normalized conversation path (`getConversationPath`).
 2. Read the SSE body via `response.body.getReader()` and a `TextDecoder`, splitting on `\n`.
 3. On each `data:` line: parse JSON `{ url, action, timestamp }`.
-4. On an `UPDATE` action for the subscribed URL: call `getConversation(fullConversationId)` once, where `fullConversationId` is `safeDecodeURIComponent(conversationId)` (`apps/chat/src/utils/string-utils.ts`) — the **bucket-included**, decode-normalized id — NOT the bucket-stripped `path` used in step 1. `getConversation`'s `path` query param must include the bucket to resolve correctly (see `conversations-api` spec); passing the bucket-stripped path caused a 400 from DIAL Core for Quick App conversations, whose deployment-id segment itself contains a slash (`applications/{bucket}/{appName}`).
+4. On an `UPDATE` action for the subscribed URL: call `getConversation(fullConversationId)` once, where `fullConversationId` is `safeDecodeURIComponent(normalizeConversationId(conversationId))` (`safeDecodeURIComponent` and `getConversationPath` are imported from `@epam/ai-dial-chat-hooks`) — the **bucket-included**, decode-normalized id — NOT the bucket-stripped `path` used in step 1. `getConversation`'s `path` query param must include the bucket to resolve correctly (see `conversations-api` spec); passing the bucket-stripped path caused a 400 from DIAL Core for Quick App conversations, whose deployment-id segment itself contains a slash (`applications/{bucket}/{appName}`).
 5. If `result.llmNamingDone === true` or `result.name?.trim() !== previousName.trim()`: call `updateConversationTitle`, `onUpdated(result.name)`, `silentRefreshConversations()`, then close the connection.
 6. On any other action or a `data:` line that does not match: continue reading.
 7. Abort the connection after `DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000` using an `AbortController` passed to the fetch.

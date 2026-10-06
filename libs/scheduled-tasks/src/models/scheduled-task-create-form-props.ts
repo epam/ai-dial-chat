@@ -142,7 +142,7 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
  * as CSS custom properties with app theme fallbacks.
  */
 export interface ScheduledTaskCreateFormColors {
-  /** Refinement status text color. Defaults to --text-primary. */
+  /** Refinement status text color. Defaults to the kit `CaptionText` color (`--text-secondary`). */
   refineActionText?: string;
   /** Refinement error color. Defaults to --text-error. */
   refineErrorText?: string;
@@ -160,7 +160,7 @@ export interface ScheduledTaskCreateFormColors {
 
 /** Typography overrides for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormTypography {
-  /** Refinement feedback typography. Defaults to 'dial-small-text'. */
+  /** Refinement feedback typography. Defaults to the kit `CaptionText` class (`'dial-tiny-text'`). */
   refineFeedbackClassName?: string;
   /** CSS class applied to the title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;

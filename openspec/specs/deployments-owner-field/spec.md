@@ -12,7 +12,7 @@ The `DeploymentItemDto` SHALL include an optional `owner` field that carries the
 
 The backend SHALL:
 - Extend `RawDeploymentDto` (`apps/chat-api/src/deployments/dto/raw-deployment.dto.ts`) with `owner?: string`.
-- Read `raw.owner` in `mapToDeploymentItem` (`apps/chat-api/src/deployments/deployments.service.ts:33–84`) and assign it to `DeploymentItemDto.owner` when present.
+- Read `raw.owner` in `mapToDeploymentItem` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`, called by `listing/deployments-listing.service.ts` and `lookup/deployments-lookup.service.ts`) and assign it to `DeploymentItemDto.owner` when present.
 - Annotate `DeploymentItemDto.owner` with `@ApiPropertyOptional({ description: 'Owner of the deployment as reported by DIAL Core' })`.
 - Include `owner` in the cached `DeploymentItemDto[]` (the field is static per deployment).
 - Not throw or skip items when `owner` is absent; the field is optional.

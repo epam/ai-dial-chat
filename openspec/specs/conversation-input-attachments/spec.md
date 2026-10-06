@@ -6,11 +6,11 @@ Specifies how the conversation input library handles file attachments: uploading
 ## Requirements
 ### Requirement: Input uploads attachments immediately through a host callback
 
-`Input`, `ConversationInput`, and `EditMessageInput` SHALL accept an optional `onUploadAttachment?: (attachment: Attachment) => Promise<string>` prop.
+`Input`, `ConversationInput`, and `EditMessageInput` SHALL accept an optional `onUploadAttachment?: (attachment: Attachment) => Promise<UploadedAttachmentResult>` prop (`UploadedAttachmentResult` from `@epam/ai-dial-chat-shared`: `{ url, name }`).
 
-When `onUploadAttachment` is provided, the input SHALL call it immediately after each attachment is added from file picker, drag-and-drop, or clipboard paste. The input SHALL keep upload integration host-agnostic: it receives only a URL string from the callback and must not know REST paths, buckets, auth/session state, generated API clients, or upload path rules.
+When `onUploadAttachment` is provided, the input SHALL call it immediately after each attachment is added from file picker, drag-and-drop, or clipboard paste. The input SHALL keep upload integration host-agnostic: it receives only the uploaded URL and stored name from the callback and must not know REST paths, buckets, auth/session state, generated API clients, or upload path rules.
 
-The input SHALL store the returned URL on the matching `Attachment.url`.
+The input SHALL store the returned `url` on the matching `Attachment.url` and the returned `name` (the name actually stored, which may differ from the original) on `Attachment.name`.
 
 #### Scenario: Attachment enters loading state on add
 
@@ -22,7 +22,7 @@ The input SHALL store the returned URL on the matching `Attachment.url`.
 
 - **WHEN** `onUploadAttachment` resolves with a URL
 - **THEN** the matching attachment transitions to `status: RequestStatus.Idle`
-- **THEN** the matching attachment stores that URL
+- **THEN** the matching attachment stores that URL and the returned stored name
 - **THEN** the send action becomes available when all attachments are idle
 
 #### Scenario: Attachment enters error state after failed upload
@@ -52,13 +52,13 @@ The input SHALL store the returned URL on the matching `Attachment.url`.
 
 ### Requirement: AttachmentCard lazy-loads image previews
 
-`libs/conversation-input/src/components/AttachmentCard/AttachmentCard.tsx` SHALL render image attachments through a lazy-loaded `<img>` element when `attachment.type === AttachmentType.Image`, the attachment is not in `RequestStatus.Error`, and either `attachment.previewUrl` or `attachment.url` is present.
+`AttachmentCard` (`libs/attachment-input/src/components/AttachmentCard/AttachmentCard.tsx`, which delegates image tiles to `Attachments/Image.tsx`) SHALL render image attachments through a lazy-loaded `<img>` element when `attachment.type === AttachmentType.Image`, the attachment is not in `RequestStatus.Error`, and either `attachment.previewUrl` or `attachment.url` is present.
 
 The image source SHALL prefer `attachment.previewUrl` and fall back to `attachment.url`. The `<img>` SHALL use native lazy-loading (`loading="lazy"`) and asynchronous decoding (`decoding="async"`).
 
-While the image has not loaded, `AttachmentCard` SHALL render a rectangular `Skeleton` from `@epam/ai-dial-ui-kit` over the image area. The skeleton SHALL use the ui-kit overlay API to display a centered image icon (`IconPhoto`) and SHALL use theme/ui-kit styling only. The skeleton SHALL remain visible while the image is loading or failed, and SHALL be removed when the image emits a successful load event.
+While the image has not loaded, `AttachmentCard` SHALL render a rectangular `Skeleton` from `@epam/ai-dial-ui-kit` over the image area. The skeleton SHALL use the ui-kit overlay API to display a centered image icon (`IconPhoto`) and SHALL use theme/ui-kit styling only. The skeleton SHALL remain visible while the image is loading (`active`) or failed (inactive), and SHALL be removed when the image emits a successful load event.
 
-The image load tracking SHALL be isolated in a reusable hook owned by `libs/conversation-input` and SHALL not introduce host/application knowledge such as REST paths, generated clients, auth/session state, or file-storage URL rules.
+The image load tracking SHALL be isolated in a reusable hook (`useLazyImageLoad`, `libs/attachment-input/src/hooks/useLazyImageLoad.ts`) owned by `libs/attachment-input` and SHALL not introduce host/application knowledge such as REST paths, generated clients, auth/session state, or file-storage URL rules.
 
 #### Scenario: Image card uses lazy browser loading
 
@@ -87,9 +87,9 @@ The image load tracking SHALL be isolated in a reusable hook owned by `libs/conv
 
 ### Requirement: Voice recording prop on ConversationInput
 
-`ConversationInputProps` (and the inner `InputProps`) SHALL accept an optional `isAudioMessageSupported?: boolean` prop. This prop is host-injected — the lib MUST NOT compute it internally or know about DIAL Core semantics. When absent or `false`, the mic button is hidden and the voice bar is never rendered.
+`ConversationInputProps` (and the inner `InputProps`) SHALL accept an optional `isAudioMessageSupported?: boolean` prop. This prop is host-injected — the lib MUST NOT compute it internally or know about DIAL Core semantics. When absent or `false`, the mic button is hidden and — unless the host separately sets `isVoiceRecordingSupported` (which defaults to `isAudioMessageSupported` and enables the add-menu "Record voice" item) — the voice bar is never rendered.
 
-When recording stops, the captured audio is immediately added as a `File` attachment to the message input tray (same as any locally-picked file). No upload or transcription callbacks are involved in the lib layer.
+The mic button starts a dictation recording: when the host supplies `onTranscribeAudio`, the recognized text is inserted into the draft; otherwise, and always for "Record voice", the captured audio is added as an audio attachment to the message input tray (same as any locally-picked file). Transcription is host-owned through `onTranscribeAudio`; the lib calls no backend itself.
 
 #### Scenario: isAudioMessageSupported absent — no mic button
 
@@ -105,15 +105,15 @@ When recording stops, the captured audio is immediately added as a `File` attach
 
 ### Requirement: `AttachmentTray` forwards a click callback to each `AttachmentCard`
 
-`libs/attachment-input/src/models/attachment-tray.ts` (`AttachmentTrayProps`) SHALL declare two optional props:
+`libs/attachment-input/src/models/attachment-tray.ts` (`AttachmentTrayProps`) SHALL declare an optional `onAttachmentClick?: (id: string) => void` prop and an optional `labels.clickLabel?: string` (on `AttachmentTrayLabels`):
 
-- `onAttachmentClick?: (id: string) => void` — Called when the user clicks or keyboard-activates a card. Receives the attachment `id`; callers that need the full `DisplayAttachment` look it up from their own attachment list by `id`.
-- `clickLabel?: string` — Forwarded to each `AttachmentCard` as `clickLabel`. When omitted, `AttachmentCard`'s own default (`'Open attachment'`) applies.
+- `onAttachmentClick` — Called when the user clicks or keyboard-activates a card. Receives the attachment `id`; callers that need the full `DisplayAttachment` look it up from their own attachment list by `id`.
+- `labels.clickLabel` — Forwarded to each `AttachmentCard` as `labels.clickLabel`. When omitted, the card's own default applies (`'Open attachment'` for image tiles, `'Download attachment'` for file tiles).
 
 `AttachmentTray.tsx` SHALL, for each rendered `AttachmentCard`:
 - Pass `onAttachmentClick` directly as the `onClick` prop (both share the `(id: string) => void` signature, so no wrapper function is needed).
-- Pass `clickLabel` as the `clickLabel` prop (may be `undefined`; card's own default covers that case).
-- Continue passing `onRemove`, `onRetry`, and `onExpand` as today — the new props are purely additive.
+- Pass `clickLabel` inside the card's `labels` object, together with `removeLabel`, `retryLabel` and `uploadingLabel` (may be `undefined`; card's own default covers that case).
+- Continue passing `onRemove`, `onRetry`, and `onExpand` as today — the click props are purely additive.
 
 When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and cards remain inert (no regression to existing consumers).
 
@@ -130,8 +130,8 @@ When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and c
 
 #### Scenario: `clickLabel` is forwarded to each card
 
-- **WHEN** `AttachmentTray` is rendered with `onAttachmentClick` and `clickLabel="Download file"`
-- **THEN** each `AttachmentCard` receives `clickLabel="Download file"`
+- **WHEN** `AttachmentTray` is rendered with `onAttachmentClick` and `labels={{ clickLabel: "Download file" }}`
+- **THEN** each `AttachmentCard` receives `labels.clickLabel="Download file"`
 
 #### Scenario: Existing remove and retry callbacks are unaffected
 
@@ -144,7 +144,7 @@ When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and c
 - `pendingDropFiles?: File[]` — files supplied from outside (e.g., page-level drag-and-drop)
 - `onDropFilesConsumed?: () => void` — signals that the files have been consumed by the input
 
-When `pendingDropFiles` changes to a non-empty array, `EditMessageInput` SHALL merge those files with its internal `pendingDropFiles` state (or set it directly when the internal queue is empty) and call `onDropFilesConsumed`.
+When `pendingDropFiles` changes to a non-empty array, `EditMessageInput` SHALL copy those files into its internal `pendingDropFiles` state (replacing it; the internal queue is cleared as soon as the inner `Input` consumes it) and call `onDropFilesConsumed`.
 
 #### Scenario: External pending files appear in edit input
 
@@ -222,6 +222,8 @@ export enum AttachmentErrorReason {
   Network = 'network',
   /** File MIME type is not in the deployment's inputAttachmentTypes list. */
   UnsupportedType = 'unsupported-type',
+  /** File size exceeds the configured maximum attachment size. */
+  FileTooLarge = 'file-too-large',
 }
 ```
 
@@ -285,11 +287,11 @@ When `validateAttachment` is not provided, existing behaviour is unchanged.
 
 `ConversationInputProps`, `InputProps`, and `EditMessageInputProps` SHALL accept optional `isAttachmentsEnabled?: boolean` and `isTextAttachmentsAllowed?: boolean` props. When absent each defaults to `true` (no change in behaviour).
 
-The `useClipboardPaste` handler SHALL convert long pasted plain text into a `text/plain` attachment only when both `isAttachmentsEnabled` and `isTextAttachmentsAllowed` are `true`. When either is `false`, the text SHALL be inserted inline into the textarea as if no threshold existed. Image clipboard items (pasted screenshots) are unaffected by either flag — they still convert to `AttachmentType.Image` attachments and proceed through the normal `validateAttachment` path.
+The `useClipboardPaste` handler (`libs/attachment-input/src/hooks/useClipboardPaste.ts`) SHALL convert long pasted plain text into a `text/plain` attachment (`AttachmentType.Pasted`) only when both `isAttachmentsEnabled` and `isTextAttachmentsAllowed` are `true`; `Input` enforces this by passing an `Infinity` threshold to the hook otherwise. When either is `false`, the text SHALL be inserted inline into the textarea as if no threshold existed. Image clipboard items (pasted screenshots) are unaffected by either flag — they still convert to `AttachmentType.Image` attachments and proceed through the normal `validateAttachment` path.
 
 The host app is responsible for resolving both props from the selected deployment:
 - When no deployment is selected, both props are omitted (undefined → `true`), allowing conversion.
-- When a deployment is selected, the host passes `isAttachmentsEnabled={isAttachmentsAllowed}` where `isAttachmentsAllowed` is derived from `selectedDeployment.inputAttachmentTypes` being non-empty, and `isTextAttachmentsAllowed={isMimeTypeAllowed('text/plain', inputAttachmentTypes)}` — `true` when the list accepts `text/plain` (an explicit `text/plain` entry, the `text/*` wildcard, or a global `*` / `*/*` entry), `false` when the model accepts only other kinds of attachments (e.g. images only).
+- When a deployment is selected, the host passes `isAttachmentsEnabled={isAttachmentsAllowed}` where `isAttachmentsAllowed` is derived from `selectedDeployment.inputAttachmentTypes` being non-empty, and `isTextAttachmentsAllowed={isMimeTypeAllowed('text/plain', inputAttachmentTypes)}` (`isAttachmentsAllowed` and `fileAccept` come from `useAttachmentValidation` in `@epam/ai-dial-chat-hooks`) — `true` when the list accepts `text/plain` (an explicit `text/plain` entry, the `text/*` wildcard, or a global `*` / `*/*` entry), `false` when the model accepts only other kinds of attachments (e.g. images only).
 
 `selectedDeployment` here is the BFF's `DeploymentItemDto`, so the field is
 `inputAttachmentTypes`. In a raw DIAL Core payload the same field is
@@ -423,7 +425,7 @@ When `addAttachments` is called with multiple files, the `Input` component SHALL
 
 The dispatcher fires one upload every `60000 / MAX_UPLOADS_PER_MINUTE` ms (600 ms). All started uploads run in parallel; the next dispatch slot opens after each interval regardless of whether prior uploads have completed.
 
-The rate limiter is implemented via `runAtRate` from `libs/conversation-input/src/utils/concurrency.ts`. The constant `MAX_UPLOADS_PER_MINUTE` is defined in `libs/conversation-input/src/constants/upload.ts`.
+The rate limiter is implemented via `runAtRate` from `libs/conversation-input/src/utils/concurrency.ts`. The constant `MAX_UPLOADS_PER_MINUTE` is defined in `libs/attachment-input/src/constants/upload.ts` and exported from `@epam/ai-dial-attachment-input`.
 
 This is client-side upload pacing; the BFF does not enforce a matching request-rate limit. A `429` that does reach the client SHALL surface as `RequestStatus.Error` on the affected attachment card, consistent with other upload failures.
 
@@ -522,8 +524,8 @@ The lib SHALL remain host-agnostic: it must not know DIAL Core, quick apps, depl
 Attachments currently in `RequestStatus.Loading` are skipped by this re-validation pass — an in-flight upload is never interrupted.
 
 - If `validateAttachment` now returns an `AttachmentErrorReason` for an attachment that was not already in that exact error state, the attachment SHALL transition to `{ status: RequestStatus.Error, errorReason: reason }`. This reuses the existing error-card rendering, retry-button suppression rules, and `hasBlockedAttachments` gating — no new UI or send-blocking mechanism is introduced.
-- If `validateAttachment` now returns `undefined` for an attachment whose `errorReason` was `AttachmentErrorReason.UnsupportedType`, the attachment SHALL transition back to `RequestStatus.Idle` with `errorReason` cleared. When that attachment has no `url` yet (it was never uploaded because it was invalid at add time), `useAttachments` SHALL call `onUploadAttachment` for it as part of the transition.
-- Attachments with any other error reason (e.g. `AttachmentErrorReason.Network`) or with no error are left untouched by this pass beyond the unsupported-type checks above.
+- If `validateAttachment` now returns `undefined` for an attachment whose `errorReason` was `AttachmentErrorReason.UnsupportedType` or `AttachmentErrorReason.FileTooLarge`, the attachment SHALL transition back to `RequestStatus.Idle` with `errorReason` cleared. When that attachment has no `url` yet (it was never uploaded because it was invalid at add time), `useAttachments` SHALL call `onUploadAttachment` for it as part of the transition.
+- Attachments with any other error reason (e.g. `AttachmentErrorReason.Network`) or with no error are left untouched by this pass beyond the unsupported-type/file-too-large checks above.
 - When `validateAttachment` is not provided (`undefined`), no re-validation pass runs.
 
 This closes the gap where a file attached while compatible with the selected model, followed by switching to a model that no longer supports that file's type, previously left the attachment silently valid until send failed.
@@ -559,23 +561,23 @@ This closes the gap where a file attached while compatible with the selected mod
 
 ### Requirement: Input wrapper removes inline-end padding when the tray is full
 
-When the total attachment count (prefix + new) reaches 7 or more, the `Input` wrapper SHALL drop its inline-end (`padding-right`) to `0`. For fewer than 7 attachments the default `p-3` (12 px on all sides) applies.
+When the total attachment count (prefix + new) reaches 7 or more, the `Input` wrapper SHALL drop its inline-end padding to `0`. For fewer than 7 attachments the default `p-4` (16 px on all sides) applies.
 
 #### Scenario: No end padding with 7 or more attachments
 
 - **WHEN** the combined attachment count is 7 or more
-- **THEN** the input wrapper uses `py-3 pl-3` (no right padding)
+- **THEN** the input wrapper uses `py-4 ps-4` (no inline-end padding)
 
 #### Scenario: Default padding with fewer than 7 attachments
 
 - **WHEN** the combined attachment count is 6 or fewer
-- **THEN** the input wrapper uses `p-3` (12 px on all sides)
+- **THEN** the input wrapper uses `p-4` (16 px on all sides)
 
 ---
 
 ### Requirement: Retry button is suppressed for non-retryable error reasons
 
-`AttachmentCard` SHALL NOT render the retry button when `attachment.errorReason === AttachmentErrorReason.UnsupportedType`, even if an `onRetry` prop is provided.
+`AttachmentCard` SHALL NOT render the retry button when `attachment.errorReason` is `AttachmentErrorReason.UnsupportedType` or `AttachmentErrorReason.FileTooLarge`, even if an `onRetry` prop is provided.
 
 For all other error states (no `errorReason`, or `errorReason === AttachmentErrorReason.Network`) the retry button continues to render when `onRetry` is present.
 
@@ -627,17 +629,17 @@ Because the browser `accept` attribute is only a selection hint (the user can st
 - **WHEN** `fileAccept` is provided and the user overrides the OS dialog to pick an unsupported file
 - **THEN** `validateAttachment` is still invoked for that file and rejects it as before
 
-### Requirement: Input always uses the stacked two-row layout
+### Requirement: Input defaults to the stacked two-row layout
 
-The `Input` component SHALL always render the textarea on its own full-width row above the action bar (`+` button, tools chips when present, model selector, send/stop, mic). There SHALL be no compact single-row layout: no prop, message length, visual line count, tool list, attachment count, or viewport width SHALL place the textarea on the same row as the action controls.
+By default (`actionRowLayout` omitted or `ActionRowLayout.Stacked`) the `Input` component SHALL render the textarea on its own full-width row above the action bar (`+` button, tools chips when present, model selector, send/stop, mic). Message length, visual line count, tool list and attachment count SHALL NOT change the layout. The only single-row layout is the host opt-in `actionRowLayout={ActionRowLayout.Inline}` (add button, textarea and footer actions on one `flex-nowrap` line, tool chips on their own row above), which applies from the desktop breakpoint up unless `isInlineActionRowAllowedBelowDesktop` is `true`; no app host in this repo passes it today.
 
 The input wrapper SHALL NOT declare a minimum height; its height SHALL follow its content.
 
-Consequently `Input` SHALL NOT reorder or re-wrap its children per breakpoint. DOM order SHALL be the visual order — textarea container, `+` button, tools chips, trailing actions — with no `order-*` or `desktop:flex-nowrap` overrides.
+Consequently `Input` SHALL NOT reorder or re-wrap its children per breakpoint. DOM order SHALL be the visual order — textarea container, `+` button, tools chips, trailing actions — with no `order-*` or `desktop:flex-nowrap` overrides (the inline layout instead renders the add cluster before the textarea in DOM order).
 
 #### Scenario: Empty input renders two rows
 
-- **WHEN** `Input` is rendered with an empty message, no attachments, and no tools
+- **WHEN** `Input` is rendered with the default `actionRowLayout`, an empty message, no attachments, and no tools
 - **THEN** the textarea occupies its own row above the row holding the `+` button and model selector
 - **AND** the same layout is rendered at a mobile viewport and at a desktop viewport
 

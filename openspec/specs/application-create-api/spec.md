@@ -13,9 +13,9 @@ The endpoint SHALL:
 - Accept a `CreateApplicationBodyDto` request body validated by NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted).
 - Use the session `accessToken` as a Bearer token for all DIAL Core calls, issued through the `@epam/ai-dial-typescript-sdk` client rather than raw `fetch`.
 - First resolve the user's storage bucket via the client's `getUserBucket`, and reject with 502 when it succeeds but returns no bucket.
-- Construct the application path as `{name}__{version}` (`appPath`), where `version` defaults to `'1.0.0'` when not supplied; URL-encode it (`encodedPath`) only for the outgoing DIAL Core request.
+- Construct the application path as `{name}__{version}` (`appPath`), where `version` defaults to `'1.0.0'` when not supplied; URL-encode it with `encodeURIComponent` (`encodedPath`) for both the outgoing DIAL Core request and the returned id.
 - Create the application via the client's `saveCustomApplication(bucket, encodedPath, …)` with a mapped body (see below).
-- On success, invalidate the per-user applications and deployments-list caches, then return `{ id: "applications/{bucket}/{appPath}" }` — the **unencoded** path, matching the resource id format used elsewhere (e.g. `listApplications`).
+- On success, invalidate the per-user applications and deployments-list caches, then return `{ id: "applications/{bucket}/{encodedPath}" }` — the **URL-encoded** path (e.g. `applications/users/alice/My%20App__1.0.0`), so a name containing spaces yields an id the client can use directly in follow-up requests such as the application preview.
 - Map DIAL Core non-2xx responses to the appropriate HTTP status using `mapDialHttpStatus`, and transport-level failures via `handleDialFetchError`.
 - Not log the access token, session cookie, or any secret. Safe identifiers (`userSub`, app path) MAY be logged at debug level.
 - Follow `apps/chat-api/AGENTS.md` for all controller and service conventions.
@@ -37,7 +37,7 @@ The endpoint SHALL:
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsValidResourceReference (https?:// URL or a
                          //   DIAL file id "files/{bucket}/{path}", no traversal segments)
   version?: string;      // optional, @IsString, @IsOptional, @Matches(SEMVER_VERSION_PATTERN) — SemVer 2.0.0
-                         //   — defaults to "0.0.1" in the service
+                         //   — defaults to "1.0.0" in the service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
   applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional
   locales?: LocaleTextEntryDto[];  // optional additional-locale name/description entries,
@@ -75,7 +75,7 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 **Exception — forced `features.skills_supported` for Quick Apps.** The one deliberate exception to the rule above: when `body.type` matches the backend's own `isQuickAppSchema` helper (`apps/chat-api/src/common/utils/application-schema.ts`), the service SHALL force `features.skills_supported` to `true` on the DIAL Core save body, merged with any caller-supplied `features` (hoisted or not), overriding any `skills_supported` value the caller may have sent. This is a narrow, acknowledged hack: when an admin creates a Quick App from the Admin application, Admin's own UI lets them set `skills_supported`; chat has no equivalent UI control, so a Quick App created from chat would otherwise never get the flag set and would silently lose skills. Pushing this default into every individual Quick App implementation was rejected as duplicative across many places, and leaving skills broken was rejected outright — forcing it here, in the one place all chat-originated application writes already pass through, was judged the least-bad of those three options, even though it couples generic application-write logic to a QuickApp-specific business rule that doesn't otherwise belong in this endpoint.
 
-**Response DTO** (`CreatedApplicationDto`): `{ id: string; displayName?: LocalizedText; object?: string }`. This endpoint populates only `id`, constructed locally as `applications/{bucket}/{appPath}` (unencoded); DIAL Core's save response body is not forwarded. The two optional fields exist for other producers of the same DTO.
+**Response DTO** (`CreatedApplicationDto`): `{ id: string; displayName?: LocalizedText; object?: string }`. This endpoint populates only `id`, constructed locally as `applications/{bucket}/{encodedPath}` (URL-encoded); DIAL Core's save response body is not forwarded. The two optional fields exist for other producers of the same DTO.
 
 **OpenAPI / generated client**: operationId `createApplication`; this cache-only change does not alter the generated client.
 
@@ -83,12 +83,12 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 **RTL / UI impact**: None.
 
-#### Scenario: Successful create returns 201 with unencoded id
+#### Scenario: Successful create returns 201 with URL-encoded id
 
 - **WHEN** an authenticated user calls `POST /api/v1/applications` with `{ "name": "My App", "type": "https://mydial.epam.com/custom_application_schemas/quickapps2" }`
 - **AND** `GET /v1/bucket` returns `{ "bucket": "users/alice" }`
-- **AND** the DIAL Core save for the URL-encoded path `users/alice/My%20App__0.0.1` succeeds
-- **THEN** the endpoint responds 201 with `{ "id": "applications/users/alice/My App__0.0.1" }` (unencoded path)
+- **AND** the DIAL Core save for the URL-encoded path `users/alice/My%20App__1.0.0` succeeds
+- **THEN** the endpoint responds 201 with `{ "id": "applications/users/alice/My%20App__1.0.0" }` (URL-encoded path)
 - **AND** the applications and deployments-list caches are invalidated
 
 #### Scenario: Cached deployments list refreshes after create

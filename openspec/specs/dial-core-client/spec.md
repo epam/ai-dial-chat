@@ -7,7 +7,7 @@ A single shared DIAL Core SDK client service used by every chat-api domain.
 ## Requirements
 
 ### Requirement: Single shared DIAL Core SDK client
-The system SHALL create exactly one `@epam/ai-dial-typescript-sdk` client instance per process, owned by `DialClientService`, using `createSDK({ baseUrl, fetch })` where `baseUrl` is read from the `DIAL_CORE_URL` environment variable via `ConfigService<EnvironmentVariables>` with `{ infer: true }` and `fetch` is the shared DIAL Core transport owned by `DialClientService`.
+The system SHALL create exactly one `@epam/ai-dial-typescript-sdk` client instance per process, owned by `DialClientService`, using `createSDK({ baseUrl, fetch })` where `baseUrl` is read from the `DIAL_CORE_URL` environment variable via `ConfigService<EnvironmentVariables>` with `{ infer: true }` and `fetch` is the shared DIAL Core transport owned by `DialClientService` and exposed as its readonly `fetchCore` member.
 
 #### Scenario: Multiple services inject the client
 - **WHEN** `ModelsService`, `ApplicationsService`, `ChatService`, and any other `chat-api` domain service are constructed within the same NestJS application instance
@@ -50,7 +50,7 @@ Every outbound HTTP request from `chat-api` to DIAL Core SHALL include exactly o
 - **THEN** the shared Core transport replaces it with the canonical `ai-dial-chat/<normalized-version>` value without producing a duplicate header
 
 ### Requirement: Raw DIAL Core escape hatches use the shared transport
-Any `chat-api` integration that calls a DIAL Core URL without an SDK operation MUST use the fetch-compatible transport exposed by `DialClientService` rather than `globalThis.fetch`, so the common User-Agent and future Core-only transport behavior remain consistent. Non-Core upstreams MUST continue using their own transport and MUST NOT receive the DIAL Chat-to-Core User-Agent automatically.
+Any `chat-api` integration that calls a DIAL Core URL without an SDK operation MUST use the fetch-compatible transport exposed by `DialClientService` (`dialClient.fetchCore`) rather than `globalThis.fetch`, so the common User-Agent and future Core-only transport behavior remain consistent. Non-Core upstreams MUST continue using their own transport and MUST NOT receive the DIAL Chat-to-Core User-Agent automatically.
 
 #### Scenario: Rating request uses the shared transport
 - **WHEN** `RateService` proxies a rating to DIAL Core
@@ -69,10 +69,10 @@ Any `chat-api` integration that calls a DIAL Core URL without an SDK operation M
 - **THEN** it does not use the DIAL Core transport and does not receive `User-Agent: ai-dial-chat/<normalized-version>` from this capability
 
 ### Requirement: DialClientService exposes baseUrl and dialApiVersion
-`DialClientService` SHALL expose `baseUrl` (the raw `DIAL_CORE_URL` value) and `dialApiVersion` (the raw `DIAL_API_VERSION` value) as readonly members, in addition to `client`, so that services needing raw HTTP access or the `api-version` query parameter do not need their own `ConfigService` reads for these values.
+`DialClientService` SHALL expose `baseUrl` (the raw `DIAL_CORE_URL` value; construction throws when it is unset) and `dialApiVersion` (the `DIAL_API_VERSION` value, defaulting to `2024-10-21`) as readonly members, in addition to `client`, `fetchCore`, and the computed `userAgent`, so that services needing raw HTTP access or the `api-version` query parameter do not need their own `ConfigService` reads for these values.
 
 #### Scenario: Raw fetch escape hatch
-- **WHEN** `ApplicationsService` needs to call a DIAL Core endpoint not covered by the SDK (e.g. `/v1/bucket`)
+- **WHEN** `RateService` needs to call a DIAL Core endpoint not covered by the SDK (`/v1/<modelId>/rate`)
 - **THEN** it builds the request URL using `dialClient.baseUrl` rather than reading `DIAL_CORE_URL` from `ConfigService` itself
 
 #### Scenario: Chat completion api-version parameter

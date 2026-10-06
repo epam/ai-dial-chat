@@ -10,23 +10,23 @@ Client-side rename validation and the rename save flow in the file-manager shell
 
 `useDialFileManager` SHALL expose `onRenameValidate(value: string, item: DialFile): string | null`, which validates a proposed new name before the rename is submitted.
 
-**State ownership**: the hook in `libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)` owns validation logic. `DialFileManagerShell` receives `onRenameValidate` via the `hookResult` prop and passes it to `DialFileManager`.
+**State ownership**: the rules run in `useDialFileMutations` (`libs/chat-hooks/src/files/useDialFileMutations/useDialFileMutations.ts`, `@epam/ai-dial-chat-hooks`), which returns a structured `FileNameValidationError` (`reason: FileNameValidationErrorReason`). `useDialFileManager` wraps it and turns the error into text through the host-supplied `buildValidationErrorMessage` option (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`, wired by `useDialFileManagerHostOptions`), so the lib holds no i18n. The app-level `DialFileManagerShell` wrapper receives the hook result as `hookResult` and forwards it as the `controller` prop of the shared `DialFileManagerShell` (`@epam/ai-dial-chat-shared/file-manager`), which passes `onRenameValidate` to `DialFileManager`.
 
 **Validation rules** (checked in order):
 
 | # | Rule | Error key |
 |---|------|-----------|
-| 1 | Empty name | `renameValidationMessages.emptyName` |
+| 1 | Empty or whitespace-only name | `dialFileManager.renameNameEmpty` |
 | 2 | Name equals reserved `.dial_folder` | `dialFileManager.renameReservedName` |
 | 3 | Name contains `/`, `\`, or a forbidden symbol (per `forbiddenSymbolsRegExp`) | File: `dialFileManager.forbiddenSymbolsTooltip`; folder: `dialFileManager.folderNameInvalidChars` |
 | 4 | Name length > 255 | `dialFileManager.renameNameTooLong` |
-| 5 | Duplicate sibling name (case-insensitive) | `renameValidationMessages.duplicateName` |
+| 5 | Duplicate sibling name (case-insensitive, among `currentFolder.items` excluding the item itself) | `dialFileManager.renameDuplicateName` |
 
 Forbidden-symbol validation SHALL use the same effective symbol set as folder creation: path separators (`/` and `\`) are always rejected, and all other forbidden characters come from the `forbiddenSymbolsRegExp` option. If a file name contains a forbidden symbol, the function SHALL return `dialFileManager.forbiddenSymbolsTooltip` ("File name should not contain special symbols {{notAllowedSymbols}}"). If a folder name contains a forbidden symbol, it SHALL return `dialFileManager.folderNameInvalidChars` ("Folder name should not contain special symbols {{notAllowedSymbols}}"). This keeps file rename, folder rename, and create-folder validation aligned while preserving file-vs-folder wording.
 
 **Caller wiring**: every production call site of `useDialFileManager` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx` and `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) MUST pass `forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP` (from `@epam/ai-dial-ui-kit`) to the hook. Without this, the regex-backed part of rule #3 never runs — the sibling regex check on `DialFileManagerShell` only feeds the ui-kit's static already-invalid-name indicator, not `onRenameValidate`, so a caller that omits this option lets any forbidden symbol beyond `/` and `\` through unvalidated.
 
-**Memoisation**: `onRenameValidate` SHALL be wrapped in `useCallback` (depends on sibling file list and `forbiddenSymbolsRegExp`).
+**Memoisation**: `onRenameValidate` SHALL be wrapped in `useCallback` (depends on `currentFolder` and `forbiddenSymbolsRegExp`).
 
 **i18n keys**:
 
@@ -35,12 +35,12 @@ Forbidden-symbol validation SHALL use the same effective symbol set as folder cr
 | `dialFileManager.renameNameEmpty` | `"Name cannot be empty"` |
 | `dialFileManager.renameDuplicateName` | `"An item with this name already exists"` |
 | `dialFileManager.renameReservedName` | `"This name is reserved"` |
-| `dialFileManager.renameInvalidChars` | `"Name contains invalid characters"` |
 | `dialFileManager.forbiddenSymbolsTooltip` | `"File name should not contain special symbols {{notAllowedSymbols}}"` |
 | `dialFileManager.folderNameInvalidChars` | `"Folder name should not contain special symbols {{notAllowedSymbols}}"` |
 | `dialFileManager.renameNameTooLong` | `"Name must be 255 characters or fewer"` |
+| `dialFileManager.renameHiddenItemWarning` | `"A dot at the start of the name will make the item hidden"` |
 
-`renameValidationMessages.emptyName` and `renameValidationMessages.duplicateName` are supplied via the ui-kit `renameValidationMessages` prop using the explicit rename i18n keys above.
+The ui-kit `renameValidationMessages` prop is built by each host (`DialFileManagerPage`, `DialFileManagerModal`) from `renameNameEmpty` (`emptyName`), `renameDuplicateName` (`duplicateName`), and `renameHiddenItemWarning` prefixed with `${NotificationVariant.Warning}__` (`hiddenItemWarning`), and reaches the shell through `labels.renameValidationMessages`.
 
 **RTL**: no directional layout impact. Error message strings are direction-agnostic; ui-kit inline input inherits `dir` from `<html>`.
 
@@ -66,7 +66,7 @@ Forbidden-symbol validation SHALL use the same effective symbol set as folder cr
 #### Scenario: File forbidden symbol rejected with specific message
 
 - **WHEN** the user types a name containing a forbidden symbol (e.g. `report:v2`)
-- **THEN** `onRenameValidate` returns `"File name should not contain special symbols {{notAllowedSymbols}}"` (the `forbiddenSymbolsTooltip` message), not the generic `"Name contains invalid characters"` message
+- **THEN** `onRenameValidate` returns `"File name should not contain special symbols {{notAllowedSymbols}}"` (the `forbiddenSymbolsTooltip` message), not a generic invalid-characters message
 - **AND** the ui-kit renders this message as a live inline tooltip while the user is still typing
 
 #### Scenario: Folder forbidden symbol rejected with folder wording
@@ -98,25 +98,25 @@ Forbidden-symbol validation SHALL use the same effective symbol set as folder cr
 
 ### Requirement: onMoveToFiles — rename save flow
 
-`useDialFileManager` SHALL expose `onMoveToFiles(items: DialCopiedItem[], sourceFolder: string, destinationFolder: string): void`, which maps ui-kit `DialCopiedItem[]` to `RenameItemDto[]` and calls `POST /api/v1/files/rename`.
+`useDialFileManager` SHALL expose `onMoveToFiles(items: DialCopiedItem[], sourceFolder: string, destinationFolder: string): void` (implemented in `useDialFileMutations`), which splits ui-kit `DialCopiedItem[]` via `prepareMoveRenameItems` (`libs/chat-hooks/src/files/dial-file-manager-copy-move.util.ts`): items whose source and destination share a parent folder become `RenameItemDto[]` sent through the injected `filesApi.renameFiles` (`POST /api/v1/files/rename`); items whose parent changes become `MoveItemDto[]` sent through `filesApi.moveFiles` in parallel. The call is ignored when the list is empty or a copy, move, or rename is already in flight.
 
 **State ownership**: `isRenaming: boolean` state is owned by `useDialFileManager`. It is `true` while the BFF call is in flight.
 
-**Mapping rule**: `DialCopiedItem.sourceUrl` → `sourcePath` (via `virtualPathToApiPath`, same as delete). `DialCopiedItem.destinationUrl` → `destinationPath`. `DialCopiedItem.nodeType` → `RenameItemNodeType.Item` or `RenameItemNodeType.Folder`.
+**Mapping rule**: `DialCopiedItem.sourceUrl` → `sourcePath` and `DialCopiedItem.destinationUrl` → `destinationPath` (both via `virtualPathToApiPath`; folders normalised to a trailing `/`, files without one). `DialCopiedItem.nodeType` → `RenameItemDtoNodeTypeEnum.Item` or `RenameItemDtoNodeTypeEnum.Folder`. Each DTO also carries `bucket` and the source `name`.
 
 **Save flow**:
-1. `setIsRenaming(true)`.
-2. Map `DialCopiedItem[]` → `RenameItemDto[]`.
-3. Call `renameFiles(dtos)` from `apps/chat/src/server-api/files.api.ts`.
-4. On success: invalidate listing cache for source parent folder and destination parent folder keys; trigger `setRetryCounter` (same as delete refresh); raise a success notification (see below).
-5. On partial failure: show toast naming failed items (mirror delete partial-error toast). No success notification is raised for a partially failed batch.
-6. On total failure: show error toast.
-7. If the renamed folder is the current browse path or an ancestor, navigate to the new virtual path (replace old prefix with new prefix in the URL).
-8. `setIsRenaming(false)`.
+1. Map `DialCopiedItem[]` → `RenameItemDto[]` (and `MoveItemDto[]`).
+2. `setIsRenaming(true)` when there is at least one rename DTO.
+3. Call `filesApi.renameFiles(renameDtos)`; a thrown call counts every rename DTO as failed.
+4. On full success of a single rename: raise a success notification (see below).
+5. On partial failure: emit `onNotification` with `FileManagerNotificationReason.RenamePartiallyFailed` and the failed `count` (the host maps it to `dialFileManager.renamePartialError`). No success notification is raised for a partially failed batch.
+6. On total failure: emit `onNotification` with `FileManagerNotificationReason.RenameFailed` (the host maps it to `dialFileManager.renameError`).
+7. If a successfully renamed folder is the current browse path or an ancestor, update the current folder path via `setFolderPath` (replace the old prefix with the new prefix).
+8. Whatever the outcome, invalidate the listing cache for every source and destination parent folder (`invalidateFolders`), call `bumpRetry()`, and `setIsRenaming(false)`.
 
-**Success notification**: a fully successful rename SHALL notify through `useOperationNotification` (see `entity-operation-notifications`) with `EntityOperation.Renamed`, `NotifiableEntity.File` or `NotifiableEntity.Folder` resolved from the renamed item's `nodeType`, and `name` = the new name. A single notification SHALL be raised per rename action; a multi-item batch SHALL use the existing plural copy rather than one notification per item.
+**Success notification**: a fully successful single-item rename SHALL emit `onOperationSuccess` with `FileOperationKind.FileRenamed`, `isFolder` from the DTO `nodeType`, and `name` = the new name; the host adapter then notifies through `useOperationNotification` (see `entity-operation-notifications`) with `EntityOperation.Renamed` and `NotifiableEntity.File` or `NotifiableEntity.Folder`. A multi-item rename batch (which the grid cannot produce today) SHALL raise no success notification.
 
-**Cache invalidation**: cache keys for the affected listing entries MUST be cleared so the next render fetches fresh data. Same strategy as delete (invalidate source parent + destination parent).
+**Cache invalidation**: cache keys for the affected listing entries MUST be cleared so the next render fetches fresh data — the source parent and destination parent of every rename and move DTO, via `invalidateFolders` + `bumpRetry`.
 
 **Memoisation**: `onMoveToFiles` SHALL be wrapped in `useCallback`.
 
@@ -134,17 +134,17 @@ Success copy lives in the `entityNotifications.file.renamed*` / `entityNotificat
 
 **RTL**: error toast uses existing toast infrastructure (logical layout already applied). No new physical-direction classes.
 
-**Accessibility**: loading overlay uses `aria-live="polite"` (same as delete overlay). Error banner uses `role="alert"`.
+**Accessibility**: loading overlay uses `aria-live="polite"` (same as delete overlay). Rename failures surface as host toasts, not an in-modal banner.
 
 #### Scenario: File rename triggers BFF and refreshes listing
 
 - **WHEN** the user confirms an inline rename of a file
-- **THEN** `onMoveToFiles` is called, `isRenaming` becomes `true`, `renameFiles` is called, and on success the listing refreshes, a success notification titled `"File renamed successfully"` is shown, and `isRenaming` returns to `false`
+- **THEN** `onMoveToFiles` is called, `isRenaming` becomes `true`, `filesApi.renameFiles` is called, and on success the listing refreshes, a success notification titled `"File renamed successfully"` is shown, and `isRenaming` returns to `false`
 
 #### Scenario: Folder rename navigates to new path
 
 - **WHEN** the user renames the folder they are currently browsing
-- **THEN** after a successful rename the app navigates to the new virtual path corresponding to the renamed folder, and a success notification titled `"Folder renamed successfully"` is shown
+- **THEN** after a successful rename the current folder path switches to the renamed folder's new path, and a success notification titled `"Folder renamed successfully"` is shown
 
 #### Scenario: Partial rename failure shows toast
 
@@ -154,18 +154,18 @@ Success copy lives in the `entityNotifications.file.renamed*` / `entityNotificat
 #### Scenario: isRenaming gate prevents concurrent operations
 
 - **WHEN** `isRenaming` is `true`
-- **THEN** rename and other destructive operations are disabled (treated as `isOperationInProgress`)
+- **THEN** `isAnyOperationInProgress` is `true` and a further `onMoveToFiles` call is ignored
 
 ### Requirement: DialFileManagerShell rename wiring
 
-`DialFileManagerShell` SHALL pass rename props to `DialFileManager` and include `DialFileManagerActions.Rename` in `actionLabels` only on the `my_files` tab (or when tabs are absent and the folder has WRITE permission).
+The shared `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) SHALL pass rename props to `DialFileManager`. `useDialFileManager` SHALL include `DialFileManagerActions.Rename` in its `actionLabels` only when `activeTab` is `DialFileManagerTabs.MyFiles` (the default when tabs are absent) and `uploadEnabled` (WRITE permission) is true; the shell forwards those labels to the grid.
 
 **Props wired**:
 - `onRenameValidate` — from `useDialFileManager`
 - `onMoveToFiles` — from `useDialFileManager`
-- `renameValidationMessages` — `{ emptyName, duplicateName, hiddenItemWarning }` i18n strings
+- `renameValidationMessages` — `labels.renameValidationMessages` (`{ emptyName, duplicateName, hiddenItemWarning }` i18n strings from the host)
 - `isRenameFileAvailable` — `uploadEnabled` (WRITE-gated)
-- `forbiddenSymbolsRegExp` — already wired (reuse)
+- `forbiddenSymbolsRegExp` — `NOT_ALLOWED_SYMBOLS_REGEXP`, with `forbiddenSymbolsTooltip` from `labels`
 
 **Action labels** (tab-gated — see `file-manager-tabs` spec for the full action matrix):
 
@@ -175,15 +175,15 @@ Success copy lives in the `entityNotifications.file.renamed*` / `entityNotificat
 | `shared` | ❌ |
 | `organization` | ❌ |
 
-**Loading overlay**: when `isRenaming` is `true`, the modal MUST show a full-coverage loading overlay (same z-index and pattern as `isDeleting` overlay). `isRenaming` MUST be included in `isOperationInProgress`.
+**Loading overlay**: when `isRenaming` is `true` and no move is in flight, the shell MUST show a full-coverage loading overlay (`absolute inset-0 z-[52]`, same pattern as the `isDeleting` overlay) containing a `Spinner` whose `ariaLabel` is `labels.renamingLabel`. `isRenaming` MUST be included in `isAnyOperationInProgress`.
 
-**Error banner**: if rename fails, an error banner appears at the bottom of the modal (same pattern as delete error banner). Clicking it dismisses the error.
+**Error feedback**: rename failures are reported through the hook's `onNotification` toast (see the save flow above); the shell renders no rename error banner.
 
-**Memoisation**: `renameValidationMessages` object SHALL be wrapped in `useMemo`.
+**Memoisation**: the host's `renameValidationMessages` object SHALL be wrapped in `useMemo` (in `DialFileManagerPage` and `DialFileManagerModal`).
 
-**RTL**: no new directional layout; overlay and banner reuse existing RTL-safe patterns (logical inset classes, `text-start`).
+**RTL**: no new directional layout; the overlay reuses existing RTL-safe patterns (logical inset classes).
 
-**Accessibility**: loading overlay `aria-live="polite"`, error banner `role="alert"`.
+**Accessibility**: loading overlay `aria-live="polite"`.
 
 #### Scenario: Rename action visible on my_files with WRITE
 
@@ -200,7 +200,7 @@ Success copy lives in the `entityNotifications.file.renamed*` / `entityNotificat
 - **WHEN** `isRenaming` is `true`
 - **THEN** a full-coverage loading overlay with `aria-live="polite"` is displayed over the modal content
 
-#### Scenario: Rename error banner dismissible
+#### Scenario: Rename error reported as a toast
 
-- **WHEN** a rename error occurs and the user clicks the error banner
-- **THEN** the banner is dismissed and the rename error state is cleared
+- **WHEN** every item in a rename batch fails
+- **THEN** `onNotification` receives `FileManagerNotificationReason.RenameFailed`, the host shows `"Rename failed. Please try again."` as an error toast, and the overlay clears

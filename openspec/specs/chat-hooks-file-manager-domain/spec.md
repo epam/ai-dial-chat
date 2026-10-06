@@ -35,81 +35,11 @@ URL, auth headers, or a CSRF token itself.
 #### Scenario: Upload operations carry progress and cancellation through the port
 
 - **WHEN** a hook calls `DialFilesApi.uploadFile`
-- **THEN** it passes `{ signal: AbortSignal; uploadMode: 'overwrite' |
-  'create-only'; onProgress: (percent: number) => void }` and the port
-  contract does not require the hook to know the underlying transport
-  (XHR, fetch, or otherwise)
-
-### Requirement: File-manager domain models and constants are host-agnostic
-
-`@epam/ai-dial-chat-hooks` SHALL export the file-manager domain model
-constants and types currently in `apps/chat/src/hooks/files/dial-file-manager.model.ts`
-and `dial-file-manager.types.ts` (`UPLOAD_CONCURRENCY`,
-`RESERVED_MARKER_NAME`, `DATE_OPTIONS`, `COLUMNS_WITH_AUTHOR`/
-`COLUMNS_WITHOUT_AUTHOR`, `CORE_PERMISSION_MAP`, `SharedRootMeta`,
-`PreparedCopyMoveItem`, `CopyMoveResult`, `UseDialFileManagerOptions`,
-`UseDialFileManagerResult`, `FileUploadValidationResult`,
-`FileManagerNotification`) unchanged in shape, depending only on
-`@epam/ai-dial-chat-shared` and `@epam/ai-dial-react-file-manager` types.
-
-#### Scenario: Constants and types are importable without any app dependency
-
-- **WHEN** a consumer imports `UPLOAD_CONCURRENCY`, `CORE_PERMISSION_MAP`, or
-  `UseDialFileManagerResult` from `@epam/ai-dial-chat-hooks`
-- **THEN** no transitive import chain reaches `apps/chat`
-
-### Requirement: Path, mapping, and copy/move utilities preserve their exact algorithms
-
-`@epam/ai-dial-chat-hooks` SHALL export
-`hasForbiddenNameSymbols`, `normalizeVirtualPath`, `getVirtualPathName`,
-`formatOperationFolderName`, `findFolderByVirtualPath`,
-`hasDialFileWritePermission`, `findDialFileByPath`,
-`isCopyMoveDuplicateAllowed`, `isShareActionsAllowed`,
-`parseNewFolderVirtualPath`, `dialCorePathToRelative`,
-`buildSharedItemVirtualPath`, `resolveOwnerCoords`, `mapCorePermissions`,
-`findFirstSuccessfulCopyMoveItem`, `buildFromCache`,
-`mergeCreatedFolderIntoCache`, `updateEntry`, `mapSearchItem`,
-`mapFileMetadataToDialFile`, `prepareCopyItems`, `prepareMoveRenameItems`,
-`virtualPathToApiPath`, `resolveDialFileApiPath`, and
-`sanitizeFileName`, each preserving its exact current algorithm (case-
-insensitive sibling-name comparisons, path-separator normalization, owner-
-bucket resolution for Shared-tab items, rename-vs-move disambiguation from
-`DialCopiedItem` selection payloads) with no behavior change from its
-current `apps/chat` implementation.
-
-`virtualPathToApiPath` and `resolveDialFileApiPath` SHALL be exported directly
-from `@epam/ai-dial-chat-hooks`'s top-level `src/index.ts` barrel.
-`getParentFolderPath` SHALL be exported only by `@epam/ai-dial-chat-shared`;
-all consumers SHALL import it from that canonical package instead of through
-a `chat-hooks` compatibility proxy.
-
-#### Scenario: Rename-vs-move disambiguation preserves current selection semantics
-
-- **WHEN** `prepareMoveRenameItems` receives a `DialCopiedItem[]` batch where
-  some items' `sourceUrl` parent equals their `destinationUrl` parent and
-  others differ
-- **THEN** same-parent items are classified for `renameFiles` and
-  different-parent items for `moveFiles`, matching the current
-  `apps/chat` behavior exactly
-
-#### Scenario: Owner-bucket resolution for Shared-tab items is preserved
-
-- **WHEN** `resolveOwnerCoords` is called for an item on the Shared tab whose
-  virtual path resolves through `sharedRootMetaRef`
-- **THEN** it returns the resolved owner bucket and path, not the current
-  user's own bucket
-
-#### Scenario: `getParentFolderPath` is imported from its canonical package
-
-- **WHEN** external code imports `getParentFolderPath`
-- **THEN** it imports it directly from `@epam/ai-dial-chat-shared`, and
-  `@epam/ai-dial-chat-hooks` exposes no compatibility re-export
-
-#### Scenario: `apps/chat`'s file-manager shell consumes the published export
-
-- **WHEN** `DialFileManagerShell.tsx` is inspected
-- **THEN** its `getParentFolderPath` call resolves from `@epam/ai-dial-chat-shared`,
-  and `apps/chat/src/utils/resolve-dial-file-api-path.ts` no longer exists
+- **THEN** it may pass a `DialFilesApiUploadOptions` object whose fields are
+  all optional — `signal?: AbortSignal`, `onProgress?: (percent: number) => void`,
+  and `uploadMode?: DialFilesApiUploadMode` (string enum: `Overwrite` =
+  `'overwrite'`, `CreateOnly` = `'create-only'`) — and the port contract does
+  not require the hook to know the underlying transport (XHR, fetch, or otherwise)
 
 ### Requirement: `dial-file-manager-mapping.util`'s tab-dispatch functions use the injected port
 
@@ -193,7 +123,8 @@ own package (`@epam/ai-dial-chat-shared`), not from
 ### Requirement: File-manager domain models and constants are host-agnostic
 
 `@epam/ai-dial-chat-hooks` SHALL export the file-manager domain model
-constants and types (`UPLOAD_CONCURRENCY`, `RESERVED_MARKER_NAME`,
+constants and types (in `libs/chat-hooks/src/files/dial-file-manager.model.ts`
+and `dial-file-manager.types.ts`: `UPLOAD_CONCURRENCY`, `RESERVED_MARKER_NAME`,
 `DATE_OPTIONS`, `COLUMNS_WITH_AUTHOR`/`COLUMNS_WITHOUT_AUTHOR`,
 `CORE_PERMISSION_MAP`, `SharedRootMeta`, `PreparedCopyMoveItem`,
 `CopyMoveResult`, `UseDialFileManagerOptions`, `UseDialFileManagerResult`,

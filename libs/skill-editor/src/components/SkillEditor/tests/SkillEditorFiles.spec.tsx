@@ -33,7 +33,7 @@ const renderMenuItems = (
   items: DropdownItem[],
   onSelect?: () => void,
 ): ReactNode =>
-  items.map(({ key, label, children: subItems, onClick }) =>
+  items.map(({ key, label, danger, children: subItems, onClick }) =>
     subItems ? (
       <ul key={key} aria-label={String(label)}>
         {renderMenuItems(subItems, onSelect)}
@@ -42,6 +42,7 @@ const renderMenuItems = (
       <button
         key={key}
         role="menuitem"
+        className={danger ? 'text-error' : undefined}
         onClick={() => {
           onClick?.({ key, domEvent: fakeMouseEvent });
           onSelect?.();
@@ -968,13 +969,33 @@ describe('SkillEditor — node menu', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('prefers a host deleteLabel, then the deprecated removeLabel', () => {
+  it('renders Delete as a danger item and leaves the Add entries neutral', () => {
     renderEditor(
       {
         files: [
           { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
         ],
-        labels: { removeLabel: 'Entfernen' },
+      },
+      fullFileActions(),
+    );
+
+    for (const item of screen.getAllByRole('menuitem', { name: 'Delete' })) {
+      expect(item.className).toBe('text-error');
+    }
+    for (const item of screen.getAllByRole('menuitem', {
+      name: 'Create folder',
+    })) {
+      expect(item.className).toBe('');
+    }
+  });
+
+  it('labels the Delete entry with a host deleteLabel', () => {
+    renderEditor(
+      {
+        files: [
+          { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+        ],
+        labels: { deleteLabel: 'Entfernen' },
       },
       fullFileActions(),
     );

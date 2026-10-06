@@ -313,6 +313,16 @@ export const ConversationsProvider = ({
 
               if (event?.action !== 'UPDATE') continue;
 
+              /* Only events for the watched resource qualify. The bucket is not
+               * compared: a shared conversation resolves to its owner's bucket
+               * server-side, so the path after the bucket is what identifies it. */
+              const eventPath = event.url
+                ? safeDecodeURIComponent(event.url)
+                : undefined;
+              if (eventPath && !eventPath.endsWith(`/${conversationPath}`)) {
+                continue;
+              }
+
               try {
                 /* `getConversation` needs the full bucket-qualified path;
                  * `conversationPath` (stripped for `watchConversation`,
@@ -331,6 +341,9 @@ export const ConversationsProvider = ({
                     onUpdated(nextName);
                     void silentRefreshConversations();
                   }
+                  /* Closes the SSE connection; releasing the reader alone
+                   * would leave the request open until the timeout. */
+                  controller.abort();
                   return;
                 }
               } catch {

@@ -1,4 +1,4 @@
-# Spec: file-manager-sharing
+# file-manager-sharing Specification
 
 ## Purpose
 
@@ -180,7 +180,7 @@ async listSharedByMe(
 #### Scenario: Empty shared-by-me listing
 
 - **WHEN** the caller has not shared anything
-- **THEN** the response contains an empty `files`/`folders` array (matching `/shared`'s empty-listing shape), not an error
+- **THEN** the response is `{ bucket, path: '', items: [] }` (`ListFilesResponseDto` has a single `items` array), not an error
 
 ---
 
@@ -197,9 +197,9 @@ async listSharedByMe(
 
 ### Requirement: sharedByMePaths wired on useDialFileManager
 
-`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL fetch `listSharedByMe` alongside the existing `my_files` tab load and expose the result as `sharedByMePaths: Set<string>`, passed to ui-kit's `DialFileManager.sharedByMePaths` prop. Each entry SHALL use ui-kit's virtual `DialFile.path` format (e.g. `/My files/reports/q1.pdf`), not the DIAL Core resource path (`files/{bucket}/reports/q1.pdf`) returned by the BFF — built via `buildSharedItemVirtualPath` (see design D9), since ui-kit's row/tree/bulk gating compares against the virtual path. On all other tabs, `sharedByMePaths` SHALL be an empty `Set`.
+`useDialFileListing` (`libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts (@epam/ai-dial-chat-hooks)`) SHALL fetch `filesApi.listSharedByMe(bucket)` alongside the existing `my_files` tab load and hold the result as `sharedByMePaths: Set<string>`; `useDialFileManager` passes it through unchanged, and in multi-section mode `useDialFileManagerSections` exposes the union of the per-section sets. It is passed to ui-kit's `DialFileManager.sharedByMePaths` prop. Each entry SHALL use ui-kit's virtual `DialFile.path` format (e.g. `/My files/reports/q1.pdf`), not the DIAL Core resource path (`files/{bucket}/reports/q1.pdf`) returned by the BFF — built via `buildSharedItemVirtualPath` (see design D9), since ui-kit's row/tree/bulk gating compares against the virtual path. On all other tabs (and while the listing is inactive), `sharedByMePaths` SHALL be an empty `Set`; a failed `listSharedByMe` request also resets it to an empty `Set`.
 
-**State ownership**: `useDialFileManager` owns `sharedByMePaths`; no new context is introduced.
+**State ownership**: `useDialFileListing` owns `sharedByMePaths`; no new context is introduced.
 
 **Cache invalidation**: `sharedByMePaths` is refreshed whenever the `my_files` tab's `retryCounter` increments — including after a successful `onRemoveFilesAccess` call (see below).
 
@@ -217,15 +217,15 @@ async listSharedByMe(
 
 ### Requirement: onUnshareFiles and onRemoveFilesAccess wired on useDialFileManager
 
-`useDialFileManager` SHALL expose `onUnshareFiles(files: DialFile[])` and `onRemoveFilesAccess(files: DialFile[])`, wired to the corresponding ui-kit `DialFileManager` props, calling `discardShared`/`revokeAccess` respectively with the resolved `bucket`/path list. Both call the BFF immediately — no confirmation dialog is shown before the request is sent (see design.md D5).
+`useDialFileManager` SHALL expose `onUnshareFiles(files: DialFile[])` and `onRemoveFilesAccess(files: DialFile[])` from its composed `useDialFileSharing` (`libs/chat-hooks/src/files/useDialFileSharing/useDialFileSharing.ts`), wired to the corresponding ui-kit `DialFileManager` props, calling `filesApi.discardShared`/`filesApi.revokeAccess` respectively on the injected `DialFilesApi` port with the resolved `bucket`/path list (each item's own `bucket`, falling back to the hook's). An empty `files` array is a no-op. Both call the BFF immediately — no confirmation dialog is shown before the request is sent (see design.md D5).
 
-**State ownership**: `useDialFileManager` owns `isUnsharing`/`isRemovingAccess`.
+**State ownership**: `useDialFileSharing` owns `isUnsharing`/`isRemovingAccess`.
 
 **Cache invalidation**: on success, `onUnshareFiles` increments `retryCounter` for the `shared` tab; `onRemoveFilesAccess` increments `retryCounter` for the `my_files` tab (refreshing both the listing and `sharedByMePaths`).
 
-**Notifications**: failure surfaces via `onNotification(NotificationVariant.Error, ...)` with a dedicated i18n-keyed message per action. Success shows no toast — the item disappearing from the refreshed listing is the confirmation.
+**Notifications**: failure emits `onNotification({ variant: NotificationVariant.Error, reason })` with `FileManagerNotificationReason.UnshareFailed` or `RemoveAccessFailed`; the lib has no `t`, and the app's notification adapter (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`) translates each reason to its dedicated i18n message. Success shows no toast — the item disappearing from the refreshed listing is the confirmation.
 
-**Memoisation**: both SHALL be `useCallback`s with dependencies `[bucket, onNotification, t]`.
+**Memoisation**: both SHALL be `useCallback`s with dependencies `[bucket, rootLabel, onNotification, filesApi, bumpRetry]`.
 
 #### Scenario: Unshare removes a shared-with-me item
 
@@ -235,7 +235,7 @@ async listSharedByMe(
 #### Scenario: Remove access fails and shows a toast
 
 - **WHEN** `onRemoveFilesAccess` is called and `revokeAccess` rejects
-- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a dedicated Remove-access-error message
+- **THEN** `onNotification` is called once with `NotificationVariant.Error` and `reason: FileManagerNotificationReason.RemoveAccessFailed`, which the app adapter shows as the dedicated Remove-access-error message
 
 ---
 
@@ -283,9 +283,9 @@ No raw string literal keys are passed to `t()` anywhere in this change — every
 
 ### Requirement: No feature-flag gating
 
-Unshare and Remove access SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — consistent with Copy/Move/Duplicate/Rename/Delete, which ship unconditionally to authenticated users with the relevant DIAL Core permissions. Visibility is gated only by `actionProfile` (`Full`) and, for bulk Remove access, by `sharedByMePaths`.
+Unshare and Remove access SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — consistent with Copy/Move/Duplicate/Rename/Delete, which ship unconditionally to authenticated users with the relevant DIAL Core permissions. Visibility is gated only by `actionProfile` (`Full`, via `isShareActionsAllowed`), by tab — Remove access is offered only on `my_files`, Unshare only on `shared` — and, for bulk Remove access, by `sharedByMePaths`.
 
 #### Scenario: Unshare and Remove access available without a feature flag
 
-- **WHEN** a user has `actionProfile: Full` on `my_files`
-- **THEN** `Unshare` and `Remove access` actions are available without checking any `ENABLED_FEATURES` entry
+- **WHEN** a user has `actionProfile: Full`
+- **THEN** `Remove access` is available on `my_files` and `Unshare` on `shared`, without checking any `ENABLED_FEATURES` entry

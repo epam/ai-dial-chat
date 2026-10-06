@@ -10,8 +10,14 @@ Defines the Scheduled Tasks list page's proactive offline-credentials login flow
 The system SHALL check offline-credentials status once per entry into the
 Scheduled Tasks **list** route (`ROUTES.ScheduledTasks`) for an authenticated
 user, in parallel with that route's own data loading. The system SHALL NOT
-run this check on `ROUTES.ScheduledTaskCreate`, `ROUTES.ScheduledTaskDetail`,
-`ROUTES.ScheduledTaskEdit`, or the OAuth callback route.
+run this check on `ROUTES.ScheduledTaskCreate`, `ROUTES.ScheduledTaskEdit`, or
+the OAuth callback route. `ROUTES.ScheduledTaskDetail` (`ScheduledTaskDetailPage`)
+also calls `useOfflineCredentialsGate` on entry, but renders the same
+`ScheduledTasksLoginBanner` only when one of the task's runs failed with
+`status: Error` and `resultStage: 'credentials'` (body text
+`scheduledTasks.detail.runCredentialsRequired`, "Sign in to DIAL Chat to run
+this task."), and re-fetches the status once per newly seen credentials-failed
+run.
 
 #### Scenario: Entering the Scheduled Tasks list
 - **WHEN** an authenticated user navigates to `ROUTES.ScheduledTasks`
@@ -21,14 +27,21 @@ run this check on `ROUTES.ScheduledTaskCreate`, `ROUTES.ScheduledTaskDetail`,
 #### Scenario: React 18 StrictMode does not duplicate the check
 - **WHEN** the list page mounts under StrictMode's double-invocation of
   effects
-- **THEN** only one offline-credentials status request is sent for that
-  route entry
+- **THEN** the first effect's request is aborted by its cleanup and exactly
+  one non-aborted offline-credentials status request settles and updates
+  state for that route entry
 
-#### Scenario: Create, detail, and edit routes do not check status
-- **WHEN** an authenticated user navigates to `ROUTES.ScheduledTaskCreate`,
-  `ROUTES.ScheduledTaskDetail`, or `ROUTES.ScheduledTaskEdit`
+#### Scenario: Create and edit routes do not check status
+- **WHEN** an authenticated user navigates to `ROUTES.ScheduledTaskCreate` or
+  `ROUTES.ScheduledTaskEdit`
 - **THEN** no `GET /api/v1/offline-credentials` request is made for that
   navigation, and no login-required UI of any kind renders on that page
+
+#### Scenario: Detail route shows the banner only for a credentials-failed run
+- **WHEN** an authenticated user opens `ROUTES.ScheduledTaskDetail` and the
+  status check reports `connected: false`
+- **THEN** the login-required banner renders only if a run of that task has
+  `status: Error` and `resultStage: 'credentials'`; otherwise no banner renders
 
 #### Scenario: Callback route is excluded
 - **WHEN** the OAuth provider redirects back to `ROUTES.ToolsetSignIn`

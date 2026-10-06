@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A disabled-by-default BFF bridge (`GET /api/v1/custom-api/:operationId`, SDK `getCustomApiOperation`) that dispatches deployment-allowlisted GET calls to exact DIAL Core paths with the caller's own session token, returning bounded, opaque JSON in a `{ "data": ... }` envelope while Core stays the authority for route authorization and business rate limits.
+A disabled-by-default BFF bridge (`GET /api/v1/custom-api/:id`, where `id` is the registry operation ID; SDK `getCustomApiOperation`) that dispatches deployment-allowlisted GET calls to exact DIAL Core paths with the caller's own session token, returning bounded, opaque JSON in a `{ "data": ... }` envelope while Core stays the authority for route authorization and business rate limits.
 
 ## Requirements
 
@@ -43,9 +43,9 @@ The registry SHALL contain no Core role policies, upstream credentials, response
 
 ### Requirement: Fixed GET API and generated-client boundary
 
-The BFF SHALL expose GET /api/v1/custom-api/:operationId, accepting no query parameters and no nonempty body. A malformed operation ID or query/body input SHALL return 400 before dispatch. A valid unknown ID SHALL return 404 after normal authentication. Unsupported business methods, including HEAD, SHALL return 405 without upstream dispatch; OPTIONS SHALL remain local under existing CORS behavior.
+The BFF SHALL expose GET /api/v1/custom-api/:id (`CustomApiController`, path parameter `id` holding the operation ID), accepting no query parameters and no nonempty body. A malformed operation ID or query/body input SHALL return 400 before dispatch. A valid unknown ID SHALL return 404 after normal authentication. Unsupported business methods, including HEAD, SHALL return 405 without upstream dispatch; OPTIONS SHALL remain local under existing CORS behavior.
 
-Success SHALL return CustomApiResponseDto as {"data": <JSON value>}. Swagger operationId SHALL be getCustomApiOperation with CustomApiOperationParamsDto for the path ID and no query/body DTO. Generated normal and Raw methods SHALL be available. The app adapter SHALL use getCustomApiOperationRaw, validate the envelope and expose data as unknown. Generator-produced any for the opaque payload SHALL be documented and contained at that boundary; generated files MUST NOT be edited manually.
+Success SHALL return CustomApiResponseDto as {"data": <JSON value>}. Swagger operationId SHALL be getCustomApiOperation with CustomApiOperationParamsDto for the path ID and no query/body DTO. Generated normal and Raw methods SHALL be available. The app adapter (`callCustomApiOperation` in apps/chat/src/server-api/custom-api.api.ts) SHALL use getCustomApiOperationRaw, validate the envelope and expose data as unknown. Generator-produced any for the opaque payload SHALL be documented and contained at that boundary; generated files MUST NOT be edited manually.
 
 Illustrative deployment mapping: data-products -> GET /data-products.
 

@@ -13,24 +13,32 @@ The application allows users to choose their preferred send-key shortcut for the
 ### Requirement: Keyboard shortcut preference persisted to localStorage
 
 The application SHALL store the user's preferred send-key shortcut under
-`StorageKey.KeyboardShortcut` in `localStorage`. Valid values are `'enter'` and `'meta-enter'`. The
-default value when no entry exists SHALL be `'enter'`.
+`StorageKey.KeyboardShortcut` (`'keyboardShortcut'`) in `localStorage`. Valid values are the `SendOnEnter`
+enum members from `@epam/ai-dial-conversation-input`: `SendOnEnter.Enter` (`'enter'`) and
+`SendOnEnter.MetaEnter` (`'meta-enter'`). The default value when no entry exists (or the stored value is
+anything other than `'meta-enter'`) SHALL be `'enter'`.
 
 A hook `useKeyboardShortcutPreference` SHALL expose `{ preference, setPreference }` where:
-- `preference` is `'enter' | 'meta-enter'`
-- `setPreference(value)` writes the value to localStorage and updates local state
+- `preference` is a `SendOnEnter` value
+- `setPreference(value)` writes the value to localStorage, updates local state and dispatches a
+  window `keyboard-shortcut-preference-change` event that every other mounted instance listens to
 
 **Nothing about the storage key, the value grammar, the default, or the cross-instance-sync
 guarantee changes in this revision.** What changes is which surfaces write the preference. Two do,
 and both go through this one hook:
 
 - **Settings → Preferences tab** (`settings-preferences-tab`) — the desktop home. The Settings page
-  is behind no feature flag, so this surface is always reachable.
+  is behind no feature flag; only the overlay host can hide it (`OverlayFeature.HideSettingsPage`).
 - **Mobile `NavigationSheet`** — retained because the sheet has no Settings entry point of its own
-  (see `user-menu`).
+  (see `user-menu`). The keyboard group is built by `useNavigationMenuGroups` and passed only to
+  the sheet.
+
+Both surfaces omit the keyboard-shortcut control when the overlay host sets
+`OverlayFeature.HideUserSettings` or `OverlayFeature.HideKeyboardShortcuts`.
 
 The desktop `UserMenu` submenu that previously wrote the preference is **removed**; the user menu
-offers no preference submenus at all.
+receives only the language group, which is omitted while `SUPPORTED_LANGUAGES` holds a single
+locale, so it offers no keyboard-shortcut submenu.
 
 Because every surface writes through `useKeyboardShortcutPreference`, the cross-instance-sync
 scenario below covers both uniformly; no surface needs its own propagation mechanism.

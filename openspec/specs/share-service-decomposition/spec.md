@@ -9,10 +9,10 @@ Backend decomposition of the monolithic `ShareService` (`apps/chat-api/src/share
 ### Requirement: Share domain service ownership map
 The share domain SHALL be decomposed into two focused injectable services plus a facade, each owning a disjoint set of responsibilities.
 
-- `ShareInvitationService` SHALL own `createShareLink`, `acceptInvitation`, and their supporting private helpers (`resolveSharedItemSummary`, `buildInvitationUrl`, `getRelatedResourceUrls`).
-- `ShareManagementService` SHALL own `discardShared`, `getRecipientsCount`, `revokeShared`, and their supporting private helper (`isSharedWithCaller`).
+- `ShareInvitationService` (`invitation/share-invitation.service.ts`) SHALL own `createShareLink`, `acceptInvitation`, and their supporting private helpers (`extractInvitationId`, `buildInvitationUrl`, `peekInvitationExpiry`, `getRelatedResourceUrls`, `getConversationRelatedResourceUrls`, `getApplicationRelatedResourceUrls`, `resolveSharedItemSummary`).
+- `ShareManagementService` (`management/share-management.service.ts`) SHALL own `discardShared`, `getRecipientsCount`, `revokeShared`, and their supporting private helper (`isSharedWithCaller`).
 - `ShareService` SHALL act as a facade that delegates every public method to exactly one of the two services above, and SHALL NOT contain business logic beyond delegation.
-- The module-level pure helpers (`resolveResourceKind`, `toShareResourceUrl`, `getInvitationRoutePath`, `isAlreadyOwnedError`, `collectConversationResourceUrls`, `collectAttachmentResourceUrls`) SHALL live in a shared, dependency-free `utils/share-resource.util.ts` module importable by both services.
+- The module-level pure helpers (exported: `resolveResourceKind`, `toShareResourceUrl`, `toPublicItemId`, `getInvitationRoutePath`, `isAlreadyOwnedError`, `collectConversationResourceUrls`, `collectApplicationPromptResourceUrls`, `deriveExpiresInDays`, and the `CONVERSATION_RESOURCE_PREFIX`/`FILE_RESOURCE_PREFIX` constants; module-private: `collectAttachmentResourceUrls`) SHALL live in a shared `utils/share-resource.util.ts` module that depends on no injectable service (only pure utilities and SDK types) and is importable by both services.
 
 #### Scenario: Facade delegates an invitation call
 - **WHEN** `ShareController` calls `ShareService.createShareLink(...)` or `ShareService.acceptInvitation(...)`

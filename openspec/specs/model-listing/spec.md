@@ -19,16 +19,16 @@ The BFF SHALL expose `GET /api/v1/models` that returns the list of DIAL Core dep
 The endpoint:
 
 - MUST require a valid BFF session cookie (`SessionGuard`); unauthenticated requests SHALL be rejected with `401 Unauthorized`
-- MUST proxy to `GET <DIAL_CORE_URL>/openai/models` forwarding `Authorization: Bearer <session.at>` as the upstream auth header
+- MUST proxy to `GET <DIAL_CORE_URL>/openai/models` (via the `@epam/ai-dial-typescript-sdk` client's `getModels`, see `apps/chat-api/src/models/models.service.ts`) forwarding `Authorization: Bearer <session.at>` as the upstream auth header
 - MUST NOT forward the `DIAL_API_KEY` to the client or use it as the upstream credential on this route
-- SHALL return `200 OK` with body `{ "data": DialModel[] }` mirroring the DIAL Core response shape
+- SHALL return `200 OK` with body `{ "data": DialModelDto[] }` (`DialModelListResponseDto` in `apps/chat-api/src/openapi/openapi-response.dto.ts`) mirroring the DIAL Core response shape
 - SHALL cache the upstream response server-side for **30 seconds** using cache key `models:list:<user.sub>`; a cache hit MUST NOT re-call DIAL Core
 - MUST set `Cache-Control: private, max-age=30` on the HTTP response so browsers and shared proxies do not cache the user-specific list
 
 #### Scenario: Authenticated user receives model list
 
 - **WHEN** a request with a valid session cookie is sent to `GET /api/v1/models`
-- **THEN** the BFF returns `200` with `{ "data": [...] }` where each item is a `DialModel` object
+- **THEN** the BFF returns `200` with `{ "data": [...] }` where each item is a `DialModelDto` object
 
 #### Scenario: Unauthenticated request is rejected
 
@@ -52,7 +52,7 @@ The endpoint:
 
 #### Scenario: Upstream is unreachable or times out
 
-- **WHEN** DIAL Core does not respond within `DIAL_CORE_TIMEOUT_MS` milliseconds
+- **WHEN** the upstream request fails without an HTTP response (network error, or an `AbortError` timeout surfaced by the fetch layer; no route-specific timeout variable is configured)
 - **THEN** the BFF returns `503 Service Unavailable`
 
 #### Scenario: Upstream returns unexpected 5xx
@@ -69,7 +69,7 @@ The endpoint:
 
 ### Requirement: DialModel shared type
 
-The `DialModel` interface and `DialModelListResponse` type SHALL be defined in `libs/chat-shared/src/models.ts` and exported from `libs/chat-shared/src/index.ts`.
+The `DialModel` and `DialModelListResponse` interfaces SHALL be defined in `libs/chat-shared/src/models/dial-model.ts` and exported from `libs/chat-shared/src/index.ts`. No code imports them today: the BFF types its responses with its own Swagger classes `DialModelDto` / `DialModelListResponseDto` (`apps/chat-api/src/openapi/openapi-response.dto.ts`), and `apps/chat` does not call this endpoint.
 
 `DialModel` MUST include at minimum the fields returned by DIAL Core's `/openai/models` response:
 
@@ -85,7 +85,6 @@ interface DialModel {
 
 interface DialModelListResponse {
   data: DialModel[];
-  object?: string;
 }
 ```
 
@@ -94,4 +93,4 @@ Unknown top-level fields from DIAL Core SHALL be preserved (index signature) so 
 #### Scenario: Type is importable from both backend and frontend
 
 - **WHEN** `apps/chat-api` and `apps/chat` are type-checked
-- **THEN** `DialModel` imported from `@epam/ai-dial-chat-shared` resolves with no type errors
+- **THEN** `DialModel` imported from `@epam/ai-dial-chat-shared` would resolve with no type errors (neither project imports it today)

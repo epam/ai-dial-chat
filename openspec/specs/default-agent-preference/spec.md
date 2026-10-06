@@ -109,16 +109,22 @@ this precedence, top to bottom:
    first-time user too, not only for one whose persisted selection happens to match. An unknown
    value falls through.
 3. **NEW** — the preference, when it is non-null, neither sentinel **and** a deployment with that id
-   exists in the catalog.
+   exists in the catalog and is selectable.
 4. **NEW** — the operator default (`appConfig.defaultDeploymentId`), when the preference is
-   `DefaultAgentMode.DefaultAgent` **and** that deployment exists in the catalog. This step is
+   `DefaultAgentMode.DefaultAgent` **and** that deployment exists in the catalog and is selectable. This step is
    deliberately **not** gated on the `defaultDeploymentPinned` feature flag: a user who explicitly
    asks for the operator default SHALL receive it whether or not the operator pinned it.
 5. **NEW** — `userConfigSelectedId`, when the preference is `DefaultAgentMode.LastUsedAgent` **and**
-   that deployment exists in the catalog.
-6. The operator default, when pinned — unchanged (step 4 of today's chain).
-7. `userConfigSelectedId` — unchanged. This is the fall-through for an **unset** preference.
-8. `deployments[0]?.id ?? null` — unchanged.
+   that deployment exists in the catalog and is selectable.
+6. The operator default, when pinned and selectable — unchanged (step 4 of today's chain).
+7. `userConfigSelectedId`, when selectable — unchanged. This is the fall-through for an **unset** preference.
+8. The first deployment that is not hidden, else the first deployment, else `null`
+   (`(deployments.find((d) => !d.isHidden) ?? deployments[0])?.id ?? null`).
+
+"Selectable" in steps 3–7 is `isDeploymentSelectable`: the id is in the catalog **and** the
+deployment is not `isHidden` — an operator-hidden deployment (`HIDDEN_ENTITY_TAGS`, Issue #9150)
+never becomes a new chat's model through a stored or configured preference. Steps 1 and 2 check
+only presence in the catalog (`isDeploymentPresent` / `findDeploymentByIdOrReference`).
 
 Step 2 SHALL NOT consult the preference: in overlay mode the host's `modelId` wins over the user's
 `Default agent for new chats` choice. Outside overlay mode `overlayModelId` is `null` and the chain
@@ -158,9 +164,10 @@ All **three** existing callers SHALL pass the preference and the overlay host's 
 Caller 3 is a dependency-driven `useEffect`, not a stable callback, so it SHALL read the live
 preference and `overlayModelId` values and list both in its dependency array — changing either while
 no explicit selection has been made SHALL re-resolve the selection immediately. Callers 1 and 2 SHALL
-read `overlayModelId` through an `overlayModelIdRef`, for the same reason as `defaultAgentRef`. This is the opposite of the ref
-discipline that callers 1 and 2 require, and the difference is deliberate: only
-`restoreDefaultSelection`'s identity is load-bearing for a consumer's effect.
+read the preference and `overlayModelId` through `defaultAgentRef` and `overlayModelIdRef`. Caller
+3's live-value discipline is the opposite of the ref discipline that callers 1 and 2 require, and
+the difference is deliberate: only `restoreDefaultSelection`'s identity is load-bearing for a
+consumer's effect.
 
 Missing caller 3 leaves the preference steps dead on first load, because it runs after
 `loadDeployments` and overwrites the selection.
@@ -269,8 +276,9 @@ Missing caller 3 leaves the preference steps dead on first load, because it runs
 ### Requirement: The preference reaches restoreDefaultSelection through a ref
 
 `DeploymentsProvider` SHALL hold the preference in a `defaultAgentRef` kept current by a
-`useEffect`, alongside the four refs already serving this purpose (`itemsRef`,
-`userConfigSelectedIdRef`, `isDefaultDeploymentPinnedRef`, `defaultDeploymentIdRef`).
+`useEffect`, alongside the other refs serving this purpose (`itemsRef`,
+`userConfigSelectedIdRef`, `isDefaultDeploymentPinnedRef`, `defaultDeploymentIdRef`,
+`overlayModelIdRef`).
 
 `restoreDefaultSelection`'s `useCallback` dependency array SHALL remain `[]`. The preference SHALL
 NOT be added to it.
@@ -278,7 +286,7 @@ NOT be added to it.
 This is load-bearing, not stylistic: `restoreDefaultSelection` is called from
 `ConversationRoute`'s mount effect, whose dependency array includes it. A changing callback identity
 would re-fire that effect — on every preference change, and on every deployments refetch — and
-discard the selection the user had just made. The existing comment at `DeploymentsContext.tsx:459-465`
+discard the selection the user had just made. The comment on `itemsRef` in `DeploymentsContext.tsx`
 records the same constraint for `items`.
 
 #### Scenario: Callback identity is stable across a preference change

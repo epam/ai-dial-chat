@@ -100,7 +100,7 @@ The message's fields are split by owner. **Server-owned:** `content`, `custom_co
 
 ### Requirement: One pending background generation per conversation
 
-While a conversation contains a message with `backgroundGeneration.status: "pending"`, the backend SHALL reject every new completion request for it — send, regenerate, and edit modes alike — with the existing generation-conflict error (`409`), before any Core call and regardless of the current flag values.
+While a conversation contains a message with `backgroundGeneration.status: "pending"`, the backend SHALL reject every new completion request for it — send, regenerate, and edit modes alike — with the existing generation-conflict error (`409`, `ConflictException(GENERATION_ACTIVE_MESSAGE)`), regardless of the current flag values. `streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`) first resolves the deployment's generation API (DIAL Core deployment reads), then reads the conversation and throws the `409`; no Core generation or job call is made before it.
 
 The placeholder save that starts a background generation SHALL be a conditional write against the conversation version the backend read, and SHALL complete before any Core job is created:
 

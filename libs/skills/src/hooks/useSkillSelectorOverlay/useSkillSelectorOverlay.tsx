@@ -63,6 +63,7 @@ export const useSkillSelectorOverlay = ({
   labels,
   historyChipLabelClassName,
   activeMentionDetailsTrigger,
+  historyDetailsTrigger,
   renderCatalogContent,
   detailsPanelComponent: DetailsPanelComponent,
 }: UseSkillSelectorOverlayOptions): UseSkillSelectorOverlayResult => {
@@ -73,6 +74,7 @@ export const useSkillSelectorOverlay = ({
     emptyQueryHintLabel = 'Type to filter',
     deletedTooltipLabel,
     notSharedTooltipLabel,
+    unsupportedTooltipLabel,
     panelLabels,
   } = labels ?? {};
 
@@ -165,7 +167,10 @@ export const useSkillSelectorOverlay = ({
             isUnsupported={!isSkillsSupported}
             detailsTrigger={activeMentionDetailsTrigger}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              unsupportedTooltipLabel,
+            }}
           />
         ),
       })),
@@ -176,6 +181,7 @@ export const useSkillSelectorOverlay = ({
       historyChipLabelClassName,
       activeMentionDetailsTrigger,
       panelLabels,
+      unsupportedTooltipLabel,
     ],
   );
 
@@ -320,6 +326,7 @@ export const useSkillSelectorOverlay = ({
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
             unresolvedReason={unresolvedReason}
+            detailsTrigger={historyDetailsTrigger}
             onViewDetails={setDetailsSkillId}
             labels={{
               viewDetailsLabel: panelLabels?.viewDetailsLabel,
@@ -341,6 +348,7 @@ export const useSkillSelectorOverlay = ({
       resolveName,
       skillByUrl,
       historyChipLabelClassName,
+      historyDetailsTrigger,
       panelLabels,
       viewerBucket,
       deletedTooltipLabel,
@@ -375,6 +383,7 @@ export const useSkillSelectorOverlay = ({
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
             unresolvedReason={unresolvedReason}
+            detailsTrigger={historyDetailsTrigger}
             onViewDetails={setDetailsSkillId}
             labels={{
               viewDetailsLabel: panelLabels?.viewDetailsLabel,
@@ -388,6 +397,7 @@ export const useSkillSelectorOverlay = ({
     [
       skillByUrl,
       historyChipLabelClassName,
+      historyDetailsTrigger,
       panelLabels,
       viewerBucket,
       deletedTooltipLabel,

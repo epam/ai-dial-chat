@@ -22,6 +22,8 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-catalog/styles.css';
 ```
 
+It already includes the styles of the publish flow from `@epam/ai-dial-publish-panel`, so a host that renders the catalog does not import that package's stylesheet separately.
+
 ## Peer Dependencies
 
 - `react`

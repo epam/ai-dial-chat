@@ -11,7 +11,7 @@ The deployments domain SHALL be decomposed into three focused injectable service
 
 - `DeploymentsListingService` SHALL own bulk `listDeployments` and its list-cache invalidation.
 - `DeploymentsLookupService` SHALL own single-item `resolveDeploymentItem` resolution (the post-share-accept lookup path).
-- `DeploymentsDetailsService` SHALL own `getDeploymentDetails`, `getDeploymentConfiguration`, `getDeploymentLimits`, details-cache invalidation, and the in-flight-request dedup map for details fetches.
+- `DeploymentsDetailsService` SHALL own `getDeploymentDetails`, `getDeploymentConfiguration`, `getDeploymentLimits`, `getDeploymentInterfaces`, `getUserLimits`, `getUserUsage`, details-cache invalidation (`invalidateDetailsCache`), and the in-flight-request dedup map (`pendingDetailsRequests`) for details fetches.
 - `DeploymentsService` SHALL act as a facade that delegates every public method to exactly one of the three services above, and SHALL NOT contain business logic beyond delegation.
 
 #### Scenario: Facade delegates a listing call
@@ -33,7 +33,7 @@ The toolsets domain SHALL be decomposed into three focused injectable services p
 - `ToolsetsMutationService` SHALL own `createToolset`, `updateToolset`, `deleteToolset`.
 - `ToolsetsAuthService` SHALL own `loginToolset`, `logoutToolset`.
 - `ToolsetsService` SHALL act as a facade that delegates every public method to exactly one of the three services above, and SHALL NOT contain business logic beyond delegation.
-- Whichever toolsets sub-service invalidates the deployments details cache after a mutation or auth change SHALL depend on `DeploymentsDetailsService` directly, not on the `DeploymentsService` facade.
+- Whichever toolsets sub-service invalidates the deployments details cache after a mutation or auth change SHALL depend on `DeploymentsDetailsService` directly, not on the `DeploymentsService` facade. Today that is `ToolsetsListingService.invalidateCaches(userSub, toolsetName?)`, which `ToolsetsMutationService` and `ToolsetsAuthService` call after every write; it clears `toolsets:list:{userSub}` and, when a `toolsetName` is given, `toolsets:single:{userSub}:{toolsetName}` and the deployments details entry.
 
 #### Scenario: Facade delegates a listing call
 - **WHEN** `ToolsetsController` calls `ToolsetsService.listToolsets(...)`
@@ -48,8 +48,8 @@ The toolsets domain SHALL be decomposed into three focused injectable services p
 - **THEN** the facade delegates to `ToolsetsAuthService.loginToolset(...)` and returns its result unchanged
 
 #### Scenario: Cross-domain cache invalidation bypasses the deployments facade
-- **WHEN** a toolset login, logout, create, update, or delete completes and the deployments details cache for that toolset must be invalidated
-- **THEN** the call is made directly against `DeploymentsDetailsService.invalidateDetailsCache`, not against the `DeploymentsService` facade
+- **WHEN** a toolset login, logout, update, or delete completes (each passes the toolset name to `ToolsetsListingService.invalidateCaches`; create passes none and clears only the list cache)
+- **THEN** the deployments details cache entry for that toolset is invalidated directly through `DeploymentsDetailsService.invalidateDetailsCache`, not through the `DeploymentsService` facade
 
 ### Requirement: Behavior equivalence across the split
 The decomposition SHALL NOT change any observable REST contract: request/response shapes, status codes, error mapping, cache key naming, cache TTLs, and structured log fields SHALL remain identical to the pre-split `DeploymentsService`/`ToolsetsService` behavior.

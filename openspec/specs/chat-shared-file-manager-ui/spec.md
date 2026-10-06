@@ -21,7 +21,7 @@ The controller's required keys SHALL be exactly the current shell destructure:
 `onSearchFiles`, `isSearching`, `searchResults`, `clearSearchResults`,
 `expandedPaths`, `loadedPaths`, `onExpandedPathsChange`,
 `onFolderPopupPathChange`, `folderPopupLoadingPaths`, `onUploadFiles`,
-`onUploadArchive`, `onValidateUpload`, `uploadBatchState`, `cancelUpload`,
+`onUploadArchive`, `onValidateUpload`, `uploadBatchState`, `cancelUpload`, `cancelUploadFile`,
 `clearUploadBatch`, `onCreateFolder`, `onCreateFolderValidate`,
 `onDownloadFiles`, `isDownloading`, `onDeleteFiles`, `isDeleting`,
 `onMoveToFiles`, `onRenameValidate`, `isRenaming`, `onCopyFiles`,
@@ -30,7 +30,11 @@ The controller's required keys SHALL be exactly the current shell destructure:
 `dateLocale`, `dateOptions`, `actionLabels`, `sharedWithMeIds`,
 `sharedByMePaths`, `onUnshareFiles`, `isUnsharing`, `onRemoveFilesAccess`,
 `isRemovingAccess`, `fileMetadata`, `isFileMetadataLoading`, `onGetInfo`, and
-`clearMetadata`. Each signature SHALL match `UseDialFileManagerResult`.
+`clearMetadata`, plus the optional `sectionTab?: DialFileManagerTabs` (the
+browsed folder's source tab, never `All`; omitted by single-source
+controllers such as `UseDialFileManagerResult`, and supplied by the
+multi-section `useDialFileManagerSections` controller). Each required
+signature SHALL match `UseDialFileManagerResult`.
 
 The package SHALL also be the canonical source of the current, unchanged
 `DialFileManagerActionProfile`, `DialFileManagerVariant`, `FileUploadStatus`,
@@ -57,7 +61,10 @@ The package SHALL also be the canonical source of the current, unchanged
 
 ### Requirement: The shared shell preserves the current presentation contract
 
-`@epam/ai-dial-chat-shared` SHALL export `DialFileManagerShell` with the current
+`@epam/ai-dial-chat-shared` SHALL export `DialFileManagerShell` from its
+`./file-manager` subpath entry (`src/entry-points/file-manager.ts`), not from
+the root entry, so a host that never renders the grid never resolves
+`@epam/ai-dial-react-file-manager`. It SHALL carry the current
 app shell's complete props and behavior, changing only `hookResult` to
 `controller: FileManagerController`. It SHALL preserve listing/search,
 breadcrumbs, tabs, selection, new-folder inline editing, copy/move destination
@@ -72,7 +79,7 @@ policy.
 The public props SHALL preserve `labels`, `activeTab`, `tabs`, `onTabChange`,
 `selectedPaths`, `onSelectedPathsChange`, `variant`, `actionProfile`, optional
 `autoSelectUploadedItems`, `allowedFileTypes`, `maxSelectableFileSize`,
-`isRowSelectable`, `getDisabledTooltip`, and
+`oversizedUploadMessage`, `isRowSelectable`, `getDisabledTooltip`, and
 `unsupportedFileTypeTooltip`, with their current types and requiredness.
 
 #### Scenario: Main and destination grids keep distinct API handlers
@@ -87,33 +94,42 @@ The public props SHALL preserve `labels`, `activeTab`, `tabs`, `onTabChange`,
 - **THEN** the shell invokes the supplied controller/host callback and does not
   construct an endpoint, client, object URL policy, or notification itself
 
-### Requirement: Loader and upload modals preserve their exact inputs
+### Requirement: Loader modal and upload queue preserve their exact inputs
 
-`@epam/ai-dial-chat-shared` SHALL export `OperationLoaderModal` and
-`UploadProgressModal` with their current props and behavior. In particular,
-`UploadProgressModal` SHALL receive the current `FileUploadBatchState` shape
-`{ files: FileUploadEntry[]; isOpen: boolean }` and a ready-to-render
-`uploadProgressText: string`; it SHALL NOT require fabricated aggregate count
-fields or a text factory.
+`@epam/ai-dial-chat-shared` SHALL export `OperationLoaderModal` with props
+`{ title: string; text: string; cancelLabel: string; onCancel: () => void }`.
+There is no `UploadProgressModal`: `DialFileManagerShell` SHALL render upload
+progress through the UI kit's `TransferQueue`, fed by `toUploadQueueItems`
+(exported from the `./file-manager` entry) from the current
+`FileUploadBatchState` shape `{ files: FileUploadEntry[]; isOpen: boolean }`,
+where `FileUploadEntry` is `{ id; name; status: FileUploadStatus; percent? }`
+and `FileUploadStatus` has members `Queued`, `Uploading`, `Completed`,
+`Failed`, and `Cancelled`. The queue title SHALL come from the
+`labels.getUploadQueueTitle(count)` label and its strings from
+`labels.uploadQueueLabels`; no fabricated aggregate count fields are required.
 
 #### Scenario: Upload state renders from current entries
 
-- **WHEN** a batch contains pending, uploading, completed, and failed entries
-- **THEN** the modal renders the same per-file statuses/progress and supplied
-  progress text as the current app component
+- **WHEN** a batch contains queued, uploading, completed, failed, and cancelled entries
+- **THEN** the `TransferQueue` renders one row per entry, mapping
+  `Queued`/`Uploading` to in-progress, `Completed` to success, `Failed` to
+  failed, and `Cancelled` to canceled, with each entry's `percent`
 
 #### Scenario: Cancellation is preserved
 
-- **WHEN** the user activates the modal's cancel control
-- **THEN** the supplied cancel callback is called exactly once
+- **WHEN** the user cancels one queue row
+- **THEN** the controller's `cancelUploadFile` is called with that entry's id,
+  and closing the queue calls `cancelUpload` followed by `clearUploadBatch`
 
 ### Requirement: The attach modal is reusable and controlled
 
-`@epam/ai-dial-chat-shared` SHALL export `FileManagerAttachModal`, extracted
+`@epam/ai-dial-chat-shared` SHALL export `FileManagerAttachModal` from the
+`./file-manager` subpath entry, extracted
 from the reusable portion of the current app modal. It SHALL receive resolved
 labels, controller, tab/selection state, file constraints, attachment counts,
-folder policy, error callback, close callback, and attach callback through
-typed props. It SHALL preserve file/folder separation, deduplication,
+folder policy (`resolveFolderPath`), the `onCountLimitExceeded` and
+`onSkippedUnsupportedFiles` callbacks, close callback, and attach callback
+through typed props. It SHALL preserve file/folder separation, deduplication,
 MIME/extension and size validation, maximum-count enforcement, drag/drop,
 auto-selection of uploaded items, and disabled/loading behavior.
 
@@ -130,8 +146,9 @@ auth, and hook invocation SHALL remain in the app adapter.
 
 - **WHEN** the current attachments plus valid selected files/folders exceed the
   supplied maximum
-- **THEN** the component reports the resolved error through the host callback,
-  does not call `onAttach`, and keeps the modal usable
+- **THEN** the component calls `onCountLimitExceeded(totalCount, limit)` so the
+  host can resolve and show the error, does not call `onAttach`, and keeps the
+  modal usable
 
 ### Requirement: Published styles contain the extracted UI utilities
 
@@ -153,7 +170,8 @@ unless required by an already documented `chat-shared` contract.
 ### Requirement: Package boundaries and peer dependencies remain explicit
 
 `chat-shared` SHALL declare `@epam/ai-dial-react-file-manager` and
-`ag-grid-community` as peer dependencies and Vite externals. It SHALL have no
+`ag-grid-community` as optional peer dependencies (`peerDependenciesMeta`)
+and Vite externals, scoped to the `./file-manager` entry. It SHALL have no
 dependency edge or transitive import to `chat-hooks`, `catalog`, a generated
 client, or any app project. AG Grid use SHALL be limited to the separately
 specified grid-event binding hook; it SHALL NOT be used for rendering, theming,

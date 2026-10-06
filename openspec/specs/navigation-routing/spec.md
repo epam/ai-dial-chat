@@ -6,19 +6,19 @@ The top-level client-side routes, the navigation sidebar that reflects them, and
 
 ## Requirements
 
-### Requirement: Client-side routing resolves three top-level routes
+### Requirement: Client-side routing resolves the top-level routes
 
-The application SHALL declare three routes using React Router `<Routes>` in `apps/chat/src/app/app.tsx`. The `/` route MUST render `<ConversationRoute>` (the welcome screen — no longer holds message state). The `/catalog` route MUST render a lazy-loaded `<CatalogView>` stub. The `/conversations/:conversationId` route MUST render a lazy-loaded `<ConversationPage>`. Any unregistered path MUST NOT match these routes without an explicit fallback route.
+The application SHALL declare its routes using React Router `<Routes>` in `apps/chat/src/app/app.tsx`, with paths taken from the `ROUTES` enum in `apps/chat/src/types/routes.ts`. Inside the `ChatLayout` layout route, `ROUTES.Root` (`/`) MUST render `<ConversationRoute>` (the welcome screen — it holds no message state) and `/conversations/*` MUST render a lazy-loaded `<ConversationPage>`. `ROUTES.Catalog` (`/catalog`) MUST render the lazy-loaded `<CatalogView>` (the full catalog, not a placeholder). The other authenticated pages (`ROUTES.SharedInvitation`, `ROUTES.ConversationSharedInvitation`, `ROUTES.FileManager`, `ROUTES.Settings`/`ROUTES.SettingsTab`, the `ROUTES.ScheduledTasks*` routes, the `AppsEditor`/`ToolsetEditor`/`CustomAppEditor`/`PromptEditor`/`SkillEditor` editors, `ToolsetEditorCallback` and `ToolsetSignIn`) MUST likewise be lazy-loaded inside the `RouteErrorBoundary` + `Suspense`/`RouteFallback` wrapper. Any unregistered path MUST fall through to the explicit `*` catch-all route.
 
 #### Scenario: Root path renders the welcome screen
 
 - **WHEN** the browser navigates to `/`
 - **THEN** `<ConversationRoute>` is mounted and the welcome screen is visible with no message history
 
-#### Scenario: Catalog path renders the catalog stub
+#### Scenario: Catalog path renders the catalog
 
 - **WHEN** the browser navigates to `/catalog`
-- **THEN** the lazy-loaded `<CatalogView>` is mounted and a "coming soon" placeholder is visible
+- **THEN** the lazy-loaded `<CatalogView>` is mounted
 
 #### Scenario: Conversation path renders the conversation page
 
@@ -37,14 +37,19 @@ The application SHALL declare three routes using React Router `<Routes>` in `app
 
 ---
 
-### Requirement: Navigation sidebar reflects the active route via aria-current
+### Requirement: Navigation rail reflects the active route via aria-current
 
-The `<Navigation>` component SHALL read `useLocation().pathname` from React Router and mark exactly one `GhostIconButton` with `aria-current="page"` — the one whose configured `path` matches the current pathname. No other button SHALL carry `aria-current` at the same time.
+`useNavigationItems` (`apps/chat/src/hooks/navigation/useNavigationItems.ts`) SHALL read `useLocation().pathname` and set each item's `isActive`: the `ROUTES.Root` item is active only on an exact `/` match or when the pathname starts with one of its `matchPaths` (`ROUTES.Conversations`); every other item is active when the pathname starts with its `path`. The desktop `NavigationPanel` from `@epam/ai-dial-navigation-panel` SHALL render each item as an `IconButton` carrying `aria-current="page"` only while it is active, swapping to the item's filled `activeIcon` glyph when one is configured.
 
 #### Scenario: Home button is active on /
 
 - **WHEN** the current pathname is `/`
 - **THEN** the button with `aria-label` equal to the value of `navigation.home` has `aria-current="page"` and the catalog button does NOT have `aria-current`
+
+#### Scenario: Home button is active inside a conversation
+
+- **WHEN** the current pathname is `/conversations/<id>`
+- **THEN** the Home button has `aria-current="page"`
 
 #### Scenario: Catalog button is active on /catalog
 
@@ -60,124 +65,114 @@ The `<Navigation>` component SHALL read `useLocation().pathname` from React Rout
 
 ### Requirement: Navigation buttons perform client-side navigation
 
-Each `GhostIconButton` in the top section of `<Navigation>` MUST call `useNavigate()(path)` when clicked. Navigation MUST be client-side (no full page reload).
+On desktop, each rail item MUST be wrapped by the `renderLink` callback `<Navigation>` passes to `NavigationPanel`, which renders a React Router `<Link to={item.id}>` (the item's `path`). On mobile, `<NavigationSheet>`'s `onSelectItem` MUST call `useNavigate()(item.id)`. Navigation MUST be client-side (no full page reload).
 
 #### Scenario: Clicking Home navigates to /
 
 - **WHEN** the user clicks the Home button while on `/catalog`
-- **THEN** `useNavigate` is called with `'/'` and the `/` route is rendered
+- **THEN** the client-side router navigates to `'/'` and the `/` route is rendered
 
 #### Scenario: Clicking Catalog navigates to /catalog
 
 - **WHEN** the user clicks the Catalog button while on `/`
-- **THEN** `useNavigate` is called with `'/catalog'` and the `/catalog` route is rendered
+- **THEN** the client-side router navigates to `'/catalog'` and the `/catalog` route is rendered
 
 ---
 
 ### Requirement: Navigation is driven by NAVIGATION_CONFIG
 
-The `<Navigation>` component SHALL NOT hard-code route paths or icon components. It MUST iterate over the exported `NAVIGATION_CONFIG` constant from `apps/chat/src/constants/navigation.ts` to render buttons. Adding a new entry to `NAVIGATION_CONFIG` MUST automatically render a new button in the sidebar with no changes to `Navigation.tsx`, unless the entry declares an optional `featureFlag` key.
+`<Navigation>` (`apps/chat/src/components/Navigation/Navigation.tsx`) SHALL NOT hard-code route paths or icon components. It MUST render the items from `useNavigationItems`, which maps the exported `NAVIGATION_CONFIG` constant from `apps/chat/src/constants/navigation.ts` (today: Home `ROUTES.Root`, Scheduled tasks `ROUTES.ScheduledTasks`, Catalog `ROUTES.Catalog`, File manager `ROUTES.FileManager`) after filtering it through `useVisibleNavItems`. Adding a new entry to `NAVIGATION_CONFIG` MUST automatically render a new button with no changes to `Navigation.tsx`, subject to the entry's gates.
 
-Each `NavigationItem` MAY declare an optional `featureFlag: string` field naming a short `useFeatureFlag` key. `<Navigation>` SHALL filter `NAVIGATION_CONFIG` before rendering: an item with no `featureFlag` always renders; an item with a `featureFlag` renders only when `useFeatureFlag(item.featureFlag)` resolves to `true` for the current session. Filtering MUST be evaluated on every render (it MUST react to a flag value becoming available/changing after initial mount, not just at first render).
+Each `NavigationItem` MAY declare an optional `featureFlag: string` field. `useVisibleNavItems` (`apps/chat/src/hooks/useVisibleNavItems.ts`) SHALL apply two gates on every render: the overlay UI feature owning the entry's route (`OverlayFeature.Catalog` for `ROUTES.Catalog`, `OverlayFeature.FileManager` for `ROUTES.FileManager`; routes absent from that map are ungated), and the entry's `featureFlag`, which passes only when `useAppConfig().status` is `UserConfigStatus.Ready` and `features[featureFlag] === true`. Filtering MUST react to a flag value becoming available/changing after initial mount.
 
 #### Scenario: Config drives rendered buttons
 
-- **WHEN** `NAVIGATION_CONFIG` contains two entries (home, catalog), neither with a `featureFlag`
-- **THEN** exactly two icon buttons are rendered in the top `<div>` of `<nav>`
+- **WHEN** `NAVIGATION_CONFIG` entries carry no `featureFlag` and their route features are enabled
+- **THEN** one icon button per entry is rendered in the navigation rail
 
 #### Scenario: Flag-gated item hidden when flag is off
 
-- **WHEN** `NAVIGATION_CONFIG` contains an entry with `featureFlag: 'scheduledTasksEnabled'` and `useFeatureFlag('scheduledTasksEnabled')` returns `false`
-- **THEN** no button for that entry is rendered in `<nav>`
+- **WHEN** `NAVIGATION_CONFIG` contains an entry with `featureFlag: 'scheduledTasksEnabled'` and that flag is not `true` in the ready app config
+- **THEN** no button for that entry is rendered
 
 #### Scenario: Flag-gated item shown when flag is on
 
-- **WHEN** `NAVIGATION_CONFIG` contains an entry with `featureFlag: 'scheduledTasksEnabled'` and `useFeatureFlag('scheduledTasksEnabled')` returns `true`
-- **THEN** a button for that entry is rendered in `<nav>`, with the same `aria-label`/tooltip/active-state behavior as ungated entries
+- **WHEN** `NAVIGATION_CONFIG` contains an entry with `featureFlag: 'scheduledTasksEnabled'` and that flag is `true` in the ready app config
+- **THEN** a button for that entry is rendered, with the same `aria-label`/tooltip/active-state behavior as ungated entries
 
 #### Scenario: Ungated entries are unaffected
 
 - **WHEN** `NAVIGATION_CONFIG` mixes gated and ungated entries
 - **THEN** every ungated entry renders regardless of any flag's value
 
+#### Scenario: A disabled overlay feature hides its entry
+
+- **WHEN** `OverlayFeature.Catalog` (or `OverlayFeature.FileManager`) is disabled
+- **THEN** the Catalog (or File manager) entry is not rendered
+
 ---
 
 ### Requirement: Navigation sidebar exposes accessible labels and tooltip
 
-Every `GhostIconButton` in the navigation top section MUST carry an `aria-label` derived from the `labelKey` field of its `NavigationItem` via `useTranslation().t()`. The same string MUST be passed to `tooltipProps.tooltip` so hover users see the label.
+Every rail `IconButton` MUST carry an `aria-label` equal to the item's `label`, which `useNavigationItems` resolves from the `labelKey` of its `NavigationItem` via `useTranslation().t()`. The same string MUST be passed to `tooltipProps.tooltip` so hover users see the label.
 
 #### Scenario: aria-label and tooltip match the i18n value
 
 - **WHEN** `<Navigation>` renders with the default config
-- **THEN** the Home button has `aria-label="Home"` and `tooltip="Home"`, and the Catalog button has `aria-label="Catalog"` and `tooltip="Catalog"` (based on `en.json` values)
+- **THEN** the Home button has `aria-label="Chat"` and `tooltip="Chat"`, and the Catalog button has `aria-label="Catalog"` and `tooltip="Catalog"` (the `en.json` values of `navigation.home` and `navigation.catalog`)
 
 ---
 
 ### Requirement: UserMenu renders for authenticated users only
 
-The `<UserMenu>` component SHALL render `null` when `useUser().status` is `'loading'` or `'unauthenticated'`. When `status === 'authenticated'`, it MUST render a trigger button labelled with the i18n key `auth.signedInAs` interpolated with the user's email (from `user.claims.email`) or `user.sub` as fallback. Clicking the trigger MUST open a dropdown containing a form that performs a `POST` to `/api/v1/auth/logout` on submit.
+`<Navigation>` SHALL render the `UserMenu` from `@epam/ai-dial-navigation-panel` in the desktop rail footer only when `useUser().status` is `AuthStatus.Authenticated` with a user and `OverlayFeature.HideUserMenu` is off. Its trigger MUST be labelled with the i18n key `auth.signedInAs` interpolated with the profile email from `useNavigationUserProfile`. The dropdown MUST offer Settings (unless `OverlayFeature.HideSettingsPage` is on) and Log out. Log out MUST open `LogoutConfirmationModal`, whose confirm action calls `logout()` from `apps/chat/src/server-api/auth.api.ts` — a `fetch` `POST` to `ApiEndpoints.AUTH_LOGOUT` with the `X-CSRF-Token` header — and then, outside the overlay, replaces the document location with `ROUTES.Login` (inside the overlay it calls `useUser().reset()` instead).
 
 #### Scenario: Unauthenticated state renders nothing
 
-- **WHEN** `useUser()` returns `status = 'unauthenticated'`
-- **THEN** `<UserMenu>` renders `null` and no button is visible in the bottom section of `<nav>`
+- **WHEN** `useUser()` returns an unauthenticated status
+- **THEN** no user menu is rendered in the rail footer
 
 #### Scenario: Loading state renders nothing
 
-- **WHEN** `useUser()` returns `status = 'loading'`
-- **THEN** `<UserMenu>` renders `null`
+- **WHEN** authentication is still loading
+- **THEN** no user menu is rendered
 
 #### Scenario: Authenticated state shows user button
 
-- **WHEN** `useUser()` returns `status = 'authenticated'` with `user.claims.email = 'user@example.com'`
-- **THEN** `<UserMenu>` renders a button whose accessible name contains `'user@example.com'` via the `auth.signedInAs` i18n interpolation
+- **WHEN** the user is authenticated with email `user@example.com`
+- **THEN** the rail renders a user-menu trigger whose accessible name contains `'user@example.com'` via the `auth.signedInAs` i18n interpolation
 
-#### Scenario: Dropdown opens on click
+#### Scenario: Log out asks for confirmation
 
-- **WHEN** the authenticated user clicks the `<UserMenu>` trigger button
-- **THEN** a dropdown appears showing the email address and a sign-out button
-
-#### Scenario: Sign-out uses a form POST
-
-- **WHEN** the sign-out button inside the dropdown is clicked
-- **THEN** a `<form method="POST" action="/api/v1/auth/logout">` is submitted (no `fetch` call)
+- **WHEN** the user chooses Log out in the user menu
+- **THEN** the log-out confirmation dialog opens, and only confirming it sends the logout `POST` request
 
 ---
 
 ### Requirement: All new user-visible strings flow through react-i18next
 
-Every user-visible string introduced by this change MUST be looked up via `useTranslation().t()`. Keys MUST live in `apps/chat/src/i18n/locales/en.json` and be referenced through the typed enums `NavigationI18nKeys` and `CatalogI18nKeys` in `apps/chat/src/constants/translation-keys.ts`. No hard-coded English strings are permitted in `Navigation.tsx` or `CatalogView.tsx`.
+Every user-visible navigation string MUST be looked up via `useTranslation().t()`. Keys MUST live in `apps/chat/src/i18n/locales/en.json` and be referenced through typed enums in `apps/chat/src/constants/translation-keys.ts` (`NavigationI18nKeys`, `AuthI18nKeys`, `ButtonsI18nKeys`, `BasicI18nKeys`, `ChatI18nKeys`). No hard-coded English strings are permitted in `Navigation.tsx`.
 
 #### Scenario: Navigation keys are present in en.json
 
-- **WHEN** the change is applied
-- **THEN** `en.json` contains `navigation.ariaLabel`, `navigation.home`, and `navigation.catalog`
-
-#### Scenario: Catalog keys are present in en.json
-
-- **WHEN** the change is applied
-- **THEN** `en.json` contains `catalog.ariaLabel` and `catalog.comingSoon`
+- **WHEN** the locale file is inspected
+- **THEN** `en.json` contains `navigation.ariaLabel`, `navigation.home`, `navigation.catalog`, `navigation.menu`, `navigation.profile`, and `navigation.back`
 
 #### Scenario: Components use the t function
 
-- **WHEN** any string is rendered by `Navigation` or `CatalogView`
+- **WHEN** any string is rendered by `Navigation`
 - **THEN** that string is the result of `t(SomeI18nKeys.Member)`, never a string literal
 
 ---
 
 ### Requirement: Tests cover the navigation surface
 
-The change SHALL ship co-located Vitest specs covering: `Navigation.spec.tsx` and `CatalogView.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour.
+The navigation surface SHALL have a co-located Vitest spec, `apps/chat/src/components/Navigation/tests/Navigation.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour.
 
 #### Scenario: Navigation active-state tests
 
 - **WHEN** the test suite for `Navigation` runs
-- **THEN** it covers at least: nav landmark aria-label, Home button render, Catalog button render, Home active on `/`, Catalog active on `/catalog`, Home not active on `/catalog`, click-to-navigate
-
-#### Scenario: CatalogView render tests
-
-- **WHEN** the test suite for `CatalogView` runs
-- **THEN** it covers at least: section landmark aria-label, coming-soon text visible
+- **THEN** it covers at least: nav landmark aria-label, Home button render, Home active on `/`, Catalog active on `/catalog`, Home not active on `/catalog`, each item rendered as a link with the correct href, and feature-flag / UI-feature gating of items
 
 ---
 
@@ -224,7 +219,7 @@ All user-visible strings introduced by the 404 page MUST be resolved through `re
 
 ### Requirement: Scheduled Task detail route and helper
 
-`apps/chat/src/types/routes.ts`'s `ROUTES` constant SHALL declare `ScheduledTaskDetail: '/scheduled-tasks/:scheduleId'`, registered in `apps/chat/src/app/app.tsx` as a lazy-loaded route alongside the existing `ROUTES.ScheduledTasks` registration, behind the same `scheduledTasksEnabled` feature-flag guard. `apps/chat/src/constants/routes.ts` SHALL export `getScheduledTaskDetailRoute(scheduleId: string): string`, returning `` `/scheduled-tasks/${encodeURIComponent(scheduleId)}` ``, mirroring the existing `getConversationRoute` helper's pattern of building a route path from a caller-supplied id.
+`apps/chat/src/types/routes.ts`'s `ROUTES` constant SHALL declare `ScheduledTaskDetail: '/scheduled-tasks/:scheduleId'`, registered in `apps/chat/src/app/app.tsx` as a lazy-loaded route alongside the existing `ROUTES.ScheduledTasks` registration; like the list route it is registered unconditionally, and the `scheduledTasksEnabled` feature-flag guard is applied inside the page through `useFeatureFlag('scheduledTasksEnabled')`. `apps/chat/src/constants/routes.ts` SHALL export `getScheduledTaskDetailRoute(scheduleId: string): string`, returning `` `/scheduled-tasks/${encodeURIComponent(scheduleId)}` ``, mirroring the existing `getConversationRoute` helper's pattern of building a route path from a caller-supplied id.
 
 #### Scenario: Route path resolves for a given scheduleId
 

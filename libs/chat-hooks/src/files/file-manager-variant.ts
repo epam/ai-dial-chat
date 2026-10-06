@@ -3,8 +3,6 @@ import {
   DialFileManagerVariant,
 } from '@epam/ai-dial-chat-shared';
 
-export { DialFileManagerActionProfile, DialFileManagerVariant };
-
 export const deriveActionProfile = (
   variant: DialFileManagerVariant,
 ): DialFileManagerActionProfile => {

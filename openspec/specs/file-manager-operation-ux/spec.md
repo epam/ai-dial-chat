@@ -8,22 +8,22 @@ A shared in-progress flag and the consolidated blackout overlay covering long-ru
 
 ### Requirement: isAnyOperationInProgress derived flag on useDialFileManager
 
-`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `isAnyOperationInProgress: boolean` on `UseDialFileManagerResult`, computed via `useMemo` as the logical OR of exactly: `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `isAnyOperationInProgress: boolean` on `UseDialFileManagerResult`, computed via `useMemo` as the logical OR of exactly: `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`, and `isUploadInProgress(uploadBatchState)` (from `@epam/ai-dial-chat-shared`, `libs/chat-shared/src/file-manager/upload-batch.ts`), which is `true` only while some file in the batch is `FileUploadStatus.Queued` or `Uploading`. A finished batch that is still non-null does not set the flag.
 
 `isLoading`, `isSearching`, and `isFileMetadataLoading` SHALL NOT be included in this composition. Each is already fully contained by its own scoped loading UI: `isLoading` represents a read (listing fetch), a distinct concept from a mutating operation; `isSearching` is scoped to ui-kit's own search-progress UI; `isFileMetadataLoading` has its own `loading` state in `fileMetadataPopupOptions`.
 
-**State ownership**: `useDialFileManager` owns `isAnyOperationInProgress`; no new context is introduced.
+**State ownership**: `useDialFileManager` owns `isAnyOperationInProgress`, deriving it from its composed `useDialFileMutations`, `useDialFileSharing`, and `useDialFileUploadBatch` results; no new context is introduced.
 
 **Memoisation**: `isAnyOperationInProgress` SHALL be recomputed via `useMemo` with dependencies `[isCreatingFolder, isDownloading, isDeleting, isRenaming, isCopying, isMoving, isUnsharing, isRemovingAccess, uploadBatchState]`.
 
 #### Scenario: Flag is true while any covered operation is in flight
 
-- **WHEN** any of `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, or `isRemovingAccess` is `true`, or `uploadBatchState` is non-null
+- **WHEN** any of `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, or `isRemovingAccess` is `true`, or `uploadBatchState` has a file that is `Queued` or `Uploading`
 - **THEN** `isAnyOperationInProgress` is `true`
 
 #### Scenario: Flag is false when nothing is in flight
 
-- **WHEN** every covered flag is `false` and `uploadBatchState` is `null`
+- **WHEN** every covered flag is `false` and `uploadBatchState` is `null` or holds only finished (`Completed`/`Failed`/`Cancelled`) files
 - **THEN** `isAnyOperationInProgress` is `false`
 
 #### Scenario: Metadata loading alone does not set the flag
@@ -43,11 +43,11 @@ A shared in-progress flag and the consolidated blackout overlay covering long-ru
 
 ### Requirement: Consolidated blackout overlay for download, delete, rename, unshare, and remove-access
 
-`DialFileManagerShell` SHALL render **one** blackout overlay block — replacing the three previously-separate blocks for `isDownloading`/`isDeleting`/`isRenaming && !isMoving` — covering five mutually-exclusive states: `isDownloading`, `isDeleting`, `isRenaming && !isMoving`, `isUnsharing`, `isRemovingAccess`. The overlay SHALL reuse the exact existing markup: `<div aria-live="polite" className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"><Spinner size={32} fullWidth={false} ariaLabel={...} /></div>`.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`; `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx` is a memoised wrapper around it) SHALL render **one** blackout overlay block — replacing the three previously-separate blocks for `isDownloading`/`isDeleting`/`isRenaming && !isMoving` — covering five mutually-exclusive states: `isDownloading`, `isDeleting`, `isRenaming && !isMoving`, `isUnsharing`, `isRemovingAccess`. The overlay SHALL reuse the exact existing markup: `<div aria-live="polite" className="absolute inset-0 z-[52] flex items-center justify-center bg-backdrop desktop:p-4"><Spinner size={32} fullWidth={false} ariaLabel={...} /></div>`.
 
-The `ariaLabel` SHALL be resolved by a dedicated helper using an if/else chain (not nested ternary expressions, per this repo's TypeScript conventions), in this precedence order when more than one flag is unexpectedly `true` simultaneously: `isDownloading` → `isDeleting` → `isRenaming && !isMoving` → `isUnsharing` → `isRemovingAccess`, mapping to `labels.downloadingLabel` / `labels.deletingLabel` / `labels.renamingLabel` / `labels.unsharingLabel` / `labels.removingAccessLabel` respectively. The overlay SHALL NOT render when none of the five flags is `true`.
+The `ariaLabel` SHALL be resolved by a dedicated helper (`resolveOverlayAriaLabel` in the shell module) using an if/else chain (not nested ternary expressions, per this repo's TypeScript conventions), in this precedence order when more than one flag is unexpectedly `true` simultaneously: `isDownloading` → `isDeleting` → `isRenaming && !isMoving` → `isUnsharing` → `isRemovingAccess`, mapping to `labels.downloadingLabel` / `labels.deletingLabel` / `labels.renamingLabel` / `labels.unsharingLabel` / `labels.removingAccessLabel` respectively. The overlay SHALL NOT render when none of the five flags is `true`.
 
-This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/move) or `UploadProgressModal` (upload) — those retain their existing dedicated treatments unchanged, since both render through ui-kit's portal-based `DialPopup` and never coincide with the five consolidated states in `useDialFileManager`'s existing per-action state model.
+Copy/move and upload keep their own treatments: `OperationLoaderModal` renders while `isCopying || isMoving`, and upload progress is shown by a non-modal `TransferQueue` fixed at the bottom-end corner (`fixed bottom-4 end-4 z-[70]`), not by a modal. The consolidated overlay's five states do not include copy, move, or upload, so neither treatment adds the overlay.
 
 #### Scenario: Download shows the consolidated overlay
 
@@ -77,7 +77,7 @@ This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/m
 #### Scenario: Existing copy/move/upload treatments are unaffected
 
 - **WHEN** `isCopying`, `isMoving`, or `uploadBatchState` is active
-- **THEN** the consolidated overlay does not additionally render — `OperationLoaderModal` and `UploadProgressModal` remain the sole indicator for those operations, exactly as before this change
+- **THEN** the consolidated overlay does not additionally render — `OperationLoaderModal` (copy/move) and the `TransferQueue` (upload) remain the sole indicators for those operations
 
 #### Scenario: No overlay when nothing is in flight
 
@@ -86,7 +86,7 @@ This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/m
 
 ### Requirement: DialFileManagerModal reads the shared flag for Attach-button gating
 
-`DialFileManagerModal` SHALL replace its local `isOperationInProgress` computation with `hookResult.isAnyOperationInProgress`, used identically to disable the Attach button (`selectedFiles.length === 0 || isLoading || isAnyOperationInProgress`, preserving the existing separate `isLoading` check). No other logic in `DialFileManagerModal` changes.
+`DialFileManagerModal` (`apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) SHALL read `hookResult.isAnyOperationInProgress` instead of a local `isOperationInProgress` computation and pass it as the `isAnyOperationInProgress` prop to the shared `FileManagerAttachModal` (`libs/chat-shared/src/file-manager/FileManagerAttachModal/FileManagerAttachModal.tsx`), which disables the Attach button with `selectedFiles.length === 0 || isLoading || isAnyOperationInProgress` (the separate `isLoading` check is preserved).
 
 #### Scenario: Attach button disabled while any covered operation is in flight
 
@@ -119,7 +119,7 @@ This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/m
 
 ### Requirement: i18n keys for the new overlay labels
 
-The keys `dialFileManager.unsharingLabel` and `dialFileManager.removingAccessLabel` SHALL be added to `apps/chat/src/i18n/locales/en.json`, with matching `DialFileManagerI18nKeys.UnsharingLabel`/`RemovingAccessLabel` members in `apps/chat/src/constants/translation-keys.ts`, and corresponding `unsharingLabel`/`removingAccessLabel` fields added to `DialFileManagerShellLabels` (`apps/chat/src/components/DialFileManagerShell/types/labels.ts`), populated by both `DialFileManagerModal` and `DialFileManagerPage`'s `labels` construction — matching the existing `downloadingLabel`/`deletingLabel`/`renamingLabel` pattern.
+The keys `dialFileManager.unsharingLabel` and `dialFileManager.removingAccessLabel` SHALL be added to `apps/chat/src/i18n/locales/en.json`, with matching `DialFileManagerI18nKeys.UnsharingLabel`/`RemovingAccessLabel` members in `apps/chat/src/constants/translation-keys.ts`, and corresponding `unsharingLabel`/`removingAccessLabel` fields on `DialFileManagerShellLabels` (`libs/chat-shared/src/file-manager/labels.ts`), populated by both `DialFileManagerModal` and `DialFileManagerPage`'s `labels` construction — matching the existing `downloadingLabel`/`deletingLabel`/`renamingLabel` pattern.
 
 #### Scenario: Overlay labels use i18n keys
 

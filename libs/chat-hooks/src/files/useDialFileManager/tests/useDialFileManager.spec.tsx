@@ -1,6 +1,11 @@
 import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
-import { FileUploadStatus, HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
+import {
+  FileUploadStatus,
+  HIDDEN_FILE,
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
@@ -16,10 +21,6 @@ import { FileManagerNotificationReason } from '../../dial-file-manager.types';
 import type { DialFilesApi } from '../../dial-files-api';
 import { DownloadDestinationType } from '../../download-destination';
 import type { DownloadDestinationHandlers } from '../../download-destination';
-import {
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
-} from '../../file-manager-variant';
 import type { UseDialFileManagerOptions } from '../useDialFileManager';
 import { useDialFileManager } from '../useDialFileManager';
 

@@ -2087,7 +2087,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`, `FileDuplicated`, `FilesDuplicated` (a copy whose every item stays in its own source folder — the Duplicate action).
 - **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
 - **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent? }`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
-- **`DialFileManagerVariant`** / **`DialFileManagerActionProfile`** — identify which host is driving `useDialFileManager` (`Attach | Standalone | FolderPicker`) and which action set that gates (`Attach | Browse | Full`); `deriveActionProfile(variant)` maps the former to the latter.
+- **`deriveActionProfile(variant)`** — maps a `DialFileManagerVariant` (`Attach | Standalone | FolderPicker`) to the `DialFileManagerActionProfile` it gates (`Attach | Browse | Full`). Both enums, and `FileUploadValidationResult`, are owned and exported by `@epam/ai-dial-chat-shared`; import them from there.
 
 ## Conversation & File Utilities
 
@@ -2164,13 +2164,15 @@ import { getModelIdFromConversationId } from '@epam/ai-dial-chat-hooks';
 getModelIdFromConversationId('conversations/bucket/gpt-4__My%20chat'); // 'gpt-4'
 ```
 
-### virtualPathToApiPath / getParentFolderPath / resolveDialFileApiPath
+### virtualPathToApiPath / resolveDialFileApiPath
 
-Pure path-algebra helpers shared by the file-manager domain layer and by any host resolving a DIAL file to its bucket-relative API path.
+Pure path-algebra helpers shared by the file-manager domain layer and by any host resolving a DIAL file to its bucket-relative API path. `getParentFolderPath` is owned by `@epam/ai-dial-chat-shared`.
 
 ```ts
-import { getParentFolderPath } from '@epam/ai-dial-chat-hooks';
+import { resolveDialFileApiPath } from '@epam/ai-dial-chat-hooks';
+import { getParentFolderPath } from '@epam/ai-dial-chat-shared';
 
+resolveDialFileApiPath(file, bucket, rootLabel);
 getParentFolderPath('reports/file.txt'); // 'reports/'
 ```
 

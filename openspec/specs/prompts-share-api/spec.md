@@ -8,7 +8,7 @@ Sharing personal prompts through the existing share endpoint.
 
 ### Requirement: Personal prompts are shareable via the existing share endpoint
 
-A user SHALL be able to share a personal prompt with another user by calling the existing `POST /api/v1/share` endpoint (implemented in `apps/chat-api/src/share/share.controller.ts`) with the prompt's full DIAL Core resource path as `itemId` — the same `id` value `PromptResponseDto` already returns. No new backend endpoint is introduced for prompt sharing, and no prompt-specific qualification step runs: the share service already accepts arbitrary DIAL Core resource paths and proxies them to DIAL Core, and a prompt's `itemId` now arrives pre-qualified with its bucket exactly like an application's, a toolset's, a conversation's, or a skill's.
+A user SHALL be able to share a personal prompt with another user by calling the existing `POST /api/v1/share` endpoint (implemented in `apps/chat-api/src/share/share.controller.ts`) with the prompt's full DIAL Core resource path as `itemId` — the same `id` value `PromptResponseDto` already returns. No new backend endpoint is introduced for prompt sharing, and no prompt-specific bucket-qualification step runs: the share service already accepts arbitrary DIAL Core resource paths and proxies them to DIAL Core, and a prompt's `itemId` arrives pre-qualified with its bucket exactly like an application's, a toolset's, a conversation's, or a skill's.
 
 The prompt's DIAL Core resource path follows the same conventions as other resources:
 
@@ -18,7 +18,7 @@ prompts/{bucket}/{path}
 
 A client uses `PromptResponseDto.id` directly as `itemId`; it MUST NOT append `.json` or another `prompts/` path segment, and it needs no separate bucket to assemble the url with — `id` already carries it.
 
-When the backend built this resource url from a bucket-relative path in the past, each `/`-delimited segment of `{path}` was percent-encoded via the shared `encodeDialResourcePath` utility (`apps/chat-api/src/common/utils/encode-dial-path.ts`) before being sent to DIAL Core. That encoding step is now applied once, when the frontend originally requests the prompt and receives its `id`, not at share time — `itemId` is passed through unmodified, matching every other resource type's share flow.
+`PromptResponseDto.id` is the raw, unencoded resource path (`buildPromptId`; folder and prompt names with spaces stay literal). Prompts are therefore the one resource kind the share flow re-encodes at share time: `toShareResourceUrl` (`apps/chat-api/src/share/utils/share-resource.util.ts`) percent-encodes each `/`-delimited segment of a `prompts/…` `itemId` via the shared, idempotent `encodeDialResourcePath` utility (`apps/chat-api/src/common/utils/encode-dial-path.ts`) before it is sent to DIAL Core, and passes every other kind through unchanged. The share-management calls (discard, revoke, recipients count) apply the same normalization, and on accept `toPublicItemId` decodes a prompt itemId read back from the invitation so the returned `itemId` matches the catalog's raw id.
 
 `POST /api/v1/share` body:
 ```
@@ -52,7 +52,8 @@ determined (see `share-link-expiry`):
 #### Scenario: Share endpoint accepts prompt paths without additional validation
 
 - **WHEN** the `itemId` resolves to a path under `prompts/`
-- **THEN** no prompt-specific validation branch is executed — the existing share service proxies the request as-is, the same as for `applications/`, `toolsets/`, `conversations/`, and `skills/`
+- **THEN** no prompt-specific validation branch is executed — `itemId` is validated by the same `CreateShareLinkDto` rules as for `applications/`, `toolsets/`, `conversations/`, and `skills/`
+- **AND** the only prompt-specific step is `toShareResourceUrl` percent-encoding the path segments before the DIAL Core `shareResource` call
 
 #### Scenario: Sharing a prompt nested inside a folder with a space in its name succeeds
 
@@ -68,12 +69,13 @@ determined (see `share-link-expiry`):
 
 - **WHEN** an accepted invitation's itemId starts with `prompts/`
 - **THEN** the response carries neither `sharedDeployment` nor `sharedToolset`, and no deployment or toolset resolution is attempted
+- **AND** the returned `itemId` is the decoded prompt path produced by `toPublicItemId`
 
 ---
 
 ### Requirement: Shared prompts appear in the personal prompt list
 
-The `GET /api/v1/prompts` endpoint's `sharedWithMe` field (defined in `prompts-api`) SHALL be populated by querying DIAL Core's shared-resources listing for resources under the `prompts/` path namespace. The service calls DIAL Core's shared-resources API (the same call used by `ConversationService` to populate shared conversations) filtered to prompt paths, maps results to `PromptResponseDto`, and returns them in `sharedWithMe`.
+The `GET /api/v1/prompts` endpoint's `sharedWithMe` field (defined in `prompts-api`) SHALL be populated by querying DIAL Core's shared-resources listing for resources under the `prompts/` path namespace. The service calls DIAL Core's shared-resources API (the same `getSharedResources` call `ConversationListingService` uses to populate shared conversations) with `resourceTypes: ['PROMPT']` and `with: 'me'`, skipping `FOLDER` nodes and hidden folder markers, maps results to `PromptResponseDto`, and returns them in `sharedWithMe`.
 
 If DIAL Core returns no shared resources or the call fails non-fatally, `sharedWithMe` SHALL default to an empty array (graceful degradation — the personal and org prompts are still returned).
 
@@ -97,7 +99,7 @@ If DIAL Core returns no shared resources or the call fails non-fatally, `sharedW
 
 ### Requirement: Swagger description for POST /api/v1/share is updated
 
-The `@ApiOperation.description` on `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) SHALL state it creates a share link "for a DIAL Core resource (catalog entity, conversation, or prompt)". No DTO, status code, or rate-limit change is required. The description SHALL NOT reference a `resourceKind` parameter, since that parameter no longer exists.
+The `@ApiOperation.description` on `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) SHALL state it creates a share link for a DIAL Core resource covering catalog entities, conversations, and prompts — today: "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — conversation, or prompt) …". No DTO, status code, or rate-limit change is required. The description SHALL NOT reference a `resourceKind` parameter, since that parameter no longer exists.
 
 #### Scenario: Updated Swagger description reflects prompt support
 

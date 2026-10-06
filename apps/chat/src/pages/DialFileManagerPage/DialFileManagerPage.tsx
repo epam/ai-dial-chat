@@ -1,12 +1,12 @@
 import {
   DIAL_FILE_MANAGER_SECTION_TABS,
-  DialFileManagerActionProfile,
-  DialFileManagerVariant,
   useDialFileManagerSections,
   useDialFileManagerTabConfig,
   type DialFileManagerSection,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
   formatFileSize,
   type DialFileManagerShellLabels,
 } from '@epam/ai-dial-chat-shared';

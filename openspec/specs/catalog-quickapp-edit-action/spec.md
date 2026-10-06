@@ -13,28 +13,28 @@ The Edit action in the catalog details panel for items the current user owns, an
 - **WHEN** a `CatalogItem` is constructed without `isEditable`
 - **THEN** the details panel treats it as not editable and does not render the Edit action for that item
 
-### Requirement: Details panel renders an Edit action next to Use in chat
-The Catalog details panel (`Header.tsx`) SHALL accept an optional `onEdit?: (item: CatalogItem) => void` prop (threaded through `DetailsPanelProps` and `CatalogProps`) and an optional `editActionLabel` text override (via `ItemDetailsTexts`, default `'Edit'`). When `onEdit` is provided AND the currently displayed item's `isEditable` is `true`, a `NeutralButton` labelled with `editActionLabel` and a leading `IconPencil` SHALL render immediately after the primary action button ("Use in chat"), before "Share". Clicking it SHALL call `onEdit` with the current item.
+### Requirement: Details panel offers an Edit action in its Manage menu
+The Catalog details panel (`Header.tsx`) SHALL accept an optional `onEdit?: (item: CatalogItem) => void` prop (threaded through `DetailsPanelProps` and `CatalogProps`) and an optional `editActionLabel` text override (via `ItemDetailsTexts`, default `'Edit'`). When `onEdit` is provided AND the currently displayed item's `isEditable` is `true` AND the panel is not read-only (`isReadonly`), an Edit entry labelled with `editActionLabel` and an `IconPencil` icon SHALL be added to the header's Manage menu (the overflow dropdown whose trigger is labelled `manageActionLabel`, default `'Manage'`), after Share (when Share is not in the action row) and before Download/Publish. When Edit is the only Manage entry (and no lazily resolved Unpublish or Revoke access entry may still join it), it SHALL instead render as a `NeutralButton` in the action row. Clicking it SHALL call `onEdit` with the current item.
 
 #### Scenario: Edit hidden when onEdit is not supplied
 - **WHEN** the details panel is rendered without an `onEdit` prop, even if the item's `isEditable` is `true`
-- **THEN** no "Edit" button is present in the DOM
+- **THEN** no "Edit" action is offered
 
 #### Scenario: Edit hidden when the item is not editable
 - **WHEN** `onEdit` is supplied but the displayed item's `isEditable` is `false` or `undefined`
-- **THEN** no "Edit" button is present in the DOM
+- **THEN** no "Edit" action is offered
 
 #### Scenario: Edit shown for an editable item
 - **WHEN** `onEdit` is supplied and the displayed item's `isEditable` is `true`
-- **THEN** an "Edit" button (default label, `IconPencil` leading icon) renders next to "Use in chat"
+- **THEN** an "Edit" entry (default label, `IconPencil` icon) appears in the Manage menu, or as a `NeutralButton` in the action row when it is the only Manage entry
 - **AND** clicking it invokes `onEdit` with the item
 
 #### Scenario: Edit label override
 - **WHEN** `editActionLabel` is supplied in `texts`
-- **THEN** the Edit button uses that label instead of the default `'Edit'`
+- **THEN** the Edit action uses that label instead of the default `'Edit'`
 
 ### Requirement: apps/chat marks a deployment editable when it belongs to a runner schema and the current user can edit it
-`mapDeploymentToCatalogItem` SHALL accept an optional `editableSchemaIds: string[]` option and compute `isEditable` as `true` when the deployment is `isMy` or `canEdit` AND either its `applicationTypeSchemaId` is one of `editableSchemaIds`, or custom apps are editable (`isCustomAppsEditable`) and the deployment is a schema-less `application`. `useCatalogItems` SHALL pass as `editableSchemaIds` the ids of every runner schema returned by `getRunnerSchemas(schemas)` over the schemas loaded from `DeploymentsContext` — not only the QuickApp schema. Toolset editability is computed separately (see `apps/chat marks a toolset editable when owned by the current user`).
+`mapDeploymentToCatalogItem` SHALL accept an optional `editableSchemaIds: string[]` option and compute `isEditable` as `true` when the deployment is `isMy` or `canEdit` AND either its `applicationTypeSchemaId` is one of `editableSchemaIds`, or custom apps are editable (`isCustomAppsEditable`) and the deployment is a schema-less `application`. The computation lives in `libs/chat-hooks` (`mapDeploymentToCatalogItem` in `catalog/map-deployment-to-catalog-item.ts`); `apps/chat/src/utils/map-deployment-to-catalog-item.ts` wraps it with the host's locale, icon-URL resolver and folder labels. `useCatalogItems` SHALL pass as `editableSchemaIds` the ids of every runner schema returned by `getRunnerSchemas(schemas)` over the schemas loaded from `DeploymentsContext` — not only the QuickApp schema. Toolset editability is computed separately (see `apps/chat marks a toolset editable when owned by the current user`).
 
 #### Scenario: Own app of any runner is editable
 - **WHEN** a deployment has `isMy: true` and `applicationTypeSchemaId` equal to the id of any runner schema (QuickApp, Quick app 2.0, Mind map, …)
@@ -74,14 +74,14 @@ The Catalog details panel (`Header.tsx`) SHALL accept an optional `onEdit?: (ite
 - **THEN** the editor navigates back to `ROUTES.Catalog`, its fixed return route
 
 ### Requirement: apps/chat marks a toolset editable when owned by the current user
-`apps/chat`'s `mapToolsetToCatalogItem` SHALL compute `isEditable` as `toolset.isMy ?? false` — every toolset owned by the current user is editable, with no schema-type restriction (unlike QuickApps, toolsets have no non-editable variant to exclude).
+`mapToolsetToCatalogItem` (defined in `libs/chat-hooks`, wrapped by `apps/chat/src/utils/map-deployment-to-catalog-item.ts`) SHALL compute `isEditable` as `!!(toolset.isMy || toolset.canEdit)` — every toolset the current user owns or may edit is editable, with no schema-type restriction (unlike QuickApps, toolsets have no non-editable variant to exclude).
 
 #### Scenario: Own toolset is editable
 - **WHEN** a toolset has `isMy: true`
 - **THEN** its mapped `CatalogItem.isEditable` is `true`
 
 #### Scenario: Toolset owned by another user is not editable
-- **WHEN** a toolset has `isMy: false` (or `undefined`)
+- **WHEN** a toolset has `isMy: false` (or `undefined`) and `canEdit` falsy
 - **THEN** its mapped `CatalogItem.isEditable` is `false`
 
 ### Requirement: URL-building for the Apps editor is unified across create and edit

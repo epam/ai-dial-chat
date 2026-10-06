@@ -10,7 +10,7 @@ The archive-upload endpoint with zip-slip validation and server-side conflict re
 
 The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) that accepts a ZIP archive and a destination, streams-extracts its entries via `yauzl`, and uploads each valid entry to DIAL Core using the create-only contract. If DIAL Core reports a name collision for an entry, the service SHALL retry that same entry with a deduplicated sibling name (`name (1).ext`, `name (2).ext`, etc.) until the upload succeeds or the retry limit is reached. The endpoint returns a per-entry result array with the final uploaded path for successful entries.
 
-The file-count limit SHALL be enforced before extraction/upload starts. `FilesUploadService` SHALL enumerate ZIP central-directory metadata and count non-directory entries before opening any entry read stream, staging entry bytes, or calling DIAL Core upload. If the count exceeds `ARCHIVE_UPLOAD_MAX_FILES`, the endpoint SHALL fail with `422 Unprocessable Entity`, return the message `Archive contains more than {maxFiles} files`, and attempt zero entry uploads. This all-or-nothing rule applies only to the file-count limit; the uncompressed-size limit remains a mid-extraction guard and may leave entries uploaded before the abort.
+The file-count limit SHALL be enforced before extraction/upload starts. `FilesUploadService` SHALL enumerate ZIP central-directory metadata and count non-directory entries before opening any entry read stream, staging entry bytes, or calling DIAL Core upload. Before that count, if the archive's total entry count (directories included) exceeds `ARCHIVE_UPLOAD_MAX_FILES * 10`, the endpoint SHALL fail with `422 Unprocessable Entity` and the message `Archive contains too many entries` (directory-entry amplification guard). If the non-directory count exceeds `ARCHIVE_UPLOAD_MAX_FILES`, the endpoint SHALL fail with `422 Unprocessable Entity`, return the message `Archive contains more than {maxFiles} files`, and attempt zero entry uploads. This all-or-nothing rule applies only to the file-count limit; the uncompressed-size limit remains a mid-extraction guard and may leave entries uploaded before the abort.
 
 **State ownership**: `FilesUploadService` (`apps/chat-api/src/files/upload/files-upload.service.ts`) owns all extraction/upload logic, including single-file upload (`uploadFile`, `uploadFileStream`) and archive extraction (`extractAndUploadArchive` and its temp-file staging helpers); `FilesController` delegates through the `FilesService` facade (thin-controller pattern).
 
@@ -27,7 +27,7 @@ Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath`
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | `bucket` | `string` | `@IsString @IsNotEmpty @Matches(BUCKET_NAME_PATTERN) @MaxLength(256)` | DIAL Core bucket |
-| `destinationPath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Destination folder, relative to bucket |
+| `destinationPath` | `string` | `@IsString @IsValidFilePath() @MaxLength(1024)` (no `@IsNotEmpty`) | Destination folder, relative to bucket; an empty string uploads to the bucket root |
 
 #### Response DTO
 
@@ -46,7 +46,7 @@ Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath`
 ```typescript
 @Post('upload-archive')
 @HttpCode(200)
-@UseInterceptors(FileInterceptor('file'))
+@UseInterceptors(ArchiveUploadInterceptor) // stages the multipart `file` on disk
 @ApiConsumes('multipart/form-data')
 @ApiBody({
   schema: {
@@ -68,11 +68,13 @@ Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath`
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable, timed out, or ARCHIVE_UPLOAD_TIMEOUT_MS exceeded' })
 uploadArchive(
-  @UploadedFile() file: { buffer: Buffer; mimetype: string },
+  @UploadedFile() file: Express.Multer.File | undefined,
   @Body() body: UploadArchiveDto,
   @Req() req: Request,
-): Promise<UploadArchiveResponseDto>
+): Promise<UploadArchiveResponseDto> // throws BadRequestException('file is required') when file is missing
 ```
+
+`FilesUploadService.uploadArchive` reads the staged archive by its `path` (not an in-memory buffer) and also rejects an empty `path` with `400 file is required`.
 
 #### Generated-client impact
 
@@ -115,6 +117,11 @@ uploadArchive(
 - **THEN** the endpoint returns `422 Unprocessable Entity` and no entries are uploaded
 - **AND** extraction/upload does not start for any entry: no entry read stream is opened and no DIAL Core create-only upload is attempted
 - **AND** the response message names the file-count check, e.g. `Archive contains more than 1000 files` when the default limit is used
+
+#### Scenario: Archive with too many total entries is rejected
+
+- **WHEN** the archive's total entry count, directories included, exceeds `ARCHIVE_UPLOAD_MAX_FILES * 10`
+- **THEN** the endpoint returns `422 Unprocessable Entity` with the message `Archive contains too many entries` and no entries are uploaded
 
 #### Scenario: Archive exceeding the uncompressed-size limit is rejected mid-extraction
 
@@ -190,7 +197,7 @@ Every archive entry SHALL be rejected (recorded as a failed result, not extracte
 
 ### Requirement: onUploadArchive wired on useDialFileManager
 
-`useDialFileManager` SHALL expose `onUploadArchive(file: File, name: string, destinationFolder: string)`, wired to ui-kit's `DialFileManager.onUploadArchive` prop, that resolves `destinationFolder` to the parent API folder path (same resolution as `onUploadFiles`), appends the provided archive `name` as a trailing-slashed child folder, and calls the new `uploadArchive` server-api wrapper with that archive-named `destinationPath`.
+`useDialFileManager` (`libs/chat-hooks`) SHALL expose, from its composed `useDialFileUploadBatch` (`libs/chat-hooks/src/files/useDialFileUploadBatch/useDialFileUploadBatch.ts`), `onUploadArchive(file: File, name: string, destinationFolder: string)`, wired to ui-kit's `DialFileManager.onUploadArchive` prop, that resolves `destinationFolder` to the parent API folder path (same resolution as `onUploadFiles`), appends the provided archive `name` as a trailing-slashed child folder, and calls `filesApi.uploadArchive(file, bucket, destinationPath)` on the injected `DialFilesApi` port with that archive-named `destinationPath`.
 
 If the ui-kit's archive conflict resolver falls back to `onUploadFiles` because the browser reports a ZIP with an empty or non-standard MIME type, `useDialFileManager` SHALL detect the single-file shape `{ fileContent.name: "*.zip", name: "<archive-folder-name>" }` and route it back through the archive upload path instead of uploading the ZIP as a normal file.
 
@@ -198,11 +205,11 @@ If the ui-kit's archive conflict resolver falls back to `onUploadFiles` because 
 
 **Cache invalidation**: on completion, the hook invalidates the cache entry for the parent destination folder and increments `retryCounter`, matching `onUploadFiles`. The archive-named child folder's contents are fetched only after the user opens that folder.
 
-**Notifications**: request-level failure (network/validation error, non-ZIP, oversized archive, timeout) surfaces via `onNotification(NotificationVariant.Error, ...)` with the generic archive-upload error because no per-entry result list is available. If the request succeeds but every entry in `results` failed, the hook surfaces an all-failed archive-entry message containing the failed file list. Partial failure (some entries failed) surfaces via a distinct partial-failure message containing the failed count and failed file list, matching the `CopyPartialError`/`MovePartialError` convention while adding actionable file names. Full success shows no toast — the archive-named child folder appearing in the refreshed parent listing is the confirmation.
+**Notifications**: the lib emits structured events through `onNotification({ variant, reason, ... })` and has no `t`; the app's notification adapter (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`) turns each reason into translated text. Request-level failure (network/validation error, non-ZIP, oversized archive, timeout) emits `{ variant: NotificationVariant.Error, reason: FileManagerNotificationReason.UploadArchiveRequestFailed }` (generic archive-upload error) because no per-entry result list is available. If the request succeeds but every entry in a non-empty `results` failed, it emits `reason: UploadArchiveFailed` with `names` and `restCount`. Partial failure (some entries failed) emits `reason: UploadArchivePartiallyFailed` with `count` (failed count), `names` and `restCount`. Full success shows no toast — the archive-named child folder appearing in the refreshed parent listing is the confirmation.
 
-The failed file list SHALL be built from failed `UploadArchiveEntryResultDto` entries as `path` or `path (error)` when an entry includes an error. The list SHALL display at most five entries and append the existing `dialFileManager.andOtherItems` label for the remaining count.
+The failed file list (`names`) SHALL be built from failed `UploadArchiveEntryResultDto` entries as `path` or `path (error)` when an entry includes an error, capped at five entries (`ARCHIVE_FAILED_FILE_LIST_LIMIT`); `restCount` carries the remainder, which the adapter renders with the existing `dialFileManager.andOtherItems` label.
 
-**Memoisation**: archive upload handling SHALL be memoised with dependencies that include `bucket`, `rootLabel`, `onNotification`, and `t`; `onUploadArchive` MAY delegate to that memoised handler.
+**Memoisation**: archive upload handling SHALL be memoised with dependencies `[bucket, rootLabel, onNotification, filesApi, invalidateFolders, bumpRetry]`; `onUploadArchive` MAY delegate to that memoised handler.
 
 #### Scenario: Successful archive upload refreshes the parent destination folder
 
@@ -221,17 +228,17 @@ The failed file list SHALL be built from failed `UploadArchiveEntryResultDto` en
 #### Scenario: Partial archive upload failure shows a toast with failed files
 
 - **WHEN** `onUploadArchive` completes with some entries failed
-- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a message reporting the failed count and failed file list
+- **THEN** `onNotification` is called once with `NotificationVariant.Error`, `reason: UploadArchivePartiallyFailed`, the failed `count`, and the failed file `names`
 
 #### Scenario: All returned archive entries fail
 
 - **WHEN** `onUploadArchive` completes with a non-empty `results` array and every entry failed
-- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a message listing the failed files
+- **THEN** `onNotification` is called once with `NotificationVariant.Error`, `reason: UploadArchiveFailed`, and the failed file `names`
 
 #### Scenario: Request-level archive upload failure shows a generic toast
 
 - **WHEN** the `uploadArchive` request itself rejects (network error, non-ZIP, oversized)
-- **THEN** `onNotification` is called once with `NotificationVariant.Error`
+- **THEN** `onNotification` is called once with `NotificationVariant.Error` and `reason: UploadArchiveRequestFailed`
 
 ---
 
@@ -253,11 +260,11 @@ If the ui-kit opens its conflict popup during archive selection, that popup conc
 
 ### Requirement: Upload-archive toolbar action, standalone-only
 
-`DialFileManagerShell` SHALL populate `toolbarOptions.newActions.uploadArchive` (label + icon) only when `variant === DialFileManagerVariant.Standalone` and `actionProfile === DialFileManagerActionProfile.Full`. The attach modal (`variant === Attach`) SHALL NOT receive this new-action entry.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) SHALL populate `toolbarOptions.newActions.uploadArchive` (label + icon) only when `variant === DialFileManagerVariant.Standalone`, `actionProfile === DialFileManagerActionProfile.Full`, the gating tab (`sectionTab ?? activeTab`) is `DialFileManagerTabs.MyFiles`, and `uploadEnabled` is true. The attach modal (`variant === Attach`) SHALL NOT receive this new-action entry.
 
 #### Scenario: Standalone page with Full profile shows the upload-archive toolbar entry
 
-- **WHEN** `DialFileManagerPage` renders with `actionProfile: Full`
+- **WHEN** `DialFileManagerPage` renders with `actionProfile: Full` on the My files tab with uploads enabled
 - **THEN** `toolbarOptions.newActions.uploadArchive` is present
 
 #### Scenario: Attach modal never shows the upload-archive toolbar entry
@@ -273,7 +280,7 @@ The following base keys SHALL be represented in `DialFileManagerI18nKeys` (`apps
 
 | Base key | Locale entry / English value (example) |
 |----------|----------------------------------------|
-| `dialFileManager.uploadArchiveAction` | `Upload archive` |
+| `dialFileManager.uploadArchiveAction` | `Archive` |
 | `dialFileManager.uploadArchiveError` | `Failed to upload the archive` |
 | `dialFileManager.uploadArchiveFilesError` | `_one`: `Failed to upload this archive file: {{files}}`; `_other`: `Failed to upload these archive files: {{files}}` |
 | `dialFileManager.uploadArchivePartialError` | `_one`: `{{count}} item in the archive could not be uploaded: {{files}}`; `_other`: `{{count}} items in the archive could not be uploaded: {{files}}` |
@@ -282,13 +289,13 @@ The following base keys SHALL be represented in `DialFileManagerI18nKeys` (`apps
 #### Scenario: Upload-archive toolbar label uses i18n key
 
 - **WHEN** the upload-archive toolbar entry is rendered
-- **THEN** its label is produced via `t(DialFileManagerI18nKeys.UploadArchiveAction)`, not a raw string literal
+- **THEN** its label is the shell's `labels.uploadArchiveAction`, which the host (`DialFileManagerPage`, `DialFileManagerModal`) produces via `t(DialFileManagerI18nKeys.UploadArchiveAction)`, not a raw string literal
 
 ---
 
 ### Requirement: No feature-flag gating
 
-Upload archive SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — consistent with the other file-manager actions. Visibility is gated only by `variant`/`actionProfile`.
+Upload archive SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — consistent with the other file-manager actions. Visibility is gated only by `variant`, `actionProfile`, the My files tab, and `uploadEnabled`.
 
 #### Scenario: Upload archive is available without a feature flag
 

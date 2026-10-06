@@ -154,7 +154,7 @@ it. Chat HTML SHALL retain permission while its OOXML runtime uses that context.
 
 The file-download route SHALL overwrite the response's `Content-Security-Policy`
 header with a dedicated, more permissive policy — built by
-`createHtmlPreviewCspHeader()` in `apps/chat-api/src/config/csp.ts` — whenever the
+`createHtmlPreviewCspHeader(allowedIframeOrigins)` in `apps/chat-api/src/config/csp.ts` — whenever the
 downloaded file's `content-type` starts with `text/html`, and SHALL remove any
 `Content-Security-Policy-Report-Only` header from that response. Every other
 download response SHALL keep the chat app's normal enforced/report-only policy
@@ -165,16 +165,26 @@ response directly into an iframe (`src=`, not `srcdoc`) without its inline
 `<script>`/`<style>` being blocked by the strict policy the chat app enforces for
 its own document — that policy has no `'unsafe-inline'`/`'unsafe-eval'`, but an
 arbitrary previewed HTML file cannot be expected to carry a nonce or avoid inline
-styles. The preview-scoped policy fixes `frame-ancestors 'self'` rather than
-reusing `ALLOWED_CONNECT_ORIGINS`/the iframe-origin allowlist, because only this
-app's own document ever embeds one of its own download responses.
+styles. Both the download route and `html-preview-frame` pass the configured
+`ALLOWED_IFRAME_ORIGINS`, and the preview-scoped policy's `frame-ancestors` is
+built by `buildDownloadFrameAncestorsDirective` as `'self'` followed by every
+`ALLOWED_IFRAME_ORIGINS` entry: `'self'` covers this app's own preview iframe,
+and the overlay-host origins are required because `frame-ancestors` validates the
+entire ancestor chain, so when this app is itself embedded in an overlay host a
+bare `'self'` would fail the check for the host page's origin.
 
 As with the WebAssembly exception above, this CSP relaxation is scoped to one
-response and never substitutes for document policy: the security property that
-actually prevents the previewed HTML from reading this app's cookies, session,
-or APIs is the iframe's `sandbox="allow-scripts"` (no `allow-same-origin`) set by
-the attachment-canvas viewer, which holds regardless of how permissive this
-response's CSP is. See the `attachment-canvas-html-viewer` spec's `HtmlContent`
+response and never substitutes for document policy. The primary control that
+prevents the previewed HTML from reading this app's cookies, session, or APIs is
+the policy's own `sandbox allow-scripts` directive (no `allow-same-origin`),
+which forces the response to render at an opaque origin even when it is opened
+directly (new tab, bookmark, external link) rather than through the preview
+iframe. The policy also sets `connect-src`, `object-src`, `base-uri`,
+`form-action`, `worker-src`, `frame-src`, and `child-src` each explicitly to
+`'none'`, and `script-src` to `'unsafe-inline'` only (no `'unsafe-eval'`, no
+remote/data/blob script sources). The iframe's `sandbox="allow-scripts"`
+attribute set by the attachment-canvas viewer is redundant defense-in-depth on
+top of that directive. See the `attachment-canvas-html-viewer` spec's `HtmlContent`
 renderer requirement for the sandbox rationale.
 
 #### Scenario: HTML download gets the preview CSP
@@ -185,6 +195,14 @@ renderer requirement for the sandbox rationale.
   policy
 - **AND** no `Content-Security-Policy-Report-Only` header is present on that
   response
+
+#### Scenario: Preview CSP allows the overlay host chain and sandboxes itself
+- **GIVEN** `ALLOWED_IFRAME_ORIGINS` is `https://host.example`
+- **WHEN** the file-download route returns a `text/html` response, or
+  `GET /api/v1/files/html-preview-frame` is requested
+- **THEN** the preview CSP contains `frame-ancestors 'self' https://host.example`
+  and `sandbox allow-scripts`
+- **AND** it contains `connect-src 'none'`
 
 #### Scenario: Non-HTML download keeps the standard policy
 - **WHEN** the file-download route returns a response whose `content-type` does

@@ -198,13 +198,15 @@ is also unlimited.
 
 ### Requirement: Per-metric, overall Cost, and row status model
 
-For each finite token cell and each matching top-level overall Cost stat, the adapter SHALL derive
-status from `usedPercent`: `>= 100` is `LimitReached`, `>= 75` and `< 100` is `RunningLow`, and `< 75`
-is `WithinLimits`. Overall row Status SHALL be the most severe finite status across all three model
-token cells and all three overall Cost limits, ordered `LimitReached` > `RunningLow` >
-`WithinLimits`. Per-deployment attributed Cost SHALL NOT be treated as a cap. If there is no finite
-status but at least one token or overall Cost limit is `Unlimited`, overall Status SHALL be
-`NoLimit`; otherwise it SHALL be `Unavailable`.
+The adapter SHALL derive status from `usedPercent` for each finite token cell, each finite
+per-deployment Cost cell, and each matching top-level overall Cost stat: `>= 100` is `LimitReached`, `>= 75`
+and `< 100` is `RunningLow`, and `< 75` is `WithinLimits`. Overall row Status (`getRowStatus`) SHALL
+be the most severe finite status across the three token cells, any finite per-deployment Cost cells,
+and the three overall Cost limits, ordered `LimitReached` > `RunningLow` > `WithinLimits`. A
+per-deployment Cost cell at the unlimited sentinel (`Unlimited`, the case for every payload observed
+to date) contributes nothing. If there is no finite status but at least one token cell is `Unlimited`
+or an overall Cost status is `NoLimit`, overall Status SHALL be `NoLimit`; sentinel Cost cells alone
+do not promote a row to `NoLimit`. Otherwise it SHALL be `Unavailable`.
 
 #### Scenario: Short-window breach determines overall Status
 - **WHEN** day Tokens is `LimitReached`, week is `RunningLow`, and month is
@@ -217,6 +219,11 @@ status but at least one token or overall Cost limit is `Unlimited`, overall Stat
 
 #### Scenario: Overall Cost breach applies to every model
 - **WHEN** a model's token limits are within limits but the top-level day Cost limit is
+  reached
+- **THEN** that model row's overall Status is `LimitReached`
+
+#### Scenario: A finite per-deployment Cost cell is folded into the row Status
+- **WHEN** a model's token cells are `WithinLimits` and its day Cost stat has a finite `total` that is
   reached
 - **THEN** that model row's overall Status is `LimitReached`
 
@@ -342,11 +349,13 @@ non-visual accessible context for the metric values.
 
 The adapter's own `USAGE_MODEL_LIMITS_I18N_KEYS` const SHALL reuse the same path strings as
 `UsageI18nKeys.TodayPeriodDescription`, `ThisWeekPeriodDescription`, `ThisMonthPeriodDescription`,
-plus dedicated key paths for `Model tokens limits`, `spent`, `Follows cost limit`, its accessible
-value description, and both overall Cost status tooltip templates. `UsageTab` continues to supply
-`TokensColumnLabel` and `CostColumnLabel` from its own `UsageI18nKeys` directly as label props —
-those two are not part of the adapter's own const, since they are column labels the tab already
-owns. Selector, minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
+plus dedicated key paths for both overall Cost status tooltip templates (`overallCostLimitRunningLowTooltip`,
+`overallCostLimitReachedTooltip`), `unavailableLabel`, `followsCostLimitLabel`, `noLimitLabel`,
+`followsCostLimitAriaLabel`, `unlimitedProgressAriaLabel`, `progressAriaLabel`, `spentLabel`, and the
+application-row `applicationTypeLabel` and `includesCalledModelsLabel`. The const carries no heading
+key: `UsageTab` supplies the `Model tokens limits` heading as `headingLabel` from
+`UsageI18nKeys.ModelLimitsHeading`, and likewise supplies `TokensColumnLabel` and `CostColumnLabel`
+from its own `UsageI18nKeys` directly as label props, since those are labels the tab already owns. Selector, minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
 
 #### Scenario: Visible token numbers are compact and currency-free
 - **WHEN** day Tokens has `used: 1600000` and `total: 2000000`

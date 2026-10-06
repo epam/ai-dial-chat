@@ -2,20 +2,21 @@
 
 ## Purpose
 
-The host-driven Download action in the catalog details panel and the version 5 JSON envelope a prompt downloads as, wired for prompts only.
+The host-driven Download action in the catalog details panel and the version 5 JSON envelope a prompt downloads as. The catalog wires the action for prompts and skills; the skill archive download is specified by `skill-archive-download`.
 
 ## Requirements
 
 ### Requirement: The details panel offers a host-driven Download action
 
-`libs/catalog` SHALL add two optional props to `CatalogProps` and `DetailsPanelProps`:
+`libs/catalog` SHALL expose these optional props on `CatalogProps` and `DetailsPanelProps`:
 
-- `onDownload?: (item: CatalogItem) => Promise<void> | void` — called when the "Download" entry in the Manage menu is activated.
+- `onDownload?: (item: CatalogItem) => Promise<void> | void` — called when the "Download" action is activated.
 - `isDownloadVisible?: (item: CatalogItem) => boolean` — narrows which items offer the action, defaulting to `true` (visible) whenever `onDownload` is supplied.
+- `isDownloadPrimary?: (item: CatalogItem) => boolean` — promotes Download to the primary-action slot instead of the Manage menu; when omitted, it is promoted for a `CatalogEntityType.Skill` item that shows no other primary action.
 
-`Header.tsx` SHALL render the entry as `shouldShowDownloadAction = !!onDownload && (isDownloadVisible?.(item) ?? true)`, positioned after Edit and before Publish, ahead of every destructive entry. `ItemDetailsTexts` SHALL gain `downloadActionLabel?: string` (default `'Download'`).
+`Header.tsx` SHALL compute `isDownloadActionEnabled = !!onDownload && (isDownloadVisible?.(item) ?? true)`. A promoted Download (`isDownloadActionPrimary`, never taken while a toolset's credentials action holds the primary slot) renders only in the primary slot; otherwise `shouldShowDownloadAction` renders the Manage-menu entry, positioned after Edit and before Publish, ahead of every destructive entry. `ItemDetailsTexts` SHALL carry `downloadActionLabel?: string` (default `'Download'`), used by both placements.
 
-The call is fire-and-forget: the panel does not await the result, shows no pending state, and stays on its details content with no confirmation step. Progress and failure feedback belong to the host, which is the only side that knows what is being written.
+The Manage-menu entry is fire-and-forget: the panel does not await the result, shows no pending state, and stays on its details content with no confirmation step. The promoted primary button awaits the call only to show its own pending/disabled state, swallows a rejection, and resets that state when `item.id` changes. Progress and failure feedback belong to the host, which is the only side that knows what is being written.
 
 The lib MUST NOT learn the file format, build the payload, or name the file. It reports the click and nothing else — a lib that serialized a prompt would embed a host-owned wire contract.
 
@@ -54,7 +55,7 @@ The lib MUST NOT learn the file format, build the payload, or name the file. It 
 
 ### Requirement: A prompt downloads as a version 5 JSON envelope
 
-`apps/chat/src/utils/export-prompt.ts` SHALL own the file's shape, mirroring the conversation export envelope so both downloads share one format family:
+`libs/chat-hooks/src/prompt/export-prompt.ts` (exported from `@epam/ai-dial-chat-hooks`) SHALL own the file's shape, mirroring the conversation export envelope so both downloads share one format family:
 
 ```ts
 export interface PromptExportFormat {
@@ -74,7 +75,7 @@ export interface PromptExportFormat {
 - carry neither `createdAt`/`updatedAt` nor `author` into the file — they describe the source resource, not the exported prompt, and would be wrong the moment the file is imported elsewhere
 - preserve `{{variable}}` placeholders in the body verbatim
 
-`serializePromptExport` SHALL produce a pretty-printed `application/json` blob. `buildPromptExportFileName(promptName, appName, date)` SHALL return `{YYYY-MM-DD}_{appName}_prompt_{safeName}.json`, replacing every character outside `[a-zA-Z0-9._-]` with `_` so the name stays a single file-name segment. `EXPORT_APP_NAME` SHALL move to `export-conversation.ts` and be shared by both download paths rather than duplicated as a literal.
+`serializePromptExport` SHALL produce a pretty-printed `application/json` blob. `buildPromptExportFileName(promptName, appName, date)` SHALL return `{YYYY-MM-DD}_{appName}_prompt_{safeName}.json`, replacing every run of characters outside `[a-zA-Z0-9._-]` with a single `_` so the name stays a single file-name segment; `date` defaults to `new Date()`. `EXPORT_APP_NAME` (`'ai_dial'`) SHALL live in `libs/chat-hooks/src/conversation/conversation-transfer/export-conversation.ts` and be shared by both download paths rather than duplicated as a literal.
 
 #### Scenario: A nested prompt carries its folder chain
 
@@ -104,15 +105,15 @@ export interface PromptExportFormat {
 
 ---
 
-### Requirement: `CatalogView` wires download for prompts only
+### Requirement: `CatalogView` wires download for prompts and skills
 
-`CatalogView` SHALL pass `onDownload={handleDownload}` and `isDownloadVisible={(item) => item.type === CatalogEntityType.Prompt}` to `Catalog`. Every other entity type is backed by configuration the catalog does not export, so offering the action there would promise a file that cannot be produced.
+`CatalogView` SHALL pass `onDownload={handleDownload}` and `isDownloadVisible={isDownloadVisible}` to `Catalog`, both returned by `useCatalogItemActions` (`apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx`), with `isDownloadVisible = (item) => item.type === CatalogEntityType.Prompt || item.type === CatalogEntityType.Skill`. Every other entity type is backed by configuration the catalog does not export, so offering the action there would promise a file that cannot be produced. A skill downloads as its archive (see `skill-archive-download`); the rest of this requirement covers the prompt branch.
 
-`handleDownload` SHALL re-fetch the body rather than reading `item.details.promptContent`: the listing seeds that field, so a prompt edited in another tab would otherwise be written to disk stale. It resolves through `getPublicPrompt` with the parsed bucket-relative sub-path when `isOrganisationPromptItem(item)`, and `getPrompt(item.id)` for a personal or shared prompt (the full `prompts/{bucket}/{path}` id is passed unmodified, whether the prompt is the caller's own or shared with them) — the same dispatch the details fetch and use-in-chat paths use.
+`handleDownload` SHALL re-fetch the body rather than reading `item.details.promptContent`: the listing seeds that field, so a prompt edited in another tab would otherwise be written to disk stale. It resolves through `getPublicPrompt` with the parsed bucket-relative sub-path when `isOrganisationPromptItem(item)`, and `getPrompt(item.id)` for a personal or shared prompt (the full `prompts/{bucket}/{path}` id is passed unmodified, whether the prompt is the caller's own or shared with them) — the same dispatch the details fetch and use-in-chat paths use, shared through the hook's `fetchPromptDto`.
 
-`isOrganisationPromptItem` SHALL be extracted to `apps/chat/src/utils/map-prompt-to-catalog-item.ts` and shared by all three call sites, replacing the inline `!item.isMyApp && !item.sharedWithMe` expression each had duplicated.
+`isOrganisationPromptItem` SHALL live in `libs/chat-hooks/src/catalog/map-prompt-to-catalog-item.ts` (exported from `@epam/ai-dial-chat-hooks`) and be the single check behind that dispatch, replacing the inline `!item.isMyApp && !item.sharedWithMe` expression each call site had duplicated.
 
-Failure SHALL surface an error notification carrying the request id from `getApiErrorDetails`, using the new `CatalogI18nKeys.DetailsPromptDownloadError` key, and SHALL write no file. Success is confirmed by the browser's own download UI, so no success notification is shown. The action label reuses the existing `ButtonsI18nKeys.Download`; no feature-scoped duplicate is declared.
+Failure SHALL surface an error notification carrying the request id from `getApiErrorDetails`, using the `CatalogI18nKeys.DetailsPromptDownloadError` key, and SHALL write no file. Success triggers the blob download via `triggerBlobDownload` and a success notification through `notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Downloaded, { name })`. The action label is `texts.downloadActionLabel = t(ButtonsI18nKeys.Download)`; no feature-scoped duplicate is declared.
 
 Sharing an owner's prompt is not a precondition: download is a read, so it is offered for personal, shared-with-me, and organisation prompts alike.
 
@@ -141,6 +142,7 @@ Sharing an owner's prompt is not a precondition: download is a read, so it is of
 
 - **WHEN** the catalog contains a Model item and a Prompt item
 - **THEN** only the Prompt item offers the Download action
+- **AND** a Skill item would offer it too, while Model, Agent, Application, and Toolset items never do
 
 #### Scenario: A failed download reports the request id and writes nothing
 
@@ -153,7 +155,7 @@ Sharing an owner's prompt is not a precondition: download is a read, so it is of
 ### Requirement: Non-functional contract for prompt download
 
 - **Memoisation**: `handleDownload` and `isDownloadVisible` MUST be `useCallback`'d, so the details panel's props stay referentially stable across unrelated re-renders.
-- **i18n**: one new key, `catalog.details.promptDownloadError`. The action label reuses `ButtonsI18nKeys.Download`, whose English value `'Download'` already exists in `en.json`.
+- **i18n**: the prompt branch uses one key, `catalog.details.promptDownloadError`; the skill branch uses `catalog.details.skillDownloadError`. The action label reuses `ButtonsI18nKeys.Download`, whose English value `'Download'` already exists in `en.json`.
 - **Accessibility**: the menu entry is a normal Manage-menu item and inherits its keyboard model; its `IconDownload` is `aria-hidden`, since the entry already carries a text label.
 - **RTL / direction impact**: none — the entry introduces no physical-direction class and its icon is not directional.
 - **Authorization**: no new client-side check. The prompt endpoints already scope reads to what the caller may see; an organisation prompt is readable by every user.

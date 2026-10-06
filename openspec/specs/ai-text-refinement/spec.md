@@ -166,13 +166,17 @@ The service SHALL use the configured DIAL SDK via `DialClientService`, select a 
 - **THEN** the service selects different server prompts for skill triggering versus task summary
 - **AND** the client cannot override either prompt or select a model
 
+#### Scenario: Operator overrides a purpose prompt
+- **WHEN** `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT` is set to a nonblank value
+- **THEN** skill Description refinement uses that value as its prompt, and the other purposes keep their built-in prompts
+
 #### Scenario: Invalid output
 - **WHEN** DIAL Core returns no usable text, output over the purpose limit, or a truncated completion
 - **THEN** the service returns 502 without exposing or persisting the output
 
 ### Requirement: Configuration, authorization, and bounded execution
 
-Refinement SHALL reuse the existing optional `UTILITY_MODEL` and its current boot-time string validation. It SHALL NOT introduce a separate model variable or tighten the shared variable's validation. An absent or blank value disables refinement availability; surrounding whitespace SHALL be trimmed before availability evaluation and model invocation. Existing client configuration SHALL expose only optional `config.aiTextRefinementAvailable`, derived from model presence; missing means false for compatibility. Hosts SHALL omit callbacks when unavailable. The endpoint SHALL still enforce authorization and configuration server-side.
+Refinement SHALL reuse the existing optional `UTILITY_MODEL` and its current boot-time string validation. It SHALL NOT introduce a separate model variable or tighten the shared variable's validation; the only refinement-specific variables are the optional prompt overrides described above. An absent or blank value disables refinement availability; surrounding whitespace SHALL be trimmed before availability evaluation and model invocation. Existing client configuration SHALL expose only optional `config.aiTextRefinementAvailable`, derived from model presence; missing means false for compatibility. Hosts SHALL omit callbacks when unavailable. The endpoint SHALL still enforce authorization and configuration server-side.
 
 There SHALL be no new `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` key and no refinement-specific role. Existing skill authoring authentication SHALL apply to skill purposes; scheduled-task purposes SHALL additionally require the existing `features.scheduledTasksEnabled` decision, including its existing role configuration. Requests SHALL use the caller's DIAL credentials without a service-credential fallback. Existing cookie-session CSRF protection SHALL apply. Calls SHALL have a 30-second timeout; disconnect/abort SHALL cancel upstream work and release resources. No automatic retry or BFF quota store SHALL be added; upstream 429 SHALL be preserved.
 
@@ -204,12 +208,12 @@ Both form labels interfaces SHALL add the optional properties below with English
 | `refineUndoAriaLabel` | Original text restored. | `textRefinement.restored` |
 | `refineUnchangedAriaLabel` | No changes were needed. | `textRefinement.unchanged` |
 
-Both libraries SHALL offer optional `colors.refineActionText`, `colors.refineErrorText`, `typography.refineActionClassName`, and `typography.refineFeedbackClassName`. Color overrides SHALL use `buildCssVars`, `--se-refine-*` / `--stcf-refine-*`, and `var(--lib-property, var(--theme-token, #hex))` fallback chains. Default typography SHALL be `dial-small-text`. Default/fallback text colors SHALL meet 7:1 contrast against the rendered fallback background. New public styling hooks SHALL follow each library's existing constant/export convention.
+Both libraries SHALL offer optional `colors.refineActionText` (the refinement status/feedback text color; unset, the status keeps the kit `CaptionText` color `--text-secondary`), `colors.refineErrorText` (the refinement error color, default `--text-error`), and `typography.refineFeedbackClassName`. There is no `typography.refineActionClassName`: the Refine and Undo buttons are kit `GhostButton`s and keep kit styling. Color overrides SHALL use `buildCssVars`, `--se-refine-*` / `--stcf-refine-*`, and `var(--lib-property, var(--theme-token, #hex))` fallback chains. Without overrides the status SHALL render with the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`) so it matches input captions everywhere. Default/fallback error colors SHALL meet 7:1 contrast against the rendered fallback background. New public styling hooks SHALL follow each library's existing constant/export convention.
 
 #### Scenario: Existing label object remains valid
 - **WHEN** an existing host supplies its old labels and the new callbacks
 - **THEN** refinement uses the English defaults and existing form labels remain intact
-- **AND** supplied translated labels and style overrides take effect on both Refine and Undo feedback
+- **AND** supplied translated labels take effect on both Refine and Undo, and color/typography overrides take effect on the refinement feedback and error text
 
 ### Requirement: Accessible mobile and RTL interaction
 

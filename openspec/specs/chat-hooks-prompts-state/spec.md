@@ -11,8 +11,9 @@ A reusable `usePromptsState` hook exported by `@epam/ai-dial-chat-hooks` that en
 `@epam/ai-dial-chat-hooks` SHALL export `usePromptsState(params: { listPrompts: () =>
 Promise<PromptListResponseDto> })` returning `{ prompts, folders, sharedWithMe, publicPrompts,
 publicFolders, isLoading, error, refetch, refetchPublicPrompts }`. On mount, the hook SHALL call the
-injected `listPrompts` once and populate all five data slices from its resolved fields (each defaulting
-to `[]` when a field is absent from the response). The hook SHALL NOT import a `server-api` module,
+injected `listPrompts` once and populate all five data slices from its resolved fields. The optional
+`publicPrompts` and `publicFolders` fields default to `[]` (`?? []`) when absent; `prompts`, `folders`, and
+`sharedWithMe` are required in `PromptListResponseDto` and are assigned as received, without a fallback. The hook SHALL NOT import a `server-api` module,
 `react-i18next`, or an application Context.
 
 #### Scenario: Mount performs exactly one aggregate fetch
@@ -61,19 +62,32 @@ compatibility alias.
 ### Requirement: Stable memoized result and callback identities
 
 The hook's returned object SHALL be memoized so its identity is stable across renders that do not change
-its underlying data, and `refetch` SHALL have a stable identity across renders (empty dependency array).
+its underlying data, and `refetch` SHALL be a `useCallback` keyed on `[listPrompts]` (the mount effect uses the same
+dependency), so its identity is stable across renders only while the caller passes a stable `listPrompts`
+reference. `apps/chat` passes the module-level `listPrompts` import, which is stable.
 
 #### Scenario: Result identity is stable across an unrelated re-render
-- **WHEN** the consuming component re-renders without any of the hook's state changing
-- **THEN** the hook's returned object reference is unchanged
+- **WHEN** the consuming component re-renders with the same `listPrompts` reference and without any of the
+  hook's state changing
+- **THEN** the hook's returned object reference and `refetch` are unchanged
+
+#### Scenario: A new `listPrompts` reference produces a new `refetch` and re-runs the mount fetch
+- **WHEN** the caller passes a different `listPrompts` function on a re-render
+- **THEN** `refetch` gets a new identity and the fetch effect runs again with the new function
 
 ### Requirement: `PromptsContext` becomes a thin wrapper over `usePromptsState`
 
 `apps/chat/src/context/PromptsContext.tsx` SHALL call `usePromptsState({ listPrompts })`, where
 `listPrompts` is the existing `apps/chat/src/server-api/prompts.api.ts` function, and SHALL expose the
-hook's result unchanged through the existing `PromptsContextType` interface. `usePrompts()`'s
+hook's state through a `useMemo`-built `PromptsContextType` object keyed on the hook's result: the five data
+slices, `isLoading`, `error`, and `refetchPublicPrompts` are passed through, and the hook's `refetch` is
+exposed as `refetchPrompts`. `PromptsContextType` has no `refetch` member. `usePrompts()`'s
 outside-provider guard error and the provider's structure SHALL be unchanged.
 
 #### Scenario: Existing consumers see no interface change
 - **WHEN** `CatalogView`, `usePromptSelectorOverlay`, or `PromptEditor` calls `usePrompts()`
 - **THEN** the returned shape and behavior match `PromptsContextType` exactly as before this change
+
+#### Scenario: The hook's `refetch` is exposed as `refetchPrompts`
+- **WHEN** a consumer reads `usePrompts().refetchPrompts`
+- **THEN** it is the same function reference as the hook's `refetch`, and `usePrompts()` exposes no `refetch` key

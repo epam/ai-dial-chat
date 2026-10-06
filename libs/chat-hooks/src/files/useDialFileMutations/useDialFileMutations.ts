@@ -10,6 +10,7 @@ import {
   MoveItemDtoNodeTypeEnum,
   RenameItemDtoNodeTypeEnum,
 } from '@epam/ai-dial-chat-api-client';
+import { getParentFolderPath } from '@epam/ai-dial-chat-shared';
 import type {
   DialCopiedItem,
   DialDeletedItem,
@@ -52,7 +53,6 @@ import type { DialFilesApi } from '../dial-files-api';
 import { DownloadDestinationType } from '../download-destination';
 import type { DownloadDestinationHandlers } from '../download-destination';
 import {
-  getParentFolderPath,
   resolveDialFileApiPath,
   virtualPathToApiPath,
 } from '../resolve-dial-file-api-path';

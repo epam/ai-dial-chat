@@ -10,22 +10,22 @@ The conversation-panel surface of owner-side revoke: the row action menu entry, 
 
 `ConversationPanelView.getActions` (`apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx`) SHALL append a "Revoke access" action to a row's action menu when, and only when, both hold:
 
-- the row is **not** readonly — the underlying `ConversationListItemDto` has `isReadonly`, `sharedWithMe`, and `publishedWithMe` all falsy, the same `isReadonlyItem` condition that already gates the owner-side Rename / Share / Delete actions in that file; **and**
+- the row is **not** readonly — the underlying `ConversationListItemDto` has `isReadonly`, `sharedWithMe`, and `publishedWithMe` all falsy, the same `isReadonly` result of `deriveConversationRowActionState` (`libs/chat-hooks/src/conversation/deriveConversationRowActionState/`) that already gates the owner-side Rename / Share / Delete actions in that file — readonly rows return their own short action list before any owner action is built; **and**
 - `isConversationsSharingEnabled` is true — the same `useUiFeature` gate the Share action already rides. With conversation sharing disabled a user cannot grant access at all, so offering to revoke it would be incoherent; revoke appears exactly where Share does; **and**
 - the row's recipient count, resolved **when that row's action menu opens**, is a positive number — an action that could only be a no-op is noise.
 
-The count SHALL come from `useShareRecipientsCount` (`apps/chat/src/hooks/useShareRecipientsCount/useShareRecipientsCount.ts`), which calls `GET /api/v1/share/recipients` per conversation id and caches the result until invalidated. `handleActionMenuOpen` — already wired to the panel's `onActionMenuOpen` for publish focus return — SHALL start the lookup, and only for a row that could offer the action (sharing enabled, row not readonly). Resolution states map to the action as follows:
+The count SHALL come from `useShareRecipientsCount(shareApi)` (`libs/chat-hooks/src/useShareRecipientsCount/useShareRecipientsCount.ts`, imported from `@epam/ai-dial-chat-hooks/sharing`), which calls `shareApi.getShareRecipientsCount` (`GET /api/v1/share/recipients`) per conversation id and caches the result until invalidated. `handleActionMenuOpen` — wired to the panel's `onActionMenuOpen`, where it also captures the row trigger for focus return and requests publish history — SHALL start the lookup, and only for a row that could offer the action (sharing enabled, row not readonly). `deriveConversationRowActionState` turns the lookup's `RecipientsCountStatus` into `isRevokeVisible`. Resolution states map to the action as follows:
 
-- **in flight** — the action is withheld, so a count never appears and then contradicts itself,
+- **not requested (`Idle`) or in flight (`Loading`)** — the action is withheld, so a count never appears and then contradicts itself,
 - **`0`** — the action stays hidden,
 - **positive number** — the action is shown, labelled `t(ButtonsI18nKeys.RevokeAccessWithCount, { count })` (English `Revoke access ({{count}})`),
-- **failed lookup** — the action is shown with the plain `t(ButtonsI18nKeys.RevokeAccess)`, so a transient upstream failure never removes the owner's only way to revoke.
+- **failed lookup (`Unknown`)** — the action is shown with the plain `t(ButtonsI18nKeys.RevokeAccess)`, so a transient upstream failure never removes the owner's only way to revoke.
 
 A successful revoke SHALL call `invalidateRecipientsCount(id)`, so reopening the menu asks again instead of replaying the pre-revoke count.
 
-For owned rows the action menu SHALL therefore contain Pin, Rename, Duplicate, Export, Share, Publish, Revoke access, Delete — adding Revoke access immediately before Delete and leaving every existing action unchanged. Readonly rows (shared-with-me or published-with-me) keep their existing sets exactly as they are today.
+For owned rows the action menu SHALL therefore contain Pin, Rename, Duplicate, Export, Share, Publish (or Unpublish for an already-published conversation), Revoke access, Delete — adding Revoke access immediately before Delete and leaving every existing action unchanged. Export is omitted when conversation export is hidden, and Share/Publish/Unpublish follow their own feature gates. Readonly rows (shared-with-me or published-with-me) keep their existing sets exactly as they are today.
 
-State owned by this requirement: `pendingRevokeId: string | null`, `isRevoking: boolean`, and `revokeError: string | null` in `ConversationPanelView` — a new triple parallel to the existing `pendingUnshareId` / `isUnsharing` / `unshareError` set, deliberately not shared with either the unshare or the owner-delete flow.
+State owned by this requirement: a dedicated `useAsyncConfirmDialog<string>()` instance in `ConversationPanelView` (`libs/chat-hooks/src/conversation/useAsyncConfirmDialog/`), destructured as `pendingRevokeId`, `isRevokePending`, `isRevoking`, `revokeError`, `openRevokeDialog`, `closeRevokeDialog`, `confirmRevokeDialog` — parallel to the unshare instance (`pendingUnshareId` / `isUnsharing` / `unshareError`) and deliberately not shared with either the unshare or the owner-delete flow.
 
 #### Scenario: Owned row menu includes Revoke access
 
@@ -83,9 +83,9 @@ State owned by this requirement: `pendingRevokeId: string | null`, `isRevoking: 
 
 ### Requirement: Revoke access action label and icon
 
-The revoke `DropdownItem` SHALL use `label={t(ButtonsI18nKeys.RevokeAccess)}` (English value "Revoke access") — the same shared key the catalog surface uses, per `.claude/rules/all-ts.md` §"Avoid duplicate translation values" — and `icon={<IconUserOff size={DIAL_ICON_SIZE.SM} className="text-secondary" />}`, matching the icon sizing and color treatment of the sibling actions in that menu. `IconUserOff` is direction-neutral and SHALL NOT be mirrored with `rtl:scale-x-[-1]`.
+The revoke `DropdownItem` (key `revoke-access`) SHALL use `label={t(ButtonsI18nKeys.RevokeAccess)}` (English value "Revoke access") when the count is unknown, or `t(ButtonsI18nKeys.RevokeAccessWithCount, { count })` once it resolves — the same shared key the catalog surface uses, per `.claude/rules/all-ts.md` §"Avoid duplicate translation values" — and `icon={<IconUserOff size={DIAL_ICON_SIZE.MD} className="text-secondary" stroke={DIAL_KIT_ICON_STROKE} />}`, matching the icon sizing and color treatment of the sibling actions in that menu. `IconUserOff` is direction-neutral and SHALL NOT be mirrored with `rtl:scale-x-[-1]`.
 
-Clicking the action SHALL only call `setPendingRevokeId(contextId)` — it SHALL NOT call the revoke API directly.
+Clicking the action SHALL only call `openRevokeDialog(contextId, rowActionsTriggerRef.current)`, which records the pending id and the row trigger for focus return — it SHALL NOT call the revoke API directly.
 
 #### Scenario: Clicking Revoke access opens confirmation without calling the API
 
@@ -96,7 +96,7 @@ Clicking the action SHALL only call `setPendingRevokeId(contextId)` — it SHALL
 
 `ConversationPanelView` SHALL render a `ConfirmationPopup` bound to `pendingRevokeId`, structurally parallel to the existing unshare popup in the same file:
 
-- `open={!!pendingRevokeId}`
+- `open={isRevokePending}`
 - `header={t(ConversationPanelI18nKeys.RevokeConfirmTitle)}` (English default "Revoke access?")
 - `description` interpolates the conversation's title via `t(ConversationPanelI18nKeys.RevokeConfirmMessage, { name: pendingRevokeTitle })` (English default: `Revoke shared access to "{{name}}"? Anyone you shared it with will lose access. Your conversation is not deleted.`), followed by an inline error line (`role="alert"`) when `revokeError` is set, mirroring the existing popups' error rendering
 - `confirmLabel={t(ButtonsI18nKeys.RevokeAccess)}`
@@ -107,7 +107,7 @@ Clicking the action SHALL only call `setPendingRevokeId(contextId)` — it SHALL
 
 `pendingRevokeTitle` SHALL be derived with `useMemo` from `items` and `pendingRevokeId`, falling back to the conversation id then the empty string, exactly as `pendingUnshareTitle` does.
 
-`handleCloseRevokeDialog` SHALL no-op while `isRevoking` is `true` (matching `handleCloseUnshareDialog`'s guard), otherwise clear `pendingRevokeId` and `revokeError`.
+`handleCloseRevokeDialog` SHALL no-op while `isRevoking` is `true` (matching `handleCloseUnshareDialog`'s guard), otherwise call `closeRevokeDialog()`, which clears the pending id and `revokeError`.
 
 #### Scenario: Confirm calls revoke exactly once and disables the dialog while pending
 
@@ -126,12 +126,12 @@ Clicking the action SHALL only call `setPendingRevokeId(contextId)` — it SHALL
 
 ### Requirement: Successful revoke keeps the conversation and notifies
 
-`handleConfirmRevoke` SHALL:
+`handleConfirmRevoke` SHALL run the following inside `confirmRevokeDialog(...)`, whose re-entry guard makes a second rapid confirm a no-op:
 
 1. Call `revokeSharedAccess(pendingRevokeId)` (the wrapper added in `apps/chat/src/server-api/share.api.ts` by the `share-revoke-access` capability).
-2. On success, call `refreshConversations()` from `ConversationsContext` so any share-derived indicator re-resolves. If this refresh rejects, the revoke is still treated as successful — no error is surfaced and no retry is invited.
+2. On success, call `invalidateRecipientsCount(id)`, then `refreshConversations()` from `ConversationsContext` so any share-derived indicator re-resolves. If this refresh rejects, the revoke is still treated as successful — no error is surfaced and no retry is invited.
 3. Show a success notification: `title={t(ConversationPanelI18nKeys.RevokeSuccessTitle)}` ("Access revoked"), `message={t(ConversationPanelI18nKeys.RevokeSuccess, { name: pendingRevokeTitle })}` (`Shared access to "{{name}}" was revoked.`).
-4. Close the popup (`setPendingRevokeId(null)`, clear `revokeError`, `isRevoking = false`).
+4. Close the popup — `confirmRevokeDialog` calls `closeRevokeDialog()` on success, resetting the pending id, `revokeError` and `isRevoking`, and returns focus to the row trigger.
 
 It SHALL NOT navigate away and SHALL NOT remove the conversation from the panel, even when the revoked conversation is the currently open one — the owner keeps their own conversation. This is the behavioural difference from `handleConfirmUnshare`, which navigates to `ROUTES.Root` for an active discarded conversation.
 
@@ -149,7 +149,7 @@ It SHALL NOT navigate away and SHALL NOT remove the conversation from the panel,
 
 If `revokeSharedAccess` rejects (e.g. the BFF responds 403/404/429/502/503), `handleConfirmRevoke` SHALL:
 
-- Set `revokeError` to `t(ConversationPanelI18nKeys.RevokeError, { name: pendingRevokeTitle })` (`Failed to revoke access to "{{name}}". Please try again.`) and keep the popup open, with the error rendered inline via `role="alert"` — mirroring `handleConfirmUnshare`'s inline-error pattern rather than a separate error notification.
+- Set `revokeError` (through `confirmRevokeDialog`'s `onError` callback) to `t(ConversationPanelI18nKeys.RevokeError, { name: pendingRevokeTitle })` (`Failed to revoke access to "{{name}}". Please try again.`) and keep the popup open, with the error rendered inline via `role="alert"` — mirroring `handleConfirmUnshare`'s inline-error pattern rather than a separate error notification.
 - NOT call `refreshConversations()`.
 - Leave the conversation and its sharing state untouched.
 

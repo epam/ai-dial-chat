@@ -18,7 +18,7 @@ export interface NavigationPanelLogo {
 export interface NavigationPanelColors {
   /** Rail background color. */
   background?: string;
-  /** Icon color of an inactive item. */
+  /** Icon color of an inactive item. Defaults to `--text-primary`. */
   itemText?: string;
   /** Icon color of the active item; also its keyboard-focus ring. */
   itemActiveText?: string;

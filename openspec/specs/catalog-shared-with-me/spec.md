@@ -7,9 +7,9 @@ TBD - created by archiving change add-catalog-unshare. Update Purpose after arch
 
 `DeploymentItemDto` (`apps/chat-api/src/deployments/`) SHALL include an optional `sharedWithMe?: boolean` field, `true` when the requesting user holds ANY DIAL Core share grant (`READ` or `WRITE`) on the application and the application is not owned by the user (`isMy === false`), `false` otherwise.
 
-`DeploymentsService` SHALL resolve this from a single unfiltered `getSharedResources({ resourceTypes: ['APPLICATION'], with: 'me' })` call per request, factored into shared private helpers (`getSharedApplicationUrlSets` for the URL sets, `computeOwnershipFlags` for the per-item `isMy`/`canEdit`/`sharedWithMe` computation) reused by both `listDeployments` and the single-item `resolveDeploymentItem` — neither path SHALL issue two separate `getSharedResources` calls per request. `sharedWithMe` SHALL NOT be cached independently of this per-request resolution (the underlying deployments list is cached 30s per `deployments:list:<userSub>`; `sharedWithMe`, like `isMy`/`canEdit`, is recomputed on every response derived from that cache entry, and on every `resolveDeploymentItem` call).
+`DeploymentsService` (a facade over `DeploymentsListingService` and `DeploymentsLookupService`) SHALL resolve this from a single unfiltered `getSharedResources({ resourceTypes: ['APPLICATION'], with: 'me' })` call per request. Each sub-service has its own private `getSharedResourceUrlSets` helper, and both use the shared `splitResourcesByPermission` (URL sets) and `computeItemOwnershipFlags` (per-item `isMy`/`canEdit`/`sharedWithMe`) utilities in `apps/chat-api/src/common/utils/resource-ownership.ts`, for `listDeployments` and the single-item `resolveDeploymentItem` alike — neither path SHALL issue two separate `getSharedResources` calls per request. `resolveDeploymentItem` skips the call entirely for a model item, which can never appear in an APPLICATION-scoped share list. `sharedWithMe` SHALL NOT be cached independently of this per-request resolution (the underlying deployments list is cached 30s per `deployments:list:<userSub>`; `sharedWithMe`, like `isMy`/`canEdit`, is recomputed on every response derived from that cache entry, and on every `resolveDeploymentItem` call).
 
-`resolveDeploymentItem` SHALL accept the requesting user's `bucket` and apply the same `computeOwnershipFlags` enrichment as `listDeployments`, so a deployment resolved through it (e.g. right after `ShareInvitationService.acceptInvitation` accepts a share) reports the same `isMy`/`canEdit`/`sharedWithMe` values a subsequent `listDeployments` call would produce for the same item — the frontend's post-accept summary SHALL NOT depend on a page refresh to see the correct ownership flags.
+`resolveDeploymentItem` SHALL accept the requesting user's `bucket` and apply the same `computeItemOwnershipFlags` enrichment as `listDeployments`, so a deployment resolved through it (e.g. right after `ShareInvitationService.acceptInvitation` accepts a share) reports the same `isMy`/`canEdit`/`sharedWithMe` values a subsequent `listDeployments` call would produce for the same item — the frontend's post-accept summary SHALL NOT depend on a page refresh to see the correct ownership flags.
 
 A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for every item in the response (never fail the whole deployments list, and never fail `resolveDeploymentItem`) and SHALL be logged at `warn` level.
 
@@ -59,49 +59,49 @@ A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for 
 
 ### Requirement: Toolsets expose an unfiltered `sharedWithMe` flag
 
-`DialToolsetDto` (`apps/chat-api/src/toolsets/`) SHALL include an optional `sharedWithMe?: boolean` represented as `shared_with_me` on the wire, computed with the same rules as the deployments requirement above, scoped to `resourceTypes: ['TOOL_SET']`. Because the generated fetch client returns runtime JSON without transforming property names, `apps/chat/src/server-api/toolsets.ts` SHALL normalize `shared_with_me` to `sharedWithMe` (and the related `can_edit` to `canEdit`) before returning toolsets to application consumers.
+`DialToolsetDto` (`apps/chat-api/src/openapi/openapi-response.dto.ts`) SHALL include an optional `sharedWithMe?: boolean`, sent as `sharedWithMe` on the wire alongside the camelCase `isMy`/`canEdit` fields, computed with the same rules as the deployments requirement above, scoped to `resourceTypes: ['TOOL_SET']`. Because the BFF already emits camelCase, `apps/chat/src/server-api/toolsets.ts` SHALL pass `listToolsets`/`getToolset` responses through unchanged, with no property-name normalization.
 
-`ToolsetsService` SHALL resolve `sharedWithMe` from the same single unfiltered `getSharedResources` call already used (or newly factored, per the deployments requirement) to compute the existing `canEdit`/`is_my` fields, for both `listToolsets` and `getToolset`.
+`ToolsetsService` (through `ToolsetsListingService.getSharedToolsetResources`) SHALL resolve `sharedWithMe` from the same single unfiltered `getSharedResources` call used to compute the existing `canEdit`/`isMy` fields, for both `listToolsets` and `getToolset`.
 
 #### Scenario: Owned toolset never reports sharedWithMe
 
-- **WHEN** a toolset's `id` bucket segment matches the requesting user's bucket (`is_my: true`)
-- **THEN** `shared_with_me` is `false`
+- **WHEN** a toolset's `id` bucket segment matches the requesting user's bucket (`isMy: true`)
+- **THEN** `sharedWithMe` is `false`
 
 #### Scenario: READ-only shared toolset reports sharedWithMe=true
 
 - **WHEN** the requesting user is not the owner and the unfiltered shared-resources lookup returns this toolset's url with `permissions: ['READ']`
-- **THEN** `shared_with_me` is `true`
+- **THEN** `sharedWithMe` is `true`
 
 #### Scenario: WRITE-shared toolset reports sharedWithMe=true
 
 - **WHEN** the requesting user is not the owner and the unfiltered shared-resources lookup returns this toolset's url with `permissions` including `WRITE`
-- **THEN** `shared_with_me` is `true`
+- **THEN** `sharedWithMe` is `true`
 
-#### Scenario: Frontend adapter normalizes toolset sharing fields
+#### Scenario: Frontend adapter passes toolset sharing fields through
 
-- **WHEN** the BFF toolsets response contains `shared_with_me: true` and `can_edit: true`
-- **THEN** `listToolsets` and `getToolset` expose `sharedWithMe: true` and `canEdit: true`, allowing the catalog mapper to render the recipient-side Delete action
+- **WHEN** the BFF toolsets response contains `sharedWithMe: true` and `canEdit: true`
+- **THEN** `listToolsets` and `getToolset` return them unchanged, allowing the catalog mapper to render the recipient-side Delete action
 
 #### Scenario: Public or organization toolset is neither owned nor shared
 
 - **WHEN** the requesting user is not the owner and the unfiltered shared-resources lookup does not include this toolset's url
-- **THEN** `shared_with_me` is `false`
+- **THEN** `sharedWithMe` is `false`
 
 #### Scenario: Shared-resources lookup failure degrades gracefully
 
 - **WHEN** DIAL Core's shared-resources lookup throws or errors during a toolset list or get request
-- **THEN** `shared_with_me` falls back to `false` for the affected item(s), a `warn`-level log is emitted, and the request still succeeds
+- **THEN** `sharedWithMe` falls back to `false` for the affected item(s), a `warn`-level log is emitted, and the request still succeeds
 
 ### Requirement: `CatalogItem.sharedWithMe` mirrors the BFF flag
 
 `libs/catalog/src/models/catalog-item.ts`'s `CatalogItem` SHALL gain an optional `sharedWithMe?: boolean` field, documented with JSDoc per `libs/*` conventions, alongside the existing `isMyApp`/`isEditable` fields.
 
-`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `mapDeploymentToCatalogItem` and `mapToolsetToCatalogItem` SHALL set `CatalogItem.sharedWithMe` directly from `DeploymentItemDto.sharedWithMe ?? false` / `DialToolsetDto.sharedWithMe ?? false` respectively, with no additional inference (no bucket parsing, no folder-label heuristics).
+`libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`'s `mapDeploymentToCatalogItem` and `mapToolsetToCatalogItem` (wrapped by the same-named app adapters in `apps/chat/src/utils/map-deployment-to-catalog-item.ts`, which supply `resolveIconUrl` and the translated `folderLabels`) SHALL set `CatalogItem.sharedWithMe` directly from `DeploymentItemDto.sharedWithMe ?? false` / `DialToolsetDto.sharedWithMe ?? false` respectively, with no additional inference (no bucket parsing, no folder-label heuristics).
 
-`libs/catalog` MUST NOT import the generated API client, server-api wrappers, or app contexts to compute this field — it is a plain boolean prop on `CatalogItem`, populated entirely by the app-level mapper.
+`libs/catalog` MUST NOT import the generated API client, server-api wrappers, or app contexts to compute this field — it is a plain boolean prop on `CatalogItem`, populated entirely by the mapper.
 
-**Generated-client impact**: `DeploymentItemDto.sharedWithMe?: boolean` and `DialToolsetDto.sharedWithMe?: boolean` are additive optional fields on existing `@epam/chat-api-client` models — no new operationId, no new endpoint, no breaking change to either response shape.
+**Generated-client impact**: `DeploymentItemDto.sharedWithMe?: boolean` and `DialToolsetDto.sharedWithMe?: boolean` are additive optional fields on existing `@epam/ai-dial-chat-api-client` models — no new operationId, no new endpoint, no breaking change to either response shape.
 
 **i18n impact**: none (a boolean data field, not user-visible text on its own).
 
@@ -124,11 +124,11 @@ A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for 
 
 ### Requirement: Shared application folders hide internal bucket identifiers
 
-`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `resolveDeploymentFolder` SHALL use the authoritative `DeploymentItemDto.sharedWithMe` flag to replace a shared application's first `applicationFolder` segment (the owner's internal bucket identifier) with the localized `catalog.folder.shared` label. Any readable nested folder segments after the owner bucket SHALL be preserved.
+`libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`'s `resolveDeploymentFolder` SHALL use the authoritative `DeploymentItemDto.sharedWithMe` flag to replace a shared application's first `applicationFolder` segment (the owner's internal bucket identifier) with the `DeploymentFolderLabels.shared` label, which the app adapter `buildDeploymentFolderLabels` fills from the localized `catalog.folder.shared` key (`CatalogI18nKeys.FolderShared`). Shared toolsets get the same treatment in the lib's internal `resolveToolsetFolder`. Any readable nested folder segments after the owner bucket SHALL be preserved.
 
-Owned applications SHALL continue to resolve to `catalog.folder.personal`, and public applications SHALL continue to replace the `public` segment with `catalog.folder.public`. `libs/catalog` SHALL remain unaware of DIAL bucket and sharing semantics and SHALL render only the resolved `CatalogItem.folder` supplied by the app-level mapper.
+Owned applications SHALL continue to resolve to `catalog.folder.personal`, and public applications SHALL continue to replace the `public` segment with `catalog.folder.public`. `libs/catalog` SHALL remain unaware of DIAL bucket and sharing semantics and SHALL render only the resolved `CatalogItem.folder` supplied by the mapper.
 
-**i18n impact**: add `catalog.folder.shared` with the English value `Shared with me`.
+**i18n impact**: `catalog.folder.shared` with the English value `Shared with me`.
 
 **RTL / direction impact**: none; the change replaces one text segment and does not introduce directional layout or icons.
 

@@ -1,7 +1,7 @@
 # catalog-unpublish-api Specification
 
 ## Purpose
-TBD - created by archiving change add-unpublish-my-resources. Update Purpose after archive.
+The `POST /api/v1/catalog/{entityType}/{entityId}/unpublish` endpoint in `apps/chat-api/src/publish/`: it submits a `DELETE`-action publication request to DIAL Core for one published folder of a catalog entity, validates its inputs, maps Core failures, and invalidates the publish-history cache.
 ## Requirements
 ### Requirement: Unpublish endpoint submits a DELETE-action publication to DIAL Core
 
@@ -36,7 +36,7 @@ Core call:
 }
 ```
 
-`sourceUrl`, `targetFolder`, and `targetUrl` SHALL be derived server-side with the same helpers the publish endpoint uses (`toSourceUrl`, `getPublicTargetFolder`, and the shared `getPublishedTargetUrl` required by `conversation-publish-api`), never taken from the request body. `name` and `displayAuthor` are built exactly as publish builds them, so a DELETE request is legible in Core's admin queue next to the ADD request it reverses.
+`sourceUrl`, `targetFolder`, and `targetUrl` SHALL be derived server-side with the same helpers the publish endpoint uses (`encodeDialResourcePath(entityId)` for `sourceUrl`, `getPublicTargetFolder`, and the shared `getPublishedTargetUrl` required by `conversation-publish-api`), never taken from the request body. `name` and `displayAuthor` are built exactly as publish builds them, so a DELETE request is legible in Core's admin queue next to the ADD request it reverses.
 
 `rules` SHALL NOT be sent. Access rules govern who may see a published resource; a removal request grants nobody anything, and forwarding a rules array would imply otherwise.
 
@@ -52,7 +52,7 @@ Response (200):
 }
 ```
 
-`requestedAt`/`requestedBy` are read back from Core's `Publication` response (`createdAt`, and `displayAuthor` before `author` via `readPublicationDisplayAuthor`), never generated locally. The field names deliberately differ from publish's `publishedAt`/`publishedBy`: this response describes a submitted request, not a completed removal.
+`requestedAt`/`requestedBy` are read back from Core's `Publication` response (`createdAt`, and `displayAuthor` before `author` via `readPublicationDisplayAuthor`). Only when Core returns no parseable body does `requestedAt` fall back to the current server time and `requestedBy` to the caller's session display name, exactly as publish does. The field names deliberately differ from publish's `publishedAt`/`publishedBy`: this response describes a submitted request, not a completed removal.
 
 Generated-client impact: OpenAPI `operationId: unpublishCatalogEntity`; request DTO `UnpublishCatalogEntityDto`; response DTO `UnpublishResultDto`. Frontend caller: a thin wrapper in `apps/chat/src/server-api/publish.api.ts` using the normal (non-`Raw`) generated method.
 
@@ -122,15 +122,15 @@ The response SHALL NOT include any field asserting removal (no `unpublishedAt`, 
 
 The caller SHALL be authenticated by the existing session guard. No additional role is required, and the service SHALL NOT attempt a local ownership or write-access check: DIAL Core enforces access when `createPublication` runs, and `apps/chat-api` has no store against which to form a second opinion.
 
-Core failures SHALL be mapped through the same helpers publish uses — `mapDialHttpStatus` with `extractDialErrorMessage(result.error)` for structured error responses, so the client sees Core's own reason; a thrown SDK/network error SHALL be logged (stack only, never the request body) and surfaced as `BadGatewayException`.
+Core failures SHALL be mapped through the same helpers publish uses — `mapDialHttpStatus` with `extractDialErrorMessage(result.error)` whenever the response is not ok or carries `result.error`, so the client sees Core's own reason for statuses whose upstream text may be exposed (401/403/404 deliberately carry a generic message instead); a thrown SDK/network error SHALL be logged (stack only, never the request body) and surfaced as `BadGatewayException`.
 
 | Core outcome | Thrown exception |
 |---|---|
-| 403 (no write access to the target folder) | `ForbiddenException` |
-| 404 (unknown entity or target) | `NotFoundException` |
-| other 4xx/5xx with a structured body | per `mapDialHttpStatus`, carrying Core's message |
-| unreachable / timeout | `ServiceUnavailableException` |
-| unexpected thrown error | `BadGatewayException` |
+| 403 (no write access to the target folder) | `ForbiddenException` (generic message) |
+| 404 (unknown entity or target) | `NotFoundException` (`Resource not found`) |
+| other 4xx with a mapped status (400, 409, 413, 429, …) | per `mapDialHttpStatus`, carrying Core's message |
+| 5xx | `BadGatewayException`, carrying Core's message |
+| thrown SDK/network error (including unreachable / timeout) | `BadGatewayException` |
 
 #### Scenario: Unauthenticated caller
 - **WHEN** a request arrives without a valid session cookie
@@ -138,7 +138,7 @@ Core failures SHALL be mapped through the same helpers publish uses — `mapDial
 
 #### Scenario: Caller lacks write access to the folder
 - **WHEN** Core returns 403 for the `createPublication` call
-- **THEN** the service throws `ForbiddenException` and the response carries Core's own message
+- **THEN** the service throws `ForbiddenException` with its generic message, not Core's upstream text
 
 #### Scenario: Core returns a structured error
 - **WHEN** `createPublication` resolves with `result.error`

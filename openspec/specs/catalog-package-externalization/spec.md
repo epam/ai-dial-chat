@@ -29,3 +29,12 @@ inline unrelated peer fonts or renderer styles.
 - **WHEN** a host mounts catalog or publish-panel with documented styles and peers
 - **THEN** the feature remains usable on supported desktop/mobile layouts and inherits
   host direction correctly.
+
+#### Scenario: Catalog stylesheet carries the publish flow
+
+- **WHEN** a host imports only `@epam/ai-dial-catalog/styles.css` and opens the catalog publish flow
+- **THEN** the publish-panel CSS Modules are present, because `libs/catalog/src/index.ts`
+  imports `@epam/ai-dial-publish-panel/styles.css`; the catalog build keeps the
+  publish-panel JavaScript external but inlines that CSS subpath into its own
+  `dist/index.css`, and a host rendering publish-panel on its own imports
+  `@epam/ai-dial-publish-panel/styles.css`.

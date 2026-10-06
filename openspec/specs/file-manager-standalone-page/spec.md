@@ -51,6 +51,7 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 **Rendering:**
 
 - Renders `DialFileManagerShell` fed by the composer's result, including its `sectionTab`, filling the full page with no additional chrome.
+- For `DialFileManagerVariant.Standalone`, the shell paints its content wrapper and `<DialFileManager>` (search, grid and the rest of the right-hand area) with `bg-layer-base`. The attach modal keeps `bg-layer-sunken`.
 - `treeHeaderByTab[All]` is `t(DialFileManagerI18nKeys.MyFilesTreeHeader)`.
 - Clears the grid selection whenever the active tab or the composer's `sectionTab` changes.
 - Forwards `maxSelectableFileSize` (for existing-file selection and grid `isRowSelectable`; see `dial-file-manager-attach-validation`) and a translated `oversizedUploadMessage` (built from the i18n key `dialFileManager.uploadFileTooLarge`) to `DialFileManagerShell`. The shell forwards them to `<DialFileManager>` as `maxSelectableFileSize` and as `maxFileSize`/`uploadValidationMessages.oversizedFiles` respectively.
@@ -72,6 +73,11 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 
 - **WHEN** `DialFileManagerPage` is rendered
 - **THEN** there is no "Attach" button, no attach footer, and no attach-selection-limit messaging anywhere on the page
+
+#### Scenario: Page content sits on the base layer
+
+- **WHEN** `DialFileManagerPage` is rendered
+- **THEN** `<DialFileManager>` carries `bg-layer-base` and not `bg-layer-sunken`
 
 #### Scenario: Tabs and CRUD match the attach modal
 

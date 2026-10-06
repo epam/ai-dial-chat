@@ -17,8 +17,18 @@ at least one of `scheduledTasksEnabled` or `liveChatInteraction` before returnin
   `GET /api/v1/offline-credentials` and DIAL Core reports
   `{ available: true, connected: false, connect: {...} }`
 - **THEN** the endpoint returns `200` with
-  `{ available: true, connected: false, connect: { authorizationEndpoint, clientId, redirectUri, scopes } }`
-  (camelCase, mapped from Core's snake_case fields)
+  `{ available: true, connected: false, connect: { authorizationEndpoint, clientId, redirectUri?, scopes } }`
+  (camelCase, mapped from Core's snake_case fields by `mapDialOfflineCredentialsToDto`); `redirectUri` is
+  optional in `OfflineCredentialsConnectDto` and emitted only when Core sends `redirect_uri`, and `scopes`
+  defaults to `[]` when Core omits it
+
+#### Scenario: Incomplete upstream connect object is dropped
+- **WHEN** DIAL Core's `connect` lacks `authorization_endpoint` or `client_id`
+- **THEN** the endpoint returns `{ available, connected }` with no `connect` object
+
+#### Scenario: Missing upstream redirect URI keeps connect usable
+- **WHEN** DIAL Core's `connect` has `authorization_endpoint` and `client_id` but no `redirect_uri`
+- **THEN** the returned `connect` contains `authorizationEndpoint`, `clientId`, and `scopes` and omits `redirectUri`
 
 #### Scenario: Credentials already connected
 - **WHEN** DIAL Core reports `{ available: true, connected: true }`
@@ -121,5 +131,6 @@ cookies, or full request/response bodies of the sign-in call.
 
 #### Scenario: Upstream failure is logged
 - **WHEN** DIAL Core returns a non-OK response
-- **THEN** the service logs a `warn` including the upstream status and any
-  extracted error message, before throwing the mapped exception
+- **THEN** `mapDialHttpStatus` logs a `warn` with the upstream status and, when an error body is present, a
+  second `warn` with the JSON-serialized upstream error body, before throwing the mapped exception whose
+  text is the message extracted by `extractDialErrorMessage` where the mapper permits it

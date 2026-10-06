@@ -2,8 +2,7 @@
 
 ## Purpose
 
-TBD - created by archiving change `extract-reusable-chat-workflows`. Update
-Purpose after archive.
+Define the reusable `@epam/ai-dial-prompts` prompt-selection workflow (`usePromptSelectorOverlay`): the favorites overlay, the host-rendered browse modal, the parameters popup and their transitions, and the boundary between that library workflow and the app adapter (`apps/chat/src/components/PromptSelector/usePromptSelectorOverlay.tsx`) that supplies data, labels, enablement and the lazy catalog.
 
 ## Requirements
 

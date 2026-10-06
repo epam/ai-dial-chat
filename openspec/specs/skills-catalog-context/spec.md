@@ -8,7 +8,7 @@ Defines `SkillsContext` as the app's single owner of skill listing state: its ex
 
 ### Requirement: `SkillsContext` owns skill listing state
 
-`SkillsContext` SHALL remain the app's single owner of catalog skill listing state. Its provider value SHALL expose personal `skills`, `sharedWithMe`, organisation `publicSkills`, `isLoading`, `error`, and a stable aggregate `refetchSkills` callback. The value SHALL be `useMemo`'d and the callback `useCallback`'d. No component or mapper SHALL call a bucket-specific list API to assemble the catalog.
+`SkillsContext` SHALL remain the app's single owner of catalog skill listing state. Its provider value SHALL expose personal `skills`, `sharedWithMe`, organisation `publicSkills`, `isLoading`, `error`, a stable aggregate `refetchSkills` callback, and `mergeSharedSkill(item)`, which upserts one skill into `sharedWithMe` by `url` (e.g. right after a share invitation is accepted). `SkillsProvider` delegates the state to `useSkillsState` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/skill/useSkillsState/useSkillsState.ts`), passing `listSkills: listCatalogSkills`, `enabled`, and `ready`, and maps its `refetch` to `refetchSkills`. The value SHALL be `useMemo`'d and the callbacks `useCallback`'d. No component or mapper SHALL call a bucket-specific list API to assemble the catalog.
 
 #### Scenario: Aggregate response populates all arrays
 
@@ -24,7 +24,7 @@ Defines `SkillsContext` as the app's single owner of skill listing state: its ex
 
 ### Requirement: Personal and organisation listings load independently
 
-The browser SHALL issue one `listCatalogSkills()` request after the user profile settles. The BFF, not `SkillsProvider`, SHALL isolate personal and organisation upstream failures. The provider SHALL set `error` only when the aggregate request rejects; a successful partial response has `error: null` and empty arrays for failed namespaces.
+The browser SHALL issue one `listCatalogSkills()` request after the user profile settles. The BFF, not `SkillsProvider`, SHALL isolate personal and organisation upstream failures: `SkillsListingService.listCatalogSkills` (`GET /api/v1/skills/catalog`) lists both namespaces with `Promise.allSettled`, logs a warning and returns an empty array for a failed namespace, and rejects the whole request only when both namespaces fail. The shared-with-me listing (`getSharedResources` for `SKILL`) degrades to `[]` on failure, and shared entries whose `url` already appears in `skills` or `publicSkills` are dropped. The provider SHALL set `error` only when the aggregate request rejects; a successful partial response has `error: null` and empty arrays for failed namespaces.
 
 While auth status is `Loading`, the request SHALL not be issued and `isLoading` stays `true`. Once the profile settles, `listCatalogSkills()` SHALL run without a frontend bucket argument because the BFF resolves the session bucket. The initial effect SHALL use a cancelled flag to avoid state updates after unmount.
 
@@ -85,7 +85,7 @@ When `OverlayFeature.Skills` is disabled, `SkillsProvider` SHALL issue no `listC
 
 ### Requirement: The provider mounts once near the app root
 
-`SkillsProvider` SHALL be mounted in `apps/chat/src/app/app.tsx` alongside the other catalog-facing providers (`DeploymentsProvider`, `PromptsProvider`), inside the authenticated tree so `user.bucket` is available, and SHALL NOT be mounted per-route or per-component.
+`SkillsProvider` SHALL be mounted in `apps/chat/src/main.tsx` alongside the other catalog-facing providers (nested inside `DeploymentsProvider` and `PromptsProvider`, wrapping `ConversationsProvider` and `<App />`), inside the `RequireAuth` tree, and SHALL NOT be mounted per-route or per-component.
 
 #### Scenario: One provider instance
 

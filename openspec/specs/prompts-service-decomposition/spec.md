@@ -13,11 +13,20 @@ The prompts domain SHALL be decomposed into four focused injectable services plu
 - `PromptsPersonalService` SHALL own personal-bucket prompt CRUD and listing: `listPrompts`, `getSharedPrompts`, `getPrompt`, `createPrompt`, `updatePrompt`, `deletePrompt`.
 - `PromptsPublicService` SHALL own organisation/public-bucket reads: `listPublicPrompts`, `getPublicPrompt`.
 - `PromptsFolderService` SHALL own folder lifecycle and single-prompt moves: `createFolder`, `renameFolder`, `deleteFolder`, `movePrompt`.
-- `PromptService` SHALL act as a facade that delegates every public method to exactly one of the four services above, and SHALL NOT contain business logic beyond delegation.
+- `PromptService` SHALL act as a facade that delegates every public method except `listPrompts` to exactly one of `PromptsPersonalService`, `PromptsPublicService`, or `PromptsFolderService` (it does not inject `PromptsResourceService`), and SHALL NOT contain business logic beyond delegation and the `listPrompts` composition below.
+- `PromptService.listPrompts` SHALL compose `PromptsPersonalService.listPrompts` and `PromptsPublicService.listPublicPrompts` via `Promise.allSettled`, returning the personal result plus `publicPrompts`/`publicFolders` from the public result. It SHALL rethrow the personal failure only when both calls reject, and otherwise log a warning and substitute empty lists for the side that failed.
+
+#### Scenario: Facade composes personal and public prompts in listPrompts
+- **WHEN** `PromptController` calls `PromptService.listPrompts(...)`
+- **THEN** the facade calls both `PromptsPersonalService.listPrompts(...)` and `PromptsPublicService.listPublicPrompts(...)` and returns the personal result extended with `publicPrompts` and `publicFolders`
+
+#### Scenario: One failed side of listPrompts degrades to empty lists
+- **WHEN** `PromptsPublicService.listPublicPrompts(...)` rejects but `PromptsPersonalService.listPrompts(...)` succeeds
+- **THEN** `PromptService.listPrompts` logs a warning and returns the personal result with empty `publicPrompts` and `publicFolders`
 
 #### Scenario: Facade delegates a personal-prompt call
-- **WHEN** `PromptController` calls `PromptService.listPrompts(...)`
-- **THEN** the facade delegates to `PromptsPersonalService.listPrompts(...)` and returns its result unchanged
+- **WHEN** `PromptController` calls `PromptService.getPrompt(...)`
+- **THEN** the facade delegates to `PromptsPersonalService.getPrompt(...)` and returns its result unchanged
 
 #### Scenario: Facade delegates a public-prompt call
 - **WHEN** `PromptController` calls `PromptService.listPublicPrompts(...)`

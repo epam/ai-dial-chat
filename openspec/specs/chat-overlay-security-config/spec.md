@@ -8,7 +8,7 @@ Embedding security for overlay mode: CSP `frame-ancestors`, the overlay-eligibil
 
 ### Requirement: CSP frame-ancestors gates embedding, defaulting to deny
 
-`apps/chat-api/src/config/csp.ts` SHALL gain a `buildFrameAncestorsDirective(allowedOverlayOrigins: string[]): string[]` function returning `["'none'"]` when the list is empty, or the list of origins (no `'self'` added implicitly) when non-empty. `apps/chat-api/src/main.ts`'s Helmet configuration SHALL set `contentSecurityPolicy.directives.frameAncestors` from this function, reusing the existing `ALLOWED_IFRAME_ORIGINS` environment variable (`EnvironmentVariables.ALLOWED_IFRAME_ORIGINS`) as the source list — no new env var is introduced for the allowlist itself, preserving backward compatibility with any deployment that already sets it for the existing `frame-src` behavior.
+`apps/chat-api/src/config/csp.ts` SHALL gain a `buildFrameAncestorsDirective(allowedOverlayOrigins: string[]): string[]` function returning `["'none'"]` when the list is empty, or the list of origins (no `'self'` added implicitly) when non-empty. `createHelmetOptions` (same file), which `apps/chat-api/src/main.ts` passes to `helmet(...)`, SHALL set `contentSecurityPolicy.directives.frameAncestors` from this function, reusing the existing `ALLOWED_IFRAME_ORIGINS` environment variable (`EnvironmentVariables.ALLOWED_IFRAME_ORIGINS`) as the source list — no new env var is introduced for the allowlist itself, preserving backward compatibility with any deployment that already sets it for the existing `frame-src` behavior.
 
 #### Scenario: Empty allowlist denies all embedding
 
@@ -27,7 +27,7 @@ Embedding security for overlay mode: CSP `frame-ancestors`, the overlay-eligibil
 
 ### Requirement: X-Frame-Options no longer blocks configured embedding
 
-Helmet's `frameguard` middleware SHALL be disabled (`frameguard: false`) whenever `ALLOWED_IFRAME_ORIGINS` is non-empty, relying solely on CSP `frame-ancestors` (respected by all currently-supported browsers) for framing control. When `ALLOWED_IFRAME_ORIGINS` is empty, `frameguard` SHALL remain enabled with its default (`SAMEORIGIN`) behavior, matching today's default-deny posture.
+Helmet's `frameguard` middleware SHALL be disabled (`frameguard: false`, set in `createHelmetOptions` in `apps/chat-api/src/config/csp.ts`) whenever `ALLOWED_IFRAME_ORIGINS` is non-empty, relying solely on CSP `frame-ancestors` (respected by all currently-supported browsers) for framing control. When `ALLOWED_IFRAME_ORIGINS` is empty, `frameguard` SHALL remain enabled with its default (`SAMEORIGIN`) behavior, matching today's default-deny posture.
 
 #### Scenario: X-Frame-Options is absent when embedding is configured
 
@@ -46,12 +46,12 @@ A new `EnvironmentVariables.OVERLAY_ENABLED` boolean (default `false`) SHALL con
 #### Scenario: Overlay mode is off by default
 
 - **WHEN** `OVERLAY_ENABLED` is unset
-- **THEN** `GET /api/v1/client-config` reports the overlay-enabled config key as `false`
+- **THEN** `GET /api/v1/client-config` reports `overlayEnabled` as `false`
 
 #### Scenario: Overlay mode requires both flags to have any effect
 
 - **WHEN** `OVERLAY_ENABLED=true` and `ALLOWED_IFRAME_ORIGINS` is empty
-- **THEN** `GET /api/v1/client-config` reports overlay-enabled as `true`, but no origin can successfully frame the app (CSP `frame-ancestors 'none'`), so overlay mode never activates client-side
+- **THEN** `GET /api/v1/client-config` reports `overlayEnabled` as `true`, but no origin can successfully frame the app (CSP `frame-ancestors 'none'`), so overlay mode never activates client-side
 
 ### Requirement: Env vars are documented with rollback notes
 
@@ -95,7 +95,7 @@ In addition to today's exact-origin entries (`scheme://host[:port]`, no path/que
 
 The accepted `hostDomain` SHALL be pinned to the message's `event.origin`: if the payload contains `hostDomain`, it must match `event.origin`, and after a host is stored the app SHALL reject active-conversation requests from any different origin, even if that origin is also allowlisted.
 
-The app SHALL validate an inbound `SET_OVERLAY_OPTIONS` message's `event.origin` against `ALLOWED_IFRAME_ORIGINS` (surfaced to the frontend via `chat-overlay-security-config`'s client-config additions) before accepting it as authoritative for `hostDomain`, per `chat-overlay-protocol`'s origin-validation requirement. This is a defense-in-depth check in addition to (not a replacement for) the server-side CSP `frame-ancestors` restriction — CSP prevents the browser from framing the page at all under a disallowed origin, while this check protects against a origin that manages to deliver a `postMessage` despite not being the actual framing origin (e.g. a misconfigured intermediate frame).
+The app SHALL validate an inbound `SET_OVERLAY_OPTIONS` message's `event.origin` against `ALLOWED_IFRAME_ORIGINS` (surfaced to the frontend as the `overlayAllowedOrigins` client-config field and checked with `matchesAllowedOrigin` from `apps/chat/src/utils/overlay-origin.ts`) before accepting it as authoritative for `hostDomain`, per `chat-overlay-protocol`'s origin-validation requirement. This is a defense-in-depth check in addition to (not a replacement for) the server-side CSP `frame-ancestors` restriction — CSP prevents the browser from framing the page at all under a disallowed origin, while this check protects against a origin that manages to deliver a `postMessage` despite not being the actual framing origin (e.g. a misconfigured intermediate frame).
 
 The allowlist check SHALL be wildcard-aware: an `ALLOWED_IFRAME_ORIGINS` entry of the form `scheme://*.host[:port]` matches an incoming origin when the origin's scheme matches exactly and the origin's remainder (host, optionally `:port`) ends with `.host[:port]` — the bare `host[:port]` itself (no subdomain label) does not match. A non-wildcard entry continues to require an exact string match against the full origin, unchanged from before this capability's wildcard support.
 

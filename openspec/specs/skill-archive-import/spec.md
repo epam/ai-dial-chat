@@ -5,9 +5,9 @@ Specifies the Catalog "Upload" entry point and the `POST /api/v1/skills/import` 
 ## Requirements
 ### Requirement: Catalog "Upload" entry imports a Skill archive or a standalone manifest
 
-The Catalog Create dropdown's "Upload" entry (child of the "Skill" submenu, see `catalog-create-options`) SHALL open a native file picker whose accepted-file hint includes both ZIP archives and Markdown files, upload the selected file to the BFF's import endpoint, and — on success — refresh `SkillsContext` so the newly created Skill appears in the Catalog without a manual page reload. The picker's `accept` attribute is a browser-level hint only; the BFF, not the picker, is the authority on whether a given upload is accepted.
+The Catalog Create dropdown's "Upload" entry (child of the "Skill" submenu, see `catalog-create-options`) SHALL open the "Upload skill" dialog (`apps/chat/src/components/SkillArchiveUploadDialog`, a host adapter over `@epam/ai-dial-skills`' `SkillArchiveUploadDialog`, which renders the ui-kit `FileDropzone`) whose accepted-file hint is `SKILL_ARCHIVE_ACCEPT` (`'.zip,.md'`, `apps/chat/src/constants/skills.ts`). The picked or dropped file SHALL be uploaded to the BFF's import endpoint through `apps/chat/src/hooks/skills/useSkillArchiveImport.ts` (host adapter over the headless `useSkillArchiveImport` controller in `@epam/ai-dial-chat-hooks`), and — on success — the host SHALL raise the Skill-created success notification, refresh `SkillsContext`, and close the dialog, so the newly created Skill appears in the Catalog without a manual page reload. The `accept` attribute is a browser-level hint only; the BFF, not the picker, is the authority on whether a given upload is accepted.
 
-Before submitting, the client SHALL perform a filename pre-check as a UX shortcut, not a security control: a selected file whose name ends in `.md` (case-insensitive) but is not exactly `SKILL.md` (case-sensitive) SHALL be rejected locally with the existing validation error state, without calling the import endpoint. A file named `.zip` (any case) or named exactly `SKILL.md` SHALL be submitted to the BFF.
+Before submitting, the client SHALL perform a filename pre-check as a UX shortcut, not a security control: a selected file whose name ends in `.md` (case-insensitive) but is not exactly `SKILL.md` (case-sensitive) SHALL be rejected locally with `SkillArchiveSelectionRejectionReason.UnsupportedFilename` (rendered as `SkillArchiveImportI18nKeys.ErrorUnsupportedFilename` under the drop area), without calling the import endpoint. A drop whose files `accept` excluded SHALL be rejected the same way. Any other file (including any `.zip`, or a file named exactly `SKILL.md`) SHALL be submitted to the BFF.
 
 #### Scenario: Selecting a valid archive creates a Skill and refreshes the Catalog
 - **WHEN** a user selects a well-formed Skill ZIP archive through the "Upload" file picker
@@ -19,15 +19,15 @@ Before submitting, the client SHALL perform a filename pre-check as a UX shortcu
 
 #### Scenario: A Markdown file with the wrong name is rejected before any request is sent
 - **WHEN** a user selects a file named `skill.md` (wrong case) or `readme.md` (wrong name) through the "Upload" file picker
-- **THEN** the client shows the existing validation error state immediately and does not call the import endpoint
+- **THEN** the dialog shows the unsupported-filename error immediately and does not call the import endpoint
 
 #### Scenario: Re-selecting the same file re-triggers the upload
 - **WHEN** a user selects the same file a second time immediately after a prior selection, whether the prior attempt was an archive or a standalone manifest
-- **THEN** the hidden file input's value is reset after the first selection so the native `onChange` event fires again and the upload (or the local filename pre-check) is re-attempted
+- **THEN** the ui-kit `FileDropzone` resets its hidden file input's value after the first selection so the native `onChange` event fires again and the upload (or the local filename pre-check) is re-attempted
 
 #### Scenario: A second upload cannot start while one is in progress
 - **WHEN** a user triggers "Upload" while a previous import (archive or standalone manifest) for this user is still in flight
-- **THEN** the file picker or submission is prevented from starting a second concurrent import
+- **THEN** `openDialog` and `handleFilesSelected` are no-ops while the request is in flight, so no second concurrent import starts
 
 #### Scenario: A failed import is shown in the still-open dialog
 - **WHEN** the import request for a selected file fails with any status (e.g. `400` for a non-ZIP or a ZIP without `SKILL.md`, or `502`/`503` from an upstream timeout)
@@ -92,11 +92,11 @@ A successful import, of either input form, SHALL make exactly one `uploadSkillFo
 
 The system SHALL reject, before extracting any file content, an archive that is: missing, empty, not a ZIP by signature (not merely by file extension or declared MIME type), truncated, or otherwise corrupted (`400`).
 
-After a successful open, the system SHALL enforce an entry-count ceiling read from the archive's central directory metadata alone, before extracting any entry's bytes (`422` if exceeded).
+After a successful open, the system SHALL enforce an entry-count ceiling (`SKILL_UPLOAD_MAX_FILES` × 10, i.e. 1000 by default) read from the archive's central directory metadata alone, before extracting any entry's bytes (`422` if exceeded).
 
 The system SHALL ignore OS-added metadata noise before any structural validation: macOS's `__MACOSX/` resource-fork tree and any `.DS_Store` or `Thumbs.db` entry, at any nesting depth, are skipped entirely — like a directory entry — and never count toward the wrapper-directory, manifest, or duplicate-path checks below.
 
-The system SHALL determine the normalized set of relative paths as follows: if every entry shares one identical first path segment (and that segment is not `SKILL.md` itself), that segment is treated as an optional wrapper directory and stripped from every path before further validation; otherwise, no stripping occurs. After this normalization step, the archive SHALL contain exactly one entry whose path is exactly `SKILL.md` (case-sensitive) — zero such entries is `400`, more than one is `422`. The system SHALL reject duplicate normalized paths (`422`) and SHALL treat directory entries as directories, never as zero-byte files.
+The system SHALL determine the normalized set of relative paths as follows (`SkillsArchiveExtractionService.resolveManifestAndEntries`): if a root-level `SKILL.md` (case-sensitive) entry exists, no stripping occurs. Otherwise every top-level directory whose immediate child is `SKILL.md` is a wrapper candidate: zero candidates is `400` (missing manifest); more than one is `422` (more than one Skill); exactly one is stripped from every path, but only when every entry lies under it — a mixed layout with files outside the wrapper is `422` (ambiguous layout). The system SHALL reject duplicate normalized paths (`422`) and SHALL treat directory entries as directories, never as zero-byte files. An archive with no file entries at all is `400`.
 
 #### Scenario: Non-ZIP file is rejected
 - **WHEN** a file without a valid ZIP local-file-header signature is uploaded, regardless of its filename extension or declared content type
@@ -119,11 +119,11 @@ The system SHALL determine the normalized set of relative paths as follows: if e
 - **THEN** the `__MACOSX` entries are ignored, the wrapper directory is stripped from the remaining entries, and the Skill is created normally
 
 #### Scenario: Archive with no manifest is rejected
-- **WHEN** neither the raw nor the wrapper-stripped path set contains a `SKILL.md` entry
+- **WHEN** the archive has no root `SKILL.md` and no top-level directory directly containing `SKILL.md`
 - **THEN** the response is `400 Bad Request`
 
 #### Scenario: Archive with multiple Skills is rejected
-- **WHEN** an archive normalizes to more than one entry whose path is `SKILL.md` (e.g. two differently named top-level directories, each containing its own `SKILL.md`)
+- **WHEN** an archive has no root `SKILL.md` and more than one top-level directory directly contains its own `SKILL.md`
 - **THEN** the response is `422 Unprocessable Entity` and no Skill is created
 
 #### Scenario: Duplicate normalized paths are rejected
@@ -136,7 +136,7 @@ The system SHALL determine the normalized set of relative paths as follows: if e
 
 ### Requirement: Entry-level safety rules reuse the existing Skill path contract
 
-Every extracted, normalized entry path SHALL be validated against the same relative-path safety rules the existing Skill multipart create endpoint enforces: no absolute path, no drive letter, no backslash, no empty/`.`/`..` segment, no control or NUL characters, no `.dial-resource` or `.dial-folder` segment, and no reserved first segment such as `files` or `v`. A path failing any of these rules SHALL be rejected (`400`).
+Every extracted entry path SHALL be validated — on the raw path before wrapper stripping (`resolveSkillEntryPath`), and again after normalization by the shared `SkillsPackageService` create validation — against the same relative-path safety rules the existing Skill multipart create endpoint enforces: no absolute path, no drive letter, no backslash, no empty/`.`/`..` segment, no control or NUL characters, no `.dial-resource` or `.dial-folder` segment, and no reserved first segment such as `files` or `v`. A path failing any of these rules SHALL be rejected (`400`).
 
 The system SHALL reject, per entry, before decompressing its content: encrypted entries, symbolic-link entries, and any entry that is neither a regular file nor a directory.
 
@@ -226,7 +226,7 @@ The system SHALL NOT log archive contents, manifest contents, authentication tok
 
 ### Requirement: `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` environment configuration
 
-The system SHALL define `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` as a validated, optional environment variable in the Skills domain's environment configuration, with a documented default. The variable SHALL be distinct from the retired `SKILL_UPLOAD_MAX_BYTES` and from the existing decompressed-content limits (`SKILL_UPLOAD_MAX_FILES`, `SKILL_FILE_UPLOAD_MAX_BYTES`, `SKILL_UPLOAD_MAX_TOTAL_BYTES`). The variable and its default SHALL be documented in `apps/chat-api/README.md` and present in `apps/chat-api/.env.template`.
+The system SHALL define `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` as a validated (`@IsInt() @Min(1)`), optional environment variable in `EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`), with a documented default of `20971520` (20 MiB), enforced by the route-scoped `SkillArchiveUploadInterceptor` (multer disk storage, `413` on `LIMIT_FILE_SIZE`). The variable SHALL be distinct from the retired `SKILL_UPLOAD_MAX_BYTES` and from the existing decompressed-content limits (`SKILL_UPLOAD_MAX_FILES`, `SKILL_FILE_UPLOAD_MAX_BYTES`, `SKILL_UPLOAD_MAX_TOTAL_BYTES`). The variable and its default SHALL be documented in `apps/chat-api/README.md` and present in `apps/chat-api/.env.template`.
 
 #### Scenario: Default applies when unset
 - **WHEN** `SKILL_ARCHIVE_UPLOAD_MAX_BYTES` is not set in the environment

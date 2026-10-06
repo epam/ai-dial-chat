@@ -58,7 +58,7 @@ The `@ApiOperation` description SHALL state that `deployments` covers the deploy
 
 (Here `llm-router` called `gpt-4o` once; its cost equals the model's and the two are not additive.)
 
-Each stats field SHALL be typed as `LimitStatsDto` with `{ total: number; used: number; resetsAt?: string }`. A `total` at or above `2^53` (`9007199254740992`) represents "unlimited" (the upstream sentinel `Long.MAX_VALUE` exceeds `Number.MAX_SAFE_INTEGER`) and MUST be documented as such in the DTO's `@ApiProperty` description; the BFF SHALL pass the value through unmodified and MUST NOT reinterpret, clamp, or drop it.
+Each stats field SHALL be typed as `LimitStatsDto` with `{ total: number; used: number; resetsAt?: string }`. A `total` at or above `2^53` (`9007199254740992`) represents "unlimited" (the upstream sentinel `Long.MAX_VALUE` exceeds `Number.MAX_SAFE_INTEGER`) and MUST be documented as such in `UserLimitStatsResponseDto`'s `@ApiProperty` descriptions (stated on `minuteCostStats`, which `dayCostStats`/`weekCostStats`/`monthCostStats` reference; `LimitStatsDto.total` itself carries only an example); the BFF SHALL pass the value through unmodified and MUST NOT reinterpret, clamp, or drop it.
 
 `resetsAt` is an optional ISO-8601 UTC instant marking the exclusive end of that stat's current accumulation period. Its presence establishes that the `day`/`week`/`month` stats are **calendar periods anchored to UTC boundaries**, not trailing windows. The BFF SHALL forward it verbatim and MUST NOT parse, reformat, convert, or synthesize it — see the `usage-period-reset-times` capability for the full contract.
 

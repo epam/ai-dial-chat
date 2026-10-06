@@ -159,14 +159,6 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   filesHeading?: string;
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */
   filesTreeAriaLabel?: string;
-  /**
-   * @deprecated Use `uploadFilesLabel`. Still used as its fallback.
-   */
-  addUploadLabel?: string;
-  /**
-   * @deprecated Use `deleteLabel`. Still used as its fallback.
-   */
-  removeLabel?: string;
   /** Label of the Files pane's Add dropdown trigger. Defaults to `'Add'`. */
   addLabel?: string;
   /** Add-menu entry that creates a folder inline. Defaults to `'Create folder'`. */
@@ -278,7 +270,7 @@ export interface SkillEditorConflict {
 
 /** CSS custom-property color overrides for `SkillEditor`. */
 export interface SkillEditorColors {
-  /** Refinement status text color. Defaults to --text-primary. */
+  /** Refinement status text color. Defaults to the kit `CaptionText` color (`--text-secondary`). */
   refineActionText?: string;
   /** Refinement error color. Defaults to --text-error. */
   refineErrorText?: string;
@@ -292,13 +284,13 @@ export interface SkillEditorColors {
 
 /** Typography class overrides for `SkillEditor`. */
 export interface SkillEditorTypography {
-  /** Refinement feedback typography. Defaults to 'dial-small-text'. */
+  /** Refinement feedback typography. Defaults to the kit `CaptionText` class (`'dial-tiny-text'`). */
   refineFeedbackClassName?: string;
   /** Typography class applied to the "Files" heading. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** Typography class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text'`. */
   helperTextClassName?: string;
-  /** Color class applied to the file tree "Delete" context-menu icon. Defaults to `'text-secondary'`. */
+  /** Color class applied to the file tree "Delete" context-menu icon. Unset by default, so the icon takes the item's danger color. */
   removeIconClassName?: string;
   /** Color class applied to the file tree Add-menu entry icons. Defaults to `'text-secondary'`. */
   menuIconClassName?: string;

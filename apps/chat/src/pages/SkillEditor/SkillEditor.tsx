@@ -11,6 +11,7 @@ import {
   type SkillEditorLoadClient,
   type SkillEditorSubmitClient,
   type SkillEditorSubmitMessages,
+  type SkillEditorSubmitNotification,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
 import {
@@ -26,6 +27,7 @@ import {
   ConfirmationPopupVariant,
   EditorThemes,
   ErrorText,
+  NotificationVariant,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -55,8 +57,13 @@ import {
   updateSkill,
 } from '../../server-api/skills.api';
 import { EditorQuery } from '../../types/editor-query';
+import {
+  EntityOperation,
+  NotifiableEntity,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
+import { ENTITY_OPERATION_NOTIFICATIONS } from '../../utils/entity-notification';
 
 const skillEditorLoadClient: SkillEditorLoadClient = {
   downloadSkill,
@@ -79,6 +86,9 @@ const NEW_SKILL_CANVAS_SCOPE = '<new>';
  * to end with this character and absorb the next key's leading path segment. */
 const CANVAS_SCOPE_SEPARATOR = '#';
 
+const SKILL_NOTIFICATIONS =
+  ENTITY_OPERATION_NOTIFICATIONS[NotifiableEntity.Skill];
+
 const SkillEditorPage: FC = () => {
   const { t } = useTranslation();
   const onRefineDescription = useTextRefinementCallback(
@@ -94,7 +104,15 @@ const SkillEditorPage: FC = () => {
   const { refetchSkills } = useSkills();
   const { currentTheme } = useTheme();
   const { closeCanvas } = useAttachmentCanvas();
-  const { showNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
+
+  const handleSubmitNotification = useCallback(
+    ({ variant, ...notification }: SkillEditorSubmitNotification) =>
+      variant === NotificationVariant.Success
+        ? showSuccessNotification(notification)
+        : showErrorNotification(notification),
+    [showSuccessNotification, showErrorNotification],
+  );
 
   const returnUrl = ROUTES.Catalog;
   const personalBucket = user?.bucket;
@@ -244,10 +262,17 @@ const SkillEditorPage: FC = () => {
       serviceUnavailable: t(SkillEditorI18nKeys.ErrorServiceUnavailable),
       pathInvalid: t(SkillEditorI18nKeys.ErrorPathInvalid),
       saveError: t(SkillEditorI18nKeys.ErrorSave),
-      saveSuccessTitle: t(SkillEditorI18nKeys.SaveSuccessTitle),
-      createSuccess: (name) => t(SkillEditorI18nKeys.CreateSuccess, { name }),
-      updateSuccessTitle: t(SkillEditorI18nKeys.UpdateSuccessTitle),
-      updateSuccess: (name) => t(SkillEditorI18nKeys.UpdateSuccess, { name }),
+      /* Success wording comes from the shared entity-operation map, like every other "X created/edited" toast. */
+      saveSuccessTitle: t(
+        SKILL_NOTIFICATIONS[EntityOperation.Created].titleKey,
+      ),
+      createSuccess: (name) =>
+        t(SKILL_NOTIFICATIONS[EntityOperation.Created].messageKey, { name }),
+      updateSuccessTitle: t(
+        SKILL_NOTIFICATIONS[EntityOperation.Edited].titleKey,
+      ),
+      updateSuccess: (name) =>
+        t(SKILL_NOTIFICATIONS[EntityOperation.Edited].messageKey, { name }),
       conflictMessage: t(SkillEditorI18nKeys.ConflictMessage),
     }),
     [t],
@@ -277,7 +302,7 @@ const SkillEditorPage: FC = () => {
     client: skillEditorSubmitClient,
     messages: submitMessages,
     onNavigate: navigate,
-    onNotify: showNotification,
+    onNotify: handleSubmitNotification,
   });
 
   /*

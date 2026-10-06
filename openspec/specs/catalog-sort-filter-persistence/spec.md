@@ -81,15 +81,16 @@ i18n keys needed: none. RTL/accessibility: the existing Filter dropdown already 
 
 A custom hook `useCatalogSortFilterPreference` SHALL be created at `apps/chat/src/hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference.ts`, built on top of the existing `apps/chat/src/hooks/useLocalStorage.ts` hook rather than calling `localStorage` directly.
 
-`apps/chat/src/types/storage-key.ts` SHALL gain two new `StorageKey` members: `CatalogSortKey` and `CatalogFilterTopics`.
+`apps/chat/src/types/storage-key.ts` SHALL define the `StorageKey` members `CatalogSortKey` (`'catalogSortKey'`) and `CatalogFilterTopics` (`'catalogFilterTopics'`); the hook also uses `CatalogIsMyAppsActive` (`'catalogIsMyAppsActive'`) for the persisted "My Apps" toggle.
 
 The hook SHALL:
 
 - Call `useLocalStorage<string>(StorageKey.CatalogSortKey, CatalogSortKey.RecentlyUpdated)` to obtain the persisted sort key string and its setter.
 - Call `useLocalStorage<string[]>(StorageKey.CatalogFilterTopics, [])` to obtain the persisted filter topics array and its setter.
-- Expose `sortKey: CatalogSortKey`, `setSortKey: (key: CatalogSortKey) => void`, `filterTopics: Set<string>`, and `setFilterTopics: (topics: Set<string>) => void`.
+- Call `useLocalStorage<boolean>(StorageKey.CatalogIsMyAppsActive, false)` for the persisted "My Apps" toggle.
+- Expose `sortKey: CatalogSortKey`, `setSortKey: (key: CatalogSortKey) => void`, `filterTopics: Set<string>`, `setFilterTopics: (topics: Set<string>) => void`, `isMyAppsActive: boolean`, and `setIsMyAppsActive: (isActive: boolean) => void`; a non-boolean persisted toggle value falls back to `false`.
 - Validate the value from `useLocalStorage` against the `CatalogSortKey` enum; an unknown value falls back to `CatalogSortKey.RecentlyUpdated`.
-- Rehydrate the filter topics array from `useLocalStorage` as `new Set(parsed)`; a non-array value falls back to an empty `Set`.
+- Rehydrate the filter topics array from `useLocalStorage` as a `Set` of its string entries (non-string entries are dropped); a non-array value falls back to an empty `Set`.
 - On every `setSortKey` call, forward the new value to the underlying `useLocalStorage` setter for `StorageKey.CatalogSortKey`.
 - On every `setFilterTopics` call, forward `Array.from(topics)` to the underlying `useLocalStorage` setter for `StorageKey.CatalogFilterTopics`.
 - Rely on `useLocalStorage`'s own `try`/`catch` handling for `localStorage` read/write failures (e.g. storage disabled, quota exceeded) — the hook does not need its own storage-access error handling.
@@ -102,12 +103,12 @@ RTL impact: none.
 
 #### Scenario: No persisted values on first visit
 
-- **WHEN** the hook mounts and `localStorage` has no `dial:catalog:sortKey` or `dial:catalog:filterTopics` entries
+- **WHEN** the hook mounts and `localStorage` has no `StorageKey.CatalogSortKey` (`catalogSortKey`) or `StorageKey.CatalogFilterTopics` (`catalogFilterTopics`) entries
 - **THEN** `sortKey` is `CatalogSortKey.RecentlyUpdated` and `filterTopics` is an empty `Set`
 
 #### Scenario: Persisted sort key is restored
 
-- **WHEN** the hook mounts and `localStorage.getItem('dial:catalog:sortKey')` returns `'newest'`
+- **WHEN** the hook mounts and `localStorage.getItem(StorageKey.CatalogSortKey)` returns `JSON.stringify('newest')`
 - **THEN** `sortKey` is `CatalogSortKey.Newest`
 
 #### Scenario: Invalid persisted sort key falls back to default
@@ -144,53 +145,21 @@ RTL impact: none.
 
 ### Requirement: CatalogView reconciles and wires persisted preferences into Catalog
 
-`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL use `useCatalogSortFilterPreference` to obtain `sortKey`, `setSortKey`, `filterTopics`, and `setFilterTopics`.
+`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL use
+`useCatalogSortFilterPreference` to obtain `sortKey`, `setSortKey`,
+`filterTopics`, and `setFilterTopics`.
 
-- Before passing `filterTopics` to `Catalog`, `CatalogView` SHALL reconcile it against the current catalog item set: compute the union of all `topics` across the memoized `catalogItems`, and pass only the intersection of persisted `filterTopics` with that union. This reconciliation SHALL be wrapped in `useMemo` keyed on `catalogItems` and the hook's `filterTopics`.
-- `CatalogView` SHALL only forward `sortKey`, `onSortChange`, `filterTopics`, and `onFilterTopicsChange` to `Catalog` when it is not rendered in selector mode (`isSelectorMode` is falsy); in selector mode these four props SHALL be `undefined` so `Catalog` falls back to its own internal, session-only sort/filter state. `CatalogView` SHALL still call `useCatalogSortFilterPreference` unconditionally (the hook read is harmless), but its values are only wired to `Catalog` outside selector mode.
-- Outside selector mode, `Catalog` SHALL receive `sortKey={sortKey}`, `onSortChange={setSortKey}`, `filterTopics={reconciledFilterTopics}`, and `onFilterTopicsChange={setFilterTopics}`.
-- `CatalogModal` (`apps/chat/src/components/DeploymentSelector/CatalogModal.tsx`) renders `CatalogView` with `isSelectorMode`. Because of the selector-mode gating above, `CatalogModal` SHALL NOT be changed and its sort/filter behavior remains uncontrolled and session-only (resets whenever the modal is closed and reopened).
-
-Memoisation: the reconciled `filterTopics` value SHALL be wrapped in `useMemo`.
-
-Feature flag: none required.
-
-Accessibility: no change — the sort dropdown and filter panel already carry their existing ARIA semantics; this requirement only changes which values drive them.
-
-#### Scenario: Persisted sort and filter are applied on page load
-
-- **WHEN** `CatalogView` mounts and `useCatalogSortFilterPreference` restores `sortKey: CatalogSortKey.Newest` and `filterTopics: Set { 'nlp' }`, and at least one loaded catalog item has topic `'nlp'`
-- **THEN** the rendered `Catalog` sorts items by "Newest" and shows only items with the `'nlp'` topic, with no additional user interaction
-
-#### Scenario: Stale persisted topic is dropped when no longer present in items
-
-- **WHEN** `useCatalogSortFilterPreference` restores `filterTopics: Set { 'deprecated-topic' }` and no loaded catalog item has that topic
-- **THEN** `Catalog` receives an empty `filterTopics` set and shows all items unfiltered
-
-#### Scenario: Changing sort in the UI updates persisted storage
-
-- **WHEN** the user selects a different sort option in the rendered `Catalog`
-- **THEN** `setSortKey` (and therefore `localStorage`) is updated with the new selection
-
-#### Scenario: CatalogModal is unaffected
-
-- **WHEN** `CatalogModal` is rendered
-- **THEN** it does not read from or write to `localStorage` for sort or filter state, and its sort/filter selections reset when the modal is closed and reopened
-
----
-
-### Requirement: CatalogView reconciles and wires persisted preferences into Catalog
-
-`CatalogView` SHALL use `useCatalogSortFilterPreference` to obtain `sortKey`,
-`setSortKey`, `filterTopics`, and `setFilterTopics`.
-
-- Before passing `filterTopics` to `Catalog`, `CatalogView` SHALL call the pure
-  `reconcileFilterTopics(filterTopics, visibleCatalogItems)` helper from
+- Before passing `filterTopics` to `Catalog`, `CatalogView` SHALL obtain
+  `reconciledFilterTopics` from the app hook `useCatalogItems`
+  (`apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`, which receives the
+  persisted topics as `persistedFilterTopics`); that hook calls the pure
+  `reconcileFilterTopics(persistedFilterTopics, visibleCatalogItems)` helper from
   `@epam/ai-dial-chat-hooks`. It SHALL return only persisted topics present in
   the current visible item set, without mutating either input. The call SHALL be
   wrapped in `useMemo` keyed on the items and stored topics.
 - Selector visible-type filtering and hide-owned filtering SHALL use the
-  corresponding pure `chat-hooks` derivations while preserving the current
+  corresponding pure `chat-hooks` derivations (`filterCatalogItemsBySelector`,
+  `filterHiddenOwnedItems`) inside `useCatalogItems` while preserving the current
   filter order and item order.
 - `CatalogView` SHALL only forward `sortKey`, `onSortChange`, `filterTopics`,
   and `onFilterTopicsChange` outside selector mode; in selector mode these props
@@ -198,7 +167,8 @@ Accessibility: no change — the sort dropdown and filter panel already carry th
 - Outside selector mode, `Catalog` SHALL receive `sortKey={sortKey}`,
   `onSortChange={setSortKey}`, `filterTopics={reconciledFilterTopics}`, and
   `onFilterTopicsChange={setFilterTopics}`.
-- `CatalogModal` SHALL NOT be changed.
+- `CatalogModal` (`apps/chat/src/components/DeploymentSelector/CatalogModal.tsx`)
+  renders `CatalogView` with `isSelectorMode` and SHALL NOT be changed.
 
 The persistence hook and `StorageKey` remain app-owned. The pure helpers SHALL
 NOT read or write storage, contexts, routes, translations, or feature flags.

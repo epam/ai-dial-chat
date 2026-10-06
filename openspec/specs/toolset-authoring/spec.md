@@ -19,7 +19,7 @@ The system SHALL provide a `/toolset-editor` route that opens the toolset editor
 - **THEN** the system redirects the user out of the editor instead of rendering the form
 
 ### Requirement: Metadata section fields
-The Metadata section SHALL allow editing the toolset avatar, name, version, description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), which opens the `AvatarPickerModal` file manager restricted to a single image up to a host-configured size, rather than a plain URL text field. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup, which is present only while the host supplies a non-empty `availableLocaleOptions` (see `builder-form`). These fields SHALL be rendered through the toolset-editor lib's `GeneralForm` component, which wraps the shared `DeploymentCreationForm` component from `@epam/ai-dial-builder-form`. The Metadata section SHALL NOT contain any connection or authentication fields.
+The Metadata section SHALL allow editing the toolset avatar, name, version, description, and topics. The avatar SHALL be picked via the shared `AddAvatar` control (preview box plus "Add avatar" button), which opens the `AvatarPickerModal` file manager restricted to a single image up to a host-configured size, rather than a plain URL text field. The name and description fields SHALL also allow editing translations for additional locales through the shared `DeploymentLocalesField` popup, which is present only while the host supplies a non-empty `availableLocaleOptions` (see `builder-form`). These fields SHALL be rendered through the toolset-editor lib's `GeneralForm` component, which wraps the shared `MetadataForm` component from `@epam/ai-dial-builder-form` (itself composed over `DeploymentCreationForm`). The Metadata section SHALL NOT contain any connection or authentication fields.
 
 The Version field SHALL be validated against the shared `builder-form` library's `SEMVER_VERSION_PATTERN` (via `validateDeploymentCreationFields` with `validateVersionPattern: SEMVER_VERSION_PATTERN`), the same rule the Quick App and Custom App editors use: a non-empty version must be a SemVer 2.0.0 version (`MAJOR.MINOR.PATCH` without leading zeros, with optional pre-release and build metadata — e.g. `1.0.0`, `1.0.0-beta`, `1.0.0+build`; not `1.2`, `1.0.0.0`, `01.0.0` or `abc`), the rule DIAL Admin applies through `semver.valid()`. A non-empty version that is not SemVer 2.0.0 SHALL surface a version-invalid error ("Version must follow semantic versioning (e.g., 1.0.0)" (`editor.versionInvalid`)) under the Version field and SHALL keep the Save button disabled. The BFF's `ToolsetBodyDto` SHALL enforce the same pattern (at most 64 characters).
 
@@ -85,9 +85,9 @@ since the candidate name itself is always primary-locale content.
   name resolved for the viewer's UI language
 
 ### Requirement: Form-only editor layout
-The editor SHALL use `EditorLayout` from `@epam/ai-dial-builder-form` (composed by the toolset-editor lib's `ToolsetEditor`) to render a header row and a two-column body. The left column SHALL contain a Metadata `EditorSection` (Avatar, Name, Version, Description, Locales, Tags fields). The right column SHALL contain a Setup `EditorSection` (Endpoint, Protocol, Allowed tools, Authentication fields). On mobile, the two sections SHALL stack vertically (Metadata on top, Setup below). The editor SHALL NOT render a footer button bar, a wizard step indicator, or a separate live preview pane.
+The editor SHALL use the shared `EntityEditor` from `@epam/ai-dial-builder-form` (composed by the toolset-editor lib's `ToolsetEditor`), which wraps `EditorLayout` and two `EditorSection`s, to render a header row and a two-column body. The left column SHALL contain a Metadata `EditorSection` (Avatar, Name, Version, Description, Locales, Tags fields). The right column SHALL contain a Setup `EditorSection` (Endpoint, Protocol, Allowed tools, Authentication fields). On mobile, the two sections SHALL stack vertically (Metadata on top, Setup below). On desktop the Cancel and primary (Create in create mode, Save in edit mode) actions render in the header actions slot; below the `desktop` breakpoint `EditorLayout` moves the same actions into a bottom action bar outside the scrollable body. The editor SHALL NOT render a wizard step indicator or a separate live preview pane.
 
-The `EditorLayout` root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`flex-1` growth, not `size-full`) — the app page renders `ToolsetEditor` (and thereby `EditorLayout`) directly as its root, with no extra wrapper element, matching `AppsEditor` and `CustomAppEditor`.
+The `EditorLayout` root SHALL use its built-in `flex min-h-0 flex-1 flex-col` classes (`flex-1` growth, not `size-full`) — the app page (`ToolsetApplicationEditor`, rendered by `ApplicationEditorPage` with `ApplicationEditorKind.Toolset`) renders `ToolsetEditor` (and thereby `EditorLayout`) directly as its root, with no extra wrapper element, matching `AppsEditor` and `CustomAppEditor`.
 
 #### Scenario: Both sections visible simultaneously
 - **WHEN** a user opens the toolset editor (create or edit mode) at desktop width
@@ -97,9 +97,13 @@ The `EditorLayout` root SHALL use `className="flex min-h-0 flex-1 flex-col"` (`f
 - **WHEN** a user opens the toolset editor at mobile width
 - **THEN** Metadata renders first (top), Setup renders below it, and both are reachable by scrolling without any tab or step navigation
 
-#### Scenario: No footer button bar
-- **WHEN** the toolset editor is open
-- **THEN** no footer row with Save/Cancel buttons appears at the bottom of the viewport; the only Save and Cancel controls are in the header actions slot
+#### Scenario: Actions placement
+- **WHEN** the toolset editor is open at desktop width
+- **THEN** the Cancel and primary action buttons appear only in the header actions slot
+
+#### Scenario: Mobile action bar
+- **WHEN** the toolset editor is open below the `desktop` breakpoint
+- **THEN** the header actions slot is hidden and the same Cancel and primary action buttons render in a bottom action bar that never overlaps the scrollable content
 
 ### Requirement: Setup section fields
 The Setup section SHALL allow editing the endpoint URL, the transport protocol (HTTP or SSE), the allowed tools (tag input), and the authentication settings (key-header, API key, OAuth client-id/secret/endpoints). The authentication block SHALL use the same visual style as the existing Settings step authentication section. The Setup section SHALL NOT contain any name, version, description, locales, or icon fields.
@@ -147,12 +151,12 @@ name.
 - **THEN** the generated default name is suffixed so it does not collide with any existing name
 
 ### Requirement: Save and exit
-The editor SHALL persist the toolset via the backend write API on save and SHALL surface a saving state. On successful save it SHALL raise a success notification and navigate to the return URL; on failure it SHALL keep the user in the editor and show an error.
+The editor SHALL persist the toolset via the backend write API on save and SHALL surface a saving state. On successful save it SHALL raise a success notification and navigate to the return URL (the catalog, `ROUTES.Catalog`); on failure it SHALL keep the user in the editor and show an error.
 
 The success notification SHALL be raised through `useOperationNotification` with `NotifiableEntity.Toolset` and `EntityOperation.Created` (create mode) or `EntityOperation.Edited` (edit mode), passing the toolset's name. Navigation SHALL NOT be delayed to keep the notification on screen.
 
 #### Scenario: Successful create
-- **WHEN** a user with a valid form clicks Save while creating a new toolset
+- **WHEN** a user with a valid form clicks the primary action (labelled "Create" in create mode) while creating a new toolset
 - **THEN** the system calls the create endpoint and, on success, shows a success notification titled `"Toolset created successfully"` and navigates to the return URL
 
 #### Scenario: Successful update

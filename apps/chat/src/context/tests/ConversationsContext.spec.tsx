@@ -1295,17 +1295,78 @@ describe('ConversationsContext — markConversationViewed', () => {
 });
 
 describe('ConversationsContext — watchForDisplayNameUpdate', () => {
-  const buildUpdateEventStream = () => {
+  const buildUpdateEventStream = (
+    events: Array<{ action: string; url?: string }> = [{ action: 'UPDATE' }],
+  ) => {
     const encoder = new TextEncoder();
     return new ReadableStream<Uint8Array>({
       start(controller) {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ action: 'UPDATE' })}\n\n`),
-        );
+        for (const event of events) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+          );
+        }
         controller.close();
       },
     });
   };
+
+  const startWatch = async (conversationId: string) => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+    const onUpdated = vi.fn();
+    act(() => {
+      result.current.watchForDisplayNameUpdate(
+        conversationId,
+        'Old Name',
+        onUpdated,
+      );
+    });
+    return onUpdated;
+  };
+
+  it('ignores an UPDATE event for a different resource URL', async () => {
+    vi.mocked(conversationsApi.watchConversation).mockResolvedValueOnce(
+      buildUpdateEventStream([
+        { action: 'UPDATE', url: 'conversations/bucket/other__uuid' },
+      ]),
+    );
+
+    const onUpdated = await startWatch('bucket/model__title__uuid');
+
+    await waitFor(() =>
+      expect(conversationsApi.watchConversation).toHaveBeenCalled(),
+    );
+    /* Let the stream drain before asserting nothing was fetched. */
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    expect(conversationsApi.getConversation).not.toHaveBeenCalled();
+    expect(onUpdated).not.toHaveBeenCalled();
+  });
+
+  it('closes the watch connection once a qualifying update arrives', async () => {
+    let signal: AbortSignal | undefined;
+    vi.mocked(conversationsApi.watchConversation).mockImplementationOnce(
+      async (_path, abortSignal) => {
+        signal = abortSignal;
+        return buildUpdateEventStream([
+          {
+            action: 'UPDATE',
+            url: 'conversations/bucket/model__title%20one__uuid',
+          },
+        ]);
+      },
+    );
+    vi.mocked(conversationsApi.getConversation).mockResolvedValueOnce({
+      name: 'New Name',
+    } as never);
+
+    const onUpdated = await startWatch('bucket/model__title one__uuid');
+
+    await waitFor(() => expect(onUpdated).toHaveBeenCalledWith('New Name'));
+    expect(signal?.aborted).toBe(true);
+  });
 
   /*
    * Regression test: `getConversation`'s backend contract requires the bucket

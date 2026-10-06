@@ -58,7 +58,7 @@ If the image cannot be copied — `ClipboardItem` or `clipboard.write` is unavai
 
 ### Requirement: Copy confirmation feedback
 
-In the copied state the Copy button SHALL show the copied label (default "Copied") and a check icon (`IconCheck`) in place of the copy icon, and a visually hidden `role="status"` `aria-live="polite"` region SHALL contain the copied label. The copied state SHALL reset to the default label and icon after the same delay `useCodeCopy` uses (`DEFAULT_RESET_DELAY_MS`), and any pending reset timer SHALL be cleared on unmount. The button element SHALL NOT be remounted by the state change, so keyboard focus stays on it.
+In the copied state the Copy button SHALL show the copied label (default "Copied") and a check icon (`IconCheck`) in place of the copy icon, and a visually hidden `role="status"` `aria-live="polite"` region SHALL contain the copied label. The copied state SHALL reset to the default label and icon after 2000 ms (`QrActions`' own `COPIED_RESET_DELAY_MS`, which matches `useCodeCopy`'s default reset delay), and any pending reset timer SHALL be cleared on unmount. The button element SHALL NOT be remounted by the state change, so keyboard focus stays on it.
 
 #### Scenario: Confirmation shown and announced
 

@@ -77,6 +77,7 @@ export class ApplicationSchemasController {
     description: 'Caller lacks permission to access this schema',
   })
   @ApiResponse({ status: 404, description: 'Schema not found' })
+  @ApiResponse({ status: 429, description: 'DIAL Core rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

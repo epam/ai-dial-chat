@@ -2,13 +2,13 @@
 
 ## Purpose
 
-The published `@epam/ai-dial-attachment-canvas` package's build and load boundaries: which exports resolve to real build artifacts, which engine code (PDF, syntax highlighting) stays out of the static import graph, how PDF-only CSS is split from the base stylesheet, how peer-declared engines are excluded from the bundle, and how the package's PDF dependency versions and built-package boundary are verified.
+The published `@epam/ai-dial-attachment-canvas` package's build and load boundaries: which exports resolve to real build artifacts, which engine code (PDF, syntax highlighting) stays out of the static import graph, how PDF-only CSS is split from the base stylesheet, how declared runtime and peer packages (including those engines) are externalized from the bundle, and how the package's PDF dependency versions and built-package boundary are verified.
 
 ## Capability: attachment-canvas-package-loading
 
 ### Overview
 
-`libs/attachment-canvas` ships PDF preview and syntax-highlighted code viewing as heavy, on-demand engines (`pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`, `@epam/pdf-highlighter-kit`, `react-syntax-highlighter`) behind existing dynamic-import boundaries. This capability governs the package's build and packaging boundary so that promise stays true for real consumers: statically importing the package root must not pull in that engine code or its CSS, every `package.json` `exports` target must resolve to a real build artifact, peer-declared engines must never be duplicated inside the bundle, and the PDF dependency versions must resolve to one consistent, installable tree. A built-package boundary test suite and a consumer fixture that installs the packed tarball verify these properties against the actual `dist/` output rather than the `@epam/source` workspace alias.
+`libs/attachment-canvas` ships PDF preview and syntax-highlighted code viewing as heavy, on-demand engines (`pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`, `@epam/pdf-highlighter-kit`, `react-syntax-highlighter`) behind existing dynamic-import boundaries. This capability governs the package's build and packaging boundary so that promise stays true for real consumers: statically importing the package root must not pull in that engine code or its CSS, every `package.json` `exports` target must resolve to a real build artifact, declared runtime and peer packages — including those engines, which are runtime `dependencies` — must never be duplicated inside the bundle, and the PDF dependency versions must resolve to one consistent, installable tree. A built-package boundary test suite and a consumer fixture that installs the packed tarball verify these properties against the actual `dist/` output rather than the `@epam/source` workspace alias.
 
 ---
 

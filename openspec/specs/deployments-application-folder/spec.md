@@ -12,7 +12,7 @@ The `DeploymentItemDto` SHALL include an optional `applicationFolder?: string` f
 
 The backend SHALL:
 - Add `applicationFolder?: string` to `DeploymentItemDto` with `@ApiPropertyOptional({ description: 'Parent folder path for application-type deployments (absent for root-level or non-application items)' })`.
-- Compute `applicationFolder` inside `mapToDeploymentItem` (`apps/chat-api/src/deployments/deployments.service.ts:33–84`) only when `type === 'application'`.
+- Compute `applicationFolder` inside `mapToDeploymentItem` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`, called by `listing/deployments-listing.service.ts` and `lookup/deployments-lookup.service.ts`) only when `type === DeploymentItemType.Application`.
 - Derive the value as: `id.includes('/') ? id.substring(0, id.lastIndexOf('/')) : undefined`.
 - Omit the field (leave it `undefined`) when `type` is `'model'` or `'toolset'`.
 - Omit the field when the application `id` contains no `/` separator (root-level application).

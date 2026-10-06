@@ -74,6 +74,11 @@ export default defineConfig(({ command }) => ({
      * affects this lib's own production build.
      */
     alias: {
+      // Source components import their CSS Modules; do not prefix-match the public CSS subpath.
+      '@epam/ai-dial-publish-panel/styles.css': path.resolve(
+        import.meta.dirname,
+        '../publish-panel/src/styles.css',
+      ),
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',
