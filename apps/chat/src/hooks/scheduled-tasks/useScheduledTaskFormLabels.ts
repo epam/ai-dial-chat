@@ -5,6 +5,7 @@ import {
   ButtonsI18nKeys,
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
+  SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
 
@@ -82,6 +83,10 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           ? ScheduledTasksI18nKeys.CreateSubmittingLabel
           : ButtonsI18nKeys.Saving,
       ),
+      discardTitle: t(SkillEditorI18nKeys.UnsavedChangesTitle),
+      discardMessage: t(SkillEditorI18nKeys.UnsavedChangesMessage),
+      discardConfirmLabel: t(SkillEditorI18nKeys.UnsavedChangesConfirmLabel),
+      discardCancelLabel: t(SkillEditorI18nKeys.UnsavedChangesCancelLabel),
     }),
     [mode, t, refinementLabels],
   );

@@ -28,7 +28,7 @@ export interface ConfirmationViewStyles {
 
 /** Props for `ConfirmationView`. */
 export interface ConfirmationViewProps {
-  /** Entity the confirmation is about, rendered as an identity card above the copy. Ignored when `identity` is set. */
+  /** Entity the confirmation is about, rendered as an identity card above the copy. Ignored when `identity` is set; with neither, no card is rendered. */
   item?: EntityHeaderItem;
   /**
    * Identity card rendered in place of the default one, for a resource that is
@@ -77,19 +77,20 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
 
   return (
     <div style={cssVars} className="flex flex-col gap-4 px-6 py-4">
-      {identity ?? (
-        <ConfirmationIdentityCard
-          item={item}
-          variant={variant}
-          styles={{
-            colors: {
-              background: colors?.cardBackground,
-              dangerBackground: colors?.cardDangerBackground,
-              dangerBorder: colors?.cardDangerBorder,
-            },
-          }}
-        />
-      )}
+      {identity ??
+        (item != null && (
+          <ConfirmationIdentityCard
+            item={item}
+            variant={variant}
+            styles={{
+              colors: {
+                background: colors?.cardBackground,
+                dangerBackground: colors?.cardDangerBackground,
+                dangerBorder: colors?.cardDangerBorder,
+              },
+            }}
+          />
+        ))}
 
       <p
         className={mergeClasses(

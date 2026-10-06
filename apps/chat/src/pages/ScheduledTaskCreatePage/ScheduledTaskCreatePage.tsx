@@ -188,6 +188,7 @@ const ScheduledTaskCreatePage: FC = () => {
       onRefineInstructions={onRefineInstructions}
       labels={labels}
       values={values}
+      initialValues={DEFAULT_VALUES}
       errors={effectiveErrors}
       skillSelector={
         <ScheduledTaskSkillField

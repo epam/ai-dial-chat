@@ -127,6 +127,14 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   createButtonLabel: string;
   /** Accessible name for the Save action's busy indicator, announced while `isSubmitting` is `true`. Defaults to `'Saving'`. */
   submittingLabel?: string;
+  /** Title of the discard confirmation. Defaults to `'Discard unsaved changes?'`. */
+  discardTitle?: string;
+  /** Body of the discard confirmation. Defaults to `'You have unsaved changes. Leaving now will discard them.'`. */
+  discardMessage?: string;
+  /** Label of the discard confirmation's confirming action. Defaults to `'Discard changes'`. */
+  discardConfirmLabel?: string;
+  /** Label of the discard confirmation's cancel action. Defaults to `'Keep editing'`. */
+  discardCancelLabel?: string;
 }
 
 /**
@@ -189,6 +197,13 @@ export interface ScheduledTaskCreateFormProps {
   labels: ScheduledTaskCreateFormLabels;
   /** Current field values. */
   values: ScheduledTaskCreateFormValues;
+  /**
+   * Values the form was opened with. When set, Back and Cancel ask for
+   * confirmation while `values` differs from it (see
+   * `hasScheduledTaskFormChanges`), and the browser warns before the page
+   * unloads. Omit it to leave unsaved-change handling to the host.
+   */
+  initialValues?: ScheduledTaskCreateFormValues;
   /** Current per-field validation errors. */
   errors: ScheduledTaskCreateFormErrors;
   /**
