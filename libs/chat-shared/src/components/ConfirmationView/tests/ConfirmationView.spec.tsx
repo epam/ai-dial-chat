@@ -21,6 +21,13 @@ describe('ConfirmationView', () => {
     expect(screen.getByText('Are you sure?')).toBeTruthy();
   });
 
+  it('renders no identity card when neither item nor identity is given', () => {
+    renderView({ item: undefined });
+
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(screen.getByText('Are you sure?')).toBeTruthy();
+  });
+
   it('renders the consequences as a list', () => {
     renderView({
       consequences: [

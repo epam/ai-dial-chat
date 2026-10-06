@@ -14,7 +14,10 @@ import {
   type SkillEditorSubmitNotification,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
-import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
+import {
+  PUBLIC_BUCKET,
+  useUnsavedChangesGuard,
+} from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -165,7 +168,12 @@ const SkillEditorPage: FC = () => {
 
   const [selectedPath, setSelectedPath] = useState(SKILL_MANIFEST_FILE);
   const [isDirty, setIsDirty] = useState(false);
-  const [pendingCancel, setPendingCancel] = useState(false);
+  const {
+    guard: guardLeave,
+    isConfirmOpen: isLeaveConfirmOpen,
+    confirm: confirmLeave,
+    dismiss: dismissLeave,
+  } = useUnsavedChangesGuard(isDirty);
   const [pendingReload, setPendingReload] = useState(false);
   const [hasReturnedToManifest, setHasReturnedToManifest] = useState(false);
 
@@ -313,17 +321,6 @@ const SkillEditorPage: FC = () => {
     });
   }, [loadState, loadedValues, handleValuesChange]);
 
-  // Warn on a full page unload while there are unsaved changes — the
-  // in-app Cancel/Back guards below cover in-app navigation.
-  useEffect(() => {
-    if (!isDirty) return;
-    const handler = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [isDirty]);
-
   // Reset selection and close any open preview when switching between
   // resources (create <-> edit, or editing a different skill).
   useEffect(() => {
@@ -338,12 +335,8 @@ const SkillEditorPage: FC = () => {
   }, [navigate, returnUrl]);
 
   const handleCancel = useCallback(() => {
-    if (isDirty) {
-      setPendingCancel(true);
-      return;
-    }
-    navigateAway();
-  }, [isDirty, navigateAway]);
+    guardLeave(navigateAway);
+  }, [guardLeave, navigateAway]);
 
   /*
    * Back is preview-aware: while a supporting file is selected it is a return
@@ -520,18 +513,15 @@ const SkillEditorPage: FC = () => {
       />
 
       <ConfirmationPopup
-        open={pendingCancel}
+        open={isLeaveConfirmOpen}
         header={t(SkillEditorI18nKeys.UnsavedChangesTitle)}
         description={t(SkillEditorI18nKeys.UnsavedChangesMessage)}
         confirmLabel={t(SkillEditorI18nKeys.UnsavedChangesConfirmLabel)}
         cancelLabel={t(SkillEditorI18nKeys.UnsavedChangesCancelLabel)}
         variant={ConfirmationPopupVariant.Danger}
-        onConfirm={() => {
-          setPendingCancel(false);
-          navigateAway();
-        }}
-        onCancel={() => setPendingCancel(false)}
-        onClose={() => setPendingCancel(false)}
+        onConfirm={confirmLeave}
+        onCancel={dismissLeave}
+        onClose={dismissLeave}
       />
 
       <ConfirmationPopup

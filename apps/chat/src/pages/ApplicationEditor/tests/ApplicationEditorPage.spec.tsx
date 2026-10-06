@@ -90,6 +90,9 @@ const fakeDefinition = defineApplicationEditor<FakeSetup>({
   update: mockUpdate,
 });
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ status: 'ready', config: {} }),
+}));
 vi.mock('../definitions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../definitions')>();
   return {

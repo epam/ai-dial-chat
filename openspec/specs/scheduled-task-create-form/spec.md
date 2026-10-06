@@ -27,16 +27,21 @@ The Scheduled Tasks list page's primary "create" action SHALL navigate to `ROUTE
 
 ### Requirement: Cancel returns to the list; valid submit calls the BFF create endpoint
 
-The create-task page SHALL always return to the fixed list route `ROUTES.ScheduledTasks`; it reads no `returnUrl` (or other) query parameter. Cancel and the back control SHALL discard in-progress form state, perform no network call, and navigate to `ROUTES.ScheduledTasks`.
+The create-task page SHALL always return to the fixed list route `ROUTES.ScheduledTasks`; it reads no `returnUrl` (or other) query parameter. Cancel and the back control SHALL perform no network call and navigate to `ROUTES.ScheduledTasks`. When the form has unsaved changes, they SHALL first raise the discard confirmation owned by `ScheduledTaskCreateForm` (see "ScheduledTaskCreateForm guards unsaved changes"), and the page SHALL pass `DEFAULT_VALUES` as `initialValues` so a pristine form leaves immediately. Navigating away discards the in-progress form state.
 
 A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/server-api/scheduled-tasks.api.ts` (wrapping the generated `@epam/ai-dial-chat-api-client` method from `add-scheduled-tasks-api`) with a body matching `CreateScheduledTaskBodyDto`: `displayName`, `trigger`, `model`, `prompt` (possibly empty with a skill), optional `skillUrls`, and optional `description` (trimmed; included only when non-empty, otherwise omitted from the body entirely — never sent as an empty string). The body SHALL NOT include a `stream` field — streaming is fixed server-side and is not client-controllable. The page's client-side validator SHALL reject a `description` longer than 500 characters before submit, mirroring the BFF's `@MaxLength(500)`. On **201 Created**, the page SHALL show a success notification via `useNotification` and navigate to `ROUTES.ScheduledTasks` with `state: { refresh: true }`, which makes the list page refetch. On **4xx/5xx**, the page SHALL show an error notification, remain on the form with user-entered values (including `description`) preserved, and re-enable the Create action.
 
 **Dependency:** requires `add-scheduled-tasks-api` (`POST /api/v1/scheduled-tasks` + `scheduled-tasks.api.ts` wrapper) to be implemented first.
 
-#### Scenario: Cancel discards changes and returns
+#### Scenario: Cancel on an untouched form returns immediately
+
+- **WHEN** the user has not changed any field and activates Cancel
+- **THEN** the app navigates to `ROUTES.ScheduledTasks` with no confirmation, notification or network call
+
+#### Scenario: Cancel after editing confirms before discarding
 
 - **WHEN** the user has typed into the display name field and activates Cancel
-- **THEN** the app navigates to `ROUTES.ScheduledTasks` and no notification or network call occurs
+- **THEN** a "Discard unsaved changes?" confirmation opens and the app stays on the form until the user chooses "Discard changes", after which it navigates to `ROUTES.ScheduledTasks` with no notification or network call
 
 #### Scenario: Valid submit persists via BFF and returns
 
@@ -67,6 +72,7 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 
 - **WHEN** the user enters a `description` longer than 500 characters and activates Create
 - **THEN** the page shows a validation error, no `POST` request is sent, and the Create action does not proceed
+
 ### Requirement: ScheduledTaskCreateForm lib component matches the BFF create contract
 
 `libs/scheduled-tasks` SHALL export a `ScheduledTaskCreateForm` component accepting `labels`, `values`, `errors`, `modelSelector` (`ReactNode`), `modelLabelId` (`string`), `onFieldChange`, `onCancel`, `onBack`, `onSubmit`, and optional `isSubmitting` (default `false`). `modelLabelId` is applied as the `id` of the Model or Agent field's `Label` element; the host generates it (e.g. via React `useId()`) rather than a hardcoded literal, and passes the same value as `modelSelector`'s own `aria-labelledby` target, so two concurrently-mounted form instances (or any future host reusing the component) never collide on a shared DOM id.
@@ -93,7 +99,7 @@ It SHALL render:
 - **Minute** — a required text input (matching the `Day of month` field's `Input` pattern) shown when `values.repeat === 'hourly'`, bound to `values.minute` (a `"0"`-`"59"` string); no `Time`, `Day of week`, or `Day of month` field is rendered for `'hourly'`
 - **Model or Agent** — a required field rendering the host-supplied `modelSelector` element in place of a lib-owned selection control, wrapped in the lib's own required-label/error markup (the "Model or Agent" label, a required marker, and `errors.modelId` rendered below the control) using the same visual pattern already used for `Calendar` fields without a built-in `labelProps` (see `withRequiredMarker`). The lib performs no deployment lookup, filtering, or catalog navigation itself — it only renders whatever `modelSelector` the host passes.
 - **Skill** - optional host-composed slot in Configuration above Instructions with `skillSelector`, `labels.skillLabel`, `values.skillUrls`, and `errors.skillUrls`; the composed UI-kit Select owns its label/error association
-- **Instructions** - markdown editor (`values.prompt`), required only when no skill is selected
+- **Instructions** - markdown editor (`values.prompt`), required only when no skill is selected; its label carries the required marker (red asterisk) exactly while `values.skillUrls` is empty and drops it once a skill is selected, with or without the Refine action
 - **Cancel / Create** actions
 
 `values` SHALL NOT include a `stream` field, and the form MUST NOT render a stream toggle — scheduled task runs are always non-streaming background executions and this is not a user-configurable option.
@@ -833,3 +839,67 @@ The BFF's own generic `details.message` SHALL NOT be displayed (it is English-on
 
 - **WHEN** create or update fails without a known code and without `upstreamMessage` (for example a 503 timeout)
 - **THEN** the page's localized generic error key is used
+
+### Requirement: ScheduledTaskCreateForm guards unsaved changes
+
+`ScheduledTaskCreateForm` SHALL accept an optional `initialValues: ScheduledTaskCreateFormValues` — the values the form was opened with. While `initialValues` is provided and `values` differs from it, activating the back control or Cancel SHALL NOT call `onBack` / `onCancel` directly; it SHALL open a discard confirmation (`ConfirmationDialog` from `@epam/ai-dial-chat-shared`, `ConfirmationPopupVariant.Danger`) with a title, a message, a confirming "Discard changes" action and a cancelling "Keep editing" action. Choosing the confirming action SHALL close the dialog and then call the callback that was deferred (`onBack` or `onCancel`, whichever opened it); choosing the cancelling action, Escape, the close control or an outside click SHALL close the dialog, call neither callback and leave `values` untouched. Any in-flight text-refinement state SHALL be reset only when the deferred callback actually runs. While the form is dirty the browser SHALL be asked to warn before the page unloads (`beforeunload`).
+
+"Differs" SHALL be decided by the exported pure function `hasScheduledTaskFormChanges(values, initialValues)`, which compares every field after normalisation: `undefined`, `null`, empty and whitespace-only strings, and empty arrays are all equal to each other, so typing into and clearing a field is not a change. Skill selections compare by their ordered contents.
+
+The dialog copy SHALL come from optional `labels.discardTitle`, `labels.discardMessage`, `labels.discardConfirmLabel` and `labels.discardCancelLabel`, defaulting to "Discard unsaved changes?", "You have unsaved changes. Leaving now will discard them.", "Discard changes" and "Keep editing". When `initialValues` is omitted the form SHALL behave as before (no confirmation, no `beforeunload` listener) so a host may own unsaved-change handling itself. The lib SHALL NOT import i18n, routing or app contexts; the dirty-state and deferral logic is the host-agnostic `useUnsavedChangesGuard(isDirty)` hook exported from `@epam/ai-dial-chat-shared`, which also backs the Skill editor's Cancel/Back guard.
+
+`ScheduledTaskCreatePage` SHALL pass `DEFAULT_VALUES` as `initialValues`; `ScheduledTaskEditPage` SHALL pass the values it hydrated the form with from the loaded task (and none until the task has loaded). Both pages SHALL supply the four discard labels through `useScheduledTaskFormLabels`, reusing the existing `skillEditor.unsavedChanges*` translations rather than adding duplicate strings.
+
+#### Scenario: Pristine form leaves without confirmation
+
+- **WHEN** `values` equals `initialValues` and the user activates Cancel or Back
+- **THEN** `onCancel` / `onBack` is called once and no dialog opens
+
+#### Scenario: Edited form asks first
+
+- **WHEN** the user changes any field and activates Cancel
+- **THEN** the "Discard unsaved changes?" dialog opens and `onCancel` has not been called
+
+#### Scenario: Keep editing preserves the draft
+
+- **WHEN** the dialog is open and the user chooses "Keep editing"
+- **THEN** the dialog closes, neither `onBack` nor `onCancel` is called, and the entered values are unchanged
+
+#### Scenario: Discard changes runs the deferred callback
+
+- **WHEN** the dialog was opened by Cancel and the user chooses "Discard changes"
+- **THEN** `onCancel` is called once and `onBack` is not
+
+#### Scenario: Back is guarded the same way
+
+- **WHEN** the form is dirty and the user activates the back control
+- **THEN** the same dialog opens, and confirming calls `onBack`
+
+#### Scenario: Edit page compares against the loaded task
+
+- **WHEN** the user opens an existing task, changes its description and activates Cancel
+- **THEN** the dialog opens; if the user instead changes nothing, or reverts the change, Cancel navigates immediately
+
+#### Scenario: Host opts out
+
+- **WHEN** `initialValues` is not passed and the user activates Cancel after editing
+- **THEN** `onCancel` is called immediately with no dialog
+
+#### Scenario: Reload with unsaved edits warns
+
+- **WHEN** the form is dirty and the user reloads or closes the tab
+- **THEN** the browser's unload warning is requested; when the form is clean it is not
+
+### Requirement: Day of month is a bounded integer field
+
+When `values.repeat === 'monthly'` the Day of month field SHALL be an integer-only numeric input (`NumberInput` from `@epam/ai-dial-ui-kit` with `integer`, `min={1}` and `max={31}`), the same pattern as the Minute field, instead of a free-text input. It SHALL NOT accept letters, signs, decimal points or exponent notation. A value outside `1`–`31` SHALL be reported through `errors.dayOfMonth` (rendered inline with the invalid state on the control) and SHALL block submit, as enforced by the shared schedule validation.
+
+#### Scenario: Non-numeric input is rejected
+
+- **WHEN** the user types a letter into Day of month
+- **THEN** the character is not accepted and `values.dayOfMonth` is unchanged
+
+#### Scenario: Out-of-range value is flagged
+
+- **WHEN** the user enters `2525541235`
+- **THEN** the field shows its invalid state with the `errors.dayOfMonth` message and Save does not submit the task

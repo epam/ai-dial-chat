@@ -1,15 +1,18 @@
 import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  ConfirmationDialog,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
   useAvailableHeightCap,
   TextRefinementField,
   useTextRefinement,
+  useUnsavedChangesGuard,
   type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
 import {
+  ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Input,
@@ -53,6 +56,7 @@ import {
   dayOfWeekToCalendarValue,
   TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
+import { hasScheduledTaskFormChanges } from '../../utils/scheduled-task-form-values';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
@@ -75,6 +79,7 @@ const MarkdownEditor = lazy(async () => {
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,
   values,
+  initialValues,
   errors,
   modelSelector,
   modelLabelId,
@@ -128,7 +133,23 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     descriptionRefinement.reset();
     instructionsRefinement.reset();
   };
+  const isDirty = Boolean(
+    initialValues && hasScheduledTaskFormChanges(values, initialValues),
+  );
+  const leaveGuard = useUnsavedChangesGuard(isDirty);
+  const handleBack = () =>
+    leaveGuard.guard(() => {
+      resetRefinement();
+      onBack();
+    });
+  const handleCancel = () =>
+    leaveGuard.guard(() => {
+      resetRefinement();
+      onCancel();
+    });
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
+  /* Instructions are only mandatory while no skill supplies the content. */
+  const isInstructionsRequired = !values.skillUrls?.length;
   const [timeBlurError, setTimeBlurError] = useState<string>();
   /* Pinned at mount through a ref — `useMemo` is only a performance hint
    * React may discard, and the earliest selectable day must stay fixed for
@@ -216,71 +237,334 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     Boolean(timeError);
 
   return (
-    <BuilderFormContainer
-      labels={{
-        title: labels.pageTitle,
-        backButtonLabel: labels.backButtonLabel,
-        cancelButtonLabel: labels.cancelButtonLabel,
-        submitButtonLabel: labels.createButtonLabel,
-        submittingLabel: labels.submittingLabel ?? 'Saving',
-      }}
-      onBack={() => {
-        resetRefinement();
-        onBack();
-      }}
-      onCancel={() => {
-        resetRefinement();
-        onCancel();
-      }}
-      onSubmit={() => {
-        if (
-          !isCreateDisabled &&
-          (!refinementLock.current || refinementLock.current.aborted)
-        )
-          onSubmit();
-      }}
-      isCancelDisabled={isSubmitting}
-      isSubmitDisabled={isCreateDisabled}
-      isSubmitting={isSubmitting}
-      backIcon={
-        backIcon === undefined ? (
-          <IconArrowNarrowLeft
-            size={DIAL_ICON_SIZE.LG}
-            stroke={DIAL_KIT_ICON_STROKE}
-            aria-hidden
-            className="rtl:scale-x-[-1]"
-          />
-        ) : (
-          backIcon
-        )
-      }
-      layout={{
-        sideColumnWidth: layout?.detailsWidth,
-        columnGap: layout?.columnGap,
-        reserveEndColumn: false,
-      }}
-      className={className}
-      styles={{
-        colors: { background: colors?.background },
-        header: {
-          colors: { borderColor: colors?.headerBorder },
-          typography: { fontClassName: titleClassName },
-        },
-        cssVars,
-      }}
-      left={
+    <>
+      <BuilderFormContainer
+        labels={{
+          title: labels.pageTitle,
+          backButtonLabel: labels.backButtonLabel,
+          cancelButtonLabel: labels.cancelButtonLabel,
+          submitButtonLabel: labels.createButtonLabel,
+          submittingLabel: labels.submittingLabel ?? 'Saving',
+        }}
+        onBack={handleBack}
+        onCancel={handleCancel}
+        onSubmit={() => {
+          if (
+            !isCreateDisabled &&
+            (!refinementLock.current || refinementLock.current.aborted)
+          )
+            onSubmit();
+        }}
+        isCancelDisabled={isSubmitting}
+        isSubmitDisabled={isCreateDisabled}
+        isSubmitting={isSubmitting}
+        backIcon={
+          backIcon === undefined ? (
+            <IconArrowNarrowLeft
+              size={DIAL_ICON_SIZE.LG}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+              className="rtl:scale-x-[-1]"
+            />
+          ) : (
+            backIcon
+          )
+        }
+        layout={{
+          sideColumnWidth: layout?.detailsWidth,
+          columnGap: layout?.columnGap,
+          reserveEndColumn: false,
+        }}
+        className={className}
+        styles={{
+          colors: { background: colors?.background },
+          header: {
+            colors: { borderColor: colors?.headerBorder },
+            typography: { fontClassName: titleClassName },
+          },
+          cssVars,
+        }}
+        left={
+          <div
+            role="group"
+            aria-label={labels.detailsSectionTitle}
+            className={mergeClasses(
+              'flex flex-1 flex-col gap-5 border-e py-6',
+              styles.detailsColumn,
+              styles.formColumn,
+            )}
+          >
+            <div className="flex flex-col gap-1">
+              <h2 className={sectionTitleClassName}>
+                {labels.detailsSectionTitle}
+              </h2>
+              <p
+                className={mergeClasses(
+                  sectionSubtitleClassName,
+                  styles.sectionSubtitle,
+                )}
+              >
+                {labels.detailsSectionSubtitle}
+              </p>
+            </div>
+
+            <Input
+              id="scheduled-task-display-name"
+              value={values.displayName}
+              onChange={(value) => onFieldChange('displayName', value ?? '')}
+              labelProps={{ label: labels.displayNameLabel, required: true }}
+              invalid={Boolean(errors.displayName)}
+              error={errors.displayName}
+            />
+
+            <TextRefinementField
+              isEnabled={Boolean(onRefineDescription)}
+              fieldId={descriptionId}
+              label={labels.descriptionLabel}
+              labels={labels}
+              refinement={descriptionRefinement}
+              disabled={isSubmitting || isRefining}
+              {...refinementStyles}
+            >
+              <Textarea
+                id={descriptionId}
+                value={values.description ?? ''}
+                onChange={(value) => {
+                  descriptionRefinement.reset();
+                  onFieldChange('description', value);
+                }}
+                labelProps={
+                  onRefineDescription
+                    ? undefined
+                    : { label: labels.descriptionLabel }
+                }
+                maxLength={DESCRIPTION_MAX_LENGTH}
+                invalid={Boolean(errors.description)}
+                error={errors.description}
+                caption={
+                  values.description
+                    ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
+                    : undefined
+                }
+              />
+            </TextRefinementField>
+
+            <div className="flex flex-col gap-1">
+              <Label
+                id={modelLabelId}
+                label={labels.modelOrAgentLabel}
+                required
+              />
+              {modelSelector}
+              {errors.modelId && (
+                <p
+                  className={mergeClasses(
+                    instructionsErrorClassName,
+                    styles.instructionsError,
+                  )}
+                >
+                  {errors.modelId}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Select
+                labelProps={{ label: labels.repeatLabel }}
+                value={values.repeat}
+                onChange={(next) =>
+                  onFieldChange('repeat', next as ScheduledTaskRepeat)
+                }
+                options={labels.repeatOptions.map((option) => ({
+                  value: option.key,
+                  label: option.label,
+                }))}
+              />
+
+              {values.repeat === ScheduledTaskRepeat.OneTime && (
+                <ScheduledTaskRunAtField
+                  label={labels.runAtLabel}
+                  value={values.runAt ?? ''}
+                  onChange={handleRunAtChange}
+                  error={errors.runAt}
+                  errorClassName={instructionsErrorClassName}
+                />
+              )}
+
+              {values.repeat !== ScheduledTaskRepeat.OneTime && (
+                <>
+                  {isTimeFieldShown && (
+                    <div className="flex flex-col gap-1">
+                      <Calendar
+                        id="scheduled-task-time"
+                        mode={CalendarMode.Time}
+                        value={values.time}
+                        onChange={handleTimeChange}
+                        onBlur={handleTimeBlur}
+                        labelProps={{ label: labels.timeLabel, required: true }}
+                        invalid={Boolean(timeError)}
+                        disabled={isSubmitting}
+                        showTimezone
+                      />
+                      {timeError && (
+                        <p
+                          className={mergeClasses(
+                            instructionsErrorClassName,
+                            styles.instructionsError,
+                          )}
+                        >
+                          {timeError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {values.repeat === ScheduledTaskRepeat.Weekly && (
+                    <div className="flex flex-col gap-1">
+                      <Calendar
+                        id="scheduled-task-day-of-week"
+                        mode={CalendarMode.Weekday}
+                        value={dayOfWeekToCalendarValue(values.dayOfWeek)}
+                        onChange={(value) =>
+                          onFieldChange(
+                            'dayOfWeek',
+                            calendarValueToDayOfWeek(value),
+                          )
+                        }
+                        labelProps={{
+                          label: labels.dayOfWeekLabel,
+                          required: true,
+                        }}
+                        invalid={Boolean(errors.dayOfWeek)}
+                      />
+                      {errors.dayOfWeek && (
+                        <p
+                          className={mergeClasses(
+                            instructionsErrorClassName,
+                            styles.instructionsError,
+                          )}
+                        >
+                          {errors.dayOfWeek}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {values.repeat === ScheduledTaskRepeat.Monthly && (
+                    <NumberInput
+                      id="scheduled-task-day-of-month"
+                      integer
+                      min={1}
+                      max={31}
+                      value={values.dayOfMonth ?? ''}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'dayOfMonth',
+                          value != null ? String(value) : '',
+                        )
+                      }
+                      labelProps={{
+                        label: labels.dayOfMonthLabel,
+                        required: true,
+                      }}
+                      invalid={Boolean(errors.dayOfMonth)}
+                      error={errors.dayOfMonth}
+                    />
+                  )}
+                  {values.repeat === ScheduledTaskRepeat.Hourly && (
+                    <NumberInput
+                      id="scheduled-task-minute"
+                      integer
+                      min={0}
+                      max={59}
+                      value={values.minute ?? ''}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'minute',
+                          value != null ? String(value) : '',
+                        )
+                      }
+                      labelProps={{
+                        label: labels.minuteLabel,
+                        required: true,
+                      }}
+                      invalid={Boolean(errors.minute)}
+                      error={errors.minute}
+                    />
+                  )}
+                  {/* The two date fields always share one row. */}
+                  <div className="flex flex-row gap-3">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <Calendar
+                        id="scheduled-task-start-date"
+                        mode={CalendarMode.Date}
+                        value={dateValueToCalendarValue(values.startDate)}
+                        onChange={(value) =>
+                          onFieldChange(
+                            'startDate',
+                            calendarValueToDateValue(value),
+                          )
+                        }
+                        minDate={minDate}
+                        labelProps={{ label: labels.startDateLabel }}
+                        placeholder={labels.startDatePlaceholder}
+                        invalid={Boolean(errors.startDate)}
+                      />
+                      {errors.startDate && (
+                        <p
+                          className={mergeClasses(
+                            instructionsErrorClassName,
+                            styles.instructionsError,
+                          )}
+                        >
+                          {errors.startDate}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-1 flex-col gap-1">
+                      <Calendar
+                        id="scheduled-task-end-date"
+                        mode={CalendarMode.Date}
+                        value={dateValueToCalendarValue(values.endDate)}
+                        onChange={(value) =>
+                          onFieldChange(
+                            'endDate',
+                            calendarValueToDateValue(value),
+                          )
+                        }
+                        minDate={minDate}
+                        labelProps={{ label: labels.endDateLabel }}
+                        placeholder={labels.endDatePlaceholder}
+                        invalid={Boolean(errors.endDate)}
+                      />
+                      {errors.endDate && (
+                        <p
+                          className={mergeClasses(
+                            instructionsErrorClassName,
+                            styles.instructionsError,
+                          )}
+                        >
+                          {errors.endDate}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        }
+      >
         <div
           role="group"
-          aria-label={labels.detailsSectionTitle}
+          aria-label={labels.configurationSectionTitle}
           className={mergeClasses(
-            'flex flex-1 flex-col gap-5 border-e py-6',
-            styles.detailsColumn,
+            'flex flex-1 flex-col gap-5 py-6',
             styles.formColumn,
           )}
         >
           <div className="flex flex-col gap-1">
             <h2 className={sectionTitleClassName}>
-              {labels.detailsSectionTitle}
+              {labels.configurationSectionTitle}
             </h2>
             <p
               className={mergeClasses(
@@ -288,354 +572,109 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 styles.sectionSubtitle,
               )}
             >
-              {labels.detailsSectionSubtitle}
+              {labels.configurationSectionSubtitle}
             </p>
           </div>
 
-          <Input
-            id="scheduled-task-display-name"
-            value={values.displayName}
-            onChange={(value) => onFieldChange('displayName', value ?? '')}
-            labelProps={{ label: labels.displayNameLabel, required: true }}
-            invalid={Boolean(errors.displayName)}
-            error={errors.displayName}
-          />
-
-          <TextRefinementField
-            isEnabled={Boolean(onRefineDescription)}
-            fieldId={descriptionId}
-            label={labels.descriptionLabel}
-            labels={labels}
-            refinement={descriptionRefinement}
-            disabled={isSubmitting || isRefining}
-            {...refinementStyles}
-          >
-            <Textarea
-              id={descriptionId}
-              value={values.description ?? ''}
-              onChange={(value) => {
-                descriptionRefinement.reset();
-                onFieldChange('description', value);
-              }}
-              labelProps={
-                onRefineDescription
-                  ? undefined
-                  : { label: labels.descriptionLabel }
-              }
-              maxLength={DESCRIPTION_MAX_LENGTH}
-              invalid={Boolean(errors.description)}
-              error={errors.description}
-              caption={
-                values.description
-                  ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
-                  : undefined
-              }
-            />
-          </TextRefinementField>
-
-          <div className="flex flex-col gap-1">
-            <Label
-              id={modelLabelId}
-              label={labels.modelOrAgentLabel}
-              required
-            />
-            {modelSelector}
-            {errors.modelId && (
-              <p
-                className={mergeClasses(
-                  instructionsErrorClassName,
-                  styles.instructionsError,
-                )}
-              >
-                {errors.modelId}
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <Select
-              labelProps={{ label: labels.repeatLabel }}
-              value={values.repeat}
-              onChange={(next) =>
-                onFieldChange('repeat', next as ScheduledTaskRepeat)
-              }
-              options={labels.repeatOptions.map((option) => ({
-                value: option.key,
-                label: option.label,
-              }))}
-            />
-
-            {values.repeat === ScheduledTaskRepeat.OneTime && (
-              <ScheduledTaskRunAtField
-                label={labels.runAtLabel}
-                value={values.runAt ?? ''}
-                onChange={handleRunAtChange}
-                error={errors.runAt}
-                errorClassName={instructionsErrorClassName}
-              />
-            )}
-
-            {values.repeat !== ScheduledTaskRepeat.OneTime && (
-              <>
-                {isTimeFieldShown && (
-                  <div className="flex flex-col gap-1">
-                    <Calendar
-                      id="scheduled-task-time"
-                      mode={CalendarMode.Time}
-                      value={values.time}
-                      onChange={handleTimeChange}
-                      onBlur={handleTimeBlur}
-                      labelProps={{ label: labels.timeLabel, required: true }}
-                      invalid={Boolean(timeError)}
-                      disabled={isSubmitting}
-                      showTimezone
-                    />
-                    {timeError && (
-                      <p
-                        className={mergeClasses(
-                          instructionsErrorClassName,
-                          styles.instructionsError,
-                        )}
-                      >
-                        {timeError}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {values.repeat === ScheduledTaskRepeat.Weekly && (
-                  <div className="flex flex-col gap-1">
-                    <Calendar
-                      id="scheduled-task-day-of-week"
-                      mode={CalendarMode.Weekday}
-                      value={dayOfWeekToCalendarValue(values.dayOfWeek)}
-                      onChange={(value) =>
-                        onFieldChange(
-                          'dayOfWeek',
-                          calendarValueToDayOfWeek(value),
-                        )
-                      }
-                      labelProps={{
-                        label: labels.dayOfWeekLabel,
-                        required: true,
-                      }}
-                      invalid={Boolean(errors.dayOfWeek)}
-                    />
-                    {errors.dayOfWeek && (
-                      <p
-                        className={mergeClasses(
-                          instructionsErrorClassName,
-                          styles.instructionsError,
-                        )}
-                      >
-                        {errors.dayOfWeek}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {values.repeat === ScheduledTaskRepeat.Monthly && (
-                  <Input
-                    id="scheduled-task-day-of-month"
-                    value={values.dayOfMonth ?? ''}
-                    onChange={(value) =>
-                      onFieldChange('dayOfMonth', value ?? '')
-                    }
-                    labelProps={{
-                      label: labels.dayOfMonthLabel,
-                      required: true,
-                    }}
-                    invalid={Boolean(errors.dayOfMonth)}
-                    error={errors.dayOfMonth}
-                  />
-                )}
-                {values.repeat === ScheduledTaskRepeat.Hourly && (
-                  <NumberInput
-                    id="scheduled-task-minute"
-                    integer
-                    min={0}
-                    max={59}
-                    value={values.minute ?? ''}
-                    onChange={(value) =>
-                      onFieldChange(
-                        'minute',
-                        value != null ? String(value) : '',
-                      )
-                    }
-                    labelProps={{
-                      label: labels.minuteLabel,
-                      required: true,
-                    }}
-                    invalid={Boolean(errors.minute)}
-                    error={errors.minute}
-                  />
-                )}
-                {/* The two date fields always share one row. */}
-                <div className="flex flex-row gap-3">
-                  <div className="flex flex-1 flex-col gap-1">
-                    <Calendar
-                      id="scheduled-task-start-date"
-                      mode={CalendarMode.Date}
-                      value={dateValueToCalendarValue(values.startDate)}
-                      onChange={(value) =>
-                        onFieldChange(
-                          'startDate',
-                          calendarValueToDateValue(value),
-                        )
-                      }
-                      minDate={minDate}
-                      labelProps={{ label: labels.startDateLabel }}
-                      placeholder={labels.startDatePlaceholder}
-                      invalid={Boolean(errors.startDate)}
-                    />
-                    {errors.startDate && (
-                      <p
-                        className={mergeClasses(
-                          instructionsErrorClassName,
-                          styles.instructionsError,
-                        )}
-                      >
-                        {errors.startDate}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-1 flex-col gap-1">
-                    <Calendar
-                      id="scheduled-task-end-date"
-                      mode={CalendarMode.Date}
-                      value={dateValueToCalendarValue(values.endDate)}
-                      onChange={(value) =>
-                        onFieldChange(
-                          'endDate',
-                          calendarValueToDateValue(value),
-                        )
-                      }
-                      minDate={minDate}
-                      labelProps={{ label: labels.endDateLabel }}
-                      placeholder={labels.endDatePlaceholder}
-                      invalid={Boolean(errors.endDate)}
-                    />
-                    {errors.endDate && (
-                      <p
-                        className={mergeClasses(
-                          instructionsErrorClassName,
-                          styles.instructionsError,
-                        )}
-                      >
-                        {errors.endDate}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      }
-    >
-      <div
-        role="group"
-        aria-label={labels.configurationSectionTitle}
-        className={mergeClasses(
-          'flex flex-1 flex-col gap-5 py-6',
-          styles.formColumn,
-        )}
-      >
-        <div className="flex flex-col gap-1">
-          <h2 className={sectionTitleClassName}>
-            {labels.configurationSectionTitle}
-          </h2>
-          <p
-            className={mergeClasses(
-              sectionSubtitleClassName,
-              styles.sectionSubtitle,
-            )}
-          >
-            {labels.configurationSectionSubtitle}
-          </p>
-        </div>
-
-        {skillSelector != null ? (
-          <div className="w-full min-w-0 max-w-[996px]">{skillSelector}</div>
-        ) : (
-          errors.skillUrls && (
-            <div aria-live="polite">
-              <p
-                className={mergeClasses(
-                  instructionsErrorClassName,
-                  styles.instructionsError,
-                )}
-              >
-                {errors.skillUrls}
-              </p>
-            </div>
-          )
-        )}
-        {/*
-         * Cap the whole group, not just the editor: the Refine action sits at the
-         * end of the label row, so an uncapped row lets it drift past the editor
-         * whenever the column is wider than the cap (e.g. at browser zoom-out).
-         */}
-        <div className="flex w-full min-w-0 max-w-[996px] flex-col">
-          <TextRefinementField
-            isEnabled={Boolean(onRefineInstructions)}
-            fieldId={instructionsEditorId}
-            labelClassName={instructionsLabelClassName}
-            label={labels.instructionsLabel}
-            labels={labels}
-            refinement={instructionsRefinement}
-            disabled={isSubmitting || isRefining}
-            {...refinementStyles}
-          >
-            <div className="flex flex-1 flex-col gap-1">
-              {/*
-               * A real <label for>, not a span: the markdown editor renders a plain
-               * textarea, and text sitting next to it names nothing the browser
-               * associates with the control.
-               */}
-              {!onRefineInstructions && (
-                <label
-                  htmlFor={instructionsEditorId}
-                  className={instructionsLabelClassName}
-                >
-                  {labels.instructionsLabel}
-                </label>
-              )}
-              <div
-                ref={instructionsCapRef}
-                className={mergeClasses(
-                  'w-full',
-                  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-                  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
-                )}
-              >
-                <Suspense fallback={<Spinner />}>
-                  <MarkdownEditor
-                    id={instructionsEditorId}
-                    value={values.prompt}
-                    onChange={(value) => {
-                      instructionsRefinement.reset();
-                      onFieldChange('prompt', value);
-                    }}
-                    height={480}
-                    theme={markdownEditorTheme}
-                    placeholder={labels.instructionsPlaceholder}
-                  />
-                </Suspense>
-              </div>
-              {errors.prompt && (
+          {skillSelector != null ? (
+            <div className="w-full min-w-0 max-w-[996px]">{skillSelector}</div>
+          ) : (
+            errors.skillUrls && (
+              <div aria-live="polite">
                 <p
                   className={mergeClasses(
                     instructionsErrorClassName,
                     styles.instructionsError,
                   )}
                 >
-                  {errors.prompt}
+                  {errors.skillUrls}
                 </p>
-              )}
-            </div>
-          </TextRefinementField>
+              </div>
+            )
+          )}
+          {/*
+           * Cap the whole group, not just the editor: the Refine action sits at the
+           * end of the label row, so an uncapped row lets it drift past the editor
+           * whenever the column is wider than the cap (e.g. at browser zoom-out).
+           */}
+          <div className="flex w-full min-w-0 max-w-[996px] flex-col">
+            <TextRefinementField
+              isEnabled={Boolean(onRefineInstructions)}
+              fieldId={instructionsEditorId}
+              labelClassName={instructionsLabelClassName}
+              label={labels.instructionsLabel}
+              required={isInstructionsRequired}
+              labels={labels}
+              refinement={instructionsRefinement}
+              disabled={isSubmitting || isRefining}
+              {...refinementStyles}
+            >
+              <div className="flex flex-1 flex-col gap-1">
+                {/*
+                 * A real <label for>, not a span: the markdown editor renders a plain
+                 * textarea, and text sitting next to it names nothing the browser
+                 * associates with the control.
+                 */}
+                {!onRefineInstructions && (
+                  <Label
+                    htmlFor={instructionsEditorId}
+                    className={instructionsLabelClassName}
+                    label={labels.instructionsLabel}
+                    required={isInstructionsRequired}
+                  />
+                )}
+                <div
+                  ref={instructionsCapRef}
+                  className={mergeClasses(
+                    'w-full',
+                    MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                    MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+                  )}
+                >
+                  <Suspense fallback={<Spinner />}>
+                    <MarkdownEditor
+                      id={instructionsEditorId}
+                      value={values.prompt}
+                      onChange={(value) => {
+                        instructionsRefinement.reset();
+                        onFieldChange('prompt', value);
+                      }}
+                      height={480}
+                      theme={markdownEditorTheme}
+                      placeholder={labels.instructionsPlaceholder}
+                    />
+                  </Suspense>
+                </div>
+                {errors.prompt && (
+                  <p
+                    className={mergeClasses(
+                      instructionsErrorClassName,
+                      styles.instructionsError,
+                    )}
+                  >
+                    {errors.prompt}
+                  </p>
+                )}
+              </div>
+            </TextRefinementField>
+          </div>
         </div>
-      </div>
-    </BuilderFormContainer>
+      </BuilderFormContainer>
+      {leaveGuard.isConfirmOpen && (
+        <ConfirmationDialog
+          open
+          title={labels.discardTitle ?? 'Discard unsaved changes?'}
+          message={
+            labels.discardMessage ??
+            'You have unsaved changes. Leaving now will discard them.'
+          }
+          confirmLabel={labels.discardConfirmLabel ?? 'Discard changes'}
+          cancelLabel={labels.discardCancelLabel ?? 'Keep editing'}
+          variant={ConfirmationPopupVariant.Danger}
+          onConfirm={leaveGuard.confirm}
+          onClose={leaveGuard.dismiss}
+        />
+      )}
+    </>
   );
 };

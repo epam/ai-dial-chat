@@ -69,6 +69,7 @@ export * from './entry-points/markdown';
 export * from './hooks/useAvailableHeightCap';
 export * from './hooks/useIsMobile';
 export * from './hooks/useTextRefinement';
+export * from './hooks/useUnsavedChangesGuard';
 
 /*
  * Explicit `/index` avoids a declaration-resolution collision with this

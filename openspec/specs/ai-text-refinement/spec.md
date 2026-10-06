@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provide shared AI-assisted refinement of skill and scheduled-task descriptions and instructions, with field-local Undo, safe cancellation, and a single authenticated API using the shared utility model.
+Provide shared AI-assisted refinement of skill and scheduled-task descriptions and instructions, and of application, toolset, and prompt descriptions, with field-local Undo, safe cancellation, and a single authenticated API using the shared utility model.
 
 ## Requirements
 
@@ -19,6 +19,18 @@ Provide shared AI-assisted refinement of skill and scheduled-task descriptions a
 - **WHEN** task Instructions are refined or restored
 - **THEN** the library calls `onFieldChange('prompt', text)` while the public callback remains `onRefineInstructions`
 - **AND** Description uses `onFieldChange('description', text)` without introducing another data-field spelling
+
+### Requirement: Every entity Description control is refinable
+
+`ToolsetEditorProps` and `PromptEditorProps` SHALL each accept optional `onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>`, rendered through the shared `TextRefinementField` around `MetadataForm`'s Description via `renderDescription`; `ToolsetEditorLabels.refinement` and `PromptEditorLabels` (which extends `TextRefinementLabels`) carry the copy. The host application editor (custom, quick, and schema apps) SHALL wrap its own `MetadataForm` Description the same way. Hosts SHALL supply the callback only when refinement is available, using `application-description` for the application editor, `toolset-description` for the toolset editor, and `prompt-description` for the prompt editor. Save SHALL be disabled while a Description refinement is pending.
+
+#### Scenario: Toolset Description is refined
+- **WHEN** refinement is available and the author activates Refine with AI on a toolset Description
+- **THEN** the host calls `refineText` with purpose `toolset-description` and the refined text replaces the Description, with Undo available
+
+#### Scenario: Refinement unavailable
+- **WHEN** the client config reports refinement unavailable
+- **THEN** the application, toolset, and prompt Description fields render without the Refine with AI action
 
 ### Requirement: Shared lifecycle with existing form value ownership
 
@@ -88,7 +100,7 @@ Rejected promises, timeout, blank output, or invalid upstream output SHALL prese
 
 ### Requirement: Shared typed refinement API
 
-The backend SHALL expose exactly one non-streaming refinement endpoint: `POST /api/v1/text-refinement`, operationId/SDK method `refineText`, tag `text-refinement`, `RefineTextRequestDto`, and `RefineTextResponseDto`. The JSON request SHALL contain only `purpose` and `text`. `purpose` SHALL be a string enum allowing the four values below. Successful responses SHALL be HTTP 200 with `{ "text": "..." }` and `Cache-Control: no-store`.
+The backend SHALL expose exactly one non-streaming refinement endpoint: `POST /api/v1/text-refinement`, operationId/SDK method `refineText`, tag `text-refinement`, `RefineTextRequestDto`, and `RefineTextResponseDto`. The JSON request SHALL contain only `purpose` and `text`. `purpose` SHALL be a string enum allowing the seven values below. Successful responses SHALL be HTTP 200 with `{ "text": "..." }` and `Cache-Control: no-store`.
 
 | Purpose | Maximum input/output characters |
 | --- | ---: |
@@ -96,6 +108,9 @@ The backend SHALL expose exactly one non-streaming refinement endpoint: `POST /a
 | `skill-instructions` | 32,000 |
 | `scheduled-task-description` | 500 |
 | `scheduled-task-instructions` | 32,000 |
+| `application-description` | 2,000 |
+| `toolset-description` | 2,000 |
+| `prompt-description` | 2,000 |
 
 Lengths SHALL count Unicode code points consistently with DTO validators. Inputs SHALL be non-whitespace strings and SHALL be sent without destructive trimming. These limits SHALL NOT change ordinary form-save limits. The request SHALL reject unknown keys, unsupported purpose values, missing fields, non-string text, and text over the applicable limit. DTOs SHALL publish validation and limits through Swagger. No input/output SHALL be silently truncated.
 
@@ -123,8 +138,8 @@ Error responses SHALL use the existing Nest exception envelope (`statusCode`, `m
 | 502 | Other upstream HTTP failures or malformed, empty, truncated, oversized output |
 | 503 | Model not configured, network unavailability, or 30-second deadline exceeded |
 
-#### Scenario: All four purposes share one operation
-- **WHEN** either form refines either field with valid text
+#### Scenario: All purposes share one operation
+- **WHEN** any refinable form refines any of its fields with valid text
 - **THEN** its host calls the same `refineText` operation with the appropriate discriminator and receives a typed text response
 
 #### Scenario: Input is rejected before model invocation
@@ -139,7 +154,7 @@ Error responses SHALL use the existing Nest exception envelope (`statusCode`, `m
 
 ### Requirement: Server-owned purpose prompts and Markdown preservation
 
-The service SHALL use the configured DIAL SDK via `DialClientService`, select a server-owned prompt by purpose, and send one non-streaming completion. Each purpose's built-in prompt MAY be replaced by an operator through an optional server-only env var — `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT` (declared in `environment.config.ts` and `.env.template`) — resolved by `resolvePrompt`: an unset, empty, or whitespace-only value keeps the built-in default, and a nonblank value replaces the whole prompt. Clients cannot override prompts. It SHALL treat supplied text as content to rewrite, preserving its language, intent, factual constraints, identifiers, URLs, and placeholders. Skill Description SHALL emphasize triggering conditions; skill Instructions SHALL clarify procedure; task Description SHALL summarize the unattended task; task Instructions SHALL clarify steps and expected report without inventing schedule, tools, or data sources. Instructions SHALL retain Markdown structure and fenced code content rather than be converted to plain prose or wrapped in an extra outer code fence. No sibling field, supporting file, or conversation context SHALL be sent. The backend SHALL validate output bounds/completeness and return a typed failure instead of null or a fabricated fallback.
+The service SHALL use the configured DIAL SDK via `DialClientService`, select a server-owned prompt by purpose, and send one non-streaming completion. Each purpose's built-in prompt MAY be replaced by an operator through an optional server-only env var — `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT`, `TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT` (declared in `environment.config.ts` and `.env.template`) — resolved by `resolvePrompt`: an unset, empty, or whitespace-only value keeps the built-in default, and a nonblank value replaces the whole prompt. Clients cannot override prompts. It SHALL treat supplied text as content to rewrite, preserving its language, intent, factual constraints, identifiers, URLs, and placeholders. Skill Description SHALL emphasize triggering conditions; skill Instructions SHALL clarify procedure; task Description SHALL summarize the unattended task; task Instructions SHALL clarify steps and expected report without inventing schedule, tools, or data sources; application Description SHALL explain what the application does and when to choose it; toolset Description SHALL explain which capabilities the toolset provides without inventing tools, endpoints, or auth requirements; prompt Description SHALL state what the prompt is for. Instructions SHALL retain Markdown structure and fenced code content rather than be converted to plain prose or wrapped in an extra outer code fence. No sibling field, supporting file, or conversation context SHALL be sent. The backend SHALL validate output bounds/completeness and return a typed failure instead of null or a fabricated fallback.
 
 #### Scenario: Instructions contain Markdown and placeholders
 - **WHEN** Instructions include headings, lists, links, fenced code, and template placeholders

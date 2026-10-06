@@ -1,3 +1,4 @@
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   PROMPT_CONTENT_MAX_LENGTH,
@@ -27,6 +28,8 @@ import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
+import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import {
   createPrompt,
@@ -231,8 +234,13 @@ const PromptEditorPage: FC = () => {
     ],
   );
 
+  const onRefineDescription = useTextRefinementCallback(
+    TextRefinementPurpose.PromptDescription,
+  );
+  const refinementLabels = useTextRefinementLabels();
   const labels = useMemo<PromptEditorLabels>(
     () => ({
+      ...refinementLabels,
       createTitle: t(PromptEditorI18nKeys.CreateTitle),
       editTitle: t(PromptEditorI18nKeys.EditTitle),
       backButtonAriaLabel: t(PromptEditorI18nKeys.BackButtonLabel),
@@ -253,7 +261,7 @@ const PromptEditorPage: FC = () => {
       charactersRemaining: (count) =>
         t(PromptEditorI18nKeys.CharactersRemaining, { count }),
     }),
-    [t],
+    [t, refinementLabels],
   );
 
   if (!isPromptsEnabled) return null;
@@ -276,6 +284,7 @@ const PromptEditorPage: FC = () => {
       onBack={handleBack}
       onCancel={handleCancel}
       onRetry={handleRetry}
+      onRefineDescription={onRefineDescription}
     />
   );
 };

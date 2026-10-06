@@ -2,7 +2,7 @@ import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOOLSET_EDITOR_CLASS } from '../../../constants/public-class-names';
 import { ToolsetTransportType } from '../../../constants/toolsets';
@@ -65,12 +65,22 @@ vi.mock('../../GeneralForm/GeneralForm', () => ({
     form,
     errors,
     onChange,
+    renderDescription,
   }: {
     form: ToolsetFormData;
     errors: { name?: string; version?: string };
     onChange: (patch: Partial<ToolsetFormData>) => void;
+    renderDescription?: (textarea: ReactNode, fieldId: string) => ReactNode;
   }) => (
     <div>
+      {renderDescription?.(
+        <textarea
+          id="toolset-description"
+          value={form.description}
+          onChange={(event) => onChange({ description: event.target.value })}
+        />,
+        'toolset-description',
+      )}
       <span>{`metadata-name-${form.name}`}</span>
       {errors.name && <p role="alert">{errors.name}</p>}
       {errors.version && <p role="alert">{errors.version}</p>}
@@ -777,5 +787,56 @@ describe('ToolsetEditor — public class names', () => {
         TOOLSET_EDITOR_CLASS.setupSection,
       ),
     ).toBeTruthy();
+  });
+
+  describe('description refinement', () => {
+    const user = userEvent.setup({ delay: null });
+
+    const validForm = makeForm({
+      description: 'Draft',
+      endpoint: 'https://example.com/mcp',
+    });
+
+    it('hides the Refine with AI action when the host supplies no callback', () => {
+      renderEditor({ initialForm: validForm });
+
+      expect(
+        screen.queryByRole('button', { name: 'Refine with AI' }),
+      ).toBeNull();
+    });
+
+    it('refines the description and blocks saving while the request is pending', async () => {
+      let resolve!: (text: string) => void;
+      const onRefineDescription = vi.fn(
+        () => new Promise<string>((done) => (resolve = done)),
+      );
+      renderEditor({ initialForm: validForm, onRefineDescription });
+
+      await user.click(screen.getByRole('button', { name: 'Refine with AI' }));
+
+      expect(onRefineDescription).toHaveBeenCalledWith(
+        'Draft',
+        expect.any(AbortSignal),
+      );
+      expect(
+        screen.getByRole<HTMLButtonElement>('button', { name: 'Create' })
+          .disabled,
+      ).toBe(true);
+
+      resolve('Refined draft');
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole<HTMLTextAreaElement>('textbox', {
+            name: 'Description',
+          }).value,
+        ).toBe('Refined draft'),
+      );
+      expect(
+        screen.getByRole<HTMLButtonElement>('button', { name: 'Create' })
+          .disabled,
+      ).toBe(false);
+      expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+    });
   });
 });

@@ -39,6 +39,9 @@ const captureIframeProps = vi.fn<(props: IframeStubProps) => void>();
 const getIframeProps = () => captureIframeProps.mock.lastCall?.[0];
 const mockTriggerSave = vi.fn<(general?: TriggerSaveGeneralPayload) => void>();
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ status: 'ready', config: {} }),
+}));
 vi.mock('../setup/AppEditorIframe', () => ({
   default: forwardRef(function AppEditorIframeStub(
     props: IframeStubProps,

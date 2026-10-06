@@ -319,4 +319,42 @@ describe('PromptEditor', () => {
 
     expect(screen.getByRole('textbox', { name: /Instructions/ })).toBeTruthy();
   });
+
+  describe('description refinement', () => {
+    const initialValues = {
+      name: 'summarize',
+      description: 'Draft',
+      content: 'Summarize:',
+    };
+
+    it('hides the Refine with AI action when the host supplies no callback', () => {
+      renderEditor({ initialValues });
+
+      expect(
+        screen.queryByRole('button', { name: 'Refine with AI' }),
+      ).toBeNull();
+    });
+
+    it('replaces the description with the refined text and offers Undo', async () => {
+      const onRefineDescription = vi.fn().mockResolvedValue('Refined draft');
+      renderEditor({ initialValues, onRefineDescription });
+
+      await user.click(
+        await screen.findByRole('button', { name: 'Refine with AI' }),
+      );
+
+      expect(onRefineDescription).toHaveBeenCalledWith(
+        'Draft',
+        expect.any(AbortSignal),
+      );
+      const description = screen.getByRole<HTMLTextAreaElement>('textbox', {
+        name: /Description/,
+      });
+      await waitFor(() => expect(description.value).toBe('Refined draft'));
+
+      await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+      expect(description.value).toBe('Draft');
+    });
+  });
 });
