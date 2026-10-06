@@ -81,7 +81,6 @@ export class ConversationLifecycleService {
       custom_content: customContent,
     };
 
-    // TODO: add temperature and other conversation settings
     const conversation: ConversationResponseDto = {
       id: `${folderId}/${conversationPath}`,
       folderId,

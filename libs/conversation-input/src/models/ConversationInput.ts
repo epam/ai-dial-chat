@@ -485,7 +485,6 @@ export interface ConversationInputProps {
    * the flat deployment list. Receives `onClose` so the panel can close the
    * popover after a selection or an explicit dismiss.
    */
-  // TODO: review usage
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
   /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
   toolsMenuItems?: ToolMenuItem[];
