@@ -18,7 +18,7 @@
     }
   },
   "dependencies": {
-    "dompurify": "3.4.13",
+    "dompurify": "3.4.16",
     "lru-cache": "^10.4.3",
     "mime-types": "^3.0.2",
     "yaml": "2.8.3"
