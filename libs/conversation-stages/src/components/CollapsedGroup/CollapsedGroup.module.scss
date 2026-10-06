@@ -36,11 +36,6 @@
   color: var(--cs-cg-label, var(--text-secondary, #57647a));
 }
 
-.stepsCount {
-  color: var(--cs-cg-steps-count, var(--text-tertiary, #848e9c));
-  font-variant-numeric: tabular-nums;
-}
-
 .doneIcon {
   color: var(--cs-cg-done, var(--text-success, #007274));
 }

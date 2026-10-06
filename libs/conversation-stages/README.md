@@ -94,9 +94,7 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
   nonnegative integer renders the stage at the top level; nothing is dropped.
 - **Status and summaries.** Each stage shows only its own status — a completed
   parent keeps its check while a child runs. `CollapsedGroup` counts steps and
-  failures over the flat array once, and its duration rules are unchanged; for
-  duration-only names a parent's and its children's durations are summed, as
-  for any other stages.
+  failures over the flat array once; it shows no total execution time.
 - **Layout.** Indentation uses logical properties, so it follows `dir`;
   additional indentation stops after the third level while deeper stages stay
   reachable, and disclosure headers are at least 44px tall at the `mobile`
@@ -136,11 +134,13 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 inner `StagesPanel`, so the group and the panel it wraps are themed from one
 place.
 
-When finished stage names include duration metadata with a start timestamp,
-such as `(7.18s, Start: 11:21:38, End: 11:21:45)`, the summary reports the
-elapsed union of those intervals. Parallel stages therefore contribute time
-only once. For legacy duration-only names such as `[3.99s]`, it falls back to
-summing the available durations.
+The summary line shows the step and failure counts only — no total execution
+time across all stages. Per-stage durations still render on each stage row,
+and a collapsed `×N` retry group still shows its attempts' elapsed time: when
+attempt names include a start timestamp, such as
+`(7.18s, Start: 11:21:38, End: 11:21:45)`, it reports the union of those
+intervals, so parallel attempts contribute time only once; for legacy
+duration-only names such as `[3.99s]`, it sums the available durations.
 
 ## Types
 

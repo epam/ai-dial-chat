@@ -228,41 +228,46 @@ When `styles.colors` is provided, `StagesPanel` SHALL apply its values as CSS cu
 
 ---
 
-### Requirement: Finished stage summaries report elapsed execution time
+### Requirement: Collapsed repeated-stage rows report elapsed execution time
 
-`CollapsedGroup` and collapsed repeated-stage rows in `StagesPanel` SHALL show the elapsed execution time represented by parseable duration metadata in stage names. When every duration-bearing stage also has a valid `Start: HH:mm:ss` timestamp, each stage SHALL be treated as the interval from its start timestamp through its declared duration, and overlapping intervals SHALL contribute to the total only once. A backward jump of more than 12 hours between consecutive stage start timestamps SHALL be treated as a midnight rollover; a wide but forward-moving range within one day SHALL remain on the same day.
+Collapsed repeated-stage (`×N`) rows in `StagesPanel` SHALL show the elapsed execution time represented by parseable duration metadata in stage names. When every duration-bearing stage also has a valid `Start: HH:mm:ss` timestamp, each stage SHALL be treated as the interval from its start timestamp through its declared duration, and overlapping intervals SHALL contribute to the total only once. A backward jump of more than 12 hours between consecutive stage start timestamps SHALL be treated as a midnight rollover; a wide but forward-moving range within one day SHALL remain on the same day.
 
-If any duration-bearing stage lacks a valid start timestamp, the components SHALL preserve compatibility with duration-only stage names by summing all parseable durations. If no duration can be parsed, no total-duration label SHALL be shown.
+If any duration-bearing stage lacks a valid start timestamp, the row SHALL preserve compatibility with duration-only stage names by summing all parseable durations. If no duration can be parsed, no total-duration label SHALL be shown.
 
 #### Scenario: Fully parallel stages contribute time once
 
-- **WHEN** three finished stages each declare a duration of 40 seconds and the same start timestamp
-- **THEN** the finished summary shows `40.0s`, not `2m 0s`
+- **WHEN** three finished attempts of one repeated stage each declare a duration of 40 seconds and the same start timestamp
+- **THEN** the repeated-stage row shows `40.0s`, not `2m 0s`
 
 #### Scenario: Partially overlapping stages contribute their interval union
 
 - **WHEN** one 20-second stage starts at `11:21:00`, another 20-second stage starts at `11:21:10`, and a separate 10-second stage starts at `11:21:40`
-- **THEN** the finished summary shows `40.0s`
+- **THEN** the repeated-stage row shows `40.0s`
 
 #### Scenario: Duration-only metadata uses the compatibility fallback
 
-- **WHEN** two finished stages declare `[40s]` without start timestamps
-- **THEN** the finished summary shows their summed duration of `1m 20s`
+- **WHEN** two finished attempts declare `[40s]` without start timestamps
+- **THEN** the repeated-stage row shows their summed duration of `1m 20s`
 
 #### Scenario: Overlapping stages can span midnight
 
 - **WHEN** a 20-second stage starts at `23:59:50` and a 10-second stage starts at `00:00:05`
-- **THEN** the finished summary shows `25.0s`
+- **THEN** the repeated-stage row shows `25.0s`
 
 #### Scenario: A wide same-day range does not imply a midnight rollover
 
 - **WHEN** ordered stages start at `00:00:00`, `11:59:59`, `12:00:00`, and `23:59:59`, with the middle two intervals overlapping across noon
-- **THEN** the middle intervals remain on the same day and the finished summary shows `7.0s`
+- **THEN** the middle intervals remain on the same day and the repeated-stage row shows `7.0s`
 
 #### Scenario: Stages without durations omit the total
 
-- **WHEN** none of the finished stage names contains parseable duration metadata
+- **WHEN** none of the finished attempt names contains parseable duration metadata
 - **THEN** no total-duration label is rendered
+
+#### Scenario: The `CollapsedGroup` summary shows no total time
+
+- **WHEN** a finished `CollapsedGroup` renders stages whose names carry parseable duration metadata
+- **THEN** its summary line shows the step (and failure) counts only, with no total execution time across all stages
 
 ---
 

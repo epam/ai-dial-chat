@@ -15,11 +15,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import { useStageExpansion } from '../../hooks/useStageExpansion/useStageExpansion';
 import type { CollapsedGroupProps } from '../../models/collapsed-group';
-import {
-  calculateStagesDurationSeconds,
-  cleanStageName,
-  formatTotalDuration,
-} from '../../utils/stage-name';
+import { cleanStageName } from '../../utils/stage-name';
 import { findLiveStage } from '../../utils/stage-progress';
 import { StagesPanelView } from '../StagesPanel/StagesPanel';
 import styles from './CollapsedGroup.module.scss';
@@ -71,7 +67,6 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   const cssVars = buildCssVars({
     '--cs-cg-label': colors?.labelColor,
     '--cs-cg-label-hover': colors?.labelHoverColor,
-    '--cs-cg-steps-count': colors?.stepsCountColor,
     '--cs-cg-done': colors?.doneColor,
     '--cs-cg-failed': colors?.failedColor,
     '--cs-text': panelColors?.text,
@@ -116,11 +111,6 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   }
 
   const hasFailed = stages.some((s) => s.status === StageStatus.Failed);
-  const totalSeconds = calculateStagesDurationSeconds(
-    stages.map((stage) => stage.name),
-  );
-  const totalDurationLabel =
-    totalSeconds > 0 ? formatTotalDuration(totalSeconds) : undefined;
 
   let summary;
   if (isStreaming) {
@@ -174,16 +164,6 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         >
           {failedCountLabel(failedCount)}
         </span>
-        {totalDurationLabel && (
-          <span
-            className={mergeClasses(
-              summaryTypography.fontClassName,
-              styles.stepsCount,
-            )}
-          >
-            {totalDurationLabel}
-          </span>
-        )}
       </span>
     );
   } else {
@@ -203,16 +183,6 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         >
           {executedLabel} {stages.length} {stepsLabel(stages.length)}
         </span>
-        {totalDurationLabel && (
-          <span
-            className={mergeClasses(
-              summaryTypography.fontClassName,
-              styles.stepsCount,
-            )}
-          >
-            {totalDurationLabel}
-          </span>
-        )}
       </span>
     );
   }
