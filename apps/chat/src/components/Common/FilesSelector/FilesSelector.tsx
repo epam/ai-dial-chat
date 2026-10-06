@@ -125,7 +125,10 @@ export const FilesSelector: React.FC<Props> = ({
           {!files.length ? (
             <NoFiles />
           ) : (
-            <div className="flex flex-col gap-y-2 overflow-auto rounded border border-primary p-2">
+            <div
+              className="flex flex-col gap-y-2 overflow-auto rounded border border-primary p-2"
+              data-qa="files-selector-container"
+            >
               {files.map((file) => (
                 <SelectedFile
                   key={file}
