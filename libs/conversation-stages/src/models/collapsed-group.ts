@@ -7,8 +7,6 @@ export interface CollapsedGroupColors {
   labelColor?: string;
   /** Color of the toggle button label and icon on hover. */
   labelHoverColor?: string;
-  /** Color of the execution time. */
-  stepsCountColor?: string;
   /** Color of the leading check icon in the finished-and-successful summary. */
   doneColor?: string;
   /** Color of the "N failed" text in the failed summary. */

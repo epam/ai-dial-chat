@@ -15,10 +15,6 @@ import type {
 } from '../../models/stages-props';
 import { groupStagesByName } from '../../utils/stage-grouping';
 import {
-  calculateStagesDurationSeconds,
-  formatTotalDuration,
-} from '../../utils/stage-name';
-import {
   getGroupExpansionKey,
   getStageExpansionKey,
 } from '../../utils/stage-tree';
@@ -138,11 +134,6 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   let groupStatus: StageStatus | null = StageStatus.Completed;
   if (hasUnresolved) groupStatus = null;
   else if (hasFailed) groupStatus = StageStatus.Failed;
-  const totalSeconds = calculateStagesDurationSeconds(
-    attempts.map((attempt) => attempt.stage.name),
-  );
-  const totalDurationLabel =
-    totalSeconds > 0 ? formatTotalDuration(totalSeconds) : undefined;
   const key = getGroupExpansionKey(row.key);
   const isOpen = expansion.isExpanded(key);
   const attemptDepth = depth + 1;
@@ -176,17 +167,6 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
       >
         ×{attempts.length}
       </span>
-      {totalDurationLabel && (
-        <span
-          className={mergeClasses(
-            'flex-none',
-            typography?.countFontClassName ?? 'dial-tiny-text',
-            styles.duration,
-          )}
-        >
-          {totalDurationLabel}
-        </span>
-      )}
     </span>
   );
 

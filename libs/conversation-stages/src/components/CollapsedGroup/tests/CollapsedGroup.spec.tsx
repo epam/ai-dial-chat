@@ -122,20 +122,20 @@ describe('CollapsedGroup — collapsed states', () => {
     expect(screen.getByText(/1 failed/)).toBeTruthy();
   });
 
-  it('shows elapsed time without double-counting parallel stages', () => {
+  it('omits a total execution time from the finished summary', () => {
     render(
       <CollapsedGroup
         stages={[
           completed(0, 'Tool A (40s, Start: 11:21:00, End: 11:21:40)'),
-          completed(1, 'Tool B (40s, Start: 11:21:00, End: 11:21:40)'),
-          completed(2, 'Tool C (40s, Start: 11:21:00, End: 11:21:40)'),
+          completed(1, 'Tool B [40s]'),
         ]}
         isStreaming={false}
       />,
     );
 
-    expect(screen.getByText('40.0s')).toBeTruthy();
-    expect(screen.queryByText('2m 0s')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /Executed/ }).textContent,
+    ).not.toMatch(/\d+(\.\d+)?s\b|\dm \d+s/);
   });
 
   it('is expanded by default while running, showing the live step name', () => {
@@ -364,35 +364,6 @@ describe('CollapsedGroup — nested stages', () => {
 
     expect(screen.getByText(/Executed 3 steps/)).toBeTruthy();
     expect(screen.getByText('1 failed')).toBeTruthy();
-  });
-
-  it('reports the same total duration as the equivalent flat stages', () => {
-    const names = ['Plan [4s]', 'Search [1s]', 'Read [2s]'];
-    const { unmount } = render(
-      <CollapsedGroup
-        stages={names.map((name, index) => completed(index, name))}
-        isStreaming={false}
-      />,
-    );
-    const flatSummary = screen.getByRole('button', {
-      name: /Executed/,
-    }).textContent;
-    unmount();
-
-    render(
-      <CollapsedGroup
-        stages={[
-          completed(0, names[0]),
-          child(completed(1, names[1]), 0),
-          child(completed(2, names[2]), 1),
-        ]}
-        isStreaming={false}
-      />,
-    );
-
-    expect(screen.getByRole('button', { name: /Executed/ }).textContent).toBe(
-      flatSummary,
-    );
   });
 
   it('keeps a stage expanded when a second stage switches the group layout', async () => {
