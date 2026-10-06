@@ -173,7 +173,7 @@
     "@types/yauzl": "^3.4.0"
   },
   "overrides": {
-    "js-yaml": "^4.1.1 || ^5.0.0",
+    "js-yaml": "^4.1.1 || ^5.4.1",
     "multer": "2.4.0",
     "proxy-addr": "2.0.8"
   }
