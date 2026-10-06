@@ -16,6 +16,7 @@ import {
   findAllowlistEntry,
   flattenKeys,
   i18nKeyExists,
+  isBuildOutputPath,
   isHistorical,
   normalizePath,
   parseAllowlist,
@@ -122,6 +123,14 @@ test('normalizePath strips ./, trailing slash, punctuation and line suffixes', (
     normalizePath('apps/chat/src/a.ts (the hook)').path,
     'apps/chat/src/a.ts',
   );
+});
+
+test('isBuildOutputPath skips build and test output that only exists after a build', () => {
+  assert.equal(isBuildOutputPath('apps/chat/dist/index.html'), true);
+  assert.equal(isBuildOutputPath('libs/*/dist/index.css'), true);
+  assert.equal(isBuildOutputPath('libs/chat-hooks/out-tsc/lib'), true);
+  assert.equal(isBuildOutputPath('libs/catalog/src/distance.ts'), false);
+  assert.equal(isBuildOutputPath('apps/chat/src/index.tsx'), false);
 });
 
 test('normalizePath turns placeholders into wildcards and ignores non-repo paths', () => {

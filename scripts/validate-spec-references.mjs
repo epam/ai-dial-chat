@@ -10,7 +10,9 @@
  *     - A repo-relative path under a known root (apps/, libs/, tools/, scripts/,
  *       docs/, openspec/, .github/) that does not exist. Globs (`*`, `**`,
  *       `{a,b}`), placeholders (`<lib>`, `{lang}`, `...`) and trailing `/` are
- *       allowed; `path:12` and `path#L12` suffixes are stripped first.
+ *       allowed; `path:12` and `path#L12` suffixes are stripped first. Build
+ *       and test output (any `dist`, `out-tsc`, `coverage`… segment) is not
+ *       checked, since it exists only after a build.
  *     - A translation key `namespace.key` whose top-level namespace exists in
  *       apps/chat/src/i18n/locales/en.json but whose full key does not. Only
  *       checked when the line presents it as a key (mentions i18n, translation,
@@ -67,6 +69,13 @@ export const SKIP_DIRECTORIES = new Set([
   'playwright-report',
   'storybook-static',
 ]);
+/*
+ * Build and test output (`apps/chat/dist`, a lib's `dist/index.css`) is real
+ * only after a build, so a clean CI checkout cannot verify it while a local
+ * tree can — the result would depend on the machine. Such paths are skipped.
+ */
+export const isBuildOutputPath = (normalizedPath) =>
+  normalizedPath.split('/').some((segment) => SKIP_DIRECTORIES.has(segment));
 export const ALLOWLIST_FILE = 'openspec/spec-references.allow.json';
 export const I18N_FILE = 'apps/chat/src/i18n/locales/en.json';
 
@@ -498,6 +507,7 @@ export const checkSpec = ({ capability, file, markdown }, context) => {
           `\`${span.text}\` carries a line number — avoid line numbers in specs; name the file and symbol`,
         );
       if (findAllowlistEntry(context.allowlist, capability, ref.path)) continue;
+      if (isBuildOutputPath(ref.path)) continue;
       if (!pathExists(context.repoRoot, ref))
         add(
           'error',
