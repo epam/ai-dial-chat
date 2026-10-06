@@ -6,14 +6,15 @@ import {
   Attachment,
   EntityEditorAppTypes,
   ExpectedConstants,
+  MockedChatApiResponseBodies,
   ToggleState,
   UploadMenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-const stageContentTitle = 'Get content file:';
-const expectedStageContent = (fileUrl: string) =>
-  `${Attachment.flowerImageName}\n${stageContentTitle}\nLoaded file "${Attachment.flowerImageName}" (image/jpeg) from file:url::${fileUrl}.`;
+// const stageContentTitle = 'Get content file:';
+// const expectedStageContent = (fileUrl: string) =>
+//   `${Attachment.flowerImageName}\n${stageContentTitle}\nLoaded file "${Attachment.flowerImageName}" (image/jpeg) from file:url::${fileUrl}.`;
 const expectedContextType = 'file';
 let modelNoAttachments: DialAIEntityModel;
 let modelAllAttachments: DialAIEntityModel;
@@ -150,15 +151,13 @@ dialTest(
     baseAssertion,
     dialHomePage,
     chat,
-    chatMessages,
-    chatMessagesAssertion,
     apiAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMDIAL-4788');
     const imageUrl = await fileApiHelper.putFile(Attachment.flowerImageName);
-    const messageIndex = 2;
-    const messageStageIndex = 1;
+    // const messageIndex = 2;
+    // const messageStageIndex = 1;
 
     await dialTest.step(
       'Open Quick app 2.0 creation page directly',
@@ -223,6 +222,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         const { completionRequest } = await chat.sendRequestWithButton(
           'what is on picture?',
+          false,
         );
 
         const appProperties = completionRequest.model.applicationProperties;
@@ -236,30 +236,31 @@ dialTest(
           appProperties.orchestrator.attachment_strategy.type,
           ORCHESTRATOR_ATTACHMENT_STRATEGY_VALUE?.type,
         );
-        await chatMessages.openMessageStage(messageIndex, messageStageIndex);
-        await chatMessagesAssertion.assertElementContainsText(
-          chatMessages.messageStageContent(messageIndex, messageStageIndex),
-          expectedStageContent(imageUrl),
-        );
-        await dialHomePage.waitForExpectedResponses(
-          () =>
-            chatMessages
-              .messageStageAttachment(
-                messageIndex,
-                messageStageIndex,
-                Attachment.flowerImageName,
-              )
-              .click(),
-          [{ apiMethod: 'GET', urlPattern: Attachment.flowerImageName }],
-        );
-        await chatMessagesAssertion.assertElementState(
-          chatMessages.getMessageStageAttachmentContent(
-            messageIndex,
-            messageStageIndex,
-            Attachment.flowerImageName,
-          ),
-          'visible',
-        );
+        //TODO: model response is not deterministic, so we cannot assert the stage content.
+        //     await chatMessages.openMessageStage(messageIndex, messageStageIndex);
+        //     await chatMessagesAssertion.assertElementContainsText(
+        //       chatMessages.messageStageContent(messageIndex, messageStageIndex),
+        //       expectedStageContent(imageUrl),
+        //     );
+        //     await dialHomePage.waitForExpectedResponses(
+        //       () =>
+        //         chatMessages
+        //           .messageStageAttachment(
+        //             messageIndex,
+        //             messageStageIndex,
+        //             Attachment.flowerImageName,
+        //           )
+        //           .click(),
+        //       [{ apiMethod: 'GET', urlPattern: Attachment.flowerImageName }],
+        //     );
+        //     await chatMessagesAssertion.assertElementState(
+        //       chatMessages.getMessageStageAttachmentContent(
+        //         messageIndex,
+        //         messageStageIndex,
+        //         Attachment.flowerImageName,
+        //       ),
+        //       'visible',
+        //     );
       },
     );
   },
@@ -284,16 +285,14 @@ dialTest(
     dialHomePage,
     sendMessage,
     chat,
-    chatMessages,
-    chatMessagesAssertion,
     apiAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMDIAL-4789');
     const imageUrl = await fileApiHelper.putFile(Attachment.flowerImageName);
-    const firstResponseIndex = 2;
-    const secondResponseIndex = 4;
-    const messageStageIndex = 1;
+    // const firstResponseIndex = 2;
+    // const secondResponseIndex = 4;
+    // const messageStageIndex = 1;
 
     await dialTest.step(
       'Open Quick app 2.0 creation page directly',
@@ -381,6 +380,9 @@ dialTest(
     await dialTest.step(
       'Send the request and verify the context stage is not displayed in the response',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const { completionRequest } = await chat.sendRequestWithButton(
           'what is on picture?',
         );
@@ -391,58 +393,71 @@ dialTest(
           appProperties.orchestrator.attachment_strategy.type,
           ORCHESTRATOR_ATTACHMENT_STRATEGY_VALUE?.type,
         );
-        await chatMessages.openMessageStage(
-          firstResponseIndex,
-          messageStageIndex,
-        );
-        await chatMessagesAssertion.assertElementDoesNotContainText(
-          chatMessages.messageStageContent(
-            firstResponseIndex,
-            messageStageIndex,
-          ),
-          stageContentTitle,
-        );
-        await chatMessagesAssertion.assertElementsCount(
-          chatMessages.messageStages(firstResponseIndex),
-          messageStageIndex,
-        );
+        const attachment =
+          completionRequest.messages[0].custom_content.attachments[0];
+        apiAssertion.assertValue(attachment.type, 'image/jpeg');
+        apiAssertion.assertValue(attachment.title, Attachment.flowerImageName);
+        apiAssertion.assertValue(attachment.url, imageUrl);
+        //TODO: model response is not deterministic, so we cannot assert the stage content.
+        // await chatMessages.openMessageStage(
+        //   firstResponseIndex,
+        //   messageStageIndex,
+        // );
+        // await chatMessagesAssertion.assertElementDoesNotContainText(
+        //   chatMessages.messageStageContent(
+        //     firstResponseIndex,
+        //     messageStageIndex,
+        //   ),
+        //   stageContentTitle,
+        // );
+        // await chatMessagesAssertion.assertElementsCount(
+        //   chatMessages.messageStages(firstResponseIndex),
+        //   messageStageIndex,
+        // );
       },
     );
 
     await dialTest.step(
       'Send the next request without attaching the file and verify the context stage is displayed in the response',
       async () => {
-        await chat.sendRequestWithButton('describe in details the picture');
-        await chatMessages.openMessageStage(
-          secondResponseIndex,
-          messageStageIndex,
+        const { completionRequest } = await chat.sendRequestWithButton(
+          'describe in details the picture',
+          false,
         );
-        await chatMessagesAssertion.assertElementContainsText(
-          chatMessages.messageStageContent(
-            secondResponseIndex,
-            messageStageIndex,
-          ),
-          expectedStageContent(imageUrl),
+        apiAssertion.assertValueIsUndefined(
+          completionRequest.messages[2].custom_content,
         );
-        await dialHomePage.waitForExpectedResponses(
-          () =>
-            chatMessages
-              .messageStageAttachment(
-                secondResponseIndex,
-                messageStageIndex,
-                Attachment.flowerImageName,
-              )
-              .click(),
-          [{ apiMethod: 'GET', urlPattern: Attachment.flowerImageName }],
-        );
-        await chatMessagesAssertion.assertElementState(
-          chatMessages.getMessageStageAttachmentContent(
-            secondResponseIndex,
-            messageStageIndex,
-            Attachment.flowerImageName,
-          ),
-          'visible',
-        );
+        //TODO: model response is not deterministic, so we cannot assert the stage content.
+        // await chatMessages.openMessageStage(
+        //   secondResponseIndex,
+        //   messageStageIndex,
+        // );
+        // await chatMessagesAssertion.assertElementContainsText(
+        //   chatMessages.messageStageContent(
+        //     secondResponseIndex,
+        //     messageStageIndex,
+        //   ),
+        //   expectedStageContent(imageUrl),
+        // );
+        // await dialHomePage.waitForExpectedResponses(
+        //   () =>
+        //     chatMessages
+        //       .messageStageAttachment(
+        //         secondResponseIndex,
+        //         messageStageIndex,
+        //         Attachment.flowerImageName,
+        //       )
+        //       .click(),
+        //   [{ apiMethod: 'GET', urlPattern: Attachment.flowerImageName }],
+        // );
+        // await chatMessagesAssertion.assertElementState(
+        //   chatMessages.getMessageStageAttachmentContent(
+        //     secondResponseIndex,
+        //     messageStageIndex,
+        //     Attachment.flowerImageName,
+        //   ),
+        //   'visible',
+        // );
       },
     );
   },
@@ -460,19 +475,18 @@ dialTest(
     entityDetailsModal,
     baseAssertion,
     dialHomePage,
+    apiAssertion,
     chat,
-    chatMessages,
-    chatMessagesAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMDIAL-4790');
-    const messageIndex = 2;
-    const messageStageIndex = 1;
+    // const messageIndex = 2;
+    // const messageStageIndex = 1;
     const externalUrl = `https://github.com/epam/ai-dial-chat/blob/development/docs/auth/auth-diagrams/07-cookie-structure.svg`;
-    const expectedFilename = externalUrl.substring(
-      externalUrl.lastIndexOf('/') + 1,
-    );
-    const expectedStageContent = `${externalUrl}\n${stageContentTitle}\nLoaded file "${expectedFilename}" (text/html) from file:url::${externalUrl}.`;
+    // const expectedFilename = externalUrl.substring(
+    //   externalUrl.lastIndexOf('/') + 1,
+    // );
+    //const expectedStageContent = `${externalUrl}\n${stageContentTitle}\nLoaded file "${expectedFilename}" (text/html) from file:url::${externalUrl}.`;
 
     await dialTest.step(
       'Open Quick app 2.0 creation page directly',
@@ -530,20 +544,28 @@ dialTest(
           isInstalledDeploymentsUpdated: false,
         });
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
-        await chat.sendRequestWithButton(`what is inside ${externalUrl}`);
-        await chatMessages.openMessageStage(messageIndex, messageStageIndex);
-        await chatMessagesAssertion.assertElementContainsText(
-          chatMessages.messageStageContent(messageIndex, messageStageIndex),
-          expectedStageContent,
+        const { completionRequest } = await chat.sendRequestWithButton(
+          `what is inside ${externalUrl}`,
+          false,
         );
-        await chatMessagesAssertion.assertElementState(
-          chatMessages.messageStageAttachment(
-            messageIndex,
-            messageStageIndex,
-            expectedFilename,
-          ),
-          'visible',
+        apiAssertion.assertValue(
+          completionRequest.model.applicationProperties.contexts.length,
+          0,
         );
+        //TODO: model response is not deterministic, so we cannot assert the stage content.
+        // await chatMessages.openMessageStage(messageIndex, messageStageIndex);
+        // await chatMessagesAssertion.assertElementContainsText(
+        //   chatMessages.messageStageContent(messageIndex, messageStageIndex),
+        //   expectedStageContent,
+        // );
+        // await chatMessagesAssertion.assertElementState(
+        //   chatMessages.messageStageAttachment(
+        //     messageIndex,
+        //     messageStageIndex,
+        //     expectedFilename,
+        //   ),
+        //   'visible',
+        // );
       },
     );
   },

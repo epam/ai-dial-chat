@@ -641,6 +641,15 @@ export class BaseAssertion {
       .not.toEqual(expectedValue);
   }
 
+  public assertValueIsUndefined(
+    actualValue: unknown,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valueIsUndefined)
+      .not.toBeDefined();
+  }
+
   public assertValueIsNotUndefined(
     actualValue: unknown,
     expectedMessage?: string,
