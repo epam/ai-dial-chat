@@ -119,6 +119,8 @@ jobs:
       # ORT analyzes the dependency tree only, so its result cannot change
       # unless a manifest did; `!= 'false'` keeps it on if `changes` failed.
       ort-enabled: ${{ needs.changes.outputs.deps != 'false' }}
+      trivy-severity: "CRITICAL,HIGH,MEDIUM,LOW"
+      trivy-severity-for-sarif: "CRITICAL,HIGH,MEDIUM,LOW"
     secrets: inherit
 
   # Repository-owned: run_tests delegates to epam/ai-dial-ci/.github/workflows/node_pr.yml@4.12.0,
