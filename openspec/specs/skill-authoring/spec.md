@@ -4,29 +4,29 @@
 Specifies `apps/chat/src/pages/SkillEditor/SkillEditor.tsx`'s create-mode behavior: routing, bucket resolution, name normalization, client-side path safety, `SKILL.md` manifest construction, atomic create via the BFF's `createSkill`, its HTTP error mapping, required fields, submission state, responsive layout, and i18n coverage.
 ## Requirements
 ### Requirement: `/skill-editor` route in create mode
-The system SHALL register `ROUTES.SkillEditor = '/skill-editor'` and a lazy-loaded `apps/chat/src/pages/SkillEditor/SkillEditor.tsx` page, following the same `React.lazy` + `Suspense`/`RouteFallback` pattern used for `ROUTES.PromptEditor` in `apps/chat/src/app/app.tsx`. The route SHALL read an optional `returnUrl` query param; when absent or when it fails same-origin/local-path validation, the page SHALL default to `ROUTES.Catalog`.
+The system SHALL register `ROUTES.SkillEditor = '/skill-editor'` and a lazy-loaded `apps/chat/src/pages/SkillEditor/SkillEditor.tsx` page, following the same `React.lazy` + `RouteErrorBoundary`/`Suspense`/`RouteFallback` pattern used for `ROUTES.PromptEditor` in `apps/chat/src/app/app.tsx`. The page SHALL NOT read a `returnUrl` query param: its `returnUrl` is always `ROUTES.Catalog` (used for Cancel/Back and after an edit-mode save), and after a successful create it navigates to `ROUTES.Catalog` with an `itemId=skills/<bucket>/<normalized path>` query (the page's `getCreateReturnUrl`), so the Catalog opens the new skill. Create mode is the route without an `id` (`EditorQuery.Id`) query param.
 
 #### Scenario: Navigating to the route renders the create form
-- **WHEN** a user navigates to `/skill-editor?returnUrl=%2Fcatalog`
+- **WHEN** a user navigates to `/skill-editor`
 - **THEN** the page renders the Create-skill form with `SKILL.md` selected by default
 
-#### Scenario: Unsafe returnUrl falls back to Catalog
-- **WHEN** the `returnUrl` query param is an absolute external URL (e.g. `https://evil.example`)
-- **THEN** the page treats it as invalid and falls back to `ROUTES.Catalog` for post-success/cancel navigation
+#### Scenario: A returnUrl query param is ignored
+- **WHEN** the URL carries a `returnUrl` query param (e.g. `https://evil.example`)
+- **THEN** the page ignores it and uses `ROUTES.Catalog` for cancel navigation and the Catalog `itemId` URL after a successful create
 
 ### Requirement: Missing user bucket blocks upload with a recoverable error
-The `SkillEditor` page SHALL read the current user's bucket via `useUser()`'s `user?.bucket`. When the bucket is `undefined` or an empty string (not yet resolved), the page SHALL render a recoverable error state explaining the bucket could not be resolved and SHALL NOT attempt to call `createSkill`.
+The `SkillEditor` page SHALL read the current user's bucket via `useUser()`'s `user?.bucket`. When the bucket is `undefined` or an empty string (not yet resolved), the page SHALL render a recoverable `role="alert"` error state in place of the form — the `skillEditor.bucketMissingTitle` heading, the `skillEditor.bucketMissingMessage` text and a Cancel button — and SHALL NOT attempt to call `createSkill` (`useSkillEditorSubmit`'s `handleSubmit` also returns early without a bucket). The form renders once the bucket resolves.
 
 #### Scenario: Bucket not yet resolved
-- **WHEN** `useUser().user?.bucket` is `''` or `undefined` at the time a user clicks Create
-- **THEN** the page shows a recoverable error state instead of calling `createSkill`, and no network request is made
+- **WHEN** `useUser().user?.bucket` is `''` or `undefined`
+- **THEN** the page shows the bucket-missing error state instead of the form, and no `createSkill` request is made
 
 #### Scenario: Bucket resolved, submit proceeds
 - **WHEN** `useUser().user?.bucket` is a non-empty string
 - **THEN** the page proceeds to build and submit the skill using that bucket
 
 ### Requirement: Deterministic name normalization
-The `SkillEditor` page SHALL normalize the user-entered Name field on submit via a pure `normalizeSkillName` function: lowercase the input, replace whitespace and any character rejected by the client-side path-safety mirror with a hyphen, collapse consecutive hyphens, and trim leading/trailing hyphens. Normalization SHALL run before the client-side path-safety check and before constructing the upload path; it SHALL NOT be performed inside `libs/skill-editor`.
+The `SkillEditor` page SHALL normalize the user-entered Name field on create submit via the pure `normalizeSkillName` function exported from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/skill/skill.ts`, called by `useSkillEditorSubmit`): lowercase the input, replace every run of characters outside `[a-z0-9]` (whitespace, underscores, dots, any other symbol) with a single hyphen, and trim a leading/trailing hyphen. Normalization SHALL run before the client-side path-safety check and before constructing the upload path; an empty or path-invalid result SHALL show the `nameInvalid` message under Name. It SHALL NOT be performed inside `libs/skill-editor`.
 
 #### Scenario: Name with spaces and mixed case is normalized
 - **WHEN** a user enters `"Good Morning Breakfast"` as the Name
@@ -37,7 +37,7 @@ The `SkillEditor` page SHALL normalize the user-entered Name field on submit via
 - **THEN** the normalized name has no consecutive hyphens and no leading/trailing hyphen
 
 ### Requirement: Client-side path-safety mirror
-The `SkillEditor` page SHALL implement a pure function mirroring `apps/chat-api/src/skills/utils/skill-path.util.ts`'s `isValidSkillRelativePath` (no absolute path, no Windows drive letters/backslashes, no control characters, no empty/`.`/`..` segment, no `.dial-resource`/`.dial-folder` segment, no `files`/`v` first segment) and SHALL apply it to the normalized skill name and to every supporting-file/folder path before allowing submission, surfacing violations as inline errors. This mirror SHALL be a client-side convenience for immediate feedback; the server remains authoritative and MAY still reject a request the client accepted.
+The `SkillEditor` page SHALL use the pure `isValidSkillRelativePath` exported from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/skill/skill.ts`), mirroring `apps/chat-api/src/skills/utils/skill-path.util.ts`'s `isValidSkillRelativePath` (no absolute path, no Windows drive letters/backslashes, no control characters, no empty/`.`/`..` segment, no `.dial-resource`/`.dial-folder` segment, no `files`/`v` first segment) and additionally reserving the `.dial_folder` folder-marker name, and SHALL apply it to the normalized skill name and to every supporting-file/folder path before allowing submission, surfacing violations as inline errors. This mirror SHALL be a client-side convenience for immediate feedback; the server remains authoritative and MAY still reject a request the client accepted.
 
 #### Scenario: Reserved first segment rejected client-side
 - **WHEN** a user adds a supporting file at path `files/notes.md`
@@ -50,7 +50,7 @@ The `SkillEditor` page SHALL implement a pure function mirroring `apps/chat-api/
 ### Requirement: SKILL.md manifest construction; no ZIP archive
 On submit, the `SkillEditor` page SHALL build `SKILL.md`'s content as YAML frontmatter followed by a blank line and the raw `instructions` text (see "Name, Description, and Instructions are all required" below). In create mode, the frontmatter SHALL be a freshly built object (`name`, `description`, serialized via the installed `yaml` package's stringify function — no manual string interpolation of unescaped user content) **unless a `SKILL.md` was imported via the upload dialog earlier in the same create session**, in which case the frontmatter SHALL be built by merging `name`/`description` into that imported frontmatter object (the same `buildSkillManifestFromFrontmatter` function edit mode already uses), so unknown fields the import carried (e.g. `version`) survive into the created skill. The page SHALL NOT build a ZIP archive for submission. It SHALL keep the manifest text and every supporting file's bytes in memory and submit them directly as `multipart/form-data`: `bucket`, `path`, `skillManifest` (the manifest text), `filePaths` (a JSON array of the supporting files' relative paths), and `files` (the supporting files' raw bytes, one part per entry, positionally paired with `filePaths`).
 
-A folder node in the editor's file tree has no content of its own — DIAL Core stores files, not standalone directories, inside a skill. Only file-kind nodes SHALL be included in `filePaths`/`files`; folder nodes SHALL NOT produce any entry.
+A folder node in the editor's file tree has no content of its own — DIAL Core stores files, not standalone directories, inside a skill. The payload SHALL be built by `buildSkillFilesPayload` (`@epam/ai-dial-chat-hooks`): every file-kind node is included in `filePaths`/`files`; a folder node with descendants produces no entry; a folder node with no descendant node produces one zero-byte `<folder>/.dial_folder` marker entry (`SKILL_FOLDER_MARKER`), appended after the real files, so the empty folder survives the write.
 
 #### Scenario: Frontmatter is correctly escaped
 - **WHEN** the Description field contains a colon, a newline, or a quote character
@@ -70,7 +70,7 @@ A folder node in the editor's file tree has no content of its own — DIAL Core 
 
 ### Requirement: Batch validation mirrors BFF package limits before commit
 
-In create mode, the `SkillEditor` page's `fileActions.validateBatch` implementation SHALL, for every staged candidate, reject: a per-file size over `SKILL_FILE_UPLOAD_MAX_BYTES` (1 MiB); an invalid or unsafe path per the existing client-side `isValidSkillRelativePath` mirror; a path traversal attempt; a duplicate path within the staged batch itself; a duplicate path against a file already present in the editor's `files` state; and a reserved root path. At the batch level, it SHALL reject the whole batch if the projected total package size (sum of all already-present supporting-file bytes, all staged supporting-file bytes, and the UTF-8 byte size of the current or imported root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_TOTAL_BYTES` (16 MiB), or if the projected total file count (already-present supporting files, plus staged supporting files, plus exactly one for the root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_FILES` (100). These three limit constants SHALL be defined once and imported, not duplicated as inline magic numbers, and SHALL be documented as a client-side mirror of the BFF's authoritative `SkillsPackageService` limits — the BFF remains the final gate.
+In create mode, the `fileActions.validateBatch` implementation the `SkillEditor` page gets from `useSkillFileActions` (`@epam/ai-dial-chat-hooks`, backed by `validateSkillFileBatch` in `libs/chat-hooks/src/skill/skill-file-batch-validation.ts`) SHALL, for every staged candidate, reject: a per-file size over `SKILL_FILE_UPLOAD_MAX_BYTES` (1 MiB); an invalid or unsafe path per the existing client-side `isValidSkillRelativePath` mirror; a path traversal attempt; a duplicate path within the staged batch itself; a duplicate path against a file already present in the editor's `files` state; and a reserved root path. At the batch level, it SHALL reject the whole batch if the projected total package size (sum of all already-present supporting-file bytes, all staged supporting-file bytes, and the UTF-8 byte size of the current or imported root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_TOTAL_BYTES` (16 MiB), or if the projected total file count (already-present supporting files, plus staged supporting files, plus exactly one for the root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_FILES` (100). These three limit constants SHALL be defined once and imported, not duplicated as inline magic numbers, and SHALL be documented as a client-side mirror of the BFF's authoritative `SkillsPackageService` limits — the BFF remains the final gate.
 
 #### Scenario: Oversized file is rejected per-candidate
 - **WHEN** a staged candidate's `File.size` exceeds `SKILL_FILE_UPLOAD_MAX_BYTES`
@@ -147,10 +147,10 @@ Before calling `createSkill` in create mode, the `SkillEditor` page SHALL NOT pe
 
 #### Scenario: Successful create navigates on 201
 - **WHEN** `createSkill` resolves successfully
-- **THEN** the page treats the resulting `201 Created` response as success, shows a success notification, and navigates to the resolved `returnUrl`
+- **THEN** the page treats the resulting `201 Created` response as success, refetches the skills listing, shows a success notification, and navigates to `ROUTES.Catalog` with `itemId=skills/<bucket>/<path>`
 
 ### Requirement: HTTP error mapping for `createSkill`
-The `SkillEditor` page SHALL interpret `createSkill` failures as follows and render a corresponding inline or notification error, keeping the form's field values intact for retry: `400` → the server's own validation message, shown verbatim when present; `409` → naming conflict (inline Name-field error, offering retry with a different name); `413` → a file or the total content is too large (inline, suggests removing/shrinking supporting files); `503` → service unavailable (inline, alongside a Retry action which resubmits the same in-memory manifest/files without rebuilding anything). Retry is offered only for a failure a plain re-send can clear: the other statuses above name something wrong with the submission itself, and re-sending it unchanged would fail the same way, so they render as text alone.
+The `SkillEditor` page SHALL interpret `createSkill` failures as follows and render a corresponding inline or notification error, keeping the form's field values intact for retry: `400` → the server's own validation message, shown verbatim when present; `409` → naming conflict (inline Name-field error, offering retry with a different name); `413` → the package is too large (inline `skillEditor.error.archiveTooLarge`, "This skill package is too large to upload."); `503` → service unavailable (inline, alongside a Retry action which resubmits the same in-memory manifest/files without rebuilding anything). Retry is offered only for a failure a plain re-send can clear: the other statuses above name something wrong with the submission itself, and re-sending it unchanged would fail the same way, so they render as text alone.
 
 #### Scenario: 400 shows the server's real message
 - **WHEN** `createSkill` rejects with `400` and a message body (e.g. "Skill must contain a SKILL.md at its root")
@@ -158,7 +158,7 @@ The `SkillEditor` page SHALL interpret `createSkill` failures as follows and ren
 
 #### Scenario: 413 response shows a size-specific message
 - **WHEN** `createSkill` rejects with `413`
-- **THEN** the page shows an inline message suggesting a file or the total content is too large, and does not clear the user's field values
+- **THEN** the page shows the inline "This skill package is too large to upload." message, and does not clear the user's field values
 
 #### Scenario: 503 response offers retry without rebuilding anything
 - **WHEN** `createSkill` rejects with `503`
@@ -188,11 +188,15 @@ A non-empty `instructions` value SHALL additionally satisfy the "Instructions mu
 - **THEN** exactly one message renders under it — never the required-field message and the front-matter message together
 
 ### Requirement: Submission state machine
-The `SkillEditor` page SHALL track and expose to `SkillEditor` (the library component) an explicit state among `initial`, `dirty`, `submitting`, `success`, and `failure`. Cancel and Create SHALL be disabled only during `submitting`. Navigation to the resolved `returnUrl` SHALL occur only after `createSkill` resolves successfully (`success` state) or when the user explicitly cancels; a `failure` state SHALL NOT navigate away.
+`useSkillEditorSubmit` SHALL track a submit `phase` among `idle`, `submitting`, `success`, and `failure`; dirtiness is tracked separately through the library's `onDirtyChange`, and the page passes the library only `isSubmitting={phase === 'submitting'}`. Cancel SHALL be disabled only while submitting; Create SHALL be disabled while submitting and additionally while a text refinement is pending, the skill is loading, or loading failed. Navigation away SHALL occur only after `createSkill` resolves successfully (`success` phase) or when the user explicitly cancels; a `failure` phase SHALL NOT navigate away.
 
-#### Scenario: Cancel navigates away immediately
-- **WHEN** a user in the `dirty` state clicks Cancel
-- **THEN** the page navigates to the resolved `returnUrl` without calling any API
+#### Scenario: Cancel with unsaved changes asks first
+- **WHEN** a user with unsaved changes clicks Cancel
+- **THEN** the page shows the unsaved-changes confirmation (`skillEditor.unsavedChanges*` keys) and navigates to `ROUTES.Catalog` only after the user confirms, without calling any API
+
+#### Scenario: Cancel on a clean form navigates away immediately
+- **WHEN** a user with no unsaved changes clicks Cancel
+- **THEN** the page navigates to `ROUTES.Catalog` without calling any API
 
 #### Scenario: Failure does not navigate
 - **WHEN** `createSkill` rejects
@@ -200,7 +204,7 @@ The `SkillEditor` page SHALL track and expose to `SkillEditor` (the library comp
 
 #### Scenario: Success navigates once
 - **WHEN** `createSkill` resolves successfully
-- **THEN** the page transitions to `success`, shows a success notification, and navigates to the resolved `returnUrl` exactly once
+- **THEN** the page transitions to `success`, shows a success notification, and navigates to the Catalog `itemId` URL of the new skill exactly once
 
 ### Requirement: Responsive layout — mobile inline accordion, desktop two-pane
 At the `desktop` breakpoint, the page SHALL render the shared two-pane layout, with Cancel/Create in the page header:
@@ -213,7 +217,7 @@ At the `mobile` breakpoint, the page SHALL render a single scrolling column:
 1. The Files pane, which starts collapsed as an "Editing file" summary row and expands in place to show the file tree.
 2. The selected file.
 
-At `mobile`, Cancel/Create SHALL render in a `position: fixed` bottom action bar that remains reachable at any scroll position. Both breakpoints SHALL keep Back reachable in the page header.
+At `mobile`, Cancel/Create SHALL render in a bottom action bar (the `EditorLayout` bar from `libs/builder-form`) placed after, and outside, the scrollable body, so it remains reachable at any scroll position. Both breakpoints SHALL keep Back reachable in the page header.
 
 #### Scenario: Desktop shows the two-pane layout
 - **WHEN** the viewport is at the `desktop` breakpoint
@@ -221,11 +225,11 @@ At `mobile`, Cancel/Create SHALL render in a `position: fixed` bottom action bar
 
 #### Scenario: Mobile collapses the Files pane by default
 - **WHEN** the viewport is at the `mobile` breakpoint and the page first renders
-- **THEN** the "Editing file" summary shows collapsed above the selected file, and Cancel/Create render in a fixed bottom bar
+- **THEN** the "Editing file" summary shows collapsed above the selected file, and Cancel/Create render in the bottom action bar
 
 #### Scenario: Mobile Create remains reachable while scrolled
 - **WHEN** a user on `mobile` scrolls to the bottom of the Instructions editor
-- **THEN** the Create and Cancel actions remain visible in the fixed bottom bar without further scrolling
+- **THEN** the Create and Cancel actions remain visible in the bottom action bar without further scrolling
 
 ### Requirement: i18n coverage for all new user-visible strings
 Every new user-visible string introduced by this change (page title, field labels, helper text, button labels, error messages, notifications, the Catalog "Skill" menu entry) SHALL be resolved through `useTranslation()` with keys following the `{domain}.{element}` convention (e.g. `skillEditor.title`, `skillEditor.nameCaption`, `catalog.create.skill`), added to `apps/chat/src/i18n/locales/en.json`. No new string SHALL be hardcoded in JSX.

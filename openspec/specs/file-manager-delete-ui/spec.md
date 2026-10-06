@@ -8,11 +8,11 @@ The delete capability on `useDialFileManager` and its wiring into the file-manag
 
 ### Requirement: useDialFileManager — delete capability
 
-`useDialFileManager` in `libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)` SHALL expose `onDeleteFiles` and `isDeleting`, and SHALL surface delete results through the `onNotification` option passed by `DialFileManagerModal`.
+`useDialFileManager` in `libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts` (`@epam/ai-dial-chat-hooks`) SHALL expose `onDeleteFiles` and `isDeleting`, and SHALL surface delete results through the `onNotification` option as structured, reason-tagged `FileManagerNotification` events that the host translates. The delete implementation lives in `useDialFileMutations` (`libs/chat-hooks/src/files/useDialFileMutations/useDialFileMutations.ts`), which `useDialFileManager` composes and whose `onDeleteFiles`/`isDeleting` it returns.
 
 #### State ownership
 
-Delete loading state is owned by `useDialFileManager`. Toast rendering is owned by `DialFileManagerModal` through the app-level `useNotification` context. No new React Context is introduced.
+Delete loading state is owned by `useDialFileMutations` and surfaced through `useDialFileManager`, which also folds it into `isAnyOperationInProgress`. Toast copy and rendering are owned by the host: `useDialFileManagerHostOptions` (`apps/chat/src/components/DialFileManagerShell/useDialFileManagerHostOptions.ts`) supplies an `onNotification` that maps each event through `buildFileManagerNotificationOptions` (`file-manager-notification-adapter.ts`) into the app-level `useNotification().showNotification`. No new React Context is introduced.
 
 #### Interface additions
 
@@ -30,36 +30,53 @@ export interface UseDialFileManagerResult {
 `UseDialFileManagerOptions` includes:
 
 ```typescript
-onNotification?: (notification: {
+onNotification?: (notification: FileManagerNotification) => void;
+
+interface FileManagerNotification {
   variant: NotificationVariant;
   title?: string;
-  message: string;
-}) => void;
+  message?: string;
+  reason?: FileManagerNotificationReason;
+  count?: number;
+  name?: string;
+  folder?: string;
+  names?: string[];
+  restCount?: number;
+}
 ```
 
 #### `onDeleteFiles` implementation
 
-`DialDeletedItem.sourceUrl` is the **virtual path** set on `DialFile.path` (e.g. `/All files/reports/q1.pdf`), NOT a DIAL resource URL. Convert it to an API-relative path using the existing `virtualPathToApiPath(sourceUrl, rootLabel)` helper already defined in the hook.
+`DialDeletedItem.sourceUrl` is the **virtual path** set on `DialFile.path` (e.g. `/All files/reports/q1.pdf`), NOT a DIAL resource URL. Convert it to an API-relative path using the `virtualPathToApiPath(sourceUrl, rootLabel)` helper.
 
 ```
+0. Return immediately when no items are passed
 1. setIsDeleting(true)
 2. Map each DialDeletedItem to DeleteItemDto:
-   - relPath = virtualPathToApiPath(item.sourceUrl, rootLabel)
+   - relPath = virtualPathToApiPath(item.sourceUrl, rootLabel), with a file's trailing '/' stripped
      e.g. "/All files/Screenshot.png" → "Screenshot.png"
           "/All files/reports/"       → "reports/"
-   - nodeType: DialFileNodeType.ITEM → 'item', FOLDER → 'folder'
-   - name: last non-empty segment of item.sourceUrl split by '/'
-3. Call deleteFiles(dtos)  [from apps/chat/src/server-api/files.api.ts]
+   - nodeType: DialFileNodeType.FOLDER → DeleteItemDtoNodeTypeEnum.Folder, otherwise DeleteItemDtoNodeTypeEnum.Item
+   - name: getVirtualPathName(item.sourceUrl, relPath) — the last non-empty segment
+   - bucket/path: on the Shared tab, the owner's coordinates via resolveOwnerCoords; otherwise the hook's bucket and relPath
+3. Call filesApi.deleteFiles(dtos)  [the caller-supplied DialFilesApi; the app passes dialFilesApiAdapter]
 4. Count failures (results.filter(r => !r.success))
-5. Show a success toast for successful deletions using legacy copy:
-   - one item → `dialFileManager.itemDeletedSuccessfully` + `dialFileManager.itemDeletedFromFolder`
-   - multiple items → `dialFileManager.itemsDeletedSuccessfully` + `dialFileManager.itemsDeletedFromFolder`
-6. Show an error toast for failed deletions using `dialFileManager.itemsDeletingFailed` + `dialFileManager.someItemsNotDeleted`; use `dialFileManager.deleteFilesError` when the whole request throws
-7. Invalidate cache: remove from cache Map all entries whose key is a parent of any deleted path
+5. When any item succeeded, emit { variant: Success, reason: FileManagerNotificationReason.FilesDeleted,
+   count: successCount, name: <first successful item's name>, folder: sourceFolder || rootLabel }
+6. When any item failed, emit { variant: Error, reason: FileManagerNotificationReason.FilesDeletePartiallyFailed,
+   names: <first 3 failed names>, restCount }; when the whole request throws, emit
+   { variant: Error, reason: FileManagerNotificationReason.DeleteFailed }
+7. Invalidate cache: invalidateFolders(<affected folder keys>)
 8. Navigate: if currentFolderPath is, or is a descendant of, any deleted folder → setFolderPath(parentApiPath)
-9. setRetryCounter(c => c + 1)  ← triggers re-fetch of current folder
+9. bumpRetry()  ← triggers re-fetch of current folder
 10. setIsDeleting(false)
 ```
+
+The host adapter turns those events into toasts with the legacy copy:
+
+- `FilesDeleted`, one item → `dialFileManager.itemDeletedSuccessfully` + `dialFileManager.itemDeletedFromFolder`; several → `dialFileManager.itemsDeletedSuccessfully` + `dialFileManager.itemsDeletedFromFolder`
+- `FilesDeletePartiallyFailed` → `dialFileManager.itemsDeletingFailed` + `dialFileManager.someItemsNotDeleted`, with `dialFileManager.andOtherItems` for `restCount`
+- `DeleteFailed` → `dialFileManager.deleteFilesError`
 
 #### Cache invalidation detail
 
@@ -67,7 +84,7 @@ For each deleted item, compute its API folder key (parent path):
 - `item` node: parent = everything up to the last `/` in `relPath` (e.g. `reports/` for `reports/q1.pdf`)
 - `folder` node: the folder path itself (e.g. `old-data/`)
 
-Remove those keys from both `cache` and `listingPermissionsCache`.
+Pass those keys to `useDialFileListing`'s `invalidateFolders`, which purges keys that are not currently rendered from both `cache` and `listingPermissionsCache`, and refreshes visible keys in place (fetch first, then overwrite) so the listing does not flash empty.
 
 #### Navigation on current-folder deletion
 
@@ -82,11 +99,13 @@ If `folderPath` is root (`''`), no navigation needed — root cannot be deleted.
 
 #### Permission gating
 
-`DialFileManagerActions.Delete` is included in `actionLabels` only when the current folder has WRITE permission (`canWriteCurrentFolder`). This hides the delete action for read-only folders without a separate disable prop.
+`DialFileManagerActions.Delete` is included in `actionLabels` only on the My files tab (`activeTab === DialFileManagerTabs.MyFiles`), where every folder is the user's own; it is never offered on the Shared or Organization tabs. Unlike Rename/Copy/Move/Duplicate it is not additionally gated by `canWriteCurrentFolder`.
 
-Bulk mixed-selection: the delete action visibility is governed by the current browsed folder's WRITE permission. Items in sub-folders with stricter permissions produce per-item 403s, captured as partial failures.
+Bulk mixed-selection: items that DIAL Core still refuses produce per-item failures, captured as partial failures.
 
-#### i18n keys (hook-level)
+#### i18n keys (host notification adapter)
+
+The hook emits no copy; `buildFileManagerNotificationOptions` resolves these keys:
 
 | Key | Usage |
 |-----|-------|
@@ -103,7 +122,7 @@ Bulk mixed-selection: the delete action visibility is governed by the current br
 
 ### Requirement: DialFileManagerModal — delete wiring
 
-`DialFileManagerModal` in `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx` SHALL wire delete into the `DialFileManager` component and expose new props for i18n copy.
+`DialFileManagerModal` in `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx` SHALL expose props for the delete copy and forward them, with the file-manager controller, into the shared `FileManagerAttachModal` (`@epam/ai-dial-chat-shared/file-manager`), whose `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) wires delete into the `DialFileManager` component.
 
 #### New Props
 
@@ -119,67 +138,42 @@ interface Props {
 }
 ```
 
-All copy is passed from call sites (`ConversationView` / `ConversationRoute`) using `useTranslation` at the app layer. The modal itself does NOT call `useTranslation` for delete strings.
+All copy is passed from call sites using `useTranslation` at the app layer. The modal itself translates only the default title (`getFileDeleteConfirmTitle`, used when `deleteConfirmTitle` is omitted) and the close-control label (`deleteCloseLabel`, `buttons.close`).
 
 #### Hook consumption
 
 ```typescript
-const {
-  // ... existing ...
-  onDeleteFiles,
-  isDeleting,
-} = useDialFileManager({ bucket, onNotification: showNotification });
+const hostOptions = useDialFileManagerHostOptions();
+const { controller: hookResult /* onDeleteFiles, isDeleting, ... */ } =
+  useFileAttachmentPicker({ fileManagerOptions: hostOptions, bucket, /* ... */ });
 ```
 
 #### isOperationInProgress update
 
 ```typescript
-const isOperationInProgress =
-  isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
+const { isAnyOperationInProgress } = hookResult;
 ```
 
-#### deleteConfirmationOptions (memoized)
+`useDialFileManager` computes `isAnyOperationInProgress` over every in-flight mutation flag (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`) and an in-progress upload batch.
+
+#### deleteConfirmationOptions (memoized, in `DialFileManagerShell`)
 
 ```typescript
 const deleteConfirmationOptions = useMemo(
   () => ({
-    cancelLabel: deleteCancelLabel,
-    confirmLabel: deleteConfirmLabel,
-    titleRenderer: deleteConfirmTitle,
-    contentRenderer: deleteConfirmBody,
+    cancelLabel: labels.deleteCancelLabel,
+    confirmLabel: labels.deleteConfirmLabel,
+    closeLabel: labels.deleteCloseLabel,
+    titleRenderer: labels.deleteConfirmTitle,
+    contentRenderer: labels.deleteConfirmBody,
   }),
-  [deleteCancelLabel, deleteConfirmLabel, deleteConfirmTitle, deleteConfirmBody],
+  [labels.deleteCancelLabel, labels.deleteConfirmLabel, labels.deleteCloseLabel, labels.deleteConfirmTitle, labels.deleteConfirmBody],
 );
 ```
 
-#### gridOptions — delete action label
+#### Action labels — grid, tree, and bulk toolbar
 
-```typescript
-actionLabels: {
-  [DialFileManagerActions.Download]: downloadLabel,
-  [DialFileManagerActions.Delete]: deleteLabel,
-},
-```
-
-`deleteLabel` added to the `useMemo` dependency array.
-
-#### treeOptions — delete action label
-
-```typescript
-actionLabels: {
-  [DialFileManagerActions.Download]: downloadLabel,
-  [DialFileManagerActions.Delete]: deleteLabel,
-},
-```
-
-#### bulkActionsToolbarOptions — delete action label
-
-```typescript
-actionLabels: {
-  [DialFileManagerActions.Download]: downloadLabel,
-  [DialFileManagerActions.Delete]: deleteLabel,
-},
-```
+`DialFileManagerShell` builds one memoized `actionLabels` map from the hook's per-tab `actionLabels`: `DialFileManagerActions.Delete` maps to `labels.deleteLabel` whenever the hook offers it. `gridOptions`, `treeOptions`, and `bulkActionsToolbarOptions` all read that map (the grid adds `Info`), so `deleteLabel` reaches every surface through one dependency chain.
 
 #### DialFileManager props
 
@@ -193,26 +187,26 @@ actionLabels: {
 
 #### Loading overlay (delete)
 
-Inside the `<div className="relative ...">` that wraps `DialFileManager`:
+Inside the `<div className="relative ...">` that wraps `DialFileManager`, the shell renders one shared operation overlay whose label `resolveOverlayAriaLabel` picks from the in-flight operation — `deletingLabel` while `isDeleting`:
 
 ```tsx
-{isDeleting && (
+{overlayLabel != null && (
   <div
     aria-live="polite"
-    className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+    className="absolute inset-0 z-[52] flex items-center justify-center bg-backdrop desktop:p-4"
   >
-    <Spinner size={32} fullWidth={false} ariaLabel={deletingLabel} />
+    <Spinner size={32} fullWidth={false} ariaLabel={overlayLabel} />
   </div>
 )}
 ```
 
 #### Toast feedback (delete)
 
-`DialFileManagerModal` calls `useNotification()` and passes `showNotification` into `useDialFileManager({ bucket, onNotification: showNotification })`. Delete success and failure feedback is rendered by the global `NotificationContainer`, not as an inline banner inside the modal.
+`DialFileManagerModal` passes `useDialFileManagerHostOptions()` (whose `onNotification` wraps `useNotification().showNotification`) into `useFileAttachmentPicker`. Delete success and failure feedback is rendered by the global `NotificationContainer`, not as an inline banner inside the modal.
 
 #### Call sites: new prop values
 
-Every host of the file manager's delete confirmation — `ConversationView`, `NewConversationComposer`, `SkillFileSystemModal`, and `DialFileManagerPage` — SHALL pass the same copy through `useTranslation`, and SHALL render the body with the shared `FileDeleteConfirmContent` rather than an inline block. The hosts pass no `deleteConfirmTitle`: `DialFileManagerModal` and `DialFileManagerPage` title the dialog with `getFileDeleteConfirmTitle` (`apps/chat/src/components/FileDeleteConfirmContent/file-delete-confirm-title.ts`), which reads the `nodeType` of the items the file manager passes as the renderer's second argument — "Delete folder" (`dialFileManager.deleteConfirmTitleFolder`) or "Delete file" (`dialFileManager.deleteConfirmTitleFile`) for one item, "Delete items" (`dialFileManager.deleteConfirmTitleMultiple`) for several — and name the close control with `buttons.close`. A host that passes `deleteConfirmTitle` (`AvatarPickerModal`) keeps its own title:
+Every host of the file manager's delete confirmation — `ConversationView`, `NewConversationComposer`, `SkillFileSystemModal`, and `DialFileManagerPage` — SHALL pass the same copy through `useTranslation`, and SHALL render the body with the shared `FileDeleteConfirmContent` rather than an inline block. The hosts pass no `deleteConfirmTitle`: `DialFileManagerModal` and `DialFileManagerPage` title the dialog with `getFileDeleteConfirmTitle` (`apps/chat/src/components/FileDeleteConfirmContent/file-delete-confirm-title.ts`), which reads the `nodeType` of the items the file manager passes as the renderer's second argument — "Delete folder" (`dialFileManager.deleteConfirmTitleFolder`) or "Delete file" (`dialFileManager.deleteConfirmTitleFile`) for one item, "Delete items" (`dialFileManager.deleteConfirmTitleMultiple`) for several — and name the close control with `buttons.close`. No current host passes `deleteConfirmTitle`; `AvatarPickerModal` (`@epam/ai-dial-builder-form`) is not a `DialFileManagerModal` host and receives its own delete-confirmation labels from `useApplicationAvatarPicker`:
 
 ```tsx
 <DialFileManagerModal
@@ -300,7 +294,7 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 
 | Key (full) | English value | Notes |
 |------------|---------------|-------|
-| `dialFileManager.deleteConfirmTitleSingle` | `"Delete item"` | Popup title, single item — `AvatarPickerModal` only |
+| `dialFileManager.deleteConfirmTitleSingle` | `"Delete item"` | Popup title, single item — `AvatarPickerModal` only (via `useApplicationAvatarPicker`) |
 | `dialFileManager.deleteConfirmTitleFile` | `"Delete file"` | Popup title, one file |
 | `dialFileManager.deleteConfirmTitleFolder` | `"Delete folder"` | Popup title, one folder |
 | `dialFileManager.deleteConfirmTitleMultiple` | `"Delete items"` | Popup title, multiple items |
@@ -317,7 +311,7 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 | `dialFileManager.someItemsNotDeleted` | `"{{files}}{{rest}} were not deleted. Please try again."` | Failed-items toast message |
 | `dialFileManager.andOtherItems` | `" and {{count}} other items"` | Failed-items overflow suffix |
 
-The Delete action label, the confirm button, and Cancel reuse `buttons.delete` / `buttons.cancel`; the "Deleting…" overlay label and the "Cannot be undone" bullet reuse `basic.deletingStatus` / `basic.consequenceCannotBeUndone`, shared with every other delete confirmation. `dialFileManager.deleteConfirmBodyMultiple` and `dialFileManager.deleteConfirmBodyItems` are still present in `en.json` and in `DialFileManagerI18nKeys` but no component reads them any more.
+The Delete action label, the confirm button, and Cancel reuse `buttons.delete` / `buttons.cancel`; the "Deleting…" overlay label and the "Cannot be undone" bullet reuse `basic.deletingStatus` / `basic.consequenceCannotBeUndone`, shared with every other delete confirmation. `dialFileManager.deleteConfirmBodyMultiple` and `dialFileManager.deleteConfirmBodyItems` are no longer read by the file-manager delete flow; `useApplicationAvatarPicker` still reads them for `AvatarPickerModal`'s `deleteConfirmMultipleText` / `deleteConfirmItemsLabel`.
 
 #### Scenario: Delete copy is fully translated
 
@@ -364,33 +358,26 @@ The delete flow SHALL stay operable and announced without a pointer:
 Delete wiring SHALL keep the option objects the file manager already caches referentially stable:
 
 - `deleteConfirmationOptions` wrapped in `useMemo` with all four copy props as deps.
-- `gridOptions`, `treeOptions`, `bulkActionsToolbarOptions` already use `useMemo`; `deleteLabel` added to each dependency array.
-- `onDeleteFiles` inside `useDialFileManager` is wrapped in `useCallback` with `[bucket, rootLabel, t]` deps (same pattern as `onDownloadFiles`).
+- `gridOptions`, `treeOptions`, `bulkActionsToolbarOptions` use `useMemo` in `DialFileManagerShell`; each depends on the shared `actionLabels` map, which lists `labels.deleteLabel` among its deps.
+- `onDeleteFiles` inside `useDialFileMutations` is wrapped in `useCallback` with `[activeTab, bucket, rootLabel, folderPath, onNotification, filesApi, sharedRootMetaRef, invalidateFolders, bumpRetry, setFolderPath]` deps (same pattern as `onDownloadFiles`).
 
 #### Scenario: Unrelated re-render keeps option identity
 
-- **WHEN** the host re-renders without changing bucket, root label, or translations
+- **WHEN** the host re-renders without changing bucket, root label, active tab, current folder, or labels
 - **THEN** `onDeleteFiles`, `deleteConfirmationOptions`, `gridOptions`, `treeOptions`, and `bulkActionsToolbarOptions` keep their previous references
 
 ---
 
 ### Requirement: dial-file-system-picker spec sync
 
-`openspec/specs/dial-file-system-picker/spec.md` SHALL be updated with a sync note at the top:
-
-```markdown
-> **Sync note (add-file-manager-delete):** `DialFileManagerModal` now accepts
-> `onDeleteFiles` and `deleteConfirmationOptions` wired from `useDialFileManager`.
-> The spec previously noted delete was absent; that is no longer the case when
-> this change ships.
-```
+`openspec/specs/dial-file-system-picker/spec.md` SHALL record that delete is wired. It does so in its capability table rather than a dedicated sync note: the `onDeleteFiles` / `deleteConfirmationOptions` row reads "wired; reachable as a row/bulk action on the \"My files\" tab".
 
 No requirement-level behavior in `dial-file-system-picker` changes.
 
 #### Scenario: The picker spec records the new props
 
 - **WHEN** this change ships
-- **THEN** `dial-file-system-picker/spec.md` carries the sync note above
+- **THEN** `dial-file-system-picker/spec.md` lists `onDeleteFiles` / `deleteConfirmationOptions` as wired
 - **AND** none of its own requirements or scenarios are altered
 
 ---
@@ -403,14 +390,12 @@ Not gated. Delete is available to all authenticated users with WRITE permission 
 
 ## Tests
 
-**`useDialFileManager.spec.tsx`** (`libs/chat-hooks/src/files/useDialFileManager/tests/useDialFileManager.spec.tsx`):
+**`useDialFileMutations.spec.tsx`** (`libs/chat-hooks/src/files/useDialFileMutations/tests/useDialFileMutations.spec.tsx`) covers `onDeleteFiles` directly; **`useDialFileManager.spec.tsx`** (`libs/chat-hooks/src/files/useDialFileManager/tests/useDialFileManager.spec.tsx`) covers the composed result, including per-tab Delete visibility (MyFiles only) and `isDeleting`:
 - `onDeleteFiles` success: cache invalidated, retryCounter incremented, `isDeleting` transitions
 - `onDeleteFiles` partial failure: success and error notifications emitted
 - `onDeleteFiles` total failure: error notification emitted
 - `onDeleteFiles` — current folder deleted: `folderPath` navigates to parent
 
 **`DialFileManagerModal.spec.tsx`** (`apps/chat/src/components/DialFileManagerModal/tests/DialFileManagerModal.spec.tsx`):
-- Delete action label appears in grid options when `deleteLabel` prop is provided
-- Loading overlay visible when `isDeleting` is true (mock hook)
-- `showNotification` from `useNotification` is passed to `useDialFileManager`
-- `isOperationInProgress` disables Attach button when `isDeleting` is true
+- Delete appears in `actionLabels` on the my_files tab and is omitted on the shared and organization tabs
+- `isAnyOperationInProgress` disables the Attach button while an operation is in flight

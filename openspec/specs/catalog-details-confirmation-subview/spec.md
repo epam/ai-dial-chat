@@ -7,7 +7,7 @@ Defines how the catalog details panel (`libs/catalog/src/components/Details/Deta
 
 The details panel SHALL NOT use `ConfirmationPopup` (or any other modal overlay) for its own confirmations. Instead it SHALL track a single active confirmation as `DetailsConfirmationKind | null` and, while one is active, replace its details content with a confirmation sub-view laid out exactly like the Publish sub-view:
 
-- **Panel header row**: a back `GhostIconButton` (`IconChevronLeft`, mirrored in RTL via `rtl:scale-x-[-1]`, accessible name from `texts.backToDetailsAriaLabel`, default `'Back'`) followed by the confirmation title. The star toggle and the panel close button SHALL be hidden while any sub-view is open.
+- **Panel header row**: the panel's `SideDrawer` (`@epam/ai-dial-ui-kit`) header, given `onBack`/`backAriaLabel`/`backDisabled` and the sub-view title, renders a back `GhostIconButton` (`IconChevronLeft`, mirrored in RTL by the kit's `rtl:-scale-x-100`, accessible name from `texts.backToDetailsAriaLabel`, default `'Back'`) followed by the confirmation title. The star toggle (`headerActions`) and the panel close button (`hideClose`) SHALL be hidden while any sub-view is open.
 - **Scrollable body** (`ConfirmationView` from `@epam/ai-dial-chat-shared`): a `ConfirmationIdentityCard` naming the item the step is about, the confirmation copy, an optional bulleted consequence list, and an optional interactive slot rendered after the bullets.
 - **Pinned footer** (`ConfirmationFooter` from `@epam/ai-dial-chat-shared`), rendered outside the scroll container: a `GhostButton` cancel and a confirming button whose treatment follows the step's variant.
 
@@ -62,7 +62,7 @@ The confirmation's palette SHALL be `ConfirmationPopupVariant` from `@epam/ai-di
 
 `Info` is the default for `ConfirmationIdentityCard`, `ConfirmationView`, and `ConfirmationFooter`.
 
-The body, footer, and identity card are not catalog components: `ConfirmationView`, `ConfirmationFooter`, and `ConfirmationIdentityCard` live in `@epam/ai-dial-chat-shared` (see the `shared-delete-confirmation` spec), so the scheduled-task, chat, and Files delete dialogs render the same block. The catalog's former `InfoCard` component and its `InfoCardProps` type are removed and not re-exported; a view that anchors a message to a catalog item uses `ConfirmationIdentityCard` with `item`. The details panel still themes the card through `ItemDetailsColors.infoCardBackground` / `infoCardDangerBackground`, forwarded to `ConfirmationView`'s `styles.colors.cardBackground` / `cardDangerBackground`; there is no themable override for the danger border.
+The body, footer, and identity card are not catalog components: `ConfirmationView`, `ConfirmationFooter`, and `ConfirmationIdentityCard` live in `@epam/ai-dial-chat-shared` (see the `shared-delete-confirmation` spec), so the scheduled-task, chat, and Files delete dialogs render the same block. The catalog's former `InfoCard` component and its `InfoCardProps` type are removed and not re-exported; a view that anchors a message to a catalog item uses `ConfirmationIdentityCard` with `item`. The details panel still themes the card through `ItemDetailsColors.infoCardBackground` / `infoCardDangerBackground`, forwarded to `ConfirmationView`'s `styles.colors.cardBackground` / `cardDangerBackground`; the panel forwards no danger-border override, so although `ConfirmationView` accepts `styles.colors.cardDangerBorder`, the details panel's danger border is not themable.
 
 #### Scenario: Only true destruction gets the danger palette
 
@@ -90,7 +90,7 @@ Unpublish is `Danger` for the same reason as revocation and with the same caveat
 
 `DeleteApiKey` is the only kind whose card and confirm button diverge: the confirm button is `Danger`, but the identity card stays `Info` via the separate `cardVariant` field, because removing one stored credential leaves the item itself untouched. Its message is `deleteApiKeyConfirmMessage(level)`, defaulting to `'Are you sure you want to delete the organization API key?'` for `CredentialsLevel.Global` and `'Are you sure you want to delete your personal API key?'` otherwise, and its loading status label is `deletingStatusLabel` → `'Deleting'`. It is listed here because the enumeration above is exhaustive; this change does not alter its behaviour.
 
-Message defaults emphasize the item name with `<strong>`. The chat app's `CatalogView` passes its own `deleteConfirmMessage` as a `<Trans>` node whose `<bold>` tag maps to `CONFIRMATION_BOLD_COMPONENTS` (`dial-small-semi-text`), so the name stays bold in the translated copy too. Hosts supplying `deleteConfirmMessage`/`unshareConfirmMessage`/`revokeShareConfirmMessage`/`unpublishConfirmMessage` return a `ReactNode`, so a host that wants emphasis can pass JSX; a host passing a plain translated string gets plain text. The English default revoke message is: `Revoke shared access to <strong>{name}</strong>? Anyone you shared it with will lose access.`
+Message defaults emphasize the item name with `<strong>`. The chat app's `CatalogView` passes its own `deleteConfirmMessage` as a `<Trans>` node whose `<bold>` tag maps to `CONFIRMATION_BOLD_COMPONENTS` (`dial-small-semi-text`), so the name stays bold in the translated copy too. Hosts supplying `deleteConfirmMessage`/`unshareConfirmMessage`/`revokeShareConfirmMessage`/`unpublishConfirmMessage` (called with the item name and, for unpublish, the single folder's label) or `unpublishSelectFolderMessage` (the multi-folder copy, called with the item name) return a `ReactNode`, so a host that wants emphasis can pass JSX; a host passing a plain translated string gets plain text. The English default revoke message is: `Revoke shared access to <strong>{name}</strong>? Anyone you shared it with will lose access.`
 
 #### Scenario: Host text overrides win over defaults
 
@@ -139,7 +139,7 @@ In the Manage ("...") menu, Delete SHALL be the last entry, after Remove from My
 
 ### Requirement: Confirming, cancelling, and failure handling
 
-Confirming SHALL await the matching host callback (`onDelete`, `onUnshare`, `onRevokeShare`, or `onLogout` with the item's signed-in credentials level) with the confirm and cancel buttons disabled and `loadingStatusLabel` announced through a `role="status" aria-live="polite"` region.
+Confirming SHALL await the matching host callback (`onDelete`, `onUnshare`, `onRevokeShare`, `onUnpublish` with the chosen folder's path segments, or `onLogout` with `{ level }` — the item's signed-in credentials level for `Logout`, the API key's level for `DeleteApiKey`) with the confirm and cancel buttons disabled and `loadingStatusLabel` announced through a `role="status" aria-live="polite"` region.
 
 On success, whether the panel closes SHALL be decided by one question — does the confirmed action remove the item from the caller's own view? That answer SHALL be expressed as a single set of kinds rather than re-decided per branch, so adding a kind is a one-line decision at that set.
 

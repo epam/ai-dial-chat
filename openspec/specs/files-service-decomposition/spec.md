@@ -8,27 +8,27 @@ The ownership map for the split files-domain services, and the contracts that sp
 
 ### Requirement: Files domain service ownership map
 
-The backend SHALL implement the files feature's business logic in `apps/chat-api/src/files/` as seven single-concern injectable services, each constructor-injecting `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) directly — never extending a base class:
+The backend SHALL implement the files feature's business logic in `apps/chat-api/src/files/` as seven single-concern injectable services, each constructor-injecting `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) and `ConfigService` directly — never extending a base class:
 
-- `FilesListingService` (`listing/files-listing.service.ts`) — read-only listing/metadata (`listFiles`, `listPublicFiles`, `listSharedFiles`, `listSharedByMe`, `getFileMetadata`) plus the shared recursive folder-traversal primitive (`expandFolderContents`, `buildArchivePath`, `getRelativeChildPath`, `toRelativePath`) used by every batch and archive-download operation below.
+- `FilesListingService` (`listing/files-listing.service.ts`) — read-only listing/metadata (`listFiles`, `listPublicFiles`, `listSharedFiles`, `listSharedByMe`, `getFileMetadata`) plus the shared recursive folder-traversal primitive (`expandFolderContents`, `buildArchivePath`, and the private `getRelativeChildPath`) used by every batch and archive-download operation below. The bucket-relative path helper `toRelativePath` lives in `dial-resource-path.util.ts`, alongside `encodeDialFilePath`, and is imported by the listing, download, and archive services.
 - `FilesUploadService` (`upload/files-upload.service.ts`) — single-file and archive upload, temp-file staging, multipart streaming.
 - `FilesFolderService` (`folder/files-folder.service.ts`) — folder creation; injects `FilesUploadService` for the marker-file write.
 - `FilesDownloadService` (`download/files-download.service.ts`) — single-file download; returns `{ stream, headers }`.
-- `FilesArchiveDownloadService` (`archive/files-archive-download.service.ts`) — zip download; injects `FilesListingService` for folder expansion; returns a stream/result object rather than writing to an Express `Response` directly.
+- `FilesArchiveDownloadService` (`archive/files-archive-download.service.ts`) — zip download; injects `FilesListingService` for folder expansion; returns an `ArchiveDownloadResult` (`{ stream, headers, abortOnDisconnect }`) rather than writing to an Express `Response` directly.
 - `FilesSharingService` (`sharing/files-sharing.service.ts`) — share/revoke/discard.
-- `FilesBatchOperationsService` (`batch/files-batch-operations.service.ts`) — delete/rename/copy/move; injects `FilesListingService` for `expandFolderContents`; the four operations share one internal dispatch helper rather than four hand-copied implementations.
+- `FilesBatchOperationsService` (`batch/files-batch-operations.service.ts`) — delete/rename/copy/move; injects `FilesListingService` for `expandFolderContents`; the four operations share one private folder fan-out helper (`runFolderFanOut`) rather than four hand-copied implementations.
 
 `FilesService` (`files.service.ts`) SHALL remain as a thin facade that `FilesController` continues to inject unchanged, delegating each of its public methods to the owning service above. No file under `apps/chat-api/src/files/` other than test files SHALL exceed approximately 400 lines; `files.service.ts` SHALL be approximately 100–150 lines.
 
 #### Scenario: Controller and facade wiring is unaffected by the split
 
 - **WHEN** `FilesController` is constructed
-- **THEN** it injects only `FilesService`, exactly as before the split, and every route handler body other than `download-archive` is unchanged
+- **THEN** its only files-domain dependency is `FilesService` (alongside `ConfigService`, which it reads for `ALLOWED_IFRAME_ORIGINS`), and every route handler body other than `download-archive` is unchanged
 
 #### Scenario: Each sub-service is independently unit-testable
 
 - **WHEN** a test constructs `FilesBatchOperationsService` directly (via `@nestjs/testing`)
-- **THEN** it only needs to provide mocks for `DialClientService` and `FilesListingService` — no other sub-service's dependencies are required
+- **THEN** it only needs to provide mocks for `DialClientService`, `ConfigService`, and `FilesListingService` — no other sub-service's dependencies are required
 
 ### Requirement: No REST contract change from the split
 
@@ -51,7 +51,7 @@ Splitting `FilesService` into sub-services SHALL NOT change any route path, HTTP
 #### Scenario: Archive download route pipes a returned stream
 
 - **WHEN** `POST /api/v1/files/download-archive` is handled
-- **THEN** `FilesController` calls the facade, receives a stream/headers result, and performs `res.setHeader`/piping itself — no `FilesService` or sub-service method receives `@Res()` as a parameter
+- **THEN** `FilesController` calls the facade, receives a `{ stream, headers, abortOnDisconnect }` result, and performs `res.setHeader`, the `res.on('close')` disconnect handling, and `pipeline(stream, res)` itself — no `FilesService` or sub-service method receives `@Res()` as a parameter
 
 #### Scenario: No Express types in the service layer
 

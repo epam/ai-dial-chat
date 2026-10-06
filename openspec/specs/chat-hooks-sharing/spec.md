@@ -8,13 +8,18 @@ Reusable sharing hooks exported by `@epam/ai-dial-chat-hooks`: the share-link re
 
 ### Requirement: Share-link request lifecycle hook
 
-`@epam/ai-dial-chat-hooks` SHALL export a hook (the generalized form of
-`apps/chat`'s `useShareLink`) that owns a loading/error/stale-response-guard/
-re-fetch state machine for creating a DIAL share link. The hook SHALL accept
-an already-configured generated-client API instance capable of calling the
-DIAL `createShareLink` operation, the resource's full DIAL Core resource path
-as its identifier, and an initial access list (`ShareLinkAccess[]`, from
-`@epam/ai-dial-share`). The hook SHALL NOT accept, forward, or reference a
+`@epam/ai-dial-chat-hooks` SHALL export `useShareLink`
+(`libs/chat-hooks/src/useShareLink/useShareLink.ts`, also re-exported from the
+`@epam/ai-dial-chat-hooks/sharing` entry point), which owns a
+loading/error/stale-response-guard/re-fetch state machine for creating a DIAL
+share link. Its signature is `useShareLink(shareApi: Pick<ShareApi,
+'createShareLink'>, itemId: string, origin: string = window.location.origin)`:
+an already-configured generated-client `ShareApi` instance, the resource's
+full DIAL Core resource path as its identifier, and the origin the returned
+link is re-anchored to (DIAL Core's `url` is rebuilt as `origin` + its
+path/search/hash). It takes no initial access list: the first request (on
+mount and whenever `itemId` changes, which also clears `data`) uses
+`[ShareLinkAccess.View]` (`ShareLinkAccess` from `@epam/ai-dial-share`). The hook SHALL NOT accept, forward, or reference a
 resource-kind parameter — `CreateShareLinkDtoResourceKindEnum` and the
 `ShareResourceKind` it mirrored no longer exist, because every resource's
 identifier, prompts included, is already a self-sufficient full resource
@@ -23,8 +28,10 @@ configure, or hold any base URL, auth header, or CSRF token itself — that
 configuration is the caller's responsibility and is fully contained in the
 client instance passed in.
 
-The hook SHALL return `{ data: ShareLinkData | null, isLoading: boolean,
-error: unknown, setAccess: (access: ShareLinkAccess[]) => void }`. Calling
+The hook SHALL return `UseShareLinkResult` = `{ data: ShareLinkData |
+undefined, isLoading: boolean, error: Error | null, setAccess: (access:
+ShareLinkAccess[]) => void }`; a non-`Error` rejection is wrapped as
+`new Error('Failed to create share link')`. Calling
 `setAccess` SHALL trigger a re-fetch. Responses from a stale (superseded)
 call SHALL be discarded and SHALL NOT overwrite `data`/`error` from a more
 recent call.
@@ -59,36 +66,41 @@ recent call.
 #### Scenario: Fetch failure surfaces an error
 
 - **WHEN** the client instance's share-link operation rejects
-- **THEN** `error` holds the rejection reason, `isLoading` becomes `false`,
+- **THEN** `error` holds the rejection (wrapped in an `Error` when it is not one), `isLoading` becomes `false`,
   and `data` is left as it was before the failed call
 
 ### Requirement: Share-recipients-count lazy lookup hook
 
-`@epam/ai-dial-chat-hooks` SHALL export a hook (the generalized form of
-`apps/chat`'s `useShareRecipientsCount`) that performs an on-demand,
-deduplicated, per-resource-id lookup of a share's recipient count against an
-already-configured generated-client API instance. The hook SHALL own a
-library-defined status model equivalent to `Idle`/`Loading`/`Resolved`/
-`Unknown`.
+`@epam/ai-dial-chat-hooks` SHALL export `useShareRecipientsCount(shareApi:
+Pick<ShareApi, 'getShareRecipientsCount'>)`
+(`libs/chat-hooks/src/useShareRecipientsCount/useShareRecipientsCount.ts`, also
+re-exported from `@epam/ai-dial-chat-hooks/sharing`), which performs an
+on-demand, deduplicated, per-resource-id lookup of a share's recipient count
+against an already-configured generated-client `ShareApi` instance. The hook
+SHALL own the exported string enum `RecipientsCountStatus` (`Idle = 'idle'`,
+`Loading = 'loading'`, `Resolved = 'resolved'`, `Unknown = 'unknown'`).
 
-The hook SHALL return `{ request: (resourceId: string) => void, get:
-(resourceId: string) => { status: 'idle' | 'loading' | 'resolved' |
-'unknown'; value?: number }, invalidate: (resourceId: string) => void }`. A
-given resource id SHALL be fetched at most once per `request` call unless
-`invalidate` is called for that id; concurrent `request` calls for the same
+The hook SHALL return `UseShareRecipientsCountResult` = `{
+requestRecipientsCount: (itemId: string) => void, getRecipientsCount:
+(itemId: string) => RecipientsCountEntry, invalidateRecipientsCount: (itemId:
+string) => void }`, where `RecipientsCountEntry` is `{ status:
+RecipientsCountStatus; count?: number }` and an id never requested reports
+`RecipientsCountStatus.Idle`. A
+given resource id SHALL be fetched at most once unless
+`invalidateRecipientsCount` is called for that id; repeated `requestRecipientsCount` calls for the same
 id before it resolves SHALL NOT trigger duplicate network calls.
 
 #### Scenario: First request for a resource fetches and resolves
 
-- **WHEN** a consumer calls `request(resourceId)` for an id it has not
+- **WHEN** a consumer calls `requestRecipientsCount(resourceId)` for an id it has not
   requested before
-- **THEN** `get(resourceId)` reports `status: 'loading'` until the network
-  call resolves, then `status: 'resolved'` with the recipient count as
-  `value`
+- **THEN** `getRecipientsCount(resourceId)` reports `RecipientsCountStatus.Loading` until the network
+  call resolves, then `RecipientsCountStatus.Resolved` with the recipient count as
+  `count`
 
 #### Scenario: Duplicate request for an in-flight resource is deduplicated
 
-- **WHEN** a consumer calls `request(resourceId)` twice for the same id
+- **WHEN** a consumer calls `requestRecipientsCount(resourceId)` twice for the same id
   before the first network call has resolved
 - **THEN** the client instance's recipients-count operation is called
   exactly once for that id
@@ -96,12 +108,12 @@ id before it resolves SHALL NOT trigger duplicate network calls.
 #### Scenario: Failed fetch reports unknown status
 
 - **WHEN** the recipients-count operation rejects for a given resource id
-- **THEN** `get(resourceId)` reports `status: 'unknown'` and no `value` —
+- **THEN** `getRecipientsCount(resourceId)` reports `RecipientsCountStatus.Unknown` and no `count` —
   matching `apps/chat`'s existing "unknown on error" behavior exactly
 
 #### Scenario: Invalidate forces a re-fetch on next request
 
-- **WHEN** a consumer calls `invalidate(resourceId)` after that id has
-  already resolved, and then calls `request(resourceId)` again
+- **WHEN** a consumer calls `invalidateRecipientsCount(resourceId)` after that id has
+  already resolved, and then calls `requestRecipientsCount(resourceId)` again
 - **THEN** the recipients-count operation is called again for that id rather
   than returning the previously cached value

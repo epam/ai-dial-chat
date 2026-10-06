@@ -2,18 +2,18 @@
 
 ## Purpose
 
-Forwarding an attachment-click callback from `ConversationMessageItem` down through `MessageBubble` to `UserMessageBubble`.
+Forwarding an attachment-click callback and its accessible label from `ConversationMessageItem` down through `MessageBubble` to `UserMessageBubble` and `AssistantMessageBubble`.
 
 ## Requirements
 
 ### Requirement: `UserMessageBubble` accepts and forwards an attachment click callback
 
-`libs/conversation-messages/src/models/MessageBubble.ts` (`UserMessageBubbleProps`) SHALL gain two optional props:
+`libs/conversation-messages/src/models/message-bubble.ts` SHALL declare, for both bubble kinds:
 
-- `onAttachmentClick?: (attachment: DisplayAttachment) => void` — Passed through to `AttachmentTray` as `onAttachmentClick`.
-- `attachmentClickLabel?: string` — Passed through to `AttachmentTray` as `clickLabel`.
+- `onAttachmentClick?: (attachment: DisplayAttachment) => void` on the shared `BaseMessageBubbleProps` (inherited by `UserMessageBubbleProps` and `AssistantMessageBubbleProps`).
+- `attachmentClickLabel?: string` on `MessageBubbleLabels`, read from the bubble's `labels` prop.
 
-`UserMessageBubble.tsx` SHALL forward both props to `<AttachmentTray>`. When either prop is absent, `AttachmentTray` receives `undefined` (its own defaults apply).
+`UserMessageBubble.tsx` SHALL render its attachments through `<AttachmentGroup>` (from the attachment-input lib), passing an `onAttachmentClick(id)` handler that resolves the id back to the matching `DisplayAttachment` and calls the bubble's `onAttachmentClick` with it, and passing `labels.attachmentClickLabel` as the group's `labels.clickLabel`. When `attachmentClickLabel` is absent, the group receives `clickLabel: undefined` (its own defaults apply).
 
 #### Scenario: Attachments are inert when `onAttachmentClick` is absent
 
@@ -25,43 +25,45 @@ Forwarding an attachment-click callback from `ConversationMessageItem` down thro
 - **WHEN** `UserMessageBubble` is rendered with `onAttachmentClick` and a non-empty `attachments` list
 - **THEN** clicking any attachment card invokes `onAttachmentClick` with the corresponding `DisplayAttachment`
 
-#### Scenario: `attachmentClickLabel` is forwarded to the tray
+#### Scenario: `attachmentClickLabel` is forwarded to the group
 
-- **WHEN** `UserMessageBubble` is rendered with `attachmentClickLabel="Download file"`
-- **THEN** the `AttachmentTray` receives `clickLabel="Download file"`
+- **WHEN** `UserMessageBubble` is rendered with `labels={{ attachmentClickLabel: "Download file" }}`
+- **THEN** the `AttachmentGroup` receives `labels.clickLabel="Download file"`
 
 ---
 
-### Requirement: `MessageBubble` forwards attachment click props to `UserMessageBubble`
+### Requirement: `MessageBubble` forwards attachment click props to the role-specific bubble
 
-`libs/conversation-messages/src/models/MessageBubble.ts` (`MessageBubbleProps`) SHALL gain the same two optional props:
+`MessageBubbleProps` (`libs/conversation-messages/src/models/message-bubble.ts`) SHALL carry the same `onAttachmentClick` prop and `labels.attachmentClickLabel` label.
 
-- `onAttachmentClick?: (attachment: DisplayAttachment) => void`
-- `attachmentClickLabel?: string`
-
-`MessageBubble.tsx` SHALL forward both props to `UserMessageBubble` when `role === MessageRole.User`. For all other roles (`Assistant`, `Status`) the props SHALL be ignored.
+`MessageBubble.tsx` SHALL forward `onAttachmentClick` (and `labels`) to `UserMessageBubble` when `role === MessageRole.User` and to `AssistantMessageBubble` for the assistant role. For `MessageRole.Status` it renders `StatusMessageBubble`, and the attachment props SHALL be ignored.
 
 #### Scenario: Props forwarded to user bubble
 
-- **WHEN** `MessageBubble` is rendered with `role="User"`, `onAttachmentClick`, and `attachmentClickLabel`
-- **THEN** the rendered `UserMessageBubble` receives both props
+- **WHEN** `MessageBubble` is rendered with `role={MessageRole.User}`, `onAttachmentClick`, and `labels.attachmentClickLabel`
+- **THEN** the rendered `UserMessageBubble` receives both
 
-#### Scenario: Props ignored for assistant bubble
+#### Scenario: Props forwarded to assistant bubble
 
-- **WHEN** `MessageBubble` is rendered with `role="Assistant"` and `onAttachmentClick`
-- **THEN** the rendered `AssistantMessageBubble` does NOT receive `onAttachmentClick`
+- **WHEN** `MessageBubble` is rendered with `role={MessageRole.Assistant}` and `onAttachmentClick`
+- **THEN** the rendered `AssistantMessageBubble` receives `onAttachmentClick`
+
+#### Scenario: Props ignored for status bubble
+
+- **WHEN** `MessageBubble` is rendered with `role={MessageRole.Status}` and `onAttachmentClick`
+- **THEN** the rendered `StatusMessageBubble` receives no attachment props
 
 ---
 
 ### Requirement: `ConversationMessageItem` wires `useAttachmentAction` to `MessageBubble`
 
-`apps/chat/src/components/ConversationView/ConversationMessageItem.tsx` SHALL call `useAttachmentAction()` and pass the returned `handleAttachmentClick` as `onAttachmentClick` to every `MessageBubble` it renders (both the normal render path and the `Suspense` fallback). It SHALL also pass the i18n value of `messages.attachment.downloadLabel` as `attachmentClickLabel`.
+`apps/chat/src/components/ConversationView/ConversationMessageItem.tsx` SHALL call `useAttachmentAction({ resolveDownloadUrl: resolveDialFileDownloadUrl })` (from `@epam/ai-dial-chat-hooks`) and pass the resulting click handler as `onAttachmentClick` to every `MessageBubble` it renders (the user/assistant render paths and the `Suspense` fallback shown while `EditMessageInput` loads). When the item's own optional `onAttachmentClick(attachment, messageIndex)` prop is supplied, it SHALL be used instead of the default download action. It SHALL also pass `t(AttachmentsI18nKeys.Download)` as `labels.attachmentClickLabel`.
 
-`ConversationMessageItem` SHALL NOT implement any download or action logic itself — all resolution is delegated to `useAttachmentAction`.
+`ConversationMessageItem` SHALL NOT implement any download or action logic itself — all resolution is delegated to `useAttachmentAction` or the caller's override.
 
 #### Scenario: Clicking a user message attachment triggers a download
 
-- **WHEN** a user message is rendered in `ConversationMessageItem` with a DIAL file attachment
+- **WHEN** a user message is rendered in `ConversationMessageItem` with a DIAL file attachment and no `onAttachmentClick` override
 - **THEN** clicking the attachment card triggers the `handleAttachmentClick` callback from `useAttachmentAction`
 - **AND** `useAttachmentAction` initiates a browser download for the file
 
@@ -70,23 +72,23 @@ Forwarding an attachment-click callback from `ConversationMessageItem` down thro
 - **WHEN** the `EditMessageInput` lazy chunk is loading and the fallback `MessageBubble` is rendered
 - **THEN** the fallback bubble also receives `onAttachmentClick` and the click handler is active
 
-#### Scenario: Non-user messages are unaffected
+#### Scenario: Caller override replaces the default download
 
-- **WHEN** an assistant message is rendered in `ConversationMessageItem`
-- **THEN** no click handler is applied to any of its content (no `onAttachmentClick` prop on `AssistantMessageBubble`)
+- **WHEN** `ConversationMessageItem` receives an `onAttachmentClick` prop
+- **THEN** activating an attachment card calls that prop with the attachment and the item's `index`, and no download is started
 
 ---
 
-### Requirement: `messages.attachment.downloadLabel` i18n key is defined
+### Requirement: `attachments.downloadFile` i18n key is defined
 
-`apps/chat/src/i18n/locales/en.json` SHALL contain the key `messages.attachment.downloadLabel` with the value `"Download file"`. A corresponding `MessagesI18nKeys` member (or extension of an existing i18n key enum) SHALL be exported from `apps/chat/src/constants/translation-keys.ts`.
+`apps/chat/src/i18n/locales/en.json` SHALL contain the key `attachments.downloadFile` with the value `"Download file"`, exposed as `AttachmentsI18nKeys.Download` from `apps/chat/src/constants/translation-keys.ts`.
 
 #### Scenario: Key exists in en.json
 
 - **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
-- **THEN** it contains `messages.attachment.downloadLabel` with a non-empty English string
+- **THEN** it contains `attachments.downloadFile` with a non-empty English string
 
 #### Scenario: Translation key is consumed via typed map
 
-- **WHEN** `ConversationMessageItem` reads `messages.attachment.downloadLabel`
-- **THEN** it does so via the typed key from the i18n constants module, not a hardcoded string literal
+- **WHEN** `ConversationMessageItem` builds `labels.attachmentClickLabel`
+- **THEN** it does so via `AttachmentsI18nKeys.Download` from the i18n constants module, not a hardcoded string literal

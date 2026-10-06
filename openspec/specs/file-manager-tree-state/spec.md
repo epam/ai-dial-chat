@@ -6,15 +6,15 @@ Ownership of `expandedPaths` and `loadedPaths` in `useDialFileManager`, and the 
 ## Requirements
 ### Requirement: useDialFileManager owns expandedPaths and loadedPaths
 
-`useDialFileManager` SHALL expose `expandedPaths: Set<string>` and `loadedPaths: Set<string>` as controlled tree state passed to `DialFileManager`. `useDialFileListing` SHALL own `expandedPaths` state and SHALL derive `loadedPaths` from the shared per-folder listing cache for the union of outer-tree expanded paths and destination-popup-observed paths.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager`) SHALL expose `expandedPaths: Set<string>` and `loadedPaths: Set<string>` as controlled tree state passed to `DialFileManager`. `useDialFileListing` (`libs/chat-hooks/src/files/useDialFileListing`) SHALL own `expandedPaths` state and SHALL derive `loadedPaths` from the shared per-folder listing cache for the union of outer-tree expanded paths and destination-popup-observed paths.
 
-`useDialFileManager` SHALL expose `onExpandedPathsChange(paths: Set<string>) => void`. When this callback is called with a new set of paths:
+`useDialFileManager` SHALL expose `onExpandedPathsChange(paths: Set<string>) => void`. When this callback is called with a new set of paths while the listing is active (`isActive`):
 1. For each path whose API path is absent from the listing cache, the hook SHALL fetch the children using the active tab's listing function unless the same API path is already loading or its last expansion failed without a subsequent collapse.
 2. Fetched children SHALL be stored in the per-folder `Map` cache, including an empty array for a successful empty listing.
 3. A candidate path SHALL be present in `loadedPaths` exactly when its API path is present in the cache.
 4. `expandedPaths` SHALL be updated to match the new `Set`.
 
-Destination-popup-observed paths SHALL preserve the exact `DialFile.path` representation supplied by File Manager, including the trailing slash on non-root folders. When the active tab changes, the cache, `expandedPaths`, and destination-popup candidate/loading paths SHALL reset, causing derived `loadedPaths` to become empty.
+Destination-popup-observed paths SHALL preserve the exact `DialFile.path` representation supplied by File Manager, including the trailing slash on non-root folders. When the active tab or the optional `sessionKey` changes, the cache, `expandedPaths`, the failed-expansion set, and destination-popup candidate/loading paths SHALL reset, causing derived `loadedPaths` to become empty.
 
 State ownership: `useDialFileListing` owns `expandedPaths`, destination-popup candidate/loading paths, and the listing cache; `loadedPaths` is a `useMemo` derivation. Feature flag: none. RTL: none — the existing File Manager tree renders the directional disclosure icon. Memoisation: `onExpandedPathsChange` SHALL use `useCallback`, and `loadedPaths` SHALL use `useMemo`. Accessibility: no new controls or roles; the disclosure icon SHALL reflect whether a loaded folder has valid children. Observability: none. Cache: the existing per-tab, per-folder cache has no TTL and is invalidated by existing mutation invalidation or a tab switch.
 
@@ -52,11 +52,11 @@ State ownership: `useDialFileListing` owns `expandedPaths`, destination-popup ca
 
 ### Requirement: DialFileManagerShell passes tree header i18n via treeOptions
 
-`DialFileManagerShell` SHALL pass `treeOptions` to `DialFileManager` with a localized header title per active tab, resolved by the host and supplied through `labels.treeHeaderByTab`. Only My Files carries a header string of its own; the other tabs reuse the label already shown in the tab selector rather than duplicating a key.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell`) SHALL pass `treeOptions` to `DialFileManager` with a localized header title per active tab, resolved by the host (`DialFileManagerPage`, `DialFileManagerModal`) and supplied through `labels.treeHeaderByTab`; the same string is also passed as `treeOptions.tabsAriaLabel`. In the `DialFileManagerVariant.Attach` variant the header is `null`. Only My Files carries a header string of its own (the All tab reuses it); the other tabs reuse the label already shown in the tab selector rather than duplicating a key.
 
 i18n keys for tree headers:
-- My Files: `dialFileManager.myFiles.treeHeader` (`"Folder tree"`)
-- Shared: `dialFileManager.tab.shared` (`"Shared with Me"`)
+- My Files and All: `dialFileManager.myFiles.treeHeader` (`"File storage"`)
+- Shared: `dialFileManager.tab.shared` (`"Shared"`)
 - Organization: `basic.organization`
 - Review: the empty string — that tab renders no tree panel
 
@@ -69,7 +69,7 @@ A consequence worth stating, since it looks like a defect from the outside: asse
 Should the expanded panel ever need a visible header, that is a change to `CollapsibleSidebar` in `@epam/ai-dial-ui-kit` — the kit exposes no other slot above the tree — and not something the shell can arrange on its own.
 
 RTL: `DialFileManager` ui-kit component handles tree layout direction; no host-level RTL handling required.
-Memoisation: `treeOptions` object in `useMemo` keyed on active tab.
+Memoisation: `treeOptions` object in `useMemo` keyed on the active tab, `labels.treeHeaderByTab`, the variant, and the forwarded tree state and callbacks.
 
 #### Scenario: Collapsed tree rail shows the tab-specific label
 
@@ -90,7 +90,7 @@ Memoisation: `treeOptions` object in `useMemo` keyed on active tab.
 
 `DialFileManagerShell` SHALL pass `loadedPaths` and `folderPopupLoadingPaths` to `DialFileManager` as `treeOptions.loadedPaths` and `treeOptions.loadingPaths`, respectively. It SHALL compare the selected destination path to `folderPopupLoadingPaths` using the same exact `DialFile.path` representation.
 
-State ownership remains in `useDialFileListing`; the shell SHALL act only as the app-level adapter to `@epam/ai-dial-react-file-manager`. Feature flag: none. i18n: no new keys. RTL: none. Memoisation: `treeOptions` SHALL be memoized with both sets as dependencies. Accessibility: no new interactive surface; forwarded state SHALL make existing loading and disclosure affordances accurate. Observability: none.
+State ownership remains in `useDialFileListing`; the shell (shared by the app's File Manager page and modal from `libs/chat-shared`) SHALL act only as the adapter to `@epam/ai-dial-react-file-manager`. Feature flag: none. i18n: no new keys. RTL: none. Memoisation: `treeOptions` SHALL be memoized with both sets as dependencies. Accessibility: no new interactive surface; forwarded state SHALL make existing loading and disclosure affordances accurate. Observability: none.
 
 #### Scenario: Pending popup folder state reaches File Manager
 

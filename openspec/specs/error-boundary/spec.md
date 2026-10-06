@@ -7,16 +7,15 @@ The React error boundary: its accessible fallback, recovery paths, placement in 
 ## Requirements
 
 ### Requirement: ErrorBoundary catches descendant render and lifecycle errors
-The root and route wrappers SHALL use `react-error-boundary` to catch descendant errors thrown during render, construction, or React lifecycle methods.
+The root and route wrappers (`RootErrorBoundary` and `RouteErrorBoundary` in `apps/chat/src/components/ErrorBoundary/ErrorBoundary.tsx`) SHALL use `react-error-boundary` to catch descendant errors thrown during render, construction, or React lifecycle methods.
 
 The component SHALL NOT catch errors thrown inside event handlers, async functions (e.g., `useEffect` bodies after mount), or errors thrown by the boundary component itself.
 
-**Fallback props interface:**
+**Fallback props interface** (`ErrorFallback.tsx` extends the library's `FallbackProps`):
 ```ts
-interface ErrorFallbackProps {
-  error: Error;
-  resetErrorBoundary: () => void;
-  actionLabel?: string; // i18n key override, default "errorBoundary.retryLabel"
+interface Props extends FallbackProps {
+  // from FallbackProps: error: unknown; resetErrorBoundary: () => void;
+  actionLabel?: ParseKeys<'translation'>; // i18n key override, default ErrorBoundaryI18nKeys.RetryLabel ("errorBoundary.retryLabel")
 }
 ```
 
@@ -46,7 +45,7 @@ interface ErrorFallbackProps {
 ---
 
 ### Requirement: Accessible fallback UI
-The default `ErrorFallback` component SHALL render an accessible, user-friendly error UI instead of a blank screen.
+The default `ErrorFallback` component SHALL render an accessible, user-friendly error UI instead of a blank screen, through the shared full-screen `AlertShell` layout (`apps/chat/src/components/AlertShell/AlertShell.tsx`).
 
 **Accessibility requirements:**
 - The root element SHALL have `role="alert"` so screen readers announce it on mount.
@@ -60,7 +59,7 @@ The default `ErrorFallback` component SHALL render an accessible, user-friendly 
 - The warning icon is symmetric — it SHALL NOT be mirrored in RTL.
 
 **Responsiveness:**
-- The fallback SHALL be centered and readable on all named breakpoints: `mobile`, `small_tablet`, `large_tablet`, `desktop`, `large_desktop`.
+- The fallback SHALL be centered and readable on the named breakpoints `mobile` and `desktop`.
 - SHALL NOT introduce `sm:`, `md:`, `lg:`, or `xl:` breakpoints.
 
 **i18n:**
@@ -80,7 +79,7 @@ The default `ErrorFallback` component SHALL render an accessible, user-friendly 
 
 #### Scenario: Fallback uses logical spacing in LTR
 - **WHEN** the document direction is `ltr`
-- **THEN** the fallback layout SHALL appear left-aligned following the writing direction
+- **THEN** the fallback content SHALL be centered (`items-center`, `text-center`) and SHALL use no physical-direction spacing class
 
 #### Scenario: Fallback uses logical spacing in RTL
 - **WHEN** the document direction is `rtl`
@@ -147,7 +146,7 @@ Two boundary instances SHALL be integrated into the application entry points.
 - Recovery action: reload via `window.location.reload()` only after an explicit button click.
 
 **Per-route boundaries** (`apps/chat/src/app/app.tsx`):
-- One boundary per lazy-loaded route: `CatalogView` and `ConversationPage`.
+- One `RouteErrorBoundary` per lazy-loaded route element — `ConversationPage`, `CatalogView`, the shared-invitation pages, `DialFileManagerPage`, the scheduled-task pages, `ApplicationEditorPage`, `ToolsetAuthCallbackPage`, `PromptEditorPage`, `SkillEditorPage`, and `NotFoundPage`.
 - Each boundary wraps the corresponding `<Suspense fallback={<RouteFallback />}>` block.
 - Recovery action: call `resetErrorBoundary`.
 - Navigation-triggered `resetKeys` reset is enabled.

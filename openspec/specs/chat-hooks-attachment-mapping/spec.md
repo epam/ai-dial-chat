@@ -37,15 +37,15 @@ resolution injected by the host.
 
 ### Requirement: `apps/chat` supplies its bucket/icon-URL resolver as an injected callback
 
-`apps/chat/src/components/ConversationView/ConversationView.tsx` and `apps/chat/src/hooks/files/useDialFileManagerState.ts` SHALL call the `@epam/ai-dial-chat-hooks` exports with `{ resolvePreviewUrl: resolveCatalogIconUrl }`, where `resolveCatalogIconUrl` remains defined in `apps/chat/src/utils/icon-path.ts` and continues to construct the app's `/api/v1/files/download` and `/api/themes/icon` paths. `apps/chat/src/utils/dial-file-to-attachment.ts` and its test SHALL be removed once the migration is verified.
+`apps/chat/src/components/ConversationView/ConversationView.tsx` and `apps/chat/src/hooks/files/useDialFileManagerState.ts` SHALL call the `@epam/ai-dial-chat-hooks` exports with `{ resolvePreviewUrl: resolveCatalogIconUrl }` (other callers — `apps/chat/src/hooks/application-editor/useApplicationAvatarPicker.ts` and `libs/toolset-editor`'s `GeneralForm` — pass their own injected `resolveIconUrl`), where `resolveCatalogIconUrl` remains defined in `apps/chat/src/utils/icon-path.ts` and continues to construct the app's `/api/v1/files/download` and `/api/themes/icon` paths. `apps/chat/src/utils/dial-file-to-attachment.ts` and its test SHALL be removed once the migration is verified.
 
 #### Scenario: App-owned URL construction never enters the library
 - **WHEN** the repository is inspected
-- **THEN** `libs/chat-hooks/src/**` contains no reference to `ApiEndpoints`, `/api/v1/files/download`, or `/api/themes/icon`, and `apps/chat/src/utils/icon-path.ts` still owns `resolveCatalogIconUrl`
+- **THEN** no non-test source file under `libs/chat-hooks/src/**` contains a reference to `ApiEndpoints`, `/api/v1/files/download`, or `/api/themes/icon` (spec fixtures under `tests/` may use such URLs as stub resolver return values), and `apps/chat/src/utils/icon-path.ts` still owns `resolveCatalogIconUrl`
 
 ### Requirement: MIME/accept-type helpers are host-agnostic public exports with consistent filtering semantics
 
-`@epam/ai-dial-chat-hooks` SHALL export `isDialFileAcceptType(type: unknown): type is DialFileAcceptType`, `mimeTypesToDialFileAcceptTypes(types?: string[]): DialFileAcceptType[] | undefined`, `mimeTypesToFileAccept(types?: string[]): string | undefined`, and `mimeTypesToAttachmentExtensionLabels(types: string[]): string`. `mimeTypesToFileAccept` SHALL derive its output by filtering `types` through `isDialFileAcceptType` (via `mimeTypesToDialFileAcceptTypes`) before joining, so it never includes a value `mimeTypesToDialFileAcceptTypes` would reject.
+`@epam/ai-dial-chat-hooks` SHALL export, from `libs/chat-hooks/src/files/attachment-types.ts`, `isDialFileAcceptType(type: string): type is DialFileAcceptType` (true for a dotted extension or any value containing `/`), `mimeTypesToDialFileAcceptTypes(types?: string[]): DialFileAcceptType[] | undefined`, `mimeTypesToFileAccept(types?: string[]): string | undefined`, and `mimeTypesToAttachmentExtensionLabels(types: string[]): string`. `mimeTypesToFileAccept` SHALL derive its output by filtering `types` through `isDialFileAcceptType` (via `mimeTypesToDialFileAcceptTypes`) before joining, so it never includes a value `mimeTypesToDialFileAcceptTypes` would reject. `mimeTypesToDialFileAcceptTypes` maps `*` to `*/*` and canonicalizes MIME aliases with `normalizeMimeType` (dotted extensions pass through untouched); `mimeTypesToFileAccept` returns `undefined` when `types` is omitted, when no accept type survives filtering, or when any surviving type is `*/*`.
 
 #### Scenario: `mimeTypesToFileAccept` filters out non-accept-type values
 - **WHEN** `mimeTypesToFileAccept` is called with a list containing at least one value that is not a valid `DialFileAcceptType`
@@ -53,11 +53,11 @@ resolution injected by the host.
 
 #### Scenario: `mimeTypesToFileAccept` and `mimeTypesToDialFileAcceptTypes` never disagree
 - **WHEN** `mimeTypesToFileAccept(types)` and `mimeTypesToDialFileAcceptTypes(types)` are both called with the same `types` input
-- **THEN** every value present in `mimeTypesToFileAccept`'s joined output corresponds to a value present in `mimeTypesToDialFileAcceptTypes`'s returned array, and vice versa
+- **THEN** whenever `mimeTypesToFileAccept` returns a string, every value in its joined output corresponds to a value present in `mimeTypesToDialFileAcceptTypes`'s returned array, and vice versa
 
 #### Scenario: Wildcard type short-circuits filtering
 - **WHEN** `types` includes a wildcard accept value
-- **THEN** `mimeTypesToFileAccept` and `mimeTypesToDialFileAcceptTypes` both resolve to the wildcard behavior they had before this change, unaffected by the filtering fix
+- **THEN** `mimeTypesToDialFileAcceptTypes` returns an array containing `*/*` and `mimeTypesToFileAccept` returns `undefined` (accept everything), unaffected by the filtering fix
 
 #### Scenario: `mimeTypesToAttachmentExtensionLabels` is unaffected by the filtering fix
 - **WHEN** `mimeTypesToAttachmentExtensionLabels` is called with any `types` input
@@ -65,7 +65,7 @@ resolution injected by the host.
 
 ### Requirement: `useAttachmentValidation` and `DialFileManagerModal` consume one shared implementation
 
-`libs/chat-hooks/src/attachment/useAttachmentValidation/useAttachmentValidation.ts` SHALL import `isDialFileAcceptType`/`mimeTypesToDialFileAcceptTypes`/`mimeTypesToFileAccept` from the new shared module instead of defining its own private copies. `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx` SHALL import `mimeTypesToDialFileAcceptTypes`/`mimeTypesToAttachmentExtensionLabels` from `@epam/ai-dial-chat-hooks`. `apps/chat/src/utils/attachment-types.ts` and its test SHALL be removed once both consumers are migrated.
+`libs/chat-hooks/src/attachment/useAttachmentValidation/useAttachmentValidation.ts` SHALL import `mimeTypesToFileAccept` from the shared module `libs/chat-hooks/src/files/attachment-types.ts` (the only one of the three helpers it uses) instead of defining its own private copies; `libs/chat-hooks/src/files/useFileAttachmentPicker/useFileAttachmentPicker.ts` likewise imports `mimeTypesToDialFileAcceptTypes` from that module. `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx` SHALL import `mimeTypesToAttachmentExtensionLabels` and `useFileAttachmentPicker` from `@epam/ai-dial-chat-hooks`, getting its accept types through `useFileAttachmentPicker` rather than calling `mimeTypesToDialFileAcceptTypes` itself. `apps/chat/src/utils/attachment-types.ts` and its test SHALL be removed once both consumers are migrated.
 
 #### Scenario: No private duplicate remains inside `useAttachmentValidation`
 - **WHEN** `libs/chat-hooks/src/attachment/useAttachmentValidation/useAttachmentValidation.ts` is inspected

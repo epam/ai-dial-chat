@@ -280,7 +280,7 @@ The context SHALL NOT re-sanitize or otherwise transform these values — it sur
 
 ### Requirement: AppConfigContext exposes the announcements list
 
-`AppConfigState.config` SHALL include an `announcements: AnnouncementItem[]` field.
+`AppConfigState.config` SHALL include an `announcements: AnnouncementListItem[]` field, typed with the `AnnouncementListItem` interface exported from `@epam/ai-dial-chat-hooks`.
 
 The initial (loading) value SHALL be `[]`. On a successful `GET /api/v1/client-config` response, it SHALL be populated from the response's `config.announcements` field. On error, or when the backend omits the field, it SHALL retain the `[]` default. A `null` or non-array value SHALL be normalized to `[]`.
 
@@ -364,7 +364,7 @@ Behaviour:
 ### Requirement: AppConfigContext exposes applicationVisualizers
 
 `AppConfigContext` (`apps/chat/src/context/AppConfigContext.tsx`) SHALL surface the
-`applicationVisualizers: Record<string, ApplicationVisualizer>` field from the
+`applicationVisualizers: ApplicationVisualizerRegistry` field (`Record<string, ApplicationVisualizer>`) from the
 `GET /api/v1/client-config` response to client consumers.
 
 Behaviour:
@@ -381,8 +381,8 @@ Behaviour:
   return a module-level constant rather than an inline `{}`, so a consumer's
   `useMemo`/`useCallback` dependencies are not invalidated on every render while config
   loads.
-- The type imported by the app SHALL be the same `ApplicationVisualizer` type exported
-  from `@epam/ai-dial-chat-shared`.
+- The type imported by the app SHALL be the same `ApplicationVisualizerRegistry` type
+  exported from `@epam/ai-dial-chat-shared`.
 
 Libs SHALL NOT read `AppConfigContext` for the registry — the app resolves the registry,
 partitions the attachments, and passes a concrete `GroupedVisualizerCanvasContent` value

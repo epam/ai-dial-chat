@@ -76,8 +76,8 @@ The frontend server-api module SHALL expose `duplicateConversation(conversationP
 `ConversationsContext` SHALL expose `duplicateConversation(id: string): Promise<string>` that performs an optimistic update, calls the server-api, and returns the new conversation ID.
 
 The optimistic lifecycle is:
-1. Before the API call, a placeholder `ConversationListItemDto` is prepended to the list. The placeholder carries a client-generated UUID as its `id`, the source conversation's `title`, `updatedAt: Date.now()`, and `sharedWithMe: false`, `publishedWithMe: false`, `isPinned: false`, `isReadonly: false`.
-2. Once the API call resolves, the placeholder's `id` is replaced in-place with the returned `newPath`.
+1. Before the API call, a placeholder `ConversationListItemDto` is prepended to the list. The placeholder carries a client-generated UUID as its `id`, the source conversation's `title` (or `''` when the source is not in the list), `updatedAt: Date.now()`, and `sharedWithMe: false`, `publishedWithMe: false`, `isPinned: false`, `isReadonly: false`, `isScheduledTask: false`.
+2. The source id is passed through `normalizeConversationId` before calling the server-api. Once the API call resolves, the placeholder's `id` is replaced in-place with the returned `newPath`.
 3. `silentRefreshConversations` is fired in the background to reconcile with the server without showing a loading state.
 4. On API failure, the placeholder is removed and the error is re-thrown.
 
@@ -94,7 +94,7 @@ The optimistic lifecycle is:
 - **THEN** the placeholder is removed from the list and the error is re-thrown so callers can handle it
 
 ### Requirement: Duplicate action in conversation row dropdown
-The conversation row three-dot dropdown SHALL include a Duplicate item (icon + translated label) for all conversations regardless of source.
+The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with `ConversationPanelI18nKeys.DuplicateError` and the response trace ID.
 
 #### Scenario: Duplicate action appears in menu
 - **WHEN** the user opens the three-dot menu for any conversation row
@@ -102,10 +102,10 @@ The conversation row three-dot dropdown SHALL include a Duplicate item (icon + t
 
 #### Scenario: Duplicate action triggers duplication and navigation
 - **WHEN** the user clicks Duplicate in the row dropdown
-- **THEN** the app calls `duplicateConversation` and navigates to the newly created conversation
+- **THEN** the app calls `duplicateConversation` and navigates to `getConversationRoute(newPath)`
 
 ### Requirement: Filter tab behavior after duplicating a read-only conversation
-After duplicating a read-only conversation the conversation panel filter tab MUST follow these rules:
+After duplicating a read-only conversation the conversation panel filter tab MUST follow these rules (applied in `apps/chat/src/app/app.tsx` `handleDuplicateReadonly`, invoked by the in-conversation button and by the panel dropdown only when the duplicated row is the currently active conversation):
 - If the active filter is **Organization** or **Shared with me** — switch to **My chats**, because the duplicated conversation does not appear under those filters.
 - If the active filter is **All** or **My chats** — leave the filter unchanged, because the duplicated conversation is already visible under those filters.
 
@@ -154,27 +154,28 @@ When a conversation is duplicated the chat settings (temperature, response forma
 - **THEN** the duplicated conversation's chat settings show the same system prompt
 
 ### Requirement: Read-only conversation view shows centered duplicate action button
-When a conversation is read-only (source bucket differs from user bucket), the `ConversationView` SHALL render a centered action button instead of the `Notification` info banner. The button SHALL display a duplicate icon and the translated text "Duplicate the conversation to be able to edit it".
+When a conversation is read-only (source bucket differs from user bucket), the `ConversationView` SHALL render a centered `NeutralButton` in place of the `ConversationInput` composer, preceded by an `ErrorMessageNotification` when a `duplicateError` is set. The button SHALL display an `IconCopy` icon and the translated text "Duplicate the conversation to be able to edit it".
 
 #### Scenario: Centered button rendered for read-only conversation
-- **WHEN** `isReadOnly` is `true` and `onDuplicateConversation` is provided
-- **THEN** the centered duplicate button is shown and the `Notification` is not
+- **WHEN** `isReadOnly` is `true`
+- **THEN** the centered duplicate button is shown and the conversation composer is not
 
 #### Scenario: Button invokes onDuplicateConversation
 - **WHEN** the user clicks the centered duplicate button
 - **THEN** `onDuplicateConversation` is called
 
 ### Requirement: i18n keys for duplicate feature
-The `conversationHistory` i18n namespace SHALL include:
-- `duplicateLabel`: short action label used in the dropdown (e.g., "Duplicate")
-- `duplicateReadOnlyDescription`: full sentence used in the centered button (e.g., "Duplicate the conversation to be able to edit it")
+The duplicate feature SHALL use these i18n keys:
+- `buttons.duplicate` (`ButtonsI18nKeys.Duplicate`): short action label used in the dropdown ("Duplicate")
+- `conversationPanel.duplicateReadOnlyDescription` (`ConversationPanelI18nKeys.DuplicateReadOnlyDescription`): full sentence used in the centered button ("Duplicate the conversation to be able to edit it")
+- `conversationPanel.duplicateError` (`ConversationPanelI18nKeys.DuplicateError`): error notification text ("Failed to duplicate the conversation. Please try again.")
 
-Both keys SHALL be present in all locale files and referenced through typed `ConversationHistoryI18nKeys` enum values.
+All keys SHALL be present in every locale file (today only `apps/chat/src/i18n/locales/en.json`) and referenced through the typed enums in `apps/chat/src/constants/translation-keys.ts`.
 
 #### Scenario: Keys present in English locale
 - **WHEN** `en.json` is loaded
-- **THEN** `conversationHistory.duplicateLabel` and `conversationHistory.duplicateReadOnlyDescription` are defined
+- **THEN** `buttons.duplicate`, `conversationPanel.duplicateReadOnlyDescription`, and `conversationPanel.duplicateError` are defined
 
 #### Scenario: Typed enum values exist
-- **WHEN** a component imports `ConversationHistoryI18nKeys`
-- **THEN** `ConversationHistoryI18nKeys.DuplicateLabel` and `ConversationHistoryI18nKeys.DuplicateReadOnlyDescription` resolve to the correct key strings
+- **WHEN** a component imports `ButtonsI18nKeys` and `ConversationPanelI18nKeys`
+- **THEN** `ButtonsI18nKeys.Duplicate`, `ConversationPanelI18nKeys.DuplicateReadOnlyDescription`, and `ConversationPanelI18nKeys.DuplicateError` resolve to the correct key strings

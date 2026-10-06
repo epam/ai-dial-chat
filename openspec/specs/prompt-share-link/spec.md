@@ -8,11 +8,11 @@ Prompt share links end to end: how `POST /api/v1/share` qualifies a bucket-relat
 
 ### Requirement: The frontend shares a prompt like any other catalog item
 
-`getShareLink` and `useShareLink` SHALL accept only the item's full resource id — the same `itemId` shape used for every other resource type. Neither accepts nor forwards a `resourceKind` parameter; that parameter, and the `ShareResourceKind`/`CreateShareLinkDtoResourceKindEnum` types it depended on, no longer exist (see `chat-hooks-sharing`).
+`useShareLink` (`libs/chat-hooks`) SHALL accept only the item's full resource id — the same `itemId` shape used for every other resource type — and send it as `createShareLinkDto: { itemId, access }` through the caller-supplied `shareApi.createShareLink`; there is no separate `getShareLink` wrapper. It neither accepts nor forwards a `resourceKind` parameter; that parameter, and the `ShareResourceKind`/`CreateShareLinkDtoResourceKindEnum` types it depended on, no longer exist (see `chat-hooks-sharing`).
 
 `SharePopoverContainer` SHALL call `useShareLink` with `item.id` for every entity type, Prompt included, with no per-type branch to attach a resource kind.
 
-`CatalogView.isShareVisible` SHALL return `true` for a Prompt item only when `item.isMyApp` is true.
+`isShareVisible` — returned by the `useCatalogSharing` hook (`apps/chat/src/hooks/useCatalogSharing/useCatalogSharing.ts`) that `CatalogView` consumes — SHALL return `true` for a Prompt item only when `item.isMyApp` is true.
 
 A prompt SHALL offer edit access, the same as Agent/Skill/Toolset — `CatalogEntityType.Prompt` is a member of `EDITABLE_ACCESS_TYPES`. `ShareInvitationService.createShareLink` maps `ShareAccess.Edit` to DIAL Core's `['READ', 'WRITE']` permissions for any resource type, prompts included, so there is no backend restriction backing a view-only default.
 

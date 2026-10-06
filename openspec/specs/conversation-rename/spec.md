@@ -22,6 +22,7 @@ interface RenameConversationPopupProps {
   onCancel: () => void;
   onGenerateWithAi: () => Promise<string>;
   labels: RenameConversationPopupLabels;
+  styles?: RenameConversationPopupStyles;
 }
 ```
 
@@ -32,7 +33,8 @@ The component renders a popup with:
 - A footer with Cancel and Save actions (Save uses the primary button variant)
 - Save is disabled when the trimmed, trailing-dot-stripped input value is empty, equals the trimmed
   `currentTitle`, or exceeds the 255-UTF-8-byte limit. While `isSaving` is `true`, the footer actions
-  are replaced by a loading indicator.
+  are removed and the popup body (input and AI trigger) is replaced by a `Spinner` loading indicator.
+- Pressing Enter in the input triggers the same Save path (ignored while Save is disabled)
 - An inline error message (`role="alert"`) shown per the precedence rules in
   `conversation-panel-rename-popup-ui`
 - `onClose` wired to `onCancel`
@@ -65,7 +67,7 @@ an application Context, or a `server-api`/generated-client module.
 #### Scenario: Footer actions are unavailable while saving
 
 - **WHEN** `isSaving` is true
-- **THEN** the footer actions are replaced by a loading indicator
+- **THEN** the footer actions are removed and a loading indicator renders in place of the input
 
 #### Scenario: Input enforces the 255-byte maximum
 
@@ -107,12 +109,12 @@ an application Context, or a `server-api`/generated-client module.
 
 ### Requirement: Rename action appears in the conversation panel action menu
 
-`ConversationPanelView` SHALL include a "Rename" action in the `DropdownItem[]` returned by `getActions`, inserted between Pin and Delete. The item uses icon `IconPencil` from `@tabler/icons-react`, label from i18n key `conversationHistory.renameLabel` ("Rename"), and `onClick` opens the rename dialog for that conversation via the app's rename dialog state (backed by `useAsyncConfirmDialog` from `chat-hooks-conversation-panel-controller`), setting `pending` to `{ id: contextId, title: panelItem.title }`.
+`ConversationPanelView` (`apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx`) SHALL include a "Rename" action with key `rename` in the `DropdownItem[]` returned by `getActions` for an owned (non-read-only) conversation, placed directly after Pin and before Duplicate (Delete stays last). Read-only items (shared with me, published with me, or otherwise `isReadonly`, per `deriveConversationRowActionState`) SHALL NOT get the Rename action. The item uses icon `IconPencilMinus` from `@tabler/icons-react`, label from i18n key `buttons.rename` (`ButtonsI18nKeys.Rename`, "Rename"), and `onClick` opens the rename dialog for that conversation via the app's rename dialog state (backed by `useAsyncConfirmDialog` from `chat-hooks-conversation-panel-controller`), calling `openRenameDialog({ id: contextId, title: panelItem.title }, rowActionsTriggerRef.current)` so focus can return to the row-actions trigger.
 
-On confirming a rename, `ConversationPanelView` SHALL call the context `renameConversation` and SHALL NOT navigate to a new route afterwards, because the conversation id (and therefore its route) is unchanged by the rename.
+On confirming a rename, `ConversationPanelView` SHALL call the context `renameConversation`, show the `EntityOperation.Renamed` success notification (on failure the popup stays open with `conversationPanel.rename.renameError`), and SHALL NOT navigate to a new route afterwards, because the conversation id (and therefore its route) is unchanged by the rename.
 
 i18n keys:
-- `conversationHistory.renameLabel` — "Rename"
+- `buttons.rename` — "Rename"
 
 #### Scenario: Rename action is present in the actions menu
 
@@ -171,7 +173,7 @@ State ownership: `ConversationsContext` — no new context state needed beyond t
 
 ### Requirement: RenameConversationPopup component tests live in `libs/conversation-panel`
 
-Component-level unit tests SHALL be written under `libs/conversation-panel`'s test conventions using Vitest and @testing-library/react, covering the scenarios defined in `conversation-panel-rename-popup-ui`. `apps/chat/src/components/RenameConversationPopup/tests/RenameConversationPopup.spec.tsx` SHALL be replaced by a thin wiring test that renders the real component connected to the app's real save/AI-generation operations and a real `useTranslation`-backed labels object.
+Component-level unit tests SHALL be written under `libs/conversation-panel`'s test conventions using Vitest and @testing-library/react, covering the scenarios defined in `conversation-panel-rename-popup-ui`. The component tests live in `libs/conversation-panel/src/components/RenameConversationPopup/tests/RenameConversationPopup.spec.tsx`. The app keeps no separate popup spec; its thin wiring tests live in `apps/chat/src/components/ConversationPanel/tests/ConversationPanelView.spec.tsx`, which renders the real component through `ConversationPanelView` connected to the app's save/AI-generation operations and a real i18next-backed labels object.
 
 #### Scenario: App wiring test covers connection to real operations
 

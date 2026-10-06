@@ -13,29 +13,34 @@ The citation card popover that shows source details, with preview, navigation, a
 `CitationDropdown` SHALL render the `CitationCard` panel inside a controlled 2.0 `Dropdown` overlay (`trigger={[]}`, `placement="bottom-end"`, `renderOverlay`) anchored to the `CitationMarker` trigger. It SHALL NOT use a `Tooltip` or `InteractiveTooltip`: both render nothing on a touch-only (`hover: none`) or mobile device, which leaves the card unreachable by tap. The card SHALL open from a tap on mobile and a click on desktop. The panel has:
 
 **Header** (horizontal flex, space-between):
-- Left: file type icon (from `getAttachmentIcon`) + source name (`DialEllipsisTooltip` for truncation)
-- Right: switcher control (hidden when `annotationCount === 1`, otherwise shows `"<N/M>"` with looping previous/next icon buttons at `ElementSize.Small`)
+- Left: optional `headerIcon` + header text (`EllipsisTooltip` for truncation). For a previewable file (`onPreview` provided and the active source is not `text/html`/`application/xhtml+xml`) the header text is the file extension from `getSourceFileExtension`, and when no `headerIcon` is supplied the UI kit's `FileIcon` for that extension is shown; otherwise the header text is `group.sourceName`.
+- Right: switcher control (hidden when the group has one annotation, otherwise shows `labels.formatSwitcherText(current, total)` with looping previous/next `GhostIconButton`s at `ElementSize.Small`)
 
 **Body**:
-- Subheader: `body.title` (omitted when absent), `dial-body-semi-text`
-- Description: `body.quote` (optional, omitted when absent), `dial-small-text text-secondary`
+- Subheader: `body.title` (omitted when absent), `dial-body-semi-text` by default
+- Description: `body.quote` (optional) rendered through `MarkdownRenderer`, `dial-small-text` by default, coloured by the `--cc-quote-text` CSS variable (fallback `--text-secondary`)
 
-**Footer** (buttons fit content, left-aligned):
+**Footer** (buttons fit content, start-aligned):
 - "Preview" button (`PrimaryButton`, `ElementSize.Small`) — rendered only when the `onPreview` prop is provided.
-- Second button, always rendered:
-  - When `onPreview` is provided: label depends on source type — `text/html` or `application/xhtml+xml` → "Open in browser" (`citations.popup.openInBrowser`); all other types → "Download" (`citations.popup.download`).
-  - When `onPreview` is **not** provided: label is always "Open in browser" (`citations.popup.openInBrowser`), regardless of source content type — a group with no preview capability is by definition an external reference, never a local download.
+- Second button (`PrimaryButton`, `ElementSize.Small`), rendered for a web link always and for a previewable file only while `isDownloadEnabled` (default `true`):
+  - When `onPreview` is provided: label depends on the active annotation's source type — `text/html` or `application/xhtml+xml` → `labels.openInBrowser`; all other types → `labels.download`.
+  - When `onPreview` is **not** provided: label is always `labels.openInBrowser`, regardless of source content type — a group with no preview capability is by definition an external reference, never a local download.
 
-Panel styling: `w-[400px] max-w-full` (so the card fits a viewport narrower than 400px), `bg-layer-raised`, `border border-primary`, `rounded-lg`, `p-4`, `shadow-lg`.
+Panel styling: `w-[400px] max-w-full` (so the card fits a viewport narrower than 400px), `rounded-lg`, `p-4`, `shadow-lg`, with the background from the `.card` module class (`--cc-card-bg`, fallback `--bg-layer-raised`); the card has no border.
 
 The component SHALL accept:
 ```ts
 interface CitationCardProps {
   group: AnnotationGroup;
   activeIndex: number;
-  onIndexChange: (i: number) => void;
+  onIndexChange: (index: number) => void;
   onPreview?: (annotation: Annotation) => void;
   onOpenInBrowser: (annotation: Annotation) => void;
+  isDownloadEnabled?: boolean;
+  headerIcon?: ReactNode;
+  labels: CitationCardLabels;
+  typography?: CitationCardTypography;
+  colors?: CitationCardColors;
 }
 ```
 
@@ -51,9 +56,17 @@ interface CitationDropdownProps {
   onPreview?: (annotation: Annotation) => void;
   isPreviewable?: (annotation: Annotation) => boolean;
   onOpenInBrowser: (annotation: Annotation) => void;
+  isDownloadEnabled?: boolean;
+  isPreviewOpen?: boolean;
+  icon?: ReactNode;
+  headerIcon?: ReactNode;
+  cardLabels: CitationCardLabels;
+  markerLabels: CitationMarkerLabels;
+  cardTypography?: CitationCardTypography;
+  markerLabelClassName?: string;
 }
 ```
-`CitationDropdown` SHALL only invoke `citationCard.closePopup()` on preview (see next requirement) when `onPreview` is provided; when `onPreview` is absent, there is no preview action to wrap.
+`CitationDropdown` SHALL only invoke `citationCard.closePopup()` on preview (see next requirement) when `onPreview` is provided; when `onPreview` is absent, there is no preview action to wrap. When `isPreviewOpen` is `true` (the host's preview panel is already open) and a preview action exists, a marker click SHALL preview the active annotation directly instead of opening the card.
 
 `useCitationMarkdownComponents` SHALL accept an optional host-supplied
 `isPreviewable(annotation)` callback and forward it to `CitationDropdown`.
@@ -79,9 +92,9 @@ DIAL-specific classification SHALL remain outside `libs/quotations`.
 - **THEN** Preview becomes available and the second action is Download
 - **AND** switching back restores the single Open in browser action
 
-**i18n keys**: `citations.popup.switcher`, `citations.popup.preview`, `citations.popup.openInBrowser`, `citations.popup.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.popup.ariaLabel`.
+**i18n keys** (supplied by the chat app through `CitationCardLabels`; the library reads no i18n): `citations.popup.switcher`, `basic.preview`, `citations.popup.openInBrowser`, `buttons.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.marker.ariaLabel` (dialog label), `buttons.showMore`, `buttons.showLess`.
 **RTL**: switcher chevron icons SHALL be mirrored with `rtl:scale-x-[-1]`; all layout uses logical flex properties.
-**Accessibility**: `role="dialog"`, `aria-modal="true"`, `aria-label` derived from source name.
+**Accessibility**: `role="dialog"`, `aria-modal="true"`, `aria-label` from `labels.ariaLabel` (the app passes `citations.marker.ariaLabel`, "Citation from {{source}}").
 **Feature flag**: none.
 
 #### Scenario: Single annotation hides the switcher
@@ -120,7 +133,7 @@ DIAL-specific classification SHALL remain outside `libs/quotations`.
 
 `CitationCard` SHALL render `body.quote` clamped to six lines by default. When, and only when, the collapsed quote overflows that clamp, it SHALL render a "Show more" toggle (`LinkButton`, `ElementSize.Small`) below the quote. Overflow SHALL be measured from the rendered element (`scrollHeight > clientHeight`) and re-measured on resize while collapsed.
 
-Activating the toggle SHALL lift the clamp and cap the quote at `min(20rem, 50vh)` with vertical scrolling; the expanded quote SHALL be keyboard-focusable (`tabIndex=0`). The toggle's label SHALL switch to "Show less", and activating it again SHALL restore the clamp.
+Activating the toggle SHALL lift the clamp and cap the quote at `min(20rem, 50vh)` with vertical scrolling; the expanded quote SHALL be keyboard-focusable (`tabIndex=0`). The toggle's label SHALL switch to "Show less", and activating it again SHALL restore the clamp. Overflow counts only when `scrollHeight` exceeds `clientHeight` by more than 1px.
 
 The toggle SHALL expose `aria-expanded` reflecting the state and `aria-controls` pointing at the quote element. The card SHALL reset to collapsed whenever the active annotation or its quote changes, including navigation through the switcher.
 
@@ -276,7 +289,7 @@ The reason navigation buttons (Prev/Next) must not cause a close: they update `a
 
 ### Requirement: "Preview" action opens the cited attachment inline
 
-When the "Preview" button is clicked in `CitationCard`, the app SHALL invoke the existing attachment-preview flow with the `Annotation.body.source.attachment` converted to a `DisplayAttachment`.
+When the "Preview" button is clicked in `CitationCard`, the app (`handleCitationPreview` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) SHALL first try to open the annotation in the attachment canvas — `annotationToPdfCanvasContent`, then `annotationToOoxmlCanvasContent`, opened with the attachment title or decoded last URL segment as the file name — and only when neither applies invoke the existing attachment-preview flow with the `Annotation.body.source.attachment` converted to a `DisplayAttachment` (`annotationToDisplayAttachment`).
 
 #### Scenario: Preview opens the attachment
 
@@ -287,8 +300,8 @@ When the "Preview" button is clicked in `CitationCard`, the app SHALL invoke the
 
 ### Requirement: Second footer button opens the source URL or downloads the file
 
-When the second footer button is clicked, the `onOpenInBrowser` handler in `useCitationMarkdownComponents` SHALL:
-- **DIAL file URLs** (`url.startsWith('files/')`): resolve the download URL via `resolveDialFileDownloadUrl`, then trigger a browser download using a programmatically created `<a download>` element clicked via `.click()`. The `download` attribute SHALL be set to `attachment.title` if present, otherwise the last path segment of the URL.
+When the second footer button is clicked, the host's `onOpenInBrowser` callback passed to `useCitationMarkdownComponents` (`handleCitationOpenInBrowser` in `ConversationMessageItem`, which calls `openAnnotationAttachment(attachment, resolveDialFileDownloadUrl)` from `libs/chat-hooks/src/files/annotation.ts`) SHALL, after stripping any `#` fragment from the URL:
+- **DIAL file URLs** (`isDialFileId`): resolve the download URL via `resolveDialFileDownloadUrl`, then trigger a browser download through `triggerAnchorDownload` (a programmatic `<a download>` click). The `download` attribute SHALL be set to `attachment.title` if present, otherwise the last path segment of the URL.
 - **Web URLs** (all other values): call `window.open(url, '_blank', 'noopener,noreferrer')`.
 
 Clicking this button SHALL NOT close the citation popup.

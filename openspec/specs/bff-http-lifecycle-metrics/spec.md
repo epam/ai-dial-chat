@@ -1,7 +1,7 @@
 # bff-http-lifecycle-metrics Specification
 
 ## Purpose
-TBD - created by archiving change complete-bff-http-observability. Update Purpose after archive.
+Raw HTTP transport-lifecycle metrics for the BFF's main `http.Server` (`apps/chat-api/src/telemetry/http-lifecycle-listener.ts`, `http-lifecycle-metrics.ts`): arrival, in-flight, and exactly-once terminal-duration instruments that also observe guard rejections, body-parser failures, and unmatched routes.
 
 ## Requirements
 

@@ -1,10 +1,10 @@
 # generated-api-client-integration Specification
 
 ## Purpose
-Defines how frontend domain modules consume the generated `@epam/chat-api-client` OpenAPI client — factory-created, same-origin, cookie-forwarding API instances with CSRF/unauthorized/telemetry middleware — instead of hand-rolled `fetch` calls, keeping app-side API wrappers thin adapters over generated methods.
+Defines how frontend domain modules consume the generated `@epam/ai-dial-chat-api-client` OpenAPI client — factory-created, same-origin, cookie-forwarding API instances with CSRF/unauthorized/telemetry middleware — instead of hand-rolled `fetch` calls, keeping app-side API wrappers thin adapters over generated methods.
 ## Requirements
 ### Requirement: Client configuration factory
-`apps/chat/src/server-api/api-client.ts` SHALL export a `createApiConfiguration()` factory function that returns a `Configuration` instance configured with `basePath: ''`, `credentials: 'include'`, and the CSRF, unauthorized, and telemetry middlewares. It SHALL also export pre-built module-level singleton instances: `deploymentsApi`, `conversationsApi`.
+`apps/chat/src/server-api/api-client.ts` SHALL export a `createApiConfiguration()` factory function that returns a `Configuration` instance configured with `basePath: ''`, `credentials: 'include'`, and the CSRF, unauthorized, and telemetry middlewares. It SHALL also export pre-built module-level singleton instances built from one shared `createApiConfiguration()` result — one per generated API class the app consumes (e.g. `deploymentsApi`, `conversationsApi`, `filesApi`, `skillsApi`, `shareApi`, `promptsApi`, `publishApi`, `toolsetsApi`).
 
 #### Scenario: Same-origin requests
 - **WHEN** a generated API class is instantiated via the factory
@@ -40,7 +40,7 @@ Defines how frontend domain modules consume the generated `@epam/chat-api-client
 ---
 
 ### Requirement: Unauthorized (401) middleware
-`apps/chat/src/server-api/api-client.ts` SHALL obtain its unauthorized middleware by calling `@epam/ai-dial-chat-hooks`'s `createUnauthorizedMiddleware({ notifyUnauthorized, refreshCsrfToken, isInvalidCsrfErrorBody })` with `apps/chat/src/server-api/base.ts`'s existing implementations, instead of defining `unauthorizedMiddleware` inline. The middleware SHALL intercept HTTP 401 responses, notify all registered `onUnauthorized` listeners, throw `UnauthorizedError` with the request URL, and refresh-and-retry exactly once on a classified invalid-CSRF response.
+`apps/chat/src/server-api/api-client.ts` SHALL obtain its unauthorized middleware by calling `@epam/ai-dial-chat-hooks`'s `createUnauthorizedMiddleware({ notifyUnauthorized, refreshCsrfToken, isInvalidCsrfErrorBody, getCsrfToken, setCsrfToken, createUnauthorizedError })` with `apps/chat/src/server-api/base.ts`'s existing implementations (`refreshCsrfToken` adapted from `base.ts`'s `CsrfRefreshStatus` enum to the factory's plain-literal `CsrfRefreshOutcome`, and `createUnauthorizedError` returning `new UnauthorizedError(url)`), instead of defining `unauthorizedMiddleware` inline. The middleware SHALL intercept HTTP 401 responses, notify all registered `onUnauthorized` listeners, throw `UnauthorizedError` with the request URL, and refresh-and-retry exactly once on a classified invalid-CSRF response.
 
 #### Scenario: 401 response received
 - **WHEN** the backend returns HTTP 401 for any request made via a generated API class
@@ -80,45 +80,45 @@ The telemetry middleware SHALL record the HTTP method, URL, response status, and
 ---
 
 ### Requirement: Deployments domain module uses generated client
-`apps/chat/src/server-api/deployments.ts` SHALL delegate to `DeploymentsApi` from `@epam/chat-api-client`. The exported function signatures (`getDeployments`, `getDeployment`) SHALL remain identical.
+The deployments wrappers SHALL delegate to the `deploymentsApi` singleton (`DeploymentsApi` from `@epam/ai-dial-chat-api-client`): `apps/chat/src/server-api/deployments.api.ts` exports `getDeployments(interfaceType?, refresh?)`, and `apps/chat/src/server-api/deployments.ts` exports `getDeploymentConfiguration(deploymentName)` and `getDeploymentDetails(deploymentId)`. There is no single-deployment `getDeployment` wrapper.
 
 #### Scenario: List deployments
-- **WHEN** `getDeployments()` is called
-- **THEN** it SHALL return a deployment list via `DeploymentsApi.listDeployments()`
+- **WHEN** `getDeployments(interfaceType, refresh)` is called
+- **THEN** it SHALL return a `DeploymentsResponseDto` via `deploymentsApi.listDeployments({ interfaceType, refresh })`
 
-#### Scenario: Get single deployment
-- **WHEN** `getDeployment(deploymentName)` is called
-- **THEN** it SHALL return a single deployment via `DeploymentsApi.getDeployment({ deploymentName })`
+#### Scenario: Get deployment configuration and details
+- **WHEN** `getDeploymentConfiguration(deploymentName)` or `getDeploymentDetails(deploymentId)` is called
+- **THEN** it SHALL delegate to `deploymentsApi.getDeploymentConfiguration({ deployment })` or `deploymentsApi.getDeploymentDetails({ deployment })` respectively
 
 ---
 
 ### Requirement: Conversations domain module uses generated client
-`apps/chat/src/server-api/conversations.api.ts` SHALL delegate to `ConversationsApi` from `@epam/chat-api-client`. The exported function signatures (`createConversation`, `getConversation`, `saveConversation`, `deleteConversation`, `getConversationMetadata`) SHALL remain identical.
+`apps/chat/src/server-api/conversations.api.ts` SHALL delegate to `ConversationsApi` from `@epam/ai-dial-chat-api-client`. Its exported wrappers include `createConversation`, `getConversation`, `saveConversation`, `deleteConversation`, `markConversationViewed`, `listConversations`, `renameConversation`, `generateConversationTitle`, `duplicateConversation`, `deleteAllConversations`, `watchConversation`, and `attachToGeneration`; the generated `ConversationsApi.getConversationMetadata` has no app wrapper.
 
 #### Scenario: Create conversation
-- **WHEN** `createConversation(firstMessage)` is called
-- **THEN** it SHALL POST via `ConversationsApi` and return a `Conversation`
+- **WHEN** `createConversation(firstMessage, deploymentId, attachments?, configurationValue?, formValue?, skills?)` is called
+- **THEN** it SHALL POST via `conversationsApi.createConversation`, nesting any attachments, configuration value, form value, or skills under `custom_content`
 
 #### Scenario: Get conversation by path
-- **WHEN** `getConversation(conversationPath)` is called
-- **THEN** it SHALL GET via `ConversationsApi` with the `path` query parameter encoded correctly
+- **WHEN** `getConversation(conversationPath, signal?)` is called
+- **THEN** it SHALL GET via `ConversationsApi` with the `path` query parameter encoded correctly, forwarding the optional `AbortSignal`
 
 #### Scenario: Save conversation
-- **WHEN** `saveConversation(conversationPath, conversation)` is called
-- **THEN** it SHALL PUT via `ConversationsApi` with the `path` query parameter and conversation body
+- **WHEN** `saveConversation(conversationPath, conversation, signal?)` is called
+- **THEN** it SHALL PUT via `ConversationsApi` with the `path` query parameter and a `saveConversationBodyDto: { conversation }` body
 
 #### Scenario: Delete conversation
 - **WHEN** `deleteConversation(conversationPath)` is called
 - **THEN** it SHALL DELETE via `ConversationsApi` with the encoded `path` query parameter
 
-#### Scenario: Get conversation metadata
-- **WHEN** `getConversationMetadata(conversationPath, { permissions: true })` is called
-- **THEN** it SHALL GET via `ConversationsApi` with both `path` and `permissions` query parameters
+#### Scenario: Streaming reconnect wrappers use Raw generated methods
+- **WHEN** `watchConversation` or `attachToGeneration` is called
+- **THEN** it SHALL call `conversationsApi.watchConversationRaw`/`conversationsApi.attachToGenerationRaw` to obtain the raw streaming `Response`
 
 ---
 
 ### Requirement: `base.ts` infrastructure symbols preserved
-`UnauthorizedError`, `onUnauthorized`, `setCsrfToken`, `getCsrfToken`, `isValidResponse`, and `hasRequiredProperties` SHALL remain exported from `apps/chat/src/server-api/base.ts` throughout and after the migration. The `get`/`post`/`put`/`del` helpers and entries in `ApiEndpoints` that are no longer referenced by any module (excluding `chat-stream.api.ts`) SHALL be removed after all domain modules are migrated.
+`UnauthorizedError`, `onUnauthorized`, `setCsrfToken`, `getCsrfToken`, `isValidResponse`, and `hasRequiredProperties` SHALL remain exported from `apps/chat/src/server-api/base.ts` throughout and after the migration. The `del` helper has been removed; `get`, `post`, and `put` remain exported from `base.ts` because `ThemeContext.tsx` still calls `get` and `chat.api.ts` still calls `post`.
 
 #### Scenario: 401 error identity preserved
 - **WHEN** any code catches an error thrown by the unauthorized middleware
@@ -127,21 +127,21 @@ The telemetry middleware SHALL record the HTTP method, URL, response status, and
 
 #### Scenario: Streaming module unaffected
 - **WHEN** `chat-stream.api.ts` is compiled after the migration
-- **THEN** it SHALL still resolve `ApiEndpoints.CONVERSATIONS` and `getCsrfToken` from `base.ts` without errors
+- **THEN** it SHALL still resolve `ApiEndpoints.CONVERSATIONS`, `getCsrfToken`, and `setCsrfToken` from `base.ts` without errors
 
 ---
 
-### Requirement: `@epam/chat-api-client` is a declared dependency of `apps/chat`
-`apps/chat/package.json` (or the workspace root `package.json` with appropriate Nx project boundary configuration) SHALL declare `@epam/chat-api-client` as a dependency so `nx graph` shows the correct lib → app edge.
+### Requirement: `@epam/ai-dial-chat-api-client` is a declared dependency of `apps/chat`
+`apps/chat` SHALL resolve `@epam/ai-dial-chat-api-client` as a workspace package so `nx graph` shows the correct lib → app edge. `apps/chat/package.json` does not list it; the edge comes from Nx's import inference over the npm workspace (`libs/*`), backed by the TypeScript project reference to `libs/chat-api-client/tsconfig.lib.json` in `apps/chat/tsconfig.app.json` and the `@epam/ai-dial-chat-api-client` → `libs/chat-api-client/src/index.ts` alias in `apps/chat/vite.config.mts`.
 
 #### Scenario: Dependency graph edge
 - **WHEN** `npm exec nx graph` is run after the migration
 - **THEN** `apps/chat` SHALL show an explicit dependency on `libs/chat-api-client`
 
 ### Requirement: Skills domain module uses generated client
-`apps/chat/src/server-api/api-client.ts` SHALL export a `skillsApi` singleton, built from `SkillsApi` in `@epam/chat-api-client` using the shared `createApiConfiguration()` factory, alongside the existing `deploymentsApi`/`conversationsApi`/`filesApi` singletons.
+`apps/chat/src/server-api/api-client.ts` SHALL export a `skillsApi` singleton, built from `SkillsApi` in `@epam/ai-dial-chat-api-client` using the shared `createApiConfiguration()` factory, alongside the existing `deploymentsApi`/`conversationsApi`/`filesApi` singletons.
 
-`apps/chat/src/server-api/skills.api.ts` SHALL provide thin wrapper functions for all 10 skill operations, delegating to `skillsApi`, following the exact pattern `apps/chat/src/server-api/files.api.ts` already establishes for its own domain.
+`apps/chat/src/server-api/skills.api.ts` SHALL provide thin wrapper functions for every skill operation (`listCatalogSkills`, `listSkills`, `listSkillFiles`, `getSkillMetadata`, `downloadSkill`, `downloadSkillFile`, `createSkill`, `updateSkill`, `importSkillArchive`, `uploadSkillFile`, `deleteSkill`, `deleteSkillFile`, `createSkillGroupingFolder`, `deleteSkillGroupingFolder`), delegating to `skillsApi`, following the exact pattern `apps/chat/src/server-api/files.api.ts` already establishes for its own domain.
 
 #### Scenario: skillsApi singleton is exported
 - **WHEN** `apps/chat/src/server-api/api-client.ts` is inspected
@@ -151,12 +151,12 @@ The telemetry middleware SHALL record the HTTP method, URL, response status, and
 - **WHEN** `downloadSkill`/`downloadSkillFile` are called from `apps/chat/src/server-api/skills.api.ts`
 - **THEN** they call `skillsApi.downloadSkillRaw(...)`/`skillsApi.downloadSkillFileRaw(...)` to obtain the raw `fetch` `Response` (whose `.body` is a `ReadableStream`), documenting the same generator gap `files.api.ts:downloadFile` already documents for `application/octet-stream`/`application/zip` responses
 
-#### Scenario: ETag-returning mutations use Raw generated methods
-- **WHEN** `uploadSkill`, `uploadSkillFile`, `deleteSkillFile`, or `createSkillGroupingFolder` are called from `skills.api.ts` and the caller needs the returned `ETag` header
-- **THEN** the wrapper calls the corresponding `*Raw` generated method to read `response.headers.get('etag')`, since the generator does not surface response headers on the non-`Raw` method's parsed return value
+#### Scenario: ETag-returning mutations use normal generated methods
+- **WHEN** `createSkill`, `updateSkill`, `uploadSkillFile`, `deleteSkillFile`, or `createSkillGroupingFolder` are called from `skills.api.ts`
+- **THEN** the wrapper calls the plain (non-`Raw`) generated method, because the new ETag is returned in the JSON response body (e.g. `SkillUploadResponseDto.etag`) rather than as an HTTP response header; `updateSkill` requires an `ifMatch` argument
 
 #### Scenario: Non-binary, non-ETag operations use normal generated methods
-- **WHEN** `listSkills`, `listSkillFiles`, `deleteSkill`, or `deleteSkillGroupingFolder` are called from `skills.api.ts`
+- **WHEN** `listCatalogSkills`, `listSkills`, `listSkillFiles`, `getSkillMetadata`, `importSkillArchive`, `deleteSkill`, or `deleteSkillGroupingFolder` are called from `skills.api.ts`
 - **THEN** they use the normal (non-`Raw`) generated method, since their response is a small JSON body with no header the caller needs
 
 #### Scenario: No hand-edited generated files
