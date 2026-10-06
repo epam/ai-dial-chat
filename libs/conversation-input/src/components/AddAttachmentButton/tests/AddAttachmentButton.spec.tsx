@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AddAttachmentButton } from '../AddAttachmentButton';
 
@@ -106,5 +107,37 @@ describe('AddAttachmentButton', () => {
 
     expect(await screen.findByText('Skills overlay')).toBeTruthy();
     expect(renderOverlay).toHaveBeenCalledWith(expect.any(Function), 0);
+  });
+
+  it('does not open the desktop menu when isDisabled is true', async () => {
+    render(<AddAttachmentButton {...defaultProps} isDisabled />);
+    await userEvent.click(screen.getByLabelText('Add'));
+    expect(screen.queryByText('Attach file')).toBeNull();
+  });
+
+  it('does not open the desktop menu with overlays when isDisabled is true', async () => {
+    render(
+      <AddAttachmentButton
+        {...defaultProps}
+        isDisabled
+        menuOverlays={[
+          {
+            key: 'prompts',
+            title: 'Prompts',
+            icon: null,
+            renderOverlay: () => null,
+          },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByLabelText('Add'));
+    expect(screen.queryByText('Prompts')).toBeNull();
+  });
+
+  it('does not open the mobile sheet when isDisabled is true', async () => {
+    mockUseIsMobile.mockReturnValue(true);
+    render(<AddAttachmentButton {...defaultProps} isDisabled />);
+    await userEvent.click(screen.getByLabelText('Add'));
+    expect(screen.queryByText('Attach file')).toBeNull();
   });
 });
