@@ -476,6 +476,14 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
             }),
           );
         }),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            ModelsActions.addInstalledModelsFail({
+              references: payload.references,
+            }),
+          );
+        }),
       );
     }),
   );
