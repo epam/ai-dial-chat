@@ -37,4 +37,10 @@ GHSA-r28c-9q8g-f849 exp:2026-12-31
 # and 6.x is ESM-only while plotly.js does
 # require('maplibre-gl/dist/maplibre-gl-unminified').
 
-CVE-2026-85061 exp:2026-10-10
+CVE-2026-85061 exp:2026-12-31
+
+# http-cache-semantics
+# Reported against the copy bundled with npm in the node:24-alpine base image;
+# not a project dependency, and no fixed version is available yet.
+
+CVE-2026-93748 exp:2026-12-31
