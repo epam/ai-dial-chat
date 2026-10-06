@@ -5,7 +5,7 @@ import { ToolsetsService } from '../toolsets.service';
  * ToolsetsService is a pure delegation facade — its business logic now
  * lives in ToolsetsListingService, ToolsetsMutationService, and
  * ToolsetsAuthService (see
- * openspec/changes/split-deployments-toolsets-services/design.md). These
+ * openspec/changes/archive/2026-08-07-split-deployments-toolsets-services/design.md). These
  * tests only verify each facade method forwards to the right sub-service
  * unchanged; behavior is covered by that sub-service's own spec.
  */

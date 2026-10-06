@@ -18,7 +18,7 @@ export interface SkillArchiveImportResult {
 }
 
 /**
- * Orchestrates `POST /api/v1/skills/import` (design.md D2/D5,
+ * Orchestrates `POST /api/v1/skills/import` (`openspec/changes/archive/2026-08-20-extend-skill-upload-with-skill-md/design.md` D2/D5,
  * `extend-skill-upload-with-skill-md`, building on
  * `add-skill-archive-import`): selects the standalone-manifest or archive
  * extractor by the uploaded field's exact filename, then calls the existing,

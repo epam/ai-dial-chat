@@ -430,7 +430,7 @@ export const isExcelRcRangeSelector = (
  * any field fails validation (non-integer/negative offsets, `end < start`,
  * a non-integer-array `path`, or a non-string `text`). `endExclusive` is the
  * wire's `end` copied through unchanged — already exclusive, not `end + 1`
- * (see `design.md` D3).
+ * (see `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md` D3).
  */
 const normalizeDocxSelector = (
   selector: DocxRangeSelector,
@@ -458,7 +458,7 @@ const normalizeDocxSelector = (
 /**
  * Converts one `pptx_text_range` selector to a location, or `undefined` when
  * any field fails validation. `endExclusive` is the wire's `end` copied
- * through unchanged (see `design.md` D3).
+ * through unchanged (see `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md` D3).
  */
 const normalizePptxSelector = (
   selector: PptxRangeSelector,

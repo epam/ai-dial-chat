@@ -29,9 +29,10 @@ and both go through this one hook:
 
 - **Settings → Preferences tab** (`settings-preferences-tab`) — the desktop home. The Settings page
   is behind no feature flag; only the overlay host can hide it (`OverlayFeature.HideSettingsPage`).
-- **Mobile `NavigationSheet`** — retained because the sheet has no Settings entry point of its own
-  (see `user-menu`). The keyboard group is built by `useNavigationMenuGroups` and passed only to
-  the sheet.
+- **Mobile `NavigationSheet`** — a quick shortcut alongside the sheet's own Settings row (its
+  profile page renders one whenever `onSettings` is passed, i.e. unless the overlay host sets
+  `OverlayFeature.HideSettingsPage`). The keyboard group is built by `useNavigationMenuGroups`
+  and passed only to the sheet.
 
 Both surfaces omit the keyboard-shortcut control when the overlay host sets
 `OverlayFeature.HideUserSettings` or `OverlayFeature.HideKeyboardShortcuts`.

@@ -130,7 +130,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                 id={collapsibleTextId}
                 ref={contentRef}
                 className={mergeClasses(
-                  // Bleed room for chip edges — see design.md Decision 3a.
+                  // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
                   'relative -me-1 -ms-1 w-[calc(100%+8px)] overflow-hidden pe-1 ps-1',
                   isOverflowing && styles.collapsibleText,
                   isOverflowing && !isCollapsed && styles.expandedText,

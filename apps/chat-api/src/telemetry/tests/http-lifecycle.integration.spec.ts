@@ -120,7 +120,7 @@ class TestController {
   }
 
   /* Writes headers and one chunk, then deliberately never calls `res.end()` — the reference
-   * shape of a long-lived SSE route (design.md's `POST /api/v1/conversations/watch`), used here
+   * shape of a long-lived SSE route (`openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md`'s `POST /api/v1/conversations/watch`), used here
    * to simulate a mid-stream client disconnect without depending on any real business route. */
   @Get('sse')
   sse(@Res() res: ExpressResponse): void {
@@ -181,7 +181,7 @@ const buildApp = async (options?: {
 };
 
 /*
- * Proves design.md D1's mechanism against the *actual* Nest/Express pipeline (helmet,
+ * Proves `openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D1's mechanism against the *actual* Nest/Express pipeline (helmet,
  * `ValidationPipe`, URI versioning, global prefix — the same ordering `main.ts` uses).
  * Requirement 8's "real-bootstrap integration test" split: this file proves the mechanism against
  * the real bootstrap; `main.ts` itself only wires the already-proven function (task 3.1).

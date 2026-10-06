@@ -39,7 +39,7 @@ export const resolveExternalServiceInfo = (
     service?.displayName || getExternalServiceFallbackName(serviceName),
   authenticationType: service?.authenticationType as RowAuthType | undefined,
   /*
-   * Best-effort default per design.md Open Question 2 — Core does not yet
+   * Best-effort default per `openspec/changes/archive/2026-07-30-interactive-external-service-login-chat/design.md` Open Question 2 — Core does not yet
    * document how a *pushed* event determines credentials level; USER
    * unless the service is only signed out at GLOBAL level.
    */

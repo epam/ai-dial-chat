@@ -5,7 +5,7 @@ import { UNMATCHED_ROUTE } from './http-metrics';
 const meter = metrics.getMeter('dial-chat-api', packageJson.version);
 
 /*
- * Bounded HTTP method attribute value shared by all three instruments below — see design.md D4.
+ * Bounded HTTP method attribute value shared by all three instruments below — see `openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D4.
  * Any method Node accepts but this list doesn't name (e.g. a client sending `TRACE` or a typo'd
  * verb) collapses to `unknown` rather than growing the attribute's cardinality unboundedly.
  */
@@ -27,7 +27,7 @@ export const resolveHttpMethod = (method: string | undefined): string =>
     : UNKNOWN_HTTP_METHOD;
 
 /*
- * Terminal outcome of a monitored request's HTTP transport lifecycle — see design.md D3. A
+ * Terminal outcome of a monitored request's HTTP transport lifecycle — see `openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D3. A
  * bounded 4-value enum instead of a free-form status so `dial.chat.http.outcome` never grows an
  * unbounded set of values, and so "client left before we could answer" / "client left mid-stream"
  * / "the transport itself failed" stay distinguishable instead of collapsing into one bucket.
@@ -41,7 +41,7 @@ export enum HttpLifecycleOutcome {
 
 /*
  * Coarse transport shape resolved from the matched route template at settle time — see
- * design.md D5. Lets the dashboard filter one histogram into "ordinary REST" vs "long-lived
+ * `openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D5. Lets the dashboard filter one histogram into "ordinary REST" vs "long-lived
  * streaming" views by attribute instead of needing a second metric name.
  */
 export enum TransportKind {
@@ -52,9 +52,9 @@ export enum TransportKind {
 
 /*
  * Fixed, explicit list of long-lived SSE route templates — verified against
- * `conversation.controller.ts` and `client-channel.controller.ts` (design.md D5). A new
+ * `conversation.controller.ts` and `client-channel.controller.ts` (`openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D5). A new
  * streaming route added later without updating this list still records correctly, just under
- * `ordinary` instead of `streaming` — an imprecise bucket, not a correctness bug (design.md
+ * `ordinary` instead of `streaming` — an imprecise bucket, not a correctness bug (`openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md`
  * Risks).
  */
 const STREAMING_ROUTE_TEMPLATES = new Set([
@@ -90,7 +90,7 @@ export const httpRequestsActive = meter.createUpDownCounter(
 );
 
 /*
- * Explicit sub-second-aware bucket boundaries (design.md D5) — the OTel SDK's default boundaries
+ * Explicit sub-second-aware bucket boundaries (`openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D5) — the OTel SDK's default boundaries
  * start at 0/5/10s, which is unusable for typical sub-second BFF latency. Spans both ordinary
  * REST and longer-lived streaming durations so one histogram serves both regimes; see D5's
  * bucket-boundary compatibility policy before ever editing this array in place.

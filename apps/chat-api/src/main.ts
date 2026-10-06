@@ -2,7 +2,7 @@
  * Must stay the first import in this file: `otel-sdk.ts` initializes the OpenTelemetry Node SDK
  * (HTTP/Undici instrumentation) before Nest, Express, cookie-parser, helmet, or any DIAL SDK
  * client can `require()` those modules first. This relies on `webpack.config.js`'s
- * `optimization: false` preserving import order — see design.md Risks if that ever changes.
+ * `optimization: false` preserving import order — see `openspec/changes/archive/2026-08-05-add-observability-support/design.md` Risks if that ever changes.
  */
 import './telemetry/otel-sdk';
 import {
@@ -85,7 +85,7 @@ async function bootstrap() {
    * attaching directly to `app.getHttpServer()`'s raw `'request'` event is what makes this
    * instrumentation see guard rejections, body-parser failures, and unmatched routes that a Nest
    * interceptor or an `app.use()` middleware — whose visibility depends on registration order —
-   * cannot (design.md D1). Moving this call later in `bootstrap()` would silently reopen that gap
+   * cannot (`openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D1). Moving this call later in `bootstrap()` would silently reopen that gap
    * for whatever gets registered ahead of it.
    */
   attachHttpLifecycleListener(app.getHttpServer());

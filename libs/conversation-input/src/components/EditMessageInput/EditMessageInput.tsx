@@ -42,6 +42,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   retryLabel,
   uploadingLabel,
   expandLabel,
+  clickLabel,
   addMenuTitle = 'Add',
   attachLabel = 'Attach file',
   menuTitle = 'Menu',
@@ -177,6 +178,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         retryLabel={retryLabel}
         uploadingLabel={uploadingLabel}
         expandLabel={expandLabel}
+        clickLabel={clickLabel}
         className="max-w-full"
         prefixAttachments={keptAttachments}
         onRemovePrefixAttachment={handleRemovePreExisting}

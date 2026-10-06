@@ -5,7 +5,10 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import { type ReactNode, Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AttachmentsI18nKeys } from '../../../constants/translation-keys';
+import {
+  AttachmentsI18nKeys,
+  ButtonsI18nKeys,
+} from '../../../constants/translation-keys';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
@@ -32,6 +35,7 @@ const {
       onSend: undefined as
         ((message: string, attachments: never[]) => Promise<void>) | undefined,
       expandLabel: undefined as string | undefined,
+      clickLabel: undefined as string | undefined,
     },
   };
 });
@@ -49,6 +53,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     belowWelcomeSlot,
     welcomeText,
     expandLabel,
+    clickLabel,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -59,9 +64,11 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     belowWelcomeSlot?: ReactNode;
     welcomeText?: string;
     expandLabel?: string;
+    clickLabel?: string;
   }) => {
     capturedInputProps.onSend = onSend;
     capturedInputProps.expandLabel = expandLabel;
+    capturedInputProps.clickLabel = clickLabel;
     return (
       <div data-testid="conversation-input">
         {belowWelcomeSlot}
@@ -226,6 +233,7 @@ describe('NewConversationComposer', () => {
     mockShowNotification.mockClear();
     capturedInputProps.onSend = undefined;
     capturedInputProps.expandLabel = undefined;
+    capturedInputProps.clickLabel = undefined;
     mockUsePageFileDrag.mockClear();
     pageDrag.isDragging = false;
     mockUseUiFeature.mockImplementation(
@@ -251,6 +259,22 @@ describe('NewConversationComposer', () => {
     expect(capturedInputProps.expandLabel).toBe(
       AttachmentsI18nKeys.ExpandPastedText,
     );
+  });
+
+  it('names composer attachment tiles after the open-in-canvas action', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    await screen.findByText('Conversation input');
+    expect(capturedInputProps.clickLabel).toBe(ButtonsI18nKeys.OpenInCanvas);
   });
 
   it('renders intro text and starter content below the conversation input', async () => {

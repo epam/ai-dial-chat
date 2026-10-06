@@ -560,7 +560,7 @@ describe('ConversationMessageItem — inline citations', () => {
      * Before Office citation highlighting existed, every non-PDF citation
      * fell through to the plain-attachment path. This citation carries no
      * selector at all (a legacy annotation, or one the backend previously
-     * stripped) — per design.md's acceptance criteria, a missing selector
+     * stripped) — per `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md`'s acceptance criteria, a missing selector
      * still opens the Office document, just with no highlight, rather than
      * falling through.
      */
@@ -1114,7 +1114,7 @@ describe('ConversationMessageItem — inline citations', () => {
    * assistant response's `content`/`custom_content.annotations`, source URL
    * replaced with a test value, execution history/model state omitted.
    * Findings from that payload (recorded in task 4.1 of
-   * `openspec/changes/fix-repeated-citation-popup-identity/tasks.md`):
+   * `openspec/changes/archive/2026-09-16-fix-repeated-citation-popup-identity/tasks.md`):
    * source is a PDF (not the issue's original DOCX); `ff3390`/`7bba1b` each
    * occur twice in `content` against exactly one annotation each (no
    * `index`); `ff3390`'s annotation carries two `pdf_region` selectors. This

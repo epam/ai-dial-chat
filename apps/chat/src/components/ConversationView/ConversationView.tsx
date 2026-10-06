@@ -1206,6 +1206,7 @@ const ConversationView: FC<Props> = ({
                 retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
                 uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
                 expandLabel={t(AttachmentsI18nKeys.ExpandPastedText)}
+                clickLabel={t(ButtonsI18nKeys.OpenInCanvas)}
                 deployments={
                   isAgentSelectorHidden ? undefined : agentSelectorItems
                 }

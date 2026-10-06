@@ -212,7 +212,7 @@ export class ProviderRegistryService implements OnModuleInit {
 
   /**
    * Enabling header bearer-token auth widens the BFF's trust boundary and
-   * bypasses CSRF (see design.md Decision 8) — an explicit issuer allowlist
+   * bypasses CSRF (see `openspec/changes/archive/2026-08-07-bff-header-token-auth/design.md` Decision 8) — an explicit issuer allowlist
    * is mandatory whenever the feature flag is on, so boot fails loudly
    * instead of silently trusting every registered provider's issuer.
    */

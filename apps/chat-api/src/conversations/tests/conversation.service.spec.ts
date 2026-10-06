@@ -6,7 +6,7 @@ import { CompletionMode } from '../dto/send-completion.dto';
  * ConversationService is a pure delegation facade — its business logic now
  * lives in ConversationPersistenceService, ConversationListingService,
  * ConversationLifecycleService, and ConversationStreamingService (see
- * openspec/changes/split-conversation-service/design.md). These tests only
+ * openspec/changes/archive/2026-08-07-split-conversation-service/design.md). These tests only
  * verify each facade method forwards to the right sub-service unchanged;
  * behavior is covered by that sub-service's own spec.
  */

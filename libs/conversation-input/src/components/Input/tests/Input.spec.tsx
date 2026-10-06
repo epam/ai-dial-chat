@@ -1060,6 +1060,57 @@ describe('Input — pasted attachment expand', () => {
   });
 });
 
+describe('Input — attachment click label', () => {
+  const attachment = {
+    id: 'report',
+    name: 'report.pdf',
+    file: new File([], 'report.pdf', { type: 'application/pdf' }),
+    type: AttachmentType.File,
+    contentType: 'application/pdf',
+    url: 'files/report.pdf',
+    status: RequestStatus.Idle,
+  };
+
+  it('names a clickable file tile by the host-supplied clickLabel', () => {
+    render(
+      <Input
+        initialAttachments={[attachment]}
+        onAttachmentClick={vi.fn()}
+        clickLabel="Открыть в холсте"
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Открыть в холсте' }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Download attachment' }),
+    ).toBeNull();
+  });
+
+  it('keeps expandLabel on a pasted card when a clickLabel is also given', () => {
+    render(
+      <Input
+        pasteTextThreshold={5}
+        onAttachmentClick={vi.fn()}
+        clickLabel="Открыть в холсте"
+        expandLabel="Развернуть текст"
+      />,
+    );
+
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'This is long enough to become a pasted attachment',
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Развернуть текст' }),
+    ).toBeTruthy();
+  });
+});
+
 describe('Input — message length cap', () => {
   const MAX = 10;
   const atCap = 'x'.repeat(MAX);

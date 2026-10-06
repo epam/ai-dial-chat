@@ -5,6 +5,7 @@ import {
   type Attachment,
   type DisplayAttachment,
   type Message,
+  type MessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
@@ -12,6 +13,7 @@ import {
   isAnswerIncomplete,
   isMessageChanged,
   shouldRerunGenerationOnEdit,
+  withToolConfiguration,
 } from '../message-utils';
 
 const userMessage = (content = 'hello'): Message => ({
@@ -114,6 +116,31 @@ describe('hasActiveToolConfig', () => {
 
   it('returns true when at least one entry is present', () => {
     expect(hasActiveToolConfig({ web: true })).toBe(true);
+  });
+});
+
+describe('withToolConfiguration', () => {
+  const stored = {
+    configuration_value: { deep_research: true },
+    attachments: [{ title: 'a.pdf', url: 'files/bucket/a.pdf' }],
+  } as MessageCustomContent;
+
+  it('returns the custom content unchanged when no tool toggle is active', () => {
+    expect(withToolConfiguration(stored, undefined)).toBe(stored);
+    expect(withToolConfiguration(undefined, {})).toBeUndefined();
+  });
+
+  it('replaces the stored configuration with the active toggles and keeps the rest', () => {
+    expect(withToolConfiguration(stored, { deep_research: false })).toEqual({
+      configuration_value: { deep_research: false },
+      attachments: stored.attachments,
+    });
+  });
+
+  it('creates custom content when there was none', () => {
+    expect(withToolConfiguration(undefined, { web: true })).toEqual({
+      configuration_value: { web: true },
+    });
   });
 });
 

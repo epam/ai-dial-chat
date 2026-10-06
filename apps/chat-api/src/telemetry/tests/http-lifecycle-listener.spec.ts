@@ -40,7 +40,7 @@ describe('http-lifecycle-listener — mechanism against a bare http.Server (no N
    * Populated on every request, before `attachHttpLifecycleListener`'s own `once()` listeners
    * attach — Node's own http machinery may already hold internal `'finish'`/`'close'` listeners
    * on a fresh response object, so "no leak" means "returns to this pre-instrumentation baseline
-   * after settling", not literally zero (design.md D2/Requirement 2's "no listener leak" scenario).
+   * after settling", not literally zero (`openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D2/Requirement 2's "no listener leak" scenario).
    */
   let listenerBaseline: { finish: number; close: number } | undefined;
 

@@ -4,7 +4,7 @@ import { SkillNodeType } from './skill-node-type';
 /**
  * One grouping folder or skill entry, normalized from DIAL Core's
  * `MetadataBase` (`ResourceFolderMetadata | ResourceItemMetadata`) — see
- * design.md's DTO sketches. `etag`/`author`/`createdAt`/`updatedAt` are only
+ * `openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md`'s DTO sketches. `etag`/`author`/`createdAt`/`updatedAt` are only
  * ever present on an `item` (a skill), never on a `folder`.
  */
 export class SkillMetadataItemDto {

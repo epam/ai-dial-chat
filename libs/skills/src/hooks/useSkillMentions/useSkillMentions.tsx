@@ -172,7 +172,7 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
     [],
   );
 
-  /* Memoized so callers keying effects/callbacks on the whole result get a stable reference — see openspec/changes/fix-skill-mention-render-loop. */
+  /* Memoized so callers keying effects/callbacks on the whole result get a stable reference — see [issue #9109](https://github.com/epam/ai-dial-chat/issues/9109). */
   return useMemo(
     () => ({
       draft,

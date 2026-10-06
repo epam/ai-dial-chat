@@ -24,7 +24,7 @@ const hasWritePermission = (permissions: string[] | undefined): boolean =>
  * normalized single-skill DTO, mirroring
  * `DeploymentsLookupService.resolveDeploymentItem` — for
  * `ShareService.acceptInvitation`'s post-accept summary resolution
- * (design.md D9). Deliberately not on the `SkillsService` facade; consumers
+ * (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D9). Deliberately not on the `SkillsService` facade; consumers
  * inject this service directly.
  */
 @Injectable()

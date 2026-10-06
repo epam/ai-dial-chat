@@ -1260,7 +1260,12 @@
     "statusDeclineSuccess": "Declined {{name}}.",
     "noCredentialsRequired": "No credentials required",
     "offlineUsageConsent": "Allow offline use",
-    "offlineUsageConsentHint": "Required for scheduled and background runs."
+    "offlineUsageConsentHint": "Required for scheduled and background runs.",
+    "callbackInProgress": "Completing sign-in…",
+    "callbackSuccess": "Sign-in complete. You can close this window.",
+    "callbackFailedTitle": "Sign-in failed",
+    "callbackMissingCode": "The sign-in provider did not return an authorization code. Close this window and try again.",
+    "callbackRequestUnverified": "This sign-in request could not be verified or has expired. Close this window and start sign-in again."
   },
   "voiceRecording": {
     "micLabel": "Dictate",

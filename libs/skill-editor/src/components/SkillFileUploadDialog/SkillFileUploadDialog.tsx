@@ -73,7 +73,7 @@ const toCandidate = (
  * The AI DIAL UI Kit's `Popup` has no bottom-sheet variant (confirmed via the
  * ui-kit MCP), so this renders as the same centered modal at every
  * breakpoint rather than the bottom-sheet chrome Figma shows on mobile — a
- * documented deviation (design.md Open Question 2), not an oversight.
+ * documented deviation (`openspec/changes/archive/2026-08-14-add-skill-file-drag-drop/design.md` Open Question 2), not an oversight.
  */
 /**
  * Upload dialog offering drag-and-drop and click-to-browse multi-file

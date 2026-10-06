@@ -14,7 +14,7 @@ export class DeleteSkillFileDto extends SkillFileResourceQueryDto {}
 /**
  * Query params for `POST /api/v1/skills/grouping-folders` and
  * `DELETE /api/v1/skills/grouping-folders`. The verified SDK schema declares
- * no request headers at all for `createSkillGroupingFolder` (design.md D2),
+ * no request headers at all for `createSkillGroupingFolder` (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D2),
  * so `If-Match` is only ever read by the delete route — that asymmetry is
  * handled in `SkillsMutationService`/`SkillsController`, not here.
  */

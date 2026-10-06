@@ -49,7 +49,7 @@ export const PUBLISH_WHILE_GENERATING_MESSAGE =
  * `getPublications`) — this service holds no persistence of its own, the
  * same non-persistence property as `apps/chat-api/src/publish/publish.service.ts`,
  * whose shared target-folder helpers this service reuses via
- * `publish-target.util.ts` (see design.md D1 for why this is a dedicated
+ * `publish-target.util.ts` (see `openspec/changes/archive/2026-07-15-add-conversation-publish/design.md` D1 for why this is a dedicated
  * service rather than an extension of the catalog `entityType` enum).
  *
  * The conversation path is always resolved against the caller's own session

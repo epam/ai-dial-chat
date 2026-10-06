@@ -167,7 +167,7 @@ export class SkillsListingService {
 
   /**
    * Resolves one skill's own authoritative metadata for
-   * `GET /api/v1/skills/metadata` (design.md D1/D2). Unlike
+   * `GET /api/v1/skills/metadata` (`openspec/changes/archive/2026-09-17-fix-shared-skill-details-metadata/design.md` D1/D2). Unlike
    * `SkillsLookupService.resolveSkillItem`, this path never folds in
    * invitation-granted permissions and never returns `null` on a miss — a
    * caller here always wants "the metadata" or a typed error, never a

@@ -63,7 +63,7 @@ const FilePreviewContent: FC<Props> = ({ fileId, fileName, onLoadFile }) => {
    * nothing to display still closes the canvas here and leaves a spinner, as it
    * did before this component took an explicit state. Giving the catalog the
    * same recoverable failure the Skill Editor now has is out of this change's
-   * scope (`design.md` Non-Goals) and needs its own change.
+   * scope (`openspec/changes/archive/2026-09-16-fix-skill-preview-back-navigation-and-recovery/design.md` Non-Goals) and needs its own change.
    */
   return (
     <SkillFilePreview

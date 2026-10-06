@@ -805,6 +805,7 @@ const ConversationMessageItem: FC<Props> = ({
             retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
             uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
             expandLabel={t(AttachmentsI18nKeys.ExpandPastedText)}
+            clickLabel={attachmentClickLabel}
             saveLabel={saveLabel}
             ariaLabel={editMessageAriaLabel}
             className="w-full max-w-[748px]"

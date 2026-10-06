@@ -9,6 +9,7 @@ import {
   getToolsetRedirectUri as resolveOAuthRedirectUri,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
+  ToolsetOAuthFailureReason,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
 import {
@@ -20,6 +21,7 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
 } from '@epam/ai-dial-toolset-editor';
+import { ToolsetSigninI18nKeys } from '../constants/translation-keys';
 import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
@@ -200,3 +202,28 @@ export const extractToolsetApiErrorMessage = async (
     return undefined;
   }
 };
+
+/*
+ * Message the OAuth callback popup shows for each failure reason the
+ * completion hook reports. A missing redirect state and a state mismatch read
+ * the same to the user: the request this popup was opened for cannot be
+ * trusted any more, so sign-in has to start over from the opener.
+ */
+const TOOLSET_OAUTH_FAILURE_MESSAGE_KEYS: Record<
+  ToolsetOAuthFailureReason,
+  ToolsetSigninI18nKeys
+> = {
+  [ToolsetOAuthFailureReason.MissingCode]:
+    ToolsetSigninI18nKeys.CallbackMissingCode,
+  [ToolsetOAuthFailureReason.MissingRedirectState]:
+    ToolsetSigninI18nKeys.CallbackRequestUnverified,
+  [ToolsetOAuthFailureReason.StateMismatch]:
+    ToolsetSigninI18nKeys.CallbackRequestUnverified,
+  [ToolsetOAuthFailureReason.LoginRequestFailed]:
+    ToolsetSigninI18nKeys.ErrorLoginFailed,
+};
+
+/** Translation key for the message the OAuth callback popup shows on failure. */
+export const getToolsetOAuthFailureMessageKey = (
+  reason: ToolsetOAuthFailureReason,
+): ToolsetSigninI18nKeys => TOOLSET_OAUTH_FAILURE_MESSAGE_KEYS[reason];

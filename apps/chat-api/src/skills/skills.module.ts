@@ -18,7 +18,7 @@ import { SkillsUploadService } from './upload/skills-upload.service';
 
 /*
  * MulterModule's ingress limits now bound discrete multipart parts (no ZIP
- * is ever uploaded on the create/update path — see design.md): `fileSize`
+ * is ever uploaded on the create/update path — see `openspec/changes/archive/2026-08-13-fix-skill-editor-core-contract/design.md`): `fileSize`
  * caps each individual `files` part at the per-file limit, `fieldSize`
  * covers the `skillManifest` text field at the same limit (SKILL.md is
  * subject to the same per-file cap), and `files` bounds the number of

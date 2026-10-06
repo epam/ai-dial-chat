@@ -120,6 +120,8 @@ When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and e
 
 `Input`, `ConversationInput` and `EditMessageInput` (in `libs/conversation-input`) SHALL each accept an optional `expandLabel?: string` prop and forward it to their `AttachmentTray` as `labels.expandLabel`, alongside `removeLabel`, `retryLabel` and `uploadingLabel`; when it is omitted the card default `'Expand pasted text'` applies. `apps/chat` SHALL pass `t(AttachmentsI18nKeys.ExpandPastedText)` (`attachments.expandPastedText`) to every composer it renders — the new-conversation composer, the active-conversation composer and the edit-message composer — so pasted tiles never announce the untranslated English default.
 
+The same three components SHALL each accept an optional `clickLabel?: string` prop and forward it to their `AttachmentTray` as `labels.clickLabel`, naming every non-pasted card that `onAttachmentClick` makes interactive (a pasted-text card keeps `expandLabel`, because `onExpand` takes precedence). When it is omitted the card default applies (`'Open attachment'` on image tiles, `'Download attachment'` on file and link tiles). Because every `apps/chat` composer's `onAttachmentClick` opens the attachment in the canvas, `apps/chat` SHALL pass `t(ButtonsI18nKeys.OpenInCanvas)` as `clickLabel` to the new-conversation and active-conversation composers, and to the edit-message composer the same `attachmentClickLabel` `ConversationMessageItem` gives its message tiles (`t(ButtonsI18nKeys.OpenInCanvas)` when a host click handler opens the canvas, `t(AttachmentsI18nKeys.Download)` when the tile falls back to downloading) — so a composer tile is never announced as the English `'Download attachment'` while activating it opens the canvas.
+
 #### Scenario: Tray cards are inert without `onAttachmentClick`
 
 - **WHEN** `AttachmentTray` is rendered without `onAttachmentClick`
@@ -145,6 +147,12 @@ When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and e
 
 - **WHEN** `Input` (or `EditMessageInput`) is rendered with `expandLabel="Развернуть текст"` and the user pastes text longer than `pasteTextThreshold`
 - **THEN** the resulting pasted-text card is a button named `"Развернуть текст"`, not `"Expand pasted text"`
+
+#### Scenario: The composer forwards a translated `clickLabel` to clickable tiles
+
+- **WHEN** `Input` (or `EditMessageInput`) is rendered with a non-pasted file attachment, `onAttachmentClick`, and `clickLabel="Открыть в холсте"`
+- **THEN** that file card is a button named `"Открыть в холсте"`, not `"Download attachment"`
+- **AND** a pasted-text card in the same composer is still named by `expandLabel`
 
 #### Scenario: Existing remove and retry callbacks are unaffected
 

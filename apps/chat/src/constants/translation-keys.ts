@@ -1246,6 +1246,11 @@ export enum ToolsetSigninI18nKeys {
   NoCredentialsRequired = 'toolsetSignin.noCredentialsRequired',
   OfflineUsageConsent = 'toolsetSignin.offlineUsageConsent',
   OfflineUsageConsentHint = 'toolsetSignin.offlineUsageConsentHint',
+  CallbackInProgress = 'toolsetSignin.callbackInProgress',
+  CallbackSuccess = 'toolsetSignin.callbackSuccess',
+  CallbackFailedTitle = 'toolsetSignin.callbackFailedTitle',
+  CallbackMissingCode = 'toolsetSignin.callbackMissingCode',
+  CallbackRequestUnverified = 'toolsetSignin.callbackRequestUnverified',
 }
 
 export enum ErrorBoundaryI18nKeys {

@@ -34,7 +34,7 @@ const noReset: FormatResetTime = () => undefined;
 /*
  * Reset values and top-level cost figures reproduced from the real
  * GET /api/v1/user/usage capture in
- * openspec/changes/migrate-usage-reset-times/fixtures/ — a payload that mixes a
+ * openspec/changes/archive/2026-09-15-migrate-usage-reset-times/fixtures/ — a payload that mixes a
  * finite day and month budget with a sentinel week budget, and carries
  * `resetsAt` on all three.
  */

@@ -35,11 +35,11 @@ export const SkillFilePathField = () =>
 /**
  * Shared `@ApiHeader` decorator documenting the conditional `If-Match`
  * request header for skill mutation endpoints. The verified SDK schema
- * declares this header per-operation, not per-DTO (see design.md D2), so
+ * declares this header per-operation, not per-DTO (see `openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D2), so
  * it's applied to controller methods rather than modeled as a validated DTO
  * field. `updateSkill` passes `{ required: true }` — DIAL Core itself
  * doesn't require it (it would just be an unconditional overwrite), but this
- * BFF does, as a deliberate safety rail (design.md's `428` decision).
+ * BFF does, as a deliberate safety rail (`openspec/changes/archive/2026-08-13-fix-skill-editor-core-contract/design.md`'s `428` decision).
  */
 export const ApiIfMatchHeader = (
   options: { required?: boolean } = {},

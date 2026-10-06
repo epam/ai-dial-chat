@@ -231,7 +231,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
             )}
             {status === McpAppInlinePreviewStatus.Ready && content && (
               <McpAppCanvasRenderer
-                /* Remounts on reload so a prior error doesn't stick — see design.md D23. */
+                /* Remounts on reload so a prior error doesn't stick — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D23. */
                 key={attemptId}
                 content={content}
                 errorLabel={loadErrorLabel}
