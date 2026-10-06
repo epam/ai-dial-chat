@@ -480,6 +480,10 @@ export const ExpectedConstants = {
   appNameSpecialCharsError:
     'Name should not contain special symbols :;,=/{}%&\\"',
   appRequiredFieldsTooltip: 'Fill in all required fields',
+  processFilesToggleLabel: 'Process files',
+  processFilesLabel: 'Allow orchestrator to process files',
+  processFilesTooltip:
+    'Allows the orchestrator to handle attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed.',
 };
 
 export const withTraceId = (message: string): RegExp => {

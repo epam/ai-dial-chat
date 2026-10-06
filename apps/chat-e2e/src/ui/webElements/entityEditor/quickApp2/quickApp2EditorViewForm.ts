@@ -1,3 +1,4 @@
+import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
@@ -47,6 +48,26 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public instructionsInput = this.instructionsField.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.instructionsInput,
   );
+  public processFilesToggleContainer =
+    this.orchestratorSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.processFilesToggleContainer,
+    );
+  public processFilesToggleLabel =
+    this.processFilesToggleContainer.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.processFilesToggleLabel,
+    );
+  public processFilesLabel =
+    this.processFilesToggleContainer.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.processFilesLabel,
+    );
+  public processFilesToggle =
+    this.processFilesToggleContainer.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.processFilesToggle,
+    );
+  public processFilesToggleInfoIcon =
+    this.processFilesToggleLabel.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.processFilesToggleInfoIcon,
+    );
   public contextToolsSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.contextToolsSection,
   );
@@ -135,6 +156,21 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public documentUrlsField = this.contextToolsSection.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.documentUrlsField,
   );
+  public addContextFileButton = new Button(
+    this.page,
+    'Add',
+    this.documentUrlsField.getElementLocator(),
+  );
+  public contextFileContainer =
+    this.documentUrlsField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.contextFilesContainer,
+    );
+  public contextFile = this.contextFileContainer.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.contextFile,
+  );
+  public contextFileByName = (filename: string) =>
+    this.contextFile.getElementLocatorByText(new RegExp(`^${filename}$`));
+
   public codeInterpreterField =
     this.contextToolsSection.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.codeInterpreterField,
@@ -280,5 +316,19 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
 
   public async getAllChipNameTexts(): Promise<string[]> {
     return this.allChipNames.getElementLocator().allTextContents();
+  }
+
+  public async openFileManagerModal(isHttpMethodTriggered = true) {
+    if (isHttpMethodTriggered) {
+      const responsePromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'GET' &&
+          resp.request().url().includes(API.folderFilesListingHost()) &&
+          resp.ok(),
+      );
+      await this.addContextFileButton.click();
+      return responsePromise;
+    }
+    await this.addContextFileButton.click();
   }
 }

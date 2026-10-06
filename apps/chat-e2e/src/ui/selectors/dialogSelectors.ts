@@ -388,6 +388,9 @@ export const AddQuickApp2SettingsFormSelector = {
   agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
   documentUrlsField: '[data-qa="document-urls-field"]',
   codeInterpreterField: '[data-qa="code-interpreter-field"]',
+  contextFilesContainer: '[data-qa="files-selector-container"]',
+  contextFile: '[data-qa="selected-file"]',
+  contextFilename: '[data-qa="selected-file-name"]',
 
   // Agents & Toolsets — view modes
   agentsAndToolsetsMarketplaceView:
@@ -408,6 +411,13 @@ export const AddQuickApp2SettingsFormSelector = {
   chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
   errorChipClass: 'bg-error', // class on a not-available or logged-out (red) chip
   activeChipClass: 'bg-accent-primary-alpha', // class on a healthy (blue) chip
+
+  //Process files toggle
+  processFilesToggleContainer: '[data-qa="process-files"]',
+  processFilesToggleLabel: '[data-qa="process-files-label"]',
+  processFilesToggle: '[data-qa="toggle-switch"]',
+  processFilesToggleInfoIcon: '[data-qa="process-files-info"]',
+  processFilesLabel: '[data-qa="toggle-label"]',
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',

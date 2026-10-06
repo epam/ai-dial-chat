@@ -29,7 +29,10 @@ export const SelectedFile: FC<Props> = ({ document, readonly, onRemove }) => {
       triggerClassName="items-center flex"
       contentClassName="text-primary"
     >
-      <div className="flex w-full cursor-pointer flex-row items-center justify-between rounded p-2 hover:bg-accent-primary-alpha">
+      <div
+        className="flex w-full cursor-pointer flex-row items-center justify-between rounded p-2 hover:bg-accent-primary-alpha"
+        data-qa="selected-file"
+      >
         <IconFile size={18} className="text-secondary" />
         <div className="ml-2 flex min-w-0 flex-1 flex-col pr-2">
           <span
@@ -37,6 +40,7 @@ export const SelectedFile: FC<Props> = ({ document, readonly, onRemove }) => {
               'w-full truncate text-sm leading-4 text-primary',
               path && 'mb-1.5',
             )}
+            data-qa="selected-file-name"
           >
             {name}
           </span>
