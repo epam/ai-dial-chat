@@ -12,7 +12,7 @@ Loading user configuration once per authenticated identity and keeping context s
 
 When the resolved `sub` changes while `UserConfigProvider` stays mounted, the provider SHALL reset `pinnedConversationIds`, `installedToolsetIds`, `installedDeploymentIds`, and `selectedDeploymentId` to their empty/`null` defaults, set `status` back to `Loading`, and re-issue `getUserConfig()` — mirroring what already happens on a fresh mount. This SHALL NOT re-run merely because `user` is updated in place with an unchanged `sub` (see `spa-auth-session`'s identity revalidation requirement).
 
-`UserConfigProvider` is placed inside `RequireAuth` in `apps/chat/src/main.tsx`, wrapping `AppConfigProvider` and `ConversationsProvider`. It therefore only mounts after the user is authenticated, and continues to fully reset via that unmount/remount path on explicit logout or a `401`. The identity-keyed effect above additionally covers the case where the identity changes without an intervening unmount — i.e. `spa-auth-session`'s "adopt the new profile in place" behavior on a focus/visibility identity mismatch.
+`UserConfigProvider` is placed inside `RequireAuth` (and inside `GenerationProvider`/`ClientChannelProvider`) in `apps/chat/src/main.tsx`, wrapping `DeploymentsProvider`, `FavoriteApplicationsProvider`, `PromptsProvider`, `SkillsProvider`, and `ConversationsProvider`; `AppConfigProvider` sits above it, outside `RequireAuth`. It therefore only mounts after the user is authenticated, and continues to fully reset via that unmount/remount path on explicit logout or a `401`. The identity-keyed effect above additionally covers the case where the identity changes without an intervening unmount — i.e. `spa-auth-session`'s "adopt the new profile in place" behavior on a focus/visibility identity mismatch.
 
 **State exposed by `UserConfigContextType`:**
 
@@ -36,7 +36,7 @@ interface UserConfigContextType {
 
 - **WHEN** `UserConfigProvider` mounts and `getUserConfig()` resolves with a valid v2 config
 - **THEN** `status` transitions from `Loading` to `Ready`
-- **AND** `pinnedConversationIds`, `installedToolsetIds`, `installedDeploymentIds` are populated from the response
+- **AND** `pinnedConversationIds`, `installedToolsetIds`, `installedDeploymentIds` are populated from the response, and `selectedDeploymentId` from `deployments.selectedId` (or `null`)
 
 #### Scenario: Status stays Loading while the fetch is in flight
 
@@ -62,9 +62,9 @@ interface UserConfigContextType {
 
 ### Requirement: App shows the existing loading spinner while user config is loading
 
-`UserConfigProvider` SHALL render `<Spinner />` while `status === UserConfigStatus.Loading`. It SHALL render its `children` (wrapped in the context provider) only once `status` is `Ready` or `Error`.
+`UserConfigProvider` SHALL render `<Spinner />` (inside a full-size centering `div`) while `status === UserConfigStatus.Loading`. It SHALL render its `children` (wrapped in the context provider) only once `status` is `Ready` or `Error`.
 
-Neither `AppConfigProvider`, `ConversationsProvider`, nor `App` renders until `UserConfigProvider` has exited the `Loading` state.
+None of `DeploymentsProvider`, `FavoriteApplicationsProvider`, `PromptsProvider`, `SkillsProvider`, `ConversationsProvider`, or `App` renders until `UserConfigProvider` has exited the `Loading` state.
 
 #### Scenario: Spinner is shown during load
 
@@ -128,9 +128,9 @@ Neither `AppConfigProvider`, `ConversationsProvider`, nor `App` renders until `U
 
 `UserConfigProvider` SHALL catch any rejection from `getUserConfig()`. On failure it SHALL:
 1. Set `status` to `UserConfigStatus.Error`
-2. Set all three arrays to `[]`
+2. Leave all three arrays (and `selectedDeploymentId`) at the empty/`null` defaults they were reset to when the load started
 3. Log the error via `console.error`
-4. Call `showNotification({ variant: 'error', message: t(UserConfigI18nKeys.LoadError) })` via `useNotification()`
+4. Call `showErrorNotification({ message: t(UserConfigI18nKeys.LoadError), requestId: traceId })` via `useNotification()`, where `traceId` comes from `getApiErrorDetails(err)` (`@epam/ai-dial-chat-hooks`)
 
 The application MUST remain usable after a config load failure (empty-array fallback).
 
@@ -226,6 +226,18 @@ The application MUST remain usable after a config load failure (empty-array fall
 
 ---
 
+### Requirement: setSelectedDeployment persists the selected deployment best-effort
+
+`UserConfigContext.setSelectedDeployment(id)` SHALL set `selectedDeploymentId` to `id` immediately and call `updateSelectedDeployment(id)` from `apps/chat/src/server-api/user-config.api.ts`. On failure it SHALL log via `console.warn` and SHALL NOT revert the local value or rethrow.
+
+#### Scenario: Persist failure keeps the local selection
+
+- **WHEN** `setSelectedDeployment('dep-1')` is called and `updateSelectedDeployment` rejects
+- **THEN** `selectedDeploymentId` remains `'dep-1'`
+- **AND** the returned promise resolves without throwing
+
+---
+
 ## Non-functional requirements
 
 ### i18n
@@ -234,7 +246,7 @@ The application MUST remain usable after a config load failure (empty-array fall
 |-----|-------------|
 | `userConfig.loadError` | `"Failed to load your settings. Some personalization may be unavailable."` |
 
-New enum in `apps/chat/src/constants/translation-keys.ts`:
+Enum in `apps/chat/src/constants/translation-keys.ts`:
 ```typescript
 export enum UserConfigI18nKeys {
   LoadError = 'userConfig.loadError',
@@ -257,7 +269,7 @@ No new interactive UI. `<Spinner />` from `@epam/ai-dial-ui-kit` already handles
 
 The `UserConfigContextType` value object MUST be wrapped in `useMemo` on all fields, following the `ThemeContext` pattern, to prevent all consumers re-rendering on every `UserConfigProvider` render.
 
-`setPinnedConversation`, `setInstalledToolset`, and `setInstalledDeployment` MUST be defined with `useCallback`.
+`setPinnedConversation`, `setInstalledToolset`, `setInstalledDeployment`, and `setSelectedDeployment` MUST be defined with `useCallback`.
 
 ### Observability / telemetry
 
@@ -265,4 +277,4 @@ No analytics events are introduced. Load failures are logged via `console.error`
 
 ### Cache
 
-No additional cache. `getUserConfig()` issues one `GET /api/v1/user-config` call per `UserConfigProvider` mount (one per authenticated session). The backend service issues one DIAL Core read per controller call; this is pre-existing behaviour unchanged by this spec.
+No additional cache. `getUserConfig()` issues one `GET /api/v1/user-config` call per `UserConfigProvider` mount and per authenticated-identity (`useUser().user?.sub`) change while mounted. The backend service issues one DIAL Core read per controller call; this is pre-existing behaviour unchanged by this spec.

@@ -13,13 +13,15 @@ Annotation types, delta accumulation during streaming, and the filtering `useAnn
 `libs/chat-shared/src/models/annotation.ts` SHALL export the following TypeScript interfaces:
 
 - `TextCharacterRangeSelector` — `{ type: 'text_character_range'; start: number; end: number }`
+- `PdfBBoxSelector` — `{ type: 'pdf_bbox'; page: number; x1: number; y1: number; x2: number; y2: number }` — an axis-aligned box on a 1-based PDF page.
 - `HtmlTagSelector` — `{ type: 'html_tag'; tag: string; id: string }` — targets the supported paired inline element `<cit data-id="e43864"></cit>` inside the accumulated message text by its `data-id` attribute.
 - `DocxRangeSelector` — `{ type: 'docx_text_range'; story: string; path: number[]; start: number; end: number; text: string }` — targets a character range inside a DOCX story. `story` SHALL be typed as an opaque `string`, NOT a closed union: only the value `'body'` is confirmed by the available contract, and inventing a closed enum from one confirmed value would reject valid upstream data. `path` is an array of integer source-tree indices. `end` is already an exclusive character offset on the wire (confirmed against captured `dial-document` responses — see the "Office range selector offsets are exclusive on the wire for DOCX/PPTX" requirement), unlike `TextCharacterRangeSelector.end`. No `storyInstance` field SHALL be declared, because the available contract does not demonstrate one.
 - `PptxRangeSelector` — `{ type: 'pptx_text_range'; slide: number; shape_id: string; start: number; end: number; text: string }` — targets a character range inside one PPTX shape. `slide` is 1-based. `shape_id` SHALL be typed `string`, matching the wire shape. `end` is already exclusive on the wire, the same as `DocxRangeSelector.end`.
-- `ExcelRcRangeSelector` — `{ type: 'excel_rc_range'; sheet: string; start: { row: number; col: number }; end?: { row: number; col: number } | null }` — targets one cell, or a contiguous range from `start` to `end`, on the sheet named `sheet`. `row` and `col` are 1-based. `end` SHALL be optional AND nullable, because the contract permits an explicit `null` for a single-cell selector. `end` here is a distinct concept from the DOCX/PPTX selectors' `end` — a 1-based cell address naming the range's last (inclusive) cell, not a character offset.
+- `ExcelCellAddress` — `{ row: number; col: number }`
+- `ExcelRcRangeSelector` — `{ type: 'excel_rc_range'; sheet: string; start: ExcelCellAddress; end?: ExcelCellAddress | null }` — targets one cell, or a contiguous same-row range from `start` to `end` (normalisation rejects an `end` on a different row or before `start`), on the sheet named `sheet`. `row` and `col` are 1-based. `end` SHALL be optional AND nullable, because the contract permits an explicit `null` for a single-cell selector. `end` here is a distinct concept from the DOCX/PPTX selectors' `end` — a 1-based cell address naming the range's last (inclusive) cell, not a character offset.
 - `AnnotationSelector` — discriminated union of `TextCharacterRangeSelector`, `PdfBBoxSelector`, `HtmlTagSelector`, `DocxRangeSelector`, `PptxRangeSelector`, and `ExcelRcRangeSelector`; unknown selector shapes SHALL be represented as `{ type: string; [key: string]: unknown }`. This open catch-all branch SHALL NOT be removed or narrowed — an unrecognised selector must keep parsing even though the three named members now cover the confirmed DOCX/PPTX/XLSX discriminators (see the "Office range selector discriminators are confirmed by a captured fixture" requirement).
 - `AnnotationTarget` — `{ source?: unknown; selector?: AnnotationSelector }`
-- `AttachmentResource` — `{ type: string; url: string }` (same shape as `MessageAttachment` but scoped to citations)
+- `AttachmentResource` — `{ type: string; url: string; title?: string }` (same shape as `MessageAttachment` but scoped to citations)
 - `AnnotationSource` — `{ type: 'attachment'; attachment: AttachmentResource }`
 - `AnnotationBody` — `{ title?: string; quote?: string; source?: AnnotationSource; selector?: AnnotationSelector | AnnotationSelector[]; configuration?: Record<string, unknown> }`
 - `Annotation` — `{ index?: number; target?: AnnotationTarget; body?: AnnotationBody }`
@@ -30,7 +32,7 @@ The `Message` interface in `libs/chat-shared/src/models/chat.ts` SHALL be extend
 
 `Annotation.index` SHALL remain optional: an `html_tag`-selector annotation never carries an `index` (DIAL Core sends the whole annotation array in one late, non-incremental chunk, keyed only by tag `id`), and this SHALL NOT be treated as invalid.
 
-All three new interfaces SHALL be exported from `libs/chat-shared/src/index.ts` as type exports, and documented in `libs/chat-shared/README.md`.
+All of these interfaces SHALL be exported from `libs/chat-shared/src/index.ts` (via `export * from './models/annotation'`), and documented in `libs/chat-shared/README.md`.
 
 **i18n**: no new user-visible strings in this requirement.
 **RTL**: no directional impact — type definitions only.
@@ -164,12 +166,12 @@ The discriminator check SHALL be isolated in one named type guard per format —
 
 ### Requirement: Annotation delta accumulation in `apply-chunk.ts`
 
-`libs/chat-hooks/src/conversation/useConversationStream/apply-chunk.ts` SHALL accumulate streaming annotation deltas into `message.custom_content.annotations` using a merge helper that matches on `index` when both the existing and incoming annotation carry one, and otherwise on `target.selector.id` when both are `html_tag`-selector annotations:
+`libs/chat-hooks/src/conversation/useConversationStream/apply-chunk.ts` SHALL accumulate streaming annotation deltas into `message.custom_content.annotations` using a merge helper that matches on `index` when both the existing and incoming annotation carry one, and otherwise on `target.selector.id` when both are `html_tag`-selector annotations. The helper and its `sameAnnotation` predicate are module-private:
 
 - A `mergeAnnotations(existing: Annotation[], incoming: Annotation[]): Annotation[]` helper iterates over incoming annotations.
-- Two annotations are considered "the same" when: both have a defined `index` and those indices are equal; OR both lack an `index`, both have `target.selector.type === 'html_tag'`, and their `target.selector.id` values are equal.
+- Two annotations are considered "the same" when: both have a defined `index` and those indices are equal; OR at least one lacks an `index` and both have `target.selector.type === 'html_tag'`, and their `target.selector.id` values are equal.
 - When a match is found, the two are merged: `body.title` and `body.quote` are **concatenated** (partial streamed strings), all other fields are last-write-wins via object spread.
-- When no match is found, the annotation is appended to the result array. Two annotations that both lack an `index` and are not both matching `html_tag` ids are never considered the same and are always appended as separate entries — this prevents distinct `html_tag` annotations (which never carry an `index`) from collapsing into one on the first index-only match.
+- When no match is found, the annotation is appended to the result array. Two annotations that do not both carry an `index` and are not both matching `html_tag` ids are never considered the same and are always appended as separate entries — this prevents distinct `html_tag` annotations (which never carry an `index`) from collapsing into one on the first index-only match.
 - When a chunk carries no annotations (`annotations` is absent or empty), the existing array is left unchanged.
 
 Raw wire-format annotations arriving via `delta.custom_fields.annotations` are normalized first (see the "Dual-shape wire normalization" requirement below) and the normalized results are merged using the same helper as `delta.custom_content.annotations`.
@@ -247,10 +249,10 @@ Raw wire-format annotations arriving via `delta.custom_fields.annotations` are n
 
 ### Requirement: Dual-shape wire normalization in `normalizeRawAnnotations`
 
-`libs/quotations/src/utils/annotation.ts` SHALL export `normalizeRawAnnotations(rawAnnotations: unknown[], attachments: MessageAttachment[]): Annotation[]` that recognizes two raw wire shapes and normalizes both into the same internal `Annotation` shape:
+`libs/chat-shared/src/utils/annotation.ts` SHALL export (from `@epam/ai-dial-chat-shared`, which owns the annotation model, so `@epam/ai-dial-chat-hooks` can normalize while streaming without depending on `@epam/ai-dial-quotations`) `normalizeRawAnnotations(rawAnnotations: unknown[], attachments: MessageAttachment[]): Annotation[]` that recognizes two raw wire shapes and normalizes both into the same internal `Annotation` shape:
 
-- **Attachment-index shape** (unchanged): `target.source.attachment_index` (number) resolved against `attachments`, with `target.selector.type === 'pdf_region'` (`{ page, bbox: { left, top, width, height } }`) converted to `PdfBBoxSelector`.
-- **html_tag shape**: `target.selector.type === 'html_tag'` with `target.selector.tag` and `target.selector.id` both strings, and `body.source` present as a flat `{ type: 'attachment', url: string }` (no `attachment_index` lookup, no `pdf_region`). Normalized to `body.source.attachment = { type: <inferred from the recognized URL extension, including DOCX/XLSX/PPTX, or defaulted to PDF>, url, title: body.title }`; `target.selector` is preserved as the `html_tag` selector; `index` is left `undefined`. When already-normalized `custom_content.annotations` are loaded, `resolveMessageAnnotations` also reconciles an `html_tag` attachment's stored type with any recognized URL extension so conversations persisted by the older all-PDF fallback remain previewable.
+- **Attachment-index shape** (unchanged): `target.source.attachment_index` (number) resolved against the `attachments` entry whose `index` equals it, with `target.selector.type === 'pdf_region'` (`{ page, bbox: { left, top, width, height } }`) converted to `PdfBBoxSelector`.
+- **html_tag shape**: `target.selector.type === 'html_tag'` with `target.selector.tag` and `target.selector.id` both strings, and `body.source` present as a flat `{ type: 'attachment', url: string }` (no `attachment_index` lookup, no `pdf_region`). Normalized to `body.source.attachment = { type: <inferred from the recognized URL extension, including DOCX/XLSX/PPTX, or defaulted to PDF>, url, title: body.title }`; `target.selector` is preserved as the `html_tag` selector; `index` is taken from the raw entry when it is a number and is otherwise left `undefined`. The `html_tag` shape is tried first. When already-normalized `custom_content.annotations` are loaded, `resolveMessageAnnotations` (in `libs/quotations/src/utils/annotation.ts`, via `normalizePersistedHtmlTagAttachmentType` from `@epam/ai-dial-chat-shared`) also reconciles an `html_tag` attachment's stored type with any recognized URL extension so conversations persisted by the older all-PDF fallback remain previewable.
 
 A raw entry that matches neither shape (no resolvable attachment index and no `html_tag` selector with a flat `body.source.url`) is omitted from the result, same as today.
 

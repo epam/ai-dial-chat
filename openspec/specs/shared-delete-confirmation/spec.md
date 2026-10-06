@@ -10,14 +10,14 @@ Defines the one delete confirmation every surface that deletes a single resource
 
 A delete confirmation SHALL present, in this order:
 
-1. **Identity card** — the resource as a red-tinted card (`ConfirmationPopupVariant.Danger`): its icon, its type, and its name.
+1. **Identity card** — the resource as a red-tinted card (`ConfirmationPopupVariant.Danger`): its icon, its type, and its name. The scheduled task dialog and the Files body show the name only, with no icon or type, per design.
 2. **Message** — one sentence naming the resource in bold and ending in "This action is permanent and cannot be undone."
 3. **Consequences** — a short bulleted list whose last bullet is "Cannot be undone" (`basic.consequenceCannotBeUndone`).
 4. **Actions** — a text Cancel beside a red Delete carrying a leading `IconTrashX`.
 
 The surfaces that render it are the catalog details panel (in place, see `catalog-details-confirmation-subview`), the scheduled task detail page, the chat panel's single-chat delete, and the Files page body (see `file-manager-delete-ui`).
 
-Not covered: the Files dialog's frame and actions belong to `@epam/ai-dial-react-file-manager`, which accepts only a title and a content node, so its confirm has no trash icon and its Cancel is a solid neutral button. `AvatarPickerModal` composes its body from three label props rather than a content node and keeps its own wording. "Delete all conversations" has no single resource to name and stays on the kit's `ConfirmationPopup` (see `conversation-panel-header-menu`).
+Not covered: the Files dialog's frame and actions belong to `@epam/ai-dial-react-file-manager`; from `0.3.0-dev.25` they match this block (close control, text Cancel, danger Delete with a trash icon), but they are the package's own, not `ConfirmationFooter`. `AvatarPickerModal` composes its body from three label props rather than a content node and keeps its own wording. "Delete all conversations" has no single resource to name and stays on the kit's `ConfirmationPopup` (see `conversation-panel-header-menu`).
 
 #### Scenario: A delete surface shows the full block
 

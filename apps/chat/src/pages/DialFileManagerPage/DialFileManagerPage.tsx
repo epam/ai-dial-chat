@@ -23,6 +23,7 @@ import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialFileManagerShell from '../../components/DialFileManagerShell/DialFileManagerShell';
 import { useDialFileManagerHostOptions } from '../../components/DialFileManagerShell/useDialFileManagerHostOptions';
+import { getFileDeleteConfirmTitle } from '../../components/FileDeleteConfirmContent/file-delete-confirm-title';
 import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
 import {
   BasicI18nKeys,
@@ -247,13 +248,12 @@ const DialFileManagerPage: FC = () => {
         DialFileManagerI18nKeys.OperationLoaderMoveTitle,
       ),
       operationLoaderCancelLabel: t(ButtonsI18nKeys.Cancel),
-      deleteConfirmTitle: (names) =>
-        names.length === 1
-          ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
-          : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple),
+      deleteConfirmTitle: (_names, items) =>
+        getFileDeleteConfirmTitle(t, items),
       deleteConfirmBody: (names) => <FileDeleteConfirmContent names={names} />,
       deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
       deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
+      deleteCloseLabel: t(ButtonsI18nKeys.Close),
       ...uploadQueueLabels,
       searchPlaceholderByTab,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),

@@ -7,18 +7,18 @@ Specifies inline editing of user messages within a conversation: entering edit m
 ## Requirements
 
 ### Requirement: Edit button availability
-The edit button on user message bubbles SHALL be visible at all times and disabled while the AI is streaming a response or when the conversation is read-only.
+The edit button on user message bubbles SHALL be rendered alongside the message actions whenever the conversation is editable, and SHALL NOT be rendered while the AI is streaming a response, when the conversation is read-only, or when the host hides the edit-user-message UI feature. `ConversationMessageItem` passes `onEdit` to `buildMessageActions` only when `isAssistantTyping` is false, and `ConversationView` withholds `onStartEdit` when `isReadOnly` is set.
 
 #### Scenario: Edit button visible on user message
-- **WHEN** a user message is rendered in the conversation
+- **WHEN** a user message is rendered in an editable conversation and no response is streaming
 - **THEN** an edit button is displayed alongside the message actions
 
-#### Scenario: Edit button disabled during streaming
+#### Scenario: Edit button removed during streaming
 - **WHEN** the AI is actively streaming a response
-- **THEN** all edit buttons in the conversation are disabled and not interactive
+- **THEN** no edit button is rendered on any user message until the stream ends
 
 #### Scenario: Edit button hidden in read-only conversation
-- **WHEN** the conversation is read-only (isReadonly flag set or user lacks WRITE permission)
+- **WHEN** the conversation is read-only (`Conversation.tsx` derives `isReadOnly` from the list item's `isReadonly`, `sharedWithMe`, or `publishedWithMe` flag, or — before the list has loaded — from the conversation id's bucket differing from the user's bucket)
 - **THEN** the edit button is not rendered on any user message
 - **AND** clicking a user message does not trigger edit mode
 
@@ -54,8 +54,16 @@ The inline edit area SHALL consist of two parts stacked vertically:
 - **THEN** below the bordered box: an attach (+) button is shown on the left
 - **THEN** a Cancel button (neutral style) and a Save & Submit button (primary style) are shown on the right of the action row
 
-#### Scenario: Save & Submit button disabled when text is empty
-- **WHEN** the user clears all text from the edit textarea
+#### Scenario: Save & Submit button disabled when there is nothing to send
+- **WHEN** the user clears all text from the edit textarea and no pre-existing or newly added attachment remains
+- **THEN** the Save & Submit button is disabled
+
+#### Scenario: Save & Submit stays enabled for an attachment-only edit
+- **WHEN** the edit textarea is empty but at least one pre-existing or newly added attachment remains
+- **THEN** the Save & Submit button is enabled
+
+#### Scenario: Save & Submit disabled while a new attachment is uploading or failed
+- **WHEN** a newly added attachment is still uploading or its upload failed
 - **THEN** the Save & Submit button is disabled
 
 ---
@@ -143,11 +151,11 @@ All user-visible strings in the edit area SHALL use i18n keys.
 
 #### Scenario: Cancel button label
 - **WHEN** the edit area is rendered
-- **THEN** the Cancel button label uses the i18n key `actions.cancel`
+- **THEN** the Cancel button label uses the i18n key `buttons.cancel` (`ButtonsI18nKeys.Cancel`)
 
 #### Scenario: Save & Submit button label
 - **WHEN** the edit area is rendered
-- **THEN** the Save & Submit button label uses the i18n key `actions.saveAndSubmit`
+- **THEN** the Save & Submit button label uses the i18n key `buttons.saveAndSubmit` (`ButtonsI18nKeys.SaveAndSubmit`)
 
 ---
 
@@ -156,7 +164,7 @@ The edit area SHALL be keyboard-navigable and provide appropriate ARIA labels.
 
 #### Scenario: Edit area aria-label
 - **WHEN** the inline edit textarea is rendered
-- **THEN** it has an `aria-label` identifying it as an edit area (i18n key: `actions.editMessage`)
+- **THEN** it has an `aria-label` identifying it as an edit area (i18n key: `buttons.editMessage`, `ButtonsI18nKeys.EditMessage`)
 
 #### Scenario: Cancel and Save buttons are keyboard-focusable
 - **WHEN** the edit area is active

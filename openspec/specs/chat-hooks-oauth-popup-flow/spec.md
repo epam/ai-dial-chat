@@ -17,15 +17,19 @@ supplied by the caller.
 `libs/chat-hooks/src/oauth/` module: `buildToolsetAuthorizeUrl`, `openToolsetOAuthPopup`,
 `navigateToolsetOAuthPopup`, `initiateOAuthLogin`, `waitForToolsetOAuthResult`,
 `getToolsetOAuthChannelName`, `encodeToolsetId`, `decodeToolsetId`, and `isPublicToolsetId`, together
-with the enums and models their signatures require. The module SHALL NOT import routing, app
+with the enums and models their signatures require (the module additionally exports
+`getToolsetRedirectUri`, `normalizeToolsetId`, `resolveToolsetCredentialsLevel`,
+`selectToolsetAuthStatus`, and the `useToolsetLogin` / `useOAuthCallbackCompletion` hooks), both
+from the package root and from the `@epam/ai-dial-chat-hooks/oauth` subpath entry. The module SHALL NOT import routing, app
 contexts, auth/session/cookies, environment variables, feature flags, i18n, or any
 `apps/chat/src/server-api` module, per `AGENTS.md` §Library isolation.
 
 #### Scenario: Module boundary holds
 
 - **WHEN** the `oauth/` module is built
-- **THEN** it imports only browser APIs, `@epam/ai-dial-chat-shared`, and
-  `@epam/ai-dial-chat-api-client` types — no host routing, context, storage-key, i18n, or
+- **THEN** it imports only browser APIs, `react` (for its two hooks), `@epam/ai-dial-chat-shared`,
+  `@epam/ai-dial-chat-api-client` types, and chat-hooks' own host-agnostic
+  `shared/toolset-login-events` module — no host routing, context, storage-key, i18n, or
   `server-api` import appears anywhere in the module
 
 #### Scenario: Duplicate helper is retired
@@ -111,8 +115,8 @@ passive observer, and PKCE does not close that gap when the challenge is verifie
 
 ### Requirement: Popup opening and redirect-state handoff
 
-The popup SHALL be opened as a blank, same-origin window as the first synchronous statement of the
-user-gestured path, so a blocked popup is detectable and the browser still treats the call as
+The popup SHALL be opened (`openToolsetOAuthPopup`, `window.open('', '_blank')`) as a blank,
+same-origin window synchronously within the user-gestured path, before any `await`, so a blocked popup is detectable and the browser still treats the call as
 user-triggered. Before navigating it to the provider, the flow SHALL write the redirect state into
 **the popup's own** `sessionStorage` and SHALL set the popup's `opener` to `null`.
 
@@ -127,6 +131,11 @@ user-triggered. Before navigating it to the provider, the flow SHALL write the r
 - **WHEN** the popup is navigated to the provider
 - **THEN** its `opener` has already been set to `null`, so the provider cannot navigate the
   application tab
+
+#### Scenario: Synchronous config validated before the popup opens
+
+- **WHEN** `initiateOAuthLogin` is called with auth settings that cannot produce an authorize URL
+- **THEN** it returns an invalid-config initiation without opening a popup
 
 #### Scenario: Blocked popup detected
 

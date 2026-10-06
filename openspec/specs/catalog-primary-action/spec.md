@@ -9,11 +9,11 @@ Defines how `libs/catalog`'s `Header.tsx` resolves at most one primary action pe
 
 ### Requirement: The primary action's identity is resolved by entity type, with a host override
 
-`Header.tsx` SHALL resolve, for a given item, at most one primary action from the following, evaluated in this order, with the first matching branch rendering and every other branch SHALL NOT render for that same item:
+`Header.tsx` SHALL resolve, for a given item, its primary-slot actions from the following branches. Under the defaults at most one renders; an explicit host predicate can make Download and "Use in chat" render side by side (see below):
 
-1. **Credentials** (Log in / Log out / Manage credentials) — unchanged, existing behavior: `item.type === CatalogEntityType.Toolset` and credentials are available for the item.
-2. **Download** — new in this revision: `onDownload` is supplied for the item, `isDownloadVisible?.(item) ?? true` is `true`, and `isDownloadPrimary?.(item) ?? item.type === CatalogEntityType.Skill` is `true`.
-3. **Use in chat** — unchanged, existing behavior: `texts?.hasPrimaryAction !== false` and `isPrimaryActionVisible?.(item) ?? (item.type === CatalogEntityType.Model || CatalogEntityType.Agent || CatalogEntityType.Prompt)` is `true`.
+1. **Credentials** (Log in / Log out / Manage credentials) — unchanged, existing behavior (`isCredentialsActionPrimary`): `item.type === CatalogEntityType.Toolset`, the header is not `isReadonly`, the item has credentials with a non-`None` authentication type, and `onLogin` or `onLogout` is supplied. When it applies, Download is never promoted.
+2. **Download** (`isDownloadActionPrimary`): `onDownload` is supplied for the item, `isDownloadVisible?.(item) ?? true` is `true`, the Credentials branch does not apply, and `isDownloadPrimary?.(item) ?? (item.type === CatalogEntityType.Skill && !shouldShowPrimaryAction)` is `true` — so the default promotes Download only for a Skill whose "Use in chat" is not shown.
+3. **Use in chat** (`shouldShowPrimaryAction`) — unchanged, existing behavior, evaluated independently of Download: `texts?.hasPrimaryAction !== false` and `isPrimaryActionVisible?.(item) ?? (item.type === CatalogEntityType.Model || item.type === CatalogEntityType.Agent || item.type === CatalogEntityType.Prompt)` is `true`. A host `isDownloadPrimary` that returns `true` for an item that also shows "Use in chat" renders both buttons in the action row ("Use in chat" first, then Download).
 4. **None** — no branch above matched.
 
 `DetailsPanelProps` and `CatalogProps` SHALL each add:
@@ -34,7 +34,7 @@ The lib SHALL treat `CatalogEntityType` as the only entity-type knowledge this r
 #### Scenario: Model keeps "Use in chat" as its primary action
 
 - **WHEN** an item's `type` is `CatalogEntityType.Model`
-- **THEN** the primary action renders as "Use in chat", unaffected by whether `onDownload`/`isDownloadPrimary` are supplied
+- **THEN** the primary action renders as "Use in chat", unaffected by whether `onDownload` is supplied; a host `isDownloadPrimary` returning `true` adds a primary Download button beside it rather than replacing it
 
 #### Scenario: Toolset's credentials swap takes precedence over Download
 
@@ -49,7 +49,7 @@ The lib SHALL treat `CatalogEntityType` as the only entity-type knowledge this r
 #### Scenario: A host can promote Download for a type other than Skill
 
 - **WHEN** the host supplies `isDownloadPrimary={(item) => item.type === CatalogEntityType.Prompt}` and `onDownload` is supplied for a Prompt item
-- **THEN** that Prompt's Download renders as its primary action instead of "Use in chat"
+- **THEN** that Prompt's Download renders as a primary action button (alongside "Use in chat", which the default `isPrimaryActionVisible` rule still shows for a Prompt) and no longer appears in the Manage menu
 
 #### Scenario: An entity type with no matching branch shows no primary action
 
@@ -89,6 +89,8 @@ An item whose Download is **not** primary (every entity type other than Skill, u
 |---|---|---|---|
 | `isSharePrimary?: (item) => boolean` | `true` | Share renders as its own button in the action row | Share renders as a Manage-menu entry, first, above Edit |
 | `isPublishPrimary?: (item) => boolean` | `false` | Whichever of Publish/Unpublish applies renders as a `NeutralButton` in the action row, after the primary action | It renders as a Manage-menu entry, in its existing position |
+
+When filtering leaves the Manage menu with a single entry (and no lazily-resolved "Unpublish"/"Revoke access" entry could still join it, and the menu is not open), that entry renders as a button of its own in the action row instead of a one-item menu — Share via `ShareButton`, a `danger` entry via `DangerButton`, any other via `NeutralButton`.
 
 The defaults reproduce the arrangement that predates these props, so a host that passes neither SHALL see no change: Share in the action row, Publish in the Manage menu.
 

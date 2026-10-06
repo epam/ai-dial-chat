@@ -8,7 +8,7 @@ Resolve application and toolset ownership and folder metadata into localized cat
 
 ### Requirement: Deployment folder is always resolved through localized, decoded segments
 
-The app wrapper `mapDeploymentToCatalogItem` (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`) SHALL accept a required `t: TFunction` parameter, resolve `DeploymentFolderLabels` through `buildDeploymentFolderLabels(t)`, and delegate to the mapper in `libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`. The library mapper SHALL derive `CatalogItem.folder` exclusively via `resolveDeploymentFolder(deployment, folderLabels)`. The library SHALL consume resolved labels without importing app i18n or translation keys. There SHALL be no code path in which `CatalogItem.folder` is derived from an un-decoded, un-prefix-stripped split of `deployment.applicationFolder`.
+The app wrapper `mapDeploymentToCatalogItem` (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`) SHALL accept a required `t: TFunction` field in its options object (`MapDeploymentToCatalogItemOptions`), resolve `DeploymentFolderLabels` through `buildDeploymentFolderLabels(t)`, and delegate to the mapper in `libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`. The library mapper SHALL derive `CatalogItem.folder` exclusively via `resolveDeploymentFolder(deployment, folderLabels)`. The library SHALL consume resolved labels without importing app i18n or translation keys. There SHALL be no code path in which `CatalogItem.folder` is derived from an un-decoded, un-prefix-stripped split of `deployment.applicationFolder`.
 
 `resolveDeploymentFolder` SHALL apply these rules in order:
 
@@ -21,7 +21,7 @@ The app wrapper `mapDeploymentToCatalogItem` (`apps/chat/src/utils/map-deploymen
 
 The app SHALL resolve `folderLabels.public` from `catalog.folder.public`, whose English value is `Organization`; Personal and Shared SHALL use the existing `catalog.folder.personal` and `catalog.folder.shared` translations. Folder labels SHALL be presentation data only and SHALL NOT change ownership, editability, sharing, or authentication flags. Existing card, list, and details renderers SHALL consume the same resolved `CatalogItem.folder`.
 
-Every call site of `mapDeploymentToCatalogItem` SHALL supply `t` obtained from `useTranslation()` (or an equivalent `TFunction`), including both call sites in `apps/chat/src/components/DeploymentSelector/useDeploymentSelectorOverlay.tsx`.
+Every call site of `mapDeploymentToCatalogItem` SHALL supply `t` obtained from `useTranslation()` (or an equivalent `TFunction`), including every call site in `apps/chat/src/components/DeploymentSelector/useDeploymentSelectorOverlay.tsx` (list items, the selected deployment, and the pinned deployment), `apps/chat/src/components/DeploymentSelector/useDeploymentSelectorFieldOverlay.tsx`, and `apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`.
 
 #### Scenario: Shared Quick App folder never exposes the raw bucket ID
 
@@ -58,12 +58,12 @@ Every call site of `mapDeploymentToCatalogItem` SHALL supply `t` obtained from `
 
 #### Scenario: Compile-time enforcement that `t` is always supplied
 
-- **WHEN** any code in `apps/chat/src` calls `mapDeploymentToCatalogItem` without passing a `t` argument
-- **THEN** the TypeScript build fails, since `t` is a required (non-optional) parameter
+- **WHEN** any code in `apps/chat/src` calls `mapDeploymentToCatalogItem` with an options object that has no `t` field
+- **THEN** the TypeScript build fails, since `t` is a required (non-optional) option
 
 ### Requirement: Shared toolset folder is localized, not silently dropped
 
-`mapToolsetToCatalogItem` in `libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts` SHALL resolve toolset folders from the effective identifier `toolset.toolset || toolset.id`. The app wrapper SHALL supply translated `folderLabels` when `t` is provided.
+`mapToolsetToCatalogItem` in `libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts` SHALL resolve toolset folders from the effective identifier `toolset.toolset || toolset.id`. The app wrapper (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`) accepts an optional `t` and SHALL supply translated `folderLabels` (via `buildDeploymentFolderLabels(t)`) only when `t` is provided.
 
 When labels are supplied, owned toolsets SHALL use `[folderLabels.personal]`. For non-owned shared toolsets, `resolveToolsetFolder` SHALL return `[folderLabels.shared, ...segments.slice(1)]` for a `toolsets/{bucket}/{path}` identifier, where `segments` excludes the final toolset name. For identifiers without the `toolsets/` prefix it SHALL return `[folderLabels.shared]`. Shared toolsets SHALL therefore retain their label even when no nested path is available.
 

@@ -7,9 +7,9 @@ Uploading a file to DIAL Core through the BFF, with DTO validation and environme
 ## Requirements
 
 ### Requirement: Upload file to DIAL Core via BFF
-The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` request with a `file` field (binary), `bucket` and `path` form fields, and an optional `uploadMode` field. The endpoint SHALL validate all inputs, apply conditional DIAL Core headers based on `uploadMode`, and proxy the upload to DIAL Core `PUT /v1/files/{bucket}/{path}` under the authenticated user's session. The endpoint SHALL return `201 Created` with a `FileUploadResponseDto` on success.
+The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` request with a `file` field (binary), `bucket` and `path` form fields, and an optional `uploadMode` field. The endpoint SHALL validate all inputs, apply conditional DIAL Core headers based on `uploadMode`, and proxy the upload to DIAL Core `PUT /v1/files/{bucket}/{path}` (via the DIAL SDK client's `uploadFile`, from `FilesUploadService` in `apps/chat-api/src/files/upload/files-upload.service.ts`) under the authenticated user's session. The endpoint SHALL return `201 Created` with a `FileUploadResponseDto` on success.
 
-The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately. The multer `memoryStorage` engine MUST be used with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB).
+The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately. The multer `memoryStorage` engine MUST be used (registered in `apps/chat-api/src/files/files.module.ts`) with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB).
 
 - **Swagger**: `@ApiConsumes('multipart/form-data')` and `@ApiBody` with schema describing `file`, `bucket`, `path`, and optional `uploadMode` fields.
 - **operationId**: `uploadFile` → generated SDK method `filesApi.uploadFile(...)`.
@@ -20,9 +20,9 @@ The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffe
 | Field | Type | Validation |
 |-------|------|------------|
 | `file` | binary | Required; max size enforced by multer |
-| `bucket` | string | Required; `@Matches(/^[\w.-]+$/)` |
+| `bucket` | string | Required; `@Matches(BUCKET_NAME_PATTERN)` (`/^[\w.-]+$/`), up to 256 characters |
 | `path` | string | Required; `@IsValidFilePath()`, up to 1024 characters |
-| `uploadMode` | `'overwrite' \| 'create-only'` | Optional; `@IsOptional()`, `@IsIn(['overwrite', 'create-only'])`; defaults to `'overwrite'` |
+| `uploadMode` | `'overwrite' \| 'create-only'` | Optional; `@IsOptional()`, `@IsString()`, `@IsIn(['overwrite', 'create-only'])`; defaults to `'overwrite'` |
 
 **Upload mode → DIAL Core header mapping:**
 | `uploadMode` | DIAL Core header |
@@ -33,7 +33,9 @@ The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffe
 `path` is a bucket-relative URL path. Clients may percent-encode each file-name
 segment (for example, `uploads/2026-09/my%20report%20%23%201.pdf`). Before
 calling DIAL Core, the BFF SHALL decode every segment once and encode it once
-again. The returned `url` SHALL preserve this canonical single-encoded path.
+again (`encodeDialResourcePath`). The returned `url` is built from the
+validated request `path` as received (`buildDialFileUrl`), so a pre-encoded
+path comes back in that same single-encoded form.
 Malformed percent escapes, encoded separators or dots (`%2E`, `%2F`, `%5C`),
 raw backslashes, leading slashes, and traversal segments remain invalid.
 
@@ -41,14 +43,14 @@ raw backslashes, leading slashes, and traversal segments remain invalid.
 
 **Success response (201):** `FileUploadResponseDto`
 ```json
-{ "url": "dial:///files/{bucket}/{path}" }
+{ "url": "files/{bucket}/{path}" }
 ```
 
 **Error codes:** 400, 401, 403, 409, 413, 429, 502, 503, 500.
 
-**Generated-client impact:** OpenAPI regeneration adds `uploadMode` to the `uploadFile` request body schema. Generated method `filesApi.uploadFile({ file, bucket, path, uploadMode? })`. Frontend callers in `apps/chat/src/server-api/files.api.ts` and `upload-file-with-progress.ts` pass `uploadMode` through.
+**Generated-client impact:** OpenAPI regeneration adds `uploadMode` to the `uploadFile` request body schema. Generated method `filesApi.uploadFile({ file, bucket, path, uploadMode? })`. Frontend callers in `apps/chat/src/server-api/files.api.ts` (via `createFilesApiClient` from `@epam/ai-dial-chat-hooks`) and `upload-file-with-progress.ts` (via `createUploadFileWithProgress`) pass `uploadMode` through.
 
-**XHR progress path:** `uploadFileWithProgress` in `apps/chat/src/server-api/upload-file-with-progress.ts` SHALL add `uploadMode` to the `FormData` when provided via `UploadFileWithProgressOptions`. The `UploadFileWithProgressOptions` type gains `uploadMode?: 'overwrite' | 'create-only'`.
+**XHR progress path:** `uploadFileWithProgress` in `apps/chat/src/server-api/upload-file-with-progress.ts` is built by `createUploadFileWithProgress` (`libs/chat-hooks/src/files/create-upload-file-with-progress.ts`), which SHALL add `uploadMode` to the `FormData` when provided via `UploadFileWithProgressOptions`. The `UploadFileWithProgressOptions` type (`libs/chat-hooks/src/files/create-files-api.ts`) carries `uploadMode?: UploadMode` (`'overwrite' | 'create-only'`).
 
 #### Scenario: Successful overwrite upload
 - **WHEN** an authenticated user sends `POST /api/v1/files` with `uploadMode: 'overwrite'` (or omits the field)
@@ -110,9 +112,9 @@ raw backslashes, leading slashes, and traversal segments remain invalid.
 ### Requirement: Upload DTO validation
 The system SHALL parse and validate the `bucket` and `path` form fields through a `UploadFileDto` class decorated with `class-validator` and `@ApiProperty`. The global `ValidationPipe` (whitelist + forbidNonWhitelisted) MUST reject any undeclared fields and strip them before the handler runs.
 
-The `UploadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/upload-file.dto.ts`.
+The `UploadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/upload-file.dto.ts`; it extends `FileParamsDto` (`apps/chat-api/src/files/dto/file-params.dto.ts`), which declares `bucket` and `path`, and adds the optional `uploadMode`.
 
-- `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(/^[\w.\-]+$/)`, `@MaxLength(256)`
+- `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(BUCKET_NAME_PATTERN, { message: BUCKET_NAME_VALIDATION_MESSAGE })` (`/^[\w.-]+$/`, from `apps/chat-api/src/common/validators/bucket-name.pattern.ts`), `@MaxLength(256)`
 - `path`: `@IsString()`, `@IsNotEmpty()`, `@MaxLength(1024)`, and `@IsValidFilePath()`; percent-encoded filename characters are valid, while a leading `/`, `..`, malformed percent escapes, encoded separators/dots, and raw forbidden path characters are rejected
 
 #### Scenario: Valid DTO passes validation
@@ -135,7 +137,7 @@ The system SHALL add `FILE_UPLOAD_MAX_BYTES` and `FILE_TRANSFER_TIMEOUT_MS` to `
 - `FILE_UPLOAD_MAX_BYTES`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1)`, default `536_870_912` (512 MB).
 - `FILE_TRANSFER_TIMEOUT_MS`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1000)`, default `30_000`.
 
-Both variables SHALL be documented in `apps/chat-api/README.md` and added as placeholders to `.env.example`.
+Both variables SHALL be documented in `apps/chat-api/README.md` and added as commented placeholders to `apps/chat-api/.env.template`.
 
 #### Scenario: Default values applied when env vars absent
 - **WHEN** neither variable is set in the environment

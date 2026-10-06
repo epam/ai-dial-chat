@@ -128,7 +128,7 @@ These live beside the inline-citation grouping they reuse, and are host-agnostic
 - Returns `null` when `parsePdfPageReference(attachment.url)` returns `null`.
 - Resolves `baseUrl` to a DIAL download URL through the injected `resolvers.resolveDialFileDownloadUrl` when it is a DIAL file id, otherwise uses it as-is; returns `null` if resolution fails.
 - When no page fragment is present, returns `{ type: Pdf, url }` with no highlights.
-- When a page is present, returns `{ type: Pdf, url, highlights: [...], selectedHighlightId }` with a single invisible (`opacity: 0`, zero-size bbox) highlight scoped to that page, whose `id`/`selectedHighlightId` is `` `reference-page-${page}` `` — unique per page number, so switching between two chips of the same PDF at different pages while the canvas is already open produces a different `selectedHighlightId` and re-triggers the scroll.
+- When a page is present, returns `{ type: Pdf, url, highlights: [...], selectedHighlightId, page }` with a single invisible (`opacity: 0`, zero-size bbox) highlight scoped to that page, whose `id`/`selectedHighlightId` is `` `reference-page-${page}` `` — unique per page number, so switching between two chips of the same PDF at different pages while the canvas is already open produces a different `selectedHighlightId` and re-triggers the scroll.
 
 `getReferenceAttachmentGroups` SHALL set the synthetic annotation's `source.attachment.type` to `application/pdf` (instead of `dto.reference_type ?? dto.type ?? ''`) when `parsePdfPageReference(dto.reference_url)` is non-null.
 
@@ -136,7 +136,7 @@ In `ConversationMessageItem.tsx`, each reference-chip `CitationDropdown` SHALL b
 
 This routing SHALL also apply outside the reference-chip row, so any `DisplayAttachment` click path resolves the same way:
 - The canvas hook's `openFileCanvas` SHALL try its injected `resolveReferencePdfContent` resolver first, whenever `attachment.url == null && attachment.referenceUrl != null`, before its normal MIME-type/extension routing. The app binds that resolver to `referenceAttachmentToPdfCanvasContent`.
-- `useAttachmentAction`'s `handleAttachmentClick` (used by any attachment card with no explicit `onAttachmentClick` override, including stage attachments rendered inside `CollapsedGroup`) SHALL route reference-only attachments the same way: PDF-page canvas preview when detectable, otherwise the DIAL-file download or `window.open` fallback.
+- `useAttachmentAction`'s `handleAttachmentClick` (used by any attachment card with no explicit `onAttachmentClick` override, including stage attachments rendered inside `CollapsedGroup`) SHALL route reference-only attachments the same way: PDF-page canvas preview when detectable, otherwise the DIAL-file download or `window.open` fallback. It does so through module-private equivalents of `referenceAttachmentToPdfCanvasContent` and `openAnnotationAttachment` that take its own `resolveDownloadUrl` instead of `AttachmentCanvasUrlResolvers`.
 
 **i18n**: none new.
 **RTL**: none — canvas panel layout is unaffected.

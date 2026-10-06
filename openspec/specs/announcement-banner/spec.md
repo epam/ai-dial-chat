@@ -41,7 +41,10 @@ The banner SHALL render only when the app-config `status` is ready AND the annou
 
 ### Requirement: Banner content is sanitized before rendering
 
-The system SHALL sanitize operator-supplied HTML before rendering it as markup. This applies to both `config.announcementDescription` and the legacy `config.announcementHtml`. Sanitization SHALL be invoked by the application component — never by a presentational library component — through the shared, host-agnostic `sanitizeAnnouncementHtml` helper exported from `@epam/ai-dial-chat-hooks`, and SHALL allow only a safe subset of tags (`a`, `b`, `strong`, `em`, `br`, `span`) and attributes (`href`, `target`, `rel`). The allowed set SHALL be kept in lockstep with the backend allowlist in `apps/chat-api/src/app-config/html-sanitizer.ts`, so the server never returns markup this pass silently strips. This client-side pass SHALL remain in place even though the backend also sanitizes the description, so the component is safe regardless of which backend version serves it.
+The system SHALL sanitize operator-supplied HTML before rendering it as markup. This applies to both `config.announcementDescription` and the legacy `config.announcementHtml`. Sanitization SHALL be invoked by the application component — never by a presentational library component — through shared, host-agnostic DOMPurify helpers exported from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/conversation/announcement-message.ts`):
+
+- The description SHALL go through `sanitizeAnnouncementHtml`, which allows only an inline subset of tags (`a`, `b`, `strong`, `em`, `br`, `span`) and attributes (`href`, `target`, `rel`). This set SHALL be kept in lockstep with `ANNOUNCEMENT_ALLOWED_TAGS` in `apps/chat-api/src/app-config/html-sanitizer.ts`, so the server never returns markup this pass silently strips. This client-side pass SHALL remain in place even though the backend also sanitizes the description, so the component is safe regardless of which backend version serves it.
+- The legacy message SHALL go through `sanitizeAnnouncementMessageHtml`, which additionally allows `u` and `p` (operators author multi-paragraph legacy announcements) with the same attribute list and no `style`. The legacy message is sanitized on the client only: the backend passes it through verbatim so that `buildAnnouncementSignature` keeps producing the byte-identical value older builds stored for dismissal.
 
 Links that the sanitized markup opens in a new tab SHALL carry `rel="noopener noreferrer"`, applied by the sanitizer rather than trusted from operator input. Content that sanitizes down to nothing SHALL be treated as absent: the banner SHALL render no element and reserve no vertical space for it.
 
@@ -87,7 +90,7 @@ Dismissal SHALL be persistent, not session-scoped: a dismissed announcement SHAL
 
 The signature SHALL be computed by a shared, host-agnostic helper (`buildAnnouncementSignature`, exported from `@epam/ai-dial-chat-hooks`) and SHALL be deterministic for a given announcement payload. Browser-storage access SHALL stay at the app edge — the `useAnnouncementDismissal` hook under `apps/chat/src/hooks/` — because libraries must not read or write browser storage directly.
 
-When the announcement consists only of the legacy `announcementHtml` (no title, no description), the signature SHALL be exactly that HTML string, so dismissals recorded before the structured fields existed remain valid without a storage migration. When structured content is present, the signature SHALL cover the title and the description only; the legacy `announcementHtml` is excluded, matching the fact that a structured banner never renders it.
+When the announcement consists only of the legacy `announcementHtml` (no title, no description), the signature SHALL be exactly that HTML string, so dismissals recorded before the structured fields existed remain valid without a storage migration. When structured content is present, the signature SHALL be a JSON payload covering the title, the description, and — only when `config.announcements` is non-empty — the announcements-popover entries behind the count pill (each rebuilt field by field as `title`, `description`, `link` so operator key order does not churn it); the legacy `announcementHtml` is excluded, matching the fact that a structured banner never renders it. Leaving `items` out when the list is empty keeps signatures stored before the popover existed valid.
 
 #### Scenario: Closing hides the banner and persists the signature
 
@@ -108,6 +111,11 @@ When the announcement consists only of the legacy `announcementHtml` (no title, 
 
 - **WHEN** a user has dismissed an announcement and the operator later changes `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION`
 - **THEN** the banner is shown again on next load because the stored signature no longer equals the current one
+
+#### Scenario: Adding a popover entry re-shows a structured banner
+
+- **WHEN** a user has dismissed a structured announcement and the operator later adds an entry to the announcements list, leaving the title and description unchanged
+- **THEN** the banner is shown again on next load, because the popover entries are part of the structured signature
 
 #### Scenario: Changing the legacy message re-shows the banner
 
@@ -192,7 +200,7 @@ Each part SHALL be conditional: an unset title or description SHALL render no el
 
 When structured content is present, the legacy `announcementHtml` SHALL be ignored rather than appended.
 
-When announcements are configured, the count pill specified by the `announcements-popover` capability SHALL sit between the text and the close control; the close control SHALL remain the trailing element of the line either way.
+When announcements are configured, the count pill specified by the `announcements-popover` capability SHALL sit between the text (and the expand/collapse control, when shown) and the close control; the close control SHALL remain the trailing element of the line either way.
 
 #### Scenario: Title and description both configured
 
@@ -223,9 +231,11 @@ When announcements are configured, the count pill specified by the `announcement
 
 ### Requirement: Overflowing banner text is truncated with an ellipsis
 
-When the combined title and description exceed the width available on the banner line, the system SHALL truncate the text with a trailing ellipsis rather than wrapping onto additional lines, growing the banner's height, or causing horizontal overflow.
+When the combined title and description exceed the width available on the banner line, the structured banner SHALL, by default, truncate the text with a trailing ellipsis rather than wrapping onto additional lines, growing the banner's height, or causing horizontal overflow.
 
-Truncation SHALL be achieved with CSS text-overflow on the text container, leaving the full text in the DOM. The close control SHALL sit outside the truncating container and SHALL NEVER be clipped, pushed out of view, or made unreachable by long text.
+Truncation SHALL be achieved with CSS text-overflow (the Tailwind `truncate` class) applied separately to the title and description spans, leaving the full text in the DOM. The close control SHALL sit outside the truncating container and SHALL NEVER be clipped, pushed out of view, or made unreachable by long text.
+
+When either the title or the description is actually clipped (measured by the app-local `useIsTextClipped` hook), the banner SHALL show an expand/collapse disclosure control (`IconChevronDown`, rotated when expanded) between the text and the trailing controls. It SHALL carry `aria-expanded`, `aria-controls` pointing at the text paragraph, and an i18n `aria-label` (`AnnouncementBannerI18nKeys.ExpandLabel` / `CollapseLabel`). Expanding SHALL drop the truncation and stack the title above the description so the full text wraps; collapsing restores the single truncated line.
 
 #### Scenario: Long text truncates on one line
 
@@ -235,7 +245,12 @@ Truncation SHALL be achieved with CSS text-overflow on the text container, leavi
 #### Scenario: Short text is not truncated
 
 - **WHEN** the title and description fit within the available width
-- **THEN** the full text is displayed with no ellipsis
+- **THEN** the full text is displayed with no ellipsis and no expand/collapse control is rendered
+
+#### Scenario: Clipped text can be expanded
+
+- **WHEN** the text is truncated and the user activates the expand control
+- **THEN** the title and description render in full on stacked, wrapping lines, the control reports `aria-expanded="true"` with the collapse label, and activating it again restores the single truncated line
 
 #### Scenario: The close control survives overflow
 
@@ -251,14 +266,14 @@ Truncation SHALL be achieved with CSS text-overflow on the text container, leavi
 
 ### Requirement: Legacy single-line layout remains the fallback
 
-When the announcement has no structured content and `config.announcementHtml` is a non-empty string, the banner SHALL render the centered single-line layout: the sanitized message centered, with the close control at the trailing edge.
+When the announcement has no structured content and `config.announcementHtml` is a non-empty string, the banner SHALL render the centered legacy layout: the sanitized message centered, with the close control at the trailing edge. Unlike the structured line, the legacy message wraps rather than truncates (it may contain `<p>` blocks, rendered inside a `div`), so it has no expand/collapse control.
 
-The layout's **structure and behavior** are the contract — centered text, one line, dismissible, no title/description split, no announcements pill. Its **surface styling is not**: the legacy branch shares the redesigned banner's background, border, text, and close-control treatment rather than preserving the pre-redesign gradient, leading megaphone icon, and `CloseButton`. A legacy-only deployment therefore keeps its message and its behavior across the upgrade, but adopts the new visual language along with the rest of the application.
+The layout's **structure and behavior** are the contract — centered text, dismissible, no title/description split, no announcements pill, no disclosure control. Its **surface styling is not**: the legacy branch shares the redesigned banner's background, border, text, and close-control treatment rather than preserving the pre-redesign gradient, leading megaphone icon, and `CloseButton`. A legacy-only deployment therefore keeps its message and its behavior across the upgrade, but adopts the new visual language along with the rest of the application.
 
 #### Scenario: Legacy-only deployment keeps its layout and behavior after upgrade
 
 - **WHEN** a deployment configures only `ANNOUNCEMENT_HTML_MESSAGE` and upgrades to a build that supports the structured fields
-- **THEN** the banner still renders the message centered on a single dismissible line, with no title/description split and no announcements pill
+- **THEN** the banner still renders the message centered and dismissible, with no title/description split and no announcements pill
 
 #### Scenario: The legacy branch adopts the redesigned surface
 
@@ -274,7 +289,7 @@ The layout's **structure and behavior** are the contract — centered text, one 
 
 ### Requirement: Banner layout is mobile-first and responsive
 
-The banner SHALL be usable on narrow viewports without horizontal overflow, without clipping the close control, and without growing beyond its single-line height. Truncation SHALL apply at every viewport width. Any JavaScript branching on viewport size SHALL use `useBreakpoint`/`useIsMobile` rather than reading `window.innerWidth`. Only the project's named Tailwind breakpoints (`mobile`, `desktop`) SHALL be used.
+The banner SHALL be usable on narrow viewports without horizontal overflow, without clipping the close control, and — while collapsed — without growing beyond its single-line height. Truncation (and the expand/collapse control it triggers) SHALL apply at every viewport width. Any JavaScript branching on viewport size SHALL use `useBreakpoint`/`useIsMobile` rather than reading `window.innerWidth`. Only the project's named Tailwind breakpoints (`mobile`, `desktop`) SHALL be used.
 
 #### Scenario: Mobile layout truncates without overflow
 

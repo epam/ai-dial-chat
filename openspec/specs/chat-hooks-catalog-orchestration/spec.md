@@ -72,8 +72,11 @@ private implementation state, not part of the returned public contract.
 ### Requirement: Details dispatch preserves every current entity branch
 
 The controller SHALL preserve the current dispatch and mapping behavior:
-personal/shared/public prompts rebuild prompt content and overview; skills parse
-their qualified id and combine manifest/inventory with `Promise.allSettled`;
+personal/shared/public prompts rebuild prompt content and overview; skills are
+delegated to the exported skill-scoped `useSkillItemDetails` hook, which parses
+the qualified id and combines manifest, recursive inventory, and
+`getSkillMetadata` with `Promise.allSettled` (a fulfilled metadata response is
+authoritative; the `skills` listing entry is only the fallback when it rejects);
 models combine details with optional limits; agents and toolsets use deployment
 details without model limits; deployment variants preserve MCP/connect
 precedence, credentials and admin-specific data. Prompt/skill branches SHALL
@@ -105,7 +108,7 @@ and limits failure SHALL not discard successful model details.
 The package SHALL export immutable pure functions for selector visible-type
 filtering, hide-owned filtering, favorite derivation, available-tab derivation,
 and topic reconciliation. They SHALL use current predicates and order:
-favorites are items whose `isUserFavorite` is true, tab ids follow supplied tab
+favorites are items whose `isUserFavorite` is true and `isHidden` is not, tab ids follow supplied tab
 order and include only types present in visible items, and topics are the
 intersection of persisted topics with topics present in those items.
 
@@ -154,9 +157,11 @@ responsibility.
 
 ### Requirement: Skill-preview lifecycle is headless and race-safe
 
-The package SHALL export a hook that accepts the selected file id/name and an
-async loader and returns loading, content, and a forbidden-or-generic error
-classification. It SHALL clear stale content on selection change, ignore
+The package SHALL export `useSkillFilePreview({ fileId, onLoadFile })`, which
+accepts the selected file id and an async loader and returns `isLoading`,
+`content`, and an `error` classified as `SkillPreviewErrorKind.Forbidden`
+(HTTP 403) or `SkillPreviewErrorKind.Generic`. The file name is not a hook
+input; the app adapter (`SkillDetailsFilePreview`) uses it only for the canvas. It SHALL clear stale content on selection change, ignore
 settlements from older selections and after unmount, and preserve the current
 forbidden classification.
 

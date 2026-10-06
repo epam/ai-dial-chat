@@ -5,6 +5,7 @@
  * reaches (see the note in `./index.ts`).
  */
 import type {
+  DialFile,
   DialFileManager,
   DialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
@@ -104,14 +105,16 @@ export interface DialFileManagerShellLabels {
   operationLoaderMoveTitle: string;
   /** Cancel-button label in the operation loader modal. */
   operationLoaderCancelLabel: string;
-  /** Returns the delete confirmation dialog title for the given item names. */
-  deleteConfirmTitle: (names: string[]) => ReactNode;
+  /** Returns the delete confirmation dialog title for the given item names and items; the items carry `nodeType`, so a folder and a file can be titled differently. */
+  deleteConfirmTitle: (names: string[], items: DialFile[]) => ReactNode;
   /** Returns the delete confirmation dialog body for the given item names. */
   deleteConfirmBody: (names: string[]) => ReactNode;
   /** Confirm-button label in the delete confirmation dialog. */
   deleteConfirmLabel: string;
   /** Cancel-button label in the delete confirmation dialog. */
   deleteCancelLabel: string;
+  /** Accessible name of the delete confirmation dialog's close control. Unset falls back to the file manager's English default. */
+  deleteCloseLabel?: string;
   /** Returns the upload queue heading for the number of files in it (e.g. "Uploading 5 files"). */
   getUploadQueueTitle: (count: number) => string;
   /** Translated strings for the upload `TransferQueue`; unset ones fall back to the kit's English defaults. */

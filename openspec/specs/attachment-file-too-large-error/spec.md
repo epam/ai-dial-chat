@@ -8,9 +8,9 @@ Specifies the validation and error notification flow when a user attaches a file
 
 ### Requirement: Validate file size against a configurable maximum before upload
 
-Before calling `onUploadAttachment`, the app SHALL validate each attachment's file size against a configurable maximum, mirroring the existing MIME-type validation flow (`attachment-unsupported-type-error`). Validation uses the `maxFileSizeBytes` parameter on the shared `useAttachmentValidation` hook (`chat-hooks-attachment-validation`), sourced by the app from `useAppConfig().config.maxAttachmentFileSizeBytes`. The hook classifies an oversized attachment as `AttachmentErrorReason.FileTooLarge` and reports the rejection through the existing `onValidationError({ reason, ... })` callback, so each surface (chat input, drag-and-drop, paste) decides only how to present it.
+Before calling `onUploadAttachment`, the app SHALL validate each attachment's file size against a configurable maximum, mirroring the existing MIME-type validation flow (`attachment-unsupported-type-error`). Validation uses the `maxFileSizeBytes` parameter on the shared `useAttachmentValidation` hook (`chat-hooks-attachment-validation`), sourced by the app from `useAppConfig().config.maxAttachmentFileSizeBytes`. The hook classifies an oversized attachment as `AttachmentErrorReason.FileTooLarge` (from `@epam/ai-dial-chat-shared`) and reports the rejection, debounced (default 100 ms) into one call per burst, through the existing `onValidationError({ reason: AttachmentValidationErrorReason.FileTooLarge, maxFileSizeBytes })` callback, so each surface (chat input, drag-and-drop, paste) decides only how to present it.
 
-A file is oversized when its byte size (`File.size` for a freshly-picked local file) strictly exceeds `maxFileSizeBytes`. A file at exactly the limit is allowed. When `maxFileSizeBytes` is `undefined` (e.g. before `AppConfig` has loaded), no size restriction is applied — this mirrors the existing "no restriction when absent" behavior of `maxSelectableFileSize` in `dial-file-manager-attach-validation`.
+A file is oversized when its byte size (`File.size` for a freshly-picked local file) strictly exceeds `maxFileSizeBytes`. A file at exactly the limit is allowed. When `maxFileSizeBytes` is `undefined`, the hook applies no size restriction — this mirrors the existing "no restriction when absent" behavior of `maxSelectableFileSize` in `dial-file-manager-attach-validation`. The app never passes `undefined` in practice: `AppConfigContext` types `maxAttachmentFileSizeBytes` as `number` and falls back to `DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES` (`536_870_912`, 512 MB) both before the config loads and when the response omits it.
 
 Invalid files SHALL be placed immediately into `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.FileTooLarge` without calling `onUploadAttachment`. The MIME-type check runs first and short-circuits: a file whose MIME type is already unsupported is classified as `AttachmentErrorReason.UnsupportedType` and the size check never runs for it (see `chat-hooks-attachment-validation`'s "MIME-type rejection takes precedence over size rejection"). The size check applies only to files that already passed the MIME-type check.
 
@@ -32,7 +32,7 @@ When a batch contains files rejected for unsupported type and other files reject
 
 **Accessibility**: `Notification` carries `role="alert"`; no additional ARIA required.
 
-**Memoisation**: `validateAttachment`'s identity changes when either `allowedMimeTypes` or `maxFileSizeBytes` changes; unchanged otherwise, per the existing content-stability rule in `chat-hooks-attachment-validation`.
+**Memoisation**: `validateAttachment`'s identity changes when the content of `allowedMimeTypes`, `maxFileSizeBytes`, `debounceMs`, or the `onValidationError` reference changes; unchanged otherwise, per the existing content-stability rule in `chat-hooks-attachment-validation`.
 
 #### Scenario: File exceeding the configured maximum is rejected
 
@@ -53,10 +53,15 @@ When a batch contains files rejected for unsupported type and other files reject
 - **AND** `huge.mp4` enters error state with `errorReason: AttachmentErrorReason.FileTooLarge`
 - **AND** exactly one "File too large" notification appears
 
-#### Scenario: No restriction when the limit is not yet known
+#### Scenario: No restriction when the hook is given no limit
 
-- **WHEN** `maxFileSizeBytes` is `undefined` because `AppConfig` has not finished loading
+- **WHEN** `useAttachmentValidation` is called with `maxFileSizeBytes` `undefined`
 - **THEN** no file is rejected for size, regardless of how large it is
+
+#### Scenario: The app applies the default limit before AppConfig loads
+
+- **WHEN** the chat input renders before `AppConfig` has finished loading
+- **THEN** `maxAttachmentFileSizeBytes` is the 512 MB default, so a file above it is still rejected as too large
 
 #### Scenario: Retry button is hidden for file-too-large error cards
 

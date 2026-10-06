@@ -12,19 +12,19 @@ Installing and uninstalling toolsets within the user configuration.
 
 ```ts
 class UpdateInstalledDto {
-  id: string;          // Toolset identifier — validated with @Matches allowlist regex
+  id: string;          // Toolset identifier — @IsString, @IsNotEmpty, @Matches(/^\S+$/) (no whitespace)
   isInstalled: boolean;
 }
 ```
 
-The handler calls `userConfigService.updateInstalledToolset(id, isInstalled, at, bucket)`. `updateInstalledToolset` reads the current config, adds or removes `id` from `toolsets.installed` (idempotent), then writes back via `writeConfig`.
+The handler calls `userConfigService.updateInstalledToolset(id, isInstalled, at, bucket)`. `updateInstalledToolset` delegates to the shared private `updateInstalledEntry('toolsets', …)`, which reads the current config, adds or removes `id` from `toolsets.installed` (idempotent), then writes back via `writeConfig` with `CURRENT_CONFIG_VERSION`.
 
 The operation MUST be idempotent:
 - Installing an already-installed ID MUST NOT create duplicates.
 - Uninstalling a missing ID MUST succeed silently (no error).
 
 Error codes:
-- `400 Bad Request` — body fails DTO validation (missing `id`, non-boolean `isInstalled`, or `id` does not match the allowlist `@Matches` constraint)
+- `400 Bad Request` — body fails DTO validation (missing `id`, non-boolean `isInstalled`, or `id` is empty or contains whitespace, failing `@Matches(/^\S+$/)`)
 - `401 Unauthorized` — missing or invalid session
 
 #### Scenario: Valid install request returns 204

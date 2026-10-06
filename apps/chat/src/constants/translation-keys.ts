@@ -552,6 +552,8 @@ export enum DialFileManagerI18nKeys {
   TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',
   TooManyFilesDescription = 'dialFileManager.tooManyFilesDescription',
   DeleteConfirmTitleSingle = 'dialFileManager.deleteConfirmTitleSingle',
+  DeleteConfirmTitleFile = 'dialFileManager.deleteConfirmTitleFile',
+  DeleteConfirmTitleFolder = 'dialFileManager.deleteConfirmTitleFolder',
   DeleteConfirmTitleMultiple = 'dialFileManager.deleteConfirmTitleMultiple',
   DeleteConfirmMessageSingle = 'dialFileManager.deleteConfirmMessageSingle',
   DeleteConfirmMessageMultiple = 'dialFileManager.deleteConfirmMessageMultiple',
