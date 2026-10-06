@@ -5,6 +5,20 @@ import { QUOTATIONS_CLASS } from '../../../constants/public-class-names';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
 import { CitationCard } from '../CitationCard';
 
+/* jsdom has no layout; report every table as wider than its scroll container
+ * so `MarkdownTable` exposes its labelled scroll region. */
+const mockOverflowingTables = () => {
+  vi.spyOn(HTMLDivElement.prototype, 'scrollWidth', 'get').mockReturnValue(400);
+  vi.spyOn(HTMLDivElement.prototype, 'clientWidth', 'get').mockReturnValue(200);
+  vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    left: 0,
+    right: 200,
+  } as DOMRect);
+  vi.spyOn(HTMLTableElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    { left: 0, right: 400 } as DOMRect,
+  );
+};
+
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   FileIcon: ({ fileExtension }: { fileExtension?: string }) => (
@@ -16,6 +30,7 @@ const makeGroup = (
   count = 1,
   attachmentType = 'application/pdf',
   title?: string,
+  quote?: string,
 ): AnnotationGroup => ({
   groupKey: 'https://files.example.com/report.pdf',
   sourceUrl: 'https://files.example.com/report.pdf',
@@ -24,7 +39,7 @@ const makeGroup = (
     index: i,
     body: {
       title: title ?? `Title ${i}`,
-      quote: `Quote ${i}`,
+      quote: quote ?? `Quote ${i}`,
       source: {
         type: 'attachment' as const,
         attachment: {
@@ -312,5 +327,64 @@ describe('CitationCard — public class names', () => {
     expect(screen.getByRole('dialog').classList).toContain(
       QUOTATIONS_CLASS.citationCard,
     );
+  });
+});
+
+describe('CitationCard — quote markdown labels', () => {
+  it('names the quote code-block buttons with the host labels', () => {
+    const group = makeGroup(
+      1,
+      'application/pdf',
+      undefined,
+      '```ts\nconst a = 1;\n```',
+    );
+
+    render(
+      <CitationCard
+        {...defaultProps({
+          group,
+          labels: {
+            ...defaultLabels,
+            codeBlockCopyLabel: 'Kopieren',
+            codeBlockDownloadLabel: 'Herunterladen',
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Kopieren' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Herunterladen' })).toBeTruthy();
+  });
+});
+
+describe('CitationCard — quote table label', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('names an overflowing quote table scroll region with the host label', () => {
+    mockOverflowingTables();
+    const group = makeGroup(
+      1,
+      'application/pdf',
+      undefined,
+      '| a | b |\n| - | - |\n| 1 | 2 |',
+    );
+
+    render(
+      <CitationCard
+        {...defaultProps({
+          group,
+          labels: {
+            ...defaultLabels,
+            tableScrollRegionAriaLabel: 'Scrollbare Tabelle',
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Scrollbare Tabelle' }),
+    ).toBeTruthy();
   });
 });

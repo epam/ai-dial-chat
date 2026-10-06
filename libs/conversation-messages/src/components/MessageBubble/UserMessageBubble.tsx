@@ -1,7 +1,6 @@
 import { AttachmentGroup } from '@epam/ai-dial-attachment-input';
 import {
   buildCssVars,
-  DisplayAttachment,
   mergeClasses,
   MessageRole,
   useCollapsedText,
@@ -42,6 +41,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     showMoreAriaLabel,
     showLessAriaLabel,
     attachmentClickLabel,
+    attachmentDownloadLabel,
     attachmentRetryLabel,
     attachmentOpenInNewTabLabel,
     userMessageAriaLabel = 'User message',
@@ -96,15 +96,19 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
         <AttachmentGroup
           attachments={attachments ?? []}
-          onAttachmentClick={(id) =>
-            onAttachmentClick?.(
-              attachments?.find((a) => a.id === id) as DisplayAttachment,
-            )
+          onAttachmentClick={
+            onAttachmentClick
+              ? (id) => {
+                  const attachment = attachments?.find((a) => a.id === id);
+                  if (attachment) onAttachmentClick(attachment);
+                }
+              : undefined
           }
           onDownloadAll={onDownloadAll}
           onRetry={onAttachmentRetry}
           labels={{
             clickLabel: attachmentClickLabel,
+            downloadLabel: attachmentDownloadLabel,
             retryLabel: attachmentRetryLabel,
             openInNewTabLabel: attachmentOpenInNewTabLabel,
           }}

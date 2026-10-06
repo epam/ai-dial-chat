@@ -57,7 +57,8 @@ Recursive pagination SHALL move from the browser to `SkillsListingService`. The 
 #### Scenario: Repeated token fails closed
 
 - **WHEN** DIAL Core repeats a non-empty continuation token
-- **THEN** the BFF rejects that namespace rather than looping indefinitely
+- **THEN** the BFF rejects that namespace rather than looping indefinitely, failing it with a typed `BadGatewayException` (`502`, "DIAL Core returned an invalid skill listing page") and logging only the namespace kind (`personal`/`public`) and page count — never the cursor or the caller bucket
+- **AND** when the other namespace succeeds the catalog still answers `200` with that namespace, and when both namespaces fail `GET /api/v1/skills/catalog` answers `502` (documented on the operation), never a generic `500`
 
 ---
 

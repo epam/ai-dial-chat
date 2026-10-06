@@ -12,7 +12,11 @@ import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ChatI18nKeys,
+  NotFoundI18nKeys,
+} from '../../../constants/translation-keys';
 import {
   useAppConfig as useAppConfigMock,
   useFeatureFlag as useFeatureFlagMock,
@@ -231,6 +235,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       activeStatusAnnouncement?: string;
       startStatusAnnouncement?: string;
       completedFieldLabel: string;
+      codeBlockCopyLabel?: string;
+      codeBlockCopiedLabel?: string;
+      codeBlockDownloadLabel?: string;
+      tableScrollRegionAriaLabel?: string;
+      mathScrollRegionAriaLabel?: string;
     };
     onBack: () => void;
     onEdit?: () => void;
@@ -285,6 +294,16 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       )}
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>
+      <span>
+        markdownLabels:
+        {[
+          labels.codeBlockCopyLabel,
+          labels.codeBlockCopiedLabel,
+          labels.codeBlockDownloadLabel,
+          labels.tableScrollRegionAriaLabel,
+          labels.mathScrollRegionAriaLabel,
+        ].join('|')}
+      </span>
       {labels.startStatusAnnouncement && (
         <span role="status">{labels.startStatusAnnouncement}</span>
       )}
@@ -491,6 +510,28 @@ describe('ScheduledTaskDetailPage', () => {
       screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
     ).toBeTruthy();
     expect(getScheduledTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('passes translated code-block, table and formula labels for the built-in instructions viewer', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        `markdownLabels:${[
+          ButtonsI18nKeys.Copy,
+          ButtonsI18nKeys.Copied,
+          ButtonsI18nKeys.Download,
+          ChatI18nKeys.ScrollableTable,
+          ChatI18nKeys.ScrollableFormula,
+        ].join('|')}`,
+      ),
+    ).toBeTruthy();
   });
 
   it('fetches the task and runs concurrently on mount', async () => {

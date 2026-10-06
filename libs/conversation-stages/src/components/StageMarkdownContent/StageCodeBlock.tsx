@@ -11,6 +11,8 @@ interface Props {
   blockClassName?: string;
   /** Accessible label for the copy button. */
   copyAriaLabel: string;
+  /** Status announced after the code has been copied. Defaults to `MarkdownCodeBlock`'s `'Copied!'`. */
+  copiedLabel?: string;
 }
 
 /** Adapts stage markdown code blocks to the shared markdown code-block UI. */
@@ -19,6 +21,7 @@ export const StageCodeBlock: FC<Props> = ({
   codeClassName,
   blockClassName = 'dial-code-text',
   copyAriaLabel,
+  copiedLabel,
 }) => {
   const language = codeClassName?.replace(/^language-/, '') ?? '';
   const value =
@@ -31,6 +34,7 @@ export const StageCodeBlock: FC<Props> = ({
       codeClassName={blockClassName}
       containerClassName={mergeClasses(styles.codeBlock, blockClassName)}
       copyLabel={copyAriaLabel}
+      copiedLabel={copiedLabel}
       hideDownload
     />
   );

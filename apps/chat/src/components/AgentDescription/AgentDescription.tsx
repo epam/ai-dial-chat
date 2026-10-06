@@ -4,7 +4,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ButtonsI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ChatI18nKeys,
+} from '../../constants/translation-keys';
 
 /*
  * An agent description is short prose — a scope note or a disclaimer — not a
@@ -41,6 +44,8 @@ const AgentDescription: FC<Props> = ({ content }) => {
       codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
       codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
       codeBlockDownloadLabel={t(ButtonsI18nKeys.Download)}
+      tableScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableTable)}
+      mathScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableFormula)}
     />
   );
 };

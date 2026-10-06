@@ -879,6 +879,7 @@ export enum AttachmentsI18nKeys {
   RemoveLabel = 'attachments.removeLabel',
   RetryLabel = 'attachments.retryLabel',
   UploadingLabel = 'attachments.uploadingLabel',
+  ExpandPastedText = 'attachments.expandPastedText',
   UnsupportedTypeTitle = 'attachments.unsupportedType.title',
   UnsupportedTypeMessage = 'attachments.unsupportedType.message',
   NoAttachmentsAllowedTitle = 'attachments.noAttachmentsAllowed.title',

@@ -105,17 +105,20 @@ The mic button starts a dictation recording: when the host supplies `onTranscrib
 
 ### Requirement: `AttachmentTray` forwards a click callback to each `AttachmentCard`
 
-`libs/attachment-input/src/models/attachment-tray.ts` (`AttachmentTrayProps`) SHALL declare an optional `onAttachmentClick?: (id: string) => void` prop and an optional `labels.clickLabel?: string` (on `AttachmentTrayLabels`):
+`libs/attachment-input/src/models/attachment-tray.ts` (`AttachmentTrayProps`) SHALL declare an optional `onAttachmentClick?: (id: string) => void` prop and optional `labels.clickLabel?: string` and `labels.expandLabel?: string` (on `AttachmentTrayLabels`):
 
 - `onAttachmentClick` — Called when the user clicks or keyboard-activates a card. Receives the attachment `id`; callers that need the full `DisplayAttachment` look it up from their own attachment list by `id`.
-- `labels.clickLabel` — Forwarded to each `AttachmentCard` as `labels.clickLabel`. When omitted, the card's own default applies (`'Open attachment'` for image tiles, `'Download attachment'` for file tiles).
+- `labels.clickLabel` — Forwarded to each `AttachmentCard` as `labels.clickLabel`. When omitted, the card's own default applies (`'Open attachment'` for image tiles, `'Download attachment'` for file, link and pasted-text tiles).
+- `labels.expandLabel` — Forwarded to each `AttachmentCard` as `labels.expandLabel`, naming a pasted-text card that `onExpand` makes interactive. When omitted, the card's default `'Expand pasted text'` applies.
 
 `AttachmentTray.tsx` SHALL, for each rendered `AttachmentCard`:
 - Pass `onAttachmentClick` directly as the `onClick` prop (both share the `(id: string) => void` signature, so no wrapper function is needed).
-- Pass `clickLabel` inside the card's `labels` object, together with `removeLabel`, `retryLabel` and `uploadingLabel` (may be `undefined`; card's own default covers that case).
+- Pass `clickLabel` and `expandLabel` inside the card's `labels` object, together with `removeLabel`, `retryLabel` and `uploadingLabel` (may be `undefined`; card's own default covers that case).
 - Continue passing `onRemove`, `onRetry`, and `onExpand` as today — the click props are purely additive.
 
-When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and cards remain inert (no regression to existing consumers).
+When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and every card without an applicable `onExpand` renders as a plain, non-focusable element (see `attachment-card-click`).
+
+`Input`, `ConversationInput` and `EditMessageInput` (in `libs/conversation-input`) SHALL each accept an optional `expandLabel?: string` prop and forward it to their `AttachmentTray` as `labels.expandLabel`, alongside `removeLabel`, `retryLabel` and `uploadingLabel`; when it is omitted the card default `'Expand pasted text'` applies. `apps/chat` SHALL pass `t(AttachmentsI18nKeys.ExpandPastedText)` (`attachments.expandPastedText`) to every composer it renders — the new-conversation composer, the active-conversation composer and the edit-message composer — so pasted tiles never announce the untranslated English default.
 
 #### Scenario: Tray cards are inert without `onAttachmentClick`
 
@@ -132,6 +135,16 @@ When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and c
 
 - **WHEN** `AttachmentTray` is rendered with `onAttachmentClick` and `labels={{ clickLabel: "Download file" }}`
 - **THEN** each `AttachmentCard` receives `labels.clickLabel="Download file"`
+
+#### Scenario: `expandLabel` names expandable pasted cards
+
+- **WHEN** `AttachmentTray` is rendered with `onExpand`, a pasted-text attachment, and `labels={{ expandLabel: "Show pasted text" }}`
+- **THEN** that card is a button named `"Show pasted text"`, and `Enter`/`Space` on it invoke `onExpand`
+
+#### Scenario: The composer forwards a translated `expandLabel` to pasted cards
+
+- **WHEN** `Input` (or `EditMessageInput`) is rendered with `expandLabel="Развернуть текст"` and the user pastes text longer than `pasteTextThreshold`
+- **THEN** the resulting pasted-text card is a button named `"Развернуть текст"`, not `"Expand pasted text"`
 
 #### Scenario: Existing remove and retry callbacks are unaffected
 

@@ -334,6 +334,8 @@ export interface InputProps {
   retryLabel?: string;
   /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
+  /** Accessible name of each pasted-text attachment card, which expands its text back into the composer when activated. Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */

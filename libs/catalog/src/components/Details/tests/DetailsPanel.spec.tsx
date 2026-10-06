@@ -8,7 +8,7 @@ import {
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import type {
   CatalogContentFilePreview,
@@ -24,6 +24,20 @@ import {
   ToolsetAuthenticationType,
 } from '../../../types/toolset-auth';
 import { DetailsPanel } from '../DetailsPanel';
+
+/* jsdom has no layout; report every table as wider than its scroll container
+ * so `MarkdownTable` exposes its labelled scroll region. */
+const mockOverflowingTables = () => {
+  vi.spyOn(HTMLDivElement.prototype, 'scrollWidth', 'get').mockReturnValue(400);
+  vi.spyOn(HTMLDivElement.prototype, 'clientWidth', 'get').mockReturnValue(200);
+  vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    left: 0,
+    right: 200,
+  } as DOMRect);
+  vi.spyOn(HTMLTableElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    { left: 0, right: 400 } as DOMRect,
+  );
+};
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
@@ -143,9 +157,11 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ),
 }));
 vi.mock('@tabler/icons-react', () => ({
+  IconCheck: () => <svg />,
   IconChevronLeft: () => <svg />,
   IconChevronDown: () => <svg />,
   IconCopy: () => <svg />,
+  IconDownload: () => <svg />,
   IconFolder: () => <svg />,
   IconKey: () => <svg />,
   IconLogin: () => <svg />,
@@ -2723,5 +2739,48 @@ describe('DetailsPanel host credential slot', () => {
       />,
     );
     expect(renderCredentials).not.toHaveBeenCalled();
+  });
+});
+
+describe('DetailsPanel — markdown code-block labels', () => {
+  it('names the Details tab code-block buttons with the texts code labels', () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: {
+          promptContent: { content: '```ts\nconst a = 1;\n```' },
+        },
+      }),
+      texts: {
+        copyCodeAriaLabel: 'Kopieren',
+        downloadCodeAriaLabel: 'Herunterladen',
+      },
+    });
+
+    expect(screen.getByRole('button', { name: 'Kopieren' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Herunterladen' })).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — markdown table label', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('names an overflowing Details tab table scroll region with the texts label', () => {
+    mockOverflowingTables();
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Prompt,
+        details: {
+          promptContent: { content: '| a | b |\n| - | - |\n| 1 | 2 |' },
+        },
+      }),
+      texts: { tableScrollRegionAriaLabel: 'Scrollbare Tabelle' },
+    });
+
+    expect(
+      screen.getByRole('region', { name: 'Scrollbare Tabelle' }),
+    ).toBeTruthy();
   });
 });

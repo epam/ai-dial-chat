@@ -38,6 +38,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   const {
     ariaLabel = 'Attachments',
     clickLabel = 'Download attachment',
+    downloadLabel = 'Download attachment',
     retryLabel = 'Retry upload',
     downloadAllLabel = 'Download all',
     openInNewTabLabel,
@@ -146,10 +147,11 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
             <AttachmentCard
               attachment={attachment}
               onClick={onAttachmentClick}
-              onDownload={handleDownload}
+              onDownload={onDownloadAll ? handleDownload : undefined}
               onRetry={onRetry}
               labels={{
                 clickLabel,
+                downloadLabel,
                 retryLabel,
                 promptLabel,
                 pastedLabel,

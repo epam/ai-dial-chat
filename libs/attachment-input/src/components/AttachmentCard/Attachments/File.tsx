@@ -6,6 +6,7 @@ import {
 import { Spinner, Highlight } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
+  type HTMLAttributes,
   type KeyboardEvent,
   useCallback,
   useId,
@@ -52,6 +53,8 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 }) => {
   const {
     clickLabel = 'Download attachment',
+    expandLabel = 'Expand pasted text',
+    downloadLabel = 'Download attachment',
     retryLabel = 'Retry upload',
     removeLabel = 'Remove attachment',
     openInNewTabLabel = 'Open in new tab',
@@ -96,6 +99,22 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         ? 'pe-5'
         : undefined;
 
+  /*
+   * Expanding a pasted tile takes precedence over `onClick`. The tile is a
+   * button only when one of the two applies; otherwise it is a plain element so
+   * it adds no no-op Tab stop.
+   */
+  const isExpandAction = !!isExpandable && onExpand !== undefined;
+  const hasAction = isExpandAction || onClick !== undefined;
+
+  const handleClick = (): void => {
+    if (isExpandAction) {
+      onExpand(id);
+    } else {
+      onClick?.(id);
+    }
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     /*
      * Only the tile itself activates on Enter/Space. Without this guard the
@@ -106,7 +125,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     if (e.target !== e.currentTarget) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onClick?.(attachment.id);
+      handleClick();
     }
   };
 
@@ -179,13 +198,19 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     </div>
   );
 
-  const handleClick = (): void => {
-    if (isExpandable && onExpand) {
-      onExpand(id);
-    } else if (onClick) {
-      onClick(id);
-    }
-  };
+  /*
+   * Role, Tab stop, name and handlers travel together, so the tile is either a
+   * complete button or a plain element — never a focusable no-op.
+   */
+  const interactiveProps: HTMLAttributes<HTMLDivElement> = hasAction
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        'aria-label': isExpandAction ? expandLabel : clickLabel,
+        onClick: handleClick,
+        onKeyDown: handleKeyDown,
+      }
+    : {};
 
   const tileContent = (
     <>
@@ -214,7 +239,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       <div className="absolute end-1 top-1 flex gap-1">
         {canDownload && (
           <DownloadAction
-            ariaLabel={clickLabel}
+            ariaLabel={downloadLabel}
             errorTitle={errorTitle}
             errorDescId={errorDescId}
             onClick={onDownload}
@@ -265,16 +290,13 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   return (
     <div style={cssVars} className={mergeClasses('inline-flex', className)}>
       <div
-        role="button"
-        tabIndex={0}
-        aria-label={clickLabel}
+        {...interactiveProps}
         aria-busy={isLoading}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
         style={cssVars}
         className={mergeClasses(
           tileClassName,
-          'cursor-pointer focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
+          hasAction && 'cursor-pointer',
+          'focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
         )}
       >
         {tileContent}

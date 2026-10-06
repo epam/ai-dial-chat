@@ -243,7 +243,7 @@ text-visual-red      text-visual-violet-1  text-visual-violet-2
 stroke-primary      stroke-secondary     stroke-tertiary
 stroke-error        stroke-error-alpha   stroke-warning
 stroke-info         stroke-success       stroke-accent
-stroke-accent-alpha stroke-default       stroke-focus-black
+stroke-accent-alpha stroke-default       stroke-focus
 stroke-accent-focus stroke-gradient-1    stroke-gradient-2
 stroke-control-disable-primary
 ```
@@ -292,14 +292,13 @@ the content.
 ### Renamed in ui-kit 0.14
 
 The control tokens were renamed for the role they fill instead of their opacity
-or their literal hue. **A theme that sets the old variable names keeps its
-colors in the Tailwind utilities** — each one is still the next link in the new
-token's fallback chain in `tailwind.config.js`. The chains in `libs/*` are a
-separate mechanism and stop at the current name (see
-[Styling libraries](#styling-libraries)), so a theme still on the old names
-renders the hex fallback for a handful of library values. Rename them.
+or their literal hue. **The old variable names are not honored anywhere** —
+neither `tailwind.config.js` nor the chains in `libs/*` (see
+[Styling libraries](#styling-libraries)) carry them as a fallback, so a theme
+still on the old names renders the built-in light hex for every renamed token.
+Rename them.
 
-| Pre-0.14 variable                                   | Preferred now                                 |
+| Pre-0.14 variable                                   | Use now                                       |
 | --------------------------------------------------- | --------------------------------------------- |
 | `bg-control-disable`                                | `bg-control-disable-primary`                  |
 | `bg-control-neutral-hover`                          | `bg-control-neutral-hover-muted`              |
@@ -312,29 +311,24 @@ renders the hex fallback for a handful of library values. Rename them.
 | `stroke-control-accent-gradient-from` / `-to`       | `stroke-gradient-1` / `stroke-gradient-2`     |
 | `stroke-control-accent-gradient-hover-from` / `-to` | `bg-gradient-1-hover` / `bg-gradient-2-hover` |
 
-Two exceptions where the old name is **not** honored, so a theme setting it
-loses the color:
+`stroke-hover-alpha` was removed rather than renamed — it held the same value
+as `stroke-accent-alpha`. Move the value there.
 
-- `stroke-hover-alpha` was removed — it held the same value as
-  `stroke-accent-alpha`. Move the value there.
-- The `stroke-control-accent-gradient-*` stops behind the selected tab's
-  underline have no fallback chain. Rename them as in the table above.
-
-`stroke-focus-black` is unchanged as a variable; only its Tailwind class name
-moved (`outline-focus-black` → `outline-focus`).
+The focus ring variable is `stroke-focus` again. ui-kit 0.13 renamed it to
+`stroke-focus-black`; the kit now reads `--stroke-focus` first and keeps
+`--stroke-focus-black` only as its own fallback. `tailwind.config.js` and the
+`libs/*` chains read `--stroke-focus` alone, so a theme still setting
+`stroke-focus-black` recolors only the kit's focus rings. Rename it. The
+Tailwind class moved back with it (`outline-focus-black` → `outline-focus`).
 
 ### `stroke-focus-blue` → `stroke-accent-focus`
 
 The accent focus ring variable is named for the role it fills instead of its
 literal hue, matching the `border-accent-focus` / `outline-accent-focus`
-classes that consume it. The old name is still the next link in the fallback
-chain — in `tailwind.config.js` and in the `libs/*` chains that reference it —
-so a theme setting `stroke-focus-blue` keeps its focus-ring color. Rename it.
-
-One caveat: `@epam/ai-dial-ui-kit`'s own stylesheet reads
-`--stroke-focus-blue` directly, so the kit's focus rings do not pick up
-`--stroke-accent-focus`. Until the kit is updated, a theme that wants a custom
-accent focus ring everywhere has to set both variables.
+classes that consume it. `tailwind.config.js`, the `libs/*` chains, and
+`@epam/ai-dial-ui-kit`'s own stylesheet all read `--stroke-accent-focus` with
+no fallback to the old name, so a theme setting only `stroke-focus-blue` gets
+the built-in `#6785FB`. Rename it.
 
 ## Migrating a theme from the legacy chat
 
@@ -386,7 +380,7 @@ same role) are omitted: `bg-error`, `bg-warning`, `bg-info`, `bg-success`,
 
 New token groups with no legacy counterpart — `bg-visual-*`, `text-visual-*`,
 `bg-control-neutral*`, `bg-control-error*`, `text-control-accent-*`,
-`stroke-focus-black`, `stroke-error-alpha`, and `shadow-*` — start at their
+`stroke-focus`, `stroke-error-alpha`, and `shadow-*` — start at their
 built-in light values until the theme sets them. A dark theme that leaves them
 alone will show light chips, focus rings, and shadows.
 

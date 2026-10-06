@@ -19,6 +19,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
     removeLabel,
     retryLabel,
     clickLabel,
+    expandLabel,
     uploadingLabel,
   } = labels ?? {};
   const { className, card } = styles ?? {};
@@ -46,7 +47,13 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
             onRemove={onRemove}
             onRetry={onRetry}
             onExpand={onExpand}
-            labels={{ removeLabel, retryLabel, clickLabel, uploadingLabel }}
+            labels={{
+              removeLabel,
+              retryLabel,
+              clickLabel,
+              expandLabel,
+              uploadingLabel,
+            }}
             styles={card}
             onClick={onAttachmentClick}
           />

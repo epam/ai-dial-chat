@@ -48,6 +48,7 @@ import {
   collectAllFolderIds,
   findContentNodeName,
 } from '../../utils/catalog-content-tree';
+import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import {
   canPublishCredentials,
   getCredentialsBannerState,
@@ -899,6 +900,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     }
   }, [item.id, tabs, activeTab]);
 
+  const markdownLabels = useMemo(
+    () => getCatalogMarkdownLabels(texts),
+    [texts],
+  );
+
   const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
   const overviewNoLabel = texts?.overviewNoLabel ?? 'No';
 
@@ -1336,6 +1342,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   content={item.description}
                   topics={item.topics}
                   detailsStyles={detailsStyles}
+                  markdownLabels={markdownLabels}
                 />
               )}
               {activeTab === CatalogDetailsTab.Content && (
@@ -1360,6 +1367,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   fileLoadingLabel={texts?.contentFileLoadingLabel}
                   fileUnsupportedLabel={texts?.contentFileUnsupportedLabel}
                   detailsStyles={detailsStyles}
+                  markdownLabels={markdownLabels}
                 />
               )}
               {activeTab === CatalogDetailsTab.Overview && (

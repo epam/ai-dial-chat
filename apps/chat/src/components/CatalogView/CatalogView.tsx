@@ -28,6 +28,7 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  ChatI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,
@@ -715,6 +716,9 @@ const CatalogView: FC<Props> = ({
           apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
           copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
           copiedCodeStatusLabel: t(ButtonsI18nKeys.Copied),
+          downloadCodeAriaLabel: t(ButtonsI18nKeys.Download),
+          tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+          mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
           pricingPricesSectionLabel: t(
             CatalogI18nKeys.DetailsPricingPricesSection,
           ),

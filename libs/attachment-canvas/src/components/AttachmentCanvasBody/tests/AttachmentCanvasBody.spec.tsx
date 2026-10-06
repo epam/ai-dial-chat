@@ -1,3 +1,4 @@
+import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentCanvasContent } from '../../../models/attachment-canvas';
@@ -14,9 +15,9 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
   return {
     ...actual,
-    MarkdownRenderer: ({ content }: { content: string }) => (
+    MarkdownRenderer: vi.fn(({ content }: { content: string }) => (
       <section aria-label="markdown-renderer">{content}</section>
-    ),
+    )),
   };
 });
 
@@ -155,6 +156,29 @@ describe('AttachmentCanvasBody', () => {
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled wrapper; verifying the body itself is not clipped
     expect(container.querySelector('.overflow-hidden')).toBeNull();
   });
+
+  it.each([
+    AttachmentContentType.Markdown,
+    AttachmentContentType.MarkdownTable,
+  ])(
+    'forwards code-block, table and formula labels to MarkdownRenderer for %s content',
+    (type) => {
+      const markdownLabels = {
+        codeBlockCopyLabel: 'Kopieren',
+        codeBlockCopiedLabel: 'Kopiert!',
+        codeBlockDownloadLabel: 'Herunterladen',
+        tableScrollRegionAriaLabel: 'Scrollbare Tabelle',
+        mathScrollRegionAriaLabel: 'Scrollbare Formel',
+      };
+      renderBody({ type, text: '# Title' } as AttachmentCanvasContent, {
+        labels: markdownLabels,
+      });
+
+      expect(vi.mocked(MarkdownRenderer).mock.calls[0]?.[0]).toMatchObject(
+        markdownLabels,
+      );
+    },
+  );
 
   it('clips the body for MarkdownTable content so the table scrolls itself', () => {
     const { container } = renderBody({

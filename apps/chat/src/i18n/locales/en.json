@@ -640,6 +640,7 @@
     "removeLabel": "Remove attachment",
     "retryLabel": "Retry upload",
     "uploadingLabel": "Uploading",
+    "expandPastedText": "Expand pasted text",
     "unsupportedType": {
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."

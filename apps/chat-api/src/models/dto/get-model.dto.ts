@@ -4,7 +4,7 @@ import { IsString, Matches } from 'class-validator';
 export class GetModelDto {
   @ApiProperty({
     description:
-      'Model name (alphanumeric, dash, underscore, dot, colon, at-sign, and slash only)',
+      'Model name (alphanumeric, dash, underscore, dot, colon, and at-sign only)',
     example: 'gpt-4o',
   })
   @IsString()

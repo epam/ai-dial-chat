@@ -144,6 +144,8 @@ export interface EditMessageInputProps {
   retryLabel?: string;
   /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
+  /** Accessible name of each pasted-text attachment card, which expands its text back into the composer when activated. Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
   /** Accessible label for the add-menu trigger button. */
   addMenuTitle?: string;
   /** Label for the attach-file menu item. */
@@ -343,6 +345,8 @@ export interface ConversationInputProps {
   retryLabel?: string;
   /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
+  /** Accessible name of each pasted-text attachment card, which expands its text back into the composer when activated. Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
   /**
    * When `true`, blocks typing, the attach menu, dictation, Enter-to-send,
    * and dropped files (`pendingDropFiles` are consumed and discarded, never

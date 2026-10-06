@@ -215,3 +215,38 @@ describe('EditMessageInput — skill mentions', () => {
     expect(screen.queryByLabelText('Add')).toBeNull();
   });
 });
+
+describe('EditMessageInput — pasted attachment label', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('forwards expandLabel to the pasted card it creates', () => {
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        pasteTextThreshold={5}
+        expandLabel="Развернуть текст"
+      />,
+    );
+
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'This is long enough to become a pasted attachment',
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Развернуть текст' }),
+    ).toBeTruthy();
+  });
+});

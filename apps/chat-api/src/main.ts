@@ -33,10 +33,7 @@ import {
 import { EnvironmentVariables } from './config/environment.config';
 import { resolveLogLevels } from './config/log-levels';
 import { configureProxyAgents } from './net/proxy-agent.setup';
-import {
-  createOpenApiConfig,
-  openApiDocumentOptions,
-} from './openapi/openapi.config';
+import { createOpenApiDocument } from './openapi/openapi.config';
 import { attachHttpLifecycleListener } from './telemetry/http-lifecycle-listener';
 import { NestOtelLogger } from './telemetry/nestjs-otel-logger';
 import { traceparentMiddleware } from './telemetry/traceparent.middleware';
@@ -209,11 +206,7 @@ async function bootstrap() {
 
   const shouldExposeSwagger = runtimeEnvironment['NODE_ENV'] !== 'production';
   if (shouldExposeSwagger) {
-    const document = SwaggerModule.createDocument(
-      app,
-      createOpenApiConfig(port),
-      openApiDocumentOptions,
-    );
+    const document = createOpenApiDocument(app, port);
     SwaggerModule.setup('api/docs', app, document);
     Logger.log(
       `📚 Swagger documentation available at: http://localhost:${port}/api/docs`,

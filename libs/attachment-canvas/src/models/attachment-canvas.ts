@@ -483,6 +483,16 @@ export interface AttachmentCanvasLabels {
   tableCopiedLabel?: string;
   /** Label for downloading a Markdown table as CSV. */
   tableDownloadCsvLabel?: string;
+  /** Accessible label for the copy button on fenced code blocks inside `Markdown`/`MarkdownTable` content. Defaults to `'Copy code'`. */
+  codeBlockCopyLabel?: string;
+  /** Status announced after a fenced code block inside `Markdown`/`MarkdownTable` content has been copied. Defaults to `'Copied!'`. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for the download button on fenced code blocks inside `Markdown`/`MarkdownTable` content. Defaults to `'Download code'`. */
+  codeBlockDownloadLabel?: string;
+  /** Accessible label for a table's horizontally scrollable region inside `Markdown`/`MarkdownTable` content. Defaults to `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's horizontally scrollable region inside `Markdown`/`MarkdownTable` content. Defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
   /** Accessible name for the OOXML citation-highlights overlay region. Defaults to `'Cited locations'`. */
   ooxmlHighlightsLabel?: string;
   /** Status announced once navigation to the selected OOXML citation highlight completes. Defaults to `'Scrolled to the cited location'`. */
@@ -574,6 +584,11 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'tableCopyLabel'
   | 'tableCopiedLabel'
   | 'tableDownloadCsvLabel'
+  | 'codeBlockCopyLabel'
+  | 'codeBlockCopiedLabel'
+  | 'codeBlockDownloadLabel'
+  | 'tableScrollRegionAriaLabel'
+  | 'mathScrollRegionAriaLabel'
   | 'ooxmlHighlightsLabel'
   | 'ooxmlHighlightNavigatedLabel'
 >;

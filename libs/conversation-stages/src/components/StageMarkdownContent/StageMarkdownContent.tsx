@@ -12,11 +12,24 @@ interface Props {
   typography?: StageTypography;
   /** Accessible label for the copy button inside code blocks. Defaults to `'Copy'`. */
   copyAriaLabel?: string;
+  /** Status announced after a code block has been copied. Defaults to `'Copied!'`. */
+  copiedLabel?: string;
+  /** Accessible label for a table's scrollable region. Defaults to `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's scrollable region. Defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
 }
 
 /** Renders stage content as formatted markdown, styled via CSS custom properties. */
 export const StageMarkdownContent: FC<Props> = memo(
-  ({ content, typography, copyAriaLabel = 'Copy' }) => {
+  ({
+    content,
+    typography,
+    copyAriaLabel = 'Copy',
+    copiedLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
+  }) => {
     const blockSpacing = 'mb-1.5 last:mb-0';
     const paragraphSpacing = 'mb-1.5';
     const heading = mergeClasses(
@@ -28,6 +41,8 @@ export const StageMarkdownContent: FC<Props> = memo(
     return (
       <MarkdownRenderer
         content={content}
+        tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+        mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
         classNames={{
           h1: heading,
           h2: heading,
@@ -100,6 +115,7 @@ export const StageMarkdownContent: FC<Props> = memo(
                 codeClassName={className}
                 blockClassName={typography?.codeBlockClassName}
                 copyAriaLabel={copyAriaLabel}
+                copiedLabel={copiedLabel}
               >
                 {children}
               </StageCodeBlock>

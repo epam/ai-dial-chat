@@ -237,6 +237,39 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+/*
+ * A file tile that opens the canvas and its corner download button are two
+ * controls; giving both the download label made them indistinguishable to
+ * assistive technology.
+ */
+describe('ConversationMessageItem — attachment tile labels', () => {
+  it('names a canvas-opening tile and its download button separately', () => {
+    render(
+      <ConversationMessageItem {...defaultProps} onAttachmentClick={vi.fn()} />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: AttachmentsI18nKeys.Download }),
+    ).toBeTruthy();
+    expect(capturedLabels).toMatchObject({
+      attachmentClickLabel: ButtonsI18nKeys.OpenInCanvas,
+      attachmentDownloadLabel: AttachmentsI18nKeys.Download,
+    });
+  });
+
+  it('names a tile that downloads by the download label', () => {
+    render(<ConversationMessageItem {...defaultProps} />);
+
+    expect(capturedLabels).toMatchObject({
+      attachmentClickLabel: AttachmentsI18nKeys.Download,
+      attachmentDownloadLabel: AttachmentsI18nKeys.Download,
+    });
+  });
+});
+
 describe('ConversationMessageItem — reference-only attachments', () => {
   const ASSISTANT_WITH_REFERENCE: Message = {
     role: MessageRole.Assistant,

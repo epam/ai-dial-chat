@@ -30,6 +30,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
     credentialsBadgeLoggedOutLabel,
     isReadonly,
     featuredChipStyle,
+    markdownLabels,
   }) => {
     const start = rowIndex * columnCount;
     const rowItems = items.slice(start, start + columnCount);
@@ -66,6 +67,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
                   }
                   isReadonly={isReadonly}
                   styles={{ colors: { featuredChipStyle } }}
+                  markdownLabels={markdownLabels}
                 />
               )}
             </div>

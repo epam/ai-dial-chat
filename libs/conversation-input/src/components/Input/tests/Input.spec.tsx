@@ -999,7 +999,7 @@ describe('Input — pasted attachment expand', () => {
 
     pasteText(screen.getByRole('textbox'), text);
 
-    const card = screen.getByRole('button', { name: 'Download attachment' });
+    const card = screen.getByRole('button', { name: 'Expand pasted text' });
     fireEvent.click(card);
 
     await waitFor(() => {
@@ -1016,7 +1016,7 @@ describe('Input — pasted attachment expand', () => {
 
     pasteText(screen.getByRole('textbox'), text);
 
-    const card = screen.getByRole('button', { name: 'Download attachment' });
+    const card = screen.getByRole('button', { name: 'Expand pasted text' });
     fireEvent.click(card);
 
     await waitFor(() => {
@@ -1024,6 +1024,22 @@ describe('Input — pasted attachment expand', () => {
         `existing\n${text}`,
       );
     });
+  });
+
+  it('names a pasted card by the host-supplied expandLabel', () => {
+    render(<Input pasteTextThreshold={5} expandLabel="Развернуть текст" />);
+
+    pasteText(
+      screen.getByRole('textbox'),
+      'This is long enough to become a pasted attachment',
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Развернуть текст' }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Expand pasted text' }),
+    ).toBeNull();
   });
 
   /*
@@ -1038,7 +1054,7 @@ describe('Input — pasted attachment expand', () => {
     pasteText(screen.getByRole('textbox'), text);
 
     expect(
-      screen.queryByRole('button', { name: 'Download attachment' }),
+      screen.queryByRole('button', { name: 'Expand pasted text' }),
     ).toBeNull();
     expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
   });

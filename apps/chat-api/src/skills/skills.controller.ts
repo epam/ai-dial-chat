@@ -85,7 +85,11 @@ export class SkillsController {
   @ApiResponse({ status: 200, type: SkillCatalogListResponseDto })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 502,
+    description:
+      'DIAL Core returned an error, or an invalid listing page (a repeated page token)',
+  })
   @ApiResponse({ status: 503, description: 'DIAL Core is unavailable' })
   listCatalogSkills(@Req() req: Request): Promise<SkillCatalogListResponseDto> {
     const { at, bucket } = req.user as SessionUser;

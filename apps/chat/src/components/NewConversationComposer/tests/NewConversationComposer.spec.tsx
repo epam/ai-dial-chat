@@ -5,6 +5,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import { type ReactNode, Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AttachmentsI18nKeys } from '../../../constants/translation-keys';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
@@ -30,6 +31,7 @@ const {
     capturedInputProps: {
       onSend: undefined as
         ((message: string, attachments: never[]) => Promise<void>) | undefined,
+      expandLabel: undefined as string | undefined,
     },
   };
 });
@@ -46,6 +48,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     onSend,
     belowWelcomeSlot,
     welcomeText,
+    expandLabel,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -55,8 +58,10 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     onSend?: (message: string, attachments: never[]) => Promise<void>;
     belowWelcomeSlot?: ReactNode;
     welcomeText?: string;
+    expandLabel?: string;
   }) => {
     capturedInputProps.onSend = onSend;
+    capturedInputProps.expandLabel = expandLabel;
     return (
       <div data-testid="conversation-input">
         {belowWelcomeSlot}
@@ -220,12 +225,31 @@ describe('NewConversationComposer', () => {
   beforeEach(() => {
     mockShowNotification.mockClear();
     capturedInputProps.onSend = undefined;
+    capturedInputProps.expandLabel = undefined;
     mockUsePageFileDrag.mockClear();
     pageDrag.isDragging = false;
     mockUseUiFeature.mockImplementation(
       (feature) =>
         feature === OverlayFeature.EmptyChatSettings ||
         feature === OverlayFeature.ChatSettings,
+    );
+  });
+
+  it('passes a translated expand label for pasted-text attachment cards', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    await screen.findByText('Conversation input');
+    expect(capturedInputProps.expandLabel).toBe(
+      AttachmentsI18nKeys.ExpandPastedText,
     );
   });
 

@@ -15,6 +15,7 @@ export const ScheduledTaskConfigurationSection: FC<
   instructionsLabel,
   instructionsMarkdown,
   renderInstructions,
+  markdownLabels,
   fieldLabelClassName = 'dial-tiny-text',
 }) => (
   <div className="flex min-w-0 flex-col gap-5">
@@ -52,7 +53,7 @@ export const ScheduledTaskConfigurationSection: FC<
         {renderInstructions ? (
           renderInstructions(instructionsMarkdown)
         ) : (
-          <MDMessageViewer content={instructionsMarkdown} />
+          <MDMessageViewer content={instructionsMarkdown} {...markdownLabels} />
         )}
       </div>
     )}

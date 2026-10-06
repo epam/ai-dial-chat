@@ -35,6 +35,9 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     failedCountLabel = (n: number) => `${n} failed`,
     runningAriaLabel = 'Running',
     copyAriaLabel,
+    codeBlockCopiedLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     failedAriaLabel,
     attemptLabel,
     attachmentClickLabel,
@@ -90,6 +93,9 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
 
   const panelLabels = {
     copyAriaLabel,
+    codeBlockCopiedLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     runningAriaLabel,
     failedAriaLabel,
     attemptLabel,

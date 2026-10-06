@@ -85,6 +85,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       removeLabel,
       retryLabel,
       uploadingLabel,
+      expandLabel,
       sendLabel,
       sendTooltip,
       emptyMessageTooltip,
@@ -1139,7 +1140,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             }}
             onRetry={handleRetry}
             onExpand={handleExpand}
-            labels={{ removeLabel, retryLabel, uploadingLabel }}
+            labels={{ removeLabel, retryLabel, uploadingLabel, expandLabel }}
             styles={attachmentTray}
             onAttachmentClick={
               onAttachmentClick != null

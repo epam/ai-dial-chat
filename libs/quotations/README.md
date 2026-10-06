@@ -68,6 +68,14 @@ toggle appears under it; expanding lifts the clamp and caps the quote at
 `aria-controls`, and every citation — including one reached through the
 switcher — opens collapsed.
 
+The quote is rendered as Markdown, so it can contain fenced code blocks, tables
+and block formulas. The optional `labels.codeBlockCopyLabel`,
+`labels.codeBlockCopiedLabel`, `labels.codeBlockDownloadLabel`,
+`labels.tableScrollRegionAriaLabel` and `labels.mathScrollRegionAriaLabel`
+name those controls; each falls back to the renderer's English default
+(`'Copy code'`, `'Copied!'`, `'Download code'`, `'Scrollable table'`,
+`'Scrollable formula'`).
+
 ```tsx
 import { CitationCard } from '@epam/ai-dial-quotations';
 
@@ -87,6 +95,11 @@ import { CitationCard } from '@epam/ai-dial-quotations';
     download: 'Download',
     showMore: 'Show more',
     showLess: 'Show less',
+    codeBlockCopyLabel: 'Copy',
+    codeBlockCopiedLabel: 'Copied!',
+    codeBlockDownloadLabel: 'Download',
+    tableScrollRegionAriaLabel: 'Scrollable table',
+    mathScrollRegionAriaLabel: 'Scrollable formula',
   }}
 />;
 ```

@@ -159,7 +159,7 @@ export interface MarkdownRendererColors {
   blockquoteText?: string;
   /** Text color for `<a>` links. Defaults to `--text-accent`. */
   linkText?: string;
-  /** Focus-visible outline color for `<a>` links. Defaults to `--stroke-focus-black`. */
+  /** Focus-visible outline color for `<a>` links. Defaults to `--stroke-focus`. */
   linkFocus?: string;
   /** Text color for `<th>` table header cells. Defaults to `--text-secondary`. */
   tableHeaderText?: string;

@@ -194,7 +194,10 @@ retry buttons on each attachment card in the tray. They default to English
 (`'Remove attachment'` / `'Retry upload'`); pass translated strings so the two
 adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
 (default `'Uploading'`) names the indeterminate progress bar a card shows while
-its upload is still in flight.
+its upload is still in flight. `expandLabel` (default `'Expand pasted text'`)
+names each pasted-text card, which expands its text back into the composer
+when activated. `Input`, `ConversationInput` and `EditMessageInput` all accept
+these four labels and forward them to the attachment tray.
 
 `sendLabel` (default `'Send message'`) is the send button's accessible name.
 `sendTooltip` is an optional hover tooltip. `emptyMessageTooltip` optionally

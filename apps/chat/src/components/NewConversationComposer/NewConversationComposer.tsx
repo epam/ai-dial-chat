@@ -589,6 +589,7 @@ const NewConversationComposer: FC<Props> = ({
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
           retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
           uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
+          expandLabel={t(AttachmentsI18nKeys.ExpandPastedText)}
           styles={composerStyles}
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments

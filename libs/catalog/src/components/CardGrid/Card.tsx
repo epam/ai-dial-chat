@@ -53,6 +53,7 @@ export const Card: FC<CardProps> = ({
   styles: cardStyles,
   credentialsBadgeLoggedOutLabel,
   isReadonly = false,
+  markdownLabels,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
@@ -204,6 +205,7 @@ export const Card: FC<CardProps> = ({
               } satisfies MarkdownRendererClassNames
             }
             components={DESCRIPTION_MARKDOWN_COMPONENTS}
+            {...markdownLabels}
           />
         )}
       </div>

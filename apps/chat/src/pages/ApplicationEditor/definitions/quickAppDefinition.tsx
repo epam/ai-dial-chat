@@ -42,6 +42,18 @@ const isPreviewAvailable = (ctx: ApplicationEditorContext) => {
   );
 };
 
+/* Mirrors `QuickAppSetup`: the iframe renders only for a saved app whose schema has an editor. */
+const isSetupEmbedded = (
+  ctx: ApplicationEditorContext,
+  appId: string | undefined,
+) => {
+  const schemaId = getSchemaId(ctx);
+  return Boolean(
+    appId &&
+      ctx.schemas.find((schema) => schema.id === schemaId)?.editorUrl,
+  );
+};
+
 const create = async (
   metadata: DeploymentCreationFormValues,
   _setup: EmptyApplicationSetup,
@@ -98,6 +110,7 @@ export const quickAppDefinition =
     defaultSetup: EMPTY_SETUP,
     validateSetup: () => ({}),
     Setup: QuickAppSetup,
+    isSetupEmbedded,
     Preview: QuickAppPreview,
     isPreviewAvailable,
     create,

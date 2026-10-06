@@ -16,6 +16,20 @@ import type {
   CatalogContentFileTreeRenderProps,
 } from './item-details-data';
 
+/** Code-block, table and formula labels forwarded to every `MarkdownRenderer` the catalog renders, derived from `ItemDetailsTexts`. */
+export interface CatalogMarkdownLabels {
+  /** Accessible label for a code block's copy button. */
+  codeBlockCopyLabel?: string;
+  /** Status announced after a code block has been copied. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for a code block's download button. */
+  codeBlockDownloadLabel?: string;
+  /** Accessible label for a table's scrollable region. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's scrollable region. */
+  mathScrollRegionAriaLabel?: string;
+}
+
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
   /** "Share" action button label. Default: `'Share'`. */
@@ -92,10 +106,16 @@ export interface ItemDetailsTexts {
   apiRequestExampleLabel?: string;
   /** "Response schema" row label in the API tab. Default: `'Response schema'`. */
   apiResponseSchemaLabel?: string;
-  /** Accessible label for the copy-to-clipboard button. Default: `'Copy'`. */
+  /** Accessible label for the copy-to-clipboard button on API snippets, and on code blocks in markdown descriptions and content. Default: `'Copy'` on API snippets, `'Copy code'` on markdown code blocks. */
   copyCodeAriaLabel?: string;
-  /** Message announced through the code block's live region once a copy completes. Default: `'Copied!'`. */
+  /** Message announced through the code block's live region once a copy completes, on API snippets and markdown code blocks. Default: `'Copied!'`. */
   copiedCodeStatusLabel?: string;
+  /** Accessible label for the download button on code blocks in markdown descriptions and content. Default: `'Download code'`. */
+  downloadCodeAriaLabel?: string;
+  /** Accessible label for a table's horizontally scrollable region in markdown descriptions and content. Default: `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's horizontally scrollable region in markdown descriptions and content. Default: `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
   /** "Token pricing" section heading in the Pricing tab. Default: `'Token pricing'`. */
   pricingPricesSectionLabel?: string;
   /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */

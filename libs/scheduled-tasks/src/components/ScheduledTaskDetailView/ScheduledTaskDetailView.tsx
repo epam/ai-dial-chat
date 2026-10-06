@@ -173,6 +173,13 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       skillDisplayNames={skillDisplayNames}
       instructionsMarkdown={instructionsMarkdown}
       renderInstructions={renderInstructions}
+      markdownLabels={{
+        codeBlockCopyLabel: labels.codeBlockCopyLabel,
+        codeBlockCopiedLabel: labels.codeBlockCopiedLabel,
+        codeBlockDownloadLabel: labels.codeBlockDownloadLabel,
+        tableScrollRegionAriaLabel: labels.tableScrollRegionAriaLabel,
+        mathScrollRegionAriaLabel: labels.mathScrollRegionAriaLabel,
+      }}
       fieldLabelClassName={fieldLabelClassName}
     />
   );

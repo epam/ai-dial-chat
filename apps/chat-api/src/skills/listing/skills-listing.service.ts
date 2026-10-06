@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   HttpException,
   Injectable,
@@ -243,7 +244,16 @@ export class SkillsListingService {
       token = page.nextToken;
       if (token != null) {
         if (visitedTokens.has(token)) {
-          throw new Error('DIAL Core returned a repeated skill page token');
+          /* A cursor that repeats would loop forever: the upstream listing is
+           * invalid, so this is a bad-gateway failure, not an internal error.
+           * Only the namespace kind and page count are logged — never the
+           * opaque cursor or the caller's bucket. */
+          this.logger.error(
+            `DIAL Core returned a repeated skill page token (namespace=${bucket === PUBLIC_BUCKET ? 'public' : 'personal'}, pages=${visitedTokens.size + 1})`,
+          );
+          throw new BadGatewayException(
+            'DIAL Core returned an invalid skill listing page',
+          );
         }
         visitedTokens.add(token);
       }
