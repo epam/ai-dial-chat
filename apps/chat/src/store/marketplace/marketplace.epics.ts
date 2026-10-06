@@ -78,9 +78,25 @@ const initEpic: AppEpic = (action$, state$) =>
           )) ||
         isShareLink;
 
+      const modelReference = query[MarketplaceQueryParams.model]?.toString();
+      const toolsetReference =
+        query[MarketplaceQueryParams.toolset]?.toString();
+      const detailsEntity = modelReference
+        ? getDetailsEntity({
+            entitiesMap: ModelsSelectors.selectModelsMap(state$.value),
+            reference: modelReference,
+            type: MarketplaceEntitiesTabs.AGENTS,
+          })
+        : getDetailsEntity({
+            entitiesMap: ToolsetSelectors.selectToolsetsMap(state$.value),
+            reference: toolsetReference,
+            type: MarketplaceEntitiesTabs.TOOLSETS,
+          });
+
       return of(
         MarketplaceActions.initSuccess({
           saveFilters: shouldSaveFilters,
+          detailsEntity,
           selectedTab: workSpaceTab
             ? MarketplaceTabs.MY_WORKSPACE
             : MarketplaceTabs.HOME,
