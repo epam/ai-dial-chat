@@ -738,6 +738,18 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
   CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
 
   @IsOptional()

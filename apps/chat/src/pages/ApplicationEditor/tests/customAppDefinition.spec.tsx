@@ -1,4 +1,7 @@
-import type { DeploymentDetailsDto } from '@epam/ai-dial-chat-api-client';
+import {
+  TextRefinementPurpose,
+  type DeploymentDetailsDto,
+} from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -8,6 +11,7 @@ import {
   ButtonsI18nKeys,
   CustomAppI18nKeys,
   EditorI18nKeys,
+  TextRefinementI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -24,6 +28,16 @@ import {
 import { ROUTES } from '../../../types/routes';
 import ApplicationEditorPage from '../ApplicationEditorPage';
 
+const { refinementConfig, mockRefineText } = vi.hoisted(() => ({
+  refinementConfig: { aiTextRefinementAvailable: false },
+  mockRefineText: vi.fn(),
+}));
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ status: 'ready', config: refinementConfig }),
+}));
+vi.mock('../../../server-api/text-refinement.api', () => ({
+  refineText: mockRefineText,
+}));
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'b' } }),
@@ -93,6 +107,36 @@ describe('ApplicationEditorPage — custom app', () => {
     vi.mocked(createApplication).mockResolvedValue({} as never);
     vi.mocked(updateApplication).mockResolvedValue({} as never);
     mockRefetchDeployments.mockResolvedValue(undefined);
+    refinementConfig.aiTextRefinementAvailable = false;
+  });
+
+  it('hides Refine with AI on the Description when refinement is unavailable', () => {
+    renderPage();
+
+    expect(
+      screen.queryByRole('button', { name: TextRefinementI18nKeys.Action }),
+    ).toBeNull();
+  });
+
+  it('refines the Description with the application purpose', async () => {
+    refinementConfig.aiTextRefinementAvailable = true;
+    mockRefineText.mockResolvedValue('Refined description');
+    renderPage();
+
+    const description = screen.getByRole<HTMLTextAreaElement>('textbox', {
+      name: EditorI18nKeys.DescriptionLabel,
+    });
+    await user.type(description, 'Draft');
+    await user.click(
+      screen.getByRole('button', { name: TextRefinementI18nKeys.Action }),
+    );
+
+    expect(mockRefineText).toHaveBeenCalledWith(
+      TextRefinementPurpose.ApplicationDescription,
+      'Draft',
+      expect.any(AbortSignal),
+    );
+    await waitFor(() => expect(description.value).toBe('Refined description'));
   });
 
   const fillValidForm = async () => {

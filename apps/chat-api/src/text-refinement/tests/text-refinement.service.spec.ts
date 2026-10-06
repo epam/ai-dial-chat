@@ -8,10 +8,13 @@ import {
   TEXT_REFINEMENT_LIMITS,
   TextRefinementPurpose,
 } from '../dto/refine-text.dto';
+import { APPLICATION_DESCRIPTION_PROMPT } from '../prompts/application-description.prompt';
+import { PROMPT_DESCRIPTION_PROMPT } from '../prompts/prompt-description.prompt';
 import { SCHEDULED_TASK_DESCRIPTION_PROMPT } from '../prompts/scheduled-task-description.prompt';
 import { SCHEDULED_TASK_INSTRUCTIONS_PROMPT } from '../prompts/scheduled-task-instructions.prompt';
 import { SKILL_DESCRIPTION_PROMPT } from '../prompts/skill-description.prompt';
 import { SKILL_INSTRUCTIONS_PROMPT } from '../prompts/skill-instructions.prompt';
+import { TOOLSET_DESCRIPTION_PROMPT } from '../prompts/toolset-description.prompt';
 import { TextRefinementService } from '../text-refinement.service';
 
 const user = {
@@ -93,6 +96,21 @@ describe('TextRefinementService', () => {
       TextRefinementPurpose.ScheduledTaskInstructions,
       'TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT',
       SCHEDULED_TASK_INSTRUCTIONS_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.ApplicationDescription,
+      'TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT',
+      APPLICATION_DESCRIPTION_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.ToolsetDescription,
+      'TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT',
+      TOOLSET_DESCRIPTION_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.PromptDescription,
+      'TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT',
+      PROMPT_DESCRIPTION_PROMPT,
     ],
   ] as const)('%s prompt configuration', (purpose, key, defaultPrompt) => {
     it.each([

@@ -12,7 +12,9 @@ import {
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
+  TextRefinementField,
   useAvailableHeightCap,
+  useTextRefinement,
 } from '@epam/ai-dial-chat-shared';
 import { Label, NeutralButton, Spinner } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
@@ -28,6 +30,7 @@ import {
   lazy,
   Suspense,
   type FC,
+  type ReactNode,
   useCallback,
   useEffect,
   useId,
@@ -96,6 +99,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   onCancel,
   onBack = onCancel,
   onRetry,
+  onRefineDescription,
   labels,
   markdownEditorTheme,
   styles: editorStyles,
@@ -188,10 +192,32 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     ],
   );
 
+  const descriptionRefinement = useTextRefinement({
+    value: values.description,
+    onChange: (description) => setField('description', description),
+    onRefine: onRefineDescription,
+    disabled: isSaving,
+    resetKey: initialValues,
+  });
+  const renderRefinableDescription = onRefineDescription
+    ? (textarea: ReactNode, fieldId: string) => (
+        <TextRefinementField
+          isEnabled
+          fieldId={fieldId}
+          label={labels?.descriptionLabel ?? 'Description'}
+          labels={labels}
+          refinement={descriptionRefinement}
+          disabled={descriptionRefinement.isPending || isSaving}
+        >
+          {textarea}
+        </TextRefinementField>
+      )
+    : undefined;
+
   const handleSubmit = useCallback(() => {
-    if (isSaving) return;
+    if (isSaving || descriptionRefinement.isPending) return;
     onSubmit(values);
-  }, [isSaving, onSubmit, values]);
+  }, [isSaving, descriptionRefinement.isPending, onSubmit, values]);
 
   const title = isEditMode
     ? (labels?.editTitle ?? 'Edit prompt')
@@ -284,6 +310,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     <EntityEditor
       {...editorProps}
       isSubmitting={isSaving}
+      isSubmitDisabled={descriptionRefinement.isPending}
       metadataSectionClassName={mergeClasses(
         FORM_CLASS_NAME,
         PROMPT_EDITOR_CLASS.form,
@@ -295,6 +322,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
             errors={metadataErrors}
             onChange={handleMetadataChange}
             fields={METADATA_FIELDS}
+            renderDescription={renderRefinableDescription}
             labels={metadataLabels}
           />
           <div

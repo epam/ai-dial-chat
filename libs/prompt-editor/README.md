@@ -101,6 +101,14 @@ const EditPromptPage = () => {
 host that loads asynchronously should memoise it and produce a new object only
 once the data has arrived.
 
+The optional `onRefineDescription` callback,
+`(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
+AI action (and Undo) beside the Description label; omit it to hide the action.
+`PromptEditorLabels` extends `TextRefinementLabels` from
+`@epam/ai-dial-chat-shared`, so the refinement copy (`refineWithAiLabel`,
+`refineUndoLabel`, …) is passed through `labels`. Save is disabled while a
+request is pending, and a new `initialValues` identity resets Undo.
+
 ### `PromptFolderField`
 
 ```tsx
