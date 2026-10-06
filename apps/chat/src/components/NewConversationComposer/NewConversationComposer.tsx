@@ -345,8 +345,15 @@ const NewConversationComposer: FC<Props> = ({
     debounceMs: NETWORK_ERROR_DEBOUNCE_MS,
   });
 
+  /*
+   * A disabled input rejects page drops with the denied overlay (the drop is
+   * still cancelled so the browser does not open the file) instead of adding
+   * them to the attachment tray.
+   */
+  const isPageDropAllowed = isAttachmentsAllowed && !isInputDisabled;
+
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
-    isAttachmentsAllowed,
+    isPageDropAllowed,
     !isDialFileManagerOpen,
   );
 
@@ -501,15 +508,15 @@ const NewConversationComposer: FC<Props> = ({
     <div className="flex flex-1 flex-col overflow-y-auto">
       <FileDndOverlay
         isVisible={isDragging}
-        isAttachmentsAllowed={isAttachmentsAllowed}
+        isAttachmentsAllowed={isPageDropAllowed}
         labels={{
           title: t(
-            isAttachmentsAllowed
+            isPageDropAllowed
               ? BasicI18nKeys.AttachFiles
               : FileDndI18nKeys.OverlayDeniedTitle,
           ),
           subtitle: t(
-            isAttachmentsAllowed
+            isPageDropAllowed
               ? FileDndI18nKeys.OverlaySubtitle
               : FileDndI18nKeys.OverlayDeniedSubtitle,
           ),

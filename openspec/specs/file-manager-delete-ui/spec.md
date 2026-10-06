@@ -67,7 +67,7 @@ interface FileManagerNotification {
    names: <first 3 failed names>, restCount }; when the whole request throws, emit
    { variant: Error, reason: FileManagerNotificationReason.DeleteFailed }
 7. Invalidate cache: invalidateFolders(<affected folder keys>)
-8. Navigate: if currentFolderPath is, or is a descendant of, any deleted folder → setFolderPath(parentApiPath)
+8. Navigate: if currentFolderPath is, or is a descendant of, any deleted folder → setFolderPath(<parent of the outermost such folder>)
 9. bumpRetry()  ← triggers re-fetch of current folder
 10. setIsDeleting(false)
 ```
@@ -88,12 +88,24 @@ Pass those keys to `useDialFileListing`'s `invalidateFolders`, which purges keys
 
 #### Navigation on current-folder deletion
 
-Check whether `folderPath` (current) equals or starts with any deleted folder's API path. If so, navigate to the nearest non-deleted ancestor:
+Collect each deleted folder's API path in the listing's own path space (the `relPath` computed from `virtualPathToApiPath`, trailing-slashed — not `dto.path`, which on the Shared tab is in owner coordinates). Among those that `folderPath` (current) equals or starts with, take the outermost (shortest) one and navigate to its parent with `getParentFolderPath` from `@epam/ai-dial-chat-shared`. That is the nearest non-deleted ancestor: moving up one level from `folderPath` is not enough, because deleting `a/` while browsing `a/b/` would otherwise land in the deleted `a/`.
 
 ```typescript
-const parentApiPath = folderPath.replace(/[^/]+\/$/, '');
-setFolderPath(parentApiPath);
+const outermostDeletedAncestor = deletedListingFolderPaths
+  .filter((deletedPath) => folderPath.startsWith(deletedPath))
+  .reduce<string | undefined>(
+    (outermost, deletedPath) =>
+      outermost == null || deletedPath.length < outermost.length
+        ? deletedPath
+        : outermost,
+    undefined,
+  );
+if (outermostDeletedAncestor != null) {
+  setFolderPath(getParentFolderPath(outermostDeletedAncestor));
+}
 ```
+
+Deleting a file, or a folder that does not contain `folderPath` (including a sibling sharing a name prefix, such as `a/bc/` while browsing `a/b/`), leaves `folderPath` unchanged.
 
 If `folderPath` is root (`''`), no navigation needed — root cannot be deleted.
 
@@ -245,13 +257,25 @@ The dialog frame and action buttons belong to `@epam/ai-dial-react-file-manager`
 
 - **GIVEN** user right-clicks a folder in the navigation tree
 - **WHEN** user selects "Delete" → confirms
-- **THEN** folder and all its contents are recursively deleted; folder disappears from the tree; if the user was browsing inside it, navigation moves to the parent
+- **THEN** folder and all its contents are recursively deleted; folder disappears from the tree; if the user was browsing inside it, navigation moves to the deleted folder's parent
 
 #### Scenario: Delete current folder
 
 - **GIVEN** user is browsing `/All files/old-data/`
 - **WHEN** user deletes `old-data` (via tree context menu) → confirms
 - **THEN** hook detects `folderPath === 'old-data/'` is deleted; navigates to root; listing shows root contents
+
+#### Scenario: Delete an ancestor of the current folder
+
+- **GIVEN** user is browsing `/All files/a/b/`
+- **WHEN** user deletes `a` (via tree context menu) → confirms
+- **THEN** hook detects `folderPath === 'a/b/'` sits inside the deleted `a/`; navigates to the parent of `a/` (root), not to the deleted `a/`
+
+#### Scenario: Deleting an unrelated folder or a file keeps the current folder
+
+- **GIVEN** user is browsing `/All files/a/b/`
+- **WHEN** user deletes `a/bc`, `z`, or the file `a/b/report.pdf` → confirms
+- **THEN** `folderPath` stays `a/b/`
 
 #### Scenario: Partial failure (some items forbidden)
 
@@ -394,7 +418,7 @@ Not gated. Delete is available to all authenticated users with WRITE permission 
 - `onDeleteFiles` success: cache invalidated, retryCounter incremented, `isDeleting` transitions
 - `onDeleteFiles` partial failure: success and error notifications emitted
 - `onDeleteFiles` total failure: error notification emitted
-- `onDeleteFiles` — current folder deleted: `folderPath` navigates to parent
+- `onDeleteFiles` — current folder deleted: `folderPath` navigates to parent; an ancestor (or several nested ancestors) deleted: navigates to the parent of the outermost one; unrelated folder or file deleted: `folderPath` unchanged
 
 **`DialFileManagerModal.spec.tsx`** (`apps/chat/src/components/DialFileManagerModal/tests/DialFileManagerModal.spec.tsx`):
 - Delete appears in `actionLabels` on the my_files tab and is omitted on the shared and organization tabs

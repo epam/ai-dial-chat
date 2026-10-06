@@ -489,6 +489,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       validateAttachment,
       pendingDropFiles,
       onDropFilesConsumed,
+      isDropDisabled: isInputDisabled,
       pendingAttachments,
       onPendingAttachmentsConsumed,
       onExpandPastedText: handleExpandPastedText,

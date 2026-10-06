@@ -215,14 +215,15 @@ const annotationIdentityKey = (annotation: Annotation): string | undefined => {
  * Maps a list of annotations to `InputHighlightData` entries for the PDF viewer.
  * Recognizes `pdf_bbox` selectors and both `pdf_region` coordinate forms
  * (`lt`/`wh` and legacy `left`/`top`/`width`/`height`); annotations whose
- * `body.selector` contains none of these are skipped. The highlight `id` comes
- * from `annotationHighlightId`, so it identifies the annotation itself rather
- * than its position in this particular input list.
+ * `body.selector` contains none of these are skipped. Each highlight `id` is
+ * the entry's id from `annotationHighlightIds(annotations)`, unique within
+ * this input list.
  */
 export const annotationsToPdfHighlights = (
   annotations: Annotation[],
-): InputHighlightData[] =>
-  annotations.flatMap((annotation, i) => {
+): InputHighlightData[] => {
+  const ids = annotationHighlightIds(annotations);
+  return annotations.flatMap((annotation, i) => {
     const selector = annotation.body?.selector;
     if (selector == null) return [];
 
@@ -236,21 +237,24 @@ export const annotationsToPdfHighlights = (
     if (bboxes.length === 0) return [];
     return [
       {
-        id: annotationHighlightId(annotation, i),
+        id: ids[i],
         bboxes,
         style: CITATION_HIGHLIGHT_STYLE,
       },
     ];
   });
+};
 
 /**
- * Returns a stable string ID for a given annotation, matching the IDs
- * `annotationsToPdfHighlights` produces (it calls this function) and the ones
- * the Office highlight path assigns.
+ * Returns a stable string ID for a given annotation — the id
+ * `annotationHighlightIds` (and so `annotationsToPdfHighlights` and the Office
+ * highlight path) assigns it whenever no earlier entry of the same list
+ * already holds that id.
  *
  * Resolved in order:
- * 1. `annotation.index` when the wire supplied one — already unique within the
- *    message, and short.
+ * 1. `annotation.index` when the wire supplied one — short, but not guaranteed
+ *    unique: a payload may repeat an `index`, which `annotationHighlightIds`
+ *    disambiguates.
  * 2. Otherwise an id derived from the annotation's own identity: its `cit` tag
  *    id plus a digest of its selectors. Two annotations differing in either
  *    part get different ids; two agreeing in both describe the same cited
@@ -273,6 +277,34 @@ export const annotationHighlightId = (
   annotation.index != null
     ? String(annotation.index)
     : (annotationIdentityKey(annotation) ?? String(fallbackIndex));
+
+/**
+ * Returns one highlight id per entry of `annotations`, unique within the list:
+ * the entry's `annotationHighlightId` when no earlier entry holds it, otherwise
+ * that id with a `-<n>` suffix no other entry's id uses.
+ */
+export const annotationHighlightIds = (annotations: Annotation[]): string[] => {
+  const baseIds = annotations.map((annotation, i) =>
+    annotationHighlightId(annotation, i),
+  );
+  /* Every base id is reserved up front, so a suffixed id never takes one a
+     later entry keeps as-is. */
+  const taken = new Set(baseIds);
+  const claimed = new Set<string>();
+
+  return baseIds.map((baseId) => {
+    if (!claimed.has(baseId)) {
+      claimed.add(baseId);
+      return baseId;
+    }
+    let ordinal = 1;
+    while (taken.has(`${baseId}-${ordinal}`)) ordinal += 1;
+    const id = `${baseId}-${ordinal}`;
+    taken.add(id);
+    claimed.add(id);
+    return id;
+  });
+};
 
 /**
  * Returns the PDF page to open for the annotation, or `undefined` when none

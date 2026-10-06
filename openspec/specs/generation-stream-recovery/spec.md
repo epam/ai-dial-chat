@@ -78,7 +78,7 @@ Timers can be frozen or throttled while a device sleeps, so a wake-up SHALL be n
 
 ### Requirement: An interrupted generation is recovered against the server copy
 
-State ownership: all recovery state SHALL live inside `useConversationStream`, in its existing refs `bufferedGenerationsRef`, `resumingPathsRef`, `activeGenerationIdRef` and `latestGenerationIdsRef`. No context, prop, or host callback is added.
+State ownership: all recovery state SHALL live inside `useConversationStream`, in its existing refs `bufferedGenerationsRef`, `resumingPathsRef`, `activeGenerationIdsRef` and `latestGenerationIdsRef`. No context, prop, or host callback is added.
 
 When `startStream`'s `onError` receives a `StreamInterruptedError` for a generation that is not superseded, the hook SHALL NOT settle it as a failure. It SHALL instead:
 
@@ -95,7 +95,7 @@ When `startStream`'s `onError` receives a `StreamInterruptedError` for a generat
 Settlement bookkeeping runs once, when recovery ends in any outcome, including after a handover once the resume flow settles:
 
 - `removeStreamingPath` (unless superseded);
-- clearing `activeGenerationIdRef`/`stoppablePath` when they still hold this generation;
+- clearing this path's `activeGenerationIdsRef` entry and stoppable state when they still hold this generation;
 - `completeGeneration`;
 - `channel?.notifyGenerationSettled`;
 - `overlay?.notifyGenerationEnd`, unless the user stopped the generation.

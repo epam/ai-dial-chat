@@ -82,7 +82,7 @@ export interface OoxmlDocxHighlightLocation {
   path: number[];
   /** Inclusive start character offset within the story's matched text. */
   start: number;
-  /** Exclusive end character offset, already converted from the wire's inclusive `end`. */
+  /** Exclusive end character offset — the wire's `end`, already exclusive, copied through unchanged. */
   endExclusive: number;
   /** The cited text, compared against the text resolved over `[start, endExclusive)`. */
   text: string;
@@ -98,7 +98,7 @@ export interface OoxmlPptxHighlightLocation {
   shapeId: string;
   /** Inclusive start character offset within the shape's matched text. */
   start: number;
-  /** Exclusive end character offset, already converted from the wire's inclusive `end`. */
+  /** Exclusive end character offset — the wire's `end`, already exclusive, copied through unchanged. */
   endExclusive: number;
   /** The cited text, compared against the text resolved over `[start, endExclusive)`. */
   text: string;

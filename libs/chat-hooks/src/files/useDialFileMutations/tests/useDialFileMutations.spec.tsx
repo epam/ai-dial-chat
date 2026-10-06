@@ -1536,5 +1536,81 @@ describe('useDialFileMutations', () => {
         reason: FileManagerNotificationReason.DeleteFailed,
       });
     });
+
+    describe('current-folder navigation', () => {
+      const deleteAndGetFolderPath = async (
+        folderPath: string,
+        deletedItems: Parameters<
+          ReturnType<typeof useDialFileMutations>['onDeleteFiles']
+        >[0],
+      ): Promise<string> => {
+        const { result, filesApi } = renderMutations({ folderPath });
+        vi.mocked(filesApi.deleteFiles).mockResolvedValue({
+          results: deletedItems.map((item) => ({
+            path: item.sourceUrl,
+            success: true,
+          })),
+        });
+
+        await act(async () => {
+          result.current.onDeleteFiles(deletedItems, '/My files');
+        });
+
+        return result.current.folderPath;
+      };
+
+      it('navigates to root when an ancestor of the browsed folder is deleted', async () => {
+        await expect(
+          deleteAndGetFolderPath('a/b/', [
+            { sourceUrl: '/My files/a/', nodeType: DialFileNodeType.FOLDER },
+          ]),
+        ).resolves.toBe('');
+      });
+
+      it('navigates to the parent of the deleted ancestor when it is nested', async () => {
+        await expect(
+          deleteAndGetFolderPath('x/a/b/c/', [
+            { sourceUrl: '/My files/x/a/', nodeType: DialFileNodeType.FOLDER },
+          ]),
+        ).resolves.toBe('x/');
+      });
+
+      it('navigates above the outermost deleted folder when several contain the browsed folder', async () => {
+        await expect(
+          deleteAndGetFolderPath('a/b/c/', [
+            { sourceUrl: '/My files/a/b/', nodeType: DialFileNodeType.FOLDER },
+            { sourceUrl: '/My files/a/', nodeType: DialFileNodeType.FOLDER },
+          ]),
+        ).resolves.toBe('');
+      });
+
+      it('navigates to the parent when the browsed folder itself is deleted', async () => {
+        await expect(
+          deleteAndGetFolderPath('a/b/', [
+            { sourceUrl: '/My files/a/b/', nodeType: DialFileNodeType.FOLDER },
+          ]),
+        ).resolves.toBe('a/');
+      });
+
+      it('keeps the browsed folder when an unrelated folder is deleted', async () => {
+        await expect(
+          deleteAndGetFolderPath('a/b/', [
+            { sourceUrl: '/My files/a/bc/', nodeType: DialFileNodeType.FOLDER },
+            { sourceUrl: '/My files/z/', nodeType: DialFileNodeType.FOLDER },
+          ]),
+        ).resolves.toBe('a/b/');
+      });
+
+      it('keeps the browsed folder when a file inside it is deleted', async () => {
+        await expect(
+          deleteAndGetFolderPath('a/b/', [
+            {
+              sourceUrl: '/My files/a/b/report.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ]),
+        ).resolves.toBe('a/b/');
+      });
+    });
   });
 });

@@ -697,6 +697,35 @@ describe('Input — isSendDisabled', () => {
 });
 
 describe('Input — isInputDisabled', () => {
+  it('consumes pendingDropFiles without adding them while isInputDisabled is true', () => {
+    const onDropFilesConsumed = vi.fn();
+    const onUploadAttachment = vi.fn();
+    const file = new File(['content'], 'dropped.pdf', {
+      type: 'application/pdf',
+    });
+    const { rerender } = render(
+      <Input
+        isInputDisabled
+        pendingDropFiles={[file]}
+        onDropFilesConsumed={onDropFilesConsumed}
+        onUploadAttachment={onUploadAttachment}
+      />,
+    );
+    expect(screen.queryByText('dropped')).toBeNull();
+    expect(onUploadAttachment).not.toHaveBeenCalled();
+    expect(onDropFilesConsumed).toHaveBeenCalledOnce();
+
+    rerender(
+      <Input
+        pendingDropFiles={[file]}
+        onDropFilesConsumed={onDropFilesConsumed}
+        onUploadAttachment={onUploadAttachment}
+      />,
+    );
+    expect(screen.queryByText('dropped')).toBeNull();
+    expect(onDropFilesConsumed).toHaveBeenCalledOnce();
+  });
+
   it('textarea has disabled attribute when isInputDisabled is true', () => {
     render(<Input isInputDisabled />);
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;

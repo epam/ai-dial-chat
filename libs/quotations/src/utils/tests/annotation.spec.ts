@@ -12,6 +12,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   annotationHighlightId,
+  annotationHighlightIds,
   annotationsToPdfHighlights,
   annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,
@@ -675,6 +676,94 @@ describe('annotationHighlightId', () => {
     expect(annotationHighlightId(citAnnotation('c1', selector), 0)).toMatch(
       /^[A-Za-z0-9_-]+$/,
     );
+  });
+});
+
+describe('annotationHighlightIds', () => {
+  const withIndex = (
+    index: number | undefined,
+    selector: unknown,
+  ): Annotation => ({
+    ...(index != null ? { index } : {}),
+    body: {
+      source: {
+        type: 'attachment',
+        attachment: { type: MIMEType.PDF, url: 'files/bucket/report.pdf' },
+      },
+      selector: selector as NonNullable<Annotation['body']>['selector'],
+    },
+  });
+
+  it('keeps unambiguous wire indices unchanged', () => {
+    const ids = annotationHighlightIds([
+      withIndex(0, bbox({ page: 1 })),
+      withIndex(1, bbox({ page: 2 })),
+      withIndex(2, bbox({ page: 3 })),
+    ]);
+
+    expect(ids).toEqual(['0', '1', '2']);
+  });
+
+  it('gives two annotations repeating one wire index distinct ids', () => {
+    const ids = annotationHighlightIds([
+      withIndex(0, bbox({ page: 1 })),
+      withIndex(0, bbox({ page: 2 })),
+    ]);
+
+    expect(ids[0]).toBe('0');
+    expect(ids[1]).not.toBe(ids[0]);
+    expect(ids[1]).toMatch(/^[A-Za-z0-9_-]+$/);
+  });
+
+  it('never mints a disambiguated id that equals another entry’s own id', () => {
+    const ids = annotationHighlightIds([
+      withIndex(0, bbox({ page: 1 })),
+      withIndex(0, bbox({ page: 2 })),
+      withIndex(0, bbox({ page: 3 })),
+    ]);
+
+    expect(new Set(ids).size).toBe(3);
+  });
+
+  it('separates a wire index from an equal positional fallback', () => {
+    const noIdentity: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: MIMEType.PDF, url: 'files/bucket/report.pdf' },
+        },
+      },
+    };
+    const ids = annotationHighlightIds([
+      withIndex(1, bbox({ page: 1 })),
+      noIdentity,
+    ]);
+
+    expect(ids[0]).toBe('1');
+    expect(ids[1]).not.toBe('1');
+  });
+
+  it('matches annotationHighlightId for each entry when nothing collides', () => {
+    const list = [
+      withIndex(undefined, bbox({ page: 1, y1: 10 })),
+      withIndex(4, bbox({ page: 2 })),
+    ];
+
+    expect(annotationHighlightIds(list)).toEqual(
+      list.map((a, i) => annotationHighlightId(a, i)),
+    );
+  });
+
+  it('is what annotationsToPdfHighlights assigns, so repeated indices do not collide', () => {
+    const list = [
+      withIndex(0, bbox({ page: 1 })),
+      withIndex(0, bbox({ page: 2 })),
+    ];
+    const highlights = annotationsToPdfHighlights(list);
+
+    expect(highlights).toHaveLength(2);
+    expect(highlights.map((h) => h.id)).toEqual(annotationHighlightIds(list));
+    expect(highlights[0].id).not.toBe(highlights[1].id);
   });
 });
 

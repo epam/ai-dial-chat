@@ -1615,6 +1615,87 @@ describe('useConversationStream', () => {
     expect(transport.getConversation).not.toHaveBeenCalled();
   });
 
+  describe('Stop with generations running in two conversations', () => {
+    /* A streams, the user switches to B and starts B, then returns to A. */
+    const startAThenB = async () => {
+      const view = renderHook(
+        (props: { conversationId: string }) =>
+          useHookHarness({ transport, conversationId: props.conversationId }),
+        { initialProps: { conversationId: 'bucket/convA' } },
+      );
+      await act(async () => {
+        view.result.current.stream.startStream(
+          'bucket/convA',
+          'A?',
+          0,
+          'gpt-4o',
+          undefined,
+          'gen-A',
+        );
+      });
+      const optionsA = capturedOptions;
+      view.rerender({ conversationId: 'bucket/convB' });
+      await act(async () => {
+        view.result.current.stream.startStream(
+          'bucket/convB',
+          'B?',
+          0,
+          'gpt-4o',
+          undefined,
+          'gen-B',
+        );
+      });
+      const optionsB = capturedOptions;
+      view.rerender({ conversationId: 'bucket/convA' });
+      return { ...view, optionsA, optionsB };
+    };
+
+    it("stops A's own generation, not B's, after returning to A", async () => {
+      const { result } = await startAThenB();
+
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+
+      expect(transport.stopCompletion).toHaveBeenCalledOnce();
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: 'gen-A',
+        path: 'convA',
+      });
+    });
+
+    it('keeps A stoppable after B finishes', async () => {
+      const { result, optionsB } = await startAThenB();
+
+      await act(async () => {
+        await optionsB?.onComplete();
+      });
+
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: 'gen-A',
+        path: 'convA',
+      });
+    });
+
+    it("keeps B stoppable after A finishes, and A's end clears only A", async () => {
+      const { result, rerender, optionsA } = await startAThenB();
+
+      await act(async () => {
+        await optionsA?.onComplete();
+      });
+      expect(result.current.stream.canStopStreaming).toBe(false);
+
+      rerender({ conversationId: 'bucket/convB' });
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: 'gen-B',
+        path: 'convB',
+      });
+    });
+  });
+
   it('passes generationId and mode, translating regenerate index for the backend', async () => {
     const { result } = renderHook(() =>
       useHookHarness({ transport, conversationId: 'bucket/conv' }),

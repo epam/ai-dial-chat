@@ -139,6 +139,14 @@ as a single hook-wide id, so starting a generation in one conversation never
 makes another conversation's still-running generation stale. This applies
 to both the immediate write and the batched per-frame write.
 
+Stop state SHALL be tracked per conversation path in the same way: the
+locally started generation that `handleStop` targets is held per path
+(`activeGenerationIdsRef`, path → generation id), and `canStopStreaming`
+reads a per-path set of stoppable paths. `handleStop` SHALL resolve the
+generation id for the displayed conversation from that per-path entry, and a
+generation that settles SHALL clear only its own path's entry, and only while
+that entry still holds its id.
+
 #### Scenario: Concurrent generations across conversations
 - **WHEN** a generation is active for conversation A and `startStream` is
   called for conversation B
@@ -152,6 +160,16 @@ to both the immediate write and the batched per-frame write.
 - **THEN** every later chunk of A is still accumulated in A's live-message
   buffer (and written to the displayed state once the user returns to A
   mid-generation), and no chunk of B is applied to A's buffer or state
+
+#### Scenario: Stop reaches a conversation's generation while another conversation generates
+- **WHEN** conversation A's generation is streaming, the user navigates to
+  conversation B and starts a generation there, then returns to A
+- **THEN** `canStopStreaming` is `true` for A, and `handleStop` calls
+  `transport.stopCompletion` once, with A's `generationId` and A's path,
+  leaving B's generation untouched
+- **AND WHEN** B's generation finishes while A's is still running
+- **THEN** A stays stoppable and Stop still targets A's generation; likewise
+  A finishing leaves B stoppable
 
 #### Scenario: Stale chunk is dropped
 - **WHEN** a chunk arrives whose generation id is no longer the newest
@@ -439,7 +457,7 @@ state.
 
 State ownership: all handover state SHALL live inside
 `useConversationStream`, in its existing refs `bufferedGenerationsRef`,
-`resumingPathsRef`, `activeGenerationIdRef` and `latestGenerationIdsRef`.
+`resumingPathsRef`, `activeGenerationIdsRef` and `latestGenerationIdsRef`.
 No context, prop, or host callback is added.
 
 When `onError` receives a `GenerationConflictError` for a start that passed
@@ -448,8 +466,9 @@ as failed. It SHALL instead:
 
 1. Call `onStreamError` once with the error.
 2. Keep the path in `streamingPaths` and write no `streamErrorMessage`.
-3. Clear `stoppablePath` when it still holds this generation, because the
-   backend rejected this `generationId` and Stop has nothing to target.
+3. Clear this path's stoppable state when the path's active generation is
+   still this one, because the backend rejected this `generationId` and Stop
+   has nothing to target.
 4. Add the path to `resumingPathsRef`, so a concurrent
    `resumeIfAwaitingGeneration` does not start a second resume.
 5. Re-fetch the conversation with `transport.getConversation` on the
@@ -476,7 +495,7 @@ as failed. It SHALL instead:
    the generation is not superseded.
 
 Settlement bookkeeping (`removeStreamingPath`, clearing
-`activeGenerationIdRef`, `completeGeneration`,
+`activeGenerationIdsRef`, `completeGeneration`,
 `channel?.notifyGenerationSettled`, `overlay?.notifyGenerationEnd`) SHALL
 run once, when the handover ends in any outcome. After a handover to the
 resume flow, it runs when that flow settles. The hook SHALL NOT send

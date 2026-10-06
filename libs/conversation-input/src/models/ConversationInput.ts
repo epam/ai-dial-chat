@@ -343,7 +343,13 @@ export interface ConversationInputProps {
   retryLabel?: string;
   /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
-  /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons and the model selector remain usable. Defaults to `false`. */
+  /**
+   * When `true`, blocks typing, the attach menu, dictation, Enter-to-send,
+   * and dropped files (`pendingDropFiles` are consumed and discarded, never
+   * added to the tray). The send button still submits a message that is
+   * already populated (e.g. by a starter). Starter/action buttons and the
+   * model selector remain usable. Defaults to `false`.
+   */
   isInputDisabled?: boolean;
   /**
    * When `true`, the model selector renders in a disabled, non-interactive

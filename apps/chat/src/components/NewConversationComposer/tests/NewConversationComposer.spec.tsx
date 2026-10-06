@@ -10,13 +10,29 @@ import { createNotificationContextValue } from '../../../context/tests/notificat
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import NewConversationComposer from '../NewConversationComposer';
 
-const { mockShowNotification, capturedInputProps } = vi.hoisted(() => ({
-  mockShowNotification: vi.fn(),
-  capturedInputProps: {
-    onSend: undefined as
-      ((message: string, attachments: never[]) => Promise<void>) | undefined,
-  },
-}));
+const {
+  mockShowNotification,
+  capturedInputProps,
+  mockUsePageFileDrag,
+  pageDrag,
+} = vi.hoisted(() => {
+  const pageDrag = { isDragging: false };
+  return {
+    pageDrag,
+    mockShowNotification: vi.fn(),
+    mockUsePageFileDrag: vi.fn(
+      (_isAttachmentsAllowed?: boolean, _isEnabled?: boolean) => ({
+        isDragging: pageDrag.isDragging,
+        pendingFiles: [] as File[],
+        onFilesConsumed: () => undefined,
+      }),
+    ),
+    capturedInputProps: {
+      onSend: undefined as
+        ((message: string, attachments: never[]) => Promise<void>) | undefined,
+    },
+  };
+});
 
 vi.mock('../../../hooks/useUiFeature');
 
@@ -177,11 +193,7 @@ vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', async (importOriginal) => {
     >();
   return {
     ...actual,
-    usePageFileDrag: () => ({
-      isDragging: false,
-      pendingFiles: [],
-      onFilesConsumed: vi.fn(),
-    }),
+    usePageFileDrag: mockUsePageFileDrag,
   };
 });
 
@@ -208,6 +220,8 @@ describe('NewConversationComposer', () => {
   beforeEach(() => {
     mockShowNotification.mockClear();
     capturedInputProps.onSend = undefined;
+    mockUsePageFileDrag.mockClear();
+    pageDrag.isDragging = false;
     mockUseUiFeature.mockImplementation(
       (feature) =>
         feature === OverlayFeature.EmptyChatSettings ||
@@ -410,6 +424,41 @@ describe('NewConversationComposer', () => {
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('send-disabled').textContent).toBe('true');
+  });
+
+  it('rejects page file drops with the denied overlay while the input is disabled', async () => {
+    pageDrag.isDragging = true;
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          isInputDisabled
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(mockUsePageFileDrag).toHaveBeenLastCalledWith(false, true);
+    expect(screen.getByText('fileDnd.overlayDeniedTitle')).toBeTruthy();
+  });
+
+  it('accepts page file drops while the input is enabled', async () => {
+    pageDrag.isDragging = true;
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(mockUsePageFileDrag).toHaveBeenLastCalledWith(true, true);
+    expect(screen.getByText('basic.attachFiles')).toBeTruthy();
   });
 
   it('suppresses autoFocus when skip-focus-chat-input-onload is enabled', async () => {

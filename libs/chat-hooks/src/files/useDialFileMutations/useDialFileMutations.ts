@@ -407,10 +407,20 @@ export const useDialFileMutations = ({
       const run = async () => {
         setIsDeleting(true);
 
+        /*
+         * Deleted folders in the listing's own path space (the space `folderPath`
+         * lives in); on the Shared tab `dto.path` is in owner coordinates instead.
+         */
+        const deletedListingFolderPaths: string[] = [];
         const dtos: DeleteItemDto[] = deletedItems.map((item) => {
           const isFolder = item.nodeType === DialFileNodeType.FOLDER;
           const apiPath = virtualPathToApiPath(item.sourceUrl, rootLabel);
           const relPath = isFolder ? apiPath : apiPath.replace(/\/$/, '');
+          if (isFolder && relPath !== '') {
+            deletedListingFolderPaths.push(
+              relPath.endsWith('/') ? relPath : `${relPath}/`,
+            );
+          }
           const name = getVirtualPathName(item.sourceUrl, relPath);
           const { bucket: itemBucket, path: itemPath } =
             activeTab === DialFileManagerTabs.Shared
@@ -469,10 +479,6 @@ export const useDialFileMutations = ({
           });
         }
 
-        const deletedFolderPaths = dtos
-          .filter((d) => d.nodeType === DeleteItemDtoNodeTypeEnum.Folder)
-          .map((d) => (d.path.endsWith('/') ? d.path : `${d.path}/`));
-
         const affectedFolderKeys = new Set<string>(
           dtos.map((d) => {
             if (d.nodeType === DeleteItemDtoNodeTypeEnum.Folder) {
@@ -485,11 +491,21 @@ export const useDialFileMutations = ({
 
         invalidateFolders([...affectedFolderKeys]);
 
-        const isCurrentFolderDeleted = deletedFolderPaths.some(
-          (fp) => folderPath === fp || folderPath.startsWith(fp),
-        );
-        if (isCurrentFolderDeleted) {
-          setFolderPath((prev) => prev.replace(/[^/]+\/$/, ''));
+        /*
+         * When the browsed folder is, or sits inside, a deleted folder, land on the
+         * parent of the outermost such folder; every deeper match went with it.
+         */
+        const outermostDeletedAncestor = deletedListingFolderPaths
+          .filter((deletedPath) => folderPath.startsWith(deletedPath))
+          .reduce<string | undefined>(
+            (outermost, deletedPath) =>
+              outermost == null || deletedPath.length < outermost.length
+                ? deletedPath
+                : outermost,
+            undefined,
+          );
+        if (outermostDeletedAncestor != null) {
+          setFolderPath(getParentFolderPath(outermostDeletedAncestor));
         }
 
         bumpRetry();

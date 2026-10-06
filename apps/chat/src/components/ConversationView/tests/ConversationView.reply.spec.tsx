@@ -27,12 +27,16 @@ const mocks = vi.hoisted(() => ({
   ],
   notify: vi.fn(),
   maxBytes: 10000,
+  deploymentConfiguration: null as {
+    isChatMessageInputDisabled?: boolean;
+  } | null,
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({
     items: mocks.items,
     selectedItemId: 'model',
     setSelectedItemId: vi.fn(),
+    selectedDeploymentConfiguration: mocks.deploymentConfiguration,
     toolsets: [],
   }),
 }));
@@ -153,6 +157,7 @@ beforeEach(() => {
   mocks.items[0].maxInputAttachments = 3;
   mocks.notify.mockClear();
   mocks.maxBytes = 10000;
+  mocks.deploymentConfiguration = null;
   Object.defineProperty(Range.prototype, 'getClientRects', {
     configurable: true,
     value: () => [new DOMRect(20, 100, 150, 20)],
@@ -268,6 +273,61 @@ describe('ConversationView Reply attachment flow', () => {
       'notes.txt',
     );
   });
+  it.each([
+    { isChatMessageInputDisabled: true, isAccepted: false },
+    { isChatMessageInputDisabled: false, isAccepted: true },
+  ])(
+    'page file drop with isChatMessageInputDisabled=$isChatMessageInputDisabled',
+    async ({ isChatMessageInputDisabled, isAccepted }) => {
+      mocks.deploymentConfiguration = { isChatMessageInputDisabled };
+      const upload = vi.fn(async (attachment: Attachment) => ({
+        url: `files/bucket/${attachment.name}`,
+        name: attachment.name,
+      }));
+      render(
+        <ConversationView
+          {...defaults}
+          onSend={vi.fn()}
+          onUploadAttachment={upload}
+        />,
+      );
+      await screen.findByRole('textbox');
+      const dragEvent = (type: string, files: File[] = []) => {
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'dataTransfer', {
+          value: { types: ['Files'], files },
+        });
+        return event;
+      };
+      act(() => {
+        document.dispatchEvent(dragEvent('dragenter'));
+      });
+      expect(
+        screen.getByText(
+          isAccepted ? 'basic.attachFiles' : 'fileDnd.overlayDeniedTitle',
+        ),
+      ).toBeTruthy();
+      const drop = dragEvent('drop', [
+        new File(['dropped'], 'dropped.txt', { type: 'text/plain' }),
+      ]);
+      act(() => {
+        document.dispatchEvent(drop);
+      });
+      /* A swallowed drop must still be cancelled, or the browser opens the file. */
+      expect(drop.defaultPrevented).toBe(true);
+      if (isAccepted) {
+        await waitFor(() => expect(upload).toHaveBeenCalledOnce());
+        expect(await screen.findByText('dropped')).toBeTruthy();
+      } else {
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 30));
+        });
+        expect(upload).not.toHaveBeenCalled();
+        expect(screen.queryByText('dropped')).toBeNull();
+      }
+    },
+  );
+
   it('reuses upload failure, retry and removal without changing the draft', async () => {
     const upload = vi
       .fn()
