@@ -49,8 +49,7 @@ const isSetupEmbedded = (
 ) => {
   const schemaId = getSchemaId(ctx);
   return Boolean(
-    appId &&
-      ctx.schemas.find((schema) => schema.id === schemaId)?.editorUrl,
+    appId && ctx.schemas.find((schema) => schema.id === schemaId)?.editorUrl,
   );
 };
 
