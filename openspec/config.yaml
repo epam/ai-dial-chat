@@ -170,6 +170,11 @@ rules:
 
   specs:
     - Specify which context or hook owns the state being introduced
+    - >-
+      Cite repo files as repo-relative paths that exist (`apps/chat/src/...`) with no line numbers
+      (`file.ts:12` rots on the next edit) — name the file and the symbol. `npm run validate:specs`
+      fails on a missing path; describe a deleted file as "the former `...`", and allowlist a
+      non-repo path in openspec/spec-references.allow.json (see .claude/rules/docs.md "Spec references")
     - Define the API endpoint shape if the feature requires a new backend endpoint
       (HTTP method, full versioned path like /api/v1/{resource} for business endpoints,
       request body, response body, error codes including 4xx and 5xx). Include a concrete

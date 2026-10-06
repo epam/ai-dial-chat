@@ -78,7 +78,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
+      # Full history so `Spec impact (advisory)` can diff the PR base sha
+      # against HEAD (`base...HEAD` needs their merge base).
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24
@@ -94,6 +98,20 @@ jobs:
       # Needs no build, so it belongs in this fast job.
       - name: Validate documentation and lib manifests
         run: npm run validate:docs
+      - name: Test spec-reference and spec-impact scripts
+        if: ${{ !cancelled() }}
+        run: npm run validate:specs:test
+      # Hard gate: repo paths and translation keys cited by openspec/specs
+      # must exist (allowlist: openspec/spec-references.allow.json).
+      - name: Validate spec references
+        if: ${{ !cancelled() }}
+        run: npm run validate:specs
+      # Advisory: annotates specs whose referenced files changed in this PR
+      # while the spec did not. Never blocks the merge.
+      - name: Spec impact (advisory)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npm run spec:impact -- --base ${{ github.event.pull_request.base.sha }}
       # Lives here rather than with lint so a docs-only PR, which skips the
       # lint job, still has its Markdown format-checked.
       - name: Format check (prettier)

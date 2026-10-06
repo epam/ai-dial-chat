@@ -47,6 +47,9 @@
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
     "validate:docs": "node scripts/validate-docs.mjs && node scripts/generate-install-matrix.mjs --check",
+    "validate:specs": "node scripts/validate-spec-references.mjs",
+    "validate:specs:test": "node --test scripts/validate-spec-references.spec.mjs scripts/spec-impact.spec.mjs",
+    "spec:impact": "node scripts/spec-impact.mjs",
     "prepare": "git config core.hooksPath .githooks",
     "docs:install-matrix": "node scripts/generate-install-matrix.mjs"
   },
@@ -187,7 +190,7 @@
   },
   "overrides": {
     "express": "$express",
-    "js-yaml": "4.3.2",
+    "js-yaml": "^4.1.1 || ^5.0.0",
     "katex": "^0.19.0",
     "postcss-selector-parser": "^7.1.6",
     "smol-toml": "^1.9.0"

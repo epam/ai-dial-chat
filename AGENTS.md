@@ -26,7 +26,7 @@
 
 Full tech stack, path aliases, commands, and architecture layout live in `openspec/config.yaml` — read it before designing or implementing features. The `opsx:*` skills use it as their primary context.
 
-Spec work follows the OpenSpec lifecycle: **explore → propose → apply → archive** (`opsx:explore` to think through an idea, `opsx:propose` to create a change with design/specs/tasks, `opsx:apply` to implement the tasks, `opsx:archive` to finalize once done).
+Spec work follows the OpenSpec lifecycle: **explore → propose → apply → archive** (`opsx:explore` to think through an idea, `opsx:propose` to create a change with design/specs/tasks, `opsx:apply` to implement the tasks, `opsx:archive` to finalize once done). `npm run validate:specs` (PR gate) checks that repo paths and translation keys cited in `openspec/specs/**` exist, and `npm run spec:impact` (advisory) lists specs whose referenced files changed without the spec — see `.claude/rules/docs.md` "Spec references".
 
 Internal `@epam/*` libs resolve via `tsconfig.base.json` paths + the Nx project graph — fix `@epam/*` resolution errors (`cannot find module`, `TS2307`) there and in the lib's own `package.json`, not by hand-editing `node_modules` symlinks or running `npm install --workspace`. Use the `nx-workspace` skill to diagnose.
 
