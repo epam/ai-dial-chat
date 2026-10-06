@@ -94,7 +94,12 @@ It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for
 
 The system SHALL provide `FeatureGuard` in `apps/chat-api/src/app-config/feature-flags/feature.guard.ts` implementing `CanActivate`. When `featureFlagsService.isEnabled(key, context)` returns `false`, the guard MUST throw `ForbiddenException`. When `true`, the guard passes.
 
-`@RequireFeature(key: FeatureKey)` decorator SHALL set metadata consumed by `FeatureGuard` via `Reflector`.
+`@RequireFeature(key: FeatureKey)` decorator SHALL set metadata consumed by `FeatureGuard` via `Reflector.getAllAndOverride(FEATURE_KEY_METADATA, [handler, class])`, so the decorator works on a handler or on the controller class, and a handler-level `@RequireFeature` overrides the class-level one. `ScheduledTasksController` relies on the class-level form for `FeatureKey.ScheduledTasksEnabled`.
+
+#### Scenario: A class-level RequireFeature gates every handler
+
+- **WHEN** a controller class carries `@UseGuards(FeatureGuard)` and `@RequireFeature(FeatureKey.ScheduledTasksEnabled)`, a handler has no decorator of its own, and the feature is disabled
+- **THEN** `FeatureGuard` throws `ForbiddenException` for that handler
 
 Feature guards MUST NOT replace authorization checks. Routes protected by `@RequireFeature` MUST also carry appropriate auth guards. Role checks and feature checks remain separate concerns.
 

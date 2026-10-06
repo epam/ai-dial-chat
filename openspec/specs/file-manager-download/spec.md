@@ -203,6 +203,8 @@ Applied in `FilesListingService.buildArchivePath(root, relative)` (relocated fro
 - Reject backslash-containing paths.
 - On rejection it returns `null`; `expandFolderContents` logs a warning (`reason=invalid-archive-path`) and skips the entry. Otherwise it returns `${root}/${relative}`.
 
+The archive root itself comes from the request's `ArchiveItemDto.name`, which is also the entry name of a directly selected file. `name` SHALL be a single path segment: `@Matches(ARCHIVE_ENTRY_NAME_PATTERN)` rejects `/`, a backslash, control characters, `.` and `..` with `400` before any archive entry is written.
+
 ---
 
 ## Archive filename determination

@@ -317,6 +317,16 @@ completes.
   `DEPLOYMENT_ID_PATTERN`
 - **THEN** the endpoint responds `400 Bad Request` and does not call DIAL Core
 
+#### Scenario: Traversal segment in the application name is rejected
+- **WHEN** the `applicationName` path parameter contains an empty, `.`, or `..` segment, raw or
+  percent-encoded (e.g. `applications/b/../x`, `applications/b/./x`, `applications/b/%2e%2e/x`)
+- **THEN** the endpoint responds `400 Bad Request` and does not call DIAL Core
+
+#### Scenario: Dotted application names stay valid
+- **WHEN** the `applicationName` path parameter is `a.b`, `__1.0.0__`, or
+  `applications/bucket/my-app__1.0.0`
+- **THEN** path validation passes
+
 #### Scenario: Not authenticated
 - **WHEN** the request has no valid session cookie
 - **THEN** the endpoint responds `401 Unauthorized`
@@ -341,9 +351,12 @@ completes.
 The backend SHALL expose `DELETE /api/v1/applications/:applicationName` that deletes an
 application for the authenticated session user by proxying DIAL Core
 (`deleteCustomApplication`), using the caller's session access token. The
-`applicationName` path parameter SHALL be validated with the same allowlist pattern used
-by `GetToolsetDto.toolsetName` (`DEPLOYMENT_ID_PATTERN`/`DEPLOYMENT_ID_VALIDATION_MESSAGE`),
-via a new `GetApplicationDto`. The bucket/path SHALL be resolved by parsing an
+`applicationName` path parameter SHALL be validated by `GetApplicationDto` with the shared
+`@IsSafeResourceId` validator (`apps/chat-api/src/common/validators/safe-resource-id.validator.ts`,
+the same check `GetToolsetDto.toolsetName`'s `@IsSafeToolsetName` delegates to): the value
+SHALL match the `DEPLOYMENT_ID_PATTERN` allowlist AND no `/`-separated segment — after one
+extra percent-decode, so `%2e%2e` and `%2F` are caught — may be empty, `.`, or `..`. Dots
+inside a segment (`a.b`, `my-app__1.0.0`) remain valid. The bucket/path SHALL be resolved by parsing an
 `applications/{bucket}/{path}` id when present (`parseDialApplicationResource`,
 `apps/chat-api/src/common/utils/dial-application-resource.ts`), falling back to the caller's own bucket
 plus the encoded name otherwise (mirroring `ToolsetsListingService.resolveToolsetResource`). On
@@ -387,6 +400,16 @@ side effects. The endpoint's request/response shape, `operationId`, and generate
 - **WHEN** the `applicationName` path parameter contains characters disallowed by
   `DEPLOYMENT_ID_PATTERN`
 - **THEN** the endpoint responds `400 Bad Request` and does not call DIAL Core
+
+#### Scenario: Traversal segment in the application name is rejected
+- **WHEN** the `applicationName` path parameter contains an empty, `.`, or `..` segment, raw or
+  percent-encoded (e.g. `applications/b/../x`, `applications/b/./x`, `applications/b/%2e%2e/x`)
+- **THEN** the endpoint responds `400 Bad Request` and does not call DIAL Core
+
+#### Scenario: Dotted application names stay valid
+- **WHEN** the `applicationName` path parameter is `a.b`, `__1.0.0__`, or
+  `applications/bucket/my-app__1.0.0`
+- **THEN** path validation passes
 
 #### Scenario: Not authenticated
 - **WHEN** the request has no valid session cookie

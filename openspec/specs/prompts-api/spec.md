@@ -27,12 +27,27 @@ A prompt SHALL be represented by `PromptResponseDto` with its full DIAL Core res
 }
 ```
 
-`id` is the full resource path `prompts/{bucket}/{path}` — the same shape every other resource type (`applications/`, `toolsets/`, `conversations/`, `skills/`) already exposes. There is no separate `bucket` field; a bucket is recoverable by parsing `id` wherever a caller still needs it in isolation. `folderId` is derived by dropping the last path segment of `id`'s `{path}` portion. `isMy`, `canEdit`, and `sharedWithMe` are requestor-relative flags. `permissions` carries the upstream READ/WRITE/SHARE values when available. An organisation prompt's `id` SHALL use the `public` bucket segment (`prompts/public/{path}`) and SHALL always return `isMy: false`, `canEdit: false`, and `sharedWithMe: false`, even if upstream metadata unexpectedly includes `WRITE`.
+`id` is the full resource path `prompts/{bucket}/{path}` — the same shape every other resource type (`applications/`, `toolsets/`, `conversations/`, `skills/`) already exposes. There is no separate `bucket` field; a bucket is recoverable by parsing `id` wherever a caller still needs it in isolation. `folderId` is derived by dropping the last path segment of `id`'s `{path}` portion. `isMy`, `canEdit`, and `sharedWithMe` are requestor-relative flags. Every endpoint that returns a single prompt (get by `id`, update, move) SHALL compute them the same way the list endpoint does, relative to the caller's session bucket rather than the bucket `id` names: `isMy` is true only when the `id` bucket equals the session bucket; a prompt in any other non-`public` bucket SHALL report `isMy: false` and `sharedWithMe: true`; `canEdit` SHALL follow the `WRITE` permission DIAL Core reports for the requestor on that resource's metadata (requested with `permissions=true` on the metadata read the BFF already performs, so no extra round trip), falling back to `isMy` when no permissions are reported. A successful update or move SHALL report `canEdit: true`, because the write itself proves write access. `permissions` carries the upstream READ/WRITE/SHARE values when available. An organisation prompt's `id` SHALL use the `public` bucket segment (`prompts/public/{path}`) and SHALL always return `isMy: false`, `canEdit: false`, and `sharedWithMe: false`, even if upstream metadata unexpectedly includes `WRITE`.
 
 #### Scenario: Writable shared prompt reports its owner and permissions
 
 - **WHEN** another user shares `prompts/owner-bucket/Work/AI/summarize` with `READ` and `WRITE`
 - **THEN** its response contains `id: 'prompts/owner-bucket/Work/AI/summarize'`, `isMy: false`, `canEdit: true`, `sharedWithMe: true`, and both permissions
+
+#### Scenario: Shared prompt fetched by id reports requestor-relative flags
+
+- **WHEN** a caller whose session bucket is `caller-bucket` requests `GET /api/v1/prompts/item?id=prompts/owner-bucket/Work/AI/summarize` and DIAL Core reports only `READ` for that resource
+- **THEN** the response contains `isMy: false`, `canEdit: false`, `sharedWithMe: true`, and `permissions: ['READ']`
+
+#### Scenario: Own prompt fetched by id is mine
+
+- **WHEN** the same caller requests `GET /api/v1/prompts/item?id=prompts/caller-bucket/Work/note`
+- **THEN** the response contains `isMy: true`, `canEdit: true`, and `sharedWithMe: false`
+
+#### Scenario: Updating or moving a writable shared prompt keeps it shared
+
+- **WHEN** the caller updates or moves `prompts/owner-bucket/Work/AI/summarize` and DIAL Core accepts the write
+- **THEN** the response contains `isMy: false`, `canEdit: true`, and `sharedWithMe: true`
 
 #### Scenario: Organisation prompt is always read-only
 

@@ -11,6 +11,7 @@ import {
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto } from './dto/create-share-link.dto';
 import {
@@ -47,6 +48,7 @@ export class ShareController {
       'and expiry.',
   })
   @ApiBody({ type: CreateShareLinkDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Share link created successfully',
@@ -85,6 +87,7 @@ export class ShareController {
       "Accepts a share invitation via DIAL Core, granting the authenticated user the invitation's " +
       "access level, and returns the shared entity's identifier so the frontend can navigate to it.",
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Invitation accepted',
@@ -131,6 +134,7 @@ export class ShareController {
       'else is a separate operation.',
   })
   @ApiBody({ type: DiscardSharedCatalogItemDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Resource discarded successfully',
@@ -175,6 +179,7 @@ export class ShareController {
       'getSharedResources operation. Intended to be called when an owner opens the menu offering "Revoke access", so the count is never stale. ' +
       'Counts accepted invitations only — an issued but unopened share link is not counted.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Recipient count resolved',
@@ -215,6 +220,7 @@ export class ShareController {
       "caller's own access to a resource shared with them is a separate operation.",
   })
   @ApiBody({ type: RevokeSharedAccessDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Shared access revoked successfully',

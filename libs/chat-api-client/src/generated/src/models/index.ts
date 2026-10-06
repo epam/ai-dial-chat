@@ -696,7 +696,7 @@ export interface ArchiveItemDto {
    */
   path: string;
   /**
-   * Display name for archive entry
+   * Display name for archive entry; a single path segment (no "/", "\", "." or "..")
    * @type {string}
    * @memberof ArchiveItemDto
    */

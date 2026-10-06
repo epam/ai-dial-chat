@@ -18,6 +18,12 @@ import {
 import { DialFileNodeType } from './dial-file-node-type';
 import { IsValidFilePath } from './file-path.validator';
 
+/*
+ * The name becomes a ZIP entry name (and the root of a folder's entries), so it
+ * must be one path segment: no separators, no `.`/`..`, no control characters.
+ */
+export const ARCHIVE_ENTRY_NAME_PATTERN = /^(?!\.{1,2}$)[^/\\\p{Cc}]+$/u;
+
 export const ArchiveItemNodeType = DialFileNodeType;
 export type ArchiveItemNodeType = DialFileNodeType;
 
@@ -42,8 +48,13 @@ export class ArchiveItemDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
+  @Matches(ARCHIVE_ENTRY_NAME_PATTERN, {
+    message:
+      'name must be a single path segment without "/", "\\", control characters, "." or ".."',
+  })
   @ApiProperty({
-    description: 'Display name for archive entry',
+    description:
+      'Display name for archive entry; a single path segment (no "/", "\\", "." or "..")',
     example: 'reports',
   })
   name!: string;

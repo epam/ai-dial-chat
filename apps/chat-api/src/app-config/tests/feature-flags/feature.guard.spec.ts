@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { FeatureKey } from '../../feature-flags/feature-key.enum';
 import { FeatureGuard } from '../../feature-flags/feature.guard';
+import { RequireFeature } from '../../feature-flags/require-feature.decorator';
 
 function makeGuard(isEnabledResult: boolean) {
   const reflector = new Reflector();
@@ -17,14 +18,17 @@ function makeGuard(isEnabledResult: boolean) {
   };
 }
 
-function makeContext(user?: { sub: string; claims: Record<string, unknown> }) {
+function makeContext(
+  user?: { sub: string; claims: Record<string, unknown> },
+  target: { handler?: object; controller?: object } = {},
+) {
   const request = { user };
   return {
-    getHandler: vi.fn(() => ({})),
+    getHandler: vi.fn(() => target.handler ?? {}),
     switchToHttp: vi.fn(() => ({
       getRequest: vi.fn(() => request),
     })),
-    getClass: vi.fn(),
+    getClass: vi.fn(() => target.controller),
     getArgs: vi.fn(),
     getArgByIndex: vi.fn(),
     switchToRpc: vi.fn(),
@@ -40,7 +44,9 @@ describe('FeatureGuard', () => {
 
   it('allows when feature is enabled', async () => {
     const { guard, reflector, featureFlagsService } = makeGuard(true);
-    vi.spyOn(reflector, 'get').mockReturnValue(FeatureKey.AsrEnabled);
+    vi.spyOn(reflector, 'getAllAndOverride').mockReturnValue(
+      FeatureKey.AsrEnabled,
+    );
     const ctx = makeContext({
       sub: 'user-1',
       claims: { roles: ['admin', 42] },
@@ -60,15 +66,63 @@ describe('FeatureGuard', () => {
 
   it('throws ForbiddenException when feature is disabled', async () => {
     const { guard, reflector } = makeGuard(false);
-    vi.spyOn(reflector, 'get').mockReturnValue(FeatureKey.AsrEnabled);
+    vi.spyOn(reflector, 'getAllAndOverride').mockReturnValue(
+      FeatureKey.AsrEnabled,
+    );
     const ctx = makeContext();
 
     await expect(guard.canActivate(ctx)).rejects.toThrow(ForbiddenException);
   });
 
+  describe('with real decorator metadata', () => {
+    @RequireFeature(FeatureKey.ScheduledTasksEnabled)
+    class ClassGatedController {
+      list() {
+        return [];
+      }
+
+      @RequireFeature(FeatureKey.AsrEnabled)
+      transcribe() {
+        return '';
+      }
+    }
+
+    it('enforces a class-level RequireFeature on a handler without its own', async () => {
+      const { guard, featureFlagsService } = makeGuard(false);
+      const ctx = makeContext(undefined, {
+        handler: ClassGatedController.prototype.list,
+        controller: ClassGatedController,
+      });
+
+      await expect(guard.canActivate(ctx)).rejects.toThrow(ForbiddenException);
+      expect(featureFlagsService.isEnabled).toHaveBeenCalledWith(
+        FeatureKey.ScheduledTasksEnabled,
+        expect.anything(),
+      );
+    });
+
+    it('lets a handler-level RequireFeature override the class-level one', async () => {
+      const { guard, featureFlagsService } = makeGuard(true);
+      const ctx = makeContext(undefined, {
+        handler: ClassGatedController.prototype.transcribe,
+        controller: ClassGatedController,
+      });
+
+      expect(await guard.canActivate(ctx)).toBe(true);
+      expect(featureFlagsService.isEnabled).toHaveBeenCalledWith(
+        FeatureKey.AsrEnabled,
+        expect.anything(),
+      );
+      expect(featureFlagsService.isEnabled).not.toHaveBeenCalledWith(
+        FeatureKey.ScheduledTasksEnabled,
+        expect.anything(),
+      );
+    });
+  });
+
   it('passes through when no RequireFeature metadata is set', async () => {
     const { guard, reflector } = makeGuard(false);
-    vi.spyOn(reflector, 'get').mockReturnValue(undefined);
+    vi.spyOn(reflector, 'getAllAndOverride').mockReturnValue(undefined);
     const ctx = makeContext();
 
     const result = await guard.canActivate(ctx);
@@ -77,7 +131,7 @@ describe('FeatureGuard', () => {
 
   it('allows an enabled alternative using the same caller context', async () => {
     const { guard, reflector, featureFlagsService } = makeGuard(false);
-    vi.spyOn(reflector, 'get').mockReturnValue([
+    vi.spyOn(reflector, 'getAllAndOverride').mockReturnValue([
       FeatureKey.ScheduledTasksEnabled,
       FeatureKey.LiveChatInteraction,
     ]);
@@ -97,7 +151,7 @@ describe('FeatureGuard', () => {
 
   it('denies when all alternative features are disabled', async () => {
     const { guard, reflector } = makeGuard(false);
-    vi.spyOn(reflector, 'get').mockReturnValue([
+    vi.spyOn(reflector, 'getAllAndOverride').mockReturnValue([
       FeatureKey.ScheduledTasksEnabled,
       FeatureKey.LiveChatInteraction,
     ]);

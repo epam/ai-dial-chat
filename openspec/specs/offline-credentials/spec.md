@@ -130,7 +130,15 @@ cookies, or full request/response bodies of the sign-in call.
   the length of the code, and never the code's value
 
 #### Scenario: Upstream failure is logged
-- **WHEN** DIAL Core returns a non-OK response
+- **WHEN** DIAL Core returns a non-OK response to the status call
 - **THEN** `mapDialHttpStatus` logs a `warn` with the upstream status and, when an error body is present, a
   second `warn` with the JSON-serialized upstream error body, before throwing the mapped exception whose
   text is the message extracted by `extractDialErrorMessage` where the mapper permits it
+
+#### Scenario: Sign-in failure is logged without the response body
+- **WHEN** DIAL Core returns a non-OK response to the sign-in call
+- **THEN** `mapDialHttpStatus` logs a single `warn` with the upstream status and operation context only —
+  the upstream error body is not passed to it and is never logged — before throwing the mapped exception
+  whose text is the message extracted by `extractDialErrorMessage` where the mapper permits it
+- **AND** the sign-in response debug line records only the status and whether data/error were present,
+  never the serialized response data

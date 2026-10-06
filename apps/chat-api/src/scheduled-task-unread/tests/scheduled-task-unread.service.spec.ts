@@ -23,11 +23,12 @@ const makeDialClient = () =>
 
 const makeDownloadSpy = (
   service: ScheduledTaskUnreadService,
-  options: { ok: boolean; body?: string },
+  options: { ok: boolean; body?: string; status?: number },
 ) =>
   vi.spyOn(service['dialClient'].client, 'downloadFile').mockResolvedValue({
     response: {
       ok: options.ok,
+      status: options.status ?? (options.ok ? 200 : 404),
       text: async () => options.body ?? '',
     },
   } as never);
@@ -168,6 +169,19 @@ describe('ScheduledTaskUnreadService', () => {
           (id) => id === 'conversations/bucket/a',
         ),
       ).toHaveLength(1);
+    });
+
+    it('does not overwrite the stored ids when the read fails', async () => {
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
+        throw new Error('DIAL Core 503');
+      });
+      makeDownloadSpy(service, { ok: false, status: 503 });
+      const uploadSpy = makeUploadSpy(service);
+
+      await expect(
+        service.markViewed('conversations/bucket/a', 'token', 'bucket'),
+      ).rejects.toThrow('DIAL Core 503');
+      expect(uploadSpy).not.toHaveBeenCalled();
     });
 
     it('calls handleDialSdkError when DIAL Core returns an error', async () => {

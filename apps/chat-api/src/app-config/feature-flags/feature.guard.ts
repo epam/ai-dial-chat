@@ -20,9 +20,13 @@ export class FeatureGuard implements CanActivate {
   ) {}
 
   async canActivate(executionContext: ExecutionContext): Promise<boolean> {
-    const featureKey = this.reflector.get<
+    /* A handler-level @RequireFeature overrides one set on the controller class. */
+    const featureKey = this.reflector.getAllAndOverride<
       FeatureKey | FeatureKey[] | undefined
-    >(FEATURE_KEY_METADATA, executionContext.getHandler());
+    >(FEATURE_KEY_METADATA, [
+      executionContext.getHandler(),
+      executionContext.getClass(),
+    ]);
 
     if (!featureKey) {
       return true;

@@ -131,6 +131,41 @@ describe('OfflineCredentialsService', () => {
       await expect(call).rejects.toThrow('Invalid authorization code');
     });
 
+    it('logs the upstream status but never the sign-in error body', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignIn).mockResolvedValue(
+        errResponse(400, {
+          error: { message: 'Invalid authorization code' },
+          detail: 'upstream-sensitive-detail',
+        }),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const logger = (service as any).logger;
+      const warnSpy = vi
+        .spyOn(logger, 'warn')
+        .mockImplementation(() => undefined);
+      const debugSpy = vi
+        .spyOn(logger, 'debug')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.signIn('token', {
+          code: 'auth-code',
+          redirectUri: 'https://chat.example.com/auth/toolset-signin',
+        }),
+      ).rejects.toThrow('Invalid authorization code');
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'DIAL Core returned 400 for sign in offline-credentials',
+      );
+      const loggedText = JSON.stringify([
+        ...warnSpy.mock.calls,
+        ...debugSpy.mock.calls,
+      ]);
+      expect(loggedText).not.toContain('upstream-sensitive-detail');
+      expect(loggedText).not.toContain('error body');
+    });
+
     it('never includes the bearer token or code value in debug logs', async () => {
       const { service, dialClient } = makeService();
       vi.mocked(dialClient.client.offlineCredentialsSignIn).mockResolvedValue(
@@ -153,7 +188,7 @@ describe('OfflineCredentialsService', () => {
       expect(loggedText).not.toContain('super-secret-authorization-code');
     });
 
-    it('debug-logs the Core status and result without the authorization code', async () => {
+    it('debug-logs the Core status and result presence without the response body or authorization code', async () => {
       const { service, dialClient } = makeService();
       vi.mocked(dialClient.client.offlineCredentialsSignIn).mockResolvedValue(
         okResponse(true),
@@ -170,7 +205,7 @@ describe('OfflineCredentialsService', () => {
       });
 
       expect(debugSpy).toHaveBeenCalledWith(
-        'DIAL Core offlineCredentialsSignIn response: status=200 data=true errorPresent=false',
+        'DIAL Core offlineCredentialsSignIn response: status=200 dataPresent=true errorPresent=false',
       );
       const loggedText = debugSpy.mock.calls.map((call) => call[0]).join('\n');
       expect(loggedText).not.toContain('super-secret-authorization-code');

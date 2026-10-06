@@ -12,6 +12,7 @@ import {
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   DialToolsetDto,
   DialToolsetListResponseDto,
@@ -40,6 +41,7 @@ export class ToolsetsController {
       'carries no client-facing Cache-Control so a browser never serves a ' +
       'stale copy across a login/logout that already invalidated that cache.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved toolset list',
@@ -78,6 +80,7 @@ export class ToolsetsController {
       'never serves a stale copy across a login/logout that already ' +
       'invalidated that cache.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved toolset',
@@ -119,6 +122,7 @@ export class ToolsetsController {
       'Invalidates the toolset list cache on success.',
   })
   @ApiBody({ type: ToolsetBodyDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Toolset created successfully',
@@ -159,6 +163,7 @@ export class ToolsetsController {
       'Invalidates the relevant caches on success.',
   })
   @ApiBody({ type: ToolsetBodyDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Toolset updated successfully',
@@ -205,6 +210,7 @@ export class ToolsetsController {
       'Deletes a toolset for the authenticated session user by proxying DIAL Core. ' +
       'Invalidates the relevant caches on success.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Toolset deleted successfully' })
   @ApiResponse({ status: 400, description: 'Invalid toolset name' })
   @ApiResponse({
@@ -239,6 +245,7 @@ export class ToolsetsController {
       'DIAL Core (POST /v1/ops/toolset/signin). Credential payloads are never logged.',
   })
   @ApiBody({ type: ToolsetLoginBodyDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Credentials submitted successfully',
@@ -279,6 +286,7 @@ export class ToolsetsController {
       'authentication type is looked up first (same lookup as `GET /api/v1/toolsets/{toolsetName}`).',
   })
   @ApiBody({ type: ToolsetLogoutBodyDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Credentials revoked successfully',

@@ -26,6 +26,7 @@ import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   CreateScheduledTaskBodyDto,
   CreatedScheduledTaskDto,
@@ -82,6 +83,7 @@ export class ScheduledTasksController {
     description:
       'Case-insensitive substring match against the scheduled task display name.',
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved scheduled task list',
@@ -128,6 +130,7 @@ export class ScheduledTasksController {
       'Invalidates the scheduled tasks list cache on success.',
   })
   @ApiBody({ type: CreateScheduledTaskBodyDto })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 201,
     description: 'Scheduled task created successfully',
@@ -182,6 +185,7 @@ export class ScheduledTasksController {
       'Returns a single DIAL Scheduler schedule by id, proxying DIAL Scheduler using the ' +
       "session user's access token. Not cached.",
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved the scheduled task',
@@ -240,6 +244,7 @@ export class ScheduledTasksController {
     type: Number,
     description: 'Offset of the first run to return.',
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved the scheduled task run history',
@@ -289,6 +294,7 @@ export class ScheduledTasksController {
     description:
       'Returns one DIAL Scheduler run for an owned schedule, proxying the Scheduler using the session access token. Not cached.',
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved the scheduled task run',
@@ -366,6 +372,7 @@ export class ScheduledTasksController {
       'Starts the saved DIAL Scheduler definition immediately for the authenticated session user. ' +
       'The request has no body, does not wait for completion, and does not change the schedule.',
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 202,
     description: 'Scheduled task run accepted',
@@ -445,6 +452,7 @@ export class ScheduledTasksController {
       'Pauses a DIAL Scheduler schedule for the authenticated session user. ' +
       'Invalidates the scheduled tasks list cache on success.',
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 200,
     description: 'Scheduled task paused successfully',
@@ -494,6 +502,7 @@ export class ScheduledTasksController {
       'Resumes a paused DIAL Scheduler schedule for the authenticated session ' +
       'user. Invalidates the scheduled tasks list cache on success.',
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 200,
     description: 'Scheduled task resumed successfully',
@@ -546,6 +555,7 @@ export class ScheduledTasksController {
       'Invalidates the scheduled tasks list cache on success.',
   })
   @ApiBody({ type: UpdateScheduledTaskBodyDto })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 200,
     description: 'Scheduled task updated successfully',
@@ -608,6 +618,7 @@ export class ScheduledTasksController {
       'never predicts or requests a specific outcome. Invalidates the scheduled ' +
       'tasks list cache on success.',
   })
+  @ApiDialCoreErrors({ errorType: ScheduledTaskValidationErrorDto })
   @ApiResponse({
     status: 204,
     description: 'Scheduled task deleted successfully (empty body)',

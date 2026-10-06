@@ -1,7 +1,16 @@
-import { Body, Controller, Get, HttpCode, Patch, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Req,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { UpdateInstalledPromptDto } from './dto/update-installed-prompt.dto';
 import { UpdateInstalledSkillDto } from './dto/update-installed-skill.dto';
 import { UpdateInstalledDto } from './dto/update-installed.dto';
@@ -17,6 +26,7 @@ export class UserConfigController {
 
   @Get()
   @ApiOperation({ summary: 'Get current user configuration' })
+  @ApiDialCoreErrors({ exclude: [HttpStatus.NOT_FOUND] })
   @ApiResponse({
     status: 200,
     description: 'User configuration',
@@ -31,6 +41,7 @@ export class UserConfigController {
   @Patch('pins')
   @HttpCode(204)
   @ApiOperation({ summary: 'Pin or unpin a conversation' })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Pin state updated' })
   @ApiResponse({ status: 400, description: 'Missing or invalid body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -42,6 +53,7 @@ export class UserConfigController {
   @Patch('toolsets')
   @HttpCode(204)
   @ApiOperation({ summary: 'Install or uninstall a toolset' })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Toolset install state updated' })
   @ApiResponse({ status: 400, description: 'Missing or invalid body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -58,6 +70,7 @@ export class UserConfigController {
   @Patch('deployments')
   @HttpCode(204)
   @ApiOperation({ summary: 'Install or uninstall a deployment' })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Deployment install state updated' })
   @ApiResponse({ status: 400, description: 'Missing or invalid body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -78,6 +91,7 @@ export class UserConfigController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Add or remove a prompt from favorites' })
   @ApiBody({ type: UpdateInstalledPromptDto })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Prompt favorite state updated' })
   @ApiResponse({ status: 400, description: 'Missing or invalid body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -98,6 +112,7 @@ export class UserConfigController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Add or remove a skill from favorites' })
   @ApiBody({ type: UpdateInstalledSkillDto })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Skill favorite state updated' })
   @ApiResponse({ status: 400, description: 'Missing or invalid body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -118,6 +133,7 @@ export class UserConfigController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Set the selected deployment' })
   @ApiBody({ type: UpdateSelectedDeploymentDto })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Selected deployment updated' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   updateSelectedDeployment(

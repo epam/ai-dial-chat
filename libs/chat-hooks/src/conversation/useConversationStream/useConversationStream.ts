@@ -300,7 +300,11 @@ export const useConversationStream = ({
   /* Generation ids stopped by the user — onComplete emits notifyStopGenerating's
    * counterpart (nothing) instead of notifyGenerationEnd for these. */
   const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
-  /** Newest generation id started for each path — see `isSuperseded` in `startStream`. */
+  /*
+   * Newest generation id started for each path — see `isSuperseded` in
+   * `startStream`. Chunk staleness is checked against this per-path entry, so
+   * concurrent generations in different conversations never drop each other.
+   */
   const latestGenerationIdsRef = useRef<Map<string, string>>(new Map());
   const mountedRef = useRef(true);
   const reloadFailuresRef = useRef(
@@ -615,11 +619,14 @@ export const useConversationStream = ({
         signal: controller.signal,
         onChunk: (chunk) => {
           /*
-           * Drop stale chunks from a superseded generation. Background chunks
-           * still update the per-path buffer, so returning before the backend's
-           * terminal save restores the complete live message.
+           * Drop stale chunks from a generation superseded on the same path
+           * (regenerate/edit/re-submit). Staleness is keyed by path, not by the
+           * hook-wide active id: a generation started in another conversation
+           * must not cut off this one, whose chunks still update the per-path
+           * buffer so returning before the backend's terminal save restores
+           * the complete live message.
            */
-          if (activeGenerationIdRef.current !== genId) return;
+          if (isSuperseded()) return;
 
           const buffered = bufferedGenerationsRef.current.get(conversationPath);
           if (buffered?.generationId === genId) {
@@ -641,7 +648,7 @@ export const useConversationStream = ({
               const flushedBuffer =
                 bufferedGenerationsRef.current.get(conversationPath);
               if (
-                activeGenerationIdRef.current !== genId ||
+                isSuperseded() ||
                 !isPathDisplayed(conversationPath) ||
                 flushedBuffer?.generationId !== genId
               )

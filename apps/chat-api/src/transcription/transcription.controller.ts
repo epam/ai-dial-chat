@@ -1,10 +1,11 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import {
   getJobTitleClaim,
   type SessionUser,
 } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { TranscribeAudioDto } from './dto/transcribe-audio.dto';
 import { TranscriptionUnavailableException } from './transcription-unavailable.exception';
 import { TranscriptionService } from './transcription.service';
@@ -17,6 +18,7 @@ export class TranscriptionController {
   @Post()
   @ApiOperation({ summary: 'Transcribe audio using the configured ASR model' })
   @ApiBody({ type: TranscribeAudioDto })
+  @ApiDialCoreErrors({ exclude: [HttpStatus.TOO_MANY_REQUESTS] })
   @ApiResponse({
     status: 200,
     schema: { properties: { transcript: { type: 'string' } } },

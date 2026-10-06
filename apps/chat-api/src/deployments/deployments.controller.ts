@@ -13,6 +13,7 @@ import {
   getJobTitleClaim,
   type SessionUser,
 } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 import { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
@@ -46,6 +47,7 @@ export class DeploymentsController {
     description:
       'Bypass the short server-side deployments list cache and refresh from DIAL Core',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: DeploymentsResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid query parameter' })
   @ApiResponse({
@@ -89,6 +91,7 @@ export class DeploymentsController {
       'Only available for deployments whose `features.configuration` flag is `true`. ' +
       'Results are cached server-side for 60 seconds per user.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: DeploymentConfigurationDto })
   @ApiResponse({ status: 400, description: 'Invalid deployment identifier' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -123,6 +126,7 @@ export class DeploymentsController {
       "Proxies GET /v1/deployments/{deployment_name}/limits using the caller's session access token. " +
       'Not cached — every request hits DIAL Core for real-time usage data.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved deployment limits',
@@ -168,6 +172,7 @@ export class DeploymentsController {
       'sets Cache-Control to private, no-store so browsers and intermediaries ' +
       'never reuse a stale copy after the active user or toolset credentials change.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: DeploymentDetailsDto })
   @ApiResponse({ status: 400, description: 'Invalid deployment identifier' })
   @ApiResponse({

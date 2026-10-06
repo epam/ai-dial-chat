@@ -133,7 +133,11 @@ for every in-band SSE error chunk except one whose `error.type` is
 ### Requirement: Per-path streaming state with stale-chunk rejection
 The hook SHALL track streaming state per conversation path (not as a
 single boolean) and SHALL reject a chunk whose generation id does not
-match the currently active generation for that path.
+match the newest generation started for that path. The newest generation
+id SHALL be tracked per conversation path (`latestGenerationIdsRef`), never
+as a single hook-wide id, so starting a generation in one conversation never
+makes another conversation's still-running generation stale. This applies
+to both the immediate write and the batched per-frame write.
 
 #### Scenario: Concurrent generations across conversations
 - **WHEN** a generation is active for conversation A and `startStream` is
@@ -141,9 +145,18 @@ match the currently active generation for that path.
 - **THEN** `isStreaming` reported for A and for B are independent, and a
   chunk for A does not affect B's state
 
+#### Scenario: A generation in another conversation does not cut off a running one
+- **WHEN** conversation A's generation is streaming, the user navigates to
+  conversation B and starts a generation there, and A's stream keeps
+  delivering chunks
+- **THEN** every later chunk of A is still accumulated in A's live-message
+  buffer (and written to the displayed state once the user returns to A
+  mid-generation), and no chunk of B is applied to A's buffer or state
+
 #### Scenario: Stale chunk is dropped
-- **WHEN** a chunk arrives whose generation id no longer matches the
-  active generation for its path
+- **WHEN** a chunk arrives whose generation id is no longer the newest
+  generation started for its path (regenerate, edit or re-submit on the same
+  conversation)
 - **THEN** the chunk is not applied to conversation state
 
 #### Scenario: Chunk for a non-displayed conversation is dropped
@@ -316,7 +329,7 @@ When `batchChunksPerFrame` is `true`:
 - **Per chunk:**
   - Each accepted chunk SHALL still be applied synchronously to the per-path buffered message. The buffer is never deferred, so restore-after-navigation and completion checks see every chunk immediately.
   - The display write (`setConversation` with the buffered message) SHALL be coalesced: at most one pending write per conversation path, scheduled with `requestAnimationFrame`. A `setTimeout(…, 16)` fallback is used when `requestAnimationFrame` is unavailable.
-- **At flush time:** the pending write SHALL re-check the same guards the immediate write uses: the generation is not superseded, the path is displayed, and a previous conversation exists. It then applies `restoreBufferedMessage` with the buffer's current content and assigns `state.conversationRef.current` inside the updater, as today.
+- **At flush time:** the pending write SHALL re-check the same guards the immediate write uses: the generation is not superseded on its own path, the path is displayed, and a previous conversation exists. It then applies `restoreBufferedMessage` with the buffer's current content and assigns `state.conversationRef.current` inside the updater, as today.
 - **Before terminal transitions:** a pending write SHALL be flushed synchronously before any of the following touches displayed state for that path:
   - the completion reload's `setConversation`;
   - error handling and interrupted-stream recovery;

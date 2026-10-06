@@ -89,12 +89,18 @@ describe('PromptService facade', () => {
   it('delegates getPrompt to PromptsPersonalService', async () => {
     const { service, personalService } = makeService();
 
-    const result = await service.getPrompt('token', 'bucket', 'my-prompt');
+    const result = await service.getPrompt(
+      'token',
+      'bucket',
+      'my-prompt',
+      'session-bucket',
+    );
 
     expect(personalService.getPrompt).toHaveBeenCalledWith(
       'token',
       'bucket',
       'my-prompt',
+      'session-bucket',
     );
     expect(result).toBe('personal-get');
   });
@@ -122,6 +128,7 @@ describe('PromptService facade', () => {
       'bucket',
       'my-prompt',
       dto,
+      'session-bucket',
     );
 
     expect(personalService.updatePrompt).toHaveBeenCalledWith(
@@ -129,6 +136,7 @@ describe('PromptService facade', () => {
       'bucket',
       'my-prompt',
       dto,
+      'session-bucket',
     );
     expect(result).toBe('personal-update');
   });
@@ -224,6 +232,7 @@ describe('PromptService facade', () => {
       'bucket',
       'my-prompt',
       dto,
+      'session-bucket',
     );
 
     expect(folderService.movePrompt).toHaveBeenCalledWith(
@@ -231,6 +240,7 @@ describe('PromptService facade', () => {
       'bucket',
       'my-prompt',
       dto,
+      'session-bucket',
     );
     expect(result).toBe('folder-move');
   });

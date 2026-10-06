@@ -25,7 +25,12 @@ const makeDialClient = () =>
 
 const makeDownloadSpy = (
   service: UserConfigService,
-  responses: Array<{ path?: string; ok: boolean; body?: string }>,
+  responses: Array<{
+    path?: string;
+    ok: boolean;
+    body?: string;
+    status?: number;
+  }>,
 ) => {
   let callIndex = 0;
   return vi
@@ -38,6 +43,7 @@ const makeDownloadSpy = (
         return {
           response: {
             ok: match.ok,
+            status: match.status ?? (match.ok ? 200 : 404),
             text: async () => match.body ?? '',
           },
         } as never;
@@ -47,6 +53,7 @@ const makeDownloadSpy = (
       return {
         response: {
           ok: r.ok,
+          status: r.status ?? (r.ok ? 200 : 404),
           text: async () => r.body ?? '',
         },
       } as never;
@@ -55,13 +62,14 @@ const makeDownloadSpy = (
 
 const makeSingleDownloadSpy = (
   service: UserConfigService,
-  options: { ok: boolean; body?: string },
+  options: { ok: boolean; body?: string; status?: number },
 ) =>
   vi
     .spyOn((service['dialClient'] as DialClientService).client, 'downloadFile')
     .mockResolvedValue({
       response: {
         ok: options.ok,
+        status: options.status ?? (options.ok ? 200 : 404),
         text: async () => options.body ?? '',
       },
     } as never);
@@ -308,11 +316,15 @@ describe('UserConfigService', () => {
         (service['dialClient'] as DialClientService).client,
         'downloadFile',
       ).mockResolvedValue({
-        response: { ok: false, text: async () => '' },
+        response: { ok: false, status: 404, text: async () => '' },
       } as never);
       makeDeleteSpy(service);
+      makeUploadSpy(service);
       const result = await service.readConfig('token', 'bucket');
-      expect(result).toEqual(DEFAULT_USER_CONFIG);
+      expect(result).toEqual({
+        ...DEFAULT_USER_CONFIG,
+        legacyMigrationDone: true,
+      });
     });
 
     it('migrates stored v2 config to v6 when reading from new path', async () => {
@@ -361,17 +373,108 @@ describe('UserConfigService', () => {
         { path: 'clientdata/installed_deployments.json', ok: false },
       ]);
       makeDeleteSpy(service);
+      makeUploadSpy(service);
       const result = await service.readConfig('token', 'bucket');
-      expect(result).toEqual(DEFAULT_USER_CONFIG);
+      expect(result).toEqual({
+        ...DEFAULT_USER_CONFIG,
+        legacyMigrationDone: true,
+      });
     });
 
-    it('returns default config when downloadFile throws', async () => {
+    it('rethrows a network failure instead of falling back to the default', async () => {
+      const failure = new Error('DIAL Core is unreachable');
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
+        throw failure;
+      });
       vi.spyOn(
         (service['dialClient'] as DialClientService).client,
         'downloadFile',
-      ).mockRejectedValue(new Error('network'));
+      ).mockRejectedValue(new TypeError('fetch failed'));
+      const uploadSpy = makeUploadSpy(service);
+
+      await expect(service.readConfig('token', 'bucket')).rejects.toBe(failure);
+      expect(uploadSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([500, 503, 429, 403])(
+      'rethrows a %i read instead of overwriting the stored config with the default',
+      async (status) => {
+        const failure = new Error(`DIAL Core ${status}`);
+        vi.mocked(handleDialSdkError).mockImplementation(() => {
+          throw failure;
+        });
+        makeDownloadSpy(service, [
+          { path: '.client_data/.user-config.json', ok: false, status },
+        ]);
+        const uploadSpy = makeUploadSpy(service);
+
+        await expect(service.readConfig('token', 'bucket')).rejects.toBe(
+          failure,
+        );
+        expect(handleDialSdkError).toHaveBeenCalledWith(
+          {},
+          'user-config.readConfig',
+          expect.anything(),
+          expect.objectContaining({ status }),
+        );
+        expect(uploadSpy).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not toggle a pin onto the default config when the read fails', async () => {
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
+        throw new Error('DIAL Core 503');
+      });
+      makeDownloadSpy(service, [
+        { path: '.client_data/.user-config.json', ok: false, status: 503 },
+      ]);
+      const uploadSpy = makeUploadSpy(service);
+
+      await expect(
+        service.updatePin('conv-1', true, 'token', 'bucket'),
+      ).rejects.toThrow('DIAL Core 503');
+      expect(uploadSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns the legacy config but keeps the legacy file when the migration write fails', async () => {
+      const v1 = { version: 1, pinnedConversationIds: ['conv-1'] };
+      makeDownloadSpy(service, [
+        { path: '.client_data/.user-config.json', ok: false },
+        { path: '.user-config.json', ok: true, body: JSON.stringify(v1) },
+        { path: 'clientdata/installed_toolsets.json', ok: false },
+        { path: 'clientdata/installed_deployments.json', ok: false },
+      ]);
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
+        throw new Error('write failed');
+      });
+      makeUploadSpy(service, { error: { status: 503 }, status: 503 });
+      const deleteSpy = makeDeleteSpy(service);
+
       const result = await service.readConfig('token', 'bucket');
-      expect(result).toEqual(DEFAULT_USER_CONFIG);
+
+      expect(result.conversations.pinnedIds).toEqual(['conv-1']);
+      expect(deleteSpy).not.toHaveBeenCalledWith(
+        'bucket',
+        '.user-config.json',
+        expect.anything(),
+      );
+    });
+
+    it('keeps legacy consolidation pending when a legacy file read fails transiently', async () => {
+      makeDownloadSpy(service, [
+        {
+          path: '.client_data/.user-config.json',
+          ok: true,
+          body: JSON.stringify(v2Config()),
+        },
+        { path: 'clientdata/installed_toolsets.json', ok: false, status: 503 },
+        { path: 'clientdata/installed_deployments.json', ok: false },
+      ]);
+      makeUploadSpy(service);
+
+      const result = await service.readConfig('token', 'bucket');
+
+      expect(result.legacyMigrationDone).toBeUndefined();
     });
 
     it('filters out non-string entries in conversations.pinnedIds during migration', async () => {

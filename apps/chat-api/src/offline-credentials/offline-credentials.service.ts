@@ -88,14 +88,22 @@ export class OfflineCredentialsService {
         body: dialBody,
       });
       this.logger.debug(
-        `DIAL Core offlineCredentialsSignIn response: status=${response.response.status} data=${JSON.stringify(response.data)} errorPresent=${response.error != null}`,
+        `DIAL Core offlineCredentialsSignIn response: status=${response.response.status} dataPresent=${response.data != null} errorPresent=${response.error != null}`,
       );
       if (response.error) {
+        /*
+         * The upstream error body is deliberately not passed as `errorBody`:
+         * `mapDialHttpStatus` would log it verbatim, and the
+         * `offline-credentials` spec forbids logging sign-in response
+         * bodies. Only the status and operation context are logged; the
+         * extracted message still becomes the client-facing exception text
+         * where the mapper permits it.
+         */
         return mapDialHttpStatus(
           response.response.status,
           'sign in offline-credentials',
           this.logger,
-          response.error,
+          undefined,
           extractDialErrorMessage(response.error),
         );
       }

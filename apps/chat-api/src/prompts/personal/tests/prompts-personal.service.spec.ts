@@ -253,7 +253,12 @@ describe('PromptsPersonalService', () => {
         'getPromptMetadata',
       ).mockResolvedValue(okResponse(metaItem('my-prompt')));
 
-      const result = await service.getPrompt(TOKEN, BUCKET, 'my-prompt');
+      const result = await service.getPrompt(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        BUCKET,
+      );
 
       expect(result).toMatchObject({
         id: 'prompts/test-bucket/my-prompt',
@@ -277,8 +282,162 @@ describe('PromptsPersonalService', () => {
         'getPrompt',
       ).mockResolvedValue(errResponse(404));
 
-      await expect(service.getPrompt(TOKEN, BUCKET, 'missing')).rejects.toThrow(
-        NotFoundException,
+      await expect(
+        service.getPrompt(TOKEN, BUCKET, 'missing', BUCKET),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('reports an own-bucket prompt as mine and editable', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPromptMetadata',
+      ).mockResolvedValue(okResponse(metaItem('my-prompt')));
+
+      const result = await service.getPrompt(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: false,
+      });
+    });
+
+    it('reports a read-only prompt shared from another bucket as shared and not editable', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPromptMetadata',
+      ).mockResolvedValue(
+        okResponse(metaItem('my-prompt', 'owner-bucket', ['READ'])),
+      );
+
+      const result = await service.getPrompt(
+        TOKEN,
+        'owner-bucket',
+        'my-prompt',
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        id: 'prompts/owner-bucket/my-prompt',
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: true,
+        permissions: ['READ'],
+      });
+    });
+
+    it('reports a writable prompt shared from another bucket as editable', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPromptMetadata',
+      ).mockResolvedValue(
+        okResponse(metaItem('my-prompt', 'owner-bucket', ['READ', 'WRITE'])),
+      );
+
+      const result = await service.getPrompt(
+        TOKEN,
+        'owner-bucket',
+        'my-prompt',
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: true,
+        sharedWithMe: true,
+      });
+    });
+
+    it('treats a foreign prompt without reported permissions as read-only', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPromptMetadata',
+      ).mockResolvedValue(okResponse(metaItem('my-prompt', 'owner-bucket')));
+
+      const result = await service.getPrompt(
+        TOKEN,
+        'owner-bucket',
+        'my-prompt',
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({ isMy: false, canEdit: false });
+    });
+
+    it('reports a public-bucket prompt as read-only and not shared, even with upstream WRITE', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPromptMetadata',
+      ).mockResolvedValue(
+        okResponse(metaItem('my-prompt', 'public', ['READ', 'WRITE'])),
+      );
+
+      const result = await service.getPrompt(
+        TOKEN,
+        'public',
+        'my-prompt',
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: false,
+      });
+    });
+
+    it('asks DIAL Core for the requestor permissions on the metadata read', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      const metadataSpy = vi
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getPromptMetadata',
+        )
+        .mockResolvedValue(okResponse(metaItem('my-prompt', 'owner-bucket')));
+
+      await service.getPrompt(TOKEN, 'owner-bucket', 'my-prompt', BUCKET);
+
+      expect(metadataSpy).toHaveBeenCalledOnce();
+      expect(metadataSpy).toHaveBeenCalledWith(
+        'owner-bucket',
+        'my-prompt',
+        expect.objectContaining({
+          params: { query: { permissions: true } },
+        }),
       );
     });
   });
@@ -384,6 +543,59 @@ describe('PromptsPersonalService', () => {
   /* ------------------------------------------------------------------ */
 
   describe('updatePrompt', () => {
+    it('reports an updated own-bucket prompt as mine and editable', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'savePrompt',
+      ).mockResolvedValue(writeOk('my-prompt'));
+
+      const result = await service.updatePrompt(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        { content: 'Updated' },
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: false,
+      });
+    });
+
+    it('reports an updated prompt in another bucket as shared, not mine', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getPrompt',
+      ).mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'savePrompt',
+      ).mockResolvedValue(writeOk('my-prompt', 'owner-bucket'));
+
+      const result = await service.updatePrompt(
+        TOKEN,
+        'owner-bucket',
+        'my-prompt',
+        { content: 'Updated' },
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        id: 'prompts/owner-bucket/my-prompt',
+        isMy: false,
+        canEdit: true,
+        sharedWithMe: true,
+      });
+    });
+
     it('updates the prompt content in place when no name change', async () => {
       const { service } = makeService();
       vi.spyOn(
@@ -395,9 +607,15 @@ describe('PromptsPersonalService', () => {
         'savePrompt',
       ).mockResolvedValue(writeOk('my-prompt'));
 
-      const result = await service.updatePrompt(TOKEN, BUCKET, 'my-prompt', {
-        content: 'Updated',
-      });
+      const result = await service.updatePrompt(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        {
+          content: 'Updated',
+        },
+        BUCKET,
+      );
 
       expect(result).toMatchObject({
         id: 'prompts/test-bucket/my-prompt',
@@ -426,9 +644,15 @@ describe('PromptsPersonalService', () => {
         )
         .mockResolvedValue(writeOk());
 
-      const result = await service.updatePrompt(TOKEN, BUCKET, 'my-prompt', {
-        name: 'renamed-prompt',
-      });
+      const result = await service.updatePrompt(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        {
+          name: 'renamed-prompt',
+        },
+        BUCKET,
+      );
 
       expect(result.id).toBe('prompts/test-bucket/renamed-prompt');
       expect(deleteSpy).toHaveBeenCalledOnce();
@@ -446,7 +670,13 @@ describe('PromptsPersonalService', () => {
       ).mockResolvedValue(errResponse(412));
 
       await expect(
-        service.updatePrompt(TOKEN, BUCKET, 'my-prompt', { name: 'other' }),
+        service.updatePrompt(
+          TOKEN,
+          BUCKET,
+          'my-prompt',
+          { name: 'other' },
+          BUCKET,
+        ),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -470,9 +700,15 @@ describe('PromptsPersonalService', () => {
       ).mockResolvedValue(errResponse(502));
 
       await expect(
-        service.updatePrompt(TOKEN, BUCKET, 'my-prompt', {
-          name: 'renamed-prompt',
-        }),
+        service.updatePrompt(
+          TOKEN,
+          BUCKET,
+          'my-prompt',
+          {
+            name: 'renamed-prompt',
+          },
+          BUCKET,
+        ),
       ).rejects.toThrow(BadGatewayException);
     });
   });

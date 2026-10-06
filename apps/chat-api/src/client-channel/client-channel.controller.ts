@@ -15,6 +15,7 @@ import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   SSE_DRAIN_TIMEOUT_MS,
   startSseResponse,
@@ -60,6 +61,7 @@ export class ClientChannelController {
     required: false,
     description: 'Existing channel id — send only when reconnecting.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'SSE stream of client-channel RPC events',
@@ -203,6 +205,7 @@ export class ClientChannelController {
     required: true,
     description: 'The active client channel id.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, description: 'Report accepted' })
   @ApiResponse({
     status: 400,

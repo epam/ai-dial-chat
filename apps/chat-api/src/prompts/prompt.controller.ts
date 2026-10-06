@@ -13,6 +13,7 @@ import {
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { CreatePromptFolderDto } from './dto/create-prompt-folder.dto';
 import { CreatePromptDto } from './dto/create-prompt.dto';
 import { GetPromptQueryDto } from './dto/get-prompt-query.dto';
@@ -57,6 +58,7 @@ export class PromptController {
     description:
       'Returns all catalog-visible prompts in one response. Organisation prompts are always read-only.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Prompts returned',
@@ -76,6 +78,7 @@ export class PromptController {
     description:
       "Reads the exact DIAL resource `id` names, whether that is the caller's own bucket or another user's bucket for a prompt shared with the caller. DIAL Core authorises the read either way.",
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Prompt returned',
@@ -86,9 +89,9 @@ export class PromptController {
   @ApiResponse({ status: 404, description: 'Prompt not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   getPrompt(@Req() req: Request, @Query() query: GetPromptQueryDto) {
-    const { at } = req.user as SessionUser;
+    const { at, bucket: sessionBucket } = req.user as SessionUser;
     const { bucket, path } = resolvePromptId(query.id);
-    return this.promptService.getPrompt(at, bucket, path);
+    return this.promptService.getPrompt(at, bucket, path, sessionBucket);
   }
 
   @Post()
@@ -97,6 +100,7 @@ export class PromptController {
     operationId: 'createPrompt',
     summary: 'Create a personal prompt',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Prompt created',
@@ -124,6 +128,7 @@ export class PromptController {
     required: true,
     description: 'Full prompt resource path to update',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Prompt updated',
@@ -139,9 +144,15 @@ export class PromptController {
     @Query() query: GetPromptQueryDto,
     @Body() dto: UpdatePromptDto,
   ) {
-    const { at } = req.user as SessionUser;
+    const { at, bucket: sessionBucket } = req.user as SessionUser;
     const { bucket, path } = resolvePromptId(query.id);
-    return this.promptService.updatePrompt(at, bucket, path, dto);
+    return this.promptService.updatePrompt(
+      at,
+      bucket,
+      path,
+      dto,
+      sessionBucket,
+    );
   }
 
   @Delete()
@@ -155,6 +166,7 @@ export class PromptController {
     required: true,
     description: 'Full prompt resource path to delete',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Prompt deleted' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -175,6 +187,7 @@ export class PromptController {
     operationId: 'listPublicPrompts',
     summary: 'List organisation prompts',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Prompts returned',
@@ -192,6 +205,7 @@ export class PromptController {
     operationId: 'getPublicPrompt',
     summary: 'Get an organisation prompt',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Prompt returned',
@@ -216,6 +230,7 @@ export class PromptController {
     operationId: 'createPromptFolder',
     summary: 'Create a prompt folder',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Folder created',
@@ -240,6 +255,7 @@ export class PromptController {
     required: true,
     description: 'Folder path to rename',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Folder renamed',
@@ -270,6 +286,7 @@ export class PromptController {
     required: true,
     description: 'Folder path to delete',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Folder deleted' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -290,6 +307,7 @@ export class PromptController {
     required: true,
     description: 'Full prompt resource path to move',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Prompt moved',
@@ -305,8 +323,8 @@ export class PromptController {
     @Query() query: GetPromptQueryDto,
     @Body() dto: MovePromptDto,
   ) {
-    const { at } = req.user as SessionUser;
+    const { at, bucket: sessionBucket } = req.user as SessionUser;
     const { bucket, path } = resolvePromptId(query.id);
-    return this.promptService.movePrompt(at, bucket, path, dto);
+    return this.promptService.movePrompt(at, bucket, path, dto, sessionBucket);
   }
 }

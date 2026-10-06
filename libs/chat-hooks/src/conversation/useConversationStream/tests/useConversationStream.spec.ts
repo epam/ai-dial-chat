@@ -79,7 +79,7 @@ const useHookHarness = ({
     ...rest,
   });
 
-  return { conversation, stream, generation };
+  return { conversation, setConversation, stream, generation };
 };
 
 describe('useConversationStream', () => {
@@ -1255,6 +1255,111 @@ describe('useConversationStream', () => {
     rerender({ conversationId: 'bucket/convB' });
     expect(result.current.stream.isStreaming).toBe(false);
   });
+
+  it.each([false, true])(
+    'keeps applying a background generation after another conversation starts one (batchChunksPerFrame: %s)',
+    async (batchChunksPerFrame) => {
+      vi.useFakeTimers();
+      const placeholder = (id: string, prompt: string): Conversation =>
+        makeConversation({
+          id,
+          messages: [
+            {
+              role: MessageRole.User,
+              content: prompt,
+              timestamp: '2026-01-01T00:00:00.000Z',
+            },
+            {
+              role: MessageRole.Assistant,
+              content: '',
+              timestamp: '2026-01-01T00:00:01.000Z',
+            },
+          ],
+        });
+      const textChunk = (content: string) => ({
+        id: content,
+        object: 'chat.completion.chunk' as const,
+        choices: [{ delta: { content }, finish_reason: null, index: 0 }],
+      });
+      const { result, rerender } = renderHook(
+        (props: { conversationId: string }) =>
+          useHookHarness({
+            transport,
+            conversationId: props.conversationId,
+            initialConversation: placeholder('bucket/convA', 'A?'),
+            batchChunksPerFrame,
+          }),
+        { initialProps: { conversationId: 'bucket/convA' } },
+      );
+
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/convA',
+          'A?',
+          1,
+          'gpt-4o',
+          undefined,
+          'gen-A',
+        );
+      });
+      const optionsA = capturedOptions;
+      act(() => optionsA?.onChunk(textChunk('A1 ')));
+
+      rerender({ conversationId: 'bucket/convB' });
+      act(() =>
+        result.current.setConversation(placeholder('bucket/convB', 'B?')),
+      );
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/convB',
+          'B?',
+          1,
+          'gpt-4o',
+          undefined,
+          'gen-B',
+        );
+      });
+      const optionsB = capturedOptions;
+
+      act(() => {
+        optionsA?.onChunk(textChunk('A2 '));
+        optionsB?.onChunk(textChunk('B1'));
+      });
+      act(() => vi.advanceTimersToNextFrame());
+
+      expect(result.current.conversation?.messages[1].content).toBe('B1');
+      expect(
+        result.current.stream.restoreBufferedGeneration(
+          'bucket/convA',
+          placeholder('bucket/convA', 'A?'),
+        ).messages[1].content,
+      ).toBe('A1 A2 ');
+
+      /* Back on A mid-generation: the host reloads A and restores its buffer. */
+      rerender({ conversationId: 'bucket/convA' });
+      act(() =>
+        result.current.setConversation(
+          result.current.stream.restoreBufferedGeneration(
+            'bucket/convA',
+            placeholder('bucket/convA', 'A?'),
+          ),
+        ),
+      );
+      act(() => {
+        optionsA?.onChunk(textChunk('A3'));
+        optionsB?.onChunk(textChunk(' B2'));
+      });
+      act(() => vi.advanceTimersToNextFrame());
+
+      expect(result.current.conversation?.messages[1].content).toBe('A1 A2 A3');
+      expect(
+        result.current.stream.restoreBufferedGeneration(
+          'bucket/convB',
+          placeholder('bucket/convB', 'B?'),
+        ).messages[1].content,
+      ).toBe('B1 B2');
+    },
+  );
 
   it('restores stages accumulated before and during background navigation', async () => {
     const initialConversation = makeConversation({

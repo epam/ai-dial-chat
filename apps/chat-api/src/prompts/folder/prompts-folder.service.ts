@@ -25,6 +25,7 @@ import {
   type PromptPayload,
   type PromptReadResult,
   type PromptWriteResult,
+  resolvePromptOwnership,
 } from '../utils/prompt-mapper.util';
 
 @Injectable()
@@ -205,6 +206,7 @@ export class PromptsFolderService {
     bucket: string,
     path: string,
     dto: MovePromptDto,
+    sessionBucket: string,
   ): Promise<PromptResponseDto> {
     const {
       data: existing,
@@ -263,6 +265,12 @@ export class PromptsFolderService {
       );
     }
 
-    return mapPromptToResponse(movedPrompt, targetId, metadata, bucket);
+    return mapPromptToResponse(
+      movedPrompt,
+      targetId,
+      metadata,
+      bucket,
+      resolvePromptOwnership(bucket, sessionBucket, metadata.permissions, true),
+    );
   }
 }

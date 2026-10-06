@@ -21,6 +21,7 @@ import {
   getJobTitleClaim,
   type SessionUser,
 } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   endsWithNewline,
   releaseSseResponse,
@@ -115,6 +116,7 @@ export class ConversationController {
     description:
       'Creates a new conversation with an initial user message and returns it with a server-assigned ID.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Conversation created successfully',
@@ -146,6 +148,7 @@ export class ConversationController {
     description:
       'Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Paginated list of conversation metadata',
@@ -170,6 +173,7 @@ export class ConversationController {
 
   @Get('metadata')
   @ApiOperation({ summary: 'Get metadata for a conversation' })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Conversation metadata',
@@ -195,6 +199,7 @@ export class ConversationController {
 
   @Get()
   @ApiOperation({ summary: 'Get a conversation by path' })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Conversation retrieved',
@@ -212,6 +217,7 @@ export class ConversationController {
 
   @Put()
   @ApiOperation({ summary: 'Save (overwrite) a conversation by path' })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Conversation saved',
@@ -259,6 +265,7 @@ export class ConversationController {
       example: 'Europe/Warsaw',
     },
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
   @ApiResponse({
     status: 400,
@@ -693,6 +700,7 @@ export class ConversationController {
     description:
       'Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, description: 'SSE stream of resource events' })
   @ApiResponse({ status: 400, description: 'Invalid or missing path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -795,6 +803,7 @@ export class ConversationController {
 
   @Patch()
   @ApiOperation({ summary: 'Rename a conversation by path' })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Conversation renamed — display name updated, path unchanged',
@@ -834,6 +843,7 @@ export class ConversationController {
     description:
       'Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Generated title suggestion',
@@ -875,6 +885,7 @@ export class ConversationController {
   @ApiOperation({
     summary: "Duplicate a conversation into the user's own bucket",
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Conversation duplicated — new path returned',
@@ -963,6 +974,7 @@ export class ConversationController {
   @Delete()
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a conversation by path' })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Conversation deleted' })
   @ApiResponse({ status: 400, description: 'Missing or invalid path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -982,6 +994,7 @@ export class ConversationController {
     description:
       'Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Conversation marked as viewed' })
   @ApiResponse({ status: 400, description: 'Missing or invalid path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })

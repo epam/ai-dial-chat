@@ -25,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { CustomApiAdmissionService } from './custom-api-admission.service';
 import { CustomApiRegistryService } from './custom-api-registry.service';
 import {
@@ -108,6 +109,7 @@ export class CustomApiController {
       'business schema or field filtering, so the response is an opaque JSON value the ' +
       'calling application must validate for its own domain.',
   })
+  @ApiDialCoreErrors({ exclude: [HttpStatus.PAYLOAD_TOO_LARGE] })
   @ApiResponse({
     status: 200,
     description: 'The configured operation succeeded',
@@ -123,7 +125,8 @@ export class CustomApiController {
   })
   @ApiResponse({
     status: 404,
-    description: 'No operation is configured for this ID',
+    description:
+      'No operation is configured for this ID, or DIAL Core reported the resource as not found',
   })
   @ApiResponse({
     status: 405,
@@ -131,7 +134,8 @@ export class CustomApiController {
   })
   @ApiResponse({
     status: 429,
-    description: 'Local in-flight call capacity exhausted',
+    description:
+      'Local in-flight call capacity exhausted, or DIAL Core rate-limited the call',
   })
   @ApiResponse({
     status: 502,

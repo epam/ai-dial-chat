@@ -1,6 +1,6 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
-import { HIDDEN_FILE } from '../../constants/dial.constants';
+import { HIDDEN_FILE, PUBLIC_BUCKET } from '../../constants/dial.constants';
 import { FOLDER_SENTINEL } from '../constants/prompt.constants';
 import type { PromptFolderResponseDto } from '../dto/prompt-folder-response.dto';
 import type { PromptResponseDto } from '../dto/prompt-response.dto';
@@ -127,6 +127,48 @@ export const metadataItemToPromptPath = (
       ? `${item.parentPath}/${item.name}`
       : null);
   return raw != null ? urlToPromptPath(raw, bucket) : null;
+};
+
+export type PromptOwnership = Pick<
+  PromptResponseDto,
+  'isMy' | 'canEdit' | 'sharedWithMe'
+>;
+
+/**
+ * Ownership flags for one prompt, relative to the requestor.
+ *
+ * `isMy` compares the bucket the prompt lives in against the caller's session
+ * bucket. A prompt in any other bucket except `public` is reported as
+ * `sharedWithMe`: DIAL Core only lets a non-admin read another user's bucket
+ * through a share grant, so a successful read there implies one. `canEdit`
+ * follows the `WRITE` permission DIAL Core reports for the requestor when it
+ * reports any, and otherwise falls back to ownership. `writeConfirmed` is set
+ * by write paths (update/move): a successful write proves write access no
+ * matter what the metadata says. A `public`-bucket (organisation) prompt is
+ * always read-only and never shared, even if upstream reports `WRITE`.
+ *
+ * Not built on `computeItemOwnershipFlags` (`common/utils/resource-ownership`):
+ * that helper only recognises the `applications`/`toolsets` id prefixes and
+ * needs the full shared-resource url sets, whereas a single-prompt response
+ * already has the owner bucket and the requestor's own permissions in hand.
+ */
+export const resolvePromptOwnership = (
+  promptBucket: string,
+  sessionBucket: string,
+  permissions: string[] | undefined,
+  writeConfirmed = false,
+): PromptOwnership => {
+  const isMy = Boolean(sessionBucket) && promptBucket === sessionBucket;
+  if (promptBucket === PUBLIC_BUCKET && !isMy) {
+    return { isMy: false, canEdit: false, sharedWithMe: false };
+  }
+  return {
+    isMy,
+    canEdit:
+      writeConfirmed ||
+      (permissions != null ? permissions.includes('WRITE') : isMy),
+    sharedWithMe: !isMy,
+  };
 };
 
 export const mapPromptToResponse = (

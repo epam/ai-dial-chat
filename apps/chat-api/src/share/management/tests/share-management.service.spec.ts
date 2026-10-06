@@ -215,6 +215,91 @@ describe('ShareManagementService', () => {
       expect(toolsetsService.invalidateListCache).not.toHaveBeenCalled();
     });
 
+    it('logs the not-shared rejection with the resource kind and never the resource path', async () => {
+      const { service } = makeService();
+      mockSharedResources(service, []);
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(okResponse(undefined));
+      const warnSpy = vi
+        .spyOn(service['logger'], 'warn')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.discardShared(
+          'applications/owner-bucket/secret-app',
+          'token',
+          'user-sub-1',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Discard shared resource rejected: resourceKind=APPLICATION is not shared with the caller',
+      );
+      const logged = JSON.stringify(warnSpy.mock.calls);
+      expect(logged).not.toContain('owner-bucket');
+      expect(logged).not.toContain('secret-app');
+    });
+
+    it('does not log an upstream error body that echoes the resource path', async () => {
+      const { service } = makeService();
+      const echoedError = {
+        error: { message: 'applications/owner-bucket/secret-app failed' },
+      };
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(okResponse({ resources: [] }));
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue({
+        error: echoedError,
+        response: { status: 502 } as Response,
+      } as never);
+      const warnSpy = vi
+        .spyOn(service['logger'], 'warn')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.discardShared(
+          'applications/owner-bucket/secret-app',
+          'token',
+          'user-sub-1',
+        ),
+      ).rejects.toThrow(BadGatewayException);
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'DIAL Core returned 502 for share.discardShared',
+      );
+      expect(JSON.stringify(warnSpy.mock.calls)).not.toContain('secret-app');
+    });
+
+    it('does not log an upstream error body from the shared-with-caller pre-check', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue({
+        error: { message: 'applications/owner-bucket/secret-app' },
+        response: { status: 502 } as Response,
+      } as never);
+      const warnSpy = vi
+        .spyOn(service['logger'], 'warn')
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.discardShared(
+          'applications/owner-bucket/secret-app',
+          'token',
+          'user-sub-1',
+        ),
+      ).rejects.toThrow(BadGatewayException);
+
+      expect(JSON.stringify(warnSpy.mock.calls)).not.toContain('secret-app');
+    });
+
     it('throws NotFoundException when DIAL Core returns 400 for a well-formed itemId that does not resolve to a resource', async () => {
       const { service } = makeService();
       mockSharedResources(service, []);

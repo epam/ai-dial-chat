@@ -10,6 +10,7 @@ import {
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   getUserDisplayName,
   resolveDisplayAuthor,
@@ -45,6 +46,7 @@ export class PublishController {
       'and holds the publication PENDING until an administrator approves it.',
   })
   @ApiBody({ type: PublishCatalogEntityDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Entity published successfully',
@@ -69,7 +71,8 @@ export class PublishController {
   })
   @ApiResponse({
     status: 503,
-    description: 'DIAL Core is unavailable or timed out',
+    description:
+      'The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)',
   })
   publish(
     @Req() req: Request,
@@ -111,6 +114,7 @@ export class PublishController {
       'own — DIAL Core is the sole source of truth.',
   })
   @ApiBody({ type: UnpublishCatalogEntityDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Unpublish request submitted for administrator approval',
@@ -139,7 +143,8 @@ export class PublishController {
   })
   @ApiResponse({
     status: 503,
-    description: 'DIAL Core is unavailable or timed out',
+    description:
+      'The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)',
   })
   unpublish(
     @Req() req: Request,
@@ -167,6 +172,7 @@ export class PublishController {
       'Returns every folder this catalog entity has been published to, most recent first, derived from ' +
       "DIAL Core's Publication API (`getPublications`) — never from chat-api-side storage.",
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Publish history for the entity',

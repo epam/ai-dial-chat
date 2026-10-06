@@ -23,6 +23,7 @@ import {
   type PromptPayload,
   type PromptReadResult,
   type PromptWriteResult,
+  resolvePromptOwnership,
   type SharedResourcesResult,
 } from '../utils/prompt-mapper.util';
 
@@ -71,9 +72,10 @@ export class PromptsPersonalService {
         )
       ).filter((p): p is PromptResponseDto => p != null);
       for (const prompt of prompts) {
-        prompt.isMy = true;
-        prompt.canEdit = prompt.permissions?.includes('WRITE') ?? true;
-        prompt.sharedWithMe = false;
+        Object.assign(
+          prompt,
+          resolvePromptOwnership(bucket, bucket, prompt.permissions),
+        );
       }
 
       const folders = deriveFolders([
@@ -150,10 +152,16 @@ export class PromptsPersonalService {
     }
   }
 
+  /**
+   * `bucket` is the bucket the prompt id names (the owner's, for a shared
+   * prompt); `sessionBucket` is the caller's own, used only to compute the
+   * requestor-relative ownership flags.
+   */
   async getPrompt(
     token: string,
     bucket: string,
     path: string,
+    sessionBucket: string,
   ): Promise<PromptResponseDto> {
     const { data, error, response } = (await this.dialClient.client.getPrompt(
       bucket,
@@ -181,11 +189,13 @@ export class PromptsPersonalService {
     if (metadata == null) {
       throw new NotFoundException(`Prompt metadata not found: ${path}`);
     }
-    return mapPromptToResponse(data, path, metadata, bucket, {
-      isMy: true,
-      canEdit: true,
-      sharedWithMe: false,
-    });
+    return mapPromptToResponse(
+      data,
+      path,
+      metadata,
+      bucket,
+      resolvePromptOwnership(bucket, sessionBucket, metadata.permissions),
+    );
   }
 
   async createPrompt(
@@ -222,6 +232,7 @@ export class PromptsPersonalService {
     bucket: string,
     path: string,
     dto: UpdatePromptDto,
+    sessionBucket: string,
   ): Promise<PromptResponseDto> {
     const {
       data: existing,
@@ -295,11 +306,13 @@ export class PromptsPersonalService {
       }
     }
 
-    return mapPromptToResponse(updatedPrompt, targetId, metadata, bucket, {
-      isMy: true,
-      canEdit: true,
-      sharedWithMe: false,
-    });
+    return mapPromptToResponse(
+      updatedPrompt,
+      targetId,
+      metadata,
+      bucket,
+      resolvePromptOwnership(bucket, sessionBucket, metadata.permissions, true),
+    );
   }
 
   async deletePrompt(

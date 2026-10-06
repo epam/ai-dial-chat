@@ -5,6 +5,7 @@ import {
   getJobTitleClaim,
   type SessionUser,
 } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { RateMessageDto } from './dto/rate-message.dto';
 import { RateService } from './rate.service';
 
@@ -22,6 +23,7 @@ export class RateController {
       "for an assistant message to DIAL Core. Uses the authenticated session's " +
       'access token as a Bearer credential.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 204,
     description: 'Rating accepted — no content returned',
