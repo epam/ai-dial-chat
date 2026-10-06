@@ -151,6 +151,9 @@ const selectInstalledModelIds = createSelector(
   },
 );
 
+const selectInstallingModelIds = (state: RootState) =>
+  rootSelector(state).installingModelIds;
+
 const selectRecentWithInstalledModelsIds = createSelector(
   [selectRecentModelsIds, selectInstalledModelIds],
   (recentModelIds, installedModelIds) => {
@@ -222,6 +225,7 @@ export const ModelsSelectors = {
   selectPublishRequestModels,
   selectInstalledModels,
   selectInstalledModelIds,
+  selectInstallingModelIds,
   selectRecentWithInstalledModelsIds,
   selectModelTopics,
   selectInitialized,

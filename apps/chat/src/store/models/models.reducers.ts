@@ -35,6 +35,7 @@ const initialState: ModelsState = {
   models: [],
   modelsMap: {},
   installedModels: [],
+  installingModelIds: [],
   recentModelsIds: [],
   recentModelsStatus: UploadStatus.UNINITIALIZED,
   isInstalledModelsInitialized: false,
@@ -69,16 +70,22 @@ export const modelsSlice = createSlice({
     },
     addInstalledModels: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         references: string[];
         showSuccessToast?: boolean;
         updateRecentModels?: boolean;
       }>,
-    ) => state,
+    ) => {
+      state.installingModelIds = payload.references;
+    },
     addInstalledModelsFail: (
       state,
       _action: PayloadAction<{ references: string[] }>,
-    ) => state,
+    ) => {
+      state.installingModelIds = [];
+    },
     removeInstalledModels: (
       state,
       _action: PayloadAction<{ references: string[]; action: DeleteType }>,
@@ -88,6 +95,7 @@ export const modelsSlice = createSlice({
       { payload }: PayloadAction<{ installedModels: InstalledModel[] }>,
     ) => {
       state.installedModels = payload.installedModels;
+      state.installingModelIds = [];
     },
     updateInstalledModelFail: (state) => state,
     setModels: (
