@@ -5,7 +5,7 @@ Show one conversation-panel row per scheduled task instead of one per run, by co
 ## Requirements
 ### Requirement: The conversation panel shows one representative row per scheduled task
 
-`apps/chat` SHALL export a pure function `collapseScheduledTaskConversations(items: ConversationListItemDto[], options: { activeConversationId?: string; conversationIdsMatch: (a: string, b: string) => boolean }): ConversationListItemDto[]` from `apps/chat/src/utils/collapse-scheduled-task-conversations.ts`. It has no React, i18n, context, or network dependency.
+`apps/chat` SHALL export a pure function `collapseScheduledTaskConversations(items: readonly ConversationListItemDto[], options: CollapseScheduledTaskConversationsOptions): ConversationListItemDto[]` (options `{ activeConversationId?: string; conversationIdsMatch: (left: string, right: string) => boolean }`) from `apps/chat/src/utils/collapse-scheduled-task-conversations.ts`. It has no React, i18n, context, or network dependency.
 
 **Group key.** An item belongs to a group when `isScheduledTask === true` and `scheduleId` is a non-empty string. The group key is `${bucket}/${scheduleId}`, where `bucket` is the segment following the `conversations` resource-type segment of the item's decoded `id` (`conversations/{bucket}/.scheduler/{scheduleId}/...`). Items that are not scheduled-task conversations, or that lack `scheduleId`, are never grouped.
 
@@ -23,12 +23,12 @@ Show one conversation-panel row per scheduled task instead of one per run, by co
 
 **Two-phase evaluation.** The same module SHALL also export:
 
-- `groupScheduledTaskConversations(items, { conversationIdsMatch })`, which returns an opaque `ScheduledTaskGrouping`. It holds the collapsed list with no active id applied (every group represented by its newest unpinned run), and the grouped unpinned runs with their group key and whether each is the group's representative. `applyActiveScheduledTaskRun` finds the active run by scanning only those runs with `conversationIdsMatch`, not the whole list.
+- `groupScheduledTaskConversations(items, { conversationIdsMatch })`, which returns an exported `ScheduledTaskGrouping` (`{ collapsed, runs, items, conversationIdsMatch }`). `collapsed` is the list with no active id applied (every group represented by its newest unpinned run); `runs` are the grouped unpinned runs, in input order, each with its `groupKey` and `isRepresentative`; `items` is the source list, used only when an older run must be swapped in. `applyActiveScheduledTaskRun` finds the active run by scanning only those runs with `conversationIdsMatch`, not the whole list.
 - `applyActiveScheduledTaskRun(grouping, activeConversationId)`, which returns a collapsed list.
 
 `applyActiveScheduledTaskRun` SHALL return the grouping's own collapsed array (the same reference) when `activeConversationId` is absent, matches no grouped unpinned run, or matches a run that already is its group's newest representative. Only when the active id matches an older unpinned run SHALL it return a new array. That array is the grouping's collapsed list with that group's representative swapped for the active run, at the active run's original relative position. The result of the two-phase evaluation SHALL equal `collapseScheduledTaskConversations(items, { activeConversationId, conversationIdsMatch })` for every input. `collapseScheduledTaskConversations` stays exported and is implemented as the two phases composed.
 
-**Memoisation.** `ConversationPanelView` SHALL compute the grouping with `useMemo` keyed on the context list reference and the (stable) `conversationIdsMatch`. It SHALL compute the collapsed list with a second `useMemo` over the grouping and the active conversation id. Navigating between conversations whose ids do not change any representative therefore leaves the collapsed list, and `useConversationPanelItems`' memoised output, referentially unchanged.
+**Memoisation.** `ConversationPanelView` SHALL compute the grouping with `useMemo` keyed on the context list reference (`conversationIdsMatch` is a module-level import, so it is not a dependency). It SHALL compute the collapsed list with a second `useMemo` over the grouping and the active conversation id. Navigating between conversations whose ids do not change any representative therefore leaves the collapsed list, and `useConversationPanelItems`' memoised output, referentially unchanged.
 
 **Feature flag.** Collapsing is not gated by `ENABLED_FEATURES` / `scheduledTasksEnabled`: scheduler conversations exist and appear in the panel regardless of that flag (same rule as the previous TASK badge), so the collapsing applies regardless of it too.
 

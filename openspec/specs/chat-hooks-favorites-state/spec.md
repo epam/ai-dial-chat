@@ -78,7 +78,9 @@ NOT swallow the error.
 ### Requirement: Stable memoized result and callback identity
 
 The hook's returned object SHALL be memoized, and `toggleFavorite` SHALL have a stable identity across
-renders (empty dependency array).
+renders for as long as the caller's `updateFavorite` identity is stable (its only dependency). The
+initial-load effect likewise depends only on `loadFavorites`, so the app passes a module-level
+`loadFavorites` and a `useCallback`-memoized `updateFavorite`.
 
 #### Scenario: Two consumers under one provider share state
 - **GIVEN** two components each call the hook (or, at the app layer, `useFavoriteApplications()`) backed
@@ -95,7 +97,8 @@ dispatches to `updateInstalledDeployment`/`updateInstalledToolset`/`updateInstal
 expose the hook's result unchanged through the existing `FavoriteApplicationsContextType` interface.
 
 #### Scenario: Existing consumers see no interface change
-- **WHEN** `CatalogView`, `usePromptSelectorOverlay`, `useDeploymentSelectorOverlay`, or
-  `useDeploymentSelectorFieldOverlay` calls `useFavoriteApplications()`
+- **WHEN** `CatalogView`, `usePromptSelectorOverlay`, `useDeploymentSelectorOverlay`,
+  `useDeploymentSelectorFieldOverlay`, `useSkillSelectorOverlay`, or `SkillDetailsPanelContainer` calls
+  `useFavoriteApplications()`
 - **THEN** the returned shape and behavior match `FavoriteApplicationsContextType` exactly as before this
   change

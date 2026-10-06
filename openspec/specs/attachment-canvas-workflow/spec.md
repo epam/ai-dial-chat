@@ -18,12 +18,16 @@ The hook now lives entirely in the library; `apps/chat` owns no
 
 ### Requirement: Attachment-opening hook exported from the package root
 
-`@epam/ai-dial-attachment-canvas` SHALL export a hook that, given a `DisplayAttachment`
+`@epam/ai-dial-attachment-canvas` SHALL export a hook,
+`useOpenAttachmentCanvas(resolvers, options)` (`UseOpenAttachmentCanvasResolvers`,
+`UseOpenAttachmentCanvasOptions`), that, given a `DisplayAttachment`
 (from `@epam/ai-dial-chat-shared`) and an optional caller-scoped
 `canvasAttachmentId`, decides whether and how to open the attachment canvas,
 using only injected content resolvers, an injected `resolveContentUrl`
 callback, an injected `customVisualizers` list, an optional `themeId`, and an
-optional `onBeforeOpen` callback — never an application React context. The
+optional `onBeforeOpen` callback — never an application React context (its only
+context is the library's own `AttachmentCanvasContext`, read through
+`useAttachmentCanvas()` for `openCanvas`/`openCanvasLoading`/`closeCanvas`). The
 hook SHALL return `{ openAttachmentCanvas: (attachment, canvasAttachmentId?,
 shouldCommit?) => Promise<boolean> }`, resolving `true` when the canvas was
 opened and `false` when the attachment could not be previewed or when the
@@ -53,7 +57,8 @@ is not required to provide it.
   `resolveOoxmlContent`/`resolveJsonContent`/`resolveVisualizerContent`/
   `resolveReferencePdfContent`/`resolveContentUrl`/`hasTextSource` callbacks
   and a `customVisualizers` array
-- **THEN** the hook never imports or reads any React context, and every
+- **THEN** the hook never imports or reads any application React context (only
+  the library's own `AttachmentCanvasContext`), and every
   content decision is made by calling the supplied resolver for the matched
   content type
 
@@ -100,8 +105,8 @@ is not required to provide it.
 
 ### Requirement: Attachment-type dispatch preserves every current decision path
 
-The hook SHALL preserve the exact dispatch behavior of `apps/chat`'s
-`useOpenAttachmentCanvas` for every attachment type and content-routing
+The hook SHALL preserve the exact dispatch behavior it inherited from the
+former `apps/chat` `useOpenAttachmentCanvas` for every attachment type and content-routing
 branch: `Image` (synchronous, no loading state), `Audio` (uses `playUrl` then
 `url`, no panel-close), `File` (loading state via `openCanvasLoading`, then
 the full content-type dispatcher), `Pasted`/`Prompt` (loading state, then

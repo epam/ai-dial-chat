@@ -90,11 +90,12 @@ renders that do not change the underlying data.
 
 ### Requirement: `SkillsContext` becomes a thin wrapper computing `enabled`/`ready`
 
-`apps/chat/src/context/SkillsContext.tsx` SHALL compute `enabled = useUiFeature(OverlayFeature.Skills)`
-and `ready = useUser().status !== AuthStatus.Loading`, call `useSkillsState({ listSkills, enabled,
-ready })`, and expose the result unchanged through the existing `SkillsContextType` interface.
+`apps/chat/src/context/SkillsContext.tsx` (`SkillsProvider`) SHALL compute `enabled = useUiFeature(OverlayFeature.Skills)`
+and `ready = useUser().status !== AuthStatus.Loading`, call `useSkillsState({ listSkills: listCatalogSkills, enabled,
+ready })`, and expose the result through the existing `SkillsContextType` interface, field for field except that
+the hook's `refetch` is exposed as `refetchSkills`.
 
 #### Scenario: Existing consumers see no interface change
-- **WHEN** `CatalogView`, `useSkillArchiveImport`, `SkillEditor`, or `SharedInvitation` calls
-  `useSkills()`
+- **WHEN** a consumer such as `CatalogView`, `useSkillArchiveImport`, `SkillEditor`, `SharedInvitation`,
+  `ScheduledTaskSkillField`, or `useSkillSelectorOverlay` calls `useSkills()`
 - **THEN** the returned shape and behavior match `SkillsContextType` exactly as before this change

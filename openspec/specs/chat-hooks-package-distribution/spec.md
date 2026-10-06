@@ -4,14 +4,15 @@
 
 `@epam/ai-dial-chat-hooks` (`libs/chat-hooks`) publishes its hooks as a dependency-isolated,
 multi-entry-point package rather than a single rolled-up root module. Each feature area
-(viewport layout, scroll anchoring, conversation, conversation transfer, conversation sources,
-file manager, catalog, skills state, skill editor, OAuth, scheduled tasks, sharing, and
-attachments/utils) is published as its own ESM subpath entry point with its own declaration
+(viewport layout, scroll anchoring, conversation, conversation overlay, conversation transfer,
+conversation sources, file manager, file-manager canvas, source content, catalog, skills state,
+skill editor, OAuth, scheduled tasks, sharing, attachments, utils, usage, and MCP apps) is published as its own ESM subpath entry point with its own declaration
 file, so a consumer that only needs one feature's hooks installs and bundles only that
 feature's dependencies instead of the package's full peer set. The root (`.`) entry remains
 available and backward compatible for consumers who have not migrated to subpath imports.
-`react` is the package's only non-optional peer dependency; every `@epam/ai-dial-*` peer and
-the type-only `@epam/pdf-highlighter-kit` peer are optional and scoped to the entry points that
+`react` is the package's only non-optional peer dependency; every `@epam/ai-dial-*` peer, the
+`@mcp-ui/client` and `@modelcontextprotocol/sdk` peers, and the type-only
+`@epam/pdf-highlighter-kit` peer are optional and scoped to the entry points that
 actually need them. Implementation-only dependencies are delivered consistently — either
 externalized as a declared peer or bundled into the entry that uses them, never both — and tree
 shaking, `sideEffects` metadata, and the packed npm artifact are verified so the published
@@ -22,9 +23,10 @@ package behaves exactly as its manifest claims.
 ### Requirement: Dependency-isolated public entry points
 `@epam/ai-dial-chat-hooks` SHALL publish, in addition to its root (`.`) entry, a fixed set of
 ESM subpath entry points — `./viewport-layout`, `./scroll-anchoring`, `./conversation`,
-`./conversation-transfer`, `./conversation-sources`, `./file-manager`, `./catalog`,
-`./skills-state`, `./skill-editor`, `./oauth`, `./scheduled-tasks`, `./sharing`, and
-`./attachments`, `./utils` — each resolvable as both a runtime ESM module and a TypeScript
+`./conversation-overlay`, `./conversation-transfer`, `./conversation-sources`, `./file-manager`,
+`./file-manager-canvas`, `./source-content`, `./catalog`, `./skills-state`, `./skill-editor`,
+`./oauth`, `./scheduled-tasks`, `./sharing`, `./attachments`, `./utils`, `./usage`, and
+`./mcp-apps` — each resolvable as both a runtime ESM module and a TypeScript
 declaration file. Each subpath's module graph SHALL reference only the runtime and type-only
 dependencies documented for it in `README.md`'s entry-point-to-dependency matrix, plus shared
 dependency-light internal modules; it SHALL NOT import, at runtime or as a type dependency,
@@ -55,7 +57,7 @@ any `@epam/ai-dial-*` package or third-party package outside that documented set
 behavior of any existing export, and SHALL continue to support the package's full documented
 peer set. Adding a subpath entry SHALL NOT require any existing consumer of the root entry to
 change an import. The newly declared type-only `@epam/pdf-highlighter-kit` peer records a module
-specifier already exposed by the rolled-up root and `./file-manager` declarations.
+specifier already exposed by the root and `./file-manager-canvas` declarations.
 
 #### Scenario: Existing root imports keep working
 - **WHEN** a consumer with the full documented peer set installed imports any name from
@@ -70,8 +72,9 @@ specifier already exposed by the rolled-up root and `./file-manager` declaration
 
 ### Requirement: Optional feature peers
 `@epam/ai-dial-chat-hooks`'s `package.json` SHALL declare `react` as its only non-optional
-`peerDependency`. Every other declared peer (every `@epam/ai-dial-*` package and the type-only
-`@epam/pdf-highlighter-kit` peer exposed by `./file-manager` declarations) SHALL be declared in
+`peerDependency`. Every other declared peer (every `@epam/ai-dial-*` package, `@mcp-ui/client`,
+`@modelcontextprotocol/sdk`, and the type-only `@epam/pdf-highlighter-kit` peer exposed by
+`./file-manager-canvas` declarations) SHALL be declared in
 `peerDependenciesMeta` with `optional: true`. `fflate` SHALL NOT appear in
 `peerDependencies` at all.
 
@@ -107,12 +110,13 @@ the explicit stylesheet contract.
 
 ### Requirement: Verified tree shaking and accurate side-effect metadata
 Dependency-light entries SHALL exclude unrelated feature code. `sideEffects` SHALL identify
-the OAuth/file-manager facades and stable preserved modules with required initialization.
-Root and scoped exports SHALL share module instances; metadata SHALL NOT retain an entire root
-barrel or depend on obsolete hashed chunk names.
+the `./oauth` and `./file-manager-canvas` facades and the stable preserved modules
+(`rollupOptions.output.preserveModules`) with required initialization. Root and scoped exports
+SHALL share module instances; metadata SHALL NOT list the root barrel or depend on hashed
+chunk names.
 
 #### Scenario: Required initialization survives production bundling
-- **WHEN** a consumer explicitly imports OAuth or file-manager behavior
+- **WHEN** a consumer explicitly imports OAuth or file-manager-canvas behavior
 - **THEN** its required event/cache initialization is retained and shared through supported
   exports.
 
@@ -130,9 +134,10 @@ barrel or depend on obsolete hashed chunk names.
 #### Scenario: The declared side-effect list matches the audited set
 - **WHEN** `package.json#sideEffects` is compared against the module-scope side-effect audit
   in the library's design record
-- **THEN** it lists the stable `./oauth`, `./file-manager`, and root facades plus the hashed
-  chunks containing the `EventTarget` singleton and the two `LRUCache` instances — and no
-  unrelated compiled output
+- **THEN** it lists exactly `./dist/oauth.js` and `./dist/file-manager-canvas.js` (the entry
+  facades) plus `./dist/shared/toolset-login-events.js` (the `EventTarget` singleton) and
+  `./dist/files/attachment-canvas.js` (the two `LRUCache` instances) — not the root barrel and
+  no unrelated compiled output
 
 #### Scenario: A side-effectful symbol is not eliminated by a consumer's bundler
 - **WHEN** a consumer's production bundler processes an entry file importing
@@ -157,7 +162,7 @@ as `development`, `latest`, and open ranges SHALL NOT select the fixture depende
 PR CI SHALL run a bounded packed-package smoke suite containing the `minimal`, `oauth`, and
 negative OAuth fixtures. The smoke run SHALL still perform the package-wide
 packed-file/export-target check, the complete audited `sideEffects` manifest check (including
-the file-manager marker-bearing chunk), and the OAuth side-effect-only consumer bundle check.
+the file-manager-canvas marker-bearing module), and the OAuth side-effect-only consumer bundle check.
 The complete per-subpath and legacy-root matrix SHALL remain runnable through a separate Nx
 target for local, release, and future nightly execution; configuring a scheduled nightly
 workflow is outside this change.

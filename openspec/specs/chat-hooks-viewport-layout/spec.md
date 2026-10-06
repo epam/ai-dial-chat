@@ -8,7 +8,9 @@ Reusable browser-viewport and layout hooks exported by `@epam/ai-dial-chat-hooks
 
 ### Requirement: Whole-page file-drag detection hook
 
-`@epam/ai-dial-chat-hooks` SHALL export `usePageFileDrag`, a headless hook
+`@epam/ai-dial-chat-hooks` SHALL export `usePageFileDrag` (from the package
+root and from the `@epam/ai-dial-chat-hooks/viewport-layout` subpath, which
+is the one `apps/chat` imports), a headless hook
 that detects files being dragged over the page (using `document`-level drag
 events only, with an enter/leave counter to avoid flicker from child-element
 boundary crossings) and exposes the dragged files once dropped. The hook
@@ -16,8 +18,9 @@ SHALL depend only on React and standard browser DOM events — no app context,
 no i18n, no UI-kit component.
 
 The hook SHALL accept two optional parameters, `isAttachmentsAllowed` and
-`isEnabled` (both boolean, default `true`), gating whether drag state is
-tracked at all, and SHALL return `{ isDragging, pendingFiles, onFilesConsumed
+`isEnabled` (both boolean, default `true`): `isEnabled` gates whether drag
+state is tracked at all, and `isAttachmentsAllowed` gates whether dropped
+files are collected into `pendingFiles`. It SHALL return `{ isDragging, pendingFiles, onFilesConsumed
 }`, where `onFilesConsumed` clears `pendingFiles` after the caller has
 processed them.
 
@@ -38,14 +41,16 @@ processed them.
 #### Scenario: Attachments not allowed
 
 - **WHEN** a consumer renders `usePageFileDrag(false)`
-- **THEN** the hook still reports the same `isDragging`/`pendingFiles`
-  behavior as the default case; gating on `isAttachmentsAllowed` for whether
-  to act on dropped files is the caller's responsibility, not the hook's
+- **THEN** the hook still tracks `isDragging` exactly as in the default case
+  (and still calls `preventDefault` on the drop), but dropped files are NOT
+  added to `pendingFiles`, which stays empty
 
 ### Requirement: Viewport-width-driven panel max-width hooks
 
-`@epam/ai-dial-chat-hooks` SHALL export `useViewportWidth`, returning the
-current `window.innerWidth` and updating on the browser `resize` event, and
+`@epam/ai-dial-chat-hooks` SHALL export (from the root and the
+`viewport-layout` subpath) `useViewportWidth`, returning the current
+`window.innerWidth` (falling back to `1024` when `window` is undefined) and
+updating on the browser `resize` event, and
 `usePanelMaxWidth`, which derives a side-panel's maximum width from the
 current viewport width and a caller-supplied minimum content-area width. Both
 hooks SHALL depend only on React and standard browser APIs.
@@ -64,6 +69,8 @@ consuming application supplies its own layout budget.
 
 - **WHEN** a consumer renders `usePanelMaxWidth(400)` at a given viewport
   width
-- **THEN** the returned max width never exceeds `viewportWidth - 400`,
-  reproducing the same math `apps/chat`'s inlined `MIN_CONTENT_AREA_WIDTH =
-  400` constant currently produces at each of its call sites
+- **THEN** the returned max width is `Math.max(0, viewportWidth - 400)` —
+  never exceeding `viewportWidth - 400` and never negative — which is what
+  `apps/chat` gets at each call site (`app.tsx`, `ConversationSourcesPanel`)
+  by passing its shared `MIN_CONTENT_AREA_WIDTH = 400` constant from
+  `apps/chat/src/constants/layout.ts`

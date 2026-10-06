@@ -202,12 +202,12 @@ The system SHALL NOT attempt token refresh for a header-authenticated request, a
 
 ### Requirement: /auth/logout is a no-op for header-authenticated callers
 
-`POST /api/v1/auth/logout` SHALL respond successfully without attempting to clear a session cookie or perform RP-initiated logout when called by a header-authenticated caller, since no session was created for that caller.
+`POST /api/v1/auth/logout` SHALL respond successfully without attempting to clear a session cookie or perform RP-initiated logout when called by a header-authenticated caller, since no session was created for that caller. Because the route is `@Public()`, no strategy runs on it: the handler treats any request carrying an `Authorization` header as such a caller (regardless of `AUTH_HEADER_TOKEN_ENABLED` or token validity) and responds `200` with an empty body, skipping the Origin check and the cookie/redirect flow.
 
 #### Scenario: Logout succeeds as a no-op under header auth
 
 - **WHEN** `POST /api/v1/auth/logout` is called by a header-authenticated caller
-- **THEN** the response is a success status, no `Set-Cookie` clearing header is emitted, and no RP-initiated logout redirect is attempted
+- **THEN** the response is `200`, no `Set-Cookie` clearing header is emitted, and no RP-initiated logout redirect is attempted
 
 ### Requirement: OpenAPI documents both authentication schemes
 

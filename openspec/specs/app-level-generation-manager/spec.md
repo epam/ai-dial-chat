@@ -10,11 +10,12 @@ Frontend ownership of the streaming-generation UI: an app-level context that kee
 
 `GenerationContext` (`apps/chat/src/context/GenerationContext.tsx`) SHALL be mounted above the routed conversation pages — inside the authenticated route subtree but outside any per-conversation component — so an in-flight stream is not torn down when the user navigates between conversations. The conversation page MUST NOT abort the generation on unmount; only an explicit Stop or tab close ends it.
 
-The context SHALL keep a registry of generation entries keyed by conversation path, each carrying `generationId`, `path`, its `AbortController`, and a `ClientGenerationStatus` of `Active` or `Done`. The registry SHALL live in a ref rather than in state, so recording a generation never re-renders consumers. It exposes exactly three functions:
+The context SHALL keep a registry of generation entries keyed by conversation path, each carrying `generationId`, `path`, its `AbortController`, and a `ClientGenerationStatus` of `Active` or `Done`. The registry SHALL live in a ref rather than in state, so recording a generation never re-renders consumers. It exposes exactly four functions:
 
 - `startGeneration(path, generationId): AbortController` — aborts the path's existing entry when that entry is still `Active`, then registers and returns a fresh `AbortController` for the new generation.
 - `completeGeneration(path, generationId): void` — marks the path's entry `Done`, and only when the entry's `generationId` still matches, so a late completion from a superseded generation cannot clear the current one.
 - `getGeneration(path): GenerationEntry | undefined` — reads the current entry for a path.
+- `hasActiveGeneration(): boolean` — `true` iff any tracked entry, on any path, is still `Active`; `ClientChannelContext` consults it before disconnecting an idle client channel.
 
 There SHALL be no `stopGeneration` on the context: stopping is the streaming hook's concern (see "Stop shows what was received, race-free"), because it involves the backend stop call rather than the local registry.
 
@@ -90,9 +91,9 @@ When a loaded conversation ends with a user message, the page SHALL render the a
 
 ### Requirement: Stop shows what was received, race-free
 
-`handleStop` — exposed by `useConversationStream`, not by the generation context — SHALL only call the stop API; it MUST NOT abort the local fetch or reload eagerly. The backend aborts upstream, saves the partial, then closes the stream, so the fetch ends naturally via `onComplete`, which reloads the saved partial. Because the backend saves before ending the response, the displayed content matches the persisted content (no empty-on-stop / text-on-refresh mismatch).
+`handleStop` — exposed by `useConversationStream`, not by the generation context — SHALL only call the stop API (`transport.stopCompletion({ generationId, path, content })`, where `content` is the buffered answer text received so far, saved by the backend for a generation whose text it does not hold); it MUST NOT abort the local fetch or reload eagerly. The backend aborts upstream, saves the partial, then closes the stream, so the fetch ends naturally via `onComplete`, which reloads the saved partial. Because the backend saves before ending the response, the displayed content matches the persisted content (no empty-on-stop / text-on-refresh mismatch).
 
-It SHALL be a no-op unless there is an active generation whose path is the displayed conversation, so a Stop click can never target a stream running in a background conversation. The stopped generation's id SHALL be recorded, so the completion that follows is recognised as a stop rather than a natural end.
+It SHALL be a no-op unless there is an active generation whose path is the displayed conversation (or, for a generation resumed after a refresh that has no local id, the displayed conversation carries a pending background message whose `backgroundGeneration.generationId` is used), so a Stop click can never target a stream running in a background conversation. The stopped generation's id SHALL be recorded, so the completion that follows is recognised as a stop rather than a natural end.
 
 An empty stopped assistant message SHALL render a localized "Stopped generating" label at display time rather than writing that text into the message content. The label SHALL be supplied by the host as a `stoppedGeneratingText` prop rather than translated inside the rendering component.
 

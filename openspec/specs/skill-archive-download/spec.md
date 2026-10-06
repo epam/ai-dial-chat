@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the whole-skill archive download flow: reuse of the existing, unmodified `GET /api/v1/skills/download` endpoint and generated client wrapper, the `apps/chat` orchestration in `CatalogView.tsx` (bucket/path resolution, filename resolution from `Content-Disposition` with a sanitized fallback, success/failure notification), and the library-isolation boundary that keeps all of this backend and filesystem knowledge out of `libs/catalog`.
+Defines the whole-skill archive download flow: reuse of the existing, unmodified `GET /api/v1/skills/download` endpoint and generated client wrapper, the `apps/chat` orchestration in `useCatalogItemActions` (consumed by `CatalogView.tsx`; bucket/path resolution, filename resolution from `Content-Disposition` with a sanitized fallback, success/failure notification), and the library-isolation boundary that keeps all of this backend and filesystem knowledge out of `libs/catalog`.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ The endpoint SHALL continue to delegate to `SkillsDownloadService.downloadSkill`
 
 The generated `SkillsApi.downloadSkillRaw`/`downloadSkill` (`libs/chat-api-client/src/generated/src/apis/SkillsApi.ts`) SHALL remain the sole generated client surface this capability calls, through the existing app-level wrapper `downloadSkill(bucket, path, signal?): Promise<Response>` (`apps/chat/src/server-api/skills.api.ts`). This capability SHALL NOT hand-edit any generated client file, and SHALL NOT add a new legacy `base.ts` wrapper or a direct component-level `fetch`.
 
-Authorization for the download SHALL follow the same rule the endpoint already applies to every skill route: `bucket`/`path` are opaque strings forwarded to DIAL Core, which is the sole authorization boundary; personal, shared, and public/organisation skills SHALL all be downloadable through the identical code path, differentiated only by whichever bucket/path the catalog item already carries — no bucket-specific branching SHALL be added in `apps/chat` or `apps/chat-api` for this capability.
+Authorization for the download SHALL follow the same rule the endpoint already applies to every skill route: `bucket`/`path` are opaque strings forwarded to DIAL Core, which is the sole authorization boundary; personal, shared, and public/organisation skills SHALL all be downloadable through the identical code path, differentiated only by whichever bucket/path the catalog item already carries — no bucket-specific branching SHALL exist in `apps/chat`. The only bucket-aware rule in `apps/chat-api` is `SkillsDownloadService`'s existing status mapping: a DIAL Core `403` for the caller's own bucket (passed from the session as `callerBucket`) is reported as `404` (a masked missing skill), while a `403` on any other bucket stays a `403`; a path that resolves to a grouping folder is rejected with `400`.
 
 #### Scenario: The existing endpoint is reused unmodified
 
@@ -36,11 +36,11 @@ Authorization for the download SHALL follow the same rule the endpoint already a
 
 ### Requirement: `CatalogView` wires Download for skills through the existing generic `onDownload`/`isDownloadVisible` contract
 
-`apps/chat/src/components/CatalogView/CatalogView.tsx`'s existing `handleDownload` (previously restricted to `CatalogEntityType.Prompt`) SHALL gain a `CatalogEntityType.Skill` branch. `isDownloadVisible` SHALL gain the matching branch. Neither the existing `CatalogEntityType.Prompt` branch's logic nor its outcome SHALL change.
+`handleDownload` in `useCatalogItemActions` (`apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx`, the hook `CatalogView.tsx` composes for item actions) SHALL have a `CatalogEntityType.Skill` branch alongside the `CatalogEntityType.Prompt` branch. `isDownloadVisible` SHALL return `true` for both `CatalogEntityType.Prompt` and `CatalogEntityType.Skill`. Neither the existing `CatalogEntityType.Prompt` branch's logic nor its outcome SHALL change.
 
 The Skill branch SHALL:
 
-1. Resolve `{ bucket, path }` from the same `openSkillRef` that the manifest loader and supporting-file renderer populate when the panel opens on a skill. If no skill is currently open (`openSkillRef.current == null`), the handler SHALL return without calling any API.
+1. Resolve `{ bucket, path }` by parsing the catalog item's own id with `parseSkillResourceUrl(item.id)` (from `@epam/ai-dial-chat-hooks`). If the id does not parse (`parseSkillResourceUrl` returns `null`), the handler SHALL return without calling any API.
 2. Call the existing `downloadSkill(bucket, path)` wrapper (`apps/chat/src/server-api/skills.api.ts`). No new server-api function, generated-client call, or raw `fetch` SHALL be introduced.
 3. Treat a non-OK `Response` (`response.ok === false`) as a failure, without attempting to read its body as an archive.
 4. On success, resolve the save filename and trigger the browser download per the following requirement, then report success through `notifyOperationSuccess(NotifiableEntity.Skill, EntityOperation.Downloaded, { name: savedName })`.
@@ -49,11 +49,11 @@ The Skill branch SHALL:
 #### Scenario: Activating Download calls the verified endpoint with the open skill's bucket and path
 
 - **WHEN** a skill's details panel is open and its Download action is activated
-- **THEN** `downloadSkill` is called with exactly the `bucket` and `path` `openSkillRef.current` carries for that skill
+- **THEN** `downloadSkill` is called with exactly the `bucket` and `path` that `parseSkillResourceUrl(item.id)` returns for that skill
 
-#### Scenario: No open skill means no request
+#### Scenario: An unparseable skill id means no request
 
-- **WHEN** Download is somehow activated with `openSkillRef.current` unset
+- **WHEN** Download is activated for a skill item whose `id` `parseSkillResourceUrl` cannot parse
 - **THEN** no request is made and no error is thrown
 
 #### Scenario: A successful download reports success
@@ -105,11 +105,11 @@ The details panel SHALL remain open after any failure. No confirmation dialog SH
 
 ### Requirement: The save filename comes from `Content-Disposition`, with a sanitized deterministic fallback
 
-The Skill branch SHALL resolve the saved file's name through the existing `apps/chat/src/utils/file-download.ts::triggerBrowserDownload(response, fallbackName)`, unmodified. `fallbackName` SHALL be `` `${sanitizeFileName(item.name)}.zip` ``, using the existing `apps/chat/src/utils/file-name.ts::sanitizeFileName` unmodified.
+The Skill branch SHALL resolve the saved file's name through the existing `apps/chat/src/utils/file-download.ts::triggerBrowserDownload(response, fallbackName)`, unmodified. `fallbackName` SHALL be `` `${sanitizeFileName(item.name)}.zip` ``, using the existing `sanitizeFileName` (`libs/chat-hooks/src/files/file-name.ts`, imported from `@epam/ai-dial-chat-hooks`) unmodified.
 
-`triggerBrowserDownload` SHALL be relied upon, not reimplemented, for: extracting a filename from a quoted or unquoted `Content-Disposition` header, stripping `/`/`\` from whatever it extracts, falling back to `fallbackName` when the header is absent or unusable, converting the response body to a `Blob`, and triggering the browser save through the existing `triggerBlobDownload` (which creates and, after a fixed delay, revokes the object URL).
+`triggerBrowserDownload` SHALL be relied upon, not reimplemented, for: extracting a filename from a quoted or unquoted `Content-Disposition` header, stripping `/`/`\` from whatever it extracts, falling back to `fallbackName` when the header is absent or unusable, converting the response body to a `Blob`, and triggering the browser save through the existing `triggerBlobDownload` from `@epam/ai-dial-chat-shared` (which creates and, after `DOWNLOAD_CLEANUP_DELAY_MS`, revokes the object URL).
 
-A filename containing Unicode characters SHALL pass through unmodified (neither `triggerBrowserDownload`'s extraction nor `sanitizeFileName`'s character replacement re-encodes or strips non-ASCII characters). A fallback filename derived from a skill name containing path separators or other characters `NOT_ALLOWED_SYMBOLS_REGEXP` forbids SHALL have those characters replaced before being handed to the browser.
+A filename containing Unicode characters SHALL pass through unmodified (neither `triggerBrowserDownload`'s extraction nor `sanitizeFileName`'s character replacement re-encodes or strips non-ASCII characters). A fallback filename derived from a skill name containing path separators or other characters `NOT_ALLOWED_SYMBOLS_REGEXP` (from `@epam/ai-dial-ui-kit`) forbids SHALL have those characters replaced before being handed to the browser.
 
 An empty response body SHALL still be saved, as a valid zero-byte file, under the resolved name — this is standard `Blob`/browser behavior and is not treated as an error by this capability.
 
@@ -154,4 +154,4 @@ No `Blob`, `File`, or object-URL API (`URL.createObjectURL`/`URL.revokeObjectURL
 #### Scenario: No direct fetch or Blob handling in the lib
 
 - **WHEN** `libs/catalog/src` is searched for `fetch(`, `URL.createObjectURL`, or `URL.revokeObjectURL`
-- **THEN** none appear in the Header/DetailsPanel/Catalog components this capability touches
+- **THEN** no `fetch(` or `URL.createObjectURL` call appears in the Header/DetailsPanel/Catalog components this capability touches, and the only `URL.revokeObjectURL` calls (in `DetailsPanel.tsx`) release `blob:` URLs of content-file image previews, never an archive

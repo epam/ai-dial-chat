@@ -5,7 +5,7 @@ TBD - created by archiving change add-unpublish-my-resources. Update Purpose aft
 ## Requirements
 ### Requirement: The conversation row action menu offers Unpublish
 
-`apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` SHALL add an `Unpublish` entry to a conversation row's action menu, occupying the existing `Publish` entry's position, using `IconWorldOff` at `DIAL_ICON_SIZE.SM` with `aria-hidden` and the label `t(ButtonsI18nKeys.Unpublish)`.
+`apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` SHALL add an `Unpublish` entry to a conversation row's action menu, occupying the existing `Publish` entry's position, using `IconWorldOff` at `DIAL_ICON_SIZE.MD` with `aria-hidden` and the label `t(ButtonsI18nKeys.Unpublish)`.
 
 `Publish` and `Unpublish` SHALL be mutually exclusive, matching the catalog details menu (`catalog-unpublish-flow`): the row menu SHALL carry exactly one of the two. A conversation with no published copy offers `Publish`; once history resolves to at least one published folder, `Unpublish` takes its place. Republishing an already-published conversation therefore means unpublishing it first.
 
@@ -37,7 +37,7 @@ The entry SHALL be gated by the same conditions that gate `Publish`, plus one mo
 
 ### Requirement: Conversation publish history is fetched lazily when the row menu opens
 
-The conversation panel SHALL call `getConversationPublishHistory(path)` when a row's action menu is opened or its trigger is focused, once per conversation, and hold the result keyed by conversation. It SHALL NOT fetch history while rendering the conversation list: the list can hold hundreds of rows, and history is a bucket-wide `getPublications` scan on the server.
+The conversation panel SHALL call `getConversationPublishHistory(path)` through the app-level `useConversationPublishHistory` hook (`apps/chat/src/hooks/useConversationPublishHistory/useConversationPublishHistory.ts`) when a row's action menu is opened (the `ConversationRow` menu's `onOpenChange(true)` fires `onActionMenuOpen`, handled by `handleActionMenuOpen`), and hold the result keyed by the bucket-relative conversation path. The resolved entries feed `deriveConversationRowActionState` from `@epam/ai-dial-chat-hooks`, which de-duplicates them into `publishedFolders` (each `folderPath` joined with `/`). It SHALL NOT fetch history while rendering the conversation list: the list can hold hundreds of rows, and history is a bucket-wide `getPublications` scan on the server.
 
 The resolution states and their effect on the `Unpublish` entry are identical to the catalog flow (see `catalog-unpublish-flow`): withheld while unresolved, shown with ≥ 1 folder, hidden on zero folders, hidden on failure. A failure SHALL NOT raise a notification — the user did not ask for history, they opened a menu.
 

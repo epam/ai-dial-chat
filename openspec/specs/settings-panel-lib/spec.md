@@ -11,7 +11,8 @@ i18n, routing, and API-client dependencies.
 
 ### Requirement: Presentational settings panel component
 The system SHALL provide a new library `libs/settings-panel` (npm package
-`@epam/ai-dial-settings-panel`) exporting a single presentational component that renders a
+`@epam/ai-dial-settings-panel`) exporting a single presentational component, `SettingsPanel`
+(alongside its prop types and the `SETTINGS_PANEL_CLASS` public class-name map), that renders a
 vertical list of icon + label rows under an optional section header, with the active row visually
 highlighted. The component SHALL accept only props — no `react-i18next`, no
 `apps/chat/src/server-api/*` import, no routing, no host-specific icon choices baked in.
@@ -34,7 +35,8 @@ interface SettingsPanelProps {
 ```
 
 Row colors (inactive, hover, active, focus ring) come from the UI kit's vertical `Tabs` and are
-not overridable through `SettingsPanel` props.
+not overridable through `SettingsPanel` props. The section header typography defaults to
+`dial-h1-text`, overridable via `styles.typography.sectionLabelClassName`.
 
 #### Scenario: Rendering the item list
 - **WHEN** the panel is given `items` with one active id and one or more disabled items
@@ -56,7 +58,8 @@ The panel SHALL expose `role="tablist"` with `aria-orientation="vertical"` on th
 `role="tab"` with `aria-selected` on each row, following the automatic-activation ARIA tabs pattern:
 only the active row is in the tab order, `ArrowUp`/`ArrowDown` move both focus and selection between
 enabled rows (wrapping at the ends), `Home`/`End` jump to the first/last enabled row, and disabled
-rows are `aria-disabled` and skipped entirely by arrow navigation.
+rows carry the native `disabled` attribute and are skipped entirely by arrow navigation. This
+behavior is delegated to the UI kit's `Tabs` with `orientation={TabOrientation.Vertical}`.
 
 #### Scenario: Arrow key navigation skips disabled rows
 - **WHEN** a user focuses an enabled row and the adjacent row in the arrow-key direction is disabled
@@ -66,14 +69,15 @@ rows are `aria-disabled` and skipped entirely by arrow navigation.
 #### Scenario: Only the active row is tab-reachable
 - **WHEN** the panel renders with one active row
 - **THEN** only that row has `tabIndex={0}`; every other row (enabled or disabled) has `tabIndex={-1}`
+  (when `activeId` names a disabled row, the first enabled row holds the tab stop instead)
 
 ---
 
 ### Requirement: Library isolation and scaffolding
-The lib SHALL be tagged `"type:ui"` in its `package.json` (matching `libs/share`,
-`libs/prompts`, `libs/prompt-editor`) and declare `peerDependencies` limited to `react`,
-`@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`, and `@tabler/icons-react` — no dependency on
-any other hand-authored lib or on `apps/*`. It SHALL include the required `package.json` fields
+The lib SHALL be tagged `"type:ui"` (plus `"publishable"`) under `nx.tags` in its `package.json`
+(matching `libs/share`, `libs/prompts`, `libs/prompt-editor`) and declare `peerDependencies`
+limited to `react`, `@epam/ai-dial-chat-shared`, and `@epam/ai-dial-ui-kit` — no dependency on
+any other hand-authored lib or on `apps/*`. It exports `./styles.css` (`./dist/index.css`). It SHALL include the required `package.json` fields
 (`license: "Apache-2.0"`, a plain-English `description`) and a `README.md` documenting the
 component's props and a usage example, per `.claude/rules/libs.md`. A `tsconfig.base.json` path
 alias (`@epam/ai-dial-settings-panel/*`) SHALL resolve to `./libs/settings-panel/*`.
@@ -81,9 +85,10 @@ alias (`@epam/ai-dial-settings-panel/*`) SHALL resolve to `./libs/settings-panel
 #### Scenario: No forbidden imports
 - **WHEN** the lib's source is scanned
 - **THEN** it contains no import of `react-i18next`, `apps/chat/src/server-api/*`, generated API
-  client types, or any other hand-authored `libs/*` package
+  client types, or any hand-authored `libs/*` package other than `@epam/ai-dial-chat-shared`
 
 #### Scenario: Consuming app resolves labels and icons
-- **WHEN** `apps/chat`'s `SettingsPage` builds the panel's `items` prop
+- **WHEN** `apps/chat` builds the panel's `items` prop (in `apps/chat/src/hooks/useSettingsTabConfig.tsx`,
+  rendered by `SettingsPage`)
 - **THEN** each `label` is already translated via `useTranslation` and each `icon` is a
   `@tabler/icons-react` element resolved in `apps/chat`, not inside the lib

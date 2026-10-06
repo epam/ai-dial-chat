@@ -8,7 +8,7 @@ Detect when a newer build has been deployed while a chat tab remains open, and p
 
 ### Requirement: App-version polling hook
 
-A `useAppVersionCheck` hook in `apps/chat/src/hooks/` SHALL own the "is a new version available" state. On mount it SHALL capture the `buildId` from the `GET /api/health` response (via the generated `HealthApi.check()` method from `@epam/chat-api-client`) as the baseline for the current tab, then poll the same endpoint on a fixed interval (default: every 5 minutes) for as long as the tab remains open. The hook SHALL memoise its returned value and stop its interval on unmount (`useEffect` cleanup) to avoid leaking timers across route changes.
+A `useAppVersionCheck` hook in `apps/chat/src/hooks/` SHALL own the "is a new version available" state. On mount it SHALL capture the `buildId` from the `GET /api/health` response (via the generated `HealthApi.check()` method from `@epam/ai-dial-chat-api-client`, wrapped as `checkHealth` in `apps/chat/src/server-api/health.api.ts`) as the baseline for the current tab, then poll the same endpoint on a fixed interval (`POLL_INTERVAL_MS`, 5 minutes) for as long as the tab remains open, and additionally re-check whenever `document.visibilityState` becomes `visible`. A response without a `buildId` is ignored. The hook SHALL memoise its returned value and stop its interval and remove its `visibilitychange` listener on unmount (`useEffect` cleanup) to avoid leaking timers across route changes.
 
 #### Scenario: Baseline build id captured on load
 
@@ -39,7 +39,7 @@ A `useAppVersionCheck` hook in `apps/chat/src/hooks/` SHALL own the "is a new ve
 
 ### Requirement: Full-screen reload prompt
 
-A `NewVersionFallback` component in `apps/chat/src/components/NewVersionFallback/` SHALL render in place of the entire app (matching the visual pattern of `ErrorFallback` — an icon, heading, message, and primary action button, in a `role="alert"` container) when `useAppVersionCheck` reports `isNewVersionAvailable === true`. `App` (`apps/chat/src/app/app.tsx`) SHALL call `useAppVersionCheck` and return `<NewVersionFallback />` instead of its normal layout whenever `isNewVersionAvailable` is `true`, blocking further interaction with the stale build until the user reloads.
+A `NewVersionFallback` component in `apps/chat/src/components/NewVersionFallback/` SHALL render in place of the entire app (sharing `ErrorFallback`'s layout through the common `AlertShell` component in `apps/chat/src/components/AlertShell/` — an icon, heading, message, and `PrimaryButton` action, in a `role="alert"` container) when `useAppVersionCheck` reports `isNewVersionAvailable === true`. `App` (`apps/chat/src/app/app.tsx`) SHALL call `useAppVersionCheck` and return `<NewVersionFallback />` instead of its normal layout whenever `isNewVersionAvailable` is `true`, blocking further interaction with the stale build until the user reloads.
 
 The fallback is always active and is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — it is a reliability affordance, not a product feature toggle.
 

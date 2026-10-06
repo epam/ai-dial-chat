@@ -10,11 +10,11 @@ Specifies how the currently active conversation is matched to the scheduled task
 
 A new context, `ActiveScheduledTaskContext` (`apps/chat/src/context/ActiveScheduledTaskContext.tsx`, provider `ActiveScheduledTaskProvider`, consumer hook `useActiveScheduledTask`), SHALL own resolution of scheduler metadata for the currently routed conversation. The consumer hook SHALL throw a clear error when used outside the provider, per the `ThemeContext` pattern.
 
-The context SHALL derive the active conversation id from the route (the same wildcard route param `Conversation.tsx` reads) and locate the matching item in `useConversations().conversations` using `conversationIdsMatch` from `apps/chat/src/utils/conversation-id-match.ts` — SHALL NOT use `Array.prototype.includes` substring matching, raw `===` on undecoded ids, or any parsing of the visible conversation title.
+The context SHALL derive the active conversation id from the current route via `useLocation().pathname` (the segment after `${ROUTES.Conversations}/`, or `null` outside that prefix or when any `/`-separated segment fails `isSafePathSegment` from `apps/chat/src/constants/routes.ts`), exposed on the value as `routeConversationId`, and locate the matching item in `useConversations().conversations` using `conversationIdsMatch` from `apps/chat/src/utils/conversation-id-match.ts` — SHALL NOT use `Array.prototype.includes` substring matching, raw `===` on undecoded ids, or any parsing of the visible conversation title.
 
-The context SHALL treat a conversation as a "scheduled-task conversation" only when the matched item has `isScheduledTask === true` AND `scheduleId` is a non-empty string AND `runId` is a non-empty string AND `useFeatureFlag('scheduledTasksEnabled')` is `true`. When any condition is false (including while `conversations` has not yet loaded for the first time since the identity/session began), the context's derived state SHALL be `'resolving'` until the conversation list has loaded once, then `'not-a-task-conversation'` if the conditions still do not hold.
+The context SHALL expose its derived state as `status: ActiveScheduledTaskStatus` (`apps/chat/src/types/active-scheduled-task.ts`; members `Resolving = 'resolving'`, `NotATaskConversation = 'not-a-task-conversation'`, `TaskConversation = 'task-conversation'`). It SHALL treat a conversation as a scheduled-task conversation (`'task-conversation'`) only when the matched item has `isScheduledTask === true` AND `scheduleId` is a non-empty string AND `runId` is a non-empty string AND `useFeatureFlag('scheduledTasksEnabled')` is `true`. When there is no route conversation id or the feature flag is off, the state SHALL be `'not-a-task-conversation'`. When no matching item is found, the state SHALL be `'resolving'` while `useConversations().isLoading` is `true` and `'not-a-task-conversation'` otherwise. A matched item that does not satisfy the conditions SHALL yield `'not-a-task-conversation'`. While `'task-conversation'`, the value SHALL also expose the matched item's `scheduleId`, `runId`, `updatedAt` (as `conversationUpdatedAt`) and `title` (as `conversationTitle`).
 
-The context value SHALL be wrapped in `useMemo`, recomputed only when the route conversation id, the `conversations` array reference, or the feature-flag value changes.
+The context value SHALL be wrapped in `useMemo` whose dependencies are exactly its exposed fields (`routeConversationId`, `status`, `scheduleId`, `runId`, `conversationUpdatedAt`, `conversationTitle`, `taskState`, `task`, `taskError`, `retryTask`, `history`); the matched item itself SHALL be memoized on the `conversations` array reference and the route conversation id.
 
 #### Scenario: Matching uses the canonical id-matching helper
 
@@ -48,10 +48,10 @@ The context value SHALL be wrapped in `useMemo`, recomputed only when the route 
 
 Once the context derives a valid `{ scheduleId, runId }` pair, it SHALL start two requests without either waiting for the other:
 
-- `getScheduledTask(scheduleId)` from `apps/chat/src/server-api/scheduled-tasks.api.ts`, tracked as `taskState: 'loading' | 'error' | 'success'` with the resolved `ScheduledTaskDto` on success.
-- The first page of `useScheduledTaskRuns(scheduleId ?? '', Boolean(scheduleId), task?.nextRunTime)`, exposed as-is on the context value. The context SHALL pass its own already-resolved `task?.nextRunTime` into this call rather than fetching the task a second time; the hook's background-refresh behavior (polling while a run is in progress, a one-shot refresh at `nextRunTime`) is otherwise identical to any other consumer of the shared hook and is not re-specified here.
+- `getScheduledTask(scheduleId)` from `apps/chat/src/server-api/scheduled-tasks.api.ts`, tracked as `taskState: ActiveScheduledTaskDetailState` (`Idle = 'idle'` outside a task conversation, `Loading = 'loading'`, `Success = 'success'`, `Unavailable = 'unavailable'` when `getApiErrorStatus(err) === 404`, `Error = 'error'` for any other failure, with the error exposed as `taskError`), with the resolved `ScheduledTaskDto` exposed as `task` on success and a `retryTask()` callback that re-runs the request for the current `scheduleId`.
+- The first page of the app adapter `useScheduledTaskRuns(scheduleId ?? '', Boolean(scheduleId), task?.nextRunTime)` (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskRuns.ts`, wrapping the shared hook from `@epam/ai-dial-chat-hooks/scheduled-tasks`), exposed as `history` on the context value. The context SHALL pass its own already-resolved `task?.nextRunTime` into this call rather than fetching the task a second time; the hook's background-refresh behavior (polling while a run is in progress, a one-shot refresh at `nextRunTime`) is otherwise identical to any other consumer of the shared hook and is not re-specified here.
 
-Fetches SHALL use the existing `cancelled`-flag-before-`setState` convention (per `useFavicon.ts` and `useScheduledTaskRuns.ts:173`). Rendering of the conversation messages and the existing sources-panel content SHALL NOT be blocked or delayed by either request's pending or failed state.
+The task-detail fetch SHALL use the existing `cancelled`-flag-before-`setState` convention (per `useFavicon.ts`); run-history request lifecycle and cancellation are owned by the shared `useScheduledTaskRuns` hook. Rendering of the conversation messages and the existing sources-panel content SHALL NOT be blocked or delayed by either request's pending or failed state.
 
 #### Scenario: Both requests start together
 
@@ -72,7 +72,7 @@ Fetches SHALL use the existing `cancelled`-flag-before-`setState` convention (pe
 
 ### Requirement: Requests reset and stale responses are ignored on identifier change
 
-When the active `scheduleId` changes (including transitioning to no scheduled-task conversation), the context SHALL reset `taskState` to `'loading'`/`undefined` and re-run both fetches for the new `scheduleId` before any new state is committed. In-flight requests for a previous `scheduleId` SHALL be aborted or their results ignored — a response belonging to a stale `scheduleId` SHALL NEVER overwrite state for the current `scheduleId`.
+When the active `scheduleId` changes (including transitioning to no scheduled-task conversation), the context SHALL reset `taskState` to `'loading'` (or to `'idle'` when there is no longer a `scheduleId`), clear `task`/`taskError`, and re-run both fetches for the new `scheduleId` before any new state is committed. In-flight requests for a previous `scheduleId` SHALL be aborted or their results ignored — a response belonging to a stale `scheduleId` SHALL NEVER overwrite state for the current `scheduleId`.
 
 When only `runId` changes while `scheduleId` stays the same (navigating between two conversations produced by the same schedule), the context SHALL NOT refetch `getScheduledTask`, and SHALL update the current-run derivation (used for highlighting and the banner timestamp) from already-loaded `history.items` plus the new `runId` without a new task-detail request.
 
@@ -97,14 +97,14 @@ When only `runId` changes while `scheduleId` stays the same (navigating between 
 The banner matches the reference Figma design (node `143:6385` in the "DIAL Chat 2.0 — Scheduled tasks" file): a single rounded card (`bg-layer-sunken` background, `border-secondary` border) containing the name+timestamp text on the start side and a "Task details" pill action on the end side.
 
 The banner SHALL show:
-- The fetched task's `displayName` once `taskState === 'success'`; a skeleton/compact loading placeholder while `taskState === 'loading'`.
+- The fetched task's `displayName` once `taskState === 'success'`; a skeleton/compact loading placeholder (a `role="status"` region labelled by `scheduledTasks.conversationBanner.loadingLabel`) while `taskState` is `'loading'` or `'idle'`.
 - A run timestamp next to `displayName`, on the same line, SHALL be shown as soon as the task's `displayName` is shown — it is never omitted while `taskState === 'success'`. Its source is resolved in this priority order:
   1. The exact run's formatted timestamp (via the existing `formatRunTimestamp` convention, including any duration suffix) once a run matching the active `runId` is present in `history.items`.
   2. Until then, a fallback timestamp formatted via the same `formatRunTimestamp` convention from the matched conversation list item's own `updatedAt` (exposed by `useActiveScheduledTask()` as `conversationUpdatedAt`) — the run that created this conversation is frequently not yet present in the first loaded page of run history, so this fallback avoids a banner with a name but no date.
   3. The banner swaps from the fallback to the exact run's timestamp in place, without a layout shift, once that run loads.
 - An inline-end "Task details" navigation action (semantic link/button, SPA navigation, no full page reload) to `getScheduledTaskDetailRoute(scheduleId)`, with a directional chevron icon.
 
-The banner SHALL NOT be added to the conversation's `messages` array and SHALL NOT be persisted as a conversation message. On `taskState === 'error'`, the banner SHALL NOT hide or displace the conversation messages; it SHALL render a scoped retry action or omit the unavailable metadata, following the nearest existing inline-error pattern in the codebase, without blocking message rendering.
+The banner SHALL NOT be added to the conversation's `messages` array and SHALL NOT be persisted as a conversation message. On `taskState === 'error'` or `'unavailable'`, the banner SHALL NOT hide or displace the conversation messages; it SHALL render the `scheduledTasks.conversationBanner.unavailableLabel` text (`role="alert"`) and, only for `'error'`, a scoped retry `GhostButton` that calls `retryTask`, without blocking message rendering.
 
 The "Task details" action's `href`/navigation target SHALL be computed by `getScheduledTaskDetailRoute` inside `apps/chat` (the app), not inside any `libs/*` package.
 
@@ -167,7 +167,7 @@ The banner SHALL use semantic navigation markup (e.g. a real link/button element
 
 ### Requirement: All new user-visible strings are sourced from i18n
 
-New strings introduced by this capability (task-summary loading/unavailable/retry text, "Task details" action label, and any current-run accessible label reused by the summary) SHALL be added under `apps/chat/src/i18n/locales/en.json`, reusing `scheduledTasks.detail.*` keys where their meaning already matches (e.g. status/run-timestamp formatting keys) instead of duplicating equivalent English strings under a new namespace. New keys specific to this capability SHALL be namespaced `scheduledTasks.conversationBanner.*`.
+New strings introduced by this capability (task-summary loading/unavailable/retry text, "Task details" action label, and any current-run accessible label reused by the summary) SHALL be added under `apps/chat/src/i18n/locales/en.json`, reusing existing `scheduledTasks.*` keys where their meaning already matches (the `scheduledTasks.detail.historyTodayAt`/`historyDateAt`/`historyDurationSuffix` run-timestamp formatting keys via `formatRunTimestamp`, and `scheduledTasks.list.retryLabel` for the retry button label) instead of duplicating equivalent English strings under a new namespace. New keys specific to this capability SHALL be namespaced `scheduledTasks.conversationBanner.*` (`loadingLabel`, `unavailableLabel`, `retryAriaLabel`, `taskDetailsLabel`, `taskDetailsAriaLabel`).
 
 #### Scenario: No hardcoded English literals
 
