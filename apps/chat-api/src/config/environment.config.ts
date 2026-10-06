@@ -668,7 +668,7 @@ export class EnvironmentVariables {
   /*
    * Server-only allowlist of exact GET Core paths exposed through
    * GET /api/v1/custom-api/:operationId (see
-   * openspec/changes/add-configured-core-api-operations/design.md). JSON object,
+   * openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md). JSON object,
    * `{"version":1,"operations":[{"id":...,"method":"GET","corePath":...}]}`.
    * Unset, empty or whitespace-only values mean no operations are enabled.
    * Parsed and bounded by CustomApiRegistryService, not by this schema, so an
@@ -1015,13 +1015,13 @@ export class EnvironmentVariables {
   PUBLICATION_FILTER_SOURCES?: string[] = [];
 
   /*
-   * Skills domain limits (see openspec/changes/fix-skill-editor-core-contract/design.md).
+   * Skills domain limits (see openspec/changes/archive/2026-08-13-fix-skill-editor-core-contract/design.md).
    * Defaults match DIAL Core's own real, verified `ComplexResourceService.Settings`
    * (maxFiles=100, maxFileSizeBytes=1 MiB, maxTotalBytes=16 MiB — read directly from
-   * epam/ai-dial-core's source, not the epic issue's "~" approximations). The former
-   * `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP Multer ingress cap) has been removed: no
-   * ZIP is ever uploaded on the create/update path since this change, so it has no
-   * remaining meaning. A deployment that still sets it has that value silently ignored
+   * epam/ai-dial-core's source, not the epic issue's "~" approximations). There is no
+   * `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP Multer ingress cap): no ZIP is uploaded
+   * on the create/update path, so such a cap has nothing to bound. A deployment that
+   * still sets it has that value silently ignored
    * (class-transformer only maps decorated properties) rather than the boot failing.
    */
   @IsOptional()
@@ -1050,7 +1050,7 @@ export class EnvironmentVariables {
 
   /*
    * Compressed-ZIP ingress cap for `POST /api/v1/skills/import` (see
-   * openspec/changes/add-skill-archive-import/design.md D8). Distinct from
+   * openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md D8). Distinct from
    * the retired `SKILL_UPLOAD_MAX_BYTES`: that variable capped a ZIP upload
    * on the create/update path, which no longer accepts ZIP at all; this one
    * bounds the new, additive archive-import endpoint's compressed upload

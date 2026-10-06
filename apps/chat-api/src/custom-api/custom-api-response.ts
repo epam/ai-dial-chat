@@ -1,6 +1,6 @@
 /**
  * Domain-agnostic bounded JSON transport helpers shared by CustomApiService.
- * See openspec/changes/add-configured-core-api-operations/design.md §5.
+ * See openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md §5.
  */
 
 /** Maximum JSON container (object/array) nesting depth, checked before parsing. */

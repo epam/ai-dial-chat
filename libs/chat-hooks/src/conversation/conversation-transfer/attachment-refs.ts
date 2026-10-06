@@ -65,7 +65,7 @@ export interface AttachmentRef {
  * Reading only `custom_content.attachments` misses the files an agent
  * produces inside an execution stage and the source documents a citation
  * points at, which is how app-generated files usually reach a conversation
- * (issue #8708). The backend's share flow already grants access to all three
+ * ([#8708](https://github.com/epam/ai-dial-chat/issues/8708)). The backend's share flow already grants access to all three
  * (`collectConversationResourceUrls` in `apps/chat-api/src/share/share.service.ts`);
  * export and import have to bundle and re-point the same set, or the imported
  * conversation keeps referencing files in the exporting user's bucket.

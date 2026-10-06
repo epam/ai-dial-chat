@@ -11,6 +11,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BubblePosition } from '../../../types/bubble-position';
@@ -228,9 +229,43 @@ describe('UserMessageBubble — attachments', () => {
 
   it('tray cards are inert when onAttachmentClick is absent', () => {
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
-    expect(
-      screen.queryByRole('button', { name: 'Open attachment' }),
-    ).toBeNull();
+    const tray = screen.getByRole('list');
+    expect(within(tray).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('tray cards are buttons that invoke onAttachmentClick when it is given', () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <UserMessageBubble
+        text="Hello"
+        attachments={[ATTACHMENT]}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Download attachment' }),
+    );
+    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
+  });
+
+  it('names the tile and its download button by separate labels', () => {
+    const onDownloadAll = vi.fn();
+    render(
+      <UserMessageBubble
+        text="Hello"
+        attachments={[ATTACHMENT]}
+        onAttachmentClick={vi.fn()}
+        onDownloadAll={onDownloadAll}
+        labels={{
+          attachmentClickLabel: 'Open in canvas',
+          attachmentDownloadLabel: 'Download file',
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Open in canvas' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Download file' }));
+    expect(onDownloadAll).toHaveBeenCalledWith([ATTACHMENT]);
   });
 });
 
@@ -618,6 +653,37 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
+  });
+
+  it('tray cards are inert when onAttachmentClick is absent', () => {
+    render(
+      <AssistantMessageBubble
+        text="Here is your file"
+        attachments={[ATTACHMENT]}
+      />,
+    );
+    const tray = screen.getByRole('list');
+    expect(within(tray).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('names the tile and its download button by separate labels', () => {
+    const onDownloadAll = vi.fn();
+    render(
+      <AssistantMessageBubble
+        text="Here is your file"
+        attachments={[ATTACHMENT]}
+        onAttachmentClick={vi.fn()}
+        onDownloadAll={onDownloadAll}
+        labels={{
+          attachmentClickLabel: 'Open in canvas',
+          attachmentDownloadLabel: 'Download file',
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Open in canvas' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Download file' }));
+    expect(onDownloadAll).toHaveBeenCalledWith([ATTACHMENT]);
   });
 });
 

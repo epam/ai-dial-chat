@@ -169,7 +169,7 @@ export const useDialFileMutations = ({
    * confirm callback on it — and the name it eventually passes to
    * `onCreateFolder` is derived by splitting a constructed virtual path on
    * '/', which silently swallows an embedded '/' the user typed as if it
-   * were a path separator (see #7968). Track the last live-typed validation
+   * were a path separator (see [#7968](https://github.com/epam/ai-dial-chat/issues/7968)). Track the last live-typed validation
    * result here so `onCreateFolder` can refuse even when the value it
    * receives no longer reflects that error.
    */

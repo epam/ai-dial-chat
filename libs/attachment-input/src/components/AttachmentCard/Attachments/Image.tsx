@@ -10,7 +10,13 @@ import {
   SkeletonVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconPhoto } from '@tabler/icons-react';
-import { CSSProperties, type FC, type KeyboardEvent, useMemo } from 'react';
+import {
+  CSSProperties,
+  type FC,
+  type HTMLAttributes,
+  type KeyboardEvent,
+  useMemo,
+} from 'react';
 import { ATTACHMENT_TILE_BASE_CLASS } from '../../../constants/attachment-group';
 import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import {
@@ -69,6 +75,11 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
 
   const isClickable =
     onClick !== undefined && !isExpandable && !isLoading && !isError;
+  /*
+   * The tile is a button only when activating it does something; otherwise it
+   * is a plain element so it adds no unnamed, no-op Tab stop.
+   */
+  const hasAction = isExpandable || isClickable;
 
   const { imageRef, imageLoadStatus } = useLazyImageLoad({
     enabled: isImage,
@@ -96,10 +107,24 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
     }
   };
 
+  /*
+   * Role, Tab stop, name and handlers travel together, so the tile is either a
+   * complete button or a plain element — never a focusable no-op.
+   */
+  const interactiveProps: HTMLAttributes<HTMLDivElement> = hasAction
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        'aria-label': isExpandable ? expandLabel : clickLabel,
+        onClick: handleCardClick,
+        onKeyDown: handleKeyDown,
+      }
+    : {};
+
   const cardClassName = mergeClasses(
     ATTACHMENT_TILE_BASE_CLASS,
     'group/attachment-tile',
-    isClickable && 'cursor-pointer',
+    hasAction && 'cursor-pointer',
     styles.tile,
     isSelected && styles.selected,
     className,
@@ -108,17 +133,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
   );
 
   return (
-    <div
-      className={cardClassName}
-      onClick={handleCardClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      style={cssVars}
-      aria-label={
-        isClickable ? clickLabel : isExpandable ? expandLabel : undefined
-      }
-    >
+    <div className={cardClassName} {...interactiveProps} style={cssVars}>
       <div className="relative h-full w-full overflow-hidden">
         <div className="absolute end-1 top-1 z-10 flex gap-1">
           {onRemove && (

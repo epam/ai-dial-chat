@@ -10,9 +10,13 @@ import {
   ToolsetOAuthResultType,
   type ToolsetRedirectState,
 } from '@epam/ai-dial-chat-hooks';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ButtonsI18nKeys,
+  ToolsetSigninI18nKeys,
+} from '../../../constants/translation-keys';
 import * as externalServicesApi from '../../../server-api/external-services';
 import * as offlineCredentialsApi from '../../../server-api/offline-credentials';
 import * as toolsetsApi from '../../../server-api/toolsets';
@@ -50,10 +54,6 @@ vi.mock('../../../server-api/external-services', () => ({
 
 vi.mock('../../../server-api/offline-credentials', () => ({
   signInOfflineCredentials: vi.fn(),
-}));
-
-vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
-  default: () => <div>Loading</div>,
 }));
 
 const renderCallback = (
@@ -101,12 +101,91 @@ describe('ToolsetAuthCallback', () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
   });
 
-  it('renders the route fallback while the flow runs', () => {
+  it('announces the in-progress status politely while the exchange runs', () => {
     setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0' });
+    /* Never settles, so the page stays in progress for the assertion. */
+    vi.mocked(toolsetsApi.loginToolset).mockReturnValue(
+      new Promise(() => undefined),
+    );
     renderCallback();
 
-    expect(screen.getByText('Loading')).toBeTruthy();
+    const status = screen.getByRole('status');
+    expect(
+      screen.getByRole('img', {
+        name: ToolsetSigninI18nKeys.CallbackInProgress,
+      }),
+    ).toBeTruthy();
+    expect(status.contains(screen.getByRole('img'))).toBe(true);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
+
+  it('shows a polite success status with a close button once the exchange succeeds', async () => {
+    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0' });
+    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+    renderCallback();
+
+    expect(
+      await screen.findByText(ToolsetSigninI18nKeys.CallbackSuccess),
+    ).toBeTruthy();
+    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+
+    mockClose.mockClear();
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Close }),
+    );
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [
+      'the exchange rejects',
+      { toolsetId: 'toolsets/b/my__1.0.0' },
+      '?code=auth-code-xyz',
+      ToolsetSigninI18nKeys.ErrorLoginFailed,
+    ],
+    [
+      'the provider returned no code',
+      { toolsetId: 'toolsets/b/my__1.0.0' },
+      '',
+      ToolsetSigninI18nKeys.CallbackMissingCode,
+    ],
+    [
+      'the popup holds no redirect state',
+      null,
+      '?code=auth-code-xyz',
+      ToolsetSigninI18nKeys.CallbackRequestUnverified,
+    ],
+    [
+      'the returned state does not match',
+      { toolsetId: 'toolsets/b/my__1.0.0', state: 'expected-state' },
+      '?code=auth-code-xyz&state=other-state',
+      ToolsetSigninI18nKeys.CallbackRequestUnverified,
+    ],
+  ] as const)(
+    'shows a translated alert with a close button when %s',
+    async (_case, redirectState, search, messageKey) => {
+      if (redirectState) setRedirectState(redirectState);
+      vi.mocked(toolsetsApi.loginToolset).mockRejectedValue(
+        new Error('network error'),
+      );
+      renderCallback(search);
+
+      const alert = await screen.findByRole('alert');
+      expect(alert.textContent).toContain(
+        ToolsetSigninI18nKeys.CallbackFailedTitle,
+      );
+      expect(alert.textContent).toContain(messageKey);
+      expect(screen.queryByRole('status')).toBeNull();
+
+      mockClose.mockClear();
+      fireEvent.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.Close }),
+      );
+      expect(mockClose).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('dispatches to loginToolset when the redirect state names no resource kind', async () => {
     setRedirectState({

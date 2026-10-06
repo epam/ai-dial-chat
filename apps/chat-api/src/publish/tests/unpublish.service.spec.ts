@@ -118,7 +118,7 @@ describe('PublishService.unpublish', () => {
     expect(new Date(result.requestedAt).toString()).not.toBe('Invalid Date');
   });
 
-  /* Same round trip as publish (GH #8727), on the removal request. */
+  /* Same round trip as publish ([#8727](https://github.com/epam/ai-dial-chat/issues/8727)), on the removal request. */
   it('reports the submitted display author, not the account Core recorded', async () => {
     const { service, dialClient } = makeService();
     vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
@@ -411,7 +411,7 @@ describe('PublishService.getPublishHistory with pending removals', () => {
 });
 
 /*
- * GH #8445. Core keeps the original ADD publication as APPROVED forever — it is
+ * [#8445](https://github.com/epam/ai-dial-chat/issues/8445). Core keeps the original ADD publication as APPROVED forever — it is
  * an audit record, not live state — so after an administrator approved an
  * unpublish request the folder still came back as published. The details panel
  * derives Publish-vs-Unpublish from exactly this history, so the action menu
@@ -550,7 +550,7 @@ describe('PublishService.getPublishHistory response shape', () => {
   });
 
   /*
-   * Regression for GH #7897: a live Core answers `getPublications` with an
+   * Regression for [#7897](https://github.com/epam/ai-dial-chat/issues/7897): a live Core answers `getPublications` with an
    * envelope, not the bare array the SDK types. Reading `.filter` off it threw a
    * TypeError that surfaced as a 503, which is why publish history was believed
    * to be broken on the Core side.

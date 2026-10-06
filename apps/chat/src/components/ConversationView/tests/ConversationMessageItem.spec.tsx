@@ -237,6 +237,39 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+/*
+ * A file tile that opens the canvas and its corner download button are two
+ * controls; giving both the download label made them indistinguishable to
+ * assistive technology.
+ */
+describe('ConversationMessageItem — attachment tile labels', () => {
+  it('names a canvas-opening tile and its download button separately', () => {
+    render(
+      <ConversationMessageItem {...defaultProps} onAttachmentClick={vi.fn()} />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: AttachmentsI18nKeys.Download }),
+    ).toBeTruthy();
+    expect(capturedLabels).toMatchObject({
+      attachmentClickLabel: ButtonsI18nKeys.OpenInCanvas,
+      attachmentDownloadLabel: AttachmentsI18nKeys.Download,
+    });
+  });
+
+  it('names a tile that downloads by the download label', () => {
+    render(<ConversationMessageItem {...defaultProps} />);
+
+    expect(capturedLabels).toMatchObject({
+      attachmentClickLabel: AttachmentsI18nKeys.Download,
+      attachmentDownloadLabel: AttachmentsI18nKeys.Download,
+    });
+  });
+});
+
 describe('ConversationMessageItem — reference-only attachments', () => {
   const ASSISTANT_WITH_REFERENCE: Message = {
     role: MessageRole.Assistant,
@@ -527,7 +560,7 @@ describe('ConversationMessageItem — inline citations', () => {
      * Before Office citation highlighting existed, every non-PDF citation
      * fell through to the plain-attachment path. This citation carries no
      * selector at all (a legacy annotation, or one the backend previously
-     * stripped) — per design.md's acceptance criteria, a missing selector
+     * stripped) — per `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md`'s acceptance criteria, a missing selector
      * still opens the Office document, just with no highlight, rather than
      * falling through.
      */
@@ -1077,11 +1110,11 @@ describe('ConversationMessageItem — inline citations', () => {
   });
 
   /*
-   * Fixture trimmed from a user-confirmed reproduction of issue #8822: the
+   * Fixture trimmed from a user-confirmed reproduction of [#8822](https://github.com/epam/ai-dial-chat/issues/8822): the
    * assistant response's `content`/`custom_content.annotations`, source URL
    * replaced with a test value, execution history/model state omitted.
    * Findings from that payload (recorded in task 4.1 of
-   * `openspec/changes/fix-repeated-citation-popup-identity/tasks.md`):
+   * `openspec/changes/archive/2026-09-16-fix-repeated-citation-popup-identity/tasks.md`):
    * source is a PDF (not the issue's original DOCX); `ff3390`/`7bba1b` each
    * occur twice in `content` against exactly one annotation each (no
    * `index`); `ff3390`'s annotation carries two `pdf_region` selectors. This

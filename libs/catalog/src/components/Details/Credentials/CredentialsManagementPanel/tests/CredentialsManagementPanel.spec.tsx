@@ -25,13 +25,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onChange,
     labelProps,
     error,
+    id,
+    'aria-describedby': ariaDescribedBy,
   }: {
     onChange: (value?: string) => void;
     labelProps?: { label?: string };
     error?: string;
+    id?: string;
+    'aria-describedby'?: string;
   }) => (
     <div>
       <input
+        id={id}
+        aria-describedby={ariaDescribedBy}
         aria-label={labelProps?.label}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -382,5 +388,49 @@ describe('CredentialsManagementPanel', () => {
       expect(screen.queryByText('Signed in')).toBeNull();
       expect(screen.getAllByText('Signed out')).toHaveLength(2);
     });
+  });
+
+  it('shows a hint naming the configured API key header on both API key inputs', () => {
+    const item = makeItem({
+      authenticationType: ToolsetAuthenticationType.ApiKey,
+      apiKeyHeader: 'X-Api-Key',
+    });
+    render(<CredentialsManagementPanel item={item} />);
+
+    expect(
+      screen.getAllByRole('textbox', {
+        name: 'API key',
+        description: 'Enter your API key value for "X-Api-Key" header',
+      }),
+    ).toHaveLength(2);
+  });
+
+  it('uses texts.apiKeyHeaderHint for the header hint when provided', () => {
+    const item = makeItem({
+      authenticationType: ToolsetAuthenticationType.ApiKey,
+      apiKeyHeader: 'X-Api-Key',
+    });
+    render(
+      <CredentialsManagementPanel
+        item={item}
+        texts={{ apiKeyHeaderHint: (header) => `Header: ${header}` }}
+      />,
+    );
+
+    expect(
+      screen.getAllByRole('textbox', { description: 'Header: X-Api-Key' }),
+    ).toHaveLength(2);
+  });
+
+  it('omits the header hint when no API key header is configured', () => {
+    const item = makeItem({
+      authenticationType: ToolsetAuthenticationType.ApiKey,
+    });
+    render(<CredentialsManagementPanel item={item} />);
+
+    for (const input of screen.getAllByRole('textbox', { name: 'API key' })) {
+      expect(input.getAttribute('aria-describedby')).toBeNull();
+    }
+    expect(screen.queryByText(/header$/)).toBeNull();
   });
 });

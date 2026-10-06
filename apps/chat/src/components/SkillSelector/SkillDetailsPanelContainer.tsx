@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  ChatI18nKeys,
 } from '../../constants/translation-keys';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
@@ -94,6 +95,11 @@ const SkillDetailsPanelContainer: FC<Props> = ({ skillId, onClose }) => {
         CatalogI18nKeys.DetailsContentFileUnsupported,
       ),
       closeAriaLabel: t(ButtonsI18nKeys.Close),
+      copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
+      copiedCodeStatusLabel: t(ButtonsI18nKeys.Copied),
+      downloadCodeAriaLabel: t(ButtonsI18nKeys.Download),
+      tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+      mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
     }),
     [t],
   );

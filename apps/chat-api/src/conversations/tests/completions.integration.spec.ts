@@ -168,7 +168,7 @@ describe('POST /conversations/completions (integration)', () => {
 
   /* Firefox keeps the fetch() promise pending until the first body byte
    * arrives, so the stream has to open with a comment rather than waiting for
-   * the model's first token — see issue #8587. */
+   * the model's first token — see [#8587](https://github.com/epam/ai-dial-chat/issues/8587). */
   it('opens the stream with the init comment before the first model chunk', async () => {
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
@@ -232,7 +232,7 @@ describe('POST /conversations/completions (integration)', () => {
    * `generationService.register()` call that rejects a duplicate active
    * generation — does not run until the controller's `for await` pulls the
    * first chunk. The rejection therefore surfaces from inside the consuming
-   * loop, after SSE headers may or may not have been sent. Before issue #8688
+   * loop, after SSE headers may or may not have been sent. Before [#8688](https://github.com/epam/ai-dial-chat/issues/8688)
    * the controller's `finally` ended the response unconditionally, flushing an
    * empty 200 and leaving the exception filter nothing to write: a second
    * browser tab submitting into the same conversation saw an empty LLM answer

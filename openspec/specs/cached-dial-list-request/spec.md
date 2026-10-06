@@ -56,4 +56,9 @@ Migrating a service's list/single-read method to `withCachedDialRequest` SHALL p
 
 #### Scenario: The helper is the default for straightforward reads
 - **WHEN** a service caches a DIAL list or single-read response with one key, one TTL, and no cross-cutting enrichment
-- **THEN** it SHALL use `withCachedDialRequest` — as models, applications, application schemas, publish, conversation publish, scheduled tasks, and the MCP app service do — rather than repeating the read-through by hand
+- **THEN** it SHALL use `withCachedDialRequest` — as models, applications, application schemas (both `listApplicationSchemas` under `application-schemas:list:${userSub}` and `getApplicationSchema` under `application-schemas:item:${userSub}:${schemaId}`, 60 s each), deployment configuration (`DeploymentsDetailsService.getDeploymentConfiguration` under `deployments:configuration:${userSub}:${name}`, 60 s), publish, conversation publish, scheduled tasks, and the MCP app service do — rather than repeating the read-through by hand
+- **AND** a non-OK upstream response or a transport failure on such a read is never cached, so the next call re-fetches from DIAL Core
+
+#### Scenario: Reads with rules the helper cannot express stay hand-written
+- **WHEN** a single-key read needs behaviour outside the helper's contract — `DeploymentsDetailsService.getDeploymentInterfaces` resolves every failure to an uncached empty list instead of mapping it to an exception, and `DeploymentsDetailsService.getDeploymentDetails` joins in-flight requests and skips a cache write whose key was invalidated mid-flight
+- **THEN** that read MAY keep its hand-written caching, with its cache key, TTL, and failure behaviour unchanged

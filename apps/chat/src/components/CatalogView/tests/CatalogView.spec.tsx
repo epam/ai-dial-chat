@@ -128,6 +128,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUnpublish,
     isUnpublishVisible,
     publishLabels,
+    detailsTexts,
     ruleSourceOptions,
     onFetchExistingRules,
     isShareVisible,
@@ -182,6 +183,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isPublishVisible?: (item: CatalogItem) => boolean;
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
+    detailsTexts?: { apiKeyHeaderHint?: (header: string) => string };
     publishLabels?: {
       credentialsLabel?: string;
       credentialsHint?: string;
@@ -236,6 +238,9 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
           {String(Boolean(isFullWidth))}
         </output>
         <output aria-label="Active tab">{activeTab ?? ''}</output>
+        <output aria-label="API key header hint">
+          {detailsTexts?.apiKeyHeaderHint?.('X-Api-Key') ?? ''}
+        </output>
         <output aria-label="Publish credentials label">
           {publishLabels?.credentialsLabel ?? ''}
         </output>
@@ -787,6 +792,15 @@ describe('CatalogView', () => {
     );
   });
 
+  /* `t` echoes the key here; what matters is that the app supplies the hint. */
+  it('supplies a translated API key header hint to the catalog details', () => {
+    render(<CatalogView />);
+
+    expect(screen.getByLabelText('API key header hint').textContent).toBe(
+      CatalogI18nKeys.CredentialsApiKeyHeaderHint,
+    );
+  });
+
   describe('publish wiring', () => {
     it('sources ruleSourceOptions from useAppConfig, not a hardcoded list', () => {
       render(<CatalogView />);
@@ -1219,7 +1233,7 @@ describe('CatalogView', () => {
       );
     });
 
-    /* Issue #9143: a prompt re-created at the same path must not come back starred. */
+    /* [#9143](https://github.com/epam/ai-dial-chat/issues/9143): a prompt re-created at the same path must not come back starred. */
     it('removes a deleted prompt from favourites', async () => {
       enablePrompts();
       mockPrompts();
@@ -1419,7 +1433,7 @@ describe('CatalogView', () => {
       ).toBeTruthy();
     });
 
-    /* Issue #9143: a skill re-created at the same path must not come back starred. */
+    /* [#9143](https://github.com/epam/ai-dial-chat/issues/9143): a skill re-created at the same path must not come back starred. */
     it('removes a deleted skill from favourites', async () => {
       enableSkills();
       mockSkills();

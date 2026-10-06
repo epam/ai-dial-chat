@@ -188,7 +188,7 @@ Use `KEEP_FIXTURES=1` when inspecting generated files. Reports are written to th
 ## Reusable chat workflows
 
 `useSkillArchiveImport` and `useFileAttachmentPicker`
-(`openspec/changes/extract-reusable-chat-workflows`) are reachable through the existing
+([`extract-reusable-chat-workflows`](../../../openspec/changes/archive/2026-09-21-extract-reusable-chat-workflows/design.md)) are reachable through the existing
 `skill-editor` and `file-manager` subpath entries, so no new fixture was added here — the
 existing `skill-editor`/`file-manager` fixtures already typecheck and bundle them. Adding
 `useFileAttachmentPicker` did add a real, previously-undeclared peer to the `file-manager`
@@ -197,8 +197,9 @@ fixture's closure: it calls `@epam/ai-dial-attachment-input`'s `isMimeTypeAllowe
 
 `@epam/ai-dial-skills`'s `SkillArchiveUploadDialog` and `@epam/ai-dial-prompts`'s
 `usePromptSelectorOverlay` have no fixture here — both packages declare workspace-sibling
-packages as ordinary `dependencies`, not `peerDependencies` (the shape this harness's peer-closure
-model isn't built for; see `.claude/rules/libs.md`'s "a sibling lib is a dependency" section).
-`tools/reusable-workflows-consumer-fixture` covers them instead, modeled on
-`tools/attachment-canvas-consumer-fixture`. See `docs/reusable-chat-workflows.md` for the full
+packages as ordinary `dependencies`, not `peerDependencies` (the shape the `SUBPATH_FIXTURES`
+entries here aren't built for; see `.claude/rules/libs.md`'s "a sibling lib is a dependency" section).
+[`tools/reusable-workflows-consumer-fixture`](../../../tools/reusable-workflows-consumer-fixture/README.md) covers them instead; it
+reuses this harness's `createFixtureDependencyResolver`/`createFixtureDir` to install their full
+dependency and peer closure. See [`docs/reusable-chat-workflows.md`](../../../docs/reusable-chat-workflows.md) for the full
 adoption map and the split between behavior tests and package-consumption fixtures.

@@ -129,7 +129,7 @@ describe('serializeMarkdownTableRows — reparsed by the renderer', () => {
     expect(cell.formulas).toEqual([tex]);
   });
 
-  /* Issue #8807: what the reader sees must be what Canvas receives. An escaped
+  /* [#8807](https://github.com/epam/ai-dial-chat/issues/8807): what the reader sees must be what Canvas receives. An escaped
      pipe used to arrive as `\|`, the norm delimiter, so `|x|` reopened as
      ‖x‖. */
   it('keeps a formula with pipes rendering the same glyphs', () => {

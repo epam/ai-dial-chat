@@ -348,7 +348,7 @@ describe('PublishFoldersTree', () => {
     act(() => {
       // Simulates the host component showing the inline error live while the
       // user types, then confirming with a different (host-sanitized) value
-      // — see #7968: the host does not reliably gate its own confirm on the
+      // — see [#7968](https://github.com/epam/ai-dial-chat/issues/7968): the host does not reliably gate its own confirm on the
       // validation result it displayed.
       capturedProps.current?.onRenameValidate?.('/New folder', {} as never);
       capturedProps.current?.onCreateFolderSave?.('New folder');

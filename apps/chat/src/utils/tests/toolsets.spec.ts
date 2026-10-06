@@ -1,14 +1,20 @@
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import { ResponseError } from '@epam/ai-dial-chat-api-client';
-import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
+import {
+  ToolsetAuthTypes,
+  ToolsetOAuthFailureReason,
+  WithLogin,
+} from '@epam/ai-dial-chat-hooks';
 import type { ToolsetFormData } from '@epam/ai-dial-toolset-editor';
 import { ToolsetTransportType } from '@epam/ai-dial-toolset-editor';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetSigninI18nKeys } from '../../constants/translation-keys';
 import * as toolsetsApi from '../../server-api/toolsets';
 import {
   extractToolsetApiErrorMessage,
   fetchToolsetAuthSettings,
   formToToolsetBody,
+  getToolsetOAuthFailureMessageKey,
   toolsetDtoToForm,
 } from '../toolsets';
 
@@ -443,5 +449,28 @@ describe('extractToolsetApiErrorMessage', () => {
     const error = new ResponseError(response);
 
     await expect(extractToolsetApiErrorMessage(error)).resolves.toBeUndefined();
+  });
+});
+
+describe('getToolsetOAuthFailureMessageKey', () => {
+  it.each([
+    [
+      ToolsetOAuthFailureReason.MissingCode,
+      ToolsetSigninI18nKeys.CallbackMissingCode,
+    ],
+    [
+      ToolsetOAuthFailureReason.MissingRedirectState,
+      ToolsetSigninI18nKeys.CallbackRequestUnverified,
+    ],
+    [
+      ToolsetOAuthFailureReason.StateMismatch,
+      ToolsetSigninI18nKeys.CallbackRequestUnverified,
+    ],
+    [
+      ToolsetOAuthFailureReason.LoginRequestFailed,
+      ToolsetSigninI18nKeys.ErrorLoginFailed,
+    ],
+  ])('maps %s to its translation key', (reason, key) => {
+    expect(getToolsetOAuthFailureMessageKey(reason)).toBe(key);
   });
 });

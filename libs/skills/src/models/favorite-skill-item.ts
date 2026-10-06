@@ -20,7 +20,7 @@ export interface SkillListingEntry {
   url: string;
   /** Display name. */
   name: string;
-  /** Listing-sourced description (Core PR #1970). Absent on folders and older Cores. */
+  /** Listing-sourced description ([ai-dial-core#1970](https://github.com/epam/ai-dial-core/pull/1970)). Absent on folders and older Cores. */
   description?: string;
 }
 

@@ -29,7 +29,7 @@ describe('toPublicationList', () => {
   /*
    * The regression this helper exists for: a live Core answers with an
    * envelope, and calling `.filter` on it threw a `TypeError` that surfaced as
-   * a 503 "DIAL Core is currently unavailable" (GH #7897).
+   * a 503 "DIAL Core is currently unavailable" ([#7897](https://github.com/epam/ai-dial-chat/issues/7897)).
    */
   it('unwraps the { publications: [...] } envelope a live Core returns', () => {
     const publications = [publication('public/A/')];
@@ -443,7 +443,7 @@ const approved = (
 });
 
 /*
- * GH #8445. Core never retracts the original `ADD` publication — it stays
+ * [#8445](https://github.com/epam/ai-dial-chat/issues/8445). Core never retracts the original `ADD` publication — it stays
  * `APPROVED` as an audit record — so once an administrator approved an
  * unpublish request the folder still looked published, the action menu went on
  * offering Unpublish, and acting on it failed with "Target resource does not
@@ -628,7 +628,7 @@ describe('resolvePublicationsForSource, approved removals', () => {
    * the removal there is nothing to order it against, so it cancels the whole
    * folder — a later re-publish included. Pinned because the alternative
    * (letting the dateable ADD win) would offer Unpublish for a copy Core may
-   * already have deleted, the failure GH #8445 is about.
+   * already have deleted, the failure [#8445](https://github.com/epam/ai-dial-chat/issues/8445) is about.
    */
   it('cancels a later ADD when the approved removal cannot be dated', async () => {
     expect(

@@ -236,7 +236,7 @@ describe('Input — command menu keyboard navigation', () => {
 
 describe('Input — selection highlight while a /query is typed', () => {
   /*
-   * Issue #9231: an open `/query` puts the textarea in mirror mode (its own
+   * [#9231](https://github.com/epam/ai-dial-chat/issues/9231): an open `/query` puts the textarea in mirror mode (its own
    * text and `::selection` are invisible), so the replacement highlight must
    * be drawn even though no mention is tracked yet. jsdom does no layout, so
    * `Range.getClientRects()` is stubbed to report one selected line.

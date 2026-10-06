@@ -438,7 +438,7 @@ describe('AnnouncementBanner — announcements pill', () => {
   /* The popover is hidden along with the banner, so the entries behind the pill
      have to key the dismissal too — otherwise publishing a new announcement
      leaves the banner closed for everyone who dismissed the previous one
-     (issue #8827). */
+     ([#8827](https://github.com/epam/ai-dial-chat/issues/8827)). */
   it('keys dismissal on the announcements behind the pill', () => {
     const announcements = [makeAnnouncement('Upgraded to 1.43')];
     mockAppConfigState.announcementTitle = 'Welcome to DIAL';

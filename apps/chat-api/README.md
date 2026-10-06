@@ -620,6 +620,14 @@ Interactive API documentation is available at `/api/docs` when the application i
 - Request/response schemas
 - Error responses
 - Query parameter validation rules
+- Authentication: two security schemes — `session` (the encrypted session cookie,
+  `__Host-chat.sess` by default) and `bearer` (an `Authorization: Bearer` token,
+  see [Header bearer-token authentication](#header-bearer-token-authentication)).
+  The document requires either one on every operation; `@Public()` routes
+  (health, themes, client-config, auth providers/login/callback/logout) are
+  emitted with `security: []`. The opt-out is derived from `@Public()` itself by
+  `createOpenApiDocument` in `src/openapi/openapi.config.ts`, so a new public
+  route needs no extra Swagger decorator.
 
 ## API Endpoints
 

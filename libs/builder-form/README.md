@@ -244,7 +244,7 @@ The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` tit
 - `extraActions` render before Cancel; `hideStandardActions` hides Cancel and the primary button so only they remain (e.g. while a preview is open).
 - `metadataTitle` replaces the Metadata heading; `null` renders the section without one, for left-column content that carries its own heading.
 - `metadataFooter` renders below the Metadata section in the left column.
-- `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading.
+- `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading; `null` renders the section without one, for Setup content that carries its own heading (e.g. an embedded editor).
 - `alert` renders in a `role="alert"` region above the Setup section (above Metadata when there is no Setup).
 
 ```tsx

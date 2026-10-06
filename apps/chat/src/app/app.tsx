@@ -44,6 +44,7 @@ import {
 import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
+  ChatI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
 import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
@@ -541,6 +542,11 @@ const App: FC = () => {
               tableCopyLabel: t(ButtonsI18nKeys.Copy),
               tableCopiedLabel: t(ButtonsI18nKeys.Copied),
               tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
+              codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+              codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+              codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+              tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+              mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
               ooxmlHighlightsLabel: t(
                 AttachmentCanvasI18nKeys.OoxmlHighlightsLabel,
               ),

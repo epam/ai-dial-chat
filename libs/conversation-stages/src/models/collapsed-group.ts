@@ -39,8 +39,14 @@ export interface CollapsedGroupLabels {
   failedCountLabel?: (failedCount: number) => string;
   /** Accessible label announced for the running summary's spinner. Defaults to `'Running'`. */
   runningAriaLabel?: string;
-  /** Accessible label for the copy button on each stage's content. Defaults to `'Copy'`. */
+  /** Accessible label for the copy button on each stage content code block. Defaults to `'Copy stage content'`. */
   copyAriaLabel?: string;
+  /** Status announced after a stage content code block has been copied. Defaults to `'Copied!'`. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for a table's horizontally scrollable region in stage content. Defaults to `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's horizontally scrollable region in stage content. Defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
   /** Visually-hidden label announced alongside a failed stage's icon. Defaults to `'Failed'`. */
   failedAriaLabel?: string;
   /** Returns the label for a single attempt inside a collapsed `×N` group. Defaults to `(n) => \`Attempt ${n}\``. */

@@ -329,7 +329,7 @@ describe('useCatalogPublishing', () => {
 
     /*
      * The public root has no path segments, so naming its leaf produced
-     * `folder ""` in the confirmation (GH #8704).
+     * `folder ""` in the confirmation ([#8704](https://github.com/epam/ai-dial-chat/issues/8704)).
      */
     it('names the root label when the target folder is the public root', () => {
       const { result, notifyOperationSuccess } = renderPublishing();
@@ -467,7 +467,7 @@ describe('useCatalogPublishing', () => {
     });
 
     /*
-     * GH #8691: Publish used to be withheld from an item that had already been
+     * [#8691](https://github.com/epam/ai-dial-chat/issues/8691): Publish used to be withheld from an item that had already been
      * published, leaving Unpublish as the owner's only action even on a brand
      * new version. The predicate must not consult publish state at all.
      */
@@ -616,7 +616,7 @@ describe('useCatalogPublishing', () => {
     });
 
     /*
-     * GH #8691: Unpublish used to ride the same predicate as Publish, which
+     * [#8691](https://github.com/epam/ai-dial-chat/issues/8691): Unpublish used to ride the same predicate as Publish, which
      * put it on the author's private item — where it could target a folder
      * that item was never published to — and kept it off the published copy,
      * the only thing an unpublish request actually removes.

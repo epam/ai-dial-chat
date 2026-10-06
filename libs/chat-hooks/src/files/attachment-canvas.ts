@@ -585,7 +585,7 @@ export const annotationToPdfCanvasContent = (
  * wire's own `type` string) to the `OoxmlHighlightLocation` shape
  * `libs/attachment-canvas` renders (discriminated by its own
  * `OoxmlHighlightKind` enum). This is the layer boundary noted in
- * `design.md`'s architecture diagram: `libs/quotations` cannot depend on
+ * `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md`'s architecture diagram: `libs/quotations` cannot depend on
  * `libs/attachment-canvas` (a real circular dependency — `attachment-canvas`
  * already depends on `quotations` for the PDF highlight path), so the
  * translation happens here, in the one lib that already depends on both.

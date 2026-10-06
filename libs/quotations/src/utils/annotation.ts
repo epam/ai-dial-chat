@@ -267,7 +267,7 @@ export const annotationsToPdfHighlights = (
  * unique beyond the list it came from, which is why it is the last resort — a
  * caller gathering one citation group at a time would otherwise give every
  * single-annotation group the same id, and the canvas could not tell two
- * citations of one document apart (issue #8907). Ids are never persisted and
+ * citations of one document apart ([#8907](https://github.com/epam/ai-dial-chat/issues/8907)). Ids are never persisted and
  * never sent over the wire.
  */
 export const annotationHighlightId = (
@@ -430,7 +430,7 @@ export const isExcelRcRangeSelector = (
  * any field fails validation (non-integer/negative offsets, `end < start`,
  * a non-integer-array `path`, or a non-string `text`). `endExclusive` is the
  * wire's `end` copied through unchanged — already exclusive, not `end + 1`
- * (see `design.md` D3).
+ * (see `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md` D3).
  */
 const normalizeDocxSelector = (
   selector: DocxRangeSelector,
@@ -458,7 +458,7 @@ const normalizeDocxSelector = (
 /**
  * Converts one `pptx_text_range` selector to a location, or `undefined` when
  * any field fails validation. `endExclusive` is the wire's `end` copied
- * through unchanged (see `design.md` D3).
+ * through unchanged (see `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md` D3).
  */
 const normalizePptxSelector = (
   selector: PptxRangeSelector,

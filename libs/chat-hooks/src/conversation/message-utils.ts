@@ -33,7 +33,7 @@ export const isMessageStreaming = (
  * an edit truncates past one: the marker is appended at the end of the
  * timeline, so truncating at an earlier message drops it, and the model the
  * user picked reverted on the next page load even though the answer had been
- * regenerated on it (issue #8712). The assistant message the backend writes
+ * regenerated on it ([#8712](https://github.com/epam/ai-dial-chat/issues/8712)). The assistant message the backend writes
  * carries the deployment that produced it, which survives that truncation
  * because it *is* the regenerated message.
  */

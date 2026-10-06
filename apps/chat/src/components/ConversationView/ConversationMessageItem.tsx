@@ -239,7 +239,8 @@ interface Props {
   /** `accept` attribute value forwarded to the edit-message native file picker. */
   fileAccept?: string;
   /**
-   * When provided, called instead of the default download action when an attachment card is activated.
+   * When provided, called instead of the default download action when an attachment card is activated —
+   * the conversation view opens the attachment in the canvas, so the tile is then named "Open in canvas".
    * Receives this item's `index` so the list can pass one stable callback and keep the row memoized.
    */
   onAttachmentClick?: (
@@ -434,6 +435,15 @@ const ConversationMessageItem: FC<Props> = ({
   const handleAttachmentClick = onAttachmentClickProp
     ? handleIndexedAttachmentClick
     : handleDownload;
+  /*
+   * A file tile and its corner download button are separate controls, so they
+   * need separate names. The tile only downloads when no host click handler
+   * is given; otherwise it opens the attachment in the canvas.
+   */
+  const attachmentClickLabel = onAttachmentClickProp
+    ? t(ButtonsI18nKeys.OpenInCanvas)
+    : t(AttachmentsI18nKeys.Download);
+  const attachmentDownloadLabel = t(AttachmentsI18nKeys.Download);
   const handleDownloadAll = useCallback(
     (attachmentsToDownload: DisplayAttachment[]) => {
       attachmentsToDownload.forEach(handleDownload);
@@ -466,6 +476,9 @@ const ConversationMessageItem: FC<Props> = ({
       attemptLabel: (number: number) =>
         t(ConversationI18nKeys.StagesAttempt, { number }),
       copyAriaLabel: t(ConversationI18nKeys.StagesCopyContent),
+      codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+      tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+      mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
       attachmentClickLabel: t(ConversationI18nKeys.StagesPreviewAttachment),
     }),
     [executedLabel, stepsLabel, t],
@@ -556,6 +569,11 @@ const ConversationMessageItem: FC<Props> = ({
         download: t(ButtonsI18nKeys.Download),
         showMore: t(ButtonsI18nKeys.ShowMore),
         showLess: t(ButtonsI18nKeys.ShowLess),
+        codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+        codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+        codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+        tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+        mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
       };
       const markerLabels = {
         ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
@@ -762,7 +780,8 @@ const ConversationMessageItem: FC<Props> = ({
                 showLessLabel,
                 showMoreAriaLabel: showMoreUserMessageAriaLabel,
                 showLessAriaLabel: showLessUserMessageAriaLabel,
-                attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+                attachmentClickLabel,
+                attachmentDownloadLabel,
                 attachmentOpenInNewTabLabel: t(
                   AttachmentsI18nKeys.OpenInNewTab,
                 ),
@@ -782,6 +801,11 @@ const ConversationMessageItem: FC<Props> = ({
             }
             onUploadAttachment={onUploadAttachment}
             cancelLabel={cancelLabel}
+            removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
+            retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
+            uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
+            expandLabel={t(AttachmentsI18nKeys.ExpandPastedText)}
+            clickLabel={attachmentClickLabel}
             saveLabel={saveLabel}
             ariaLabel={editMessageAriaLabel}
             className="w-full max-w-[748px]"
@@ -984,6 +1008,15 @@ const ConversationMessageItem: FC<Props> = ({
                           download: t(ButtonsI18nKeys.Download),
                           showMore: t(ButtonsI18nKeys.ShowMore),
                           showLess: t(ButtonsI18nKeys.ShowLess),
+                          codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+                          codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+                          codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+                          tableScrollRegionAriaLabel: t(
+                            ChatI18nKeys.ScrollableTable,
+                          ),
+                          mathScrollRegionAriaLabel: t(
+                            ChatI18nKeys.ScrollableFormula,
+                          ),
                         }}
                         markerLabels={{
                           ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
@@ -1100,7 +1133,8 @@ const ConversationMessageItem: FC<Props> = ({
           showLessLabel,
           showMoreAriaLabel: showMoreUserMessageAriaLabel,
           showLessAriaLabel: showLessUserMessageAriaLabel,
-          attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+          attachmentClickLabel,
+          attachmentDownloadLabel,
           attachmentOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
           startersAriaLabel: quickReplyButtonsAriaLabel,
           thinkingLabel,

@@ -32,12 +32,16 @@ export interface SessionPayload {
 /** Claim key the `job_title` OIDC claim (when allowlisted) is stored under. */
 export const JOB_TITLE_CLAIM = 'job_title';
 
-/** Reads the `job_title` claim out of `SessionUser.claims`, if present and a string. */
+/**
+ * Reads the `job_title` claim out of a claims record, if it is a string that
+ * is non-empty after trimming. Empty, whitespace-only, and non-string values
+ * yield `undefined` so they are neither stored in the session nor forwarded.
+ */
 export const getJobTitleClaim = (
   claims: Record<string, unknown> | undefined,
 ): string | undefined => {
   const value = claims?.[JOB_TITLE_CLAIM];
-  return typeof value === 'string' ? value : undefined;
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
 };
 
 export interface SessionUser {

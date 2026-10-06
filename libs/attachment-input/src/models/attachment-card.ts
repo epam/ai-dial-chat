@@ -85,15 +85,15 @@ export interface AttachmentCardLabels extends AttachmentTypeLabels {
   removeLabel?: string;
   /** Accessible label for the retry button (error state only). Defaults to `'Retry upload'`. */
   retryLabel?: string;
-  /** Accessible label applied to the card root when it is interactive via `onClick`. Defaults to `'Open attachment'`. */
+  /** Accessible name of the card root when it is interactive via `onClick`. Defaults to `'Open attachment'` on an image tile and `'Download attachment'` on a file, link or pasted-text tile. Unused when the card has no `onClick`. */
   clickLabel?: string;
-  /** Accessible label applied to the card root when it is interactive via `onExpand` (pasted-text cards). Defaults to `'Expand pasted text'`. */
+  /** Accessible name of the card root when it is interactive via `onExpand` (pasted-text cards; takes precedence over `clickLabel`). Defaults to `'Expand pasted text'`. */
   expandLabel?: string;
   /** Accessible label for the loading spinner shown while the attachment is uploading. Defaults to `'Loading attachment'`. */
   loadingLabel?: string;
   /** Accessible label for the file card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
-  /** Accessible label for the download button. Defaults to `'Download attachment'`. */
+  /** Accessible label for the corner download button on image and file tiles (rendered when `onDownload` is given). Defaults to `'Download attachment'`. */
   downloadLabel?: string;
   /** Accessible label for the open-in-new-tab button. Defaults to `'Open in new tab'`. */
   openInNewTabLabel?: string;
@@ -109,9 +109,9 @@ export interface AttachmentCardProps {
   onRemove?: (id: string) => void;
   /** Called when the user activates the retry button (error state only). */
   onRetry?: (id: string) => void;
-  /** Called when the user clicks or activates a pasted-text card to expand its content back into the input. */
+  /** Called when the user clicks or keyboard-activates (Enter/Space) a pasted-text card to expand its content back into the input. Takes precedence over `onClick` on pasted-text cards. */
   onExpand?: (id: string) => void;
-  /** Called when the user clicks or keyboard-activates the card. Receives the attachment `id`. */
+  /** Called when the user clicks or keyboard-activates (Enter/Space) the card. Receives the attachment `id`. When neither this nor an applicable `onExpand` is given, the card renders as a non-interactive element (no `role="button"`, no Tab stop). */
   onClick?: (id: string) => void;
   /** Localised accessible labels for the remove/retry actions, the interactive card root, and the non-extension attachment type names (prompt/pasted/image). */
   labels?: AttachmentCardLabels;

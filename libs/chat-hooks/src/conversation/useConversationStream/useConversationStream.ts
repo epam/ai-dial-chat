@@ -176,7 +176,7 @@ export interface UseConversationStreamParams {
  * Picks the text written to `streamErrorMessage`. Only a conflict (host copy)
  * or an upstream DIAL Core error (upstream copy) is displayable; any other
  * error is transport detail and becomes '' so the host renders its localized
- * fallback (issue #8979).
+ * fallback ([#8979](https://github.com/epam/ai-dial-chat/issues/8979)).
  */
 const resolveStreamErrorMessage = (
   error: Error,
@@ -722,7 +722,7 @@ export const useConversationStream = ({
           onStreamErrorRef.current?.(error);
           /*
            * A lost or stalled connection says nothing about the backend-owned
-           * generation, which usually keeps running (issue #8959): ask the
+           * generation, which usually keeps running ([#8959](https://github.com/epam/ai-dial-chat/issues/8959)): ask the
            * server before showing an error.
            */
           if (error instanceof StreamInterruptedError && !isSuperseded()) {
@@ -763,7 +763,7 @@ export const useConversationStream = ({
         if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
         /*
          * A conflict is an expected state (another tab is already
-         * generating, issue #8688) and gets the host-supplied explanation;
+         * generating, [#8688](https://github.com/epam/ai-dial-chat/issues/8688)) and gets the host-supplied explanation;
          * an upstream DIAL Core error keeps its own text; every other error
          * is transport detail and falls back to the host's localized copy.
          */

@@ -1,7 +1,7 @@
 /**
  * A single MIME → visualizer mapping from the `CUSTOM_VISUALIZERS` registry.
  * Field semantics are fixed by already-deployed visualizer applications and
- * operator configurations — see `design.md` D9/D10 in the
+ * operator configurations — see `openspec/changes/archive/2026-07-30-add-custom-visualizers/design.md` D9/D10 in the
  * `add-custom-visualizers` change for why `title` is required and
  * `contentType` accepts a comma-separated list.
  */

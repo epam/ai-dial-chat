@@ -157,7 +157,7 @@ export const useMcpAppBridge = (
        * everything else (iframe, transport, connect, tool input/result
        * delivery) exactly as before.
        */
-      /* Seeds `ui/initialize`'s `containerDimensions` synchronously — see design.md D20. */
+      /* Seeds `ui/initialize`'s `containerDimensions` synchronously — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D20. */
       const rect = containerRef.current?.getBoundingClientRect();
       const initialHostContext =
         rect != null && rect.width > 0 && rect.height > 0

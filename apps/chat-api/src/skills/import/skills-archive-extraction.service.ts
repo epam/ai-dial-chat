@@ -46,12 +46,12 @@ const UNIX_DIRECTORY_TYPE = 0x4000;
 const ENCRYPTED_BIT_FLAG = 0x1;
 /** Marks the stream destroyed by the abort listener, so it is not mistaken for an archive defect. */
 const ABORT_STREAM_ERROR = 'SKILL_ARCHIVE_IMPORT_ABORTED';
-/** Guards against directory-entry amplification before any extraction (design.md D4), mirroring the Files domain's identical guard. */
+/** Guards against directory-entry amplification before any extraction (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md` D4), mirroring the Files domain's identical guard. */
 const ENTRY_COUNT_CEILING_MULTIPLIER = 10;
 
 /**
  * Extracts and validates a whole-Skill ZIP archive for
- * `POST /api/v1/skills/import` (design.md, `add-skill-archive-import`).
+ * `POST /api/v1/skills/import` (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md`, `add-skill-archive-import`).
  * Performs every archive-specific check (container validity, entry-count
  * ceiling, wrapper-directory stripping, exactly-one-manifest, duplicate
  * paths, entry safety, encrypted/symlink rejection, incremental
@@ -266,7 +266,7 @@ export class SkillsArchiveExtractionService {
   }
 
   /**
-   * Resolves the manifest and normalizes every entry's path (design.md D4).
+   * Resolves the manifest and normalizes every entry's path (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md` D4).
    * If a root-level `SKILL.md` is present, no wrapper stripping happens. If
    * not, every top-level directory whose immediate child is `SKILL.md` is a
    * wrapper candidate: exactly one candidate is stripped; zero is "missing
@@ -358,7 +358,7 @@ export class SkillsArchiveExtractionService {
 
   /**
    * Streams one entry with incremental per-file and running-total limit
-   * enforcement (design.md D6) — the size the archive declares for an entry
+   * enforcement (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md` D6) — the size the archive declares for an entry
    * is never consulted, only the bytes actually received, closing the
    * classic zip-bomb vector.
    */

@@ -48,6 +48,7 @@ import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  ChatI18nKeys,
   ConversationPanelI18nKeys,
   ScheduledTasksI18nKeys,
   SidebarI18nKeys,
@@ -228,6 +229,8 @@ const ConversationSourcesPanelContainer: FC = () => {
             codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
             codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
             codeBlockDownloadLabel={t(ButtonsI18nKeys.Download)}
+            tableScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableTable)}
+            mathScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableFormula)}
           />
         )}
       />
@@ -391,6 +394,11 @@ const ConversationSourcesPanelContainer: FC = () => {
       copySourceLabel: t(ButtonsI18nKeys.CopyLink),
       sourceCopiedLabel: t(ButtonsI18nKeys.Copied),
       attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+      codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+      codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+      codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+      tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+      mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
     }),
     [t],
   );

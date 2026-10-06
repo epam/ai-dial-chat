@@ -46,7 +46,7 @@ describe('encodePlainDialResourcePath', () => {
   });
 
   /*
-   * The whole reason this variant exists (Issue #8974): `encodeDialResourcePath`
+   * The whole reason this variant exists ([#8974](https://github.com/epam/ai-dial-chat/issues/8974)): `encodeDialResourcePath`
    * decodes first, so a folder literally named `test%20folder` collapses to
    * `test folder` and addresses a different resource.
    */

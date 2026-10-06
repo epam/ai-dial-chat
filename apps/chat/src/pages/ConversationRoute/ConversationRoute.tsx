@@ -102,7 +102,7 @@ const ConversationRoute: FC = () => {
   /*
    * A picked prompt is inserted at the caret rather than written to
    * `composerSeed`, so it cannot discard a draft the user has already typed
-   * on this screen (issue #8754). The route-state seeding below still
+   * on this screen ([#8754](https://github.com/epam/ai-dial-chat/issues/8754)). The route-state seeding below still
    * replaces, because it arrives with a fresh navigation onto an empty
    * composer.
    */
@@ -304,7 +304,7 @@ const ConversationRoute: FC = () => {
    * before `navigate`'s state-clearing update (React Router wraps it in
    * `startTransition`, so it is low priority) has a chance to commit —
    * without the ref guard, `selectSkillByUrl` keeps re-firing and starving
-   * that transition indefinitely (issue #9109's render loop).
+   * that transition indefinitely ([#9109](https://github.com/epam/ai-dial-chat/issues/9109)'s render loop).
    */
   const hasConsumedRouteSkillIdRef = useRef(false);
   useEffect(() => {

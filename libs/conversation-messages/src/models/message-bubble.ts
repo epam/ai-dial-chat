@@ -59,6 +59,8 @@ export interface MessageBubbleLabels {
   assistantMessageAriaLabel?: string;
   /** aria-label for interactive attachment tiles. */
   attachmentClickLabel?: string;
+  /** aria-label for each file tile's own download button (rendered when `onDownloadAll` is given). Defaults to `'Download attachment'`. */
+  attachmentDownloadLabel?: string;
   /** aria-label for the attachment retry button. */
   attachmentRetryLabel?: string;
   /** aria-label for the attachment open-in-new-tab button. */

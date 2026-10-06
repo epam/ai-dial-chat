@@ -13,7 +13,7 @@ import {
 /*
  * Thin orchestrator for ConversationController. Every method here delegates
  * to exactly one of the four focused conversation services below — see
- * openspec/changes/split-conversation-service/design.md for the ownership
+ * openspec/changes/archive/2026-08-07-split-conversation-service/design.md for the ownership
  * map and why the split follows this boundary. Pure 1:1 delegates are bound
  * property references; only `generateTitle`/`markConversationViewed` carry
  * a line of glue (path qualification / URL building) so they stay as methods.

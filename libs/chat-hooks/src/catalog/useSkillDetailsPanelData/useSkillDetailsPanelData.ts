@@ -118,7 +118,7 @@ export const useSkillDetailsPanelData = ({
    * the same skill runs the cleanup and a new effect, but a token captured
    * at call time additionally guards against the earlier request's response
    * landing after the newer request started (see `Catalog.tsx`'s equivalent
-   * `pendingRequestIdRef` guard, design.md D9).
+   * `pendingRequestIdRef` guard, `openspec/changes/archive/2026-09-17-fix-shared-skill-details-metadata/design.md` D9).
    */
   const requestIdRef = useRef(0);
 

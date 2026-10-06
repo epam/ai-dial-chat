@@ -52,6 +52,16 @@ export interface CitationCardLabels {
   showMore: string;
   /** Label for the toggle that collapses an expanded quote. */
   showLess: string;
+  /** Accessible label for the copy button on a fenced code block inside the quote. Defaults to `'Copy code'`. */
+  codeBlockCopyLabel?: string;
+  /** Status announced after a fenced code block inside the quote has been copied. Defaults to `'Copied!'`. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for the download button on a fenced code block inside the quote. Defaults to `'Download code'`. */
+  codeBlockDownloadLabel?: string;
+  /** Accessible label for a table's horizontally scrollable region inside the quote. Defaults to `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's horizontally scrollable region inside the quote. Defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
 }
 
 /** Color overrides for `CitationCard`, applied as CSS custom properties with app theme fallbacks. */
@@ -292,6 +302,13 @@ export const CitationCard: FC<CitationCardProps> = ({
                       ol: quoteClassName,
                       strong: quoteStrongClassName,
                     }}
+                    codeBlockCopyLabel={labels.codeBlockCopyLabel}
+                    codeBlockCopiedLabel={labels.codeBlockCopiedLabel}
+                    codeBlockDownloadLabel={labels.codeBlockDownloadLabel}
+                    tableScrollRegionAriaLabel={
+                      labels.tableScrollRegionAriaLabel
+                    }
+                    mathScrollRegionAriaLabel={labels.mathScrollRegionAriaLabel}
                   />
                 )}
               </div>

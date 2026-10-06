@@ -200,6 +200,21 @@ No icon mirroring is required (`IconCopy` and `IconCheck` are symmetric).
 - **WHEN** the message is not streaming
 - **THEN** the code block's download button's accessible name is that label, not `'Download code'`
 
+#### Scenario: Libraries that embed markdown forward host labels
+
+- **GIVEN** a library renders `MarkdownRenderer` internally — `@epam/ai-dial-attachment-canvas` (`AttachmentCanvasLabels` / `AttachmentCanvasBodyLabels`), `@epam/ai-dial-quotations` (`CitationCardLabels`), `@epam/ai-dial-source-panel` (`ConversationSourcesPanelLabels`) or `@epam/ai-dial-conversation-stages` (`StagesPanelLabels` / `CollapsedGroupLabels`) — and the host sets that library's optional `codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel` fields (stages: `copyAriaLabel`, `codeBlockCopiedLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`; stage code has no download button), or `@epam/ai-dial-catalog`'s `ItemDetailsTexts` sets `copyCodeAriaLabel`, `copiedCodeStatusLabel`, `downloadCodeAriaLabel`, `tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel`
+- **WHEN** the embedded markdown contains a fenced code block, a table wider than its container, or a block formula
+- **THEN** the code block's buttons, its copied announcement, the table's scroll region and the formula's scroll region carry those labels instead of the English defaults
+- **AND** an unset field falls back to the renderer's English default
+
+#### Scenario: Scheduled-task built-in instructions viewer forwards host labels
+
+- **GIVEN** `@epam/ai-dial-scheduled-tasks` renders a task's instructions with its built-in `MDMessageViewer` because the host supplied no `renderInstructions`
+- **AND** the host sets the `ScheduledTaskInstructionsMarkdownLabels` fields (`codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`) on `ScheduledTaskDetailView`'s `labels` or on `ScheduledTaskDetailsSummary`'s `markdownLabels`
+- **WHEN** the instructions contain a fenced code block, a wide table or a block formula
+- **THEN** those controls carry the host labels instead of the English defaults
+- **AND** a host-supplied `renderInstructions` ignores those fields and owns its own labels
+
 #### Scenario: Keyboard copy activation
 
 - **GIVEN** focus is on the copy button inside a `MarkdownCodeBlock`
@@ -244,7 +259,7 @@ When `isStreaming` is `true` the copy button (and the download button) MUST NOT 
 | `buttons.copied` (existing, `ButtonsI18nKeys.Copied`) | `"Copied!"` | Passed as `labels.codeBlockCopiedLabel` by `ConversationMessageItem`, forwarded through `AssistantMessageBubble` to `MDMessageViewer` |
 | `buttons.download` (existing, `ButtonsI18nKeys.Download`) | `"Download"` | Passed as `labels.codeBlockDownloadLabel` by `ConversationMessageItem`, forwarded through `AssistantMessageBubble` and `MDMessageViewer` (`codeBlockDownloadLabel`) to `MarkdownRenderer`, which hands it to `MarkdownCodeBlock` as `downloadLabel` |
 
-No new keys are introduced. The lib defaults to English strings (`'Copy code'` / `'Copied!'` / `'Download code'`). Every other app call site that renders markdown with code blocks (`AgentDescription`, the scheduled-task instructions in `ConversationSourcesPanel`) passes the same three keys.
+No new keys are introduced. The lib defaults to English strings (`'Copy code'` / `'Copied!'` / `'Download code'`). Every other app call site that renders markdown with code blocks (`AgentDescription`, the scheduled-task instructions in `ConversationSourcesPanel`) passes the same three keys plus `chat.scrollableTable` (`ChatI18nKeys.ScrollableTable`) as `tableScrollRegionAriaLabel` and `chat.scrollableFormula` (`ChatI18nKeys.ScrollableFormula`) as `mathScrollRegionAriaLabel`. The hosts of the embedding libraries pass the same five keys: `app.tsx` (`AttachmentCanvasContainer`), `SkillFilePreview` (`AttachmentCanvasBody`), `ConversationMessageItem` (citation `cardLabels`, and `stageLabels` with `buttons.copied` / `chat.scrollableTable` / `chat.scrollableFormula` beside the existing `conversation.stages.copyContent`), the app `ConversationSourcesPanel` (source-quote labels), `CatalogView` and `SkillDetailsPanelContainer` (`ItemDetailsTexts`), and `ScheduledTaskDetailPage` (`ScheduledTaskDetailView` `labels`, which relies on the built-in instructions viewer).
 
 ---
 

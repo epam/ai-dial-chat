@@ -13,12 +13,12 @@ Forwarding an attachment-click callback and its accessible label from `Conversat
 - `onAttachmentClick?: (attachment: DisplayAttachment) => void` on the shared `BaseMessageBubbleProps` (inherited by `UserMessageBubbleProps` and `AssistantMessageBubbleProps`).
 - `attachmentClickLabel?: string` on `MessageBubbleLabels`, read from the bubble's `labels` prop.
 
-`UserMessageBubble.tsx` SHALL render its attachments through `<AttachmentGroup>` (from the attachment-input lib), passing an `onAttachmentClick(id)` handler that resolves the id back to the matching `DisplayAttachment` and calls the bubble's `onAttachmentClick` with it, and passing `labels.attachmentClickLabel` as the group's `labels.clickLabel`. When `attachmentClickLabel` is absent, the group receives `clickLabel: undefined` (its own defaults apply).
+`UserMessageBubble.tsx` and `AssistantMessageBubble.tsx` SHALL render their attachments through `<AttachmentGroup>` (from the attachment-input lib). Only when the bubble receives `onAttachmentClick` SHALL they pass the group an `onAttachmentClick(id)` handler that resolves the id back to the matching `DisplayAttachment` and calls the bubble's `onAttachmentClick` with it (an id with no match calls nothing); otherwise they pass `undefined`, so the group renders its tiles as non-interactive. They also pass `labels.attachmentClickLabel` as the group's `labels.clickLabel`. When `attachmentClickLabel` is absent, the group receives `clickLabel: undefined` (its own defaults apply).
 
 #### Scenario: Attachments are inert when `onAttachmentClick` is absent
 
-- **WHEN** `UserMessageBubble` is rendered without `onAttachmentClick`
-- **THEN** no attachment card is keyboard-accessible as a button
+- **WHEN** `UserMessageBubble` or `AssistantMessageBubble` is rendered without `onAttachmentClick` (and without `onDownloadAll`)
+- **THEN** the `AttachmentGroup` receives no `onAttachmentClick`, and no element in the attachment list is a button or a Tab stop
 
 #### Scenario: Attachment click invokes the callback
 

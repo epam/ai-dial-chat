@@ -678,6 +678,123 @@ describe('useConversationHandlers', () => {
       );
     });
 
+    it.each([
+      [true, false],
+      [false, true],
+    ])(
+      'resubmits with the current tool toggle (stored deep_research: %s, current: %s)',
+      async (storedValue, currentValue) => {
+        const conversation = editableConversation();
+        conversation.messages[0].custom_content = {
+          ...conversation.messages[0].custom_content,
+          configuration_value: { deep_research: storedValue },
+        };
+        const { result } = renderHook(() =>
+          useHarness({
+            conversation,
+            toolConfigurationValue: { deep_research: currentValue },
+          }),
+        );
+
+        await act(() =>
+          result.current.handlers.handleEditMessage(
+            0,
+            'Edited question',
+            [{ id: 'files/bucket/kept.pdf', name: 'kept.pdf' } as never],
+            [],
+          ),
+        );
+
+        const expectedCustomContent = {
+          configuration_value: { deep_research: currentValue },
+          attachments: [expect.objectContaining({ title: 'kept.pdf' })],
+        };
+        expect(result.current.startStream).toHaveBeenCalledWith(
+          conversation.id,
+          'Edited question',
+          1,
+          'selected-model',
+          expectedCustomContent,
+          expect.any(String),
+          'edit',
+        );
+        expect(result.current.conversation?.messages[0].custom_content).toEqual(
+          expectedCustomContent,
+        );
+      },
+    );
+
+    it('forwards an active tool configuration when the edited message had no custom_content', async () => {
+      const conversation = makeConversation({
+        messages: [
+          {
+            role: 'user' as never,
+            content: 'Original question',
+            timestamp: 't',
+          },
+          { role: 'assistant' as never, content: 'Answer', timestamp: 't' },
+        ],
+      });
+      const { result } = renderHook(() =>
+        useHarness({
+          conversation,
+          toolConfigurationValue: { deep_research: true },
+        }),
+      );
+
+      await act(() =>
+        result.current.handlers.handleEditMessage(0, 'Edited question', [], []),
+      );
+
+      expect(result.current.startStream).toHaveBeenCalledWith(
+        conversation.id,
+        'Edited question',
+        1,
+        'selected-model',
+        { configuration_value: { deep_research: true } },
+        expect.any(String),
+        'edit',
+      );
+    });
+
+    it('uses the tool configuration from the latest render', async () => {
+      const conversation = makeConversation({
+        messages: [
+          {
+            role: 'user' as never,
+            content: 'Original question',
+            timestamp: 't',
+          },
+          { role: 'assistant' as never, content: 'Answer', timestamp: 't' },
+        ],
+      });
+      const { result, rerender } = renderHook(
+        ({ toolConfigurationValue }) =>
+          useHarness({ conversation, toolConfigurationValue }),
+        {
+          initialProps: {
+            toolConfigurationValue: undefined as
+              Record<string, boolean> | undefined,
+          },
+        },
+      );
+      rerender({ toolConfigurationValue: { deep_research: true } });
+
+      await act(() =>
+        result.current.handlers.handleEditMessage(0, 'Edited question', [], []),
+      );
+
+      expect(result.current.startStream).toHaveBeenCalledWith(
+        conversation.id,
+        'Edited question',
+        1,
+        'selected-model',
+        { configuration_value: { deep_research: true } },
+        expect.any(String),
+        'edit',
+      );
+    });
+
     it('merges newly uploaded attachments alongside kept ones', async () => {
       const conversation = editableConversation();
       const { result } = renderHook(() => useHarness({ conversation }));

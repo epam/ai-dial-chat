@@ -95,7 +95,7 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
  * response IS its MCP App responding, and it typically never populates
  * `custom_content.state` at all — it isn't an LLM-orchestrated tool-call
  * turn, so there is no call to find evidence of in the first place (the same
- * class of self-hosted-app gap `design.md`'s D9 "Known gap" documents for
+ * class of self-hosted-app gap `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md`'s D9 "Known gap" documents for
  * discovery — here it recurs at per-message matching).
  *
  * Otherwise (a `discovery: 'indirect'` match — a real MCP-capable toolset a

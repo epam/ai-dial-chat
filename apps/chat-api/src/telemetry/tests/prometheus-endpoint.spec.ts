@@ -78,7 +78,7 @@ describe('Prometheus scrape endpoint', () => {
      * Verified against the installed `@opentelemetry/exporter-prometheus@0.221.0`: it
      * unconditionally sets `content-type: text/plain` (see PrometheusExporter.js's
      * `_exportMetrics`), not the `text/plain; version=0.0.4; charset=utf-8` Prometheus exposition
-     * format string design.md assumed — that suffix was true of older versions of this package.
+     * format string `openspec/changes/archive/2026-08-05-add-observability-support/design.md` assumed — that suffix was true of older versions of this package.
      */
     expect(response.headers.get('content-type')).toBe('text/plain');
 

@@ -25,7 +25,7 @@ import { AuthStatus } from '../../types/auth-status';
 import ConversationRoute from './ConversationRoute';
 
 /*
- * Reproduces GitHub issue #8150 Case 3 end to end against the real
+ * Reproduces [#8150](https://github.com/epam/ai-dial-chat/issues/8150) Case 3 end to end against the real
  * DeploymentsContext (only the server-api boundary is mocked), instead of
  * mocking useDeployments away as ConversationRoute.spec.tsx does — this is
  * the only way to exercise the actual clobbering bug between

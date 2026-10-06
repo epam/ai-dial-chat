@@ -394,7 +394,7 @@ describe('Header', () => {
   });
 
   /*
-   * GH #8691: a published copy under `public/` has no owner-side entries at
+   * [#8691](https://github.com/epam/ai-dial-chat/issues/8691): a published copy under `public/` has no owner-side entries at
    * all, so its Manage menu is empty until the publish-history lookup that
    * produces Unpublish resolves — and that lookup is started by reaching for
    * this very trigger. A hidden trigger left the copy permanently unactionable.

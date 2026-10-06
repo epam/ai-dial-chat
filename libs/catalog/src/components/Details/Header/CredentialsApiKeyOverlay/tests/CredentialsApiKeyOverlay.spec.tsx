@@ -17,12 +17,18 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onChange,
     labelProps,
     disabled,
+    id,
+    'aria-describedby': ariaDescribedBy,
   }: {
     onChange: (value?: string) => void;
     labelProps?: { label?: string };
     disabled?: boolean;
+    id?: string;
+    'aria-describedby'?: string;
   }) => (
     <input
+      id={id}
+      aria-describedby={ariaDescribedBy}
       aria-label={labelProps?.label}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
@@ -304,5 +310,56 @@ describe('CredentialsApiKeyOverlay', () => {
     );
     expect(screen.getByText('My key')).toBeTruthy();
     expect(screen.getByText('Key on file')).toBeTruthy();
+  });
+
+  it('describes the API key input with a hint naming the configured header', () => {
+    render(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedOut}
+        apiKeyHeader="X-Api-Key"
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'API key',
+        description: 'Enter your API key value for "X-Api-Key" header',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('uses texts.apiKeyHeaderHint for the header hint when provided', () => {
+    render(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedOut}
+        apiKeyHeader="X-Api-Key"
+        onClose={vi.fn()}
+        texts={{ apiKeyHeaderHint: (header) => `Header: ${header}` }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('textbox', { description: 'Header: X-Api-Key' }),
+    ).toBeTruthy();
+  });
+
+  it('omits the header hint when no API key header is configured', () => {
+    render(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedOut}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'API key' });
+    expect(input.getAttribute('aria-describedby')).toBeNull();
+    expect(screen.queryByText(/header$/)).toBeNull();
   });
 });

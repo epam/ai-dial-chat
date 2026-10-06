@@ -45,7 +45,7 @@ describe('getPublishedTargetUrl', () => {
   });
 
   /*
-   * Issue #8974: the folder's plain name really contains `%20`. The percent
+   * [#8974](https://github.com/epam/ai-dial-chat/issues/8974): the folder's plain name really contains `%20`. The percent
    * sign itself has to be escaped, or Core decodes the target folder back to
    * `test folder` and the published copy lands under the wrong name.
    */

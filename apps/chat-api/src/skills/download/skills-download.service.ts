@@ -23,7 +23,7 @@ export interface SkillDownload {
  * `apps/chat-api/src/files/download/files-download.service.ts`'s
  * `SAFE_DOWNLOAD_HEADERS` and including `etag`, since skill downloads carry
  * a resource-version ETag the plain file-download endpoint has no equivalent
- * for (design.md D5). `content-length` is intentionally omitted: the SDK's
+ * for (`openspec/changes/archive/2026-08-24-add-prompt-catalog-entity-type/design.md` D5). `content-length` is intentionally omitted: the SDK's
  * Fetch response body may already be transport-decoded, so the upstream wire
  * length is not necessarily the number of bytes this BFF streams to its
  * caller. Node must frame the outgoing response from the actual body.
@@ -85,7 +85,7 @@ export class SkillsDownloadService {
    * `downloadSkillGroupingFolder` contract instead — a `400` with no body
    * (schema.ts declares no `200` at all for that case) — which this method
    * turns into a `BadRequestException` directing the caller to list
-   * metadata instead (design.md's negative-contract rule), rather than
+   * metadata instead (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md`'s negative-contract rule), rather than
    * forwarding an empty/error body as if it were a ZIP stream.
    *
    * `callerBucket` is the authenticated user's own bucket; a `403` for that

@@ -51,7 +51,7 @@ export class CustomApiClientClosedException extends HttpException {
 
 /**
  * Dispatches one allowlisted GET call to Core using the caller's own access
- * token. See openspec/changes/add-configured-core-api-operations/design.md
+ * token. See openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md
  * §3 and §5 for the transport and error-mapping contract this implements.
  */
 @Injectable()

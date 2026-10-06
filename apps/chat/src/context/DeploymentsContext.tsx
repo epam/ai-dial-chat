@@ -162,7 +162,7 @@ const isDeploymentPresent = (
 ): boolean => id != null && deployments.some((d) => d.id === id);
 
 /* A deployment the operator hid via HIDDEN_ENTITY_TAGS must not become a new
-   chat's model through a stored or configured preference (Issue #9150). */
+   chat's model through a stored or configured preference ([#9150](https://github.com/epam/ai-dial-chat/issues/9150)). */
 const isDeploymentSelectable = (
   deployments: DeploymentItemDto[],
   id: string | null,
@@ -182,7 +182,7 @@ const isDeploymentSelectable = (
  * a `null` preference keeps falling through to the pin, which is the
  * precedence `DEFAULT_DEPLOYMENT_PINNED` documents. Without that step the
  * option would be inert — the control that writes it is offered only where an
- * agent is pinned, so the pin would always win (Issue #8889).
+ * agent is pinned, so the pin would always win ([#8889](https://github.com/epam/ai-dial-chat/issues/8889)).
  *
  * `overlayModelId` is the `modelId` the embedding host sent through
  * `SET_OVERLAY_OPTIONS`. It outranks every user and operator preference: the

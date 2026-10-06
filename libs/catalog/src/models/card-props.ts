@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
+import type { CatalogMarkdownLabels } from './item-details-props';
 
 /** Typography class overrides for `Card` content. */
 export interface CardTypography {
@@ -79,4 +80,6 @@ export interface CardProps {
    * when the item has no folder path left to show. Default: false.
    */
   isReadonly?: boolean;
+  /** Code-block, table and formula labels forwarded to the description markdown. Defaults to the renderer's English labels. */
+  markdownLabels?: CatalogMarkdownLabels;
 }

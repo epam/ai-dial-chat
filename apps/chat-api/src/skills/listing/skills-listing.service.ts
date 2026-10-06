@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   HttpException,
   Injectable,
@@ -166,7 +167,7 @@ export class SkillsListingService {
 
   /**
    * Resolves one skill's own authoritative metadata for
-   * `GET /api/v1/skills/metadata` (design.md D1/D2). Unlike
+   * `GET /api/v1/skills/metadata` (`openspec/changes/archive/2026-09-17-fix-shared-skill-details-metadata/design.md` D1/D2). Unlike
    * `SkillsLookupService.resolveSkillItem`, this path never folds in
    * invitation-granted permissions and never returns `null` on a miss — a
    * caller here always wants "the metadata" or a typed error, never a
@@ -243,7 +244,16 @@ export class SkillsListingService {
       token = page.nextToken;
       if (token != null) {
         if (visitedTokens.has(token)) {
-          throw new Error('DIAL Core returned a repeated skill page token');
+          /* A cursor that repeats would loop forever: the upstream listing is
+           * invalid, so this is a bad-gateway failure, not an internal error.
+           * Only the namespace kind and page count are logged — never the
+           * opaque cursor or the caller's bucket. */
+          this.logger.error(
+            `DIAL Core returned a repeated skill page token (namespace=${bucket === PUBLIC_BUCKET ? 'public' : 'personal'}, pages=${visitedTokens.size + 1})`,
+          );
+          throw new BadGatewayException(
+            'DIAL Core returned an invalid skill listing page',
+          );
         }
         visitedTokens.add(token);
       }

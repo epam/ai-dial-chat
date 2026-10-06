@@ -263,7 +263,7 @@ y$ which spans lines`;
     expect(preprocessLaTeX(content)).toBe(expected);
   });
 
-  /* Issue #8753, second failure: a currency-shaped opening delimiter was escaped on its
+  /* [#8753](https://github.com/epam/ai-dial-chat/issues/8753), second failure: a currency-shaped opening delimiter was escaped on its
    * own, which left its partner free to open the next span and shifted every pairing
    * along the line — `$0 < x$ and then $y \in H$` typeset the English words and printed
    * both formulas as source. */
@@ -355,7 +355,7 @@ y$ which spans lines`;
     });
   });
 
-  /* Issue #8753, first failure: `remark-math` reads the rest of a line-leading `$$` fence
+  /* [#8753](https://github.com/epam/ai-dial-chat/issues/8753), first failure: `remark-math` reads the rest of a line-leading `$$` fence
    * as discardable meta and only closes on a line holding nothing but `$$`, so
    * `$$\begin{aligned}` … `\end{aligned}$$` lost the environment opener, never closed, and
    * swallowed every heading and paragraph after it as raw LaTeX. */

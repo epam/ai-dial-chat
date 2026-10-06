@@ -497,7 +497,7 @@ export const Header: FC<HeaderProps> = ({
    * is empty, and the menu stays empty while the trigger is hidden. A
    * published copy under the organization's public area is exactly that item
    * (its owner-side entries — Share, Edit, Delete, Revoke — are all gated on
-   * `isMyApp`), which is how GH #8691 left one with no action at all.
+   * `isMyApp`), which is how [#8691](https://github.com/epam/ai-dial-chat/issues/8691) left one with no action at all.
    *
    * So the trigger also renders while the lookup is outstanding and the host
    * has affirmatively said this item is unpublishable. That last part is why
@@ -753,7 +753,7 @@ export const Header: FC<HeaderProps> = ({
    * An overflow menu holding a single entry costs a click for nothing and
    * leaves the header looking empty until it is opened — which is how a
    * read-only shared item, whose only surviving action is "Remove from My
-   * List", ended up with no visible action at all (GH #8989). So the last
+   * List", ended up with no visible action at all ([#8989](https://github.com/epam/ai-dial-chat/issues/8989)). So the last
    * action standing is rendered as a button in the action row instead.
    *
    * Two entries resolve lazily off the Manage trigger, and the trigger is
@@ -768,7 +768,7 @@ export const Header: FC<HeaderProps> = ({
    * an item the host affirmatively calls unpublishable, because the details
    * panel resolves those up front rather than on hover. That is what lets an
    * Organization copy, whose only action is "Unpublish", show it as a button
-   * (GH #8989). A host with no unpublish rule gets no up-front lookup, so its
+   * ([#8989](https://github.com/epam/ai-dial-chat/issues/8989)). A host with no unpublish rule gets no up-front lookup, so its
    * items keep the hold.
    */
   const isUnpublishRuleAffirmed = isUnpublishVisible?.(item);
@@ -915,6 +915,7 @@ export const Header: FC<HeaderProps> = ({
             level={CredentialsLevel.User}
             status={item.credentials?.userStatus}
             apiKeyAddedWhen={item.credentials?.userApiKeyAddedWhen}
+            apiKeyHeader={item.credentials?.apiKeyHeader}
             onLogin={onLogin}
             onLogout={onLogout}
             onClose={() => setIsApiKeyOverlayOpen(false)}

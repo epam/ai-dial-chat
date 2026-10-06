@@ -16,7 +16,7 @@ import { finalize, type Observable } from 'rxjs';
 import type { EnvironmentVariables } from '../../config/environment.config';
 
 /**
- * Disk-stages the ZIP uploaded to `POST /api/v1/skills/import` (design.md
+ * Disk-stages the ZIP uploaded to `POST /api/v1/skills/import` (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md`
  * D7, `add-skill-archive-import`), modeled on
  * `apps/chat-api/src/files/archive-upload.interceptor.ts` but scoped to this
  * one route only — the Skills domain's other Multer config (`SkillsModule`)

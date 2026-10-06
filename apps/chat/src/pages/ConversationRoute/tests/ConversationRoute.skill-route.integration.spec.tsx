@@ -27,7 +27,7 @@ import { AuthStatus } from '../../../types/auth-status';
 import ConversationRoute from '../ConversationRoute';
 
 /*
- * Reproduces issue #9109: the catalog's "Use in chat" action on a Skill
+ * Reproduces [#9109](https://github.com/epam/ai-dial-chat/issues/9109): the catalog's "Use in chat" action on a Skill
  * navigates to `/` with one-shot router state `{ skillId }`, which
  * `ConversationRoute` consumes via the real (unmocked)
  * `apps/chat`'s `useSkillSelectorOverlay` → `@epam/ai-dial-skills`'s

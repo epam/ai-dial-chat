@@ -126,6 +126,11 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
+    codeBlockCopyLabel,
+    codeBlockCopiedLabel,
+    codeBlockDownloadLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     ooxmlHighlightsLabel,
     ooxmlHighlightNavigatedLabel,
   } = {},
@@ -281,6 +286,11 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
+            codeBlockCopyLabel={codeBlockCopyLabel}
+            codeBlockCopiedLabel={codeBlockCopiedLabel}
+            codeBlockDownloadLabel={codeBlockDownloadLabel}
+            tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+            mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
             classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
           />
         );
@@ -290,6 +300,11 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
+            codeBlockCopyLabel={codeBlockCopyLabel}
+            codeBlockCopiedLabel={codeBlockCopiedLabel}
+            codeBlockDownloadLabel={codeBlockDownloadLabel}
+            tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+            mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
             containerClassName="flex h-full min-h-0 flex-col"
             classNames={{
               ...DEFAULT_MARKDOWN_CLASS_NAMES,
@@ -501,6 +516,11 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
+    codeBlockCopyLabel,
+    codeBlockCopiedLabel,
+    codeBlockDownloadLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     ooxmlHighlightsLabel,
     ooxmlHighlightNavigatedLabel,
   ]);

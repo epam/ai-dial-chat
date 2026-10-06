@@ -3,10 +3,24 @@ import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MouseEventHandler, ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ConversationSourcesPanelLabels } from '../../../models/conversation-sources-panel-props';
 import type { QuotationSource } from '../../../models/quotation-source';
 import ConversationSourcesPanel from '../ConversationSourcesPanel';
+
+/* jsdom has no layout; report every table as wider than its scroll container
+ * so `MarkdownTable` exposes its labelled scroll region. */
+const mockOverflowingTables = () => {
+  vi.spyOn(HTMLDivElement.prototype, 'scrollWidth', 'get').mockReturnValue(400);
+  vi.spyOn(HTMLDivElement.prototype, 'clientWidth', 'get').mockReturnValue(200);
+  vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    left: 0,
+    right: 200,
+  } as DOMRect);
+  vi.spyOn(HTMLTableElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    { left: 0, right: 400 } as DOMRect,
+  );
+};
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
@@ -373,5 +387,65 @@ describe('ConversationSourcesPanel — title and additionalSections (optional, a
 
     expect(screen.getByText('History content')).toBeTruthy();
     expect(screen.getAllByText('No results')).toBeTruthy();
+  });
+
+  it('forwards code-block labels to the markdown renderer of a source quote', () => {
+    render(
+      <ConversationSourcesPanel
+        isOpen
+        onClose={vi.fn()}
+        uploaded={[]}
+        generated={[]}
+        sources={[
+          {
+            url: 'https://example.com',
+            title: 'Example',
+            contentType: 'text/html',
+            quote: '```ts\nconst a = 1;\n```',
+          },
+        ]}
+        isMobile={false}
+        labels={{
+          ...LABELS,
+          codeBlockCopyLabel: 'Kopieren',
+          codeBlockDownloadLabel: 'Herunterladen',
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Kopieren' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Herunterladen' })).toBeTruthy();
+  });
+});
+
+describe('ConversationSourcesPanel — source quote table label', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('names an overflowing source quote table scroll region with the host label', () => {
+    mockOverflowingTables();
+    render(
+      <ConversationSourcesPanel
+        isOpen
+        onClose={vi.fn()}
+        uploaded={[]}
+        generated={[]}
+        sources={[
+          {
+            url: 'https://example.com',
+            title: 'Example',
+            contentType: 'text/html',
+            quote: '| a | b |\n| - | - |\n| 1 | 2 |',
+          },
+        ]}
+        isMobile={false}
+        labels={{ ...LABELS, tableScrollRegionAriaLabel: 'Scrollbare Tabelle' }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Scrollbare Tabelle' }),
+    ).toBeTruthy();
   });
 });

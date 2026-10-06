@@ -11,7 +11,7 @@ import { IsSafeDeploymentId } from '../../common/validators/safe-deployment-id.v
 
 /*
  * Mirrors the `ui://` scheme check DIAL Core itself performs on this query
- * param (`McpResourceController`, `epam/ai-dial-core` PR #1745) — rejecting
+ * param (`McpResourceController`, [ai-dial-core#1745](https://github.com/epam/ai-dial-core/pull/1745)) — rejecting
  * clearly-invalid values here avoids an unnecessary round trip to Core.
  */
 const UI_RESOURCE_URI_PATTERN = /^ui:\/\/[\w.\-~!$&'()*+,;=:@/%]+$/;

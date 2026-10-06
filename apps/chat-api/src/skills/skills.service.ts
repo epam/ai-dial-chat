@@ -8,9 +8,9 @@ import { SkillsUploadService } from './upload/skills-upload.service';
 /*
  * Thin facade for SkillsController. Every public method here delegates to
  * exactly one focused sub-service — see
- * openspec/changes/add-skills-bff-api/design.md's service ownership map.
+ * openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md's service ownership map.
  * `SkillsLookupService.resolveSkillItem` is deliberately never bound here —
- * `ShareModule` injects `SkillsLookupService` directly instead (design.md D9).
+ * `ShareModule` injects `SkillsLookupService` directly instead (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D9).
  */
 @Injectable()
 export class SkillsService {

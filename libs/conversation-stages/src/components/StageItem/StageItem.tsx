@@ -102,6 +102,9 @@ export const StageItem: FC<StageItemProps> = ({
   );
   const {
     copyAriaLabel = 'Copy stage content',
+    codeBlockCopiedLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     runningAriaLabel,
     failedAriaLabel,
     attachmentClickLabel = 'Preview search result',
@@ -206,6 +209,9 @@ export const StageItem: FC<StageItemProps> = ({
                 content={stage.content}
                 typography={typography}
                 copyAriaLabel={copyAriaLabel}
+                copiedLabel={codeBlockCopiedLabel}
+                tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+                mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
               />
             </div>
           )}

@@ -70,7 +70,7 @@ describe('serializeMarkdownTableRows', () => {
 
 /* Reading `textContent` off a rendered formula returns the glyphs and the
    LaTeX run together, which is what corrupted a table reopened in Canvas
-   (issue #8807). */
+   ([#8807](https://github.com/epam/ai-dial-chat/issues/8807)). */
 describe('serializeMarkdownTableRows — formula cells', () => {
   it('writes a formula back as the LaTeX it was rendered from', () => {
     const rows = [createRow('Bound'), createMathRow('-\\tfrac12')];

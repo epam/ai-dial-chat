@@ -11,7 +11,7 @@ const SKILL_URL_PATTERN = /^skills\/(?!.*\.\.)[\w.-]+\/.+$/;
 
 /*
  * A skill referenced from `custom_content.skills` — DIAL Core's `RequestSkill`
- * schema (PR #1956): an object with a non-blank `url`.
+ * schema ([ai-dial-core#1956](https://github.com/epam/ai-dial-core/pull/1956)): an object with a non-blank `url`.
  */
 export class RequestSkillDto {
   @ApiProperty({

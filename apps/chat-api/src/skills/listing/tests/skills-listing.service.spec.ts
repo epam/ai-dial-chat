@@ -492,6 +492,66 @@ describe('SkillsListingService', () => {
       expect(result.skills).toHaveLength(1);
       expect(result.publicSkills).toEqual([]);
     });
+
+    it('maps a repeated upstream page token to BadGatewayException', async () => {
+      // Default mock answers every page with the same `next-page` cursor.
+      const { service, sdkClient } = makeService();
+
+      await expect(
+        service.listCatalogSkills('my-bucket', 'token'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      await expect(
+        service.listCatalogSkills('my-bucket', 'token'),
+      ).rejects.toThrow('DIAL Core returned an invalid skill listing page');
+      // Stops at the first repeat instead of looping: two pages per namespace.
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledTimes(8);
+    });
+
+    it('logs only safe context for a repeated page token', async () => {
+      const { service } = makeService();
+      const errorSpy = vi
+        .spyOn(
+          (service as unknown as { logger: { error: () => void } }).logger,
+          'error',
+        )
+        .mockImplementation(() => undefined);
+
+      await expect(
+        service.listCatalogSkills('my-bucket', 'token'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+
+      const messages = (errorSpy.mock.calls as unknown[][]).map((call) =>
+        String(call[0]),
+      );
+      expect(messages).toHaveLength(2);
+      for (const message of messages) {
+        expect(message).toContain('repeated skill page token');
+        expect(message).not.toContain('next-page');
+        expect(message).not.toContain('my-bucket');
+      }
+    });
+
+    it('keeps the public namespace when only the personal cursor repeats', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata.mockImplementation(async (bucket: string) =>
+        bucket === 'public'
+          ? {
+              error: undefined,
+              response: { status: 200 },
+              data: { items: [skillItem] },
+            }
+          : {
+              error: undefined,
+              response: { status: 200 },
+              data: { items: [skillItem], nextToken: 'loop' },
+            },
+      );
+
+      const result = await service.listCatalogSkills('my-bucket', 'token');
+
+      expect(result.skills).toEqual([]);
+      expect(result.publicSkills).toHaveLength(1);
+    });
   });
 
   describe('listSkillFiles', () => {

@@ -26,7 +26,7 @@ import { UnpublishConversationDto } from './dto/unpublish-conversation.dto';
  * Publishes conversations to an Organization folder and reads their publish
  * history, both proxied through DIAL Core's Publication API. A sibling of
  * `ConversationController` rather than a merged set of methods on it (kept
- * separate for file-size reasons — see design.md D1) and a sibling of
+ * separate for file-size reasons — see `openspec/changes/archive/2026-07-15-add-conversation-publish/design.md` D1) and a sibling of
  * `apps/chat-api/src/publish/publish.controller.ts` rather than an extension
  * of its `entityType` enum, since conversation paths don't fit that
  * controller's single-URL-segment `entityId` shape.

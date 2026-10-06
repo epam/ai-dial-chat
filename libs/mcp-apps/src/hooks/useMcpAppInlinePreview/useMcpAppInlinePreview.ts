@@ -25,7 +25,7 @@ export interface McpAppInlinePreviewState {
   content?: McpAppCanvasContent;
   /** Re-fetches the resource and re-resolves the tool result from scratch, bypassing `cache`. */
   reload: () => void;
-  /** Increments on every `reload()` call. Pass as the `key` on `McpAppCanvasRenderer` to force a remount — see design.md D23. */
+  /** Increments on every `reload()` call. Pass as the `key` on `McpAppCanvasRenderer` to force a remount — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D23. */
   attemptId: number;
 }
 

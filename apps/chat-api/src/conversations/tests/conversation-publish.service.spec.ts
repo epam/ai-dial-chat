@@ -95,7 +95,7 @@ describe('ConversationPublishService', () => {
       );
     });
 
-    /* Same round trip the catalog publish makes (GH #8727). */
+    /* Same round trip the catalog publish makes ([#8727](https://github.com/epam/ai-dial-chat/issues/8727)). */
     it('reports the submitted display author, not the account Core recorded', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(

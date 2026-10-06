@@ -381,7 +381,7 @@ describe('PublishConversationPanelContainer', () => {
    * `allowReplace={false}` became observable once history stopped being
    * hardcoded empty: a conversation carries no version, so a second publish
    * to the same folder would create a duplicate public copy rather than an
-   * update. See the change's design.md D6.
+   * update. See the change's `openspec/changes/archive/2026-08-24-add-unpublish-my-resources/design.md` D6.
    */
   it('reports an existing publication for a folder the handed-down history names', async () => {
     await renderContainer({

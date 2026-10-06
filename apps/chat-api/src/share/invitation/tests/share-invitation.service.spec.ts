@@ -1266,7 +1266,7 @@ describe('ShareInvitationService', () => {
      * The invitation's own grant is what decides whether the recipient may
      * edit the skill, so it has to reach the lookup that builds the
      * post-accept summary — otherwise an edit-share resolves with `canEdit`
-     * unset and the catalog renders it read-only (GH #8839).
+     * unset and the catalog renders it read-only ([#8839](https://github.com/epam/ai-dial-chat/issues/8839)).
      */
     it('forwards the invited skill resource permissions to resolveSkillItem', async () => {
       const { service, skillsLookupService } = makeService();

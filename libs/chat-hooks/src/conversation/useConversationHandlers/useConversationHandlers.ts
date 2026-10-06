@@ -30,6 +30,7 @@ import { createMessagePair } from './message-factory';
 import {
   hasActiveToolConfig,
   shouldRerunGenerationOnEdit,
+  withToolConfiguration,
 } from './message-utils';
 import { getStarterDisplayText, getStarterSubmitText } from './starter-option';
 
@@ -243,13 +244,10 @@ export const useConversationHandlers = ({
       /* The tool toggles may have changed since the original send (e.g. Deep
        * Research switched on after stopping the answer), so regeneration uses
        * the current toggle state rather than the stored one. */
-      const customContent: MessageCustomContent | undefined =
-        hasActiveToolConfig(toolConfigurationValue)
-          ? {
-              ...userMsg.custom_content,
-              configuration_value: toolConfigurationValue,
-            }
-          : userMsg.custom_content;
+      const customContent = withToolConfiguration(
+        userMsg.custom_content,
+        toolConfigurationValue,
+      );
 
       const regeneratedMessage = {
         ...latest.messages[messageIndex],
@@ -596,6 +594,12 @@ export const useConversationHandlers = ({
       } else {
         updatedCustomContent = undefined;
       }
+      /* As for regenerate, the resubmission carries the current tool toggles
+       * (e.g. Deep Research) rather than the ones stored on the edited message. */
+      updatedCustomContent = withToolConfiguration(
+        updatedCustomContent,
+        toolConfigurationValue,
+      );
 
       const updatedUserMessage = {
         ...originalMessage,
@@ -647,6 +651,7 @@ export const useConversationHandlers = ({
       resolveModelId,
       setConversation,
       startStream,
+      toolConfigurationValue,
     ],
   );
 

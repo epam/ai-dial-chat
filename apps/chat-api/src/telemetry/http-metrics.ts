@@ -9,7 +9,7 @@ const meter = metrics.getMeter('dial-chat-api', packageJson.version);
  * The only HTTP server metric instrument in the app. Its implicit `count` (available via any
  * backend's count-over-time aggregation) already answers "how many requests" for the same
  * attribute set, so a separate `Counter` would just double the maintained instrument surface for
- * no new information — see design.md §4.
+ * no new information — see `openspec/changes/archive/2026-08-05-add-observability-support/design.md` §4.
  */
 export const httpServerRequestDuration = meter.createHistogram(
   'http.server.request.duration',

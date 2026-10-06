@@ -27,7 +27,7 @@ const rememberAttempt = (now: number): boolean => {
 /*
  * A tab opened before a redeploy still references the old content-hashed
  * chunk names; the server no longer has them, so the next lazy route import
- * fails (Firefox: "error loading dynamically imported module", Issue #9254).
+ * fails (Firefox: "error loading dynamically imported module", [#9254](https://github.com/epam/ai-dial-chat/issues/9254)).
  * Browsers cache a failed module import for the document's lifetime, so only
  * a reload — which fetches a fresh no-store index.html with the current
  * chunk names — recovers. Vite dispatches `vite:preloadError` for every

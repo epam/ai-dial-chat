@@ -80,7 +80,7 @@ describe('LogoutConfirmationModal', () => {
   /*
    * A full document load picks up the current chunk hashes; a client-side
    * navigate would lazy-import a Login chunk a redeploy may have removed
-   * (Issue #9254).
+   * ([#9254](https://github.com/epam/ai-dial-chat/issues/9254)).
    */
   it('loads the login page as a fresh document outside overlay mode', async () => {
     render(<LogoutConfirmationModal isOpen onClose={vi.fn()} />);

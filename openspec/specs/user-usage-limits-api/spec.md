@@ -24,7 +24,7 @@ The endpoint:
 - Without a `deploymentTypes` query parameter, reports the kinds configured in `USER_USAGE_DEPLOYMENT_TYPES` (default: models and applications). When the effective kinds include `application`, `deployments` MAY also contain config-defined and custom Applications keyed by their DIAL Core name (a custom application's key has the form `applications/<bucket>/<name>`). Toolsets, routes, and interceptors are never present
 - A deployment the caller has never used MUST still appear in `deployments`, with its real limits reported against zero usage
 
-The `@ApiOperation` description SHALL state that `deployments` covers the deployment kinds in `deploymentTypes`, or the server-configured default kinds when omitted, and SHALL NOT say "every model deployment" unqualified.
+The `@ApiOperation` description SHALL state that `deployments` covers the deployment kinds in `deploymentTypes`, or the server-configured default kinds when omitted, and SHALL NOT say "every model deployment" unqualified. The `@ApiPropertyOptional` description of `UserLimitStatsResponseDto.deployments` SHALL say the same — the map contains only the kinds selected by `deploymentTypes`, or the server-configured default kinds (`USER_USAGE_DEPLOYMENT_TYPES`, models and applications by default) when omitted, and toolsets and routes never appear — and SHALL NOT describe the map as "models only".
 
 **Example response (200)** for `GET /api/v1/user/limits?deploymentTypes=model,application`:
 

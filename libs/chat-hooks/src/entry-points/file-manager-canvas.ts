@@ -4,6 +4,6 @@
  * ordinary file browsing, upload and naming helpers — carries no static
  * import of the optional `@epam/ai-dial-attachment-canvas` and
  * `@epam/ai-dial-quotations` peers
- * ([issue #8855](https://github.com/epam/ai-dial-chat/issues/8855)).
+ * ([#8855](https://github.com/epam/ai-dial-chat/issues/8855)).
  */
 export * from '../files/attachment-canvas';

@@ -724,7 +724,7 @@ describe('annotationsToPdfHighlights', () => {
 
     /* Without an `index`, the id comes from the annotation's own identity
        rather than its array position, so two citations of one page stay
-       distinguishable (issue #8907). Ids must also survive being interpolated
+       distinguishable ([#8907](https://github.com/epam/ai-dial-chat/issues/8907)). Ids must also survive being interpolated
        into the viewer's `[data-term-id="<id>"]` selectors. */
     expect(highlights).toHaveLength(2);
     expect(highlights[0].id).not.toBe(highlights[1].id);

@@ -37,7 +37,7 @@ describe('mimeTypesToDialFileAcceptTypes', () => {
   });
 
   it('canonicalizes an aliased MIME type so the file picker recognizes it', () => {
-    /* Issue #8939: a picker given `text/json` offers no .json file. */
+    /* [#8939](https://github.com/epam/ai-dial-chat/issues/8939): a picker given `text/json` offers no .json file. */
     expect(mimeTypesToDialFileAcceptTypes(['text/json'])).toEqual([
       'application/json',
     ]);

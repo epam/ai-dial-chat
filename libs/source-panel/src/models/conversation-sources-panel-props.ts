@@ -32,6 +32,16 @@ export interface ConversationSourcesPanelLabels {
   sourceCopiedLabel?: string;
   /** Label passed to each attachment card's action button. */
   attachmentClickLabel: string;
+  /** Accessible label for the copy button on a fenced code block inside a source quote. Defaults to `'Copy code'`. */
+  codeBlockCopyLabel?: string;
+  /** Status announced after a fenced code block inside a source quote has been copied. Defaults to `'Copied!'`. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for the download button on a fenced code block inside a source quote. Defaults to `'Download code'`. */
+  codeBlockDownloadLabel?: string;
+  /** Accessible label for a table's horizontally scrollable region inside a source quote. Defaults to `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's horizontally scrollable region inside a source quote. Defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
 }
 
 /** CSS custom-property overrides for the sources section. */

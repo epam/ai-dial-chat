@@ -84,7 +84,7 @@ export const isAwaitingGenerationResume = (
  * backend's periodic SSE keepalive), so it naturally ends when a genuine
  * terminal event arrives — imposing an arbitrary cutoff there would abandon
  * (and visibly erase the progress of) a legitimately long-running generation
- * such as a multi-stage agent/Deep Research run (Issue #8494).
+ * such as a multi-stage agent/Deep Research run ([#8494](https://github.com/epam/ai-dial-chat/issues/8494)).
  */
 const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
 

@@ -4,7 +4,7 @@ import type { ExcelCellAddress } from '@epam/ai-dial-chat-shared';
  * A validated, normalised DOCX character-range location. `endExclusive` is
  * the wire's `end` copied through unchanged — confirmed exclusive on the
  * wire, unlike `TextCharacterRangeSelector`'s inclusive `end` (see the
- * `annotation.ts` normaliser and `design.md` D3 for the evidence).
+ * `annotation.ts` normaliser and `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md` D3 for the evidence).
  */
 export interface DocxOfficeHighlightLocation {
   /** Discriminates this location within `OfficeHighlightLocation`. Mirrors the wire selector's `type`. */
@@ -24,7 +24,7 @@ export interface DocxOfficeHighlightLocation {
 /**
  * A validated, normalised PPTX character-range location. `endExclusive` is
  * the wire's `end` copied through unchanged — confirmed exclusive on the
- * wire (see `design.md` D3).
+ * wire (see `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md` D3).
  */
 export interface PptxOfficeHighlightLocation {
   /** Discriminates this location within `OfficeHighlightLocation`. Mirrors the wire selector's `type`. */

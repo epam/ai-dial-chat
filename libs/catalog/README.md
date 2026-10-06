@@ -735,6 +735,64 @@ Through `Catalog`, the same two callbacks are `onUnpublish` and
 />
 ```
 
+### Markdown code-block labels
+
+Item descriptions (on cards and in the About tab) and the Content tab body are
+rendered as markdown, so they can contain fenced code blocks, tables and block
+formulas. Five `ItemDetailsTexts` fields name those controls, on
+`DetailsPanel`'s `texts` and on `Catalog`'s `detailsTexts` (which also reaches
+the cards):
+
+| Field                        | Names                                      | Default on markdown    |
+| ---------------------------- | ------------------------------------------ | ---------------------- |
+| `copyCodeAriaLabel`          | The copy button (also on API snippets)     | `'Copy code'`          |
+| `copiedCodeStatusLabel`      | The copied announcement (also on snippets) | `'Copied!'`            |
+| `downloadCodeAriaLabel`      | The download button                        | `'Download code'`      |
+| `tableScrollRegionAriaLabel` | A wide table's scroll region               | `'Scrollable table'`   |
+| `mathScrollRegionAriaLabel`  | A wide block formula's scroll region       | `'Scrollable formula'` |
+
+```tsx
+<Catalog
+  items={items}
+  favorites={favorites}
+  detailsTexts={{
+    copyCodeAriaLabel: t('buttons.copy'),
+    copiedCodeStatusLabel: t('buttons.copied'),
+    downloadCodeAriaLabel: t('buttons.download'),
+    tableScrollRegionAriaLabel: t('chat.scrollableTable'),
+    mathScrollRegionAriaLabel: t('chat.scrollableFormula'),
+  }}
+/>
+```
+
+A plain-text file preview in the Content tab uses the copy and copied labels
+too; it has no download control.
+
+### API key header hint
+
+For an `API_KEY` toolset whose `credentials.apiKeyHeader` is set, every API key
+input the details panel renders — the header's personal API-key popover and
+both `Personal credentials` / `Organization credentials` rows of the
+credentials-management sub-view — shows a hint naming that header under the
+input and links it to the field with `aria-describedby`. Without
+`apiKeyHeader` no hint is rendered. The text comes from
+`ItemDetailsTexts.apiKeyHeaderHint`, a function of the header name that
+defaults to `` (header) => `Enter your API key value for "${header}" header` ``:
+
+```tsx
+<Catalog
+  items={items}
+  favorites={favorites}
+  detailsTexts={{
+    apiKeyHeaderHint: (header) =>
+      t('catalog.details.credentials.apiKeyHeaderHint', { header }),
+  }}
+/>
+```
+
+`ApplicationCredentials` rows show no header hint: `ApplicationCredential`
+carries no header name.
+
 ### Prompt entities
 
 `CatalogEntityType.Prompt` is a display category for reusable text prompts.

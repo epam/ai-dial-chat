@@ -1,4 +1,4 @@
-/* Defaults for MCP UI host-context CSS variables — see design.md D18 in openspec/changes/mcp-apps-support. */
+/* Defaults for MCP UI host-context CSS variables — see design.md D18 in openspec/changes/archive/2026-09-30-mcp-apps-support. */
 :root {
   /* Backgrounds */
   --color-background-primary: var(--bg-layer-raised, #fcfcfc);
@@ -37,9 +37,9 @@
   --color-border-disabled: var(--stroke-control-disable-primary, #848e9c);
 
   /* Focus rings */
-  --color-ring-primary: var(--stroke-focus-black, var(--stroke-focus, #161b2d));
+  --color-ring-primary: var(--stroke-focus, #161b2d);
   --color-ring-secondary: var(--stroke-accent-focus, #6785fb);
-  --color-ring-inverse: var(--stroke-focus-black, var(--stroke-focus, #161b2d));
+  --color-ring-inverse: var(--stroke-focus, #161b2d);
   --color-ring-info: var(--stroke-info, #1d4ed8);
   --color-ring-danger: var(--stroke-error, #ae2f2f);
   --color-ring-success: var(--stroke-success, #007274);
@@ -92,7 +92,7 @@
   /* Border width — matches `tailwind.config.js`'s `outlineWidth.DEFAULT` */
   --border-width-regular: 1px;
 
-  /* Shadows — see design.md D18 for why colors are inlined here. */
+  /* Shadows — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D18 for why colors are inlined here. */
   --shadow-hairline: 0 1px 4px 0 #2764d933, 0 1px 2px 0 #161b2d08;
   --shadow-sm: 0 8px 10px 0 #2764d914;
   --shadow-md: 0 8px 24px 0 #2764d90f;

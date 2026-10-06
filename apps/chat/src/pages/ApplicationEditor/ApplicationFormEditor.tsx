@@ -483,6 +483,11 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
             setupTitle: t(EditorI18nKeys.SetupSectionTitle),
             cancelLabel: t(ButtonsI18nKeys.Cancel),
           }}
+          setupTitle={
+            definition.isSetupEmbedded?.(context, appId || undefined)
+              ? null
+              : undefined
+          }
           metadata={
             <MetadataForm
               values={metadata.values}

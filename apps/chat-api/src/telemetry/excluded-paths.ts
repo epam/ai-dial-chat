@@ -6,7 +6,7 @@
  *
  * `/metrics` never actually reaches `MetricsInterceptor` (it's served by the Prometheus
  * exporter's own standalone `http.createServer()`, entirely outside Nest/Express — see
- * design.md §5), so this set only has practical effect on `/api/health` for that consumer; it's
+ * `openspec/changes/archive/2026-08-05-add-observability-support/design.md` §5), so this set only has practical effect on `/api/health` for that consumer; it's
  * still shared so both exclusion points stay driven by one source of truth.
  */
 export const TELEMETRY_EXCLUDED_PATHS = new Set(['/api/health', '/metrics']);

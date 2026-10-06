@@ -395,7 +395,7 @@ describe('usePublishFlow', () => {
   });
 
   /*
-   * The legacy bug this guards (GH #5074): the option survived a publish and
+   * The legacy bug this guards ([#5074](https://github.com/epam/ai-dial-chat/issues/5074)): the option survived a publish and
    * the next open started with it already ticked.
    */
   it('clears the credentials opt-in on reset', () => {

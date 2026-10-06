@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
+  ChatI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { usePdfPreviewLoader } from '../../hooks/attachment/usePdfPreviewLoader';
@@ -80,6 +81,11 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
           ),
           pdfPageNumberLabel: t(AttachmentCanvasI18nKeys.PdfPageNumberLabel),
           xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
+          codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+          codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+          codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+          tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+          mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
         }}
         codeBlockTheme={
           currentTheme === ThemeId.Dark

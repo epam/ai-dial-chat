@@ -68,7 +68,7 @@ export const useConversationScroll = <T>({
   const isSpacerActiveRef = useRef(false);
   const isSpacerSettledRef = useRef(false);
   const anchorScrollTopRef = useRef<number | null>(null);
-  /* Last-known "at bottom" state, kept current by updateScrollButtonVisibility — see design.md D25. */
+  /* Last-known "at bottom" state, kept current by updateScrollButtonVisibility — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D25. */
   const wasAtBottomRef = useRef(true);
 
   /*
@@ -337,7 +337,7 @@ export const useConversationScroll = <T>({
       /*
        * Follows a still-at-bottom viewport down when content grows outside
        * an active turn (e.g. an MCP app preview finishing its async
-       * load/resize) — see design.md D25. Skipped while the spacer owns
+       * load/resize) — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D25. Skipped while the spacer owns
        * scroll position (an in-progress turn is anchored to its own top,
        * not to the bottom).
        */

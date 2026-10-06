@@ -1,0 +1,49 @@
+{
+  "$comment": "References scripts/validate-spec-references.mjs must not verify against this repository. Each entry needs a reason; `spec` (a capability name, `*` pattern, or list) scopes it. Entries that match nothing are reported as warnings.",
+  "entries": [
+    {
+      "reference": "tools/list",
+      "spec": ["catalog-connect-action", "mcp-app-*"],
+      "reason": "MCP JSON-RPC method name, not a repo path under tools/."
+    },
+    {
+      "reference": "tools/call",
+      "spec": ["mcp-app-*"],
+      "reason": "MCP JSON-RPC method name, not a repo path under tools/."
+    },
+    {
+      "reference": "docs/open_api_core.yaml",
+      "spec": "mcp-app-proxy-api",
+      "reason": "Path inside the DIAL Core repository, not this one."
+    },
+    {
+      "reference": "scripts/*",
+      "spec": [
+        "catalog-content-file-picker",
+        "catalog-content-file-preview",
+        "skill-archive-import",
+        "skill-details-panel",
+        "skills-multipart-processing"
+      ],
+      "reason": "Example file inside a skill package (scripts/run.py, scripts/run.sh), not a repo path."
+    },
+    {
+      "reference": "docs/*",
+      "spec": [
+        "skill-authoring",
+        "skill-details-panel",
+        "skill-editing",
+        "skill-file-drag-drop",
+        "skill-file-preview",
+        "skill-file-tree-actions",
+        "skills-multipart-processing"
+      ],
+      "reason": "Example file or .dial_folder marker inside a skill package's docs/ folder, not a repo path."
+    },
+    {
+      "reference": "chat.sendDisabledTooltip",
+      "spec": "conversation-input-send-tooltip",
+      "reason": "Translation key owned by the pg-chat host, cited as an example of a host-supplied string; not an apps/chat key."
+    }
+  ]
+}
