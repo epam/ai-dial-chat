@@ -456,6 +456,8 @@ export interface ItemDetailsColors {
   credentialsRowDescriptionText?: string;
   /** Text color of the empty-API-key validation message. Fallback: `--text-error`. */
   credentialsErrorText?: string;
+  /** Text color of the header-name hint under the personal API-key popover's input. Fallback: `--text-secondary`. */
+  credentialsHintText?: string;
   /** Surface color of the credentials status card used by the banner, the configured-key card, and the personal API-key popover. Fallback: `--bg-layer-base`. */
   credentialsCardBackground?: string;
   /** Color of the credentials status card's leading icon. Fallback: `--text-secondary`. */

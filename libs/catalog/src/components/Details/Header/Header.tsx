@@ -920,6 +920,7 @@ export const Header: FC<HeaderProps> = ({
             onLogout={onLogout}
             onClose={() => setIsApiKeyOverlayOpen(false)}
             texts={texts}
+            colors={detailsStyles?.colors}
           />
         )}
       >

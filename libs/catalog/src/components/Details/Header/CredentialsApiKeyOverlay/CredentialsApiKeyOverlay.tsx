@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_KIT_ICON_STROKE,
   Input,
@@ -9,7 +9,10 @@ import {
 import { IconKey } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
 import type { CatalogItem } from '../../../../models/catalog-item';
-import type { ItemDetailsTexts } from '../../../../models/item-details-props';
+import type {
+  ItemDetailsColors,
+  ItemDetailsTexts,
+} from '../../../../models/item-details-props';
 import {
   CredentialsLevel,
   CredentialStatus,
@@ -45,6 +48,11 @@ interface CredentialsApiKeyOverlayProps {
   onClose: () => void;
   /** Text overrides. */
   texts?: ItemDetailsTexts;
+  /**
+   * Color overrides. The popover renders in a portal, outside the details
+   * panel, so it sets the vars it reads on its own root.
+   */
+  colors?: ItemDetailsColors;
   /** CSS class applied to the "Delete" action. Defaults to `'text-error'`. */
   deleteActionClassName?: string;
 }
@@ -60,6 +68,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
   onLogout,
   onClose,
   texts,
+  colors,
   deleteActionClassName = 'text-error',
 }) => {
   const [apiKey, setApiKey] = useState('');
@@ -121,8 +130,17 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
         )
       : undefined;
 
+  const cssVars = buildCssVars({
+    '--cat-details-divider': colors?.divider,
+    '--cat-cred-hint-text': colors?.credentialsHintText,
+    '--cat-cred-card-bg': colors?.credentialsCardBackground,
+    '--cat-cred-card-icon': colors?.credentialsCardIcon,
+    '--cat-cred-card-title-text': colors?.credentialsCardTitleText,
+    '--cat-cred-card-description-text': colors?.credentialsCardDescriptionText,
+  });
+
   return (
-    <div className="flex w-[418px] flex-col">
+    <div className="flex w-[418px] flex-col" style={cssVars}>
       <div className="flex items-center gap-2 px-4 py-3">
         <span className="dial-small-semi-text">{title}</span>
       </div>
