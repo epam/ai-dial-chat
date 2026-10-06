@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { Components } from 'react-markdown';
 
 import classNames from 'classnames';
@@ -25,12 +25,14 @@ import remarkGfm from 'remark-gfm';
 interface Props {
   children: string;
   isShortDescription?: boolean;
+  isInlinePreview?: boolean;
   className?: string;
 }
 
 export const EntityMarkdownDescription = ({
   children,
   isShortDescription,
+  isInlinePreview,
   className,
 }: Props) => {
   const allowedImageSources = useAppSelector(
@@ -52,7 +54,7 @@ export const EntityMarkdownDescription = ({
   const components: Components = useMemo(() => {
     const allowedImageHosts = parseAllowedImageHosts(allowedImageSources);
 
-    return {
+    const baseComponents: Components = {
       img({ src, ...props }) {
         // Strip external images entirely to prevent silent data exfiltration
         // via auto-loaded image URLs.
@@ -68,7 +70,35 @@ export const EntityMarkdownDescription = ({
         return <img src={src} {...props} />;
       },
     };
-  }, [allowedImageSources]);
+
+    if (!isInlinePreview) {
+      return baseComponents;
+    }
+
+    const HeadingAsText = ({ children }: { children?: ReactNode }) => (
+      <>
+        <span>{children}</span>{' '}
+      </>
+    );
+
+    const InlineParagraph = ({ children }: { children?: ReactNode }) => (
+      <>
+        <p className="inline">{children}</p>{' '}
+      </>
+    );
+
+    return {
+      ...baseComponents,
+      h1: HeadingAsText,
+      h2: HeadingAsText,
+      h3: HeadingAsText,
+      h4: HeadingAsText,
+      h5: HeadingAsText,
+      h6: HeadingAsText,
+      p: InlineParagraph,
+      hr: () => null,
+    };
+  }, [allowedImageSources, isInlinePreview]);
 
   return (
     <MemoizedReactMarkdown
