@@ -14,6 +14,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -30,6 +31,7 @@ import { resolveLocalizedText } from '../../utils/locale';
 import {
   findWorstCappedRow,
   getGaugeNeedleAngle,
+  getViewportClampShift,
 } from '../../utils/usage-limits';
 import { formatUsageResetTime } from '../../utils/usage-reset-time';
 import styles from './UsageLimitsControl.module.scss';
@@ -55,6 +57,7 @@ const UsageLimitsControl: FC<Props> = ({
   const { limitsDto, isLoading, hasError, refresh } =
     useDeploymentUsageLimits(deploymentId);
   const [isOpen, setIsOpen] = useState(false);
+  const [popoverShiftPx, setPopoverShiftPx] = useState(0);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -161,6 +164,39 @@ const UsageLimitsControl: FC<Props> = ({
     };
   }, [isOpen]);
 
+  /*
+   * The popover is anchored to the trigger's end edge, but the trigger sits
+   * mid-row, so on a narrow viewport the panel would run past the opposite
+   * edge. `max-w-[calc(100vw-2rem)]` caps its width, not its position — this
+   * nudges it back inside the viewport before paint and on every resize.
+   */
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+    if (!isOpen || dialog == null) return;
+
+    const updateShift = () => {
+      const rect = dialog.getBoundingClientRect();
+      /* Nothing laid out (e.g. jsdom) — no position to correct. */
+      if (rect.width === 0) return;
+
+      /* The rect already includes the shift applied so far, so it is removed
+         to clamp from the panel's natural, anchored position. */
+      setPopoverShiftPx((appliedShift) =>
+        getViewportClampShift(
+          rect.left - appliedShift,
+          rect.right - appliedShift,
+          document.documentElement.clientWidth,
+        ),
+      );
+    };
+
+    updateShift();
+    window.addEventListener('resize', updateShift);
+    return () => {
+      window.removeEventListener('resize', updateShift);
+    };
+  }, [isOpen]);
+
   if (!deploymentId || limits == null) {
     return null;
   }
@@ -256,6 +292,13 @@ const UsageLimitsControl: FC<Props> = ({
           aria-labelledby={titleId}
           tabIndex={-1}
           className="absolute bottom-full end-0 z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
+          /* Measured in physical viewport pixels, so the shift is physical too
+             and stays correct under RTL. */
+          style={
+            popoverShiftPx !== 0
+              ? { transform: `translateX(${popoverShiftPx}px)` }
+              : undefined
+          }
         >
           <p id={titleId} className="dial-small-semi-text text-primary">
             {deploymentName ?? t(ConversationInputI18nKeys.PopoverTitle)}
