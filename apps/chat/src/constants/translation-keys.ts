@@ -251,6 +251,7 @@ export enum CatalogI18nKeys {
   CredentialsApiKeyAddedLabel = 'catalog.details.credentials.apiKeyAddedLabel',
   CredentialsAddingApiKeyStatusLabel = 'catalog.details.credentials.addingApiKeyStatusLabel',
   CredentialsApiKeyRequiredErrorMessage = 'catalog.details.credentials.apiKeyRequiredErrorMessage',
+  CredentialsApiKeyHeaderHint = 'catalog.details.credentials.apiKeyHeaderHint',
   CredentialsDeleteApiKeyConfirmMessagePersonal = 'catalog.details.credentials.deleteApiKeyConfirmMessagePersonal',
   CredentialsDeleteApiKeyConfirmMessageOrg = 'catalog.details.credentials.deleteApiKeyConfirmMessageOrg',
   CredentialsOrgFallbackBannerTitleCredentials = 'catalog.details.credentials.orgFallbackBannerTitleCredentials',

@@ -150,6 +150,13 @@ export interface ItemDetailsTexts {
   apiKeyFieldLabel?: string;
   /** Validation error shown under the API key input when "Add" is submitted with an empty value. Default: `'API key is required.'`. */
   apiKeyRequiredErrorMessage?: string;
+  /**
+   * Returns the hint shown under an API key input, given the configured key
+   * header name. Rendered only when `credentials.apiKeyHeader` is set, and
+   * linked to the input via `aria-describedby`. Default:
+   * `(header) => \`Enter your API key value for "${header}" header\``.
+   */
+  apiKeyHeaderHint?: (header: string) => string;
   /** Accessible label for the logged-out warning icon on catalog card avatars, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
   /**

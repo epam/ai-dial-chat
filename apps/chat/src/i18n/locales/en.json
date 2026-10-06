@@ -160,6 +160,7 @@
         "apiKeyAddedLabel": "Added {{when}}",
         "addingApiKeyStatusLabel": "Adding",
         "apiKeyRequiredErrorMessage": "API key is required.",
+        "apiKeyHeaderHint": "Enter your API key value for \"{{header}}\" header",
         "deleteApiKeyConfirmMessagePersonal": "Are you sure you want to delete your personal API key?",
         "deleteApiKeyConfirmMessageOrg": "Are you sure you want to delete the organization API key?",
         "orgFallbackBannerTitleCredentials": "You are currently using organization credentials to access this toolset.",

@@ -29,6 +29,8 @@ interface CredentialsApiKeyOverlayProps {
   status: CredentialStatus | undefined;
   /** Already-formatted relative time since the key was added (e.g. `'3 weeks ago'`), shown as support text once signed in. */
   apiKeyAddedWhen?: string;
+  /** Name of the configured API key header (e.g. `X-Api-Key`). When set, a hint naming it is shown under, and describes, the API key input. */
+  apiKeyHeader?: string;
   /** Called with the entered key when "Add" is submitted. May return a promise; the popover stays open with a spinner until it resolves. */
   onLogin?: (
     item: CatalogItem,
@@ -53,6 +55,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
   level,
   status,
   apiKeyAddedWhen,
+  apiKeyHeader,
   onLogin,
   onLogout,
   onClose,
@@ -103,6 +106,14 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
     texts?.apiKeyRequiredErrorMessage ?? 'API key is required.';
   const addedMessage =
     texts?.personalApiKeyAddedMessage ?? 'Personal key has been added';
+  const inputId = `catalog-item-${item.id}-${level}-api-key`;
+  const headerHintId = `${inputId}-header-hint`;
+  const headerHint = apiKeyHeader
+    ? (
+        texts?.apiKeyHeaderHint ??
+        ((header) => `Enter your API key value for "${header}" header`)
+      )(apiKeyHeader)
+    : undefined;
   const addedWhenLabel =
     apiKeyAddedWhen != null
       ? (texts?.apiKeyAddedLabel ?? ((when) => `Added ${when}`))(
@@ -121,7 +132,8 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
         <div className="flex animate-fadeIn flex-col gap-1 px-4 py-3.5">
           <div className="flex items-end gap-2">
             <Input
-              id={`catalog-item-${item.id}-${level}-api-key`}
+              id={inputId}
+              aria-describedby={headerHint ? headerHintId : undefined}
               type="password"
               autoComplete="current-password"
               value={apiKey}
@@ -144,10 +156,20 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
             />
           </div>
           {/*
-           * Rendered as a sibling below the input+button row, not through
-           * Input's own `error` prop, so the button never shifts when the
-           * message appears — only the space below the row grows.
+           * The header hint and the error are rendered as siblings below the
+           * input+button row, not through Input's own `caption`/`error` props,
+           * so the button never shifts when they appear — only the space below
+           * the row grows. Input's `caption` also carries no id to describe the
+           * field by and is announced as an alert; this hint is static.
            */}
+          {headerHint && (
+            <span
+              id={headerHintId}
+              className={mergeClasses('dial-caption-text', styles.hint)}
+            >
+              {headerHint}
+            </span>
+          )}
           {hasEmptyKeyError && (
             <span className="dial-caption-text text-error">
               {emptyKeyErrorMessage}

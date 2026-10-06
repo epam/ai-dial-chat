@@ -372,6 +372,15 @@ export class AuthController {
       if (key in allClaims) filteredClaims[key] = allClaims[key];
     }
     /*
+     * An empty, whitespace-only, or non-string job title is unusable: drop
+     * the key so the session never stores it (and the Keycloak UserInfo
+     * fallback below can still supply a usable value).
+     */
+    const idTokenJobTitle = getJobTitleClaim(filteredClaims);
+    if (idTokenJobTitle === undefined) {
+      delete filteredClaims[JOB_TITLE_CLAIM];
+    }
+    /*
      * Roles are typically issued on the access token, not the ID token —
      * decode it (unverified; it came directly from the IdP over TLS, same
      * trust boundary as the ID token) and prefer that as the roles source.
@@ -400,7 +409,7 @@ export class AuthController {
      */
     if (
       providerConfig.id === AuthProviderId.Keycloak &&
-      !getJobTitleClaim(filteredClaims) &&
+      idTokenJobTitle === undefined &&
       tokenSet.access_token &&
       client.issuer.metadata.userinfo_endpoint
     ) {

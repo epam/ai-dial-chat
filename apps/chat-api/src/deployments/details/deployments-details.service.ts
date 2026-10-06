@@ -18,6 +18,7 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { resolveLocalizedValue } from '../../common/utils/localized-value';
 import { StringUtils } from '../../common/utils/string-utils';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { withCachedDialRequest } from '../../dial/cached-dial-request.helper';
 import { DialClientService } from '../../dial/dial-client.service';
 import type {
   DeploymentLimitsResponseDto,
@@ -130,55 +131,46 @@ export class DeploymentsDetailsService {
     userSub: string,
     accessToken: string,
   ): Promise<DeploymentConfigurationDto> {
-    const cacheKey = `deployments:configuration:${userSub}:${name}`;
-    const cached =
-      await this.cacheManager.get<DeploymentConfigurationDto>(cacheKey);
-    if (cached) {
-      this.logger.debug(
-        `Cache hit for deployment configuration "${name}" (sub: ${userSub})`,
-      );
-      return cached;
-    }
-
-    try {
-      const result = await this.dialClient.client.configurationDeployment(
-        encodeDialResourcePath(name),
-        {
-          headers: getBearerAuthHeaders(accessToken),
-        },
-      );
-      this.logger.debug(
-        `DIAL Core configurationDeployment for "${name}": ${JSON.stringify(result)}`,
-      );
-      if (result.error) {
-        return mapDialHttpStatus(
-          result.response.status,
-          `get deployment configuration "${name}"`,
-          this.logger,
+    const context = `get deployment configuration "${name}"`;
+    return withCachedDialRequest({
+      cacheManager: this.cacheManager,
+      cacheKey: `deployments:configuration:${userSub}:${name}`,
+      ttlMs: 60 * 1000,
+      context,
+      logger: this.logger,
+      fetch: async (): Promise<DeploymentConfigurationDto> => {
+        const result = await this.dialClient.client.configurationDeployment(
+          encodeDialResourcePath(name),
+          {
+            headers: getBearerAuthHeaders(accessToken),
+          },
         );
-      }
-      const raw = result.data ?? {};
+        this.logger.debug(
+          `DIAL Core configurationDeployment for "${name}": ${JSON.stringify(result)}`,
+        );
+        if (result.error) {
+          return mapDialHttpStatus(
+            result.response.status,
+            context,
+            this.logger,
+          );
+        }
+        const raw = result.data ?? {};
 
-      const data: DeploymentConfigurationDto = {
-        type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
-        title: typeof raw['title'] === 'string' ? raw['title'] : undefined,
-        properties: isRecord(raw['properties']) ? raw['properties'] : undefined,
-        additionalProperties: toAdditionalProperties(
-          raw['additionalProperties'],
-        ),
-        isChatMessageInputDisabled:
-          raw['dial:chatMessageInputDisabled'] === true || undefined,
-      };
-      await this.cacheManager.set(cacheKey, data, 60 * 1000);
-      return data;
-    } catch (err) {
-      return handleDialFetchError(
-        err,
-        `get deployment configuration "${name}"`,
-        this.logger,
-        0,
-      );
-    }
+        return {
+          type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
+          title: typeof raw['title'] === 'string' ? raw['title'] : undefined,
+          properties: isRecord(raw['properties'])
+            ? raw['properties']
+            : undefined,
+          additionalProperties: toAdditionalProperties(
+            raw['additionalProperties'],
+          ),
+          isChatMessageInputDisabled:
+            raw['dial:chatMessageInputDisabled'] === true || undefined,
+        };
+      },
+    });
   }
 
   async getDeploymentDetails(

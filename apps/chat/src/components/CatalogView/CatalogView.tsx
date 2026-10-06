@@ -746,6 +746,8 @@ const CatalogView: FC<Props> = ({
           apiKeyRequiredErrorMessage: t(
             CatalogI18nKeys.CredentialsApiKeyRequiredErrorMessage,
           ),
+          apiKeyHeaderHint: (header) =>
+            t(CatalogI18nKeys.CredentialsApiKeyHeaderHint, { header }),
           apiKeyActionLabel: t(ApiI18nKeys.ApiKey),
           changeApiKeyActionLabel: t(
             CatalogI18nKeys.CredentialsChangeApiKeyActionLabel,

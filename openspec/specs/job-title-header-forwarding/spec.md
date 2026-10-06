@@ -10,7 +10,7 @@ it is absent from the ID token.
 ## Requirements
 ### Requirement: The `job_title` OIDC claim is captured into the session on login
 
-`AuthController.callback()` SHALL include `job_title` in the allowlist of OIDC ID-token claims copied into `SessionPayload.claims` when present on the token, using the same allowlist mechanism as `name`, `email`, `preferred_username`, and the other existing allowlisted claims. No new per-provider configuration key is introduced for this claim name — it is read the same way for every provider, same as the other allowlisted claims (unlike `rolesClaim`, which is configurable). Once a request is authenticated via the session cookie, the same value is available as `SessionUser.claims['job_title']`.
+`AuthController.callback()` SHALL include `job_title` in the allowlist of OIDC ID-token claims copied into `SessionPayload.claims` when present on the token as a string that is non-empty after trimming, using the same allowlist mechanism as `name`, `email`, `preferred_username`, and the other existing allowlisted claims. No new per-provider configuration key is introduced for this claim name — it is read the same way for every provider, same as the other allowlisted claims (unlike `rolesClaim`, which is configurable). Once a request is authenticated via the session cookie, the same value is available as `SessionUser.claims['job_title']`.
 
 #### Scenario: Provider's ID token includes a job title
 
@@ -21,6 +21,15 @@ it is absent from the ID token.
 
 - **WHEN** a user completes login and neither the ID token nor an applicable Keycloak UserInfo fallback supplies a usable `job_title` claim
 - **THEN** the session's `claims` does not include a `job_title` key, and reading it from `SessionUser.claims` yields no value
+
+#### Scenario: Provider's ID token carries an unusable job title
+- **WHEN** a user completes login and the ID token's `job_title` is an empty or whitespace-only string, or is not a string (number, `null`, array), and no applicable Keycloak UserInfo fallback supplies a usable value
+- **THEN** the session's `claims` does not include a `job_title` key, and no `X-JOB-TITLE` header is sent for that session
+- **AND** for Keycloak, an unusable ID-token value counts as absent, so the UserInfo fallback is still attempted
+
+#### Scenario: Forwarding ignores an unusable job title from any source
+- **WHEN** `getJobTitleClaim` reads `SessionUser.claims` (cookie session or unfiltered bearer-JWT claims) and `job_title` is missing, not a string, or empty after trimming
+- **THEN** it yields no value, so the outbound DIAL Core request omits `X-JOB-TITLE`; a non-empty string is returned unchanged and forwarded
 
 ### Requirement: Keycloak can supply job title through UserInfo
 

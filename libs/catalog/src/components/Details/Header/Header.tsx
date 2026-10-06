@@ -915,6 +915,7 @@ export const Header: FC<HeaderProps> = ({
             level={CredentialsLevel.User}
             status={item.credentials?.userStatus}
             apiKeyAddedWhen={item.credentials?.userApiKeyAddedWhen}
+            apiKeyHeader={item.credentials?.apiKeyHeader}
             onLogin={onLogin}
             onLogout={onLogout}
             onClose={() => setIsApiKeyOverlayOpen(false)}

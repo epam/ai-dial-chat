@@ -280,6 +280,38 @@ describe('ApplicationSchemasService', () => {
       expect(result).toEqual(mockSchema);
     });
 
+    it('caches the upstream schema under the per-user-per-schema key for 60 s on cache miss', async () => {
+      const { service, cacheManager } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomApplicationSchema',
+      ).mockResolvedValue(okItemResponse(mockSchema));
+
+      await service.getApplicationSchema('user1', 'tok', 'schema-id');
+
+      expect(cacheManager.get).toHaveBeenCalledWith(
+        'application-schemas:item:user1:schema-id',
+      );
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'application-schemas:item:user1:schema-id',
+        mockSchema,
+        60 * 1000,
+      );
+    });
+
+    it('does not cache an upstream error outcome', async () => {
+      const { service, cacheManager } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomApplicationSchema',
+      ).mockResolvedValue(errResponse(404));
+
+      await expect(
+        service.getApplicationSchema('u', 't', 'sid'),
+      ).rejects.toThrow(NotFoundException);
+      expect(cacheManager.set).not.toHaveBeenCalled();
+    });
+
     it('returns cached schema without calling upstream on cache hit', async () => {
       const { dialClient, configService } = makeDeps();
       const cacheManager = {
