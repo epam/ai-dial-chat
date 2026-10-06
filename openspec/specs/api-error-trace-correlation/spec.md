@@ -100,11 +100,15 @@ helper SHALL NOT throw and SHALL still return the resolved `message`.
 - **THEN** `getApiErrorDetails` returns `traceId: undefined` without throwing
 
 ### Requirement: Library hooks take trace-ID resolution from the host
-Hooks in `@epam/ai-dial-chat-hooks` that attach a trace ID to a failure event SHALL accept it
-through an optional host-supplied `resolveErrorTraceId(error: unknown) => Promise<string |
-undefined>` callback rather than calling `getApiErrorDetails` themselves, and SHALL default that
-callback to one resolving `undefined`. A host that supplies no callback SHALL still receive working
-failure events, simply without a trace ID.
+The conversation transfer hooks SHALL accept, in `@epam/ai-dial-chat-hooks` (`useConversationExport` and
+`useConversationImport`), the trace ID for their failure events through an optional
+host-supplied `resolveErrorTraceId(error: unknown) => Promise<string | undefined>` callback rather
+than calling `getApiErrorDetails` themselves, and SHALL default that callback to one resolving
+`undefined`. A host that supplies no callback SHALL still receive working failure events, simply
+without a trace ID. Because `getApiErrorDetails` now lives in the same package and only
+duck-types the error, other library hooks that surface a `requestId` on a notification
+(`useCatalogEditNavigation`, `useCatalogToolsetCredentials`, `useSkillEditorSubmit`) call
+`getApiErrorDetails` directly instead of taking a resolver.
 
 #### Scenario: Host supplies the resolver
 - **WHEN** a host passes `resolveErrorTraceId` to a conversation transfer hook and an operation fails

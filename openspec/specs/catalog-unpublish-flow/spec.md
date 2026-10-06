@@ -9,7 +9,9 @@ TBD - created by archiving change add-unpublish-my-resources. Update Purpose aft
 
 `Publish` and `Unpublish` SHALL be mutually exclusive: the menu SHALL carry exactly one of the two, whichever matches the item's current state. `Publish` SHALL be suppressed whenever `Unpublish` is shown, regardless of what `isPublishVisible(item)` returns. An item with no published copy offers `Publish`; an item with at least one published folder offers `Unpublish` instead.
 
-This deliberately removes the ability to publish an already-published item a second time (to another folder, or a re-publish of the same one) from the menu; republishing stays reachable by unpublishing first. Because the history lookup is lazy, the entry MAY start as `Publish` and become `Unpublish` when the response lands — which is why the lookup fires on hover/focus of the Manage trigger rather than on menu open, so it is normally settled before the menu is visible.
+This deliberately removes the ability to publish an already-published item a second time (to another folder, or a re-publish of the same one) from the menu; republishing stays reachable by unpublishing first. Because the history lookup is lazy, the entry MAY start as `Publish` and become `Unpublish` when the response lands — which is why the lookup already fires on hover/focus of the Manage trigger (and again, guarded, on menu open), so it is normally settled before the menu is visible.
+
+Neither entry renders when the panel is `isReadonly`. Where the host's `isPublishPrimary(item)` returns `true`, whichever of `Publish`/`Unpublish` applies renders as a button in the action row instead of inside the Manage menu, and hovering or focusing that button also starts the history lookup. While the lookup is still outstanding and the host's `isUnpublishVisible(item)` returns exactly `true`, the Manage trigger stays rendered even if the menu would otherwise be empty, so an item whose only entry would be `Unpublish` is never left without a trigger.
 
 The entry SHALL NOT use the `danger` dropdown treatment. Unpublishing removes a published copy but destroys nothing the owner holds — the source entity is untouched and can be published again — so it sits with Edit/Download rather than with Delete.
 
@@ -36,9 +38,9 @@ Clicking it SHALL call `onOpenUnpublish`, a new prop the panel supplies; the hea
 
 ### Requirement: Unpublish visibility is derived from publish history
 
-The entry SHALL be shown only when the panel holds at least one publish-history entry for the current item, combined (AND) with an optional caller-supplied `isUnpublishVisible(item)` rule and the presence of an `onUnpublish` callback.
+The entry SHALL be shown only when the panel holds at least one published folder for the current item from resolved publish history, combined (AND) with an optional caller-supplied `isUnpublishVisible(item)` rule, the presence of an `onUnpublish` callback, and a non-`isReadonly` panel. Folders are deduplicated by their joined path (an item republished to the same folder yields it once), keeping history order.
 
-The panel already fetches history through `getPublishHistory(item)` when the publish sub-view opens. That fetch SHALL be lifted so it also runs when the Manage menu is opened or focused — the same lazy, once-per-item trigger `Header.tsx` already uses for its recipient-count lookup (`onMouseEnter`/`onFocus` on the Manage trigger, guarded by a ref holding the item id whose lookup has started). It SHALL NOT run on panel open or on item render: most items are never unpublished, and the request is only worth making when the user reaches for the menu.
+The panel already fetches history through `getPublishHistory(item)` when the publish sub-view opens. That fetch SHALL be lifted so it also runs when the Manage trigger is hovered or focused and when the menu opens — the same lazy trigger `Header.tsx` uses for its recipient-count lookup — via the panel's `requestPublishHistory`, guarded by a ref holding the item id whose lookup has started so it runs once per item. It SHALL NOT run on panel open or on item render, with one exception: when the host affirmatively marks the item unpublishable (`isUnpublishVisible(item) === true`, with `onUnpublish` supplied and the panel not readonly), the panel prefetches history up front so the header's menu-or-button arrangement is settled before the pointer arrives. A successful publish through the publish sub-view releases the guard and re-fetches history, so the newly published folder can offer `Unpublish`.
 
 Resolution states:
 
@@ -51,7 +53,7 @@ Resolution states:
 
 Hiding on failure is deliberate and differs from `Revoke access`, which stays reachable when its lookup fails. Revoke needs the lookup only for a count in its label; Unpublish needs the folder itself to build the request, so an entry shown without history could not do anything if clicked. A failed lookup is retried the next time the menu is opened, and the 60-second server-side history cache keeps a transient failure short-lived.
 
-Publish history fetched for the menu and publish history fetched for the publish sub-view SHALL be the same state, fetched once per item — opening Publish after opening the menu SHALL NOT issue a second request.
+Publish history fetched for the menu and publish history fetched for the publish sub-view SHALL be the same state, fetched once per item (until a failure or a successful publish releases the guard) — opening Publish after opening the menu SHALL NOT issue a second request.
 
 #### Scenario: Entry appears once history resolves with entries
 - **GIVEN** the item has been published to one folder
@@ -80,7 +82,7 @@ Selecting `Unpublish` SHALL open the details panel's in-place confirmation sub-v
 
 The sub-view's body depends on how many folders the item is published to:
 
-- **Exactly one folder** — static copy naming that folder, and the confirm button is enabled immediately.
+- **Exactly one folder** — static copy naming that folder (the public root, which has no path segments, is named with `publishLabels.rootFolderLabel ?? 'Organization'`), and the confirm button is enabled immediately.
 - **More than one folder** — the published folders render as a single-select radio group under the message, in the order history returns them (most recently published first), with none preselected. The confirm button stays disabled until the user picks one.
 
 Selecting a folder SHALL NOT trigger any request; the choice is local panel state, cleared when the confirmation is cancelled, when the sub-view closes, and when `item.id` changes.
@@ -143,11 +145,11 @@ On reject, the confirmation closes the same way and the item stays visible. Succ
 
 ### Requirement: The app wires Unpublish to the BFF endpoint and its notification
 
-`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL pass `onUnpublish` to `DetailsPanel`, calling the `unpublishCatalogEntity` wrapper in `apps/chat/src/server-api/publish.api.ts` with the item's entity type, id, the selected folder joined with `/`, and the item's version.
+`apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL pass `onUnpublish` (and `isUnpublishVisible`) to `DetailsPanel`, using `handleUnpublish` from `useCatalogPublishing` (`apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`). `handleUnpublish` maps the item type with `toPublishEntityType` (throwing for a non-publishable type) and calls the `unpublishCatalogEntity` wrapper in `apps/chat/src/server-api/publish.api.ts` (bound from `createPublishApiClient` in `@epam/ai-dial-chat-hooks`) with the entity type, id, `{ folderPath: <selected folder joined with `/`>, version }` (version only when the item has one).
 
-On success it SHALL raise exactly one notification through `useOperationNotification` with `EntityOperation.UnpublishRequested`, the entity resolved by the existing `resolveNotifiableEntity(item.type)` helper, and `{ name, folder }` where `folder` is the selected folder's leaf segment — the same interpolation shape the publish success notification uses.
+On success it SHALL raise exactly one notification through `useOperationNotification`'s `notifyOperationSuccess` with `EntityOperation.UnpublishRequested`, the entity resolved by `resolveCatalogItemEntity(item.type, deployment, schemas)`, and `{ name, folder, type }` where `folder` is `getPublishFolderLabel(folderPath, t)` (the leaf segment, or the translated Organization label for the root) and `type` is the schema display name — the same interpolation shape the publish success notification uses.
 
-On failure it SHALL reuse `usePublishErrorNotification`, which already maps status, message, trace id, and the offline case; no new error copy is introduced.
+On failure it SHALL reuse `usePublishErrorNotification` (passed in as `showPublishError`, called with `EntityOperation.UnpublishRequested`), which already maps status, message, trace id, and the offline case, and SHALL rethrow so the panel's rejection path runs; no new error copy is introduced.
 
 All strings SHALL come from `t()` with keys declared in `apps/chat/src/constants/translation-keys.ts`; no raw key literal and no English string may appear in the wiring. `libs/catalog` SHALL learn nothing about the endpoint, the entity-type enum, or the generated client — it receives only the callback and the labels.
 
@@ -157,7 +159,7 @@ All strings SHALL come from `t()` with keys declared in `apps/chat/src/constants
 
 #### Scenario: Success raises the request-pending notification
 - **WHEN** the request resolves
-- **THEN** one success notification is raised via `notifyOperationSuccess(..., EntityOperation.UnpublishRequested, { name, folder })`
+- **THEN** one success notification is raised via `notifyOperationSuccess(..., EntityOperation.UnpublishRequested, { name, folder, type })`
 
 #### Scenario: Failure reuses the shared publish error notification
 - **WHEN** the request rejects with a 403

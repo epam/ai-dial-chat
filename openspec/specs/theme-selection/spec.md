@@ -20,7 +20,8 @@ custom properties on the `<html>` element, over the light-theme hex fallbacks co
 **Backend**: none. No new endpoint, environment variable, or generated-client change.
 
 **i18n keys**: `settings.theme`, `settings.themeLight`, `settings.themeDark`, `settings.themeSystem`
-— all four already existed and become used for the first time.
+— declared as `SettingsI18nKeys.Theme`, `ThemeLight`, `ThemeDark`, `ThemeSystem` and used by
+`useThemeOptions` and `PreferencesTab`.
 
 **Feature gating**: none. The row's visibility depends only on how many themes the configuration
 offers and on the overlay's `HideUserSettings` feature.
@@ -55,8 +56,7 @@ longer contains SHALL be discarded silently and SHALL NOT be written back over t
 value, so that a theme temporarily missing from the configuration does not permanently erase the
 preference.
 
-This replaces the behaviour at `ThemeContext.tsx:93-107`, where the stored value gates an
-assignment of `config.themes[0].id` or `ThemeId.Light` and is otherwise ignored.
+The provider SHALL NOT fall back to `config.themes[0].id`; the only fallback is `ThemeId.Light`.
 
 **State ownership**: `ThemeContext` — no new context is introduced.
 **Memoisation**: the context value stays wrapped in `useMemo`; `setTheme` stays wrapped in
@@ -190,16 +190,17 @@ other id. A theme with no `displayName` SHALL fall back to its `id`.
 ### Requirement: The Preferences tab renders the theme picker
 
 `apps/chat/src/pages/SettingsPage/PreferencesTab/PreferencesTab.tsx` SHALL render a ui-kit `Select`
-for the theme as the first row of the Preferences tab, replacing the commented-out block at
-`:92-107` and the note at `:26-47`.
+for the theme as the first row of the Preferences tab, before the Language, Keyboard and
+Default-agent rows.
 
 The row SHALL be rendered when `!isUserSettingsHidden` (the existing
 `OverlayFeature.HideUserSettings` rule) **and** `options.length > 1`, and SHALL be hidden otherwise.
 It SHALL participate in the tab's existing `isResolvingRows` gate and in `hasAnyRow`, so a
 deployment whose only visible row is the theme row does not show the empty state.
 
-**i18n keys** (all already present in `apps/chat/src/i18n/locales/en.json:606-609`, currently
-unused): `settings.theme`, `settings.themeLight`, `settings.themeDark`, `settings.themeSystem`.
+**i18n keys** (in `apps/chat/src/i18n/locales/en.json`, referenced through `SettingsI18nKeys`):
+`settings.theme` ("Theme"), `settings.themeLight` ("Light"), `settings.themeDark` ("Dark"),
+`settings.themeSystem` ("System").
 
 **Accessibility**: the `Select` is labelled through `labelProps.label` with `t(SettingsI18nKeys.Theme)`,
 matching the Language and Keyboard rows; it is reachable and operable by keyboard through the ui-kit

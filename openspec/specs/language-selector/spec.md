@@ -17,8 +17,9 @@ The language selector allows users to switch the application UI language at runt
 The system SHALL offer language selection on **two** surfaces, both live at once:
 
 - the **Settings page's Preferences tab** (`settings-preferences-tab`) — its home alongside theme,
-  keyboard shortcut and "Default agent for new chats". The Settings page is behind no feature flag, so this
-  surface is always reachable on desktop;
+  keyboard shortcut and "Default agent for new chats". The Settings page is behind no feature flag; only
+  the overlay's `OverlayFeature.HideSettingsPage` removes it, so outside that case this surface is always
+  reachable on desktop;
 - the **desktop `UserMenu` submenu** built by `useNavigationMenuGroups` (see `user-menu`) — retained
   as a quick picker.
 
@@ -82,7 +83,8 @@ Selecting a language SHALL call `i18n.changeLanguage(code)`, which persists the 
 
 The currently active language option SHALL be visually distinguished on both surfaces: in the
 Preferences tab's language `Select`, by the control's own selected-option treatment; and in the
-`UserMenu` submenu, through `MenuItemLabel`'s `isActive`.
+`UserMenu` submenu, through the option's `isActive`, which `UserMenu` renders as a
+`MenuItemMark.Check` trailing check (`checked`).
 
 In the **Preferences tab**, the selected value SHALL be resolved by comparing **base** language
 codes — both `i18n.language` and each option's `code` reduced to the segment before any `-` — so

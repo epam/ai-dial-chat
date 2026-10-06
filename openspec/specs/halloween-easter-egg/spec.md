@@ -22,13 +22,13 @@ Only the start-page `NewConversationComposer` SHALL route outgoing text through 
 
 ### Requirement: The empty chat carries seasonal decoration with a pumpkin trigger
 
-While Halloween is the selected, loaded event on the start page, `NewConversationComposer` SHALL render `HalloweenDecor` inside its welcome-screen region: a single cobweb pinned to the region's inline-end top corner with a spider perched on it, and a pumpkin button rendered before the decoration layer so the spider paints over it. `CelebrationDecor` SHALL render the selected event decoration, or nothing when the runtime is disabled. HalloweenDecor receives an onActivate callback and does not read config or select scenes.
+While Halloween is the selected, loaded event on the start page, `NewConversationComposer` SHALL render `CelebrationDecor` (from `@epam/ai-dial-celebrations`, which renders the event's `HalloweenDecor`) inside its welcome-screen region whenever the celebration is enabled and the composer is not in its inline layout: a single cobweb pinned to the region's inline-end top corner with a spider perched on it, and a pumpkin button rendered before the decoration layer so the spider paints over it. `CelebrationDecor` SHALL render the selected event decoration, or nothing when the runtime is disabled. HalloweenDecor receives an onActivate callback and does not read config or select scenes.
 
 The webs SHALL stay faint — they frame the screen rather than compete with it — and the faintness SHALL live on the web drawing, not on the corner wrapper, so the spiders keep their contrast.
 
 Each pumpkin click SHALL randomly select ghosts, a web-weaving celebration, bats, a cat with wisps, flying witches, a ghost train, a claw portal, perched ravens, candy rain, invisible paw prints, or dancing skeletons. Every scene SHALL be eligible on the first click. Later clicks SHALL exclude the preceding pumpkin scene, with all other scenes equally eligible. Each click SHALL replace the active effect. Keyboard Enter/Space and touch SHALL use the same selection behaviour.
 
-Every celebration SHALL raise a success notification and SHALL clear itself after its configured scene duration, which SHALL outlast its finite artwork animations. The existing scenes SHALL default to `HALLOWEEN_BURST_DURATION_MS`; the six additional scenes SHALL use individual deadlines between 10 and 12 seconds. Repeating the same celebration SHALL restart its animations rather than leave the layer untouched.
+Every celebration SHALL raise a success notification and SHALL clear itself after its configured scene duration, which SHALL outlast its finite artwork animations. Scenes without an entry in `HALLOWEEN_SCENE_DURATIONS` (ghosts, web, descending spiders) SHALL default to `HALLOWEEN_BURST_DURATION_MS` (14000ms); bats, cat and witches use their scene duration plus 500ms, and the six additional click scenes use individual deadlines: train 12000ms, portal 10000ms, ravens 13000ms, candy `CANDY_DEADLINE_MS` (35500ms), footprints 12000ms and skeletons `SKELETON_DEADLINE_MS` (12000ms). Repeating the same celebration SHALL restart its animations rather than leave the layer untouched.
 
 The Halloween module and its artwork SHALL load on demand only when selected on the start page. CelebrationProvider SHALL own the portal, random selection and cleanup; HalloweenBurstOverlay supplies only scene artwork.
 
@@ -181,7 +181,7 @@ The spider SHALL be drawn as inline SVG, not an emoji, with a shaded segmented b
 
 ### Requirement: Every celebration toast names the secret chat phrase
 
-All twelve celebration notifications, including the secret-phrase spider drop, SHALL tell the user to send `HALLOWEEN_SECRET_PHRASE` in the start-page chat. The phrase SHALL be interpolated rather than duplicated in locale strings. Messages SHALL NOT promise a fixed next scene.
+All sixteen celebration notifications (one per `HalloweenScene`, including the five secret-pool scenes) SHALL tell the user to send `HALLOWEEN_SECRET_PHRASE` in the start-page chat. The phrase SHALL be interpolated rather than duplicated in locale strings. Messages SHALL NOT promise a fixed next scene.
 
 #### Scenario: Clicking the pumpkin reveals the phrase
 
@@ -443,7 +443,7 @@ The train SHALL support an optional supplied audio source. With no source, no me
 
 ### Requirement: Ravens build a nest from the interface
 
-`HalloweenBurst.Ravens` SHALL show five ravens on mobile and eight on desktop, owned by `HalloweenRavens` inside the existing celebration viewport layer. Birds SHALL land on visible UI, tear small fragments from separated headings, buttons and history rows and build a nest on the main pumpkin. Two ravens SHALL grip opposite ends of one visible conversation, first attempt small pulls, then brace and tug harder while its visual copy bends. One SHALL release; the other and the conversation SHALL recoil toward the nest. Collectors SHALL each use a unique source, deliver their piece at staggered times and immediately fly off along separate routes without gathering over the nest. The pumpkin SHALL shake and all borrowed UI SHALL be restored by twelve seconds, before a thirteen-second shared deadline.
+`HalloweenScene.Ravens` SHALL show five ravens on mobile and eight on desktop, owned by `HalloweenRavens` inside the existing celebration viewport layer. Birds SHALL land on visible UI, tear small fragments from separated headings, buttons and history rows and build a nest on the main pumpkin. Two ravens SHALL grip opposite ends of one visible conversation, first attempt small pulls, then brace and tug harder while its visual copy bends. One SHALL release; the other and the conversation SHALL recoil toward the nest. Collectors SHALL each use a unique source, deliver their piece at staggered times and immediately fly off along separate routes without gathering over the nest. The pumpkin SHALL shake and all borrowed UI SHALL be restored by twelve seconds, before a thirteen-second shared deadline.
 
 Flying birds SHALL turn toward their flight direction at route changes; grounded tugging SHALL preserve their grip-facing pose. The birds' beaks and the carried edges SHALL derive from the same geometry and timeline throughout contact. Target discovery SHALL use a bounded snapshot of visible existing DOM geometry in physical viewport coordinates, preserving attachment in LTR and RTL. Hidden, clipped, expanded or focused conversation controls SHALL NOT be borrowed. When no eligible conversation is visible, the birds SHALL fight over a decorative composer-border strip; when the pumpkin is absent the nest SHALL use a composer corner. With no usable interface, a stationary decorative flock SHALL remain available.
 

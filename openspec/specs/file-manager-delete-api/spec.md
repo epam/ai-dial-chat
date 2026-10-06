@@ -16,7 +16,7 @@ The BFF SHALL expose `POST /api/v1/files/delete` that accepts a batch of file/fo
 
 #### Request DTO
 
-**`DeleteItemNodeType`** (string enum, `apps/chat-api/src/files/dto/delete-files.dto.ts`):
+**`DeleteItemNodeType`** (exported from `apps/chat-api/src/files/dto/delete-files.dto.ts` as an alias of the shared `DialFileNodeType` string enum in `apps/chat-api/src/files/dto/dial-file-node-type.ts`):
 ```
 Item   = 'item'
 Folder = 'folder'
@@ -59,6 +59,7 @@ Folder = 'folder'
 @Post('delete')
 @HttpCode(200)
 @ApiOperation({ summary: 'Delete files and folders' })
+@ApiBody({ type: DeleteFilesDto })
 @ApiResponse({ status: 200, type: DeleteFilesResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -72,14 +73,14 @@ async deleteFiles(
 
 #### Service behavior
 
-1. For each `DeleteItemDto`:
-   - If `nodeType === 'item'`: call `this.client.deleteFile(bucket, relativePath, { headers: getBearerAuthHeaders(at) })`.  
+1. All `DeleteItemDto`s are processed concurrently (`Promise.all`); for each:
+   - If `nodeType === 'item'`: call `this.dialClient.client.deleteFile(bucket, encodeDialFilePath(relativePath), { headers: getBearerAuthHeaders(at), signal: AbortSignal.timeout(FILE_TRANSFER_TIMEOUT_MS) })`.  
      - 2xx → `{ path, success: true }`.  
      - 404 → `{ path, success: true }` (already gone, treat as success).  
      - 403 → `{ path, success: false, error: 'Forbidden' }`.  
-     - Other → `{ path, success: false, error: 'Delete failed' }`.
-   - If `nodeType === 'folder'`: call `expandFolderContents` (reuse existing method), then delete each expanded file individually. Finally, attempt to delete `${folderRelPath}.dial_folder` marker (404 is silently ignored). Aggregate: if all children and marker succeed → `{ path, success: true }`; if any child fails → `{ path, success: false, error: 'Partial folder delete' }`.
-2. Return `{ results }` after all items are processed.
+     - Other status, or a thrown exception (including a timeout or unreachable DIAL Core) → `{ path, success: false, error: 'Delete failed' }`.
+   - If `nodeType === 'folder'`: call `expandFolderContents` (reuse existing method), then delete each expanded file individually, one at a time. If `expandFolderContents` throws → `{ path, success: false, error: 'Delete failed' }`. Finally, attempt to delete `${folderRelPath}.dial_folder` marker (404 counts as success). Aggregate: if all children and marker succeed → `{ path, success: true }`; if any child or the marker fails → `{ path, success: false, error: 'Partial folder delete' }`.
+2. Return `{ results }` after all items are processed. Per-item DIAL Core failures never fail the request: they surface only as `success: false` entries in a `200` response.
 
 **Folder path normalisation**: if `path` does not end with `/`, append `/` before passing to `expandFolderContents` (same as archive download).
 
@@ -87,7 +88,7 @@ async deleteFiles(
 
 #### Generated client
 
-- **operationId**: `filesControllerDeleteFiles` (NestJS auto-name)
+- **operationId**: `deleteFiles` (the handler name, via `operationIdFactory`)
 - **SDK method**: `filesApi.deleteFiles({ deleteFilesDto: { items } })`
 - **Request DTO**: `DeleteFilesDto`
 - **Response DTO**: `DeleteFilesResponseDto`
@@ -129,7 +130,7 @@ HTTP 200
 {
   "results": [
     { "path": "reports/q1.pdf", "success": true },
-    { "path": "old-data/", "success": false, "error": "Forbidden" }
+    { "path": "old-data/", "success": false, "error": "Partial folder delete" }
   ]
 }
 ```
@@ -186,7 +187,7 @@ HTTP 400
 
 - **GIVEN** DIAL Core times out
 - **WHEN** delete is called
-- **THEN** `503 Service Unavailable`
+- **THEN** `200` with each affected item reported as `{ success: false, error: 'Delete failed' }` (the per-item catch absorbs the timeout; the declared `503` response is not produced by this path)
 
 ## Tests
 
@@ -195,7 +196,7 @@ HTTP 400
 - `POST /api/v1/files/delete` → 400 when body is invalid (missing `items`)
 - `POST /api/v1/files/delete` → 401 when unauthenticated
 
-**Service unit tests** (`apps/chat-api/src/files/tests/files.service.spec.ts`):
+**Service unit tests** (`apps/chat-api/src/files/tests/batch/files-batch-operations.service.spec.ts`):
 - `deleteFiles` single item success
 - `deleteFiles` single item returns 404 → `success: true`
 - `deleteFiles` single item returns 403 → `success: false, error: 'Forbidden'`

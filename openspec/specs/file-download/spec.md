@@ -9,7 +9,7 @@ Downloading a file from DIAL Core through the BFF, with query DTO validation, a 
 ### Requirement: Download file from DIAL Core via BFF
 The system SHALL expose `GET /api/v1/files/download` accepting `bucket` and `path` query parameters, validate all inputs, proxy the request to DIAL Core `GET /v1/files/{bucket}/{path}` under the authenticated user's session, and stream the binary response back to the browser.
 
-The handler SHALL forward an explicit allowlist of safe response headers from the DIAL Core response: `content-type`, `content-disposition`, `content-length`. All other headers SHALL be stripped. The endpoint SHALL not buffer the response body — it SHALL pipe the DIAL Core `fetch` response body stream directly to the NestJS `Response` object.
+The handler SHALL forward an explicit allowlist of safe response headers from the DIAL Core response: `content-type`, `content-disposition`, `content-length`. All other DIAL Core headers SHALL be stripped. The allowlist is `SAFE_DOWNLOAD_HEADERS` in `apps/chat-api/src/files/download/files-download.service.ts`. When the forwarded `content-type` starts with `text/html` (HTML previews load this route via `src=`), the handler SHALL additionally set its own `Content-Security-Policy` from `createHtmlPreviewCspHeader(ALLOWED_IFRAME_ORIGINS)`, remove any `Content-Security-Policy-Report-Only`, and rewrite a leading `attachment` in `Content-Disposition` to `inline`. The endpoint SHALL not buffer the response body — it SHALL pipe the DIAL Core `fetch` response body stream directly to the NestJS `Response` object.
 
 - **HTTP method**: `GET`
 - **Route**: `/api/v1/files/download` (query-param shape chosen over path params; see design.md Decision 3)
@@ -19,14 +19,14 @@ The handler SHALL forward an explicit allowlist of safe response headers from th
 **Query parameters:**
 | Parameter | Type   | Validation |
 |-----------|--------|------------|
-| `bucket`  | string | Required; `@Matches(/^[\w.\-]+$/)` |
-| `path`    | string | Required; `@Matches(/^[\w.\-/]+$/)` — must not contain `..`; must not start with `/` |
+| `bucket`  | string | Required; `@Matches(BUCKET_NAME_PATTERN)` (`/^[\w.-]+$/`) |
+| `path`    | string | Required; `@IsValidFilePath()` — must not start with `/`, contain `..`, contain any of `:;,={}&\"`, contain a malformed `%` sequence, or contain an encoded `%2e`/`%2f`/`%5c` |
 
 **Success response (200):** Binary stream. Swagger annotated as `@ApiProduces('application/octet-stream')` with `@ApiResponse({ status: 200, description: 'Binary file content', schema: { type: 'string', format: 'binary' } })`.
 
 **Error codes:** 400, 401, 403, 404, 429, 502, 503, 500.
 
-**OpenAPI generator gap:** The generator emits `Blob | void` for binary responses, which loses stream semantics. The `files.api.ts` wrapper SHALL use `filesApi.downloadFileRaw()` to obtain the raw `fetch` `Response` object, document this as a generator gap, and expose a typed helper. This pattern mirrors `auth.api.ts`:`getCurrentUserRaw()`.
+**OpenAPI generator gap:** The generator emits `Blob | void` for binary responses, which loses stream semantics. The frontend wrapper (`createFilesApiClient`, re-exported through `files.api.ts`) SHALL use `filesApi.downloadFileRaw()` to obtain the raw `fetch` `Response` object, document this as a generator gap, and expose a typed helper. This pattern mirrors `auth.api.ts`:`getCurrentUserRaw()`.
 
 #### Scenario: Successful file download
 - **WHEN** an authenticated user sends `GET /api/v1/files/download?bucket=my-bucket&path=folder/file.pdf`
@@ -34,7 +34,7 @@ The handler SHALL forward an explicit allowlist of safe response headers from th
 
 #### Scenario: Downloaded file headers forwarded correctly
 - **WHEN** DIAL Core responds with `Content-Type: application/pdf`, `Content-Disposition: attachment; filename="report.pdf"`, and `Content-Length: 204800`
-- **THEN** the BFF response includes exactly those three headers and no additional DIAL Core headers
+- **THEN** the BFF response includes exactly those three headers and no additional DIAL Core headers (for a non-HTML `Content-Type`)
 
 #### Scenario: Unauthenticated download attempt
 - **WHEN** the request carries no valid session cookie
@@ -73,10 +73,10 @@ The handler SHALL forward an explicit allowlist of safe response headers from th
 ### Requirement: Download query DTO validation
 The system SHALL parse and validate the `bucket` and `path` query parameters through a `DownloadFileDto` class decorated with `class-validator` and `@ApiProperty`. The global `ValidationPipe` MUST reject undeclared query params.
 
-The `DownloadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/download-file.dto.ts`.
+`DownloadFileDto` SHALL be exported from `apps/chat-api/src/files/dto/download-file.dto.ts` as a re-export of the shared `FileParamsDto` (`apps/chat-api/src/files/dto/file-params.dto.ts`).
 
-- `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(/^[\w.\-]+$/)`, `@MaxLength(256)`
-- `path`: `@IsString()`, `@IsNotEmpty()`, `@Matches(/^[\w.\-/]+$/)`, `@MaxLength(1024)`, and validation rejecting values starting with `/` or containing `..`
+- `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(BUCKET_NAME_PATTERN)`, `@MaxLength(256)`
+- `path`: `@IsString()`, `@IsNotEmpty()`, `@MaxLength(1024)`, `@IsValidFilePath()` (`apps/chat-api/src/files/dto/file-path.validator.ts`), which rejects values starting with `/`, containing `..`, containing a forbidden character, a malformed `%` sequence, or an encoded dot/slash/backslash
 
 #### Scenario: Valid DTO passes validation
 - **WHEN** `bucket` is `user-bucket-01` and `path` is `reports/q1.pdf`
@@ -89,7 +89,7 @@ The `DownloadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/download-
 ---
 
 ### Requirement: Generated-client frontend wrapper for download
-The system SHALL provide a typed frontend wrapper in `apps/chat/src/server-api/files.api.ts` that uses `filesApi.downloadFileRaw()` from `@epam/chat-api-client` to obtain the raw `fetch` `Response`. The wrapper SHALL document the generator gap inline and expose the `Response` to callers so they can read `response.body` as a `ReadableStream` or call `response.blob()`.
+The system SHALL provide a typed frontend `downloadFile(bucket, path, signal?)` exported from `apps/chat/src/server-api/files.api.ts`, built by `createFilesApiClient(filesApi, uploadFileWithProgress)` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/files/create-files-api.ts`), which calls `filesApi.downloadFileRaw()` of `@epam/ai-dial-chat-api-client` and returns its `.raw` `fetch` `Response`. The implementation SHALL document the generator gap inline and expose the `Response` to callers so they can read `response.body` as a `ReadableStream` or call `response.blob()`.
 
 The `filesApi` singleton SHALL be exported from `apps/chat/src/server-api/api-client.ts` using the shared `Configuration` instance (with CSRF, unauthorized, and telemetry middleware already wired).
 
@@ -97,7 +97,7 @@ The `filesApi` singleton SHALL be exported from `apps/chat/src/server-api/api-cl
 - **i18n**: No new user-visible strings introduced by this capability; error display is the caller's responsibility.
 
 #### Scenario: Frontend wrapper returns raw Response for streaming
-- **WHEN** `downloadFile({ bucket, path })` is called in the frontend wrapper
+- **WHEN** `downloadFile(bucket, path)` is called in the frontend wrapper
 - **THEN** the function calls `filesApi.downloadFileRaw(...)` and resolves to the raw `fetch` `Response` object with status `200` and a non-null `body` stream
 
 #### Scenario: Frontend wrapper propagates 404 error

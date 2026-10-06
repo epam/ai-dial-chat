@@ -10,7 +10,7 @@ Define how deployment-provided tool toggles are shown in the conversation input,
 
 The system SHALL derive the available tools from the selected deployment's configuration schema alone. Every boolean-typed property (explicit `"type": "boolean"`, or no `type` with a boolean `default`) of `selectedDeploymentConfiguration.properties` is one tool, in schema order.
 
-Tools SHALL always be surfaced as a row of chips rendered directly in the conversation input — every tool, selected or not, in schema order. The chip body toggles the tool and `aria-pressed` reflects the state.
+Tools SHALL always be surfaced as a row of chips rendered directly in the conversation input (`ToolsChips` in `libs/conversation-input`) — every tool, selected or not, in schema order. The chip body toggles the tool and `aria-pressed` reflects the state. When the host supplies both `stateOnLabel` and `stateOffLabel` (this app passes `tools.stateOn` / `tools.stateOff`), the chip appends that visible, `aria-hidden` state text after the label.
 
 Whether a chip can additionally be taken off the input is governed by the `removable-tools` UI feature (`OverlayFeature.RemovableTools`), which is in `DEFAULT_ENABLED_UI_FEATURES`:
 
@@ -57,12 +57,12 @@ Beyond `removable-tools`, no operator configuration gates this: there is no env 
 
 ### Requirement: Tools submenu rendering (desktop)
 
-On desktop viewports, the "Tools" menu item SHALL open a submenu panel (nested within the `DialDropdown`) displaying tool toggle rows.
+On desktop viewports, the "Tools" menu item SHALL open a submenu panel (nested within the ui-kit 2.0 `Dropdown` rendered by `AddAttachmentButton`) displaying tool toggle rows.
 
 Each tool row SHALL display:
 - An icon (host-supplied, `IconTelescope` in this app) with `aria-hidden`
 - The tool label (from schema property `title`, falling back to the humanized property key — `deep_research` becomes "Deep research")
-- A trailing check icon (`IconCheck`) when the tool is selected, hidden when unselected
+- A trailing check mark when the tool is selected, hidden when unselected — rendered by the ui-kit menu from each row's `selectable: true`, `mark: MenuItemMark.Check`, and `checked: isSelected` fields, not by a host-supplied icon
 
 The submenu panel SHALL use `aria-haspopup="menu"` on the trigger item and the panel SHALL have `role="menu"`.
 
@@ -75,12 +75,12 @@ The submenu panel SHALL use `aria-haspopup="menu"` on the trigger item and the p
 - **THEN** the tool row label reads "Deep research"
 
 #### Scenario: Tool row displays humanized key when title is absent
-- **THEN** the tool row label reads the humanized key ("Deep research")
-- **THEN** the tool row label reads the i18n fallback value ("Deep research")
+- **WHEN** the deployment configuration property `deep_research` has no `title`
+- **THEN** the tool row label reads the humanized key ("Deep research"), with no i18n lookup involved
 
 #### Scenario: Selected tool shows check icon
 - **WHEN** the Deep Research tool is selected (toggled on)
-- **THEN** the tool row displays a trailing `IconCheck`
+- **THEN** the tool row displays the ui-kit trailing check mark
 
 #### Scenario: Unselected tool hides check icon
 - **WHEN** the Deep Research tool is unselected (toggled off)
@@ -330,7 +330,7 @@ The tools menu SHALL support full keyboard navigation:
 
 The "Tools" trigger SHALL have `aria-haspopup="menu"` and `aria-expanded` reflecting submenu visibility.
 
-Decorative icons (`IconTool`, `IconTelescope`, `IconCheck`) SHALL have `aria-hidden="true"`.
+Decorative icons (`IconTool`, `IconTelescope`, and the ui-kit check mark) SHALL have `aria-hidden="true"`.
 
 Tool labels SHALL be the accessible name for each row (no separate `aria-label` needed since the label text is visible).
 
@@ -352,6 +352,8 @@ The following i18n keys SHALL be added to `apps/chat/src/i18n/locales/en.json`:
 |-----|---------------|-------|
 | `tools.menuTitle` | `"Tools"` | Top-level menu item label |
 | `tools.removeTool` | `"Remove {{label}}"` | Accessible label of a chip's × button |
+| `tools.stateOn` | `"On"` | Visible chip state text while the tool is on (`stateOnLabel`) |
+| `tools.stateOff` | `"Off"` | Visible chip state text while the tool is off (`stateOffLabel`) |
 
 #### Scenario: Labels use i18n values
 - **WHEN** the Tools menu renders in a locale that has translated `tools.menuTitle`

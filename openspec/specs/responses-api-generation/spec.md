@@ -23,14 +23,14 @@ Generating assistant responses through DIAL's Responses API behind an adapter se
 
 ### Requirement: ConversationService resolves generation API before opening the upstream stream
 
-`ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`) SHALL call `DeploymentsService.getDeploymentDetails(sub, model, token)` (the existing cached, user-token-scoped lookup already used by the deployment details endpoint) before issuing any upstream generation call, read `features` off the returned `modelDetails`/`applicationDetails` per the resolved `type`, and pass the result through `resolveGenerationApi` to compute a candidate generation API. `ConversationModule` SHALL import `DeploymentsModule` and `AppConfigModule` to obtain `DeploymentsService` and `FeatureFlagsService` respectively. When `getDeploymentDetails` resolves the target id to `type: 'toolset'`, `streamCompletion` SHALL reject the request with HTTP 400 before any generation call or feature-flag resolution, since a toolset is not a generation deployment. `getDeploymentDetails` SHALL be called unconditionally for every completion request, regardless of the state of the feature flag introduced below — it is not skipped, short-circuited, or bypassed based on that flag, because it also performs the toolset rejection above and the `temperature`-capability derivation below, neither of which is specific to the Responses API.
+`ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`) SHALL call `DeploymentsService.getDeploymentDetails(sub, model, token)` (the existing cached, user-token-scoped lookup already used by the deployment details endpoint) before issuing any upstream generation call, read `features` off the returned `modelDetails`/`applicationDetails` per the resolved `type`, and pass the result through `resolveGenerationApi` to compute a candidate generation API. `ConversationModule` SHALL import `DeploymentsModule` and `AppConfigModule` to obtain `DeploymentsService` and `FeatureFlagsService` respectively. `getDeploymentDetails` and the `FeatureKey.ResponsesApiEnabled`/`FeatureKey.ResponsesBackgroundEnabled` flag lookups SHALL be resolved concurrently (one `Promise.all` in the private `resolveGenerationApiForDeployment` helper). When `getDeploymentDetails` resolves the target id to `type: 'toolset'`, `streamCompletion` SHALL reject the request with HTTP 400 (`BadRequestException`) before any generation call, regardless of the resolved flag values, since a toolset is not a generation deployment. `getDeploymentDetails` SHALL be called unconditionally for every completion request, regardless of the state of the feature flag introduced below — it is not skipped, short-circuited, or bypassed based on that flag, because it also performs the toolset rejection above and the `temperature`-capability derivation below, neither of which is specific to the Responses API.
 
 The same `features` lookup used to resolve the generation API SHALL also be used to determine whether the resolved deployment explicitly supports the `temperature` parameter (`features.temperature === true`). `ConversationStreamingService` SHALL make no additional `getDeploymentDetails` (or equivalent deployment-details) call for this purpose — the boolean SHALL be derived from the `features` object already read while resolving `GenerationApi`, and passed through to whichever adapter's `buildRequest` is invoked for that generation.
 
 `GenerationApi.Responses` SHALL only ever be the resolved generation API when **both** of the following hold:
 
 1. `resolveGenerationApi(features)` returns `GenerationApi.Responses` (i.e. the resolved deployment reports `features.responsesApi === true`); **AND**
-2. `FeatureFlagsService.isEnabled(FeatureKey.ResponsesApiEnabled, context)` resolves to `true`, where `context` is a fixed server-side `AppConfigEvalContext` (no per-request `roles`, matching the `features.llmConversationNaming` precedent at `apps/chat-api/src/conversations/conversation-naming.service.ts:32,180-183`).
+2. `FeatureFlagsService.isEnabled(FeatureKey.ResponsesApiEnabled, context)` resolves to `true`, where `context` is a fixed server-side `AppConfigEvalContext` (the module-level `SERVER_APP_CONFIG_CONTEXT = { appId: 'chat-api' }`, no per-request `roles`, matching the `features.llmConversationNaming` precedent in `apps/chat-api/src/conversations/conversation-naming.service.ts`).
 
 When condition 2 does not hold — the flag is disabled, absent (default `false`), or its resolution fails for any reason — `streamCompletion` SHALL resolve to `GenerationApi.ChatCompletions` regardless of what `resolveGenerationApi(features)` alone would have returned, and SHALL NOT invoke `ResponsesAdapter.buildRequest` or `ResponsesAdapter.stream` for that request. This flag check SHALL NOT alter, wrap, or gate the `resolveGenerationApi` pure function itself (`apps/chat-api/src/conversations/generation/generation-api.ts`) — that function's existing signature, behavior, and spec scenarios (Requirement: "Generation API resolver") are unchanged by this requirement.
 
@@ -66,7 +66,7 @@ This requirement SHALL NOT introduce, remove, or change any `@RequireFeature`/`F
 #### Scenario: Target resolves to a toolset regardless of the feature flag
 
 - **WHEN** a completion request's `model` resolves via `getDeploymentDetails` to `type: 'toolset'`, in any state of `features.responsesApiEnabled`
-- **THEN** the request is rejected with HTTP 400 before any feature-flag resolution or generation call is made
+- **THEN** the request is rejected with HTTP 400 before any generation call is made, whatever the (concurrently resolved) flag values are
 
 #### Scenario: getDeploymentDetails is not skipped when the flag is disabled
 
@@ -110,7 +110,7 @@ The existing SDK `sendChatCompletionRequest` call, request construction from `bu
 
 `responses.adapter.ts` (`apps/chat-api/src/conversations/generation/responses.adapter.ts`) SHALL build the Responses request from the same `buildConversationHistory` result used by the Chat Completions path: each history message becomes an `input` item carrying its `role` and text `content`, in order, with the system/instruction message kept as the first `input` item. Messages whose `role` is `ConversationMessageRole.Status` (internal Chat-owned bookkeeping markers, e.g. model-changed) SHALL be excluded from the `input` array before the remaining messages are mapped, matching the equivalent filtering already applied by `chat-completions.adapter.ts`; the relative order of all remaining messages SHALL be preserved. The request SHALL set `stream: true` and SHALL NOT set `previous_response_id` or `conversation` (neither key, nor a `null` value, since DIAL Core rejects the key's mere presence).
 
-On the stateless Responses path the request SHALL set `store: false` and SHALL NOT set `background`. On the background path defined by `background-responses-generation` the request SHALL set `store: true` and `background: true`; every other field (`input`, `instructions`, `temperature`, `max_output_tokens`, `reasoning`, `custom_fields`) SHALL be built exactly as on the stateless path.
+On the stateless Responses path the request SHALL set `store: false` and SHALL NOT set `background`. On the background path defined by `background-responses-generation` the request SHALL set `store: true` and `background: true`; every other field (`model`, `input`, `temperature`, `max_output_tokens`, `reasoning`, `custom_fields`) SHALL be built exactly as on the stateless path.
 
 #### Scenario: Full turn history sent as input
 
@@ -134,7 +134,7 @@ On the stateless Responses path the request SHALL set `store: false` and SHALL N
 
 ### Requirement: SDK createResponse call and cast isolation
 
-`responses.adapter.ts` SHALL call `this.dialClient.client.createResponse({ body: responsesRequest as never, headers: { ...bearer auth headers, Accept: 'text/event-stream', 'X-CONVERSATION-ID': conversationId, ...optional X-DIAL-CLIENT-CHANNEL-ID }, parseAs: 'stream', signal })`. The `as never` cast SHALL be confined to this single call site; the function's return value SHALL be converted immediately to the locally defined types in `generation.types.ts` before being passed to any caller.
+`responses.adapter.ts` SHALL call `this.dialClient.client.createResponse({ body: responsesRequest as never, headers: { ...bearer auth headers, Accept: 'text/event-stream', 'X-CONVERSATION-ID': conversationId (via `buildConversationIdHeaders`), ...optional X-DIAL-CLIENT-CHANNEL-ID, ...optional timezone header, ...optional job-title headers (`buildJobTitleHeaders`) }, parseAs: 'stream', signal })`. The `as never` cast SHALL be confined to this single call site; the function's return value SHALL be converted immediately to the locally defined types in `generation.types.ts` before being passed to any caller.
 
 #### Scenario: Cast does not leak past the adapter
 
@@ -151,6 +151,7 @@ On the stateless Responses path the request SHALL set `store: false` and SHALL N
 - `response.failed` → record an explicit terminal-error signal. Extract a human-readable message from `response.error` using the repository's established DIAL error-extraction conventions (`extractDialErrorMessage`); fall back to a stable generic message when no usable text is available. Preserve any assistant text assembled from prior `response.output_text.delta` events. SHALL NOT be counted as an unknown event, SHALL NOT cause a downstream `data: [DONE]` write, and SHALL NOT trigger a Chat Completions retry.
 - `response.incomplete` → finalize the generation the same way an in-progress error/stop is finalized today: record an explicit terminal-error signal and save the partial assistant message accumulated so far via the existing `backend-owned-generation-persistence` partial-save path.
 - An in-band `error` event or an error payload embedded in another event → record an explicit terminal-error signal and terminate the stream via the existing stream-error path (no Chat Completions retry).
+- `response.reasoning_text.delta` → discard silently: not forwarded to the browser, not added to the assembled message, not counted as an unknown event, and not a terminal signal.
 - Any other event `type` → skip without forwarding to the browser; count it by `event.type` in metrics; MUST NOT log event content or prompt/response text; MUST NOT be treated as a terminal signal of any kind.
 
 A downstream-compatibility `[DONE]` marker (`data: [DONE]`) SHALL be accepted only as a backward-compatibility signal for legacy or non-standard upstreams, not as part of the canonical DIAL Core Responses contract (Core's canonical stream ends in `response.completed` or `response.incomplete` and does not append `[DONE]`). Observing `[DONE]` SHALL record an explicit success terminal signal only when no terminal signal (success or error) has already been recorded for that stream; it SHALL NOT override an earlier `response.failed`, `response.incomplete`, in-band `error`, or invalid-status `response.completed` signal.
@@ -301,7 +302,7 @@ On the stateless Responses path `responseId` is diagnostic only. On the backgrou
 
 ### Requirement: Responses request forwards conversation temperature only when explicitly supported
 
-`ResponsesAdapter.buildRequest` SHALL accept a `temperatureSupported: boolean` parameter, computed by `ConversationService` from the deployment `features` already fetched to resolve the generation API. The built `ResponsesApiRequestBody` SHALL include an optional `temperature: number` field set to `startConversation.temperature` only when `temperatureSupported === true` AND `startConversation.temperature` is not `null`/`undefined`. Presence SHALL be checked with a nullish check, not a truthiness check, so that `temperature: 0` is preserved. The field SHALL be omitted entirely — never sent as `null`, `undefined`, or a substituted default — when `temperatureSupported` is `false`, when it was not determined (absent capability), or when the conversation has no usable value. `ResponsesAdapter` SHALL NOT read a default temperature from any frontend constant, environment variable, or DIAL Core configuration, and SHALL NOT alter `ChatCompletionsAdapter.buildRequest`'s existing unconditional temperature forwarding.
+`ResponsesAdapter.buildRequest` SHALL accept a `temperatureSupported: boolean` parameter, computed by `ConversationService` from the deployment `features` already fetched to resolve the generation API. The built `ResponsesApiRequestBody` SHALL include an optional `temperature: number` field set to `startConversation.temperature` only when `temperatureSupported === true` AND `startConversation.temperature` is not `null`/`undefined`. Presence SHALL be checked with a nullish check, not a truthiness check, so that `temperature: 0` is preserved. The field SHALL be omitted entirely — never sent as `null`, `undefined`, or a substituted default — when `temperatureSupported` is `false`, when it was not determined (absent capability), or when the conversation has no usable value. `ResponsesAdapter` SHALL NOT read a default temperature from any frontend constant, environment variable, or DIAL Core configuration, `ChatCompletionsAdapter.buildRequest` SHALL apply the same rule: it also accepts `temperatureSupported` and includes `temperature` only when `temperatureSupported === true` and `startConversation.temperature != null`.
 
 #### Scenario: Supported deployment forwards a zero temperature exactly
 
@@ -323,10 +324,10 @@ On the stateless Responses path `responseId` is diagnostic only. On the backgrou
 - **WHEN** `temperatureSupported` is `false` because the deployment `features` object had no `temperature` field
 - **THEN** the built Responses request body has no `temperature` field
 
-#### Scenario: Chat Completions temperature forwarding is unaffected
+#### Scenario: Chat Completions temperature forwarding uses the same capability gate
 
 - **WHEN** a generation is routed through `ChatCompletionsAdapter` rather than `ResponsesAdapter`
-- **THEN** `ChatCompletionsAdapter.buildRequest`'s existing temperature-forwarding behavior (unconditional on presence, capability-independent) is unchanged
+- **THEN** `ChatCompletionsAdapter.buildRequest` forwards `temperature` under the same capability gate (`temperatureSupported === true` and a non-nullish `startConversation.temperature`), and omits it otherwise
 
 ---
 

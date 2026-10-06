@@ -3,8 +3,8 @@
 ## Purpose
 
 Specifies `@epam/ai-dial-chat-hooks`'s `useDialFileMutations` and
-`useDialFileSharing` — folder create/delete/rename/copy/move and
-share/unshare operations that invalidate the shared listing cache via
+`useDialFileSharing` — folder create/delete/rename/copy/move/download and
+unshare/remove-access operations that invalidate the shared listing cache via
 injected callbacks, validate names with structured (non-translated) errors,
 support independent cancellation, and report outcomes as structured events
 rather than calling application notification services.
@@ -17,20 +17,25 @@ rather than calling application notification services.
 `useDialFileSharing`, neither of which SHALL hold its own copy of the
 listing cache — every successful mutation SHALL call the injected
 `invalidateFolders`/`bumpRetry`/`mergeCreatedFolder` callbacks (owned by
-`useDialFileListing`) to reflect the change, and every network call SHALL go
+`useDialFileListing`; `useDialFileSharing` receives only `bumpRetry`) to
+reflect the change, and every network call SHALL go
 through the injected `DialFilesApi` port.
 
 #### Scenario: Folder creation merges optimistically rather than invalidating
 
 - **WHEN** `onCreateFolder` succeeds
 - **THEN** the hook calls `mergeCreatedFolder` to insert the new folder into
-  its parent's cache entry directly, rather than invalidating and refetching
+  its parent's cache entry directly (passing the parent's cached
+  permissions), followed by `bumpRetry`, rather than calling
+  `invalidateFolders`
 
 #### Scenario: Delete invalidates exactly the affected parent folders
 
 - **WHEN** `onDeleteFiles` completes (success or partial failure)
 - **THEN** the hook calls `invalidateFolders` with exactly the set of
-  affected parent-folder API paths, followed by `bumpRetry`
+  affected cache keys — the parent-folder API path of each deleted file and
+  the own (trailing-slash) API path of each deleted folder — followed by
+  `bumpRetry`
 
 ### Requirement: Name validation returns a structured reason, not a translated message
 
@@ -38,15 +43,20 @@ through the injected `DialFilesApi` port.
 `FileNameValidationError` (`empty`, `forbiddenSymbols`, `reservedName`,
 `tooLong`, `duplicateName`) or `null`
 for a valid name, and SHALL NOT import `react-i18next` or produce a
-pre-rendered message string. Validation SHALL check, in order: empty,
-forbidden symbols (including a caller-supplied `forbiddenSymbolsRegExp`),
-the reserved marker name, length over 255
-characters, and case-insensitive sibling-name conflict.
+pre-rendered message string. `onCreateFolderValidate` SHALL check, in order:
+empty, forbidden symbols (including a caller-supplied
+`forbiddenSymbolsRegExp`), the reserved marker name (`RESERVED_MARKER_NAME`),
+length over 255 characters, and case-insensitive sibling-name conflict
+against `parentFolder.items`. `onRenameValidate` SHALL apply the same checks
+but test the reserved marker name before forbidden symbols, and match
+siblings in `currentFolder.items` excluding the renamed item itself.
 
 #### Scenario: A forbidden-symbol name is rejected with the offending symbols
 
 - **WHEN** `onCreateFolderValidate` is called with a name containing `:`
-- **THEN** it returns `{ reason: 'forbiddenSymbols', symbols: ':' }`
+- **THEN** it returns `{ reason: 'forbiddenSymbols', symbols: NOT_ALLOWED_SYMBOLS }`
+  — the full forbidden-symbol list exported by `@epam/ai-dial-ui-kit`, not
+  only the offending character
 
 #### Scenario: A case-insensitive sibling conflict is detected
 
@@ -93,8 +103,10 @@ controller (as opposed to a genuine request failure).
 
 `useDialFileMutations` SHALL emit an `onOperationSuccess` callback carrying
 a library-owned `FileOperationSuccessEvent` (kind, name, count,
-destinationFolderName as applicable) instead of calling any application
-notification service directly, and SHALL NOT import
+isFolder, destinationFolderName as applicable) instead of calling any
+application notification service directly — delete success is the one
+exception, reported through `onNotification` as a `Success`-variant
+`FileManagerNotificationReason.FilesDeleted` notification — and SHALL NOT import
 `apps/chat/src/hooks/useOperationNotification` or
 `apps/chat/src/types/entity-notification`.
 

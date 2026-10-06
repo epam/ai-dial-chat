@@ -16,7 +16,7 @@ The All tab on the standalone File storage page and file attachment picker: one 
 
 ### Requirement: useDialFileManagerSections composes one manager per source section
 
-`@epam/ai-dial-chat-hooks` SHALL export `useDialFileManagerSections(options)`, together with its `UseDialFileManagerSectionsOptions`, `UseDialFileManagerSectionsResult` and `DialFileManagerSection` types. Its options are those of `useDialFileManager` without `rootLabel`, plus `activeTab` (which may be `All`) and `sections: DialFileManagerSection[]` (`{ tab, rootLabel }`, where `tab` is one of `MyFiles`/`Shared`/`Organization`).
+`@epam/ai-dial-chat-hooks` SHALL export `useDialFileManagerSections(options)`, together with its `UseDialFileManagerSectionsOptions`, `UseDialFileManagerSectionsResult` and `DialFileManagerSection` types. Its options are those of `useDialFileManager` without `activeTab`, `rootLabel`, `isActive` and `sessionKey`, plus `activeTab` (which may be `All`) and `sections: DialFileManagerSection[]` (`{ tab, rootLabel }`, where `tab` is one of `MyFiles`/`Shared`/`Organization`, the members of `DIAL_FILE_MANAGER_SECTION_TABS`). `DialFileManagerSection` is declared in `dial-file-manager.model.ts`. Sections whose `tab` is not a section tab are dropped, and a `rootLabel` that is empty, contains `/`, or repeats an earlier label is replaced by the tab id (`withRoutableRootLabels`), so every label is a routable first path segment.
 
 The hook SHALL call `useDialFileManager` exactly three times per render, in the fixed order MyFiles, Shared, Organization, whatever `sections` contains. Each call SHALL pass:
 
@@ -29,7 +29,7 @@ The result SHALL be a `UseDialFileManagerResult` plus `sectionTab`. The hook SHA
 
 **State ownership**: the composer owns only the browsed-section state and the last-info section. All listing and cache state stays in the per-section `useDialFileListing` instances.
 
-**Memoisation**: the merged result and every routed callback SHALL be memoized on the section results.
+**Memoisation**: the merged result and the routed callbacks are deliberately not memoized — each `useDialFileManager` section result is a fresh object on every render, so memoizing on it would change nothing.
 
 #### Scenario: Single tab returns the section result unchanged
 
@@ -69,7 +69,8 @@ The composer SHALL resolve a virtual path's section by matching its first segmen
 - **Navigation:** `onPathChange(p)` SHALL make `p`'s section the browsed section and forward `p` to it. `onPathChange()` with no argument returns to the browsed section's root.
 - **Browsed-section fields:** `path`, `isLoading`, `error`, `retry`, search fields, `uploadEnabled`, `isNewButtonDisabled`, `disabledNewButtonTooltip`, `visibleColumns`, `actionLabels`, `dateLocale`, `dateOptions` and `sectionTab` SHALL be the browsed section's.
 - **Unions:** `expandedPaths`, `loadedPaths`, `folderPopupLoadingPaths`, `sharedWithMeIds` and `sharedByMePaths` SHALL be unions across sections. `onExpandedPathsChange` SHALL split its argument by section.
-- **Path-routed callbacks:** upload, create-folder, download, delete, unshare, remove-access, info and rename-validate callbacks SHALL be routed by their destination, parent, or first item path.
+- **Path-routed callbacks:** upload, upload-validate, create-folder, create-folder-validate, folder-popup navigation, info and rename-validate callbacks SHALL be routed by their destination, parent, or item path.
+- **Batch callbacks:** download, delete, unshare and remove-access SHALL split their items by owning section and call each section with its own slice, so a selection spanning sections never reaches another section's bucket. Delete passes `sourceFolder` only to the section that owns it and `''` to the others.
 - **Operation flags:** operation-in-progress flags SHALL be the logical OR across sections.
 - **Upload batch:** `uploadBatchState` and its cancel/clear callbacks SHALL come from the section holding a non-null batch (the browsed section preferred), so an upload queue keeps rendering after the user navigates to another section.
 

@@ -9,12 +9,12 @@ Purpose after archive.
 
 ### Requirement: Skill import has a public headless controller
 
-`@epam/ai-dial-chat-hooks/skill-editor` SHALL export `useSkillArchiveImport` with named public options/result/status/error-kind types. The hook SHALL own dialog visibility, local rejection, in-flight state and import completion. It SHALL receive the configured import request and host completion/error callbacks; it SHALL NOT import app contexts, routing, i18n, notification transports, or initialize an API client. Error outcomes SHALL be semantic values rather than translation keys.
+`@epam/ai-dial-chat-hooks/skill-editor` SHALL export `useSkillArchiveImport` with named public options/result/status/error-kind types. The hook SHALL own dialog visibility, local rejection, in-flight state and import completion. It SHALL receive the configured import request (`importArchive(file, signal)`), host completion/error callbacks (`onImported`, `onError(error, kind)`) and an optional `manifestFileName` (default `'SKILL.md'`); it SHALL NOT import app contexts, routing, i18n, notification transports, or initialize an API client. Error outcomes SHALL be semantic values rather than translation keys.
 
 #### Scenario: Import without parent providers
 
 - **WHEN** an independent host supplies an import callback and selects a valid ZIP or exactly named `SKILL.md`
-- **THEN** the hook closes selection, enters uploading, submits that file once, invokes the successful completion adapter once, and reaches success without parent providers
+- **THEN** the hook enters uploading with the dialog still open, submits that file once, invokes the successful completion adapter once, and reaches success with the dialog closed, without parent providers
 
 #### Scenario: Local filename rejection
 
@@ -32,9 +32,14 @@ Purpose after archive.
 - **WHEN** selection is empty or an outstanding operation completes after unmount
 - **THEN** empty selection initiates no request and late completion performs no hook state update or host completion notification
 
+#### Scenario: Closing the dialog mid-upload
+
+- **WHEN** `closeDialog` is called while an import is in flight
+- **THEN** the hook aborts the request through its `AbortSignal`, returns to idle, and ignores the request's later outcome
+
 ### Requirement: Import failures preserve host feedback behavior
 
-The controller SHALL classify 400/413/422 as validation, 409 as collision, 429 as rate limited, 502/503 as unavailable, and all other failures as generic. The host SHALL translate outcomes and resolve/display trace IDs only for generic failures. Successful import SHALL invoke the existing host success notification and awaited list refresh; refresh failure SHALL NOT cause an automatic repeat of the import request.
+The controller SHALL classify 400/413/422 as validation, 409 as collision, 429 as rate limited, 502/503 as unavailable, and all other failures as generic. A failed request SHALL keep the dialog open so the error renders inline and another file can be chosen. The host SHALL translate outcomes and resolve/display trace IDs only for generic failures. Successful import SHALL invoke the existing host success notification and awaited list refresh; refresh failure SHALL NOT cause an automatic repeat of the import request.
 
 #### Scenario: Mapped and generic failures
 

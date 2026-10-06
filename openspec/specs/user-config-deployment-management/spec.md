@@ -12,12 +12,12 @@ Installing, uninstalling, and selecting deployments within the user configuratio
 
 ```ts
 class UpdateInstalledDto {
-  id: string;          // Deployment identifier — validated @IsNotEmpty + @Matches(/^\S+$/) (any non-whitespace)
-  isInstalled: boolean;
+  id: string;          // Deployment identifier — validated @IsString + @IsNotEmpty + @Matches(/^\S+$/) (any non-whitespace)
+  isInstalled: boolean; // @IsBoolean
 }
 ```
 
-The handler calls `userConfigService.updateInstalledDeployment(id, isInstalled, at, bucket)`. `updateInstalledDeployment` reads the current config, adds or removes `id` from `deployments.installed` (idempotent), then writes back via `writeConfig`.
+The handler calls `userConfigService.updateInstalledDeployment(id, isInstalled, at, bucket)`. `updateInstalledDeployment` delegates to the private `updateInstalledEntry('deployments', ...)` helper shared with toolsets, prompts and skills: it reads the current config, adds or removes `id` from `deployments.installed` (idempotent), then writes back via `writeConfig` with `version: CURRENT_CONFIG_VERSION`.
 
 The operation MUST be idempotent:
 - Installing an already-installed ID MUST NOT create duplicates.
@@ -66,25 +66,23 @@ Error codes:
 
 ### Requirement: UserConfigDto v3 includes deployments.selectedId
 
-`apps/chat-api/src/user-config/dto/user-config.dto.ts` SHALL add `selectedId: string | null` to the `DeploymentsDto` nested class, and bump `CURRENT_CONFIG_VERSION` to `3`:
+`apps/chat-api/src/user-config/dto/user-config.dto.ts` SHALL carry `selectedId: string | null` on the `DeploymentsConfig` interface and its `DeploymentsConfigDto` class (introduced as config version 3; `CURRENT_CONFIG_VERSION` is now `6` after the later prompts/skills/prompt-id migrations):
 
 ```ts
-class DeploymentsDto {
-  @ApiProperty({ type: [String] })
-  @IsArray()
-  @IsString({ each: true })
-  installed: string[];
+class DeploymentsConfigDto implements DeploymentsConfig {
+  @ApiProperty({ description: 'Installed deployment identifiers.', example: ['deployment-xyz'], type: [String] })
+  installed!: string[];
 
   @ApiPropertyOptional({ nullable: true, type: String })
   @IsOptional()
   @IsString()
-  selectedId: string | null;
+  selectedId!: string | null;
 }
 
-const CURRENT_CONFIG_VERSION = 3;
+export const CURRENT_CONFIG_VERSION = 6;
 ```
 
-`selectedId` is optional at the DTO level to allow partial reads of older stored files.
+`selectedId` is optional at the DTO level to allow partial reads of older stored files. `DEFAULT_USER_CONFIG` and `createDefaultUserConfig()` set `deployments: { installed: [], selectedId: null }`.
 
 **i18n impact:** None.
 
@@ -97,42 +95,38 @@ const CURRENT_CONFIG_VERSION = 3;
 
 #### Scenario: UserConfigDto without selectedId deserialises to null
 
-- **WHEN** a stored config file contains `{ "version": 2, "deployments": { "installed": [] } }` and is migrated to v3
+- **WHEN** a stored config file contains `{ "version": 2, "deployments": { "installed": [] } }` and is migrated to the current version
 - **THEN** the migrated `UserConfigDto.deployments.selectedId` is `null`
 
 ---
 
 ### Requirement: migrateConfig handles v2→v3 migration
 
-`UserConfigService.migrateConfig` SHALL add a migration step for version 2 → 3 that sets `deployments.selectedId = null` on configs that lack the field:
+`migrateConfig(raw: unknown, userBucket: string): UserConfig`, a module-level function exported from `apps/chat-api/src/user-config/dto/user-config.dto.ts` and called by `UserConfigService` on every config read, SHALL rebuild the config from the stored object and return it at `CURRENT_CONFIG_VERSION` (`6`). For the v2→v3 step it SHALL carry `deployments.selectedId` over when the stored value is a string and set it to `null` otherwise:
 
 ```ts
-// v2 → v3: add deployments.selectedId
-if (config.version < 3) {
-  config.deployments = {
-    ...config.deployments,
-    selectedId: config.deployments.selectedId ?? null,
-  };
-  config.version = 3;
-}
+// v2→v3: extract selectedId if present, default to null
+const deploymentsSelectedIdRaw = deploymentsObj?.['selectedId'];
+const deploymentsSelectedId =
+  typeof deploymentsSelectedIdRaw === 'string' ? deploymentsSelectedIdRaw : null;
 ```
 
-Existing v3 files (already have `selectedId`) pass through unchanged. The migration MUST be idempotent.
+A v1 shape (`pinnedConversationIds` at the root, no `conversations`) returns `createDefaultUserConfig()` with only the pinned ids carried over, so `selectedId` is `null`. Files that already have a string `selectedId` keep it. The migration MUST be idempotent.
 
 #### Scenario: v2 config is migrated to v3 with selectedId null
 
 - **WHEN** `migrateConfig` receives a v2 config `{ version: 2, deployments: { installed: ["dep-1"] } }`
-- **THEN** the returned config has `version: 3` and `deployments.selectedId === null`
+- **THEN** the returned config has `version: CURRENT_CONFIG_VERSION` (`6`) and `deployments.selectedId === null`
 
-#### Scenario: v3 config with selectedId is not mutated
+#### Scenario: Stored selectedId is preserved
 
 - **WHEN** `migrateConfig` receives `{ version: 3, deployments: { installed: [], selectedId: "gpt-4o" } }`
-- **THEN** the returned config is identical (selectedId remains `"gpt-4o"`, version stays 3)
+- **THEN** the returned config keeps `deployments.selectedId === "gpt-4o"` and has `version: CURRENT_CONFIG_VERSION`
 
-#### Scenario: v1 config migrates through v2 then v3
+#### Scenario: v1 config migrates to the current version
 
 - **WHEN** `migrateConfig` receives a v1 config
-- **THEN** the returned config has `version: 3` and `deployments.selectedId === null`
+- **THEN** the returned config has `version: CURRENT_CONFIG_VERSION` and `deployments.selectedId === null`
 
 ---
 
@@ -149,13 +143,13 @@ class UpdateSelectedDeploymentDto {
   })
   @IsOptional()
   @IsString()
-  id: string | null;
+  id: string | null = null;
 }
 ```
 
 The handler calls `userConfigService.updateSelectedDeployment(id, at, bucket)`.
 
-`updateSelectedDeployment` reads the current config, sets `deployments.selectedId = id`, then writes back via `writeConfig`. The entire operation MUST be a read-modify-write.
+`updateSelectedDeployment` reads the current config, sets `deployments.selectedId = id`, then writes back via `writeConfig` with `version: CURRENT_CONFIG_VERSION`. The entire operation MUST be a read-modify-write.
 
 **Authorization:** Requires authenticated user (existing `SessionGuard` on the controller). Same as all other user-config mutation endpoints.
 
@@ -225,7 +219,7 @@ selectedDeploymentId: string | null;
 setSelectedDeployment: (id: string | null) => Promise<void>;
 ```
 
-`selectedDeploymentId` reflects `getUserConfig()` response `deployments.selectedId` (initially `null` if absent). `setSelectedDeployment` calls `updateSelectedDeployment(id)` from `user-config.api.ts` and updates local state optimistically on success.
+`selectedDeploymentId` reflects `getUserConfig()` response `deployments.selectedId` (initially `null` if absent). `setSelectedDeployment` updates local state optimistically before calling `updateSelectedDeployment(id)` from `user-config.api.ts`; a failed backend call is logged with `console.warn` and swallowed (the promise resolves, and local state is not rolled back).
 
 **Memoisation:** The context value object SHALL be wrapped in `useMemo`; `setSelectedDeployment` SHALL be wrapped in `useCallback` to keep the memoised value stable across renders.
 
@@ -237,10 +231,10 @@ setSelectedDeployment: (id: string | null) => Promise<void>;
 #### Scenario: setSelectedDeployment writes to backend and updates local state
 
 - **WHEN** `setSelectedDeployment("gpt-4o")` is called
-- **THEN** `updateSelectedDeployment("gpt-4o")` is called
-- **AND** `selectedDeploymentId` updates to `"gpt-4o"` on success
+- **THEN** `selectedDeploymentId` updates to `"gpt-4o"` immediately
+- **AND** `updateSelectedDeployment("gpt-4o")` is called
 
 #### Scenario: setSelectedDeployment with null clears selectedDeploymentId
 
-- **WHEN** `setSelectedDeployment(null)` is called and the backend call succeeds
-- **THEN** `selectedDeploymentId` is `null`
+- **WHEN** `setSelectedDeployment(null)` is called
+- **THEN** `selectedDeploymentId` is `null`, whether or not the backend call succeeds

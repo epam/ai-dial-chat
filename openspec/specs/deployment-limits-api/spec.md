@@ -14,7 +14,7 @@ The endpoint:
 
 - MUST require a valid BFF session cookie (`SessionGuard`); unauthenticated requests SHALL be rejected with `401 Unauthorized`
 - MUST proxy to `GET <DIAL_CORE_URL>/v1/deployments/{deploymentName}/limits` forwarding `Authorization: Bearer <session.at>` as the upstream auth header
-- MUST call DIAL Core using `@epam/ai-dial-typescript-sdk` method `getDeploymentLimits(deploymentName, { headers })`
+- MUST call DIAL Core using `@epam/ai-dial-typescript-sdk` method `getDeploymentLimits(encodeDialResourcePath(deploymentName), { headers })` (`DeploymentsDetailsService.getDeploymentLimits`)
 - MUST NOT forward the `DIAL_API_KEY` to the client or use it as the upstream credential on this route
 - SHALL return `200 OK` with a `DeploymentLimitsResponseDto` body on success
 - SHALL return `404 Not Found` when DIAL Core responds with `404` (limits not configured or deployment not found)
@@ -41,7 +41,7 @@ The endpoint:
 }
 ```
 
-Each stats field SHALL be typed as `LimitStatsDto` with `{ total: number; used: number }`.
+Each stats field is optional on `DeploymentLimitsResponseDto` (`apps/chat-api/src/openapi/openapi-response.dto.ts`) and SHALL be typed as `LimitStatsDto` with `{ total: number; used: number; resetsAt?: string }`, where `resetsAt` is an optional ISO-8601 UTC instant marking the exclusive end of the stat's current calendar period, forwarded verbatim from DIAL Core when present.
 
 #### Scenario: Authenticated user retrieves deployment limits
 
@@ -79,9 +79,9 @@ Each stats field SHALL be typed as `LimitStatsDto` with `{ total: number; used: 
 
 The `:deployment` path parameter MUST support both single-segment static deployment names and slash-separated DIAL resource identifiers such as `applications/{bucket}/{path}` and `toolsets/{bucket}/{path}`. Callers MUST percent-encode the complete identifier when placing it in the single BFF path parameter; decoded `/` characters are structural separators inside the deployment identifier.
 
-The BFF MUST validate the decoded identifier before any upstream call. It SHALL reject an identifier longer than 2048 characters, an empty path segment, a `.` or `..` path segment (including percent-encoded variants decoded at the route boundary), or an ASCII control character with `400 Bad Request`. Spaces and URL-reserved characters are not globally forbidden because DIAL Core permits them in deployment/resource names when correctly percent-encoded.
+The BFF MUST validate the decoded identifier before any upstream call (`GetDeploymentDto`: `@IsString() @MaxLength(2048) @IsSafeDeploymentId()`). It SHALL reject an identifier longer than 2048 characters, an empty path segment, a `.` or `..` path segment (including percent-encoded variants decoded at the route boundary), or an ASCII control character with `400 Bad Request`. Spaces and URL-reserved characters are not globally forbidden because DIAL Core permits them in deployment/resource names when correctly percent-encoded.
 
-After validation, the BFF MUST percent-encode every `/`-separated segment independently before passing the identifier to the DIAL SDK, while preserving structural `/` separators. This prevents the SDK's string-interpolated URL from interpreting deployment-name content as a query, fragment, or path traversal.
+After validation, the BFF MUST percent-encode every `/`-separated segment independently (`encodeDialResourcePath`) before passing the identifier to the DIAL SDK, while preserving structural `/` separators. This prevents the SDK's string-interpolated URL from interpreting deployment-name content as a query, fragment, or path traversal.
 
 #### Scenario: Valid deployment identifiers pass validation
 
@@ -100,7 +100,7 @@ After validation, the BFF MUST percent-encode every `/`-separated segment indepe
 `apps/chat/src/server-api/deployment-limits.ts` (or an equivalent export from the deployments wrapper) SHALL export a typed async function `getDeploymentLimits` that:
 
 - Accepts `deploymentName: string`
-- Calls the generated `@epam/chat-api-client` method `getDeploymentLimits({ deployment: deploymentName })` via `deploymentsApi`
+- Calls the generated `@epam/ai-dial-chat-api-client` method `getDeploymentLimits({ deployment: deploymentName })` via `deploymentsApi`
 - Returns `Promise<DeploymentLimitsResponseDto>`
 
 No direct `fetch` calls are permitted in this helper.

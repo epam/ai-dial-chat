@@ -28,13 +28,13 @@ The React + Vite sandbox app that exercises `ChatOverlay` and `ChatOverlayManage
 
 ### Requirement: Sandbox controls use the shared UI Kit and Tailwind
 
-All sandbox-owned buttons SHALL use button components exported by `@epam/ai-dial-ui-kit`. Text inputs and selectors SHALL use `Input` and `SelectField` so the developer playground exercises the same controls as the main application. Sandbox layout and presentation SHALL be authored with mobile-first Tailwind utility classes, using the workspace `mobile`/`desktop` breakpoints and logical direction utilities. A CSS entry file MAY remain solely to load the Tailwind layers and the UI Kit's published stylesheet; it SHALL NOT contain sandbox-specific selector rules.
+All sandbox-owned buttons SHALL use button components exported by `@epam/ai-dial-ui-kit`. Text inputs and selectors SHALL use the UI Kit `Input` and `Select` so the developer playground exercises the same controls as the main application. Sandbox layout and presentation SHALL be authored with mobile-first Tailwind utility classes, using the workspace `mobile`/`desktop` breakpoints and logical direction utilities. A CSS entry file (`apps/chat-overlay-sandbox/src/tailwind.css`) MAY remain solely to load the Tailwind layers and the UI Kit's published stylesheet; it SHALL NOT contain sandbox-specific selector rules.
 
 #### Scenario: No native sandbox controls remain
 
 - **WHEN** the sandbox source components are inspected
 - **THEN** they contain no native `<button>`, `<input>`, or `<select>` elements owned by the sandbox
-- **AND** actions use UI Kit button components while text and selection fields use `Input` and `SelectField`
+- **AND** actions use UI Kit button components while text and selection fields use `Input` and `Select`
 
 #### Scenario: Presentation is colocated as Tailwind utilities
 
@@ -49,12 +49,12 @@ All sandbox-owned buttons SHALL use button components exported by `@epam/ai-dial
 
 ### Requirement: Sandbox host URL is configured via a Vite-prefixed env var
 
-The sandbox SHALL read the chat app's overlay host URL from `import.meta.env.VITE_CHAT_OVERLAY_HOST`, documented in an `apps/chat-overlay-sandbox/.env.development` (or equivalent) file, since only `VITE_`-prefixed variables are exposed to client-side Vite code in this repo's toolchain.
+The sandbox SHALL resolve the chat app's overlay host URL through `getChatOverlayHost()` (`apps/chat-overlay-sandbox/src/env.ts`): a non-blank `import.meta.env.VITE_CHAT_OVERLAY_HOST` (documented in `apps/chat-overlay-sandbox/.env.development`, since only `VITE_`-prefixed variables are exposed to client-side Vite code in this repo's toolchain) wins; otherwise it falls back to `window.location.origin`, because deployed builds are served by `chat-api` under `/overlay-sandbox/` and embed the same-origin chat.
 
 #### Scenario: Missing env var fails fast with a clear message
 
-- **WHEN** `VITE_CHAT_OVERLAY_HOST` is unset and the sandbox attempts to construct a `ChatOverlay`
-- **THEN** the sandbox surfaces a visible message naming the missing env var, rather than silently constructing an iframe with an empty `src`
+- **WHEN** `getChatOverlayHost()` returns `null` (neither `VITE_CHAT_OVERLAY_HOST` nor a current origin is available) and a case would construct a `ChatOverlay`
+- **THEN** the case renders `MissingEnvNotice` (`role="alert"`) naming the `VITE_CHAT_OVERLAY_HOST` env var, rather than silently constructing an iframe with an empty `src`
 
 ### Requirement: Sandbox exercises both ChatOverlay and ChatOverlayManager
 

@@ -10,7 +10,7 @@
 
 `apps/chat/src/context/UiFeaturesContext.tsx` SHALL be the sole owner of the app's effective UI-feature set, computed from `DEFAULT_ENABLED_UI_FEATURES` (`apps/chat/src/constants/ui-features.ts`), `AppConfigContext.config.enabledUiFeatures`, an overlay-supplied replacement (see "Overlay replace semantics" below), and a temporary isolated-view override (see "Isolated-view override takes precedence over every other source", `// TODO: remove in next release`). It SHALL follow the `ThemeContext` pattern: `createContext<UiFeaturesContextType | undefined>(undefined)`, a `useMemo`-wrapped provided value, and a `useUiFeatures()` hook that throws a descriptive `Error` when called outside the provider. It SHALL expose `useUiFeature(feature: OverlayFeature): boolean` (`apps/chat/src/hooks/useUiFeature.ts`) as the primary consumption point for gating components. `UiFeaturesProvider` SHALL be mounted in `apps/chat/src/main.tsx` below `AppConfigProvider` and above `OverlayModeGate`.
 
-**State ownership:** `UiFeaturesContext` (new). Reads `AppConfigContext.config.enabledUiFeatures` (existing context, extended). Written to by two callers: `OverlayContext`'s `SET_OVERLAY_OPTIONS` handler (via `applyOverlayOverride`), and — temporarily, `// TODO: remove in next release` — `useIsolatedModelView` (via the new `applyIsolatedViewOverride`, see `isolated-model-view`). No other consumer may mutate the effective set.
+**State ownership:** `UiFeaturesContext` (new). Reads `AppConfigContext.config.enabledUiFeatures` (existing context, extended). Written to by two callers: `OverlayContext`'s `SET_OVERLAY_OPTIONS` handler (via `applyOverlayOverride`), and — temporarily, `// TODO: remove in next release` — `IsolatedModelViewProvider` (`apps/chat/src/context/IsolatedModelViewContext.tsx`, via the new `applyIsolatedViewOverride`, see `isolated-model-view`). No other consumer may mutate the effective set.
 
 **Feature flag:** Not gated behind any existing flag — this capability defines the toggle system itself, not a toggle within it.
 
@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 26 default-on keys and exclude the 19 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 45-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 45 keys.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 26 default-on keys and exclude the 25 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 51-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 51 keys.
 
 `catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
@@ -137,7 +137,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 45 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 51 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -155,13 +155,13 @@ Each of the 45 transferable `OverlayFeature` values SHALL gate exactly the ownin
 
 ### Requirement: chat-settings gates the settings entry everywhere; empty-chat-settings narrows it
 
-The "Chat settings" entry in the conversation input's "+" menu â and the modal (desktop) and bottom sheet (mobile) it opens, carrying temperature, system prompt, and response format â SHALL be removed wherever `isEnabled('chat-settings')` is `false`. `ConversationView` and `NewConversationComposer` SHALL both hide it by passing no `chatSettings` config to `ConversationInput`, the lib's own omit path, which drops the menu item and leaves the modal and sheet unmounted rather than hidden.
+The "Chat settings" entry in the conversation input's "+" menu — and the modal (desktop) and bottom sheet (mobile) it opens, carrying temperature, system prompt, and response format — SHALL be removed wherever `isEnabled('chat-settings')` is `false`. `ConversationView` and `NewConversationComposer` SHALL both hide it by passing no `chatSettings` config to `ConversationInput`, the lib's own omit path, which drops the menu item and leaves the modal and sheet unmounted rather than hidden.
 
 `empty-chat-settings` SHALL narrow the entry to the empty-chat composer only: that screen renders it when **both** keys are enabled. A host that disables only `empty-chat-settings` therefore keeps the in-chat entry, its behavior before `chat-settings` existed, while a host that disables `chat-settings` loses the entry on every screen without having to name the narrower key too.
 
 **Accessibility:** The entry and its overlay are conditionally unmounted, so neither leaves an accessibility-tree node nor a tab stop.
 
-**i18n impact:** None â existing translated labels are shown or omitted.
+**i18n impact:** None — existing translated labels are shown or omitted.
 
 #### Scenario: chat-settings removes the entry from an active conversation
 
@@ -185,15 +185,15 @@ The "Chat settings" entry in the conversation input's "+" menu â and the mo
 
 ### Requirement: hide-navigation-menu removes the hamburger and the sheet it opens
 
-`isEnabled('hide-navigation-menu')` SHALL remove the mobile navigation menu in full: `Header` SHALL render no hamburger button, and `Navigation` SHALL leave `NavigationSheet` unmounted rather than merely closed. Both are required â the sheet carries focusable rows (nav items, profile, keyboard shortcuts, log out), so leaving it mounted-but-closed would keep them in the tab order once any other caller flipped its `isOpen`, and the hamburger is its only trigger.
+`isEnabled('hide-navigation-menu')` SHALL remove the mobile navigation menu in full: `Header` SHALL render no hamburger button, and `Navigation` SHALL leave `NavigationSheet` unmounted rather than merely closed. Both are required — the sheet carries focusable rows (nav items, profile, keyboard shortcuts, log out), so leaving it mounted-but-closed would keep them in the tab order once any other caller flipped its `isOpen`, and the hamburger is its only trigger.
 
 The key SHALL NOT affect the desktop navigation rail or its user menu, which `hide-user-menu` owns. It exists for embeds whose host portal already handles sign-in and sign-out, making the sheet's log-out row dead weight.
 
-**RTL impact:** None â the removed control and surface are omitted, not repositioned.
+**RTL impact:** None — the removed control and surface are omitted, not repositioned.
 
 **Accessibility:** Both the button and the sheet are absent from the DOM, so neither leaves an accessibility-tree node nor a tab stop.
 
-**i18n impact:** None â existing translated labels are omitted along with their controls.
+**i18n impact:** None — existing translated labels are omitted along with their controls.
 
 #### Scenario: The hamburger is gone
 
@@ -217,7 +217,7 @@ The key SHALL NOT affect the desktop navigation rail or its user menu, which `hi
 
 ### Requirement: hide-keyboard-shortcuts removes the entry on both profile surfaces
 
-`isEnabled('hide-keyboard-shortcuts')` SHALL remove the Keyboard shortcuts entry from the desktop user menu (`UserMenu`) and from the mobile profile sheet (`ProfilePageContent`). `isEnabled('hide-user-settings')` SHALL also remove it from both, so the two surfaces agree; neither key SHALL affect the other settings entries the other key governs — with only `hide-keyboard-shortcuts` enabled the language selector SHALL still render.
+`isEnabled('hide-keyboard-shortcuts')` SHALL remove the Keyboard shortcuts entry from both surfaces that offer it: the Settings page's Preferences tab (`PreferencesTab`, the desktop entry point — the desktop `UserMenu` receives only the language group) and the mobile `NavigationSheet` profile page (`ProfilePage` in `@epam/ai-dial-navigation-panel`), whose `keyboardGroup` `useNavigationMenuGroups` omits. `isEnabled('hide-user-settings')` SHALL also remove it from both, so the two surfaces agree; `hide-keyboard-shortcuts` SHALL NOT affect the other settings entries `hide-user-settings` governs — with only `hide-keyboard-shortcuts` enabled the language entry SHALL still render wherever it is offered (it is offered only when `SUPPORTED_LANGUAGES` holds more than one locale, which no shipping build does today).
 
 Because Keyboard shortcuts is the mobile sheet's only settings entry, hiding it SHALL drop that entry's list and its trailing divider together, leaving no empty list or stray rule.
 
@@ -227,15 +227,15 @@ Hiding the entry SHALL NOT change send behavior: the `SendOnEnter` preference is
 
 **i18n impact:** None — the existing translated label is shown or omitted; no new strings.
 
-#### Scenario: The entry disappears from the user menu
+#### Scenario: The entry disappears from both surfaces
 
-- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the user opens the user menu
-- **THEN** no Keyboard shortcuts entry is rendered, and the language entry still is
+- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the user opens the Settings page's Preferences tab or the mobile profile page
+- **THEN** no Keyboard shortcuts entry is rendered, and the other Preferences rows (theme, language, default agent) keep their own visibility rules
 
 #### Scenario: hide-user-settings hides it too
 
 - **WHEN** `isEnabled('hide-user-settings')` is `true`
-- **THEN** the Keyboard shortcuts entry is absent from both the user menu and the mobile profile sheet
+- **THEN** the Keyboard shortcuts entry is absent from both the Settings page's Preferences tab and the mobile profile page
 
 #### Scenario: Send-on-Enter keeps working while the entry is hidden
 
@@ -289,7 +289,7 @@ A pinned `fixedModel` SHALL keep rendering the disabled selector, because the ap
 
 ### Requirement: A key that gates a route hides both the entry point and the route
 
-A feature key whose owning surface is a whole route SHALL gate the navigation entry and the route element together, so that a direct URL cannot reach a section whose entry point is hidden. `file-manager` SHALL gate the File Manager navigation entry (desktop `Navigation` and mobile `NavPageContent`, both through the shared `useVisibleNavItems` hook) and the `ROUTES.FileManager` route element, which SHALL redirect to `ROUTES.Root` with `replace` when the key is disabled.
+A feature key whose owning surface is a whole route SHALL gate the navigation entry and the route element together, so that a direct URL cannot reach a section whose entry point is hidden. `file-manager` SHALL gate the File Manager navigation entry (the desktop `NavigationPanel` rail and the mobile `NavigationSheet`, both fed by `Navigation` through `useNavigationItems`, which wraps the shared `useVisibleNavItems` hook) and the `ROUTES.FileManager` route element, which SHALL redirect to `ROUTES.Root` with `replace` when the key is disabled.
 
 Route gating SHALL NOT be treated as an authorization boundary: the backend SHALL continue to enforce access to the underlying data and operations regardless of which keys are enabled.
 
@@ -314,16 +314,16 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 ### Requirement: show-agent-description renders the selected agent's description on the empty chat
 
-`NewConversationComposer` SHALL render the selected deployment's `description`, resolved for the active language and rendered as markdown, after the starter-button slot on the empty-chat screen when `isEnabled('show-agent-description')` is `true`. Nothing SHALL render when the key is off, when no deployment is selected, or when the resolved description is empty or whitespace-only. The key SHALL NOT affect the operator-wide welcome-screen description, which `ConversationInput` renders under the greeting from the app config and which no UI-feature key gates. The markdown renderer SHALL be loaded on demand so a deployment with the key off does not pay for it.
+`NewConversationComposer` SHALL render the selected deployment's `description`, resolved for the active language and rendered as markdown (`AgentDescription`), on the empty-chat screen above the greeting and the input — it precedes `ConversationInput` inside the welcome region — when `isEnabled('show-agent-description')` is `true`. Nothing SHALL render when the key is off, when the composer uses `ComposerLayout.Inline`, when no deployment is selected, or when the resolved description is empty or whitespace-only. The key SHALL NOT affect the operator-wide welcome-screen description, which `ConversationInput` renders under the greeting from the app config and which no UI-feature key gates. The markdown renderer SHALL be loaded on demand so a deployment with the key off does not pay for it.
 
 **Accessibility:** The description is static prose in the already-labeled welcome-screen region; links inside it keep the markdown renderer's own accent treatment and focus behavior. No live region is introduced — the text does not change in response to a user action.
 
 **i18n impact:** None — the text is deployment-authored content resolved through the existing `LocalizedText` fallback chain, not a UI string.
 
-#### Scenario: The description renders below the starters when the key is on
+#### Scenario: The description renders above the greeting when the key is on
 
 - **WHEN** `isEnabled('show-agent-description')` is `true` and the selected deployment has a description containing a markdown link
-- **THEN** the empty-chat screen renders that description after the starter buttons, with the link as an anchor
+- **THEN** the empty-chat screen renders that description before the greeting and the input, with the link as an anchor
 
 #### Scenario: Nothing renders when the key is off
 
@@ -440,7 +440,7 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 ### Requirement: Isolated-view override takes precedence over every other source
 
-`TODO: remove in next release.` `UiFeaturesContext` SHALL expose `applyIsolatedViewOverride(features: Set<OverlayFeature> | null)`, called only by `useIsolatedModelView` (see `isolated-model-view`). When set to a non-null value, the effective UI-feature set SHALL become exactly that set, taking precedence over the overlay override, the server `enabledUiFeatures` baseline, and the compiled defaults — none of those other sources SHALL be consulted while the isolated-view override is active. When `null` (the default, and the value whenever isolated view is not active), the existing three-level priority chain (overlay override → server baseline → compiled defaults) SHALL apply unchanged.
+`TODO: remove in next release.` `UiFeaturesContext` SHALL expose `applyIsolatedViewOverride(features: Set<OverlayFeature> | null)`, called only by `IsolatedModelViewProvider` (see `isolated-model-view`). When set to a non-null value, the effective UI-feature set SHALL become exactly that set, taking precedence over the overlay override, the server `enabledUiFeatures` baseline, and the compiled defaults — none of those other sources SHALL be consulted while the isolated-view override is active. When `null` (the default, and the value whenever isolated view is not active), the existing three-level priority chain (overlay override → server baseline → compiled defaults) SHALL apply unchanged.
 
 This override SHALL NOT be normalized against `DEPRECATED_OVERLAY_FEATURE_ALIASES`/`resolveOverlayFeature` the way `applyOverlayOverride`'s input is, since its caller always supplies canonical `OverlayFeature` enum members directly rather than wire strings from an external host.
 

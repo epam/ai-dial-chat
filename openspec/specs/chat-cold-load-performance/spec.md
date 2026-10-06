@@ -7,7 +7,7 @@ Defines the initial-load byte budgets, the required lazy/deferred boundaries for
 ## Requirements
 
 ### Requirement: Initial JS/CSS graph excludes in-scope non-critical heavy dependencies
-The JavaScript and CSS files referenced directly by `apps/chat/dist/index.html` (the entry script, its `modulepreload` chunks, and its stylesheets) for the `/` route SHALL NOT include Monaco editor code, `pdfjs-dist` core/worker code, KaTeX, or `react-syntax-highlighter`. Each dependency SHALL load only when the corresponding feature is used. AG Grid embedded in `@epam/ai-dial-ui-kit` is explicitly excluded and belongs to a separate package-level change.
+The JavaScript and CSS files referenced directly by `apps/chat/dist/index.html` (the entry script, its `modulepreload` chunks, and its stylesheets) for the `/` route SHALL NOT include Monaco editor code, `pdfjs-dist` core/worker code, KaTeX, or `react-syntax-highlighter`. Each dependency SHALL load only when the corresponding feature is used. AG Grid, which `@epam/ai-dial-ui-kit` ships behind its `/grid` subpath, is governed by "Heavy feature engines remain outside chat startup" below.
 
 #### Scenario: Cold load of `/` with a plain-text-only conversation
 - **WHEN** a user with an authenticated session navigates to `/` with an empty HTTP cache and no conversation contains math or a fenced code block
@@ -22,7 +22,7 @@ The JavaScript and CSS files referenced directly by `apps/chat/dist/index.html` 
 - **THEN** the corresponding engine loads on demand while an immediate lightweight fallback preserves readable content during the transition
 
 ### Requirement: Initial preload byte budgets
-Using the repeatable measurement script against a clean production build, the initial graph SHALL improve by at least 30% from the reproduced 1,724,639-byte gzip baseline and SHALL remain at or below 1,100,000 gzip bytes of JavaScript, 60,000 gzip bytes of CSS, and 1,160,000 gzip bytes in total. These budgets cover only this change's app-side and in-repository lazy-loading scope; UI-kit AG Grid packaging and generated API-client decomposition are separate follow-ups.
+Using the repeatable measurement script against a clean production build, the initial graph SHALL improve by at least 30% from the reproduced 1,724,639-byte gzip baseline and SHALL remain at or below 1,100,000 gzip bytes of JavaScript, 60,000 gzip bytes of CSS, and 1,160,000 gzip bytes in total. These budgets cover the app-side and in-repository lazy-loading scope, including the UI Kit `/grid` and `/editors` subpath boundaries (see "Public package boundaries support repeatable verification"); generated API-client decomposition is a separate follow-up.
 
 #### Scenario: Post-change clean build meets the budgets
 - **WHEN** `apps/chat` is built cleanly and `node scripts/measure-initial-bundle.mjs` measures every script, `modulepreload`, and stylesheet referenced by `dist/index.html`

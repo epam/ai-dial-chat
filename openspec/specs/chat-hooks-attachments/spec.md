@@ -130,10 +130,11 @@ parameter and use it wherever a DIAL file id needs to become a downloadable
 URL.
 
 Before passing the filename to `triggerAnchorDownload` or `triggerBlobDownload`,
-the hook SHALL call `ensureDownloadFilename(name, url, contentType)` to guarantee
-a file extension is present. The function returns `name` unchanged when it already
-ends with an extension; otherwise it appends the extension extracted from the last
-path segment of `url`, then falls back to `MIME_TYPE_EXT_MAP[contentType]`, and
+the hook SHALL call `ensureDownloadFilename(name, url, contentType)` (exported by
+`@epam/ai-dial-chat-shared`) to guarantee a file extension is present. The function
+returns `name` unchanged when it already ends with a plausible extension; otherwise
+it appends `MIME_TYPE_EXT_MAP[contentType]`, then falls back to the extension
+extracted from the last path segment of `url` (query and fragment stripped), and
 finally returns `name` as-is when neither source provides an extension.
 
 The hook SHALL return `{ handleAttachmentClick: (attachment: DisplayAttachment)
@@ -155,11 +156,12 @@ action).
 #### Scenario: Download filename gets extension from the URL when the name has none
 
 - **WHEN** a consumer calls `handleAttachmentClick` with a `DisplayAttachment`
-  whose `name` is `'Thermo Fisher 10-K Summary'` and whose `url` path ends with
+  whose `name` is `'Thermo Fisher 10-K Summary'`, whose `contentType` maps to no
+  `MIME_TYPE_EXT_MAP` entry, and whose `url` path ends with
   `'ThermoFisher_2024.xlsx'`
 - **THEN** the triggered download uses the filename `'Thermo Fisher 10-K Summary.xlsx'`
 
-#### Scenario: Download filename falls back to MIME-type extension when the URL has none
+#### Scenario: Download filename takes the MIME-type extension when the name has none
 
 - **WHEN** a consumer calls `handleAttachmentClick` with a `DisplayAttachment`
   whose `name` has no extension, whose `url` path segment has no extension, and

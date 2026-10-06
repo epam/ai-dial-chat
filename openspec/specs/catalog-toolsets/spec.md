@@ -10,7 +10,7 @@ Loading toolsets from the dedicated toolsets API and combining them with deploym
 
 The app SHALL load catalog toolsets through the existing frontend toolsets adapter, `apps/chat/src/server-api/toolsets.ts`, by calling `listToolsets()`.
 
-The app MUST NOT load catalog toolsets by requesting MCP deployments from `GET /api/v1/deployments`.
+The app MUST NOT derive catalog toolsets from `GET /api/v1/deployments`. `DeploymentsProvider` does request MCP-capable deployments there (`getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])`, per the deployments-context spec), but those rows stay deployment items in `DeploymentsContextType.items`; catalog toolsets come only from `listToolsets()`.
 
 The backend `GET /api/v1/toolsets` listing SHALL filter out hidden marker entries whose `id` contains `.dial_folder`, matching the existing deployments listing behavior for DIAL folder markers.
 
@@ -19,11 +19,11 @@ The backend `DialToolsetDto` OpenAPI response SHALL document DIAL SDK fields use
 The backend `GET /api/v1/toolsets` and `GET /api/v1/toolsets/{toolsetName}` responses SHALL return every field in camelCase, matching the `GET /api/v1/deployments` response convention, with no snake_case fields present anywhere in the payload (top-level or nested, e.g. `authSettings`). This includes:
 
 - `isInstalled`, computed from `userConfig.toolsets.installed`
-- `isMy`, computed by checking whether the current session bucket appears as a path segment in the toolset id/path
+- `isMy`, computed by `computeItemOwnershipFlags` (`apps/chat-api/src/common/utils/resource-ownership.ts`): the toolset id's owner-bucket segment (the second segment for a `toolsets/`-prefixed id, otherwise the first) equals the current session bucket
 - `canEdit`, computed from `isMy` or WRITE-level share access
 - `sharedWithMe`, computed from non-owned share access
 - `displayName`, `displayVersion`, `iconUrl`, `descriptionKeywords`, `maxRetryAttempts`, `createdAt`, `updatedAt`, `allowedTools` — remapped from the corresponding raw DIAL Core snake_case fields
-- `authSettings`, with nested fields remapped to camelCase (`authenticationType`, `apiKeyHeader`, `clientId`, `redirectUri`, `authorizationEndpoint`, `tokenEndpoint`, `codeChallenge`, `codeChallengeMethod`, `scopesSupported`, `globalAuthStatus`, `userLevelAuthStatus`), continuing to exclude `clientSecret`/`codeVerifier`
+- `authSettings`, with nested fields remapped to camelCase (`authenticationType`, `apiKeyHeader`, `clientId`, `redirectUri`, `authorizationEndpoint`, `tokenEndpoint`, `codeChallenge`, `codeChallengeMethod`, `scopesSupported`, `globalAuthStatus`, `userLevelAuthStatus`, `dynamicallyRegistered`), continuing to exclude `clientSecret`/`codeVerifier`
 - `features`, typed as `DialToolsetFeaturesDto` with nested fields remapped to camelCase (`truncatePrompt`, `systemPrompt`, `urlAttachments`, `folderAttachments`, `allowResume`, `accessibleByPerRequestKey`, `contentParts`, `autoCaching`, `parallelToolCalls`, `assistantAttachmentsInRequest`, `chatCompletion`, `responsesApi`, `maxTokensSupported`, `maxCompletionTokensSupported`, `customTemperatureSupported`, `reasoningEfforts`, plus unprefixed `rate`, `tokenize`, `configuration`, `tools`, `seed`, `temperature`, `cache`, `mcp`) — distinct from the shared, intentionally-snake_case `DialModelFeaturesDto` used by the out-of-scope `GET /api/v1/models`
 
 The frontend toolsets adapter (`apps/chat/src/server-api/toolsets.ts`) SHALL pass through the `GET /api/v1/toolsets` and `GET /api/v1/toolsets/{toolsetName}` responses without field-name normalization, since the backend already returns camelCase fields.
@@ -31,15 +31,15 @@ The frontend toolsets adapter (`apps/chat/src/server-api/toolsets.ts`) SHALL pas
 #### Scenario: Provider loads toolsets in parallel with deployments
 
 - **WHEN** `DeploymentsProvider` starts loading catalog/model data
-- **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat])`
+- **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])`
 - **AND** it calls `getApplicationSchemas()`
 - **AND** it calls `listToolsets()`
-- **AND** it exposes the returned `DialToolsetDto[]` as `toolsets` on `DeploymentsContextType`
+- **AND** it exposes the returned `DialToolsetListResponseDto.data` (`DialToolsetDto[]`, sorted by `sortToolsets`) as `toolsets` on `DeploymentsContextType`
 
 #### Scenario: Toolsets expose user ownership and installation state in camelCase
 
 - **GIVEN** the user config contains a toolset id in `toolsets.installed`
-- **AND** the toolset id/path includes the current session bucket as a path segment
+- **AND** the toolset id's owner-bucket segment is the current session bucket
 - **WHEN** the authenticated user calls `GET /api/v1/toolsets`
 - **THEN** that toolset has `isInstalled: true`
 - **AND** `isMy: true`
@@ -54,7 +54,7 @@ The frontend toolsets adapter (`apps/chat/src/server-api/toolsets.ts`) SHALL pas
 #### Scenario: Toolsets fetch failure does not fail deployments
 
 - **WHEN** `listToolsets()` rejects
-- **AND** `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat])` succeeds
+- **AND** `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])` succeeds
 - **THEN** `DeploymentsContextType.items` contains the loaded deployments
 - **AND** `DeploymentsContextType.toolsets` is an empty array
 - **AND** `DeploymentsContextType.error` remains `null`
@@ -62,24 +62,25 @@ The frontend toolsets adapter (`apps/chat/src/server-api/toolsets.ts`) SHALL pas
 
 ### Requirement: Catalog combines deployments and toolsets at the app edge
 
-`CatalogView` SHALL build catalog items from both:
+`CatalogView` SHALL build catalog items through the app-level `useCatalogItems` hook (`apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`), which combines (alongside prompts and skills):
 
 - `DeploymentsContextType.items`, mapped with the deployment-to-catalog mapper
-- `DeploymentsContextType.toolsets`, mapped with an app-level toolset-to-catalog mapper
+- `DeploymentsContextType.toolsets`, mapped with the app-level `mapToolsetToCatalogItem` (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`) — only while the `OverlayFeature.Toolsets` UI feature (`isToolsetsEnabled`) is on
 
 The toolset mapper SHALL convert each `DialToolsetDto` to a `CatalogItem` with:
 
 - `id` from `toolset.id`
 - `type: CatalogEntityType.Toolset`
-- `name` from `displayName`, falling back to `toolset`, then `reference`, then `id`
-- `description` from `description`, falling back to empty string
+- `name` from `displayName` resolved for the active locale (`resolveLocalizedText`), falling back to `toolset`, then `reference`, then `id`
+- `description` from `description` resolved for the active locale, falling back to empty string
 - `iconUrl` resolved through the existing catalog icon resolver
 - `version` from `displayVersion`, falling back to empty string
-- `updatedAt` and `lastUsed` from `updatedAt`
+- `updatedAt` from `updatedAt`, `createdAt` from `createdAt`, and `lastUsed` from `formatLastUsed(updatedAt)`
 - `topics` from `descriptionKeywords`, falling back to an empty array
 - `folder` from the localized ownership/root label and any decoded nested path, following the [deployment-catalog-item-mapping](../deployment-catalog-item-mapping/spec.md) rules; configured toolsets with plain IDs SHALL show the Organization label when neither owned nor shared
 - `details.tools.tools` from `allowedTools`, when present
-- `isMyApp` from `isMy`
+- `isMyApp` from `isMy`, `sharedWithMe` from `sharedWithMe`, and `isEditable` from `isMy || canEdit`
+- `credentials` from `authSettings` via `mapDeploymentToolsetCredentials`
 - favorite/starred state from user-config installed ids
 
 The app-owned wrapper in `apps/chat` SHALL resolve translations and icon URLs and delegate the DTO mapping to `libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`, following [chat-hooks-domain-utilities](../chat-hooks-domain-utilities/spec.md). `libs/catalog` SHALL consume resolved `CatalogItem` values without interpreting DIAL identifiers or ownership metadata.
@@ -88,6 +89,7 @@ The app-owned wrapper in `apps/chat` SHALL resolve translations and icon URLs an
 
 - **GIVEN** `DeploymentsContextType.items` contains a model deployment
 - **AND** `DeploymentsContextType.toolsets` contains a toolset
+- **AND** the `OverlayFeature.Toolsets` UI feature is enabled
 - **WHEN** `CatalogView` renders
 - **THEN** the `Catalog` component receives one model catalog item
 - **AND** one toolset catalog item with `type: CatalogEntityType.Toolset`
@@ -96,7 +98,7 @@ The app-owned wrapper in `apps/chat` SHALL resolve translations and icon URLs an
 
 - **GIVEN** `DeploymentsContextType.toolsets` contains toolsets
 - **WHEN** conversation/model selector surfaces read `DeploymentsContextType.items`
-- **THEN** they receive only the chat deployments loaded from `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat])`
+- **THEN** they receive only the deployments loaded from `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])`, never `DialToolsetDto` entries
 
 #### Scenario: Installed toolsets appear as catalog favorites
 

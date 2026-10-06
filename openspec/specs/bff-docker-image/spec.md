@@ -76,7 +76,7 @@ Tags SHALL follow the same rules the `ai-dial-chat` image uses for the same run:
 - additionally `latest` when that action reports `is-latest == 'true'` on a `release-*` branch
 
 Before building, the job SHALL stamp the workspace root `package.json` version with
-`<next-version>` (`npm version <next-version> --no-git-tag-version`), so that the bundled
+`<next-version>` (`npm version <next-version> --no-git-tag-version --allow-same-version`), so that the bundled
 `PACKAGE_VERSION`, and with it `/api/health` `version` and `buildId`, matches the
 `ai-dial-chat` image of the same run. The image SHALL be scanned by the Trivy step built into
 `build_docker`, the same as the other images.
@@ -102,8 +102,10 @@ Before building, the job SHALL stamp the workspace root `package.json` version w
 
 The PR Workflow (`.github/workflows/pr.yml`) SHALL build the BFF-only image from
 `apps/chat-api/Dockerfile` on every pull request targeting `development` or `release-*`,
-without pushing, as a job independent of `run_tests`. A Dockerfile or build failure SHALL fail
-the pull request.
+without pushing, as a job (`docker_build_bff`) independent of `run_tests`. Like the other
+code jobs it depends only on the `changes` job and is skipped (reported as passed) for a
+docs-only pull request (`needs.changes.outputs.code == 'false'`). A Dockerfile or build failure
+SHALL fail the pull request.
 
 #### Scenario: Broken Dockerfile fails the PR
 

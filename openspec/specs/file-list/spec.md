@@ -63,13 +63,13 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 }
 ```
 
-**Error codes:** 400, 401, 403, 404, 429, 502, 503, 500.
+**Error codes:** 400, 401, 403, 404, 429, 502, 503, 500. The handler's `@ApiResponse` decorators declare 200, 400, 401, 403, 404, 502, and 503.
 
 **Generated client:**
 - `operationId`: `listFiles`
 - Request DTO: `ListFilesQueryDto` (query params as described)
 - Response DTO: `ListFilesResponseDto` with nested `ListFilesItemDto[]`
-- Frontend callers use the normal `filesApi.listFiles(params)` method (not `Raw`); no generator gap applies.
+- Frontend callers use the normal `filesApi.listFiles(params)` method (not `Raw`) through `createFilesApiClient`; no generator gap applies.
 
 **Feature flag:** Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. The endpoint is available to all authenticated users.
 
@@ -183,7 +183,7 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 - **GIVEN** the authenticated user does not own or have access to the requested bucket
 - **WHEN** DIAL Core returns `403 Forbidden`
-- **THEN** `handleDialError` maps it to `ForbiddenException` and the BFF returns `403 Forbidden`
+- **THEN** `handleDialSdkError` maps it to `ForbiddenException` and the BFF returns `403 Forbidden`
 
 ---
 
@@ -191,7 +191,7 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 - **GIVEN** the requested `bucket` or `path` does not exist in DIAL Core
 - **WHEN** DIAL Core returns `404 Not Found`
-- **THEN** `handleDialError` maps it to `NotFoundException` and the BFF returns `404 Not Found`
+- **THEN** `handleDialSdkError` maps it to `NotFoundException` and the BFF returns `404 Not Found`
 
 ---
 
@@ -199,7 +199,7 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 - **GIVEN** DIAL Core is rate-limiting requests for the authenticated user
 - **WHEN** DIAL Core returns `429 Too Many Requests`
-- **THEN** `handleDialError` maps it to `TooManyRequestsException` and the BFF returns `429 Too Many Requests`
+- **THEN** `handleDialSdkError` maps it to an `HttpException` with `HttpStatus.TOO_MANY_REQUESTS` and the BFF returns `429 Too Many Requests`
 
 ---
 
@@ -207,7 +207,7 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 - **GIVEN** DIAL Core encounters an internal error
 - **WHEN** DIAL Core returns a `5xx` status
-- **THEN** the service logs the error and `handleDialError` maps it to `BadGatewayException`; the BFF returns `502 Bad Gateway`
+- **THEN** the service logs the error and `handleDialSdkError` maps it to `BadGatewayException`; the BFF returns `502 Bad Gateway`
 
 ---
 
@@ -215,7 +215,7 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 - **GIVEN** the DIAL Core metadata endpoint is slow or unreachable
 - **WHEN** the `AbortSignal.timeout(FILE_TRANSFER_TIMEOUT_MS)` fires
-- **THEN** `handleDialError` maps the abort error to `ServiceUnavailableException`; the BFF returns `503 Service Unavailable`
+- **THEN** `handleDialSdkError` maps the `TimeoutError` to `ServiceUnavailableException`; the BFF returns `503 Service Unavailable`
 
 ---
 
@@ -247,6 +247,10 @@ The system SHALL map each item in the DIAL Core folder response to a `ListFilesI
 - `contentType` for file items → `item.contentType` when DIAL Core supplies it; otherwise SHALL be inferred from the file name's extension via `mime-types`' `lookup()`, falling back to `undefined` when the extension is unknown or absent. This fallback exists because the sharing SDK response consumed by `file-manager-shared-list` does not include `contentType`/`contentLength` per item, unlike the regular metadata endpoint used here.
 - `updatedAt` → forwarded as `number` (Unix ms) from DIAL; note that `DialModifiedEntity.updatedAt` is typed as `string` in the ui-kit — callers must cast if using the TypeScript type directly.
 - `bucket` → propagated from the request query parameter (DIAL items may not include it).
+- `permissions`, `resourceType` → forwarded from the DIAL item; `author` → the item's `author`, else `owner`, else the first `sharedBy` user (falling back to the same lookup on its nested `items`).
+- `path` for every item is derived from the DIAL item's `url`, falling back to `${parentPath}/${name}` (or `name`) when `url` is absent.
+
+`ListFilesResponseDto` additionally carries an optional folder-level `permissions` array: DIAL Core's own listing `permissions` when present, otherwise the value `resolveListingPermissions` derives from the visible items.
 
 #### Scenario: contentType is inferred from extension when DIAL Core omits it
 
@@ -278,6 +282,8 @@ The system SHALL correctly list folder items returned by DIAL Core even when the
 
 The system SHALL forward the `token` query parameter to DIAL Core as the continuation token and SHALL include the `nextToken` field from the DIAL Core response in `ListFilesResponseDto.nextToken`. When no further pages are available, `nextToken` SHALL be absent (undefined / omitted) from the response.
 
+When the caller supplies neither `token` nor `limit`, `FilesListingService.listFiles` SHALL instead aggregate every page itself — requesting DIAL Core pages of 1000 items and following `nextToken` until it is exhausted — and return all items with `nextToken` omitted.
+
 The `nextToken` field is not declared in the SDK TypeScript interface but is returned by the DIAL endpoint per its documented API contract. The service accesses it via a type cast.
 
 #### Scenario: A further page is advertised
@@ -285,6 +291,11 @@ The `nextToken` field is not declared in the SDK TypeScript interface but is ret
 - **WHEN** DIAL Core returns a `nextToken` for the requested folder
 - **THEN** the response carries the same value in `ListFilesResponseDto.nextToken`
 - **AND** passing it back as `token` requests the following page
+
+#### Scenario: Unpaginated request aggregates every page
+
+- **WHEN** `GET /api/v1/files/list?bucket=my-bucket&path=large-folder/` is called without `token` or `limit`
+- **THEN** the service requests DIAL Core pages with `limit=1000`, follows each returned `nextToken`, and returns every item with no `nextToken` in the response
 
 #### Scenario: The last page omits the token
 
@@ -301,14 +312,14 @@ The system SHALL parse and validate all query parameters through `ListFilesQuery
 
 Field specifications:
 
-- `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(/^[\w.-]+$/)`, `@MaxLength(256)`, `@ApiProperty(...)`
-- `path`: `@IsOptional()`, `@IsString()`, `@Matches(/^[\w.\-/]*$/)`, custom `@IsValidFilePath()` validator (no leading `/`, no `..`), `@MaxLength(1024)`, `@ApiPropertyOptional(...)`
+- `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(BUCKET_NAME_PATTERN)` (`/^[\w.-]+$/`, from `apps/chat-api/src/common/validators/bucket-name.pattern.ts`), `@MaxLength(256)`, `@ApiProperty(...)`
+- `path`: `@IsOptional()`, `@IsString()`, custom `@IsValidFilePath()` validator (`apps/chat-api/src/files/dto/file-path.validator.ts`: no leading `/`, no `..`, none of `: ; , = { } & \ "`, no malformed `%` escape, no encoded `%2e`/`%2f`/`%5c`), `@MaxLength(1024)`, `@ApiPropertyOptional(...)`
 - `token`: `@IsOptional()`, `@IsString()`, `@MaxLength(1024)`, `@ApiPropertyOptional(...)`
 - `limit`: `@IsOptional()`, `@Transform(({ value }) => parseInt(value, 10))`, `@IsInt()`, `@Min(1)`, `@Max(1000)`, `@ApiPropertyOptional(...)`
 - `recursive`: `@IsOptional()`, `@Transform(({ value }) => value === 'true' || value === true)`, `@IsBoolean()`, `@ApiPropertyOptional(...)`
-- `permissions`: `@IsOptional()`, `@Transform(({ value }) => value !== 'false' && value !== false)`, `@IsBoolean()`, `@ApiPropertyOptional(...)`
+- `permissions`: `@IsOptional()`, `@Transform(({ value }) => value === 'true' || value === true)`, `@IsBoolean()`, `@ApiPropertyOptional({ default: true })` — an omitted value stays `undefined` and `FilesListingService` sends `permissions: true` to DIAL Core; any supplied value other than `true`/`'true'` becomes `false`
 
-Response DTOs for Swagger (`ListFilesItemDto`, `ListFilesResponseDto`) SHALL be defined in the same file and carry full `@ApiProperty` annotations so the generated client has strong types.
+`ListPublicFilesQueryDto` and `ListSharedFilesQueryDto` live in the same file. Response DTOs for Swagger (`ListFilesItemDto`, `ListFilesResponseDto`) SHALL be defined in the same file and carry full `@ApiProperty` annotations so the generated client has strong types.
 
 #### Scenario: An undeclared query parameter is rejected
 
@@ -324,18 +335,18 @@ Response DTOs for Swagger (`ListFilesItemDto`, `ListFilesResponseDto`) SHALL be 
 
 ### Requirement: Generated client and frontend wrapper
 
-The system SHALL provide a typed frontend wrapper `listFiles(params)` in `apps/chat/src/server-api/files.api.ts` that delegates to the generated `filesApi.listFiles(...)` from `@epam/chat-api-client`.
+The system SHALL provide a typed frontend wrapper `listFiles(params, signal?)` exported from `apps/chat/src/server-api/files.api.ts` that delegates to the generated `filesApi.listFiles(...)` from `@epam/ai-dial-chat-api-client`. The wrapper is built by `createFilesApiClient(filesApi, uploadFileWithProgress)` (`libs/chat-hooks/src/files/create-files-api.ts`, exported from `@epam/ai-dial-chat-hooks`); `files.api.ts` re-exports `filesApiClient.listFiles`, and an optional `AbortSignal` is passed through as the request init's `signal`.
 
 The `filesApi` singleton is already exported from `apps/chat/src/server-api/api-client.ts`; no new singleton is needed.
 
 - **operationId**: `listFiles`
-- **SDK method**: `filesApi.listFiles({ bucket, path?, token?, limit?, recursive?, permissions? }): Promise<ListFilesResponseDto>`
+- **SDK method**: `filesApi.listFiles({ bucket, path?, token?, limit?, recursive?, permissions? }, initOverrides?): Promise<ListFilesResponseDto>`
 - **Generator gap**: None expected; `application/json` response with typed DTO generates a strong return type.
 - **Cache TTL**: No cache at the frontend layer.
 
 #### Scenario: Frontend wrapper delegates to generated client
 
-- **WHEN** `listFiles({ bucket: 'my-bucket', path: 'folder/' })` is called in `files.api.ts`
+- **WHEN** `listFiles({ bucket: 'my-bucket', path: 'folder/' })` exported from `files.api.ts` is called
 - **THEN** the function calls `filesApi.listFiles(...)` and resolves to a `ListFilesResponseDto` with the correct items
 
 #### Scenario: Frontend wrapper propagates 401 error

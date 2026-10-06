@@ -8,7 +8,7 @@ Falling back to the application type schema's icon when an application deploymen
 
 ### Requirement: DeploymentItemDto exposes applicationTypeSchemaId
 
-`DeploymentItemDto` (in `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL include an optional `applicationTypeSchemaId` string field annotated with `@ApiPropertyOptional`. `DeploymentsService.mapToDeploymentItem` SHALL read the upstream DIAL Core deployment field and map it to `applicationTypeSchemaId` when the field is present and non-empty.
+`DeploymentItemDto` (in `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL include an optional `applicationTypeSchemaId` string field annotated with `@ApiPropertyOptional`. `mapToDeploymentItem` (in `apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`, used by the deployments listing and lookup services) SHALL read the upstream DIAL Core `application_type_schema_id` field and map it to `applicationTypeSchemaId` when the item is an application deployment and the field is present and non-empty.
 
 Generated-client impact: after running `npm run openapi`, `DeploymentItemDto` in `libs/chat-api-client` SHALL include `applicationTypeSchemaId?: string`. Frontend callers use the normal (non-`Raw`) `listDeployments` method. No new operationId is introduced; the field is additive to the existing `GET /api/v1/deployments` response DTO.
 
@@ -26,7 +26,7 @@ Generated-client impact: after running `npm run openapi`, `DeploymentItemDto` in
 
 ### Requirement: ApplicationSchemaSummaryDto exposes iconUrl
 
-`ApplicationSchemaSummaryDto` (in `apps/chat-api/src/applications/dto/application-schema.dto.ts`) SHALL include an optional `iconUrl` string field annotated with `@ApiPropertyOptional`. `ApplicationSchemasService.listApplicationSchemas` SHALL map the upstream DIAL Core schema icon field (expected key: `dial:applicationTypeIconUrl`) to `iconUrl` when present and non-empty.
+`ApplicationSchemaSummaryDto` (in `apps/chat-api/src/application-schemas/dto/application-schema.dto.ts`) SHALL include an optional `iconUrl` string field annotated with `@ApiPropertyOptional`. `ApplicationSchemasService.listApplicationSchemas` (`apps/chat-api/src/application-schemas/application-schemas.service.ts`) SHALL map the upstream DIAL Core schema icon field `dial:applicationTypeIconUrl` to `iconUrl`.
 
 Generated-client impact: after running `npm run openapi`, `ApplicationSchemaSummaryDto` in `libs/chat-api-client` SHALL include `iconUrl?: string`. Frontend callers use the normal `listApplicationSchemas` method via `getApplicationSchemas()` in `apps/chat/src/server-api/application-schemas.ts`.
 
@@ -44,7 +44,7 @@ Generated-client impact: after running `npm run openapi`, `ApplicationSchemaSumm
 
 ### Requirement: DeploymentsProvider fetches schema summaries in parallel with deployments
 
-`DeploymentsProvider` (in `apps/chat/src/context/DeploymentsContext.tsx`) SHALL call `getApplicationSchemas()` concurrently with `getDeployments()` using `Promise.allSettled` inside the same `useEffect`. When the component unmounts before both fetches complete, both results MUST be discarded via the existing `isCancelled` guard.
+`DeploymentsProvider` (in `apps/chat/src/context/DeploymentsContext.tsx`) SHALL call `getApplicationSchemas()` concurrently with `getDeployments()` (and `listToolsets()`) using one `Promise.allSettled` inside `loadDeployments`, which the mount `useEffect` invokes. When the component unmounts before the fetches complete, all results MUST be discarded via the `signal.isCancelled` guard. A rejected schema fetch is logged with `console.warn` and leaves `schemas` empty; the schema list is also exposed as `schemas` on `DeploymentsContextType`.
 
 Cache key (BFF side): `application-schemas:list:{userSub}` with TTL 60 000 ms (already established in `ApplicationSchemasService`).
 
@@ -72,7 +72,7 @@ Cache key (BFF side): `application-schemas:list:{userSub}` with TTL 60 000 ms (a
 
 ### Requirement: Application deployments without own iconUrl use schema icon fallback
 
-`DeploymentsProvider` SHALL derive `items` with `useMemo` after both deployments and schema summaries are available. For each item where `item.type === 'application'` and `item.iconUrl` is `undefined` or empty and `item.applicationTypeSchemaId` is defined, the provider MUST find the first schema where `schema.id === item.applicationTypeSchemaId` and set `item.iconUrl` to `schema.iconUrl`. The enriched list MUST be exposed as `items` on `DeploymentsContextType`.
+`DeploymentsProvider` SHALL derive `items` with `useMemo` after both deployments and schema summaries are available. For each item where `item.type === 'application'` and `item.iconUrl` is `undefined` or empty and `item.applicationTypeSchemaId` is defined, the provider MUST look up the schema whose `schema.id === item.applicationTypeSchemaId` (via a `Map` keyed by id, so a later duplicate id wins) and, when that schema has a non-empty `iconUrl`, return a copy of the item with `iconUrl` set to it. The enriched list MUST be exposed as `items` on `DeploymentsContextType`.
 
 #### Scenario: Application deployment without icon — matching schema with icon
 
@@ -103,7 +103,7 @@ Cache key (BFF side): `application-schemas:list:{userSub}` with TTL 60 000 ms (a
 
 ### Requirement: selectedItemId behavior is unchanged
 
-`DeploymentsProvider` SHALL continue to initialise `selectedItemId` to the first deployment's `id` on successful load, preserve an existing valid `selectedItemId` across re-renders, and reset to the first item or `null` when the previously selected id is absent from the new list. The schema fetch result MUST NOT affect `selectedItemId`.
+`DeploymentsProvider` SHALL resolve `selectedItemId` on successful load through `resolveInitialSelection`: preserve an existing `selectedItemId` still present in the list; otherwise take, in order, the overlay host's `modelId` (by id or reference), the stored default-agent preference, the operator default (`defaultDeploymentPinned`), the persisted user-config selection, and finally the first non-hidden deployment (or the first deployment, or `null` when the list is empty). The schema fetch result MUST NOT affect `selectedItemId`.
 
 #### Scenario: selectedItemId is preserved when still valid
 
@@ -113,13 +113,13 @@ Cache key (BFF side): `application-schemas:list:{userSub}` with TTL 60 000 ms (a
 #### Scenario: selectedItemId resets when previous selection is gone
 
 - **WHEN** deployments reload and the previously selected id is not present in the new list
-- **THEN** `selectedItemId` MUST be set to the first item's id, or `null` if the list is empty
+- **THEN** `selectedItemId` MUST be re-resolved through the preference chain, falling back to the first non-hidden item's id, or `null` if the list is empty
 
 ---
 
 ### Requirement: Consumer components continue using resolveCatalogIconUrl
 
-`ConversationRoute` (in `apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx`) and `ConversationView` (in `apps/chat/src/components/ConversationView/ConversationView.tsx`) SHALL continue to map `items` to `DeploymentItem[]` using `resolveCatalogIconUrl(item.iconUrl)` in a `useMemo`. No schema lookup logic SHALL be added to these components.
+`ConversationRoute` (in `apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx`) and `ConversationView` (in `apps/chat/src/components/ConversationView/ConversationView.tsx`) SHALL continue to map `items` to `DeploymentItem[]` using `iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined` in a `useMemo`. No schema lookup logic SHALL be added to these components.
 
 #### Scenario: Application deployment with schema-derived iconUrl reaches ConversationInput
 

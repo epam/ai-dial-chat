@@ -6,11 +6,11 @@ Define how the DIAL file manager attach modal validates selectable rows and the 
 
 ### Requirement: Hidden-path rows are not selectable
 
-`DialFileManagerModal` SHALL prevent selection of any grid row whose `path` contains a hidden path segment. A segment is hidden when it starts with `.` (for example `.env`, `.hidden`, or the file-manager placeholder `.dial_folder`). This includes files inside hidden folders. The `isRowSelectable` predicate SHALL return `false` for such rows.
+`DialFileManagerModal` SHALL prevent selection of any grid row whose `path` contains a hidden path segment, using the `isRowSelectable` predicate returned by `useFileAttachmentPicker` (`@epam/ai-dial-chat-hooks`) and forwarded to `FileManagerAttachModal`, which also re-applies it to every selection change (e.g. auto-selected uploads). A segment is hidden when it starts with `.` (for example `.env`, `.hidden`, or the file-manager placeholder `.dial_folder`). This includes files inside hidden folders. The `isRowSelectable` predicate SHALL return `false` for such rows.
 
-The canonical `isHiddenPath(path: string): boolean` SHALL be owned by `@epam/ai-dial-chat-shared` and evaluate path segments rather than relying on a single marker string. The reusable attachment picker and shared modal SHALL consume this helper without an app-local duplicate.
+The canonical `isHiddenPath(path: string): boolean` SHALL be owned by `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/file-manager/path.ts`) and evaluate path segments rather than relying on a single marker string. The reusable attachment picker and shared modal SHALL consume this helper without an app-local duplicate.
 
-i18n: tooltip key `DialFileManager.AttachingHiddenFilesNotAllowed`
+i18n: tooltip key `DialFileManagerI18nKeys.AttachingHiddenFilesNotAllowed` (`dialFileManager.attachingHiddenFilesNotAllowed`)
 RTL: none (tooltip text only)
 Feature flag: none
 Memoisation: the reusable picker SHALL expose a memoized `isRowSelectable` predicate that updates when its constraints change.
@@ -40,7 +40,7 @@ Matching SHALL use the canonical `isMimeTypeAllowed(contentType, allowedTypes)` 
 
 When `allowedTypes` is empty or absent, all MIME types are allowed (no restriction).
 
-MIME filtering applies to `DialFileNodeType.ITEM` rows only; `FOLDER` rows are unaffected by this rule.
+MIME filtering applies to `DialFileNodeType.ITEM` rows with a non-null `contentType` only; `FOLDER` rows are unaffected by this rule (their selectability is `canAttachFolders`, default `false`).
 
 RTL: none
 Feature flag: none
@@ -76,11 +76,11 @@ When `maxSelectableFileSize` is absent or `undefined`, no size restriction is ap
 
 File-size checking applies to `DialFileNodeType.ITEM` rows only. Folder rows are unaffected.
 
-`maxSelectableFileSize` SHALL be sourced from `useAppConfig().config.maxAttachmentFileSizeBytes` rather than the hardcoded `MAX_SELECTABLE_FILE_SIZE_BYTES` constant (`apps/chat/src/constants/files.ts`). The constant is retained only as `AppConfigContext`'s pre-load default value (see `app-config-context`'s `maxAttachmentFileSizeBytes` requirement) — no caller of `DialFileManagerModal` SHALL reference the constant directly any longer.
+`maxSelectableFileSize` SHALL be sourced by `DialFileManagerModal`'s callers (`ConversationView`, `NewConversationComposer`) from `useAppConfig().config.maxAttachmentFileSizeBytes`. The former `MAX_SELECTABLE_FILE_SIZE_BYTES` constant no longer exists; the only hardcoded value left is `AppConfigContext`'s module-local pre-load default `DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES` (`536_870_912`, see `app-config-context`'s `maxAttachmentFileSizeBytes` requirement).
 
 RTL: none
 Feature flag: none
-Memoisation: same `isRowSelectable` in `useMemo` grid options
+Memoisation: the same memoized `isRowSelectable`, consumed by the shell's `useMemo` grid options
 
 #### Scenario: File exceeding size cap is not selectable
 
@@ -106,7 +106,7 @@ Memoisation: same `isRowSelectable` in `useMemo` grid options
 
 ### Requirement: New-upload size cap uses the ui-kit's native maxFileSize check
 
-`DialFileManagerModal` SHALL pass the same `maxSelectableFileSize` value into `FileManagerAttachModal`'s (and, through it, `DialFileManagerShell`'s) `maxFileSize` prop on `<DialFileManager>` from `@epam/ai-dial-react-file-manager` — the vendor component's own built-in pre-upload size check, distinct from `maxSelectableFileSize`'s existing-file-selection check. `DialFileManagerModal` SHALL also pass a translated `oversizedUploadMessage` string (new prop on `FileManagerAttachModal`/`DialFileManagerShell`), forwarded to `<DialFileManager>`'s `uploadValidationMessages.oversizedFiles`.
+`DialFileManagerModal` SHALL pass the same `maxSelectableFileSize` value to `FileManagerAttachModal` and, through it, to the shared `DialFileManagerShell`, which forwards it as the `maxFileSize` prop on `<DialFileManager>` from `@epam/ai-dial-react-file-manager` — the vendor component's own built-in pre-upload size check, distinct from `maxSelectableFileSize`'s existing-file-selection check. `DialFileManagerModal` SHALL also pass a translated `oversizedUploadMessage` string (prop on `FileManagerAttachModal`/`DialFileManagerShell`, omitted when `maxSelectableFileSize` is absent or not positive), forwarded to `<DialFileManager>`'s `uploadValidationMessages.oversizedFiles`.
 
 This is a single AppConfig-sourced numeric value doing double duty: it bounds which already-listed files are selectable (`maxSelectableFileSize` → `isRowSelectable`) and, via the same value forwarded as `maxFileSize`, which freshly-picked local files the ui-kit accepts into an upload batch at all. `onValidateUpload`/`onUploadFiles` (see `file-manager-upload`) never see a file the ui-kit's own `maxFileSize` check has already rejected.
 
@@ -131,14 +131,14 @@ i18n: `dialFileManager.uploadFileTooLarge` key (e.g. "Max file size is {{maxSize
 
 ### Requirement: Attach handler skips hidden and MIME-invalid files with info toast
 
-When the user clicks Attach, `DialFileManagerModal` SHALL:
-1. Remove from the resolved set any selected file that is hidden (`isHiddenPath`: any path segment starts with `.`) or has a disallowed MIME type (when `allowedTypes` is provided).
-2. If any files were removed due to unsupported type, show an info notification (title: `DialFileManager.UnsupportedFilesSkipped`, message: `DialFileManager.UnsupportedFilesDescription`).
-3. Call `onAttach` with the filtered set (modal closes).
+When the user clicks Attach, `DialFileManagerModal` SHALL, through `FileManagerAttachModal`'s `handleAttach`:
+1. Remove from the resolved set any selected item that is hidden (`isHiddenPath`: any path segment starts with `.`) or is a file with a disallowed MIME type (when `allowedTypes` is provided), and drop nested folders and files that sit inside another selected folder.
+2. If any files were removed due to unsupported type, call `onSkippedUnsupportedFiles`, for which `DialFileManagerModal` shows an info notification via `showInfoNotification` (title: `DialFileManagerI18nKeys.UnsupportedFilesSkipped`, message: `DialFileManagerI18nKeys.UnsupportedFilesDescription`). Hidden items are dropped without a notification.
+3. Call `onAttach` with `{ files, folderPaths }` (folder paths resolved through `resolveFolderPath`); the host closes the modal.
 
 Hidden files removed at the grid level (non-selectable) are not expected to appear in `selectedFiles`, but the Attach handler SHALL apply the hidden check again as a safety net.
 
-i18n keys: `DialFileManager.UnsupportedFilesSkipped`, `DialFileManager.UnsupportedFilesDescription`
+i18n keys: `dialFileManager.unsupportedFilesSkipped`, `dialFileManager.unsupportedFilesDescription`
 RTL: none (toast only)
 Feature flag: none
 Memoisation: `handleAttach` in `useCallback`
@@ -162,15 +162,15 @@ Memoisation: `handleAttach` in `useCallback`
 
 ### Requirement: Attach handler blocks when count exceeds maximumAttachmentsAmount
 
-When `maximumAttachmentsAmount` is provided as a finite number greater than `0`, `DialFileManagerModal` SHALL check the count of the valid (post-filter) selection **after** applying hidden and MIME filters. The count SHALL include both the valid current modal selection and `existingAttachmentsAmount` (default `0`) supplied by the host for attachments already present in the conversation input tray.
+When `maximumAttachmentsAmount` is provided as a finite number greater than `0`, `DialFileManagerModal` SHALL check the count of the valid (post-filter) selection **after** applying hidden and MIME filters. The count SHALL include the valid current modal selection (files plus resolved folder paths) and `existingAttachmentsAmount` (default `0`) supplied by the host for attachments already present in the conversation input tray.
 
 If the combined count exceeds `maximumAttachmentsAmount`, the modal SHALL:
-1. Show an error notification (title: `DialFileManager.TooManyFilesSelected`, message: `DialFileManager.TooManyFilesDescription` with `{{count}}` and `{{limit}}`).
+1. Call `onCountLimitExceeded(totalCount, limit)`, for which `DialFileManagerModal` shows an error notification via `showErrorNotification` (title: `DialFileManagerI18nKeys.TooManyFilesSelected`, message: `DialFileManagerI18nKeys.TooManyFilesDescription` with `{{count}}` and `{{limit}}`).
 2. **Not** call `onAttach` — the modal stays open.
 
 When `maximumAttachmentsAmount` is `undefined`, `0`, negative, or non-finite, no count restriction is applied.
 
-i18n keys: `DialFileManager.TooManyFilesSelected`, `DialFileManager.TooManyFilesDescription` (params: `count`, `limit`)
+i18n keys: `dialFileManager.tooManyFilesSelected`, `dialFileManager.tooManyFilesDescription` (params: `count`, `limit`)
 RTL: none (toast only)
 Feature flag: none
 Memoisation: `handleAttach` in `useCallback`

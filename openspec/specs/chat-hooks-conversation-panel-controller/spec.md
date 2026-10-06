@@ -10,9 +10,12 @@ Reusable conversation-panel controller hooks and utilities exported by `@epam/ai
 ConversationListItemDto[]; deployments: DeploymentItemDto[]; isDeploymentsLoading: boolean;
 toPanelConversationId: (id: string) => string;
 resolveIconUrl: (deployment: DeploymentItemDto | undefined) => string | undefined; resolveIconTooltip:
-(deployment: DeploymentItemDto | undefined, fallback: string) => string; resolveHref: (conversationId:
+(deployment: DeploymentItemDto | undefined, fallback: string) => string | undefined; resolveHref: (panelConversationId:
 string) => string; resolveTaskPresentation?: (item: ConversationListItemDto) => { leadingIcon?: ReactNode;
-isUnread: boolean } | undefined }): ConversationItem[]`. The hook SHALL NOT import `react-i18next`, an application
+isUnread: boolean } | undefined })` (`UseConversationPanelItemsParams`), returning an inferred array of
+`ConversationItem`-compatible objects (`id`, `title`, `isPinned`, `iconUrl`, `iconTooltip`, `isIconLoading`,
+`source`, `href`, plus `leadingIcon`/`isUnread` when task presentation applies) — the hook does not import the
+panel lib's `ConversationItem` type. The hook SHALL NOT import `react-i18next`, an application
 Context, an app routing module, or any UI-kit/icon component — every app-specific resolution (icon URL, localized
 tooltip text, route construction, task-row presentation including the rendered icon node) SHALL be supplied through
 the resolver parameters. When `resolveTaskPresentation` returns a value, the hook SHALL copy `leadingIcon` and
@@ -84,11 +87,13 @@ row-action call sites.
 `@epam/ai-dial-chat-hooks` SHALL export `useActiveConversationSync(params: { activeConversationId:
 string | undefined; items: ConversationListItemDto[]; refreshConversations: () => Promise<void>;
 markConversationViewed: (id: string) => Promise<void>; conversationIdsMatch: (a: string, b: string) =>
-boolean; toPanelConversationId: (id: string) => string })`. The hook SHALL run two effects: (1) if the
+boolean; toPanelConversationId: (id: string) => string }): string | undefined`, returning the active
+conversation's panel-space id. The hook SHALL run two effects: (1) if the
 active conversation is not found in `items`, call `refreshConversations()`, deliberately excluding
 `items`/`refreshConversations` from its own dependency array to avoid a refetch loop — this omission
-SHALL be documented in the hook's JSDoc with the same rationale as the code it replaces; (2) when the
-matching raw item changes, call `markConversationViewed(activeItem.id)`.
+SHALL be documented in the hook's JSDoc with the same rationale as the code it replaces; (2) once per
+matching active identity (keyed on the active panel id and the matching item's raw id, so a list refresh
+or rollback does not retry the write), call `markConversationViewed(activeItemId)`.
 
 #### Scenario: Missing active conversation triggers exactly one refresh, not a loop
 - **GIVEN** `activeConversationId` does not match any entry in `items`
@@ -101,11 +106,15 @@ matching raw item changes, call `markConversationViewed(activeItem.id)`.
 
 ### Requirement: `useAsyncConfirmDialog` is a generic single-slot pending/loading/error state machine
 
-`@epam/ai-dial-chat-hooks` SHALL export `useAsyncConfirmDialog<T>(): { pending: T | null; isPending:
-boolean; isRunning: boolean; error: string | null; open: (value: T) => void; close: () => void; confirm:
-(run: (value: T) => Promise<void>, onError: (error: unknown) => string) => Promise<void> }`. `confirm`
-SHALL be a no-op re-entry guard while `isRunning` is `true`; on failure it SHALL set `error` to
-`onError(caughtError)` and leave `pending` set; on success it SHALL call `close()`.
+`@epam/ai-dial-chat-hooks` SHALL export `useAsyncConfirmDialog<T>(): AsyncConfirmDialogControls<T>`, i.e.
+`{ pending: T | null; isPending: boolean; isRunning: boolean; error: string | null; open: (value: T,
+returnFocusTo?: HTMLElement | null) => void; close: () => void; confirm: (run: (value: T) => Promise<void>,
+onError: (error: unknown) => string) => Promise<void> }`. `confirm`
+SHALL be a no-op while `isRunning` is `true` or `pending` is `null`; on failure it SHALL set `error` to
+`onError(caughtError)` and leave `pending` set; on success it SHALL reset `pending`, `error` and `isRunning`
+as `close()` does. A result that settles after `open`/`close` started a newer cycle SHALL be ignored.
+When `pending` returns to `null`, the hook SHALL restore focus to `returnFocusTo`, or to the element that
+held focus when `open` was called, if it is still connected.
 
 #### Scenario: Opening sets pending and clears any previous error
 - **WHEN** `open(value)` is called
@@ -128,12 +137,12 @@ SHALL be a no-op re-entry guard while `isRunning` is `true`; on failure it SHALL
 
 `@epam/ai-dial-chat-hooks` SHALL export `deriveConversationRowActionState(item: Pick<
 ConversationListItemDto, 'sharedWithMe' | 'publishedWithMe' | 'isReadonly'>, publishHistory:
-PublishHistoryEntry[] | undefined, recipients: RecipientsCountState): ConversationRowActionState` where
+PublishHistoryEntry[] | undefined, recipients: RecipientsCountEntry): ConversationRowActionState` where
 `ConversationRowActionState` is `{ isReadonly: boolean; publishedFolders: string[]; isRevokeVisible:
 boolean; isPublishApplicable: boolean; isUnpublishApplicable: boolean }`. `isReadonly` SHALL be `true`
 when `item.isReadonly`, `item.sharedWithMe`, or `item.publishedWithMe` is `true`. `publishedFolders` SHALL
 be `publishHistory`'s folder paths deduplicated by their joined path, computed only when `isReadonly` is
-`false`. `isRevokeVisible` SHALL be `true` when `recipients.status` is `Unknown`, or `Resolved` with a
+`false` and `publishHistory` is defined. `isRevokeVisible` SHALL be `true` when `recipients.status` is `RecipientsCountStatus.Unknown`, or `Resolved` with a
 count greater than `0`. `isPublishApplicable`/`isUnpublishApplicable` SHALL be mutually exclusive,
 keyed on whether `publishedFolders` is empty.
 

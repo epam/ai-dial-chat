@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD - created by archiving change lazy-client-channel-subscription. Update Purpose after archive.
+Demand-driven lifecycle of the per-tab DIAL Core client-channel subscription owned by `ClientChannelProvider`: when a channel is opened, shared, released, and torn down, and how late or cancelled setup results are kept inert.
 
 ## Requirements
 
@@ -25,8 +25,8 @@ Demand SHALL be acquired only by `ensureConnected()` and `waitForChannel()` — 
 path — and never by mounting, rendering, navigating, enabling the flag, or a tab visibility
 change.
 
-Demand SHALL be released when the generation that acquired it settles, driven by the existing
-`notifyGenerationSettled()` notification which `useConversationStream` already invokes from both
+The long-lived token `ensureConnected()` acquires SHALL be released when the generation that acquired it settles, driven by the existing
+`notifyGenerationSettled()` notification (which removes one token, since the capability is parameterless). The short-lived token `waitForChannel()` acquires SHALL be released as soon as that wait itself settles (channel id, `null`, or timeout), never by `notifyGenerationSettled()`. The `notifyGenerationSettled()` notification is the one which `useConversationStream` already invokes from both
 its `onComplete` and `onError` terminal paths. `disconnect()` SHALL clear the registry outright,
 so flag-disable, logout, and unmount cannot leak demand.
 
@@ -61,7 +61,7 @@ completion HTTP request is sent, so the id can be included. This SHALL apply to 
 completion starts: normal send, message edit, regenerate, the automatic first-message start
 after navigating to a conversation whose last message is from the user
 (`apps/chat/src/pages/Conversation/Conversation.tsx`), and the QuickApps preview
-(`apps/chat/src/pages/AppsEditor/AppPreviewChat.tsx`).
+(`apps/chat/src/pages/ApplicationEditor/setup/AppPreviewChat.tsx`, mounted under `ROUTES.AppsEditor`).
 
 The provider SHALL maintain at most one client-channel subscription per application tab.
 Concurrent completion requests SHALL share it:
@@ -164,13 +164,14 @@ connect is torn down before the second mount runs.
 
 `useConversationStream` SHALL re-check, between its channel wait resolving and calling
 `transport.streamCompletion`, whether the generation is still wanted: it SHALL NOT send the
-completion if the generation's `AbortController` signal is already aborted, or if a newer
-generation has superseded it on the same conversation path. The hook lives at
+completion if the generation's `AbortController` signal is already aborted, if the user stopped that
+generation, or if a newer generation has superseded it on the same conversation path. The hook lives at
 `libs/chat-hooks/src/conversation/useConversationStream/useConversationStream.ts`.
 
 The re-check SHALL use only values the hook already holds — the `AbortController` returned by
-the host-supplied `startGeneration` and the hook's existing supersession predicate — and SHALL
-NOT add any parameter or capability to the hook's public surface.
+the host-supplied `startGeneration`, the hook's existing supersession predicate (`isSuperseded`), and its
+`stoppedGenerationIdsRef` set (a plain Stop never aborts the controller, so this set is what records a
+user-initiated stop) — and SHALL NOT add any parameter or capability to the hook's public surface.
 
 A suppressed send SHALL return silently rather than being routed through the error path, because
 Stop and re-submit have already run their own cleanup and an error bubble would misreport a

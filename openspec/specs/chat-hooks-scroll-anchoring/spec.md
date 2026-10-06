@@ -38,7 +38,7 @@ app-owned singletons or global state.
   `useConversationScroll` without any other package present
 
 ### Requirement: `useConversationScroll` public API
-The library SHALL export a hook `useConversationScroll<T>(params: { messages: T[]; isAssistantTyping: boolean; conversationId: string }): result` where `T` is an unconstrained generic type parameter (the hook reads only `messages.length`, never message field values), and `result` SHALL contain exactly: `containerRef`, `contentRef`, `spacerRef` (each a `RefObject<HTMLDivElement | null>`), `setMessageRef: (index: number, el: HTMLDivElement | null) => void`, `isScrollButtonVisible: boolean`, `scrollToBottom: () => void`, and `armAnchor: (index: number) => void`. This signature SHALL be identical in shape and semantics to the current `apps/chat/src/hooks/conversation/useConversationScroll.ts` implementation, differing only in the generic message type.
+The library SHALL export a hook `useConversationScroll<T>(params: { messages: T[]; isAssistantTyping: boolean; conversationId: string }): result` where `T` is an unconstrained generic type parameter (the hook reads only `messages.length`, never message field values), and `result` SHALL contain exactly: `containerRef`, `contentRef`, `spacerRef` (each a `RefObject<HTMLDivElement | null>`), `setMessageRef: (index: number, el: HTMLDivElement | null) => void`, `isScrollButtonVisible: boolean`, `scrollToBottom: () => void`, and `armAnchor: (index: number) => void`. The hook and its `UseConversationScrollParams<T>` / `UseConversationScrollResult` types live in `libs/chat-hooks/src/conversation/useConversationScroll/useConversationScroll.ts` and are re-exported by `libs/chat-hooks/src/entry-points/scroll-anchoring.ts`; the signature is identical in shape and semantics to the former `apps/chat` implementation it was extracted from, differing only in the generic message type.
 
 #### Scenario: Consuming with a minimal message shape
 - **WHEN** a consumer calls `useConversationScroll({ messages: [{ text: 'hi' }, { text: 'there' }], isAssistantTyping: false, conversationId: 'c1' })` where the message objects carry no `id` field
@@ -57,7 +57,7 @@ The library SHALL export a hook `useConversationScroll<T>(params: { messages: T[
 - **THEN** the hook does not force-scroll to the new bottom on every growth tick, and clamps any programmatic or user scroll so it cannot move past the maximum allowed scroll position implied by an active anchor spacer
 
 ### Requirement: Behavior parity with the extracted `apps/chat` hook
-The extraction SHALL NOT change `apps/chat`'s observable scroll/anchor behavior. `apps/chat`'s conversation view SHALL consume `useConversationScroll` from `@epam/ai-dial-chat-hooks` instead of a local copy, passing its existing `Message[]` array directly (no adapter/mapping required).
+The extraction SHALL NOT change `apps/chat`'s observable scroll/anchor behavior. `apps/chat`'s conversation view (`apps/chat/src/components/ConversationView/ConversationView.tsx`) SHALL consume `useConversationScroll` from `@epam/ai-dial-chat-hooks/scroll-anchoring` instead of a local copy, passing its existing `Message[]` array directly (no adapter/mapping required).
 
 #### Scenario: The scroll-anchoring test suite passes against the library hook
 - **WHEN** the `useConversationScroll` test suite runs against the implementation exported from `@epam/ai-dial-chat-hooks`

@@ -41,7 +41,7 @@ While `useDeployments().isLoading` is true and `schemas` is empty, the page SHAL
 
 `SchemaAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/SchemaAppSetup.tsx`) SHALL load the full JSON schema for `AppsEditorQuery.Schema` through `getApplicationSchema(schemaId)` (`apps/chat/src/server-api/application-schemas.ts`) in a `useEffect` with a cancelled flag, and render it with the kit's `DialSchemaRenderer` (`variant={SchemaRendererVariant.Flat}`). `DialSchemaRenderer` is a 1.0 component with no 2.0 replacement. Its `onChange` and `onDefaultValues` SHALL both write the whole value into the setup's `properties`. An empty schema id fails without a request.
 
-`skipUntouched` SHALL be on until a submit is blocked by a missing required property (`errors.properties` set) and off from then on, so after a blocked Create/Save every missing required field is marked invalid, not only the touched ones (WCAG 3.3.1).
+`skipUntouched` SHALL be on while no submit is blocked and off while a missing required property blocks it (`skipUntouched={!errors.properties}`), so after a blocked Create/Save every missing required field is marked invalid, not only the touched ones (WCAG 3.3.1).
 
 Its states SHALL be:
 
@@ -59,7 +59,7 @@ The setup model is `SchemaApplicationSetup` (`apps/chat/src/models/application-e
 
 The component SHALL report `onReadyChange(false)` until the form is shown and the schema's `required` list is in the setup, and `true` afterwards; `ApplicationFormEditor` disables Create/Save while the Setup is not ready, in create mode as in edit mode. So a submit can never be validated against an empty required list while the schema is still loading.
 
-**Endpoint reused** — no new endpoint. `GET /api/v1/application-schemas/:id` (operationId `getApplicationSchema`, generated `applicationsApi.getApplicationSchema({ id })`, normal method), cached server-side under `application-schemas:item:<userSub>:<schemaId>` for 60 seconds with TTL-only invalidation, as `application-schemas-get` specifies. Example: `GET /api/v1/application-schemas/https%3A%2F%2Fexample.com%2Fschemas%2Ftext-classification` → `200 { "$id": "…", "type": "object", "properties": { "labels": { "type": "string", "title": "Labels" } }, "required": ["labels"] }`; `401`/`403` pass through, `404` when unknown, `502` for upstream 5xx, `503` when DIAL Core is unreachable — all shown as the load-failed message.
+**Endpoint reused** — no new endpoint. `GET /api/v1/application-schemas/:id` (operationId `getApplicationSchema`, generated `applicationsApi.getApplicationSchema({ id })`, normal method), cached server-side under `application-schemas:item:<userSub>:<schemaId>` for 60 seconds with TTL-only invalidation, as `application-schemas-get` specifies. Example: `GET /api/v1/application-schemas/https%3A%2F%2Fexample.com%2Fschemas%2Ftext-classification` → `200 { "$id": "…", "type": "object", "properties": { "labels": { "type": "string", "title": "Labels" } }, "required": ["labels"] }`; `400` for an invalid or empty id, `401`/`403` pass through, `404` when unknown, `429` when DIAL Core rate-limits, `502` for upstream 5xx, `503` when DIAL Core is unreachable — all shown as the load-failed message.
 
 **i18n**: `appsEditor.schemaForm.loadFailed` ("Failed to load the application settings. Please try again."), `appsEditor.schemaForm.requiredMissing` ("Fill in all required settings."), declared as `AppsEditorI18nKeys.SchemaFormLoadFailed` / `SchemaFormRequiredMissing`. The renderer's own texts are left at the kit's English defaults.
 

@@ -146,25 +146,30 @@ translation-key enum.
 ### Requirement: Metadata retrieval resolves the correct bucket per item origin
 
 `@epam/ai-dial-chat-hooks` SHALL export `useDialFileMetadata`, which resolves
-the correct bucket for a metadata request based on the clicked item's
-origin (own bucket for `my_files`, owner bucket for Shared items via
-`sharedRootMetaRef`, item's own bucket for Organization items), independent
-of the shared listing cache.
+the correct bucket for a metadata request from the clicked item itself:
+it uses the item's own `DialFile.bucket` (set by the listing mapper — the
+owner's bucket for Shared items, the item's bucket for Organization items)
+and falls back to the current user's `bucket` option, then resolves the API
+path via `resolveDialFileApiPath`. It does not read `sharedRootMetaRef` and
+is independent of the shared listing cache.
 
 #### Scenario: Shared nested item resolves the owner's bucket
 
 - **WHEN** `onGetInfo` is called for a nested Shared-tab item
-- **THEN** the metadata request resolves and uses the owning user's bucket,
-  not the current user's bucket
+- **THEN** the metadata request uses the item's own `bucket` (the owning
+  user's bucket), not the current user's bucket
 
 ### Requirement: Tab configuration reads its tab list from an injected value, not a context
 
-`@epam/ai-dial-chat-hooks` SHALL export `useDialFileManagerTabConfig`,
+`@epam/ai-dial-chat-hooks` SHALL export
+`useDialFileManagerTabConfig(activeTab, onTabChange, allTabs, fileManagerTabs)`,
 accepting `fileManagerTabs: string[] | undefined` as a plain parameter
-instead of reading `AppConfigContext`, and preserving the exact reset
-behavior: when the current `activeTab` is excluded from the configured set,
-reset to the first still-enabled tab in priority order `[MyFiles, Shared,
-Organization]`, falling back to `MyFiles`.
+instead of reading `AppConfigContext` (`undefined` means no restriction).
+The `All` tab SHALL count as enabled only while it is configured and at
+least two source tabs (`MyFiles`, `Shared`, `Organization`) are configured.
+When the current `activeTab` is not enabled, the hook resets it to the first
+enabled tab in priority order `[All, MyFiles, Shared, Organization]`,
+falling back to `MyFiles`.
 
 #### Scenario: Active tab resets when excluded by the injected configuration
 

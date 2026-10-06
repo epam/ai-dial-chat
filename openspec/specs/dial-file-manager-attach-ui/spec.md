@@ -6,7 +6,7 @@ Define the DIAL file manager attach modal UI contract, including tab chrome, att
 
 ### Requirement: Tab navigation UI in DialFileManagerModal
 
-`DialFileManagerModal` SHALL render configured All, My files, Shared with me, and Organization tabs using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`. The hook is called with an i18n-translated label map and `DialFileManagerTabs.All` as the initial tab, falling back through the shared tab configuration when All is unavailable. The resulting `tabs`, `activeTab`, and `handleTabChange` are wired to `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange` respectively (they were passed under `toolbarOptions` up to `@epam/ai-dial-react-file-manager` 0.3.0-dev.2). No custom tab UI is built — the kit renders the strip as a chip row in the folders panel, above the tree it filters; its role structure is specified by the `file-manager-tabs` spec, requirement "Tab strip accessibility".
+`DialFileManagerModal` (`apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) SHALL render configured All, My files, Shared with me, and Organization tabs through `useFileAttachmentPicker` from `@epam/ai-dial-chat-hooks`, which calls `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager` with the modal's i18n-translated label map and `DialFileManagerTabs.All` as the initial tab, and filters the list to `useAppConfig().config.fileManagerTabs` through `useDialFileManagerTabConfig` (All is kept only while at least two source tabs are enabled; an excluded active tab falls back to the highest-priority enabled tab). The resulting `tabs`, `activeTab`, and `onTabChange` are passed to `FileManagerAttachModal` (`@epam/ai-dial-chat-shared/file-manager`), whose `DialFileManagerShell` wires them to `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange` respectively (they were passed under `toolbarOptions` up to `@epam/ai-dial-react-file-manager` 0.3.0-dev.2). No custom tab UI is built — the kit renders the strip as a chip row in the folders panel, above the tree it filters; its role structure is specified by the `file-manager-tabs` spec, requirement "Tab strip accessibility".
 
 RTL: tab bar direction is handled by the ui-kit; no physical direction classes on the modal wrapper.
 
@@ -19,21 +19,21 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 #### Scenario: Tab labels use i18n
 
 - **WHEN** the app language is changed
-- **THEN** tab labels update to match the active locale's `dialFileManager.tab.*` keys
+- **THEN** tab labels update to match the active locale's `dialFileManager.tab.all`, `dialFileManager.tab.myFiles` and `dialFileManager.tab.shared` keys, and the Organization tab uses `basic.organization`
 
 ---
 
 ### Requirement: Per-tab gridOptions in DialFileManagerShell
 
-`DialFileManagerShell` SHALL derive `gridOptions` from the controller's browsed `sectionTab`, falling back to `activeTab` for controllers without section composition:
+The shared `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) SHALL build `gridOptions` from per-tab fields of its controller. `useDialFileManager` (`@epam/ai-dial-chat-hooks`) computes them for each source section, and `useDialFileManagerSections` exposes the browsed section's values (its `sectionTab`; the shell falls back to `activeTab` for controllers without section composition):
 
-- `visibleColumns` changes per tab (see `file-manager-tabs` spec).
-- `actionLabels` includes `Delete` only when the effective source tab is `DialFileManagerTabs.MyFiles`.
-- `dateLocale` is `i18n.language`.
-- `dateOptions` is `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`.
-- `selectionMode`, `additionalGridOptions`, and row-selectability logic are unchanged from current implementation.
+- `visibleColumns` is `COLUMNS_WITH_AUTHOR` on the Shared section and `COLUMNS_WITHOUT_AUTHOR` otherwise (see `file-manager-tabs` spec).
+- `actionLabels` includes `Delete` only on the `DialFileManagerTabs.MyFiles` section; the shell maps each present action onto its translated label and adds `Info` to the grid labels when the controller supplies it.
+- `dateLocale` is the host's `locale` option, which `useDialFileManagerHostOptions` sets to `i18n.language`.
+- `dateOptions` is `DATE_OPTIONS`: `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`.
+- `selectionMode` is `GridSelectionMode.MULTIPLE`, and `additionalGridOptions.rowSelection` carries the host's `isRowSelectable` (all rows selectable when absent).
 
-`gridOptions` SHALL be recomputed (via `useMemo`) whenever `activeTab`, `downloadLabel`, or `deleteLabel` changes.
+`gridOptions` SHALL be recomputed (via `useMemo`) whenever `visibleColumns`, `dateLocale`, `dateOptions`, the grid action labels, or `isRowSelectable` changes.
 
 #### Scenario: gridOptions recomputed on tab switch
 
@@ -49,7 +49,7 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ### Requirement: Per-tab treeOptions and bulkActionsToolbarOptions
 
-`DialFileManagerShell` SHALL derive `treeOptions.actionLabels` and `bulkActionsToolbarOptions.actionLabels` from `activeTab` with the same Delete visibility rule as `gridOptions.actionLabels`: Delete present only on `my_files` tab.
+`DialFileManagerShell` SHALL derive `treeOptions.actionLabels` and `bulkActionsToolbarOptions.actionLabels` from the same controller `actionLabels` as `gridOptions.actionLabels`, so Delete is present only on the `my_files` section. The bulk toolbar additionally drops `RemoveAccess` unless every selected path is shared by the user.
 
 #### Scenario: Bulk actions hide Delete on Shared tab
 
@@ -60,7 +60,7 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ### Requirement: Per-tab uploadEnabled and toolbar new-button state
 
-`DialFileManagerModal` SHALL compute `uploadEnabled` and `isNewButtonDisabled` from `activeTab` and current folder permissions (see `file-manager-tabs` spec for the full rules table). `toolbarOptions.isNewButtonDisabled` and `toolbarOptions.disabledNewButtonTooltip` are wired from the same source.
+`useDialFileManager` SHALL compute `uploadEnabled` from the section tab and current folder permissions (`false` on Organization and at the Shared root, otherwise the folder's write permission; see `file-manager-tabs` spec for the full rules table) and `isNewButtonDisabled` as `!uploadEnabled`. `DialFileManagerShell` wires `toolbarOptions.isNewButtonDisabled` and `toolbarOptions.disabledNewButtonTooltip` from the controller.
 
 #### Scenario: Organization tab disables new button
 
@@ -71,18 +71,18 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ### Requirement: sharedWithMeIds passed to DialFileManager
 
-`DialFileManagerShell` SHALL pass `sharedWithMeIds` to `DialFileManager` when `activeTab === DialFileManagerTabs.Shared`, populated from the root-level item paths in the shared listing. On all other tabs `sharedWithMeIds` SHALL be `undefined`.
+`DialFileManagerShell` SHALL pass the controller's `sharedWithMeIds` to `DialFileManager`. `useDialFileListing` populates it for the Shared section from the root-level item paths in the shared listing (`undefined` for other sections), and `useDialFileManagerSections` flattens the lists of every enabled section, so the array is defined on any tab while the Shared section is configured and is `undefined` only when no section supplies one.
 
 #### Scenario: sharedWithMeIds present on Shared tab
 
-- **WHEN** the active tab is `shared` and shared items have been loaded
+- **WHEN** the active tab is `shared` (or `all` with the Shared section enabled) and shared items have been loaded
 - **THEN** `DialFileManager` receives a non-empty `sharedWithMeIds` array
 
 ---
 
 ### Requirement: Selection cleared on tab change
 
-`DialFileManagerModal` SHALL reset `selectedPaths` to an empty `Set` when its tab-change handler changes `activeTab`. This prevents stale selections from one tab's file tree being carried over to another tab's tree.
+`DialFileManagerModal` SHALL reset `selectedPaths` to an empty `Set` when its tab-change handler changes `activeTab`; the handler and the selection state are owned by `useFileAttachmentPicker`, whose `onTabChange` clears the selection before switching tabs and which also clears it when the browsed source section (`controller.sectionTab`) changes inside All. This prevents stale selections from one tab's file tree being carried over to another tab's tree.
 
 > **Implementation note:** from `@epam/ai-dial-react-file-manager` 0.3.0-dev.3 the tab strip sits in the folders panel and stays visible while a selection is active (the bulk-actions toolbar floats over the grid), so clicking a tab with files selected is a reachable flow. Up to 0.3.0-dev.2 the bulk-actions toolbar took the place of the tab strip, which is why this requirement is stated at the handler level.
 
@@ -98,15 +98,15 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 When the modal is in attach mode (i.e., the `onAttach` callback is present), `DialFileManagerModal` SHALL render a description paragraph below the modal title that summarises the active constraints:
 
-- **Supported types + max size**: always shown when at least one of `allowedTypes` or `maxSelectableFileSize` is provided. Uses i18n key `DialFileManager.MaxSizeSupportedTypes` with params `{{maxSize}}` (human-readable, e.g., "512 MB") and `{{allowedExtensions}}` (comma-separated type labels from `mimeTypesToExtensionLabels`).
-- **Max count suffix**: appended when `maximumAttachmentsAmount` is provided and is a finite positive number. Uses i18n key `DialFileManager.UpToFiles` with param `{{count}}`.
+- **Supported types + max size**: always shown when at least one of `allowedTypes` or `maxSelectableFileSize` is provided. Uses i18n key `DialFileManagerI18nKeys.MaxSizeSupportedTypes` (`dialFileManager.maxSizeSupportedTypes`) with params `{{maxSize}}` (human-readable, e.g., "512 MB") and `{{allowedExtensions}}` (comma-separated type labels from `mimeTypesToExtensionLabels`).
+- **Max count suffix**: appended when `maximumAttachmentsAmount` is provided and is a finite positive number. Uses i18n key `DialFileManagerI18nKeys.UpToFiles` (`dialFileManager.upToFiles`, plural `_one`/`_other`) with param `{{count}}`.
 
-The description paragraph SHALL use `text-secondary` styling and be positioned inside the modal header area, below the title, before the file grid. The description is unaffected by the active tab.
+The description string SHALL be computed by `DialFileManagerModal` and passed as `labels.headerDescription` to `FileManagerAttachModal`, which renders it as a paragraph inside the `Popup` header, below an `<h3>` title, before the file grid. When only a size constraint applies it uses `DialFileManagerI18nKeys.MaxSizeOnly`; a `*`/`*/*` type list uses `DialFileManagerI18nKeys.AllTypes`; an `allowedTypesLabel` prop overrides the computed type label; parts are joined with `. ` and end with `.`. The description SHALL use `text-secondary` styling. The description is unaffected by the active tab.
 
-i18n keys: `DialFileManager.MaxSizeSupportedTypes` (params: `maxSize`, `allowedExtensions`), `DialFileManager.UpToFiles` (param: `count`)
-RTL: paragraph uses `text-start` and logical padding — no physical `text-left`/`pl-*`.
+i18n keys: `dialFileManager.maxSizeSupportedTypes` (params: `maxSize`, `allowedExtensions`), `dialFileManager.maxSizeOnly` (param: `maxSize`), `dialFileManager.allTypes`, `dialFileManager.upToFiles` (param: `count`)
+RTL: paragraph uses `text-start` — no physical `text-left`/`pl-*`.
 Feature flag: none
-Accessibility: `id` on description paragraph matched to `aria-describedby` on the popup (if the `DialPopup` component supports `aria-describedby` via a prop; otherwise omit and use prose placement).
+Accessibility: the `Popup` receives `ariaLabel={title}`; the description has no `aria-describedby` link and relies on prose placement under the title.
 Memoisation: description string computed in `useMemo` from props.
 
 #### Scenario: Description shows type + size when both provided
@@ -127,21 +127,21 @@ Memoisation: description string computed in `useMemo` from props.
 #### Scenario: Description RTL direction
 
 - **WHEN** the page direction is `rtl`
-- **THEN** the description paragraph text aligns to the start edge and padding uses logical properties
+- **THEN** the description paragraph text aligns to the start edge (`text-start`)
 
 ---
 
 ### Requirement: Disabled-row tooltip for hidden paths
 
-`DialFileManagerModal` SHALL pass a `getDisabledTooltip` callback to `DialFileManager`. The callback SHALL:
+`DialFileManagerModal` SHALL pass a `getDisabledTooltip` callback through `FileManagerAttachModal` and `DialFileManagerShell` to `DialFileManager`. The callback SHALL:
 - Return the string `t(DialFileManagerI18nKeys.AttachingHiddenFilesNotAllowed)` when `isHiddenPath(row.path)` is `true`.
 - Return `undefined` for all other rows.
 
-`isHiddenPath` SHALL treat any path segment starting with `.` as hidden, including `.env`, `.hidden`, and the file-manager placeholder `.dial_folder`.
+`isHiddenPath` (`@epam/ai-dial-chat-shared`) SHALL treat any path segment starting with `.` as hidden, including `.env`, `.hidden`, and the file-manager placeholder `.dial_folder`.
 
 The callback behavior is unchanged by `activeTab`.
 
-i18n key: `DialFileManager.AttachingHiddenFilesNotAllowed`
+i18n key: `dialFileManager.attachingHiddenFilesNotAllowed`
 RTL: none (tooltip text positioning is handled by the UI kit)
 Feature flag: none
 Memoisation: `getDisabledTooltip` in `useCallback`.
@@ -149,7 +149,7 @@ Memoisation: `getDisabledTooltip` in `useCallback`.
 #### Scenario: Hidden path row shows tooltip
 
 - **WHEN** a grid row has `path` containing a dot-prefixed segment such as `/My files/.hidden/report.pdf` and the user hovers or focuses the row
-- **THEN** the tooltip "Attaching hidden files is not allowed." (or its translation) is displayed
+- **THEN** the tooltip "Attaching hidden files is not allowed" (or its translation) is displayed
 
 #### Scenario: Normal path row shows no tooltip
 

@@ -1,16 +1,21 @@
 # footer-message Specification
 
 ## Purpose
-Show user useful information in the footer.
+Show users operator-supplied, sanitized HTML information (and the version label) in the chat footer.
 
 ## Requirements
 ### Requirement: Operator-supplied footer HTML is sanitized server-side before use
 
-The NestJS `app-config` service SHALL read `FOOTER_HTML_MESSAGE` from `ConfigService`, replace
-the `%%VERSION%%` token with the **resolved chat version** — the `CHAT_VERSION` env var when
-set and non-blank, otherwise `packageJSON.version` — then sanitize the result using
-`sanitize-html` with an allowlist of `a`, `span`, `strong`, `u`, `em`, `br`, `p` tags. All other
-tags and event-handler attributes SHALL be stripped. Every `<a>` tag SHALL have
+The NestJS `app-config` module SHALL resolve the `footer.html` config-registry key (sourced from
+`FOOTER_HTML_MESSAGE`, default `null`) and map it to `footerHtmlMessage` in
+`apps/chat-api/src/app-config/client-config.mapper.ts` through `sanitizeFooterHtml`
+(`apps/chat-api/src/app-config/html-sanitizer.ts`), which replaces every
+`%%VERSION%%` token with the **resolved chat version** — `resolveAppVersion`
+(`apps/chat-api/src/common/utils/app-version.ts`): the `app.version` key (`CHAT_VERSION`) when set
+and non-blank, otherwise the workspace-root `package.json` version (`PACKAGE_VERSION`) — then
+sanitizes the result using `sanitize-html` with an allowlist of `a`, `span`, `strong`, `u`, `em`, `br`, `p` tags. All other
+tags and event-handler attributes SHALL be stripped; only `href`, `target` and `rel` survive, on
+`<a>`. Every `<a>` tag SHALL have
 `target="_blank"` and `rel="noopener noreferrer"` injected automatically, except for in-page
 hash links (`href` starting with `#`), which are left untouched. The sanitized value SHALL be
 included in the `GET /api/v1/app-config` response as the `footerHtmlMessage` field. The frontend
@@ -19,15 +24,20 @@ reads it via `useAppConfig().config.footerHtmlMessage`.
 The token and the dedicated `config.appVersion` field SHALL always resolve to the same string,
 so a footer authored with `%%VERSION%%` can never disagree with the version label.
 
-- **i18n keys**: none (content is operator-supplied HTML, not translated)
-- **Feature flag**: `footer` — checked via `useFeatureFlag('footer')` from `AppConfigContext`
+- **i18n keys**: none for the message content (operator-supplied HTML, not translated); the
+  region and version label use `footerMessage.regionAriaLabel` (`"Footer"`) and
+  `footerMessage.versionAriaLabel` (`"Application version {{version}}"`) via
+  `FooterMessageI18nKeys`
+- **Feature flag**: `footer` (registry key `features.footer`, default `false`, resolved to `true`
+  whenever `FOOTER_HTML_MESSAGE` is set) — checked via `useFeatureFlag('footer')` from
+  `AppConfigContext`
 - **RTL impact**: none — content is operator HTML; the wrapper element uses logical padding
 - **Memoisation**: none required — value is static after app-config loads
 
 #### Scenario: Version token substitution
 
 - **WHEN** `FOOTER_HTML_MESSAGE` contains `%%VERSION%%` and `CHAT_VERSION` is not set
-- **THEN** the server replaces it with the value of `packageJSON.version` (e.g. `"1.2.3"`)
+- **THEN** the server replaces it with the workspace-root `package.json` version (e.g. `"1.2.3"`)
   before any sanitization
 
 #### Scenario: Version token honours CHAT_VERSION
@@ -57,9 +67,9 @@ so a footer authored with `%%VERSION%%` can never disagree with the version labe
 
 ### Requirement: Footer HTML is sanitized client-side before rendering
 
-The `FooterMessage` component SHALL apply DOMPurify to `footerHtmlMessage` immediately before passing it to `dangerouslySetInnerHTML`. If `window` is unavailable (SSR context), the raw value SHALL be used unchanged (server-side pass already ran).
+The `FooterMessage` component (`apps/chat/src/components/FooterMessage/FooterMessage.tsx`) SHALL pass `footerHtmlMessage` through `sanitizeFooterHtml` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/conversation/footer-message.ts`) — a DOMPurify pass with the same `a`/`span`/`strong`/`u`/`em`/`br`/`p` tag allowlist and `href`/`target`/`rel` attribute allowlist as the server — immediately before passing it to `dangerouslySetInnerHTML`. The sanitizer is only invoked when the `footer` flag is on and the message is non-empty; otherwise the sanitized value is `''`.
 
-- **Memoisation**: `useMemo` on the DOMPurify result, keyed on `footerHtmlMessage`
+- **Memoisation**: `useMemo` on the sanitized result, keyed on `isFooterEnabled` and `footerHtmlMessage`
 
 #### Scenario: Client-side sanitization runs in browser
 
@@ -76,19 +86,20 @@ The `FooterMessage` component SHALL NOT render the operator's footer HTML when e
 The component SHALL render `null` only when it has nothing at all to show — that is, when the
 footer message is hidden by the rule above **and** no version label is available (see the
 `chat-version-display` capability). When a version label is available, the footer region SHALL
-render containing only that label.
+render containing only that label. The version label is not gated by the `footer` flag; an
+embedding host hides it with the `hide-footer-version` UI feature (`OverlayFeature.HideFooterVersion`).
 
 While `useAppConfig().status` is not `UserConfigStatus.Ready`, the component SHALL render
 `null` regardless of either input.
 
 #### Scenario: Feature flag disabled with no version
 
-- **WHEN** `footer` is absent from `ENABLED_FEATURES` and `config.appVersion` is `''`
-- **THEN** `FooterMessage` renders nothing regardless of the `FOOTER_HTML_MESSAGE` value
+- **WHEN** `features.footer` resolves to `false` (e.g. `FOOTER_HTML_MESSAGE` is unset) and `config.appVersion` is `''`
+- **THEN** `FooterMessage` renders nothing
 
 #### Scenario: Feature flag disabled with a version available
 
-- **WHEN** `footer` is absent from `ENABLED_FEATURES` and `config.appVersion` is non-empty
+- **WHEN** `features.footer` resolves to `false` and `config.appVersion` is non-empty
 - **THEN** `FooterMessage` renders the footer region containing the version label and none of
   the `FOOTER_HTML_MESSAGE` content
 
@@ -107,10 +118,11 @@ While `useAppConfig().status` is not `UserConfigStatus.Ready`, the component SHA
 
 ### Requirement: Footer message renders in both desktop and mobile layouts
 
-On `desktop` breakpoint and wider, `FooterMessage` SHALL render inside the chat input footer
-area. On `mobile` breakpoint, it SHALL render inside the mobile user panel below a separator.
-Both placements use the same `FooterMessage` component instance, controlled by screen-size
-render guards.
+`FooterMessage` SHALL render below the chat input area of `ConversationView` and
+`NewConversationComposer` at every breakpoint, and additionally as the `footer` of the
+`NavigationSheet` (the mobile navigation sheet opened from the header hamburger) rendered by
+`apps/chat/src/components/Navigation/Navigation.tsx`. Each placement mounts its own
+`FooterMessage` instance; no screen-size render guard selects between them.
 
 The footer region SHALL be a positioning context (`relative`) whose direct children are the
 sanitized-message element and the version label, rather than a single element hosting the
@@ -128,19 +140,20 @@ an out-of-flow label would paint outside it.
 
 #### Scenario: Desktop placement
 
-- **WHEN** viewport is at `desktop` breakpoint or wider
+- **WHEN** a conversation or the new-conversation composer is shown at any breakpoint
 - **THEN** `FooterMessage` is visible below the chat input area
 
 #### Scenario: Mobile placement
 
-- **WHEN** viewport is at `mobile` breakpoint
-- **THEN** `FooterMessage` is visible in the mobile user panel
+- **WHEN** the `NavigationSheet` is opened from the header hamburger on `mobile`
+- **THEN** `FooterMessage` is visible as the sheet's footer
 
 #### Scenario: Screen reader identifies footer region
 
 - **WHEN** `FooterMessage` renders with a non-empty message or a version label
-- **THEN** the root element exposes a landmark or labelled region recognizable to assistive
-  technology
+- **THEN** the root element is a `<section>` labelled by `footerMessage.regionAriaLabel`, and the
+  version is announced through a screen-reader-only `footerMessage.versionAriaLabel` text while
+  the visible `formatAppVersion` label is `aria-hidden`
 
 #### Scenario: Message stays centred with a version label present
 

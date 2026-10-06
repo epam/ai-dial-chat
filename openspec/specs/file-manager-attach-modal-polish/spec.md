@@ -90,7 +90,7 @@ Two contexts SHALL override the tab-specific copy, in this precedence order:
 Both overrides render an empty description; the tab-specific copy is used only at a tab's root with no active search.
 
 RTL: none — text direction is inherited from the `dir` attribute on `<html>`.
-Memoisation: empty state props in `useMemo` keyed on the active tab, the search state, and the current path.
+Memoisation: empty state props in `useMemo` keyed on the browsed section tab (`sectionTab ?? activeTab`), the search state (`searchResults`, `isSearching`), and the current path.
 
 #### Scenario: My Files empty state shown when My Files tab is empty
 
@@ -142,7 +142,7 @@ Feature flag: none.
 
 `FileManagerAttachModal` SHALL retain its fixed responsive height of `min(800px, 100dvh)` and sunken background. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
 
-In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's bottom padding and apply grid padding through `contentClassName="pb-0"` and `gridClassName="size-full px-5 py-4"`. Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
+In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's horizontal and bottom padding and apply grid spacing through `contentClassName="px-0 pb-0"` and `gridClassName="size-full gap-6 px-6 py-4"` (Standalone keeps `gridClassName="size-full"` and no `contentClassName`). Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
 
 #### Scenario: Attach chrome and grid spacing
 

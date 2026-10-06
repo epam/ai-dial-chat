@@ -120,7 +120,7 @@ htmlViewRenderedLabel?: string;
 | `HtmlViewSource` | `attachmentCanvas.htmlViewSource` | `"View source"` |
 | `HtmlViewRendered` | `attachmentCanvas.htmlViewRendered` | `"View rendered"` |
 
-`AttachmentCanvasContainer` SHALL forward all four labels to the `labels` prop.
+The chat app SHALL pass all four translated labels in the `labels` prop of `AttachmentCanvasContainer` (`apps/chat/src/app/app.tsx`), which forwards them to `AttachmentCanvas`.
 
 #### Scenario: labels have default values
 
@@ -138,7 +138,7 @@ htmlViewRenderedLabel?: string;
 `isSourceView` is a **prop** (not internal state) — it is owned and toggled by `AttachmentCanvas` (see the toggle button requirement below).
 
 - **Rendered mode (`isSourceView === false`):** displays the iframe (see below).
-- **Source mode (`isSourceView === true`):** renders the resolved source text using `CodeContent` with `language: 'html'`. The text is `content.srcdoc` when set, or the string returned by `content.resolveSourceText()` once that lazy fetch resolves (a spinner is shown while it is pending). Only reachable when `content.srcdoc != null` or `content.resolveSourceText != null`.
+- **Source mode (`isSourceView === true`):** renders the resolved source text using `CodeContent` with `language: 'html'`. The text is `content.srcdoc` when set, or the string returned by `content.resolveSourceText()` once that lazy fetch resolves (a spinner is shown while it is pending). When `resolveSourceText()` rejects, the rendered iframe is shown instead, and the next switch to source view retries the fetch. Only reachable when `content.srcdoc != null` or `content.resolveSourceText != null`.
 
 **Toggle button:**
 - Rendered in the `AttachmentCanvas` panel header (`rightActions`), alongside the download and copy buttons — **not** inside `HtmlContent`.
@@ -155,7 +155,7 @@ Let `isSameOriginUrl = content.isSameOriginUrl === true && content.url != null` 
 - With `content.srcdocHostUrl`: set the iframe's `src` attribute to `content.srcdocHostUrl` and leave `srcdoc` unset, so the document carries its host response's own CSP instead of inheriting the embedding document's. On the iframe's first `load`, post `{ type: HTML_PREVIEW_FRAME_RENDER_MESSAGE, html: content.srcdoc }` to its `contentWindow` with target `'*'` (the sandboxed frame has an opaque origin). Later `load` events for the same content (the host document replacing itself) SHALL NOT post again; a new `content` SHALL remount the iframe.
 - The iframe SHALL carry `sandbox="allow-scripts"` — no `allow-same-origin`, no `allow-forms`, no `allow-popups`, no `allow-navigation`.
 - The iframe SHALL fill the remaining panel body area (`w-full h-full border-none`).
-- No CSP block detection is needed for `srcdoc`; the content is always rendered.
+- No CSP block detection is needed for `srcdoc`; the content is always rendered. As in every rendered mode, a spinner covers the still-mounted, `invisible` iframe until its first `load`.
 
 **`src` mode, same-origin download (`isSameOriginUrl === true`):**
 - Set the iframe's `src` attribute to `content.url` (this app's own `/api/v1/files/download` route).
@@ -195,7 +195,7 @@ interface HtmlContentProps {
 
 The component MUST NOT read from any app-level context.
 
-**RTL impact:** none — the iframe and blocked-state panel are direction-agnostic. The blocked-state panel text uses logical Tailwind classes (`text-start`, `gap-x-2`, etc.).
+**RTL impact:** none — the iframe and blocked-state panel are direction-agnostic. The blocked-state panel uses only symmetric classes (`flex-col items-center justify-center gap-3`, `text-center`), so it needs no logical-property variants.
 
 **Accessibility:**
 - The iframe SHALL carry `title` set to `title` prop value when provided.
@@ -298,9 +298,9 @@ export const resolveHtmlCanvasContent = async (
 Resolution branches on the injected `resolvers.resolveDialUrl(attachment)`, which decides the primary render target:
 
 - **A non-`null` download URL** (the attachment is a DIAL-uploaded file): return `{ type: AttachmentContentType.Html, url: downloadUrl, isSameOriginUrl, resolveSourceText }` with no eager fetch and no `srcdoc`. `isSameOriginUrl` is a real comparison — the download URL's origin against the embedding document's own origin — not a hardcoded literal. `resolveSourceText` is a lazy `() => Promise<string>` that fetches and returns the HTML text (via the shared `resolveAttachmentText` helper) only when invoked, and rejects if that fetch fails; it is not called during resolution, so a preview that is never switched to source view never fetches the text at all, avoiding a double download against the same URL the iframe already loads. The size gate below does not apply to this branch — the preview always renders via the download URL regardless of the file's text size.
-- **No download URL** (a locally-picked file or inline `data`, not yet uploaded): delegate to the shared `resolveAttachmentText` helper eagerly, gated at 1 MiB — return `{ type: AttachmentContentType.Html, srcdoc: text }` when the fetched text is within the gate, or `null` when it exceeds the gate (falling through to `UnsupportedCanvasContent`).
+- **No download URL** (a locally-picked file or inline `data`, not yet uploaded): delegate to the shared `resolveAttachmentText` helper eagerly, gated at 1 MiB — return `{ type: AttachmentContentType.Html, srcdoc: text, srcdocHostUrl: resolvers.htmlSrcdocHostUrl }` when the fetched text is within the gate (`HTML_SRCDOC_SIZE_LIMIT = 1_048_576`), or `null` when it exceeds the gate (falling through to `UnsupportedCanvasContent`).
 
-The DIAL-URL resolution is injected rather than imported, so the resolver stays host-agnostic; `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts` binds it and exposes it to the canvas hook as `resolveHtmlContent(attachment)`.
+The DIAL-URL resolution is injected rather than imported, so the resolver stays host-agnostic; `apps/chat/src/hooks/attachment/useAttachmentCanvasResolvers.ts` binds it and exposes it to the canvas hook as `resolveHtmlContent(attachment)`. The optional `AttachmentCanvasUrlResolvers.htmlSrcdocHostUrl` is likewise host-supplied: the chat app sets it to `DIAL_HTML_PREVIEW_FRAME_URL` (`/api/v1/files/html-preview-frame`, from `apps/chat/src/utils/dial-file.ts`) in `apps/chat/src/utils/attachment-display-resolvers.ts`.
 
 Because `null` also means "this attachment carries no text at all" (an external HTML URL), the caller SHALL distinguish the two with `hasAttachmentTextSource(attachment)` — see the routing requirement below — so a size-gated local file is not re-opened as a url-only iframe and reported as frame-blocked.
 
@@ -313,7 +313,7 @@ Because `null` also means "this attachment carries no text at all" (an external 
 #### Scenario: local file with small text resolves to srcdoc only
 
 - **WHEN** `resolveHtmlCanvasContent` is called with a locally-picked HTML file (no download URL) whose text is within the 1 MiB gate
-- **THEN** it returns `{ type: AttachmentContentType.Html, srcdoc: <fetched text> }` with no `url`
+- **THEN** it returns `{ type: AttachmentContentType.Html, srcdoc: <fetched text>, srcdocHostUrl: resolvers.htmlSrcdocHostUrl }` with no `url`
 
 #### Scenario: local file with oversized text falls through
 
@@ -342,7 +342,7 @@ When `resolveHtmlCanvasContent` returns `null`, the fallback SHALL depend on whe
 
 That predicate is the `hasAttachmentTextSource` helper from `libs/chat-hooks/src/files/attachment-canvas.ts`, injected into the hook as `resolvers.hasTextSource` rather than imported by it.
 
-`isExternalSourcePreviewable`, in that same `libs/chat-hooks` module, SHALL return `true` for `html`/`htm` URL extensions (so external HTML source links open in the canvas rather than a new tab).
+`isExternalSourcePreviewable`, in `libs/chat-hooks/src/files/source-content.ts` (re-exported from `@epam/ai-dial-chat-hooks`), SHALL return `true` for `html`/`htm` URL extensions (so external HTML source links open in the canvas rather than a new tab).
 
 For external URL sources (an `AttachmentResource` whose URL path ends in `.html` or `.htm`), the canvas SHALL be opened with `HtmlCanvasContent { url }` — no fetch, the iframe loads the URL directly.
 

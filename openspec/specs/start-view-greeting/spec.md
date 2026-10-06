@@ -29,11 +29,11 @@ When no name is available (unauthenticated or no `name` claim), the greeting SHA
 - `chat.greetingNight` → `"Good night, {{name}}"`
 - `chat.greetingNightNoName` → `"Good night"`
 
-**State ownership**: Logic lives in `ConversationRoute` (app-level page component). The resulting string is passed to `ConversationInput`'s existing `welcomeText` prop — no lib changes required.
+**State ownership**: Logic lives in `NewConversationComposer` (`apps/chat/src/components/NewConversationComposer/NewConversationComposer.tsx`), which derives `firstName` as `useUserProfile().displayName.split(' ')[0]`, calls `getTimeOfDayGreeting` from `@epam/ai-dial-chat-hooks`, and passes the resulting string to `ConversationInput`'s `welcomeText` prop.
 
 **RTL impact**: The greeting is a plain text string rendered by the existing `welcomeText` prop. The `ConversationInput` component already handles text direction through its root element's inherited `dir` attribute. No additional logical properties or icon mirroring are needed.
 
-**Feature gate**: None. Personalized greeting is always enabled.
+**Feature gate**: The greeting (and with it the description line) is omitted — `welcomeText` is `undefined` — when `OverlayFeature.HideGreeting` is enabled or when the composer uses `ComposerLayout.Inline`.
 
 **Accessibility**: The greeting replaces the existing `welcomeText` which is already read by screen readers. No new ARIA roles or labels required.
 
@@ -66,14 +66,14 @@ When no name is available (unauthenticated or no `name` claim), the greeting SHA
 - **THEN** only "Will" is appended to the greeting phrase
 
 ### Requirement: Greeting utility is independently testable
-A pure function `getTimeOfDayGreeting` in `apps/chat/src/utils/greeting.ts` SHALL accept the local hour (0–23) and an optional first name, and return the appropriately selected greeting phrase string.
+A pure function `getTimeOfDayGreeting` in `libs/chat-hooks/src/conversation/greeting.ts` (exported from `@epam/ai-dial-chat-hooks`) SHALL accept the local hour (0–23) and an optional first name, and return the appropriately selected greeting phrase string.
 
 The function signature is:
 ```ts
 getTimeOfDayGreeting(hour: number, translations: GreetingTranslations, firstName?: string): string
 ```
 
-Where `GreetingTranslations` is an object carrying the eight pre-translated phrase strings so the function remains pure and testable without i18n setup.
+Where `GreetingTranslations` is an object carrying the eight pre-translated phrase strings (`morningWithName`, `morningNoName`, `afternoonWithName`, `afternoonNoName`, `eveningWithName`, `eveningNoName`, `nightWithName`, `nightNoName`) so the function remains pure and testable without i18n setup.
 
 #### Scenario: Utility returns morning phrase at hour 9
 - **WHEN** `getTimeOfDayGreeting(9, translations, 'Will')` is called
@@ -93,7 +93,7 @@ Where `GreetingTranslations` is an object carrying the eight pre-translated phra
 
 The start screen SHALL display a short line of copy below the greeting heading, sourced from `useAppConfig().config.welcomeScreenDescription` (see the `app-config-context` and `client-config-endpoint` capabilities), not hardcoded or translated through i18n.
 
-`NewConversationComposer` SHALL pass this value to `ConversationInput`'s `descriptionText` prop as `welcomeScreenDescription ?? undefined`. When the value is `null` (operator has not configured `WELCOME_SCREEN_DESCRIPTION`), no description SHALL render and no extra spacing SHALL be introduced.
+`NewConversationComposer` SHALL pass this value to `ConversationInput`'s `descriptionText` prop as `welcomeScreenDescription ?? undefined` (`undefined` in `ComposerLayout.Inline`). When the value is `null` (operator has not configured `WELCOME_SCREEN_DESCRIPTION`), no description SHALL render and no extra spacing SHALL be introduced.
 
 `ConversationInput` (`libs/conversation-input`) SHALL render `descriptionText`, when both it and `welcomeText` are present, as a `<p>` beneath the welcome `<h1>`, both wrapped in a shared column with `gap-4` (16px) between them. `descriptionText` SHALL be ignored (never rendered) when `welcomeText` is absent. The paragraph SHALL be capped at `max-w-[540px]` so long operator copy wraps instead of stretching the layout, and its default typography SHALL be `dial-body-paragraph-text`, overridable via `styles.typography.descriptionClassName`; its color SHALL default to `--text-secondary`, overridable via `styles.colors.descriptionText` (CSS var `--ci-description-color`).
 

@@ -13,19 +13,19 @@ The system SHALL display a conflict resolution popup when one or more files bein
 - **Multiple file conflicts**: Strategy choice — Replace all / Duplicate all / Decide for each (grid with per-file dropdowns).
 - **Cancel**: Close the popup without uploading the conflicting files. Non-conflicting files in the same batch SHALL proceed.
 
-The popup is the ui-kit's built-in `ConflictResolutionPopup` wired via `conflictResolutionPopupOptions` on `DialFileManager`. No custom conflict modal SHALL be built in the application layer.
+The popup is the file-manager package's (`@epam/ai-dial-react-file-manager`) built-in `ConflictResolutionPopup`, wired via `conflictResolutionPopupOptions` on `DialFileManager`. No custom conflict modal SHALL be built in the application layer. (Below, "the file manager" refers to that package.)
 
-`DialFileManagerShell` MUST pass `conflictResolutionPopupOptions` to `DialFileManager`. The hook `useDialFileManager.onValidateUpload` MUST NOT return `{ valid: false }` for name-collision-only cases — name collisions SHALL be delegated to the ui-kit's internal conflict detection.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) MUST pass `labels.conflictResolutionPopupOptions` to `DialFileManager` as `conflictResolutionPopupOptions`. `useDialFileManager`'s `onValidateUpload` (implemented in `libs/chat-hooks/src/files/useDialFileUploadBatch/useDialFileUploadBatch.ts`) MUST NOT return `{ valid: false }` for name-collision-only cases — name collisions SHALL be delegated to the file manager's internal conflict detection.
 
-**Replace behavior:** The ui-kit calls `onUploadFiles` with the conflicting file's original name. `useDialFileManager` SHALL detect that this name exists in the cached listing and upload with `uploadMode: 'overwrite'` (no `If-None-Match` header on the BFF call → DIAL Core overwrites).
+**Replace behavior:** The file manager calls `onUploadFiles` with the conflicting file's original name. `useDialFileManager` (through `useDialFileUploadBatch`) SHALL detect that this name exists in the cached listing and upload with `uploadMode: 'overwrite'` (`DialFilesApiUploadMode.Overwrite`; no `If-None-Match` header on the BFF call → DIAL Core overwrites).
 
-**Duplicate behavior:** The ui-kit generates a unique sibling name (e.g., `notes (1).txt`) and calls `onUploadFiles` with the new name. `useDialFileManager` SHALL detect that this name is absent from the cached listing and upload with `uploadMode: 'create-only'` (`If-None-Match: *` forwarded by the BFF → DIAL Core creates only if the path is free).
+**Duplicate behavior:** The file manager generates a unique sibling name (e.g., `notes (1).txt`) and calls `onUploadFiles` with the new name. `useDialFileManager` SHALL detect that this name is absent from the cached listing and upload with `uploadMode: 'create-only'` (`DialFilesApiUploadMode.CreateOnly`; `If-None-Match: *` forwarded by the BFF → DIAL Core creates only if the path is free).
 
-**Cancel behavior:** The ui-kit does not call `onUploadFiles` for cancelled files. Non-conflicting files in the same batch upload normally.
+**Cancel behavior:** The file manager does not call `onUploadFiles` for cancelled files. Non-conflicting files in the same batch upload normally.
 
-**Decide for each:** Per-file decisions (Replace/Duplicate/Cancel) are resolved by the ui-kit, which calls `onUploadFiles` with the final resolved file list. The same overwrite/create-only logic applies per file.
+**Decide for each:** Per-file decisions (Replace/Duplicate/Cancel) are resolved by the file manager, which calls `onUploadFiles` with the final resolved file list. The same overwrite/create-only logic applies per file.
 
-**State ownership:** `useDialFileManager` owns upload state. No new Context is introduced.
+**State ownership:** `useDialFileManager` owns upload state through its `useDialFileUploadBatch` sub-hook. No new Context is introduced.
 
 **i18n keys:**
 | Key | English |
@@ -33,20 +33,20 @@ The popup is the ui-kit's built-in `ConflictResolutionPopup` wired via `conflict
 | `dialFileManager.conflictSingleTitle` | `"Replace or Duplicate Item"` |
 | `dialFileManager.conflictMultipleTitle` | `"Replace or Duplicate Items"` |
 | `dialFileManager.conflictReplace` | `"Replace"` |
-| `dialFileManager.conflictDuplicate` | `"Duplicate"` |
+| `buttons.duplicate` | `"Duplicate"` (reuse existing; there is no `dialFileManager.conflictDuplicate` key) |
 | `dialFileManager.conflictDecideForEach` | `"Decide for each"` |
 | `dialFileManager.conflictReplaceAll` | `"Replace all"` |
 | `dialFileManager.conflictDuplicateAll` | `"Duplicate all"` |
 | `buttons.confirm` | `"Confirm"` (reuse existing) |
 | `buttons.cancel` | `"Cancel"` (reuse existing) |
 
-**RTL impact:** The conflict popup uses the ui-kit's logical layout — no directional Tailwind classes are added at the app level. No physical-direction classes added.
+**RTL impact:** The conflict popup uses the file manager's logical layout — no directional Tailwind classes are added at the app level. No physical-direction classes added.
 
 **Feature flag:** Not gated.
 
 **Memoisation:** `conflictResolutionPopupOptions` SHALL be wrapped in `useMemo` in `DialFileManagerModal` to prevent `DialFileManager` re-renders.
 
-**Accessibility:** Focus is trapped inside `ConflictResolutionPopup` (ui-kit built-in). No additional ARIA needed at the app layer.
+**Accessibility:** Focus is trapped inside `ConflictResolutionPopup` (file-manager built-in). No additional ARIA needed at the app layer.
 
 **Observability:** None required.
 
@@ -64,7 +64,7 @@ The popup is the ui-kit's built-in `ConflictResolutionPopup` wired via `conflict
 - **WHEN** the user uploads `notes.txt` and `notes.txt` already exists in the folder
 - **THEN** the conflict popup opens
 - **AND** the user selects Duplicate and confirms
-- **AND** the ui-kit generates a unique name (e.g., `notes (1).txt`) and calls `onUploadFiles` with the new name
+- **AND** the file manager generates a unique name (e.g., `notes (1).txt`) and calls `onUploadFiles` with the new name
 - **AND** `useDialFileManager` detects `notes (1).txt` is absent from the cached listing → uploads with `uploadMode: 'create-only'`
 - **AND** `POST /api/v1/files` is called with `uploadMode: 'create-only'` → BFF forwards `If-None-Match: *` to DIAL Core
 - **AND** DIAL Core creates `notes (1).txt` without overwriting the original `notes.txt`

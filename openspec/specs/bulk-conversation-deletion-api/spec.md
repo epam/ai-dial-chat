@@ -30,7 +30,7 @@ On success the handler returns HTTP 200 with `ConversationDeletionResultDto`:
 ```ts
 class ConversationDeletionFailureDto {
   id: string;
-  code: 'NOT_FOUND' | 'FORBIDDEN' | 'UPSTREAM_ERROR' | 'UNKNOWN';
+  code: string; // @IsIn / Swagger enum: 'NOT_FOUND' | 'FORBIDDEN' | 'UPSTREAM_ERROR' | 'UNKNOWN'
 }
 
 class ConversationDeletionResultDto {
@@ -43,11 +43,11 @@ class ConversationDeletionResultDto {
 
 The service SHALL:
 1. Deduplicate `ids` via `new Set(ids)`.
-2. For each unique ID, validate ownership: the ID MUST start with `conversations/{sessionBucket}/`. IDs that fail ownership validation collect immediately as `{ id, code: 'FORBIDDEN' }` without contacting DIAL Core.
-3. For each owned ID, extract the bucket-relative path (everything after `conversations/{sessionBucket}/`) and call `client.deleteConversation(bucket, encodeDialResourcePath(path), { headers: getBearerAuthHeaders(token) })`.
+2. For each unique ID, validate ownership (`isOwnedBySessionBucket`): the ID MUST start with `conversations/{sessionBucket}/` and its bucket-relative remainder MUST NOT contain a `..` segment. IDs that fail ownership validation collect immediately as `{ id, code: 'FORBIDDEN' }` without contacting DIAL Core.
+3. For each owned ID, extract the bucket-relative path (everything after `conversations/{sessionBucket}/`), decode each segment with `safeDecodeURIComponent` (IDs from the metadata listing are already URL-encoded, so this avoids double-encoding), and call `this.dialClient.client.deleteConversation(bucket, encodeDialResourcePath(path), { headers: getBearerAuthHeaders(token) })`.
 4. All DIAL Core calls run concurrently via `Promise.allSettled`.
-5. Classify each result per §10 of design.md.
-6. For each successfully deleted conversation, fire a fire-and-forget `userConfigService.updatePin(id, false, …)` to drop the pin state.
+5. Classify each result: a fulfilled call with no `error` counts as `deleted`; an error with status 404 counts as `alreadyAbsent`; an error with status 403 collects as `FORBIDDEN`; any other error, or a rejected promise, is logged and collects as `UPSTREAM_ERROR`.
+6. For each successfully deleted conversation, fire a fire-and-forget `this.pinConversation(id, false, token, bucket)` (which delegates to `userConfigService.updatePin`) to drop the pin state; a rejection is only logged.
 7. Return `ConversationDeletionResultDto`. The service MUST NOT throw — all outcomes are encoded in the DTO.
 
 HTTP 200 is returned even when every item failed. The caller inspects `failed` to determine per-item outcomes.
@@ -56,7 +56,7 @@ Generated-client impact:
 - OpenAPI operationId: `deleteConversations`
 - SDK method: `ConversationsApi.deleteConversations({ deleteConversationsBodyDto })`
 - Response type: `ConversationDeletionResultDto`
-- Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
+- No frontend wrapper calls this operation today; `apps/chat/src/server-api/conversations.api.ts` wraps only `deleteAllConversations`
 
 Error codes:
 - `400 Bad Request` — `ids` is missing, empty array, exceeds 100, or any element is not a non-empty string
@@ -259,18 +259,11 @@ Error codes:
 
 ### Requirement: Frontend wrappers in conversations.api.ts delegate to the generated client
 
-`apps/chat/src/server-api/conversations.api.ts` SHALL export:
-- `deleteConversations(ids: string[]): Promise<ConversationDeletionResultDto>` — delegates to `conversationsApi.deleteConversations({ deleteConversationsBodyDto: { ids } })`
-- `deleteAllConversations(): Promise<ConversationDeletionResultDto>` — delegates to `conversationsApi.deleteAllConversations({ deleteAllConversationsBodyDto: { confirm: true } })`
+`apps/chat/src/server-api/conversations.api.ts` SHALL export `deleteAllConversations(): Promise<ConversationDeletionResultDto>` — delegating to `conversationsApi.deleteAllConversations({ deleteAllConversationsBodyDto: { confirm: true } })` — which `ConversationsContext` consumes (as `apiDeleteAllConversations`) for the conversation panel menu. No frontend wrapper for `deleteConversations` exists; the by-IDs operation is reachable only through the generated `ConversationsApi.deleteConversations`.
 
-Neither wrapper SHALL call `base.ts` helpers or construct `/api/v1/...` strings directly.
+The wrapper SHALL NOT call `base.ts` helpers or construct `/api/v1/...` strings directly.
 
 `apps/chat/src/server-api/api-client.ts` SHALL NOT change — the `conversationsApi` singleton already exists.
-
-#### Scenario: deleteConversations wrapper delegates to generated client
-
-- **WHEN** `deleteConversations(["conversations/b/id-1"])` is called from the frontend wrapper
-- **THEN** `conversationsApi.deleteConversations({ deleteConversationsBodyDto: { ids: ["conversations/b/id-1"] } })` is called
 
 #### Scenario: deleteAllConversations wrapper always sends confirm: true
 
@@ -279,8 +272,8 @@ Neither wrapper SHALL call `base.ts` helpers or construct `/api/v1/...` strings 
 
 #### Scenario: No new base.ts endpoint entry
 
-- **WHEN** both wrappers are implemented
-- **THEN** `apps/chat/src/server-api/base.ts` does not gain a new `CONVERSATION_DELETIONS` constant or `del()`/`post()` call for these endpoints
+- **WHEN** the wrapper is implemented
+- **THEN** `apps/chat/src/server-api/base.ts` does not gain a new `CONVERSATION_DELETIONS` constant or `del()`/`post()` call for the deletion endpoints
 
 ---
 

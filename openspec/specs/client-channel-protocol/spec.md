@@ -1,7 +1,7 @@
 # client-channel-protocol Specification
 
 ## Purpose
-TBD - created by archiving change interactive-toolset-login-chat. Update Purpose after archive.
+How the BFF relays DIAL Core client-channel subscribe/report/unsubscribe operations, how the channel id reaches completion requests, and how the frontend `ClientChannelProvider` gates, opens, and tears down the channel (feature flag, streaming-capable routes, demand, idle disconnect).
 ## Requirements
 
 ### Requirement: BFF proxies DIAL Core client-channel subscribe as an SSE relay
@@ -14,7 +14,7 @@ While relaying, the handler SHALL respect `res.write()`'s return value: when it 
 
 Request: no body. Optional request header `X-DIAL-CLIENT-CHANNEL-ID` (reconnect case).
 Response: `200 text/event-stream`, response header `X-DIAL-CLIENT-CHANNEL-ID`, SSE body of `RpcRequest` events framed as `data: <json>\n\n`.
-Generated-client impact: this endpoint is **not** exposed through the generated `@epam/chat-api-client` (SSE streaming is a documented generator gap, matching the existing `chat-stream.api.ts` precedent); the frontend calls it with a raw `fetch` in a new `apps/chat/src/server-api/client-channel.ts` adapter, same pattern as `streamCompletion`.
+Generated-client impact: the endpoint is documented in Swagger (`operationId: subscribeClientChannel`), so the generated `@epam/ai-dial-chat-api-client` does contain a `ClientChannelApi.subscribeClientChannel` method, but the frontend does **not** use it — the generated client cannot stream a `ReadableStream` response body (a documented generator gap, matching the existing `chat-stream.api.ts` precedent). The frontend calls it with a raw `fetch` in `subscribeClientChannel` in `apps/chat/src/server-api/client-channel.ts`, same pattern as `streamCompletion`.
 
 #### Scenario: Fresh subscribe returns a new channel id
 - **WHEN** the frontend calls `POST /api/v1/client-channel/subscribe` with no `X-DIAL-CLIENT-CHANNEL-ID` header
@@ -55,14 +55,14 @@ The backend SHALL expose `POST /api/v1/client-channel/report` and `POST /api/v1/
 `POST /api/v1/client-channel/report`:
 - Request header: `X-DIAL-CLIENT-CHANNEL-ID` (required).
 - Request body (`ReportClientChannelDto`): `{ "id": string, "result": "success" | "denied" }` — validated with `class-validator`: `id` allowlisted to a safe opaque-id character set (letters, digits, dashes, underscores, dots, `%`, and slashes — the `%` is required because a `toolset/signin`/`external-service/signin` event's `id` is a percent-encoded resource path, e.g. an application name containing spaces), `result` restricted to the enum.
-- Response: `200 {}` on success.
-- Error codes: `400` invalid/missing channel id or malformed body; `401` no valid BFF session; `502` if Core rejects or errors on the report call.
+- Response: `200` with an empty body on success (the handler returns `void`).
+- Error codes: `400` invalid/missing channel id or malformed body; `401` no valid BFF session; `403` when the `liveChatInteraction` flag resolves `false` (see below). A Core error status is mapped through the shared `mapDialHttpStatus` (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) — e.g. Core `400`/`401`/`403`/`404`/`409`/`429` keep their status, any Core `5xx` becomes `502` — and an unreachable Core becomes `503` via `handleDialFetchError`.
 
 `POST /api/v1/client-channel/unsubscribe`:
 - Request header: `X-DIAL-CLIENT-CHANNEL-ID` (required).
 - Response: forwards Core's HTTP status unchanged with an empty body, including `200`/`204` on success, `404` when the channel is already gone, and Core's error statuses. The status is read from the HTTP response regardless of whether Core supplies an error body. Returns `503` when Core cannot be reached; local validation, session, and CSRF failures retain their usual responses.
 
-Generated-client impact: both endpoints SHALL be exposed through the generated `@epam/chat-api-client` (non-streaming JSON request/response) with `operationIdFactory` names `reportClientChannel` / `unsubscribeClientChannel`; the frontend calls them through thin wrappers in `apps/chat/src/server-api/client-channel.ts`, following the same pattern as `apps/chat/src/server-api/toolsets.ts`.
+Generated-client impact: both endpoints SHALL be exposed through the generated `@epam/ai-dial-chat-api-client` (non-streaming JSON request/response) with `operationIdFactory` names `reportClientChannel` / `unsubscribeClientChannel`; the frontend calls them through thin wrappers in `apps/chat/src/server-api/client-channel.ts`, following the same pattern as `apps/chat/src/server-api/toolsets.ts`.
 
 #### Scenario: Report success
 - **WHEN** the frontend posts `{ id: "<eventId>", result: "success" }` with a valid channel id
@@ -98,7 +98,7 @@ Generated-client impact: both endpoints SHALL be exposed through the generated `
 
 ### Requirement: Channel id propagates into the completion request
 
-`ConversationStreamingService.streamCompletion` (invoked via the `ConversationService` facade, which keeps the identical signature) SHALL accept an optional `clientChannelId` parameter. When the frontend's completion request includes a current channel id, `POST /api/conversations/completions` SHALL accept it (request field or header, backend-defined) and the backend SHALL forward it as the `X-DIAL-CLIENT-CHANNEL-ID` header on the upstream completion call to Core so Core can correlate a `toolset/signin` event to that specific tool invocation. This SHALL be additive and SHALL NOT change any existing documented completion persistence behavior.
+`ConversationStreamingService.streamCompletion` (invoked via the `ConversationService` facade, which keeps the identical signature) SHALL accept an optional `clientChannelId` parameter. When the frontend's completion request includes a current channel id, `POST /api/v1/conversations/completions` SHALL accept it as the optional `clientChannelId` body field of `SendCompletionDto` (allowlist-validated) and the backend SHALL forward it as the `X-DIAL-CLIENT-CHANNEL-ID` header on the upstream completion call to Core so Core can correlate a `toolset/signin` event to that specific tool invocation. This SHALL be additive and SHALL NOT change any existing documented completion persistence behavior.
 
 Since the subscribe request is asynchronous, the frontend's `useConversationStream.startStream` SHALL NOT read the channel id synchronously and give up if it is not yet set — it SHALL await `ConversationStreamChannel.waitForChannel()`, which resolves with the channel id once an in-flight subscribe completes or with `null` after a bounded timeout, so a completion sent immediately after requesting one can still carry the id once the subscription catches up.
 

@@ -73,13 +73,13 @@ Adding single-newline break support SHALL NOT change how `MarkdownRenderer` rend
 
 ### Requirement: Sanitize raw HTML output
 
-`MarkdownRenderer` SHALL run `rehypeSanitize` (extending `defaultSchema` from `rehype-sanitize`) after `rehypeRaw` and `rehypeKatex` in the shared rehype plugin pipeline, so that any element or attribute the raw-HTML pass could have introduced — and that is not explicitly allow-listed — is stripped before render. This applies to all consumers of `MarkdownRenderer`/`MDMessageViewer`.
+`MarkdownRenderer` SHALL run `rehypeSanitize` (extending `defaultSchema` from `rehype-sanitize`) after `rehypeRaw` and `rehypeKatex` (loaded on demand only when the content contains math delimiters) as the last built-in step of the shared rehype plugin pipeline, so that any element or attribute the raw-HTML pass could have introduced — and that is not explicitly allow-listed — is stripped before render. This applies to all consumers of `MarkdownRenderer`/`MDMessageViewer`.
 
 The extended schema MUST allow-list, on top of `defaultSchema`:
 - The MathML tag set produced by `rehypeKatex`'s `output: 'mathml'` mode (e.g. `math`, `mrow`, `mi`, `mo`, `mn`, `semantics`, `annotation`, …), so KaTeX-rendered formulas are not stripped.
 - The `className` attribute on `code` elements, so the `language-*` class used for fenced-code-block language detection (see `markdown-code-blocks` spec) survives sanitization.
 
-Plugin order is significant: `rehypeRaw` MUST run first so raw HTML text nodes become real elements before any later plugin inspects the tree, and `rehypeSanitize` MUST run last so it can catch anything unsafe that `rehypeRaw` or `rehypeKatex` introduced.
+Plugin order is significant: `rehypeRaw` MUST run first so raw HTML text nodes become real elements before any later plugin inspects the tree, and `rehypeSanitize` MUST run last among the built-in plugins so it can catch anything unsafe that `rehypeRaw` or `rehypeKatex` introduced. Caller-supplied `rehypePlugins` are appended after `rehypeSanitize`, so their output is not sanitized by this pass.
 
 #### Scenario: Dangerous raw HTML is stripped
 

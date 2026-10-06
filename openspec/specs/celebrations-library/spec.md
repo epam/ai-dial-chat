@@ -50,7 +50,7 @@ The context value, resolved labels and the enabled scene pools SHALL be memoized
 
 ### Requirement: Hosts choose which scenes and decor behaviours are shown
 
-`selection` SHALL accept, per event id, `enabledScenes` (when set, only these scenes may play), `disabledScenes` (never play), `disabledDecorBehaviors` and `isSecretEnabled` (default `true`). The Halloween entry SHALL export `HalloweenScene` (16 members) and `HalloweenDecorBehavior` (`SpiderFlee`, `SpiderDrop`, `SpiderDrum`, `PumpkinWrap`); the New Year entry SHALL export `NewYearScene` (3 members). Defaults SHALL enable everything, reproducing today's behaviour.
+`selection` SHALL accept, per event id, `enabledScenes` (when set, only these scenes may play), `disabledScenes` (never play), `disabledDecorBehaviors` and `isSecretEnabled` (default `true`). The Halloween entry SHALL export `HalloweenScene` (16 members) and `HalloweenDecorBehavior` (`SpiderFlee`, `SpiderDrop`, `SpiderDrum`, `PumpkinWrap`); the New Year entry SHALL export `NewYearScene` (5 members: `PenguinStar`, `GiftWrapping`, `Snow`, `Confetti`, `Sleigh`). Besides these enums and its labels, the Halloween entry SHALL also export `halloweenEvent` (its default export), `createHalloweenEvent` and `HalloweenEventOptions` (an optional `trainSoundtrackUrl`; the train scene is silent without it), and the New Year entry SHALL export `newYearEvent` as its default export. Defaults SHALL enable everything, reproducing today's behaviour.
 
 Disabled scenes SHALL be removed from both the click pool and the secret pool before random selection, and `celebrate(id)` SHALL ignore a disabled id. A click with an empty click pool SHALL do nothing. A secret phrase SHALL be consumed only when `isSecretEnabled` is true and at least one of its scenes is enabled; otherwise the text SHALL be sent normally. A disabled decor behaviour SHALL never start (its timers and listeners are not installed) while the rest of the decor keeps working. Unknown ids in a selection SHALL be ignored.
 
@@ -113,17 +113,17 @@ No file in `libs/celebrations/src` SHALL import `react-i18next`, a router, an `a
 
 ### Requirement: Storybook covers every scene and decor behaviour
 
-The library SHALL own a Storybook (`libs/celebrations/.storybook`, React/Vite framework) with `storybook` and `build-storybook` targets. There SHALL be one story per `HalloweenScene` and `NewYearScene` member, a story per event decor, a story per `HalloweenDecorBehavior`, and a provider playground whose controls toggle scenes, decor behaviours and the secret phrase. Scene stories SHALL render inside a fixture host page that carries every anchor (composer, starter list, a history container with conversation links, a welcome region) and passes them through `anchors`, so interface-borrowing scenes show their full story; stories SHALL offer a reduced-motion variant. A unit test SHALL fail when any scene or decor behaviour member lacks a story. The PR workflow SHALL run `build-storybook`; the built Storybook SHALL NOT be deployed.
+The library SHALL own a Storybook (`libs/celebrations/.storybook`, React/Vite framework) with `storybook` and `build-storybook` targets. There SHALL be one story per `HalloweenScene` and `NewYearScene` member, a story per event decor, a story per `HalloweenDecorBehavior`, and a provider playground whose controls toggle scenes, decor behaviours and the secret phrase. Scene stories SHALL render inside a fixture host page that carries every anchor (composer, starter list, a history container with conversation links, a welcome region) and passes them through `anchors`, so interface-borrowing scenes show their full story; stories SHALL offer a reduced-motion variant. A unit test (`libs/celebrations/src/stories/tests/story-coverage.spec.ts`) SHALL fail when any scene or decor behaviour member lacks a story. The PR workflow SHALL NOT run `build-storybook`: its former `build_celebrations_storybook` job in `.github/workflows/pr.yml` is commented out, because the `typecheck` job already type-checks and lints every story (`libs/celebrations/tsconfig.json` references `tsconfig.storybook.json`); maintainers run `npm exec nx run @epam/ai-dial-celebrations:build-storybook` locally, and the lib's `test-baseline-browser` target depends on it. The built Storybook SHALL NOT be deployed.
 
 #### Scenario: A new scene without a story
 
 - **WHEN** a member is added to `HalloweenScene` and no story references it
 - **THEN** the story-coverage test fails
 
-#### Scenario: CI builds Storybook
+#### Scenario: CI type-checks stories without building Storybook
 
 - **WHEN** a pull request changes the library
-- **THEN** the PR workflow builds Storybook and fails the check if the build fails
+- **THEN** the PR workflow's `typecheck` job type-checks and lints every story, and no PR job runs `build-storybook`
 
 ### Requirement: DIAL Chat integrates through an app-level adapter
 

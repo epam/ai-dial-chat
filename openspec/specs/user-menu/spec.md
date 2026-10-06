@@ -16,7 +16,7 @@ A Logout confirmation dialog guards the logout action.
 
 ### Requirement: Avatar trigger opens the dropdown
 
-`UserMenu` SHALL render a `<button type="button">` carrying `aria-label={labels.trigger}` — the host passes `t('auth.signedInAs', { email })` — wrapping a `Tooltip` whose content is `profile.email` and whose visibility is controlled by the `isTooltipHidden` prop. The button SHALL open a `Dropdown` with `placement="top-end"` and `matchReferenceWidth={false}`.
+`UserMenu` SHALL render the kit `Button` carrying `aria-label={labels.trigger}` — the host passes `t('auth.signedInAs', { email })` — with `iconBefore` set to the `UserAvatar` and `tooltipProps={{ tooltip: profile.email, hideTooltip: isTooltipHidden }}`, so the email tooltip is attached to the button itself. The button SHALL open a `Dropdown` with `placement="top-end"` and `matchReferenceWidth={false}`.
 
 `UserMenu` itself has no viewport logic. Desktop-only placement is the host's: `Navigation` renders `UserMenu` only inside the `!isMobile` branch, as the `NavigationPanel`'s `footer`. On mobile the `NavigationSheet` owns the settings surface instead, and it is passed only the keyboard-shortcut group — the locale picker stays desktop-only.
 
@@ -49,10 +49,11 @@ There is exactly **one** divider, and it sits **after** the preference groups, s
 Settings and Log out. A group whose `options` array is empty is dropped entirely, so a host that
 supplies no groups yields `identity → divider → [settings] → logout`.
 
-That no-groups shape is the **only** shape this app produces: `Navigation` supplies no groups and
-always supplies `onSettings`, so the rendered menu is always
-`identity → divider → Settings → Log out`. `UserMenu` itself is unchanged — it still supports hosts
-that pass groups or omit `onSettings`; this app simply exercises neither branch.
+`Navigation` passes `groups={languageGroup ? [languageGroup] : undefined}` — `undefined` in every
+shipping build, since only one locale ships — and passes `onSettings` unless
+`OverlayFeature.HideSettingsPage` is enabled, so the rendered menu is
+`identity → divider → Settings → Log out` (or `identity → divider → Log out` when the overlay hides
+the settings page).
 
 #### Scenario: Desktop order in this app
 - **WHEN** a signed-in user opens the dropdown
@@ -89,15 +90,15 @@ The first item SHALL be a non-interactive `DropdownItemType.PlainText` row showi
 
 When the host passes `onSettings`, `UserMenu` SHALL render a `settings` item with `IconSettings` (`DIAL_ICON_SIZE.SM`, `aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`) and the label `labels.settings`, placed between the divider and Log out.
 
-The host SHALL pass `onSettings` only when the `settingsPageEnabled` feature flag is on, and its handler SHALL navigate to `ROUTES.Settings`. The same flag gates the `labels.settings` string, so the entry never renders without its label.
+The host SHALL pass `onSettings` unless `OverlayFeature.HideSettingsPage` is enabled, and its handler SHALL navigate to `ROUTES.Settings`. `labels.settings` (`t('basic.settings')`) is always passed. The same handler is also passed to the mobile `NavigationSheet`.
 
 #### Scenario: Settings navigates to the settings route
-- **GIVEN** `settingsPageEnabled` is on
+- **GIVEN** `OverlayFeature.HideSettingsPage` is not enabled
 - **WHEN** the user activates the Settings item
 - **THEN** the app navigates to `ROUTES.Settings`
 
-#### Scenario: Settings is hidden behind its flag
-- **GIVEN** `settingsPageEnabled` is off
+#### Scenario: Settings is hidden by the overlay feature
+- **GIVEN** `OverlayFeature.HideSettingsPage` is enabled
 - **WHEN** the dropdown is rendered
 - **THEN** no Settings item appears
 
@@ -118,9 +119,9 @@ and `Navigation` passes them to the surface that needs them.
   passes it to the desktop `UserMenu`.
 - `keyboardGroup?` (`id: 'keyboard-shortcuts'`, `IconKeyboard`) — the send-on-Enter picker for the
   **mobile `NavigationSheet`**, suppressed by `OverlayFeature.HideUserSettings` or
-  `OverlayFeature.HideKeyboardShortcuts`. The sheet keeps it because it has no Settings entry point
-  of its own (`Navigation` passes it no `onSettings`), so dropping it would leave mobile users
-  unable to change the shortcut at all.
+  `OverlayFeature.HideKeyboardShortcuts`. `Navigation` passes it to the sheet as
+  `groups={keyboardGroup ? [keyboardGroup] : undefined}`; the sheet also receives the same
+  `onSettings` handler as the desktop menu (omitted under `OverlayFeature.HideSettingsPage`).
 
 The locale picker is therefore offered on **two** surfaces — this menu and the Preferences tab —
 while theme and "Default agent for new chats" are offered only in the Preferences tab. Both language surfaces
@@ -134,8 +135,10 @@ the group appears the moment a second locale is registered.
 The `settingsPageEnabled` gating that briefly conditioned these fields is removed along with the
 flag; neither field is gated on it.
 
-The active option in the remaining group SHALL be visually indicated through `MenuItemLabel`'s
-`isActive`.
+The active option of a group SHALL be visually indicated from its `isActive` flag: in the
+`UserMenu` dropdown each option is rendered with `mark: MenuItemMark.Check` and
+`checked: option.isActive` (a trailing check announced as a radio item); in the sheet's
+`OptionListPage` it drives the row's `isCurrent` state.
 
 i18n keys: `settings.language`, `settings.keyboardShortcuts`, `settings.shortcutEnter`,
 `settings.shortcutMetaEnter`
@@ -211,13 +214,13 @@ behaviour continues to be specified by the theming documentation rather than her
 
 Props: `isOpen`, `onClose`.
 
-Confirming SHALL `await logout()`, log and swallow a failure so the client still tears down its session, `reset()` the auth state, and — unless the app is running as an overlay — navigate to `ROUTES.Login`. Cancelling and closing SHALL call `onClose` without logging out.
+Confirming SHALL `await logout()` and log and swallow a failure so the client still tears down its session. In overlay mode it SHALL then `reset()` the auth state without navigating. Outside overlay mode it SHALL perform a full document load with `window.location.replace(ROUTES.Login)` instead of a client-side navigate and SHALL skip `reset()` — a fresh `index.html` drops all in-memory state and references the current chunks (Issue #9254), and an `Unauthenticated` status would let `useAuthRedirect` race the navigation with a single-provider SSO redirect. Cancelling and closing SHALL call `onClose` without logging out.
 
 i18n keys: `auth.logOutConfirmTitle`, `auth.logOutConfirmDescription`, `buttons.logOut`
 
 #### Scenario: Confirm logs out and returns to login
 - **WHEN** the user confirms in the dialog and the app is not an overlay
-- **THEN** `logout()` is awaited, the auth state is reset, and the app navigates to `ROUTES.Login`
+- **THEN** `logout()` is awaited and the page is replaced with a full load of `ROUTES.Login` via `window.location.replace`, without calling `reset()`
 
 #### Scenario: Confirm in overlay mode does not navigate
 - **GIVEN** the app is running as an overlay
@@ -226,7 +229,7 @@ i18n keys: `auth.logOutConfirmTitle`, `auth.logOutConfirmDescription`, `buttons.
 
 #### Scenario: A failed logout request still resets the client
 - **WHEN** `logout()` rejects
-- **THEN** the error is logged and the auth state is still reset
+- **THEN** the error is logged and the client still tears down its session — `reset()` in overlay mode, the full `ROUTES.Login` load otherwise
 
 #### Scenario: Cancel closes without logging out
 - **WHEN** the user clicks Cancel or presses Escape

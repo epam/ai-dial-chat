@@ -39,8 +39,9 @@ These fields SHALL be rendered through the shared `MetadataForm` from `@epam/ai-
 
 ### Requirement: Create request forwards form fields
 On save, the editor SHALL submit the General step field values to the create-application
-endpoint via the generated `@epam/chat-api-client` `ApplicationsApi`, through the
-`apps/chat/src/server-api/applications.ts` wrapper. The submitted payload SHALL NOT include an
+endpoint via the generated `@epam/ai-dial-chat-api-client` `ApplicationsApi`, through the
+`createApplication` wrapper in `apps/chat/src/server-api/applications.ts` (called from
+`apps/chat/src/pages/ApplicationEditor/definitions/quickAppDefinition.tsx`). The submitted payload SHALL NOT include an
 `intro` property. Any additional-locale translations entered through the "Add locale" popup
 SHALL be composed into the create request's `locales`/`primaryLocale` fields; when no additional
 locales were entered, both fields SHALL be omitted so the request is byte-identical to a save
@@ -77,18 +78,18 @@ When Save is clicked, the editor SHALL do the following:
 
 - It SHALL always include the current metadata values (name, description, icon URL, topics and `display_version`) as a `general` payload on the `TriggerSave` message posted to the embedded Setup editor. The embedded editor persists them as part of the single save it already performs.
 - The `general` payload SHALL NOT include an `intro` property or the backend `version` field.
-- The host SHALL NOT make a separate `update-application` request to persist these values.
+- After the embedded editor reports `SaveSuccess`, `QuickAppSetup` SHALL make one follow-up `updateApplication` request (`reassertSkillsSupport`) carrying the current name, description, icon URL, topics and `locales`/`primaryLocale` (never `display_version`, `version` or `application_properties`), so the backend force-sets `features.skills_supported` (see `applications-write-api`); the save counts as successful only once that request finishes. The same follow-up runs after the `TriggerSave` issued for Preview.
 - The `general` payload SHALL NOT alter the application's setup configuration (`application_properties`, including orchestrator/tool set state) or its `version`.
 
 Triggering Preview SHALL NOT include a `general` payload.
 
 #### Scenario: Save forwards edited metadata to the embedded editor
 - **WHEN** a user edits Topic, Description, Icon, Name or Version of an existing Quick App and clicks Save
-- **THEN** the `TriggerSave` message includes a `general` payload carrying the edited values (with no `intro` property), and no `update-application` request is made by the host
+- **THEN** the `TriggerSave` message includes a `general` payload carrying the edited values (with no `intro` property), and the host's only own request is the follow-up `updateApplication` skills-support reassertion
 
 #### Scenario: Save still forwards metadata when it is unchanged
 - **WHEN** a user clicks Save without editing any metadata field
-- **THEN** the `TriggerSave` message still includes a `general` payload carrying the current values, and no `update-application` request is made
+- **THEN** the `TriggerSave` message still includes a `general` payload carrying the current values, followed by the same `updateApplication` skills-support reassertion
 
 #### Scenario: Save after an in-place create forwards metadata
 - **WHEN** a user creates a Quick App in this session, edits its Description in the Metadata section and clicks Save
@@ -118,7 +119,7 @@ save that persists no user-editable field change but still touches only metadata
 no-op re-save) SHALL report `hasChanges: false`.
 
 This field is part of the cross-repo `postMessage` contract between this host
-(`apps/chat/src/pages/AppsEditor`) and the embedded Quick Apps editor; it requires a
+(`apps/chat/src/pages/ApplicationEditor`) and the embedded Quick Apps editor; it requires a
 corresponding change in the Quick Apps editor's own save-completion code, not only in this
 repo. Until the embedded editor sends it, the host SHALL treat a `SaveSuccess` without the
 field as `hasChanges: false` (see the `app-preview-chat` spec's "Preview session resets when
@@ -129,7 +130,7 @@ On this repo's side, `apps/chat/src/types/apps-editor.ts` SHALL declare a
 and `AppEditorIframe`'s message handler SHALL forward the received `hasChanges` value (or
 `undefined`) to its `onSaveSuccess` prop, which SHALL be widened from `() => void` to
 `(hasChanges: boolean) => void` (normalizing a missing/non-boolean field to `false` before
-calling it), threading it through `SettingsStep` to `AppsEditor`.
+calling it). `QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`) passes it as `handleSaveSuccess`, which resolves the pending `TriggerSave` promise with that value so its `save`/`startPreview` handle can reset the preview session when it is `true`.
 
 #### Scenario: Settings-only change is reported
 - **WHEN** the user changes orchestrator/tool set configuration in the Settings step and

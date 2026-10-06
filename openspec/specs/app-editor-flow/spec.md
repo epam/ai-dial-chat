@@ -10,16 +10,20 @@ Defines the `/apps-editor` route: a two-step (General → Settings) application 
 
 `apps/chat/src/app/app.tsx` SHALL register a lazy-loaded route for `ROUTES.AppsEditor`:
 ```tsx
-const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
+const ApplicationEditorPage = lazy(
+  () => import('../pages/ApplicationEditor/ApplicationEditorPage'),
+);
 // inside <Routes>:
 <Route path={ROUTES.AppsEditor} element={
   <RouteErrorBoundary>
     <Suspense fallback={<RouteFallback />}>
-      <AppsEditorPage />
+      <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
     </Suspense>
   </RouteErrorBoundary>
 } />
 ```
+
+The route serves every application schema: `ApplicationEditorPage` resolves the kind with `resolveSchemaEditorKind` (`apps/chat/src/utils/application-editor.ts`), which switches to `ApplicationEditorKind.SchemaApp` when the `schema` param names a known schema without an `editorUrl`, and otherwise keeps `QuickApp`.
 
 **i18n impact**: See key table in the editor page requirement below.
 
@@ -28,12 +32,12 @@ const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 #### Scenario: Navigating to /apps-editor renders the page
 
 - **WHEN** the user navigates to `/apps-editor?schema=<id>`
-- **THEN** the `AppsEditorPage` component renders without a full-page error
+- **THEN** the `ApplicationEditorPage` component renders without a full-page error
 
 #### Scenario: Route is lazy-loaded
 
 - **WHEN** the user visits the catalog for the first time without navigating to /apps-editor
-- **THEN** the AppsEditorPage module is NOT in the initial JS bundle
+- **THEN** the ApplicationEditorPage module is NOT in the initial JS bundle
 
 ---
 
@@ -68,38 +72,38 @@ The editor SHALL read all params exclusively via `useSearchParams` from `react-r
 
 ### Requirement: A Settings-step save reasserts features.skills_supported via a follow-up updateApplication call
 
-The embedded Settings-step editor (loaded from `schema.editorUrl`) SHALL persist a Settings-step
-save entirely on its own — `AppsEditor` never calls the backend `updateApplication` endpoint
-itself for that save, it only posts `TriggerSave` to the iframe and reacts to the `SAVE_SUCCESS`/
+The embedded Setup editor (loaded from `schema.editorUrl`) SHALL persist a Setup save entirely
+on its own — the chat host never calls the backend `updateApplication` endpoint for the
+configuration itself, it only posts `TriggerSave` to the iframe and reacts to the `SAVE_SUCCESS`/
 `SAVE_ERROR` postMessage the iframe posts back. That embedded editor is a separate application,
 not owned by this repository, and has no reason to know about the chat-side `skills_supported`
 hack described in the `applications-write-api` spec's "Quick Apps always get
 features.skills_supported: true" requirement — its own save may leave the flag unset or
 overwrite it back to its prior value.
 
-To close that gap without needing to change the embedded editor's protocol, `AppsEditor`'s
-`handleSaveSuccess` SHALL, immediately after receiving a `SAVE_SUCCESS` message (for both a
-Save & Exit and a Preview trigger, since both perform a real save through the iframe) and
-before any of its existing success side effects (`refetchDeployments`, `notifyOperationSuccess`,
-navigation, entering preview), call the frontend `updateApplication` API for `appIdForSettings`
-with the current General-step values (`name`, `description`, `iconUrl`, `topics`, `locales`,
-`primaryLocale`, read via `generalFormRef.current.getValues()`) and **await** its result. This
-call's only purpose is to re-trigger the backend's unconditional `skills_supported` force-merge
-on every update — the General-step values are sent unchanged (a no-op for those fields) so this
-call otherwise has no visible effect for a non-Quick-App schema, where the backend's
-`isQuickAppSchema` check makes the force-merge itself a no-op too.
+To close that gap without changing the embedded editor's protocol, `QuickAppSetup`
+(`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`) SHALL, in both its `save(values)`
+and `startPreview(values)` handles and immediately after the iframe save resolves with
+`SAVE_SUCCESS`, call `reassertSkillsSupport(values)`: the frontend `updateApplication(appId, …)` API
+with the current Metadata values (`name`, `description`, `iconUrl`, `topics`, `locales`,
+`primaryLocale`, derived through `toTriggerSaveGeneral(values)`), and **await** it. This call's only
+purpose is to re-trigger the backend's unconditional `skills_supported` force-merge on every
+update — the Metadata values are sent unchanged (a no-op for those fields), so for a non-Quick-App
+schema, where the backend's `isQuickAppSchema` check makes the force-merge a no-op too, the call
+has no visible effect.
 
-`AppsEditor` SHALL wait for this call to settle before proceeding: on success, the existing
-success-path side effects run as before; on failure, `AppsEditor` SHALL stop before running any
-of them — no `refetchDeployments`, no `notifyOperationSuccess`, no navigation, no entering
-preview — and SHALL surface the failure the same way `SAVE_ERROR` from the iframe is surfaced
-(`isSaving` becomes false, `pendingSaveAction` is cleared, `saveError` is set to the generic
-"save failed" message, rendered via `Notification`). The page stays on the Settings step.
+The save only counts as successful once this call settles. On success, `save`/`startPreview`
+resolve and the page's success path runs (`ApplicationFormEditor`'s `persist`: `refetchDeployments()`,
+`notifyOperationSuccess`, navigation to `ROUTES.Catalog`; or, for Preview, `isPreviewing` becoming
+true). On failure, `QuickAppSetup` SHALL set its inline `saveError` to `appsEditor.error.saveFailed`
+(rendered through `ErrorMessageNotification` above the iframe) and rethrow, so the page stops
+before any of those side effects — no `refetchDeployments`, no `notifyOperationSuccess`, no
+navigation, no entering preview — and the page clears `isSaving` and stays open.
 
-#### Scenario: Reassertion call runs before Save & Exit's side effects
+#### Scenario: Reassertion call runs before Save's side effects
 
-- **WHEN** the iframe posts `SAVE_SUCCESS` for a Save & Exit trigger
-- **THEN** `updateApplication(appIdForSettings, { name, description, iconUrl, topics, locales, primaryLocale })` is called and awaited before `refetchDeployments()`, `notifyOperationSuccess`, and navigation to `returnUrl`
+- **WHEN** the iframe posts `SAVE_SUCCESS` for a Save trigger
+- **THEN** `updateApplication(appId, { name, description, iconUrl, topics, locales, primaryLocale })` is called and awaited before `refetchDeployments()`, `notifyOperationSuccess`, and navigation to `ROUTES.Catalog`
 
 #### Scenario: Reassertion call runs before Preview's side effects
 
@@ -110,18 +114,18 @@ preview — and SHALL surface the failure the same way `SAVE_ERROR` from the ifr
 #### Scenario: A failed reassertion call blocks the rest of the success path
 
 - **WHEN** the reassertion `updateApplication` call rejects
-- **THEN** `isSaving` becomes false, `saveError` is set to the generic save-failed message, `pendingSaveAction` is cleared, and no `refetchDeployments`, `notifyOperationSuccess`, navigation, or `isPreviewing` transition occurs
+- **THEN** `isSaving` becomes false, the Setup section's inline `saveError` is set to the generic save-failed message, and no `refetchDeployments`, `notifyOperationSuccess`, navigation, or `isPreviewing` transition occurs
 
 #### Scenario: A successful reassertion call does not alter General-step data
 
 - **WHEN** the reassertion call succeeds
-- **THEN** the `name`/`description`/`iconUrl`/`topics`/`locales`/`primaryLocale` values it sent are identical to what `generalFormRef.current.getValues()` already held, so the update is a no-op for every field except the backend's forced `features.skills_supported`
+- **THEN** the `name`/`description`/`iconUrl`/`topics`/`locales`/`primaryLocale` values it sent are identical to the Metadata values already passed to `save`/`startPreview`, so the update is a no-op for every field except the backend's forced `features.skills_supported`
 
 ---
 
 ### Requirement: App editor iframe component
 
-`apps/chat/src/pages/AppsEditor/AppEditorIframe.tsx` SHALL:
+`apps/chat/src/pages/ApplicationEditor/setup/AppEditorIframe.tsx` SHALL:
 
 - Build the iframe URL with encoded `authProvider`, `id`, `theme`, and `applicationCredentials` query parameters.
   - `providerId` from `useUser().user?.providerId`
@@ -245,7 +249,7 @@ Where `applicationsApi` is the generated `ApplicationsApi` instance (from `api-c
 
 Application IDs returned by `POST /api/v1/applications` (`createApplication` in `apps/chat-api/src/applications/applications.service.ts`) SHALL have their name component percent-encoded (`encodeURIComponent`) before being included in the response `id` field. This makes the create response consistent with IDs returned by `GET /api/v1/applications`, which are passed through from DIAL Core where they are always stored percent-encoded.
 
-**Invariant**: `CreatedApplicationDto.id` satisfies `/^(?:[\w.\-:@/()]|%[\dA-Fa-f]{2})+$/` — the same pattern `DEPLOYMENT_ID_PATTERN` enforces on `CreateConversationDto.deploymentId` in `apps/chat-api/src/conversations/`.
+**Invariant**: `CreatedApplicationDto.id` satisfies `/^(?:[\w.\-:@/()]|%[\dA-Fa-f]{2})+$/` — the same pattern `DEPLOYMENT_ID_PATTERN` (`apps/chat-api/src/common/validators/deployment-id.pattern.ts`) enforces on `CreateConversationDto.deploymentId`.
 
 `AppPreviewChat` SHALL normalize the `appId` prop before forwarding it as `deploymentId` to `createConversation`. The normalization (`normalizeDeploymentId` in `AppPreviewChat.tsx`) is idempotent: it splits on `/`, decodes each segment with `decodeURIComponent` (falling back to `encodeURIComponent` on malformed sequences), then re-encodes with `encodeURIComponent`. This handles both:
 - Already-encoded IDs — from apps created after the encoding fix (no double-encoding).
@@ -275,7 +279,7 @@ Application IDs returned by `POST /api/v1/applications` (`createApplication` in 
 
 ### Requirement: Quick app Settings can open application credentials in the Chat host
 
-`AppEditorIframe` SHALL handle `{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: string }` by opening a Chat-owned `Popup` containing `ApplicationCredentials` for the requested application. `appId` identifies the selected agent and SHALL NOT be assumed to be the Quick app being edited. The host SHALL normalize the raw editor id through the existing `encodeToolsetId` helper before calling its BFF adapter.
+`AppEditorIframe` SHALL handle `{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: string }` by opening a Chat-owned `Popup` containing `ApplicationCredentials` for the requested application. `appId` identifies the selected agent and SHALL NOT be assumed to be the Quick app being edited. The host SHALL normalize the raw editor id through `normalizeDeploymentId` (from `@epam/ai-dial-chat-hooks`, decode-then-encode, idempotent) before calling its BFF adapter.
 
 The handler SHALL require both credential capability gates, `event.origin` equal to the configured editor URL's origin, `event.source` equal to the current iframe's `contentWindow`, and a nonempty string `appId`. Messages failing these checks SHALL be ignored. No API key, OAuth code or token SHALL be exchanged through this message contract; no credential-result message or client-channel report is required. Core/BFF authorization SHALL still apply to the requested app.
 
@@ -317,7 +321,7 @@ The external editor integration SHALL rely on the advertised query parameter: ho
 
 ### Requirement: Quick-app editor renders a single Metadata | Setup page
 
-The Quick App editor SHALL be rendered by `ApplicationEditorPage` with `kind = ApplicationEditorKind.QuickApp` (see `application-editor-registry`) on the unchanged route `ROUTES.AppsEditor`.
+The Quick App editor SHALL be rendered by `ApplicationEditorPage` with `kind = ApplicationEditorKind.QuickApp` (see `application-editor-registry`) on the unchanged route `ROUTES.AppsEditor`, which renders `ApplicationFormEditor` with `quickAppDefinition` (`apps/chat/src/pages/ApplicationEditor/definitions/quickAppDefinition.tsx`). Any schema with an embedded editor opens here; Preview is offered only for the Quick Apps schema (`isPreviewAvailable` → `isQuickAppSchema`).
 
 It uses the `schema` and `appId` query params (see "Apps-editor query param contract"); any legacy `step`, `isCreating` or `returnUrl` param is ignored.
 
@@ -337,7 +341,7 @@ The page SHALL NOT render a step indicator, a Next button or the General-step Ca
 **Create mode** (no `appId`) uses `ApplicationCreateStrategy.MetadataFirst`:
 
 1. Clicking Create validates the metadata.
-2. It calls `createApplication({ name, type: schemaId, description, iconUrl, version, topics, applicationProperties, locales, primaryLocale })` through `apps/chat/src/server-api/applications.ts`. `applicationProperties` seeds the same empty orchestrator/contexts/tool_sets defaults as before.
+2. It calls `createApplication({ name, type: schemaId, description, iconUrl, version, topics, applicationProperties, locales, primaryLocale })` through `apps/chat/src/server-api/applications.ts`. For the Quick Apps schema, `applicationProperties` seeds the empty orchestrator/contexts/tool_sets defaults; for any other schema it is omitted.
 3. It raises the `NotifiableEntity.QuickApp` + `EntityOperation.Created` notification.
 4. It replaces the search params to add `appId`, which switches the page into edit mode in place.
 
@@ -350,7 +354,7 @@ A create failure raises an error notification with the API detail, falling back 
   1. Awaits the `features.skills_supported` `updateApplication` reassertion (see "A Settings-step save reasserts features.skills_supported via a follow-up updateApplication call").
   2. Awaits `refetchDeployments()`.
   3. Raises `EntityOperation.Edited`.
-  4. Navigates to `returnUrl`.
+  4. Navigates to `returnUrl`, which is always `ROUTES.Catalog`.
 - On `SaveError`, the page clears `isSaving`, the Setup section shows the error or `appsEditor.error.saveFailed` inline above the embedded editor, and the page stays open.
 
 **Preview** (edit mode only):
@@ -361,14 +365,14 @@ A create failure raises an error notification with the API detail, falling back 
 
 **Other**
 
-- Memoisation: the resolved schema, `returnUrl` and header callbacks SHALL be memoised (`useMemo`/`useCallback`).
+- Memoisation: the resolved schema and header callbacks SHALL be memoised (`useMemo`/`useCallback`); `returnUrl` is the constant `ROUTES.Catalog`.
 - Schema not found: the page still renders, using the fallback title, without throwing.
 - The saving overlay marks the content `inert`.
 
 #### Scenario: Create mode shows Metadata and a pending Setup
-- **WHEN** the page mounts with `?schema=<id>&returnUrl=/catalog` and no `appId`
+- **WHEN** the page mounts with `?schema=<id>` and no `appId`
 - **THEN** the Metadata section renders the shared fields
-- **AND** the Setup section shows "Create the application to configure its setup."
+- **AND** the Setup section shows "Create the application to configure its setup." with a Create button
 - **AND** the header shows Create, with no Preview button
 
 #### Scenario: Create switches to edit mode and loads the editor iframe
@@ -383,7 +387,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 #### Scenario: Save triggers iframe save and navigates on success
 - **WHEN** in edit mode the user clicks Save and the iframe posts `SAVE_SUCCESS`
-- **THEN** the page awaits the `updateApplication` reassertion and `refetchDeployments()`, shows the edited notification, and navigates to `returnUrl`
+- **THEN** the page awaits the `updateApplication` reassertion and `refetchDeployments()`, shows the edited notification, and navigates to `ROUTES.Catalog`
 
 #### Scenario: Save failure shows inline error and stays on the page
 - **WHEN** the iframe posts `SAVE_ERROR`
@@ -403,17 +407,17 @@ A create failure raises an error notification with the API detail, falling back 
 
 ### Requirement: Quick-app Setup section
 
-`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a `forwardRef` component implementing `ApplicationSetupHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `startPreview(metadata)` forwards to `triggerSave()` with no payload.
+`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a function component that receives `ref` as a prop (React 19, no `forwardRef`) and exposes `ApplicationSetupHandle` through `useImperativeHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `startPreview(metadata)` forwards to `triggerSave()` with no payload.
 
 It SHALL render the following:
 
-- Without `appId` (create mode): the `applicationEditor.setupPendingCreate` placeholder.
+- Without `appId` (create mode): the `applicationEditor.setupPendingCreate` placeholder, with a `PrimaryButton` Create that calls `onSubmit` (disabled while `isSubmitting`).
 - With `appId` and `schema.editorUrl`: `AppEditorIframe` only. `QuickAppSetup` SHALL NOT render `AppPreviewChat`. The preview chat is rendered at page level by `QuickAppPreview` (see `app-preview-chat` "Preview is a full-page mode"), and the iframe stays mounted while preview is shown because the whole `EntityEditor` is only hidden.
 - With `appId` but no `schema.editorUrl`: the `appsEditor.settingsStep.noEditorPlaceholder` placeholder.
 
 It SHALL report iframe readiness through `onReadyChange`, which gates the Save button and Preview (see `quick-app-authoring`). It SHALL call `onPreviewReset` when a save reports `hasChanges: true` (see `app-preview-chat` "Preview session resets when the saved configuration actually changed"). `ApplicationSetupProps` no longer carries `isPreviewing`.
 
-On mobile, the Setup section SHALL give the iframe a minimum height of 640 px so it stays usable below the stacked Metadata section.
+The Setup section SHALL give the iframe container a minimum height of 640 px (`min-h-[640px]`, applied at every width) so it stays usable below the stacked Metadata section on mobile.
 
 #### Scenario: Schema with editorUrl renders iframe once the app exists
 - **WHEN** `schema.editorUrl` is set and `appId` is `"abc"`

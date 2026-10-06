@@ -2,7 +2,7 @@
 
 ## Purpose
 
-User configuration stored in the user's DIAL Core bucket: read consolidation, the v2 shape, and pin persistence.
+User configuration stored in the user's DIAL Core bucket: read consolidation, the versioned shape (current version 6), and pin persistence.
 
 ## Requirements
 
@@ -10,7 +10,7 @@ User configuration stored in the user's DIAL Core bucket: read consolidation, th
 
 `UserConfigService` in `apps/chat-api/src/user-config/user-config.service.ts` SHALL be the single owner of a JSON file called `.user-config.json` stored at `.client_data/.user-config.json` in the user's personal DIAL Core bucket. No other service reads or writes this file directly.
 
-The file format is versioned (current version: `2`):
+The file format is versioned (`CURRENT_CONFIG_VERSION = 6`, `apps/chat-api/src/user-config/dto/user-config.dto.ts`):
 
 ```ts
 interface ConversationsConfig {
@@ -23,6 +23,15 @@ interface ToolsetsConfig {
 
 interface DeploymentsConfig {
   installed: string[];
+  selectedId: string | null;
+}
+
+interface PromptsConfig {
+  installed: string[]; // favorited prompts/{bucket}/{path} ids
+}
+
+interface SkillsConfig {
+  installed: string[]; // favorited skill resource URLs
 }
 
 interface UserConfig {
@@ -30,18 +39,21 @@ interface UserConfig {
   conversations: ConversationsConfig;
   toolsets: ToolsetsConfig;
   deployments: DeploymentsConfig;
+  prompts: PromptsConfig;
+  skills: SkillsConfig;
+  legacyMigrationDone?: boolean; // internal flag, see below
 }
 ```
 
-Default (missing file, parse error, or empty bucket path):
+Default (`createDefaultUserConfig()`, a fresh object per call; missing file, parse error, or empty bucket path):
 ```json
-{ "version": 2, "conversations": { "pinnedIds": [] }, "toolsets": { "installed": [] }, "deployments": { "installed": [] } }
+{ "version": 6, "conversations": { "pinnedIds": [] }, "toolsets": { "installed": [] }, "deployments": { "installed": [], "selectedId": null }, "prompts": { "installed": [] }, "skills": { "installed": [] } }
 ```
 
-`migrateConfig(raw)` upgrades any stored value to the current v2 shape:
-- Null / non-object → default v2 config.
-- v1 shape (top-level `pinnedConversationIds` present, no nested `conversations`) → lift `pinnedConversationIds` into `conversations.pinnedIds` (filtering non-strings), set `toolsets.installed = []`, `deployments.installed = []`, `version = 2`.
-- v2+ shape → validate and sanitise each array (filter non-strings), set `version = 2`.
+`migrateConfig(raw, userBucket)` upgrades any stored value to the current v6 shape:
+- Null / non-object → default config.
+- v1 shape (top-level `pinnedConversationIds` present, no nested `conversations`) → default config with `pinnedConversationIds` lifted into `conversations.pinnedIds` (filtering non-strings).
+- v2+ shape → read each section's array, filtering non-strings; `deployments.selectedId` is kept only when it is a string (else `null`); a bare (non-`prompts/`-prefixed) `prompts.installed` entry is qualified as `prompts/{userBucket}/{entry}`; `legacyMigrationDone` is kept only when `true`; `version` is set to 6.
 
 **File path migration (old → new):** On `readConfig`, the service first attempts to download `.client_data/.user-config.json`. If DIAL Core returns non-ok, it falls back to downloading `.user-config.json` (the legacy path). If the legacy file is found, `migrateConfig` is applied, the result is written to the new path, and the old path is deleted (best-effort; failure is logged with `logger.warn`, not thrown). If neither path yields data, the default config is returned.
 
@@ -52,22 +64,22 @@ Default (missing file, parse error, or empty bucket path):
 #### Scenario: Missing file falls back to default config
 
 - **WHEN** `readConfig` is called and `.client_data/.user-config.json` does not exist and `.user-config.json` does not exist
-- **THEN** `readConfig` returns the default v2 config without throwing
+- **THEN** `readConfig` returns the default v6 config without throwing
 
 #### Scenario: Corrupt file falls back to default config
 
 - **WHEN** `readConfig` is called and the stored file contains invalid JSON
-- **THEN** `readConfig` returns the default v2 config without throwing
+- **THEN** `readConfig` returns the default v6 config without throwing
 
-#### Scenario: Legacy v1 file is migrated to v2 on first read
+#### Scenario: Legacy v1 file is migrated to the current shape on first read
 
 - **WHEN** `readConfig` is called and `.client_data/.user-config.json` does not exist but `.user-config.json` exists with `{ "version": 1, "pinnedConversationIds": ["conv-1"] }`
-- **THEN** the returned config is `{ "version": 2, "conversations": { "pinnedIds": ["conv-1"] }, "toolsets": { "installed": [] }, "deployments": { "installed": [] } }`
+- **THEN** the returned config is the default v6 config with `conversations.pinnedIds = ["conv-1"]` (plus `legacyMigrationDone: true` once legacy installation files have been consolidated)
 - **AND** the migrated config is written to `.client_data/.user-config.json`
 
-#### Scenario: v2 file at new path is returned as-is
+#### Scenario: v6 file at new path is returned as-is
 
-- **WHEN** `readConfig` is called and `.client_data/.user-config.json` contains a valid v2 config
+- **WHEN** `readConfig` is called and `.client_data/.user-config.json` contains a valid v6 config with `legacyMigrationDone: true`
 - **THEN** the stored config is returned without falling back to the legacy path
 
 #### Scenario: Non-string entries in any array are filtered during migration
@@ -79,35 +91,35 @@ Default (missing file, parse error, or empty bucket path):
 
 ### Requirement: readConfig consolidates legacy installation files into the unified config
 
-When `readConfig` is called, after the primary config is resolved (from new path, old path, or default), `UserConfigService` SHALL attempt to read and consolidate two legacy installation files stored at:
+When `readConfig` is called, after the primary config is resolved (from new path, old path, or default), and only while the config does not carry `legacyMigrationDone: true`, `UserConfigService` SHALL attempt to read and consolidate two legacy installation files stored at:
 
-- `clientdata/installed_toolsets.json` — a plain JSON array of toolset ID strings
-- `clientdata/installed_deployments.json` — a plain JSON array of deployment ID strings
+- `clientdata/installed_toolsets.json` — a JSON array of toolset IDs (strings, or objects carrying a string `id`)
+- `clientdata/installed_deployments.json` — a JSON array of deployment IDs (strings, or objects carrying a string `id`)
 
 Consolidation strategy: **new-config-wins union** — the existing `config.toolsets.installed` (or `config.deployments.installed`) array is the base; only IDs from the legacy file that are NOT already present in the base are appended. The merge is performed independently for each legacy file.
 
-After consolidation the legacy file is deleted from the DIAL Core bucket (best-effort). If deletion fails the failure is logged with `logger.warn` and the method returns normally. If the next `readConfig` call finds the legacy file again, the merge is a no-op because all legacy IDs are already present — no duplicates are introduced.
+After a legacy file is read as a valid array, it is deleted from the DIAL Core bucket (best-effort; a `404` is ignored). If deletion fails for another reason the failure is logged with `logger.warn` and the method returns normally. After the consolidation pass — whatever it found — the config is marked `legacyMigrationDone: true` and written, so later `readConfig` calls skip consolidation entirely and never re-read a legacy file whose deletion failed.
 
 If a legacy file is absent (DIAL Core returns non-ok), missing, or yields empty/malformed content:
 - Absent or non-ok response: skip silently, no change to config.
 - Empty JSON array `[]`: no IDs to merge; skip.
 - Invalid JSON or non-array body: log `logger.warn`, skip; do not modify the config.
-- Array containing non-string entries: filter to strings only, then merge the strings.
+- Array containing other entries: keep strings and the string `id` of object entries, drop everything else, then merge.
 
 All config sections not touched by the merge (`conversations`, and any future sections) MUST be preserved unchanged.
 
-If no IDs were added by either merge, `writeConfig` is NOT called.
+The first consolidation pass always calls `writeConfig` once (to persist `legacyMigrationDone: true`, together with any merged IDs). Once the flag is stored, `readConfig` does NOT call `writeConfig` for consolidation.
 
 #### Scenario: Only legacy toolset file exists — no user-config at any path
 
 - **WHEN** `.client_data/.user-config.json` is absent, `.user-config.json` is absent, and `clientdata/installed_toolsets.json` contains `["toolset-a", "toolset-b"]`
-- **THEN** `readConfig` returns `{ "version": 2, "conversations": { "pinnedIds": [] }, "toolsets": { "installed": ["toolset-a", "toolset-b"] }, "deployments": { "installed": [] } }`
+- **THEN** `readConfig` returns the default v6 config with `toolsets.installed = ["toolset-a", "toolset-b"]` and `legacyMigrationDone: true`
 - **AND** the merged config is written to `.client_data/.user-config.json`
 
 #### Scenario: Only legacy deployment file exists — no user-config at any path
 
 - **WHEN** `.client_data/.user-config.json` is absent, `.user-config.json` is absent, and `clientdata/installed_deployments.json` contains `["dep-1"]`
-- **THEN** `readConfig` returns `{ "version": 2, "conversations": { "pinnedIds": [] }, "toolsets": { "installed": [] }, "deployments": { "installed": ["dep-1"] } }`
+- **THEN** `readConfig` returns the default v6 config with `deployments.installed = ["dep-1"]` and `legacyMigrationDone: true`
 
 #### Scenario: Both legacy installation files exist — no user-config at any path
 
@@ -128,17 +140,22 @@ If no IDs were added by either merge, `writeConfig` is NOT called.
 
 - **WHEN** `.client_data/.user-config.json` contains `{ "toolsets": { "installed": ["ts-a", "ts-b"] }, ... }` and `clientdata/installed_toolsets.json` contains `["ts-a", "ts-b"]`
 - **THEN** `readConfig` returns a config with `toolsets.installed = ["ts-a", "ts-b"]` (unchanged)
-- **AND** `writeConfig` is NOT called because no new IDs were added
+- **AND** `writeConfig` is called only to persist `legacyMigrationDone: true`
 
-#### Scenario: Both legacy files absent — no migration attempted
+#### Scenario: Both legacy files absent — only the flag is persisted
 
-- **WHEN** `.client_data/.user-config.json` exists and both `clientdata/installed_toolsets.json` and `clientdata/installed_deployments.json` are absent (DIAL Core returns non-ok for both)
-- **THEN** `readConfig` returns the stored config unchanged and does NOT call `writeConfig`
+- **WHEN** `.client_data/.user-config.json` exists without `legacyMigrationDone` and both `clientdata/installed_toolsets.json` and `clientdata/installed_deployments.json` are absent (DIAL Core returns non-ok for both)
+- **THEN** `readConfig` returns the stored config's sections unchanged, with `legacyMigrationDone: true`, and calls `writeConfig` once to persist the flag
+
+#### Scenario: Consolidation already done — no legacy reads
+
+- **WHEN** `.client_data/.user-config.json` carries `legacyMigrationDone: true`
+- **THEN** `readConfig` does not download either legacy installation file and does NOT call `writeConfig`
 
 #### Scenario: Empty legacy file — treated as no-op
 
 - **WHEN** `clientdata/installed_toolsets.json` contains `[]`
-- **THEN** `toolsets.installed` in the returned config is unchanged and `writeConfig` is NOT called
+- **THEN** `toolsets.installed` in the returned config is unchanged
 
 #### Scenario: Malformed legacy file — skipped with warning
 
@@ -146,11 +163,11 @@ If no IDs were added by either merge, `writeConfig` is NOT called.
 - **THEN** `readConfig` logs a `logger.warn` and returns the config without modification
 - **AND** the legacy file is NOT deleted
 
-#### Scenario: Repeated migration is idempotent when legacy file deletion fails
+#### Scenario: Repeated read is idempotent when legacy file deletion fails
 
 - **WHEN** `clientdata/installed_toolsets.json` contains `["ts-a"]`, the legacy file deletion fails on the first `readConfig` call, and `readConfig` is called a second time with the same legacy file still present
 - **THEN** the second call returns a config with `toolsets.installed` containing `"ts-a"` exactly once
-- **AND** the second call does NOT call `writeConfig` because no new IDs were added
+- **AND** the second call skips consolidation (the stored `legacyMigrationDone: true`) and does NOT call `writeConfig`
 
 #### Scenario: Partial migration — only one legacy installation file exists
 
@@ -164,32 +181,34 @@ If no IDs were added by either merge, `writeConfig` is NOT called.
 
 #### Scenario: Non-string entries in legacy file are filtered before merging
 
-- **WHEN** `clientdata/installed_toolsets.json` contains `["ts-valid", 42, null, "ts-also-valid"]`
-- **THEN** only `"ts-valid"` and `"ts-also-valid"` are merged into `toolsets.installed`
+- **WHEN** `clientdata/installed_toolsets.json` contains `["ts-valid", 42, null, "ts-also-valid", { "id": "ts-object" }]`
+- **THEN** only `"ts-valid"`, `"ts-also-valid"`, and `"ts-object"` are merged into `toolsets.installed`
 
 ---
 
-### Requirement: GET /api/v1/user-config returns the full user configuration in v2 shape
+### Requirement: GET /api/v1/user-config returns the full user configuration in the current shape
 
-`UserConfigController` SHALL expose `GET /api/v1/user-config` returning HTTP 200 with the current `UserConfig` v2 object for the authenticated user. The handler calls `userConfigService.readConfig(at, bucket)` and returns the result directly.
+`UserConfigController` SHALL expose `GET /api/v1/user-config` returning HTTP 200 with the current `UserConfig` object (version 6, documented as `UserConfigDto`) for the authenticated user. The handler calls `userConfigService.readConfig(at, bucket)` and returns the result directly.
 
 Response body shape:
 ```json
 {
-  "version": 2,
+  "version": 6,
   "conversations": { "pinnedIds": ["conversations/bucket/gpt-4__chat__uuid"] },
   "toolsets": { "installed": ["toolset-abc"] },
-  "deployments": { "installed": [] }
+  "deployments": { "installed": [], "selectedId": null },
+  "prompts": { "installed": [] },
+  "skills": { "installed": [] }
 }
 ```
 
 Error codes:
 - `401 Unauthorized` — missing or invalid bearer token
 
-#### Scenario: Returns the stored v2 config
+#### Scenario: Returns the stored config
 
 - **WHEN** `GET /api/v1/user-config` is called
-- **THEN** the response is 200 with body `{ "version": 2, "conversations": { "pinnedIds": [...] }, "toolsets": { "installed": [...] }, "deployments": { "installed": [...] } }`
+- **THEN** the response is 200 with body `{ "version": 6, "conversations": { "pinnedIds": [...] }, "toolsets": { "installed": [...] }, "deployments": { "installed": [...], "selectedId": ... }, "prompts": { "installed": [...] }, "skills": { "installed": [...] } }`
 
 ---
 
@@ -237,18 +256,18 @@ Error codes: unchanged from v1.
 
 ### Requirement: UserConfigModule is imported by ConversationModule and AppModule
 
-Unchanged. `UserConfigModule` SHALL be listed in `ConversationModule.imports` and `AppModule.imports`. `UserConfigModule` exports `UserConfigService`. `getPinnedIds` and `migratePin` now operate on `config.conversations.pinnedIds`.
+`UserConfigModule` SHALL be listed in `ConversationModule.imports` and `AppModule.imports` (it is also imported by `DeploymentsModule` and `ToolsetsModule`). `UserConfigModule` exports `UserConfigService`. `getPinnedIds` and `migratePin` operate on `config.conversations.pinnedIds`.
 
 #### Scenario: Pin cleanup on conversation delete uses conversations.pinnedIds
 
 - **WHEN** `DELETE /api/v1/conversations?path=...` is called for a conversation that is in `conversations.pinnedIds`
-- **THEN** `userConfigService.updatePin(id, false, ...)` is called, and after the delete the id is absent from `conversations.pinnedIds`
+- **THEN** after the DIAL Core delete, `ConversationLifecycleService` calls `userConfigService.updatePin(id, false, ...)` fire-and-forget (a failure is logged, not thrown), and the id is then absent from `conversations.pinnedIds`
 
 ---
 
 ### Requirement: Frontend uses user-config.api.ts for pin operations
 
-Unchanged. The frontend MUST call `PATCH /api/v1/user-config/pins` through `apps/chat/src/server-api/user-config.api.ts` wrapping the regenerated `@epam/chat-api-client` method. Frontend types are updated to match the new `UserConfigDto` v2 shape.
+The frontend MUST call `PATCH /api/v1/user-config/pins` through `apps/chat/src/server-api/user-config.api.ts` wrapping the generated `@epam/ai-dial-chat-api-client` method `userConfigApi.updatePin({ updatePinsDto })`. Frontend types come from the generated `UserConfigDto`.
 
 #### Scenario: Frontend pin call reaches the endpoint with the new response shape
 

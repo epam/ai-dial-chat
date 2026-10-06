@@ -122,7 +122,7 @@ Example response:
 
 ### Requirement: Prompt API errors surface through the shared error-detail path
 
-Wrappers SHALL NOT swallow or remap rejections. Callers extract the trace id with the existing `getApiErrorDetails` helper from `apps/chat/src/server-api/api-error.ts` and surface a notification, exactly as `CatalogView`'s toolset and application handlers do today.
+Wrappers SHALL NOT swallow or remap rejections. Callers extract the status and trace id with the existing `getApiErrorDetails` helper (`libs/chat-hooks/src/api-error/api-error.ts`, imported from `@epam/ai-dial-chat-hooks`) and surface a notification, exactly as the catalog's toolset and application handlers in `apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx` do today.
 
 The status codes callers MUST handle for prompt operations are: `400` (validation — name contains `/`, content over 50 000 characters, malformed path), `401` (unauthorized), `404` (prompt or folder not found), `409` (duplicate path on create, conflict on rename/move), and `502` (DIAL Core error).
 
@@ -135,7 +135,7 @@ The status codes callers MUST handle for prompt operations are: `400` (validatio
 #### Scenario: Duplicate create surfaces as a conflict
 
 - **WHEN** `createPrompt` targets a path that already exists and the backend responds `409`
-- **THEN** the wrapper rejects and the calling form renders an inline "already exists" field error rather than a generic failure toast
+- **THEN** the wrapper rejects and the calling form (`PromptEditor`) sets the `name` field error to `PromptFieldError.Conflict`, rendering `PromptEditorI18nKeys.ErrorNameConflict` inline rather than a generic failure toast
 
 #### Scenario: Wrapper adds no retry or fallback
 

@@ -266,7 +266,7 @@ The following SHALL remain as they are at `1cfb11468`:
 - **Host element:** the `inert`, `aria-hidden` and pointer-transparent host element.
 - **Draft:** draft, focus and selection preservation.
 
-The existing assertions in `NewYearGiftWrapping.spec.tsx` (41 tests) and `gift-wrapping.spec.ts` (31 tests) SHALL pass. The only permitted edit is the mock's module path and the loader's name.
+The existing assertions in `NewYearGiftWrapping.spec.tsx` (41 tests at `1cfb11468`) and `gift-wrapping.spec.ts` (31 tests at `1cfb11468`) SHALL pass; the files have since grown to 44 and 32 tests with the session and timing-budget cases. The only permitted edit is the mock's module path and the loader's name.
 
 #### Scenario: Renderer-generated SVG mutations are ignored
 - **WHEN** the renderer mutates its own SVG during playback

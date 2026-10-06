@@ -1,7 +1,7 @@
 # observability-telemetry Specification
 
 ## Purpose
-TBD - created by archiving change add-observability-support. Update Purpose after archive.
+Opt-in OpenTelemetry support for the `apps/chat-api` BFF: SDK bootstrap and per-signal exporter selection from `OTEL_*` variables, HTTP tracing with `traceparent` propagation, NestJS log export, the `http.server.request.duration` histogram, and runtime memory/SSE/generation gauges.
 ## Requirements
 ### Requirement: OpenTelemetry SDK disabled by default
 The application SHALL treat OpenTelemetry as fully disabled unless explicitly enabled, so that a

@@ -47,17 +47,17 @@ For each of the nine providers, the system SHALL treat the provider's `CLIENT_ID
 
 ### Requirement: Partial provider configuration fails application boot
 
-When a provider's `CLIENT_ID` variable is set but another field required for that provider (its client secret field, and its host/tenant/issuer field) is missing, the system SHALL throw a descriptive error during application boot identifying the provider and the missing variable, and SHALL NOT start serving requests.
+When a provider's `CLIENT_ID` variable is set but another field required for that provider (its client secret field, and its host/tenant/issuer field) is missing, the system SHALL throw a descriptive error during application boot identifying the provider by its default label and naming the missing variable (`<Label> is configured but <VAR> is missing`, from `requireField` in `apps/chat-api/src/auth/providers/provider-builders.ts`), and SHALL NOT start serving requests. Azure B2C's secret variable is `AUTH_AZURE_B2C_CLIENT_SECRET` and Okta's is `AUTH_OKTA_CLIENT_SECRET`; every other provider uses `AUTH_{PROVIDER_TYPE}_SECRET`.
 
 #### Scenario: Missing secret fails boot
 
 - **WHEN** `AUTH_AUTH0_CLIENT_ID` and `AUTH_AUTH0_HOST` are set but `AUTH_AUTH0_SECRET` is not set
-- **THEN** application boot fails with an error message naming `auth0` and `AUTH_AUTH0_SECRET`
+- **THEN** application boot fails with the error `Auth0 is configured but AUTH_AUTH0_SECRET is missing`
 
 #### Scenario: Missing host/tenant/issuer fails boot
 
 - **WHEN** `AUTH_AZURE_AD_CLIENT_ID` and `AUTH_AZURE_AD_SECRET` are set but `AUTH_AZURE_AD_TENANT_ID` is not set
-- **THEN** application boot fails with an error message naming `azure-ad` and `AUTH_AZURE_AD_TENANT_ID`
+- **THEN** application boot fails with the error `Azure AD is configured but AUTH_AZURE_AD_TENANT_ID is missing`
 
 ### Requirement: Provider-specific issuer derivation
 
@@ -126,7 +126,7 @@ When `AUTH_{PROVIDER_TYPE}_SCOPE` is not set, the system SHALL use a hardcoded d
 
 ### Requirement: Fallback chain for admin roles and roles claim path
 
-For each provider, `adminRoles` SHALL resolve from `AUTH_{PROVIDER_TYPE}_ADMIN_ROLE_NAMES` (comma-separated) if set, else the app-wide `ADMIN_ROLE_NAMES` (comma-separated, default `admin`) if set, else `undefined`. `rolesClaim` SHALL resolve from `AUTH_{PROVIDER_TYPE}_DIAL_ROLES_FIELD` if set, else the app-wide `DIAL_ROLES_FIELD` (default `dial_roles`).
+For each provider except Google, `adminRoles` SHALL resolve from `AUTH_{PROVIDER_TYPE}_ADMIN_ROLE_NAMES` (comma-separated) if set, else the app-wide `ADMIN_ROLE_NAMES` (comma-separated, default `admin`) if set, else `undefined`. `rolesClaim` SHALL resolve from `AUTH_{PROVIDER_TYPE}_DIAL_ROLES_FIELD` if set, else the app-wide `DIAL_ROLES_FIELD` (default `dial_roles`). Google has no `AUTH_GOOGLE_ADMIN_ROLE_NAMES` / `AUTH_GOOGLE_DIAL_ROLES_FIELD` variables: its `adminRoles` and `rolesClaim` always come from the app-wide `ADMIN_ROLE_NAMES` and `DIAL_ROLES_FIELD`.
 
 #### Scenario: Provider-specific admin roles override the app-wide default
 

@@ -14,7 +14,7 @@ Specifies `ThemesModule`, the NestJS module wrapper around the existing `ThemeCo
 
 #### Scenario: Themes routes remain reachable through the module
 
-- **WHEN** a client calls any existing `/api/v1/themes/*` route after `ThemesModule` is introduced
+- **WHEN** a client calls any existing `/api/themes` route (`GET /api/themes`, `GET /api/themes/icon`; `ThemeController` is declared with the unversioned `@Controller('themes')`) after `ThemesModule` is introduced
 - **THEN** the route resolves to the same `ThemeController` handler and returns the same response as before the module extraction
 
 #### Scenario: ThemeService is still injectable where currently used
@@ -29,5 +29,5 @@ Specifies `ThemesModule`, the NestJS module wrapper around the existing `ThemeCo
 
 #### Scenario: Existing theme specs pass unchanged
 
-- **WHEN** `theme.controller.spec.ts` and `theme.service.spec.ts` are run after the module extraction
+- **WHEN** `apps/chat-api/src/themes/tests/theme.controller.spec.ts` and `theme.service.spec.ts` are run after the module extraction
 - **THEN** both suites pass without modification to their assertions, only updating test module bootstrapping imports if they previously imported `AppModule` directly

@@ -1,7 +1,7 @@
 # catalog-publish-api Specification
 
 ## Purpose
-Lets a user with write access to a target folder publish a catalog entity (model, toolset, or application) to the shared public catalog, and retrieve that entity's publish history, via BFF endpoints that proxy DIAL Core's Publication API. `chat-api` holds no durable publish state of its own — DIAL Core's Publication API is the sole source of truth.
+Lets a user with write access to a target folder publish a catalog entity (toolset, application, prompt, or skill — `model` is accepted as an `entityType` value) to the shared public catalog, and retrieve that entity's publish history, via BFF endpoints that proxy DIAL Core's Publication API. `chat-api` holds no durable publish state of its own — DIAL Core's Publication API is the sole source of truth.
 ## Requirements
 
 ### Requirement: Publish endpoint proxies DIAL Core's Publication API
@@ -19,7 +19,7 @@ The backend SHALL expose authenticated `POST /api/v1/catalog/{entityType}/{entit
 
 Existing callers MAY continue sending `version`. When it is absent or empty, `PublishService` SHALL recover it from a versioned `{name}__{version}` resource id. An unversioned Prompt or Skill SHALL use an empty string in `PublishResultDto.version`, and the Core publication title SHALL contain only the decoded resource name without a synthetic version or trailing space.
 
-`author` SHALL be the display author recorded on the publication. `PublishController.publish` SHALL resolve the effective value as `author?.trim() || getUserDisplayName(claims)` and pass that single string to `PublishService.publish`, whose signature and its `displayAuthor: author` line on the `createPublication` body SHALL remain unchanged. A request that omits `author`, or sends it blank or whitespace-only, SHALL therefore behave exactly as it did before this change.
+`author` SHALL be the display author recorded on the publication. `PublishController.publish` SHALL resolve the effective value with `resolveDisplayAuthor(author, claims)` (`apps/chat-api/src/common/utils/user-display-name.ts`, which returns `author?.trim() || getUserDisplayName(claims)`) and pass that single string to `PublishService.publish`, whose signature and its `displayAuthor: author` line on the `createPublication` body SHALL remain unchanged. A request that omits `author`, or sends it blank or whitespace-only, SHALL therefore behave exactly as it did before this change.
 
 `author` SHALL NOT affect authorization or the recorded actor. DIAL Core continues to derive the publication's `author` from the caller's bearer token and to enforce target-folder write access against it; `displayAuthor` is presentation only. `PublishResultDto.publishedBy` SHALL report the publication's display author, reading `publication.displayAuthor` before `publication.author` (`readPublicationDisplayAuthor`), so the response and publish history name the author the publisher chose. Core always records its own `author`, so reading that first would leave a submitted display author unobservable in every response this API returns.
 
@@ -78,7 +78,7 @@ OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.v
 #### Scenario: Owned prompt is published using its own full resource id
 
 - **WHEN** an authenticated user with target-folder write access publishes their own prompt using its `entityId: 'prompts/{bucket}/{path}'`
-- **THEN** the BFF calls Core with that `sourceUrl` unmodified — no bucket qualification step runs — returns 201, and reports `version: ""`
+- **THEN** the BFF calls Core with that resource path as `sourceUrl`, only percent-encoded per segment by `encodeDialResourcePath` — no bucket qualification step runs — returns 201, and reports `version: ""`
 
 #### Scenario: Versioned entity remains backward compatible
 
@@ -147,7 +147,7 @@ OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.v
 
 `function: REGEX` rules are not required to have `targets.length === 1` at the DTO layer (the same `@ArrayMaxSize(20)` applies uniformly); the UI enforces "exactly one pattern for REGEX" before submission, and a non-UI client sending more than one target under `REGEX` is harmless (Core would only ever evaluate meaningfully against the rule as DIAL Core's own semantics define, and is not a security concern this backend needs to additionally police).
 
-`publish.service.ts`'s `requestBody` SHALL replace the hardcoded `rules: []` (previously at `publish.service.ts:99`) with `rules: dto.rules ?? []`, passed through unchanged to `createPublication`.
+`PublishService.publish`'s `requestBody` SHALL carry `rules: rules ?? []` (the controller forwards `dto.rules`), passed through unchanged to `createPublication`.
 
 #### Scenario: Valid EQUAL rule is accepted
 - **WHEN** a publish request includes `rules: [{ source: 'title', function: 'EQUAL', targets: ['Internal Tools'] }]`
@@ -208,11 +208,11 @@ OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.v
 ---
 
 ### Requirement: Publish history endpoint derives history from Core publications, not chat-api storage
-The backend SHALL expose `GET /api/v1/catalog/{entityType}/{entityId}/publish-history` returning publish entries for the given entity **across every folder it has ever been published to** (folder-scoping happens client-side, in `PublishPanel`), most recent first. It SHALL call DIAL Core's `getPublications` with a `ResourceLink` body scoped to the caller's own-bucket publication list (`{ url: "publications/{bucket}/" }`, built by `getPublicationsListScope`), then narrow the response to publications whose `resources[].sourceUrl` reference the entity's own resource url, mapped to `PublishHistoryEntryDto[]`. Core exposes no per-resource publication filter, so a bucket-wide scan plus a local narrowing is the only available shape.
+The backend SHALL expose `GET /api/v1/catalog/{entityType}/{entityId}/publish-history` returning publish entries for the given entity **across every folder it has ever been published to** (folder-scoping happens client-side, in `PublishPanel`), most recent first. It SHALL call DIAL Core's `getPublications` with a `ResourceLink` body scoped to the caller's own-bucket publication list (`{ url: "publications/{bucket}/" }`, built by `getPublicationsListScope` from the session `bucket`, never from `entityId`), then narrow the response to publications whose `resources[].sourceUrl` reference the entity's own resource url, mapped to `PublishHistoryEntryDto[]`. Core exposes no per-resource publication filter, so a bucket-wide scan plus a local narrowing is the only available shape.
 
-That narrowing SHALL NOT read `resources` off the list response. Core's `getPublications` returns publication **metadata only** — `url`, `status`, `targetFolder`, `createdAt`, `author` — with no `resources` array, so filtering the list on `resources[].sourceUrl` matches nothing: a live Core returned 60 publications and history still came back empty, hiding `Unpublish` on an entity that was demonstrably published. Each candidate SHALL therefore be re-read through Core's `getPublication` (`{ url: publication.url }`) and matched on that detailed record. Candidacy SHALL be defined by exclusion, not inclusion: a publication is a candidate unless Core positively reports it as `PENDING` or `REJECTED`. A `PENDING` request has not created a published copy yet and a `REJECTED` one never will, so neither describes a folder the entity is published to, and skipping them keeps the number of detail lookups proportional to real publications. A publication with **no** status is still read — an absent field is not evidence that the publication is unfinished, and dropping it would silently shorten history.
+That narrowing SHALL NOT read `resources` off the list response. Core's `getPublications` returns publication **metadata only** — `url`, `status`, `targetFolder`, `createdAt`, `author` — with no `resources` array, so filtering the list on `resources[].sourceUrl` matches nothing: a live Core returned 60 publications and history still came back empty, hiding `Unpublish` on an entity that was demonstrably published. Each candidate SHALL therefore be re-read through Core's `getPublication` (`{ url: publication.url }`) and matched on that detailed record. A publication SHALL be a candidate when its status is `APPROVED` or absent (`isDetailCandidate` in `publication.util.ts`), so a publication Core reports as `PENDING` or `REJECTED` is never re-read. A `PENDING` request has not created a published copy yet and a `REJECTED` one never will, so neither describes a folder the entity is published to, and skipping them keeps the number of detail lookups proportional to real publications. A publication with **no** status is still read — an absent field is not evidence that the publication is unfinished, and dropping it would silently shorten history.
 
-A publication that already carries `resources` SHALL be matched without a round trip. The lookups SHALL be issued in bounded-concurrency batches rather than all at once, and a failed lookup SHALL drop that one publication rather than fail the request: history is informational, and one unreadable publication must not take down the publish panel for the whole entity.
+A publication that already carries `resources` SHALL be matched without a round trip. The lookups SHALL be issued in bounded-concurrency batches (`PUBLICATION_DETAIL_CONCURRENCY = 8`) rather than all at once, and a failed lookup SHALL drop that one publication rather than fail the request: history is informational, and one unreadable publication must not take down the publish panel for the whole entity.
 
 The `getPublications` response SHALL be accepted both as the bare array the SDK types (`ListPublication = Publication[]`) and as the `{ publications: [...] }` envelope a live Core returns. Calling `.filter` straight on the envelope threw `TypeError: (result.data ?? []).filter is not a function`, which `handleDialFetchError` reported as "DIAL Core is currently unavailable" (503) — this, not a Core outage, is what [GH #7897](https://github.com/epam/ai-dial-chat/issues/7897) actually was, and what led to both frontend publish-history fetches being stubbed out. An unrecognised shape SHALL degrade to an empty list with a warning, never a throw.
 
@@ -329,11 +329,11 @@ The endpoint is load-bearing beyond the publish panel: the Unpublish action's vi
 
 #### Scenario: Unknown entity
 - **WHEN** `entityId` does not correspond to an existing catalog entity of `entityType`
-- **THEN** the service throws `NotFoundException` (404)
+- **THEN** the service performs no existence check of its own: no listed publication references it, so the endpoint returns 200 with an empty array
 
 #### Scenario: Upstream failure
-- **WHEN** the Core `getPublications` call fails unexpectedly
-- **THEN** the service throws `BadGatewayException` or `ServiceUnavailableException` (per `handleDialSdkError`)
+- **WHEN** the Core `getPublications` call throws unexpectedly
+- **THEN** `withCachedDialRequest` passes the error to `handleDialFetchError`, which throws `BadGatewayException` or `ServiceUnavailableException`
 
 #### Scenario: Core rejects the history request with a structured error
 - **WHEN** `getPublications` resolves with a structured error response (`result.error`)

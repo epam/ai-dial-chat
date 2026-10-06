@@ -6,7 +6,7 @@ TBD - created by archiving change interactive-toolset-login-chat. Update Purpose
 
 ### Requirement: `ClientChannelProvider` owns subscription lifecycle and pending events
 
-A `ClientChannelProvider` (React Context, `apps/chat/src/context/ClientChannelContext.tsx`, consumer hook `useClientChannel`) SHALL be mounted once inside `RequireAuth` in `apps/chat/src/main.tsx`, at the same level as `GenerationProvider`, so it survives conversation route navigation. Its context value SHALL be wrapped in `useMemo`. It SHALL own: the current channel id (or none), connection status, a `Map<eventId, PendingSigninEvent>` of pending `toolset/signin` events parsed from the SSE stream, and the **connection demand registry** that decides whether a subscription should exist at all (see `client-channel-demand-lifecycle`). The consumer hook SHALL throw if used outside the provider, matching the `ThemeContext` reference pattern.
+A `ClientChannelProvider` (React Context, `apps/chat/src/context/ClientChannelContext.tsx`, consumer hook `useClientChannel`) SHALL be mounted once inside `RequireAuth` in `apps/chat/src/main.tsx`, directly inside `GenerationProvider`, so it survives conversation route navigation. Its context value SHALL be wrapped in `useMemo`. It SHALL own: the current channel id (or none), connection status, a `Map<eventId, PendingSigninEvent>` of pending `toolset/signin` events parsed from the SSE stream, and the **connection demand registry** that decides whether a subscription should exist at all (see `client-channel-demand-lifecycle`). The consumer hook SHALL throw if used outside the provider, matching the `ThemeContext` reference pattern.
 
 The demand registry SHALL remain internal to the provider: it SHALL NOT appear on `ClientChannelContextValue`, so consumers — `SigninInterruptDialog`, `Conversation`, and `AppPreviewChat` — see an unchanged context surface. Mounting the provider SHALL NOT itself create demand and SHALL NOT open a subscription.
 
@@ -24,7 +24,7 @@ The demand registry SHALL remain internal to the provider: it SHALL NOT appear o
 
 ### Requirement: SSE event parsing tolerates fragmented network chunks
 
-The client-channel SSE reader SHALL buffer partial reads and only parse complete `data: <json>\n\n` frames, exactly as `chat-stream.api.ts`'s existing `parseSSELine` buffering does for completions. It SHALL NOT assume one JSON event arrives within a single `reader.read()` result.
+The client-channel SSE reader SHALL buffer partial reads and only parse complete `data: <json>\n\n` frames, exactly as the completion stream's `parseSSELine` buffering (`libs/chat-hooks/src/conversation/create-chat-stream-api.ts`) does for completions. It SHALL NOT assume one JSON event arrives within a single `reader.read()` result.
 
 #### Scenario: One event split across two network chunks
 - **WHEN** a single `toolset/signin` SSE frame arrives split across two `reader.read()` results
@@ -66,11 +66,11 @@ Tab visibility SHALL NOT resume retrying. The retry budget SHALL be reset when f
 
 ### Requirement: Global non-dismissible toolset sign-in dialog
 
-When one or more `toolset/signin` events are pending and the `liveChatInteraction` flag is enabled, a global `SigninInterruptDialog` (`apps/chat/src/components/SigninInterruptDialog/SigninInterruptDialog.tsx`) SHALL render, mounted at the authenticated-application level (visible regardless of which route/conversation is active). The dialog SHALL NOT be dismissible by clicking outside, pressing Escape, or any action other than resolving every listed event (login or decline). It SHALL list every pending event as a row showing the toolset's name/version (or a fallback derived from the toolset id while metadata is loading) and per-row `Log in` / `Decline` actions, plus a single `Decline all` action. Only the row currently being processed SHALL be disabled; other rows remain actionable.
+When one or more `toolset/signin` events (or `external-service/signin` events, which the same dialog lists alongside them) are pending, the `liveChatInteraction` feature flag is enabled, and the `OverlayFeature.LiveChatInteraction` UI feature is enabled, a global `SigninInterruptDialog` (`apps/chat/src/components/SigninInterruptDialog/SigninInterruptDialog.tsx`, lazy-loaded and mounted in `apps/chat/src/app/app.tsx`) SHALL render, mounted at the authenticated-application level (visible regardless of which route/conversation is active). The dialog SHALL NOT be dismissible by clicking outside, pressing Escape, or any action other than resolving every listed event (login or decline). It SHALL list every pending event as a row showing the toolset's name/version (or a fallback derived from the toolset id while metadata is loading) and per-row `Log in` / `Decline` actions, plus a single `Decline all` footer action rendered only while more than one event is pending (with a single event the row's own `Decline` covers it). Only the row currently being processed SHALL be disabled; other rows remain actionable.
 
 "Not dismissible" constrains the client-channel lifecycle, not only the dialog's own event handlers: the dialog renders `ClientChannelProvider`'s pending-event map, so any teardown that clears that map dismisses the dialog on the user's behalf. While the dialog lists at least one unresolved event, the subscription SHALL therefore be pinned open — the idle-disconnect timer SHALL NOT fire and leaving a streaming-capable route SHALL NOT tear the channel down (see the `client-channel-protocol` requirements for the flag gate and the idle disconnect). The pin is also what keeps the event resolvable at all, since a `report` is addressed to the channel id Core is blocked on. The two teardowns that end the mechanism rather than idling it — the `liveChatInteraction` flag flipping off, and the provider unmounting on logout or app teardown — remain unconditional and do clear the pending events.
 
-i18n keys: every member of `ToolsetSigninI18nKeys` in `apps/chat/src/constants/translation-keys.ts` (`toolsetSignin.dialogTitle`, `toolsetSignin.dialogDescription`, `toolsetSignin.rowDecline`, `toolsetSignin.declineAll`, `toolsetSignin.apiKeyLabel`, `toolsetSignin.apiKeyPlaceholder`, `toolsetSignin.errorLoginFailed`, `toolsetSignin.errorPopupBlocked`, `toolsetSignin.errorDeclineFailed`, `toolsetSignin.errorRetry`, `toolsetSignin.statusLoginSuccess`, `toolsetSignin.statusDeclineSuccess`, `toolsetSignin.noCredentialsRequired`, `toolsetSignin.offlineUsageConsent`, `toolsetSignin.offlineUsageConsentHint`).
+i18n keys: every member of `ToolsetSigninI18nKeys` in `apps/chat/src/constants/translation-keys.ts` (`toolsetSignin.dialogTitle`, `toolsetSignin.dialogDescription`, `toolsetSignin.rowDecline`, `toolsetSignin.declineAll`, `toolsetSignin.apiKeyLabel`, `toolsetSignin.apiKeyPlaceholder`, `toolsetSignin.errorLoginFailed`, `toolsetSignin.adminConsentRequired`, `toolsetSignin.offlineUnavailable`, `toolsetSignin.dialNativeHint`, `toolsetSignin.errorPopupBlocked`, `toolsetSignin.errorDeclineFailed`, `toolsetSignin.errorRetry`, `toolsetSignin.statusLoginSuccess`, `toolsetSignin.statusDeclineSuccess`, `toolsetSignin.noCredentialsRequired`, `toolsetSignin.offlineUsageConsent`, `toolsetSignin.offlineUsageConsentHint`).
 
 RTL: dialog and row layout use logical Tailwind utilities (`ps-*`/`pe-*`/`text-start`, etc.) and no directional icons beyond a symmetric close-suppression (no close icon at all, since the dialog is non-dismissible); fully mirrors under `dir="rtl"` with no icon-flip needed since it uses no directional icons.
 
@@ -102,7 +102,7 @@ Accessibility: dialog root uses `role="dialog"` + `aria-modal="true"` + `aria-la
 
 ### Requirement: Shared `useToolsetLogin` controller with stale-credential override
 
-An app-level `useToolsetLogin` hook (`apps/chat/src/hooks/toolsets/useToolsetLogin.ts`) SHALL encapsulate the API key and OAuth login orchestration currently inline in `CatalogView.tsx`, and SHALL be used by both `CatalogView` and `ToolsetSigninDialog`. It SHALL accept a `forceStale?: boolean` option; when `true`, it SHALL call `logoutToolset` for the target credentials level before calling `loginToolset`/initiating OAuth, regardless of the locally cached status — because a `toolset/signin` event is proof the Core-side credentials are invalid even when the local cache still reports `SIGNED_IN`. `ToolsetSigninDialog` SHALL always pass `forceStale: true`. After a successful login, the hook SHALL call `refetchToolsets()` to refresh authoritative state.
+The API key and OAuth login orchestration SHALL live in the shared `useToolsetLogin` hook (`libs/chat-hooks/src/oauth/useToolsetLogin/useToolsetLogin.ts`, exported from `@epam/ai-dial-chat-hooks/oauth`), which `SigninInterruptDialog` consumes through the thin app adapter `apps/chat/src/hooks/toolsets/useToolsetLogin.ts` (injecting `server-api/toolsets`'s `loginToolset`/`logoutToolset`/`getToolset` and `ROUTES.ToolsetSignIn` as the OAuth callback path). `CatalogView` uses the separate `useCatalogToolsetCredentials` hook from `@epam/ai-dial-chat-hooks`. The hook's login params SHALL accept a `forceStale?: boolean` option; when `true`, it SHALL log out the target credentials level before calling `loginToolset`/navigating the OAuth popup, regardless of the locally cached status — because a `toolset/signin` event is proof the Core-side credentials are invalid even when the local cache still reports `SIGNED_IN`. `SigninInterruptDialog` SHALL always pass `forceStale: true`. After a successful login, the dialog SHALL call `refetchToolsets()` (from `DeploymentsContext`) to refresh authoritative state before reporting success.
 
 Credentials level selection for a signin-triggered login SHALL follow the existing rule: public toolset → `USER` level; private toolset → `GLOBAL` level. The dialog SHALL NOT offer an organization-credential-management choice (no admin "Manage credentials" affordance), even for admin users.
 
@@ -112,7 +112,7 @@ Credentials level selection for a signin-triggered login SHALL follow the existi
 
 #### Scenario: API key login for a signin event
 - **WHEN** the user submits an API key for a pending event's toolset
-- **THEN** the hook validates the input is non-empty (trimmed), calls `loginToolset`, refetches toolsets, and only then reports `success` for that event's id
+- **THEN** the row's `Log in` action stays disabled until the trimmed input is non-empty, the hook calls `loginToolset` with the trimmed key, the dialog refetches toolsets, and only then reports `success` for that event's id
 
 #### Scenario: API key login fails
 - **WHEN** the API key login call fails
@@ -124,11 +124,11 @@ Credentials level selection for a signin-triggered login SHALL follow the existi
 
 ### Requirement: OAuth login from the signin dialog reuses the existing popup/callback mechanism
 
-The dialog's `Log in` action for an OAuth-configured toolset SHALL reuse `initiateOAuthLogin`, `getToolsetOAuthChannelName`, `waitForToolsetOAuthResult`, and the existing `ToolsetEditorCallback` route unchanged: synchronous popup open (with popup-blocked detection surfaced as a row-level error), `state`-based validation, popup-owned `sessionStorage`, `popup.opener = null` severed before external navigation, and `BroadcastChannel`-delivered results. On a `Cancelled` result (popup closed without a message), the hook SHALL re-verify the real toolset status via `getToolset` before deciding whether to report success or leave the event pending, exactly as `CatalogView.handleLogin` does today for the same race.
+The dialog's `Log in` action for an OAuth-configured toolset SHALL reuse the existing `@epam/ai-dial-chat-hooks/oauth` popup mechanism (`waitForToolsetOAuthResult`; with `forceStale` the popup is opened synchronously via `openToolsetOAuthPopup` before the logout call and then navigated via `navigateToolsetOAuthPopup`, otherwise `initiateOAuthLogin`) and the existing toolset OAuth callback route (`ROUTES.ToolsetSignIn`): synchronous popup open (with popup-blocked detection surfaced as a row-level error), `state`-based validation, popup-owned `sessionStorage`, `popup.opener = null` severed before external navigation, and `BroadcastChannel`-delivered results. On a `Cancelled` result (popup closed without a message), the hook SHALL re-verify the real toolset status via `getToolset` before deciding whether to report success or leave the event pending, exactly as the catalog's toolset login does for the same race.
 
 #### Scenario: OAuth login succeeds
 - **WHEN** the popup reports a `Success` result on its `BroadcastChannel`
-- **THEN** the hook refetches toolsets and reports `{ id: eventId, result: 'success' }` on the client channel
+- **THEN** the dialog refetches toolsets and reports `{ id: eventId, result: 'success' }` on the client channel
 
 #### Scenario: Popup blocked
 - **WHEN** the browser blocks the synchronous popup open
@@ -178,7 +178,7 @@ When a login for one event succeeds, the client SHALL report `success` individua
 
 ### Requirement: Mobile and desktop layout parity
 
-`ToolsetSigninDialog` SHALL render usably on both mobile and desktop breakpoints using the project's named Tailwind breakpoints (`mobile`, `desktop`) and, where JS branching is required, `useBreakpoint`/`useIsMobile` — never raw `window.innerWidth` checks. On mobile it SHALL use a full-width/bottom-sheet-style layout consistent with other global mobile dialogs in the app; on desktop a centered modal.
+`SigninInterruptDialog` SHALL render usably on both mobile and desktop breakpoints using the project's named Tailwind breakpoints (`mobile`, `desktop`) and, where JS branching is required, `useBreakpoint`/`useIsMobile` — never raw `window.innerWidth` checks. On mobile it SHALL use a full-width/bottom-sheet-style layout consistent with other global mobile dialogs in the app; on desktop a centered modal.
 
 #### Scenario: Mobile viewport
 - **WHEN** the dialog renders at a mobile breakpoint
@@ -186,7 +186,7 @@ When a login for one event succeeds, the client SHALL report `success` individua
 
 ### Requirement: Memoization of dialog state derivations
 
-Derived values passed to `ToolsetSigninDialog` rows (e.g. resolved toolset display name/version, per-row disabled state) SHALL be memoized with `useMemo`/`useCallback` where computed from the pending-events map and toolset list, to avoid re-rendering every row on every unrelated context update.
+Derived values passed to `SigninInterruptDialog` rows (e.g. resolved toolset display name/version, per-row disabled state) SHALL be memoized with `useMemo`/`useCallback` where computed from the pending-events map and toolset list, to avoid re-rendering every row on every unrelated context update.
 
 #### Scenario: Unrelated context update does not re-render all rows
 - **WHEN** an unrelated piece of `DeploymentsContext` state changes while the dialog is open

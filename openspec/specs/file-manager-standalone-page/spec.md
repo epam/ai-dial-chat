@@ -6,16 +6,21 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 ## Requirements
 ### Requirement: File Manager route registration
 
-`apps/chat/src/types/routes.ts` SHALL define `ROUTES.FileManager = '/files'`. `apps/chat/src/app/app.tsx` SHALL register a lazy-loaded route at `ROUTES.FileManager` rendering `DialFileManagerPage`, wrapped in `RouteErrorBoundary` and `Suspense` with `fallback={<RouteFallback />}`, following the same pattern as the existing `ROUTES.Catalog` route registration.
+`apps/chat/src/types/routes.ts` SHALL define `ROUTES.FileManager = '/files'`. `apps/chat/src/app/app.tsx` SHALL register a lazy-loaded route at `ROUTES.FileManager` rendering `DialFileManagerPage`, wrapped in `RouteErrorBoundary` and `Suspense` with `fallback={<RouteFallback />}`, following the same pattern as the existing `ROUTES.Catalog` route registration. The route SHALL render the page only while `useUiFeature(OverlayFeature.FileManager)` is enabled; otherwise it SHALL render `<Navigate to={ROUTES.Root} replace />`, so a direct `/files` URL cannot bypass the hidden navigation entry.
 
 #### Scenario: Navigating to /files renders the page
 
 - **WHEN** an authenticated user navigates to `/files`
 - **THEN** `DialFileManagerPage` renders inside the app shell, with a `RouteFallback` shown while the lazy chunk loads
 
+#### Scenario: Navigating to /files with the feature hidden
+
+- **WHEN** `OverlayFeature.FileManager` is disabled and the user navigates to `/files`
+- **THEN** the app redirects to `ROUTES.Root` instead of rendering the page
+
 ### Requirement: File Manager navigation entry
 
-`apps/chat/src/constants/navigation.ts` SHALL add a `NavigationItem` to `NAVIGATION_CONFIG` with `path: ROUTES.FileManager`, a Tabler folder/files icon, and a new `NavigationI18nKeys` member (e.g. `FileManager`) resolving to a `dialFileManager.page.navLabel` i18n key, following the same shape as the existing Catalog entry.
+`apps/chat/src/constants/navigation.ts` SHALL add a `NavigationItem` to `NAVIGATION_CONFIG` with `path: ROUTES.FileManager`, `icon: IconFolderOpen`, `activeIcon: IconFolderOpenCustomFilled`, and `labelKey: NavigationI18nKeys.FileManager` (`dialFileManager.page.navLabel`, English "File Manager"), following the same shape as the existing Catalog entry. `apps/chat/src/hooks/useVisibleNavItems.ts` SHALL hide the entry when `OverlayFeature.FileManager` is disabled.
 
 #### Scenario: File Manager link appears in main navigation
 
@@ -45,8 +50,8 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 **File manager composition:**
 
 - Calls `useDialFileManagerSections({ …hostOptions, bucket, activeTab, sections, variant: DialFileManagerVariant.Standalone, actionProfile: DialFileManagerActionProfile.Full, forbiddenSymbolsRegExp })` from `@epam/ai-dial-chat-hooks` in place of a single `useDialFileManager`.
-- `sections` lists every source tab (`my_files`, `shared`, `organization`, in that order) enabled by `fileManagerTabs`, each paired with its translated tab label as `rootLabel`. The label keys are `dialFileManager.tab.myFiles`, `dialFileManager.tab.shared` and `basic.organization`.
-- `sections` is `useMemo`'d on `fileManagerTabs` and `t`.
+- `sections` lists every tab of `DIAL_FILE_MANAGER_SECTION_TABS` (`my_files`, `shared`, `organization`, in that order) enabled by `fileManagerTabs` (all of them when `fileManagerTabs` is unset), each paired with a translated `rootLabel`. My files and Organization use their tab labels (`dialFileManager.tab.myFiles`, `basic.organization`); Shared uses the shorter `dialFileManager.shared.rootFolder` ("Shared") rather than its tab label `dialFileManager.tab.shared`.
+- `sections` is `useMemo`'d on `fileManagerTabs`, the tab labels and `t`.
 
 **Rendering:**
 
@@ -103,7 +108,7 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 
 ### Requirement: Standalone page responsive layout
 
-`DialFileManagerPage` SHALL be authored mobile-first per `.claude/skills/responsive-design/SKILL.md`: base classes target ≤768px, with `desktop:` overrides for ≥769px (no `sm:`/`md:`/`lg:`/`xl:` or non-project breakpoint prefixes). The page's root container SHALL use `min-h-0` plus flex-grow so `DialFileManagerShell` fills available height under the app's global header on desktop. Any directional Tailwind classes SHALL use logical properties (`text-start`, `ps-*`/`pe-*`, `ms-*`/`me-*`) — no new physical-direction (`ml-*`/`mr-*`/`text-left`/`text-right`) classes.
+`DialFileManagerPage` SHALL be authored mobile-first per `.claude/skills/responsive-design/SKILL.md`: base classes target ≤768px, with `desktop:` overrides for ≥769px (no `sm:`/`md:`/`lg:`/`xl:` or non-project breakpoint prefixes). The page's root container SHALL use `flex size-full min-h-0 flex-col` so `DialFileManagerShell` fills available height under the app's global header on desktop. Any directional Tailwind classes SHALL use logical properties (`text-start`, `ps-*`/`pe-*`, `ms-*`/`me-*`) — no new physical-direction (`ml-*`/`mr-*`/`text-left`/`text-right`) classes.
 
 #### Scenario: Page fits at 360px width with no horizontal scroll
 

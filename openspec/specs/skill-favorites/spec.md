@@ -8,21 +8,21 @@ Defines how a skill is starred: the `skills.installed` section in the user confi
 
 ### Requirement: The user config carries a `skills.installed` section
 
-`apps/chat-api/src/user-config/dto/user-config.dto.ts` SHALL gain a `skills: { installed: string[] }` section alongside the existing `toolsets`, `deployments`, and `prompts` sections. `createDefaultUserConfig` SHALL seed it as `{ installed: [] }`, the fresh-object factory used per request SHALL do the same (so arrays are never shared between requests), and `CURRENT_CONFIG_VERSION` SHALL be bumped from `4` to `5`.
+`apps/chat-api/src/user-config/dto/user-config.dto.ts` SHALL gain a `skills: { installed: string[] }` section alongside the existing `toolsets`, `deployments`, and `prompts` sections. `createDefaultUserConfig` SHALL seed it as `{ installed: [] }`, the fresh-object factory used per request SHALL do the same (so arrays are never shared between requests), and `CURRENT_CONFIG_VERSION` SHALL be at least `5` (this change bumped it from `4` to `5`; the later `unify-prompt-resource-id` migration bumped it again, to the current `6`).
 
-`migrateConfig` SHALL fill the section with `{ installed: [] }` when reading a document that predates it, and SHALL keep the existing `getInstalledEntries`-style filtering that drops non-string entries. No migration job is required: a new-code read of an older document and an older-code read of a newer document both degrade to an empty skill favourites list.
+`migrateConfig(raw, userBucket)` SHALL fill the section with `{ installed: [] }` when reading a document that predates it, and SHALL keep the existing `getInstalledEntries`-style filtering that drops non-string entries. No migration job is required: a new-code read of an older document and an older-code read of a newer document both degrade to an empty skill favourites list.
 
 Entries SHALL be full `skills/{bucket}/{path}` resource URLs, matching `CatalogItem.id` for a skill.
 
 #### Scenario: Fresh config has an empty skills section
 
 - **WHEN** a user with no stored config reads it
-- **THEN** the response contains `skills: { installed: [] }` and `version: 5`
+- **THEN** the response contains `skills: { installed: [] }` and `version` equal to `CURRENT_CONFIG_VERSION` (currently `6`)
 
 #### Scenario: Older document is migrated on read
 
 - **WHEN** a stored config at `version: 4` with no `skills` key is read
-- **THEN** `migrateConfig` returns a config with `skills: { installed: [] }` and `version: 5`, leaving every other section untouched
+- **THEN** `migrateConfig` returns a config with `skills: { installed: [] }` and `version` equal to `CURRENT_CONFIG_VERSION` (currently `6`), leaving every other section untouched apart from the separate v5→v6 qualification of bare `prompts.installed` entries
 
 #### Scenario: Non-string entries are dropped
 
@@ -80,7 +80,7 @@ Controller conventions (thin controller, `@ApiOperation` + `@ApiResponse` per st
 
 - **Generated client**: OpenAPI `operationId: 'updateInstalledSkill'`, exposed on the generated `UserConfigApi` as `updateInstalledSkill({ updateInstalledSkillDto })`. Request DTO `UpdateInstalledSkillDto`, no response DTO (204). The frontend wrapper uses the normal (non-`Raw`) generated method. `npm run openapi` and `npm run openapi:check` SHALL be run and `chat-api-client` rebuilt in the same change.
 - **Frontend wrapper**: `apps/chat/src/server-api/user-config.api.ts` SHALL gain `updateInstalledSkill(id: string, isInstalled: boolean)`, shaped exactly like the existing `updateInstalledPrompt`.
-- **State ownership**: `FavoriteApplicationsContext` remains the sole owner of `favoriteIds`. `FavoriteEntityType` SHALL gain `Skill = 'skill'`, and `INSTALL_BY_ENTITY_TYPE` SHALL map it to `updateInstalledSkill`. `useFavoriteApplications` SHALL seed `favoriteIds` from `config.skills.installed` in addition to the sections it already reads, so a skill's star reflects stored state on first render.
+- **State ownership**: `FavoriteApplicationsProvider` (`apps/chat/src/context/FavoriteApplicationsContext.tsx`) remains the sole owner of `favoriteIds`, delegating the state machine to `useFavoriteEntitiesState` from `@epam/ai-dial-chat-hooks/catalog` (`libs/chat-hooks/src/catalog/useFavoriteEntitiesState/useFavoriteEntitiesState.ts`), which also owns the `FavoriteEntityType` enum. `FavoriteEntityType` SHALL gain `Skill = 'skill'`, and the app's `INSTALL_BY_ENTITY_TYPE` SHALL map it to `updateInstalledSkill`. The provider's `loadFavorites` SHALL return `skills: config.skills?.installed ?? []` in its `FavoritesPayload`, and `useFavoriteEntitiesState` SHALL seed `favoriteIds` from it in addition to the deployments, toolsets and prompts sections, so a skill's star reflects stored state on first render; consumers read the state through `useFavoriteApplications()`.
 - **Catalog type mapping**: `FAVORITE_ENTITY_TYPE_BY_CATALOG_TYPE` in `apps/chat/src/utils/favorites.ts` SHALL gain `[CatalogEntityType.Skill]: FavoriteEntityType.Skill`. Without this entry the map's deployment fallback would write skill resource URLs into `deployments.installed`, corrupting an unrelated list — this entry is a correctness requirement, not a convenience.
 - **i18n keys**: none. The star control and its label already exist.
 - **RTL impact**: none.

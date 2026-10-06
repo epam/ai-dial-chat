@@ -4,7 +4,7 @@
 Specifies `libs/builder-form`'s host-agnostic builder/editor form building blocks: the `BuilderFormContainer` page shell, the `EditorLayout`/`EditorSection` two-column editor layout, the `AddAvatar`/`AvatarPickerModal` avatar controls, and the `DeploymentCreationForm`/`DeploymentLocalesField` shared General-step field set with its validation — public package surface, host-isolation boundary (no i18n/routing/API knowledge), responsive layout behaviour, RTL/accessibility support, and the host/library division of responsibility shared by the scheduled-task, prompt, skill, toolset, Quick App, and Custom App editors.
 ## Requirements
 ### Requirement: Public package surface
-`libs/builder-form/src/index.ts` SHALL export `BuilderFormContainer`, `EditorLayout`, `EditorSection`, `AddAvatar`, `AvatarPickerModal`, `DeploymentCreationForm`, `DeploymentLocalesField`, `validateDeploymentCreationFields` with its patterns, `DeploymentCreationFieldErrorCode`, and every TypeScript type reachable through their props: `BuilderFormContainerProps`, `BuilderFormContainerStyles`, `BuilderFormContainerColors`, `BuilderFormHeaderLabels`, `BuilderFormHeaderStyles`, `BuilderFormHeaderColors`, `BuilderFormHeaderTypography`, `EditorLayoutProps`, `EditorLayoutLabels`, `EditorLayoutStyles`, `EditorSectionProps`, `EditorSectionStyles`, `AddAvatarProps`, `AddAvatarColors`, `AddAvatarStyles`, `AvatarPickerModalProps`, `AvatarPickerModalLabels`, `AvatarPickerFileManagerModalProps`, `DeploymentCreationFormProps`, `DeploymentCreationFormValues`, `DeploymentCreationFormLabels`, `DeploymentCreationFormFieldLabels`, `DeploymentCreationFormIconLabels`, `DeploymentCreationFormFieldErrors`, `DeploymentCreationFormLocaleEntry`, `DeploymentCreationFormLocaleOption`, `DeploymentCreationFormLocaleLabels`, `DeploymentCreationFormStyles`, `DeploymentCreationFormErrorCodes`, `DeploymentCreationFormValidationOptions`, `DeploymentLocalesFieldProps`. Internal-only helpers (the header and body components inside `BuilderFormContainer`) SHALL NOT be exported from the barrel. The package `libs/builder-form/package.json` SHALL declare `name: "@epam/ai-dial-builder-form"` with `description`, `license: "Apache-2.0"`, an `exports` map with source/types/import/default for `.`, `./package.json`, and `./styles.css`, and peer dependencies on `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and `@tabler/icons-react`.
+`libs/builder-form/src/index.ts` SHALL export `BuilderFormContainer`, `EditorLayout`, `EditorSection`, `AddAvatar`, `AvatarPickerModal`, `DeploymentCreationForm`, `DeploymentLocalesField`, `EntityEditor`, `MetadataForm`, `useMetadataForm`, `MetadataField`, `validateDeploymentCreationFields` with its patterns (`NAME_PATTERN`, `VERSION_PATTERN`, `SEMVER_VERSION_PATTERN`), `DeploymentCreationFieldErrorCode`, the `BUILDER_FORM_CLASS` public class-name map, `DEFAULT_METADATA_FORM_LABELS`, and every TypeScript type reachable through their props: `BuilderFormContainerProps`, `BuilderFormContainerStyles`, `BuilderFormContainerColors`, `BuilderFormActionsLabels`, `BuilderFormHeaderLabels`, `BuilderFormHeaderStyles`, `BuilderFormHeaderColors`, `BuilderFormHeaderTypography`, `EditorLayoutProps`, `EditorLayoutLabels`, `EditorLayoutStyles`, `EditorLayoutColors`, `EditorSectionProps`, `EditorSectionStyles`, `EditorSectionColors`, `AddAvatarProps`, `AddAvatarColors`, `AddAvatarStyles`, `AvatarPickerModalProps`, `AvatarPickerModalLabels`, `AvatarPickerFileManagerModalProps`, `DeploymentCreationFormProps`, `DeploymentCreationFormValues`, `DeploymentCreationFormLabels`, `DeploymentCreationFormFieldLabels`, `DeploymentCreationFormIconLabels`, `DeploymentCreationFormFieldErrors`, `DeploymentCreationFormLocaleEntry`, `DeploymentCreationFormLocaleOption`, `DeploymentCreationFormLocaleLabels`, `DeploymentCreationFormStyles`, `DeploymentCreationFormErrorCodes`, `DeploymentCreationFormValidationOptions`, `DeploymentLocalesFieldProps`, `EntityEditorProps`, `EntityEditorLabels`, `EntityEditorStyles`, `MetadataFormProps`, `MetadataFormLabels`, `MetadataFormAvatarPicker`, `UseMetadataFormOptions`, `UseMetadataFormResult`. Internal-only helpers (the header and body components inside `BuilderFormContainer`) SHALL NOT be exported from the barrel. The package `libs/builder-form/package.json` SHALL declare `name: "@epam/ai-dial-builder-form"` with `description`, `license: "Apache-2.0"`, an `exports` map with `./package.json`, `./styles.css` (`./dist/index.css`), and `.` (source/types/import/default), peer dependencies on `react`, `@epam/ai-dial-ui-kit`, and `@epam/ai-dial-chat-shared`, and `@tabler/icons-react` as a regular dependency.
 
 #### Scenario: Consumer imports the library's public surface
 - **WHEN** a consumer writes `import { EditorLayout, EditorSection, EditorLayoutProps, EditorLayoutLabels } from '@epam/ai-dial-builder-form'`
@@ -26,7 +26,7 @@ Specifies `libs/builder-form`'s host-agnostic builder/editor form building block
 - **THEN** none are found; back-navigation is exposed only via `onBack` callback prop
 
 ### Requirement: BuilderFormContainer — page shell
-`BuilderFormContainer` SHALL render a full-height, non-scrolling page shell: a header (back control, title, cancel/submit action pair, with a `role="status"` region announcing `labels.submittingLabel` while `isSubmitting` is `true`) above a three-column body — `left`, the main column (`children`), and `metadata`. The header SHALL use the same responsive padding as the scheduled-task detail header: `px-4 py-2` below desktop and `px-8 py-0` with a 64 px height at desktop. On mobile the stacked body SHALL own the single vertical scrollbar. On desktop the body SHALL be a non-wrapping clipped row and each populated column SHALL scroll independently, keeping the page root and header fixed. Side columns are full width on mobile and a fixed 400 px on desktop; supplying `left` without `metadata` reserves an empty end column of the same width so the main column stays optically centered. The container SHALL hold no state of its own; all strings, disabled flags, and callbacks are host-supplied.
+`BuilderFormContainer` SHALL render a full-height, non-scrolling page shell: a header (back control, title, cancel/submit action pair shown at desktop only, while a sticky bottom footer holds the same pair below desktop, with a `role="status"` region announcing `labels.submittingLabel` while `isSubmitting` is `true`) above a three-column body — `left`, the main column (`children`), and `metadata`. The header SHALL use the same responsive padding as the scheduled-task detail header: `px-4 py-2` below desktop and `px-8 py-0` with a 64 px height at desktop. On mobile the stacked body SHALL own the single vertical scrollbar. On desktop the body SHALL be a non-wrapping clipped row and each populated column SHALL scroll independently, keeping the page root and header fixed. Side columns are full width on mobile and a fixed 400 px on desktop; supplying `left` without `metadata` reserves an empty end column of the same width so the main column stays optically centered. An optional `layout` prop (`sideColumnWidth`, default `'400px'`; `columnGap`, default `'0px'`; `reserveEndColumn`, default `true`) overrides that sizing. The container SHALL hold no state of its own; all strings, disabled flags, and callbacks are host-supplied.
 
 #### Scenario: Default responsive shell
 
@@ -37,7 +37,7 @@ Specifies `libs/builder-form`'s host-agnostic builder/editor form building block
 
 ### Requirement: EditorLayout — header row
 `EditorLayout` SHALL render a header row containing:
-- A `GhostIconButton` with a left-arrow icon on the inline-start side, labelled by `backAriaLabel` (English default `'Back'`), that calls `onBack` when clicked
+- A `GhostIconButton` with an `IconArrowNarrowLeft` icon on the inline-start side, labelled by `backAriaLabel` (English default `'Back'`), that calls `onBack` when clicked
 - A `title` text rendered as an `h1` heading element
 - An `actions` ReactNode slot on the inline-end side, rendered as-is (the host supplies the actual `GhostButton` / `PrimaryButton` instances), visible only at the `desktop` breakpoint and above
 - A `role="status"` aria-live polite SR-only region that announces `labels.savingStatusLabel` (default `'Saving'`) when `isSaving` is `true` and an empty string otherwise
@@ -82,7 +82,7 @@ Below the `desktop` breakpoint, `EditorLayout` SHALL render the same `actions` c
 ### Requirement: EditorLayout — two-column responsive body
 `EditorLayout` SHALL render its body as a two-column layout on desktop and a single stacked column on mobile:
 
-- **Desktop** (≥ `desktop` breakpoint): `leftContent` occupies a fixed 360 px column on the inline-start side; `rightContent` (when provided) occupies the remaining `flex-1` space, separated by a `border-e` divider. Both columns are independently scrollable via `overflow-y-auto` on the outer body container.
+- **Desktop** (≥ `desktop` breakpoint): `leftContent` occupies a fixed 400 px column on the inline-start side; `rightContent` (when provided) occupies the remaining `flex-1` space, separated by a `border-e` divider. The body container is `overflow-hidden` and each column scrolls independently through its own `overflow-y-auto`.
 - **Mobile** (below `desktop` breakpoint): `leftContent` renders first (top), `rightContent` renders below it; both span full width. The body container is a single scrollable column.
 - When `rightContent` is absent or `undefined`, `leftContent` expands to full width at all viewport sizes.
 
@@ -241,7 +241,7 @@ than the default permissive character-set check.
 - **THEN** it returns no error for version
 
 ### Requirement: Library isolation boundary
-`libs/builder-form` SHALL NOT import `react-i18next`, `@epam/chat-api-client`,
+`libs/builder-form` SHALL NOT import `react-i18next`, `@epam/ai-dial-chat-api-client`,
 `apps/chat/src/server-api`, routing utilities, browser storage, feature-flag clients, file
 manager/upload components, or any DIAL Core/application-specific integration detail. All
 display strings SHALL be supplied by the host app through a `labels` prop; all request-body
@@ -251,7 +251,7 @@ prop, which does not violate this boundary.
 
 #### Scenario: No generated client or i18n imports
 - **WHEN** the library's source is inspected
-- **THEN** no file under `libs/builder-form/src` imports `@epam/chat-api-client`,
+- **THEN** no file under `libs/builder-form/src` imports `@epam/ai-dial-chat-api-client`,
   `react-i18next`, or an application route/path constant
 
 ### Requirement: Name and description resolve to plain strings before reaching the library
@@ -353,8 +353,9 @@ phone.
 
 #### Scenario: Popup opens with one unconfigured row when no locales exist yet
 - **WHEN** a user opens the "Add locale" popup while `otherLocales` is empty
-- **THEN** the popup pre-seeds one empty, unconfigured row instead of showing an empty list
-  that requires clicking "Add locale" first
+- **THEN** the popup pre-seeds one row, with the first available language pre-selected and an
+  empty name and description, instead of showing an empty list that requires clicking
+  "Add locale" first
 
 ### Requirement: Host composes additional locales into the write payload
 A host app that saves an entity SHALL compose `values.otherLocales` into the request fields DIAL
@@ -378,7 +379,7 @@ since that value is already the primary Name/Description field.
 
 ### Requirement: Visual composition without duplicated logic
 The library SHALL render its field stack using neutral default layout classes and SHALL
-accept an optional `classNames` prop for per-slot style overrides, without requiring host apps
+accept an optional `styles` prop (`DeploymentCreationFormStyles`: `root` and `field` class names) for per-slot style overrides, without requiring host apps
 to fork or duplicate the shared field/validation logic to achieve a different visual layout
 around the shared fields.
 
@@ -398,7 +399,7 @@ around the shared fields.
 
 #### Scenario: Back icon is aria-hidden
 - **WHEN** `EditorLayout` renders
-- **THEN** the `IconArrowLeft` inside the back button carries `aria-hidden`, and the button's accessible name comes from `aria-label={backAriaLabel}`
+- **THEN** the `IconArrowNarrowLeft` inside the back button carries `aria-hidden`, and the button's accessible name comes from `aria-label={backAriaLabel}`
 
 ### Requirement: Builder form back icon is a supported composition option
 
@@ -437,7 +438,8 @@ BuilderFormHeader and its containing public shell SHALL accept and forward optio
 
 **Left column (`leftContent`)**
 
-- An `EditorSection` titled `labels.metadataTitle` (default `'Metadata'`) that contains `metadata`.
+- An `EditorSection` titled `metadataTitle ?? labels.metadataTitle` (default `'Metadata'`) that contains `metadata`; `metadataTitle={null}` renders the section without a heading.
+- When `setup` is absent, `alert` (wrapped in `role="alert"`) renders above that section instead.
 - `metadataFooter`, when provided, below that section.
 
 **Right column (`rightContent`)**
@@ -454,7 +456,7 @@ Mobile behaviour (sections stacked, Metadata first, actions in the bottom bar) i
 #### Scenario: Screenshot layout at desktop width
 - **WHEN** `EntityEditor` renders with `title="Create toolset"`, `submitLabel="Create"`, a `metadata` node and a `setup` node at desktop width
 - **THEN** the header shows a back button, the "Create toolset" heading, and Cancel and Create buttons at the inline end
-- **AND** a "Metadata" `<h2>` section renders in the 360 px left column
+- **AND** a "Metadata" `<h2>` section renders in the 400 px left column
 - **AND** a "Setup" `<h2>` section renders in the right column
 
 #### Scenario: Extra actions and preview mode
@@ -519,9 +521,9 @@ The default Tags placeholder SHALL be `'Add tags, comma separated'`.
 - `values` and `setValues(patch)`.
 - `touched` and `markTouched(field)`.
 - `errorCodes`: the full result of `validateDeploymentCreationFields(values, validationOptions)`.
-- `visibleErrorCodes`: only the touched fields, or every field once `attemptSubmit()` has been called.
+- `visibleErrorCodes`: only the touched fields, or every field once `attemptSubmit()` has been called. A `TooLong` or `ControlCharacters` code is visible immediately, without a touch; only a `Required` or `InvalidFormat` code waits for touch or submit.
 - `attemptSubmit(): boolean`: marks every field touched and returns whether `errorCodes` is empty.
-- `isDirty` and `reset(values)`.
+- `isDirty` and `reset(values?)`, which re-seeds from the given values or, when omitted, from the latest `initialValues`.
 
 `initialValues` SHALL seed `values` once per `reseedKey`, so a host re-render never overwrites edits. The hook SHALL also return `submitAttemptCount`, incremented on every `attemptSubmit()`.
 

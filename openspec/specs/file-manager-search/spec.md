@@ -2,24 +2,24 @@
 
 ## Purpose
 
-Recursive file search exposed by `useDialFileManager` and enabled in the file-manager shell.
+Recursive file search exposed by `useDialFileManager` (`libs/chat-hooks`) and enabled in the file-manager shell (`libs/chat-shared`).
 
 ## Requirements
 
 ### Requirement: useDialFileManager exposes onSearchFiles for recursive file search
 
-`useDialFileManager` SHALL expose an `onSearchFiles(query: string) => void` callback. When called with a non-empty query, the hook SHALL fetch a recursive listing from the BFF using the active tab's listing function (`listFiles` / `listSharedFiles` / `listPublicFiles`) with `{ recursive: true }`, and expose the whole recursive listing, unfiltered, through `searchResults`. The hook SHALL NOT filter by the query: `DialFileManager` calls `onSearchFiles` once per search session and applies the case-insensitive name-contains filter for that query and every later one itself, so pre-filtering by the first query would hide matches for a replacement query.
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts`) SHALL expose an `onSearchFiles(folder: string, query: string) => void` callback, implemented by `useDialFileListing` and forwarded unchanged. When called with a non-blank query, the hook SHALL fetch a recursive listing of the current folder through `fetchForSearch` (`dial-file-manager-mapping.util.ts`) with `recursive: true` — `filesApi.listFiles` for My files, `filesApi.listPublicFiles` for Organization, and, for a nested Shared folder, `filesApi.listFiles` against the owning shared root's bucket and path — and expose the whole recursive listing, unfiltered, through `searchResults: DialFile[] | null`. At the Shared tab's root no request is made: the already-cached root items are used as the results. The hook SHALL NOT filter by the query: `DialFileManager` calls `onSearchFiles` once per search session and applies the case-insensitive name-contains filter for that query and every later one itself, so pre-filtering by the first query would hide matches for a replacement query.
 
-The hook SHALL debounce `onSearchFiles` calls by 300 ms. Any in-flight search request SHALL be cancelled (via `AbortController`) when a new query arrives or when the component unmounts.
+The hook SHALL debounce `onSearchFiles` calls by 300 ms. Every call SHALL immediately cancel the pending debounce timer and any in-flight search (a cancellation flag, not an `AbortController`), so a slower stale fetch never overwrites newer results; the timer and in-flight search are also cancelled on unmount. A failed search resolves `searchResults` to `[]`.
 
-The hook SHALL expose `isSearching: boolean` that is `true` while the debounced request is in flight. When the query becomes empty, `isSearching` SHALL return to `false` and `items` SHALL revert to the cached folder contents for the current path.
+The hook SHALL expose `isSearching: boolean` that is `true` while the debounced request is in flight, and `clearSearchResults()`. When the query becomes blank, `searchResults` SHALL return to `null` and `isSearching` to `false`; `items` (the folder contents for the current path) is never replaced by search results.
 
-State ownership: `useDialFileManager` hook — internal `searchQuery` and `searchResults` refs/state; `items` is derived from search results when query is non-empty.
+State ownership: `useDialFileListing` hook — internal `searchResults`/`isSearching` state and debounce/cancel refs; the query itself is owned by `DialFileManager`.
 Feature flag: none — enabled unconditionally when `DialFileManagerShell` sets `searchable: true`.
 RTL: none — search is direction-agnostic.
-Memoisation: `onSearchFiles` wrapped in `useCallback`; `items` derivation in `useMemo`.
+Memoisation: `onSearchFiles` and `clearSearchResults` wrapped in `useCallback`.
 Cache: search results are NOT stored in the per-folder `Map` cache; they are ephemeral for the duration of the active query.
-No new BFF endpoint — reuses existing `listFiles` / `listSharedFiles` / `listPublicFiles` with `recursive: true`.
+No new BFF endpoint — reuses existing `listFiles` / `listPublicFiles` with `recursive: true`.
 
 #### Scenario: Search returns matching files
 
@@ -36,7 +36,7 @@ No new BFF endpoint — reuses existing `listFiles` / `listSharedFiles` / `listP
 #### Scenario: Empty query restores folder view
 
 - **WHEN** user clears the search field after a previous search
-- **THEN** `items` reverts to the cached folder contents for the current path
+- **THEN** `searchResults` is `null`, the grid shows the cached folder contents for the current path
 - **AND** `isSearching` is `false`
 
 #### Scenario: Rapid typing debounces requests
@@ -47,25 +47,26 @@ No new BFF endpoint — reuses existing `listFiles` / `listSharedFiles` / `listP
 #### Scenario: Tab switch during search clears search state
 
 - **WHEN** user switches from My Files tab to Shared tab while a search query is active
-- **THEN** the search query is cleared, `items` shows the root of the new tab, and `isSearching` is `false`
+- **THEN** the pending/in-flight search is cancelled, `searchResults` is `null`, `items` shows the root of the new tab, and `isSearching` is `false`
 
-#### Scenario: Search on Shared tab uses shared listing endpoint
+#### Scenario: Search on Shared tab searches the shared root's own bucket
 
-- **WHEN** user is on the Shared tab and types a search query
-- **THEN** `listSharedFiles` is called with `{ recursive: true }` (not `listFiles`)
+- **WHEN** user is inside a shared folder on the Shared tab and types a search query
+- **THEN** `listFiles` is called with the shared root's `bucket`, its path in that bucket, and `recursive: true`
+- **AND** at the Shared tab root, the cached root items are used and no request is made
 
 ---
 
 ### Requirement: DialFileManagerShell enables search UI
 
-`DialFileManagerShell` SHALL pass `navigationPanelOptions={{ searchable: true, hideSearchPathItemName: true }}` to `DialFileManager` and wire `onSearchFiles` from `useDialFileManager` to the `DialFileManager` search callback prop.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) SHALL pass `navigationPanelOptions={{ searchable: true, placeholder: labels.searchPlaceholderByTab?.[tab] }}` and `hideSearchPathItemName={true}` to `DialFileManager`, and wire `onSearchFiles`, `searchInProgress={isSearching}`, `searchResults={searchResults ?? []}`, and `clearSearchResults` from the file-manager controller.
 
-When `isSearching` is `true`, the shell SHALL display a loading indicator within the file grid area (using the existing skeleton/spinner pattern).
+When `isSearching` is `true`, `DialFileManager` displays its own loading state in the file grid area via `searchInProgress`.
 
-When search returns zero results, the shell SHALL display a generic "No results found" empty state (i18n key: `dialFileManager.search.emptyStateTitle`).
+When a completed search is shown (`searchResults != null && !isSearching`), the shell SHALL use the host-supplied `labels.searchEmptyStateTitle` as the empty-state title. The app hosts (`DialFileManagerModal`, `DialFileManagerPage`) supply `t(BasicI18nKeys.NoResults)` — key `basic.noResults`, "No results found".
 
 RTL: none — `DialFileManager` handles search input direction internally.
-i18n keys: `dialFileManager.search.emptyStateTitle`.
+i18n keys: `basic.noResults` (host-supplied through `labels.searchEmptyStateTitle`; the lib does not import i18n).
 Accessibility: search input provided by `DialFileManager` ui-kit component; no additional ARIA attributes needed from the host.
 
 #### Scenario: Search input visible in modal
@@ -81,9 +82,9 @@ Accessibility: search input provided by `DialFileManager` ui-kit component; no a
 #### Scenario: Loading indicator during search
 
 - **WHEN** a search query is debounced and the BFF request is in flight
-- **THEN** the file grid area shows a loading skeleton or spinner
+- **THEN** `DialFileManager` receives `searchInProgress={true}` and shows its loading state in the file grid area
 
 #### Scenario: Empty state for no search results
 
 - **WHEN** the search completes and no files match the query
-- **THEN** the empty state copy uses key `dialFileManager.search.emptyStateTitle`
+- **THEN** the empty state title is `labels.searchEmptyStateTitle` ("No results found", `basic.noResults`, in the app hosts)

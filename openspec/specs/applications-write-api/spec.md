@@ -110,7 +110,8 @@ way `deleteApplication` does, fetch the current stored application via DIAL Core
 `application_type_schema_id` is never in the body and therefore always carried through
 untouched, and `displayVersion` is carried through unless the body supplies `version`.
 `displayName` SHALL be replaced outright on every update; the remaining optional fields SHALL
-be written only when present in the body.
+be written only when present (non-`null`) in the body — `topics` additionally only when non-empty, so
+`topics: []` carries the stored `descriptionKeywords` through unchanged.
 
 **`applicationProperties` replacement semantics:**
 - When the request body omits `applicationProperties`, or supplies it as `null`, the stored
@@ -343,8 +344,9 @@ application for the authenticated session user by proxying DIAL Core
 `applicationName` path parameter SHALL be validated with the same allowlist pattern used
 by `GetToolsetDto.toolsetName` (`DEPLOYMENT_ID_PATTERN`/`DEPLOYMENT_ID_VALIDATION_MESSAGE`),
 via a new `GetApplicationDto`. The bucket/path SHALL be resolved by parsing an
-`applications/{bucket}/{path}` id when present, falling back to the caller's own bucket
-plus the encoded name otherwise (mirroring `ToolsetsService.resolveToolsetResource`). On
+`applications/{bucket}/{path}` id when present (`parseDialApplicationResource`,
+`apps/chat-api/src/common/utils/dial-application-resource.ts`), falling back to the caller's own bucket
+plus the encoded name otherwise (mirroring `ToolsetsListingService.resolveToolsetResource`). On
 success, the per-user applications list cache (`applications:list:${userSub}`) SHALL be
 invalidated, and the per-user deployments list cache SHALL also be invalidated via
 `DeploymentsService.invalidateListCache(userSub)` (clearing `deployments:list:${userSub}`

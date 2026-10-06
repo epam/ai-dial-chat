@@ -33,14 +33,16 @@ The backend SHALL expose `POST /api/v1/prompts/folders` in `PromptController` (`
 
 ```
 {
-  "name":     "<string @IsString @MinLength(1) @MaxLength(256) @Matches(/^[^/]+$/)>",
-  "parentId": "<string | undefined @IsString @Matches(/^[a-zA-Z0-9 _.\-/]*$/) @IsOptional>"
+  "name":     "<string @IsString @MinLength(1) @MaxLength(256) @Matches(PROMPT_NAME_PATTERN)>",
+  "parentId": "<string | undefined @IsOptional @IsString @Matches(OPTIONAL_PROMPT_PATH_PATTERN)>"
 }
 ```
 
-The service:
+`PROMPT_NAME_PATTERN` (`/^(?!\.{1,2}$)[a-zA-Z0-9 _.-]+$/` — no `/`, and not `.` or `..`) and `OPTIONAL_PROMPT_PATH_PATTERN` (empty, or safe `/`-separated `[a-zA-Z0-9 _.-]` segments with no `.`/`..` traversal segment and no `//`) live in `apps/chat-api/src/prompts/constants/prompt-path.constants.ts`.
+
+The service (`PromptsFolderService.createFolder`):
 1. Derives the full folder path: `{parentId ? parentId + '/' : ''}{name}`.
-2. Rejects with 409 if a sentinel already exists at that path.
+2. Rejects with 409 if a sentinel already exists at that path — the sentinel write is sent with `If-None-Match: *`, and DIAL Core's `412` is mapped to `409`.
 3. Writes sentinel resource `prompts/{sessionBucket}/{folderPath}/.folder` (empty content) to DIAL Core.
 4. Returns HTTP 201 with `PromptFolderResponseDto`: `{ "id": "<folderPath>", "name": "<name>" }`.
 
@@ -75,9 +77,11 @@ The backend SHALL expose `PUT /api/v1/prompts/folders` with a required `path` qu
 
 ```
 {
-  "name": "<string @IsString @MinLength(1) @MaxLength(256) @Matches(/^[^/]+$/)>"
+  "name": "<string @IsString @MinLength(1) @MaxLength(256) @Matches(PROMPT_NAME_PATTERN)>"
 }
 ```
+
+The `path` query parameter (here and on `DELETE /api/v1/prompts/folders`) is validated by `RequiredPromptPathDto` (`PROMPT_PATH_PATTERN`, 1–2048 characters).
 
 The service:
 1. Verifies the folder exists (at least one file with the given path prefix, or a sentinel at that path).
@@ -179,7 +183,7 @@ After implementation `npm run openapi` SHALL produce these SDK methods:
 #### Scenario: Folder operations are available in the generated client
 
 - **WHEN** `npm run openapi` completes from the implemented Swagger document
-- **THEN** `@epam/chat-api-client` exposes all four SDK methods in the table above
+- **THEN** `@epam/ai-dial-chat-api-client` exposes all four SDK methods in the table above
 
 RTL / direction impact: none (backend only).
 Feature flag gating: none.

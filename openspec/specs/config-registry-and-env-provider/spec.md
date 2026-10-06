@@ -99,14 +99,14 @@ interface AppConfigEvalContext {
 }
 ```
 
-Context fields MUST NOT be serialized into the client response. Providers receive the full context but MAY ignore user-specific fields in the first slice.
+`AppConfigController` (`apps/chat-api/src/app-config/app-config.controller.ts`) builds the context from the validated `appId` query parameter, the optional session (`OptionalSessionGuard`): `userId` = the session user's `sub` and `roles` = the string entries of the session claims' `roles` array, and `environment` = `NODE_ENV`. Context fields MUST NOT be serialized into the client response. Providers receive the full context and MAY ignore user-specific fields; `EnvConfigProvider` reads only `roles`, for definitions that declare `allowedRolesEnvVar`.
 
 **RTL impact:** None. **i18n impact:** None.
 
 #### Scenario: Context is built from appId
 
 - **WHEN** the controller receives `?appId=chat-ui`
-- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'` and `environment=NODE_ENV` is constructed and passed to `AppConfigService`
+- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'`, `environment=NODE_ENV`, and — when a session is present — the session user's `userId` and `roles` is constructed and passed to `AppConfigService`
 
 #### Scenario: Context does not appear in response
 
@@ -222,13 +222,13 @@ On provider error: log warning, skip to next provider. For keys with `critical=t
 
 ### Requirement: Type mismatch falls through to next provider
 
-When `EnvConfigProvider` reads an env var whose parsed value does not match `definition.valueType` (e.g. `TRANSCRIBE_SIZE_LIMIT_BYTES` is `NaN` after `parseInt`), it MUST log a warning including the key name and return `undefined` so the next provider can supply a safe default.
+When `EnvConfigProvider`'s generic environment-variable path receives a value from `ConfigService` that does not match `definition.valueType` (e.g. `NaN` for a `valueType='number'` key), it MUST log a warning including the key name and return `undefined` so the next provider can supply a safe default. `valueType='json'` values are not type-checked on this path. Numeric env vars such as `TRANSCRIBE_SIZE_LIMIT_BYTES` are additionally validated with `@IsInt()`/`@Min(1)` in `EnvironmentVariables`, so a non-numeric value set in the real environment fails startup validation before any resolution happens; this provider-level check is the defensive fallback for values that bypass that schema.
 
 **RTL impact:** None. **i18n impact:** None.
 
 #### Scenario: Non-numeric TRANSCRIBE_SIZE_LIMIT_BYTES falls through
 
-- **WHEN** `TRANSCRIBE_SIZE_LIMIT_BYTES=not-a-number` is set and `EnvConfigProvider.resolve('asr.transcribeSizeLimitBytes', ctx)` is called
+- **WHEN** `ConfigService` yields `NaN` for `TRANSCRIBE_SIZE_LIMIT_BYTES` and `EnvConfigProvider.resolve('asr.transcribeSizeLimitBytes', ctx)` is called
 - **THEN** the provider logs a warning and returns `undefined`
 - **AND** `CompositeConfigProvider` falls through to `StaticDefaultsProvider` and returns `5242880`
 
@@ -288,7 +288,7 @@ The `CONFIG_DEFINITIONS` registry SHALL include an `announcement.html` entry so 
 
 ### Requirement: Unrecognized entries are filtered with a warning at the service layer, not at env validation
 
-`AppConfigService.getClientConfig` SHALL filter the resolved `uiFeatures.enabledUiFeatures` list to values that are members of the shared `OverlayFeature` enum before including it in the response, logging a `warn`-level message (naming the unrecognized value) for each entry dropped. When all entries are unrecognized, the service SHALL log an additional warning and return `null` (falling back to compiled-in defaults), rather than sending an empty array that would break the entire UI. This filtering SHALL NOT cause application boot to fail and SHALL NOT reject the request — the response always returns `200 OK`.
+`AppConfigService.getClientConfig` SHALL filter the resolved `uiFeatures.enabledUiFeatures` list to values that are members of the shared `OverlayFeature` enum before including it in the response — through `normalizeEnabledUiFeatures` (`apps/chat-api/src/app-config/enabled-ui-features.normalizer.ts`), applied by the `uiFeatures.enabledUiFeatures` entry of `CLIENT_CONFIG_MAPPINGS` (`client-config.mapper.ts`) with a `warn` callback bound to the service's logger — logging a `warn`-level message (naming the unrecognized value) for each entry dropped. When all entries are unrecognized, the service SHALL log an additional warning and return `null` (falling back to compiled-in defaults), rather than sending an empty array that would break the entire UI. This filtering SHALL NOT cause application boot to fail and SHALL NOT reject the request — the response always returns `200 OK`.
 
 Membership SHALL be decided against the app-local `KNOWN_UI_FEATURES` allowlist and `DEPRECATED_UI_FEATURE_ALIASES` map (`apps/chat-api/src/app-config/known-ui-features.constants.ts`), which mirror `OverlayFeature` and `DEPRECATED_OVERLAY_FEATURE_ALIASES` without importing the browser-facing overlay package into this Node-only service.
 
@@ -373,7 +373,7 @@ The `CONFIG_DEFINITIONS` registry (`apps/chat-api/src/app-config/config-registry
 - `description` — human-readable summary of the visualizer registry semantics.
 - `owner` — matches the ownership convention used by other registry entries.
 
-The parsed value type MUST be `CustomVisualizer[]` (see `custom-visualizers` capability). Elements that fail per-entry validation SHALL be dropped with an error log at boot; total parse failure SHALL yield `[]`.
+The parsed value type MUST be `CustomVisualizer[]` (see `custom-visualizers` capability). Elements that fail per-entry validation (`CustomVisualizerDto` requires a non-empty `title` and `contentType` and an absolute HTTP(S) `url`) SHALL be dropped with an error log when the key is resolved; total parse failure SHALL yield `[]`. Boot never fails on malformed config.
 
 **Feature flag:** none. The registry entry is a backend implementation detail.
 
@@ -384,8 +384,8 @@ The parsed value type MUST be `CustomVisualizer[]` (see `custom-visualizers` cap
 
 #### Scenario: Env resolves to parsed array
 
-- **WHEN** `CUSTOM_VISUALIZERS='[{"contentType":"application/x-my-viz","url":"https://viz.example.com"}]'` and the config is resolved
-- **THEN** the `customVisualizers` value on the resolved config equals `[{ contentType: 'application/x-my-viz', url: 'https://viz.example.com' }]`
+- **WHEN** `CUSTOM_VISUALIZERS='[{"title":"my-viz","contentType":"application/x-my-viz","url":"https://viz.example.com"}]'` and the config is resolved
+- **THEN** the `customVisualizers` value on the resolved config is one entry with `title: 'my-viz'`, `contentType: 'application/x-my-viz'`, and `url: 'https://viz.example.com'`
 
 #### Scenario: Missing env falls back to default
 
@@ -584,7 +584,7 @@ The `CONFIG_DEFINITIONS` registry (`apps/chat-api/src/app-config/config-registry
 - `description` — human-readable summary of the application-scoped grouped visualizer registry, including that each entry's origin must also be listed in `ALLOWED_IFRAME_ORIGINS` and that application visualizers take precedence over `CUSTOM_VISUALIZERS` for the attachments they claim.
 - `owner` — matches the ownership convention used by other registry entries.
 
-The parsed value type MUST be `Record<string, ApplicationVisualizer>` (see the `application-visualizers` capability). Entries that fail per-entry validation SHALL be dropped with an error log at boot; total parse failure SHALL yield `{}`.
+The parsed value type MUST be `Record<string, ApplicationVisualizer>` (see the `application-visualizers` capability). Entries that fail per-entry validation SHALL be dropped with an error log when the key is resolved; total parse failure SHALL yield `{}`. Boot never fails on malformed config.
 
 **Feature flag:** none. The registry entry is a backend implementation detail.
 
@@ -621,7 +621,7 @@ Boot MUST NOT fail for any of these cases.
 
 Additionally, the provider SHALL log a warning when a surviving entry's URL origin is absent from `ALLOWED_IFRAME_ORIGINS`, naming the entry key and the missing origin. The entry is still returned — CSP, not this provider, is what blocks the iframe — but the warning gives the operator the only server-side signal of a misconfiguration that is otherwise invisible in the browser.
 
-`ApplicationVisualizerDto` (`apps/chat-api/src/app-config/dto/application-visualizer.dto.ts`) SHALL mirror `CustomVisualizerDto` with `contentType` optional, and SHALL carry full `@ApiProperty` metadata on every field.
+`ApplicationVisualizerDto` (`apps/chat-api/src/app-config/dto/application-visualizer.dto.ts`) SHALL mirror `CustomVisualizerDto` with `contentType` optional plus the application-only `borderless` and `withoutTitle` fields, and SHALL carry full `@ApiProperty` metadata on every field.
 
 #### Scenario: Invalid JSON resolves to an empty registry
 
@@ -680,7 +680,7 @@ mapping entries SHALL write the same response field. The mapped fields, together
 `appVersion` and `aiTextRefinementAvailable`, SHALL cover every `ClientConfigDto`
 field.
 
-A unit test in `apps/chat-api/src/app-config/tests/` SHALL enforce these properties
+The mapping table is `CLIENT_CONFIG_MAPPINGS` in `apps/chat-api/src/app-config/client-config.mapper.ts`. A unit test in `apps/chat-api/src/app-config/tests/` (`client-config.mapper.spec.ts`) SHALL enforce these properties
 against the real `CONFIG_DEFINITIONS`, so a new unmapped client key fails the test
 suite during development. `ConfigDefinition.key` SHALL stay typed as `string`, and
 `CONFIG_DEFINITIONS` SHALL stay annotated as `ConfigDefinition[]`. This requirement

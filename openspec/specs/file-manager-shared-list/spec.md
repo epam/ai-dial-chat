@@ -16,6 +16,8 @@ The system SHALL expose `GET /api/v1/files/shared` in `apps/chat-api/src/files/f
 - **Request content-type**: none (query params only)
 - **Response content-type**: `application/json`
 
+Query parameters are validated by `ListSharedFilesQueryDto` (`path`: `@IsValidFilePath`, max 1024; `token`: max 1024; `limit`: integer 1-1000).
+
 **Query parameters:**
 
 | Parameter | Type   | Required | Default |
@@ -26,7 +28,7 @@ The system SHALL expose `GET /api/v1/files/shared` in `apps/chat-api/src/files/f
 
 **Success response (200):** `ListFilesResponseDto` (same DTO shape as `GET /api/v1/files/list`)
 
-The service SHALL call the DIAL Core sharing SDK method for files (`resourceTypes: ['FILE']`) and map results to `ListFilesItemDto[]` using the existing `normalizeFileItem` utility. No `sharedWithMe` flag is added to the DTO — the endpoint itself guarantees all items are shared.
+The service (`FilesListingService.listSharedFiles` in `apps/chat-api/src/files/listing/files-listing.service.ts`) SHALL call the DIAL Core sharing SDK method `getSharedResources` with `{ resourceTypes: ['FILE'], with: 'me', includeUserInfo: true }`, drop reserved root folders, and map results to `ListFilesItemDto[]` using the existing `normalizeFileItem` utility. Filtering and paging happen in the BFF: `path` keeps only items whose path equals or starts with it, `limit` truncates the result, and `token` is accepted but not used (no `nextToken` is returned). The response carries `bucket: ''` and `path` set to the requested path (or `''`). No `sharedWithMe` flag is added to the DTO — the endpoint itself guarantees all items are shared.
 
 The sharing SDK response does not include `contentType`/`contentLength` per item (unlike the regular metadata endpoint used by `GET /api/v1/files/list`). `normalizeFileItem` compensates by inferring `contentType` from the file name's extension (see `file-list`'s "Normalize DIAL metadata to FileManager-compatible nodes" requirement) so that MIME-type-based attach restrictions (`dial-file-manager-attach-validation`) apply consistently to shared files, not only to `my_files`/`organization` files.
 
@@ -58,12 +60,12 @@ The sharing SDK response does not include `contentType`/`contentLength` per item
 
 - **GIVEN** DIAL Core is unreachable or returns a 5xx error
 - **WHEN** `GET /api/v1/files/shared` is called
-- **THEN** `handleDialError` maps the error to `502 Bad Gateway`
+- **THEN** `handleDialSdkError` maps a DIAL Core 5xx to `502 Bad Gateway` (an unreachable or timed-out DIAL Core maps to `503`)
 
 #### Scenario: Frontend wrapper delegates to generated client
 
 - **WHEN** `listSharedFiles({})` is called in `files.api.ts`
-- **THEN** the function calls `filesApi.listSharedFiles(...)` and resolves to `ListFilesResponseDto`
+- **THEN** the function (built by `createFilesApiClient` from `@epam/ai-dial-chat-hooks`) calls `filesApi.listSharedFiles(...)` and resolves to `ListFilesResponseDto`
 
 ---
 
@@ -76,6 +78,8 @@ The system SHALL expose `GET /api/v1/files/public` in `apps/chat-api/src/files/f
 - **Auth**: session cookie
 - **Request content-type**: none (query params only)
 - **Response content-type**: `application/json`
+
+Query parameters are validated by `ListPublicFilesQueryDto` (`path`: `@IsValidFilePath`, max 1024; `token`: max 1024; `limit`: integer 1-1000; `recursive`: boolean).
 
 **Query parameters:**
 
@@ -90,7 +94,7 @@ The system SHALL expose `GET /api/v1/files/public` in `apps/chat-api/src/files/f
 
 **Success response (200):** `ListFilesResponseDto`
 
-The service SHALL call the existing `listFiles` SDK method with `bucket = PUBLIC_BUCKET` and the provided `path`. Items are normalized using `normalizeFileItem`.
+The service (`FilesListingService.listPublicFiles`) SHALL delegate to the same service `listFiles` used by `GET /api/v1/files/list`, with bucket `'public'` (the value of `PUBLIC_BUCKET` in `apps/chat-api/src/constants/dial.constants.ts`), the provided `path`, and `permissions: false`. Items are normalized using `normalizeFileItem`.
 
 **Error codes:** 400, 401, 404, 429, 502, 503, 500.
 
@@ -124,13 +128,13 @@ The service SHALL call the existing `listFiles` SDK method with `bucket = PUBLIC
 #### Scenario: Frontend wrapper delegates to generated client
 
 - **WHEN** `listPublicFiles({})` is called in `files.api.ts`
-- **THEN** the function calls `filesApi.listPublicFiles(...)` and resolves to `ListFilesResponseDto`
+- **THEN** the function (built by `createFilesApiClient` from `@epam/ai-dial-chat-hooks`) calls `filesApi.listPublicFiles(...)` and resolves to `ListFilesResponseDto`
 
 ---
 
 ### Requirement: Frontend wrappers for shared and public file listing
 
-The system SHALL provide typed frontend wrappers `listSharedFiles(params)` and `listPublicFiles(params)` in `apps/chat/src/server-api/files.api.ts`, delegating to the generated `filesApi.listSharedFiles(...)` and `filesApi.listPublicFiles(...)` from `@epam/chat-api-client`. Both wrappers SHALL follow the same pattern as the existing `listFiles` wrapper.
+The system SHALL provide typed frontend wrappers `listSharedFiles(params)` and `listPublicFiles(params)` in `apps/chat/src/server-api/files.api.ts`, delegating to the generated `filesApi.listSharedFiles(...)` and `filesApi.listPublicFiles(...)` from `@epam/ai-dial-chat-api-client`. Both wrappers SHALL follow the same pattern as the existing `listFiles` wrapper: `files.api.ts` re-exports them from `createFilesApiClient(filesApi, uploadFileWithProgress)` (`@epam/ai-dial-chat-hooks`).
 
 #### Scenario: listSharedFiles resolves to typed response
 

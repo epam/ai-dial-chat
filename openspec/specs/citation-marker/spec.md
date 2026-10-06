@@ -129,37 +129,45 @@ The frontend host's citation-rendering call site SHALL call `groupAnnotations` i
 
 ### Requirement: `CitationMarker` renders an inline button after the cited text span
 
-`apps/chat/src/components/Citations/CitationMarker/CitationMarker.tsx` SHALL render a UI kit `Button` (variant neutral, appearance outlined, size small) with:
+`libs/quotations/src/components/CitationMarker/CitationMarker.tsx` (exported as `CitationMarker` from `@epam/ai-dial-quotations`) SHALL render a UI kit `NeutralButton` (`size={ElementSize.Small}`, capped at `max-w-[240px]` with a single-line truncated label) with:
 - An optional leading icon, rendered before the label, when the `icon` prop is provided; omitted (no icon) when the prop is absent.
-- Label: `sourceName` when `annotationCount === 1`; `sourceName + " +" + (annotationCount - 1)` when `annotationCount > 1` (e.g. `"Wikipedia +1"`)
-- `aria-label`: `"Citation from <sourceName>"` (i18n key `citations.marker.ariaLabel`)
+- Label: `labels.label` when `annotationCount === 1`, and `labels.labelWithOverflow` when `annotationCount > 1`, wrapped in a span with `labelClassName` (default `'dial-caption-text'`). The lib does not format the text itself: the host builds the strings, so with the app's i18n values the label is the source name (e.g. `"Wikipedia"`) or the source name plus `" +" + (annotationCount - 1)` (e.g. `"Wikipedia +1"`)
+- `aria-label`: `labels.ariaLabel` (the app passes `"Citation from <sourceName>"`, i18n key `citations.marker.ariaLabel`)
 - `onClick`: calls the `onOpen` callback prop
 
 The component SHALL accept:
 ```ts
+interface CitationMarkerLabels {
+  ariaLabel: string;
+  label: string;
+  labelWithOverflow: string;
+}
+
 interface CitationMarkerProps {
   sourceName: string;
   annotationCount: number;
   onOpen: () => void;
   icon?: ReactNode;
+  labels: CitationMarkerLabels;
+  labelClassName?: string;
 }
 ```
 
-Existing inline-citation call sites (`CitationDropdown` used from `useCitationMarkdownComponents`) SHALL NOT pass `icon`, preserving their current icon-less appearance.
+`CitationMarker` is rendered by `CitationDropdown` (`libs/quotations`), which forwards its own optional `icon`. Inline-citation call sites (`CitationDropdown` rendered from `useCitationMarkdownComponents`) SHALL NOT pass `icon`, preserving their icon-less appearance; the message-level reference list in `ConversationMessageItem` passes an `aria-hidden` `IconLink`. `sourceName` is accepted but not rendered directly — the host interpolates it into `labels`.
 
-**i18n keys**: `citations.marker.label` (single), `citations.marker.labelWithOverflow` (with `+N`), `citations.marker.ariaLabel`.
+**i18n keys** (app side, `CitationsI18nKeys.MarkerLabel` / `MarkerLabelWithOverflow` / `MarkerAriaLabel`): `citations.marker.label` (`"{{source}}"`), `citations.marker.labelWithOverflow` (`"{{source}} +{{count}}"`), `citations.marker.ariaLabel` (`"Citation from {{source}}"`). The lib itself performs no translation.
 **RTL**: the button itself is direction-agnostic (text content only, no directional icon); when `icon` is provided, it is a symmetric icon (e.g. a link glyph) that SHALL NOT be mirrored.
 **Accessibility**: button role is already provided by the UI kit `Button`; the optional icon SHALL be marked `aria-hidden` by the caller.
 **Feature flag**: none.
 
 #### Scenario: Single-source marker shows source name only
 
-- **WHEN** `CitationMarker` is rendered with `sourceName="Wikipedia"` and `annotationCount={1}`
+- **WHEN** `CitationMarker` is rendered with `annotationCount={1}` and `labels.label = "Wikipedia"`
 - **THEN** the button label is `"Wikipedia"`
 
 #### Scenario: Multi-source marker shows overflow count
 
-- **WHEN** `CitationMarker` is rendered with `sourceName="Wikipedia"` and `annotationCount={3}`
+- **WHEN** `CitationMarker` is rendered with `annotationCount={3}` and the app's `labels.labelWithOverflow` for source `"Wikipedia"` and count 2
 - **THEN** the button label is `"Wikipedia +2"`
 
 #### Scenario: Clicking the marker calls onOpen
@@ -191,6 +199,8 @@ Existing inline-citation call sites (`CitationDropdown` used from `useCitationMa
 - Filters the resolved list to exclude annotations without `body.source.attachment.url`. This also excludes attachments that carry only inline data (no `url`): some grounding providers stream attachments whose content is embedded as base64 or text in the `data` field rather than a resolvable URL, and those cannot be linked or previewed.
 - Handles `null`/`undefined` annotation items gracefully (skips them without throwing).
 - Wraps the result in `useMemo` keyed on `[isStreaming, message]`.
+
+The non-streaming resolution, URL filtering, and MIME reconciliation live in `resolveMessageAnnotations(message)` (`libs/quotations/src/utils/annotation.ts`), which `useAnnotations` calls; `normalizeRawAnnotations` is imported from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/utils/annotation.ts`).
 
 **i18n**: none.
 **RTL**: none — hook returns data only.
@@ -230,7 +240,7 @@ The citation-aware markdown hook in `libs/quotations` (`useCitationMarkdownCompo
 - **Offset-based** (`text_character_range`, or any non-`html_tag` selector, including missing/unknown selectors): a sentinel string is injected into the pre-processed markdown at the character offset indicated by `target.selector.end`, and a `p`/`li` component override splits string children on that sentinel to render a `<CitationDropdown>` in its place. Unchanged from before the `html_tag` family existed.
 - **Tag-based** (`html_tag`): the exact supported element `<cit data-id="…"></cit>` is parsed by the host's `rehype-raw` pipeline and allow-listed through its `rehype-sanitize` schema (tag name `cit`, attribute `dataId`; see the `libs/chat-shared` `MarkdownRenderer`'s `baseRehypePlugins`). The hook registers a `cit` react-markdown component override that looks up the group by `data-id` and renders `<CitationDropdown>` for a match. Unmatched supported elements and every unsupported `cit` shape are displayed as literal text.
 
-The hook accepts an `isStreaming: boolean` parameter (added before `isCompactTypography` in its parameter list). Its `processedContent` computation:
+The hook's signature is `useCitationMarkdownComponents(content, groups, callbacks, isStreaming = false, isCompactTypography = false, fallbackGroups = [])` and it returns `{ processedContent, markdownComponents }`. `fallbackGroups` is an optional pool of groups from outside the message, consulted only to resolve a `<cit data-id>` element the message's own `groups` do not cover; it never affects sentinel injection or `processedContent`, and on a colliding id the message's own group wins. Its `processedContent` computation:
 
 - When `isStreaming` is `true`: applies `stripCitTagsWhileStreaming(content)`, which removes only complete supported citation elements and escapes unsupported or partial `cit` markup for literal display. No offset-based sentinel injection runs while streaming (`groups` is always `[]` in this state per the `useAnnotations` requirement above).
 - When `isStreaming` is `false`: runs `injectCitationSentinels(content, groups)` when groups are present, then escapes unsupported `cit` markup. `html_tag` groups are skipped by sentinel injection because matched supported elements render through the native `cit` component path. Sentinel indices for the remaining groups SHALL still refer to the original, unfiltered `groups` array.
@@ -241,7 +251,7 @@ Other injection rules, unchanged:
 - If the `end` offset exceeds the message text length, the marker SHALL be clamped to the end of the text.
 - Multiple markers at the same position SHALL be rendered in the order of their `AnnotationGroup` array.
 
-A supported `<cit data-id="…"></cit>` element with no matching `html_tag` group is rendered as literal text. Every other `cit` shape is escaped before Markdown parsing and likewise displayed literally. The shared `MarkdownRenderer` default `cit` component also serializes supported elements as text unless a citation-aware consumer supplies its override.
+A supported `<cit data-id="…"></cit>` element with no matching `html_tag` group in `groups` or `fallbackGroups` is rendered as literal text. Every other `cit` shape is escaped before Markdown parsing and likewise displayed literally. The shared `MarkdownRenderer` default `cit` component also serializes supported elements as text unless a citation-aware consumer supplies its override.
 
 **i18n**: see `CitationMarker` component above.
 **RTL**: the injected markers use `ms-1` logical margin; no additional RTL handling needed.
@@ -274,7 +284,7 @@ A supported `<cit data-id="…"></cit>` element with no matching `html_tag` grou
 
 #### Scenario: An unmatched cit element renders as literal text
 
-- **WHEN** the message content contains a `<cit data-id="e52dc2"></cit>` element, `isStreaming` is `false`, and no group's `target.selector.id` equals `"e52dc2"`
+- **WHEN** the message content contains a `<cit data-id="e52dc2"></cit>` element, `isStreaming` is `false`, and no group in `groups` or `fallbackGroups` has `target.selector.id` equal to `"e52dc2"`
 - **THEN** no marker is rendered and the original `<cit data-id="e52dc2"></cit>` markup remains visible as text
 
 #### Scenario: Every cit tag is hidden while streaming, even a well-formed matched pair

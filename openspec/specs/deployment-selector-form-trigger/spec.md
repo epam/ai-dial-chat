@@ -8,24 +8,22 @@ A form-field trigger that reuses the deployment selector overlay, including its 
 
 ### Requirement: DeploymentSelectorFieldTrigger reuses the existing overlay content behind a form-field trigger
 
-`apps/chat/src/components/DeploymentSelector/DeploymentSelectorFieldTrigger.tsx` SHALL render a full-width outlined form control, built on the `Input` component from `@epam/ai-dial-ui-kit` (`readOnly`, with a trailing `iconAfter` chevron) rather than a hand-styled element — the same recipe `Select` uses for its own field — so its chrome (border, radius, height, focus/hover, colors) is pixel-identical to `Input`/`Select` everywhere else in the app. It opens the existing `DeploymentSelectorOverlay`/`DeploymentSelectorPanel` content — search, "Currently selected" row, Favorites list with star toggles, and the "Browse" footer action — via the ui-kit `Dropdown` component, the same primitive `ModelSelectorControl` already uses for the chat input's `modelPickerOverlay` case. The component SHALL NOT introduce a second implementation of search, favorites, grouping, or Browse behavior; it SHALL consume the same mapping utilities `useDeploymentSelectorOverlay` uses (`mapDeploymentToCatalogItem`, `findDeploymentByIdOrReference`) so a deployment's display name, icon, and type render identically to the chat selector.
+`apps/chat/src/components/DeploymentSelector/DeploymentSelectorFieldTrigger.tsx` SHALL render a full-width outlined form control through the controlled `DeploymentSelectorField` exported by `@epam/ai-dial-catalog`, which builds its trigger on the `Input` component from `@epam/ai-dial-ui-kit` (`readOnly`, `role="combobox"`, with a trailing `iconAfter` chevron) rather than a hand-styled element — the same recipe `Select` uses for its own field — so its chrome (border, radius, height, focus/hover, colors) is pixel-identical to `Input`/`Select` everywhere else in the app. It opens the existing `DeploymentSelectorOverlay`/`DeploymentSelectorPanel` content (passed as the field's `renderPanel`) — search, "Currently selected" row, Favorites list with star toggles, and the "Browse" footer action — via the ui-kit `Dropdown` component on desktop, the same primitive `ModelSelectorControl` already uses for the chat input's `modelPickerOverlay` case, and via the field's `renderOverlay` slot wrapped in `BottomSheetShell` (`@epam/ai-dial-conversation-input`) on mobile. The component SHALL NOT introduce a second implementation of search, favorites, grouping, or Browse behavior; it SHALL consume the same mapping utilities `useDeploymentSelectorOverlay` uses (`mapDeploymentToCatalogItem`, `findDeploymentByIdOrReference`) so a deployment's display name, icon, and type render identically to the chat selector.
 
 `DeploymentSelectorFieldTrigger` SHALL accept `selectedId: string | null`, `onSelect: (id: string) => void`, and SHALL NOT read or write `DeploymentsContext.selectedItemId`/`setSelectedItemId` — its selection is independent of the chat input's currently active deployment. It SHALL accept the deployment list and favorites via `useDeployments()`/`useFavoriteApplications()` internally (same context providers the chat input uses), not via props duplicating that data. This independence SHALL hold for every pick path, including a pick made through the "Browse" catalog: `CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL accept an optional `onSelect?: (id: string) => void` prop and, when supplied, route a selector-mode card pick through it instead of `DeploymentsContext.setSelectedItemId`; `CatalogModal` SHALL forward its own optional `onSelect` prop to `CatalogView`; and `useDeploymentSelectorFieldOverlay`'s `catalogModal` SHALL pass its `onSelect` argument through to `CatalogModal`, so a Browse pick from the Scheduled Task form updates the form's `values.modelId` and never the chat input's active deployment. The chat input's own `useDeploymentSelectorOverlay` continues to render `CatalogModal` without an `onSelect` prop, preserving its existing behavior of committing a Browse pick directly to `DeploymentsContext`.
 
 The trigger SHALL render:
 - The selected deployment's display name (resolved via `findDeploymentByIdOrReference`/`mapDeploymentToCatalogItem`) when `selectedId` is set, truncated consistently with other form field values.
-- A placeholder string (supplied via a labels prop) when `selectedId` is `null`/unset.
+- A placeholder string (supplied via the `placeholder` prop) when `selectedId` is `null`/unset.
 - A trailing chevron icon that visually indicates expand/collapse state.
 
-Opening the trigger SHALL render the panel with `matchReferenceWidth` left at the `Dropdown` default (`true`), so the overlay starts at the field's full width rather than the icon trigger's fixed `320px` override.
-
-`matchReferenceWidth` sets only a `min-width`, so on its own it lets a long agent name stretch the overlay well past the field it belongs to. The panel SHALL therefore also be capped at `max-w-[max(var(--reference-width),360px)]` — `--reference-width` is the field width the kit publishes on the floating element — so the panel reads as this field's popup the way a `Select`'s list does. The `max()` floor keeps the panel's own `360px` minimum honoured on a field narrower than that, and the `!` prefix is required because the kit writes its available-width cap as an inline style.
+Opening the trigger on desktop SHALL size the `Dropdown` list to `w-[min(var(--reference-width),calc(100vw-2rem))] max-w-full` — `--reference-width` is the field width the kit publishes on the floating element — so the panel reads as this field's popup the way a `Select`'s list does, rather than the icon trigger's fixed `320px` override. The trigger SHALL pass `min-w-0` (merged with any host `panelClassName`) to the panel, overriding `DeploymentSelectorPanel`'s own `min-w-[360px]` default, so a long agent name cannot stretch the panel past its field and a narrow field gets no `360px` floor.
 
 #### Scenario: A long deployment name does not widen the panel past its field
 
 - **GIVEN** the opened panel contains a deployment whose display name is far wider than the field
 - **WHEN** the panel renders
-- **THEN** the panel's width does not exceed the field's own width, except on a field narrower than `360px`, where the panel stops at `360px`
+- **THEN** the panel's width does not exceed the field's own width (nor the viewport width minus `2rem`), including on a field narrower than `360px`
 
 #### Scenario: Trigger shows placeholder when nothing is selected
 
@@ -153,22 +151,22 @@ The panel's search SHALL filter extra rows by case-insensitive substring on `lab
 
 ### Requirement: DeploymentSelectorFieldTrigger meets accessibility and RTL requirements independent of its host form
 
-The trigger button SHALL expose `aria-haspopup="listbox"`, `aria-expanded` reflecting open state, and `aria-labelledby` referencing the host-supplied label element's id. The trigger is built on the `Input` component from `@epam/ai-dial-ui-kit` (`readOnly`, with a trailing `iconAfter` chevron/spinner) — the same recipe `Select` uses for its own field — so its interactive target height matches `Input`'s standard field height (40px) and is consistent with every other field in the host form (Display name, Description, Prompt), rather than a bespoke 44×44px minimum. Keyboard users SHALL be able to open the panel (Enter/Space), navigate its search box and list (Tab/Arrow keys, inherited from the existing panel implementation), select an item (Enter), and close it (Escape) with focus restored to the trigger button. All layout SHALL use Tailwind logical properties; the chevron icon's directional treatment (if any) SHALL be verified against an RTL locale rather than assumed symmetric. The component SHALL work at both the `mobile` and `desktop` breakpoints defined in `tailwind.config.js`, reusing the existing panel's own mobile/desktop behavior — no new breakpoint-specific layout logic is introduced beyond selecting between the full-width field's own responsive sizing.
+The trigger SHALL expose `aria-haspopup="listbox"` on desktop (`"dialog"` on mobile, where the panel opens in a bottom sheet), `aria-expanded` reflecting open state, and `aria-labelledby` referencing the host-supplied label element's id. The trigger is built on the `Input` component from `@epam/ai-dial-ui-kit` (`readOnly`, with a trailing `iconAfter` chevron/spinner) — the same recipe `Select` uses for its own field — so its interactive target height matches `Input`'s standard field height (40px) and is consistent with every other field in the host form (Display name, Description, Prompt), rather than a bespoke 44×44px minimum. Keyboard users SHALL be able to open the panel (Enter/Space), navigate its search box and list (Tab/Arrow keys, inherited from the existing panel implementation), select an item (Enter), and close it (Escape) with focus restored to the trigger input. All layout SHALL use Tailwind logical properties; the chevron icon's directional treatment (if any) SHALL be verified against an RTL locale rather than assumed symmetric. The component SHALL work at both the `mobile` and `desktop` breakpoints defined in `tailwind.config.js`, reusing the existing panel content on both — the only breakpoint branch is `useIsMobile()` choosing between the desktop `Dropdown` popover and the mobile `BottomSheetShell` (`max-h-[90dvh]`), the same sheet the chat page's picker uses.
 
 #### Scenario: Keyboard user can open, select, and close
 
 - **WHEN** a keyboard-only user Tabs to the trigger, presses Enter to open it, uses Arrow keys and Enter to select a deployment
-- **THEN** the panel opens, the selection is applied, the panel closes, and focus returns to the trigger button
+- **THEN** the panel opens, the selection is applied, the panel closes, and focus returns to the trigger input
 
 #### Scenario: Escape closes the panel and restores focus
 
 - **WHEN** the panel is open and the user presses Escape
-- **THEN** the panel closes and focus returns to the trigger button
+- **THEN** the panel closes and focus returns to the trigger input
 
 #### Scenario: Trigger exposes expanded and labelled state
 
 - **WHEN** the panel is open
-- **THEN** the trigger button has `aria-expanded="true"` and `aria-labelledby` pointing at the host's label element
+- **THEN** the trigger has `aria-expanded="true"` and `aria-labelledby` pointing at the host's label element
 
 #### Scenario: Trigger matches the standard field height used elsewhere in the form
 

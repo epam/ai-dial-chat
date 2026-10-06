@@ -14,12 +14,12 @@ The endpoint:
 
 - MUST require a valid BFF session cookie (`SessionGuard`); unauthenticated requests SHALL be rejected with `401 Unauthorized`
 - MUST proxy to `GET <DIAL_CORE_URL>/openai/toolsets/{toolsetName}` forwarding `Authorization: Bearer <session.at>` as the upstream auth header
-- MUST call DIAL Core using `@epam/ai-dial-typescript-sdk` method `getToolset(toolsetName, { headers })`
+- MUST call DIAL Core using `@epam/ai-dial-typescript-sdk` method `getToolset(toolsetName, { headers })`; for a custom-toolset id (`toolsets/{bucket}/{path}`, parsed by `parseDialToolsetResource`) it SHALL first call `getCustomToolSet(bucket, path, { headers })`, fall back to `getToolset` when that returns `404`, and otherwise merge the best-effort `getToolset` details into the custom toolset
 - MUST NOT forward the `DIAL_API_KEY` to the client or use it as the upstream credential on this route
-- SHALL return `200 OK` with a `DialToolset` object body on success
+- SHALL return `200 OK` with a `DialToolsetDto` body on success, enriched per request with the caller's ownership/installation fields (e.g. `isInstalled`) from user config and the toolsets shared with the caller
 - SHALL return `404 Not Found` when DIAL Core responds with `404`
-- SHALL cache the upstream response server-side for **60 seconds** using cache key `toolsets:single:<user.sub>:<toolsetName>`; a cache hit MUST NOT re-call DIAL Core
-- MUST set `Cache-Control: private, max-age=60` on the HTTP response
+- SHALL cache the mapped upstream toolset server-side for **60 seconds** using cache key `toolsets:single:<user.sub>:<toolsetName>`; a cache hit MUST NOT re-call DIAL Core for the toolset itself (ownership enrichment still runs)
+- MUST NOT set a client-facing `Cache-Control` header on the HTTP response, so a browser never serves a stale copy across a login/logout that already invalidated the server-side cache
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError`
 - Controller handler name / OpenAPI operationId: **`getToolset`** → generated client method `getToolset({ toolsetName })`
 - If upstream `auth_settings` contains `client_secret`, the BFF MUST omit that field before returning the response
@@ -61,7 +61,7 @@ The endpoint:
 #### Scenario: Authenticated user retrieves a toolset by name
 
 - **WHEN** a request with a valid session cookie is sent to `GET /api/v1/toolsets/my-toolset`
-- **THEN** the BFF returns `200` with the corresponding `DialToolset` JSON object
+- **THEN** the BFF returns `200` with the corresponding `DialToolsetDto` JSON object
 
 #### Scenario: Unauthenticated request is rejected
 
@@ -81,7 +81,7 @@ The endpoint:
 #### Scenario: Cache hit avoids upstream call
 
 - **WHEN** `GET /api/v1/toolsets/my-toolset` is called twice within 60 seconds for the same user
-- **THEN** only one upstream request is made to DIAL Core; the second response is served from cache
+- **THEN** only one upstream toolset request is made to DIAL Core; the second response's toolset is served from cache
 
 ---
 
@@ -122,7 +122,7 @@ Any value that fails either check SHALL cause the BFF to return `400 Bad Request
 `apps/chat/src/server-api/toolsets.ts` SHALL export a typed async function `getToolset` that:
 
 - Accepts `toolsetName: string`
-- Calls the generated `@epam/chat-api-client` method `getToolset({ toolsetName })` via `toolsetsApi`
+- Calls the generated `@epam/ai-dial-chat-api-client` method `getToolset({ toolsetName })` via `toolsetsApi`
 - Returns `Promise<DialToolsetDto>`
 
 No direct `fetch` calls are permitted in this helper.

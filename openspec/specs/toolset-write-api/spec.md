@@ -47,7 +47,8 @@ OpenAPI spec. There is no generated-client method change; `ToolsetBodyDto` only 
 #### Scenario: Successful create
 - **WHEN** an authenticated user POSTs a valid toolset body
 - **THEN** the service proxies the create to DIAL Core, invalidates the user's toolset list
-  cache, and returns the created toolset identifier
+  cache, and returns `201` with `MutatedToolsetDto` (`{ id }`, the
+  `toolsets/<bucket>/<encoded name>__<version>` identifier)
 
 #### Scenario: Request body still includes intro
 - **WHEN** an authenticated user POSTs a toolset body that includes an `intro` property
@@ -115,7 +116,7 @@ map keyed by `primaryLocale` (seeded from `name`/`description`) plus one key per
 ### Requirement: Update and delete toolset endpoints
 The backend SHALL expose `PATCH /api/v1/toolsets/:toolsetName` and
 `DELETE /api/v1/toolsets/:toolsetName` that proxy DIAL Core, validate the toolset name
-parameter against an allowlist, and invalidate the affected caches on success.
+parameter against an allowlist (`GetToolsetDto` with `@IsSafeToolsetName`), and invalidate the affected caches on success. Update responds `200` with `MutatedToolsetDto` (`{ id: toolsetName }`); delete responds `204`. When the update body's `authSettings.authenticationType` is `OAUTH`, the service first reads the stored toolset and preserves its hidden auth settings in the saved body.
 
 #### Scenario: Successful update
 - **WHEN** an authenticated user PATCHes an existing toolset with a valid body
@@ -147,7 +148,7 @@ validation used by resource CRUD operations.
 
 The endpoints SHALL proxy `POST /v1/ops/toolset/signin` and
 `POST /v1/ops/toolset/signout`, respectively, with the caller's session access token and
-return `200` with `{ "success": true }` on success. Supporting bucketless IDs SHALL preserve
+return `200` with `{ "success": true }` (`ToolsetAuthResultDto`) on success, invalidating the toolset caches. When the logout body omits `authenticationType`, the service SHALL look up the toolset's stored `authSettings.authenticationType` first (a failed lookup surfaces as `404`). A DIAL Core `404` from signout SHALL be treated as an idempotent success (already signed out). Supporting bucketless IDs SHALL preserve
 the existing request and response DTOs and generated `loginToolset` / `logoutToolset`
 operations.
 
@@ -162,6 +163,10 @@ operations.
 #### Scenario: Logout
 - **WHEN** an authenticated user requests logout for a toolset
 - **THEN** the service proxies the credential revocation to DIAL Core
+
+#### Scenario: Logout when no credential is stored
+- **WHEN** DIAL Core answers the signout request with `404`
+- **THEN** the endpoint still returns `200` with `{ "success": true }`
 
 #### Scenario: Platform toolset login without a bucket
 - **WHEN** an authenticated user submits valid API-key or OAuth credentials to
@@ -223,7 +228,7 @@ handler names suitable for the generated client (e.g. `createToolset`, `updateTo
 #### Scenario: OpenAPI contract regenerated
 - **WHEN** the new endpoints are added
 - **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
-  generated `@epam/chat-api-client` exposes the new operations
+  generated `@epam/ai-dial-chat-api-client` exposes the new operations
 
 #### Scenario: Authentication required
 - **WHEN** a request to a write endpoint has no valid session cookie

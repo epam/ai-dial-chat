@@ -13,8 +13,9 @@ Defines `libs/chat-hooks/src/skill/skill-manifest.ts`'s `parseSkillManifestDocum
 
 The split SHALL be a leading-fence scan, not a YAML parse of the whole file:
 
-- When `raw` does not begin with a line consisting solely of `---` (leading whitespace and a leading BOM tolerated), the entire text SHALL be returned as `body` with `about`, `name`, and `description` all `undefined`.
-- When it does, the text between the opening fence line and the next line consisting solely of `---` SHALL be parsed as YAML, and everything after that closing line SHALL be `body`, with any single leading blank line removed.
+- Before scanning, a leading BOM SHALL be stripped and CRLF line endings normalised to LF. A fence line is a line that, once trimmed, matches `/^---[ \t]*$/`; the opening fence is the first non-blank line, so leading blank lines and surrounding whitespace are tolerated.
+- When the first non-blank line is not a fence line, the entire text SHALL be returned as `body` with `about`, `name`, and `description` all `undefined`.
+- When it is, the text between the opening fence line and the next fence line SHALL be parsed as YAML, and everything after that closing line (of the normalised text) SHALL be `body`, with any single leading blank line removed. When the parsed YAML is not an object (for example empty or a bare scalar), only `body` is returned.
 - When no closing fence exists, the entire text SHALL be returned as `body` — an unterminated fence is not frontmatter.
 
 `body` SHALL never be `undefined`: a manifest that is nothing but frontmatter yields an empty-string body.
@@ -61,7 +62,8 @@ Key matching SHALL be exact — no case-insensitive or fuzzy fallback. Keys not 
 Values SHALL be type-checked after parsing:
 
 - A string field whose parsed value is not a string SHALL be dropped.
-- A list field SHALL accept an array, retaining only its string entries; a bare string SHALL be promoted to a one-element array; any other parsed type SHALL be dropped.
+- A list field SHALL accept an array, retaining only its non-empty string entries; a bare non-empty string SHALL be promoted to a one-element array; any other parsed type SHALL be dropped.
+- Aliases are tried in table order, and the first alias that resolves to a non-empty value wins.
 - A field that resolves to an empty string, or a list that resolves to zero entries, SHALL be omitted rather than stored as empty.
 
 `about` SHALL be `undefined` when no recognised `about.*` field resolved, so a caller can test one value rather than four.

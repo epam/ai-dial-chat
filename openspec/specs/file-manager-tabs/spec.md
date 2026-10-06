@@ -6,19 +6,20 @@ File-manager tabs: per-tab visible columns, action labels, upload rules, and sel
 ## Requirements
 ### Requirement: Tab navigation in DialFileManagerModal
 
-`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `All`, `My files`, `Shared with me`, and `Organization` (all four, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`, filtered against `fileManagerTabs`. The active tab SHALL be tracked via `handleTabChange` and wired to `DialFileManager` through the folders-panel options — `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange`. The strip lives there, above the tree it filters, as of `@epam/ai-dial-react-file-manager` 0.3.0-dev.3, which rebuilt the file manager to the 2.0 design; up to 0.3.0-dev.2 the same three props were passed under `toolbarOptions` and rendered in the content toolbar, and a build still pinned to that version renders no strip at all if it passes them under `treeOptions` (and vice versa). The initial tab SHALL be the first tab present in `fileManagerTabs` following the fixed priority `all` → `my_files` → `shared` → `organization` (defaulting to `DialFileManagerTabs.All` when All is configured and at least two source tabs are enabled).
+`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `All`, `My files`, `Shared with me`, and `Organization` (all four, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — through `useFileAttachmentPicker` (`@epam/ai-dial-chat-hooks`), which wraps `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`, filters it against `fileManagerTabs` via `useDialFileManagerTabConfig`, and composes the source sections via `useDialFileManagerSections`. The active tab SHALL be tracked via the picker's `onTabChange` and wired to `DialFileManager` through the folders-panel options — `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange`. The strip lives there, above the tree it filters, as of `@epam/ai-dial-react-file-manager` 0.3.0-dev.3, which rebuilt the file manager to the 2.0 design; up to 0.3.0-dev.2 the same three props were passed under `toolbarOptions` and rendered in the content toolbar, and a build still pinned to that version renders no strip at all if it passes them under `treeOptions` (and vice versa). The modal SHALL request `initialTab: DialFileManagerTabs.All`; when that tab is not available, the active tab falls back to the first tab present in `fileManagerTabs` following the fixed priority `all` → `my_files` → `shared` → `organization` (All is available only when configured and at least two source tabs are enabled).
 
 Tab label i18n keys:
+- `all` → `dialFileManager.tab.all` (`DialFileManagerI18nKeys.TabAll`)
 - `my_files` → `dialFileManager.tab.myFiles`
 - `shared` → `dialFileManager.tab.shared`
-- `organization` → `dialFileManager.tab.organization`
+- `organization` → `basic.organization` (`BasicI18nKeys.Organization`)
 
 RTL: tab rendering and label alignment are handled by the ui-kit; no physical direction classes in the modal wrapper.
 
-#### Scenario: Modal opens on My files tab
+#### Scenario: Modal opens on the All tab
 
-- **WHEN** `DialFileManagerModal` mounts with `isOpen=true` and `fileManagerTabs` includes `my_files` (the default)
-- **THEN** the active tab is `DialFileManagerTabs.MyFiles` and the file listing shows the user's personal bucket
+- **WHEN** `DialFileManagerModal` mounts with `isOpen=true` and `fileManagerTabs` is the default four-tab set
+- **THEN** the active tab is `DialFileManagerTabs.All`, composing the My files, Shared with me, and Organization sections
 
 #### Scenario: Switching to Shared tab loads shared listing
 
@@ -83,7 +84,7 @@ RTL: tab rendering and label alignment are handled by the ui-kit; no physical di
 
 ### Requirement: Locale-aware UpdatedAt column
 
-`DialFileManagerShell` SHALL pass `gridOptions.dateLocale` and `gridOptions.dateOptions` to format the UpdatedAt column. `dateLocale` SHALL be sourced from `i18n.language` (via `useTranslation`). `dateOptions` SHALL be fixed as `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`, so the cell carries the modification time alongside the calendar date and the clock stays 24-hour in every locale. These options SHALL be applied regardless of the active tab, and the same options SHALL format the modified date in the file metadata popup.
+`DialFileManagerShell` SHALL pass `gridOptions.dateLocale` and `gridOptions.dateOptions` to format the UpdatedAt column. Both come from the `useDialFileManager` controller (`@epam/ai-dial-chat-hooks`): `dateLocale` is the host-supplied `locale` option, which this app sets to `i18n.language` in `useDialFileManagerHostOptions`, and `dateOptions` is the `DATE_OPTIONS` constant (`libs/chat-hooks/src/files/dial-file-manager.model.ts`), fixed as `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`, so the cell carries the modification time alongside the calendar date and the clock stays 24-hour in every locale. These options SHALL be applied regardless of the active tab, and the same options SHALL format the modified date in the file metadata popup.
 
 Items with a missing `updatedAt` SHALL display an empty cell; no error or fallback string is rendered.
 
@@ -243,7 +244,7 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 
 ### Requirement: Standalone page uses the Full action profile
 
-`DialFileManagerPage` SHALL pass `actionProfile: DialFileManagerActionProfile.Full` to `useDialFileManager`. This is the final step of the #7504 roadmap: `Full` was introduced as a reserved, unused profile, then progressively defined by `add-file-manager-sharing` (Unshare/Remove access), `add-file-manager-metadata-ui` (Info), and this change (upload-archive) — each of those three changes' actions now has a working handler, so the standalone page adopts `Full` in full, superseding its prior `Browse` assignment. `Full` is a strict superset of `Browse`: every action `Browse` exposed (Download, Delete, Rename, Copy, Move, Duplicate) remains available, with Unshare, Remove access, Info, and upload-archive added on top.
+`DialFileManagerPage` SHALL pass `actionProfile: DialFileManagerActionProfile.Full` to `useDialFileManagerSections` (which runs one `useDialFileManager` per source section) and to `DialFileManagerShell`. This is the final step of the #7504 roadmap: `Full` was introduced as a reserved, unused profile, then progressively defined by `add-file-manager-sharing` (Unshare/Remove access), `add-file-manager-metadata-ui` (Info), and this change (upload-archive) — each of those three changes' actions now has a working handler, so the standalone page adopts `Full` in full, superseding its prior `Browse` assignment. `Full` is a strict superset of `Browse`: every action `Browse` exposed (Download, Delete, Rename, Copy, Move, Duplicate) remains available, with Unshare, Remove access, Info, and upload-archive added on top.
 
 #### Scenario: Standalone page shows the complete my_files matrix
 

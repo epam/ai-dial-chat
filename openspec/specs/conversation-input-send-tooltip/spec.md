@@ -6,7 +6,7 @@ Define host-configurable send-button tooltip text for empty and populated conver
 
 ### Requirement: Optional empty-composer tooltip
 
-`InputProps` and `ConversationInputProps` SHALL expose `emptyMessageTooltip?: string` in addition to `sendTooltip?: string`. `ConversationInput` SHALL forward both values to `Input`. `Input` SHALL select `emptyMessageTooltip ?? sendTooltip` when it has no sendable content, and `sendTooltip` otherwise. Sendable content SHALL mean non-whitespace message text, at least one attachment, or an inline-start slot such as a selected skill. Other reasons that disable sending SHALL NOT select the empty tooltip.
+`InputProps` and `ConversationInputProps` SHALL expose `emptyMessageTooltip?: string` in addition to `sendTooltip?: string`. `ConversationInput` SHALL forward both values to `Input`. `Input` SHALL select `emptyMessageTooltip ?? sendTooltip` when it has no sendable content, and `sendTooltip` otherwise. Sendable content (`hasSendableContent` in `Input`) SHALL mean non-whitespace message text or at least one attachment. A selected skill is a tracked `/{name}` mention inside the message text itself, so a mention-only message already counts as text. Other reasons that disable sending SHALL NOT select the empty tooltip.
 
 The existing local message and attachment state in `Input` SHALL own this selection; hosts SHALL NOT need to mirror that state. Both strings SHALL be supplied by the host. A host such as pg-chat can reuse `chat.sendMessage` and `chat.sendDisabledTooltip`; the library SHALL NOT import app i18n. No new translations, feature flags, backend endpoints, caching, telemetry, or memoization are required. This direction-agnostic text change SHALL preserve existing RTL layout, keyboard behavior, accessible send label, disabled state, and streaming controls.
 
@@ -23,7 +23,7 @@ The existing local message and attachment state in `Input` SHALL own this select
 
 #### Scenario: Attachment-only or skill-only message
 
-- **WHEN** there is an attachment or inline-start slot and no message text
+- **WHEN** there is an attachment and no message text, or the message text is only a skill mention such as `/skill `
 - **THEN** hovering the send button shows the regular `sendTooltip`
 - **AND** this remains true for a blocked attachment
 

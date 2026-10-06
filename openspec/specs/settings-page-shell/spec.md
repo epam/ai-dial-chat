@@ -14,13 +14,14 @@ The system SHALL provide a "Settings" item, marked with the `IconSettings` icon 
 (`libs/navigation-panel/src/components/UserMenu/UserMenu.tsx`, driven by the host's `onSettings`
 and `labels.settings` props from `apps/chat/src/components/Navigation/Navigation.tsx`). Selecting
 it SHALL navigate to `ROUTES.Settings` (`/settings`) via `useNavigate()`. The item's accessible
-name SHALL come from an i18n key (not a hardcoded string).
+name SHALL come from an i18n key (not a hardcoded string): `BasicI18nKeys.Settings` (`basic.settings`).
 
-The item SHALL be included unconditionally for every authenticated user. The `SettingsPageEnabled`
-feature flag that previously gated it is **removed** — there is no flag, no `SETTINGS_PAGE_ENABLED`
-environment variable, and no `features.settingsPageEnabled` config-registry entry. The host SHALL
-always pass `onSettings` and `labels.settings`, so `UserMenu`'s existing "omit the item when the
-host passes no `onSettings`" behaviour is never exercised by this app.
+The item SHALL be included for every authenticated user unless the overlay host hides the Settings
+page. The `SettingsPageEnabled` feature flag that previously gated it is **removed** — there is no
+flag, no `SETTINGS_PAGE_ENABLED` environment variable, and no `features.settingsPageEnabled`
+config-registry entry. `Navigation` SHALL always pass `labels.settings`, and SHALL pass `onSettings`
+unless `OverlayFeature.HideSettingsPage` resolves to `true`; in that case it passes `undefined`, and
+`UserMenu`'s existing "omit the item when the host passes no `onSettings`" behaviour removes the item.
 
 `UserMenu` remains suppressed as a whole by `OverlayFeature.HideUserMenu` and for unauthenticated
 users; those are unrelated to the removed flag.
@@ -34,9 +35,14 @@ users; those are unrelated to the removed flag.
   Enter or Space
 - **THEN** the application navigates to `/settings`, identically to a mouse click
 
-#### Scenario: Gear icon is always present for an authenticated user
-- **WHEN** a signed-in user opens the `UserMenu` dropdown in any deployment
-- **THEN** the "Settings" item is present — no configuration can remove it
+#### Scenario: Gear icon is present for an authenticated user unless the host hides Settings
+- **WHEN** a signed-in user opens the `UserMenu` dropdown in any deployment and
+  `OverlayFeature.HideSettingsPage` does not resolve to `true`
+- **THEN** the "Settings" item is present — no environment configuration can remove it
+
+#### Scenario: The host hides the Settings entry
+- **WHEN** `OverlayFeature.HideSettingsPage` resolves to `true`
+- **THEN** `Navigation` passes no `onSettings` and the `UserMenu` dropdown has no "Settings" item
 
 ---
 
@@ -48,9 +54,11 @@ following the existing `ScheduledTasksPage` route registration pattern:
 
 - `ROUTES.SettingsTab` (`/settings/:tab`) — the canonical location of a settings tab. The segment is
   the tab's `SettingsTabs` value, which is already URL-shaped.
-- `ROUTES.Settings` (`/settings`) — retained so existing links and bookmarks keep resolving, and
-  rendering `<Navigate replace />` to the default tab's path rather than a tab of its own, so each
-  tab has exactly one canonical URL.
+- `ROUTES.Settings` (`/settings`) — retained so existing links and bookmarks keep resolving. It
+  renders the same `SettingsPage`, which finds no `:tab` segment and itself renders
+  `<Navigate replace />` to the default tab's path rather than a tab of its own, so each tab has
+  exactly one canonical URL. The redirect lives in `SettingsPage`, not in the route element, because
+  only the shell knows which tabs are configured.
 
 A single dynamic segment SHALL be used rather than one registered route per tab, so that adding a
 tab stays a matter of an enum member and a config entry alone.
@@ -62,7 +70,7 @@ member per tab. The concrete path SHALL be built by `getSettingsTabRoute` in
 `` `${ROUTES.Parent}/${segment}` `` shape, so no call site substitutes into the `:tab` pattern
 itself.
 
-Both registrations SHALL be generated from one gated expression in
+Both registrations SHALL be generated from one gated expression, `renderSettingsRoutes(isSettingsPageHidden)` in
 `apps/chat/src/app/settings-routes.tsx`, which `app.tsx` spreads into its `<Routes>` and which owns
 the lazy `SettingsPage` import. Generating them together is what makes a settings path that bypasses
 the gate structurally impossible, and it gives the gate a test seam: `app.tsx` itself has no route
@@ -167,9 +175,12 @@ current tab entry uses it.
 
 ### Requirement: RTL and localization compliance for the Settings shell
 All layout in `SettingsPage` and its tab container SHALL use CSS logical properties / Tailwind logical
-utilities (e.g. `ps-*`, `pe-*`, `text-start`) instead of physical-direction utilities, and all
-user-visible strings SHALL go through `react-i18next` under a `settingsPage` namespace distinct from
-the existing `settings` namespace owned by `UserMenu`.
+utilities (e.g. `ps-*`, `pe-*`, `border-e`, `text-start`) instead of physical-direction utilities, and all
+user-visible strings SHALL go through `react-i18next` via keys declared in
+`apps/chat/src/constants/translation-keys.ts`. There is no dedicated `settingsPage` namespace: the
+shell reuses `BasicI18nKeys.Settings` (`basic.settings`) for its heading and `SettingsPanel`
+section label, and the tab labels are `SettingsI18nKeys.Preferences` (`settings.preferences`) and
+`BasicI18nKeys.Usage` (`basic.usage`).
 
 #### Scenario: Rendering under an RTL locale
 - **WHEN** the active language is Arabic (`dir="rtl"` on `<html>`)

@@ -14,9 +14,13 @@ The system SHALL expose one module (`apps/chat-api/src/common/dial/dial-error.ma
 - **WHEN** a caller passes a 4th `response: { status: number }` argument to `handleDialSdkError` alongside an `error` argument
 - **THEN** the function merges `response.status` into the error body before mapping, so `response.status` is used for exception selection even if the error body already carries its own (possibly stale or absent) `status` field, and omitting `response` falls back to using `error.status` (or a generic `BadGatewayException` if neither carries a usable status)
 
-#### Scenario: Fetch-shaped error is mapped through the shared status mapper
-- **WHEN** a service calls `handleDialFetchError(err, context, logger, timeoutMs?)` with a `Response`-shaped error, an `AbortError`, or a network `TypeError`
-- **THEN** the function throws the same NestJS `HttpException` subtype (including timeout/service-unavailable handling) that the pre-consolidation `handleDialFetchError` threw for that input
+#### Scenario: Fetch-shaped error is mapped by the fetch handler
+- **WHEN** a service calls `handleDialFetchError(err, context, logger?, timeoutMs?)` from the catch block of a raw `fetch` call
+- **THEN** an `AbortError` throws `ServiceUnavailableException('DIAL Core request timed out')` and any other non-`HttpException` error throws `ServiceUnavailableException('DIAL Core is currently unavailable')`; a non-ok `Response` is not handled here — callers pass its status to `mapDialHttpStatus` directly
+
+#### Scenario: Fetch handler can swallow follow-up failures
+- **WHEN** a caller passes a 5th `{ swallow: true }` argument to `handleDialFetchError`
+- **THEN** the error is logged with the same messages as the throwing path and the call returns instead of throwing
 
 #### Scenario: Existing HttpException instances are re-thrown unchanged
 - **WHEN** either `handleDialSdkError` or `handleDialFetchError` receives an error that is already an instance of `HttpException`
@@ -24,7 +28,11 @@ The system SHALL expose one module (`apps/chat-api/src/common/dial/dial-error.ma
 
 #### Scenario: Optional logger records the error before mapping
 - **WHEN** a caller passes a `logger` argument to `handleDialSdkError`, `handleDialFetchError`, or `mapDialHttpStatus`
-- **THEN** the mapper logs the error with the provided `context` before throwing the mapped exception, and omitting `logger` SHALL NOT change which exception is thrown
+- **THEN** the mapper logs the error with the provided `context` before throwing the mapped exception (an already-`HttpException` error is re-thrown without logging, except on the `swallow` path), and omitting `logger` SHALL NOT change which exception is thrown
+
+#### Scenario: Upstream message replaces generic text except for 401/403/404
+- **WHEN** a caller invokes `mapDialHttpStatus(status, context, logger?, errorBody?, upstreamMessage?)` with an `upstreamMessage`
+- **THEN** that message replaces the generic exception text for 400, 405, 409, 412, 413, 422, 429, and 5xx, while 401, 403, and 404 keep their generic text; `isUpstreamTextExposable(status)` exposes the same rule to other domains, and `errorBody`, when given, is only logged
 
 ### Requirement: SDK-shaped error paths propagate the real upstream HTTP status
 Every `chat-api` service method that calls `handleDialSdkError` after receiving an SDK-shaped `{ data, error, response }` result SHALL pass the raw `response` (or a `{ status }` value derived from it) as the 4th argument, not rely on the parsed error body alone, so `mapDialHttpStatus` throws the exception matching DIAL Core's actual response.
@@ -42,8 +50,8 @@ Every `chat-api` service method that calls `handleDialSdkError` after receiving 
 - **THEN** `handleDialSdkError` receives that real status (via the `response` argument) and throws the matching exception
 
 #### Scenario: every SDK-shaped service passes the response through to the mapper
-- **WHEN** any of `conversation.service.ts`, `bucket.service.ts`, `files.service.ts`, `user-config.service.ts`, `chat.service.ts`, or `transcription.service.ts` handles an SDK-shaped result on a path where a `response` is available
-- **THEN** it passes that `response` (or a `{ status }` object derived from it) as the 4th argument to `handleDialSdkError`, so no SDK-path service can silently lose the upstream status; `rate.service.ts` is out of scope for this requirement because it is fetch-based, not SDK-shaped
+- **WHEN** any SDK-shaped service — the conversation sub-services behind the `conversation.service.ts` facade (`conversations/lifecycle`, `persistence`, `listing`, `streaming`), `auth/bucket/bucket.service.ts`, the files sub-services behind the `files.service.ts` facade (`files/listing`, `upload`, `download`, `sharing`, `folder`, `batch`), `user-config.service.ts`, `chat.service.ts`, or `transcription.service.ts` — handles an SDK-shaped result on a path where a `response` is available
+- **THEN** it passes that `response` (or a `{ status }` object derived from it) as the 4th argument to `handleDialSdkError`, so no SDK-path service can silently lose the upstream status; `rate.service.ts` is out of scope for this requirement because it is fetch-based: it throws an `Error` carrying `status: response.status` for a non-ok response and passes that error to `handleDialSdkError` without a `response` argument
 
 ### Requirement: mapDialHttpStatus maps 405, 412, and 422 explicitly
 `mapDialHttpStatus` (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) SHALL map DIAL Core status `405` to `MethodNotAllowedException`, `412` to `PreconditionFailedException`, and `422` to `UnprocessableEntityException`, instead of falling through to the generic `>= 500` `BadGatewayException` branch (which previously caught nothing for these three codes and fell to the final catch-all `BadGatewayException` at the function's end). Every other previously-mapped status (`400`, `401`, `403`, `404`, `409`, `413`, `429`, `5xx`) SHALL remain mapped exactly as before this change.

@@ -32,29 +32,32 @@ No minimum length or pattern constraint is required; an empty string provided by
 
 ### Requirement: Config registry exposes defaultDeploymentId as a client-visible config key
 
-`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts` SHALL include a new entry:
+`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts` SHALL include an entry:
 
 ```ts
 {
   key: 'deployments.defaultDeploymentId',
-  envVar: 'DEFAULT_DEPLOYMENT',
-  visibility: 'client',
   type: 'config',
   valueType: 'string',
-  default: null,
+  visibility: 'client',
+  defaultValue: null,
+  critical: false,
+  description: 'Operator-configured default deployment ID shown to users without a persisted selection. Null when DEFAULT_DEPLOYMENT is not set.',
+  owner: 'chat-team',
+  envVar: 'DEFAULT_DEPLOYMENT',
 }
 ```
 
-When `DEFAULT_DEPLOYMENT` is not set (or is an empty string), `AppConfigService` SHALL resolve `deployments.defaultDeploymentId` as `null`.
+`CLIENT_CONFIG_MAPPINGS` in `apps/chat-api/src/app-config/client-config.mapper.ts` SHALL map the key onto `config.defaultDeploymentId` through `toNullableString`. When `DEFAULT_DEPLOYMENT` is not set (or is an empty string), `AppConfigService` SHALL resolve `deployments.defaultDeploymentId` as `null`.
 
 #### Scenario: Env var set — registry entry resolves to the string value
 
-- **WHEN** `DEFAULT_DEPLOYMENT=my-model` is set and `AppConfigService.resolveClientConfig('chat-ui')` is called
+- **WHEN** `DEFAULT_DEPLOYMENT=my-model` is set and `AppConfigService.getClientConfig({ appId: 'chat-ui', ... })` is called
 - **THEN** the resolved value for key `deployments.defaultDeploymentId` is `"my-model"`
 
 #### Scenario: Env var absent — registry entry resolves to null
 
-- **WHEN** `DEFAULT_DEPLOYMENT` is not set and `AppConfigService.resolveClientConfig('chat-ui')` is called
+- **WHEN** `DEFAULT_DEPLOYMENT` is not set and `AppConfigService.getClientConfig({ appId: 'chat-ui', ... })` is called
 - **THEN** the resolved value for key `deployments.defaultDeploymentId` is `null`
 
 ---
@@ -72,10 +75,10 @@ When `DEFAULT_DEPLOYMENT` is not set (or is an empty string), `AppConfigService`
 })
 @IsOptional()
 @IsString()
-defaultDeploymentId: string | null;
+defaultDeploymentId!: string | null;
 ```
 
-**Authorization:** The `GET /api/v1/client-config` endpoint is public (no session required). No change to the endpoint's auth posture is introduced by this requirement.
+**Authorization:** The `GET /api/v1/client-config` endpoint is public (`@Public()` with `OptionalSessionGuard`; no session required). No change to the endpoint's auth posture is introduced by this requirement.
 
 **Feature flag:** Not gated.
 
@@ -86,22 +89,12 @@ defaultDeploymentId: string | null;
 **Generated-client impact:**
 - operationId: `getClientConfig` (unchanged — same handler).
 - SDK method: `AppConfigApi.getClientConfig(appId)` — return type updates automatically after regeneration.
-- Frontend wrapper `apps/chat/src/server-api/app-config.api.ts` SHALL expose `defaultDeploymentId: string | null` from the response's `config` object. `AppConfigContext` SHALL read and expose it as `defaultDeploymentId: string | null`.
+- Frontend wrapper `apps/chat/src/server-api/app-config.api.ts`'s `getClientConfig` returns the whole generated `ClientConfigResponseDto` (calling `appConfigApi.getClientConfig({ appId: 'chat-ui' })`); `AppConfigContext` SHALL read `response.config?.defaultDeploymentId ?? null` from it and expose it as `config.defaultDeploymentId: string | null`.
 
 #### Scenario: GET /api/v1/client-config with DEFAULT_DEPLOYMENT set returns defaultDeploymentId
 
 - **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `DEFAULT_DEPLOYMENT=gpt-4o`
-- **THEN** the response is `200 OK` and the body contains:
-  ```json
-  {
-    "appId": "chat-ui",
-    "config": {
-      "asrModelId": null,
-      "transcribeSizeLimitBytes": null,
-      "defaultDeploymentId": "gpt-4o"
-    }
-  }
-  ```
+- **THEN** the response is `200 OK` and the body contains `"appId": "chat-ui"` and, among the other client config fields, `"config": { ..., "defaultDeploymentId": "gpt-4o", ... }`
 
 #### Scenario: GET /api/v1/client-config without DEFAULT_DEPLOYMENT returns null defaultDeploymentId
 
@@ -112,16 +105,16 @@ defaultDeploymentId: string | null;
 
 ### Requirement: AppConfigContext exposes defaultDeploymentId to the frontend
 
-`apps/chat/src/context/AppConfigContext.tsx` SHALL expose `defaultDeploymentId: string | null` as part of the context value, reading it from the `config.defaultDeploymentId` field of the `GET /api/v1/client-config` response.
+`apps/chat/src/context/AppConfigContext.tsx` SHALL expose `defaultDeploymentId: string | null` inside the context value's `config` object (`AppConfigState.config.defaultDeploymentId`, `null` in the pre-load `INITIAL_STATE`), reading it from the `config.defaultDeploymentId` field of the `GET /api/v1/client-config` response. Consumers such as `DeploymentsContext` and `useDeploymentSelectorOverlay` read it as `useAppConfig().config.defaultDeploymentId`.
 
 **Memoisation:** The existing `useMemo` on the context value covers this field automatically.
 
 #### Scenario: AppConfigContext provides defaultDeploymentId when configured
 
 - **WHEN** the config endpoint returns `config.defaultDeploymentId = "gpt-4o"`
-- **THEN** `useAppConfig().defaultDeploymentId` equals `"gpt-4o"`
+- **THEN** `useAppConfig().config.defaultDeploymentId` equals `"gpt-4o"`
 
 #### Scenario: AppConfigContext provides null when not configured
 
 - **WHEN** the config endpoint returns `config.defaultDeploymentId = null`
-- **THEN** `useAppConfig().defaultDeploymentId` is `null`
+- **THEN** `useAppConfig().config.defaultDeploymentId` is `null`

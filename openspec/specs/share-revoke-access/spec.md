@@ -2,7 +2,7 @@
 
 ## Purpose
 
-An owner takes back every recipient's access to a resource they own — a catalog entity (application or toolset) or a conversation — without deleting it. Covers the BFF revoke endpoint, the on-demand recipient-count lookup that gates the action, and the catalog details-panel surface that offers it.
+An owner takes back every recipient's access to a resource they own — a catalog entity (application, toolset, skill, or prompt) or a conversation — without deleting it. Covers the BFF revoke endpoint, the on-demand recipient-count lookup that gates the action, and the catalog details-panel surface that offers it.
 
 ## Requirements
 
@@ -13,18 +13,18 @@ The system SHALL expose `POST /api/v1/share/revoke` on the existing `ShareContro
 The endpoint SHALL:
 
 - Require a valid session; respond `401 Unauthorized` when no session is present.
-- Accept `RevokeSharedAccessDto { itemId: string }` validated via the global NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform). `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and an `@Matches` allowlist restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, `skills/{bucket}/{path}`, **or `prompts/{bucket}/{path}`** — the same pattern `DiscardSharedCatalogItemDto` uses (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`). Other DIAL resource types and incomplete paths SHALL be rejected before any DIAL Core call. `RevokeSharedAccessDto` carries no `resourceKind` field — every `itemId`, prompts included, is a self-sufficient full resource path.
+- Accept `RevokeSharedAccessDto { itemId: string }` validated via the global NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform). `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and the shared `IsCatalogResourcePath` validator (`apps/chat-api/src/share/dto/catalog-resource-path.validator.ts`), whose `CATALOG_RESOURCE_PATH_PATTERN` allowlist is restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, `skills/{bucket}/{path}`, **or `prompts/{bucket}/{path}`** — the same validator `DiscardSharedCatalogItemDto` uses (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`; that DTO additionally rejects `skills/.../files/...` paths with an `@Matches`, which `RevokeSharedAccessDto` does not). Other DIAL resource types and incomplete paths SHALL be rejected before any DIAL Core call. `RevokeSharedAccessDto` carries no `resourceKind` field — every `itemId`, prompts included, is a self-sufficient full resource path.
 - Use the session `accessToken` as the Bearer credential, via `getBearerAuthHeaders`.
-- Call SDK `revokeSharedResources({ headers, body: { resources: [{ url: itemId }] } })`, passing `itemId` through unmodified with no bucket/path reconstruction.
+- Call SDK `revokeSharedResources({ headers, body: { resources: [{ url: toShareResourceUrl(itemId) }] } })` with no bucket/path reconstruction. `toShareResourceUrl` (`apps/chat-api/src/share/utils/share-resource.util.ts`) passes every `itemId` through unchanged except a `prompts/` id, which is re-encoded with `encodeDialResourcePath` because prompt list ids are the decoded, human-readable path.
 - NOT perform any pre-flight `getSharedResources` check. Unlike `discardShared`, a resource with no current recipients is a legitimate no-op success for the owner, not a condition to surface as an error.
 - Rely on DIAL Core to enforce ownership; a caller who does not own the resource SHALL surface as `403 Forbidden` via `mapDialHttpStatus`.
 - On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, unconditionally regardless of `itemId` type, mirroring `ShareManagementService.discardShared`. Conversations, skills, and prompts have no equivalent server-side list cache, so for those `itemId` types this is a harmless no-op.
 - Respond `200 OK` with `RevokeSharedAccessResponseDto { success: true }`. DIAL Core returns an empty 200 body for this operation, so the response is synthesized by the BFF.
-- Map upstream failures via the fetch-shaped `mapDialHttpStatus` / `handleDialFetchError` pair: DIAL Core 400 → 404 (`'Resource does not exist'`, since the DTO already rejects malformed itemIds so a Core 400 can only mean an unresolvable resource — same reasoning as `discardShared`), 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
+- Map upstream failures via the fetch-shaped `mapDialHttpStatus` / `handleDialFetchError` pair (the 400 case is handled inline in `ShareManagementService.revokeShared` before `mapDialHttpStatus` is reached): DIAL Core 400 → 404 (`'Resource does not exist'`, since the DTO already rejects malformed itemIds so a Core 400 can only mean an unresolvable resource — same reasoning as `discardShared`), 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
 - Not cache the mutation response.
 - Log structured start/completion messages (e.g. `Revoke shared access started`, `Revoke shared access completed: success=true`) without the access token, invitation links, full resource path, or any other user data.
 
-Resolve the DIAL Core `resourceTypes` filter for `revokeShared` via the existing `RESOURCE_KIND_BY_PREFIX` map (`apps/chat-api/src/share/utils/share-resource.util.ts`), which already includes a `['skills/', 'SKILL']` entry and a `['prompts/', 'PROMPT']` entry alongside `applications/` → `APPLICATION`, `toolsets/` → `TOOL_SET`, and `conversations/` → `CONVERSATION` — no change to this map is required by this capability, only to the DTO allowlist that gates whether a `prompts/` `itemId` reaches it.
+The existing `RESOURCE_KIND_BY_PREFIX` map (`apps/chat-api/src/share/utils/share-resource.util.ts`), read through `resolveResourceKind`, maps `applications/` → `APPLICATION`, `toolsets/` → `TOOL_SET`, `conversations/` → `CONVERSATION`, `skills/` → `SKILL`, and `prompts/` → `PROMPT`. `revokeShared` itself sends no `resourceTypes` filter; the map is used by `getRecipientsCount` and `discardShared`.
 
 Controller handler name / OpenAPI operationId: **`revokeSharedAccess`** → generated client method `revokeSharedAccess()`.
 
@@ -90,12 +90,12 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 #### Scenario: Skill itemId is accepted by the revoke endpoint
 
 - **WHEN** an authenticated owner calls `POST /api/v1/share/revoke` with `{ itemId: "skills/owner-bucket/team-a/docs-helper" }` for a skill they own
-- **THEN** the endpoint accepts the request, resolves the `SKILL` resource kind via `RESOURCE_KIND_BY_PREFIX`, calls DIAL Core `revokeSharedResources` with that itemId, and responds `200 { success: true }`
+- **THEN** the endpoint accepts the request, calls DIAL Core `revokeSharedResources` with that itemId unchanged, and responds `200 { success: true }`
 
 #### Scenario: Prompt itemId is now accepted by the revoke endpoint, with no resourceKind field
 
 - **WHEN** an authenticated owner calls `POST /api/v1/share/revoke` with `{ itemId: "prompts/owner-bucket/Work/AI/summarize" }` for a prompt they own
-- **THEN** the endpoint accepts the request (no `resourceKind` field is present or needed), resolves the `PROMPT` resource kind via `RESOURCE_KIND_BY_PREFIX`, calls DIAL Core `revokeSharedResources` with that itemId unmodified, and responds `200 { success: true }`
+- **THEN** the endpoint accepts the request (no `resourceKind` field is present or needed), calls DIAL Core `revokeSharedResources` with that itemId re-encoded by `toShareResourceUrl` (identical to the input when it contains no characters needing percent-encoding), and responds `200 { success: true }`
 
 #### Scenario: Malformed skill itemId is still rejected
 
@@ -106,11 +106,11 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 
 `ShareController` SHALL expose `GET /api/v1/share/recipients?itemId=...`, answering `ShareRecipientsResponseDto { itemId, recipientsCount }`.
 
-`GetShareRecipientsDto` SHALL validate `itemId` with the same allowlist as `RevokeSharedAccessDto` (`applications|toolsets|conversations|skills|prompts` prefix, `IsValidFilePath`, `@MaxLength(2048)`) and carries no `resourceKind` field: a resource revoke cannot act on has no count worth answering, and every accepted resource type — prompts included — is now identified by one self-sufficient `itemId`.
+`GetShareRecipientsDto` (`apps/chat-api/src/share/dto/share-recipients.dto.ts`) SHALL validate `itemId` with the same validators as `RevokeSharedAccessDto` (`IsCatalogResourcePath` with the `applications|toolsets|conversations|skills|prompts` prefix, `IsValidFilePath`, `@MaxLength(2048)`) and carries no `resourceKind` field: a resource revoke cannot act on has no count worth answering, and every accepted resource type — prompts included — is now identified by one self-sufficient `itemId`.
 
-`ShareManagementService.getRecipientsCount` SHALL call `getSharedResources({ resourceTypes: [kind(itemId)], with: 'others', includeUserInfo: true })` and pick the one resource out of that set with `countRecipientsByUrl` + `resolveRecipientsCount(counts, itemId, decode(itemId))` — both encodings are tried because list ids and DIAL Core share urls differ in percent-encoding for some resource types. DIAL Core has no single-resource variant of this query. `kind(itemId)` SHALL resolve `skills/`-prefixed ids to `SKILL` and `prompts/`-prefixed ids to `PROMPT` via the existing `RESOURCE_KIND_BY_PREFIX` map, unchanged by this capability.
+`ShareManagementService.getRecipientsCount` SHALL convert `itemId` with `toShareResourceUrl`, call `getSharedResources({ resourceTypes: [resolveResourceKind(url)], with: 'others', includeUserInfo: true })` and pick the one resource out of that set with `countRecipientsByUrl` + `resolveRecipientsCount(counts, url, safeDecodeURIComponent(url))` — both encodings are tried because list ids and DIAL Core share urls differ in percent-encoding for some resource types. DIAL Core has no single-resource variant of this query. `resolveResourceKind` SHALL resolve `skills/`-prefixed ids to `SKILL` and `prompts/`-prefixed ids to `PROMPT` via the existing `RESOURCE_KIND_BY_PREFIX` map, unchanged by this capability.
 
-DIAL Core omits resources nobody currently holds from a **successful** response, so a resource missing from a successful result SHALL answer `0`. An upstream failure SHALL surface as `502`/`503` rather than as a count, leaving the caller to decide how to degrade — a fabricated `0` would silently remove the owner's only way to revoke.
+DIAL Core omits resources nobody currently holds from a **successful** response, so a resource missing from a successful result SHALL answer `0`. An upstream failure SHALL surface as an HTTP error mapped by `mapDialHttpStatus` / `handleDialFetchError` (DIAL Core 4xx statuses such as 401/403/404/429 pass through as the matching exception, 5xx → `502`, network/timeout → `503`) rather than as a count, leaving the caller to decide how to degrade — a fabricated `0` would silently remove the owner's only way to revoke.
 
 `ShareMetadata` entries are only produced for users who **accepted** an invitation, so `recipientsCount` counts accepted grants. An issued-but-unopened share link contributes nothing and reads as `0`.
 
@@ -130,8 +130,8 @@ Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/cha
 
 #### Scenario: Upstream failure is surfaced, not smoothed over
 
-- **WHEN** DIAL Core returns an error status or is unreachable
-- **THEN** the endpoint responds `502`/`503`, and no count is invented
+- **WHEN** DIAL Core returns a 5xx status or is unreachable
+- **THEN** the endpoint responds `502`/`503` respectively, and no count is invented
 
 #### Scenario: Non-revocable resource is rejected
 
@@ -146,23 +146,25 @@ Shared helpers: `countRecipientsByUrl` and `resolveRecipientsCount` in `apps/cha
 #### Scenario: Recipient count for a shared skill
 
 - **WHEN** the shared-with-others set contains `{ url: 'skills/owner-bucket/team-a/docs-helper', sharedWith: [a] }`
-- **THEN** `GET /api/v1/share/recipients?itemId=skills/owner-bucket/team-a/docs-helper` resolves `kind(itemId) = 'SKILL'` and answers `{ itemId, recipientsCount: 1 }`
+- **THEN** `GET /api/v1/share/recipients?itemId=skills/owner-bucket/team-a/docs-helper` resolves `resolveResourceKind` to `'SKILL'` and answers `{ itemId, recipientsCount: 1 }`
 
 #### Scenario: Recipient count for a shared prompt, with no resourceKind field
 
 - **WHEN** the shared-with-others set contains `{ url: 'prompts/owner-bucket/Work/AI/summarize', sharedWith: [a, b] }`
-- **THEN** `GET /api/v1/share/recipients?itemId=prompts/owner-bucket/Work/AI/summarize` (no `resourceKind` query param present or needed) resolves `kind(itemId) = 'PROMPT'` and answers `{ itemId, recipientsCount: 2 }`
+- **THEN** `GET /api/v1/share/recipients?itemId=prompts/owner-bucket/Work/AI/summarize` (no `resourceKind` query param present or needed) resolves `resolveResourceKind` to `'PROMPT'` and answers `{ itemId, recipientsCount: 2 }`
 
 ### Requirement: Owner-side "Revoke access" action in the catalog details panel
 
-`Header` (`libs/catalog/src/components/Details/Header/Header.tsx`) SHALL append a "Revoke access" entry to the details panel's "Manage" dropdown when, and only when, both of the following hold:
+`Header` (`libs/catalog/src/components/Details/Header/Header.tsx`) SHALL append a "Revoke access" entry to the details panel's "Manage" dropdown when, and only when, all of the following hold:
 
-- an `onRevokeShare` callback was supplied by the host, and
-- the item's `isMyApp` is `true`.
+- the panel is not read-only (`isReadonly` is false),
+- an `onRevokeShare` callback was supplied by the host,
+- the item's `isMyApp` is `true`, and
+- the caller-supplied `isRevokeShareVisible(item)` does not return `false`.
 
-The entry SHALL render before the owner-side Delete entry (Delete is always the last Manage entry — see `catalog-details-confirmation-subview`), use the label `texts.revokeShareLabel` (English default `'Revoke access'`), and use `IconUserOff` from `@tabler/icons-react` at `DIAL_ICON_SIZE.SM` with `aria-hidden`, visually distinguishing it from Delete's `IconTrashX` while sharing Delete's `danger: true` treatment. Because the entry is gated on ownership and "Remove from My List" is gated on `sharedWithMe`, the two never render together.
+The entry SHALL render before the owner-side Delete entry (Delete is always the last Manage entry — see `catalog-details-confirmation-subview`), use the label `texts.revokeShareLabel` (English default `'Revoke access'`), and use `IconUserOff` from `@tabler/icons-react` at `DIAL_ICON_SIZE.SM` with `aria-hidden` and `stroke={DIAL_KIT_ICON_STROKE}`, visually distinguishing it from Delete's `IconTrashX` while sharing Delete's `danger: true` treatment. Because the entry is gated on ownership and "Remove from My List" is gated on `sharedWithMe`, the two never render together.
 
-Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onRevokeShare` directly.
+Clicking it SHALL only request confirmation — it SHALL NOT call the host's `onRevokeShare` directly: `DetailsPanel` passes `Header` its own `handleRequestRevokeShare`, which opens the `DetailsConfirmationKind.RevokeAccess` sub-view, and only the confirm action calls the host callback.
 
 Additionally, the entry SHALL be gated on a recipient count resolved **when the Manage menu opens**, via the host-supplied `onFetchRecipientsCount(item): Promise<number | undefined>`. `Header` SHALL call it from the dropdown's `onOpenChange`, and also from the trigger's `onMouseEnter`/`onFocus` so the lookup is usually settled before the click lands — at most once per displayed item, reset whenever `item.id` changes. It SHALL NOT be called for an item that could never offer the action (no `onRevokeShare`, `isMyApp !== true`, or `isRevokeShareVisible` returning `false`).
 
@@ -170,7 +172,7 @@ Resolution states map to the entry as follows:
 
 - **in flight** — the entry is withheld, so a count never appears and then contradicts itself,
 - **`0`** — the entry stays hidden; an action that could only be a no-op is noise,
-- **positive number** — the entry is shown, labelled `texts.revokeShareLabelWithCount(count)` (English default `` (count) => `Revoke access (${count})` ``) so the owner sees the blast radius before confirming,
+- **positive number** — the entry is shown, labelled `texts.revokeShareLabelWithCount(count)` (English default `` (count) => `${revokeShareLabel} (${count})` ``) so the owner sees the blast radius before confirming,
 - **`undefined` or a rejection** — the entry is shown with the plain `texts.revokeShareLabel`, so a transient upstream failure never removes the owner's only way to revoke.
 
 When the host supplies no `onFetchRecipientsCount`, the entry is offered for every owned item.
@@ -238,19 +240,19 @@ Resolving on menu open, rather than reading a value carried on the item, is what
 
 ### Requirement: `CatalogView` wires revoke to the BFF endpoint
 
-`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL implement `onRevokeShare` as `handleRevokeShare`, structurally parallel to the existing `handleUnshare`:
+`CatalogView` (`apps/chat/src/components/CatalogView/CatalogView.tsx`) SHALL pass `onRevokeShare={handleRevokeShare}`, where `handleRevokeShare` comes from the app hook `useCatalogSharing` (`apps/chat/src/hooks/useCatalogSharing/useCatalogSharing.ts`) and is structurally parallel to that hook's `handleUnshare`:
 
 1. Call `revokeSharedAccess(item.id)` from `apps/chat/src/server-api/share.api.ts`.
-2. On success, show a success notification (`title` = `CatalogI18nKeys.DetailsRevokeShareSuccessTitle`, `message` = `CatalogI18nKeys.DetailsRevokeShareSuccess` interpolating `{ name: item.name }`).
-3. On rejection, resolve the request's `traceId` via `getApiErrorDetails(err)`, show an error notification (`title` = `CatalogI18nKeys.DetailsRevokeShareErrorTitle`, `message` = `CatalogI18nKeys.DetailsRevokeShareError` with `{ name: item.name }`, `requestId` = `traceId`), and re-throw so the panel returns to its details content.
+2. On success, call `showSuccessNotification` (`title` = `CatalogI18nKeys.DetailsRevokeShareSuccessTitle`, `message` = `CatalogI18nKeys.DetailsRevokeShareSuccess` interpolating `{ name: item.name }`).
+3. On rejection, resolve the request's `traceId` via `getApiErrorDetails(err)` (from `@epam/ai-dial-chat-hooks`), call `showErrorNotification` (`title` = `CatalogI18nKeys.DetailsRevokeShareErrorTitle`, `message` = `CatalogI18nKeys.DetailsRevokeShareError` with `{ name: item.name }`, `requestId` = `traceId`), and re-throw so the panel returns to its details content.
 
-Unlike `handleUnshare`, it SHALL NOT refetch deployments, toolsets, or skills, and SHALL NOT clear `selectedItemId`: revoking does not change what the owner can see, so neither list membership nor the current selection is affected — this holds for `Skill` items exactly as it already does for `Application`/`Toolset` items.
+Unlike `handleUnshare`, it SHALL NOT refetch deployments, toolsets, skills, or prompts, and SHALL NOT clear `selectedItemId`: revoking does not change what the owner can see, so neither list membership nor the current selection is affected — this holds for `Skill` items exactly as it already does for `Application`/`Toolset` items.
 
-`CatalogView.isRevokeShareVisible` SHALL NOT unconditionally exclude `CatalogEntityType.Skill`. `Header`'s existing built-in `isMyApp === true` gate, combined with the recipient-count lookup, already makes Revoke access ownership-gated for every entity type; `isRevokeShareVisible` is only an additional caller-supplied override and SHALL return `true` for `Skill` so the built-in gate is the sole determinant, matching the current behavior for `Application`/`Toolset`.
+`useCatalogSharing.isRevokeShareVisible` (passed by `CatalogView` as `isRevokeShareVisible`) SHALL NOT exclude any entity type — it is `useCallback(() => true, [])`, so `Skill` and `Prompt` items are treated like every other type. `Header`'s existing built-in `isMyApp === true` gate, combined with the recipient-count lookup, already makes Revoke access ownership-gated for every entity type; `isRevokeShareVisible` is only an additional caller-supplied override and SHALL return `true` for every item so the built-in gate is the sole determinant.
 
 `CatalogView` SHALL pass the corresponding `texts` entries through to the catalog, alongside the existing `unshare*` entries, unchanged by this capability.
 
-`CatalogView` SHALL also implement `onFetchRecipientsCount` as `handleFetchRecipientsCount`: call `getShareRecipientsCount(item.id)` and return its `recipientsCount`. A rejection SHALL propagate untouched — the details panel degrades to an uncounted, still-reachable entry, and a failed count is not something to interrupt the user with a notification about. This is unchanged by this capability and already works for any `item.id`, `Skill` included.
+`CatalogView` SHALL also pass `onFetchRecipientsCount={handleFetchRecipientsCount}` from `useCatalogSharing`, which SHALL call `getShareRecipientsCount(item.id)` and return its `recipientsCount`. A rejection SHALL propagate untouched — the details panel degrades to an uncounted, still-reachable entry, and a failed count is not something to interrupt the user with a notification about. This is unchanged by this capability and already works for any `item.id`, `Skill` included.
 
 #### Scenario: Successful revoke notifies and leaves the catalog untouched
 
@@ -270,17 +272,18 @@ Unlike `handleUnshare`, it SHALL NOT refetch deployments, toolsets, or skills, a
 
 ### Requirement: i18n keys for the catalog revoke flow
 
-New keys SHALL be added to `apps/chat/src/constants/translation-keys.ts` and `apps/chat/src/i18n/locales/en.json`. The generic action label lives in the shared `ButtonsI18nKeys` namespace so the conversation surface reuses the same key, per `.claude/rules/all-ts.md` §"Avoid duplicate translation values"; the rest are feature-scoped under `catalog.details.revokeShare.*`, matching the existing `catalog.details.unshare.*` nesting. These keys are entity-type-agnostic and already interpolate `{{name}}` from `item.name`, so no skill-specific key is added — a skill's revoke notification reuses every key below unchanged.
+New keys SHALL be added to `apps/chat/src/constants/translation-keys.ts` and `apps/chat/src/i18n/locales/en.json`. The generic action labels live in the shared `ButtonsI18nKeys` namespace so the conversation surface reuses the same keys, per `.claude/rules/all-ts.md` §"Avoid duplicate translation values"; the rest are feature-scoped under `catalog.details.revokeShare.*`, matching the existing `catalog.details.unshare.*` nesting. These keys are entity-type-agnostic and already interpolate `{{name}}` from `item.name`, so no skill-specific key is added — a skill's revoke notification reuses every key below unchanged.
 
 | Enum member | Key | English value |
 |---|---|---|
 | `ButtonsI18nKeys.RevokeAccess` | `buttons.revokeAccess` | `Revoke access` |
+| `ButtonsI18nKeys.RevokeAccessWithCount` | `buttons.revokeAccessWithCount` | `Revoke access ({{count}})` |
 | `CatalogI18nKeys.DetailsRevokeShareConfirmTitle` | `catalog.details.revokeShare.confirmTitle` | `Revoke access?` |
-| `CatalogI18nKeys.DetailsRevokeShareConfirmMessage` | `catalog.details.revokeShare.confirmMessage` | `Revoke shared access to "{{name}}"? Anyone you shared it with will lose access.` |
+| `CatalogI18nKeys.DetailsRevokeShareConfirmMessage` | `catalog.details.revokeShare.confirmMessage` | `Revoke shared access to <bold>{{name}}</bold>? Anyone you shared it with will lose access.` (rendered through `<Trans>`) |
 | `CatalogI18nKeys.DetailsRevokeShareConsequenceOthersLoseAccess` | `catalog.details.revokeShare.consequenceOthersLoseAccess` | `Everyone you shared it with loses access` |
 | `CatalogI18nKeys.DetailsRevokeShareConsequenceLinksStopWorking` | `catalog.details.revokeShare.consequenceLinksStopWorking` | `Existing share links stop working` |
 | `CatalogI18nKeys.DetailsRevokeShareConsequenceKeepsYourCopy` | `catalog.details.revokeShare.consequenceKeepsYourCopy` | `You keep full access — nothing is deleted` |
-| `CatalogI18nKeys.DetailsRevokeShareRevokingStatus` | `catalog.details.revokeShare.revokingStatus` | `Revoking access` |
+| `CatalogI18nKeys.DetailsRevokeShareRevokingStatus` | `catalog.details.revokeShare.revokingStatus` | `Revoking access…` |
 | `CatalogI18nKeys.DetailsRevokeShareSuccessTitle` | `catalog.details.revokeShare.successTitle` | `Access revoked` |
 | `CatalogI18nKeys.DetailsRevokeShareSuccess` | `catalog.details.revokeShare.success` | `Shared access to "{{name}}" was revoked.` |
 | `CatalogI18nKeys.DetailsRevokeShareErrorTitle` | `catalog.details.revokeShare.errorTitle` | `Revoke failed` |
@@ -291,7 +294,7 @@ New keys SHALL be added to `apps/chat/src/constants/translation-keys.ts` and `ap
 #### Scenario: New keys resolve via i18n
 
 - **WHEN** `en.json` is loaded
-- **THEN** `buttons.revokeAccess` resolves to `"Revoke access"` and every `catalog.details.revokeShare.*` key resolves to its English value above
+- **THEN** `buttons.revokeAccess` resolves to `"Revoke access"`, `buttons.revokeAccessWithCount` to `"Revoke access ({{count}})"`, and every `catalog.details.revokeShare.*` key resolves to its English value above
 
 #### Scenario: Skill revoke notification reuses the same keys with no new key added
 
@@ -300,7 +303,7 @@ New keys SHALL be added to `apps/chat/src/constants/translation-keys.ts` and `ap
 
 ### Requirement: Library isolation for the revoke callback
 
-`libs/catalog` SHALL receive revoke behaviour exclusively through host-supplied values: the `onRevokeShare?: (item: CatalogItem) => void | Promise<void>` callback on `CatalogProps` / `DetailsPanelProps` / `ItemDetailsProps`, and the `texts.revokeShareLabel`, `texts.revokeShareConfirmTitle`, `texts.revokeShareConfirmMessage`, `texts.revokeShareConfirmConsequences`, and `texts.revokingShareStatusLabel` entries on `ItemDetailsTexts`, each with an English default.
+`libs/catalog` SHALL receive revoke behaviour exclusively through host-supplied values: the `onRevokeShare?: (item: CatalogItem) => Promise<void> | void` callback on `CatalogProps` / `DetailsPanelProps` (and `onRevokeShare?: (item: CatalogItem) => void` on `Header`'s props), the `onFetchRecipientsCount` and `isRevokeShareVisible` callbacks on the same props, and the `texts.revokeShareLabel`, `texts.revokeShareLabelWithCount`, `texts.revokeShareConfirmTitle`, `texts.revokeShareConfirmMessage`, `texts.revokeShareConfirmConsequences`, and `texts.revokingShareStatusLabel` entries on `ItemDetailsTexts`, each with an English default.
 
 The lib SHALL NOT contain the endpoint path, import `@epam/ai-dial-chat-api-client` or `apps/chat/src/server-api`, read app contexts, emit notifications, or know that revocation is an HTTP operation at all. `texts.revokeShareConfirmMessage` SHALL follow the existing `unshareConfirmMessage` signature `(name: string) => ReactNode` so hosts can pass either JSX or a plain translated string.
 
@@ -317,7 +320,7 @@ The Manage-menu entry and the confirmation sub-view SHALL introduce no physical-
 
 The entry's icon SHALL carry `aria-hidden` (the entry's own label names it). The confirmation sub-view's in-flight status SHALL be announced through the existing `role="status" aria-live="polite"` region using `texts.revokingShareStatusLabel`, and the whole flow SHALL be operable by keyboard alone using the dialog semantics the sub-view already provides.
 
-`handleRevokeShare` in `CatalogView` SHALL be wrapped in `useCallback` with `[showNotification, t]` as dependencies, matching `handleUnshare`. The `Header` `manageItems` array SHALL keep its existing `useMemo`, extended with the new visibility flag and handler in its dependency list, and the new `handleRevokeShare` callback inside `Header` SHALL be `useCallback`-wrapped like `handleUnshare`.
+`handleRevokeShare` in `useCatalogSharing` SHALL be wrapped in `useCallback` with `[showErrorNotification, showSuccessNotification, t]` as dependencies. The `Header` `manageActions` array (mapped into `manageItems`) SHALL keep its existing `useMemo`, extended with the revoke visibility flag, `recipientsCount`, and handler in its dependency list, and the new `handleRevokeShare` callback inside `Header` SHALL be `useCallback`-wrapped like `handleUnshare`.
 
 #### Scenario: RTL layout leaves the entry logically positioned
 
@@ -331,15 +334,15 @@ The entry's icon SHALL carry `aria-hidden` (the entry's own label names it). The
 
 ### Requirement: Tests — backend and catalog revoke flow
 
-`apps/chat-api/src/share/tests/share.service.spec.ts` and `share.controller.spec.ts` SHALL cover: a successful revoke (correct Core body, both caches invalidated, `{ success: true }`); no `getSharedResources` call being made; each mapped status (400→404, 401, 403, 404, 429, 5xx→502, network→503); DTO rejection of a malformed, empty, over-length, traversal-containing, and wrong-resource-type `itemId`; the unauthenticated case; and, newly, a successful revoke for a `skills/{bucket}/{path}` `itemId` alongside a malformed `skills/...` `itemId` rejection.
+`apps/chat-api/src/share/management/tests/share-management.service.spec.ts`, `apps/chat-api/src/share/tests/share.controller.spec.ts`, and `apps/chat-api/src/share/tests/revoke-shared-access.dto.spec.ts` (with `share.service.spec.ts` covering only facade delegation) SHALL together cover: a successful revoke (correct Core body, both caches invalidated, `{ success: true }`); no `getSharedResources` call being made; each mapped status (400→404, 401, 403, 404, 429, 5xx→502, network→503); DTO rejection of a malformed, empty, over-length, traversal-containing, and wrong-resource-type `itemId`; the unauthenticated case; and, newly, a successful revoke for a `skills/{bucket}/{path}` `itemId` alongside a malformed `skills/...` `itemId` rejection.
 
 `libs/catalog/src/components/Details/Header/tests/Header.spec.tsx` and `libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx` SHALL cover: entry visibility for owned vs shared-with-me vs callback-absent items; clicking opens the confirmation without invoking the callback; confirming calls `onRevokeShare` exactly once with the panel staying open on success; a rejection returns to the details content with the panel still open; and a second rapid confirm click not double-invoking the callback. These cases are entity-type-agnostic and SHALL be exercised with a `Skill` fixture alongside the existing `Application`/`Toolset` fixtures.
 
-`apps/chat/src/components/CatalogView/tests/CatalogView.spec.tsx` SHALL cover the success path (one API call, success notification, no refetch, selection untouched) and the failure path (error notification with trace id, rejection re-thrown), for a `Skill` item in addition to the existing `Application`/`Toolset` cases, and SHALL cover `isRevokeShareVisible` returning `true` for `Skill`.
+`apps/chat/src/hooks/useCatalogSharing/tests/useCatalogSharing.spec.ts` SHALL cover the success path (one API call, success notification, no refetch, selection untouched) and the failure path (error notification with trace id, rejection re-thrown), for `Skill` and `Prompt` items in addition to the default case, `handleFetchRecipientsCount` resolving and propagating a failure, and `isRevokeShareVisible` returning `true`; `apps/chat/src/components/CatalogView/tests/CatalogView.spec.tsx` covers the action being offered from the rendered catalog.
 
 Tests SHALL query by role, label, and text — no implementation-specific selectors and no `data-testid`.
 
 #### Scenario: Test suites cover the full success and failure matrix including skills
 
-- **WHEN** the backend, lib, and `CatalogView` suites are run
+- **WHEN** the backend, lib, and `useCatalogSharing`/`CatalogView` suites are run
 - **THEN** every scenario listed above passes, including the newly added skill-specific cases

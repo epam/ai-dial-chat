@@ -8,7 +8,7 @@ Track which scheduler-created conversations the current user has opened, persist
 
 ### Requirement: Viewed scheduled-task conversation ids are persisted in a dedicated bucket file
 
-The backend SHALL persist which scheduler-created conversation ids the current user has opened in `.client_data/.viewed-scheduled-task-conversations.json` inside the user's DIAL Core bucket — a dedicated file, separate from `.client_data/.user-config.json`, owned by a new `apps/chat-api/src/scheduled-task-unread/` domain (`ScheduledTaskUnreadService`, `ScheduledTaskUnreadController`, `ScheduledTaskUnreadModule`, `dto/`).
+The backend SHALL persist which scheduler-created conversation ids the current user has opened in `.client_data/.viewed-scheduled-task-conversations.json` inside the user's DIAL Core bucket — a dedicated file, separate from `.client_data/.user-config.json`, owned by the `apps/chat-api/src/scheduled-task-unread/` domain (`ScheduledTaskUnreadService`, `ScheduledTaskUnreadModule`, and `dto/viewed-scheduled-task-conversations.dto.ts` with `DEFAULT_VIEWED_SCHEDULED_TASK_CONVERSATIONS` and `parseViewedScheduledTaskConversations`). The domain has no controller of its own: the module only provides and exports the service, and the HTTP endpoint lives in `ConversationController`.
 
 File schema:
 
@@ -19,7 +19,7 @@ interface ViewedScheduledTaskConversations {
 }
 ```
 
-Read path SHALL follow the same pattern as `UserConfigService.readConfigFromPath` (`apps/chat-api/src/user-config/user-config.service.ts`): `DialClientService.client.downloadFile(bucket, path, { headers: getBearerAuthHeaders(token), parseAs: 'stream' })`; a non-ok response or any thrown error SHALL be treated as "file does not exist yet" and fall back to `{ version: 1, conversationIds: [] }` without throwing, logging a `logger.warn` on unexpected failures.
+Read path SHALL follow the same pattern as `UserConfigService.readConfigFromPath` (`apps/chat-api/src/user-config/user-config.service.ts`): `DialClientService.client.downloadFile(bucket, path, { headers: getBearerAuthHeaders(token), parseAs: 'stream' })`; a non-ok response or any thrown error SHALL be treated as "file does not exist yet" and fall back to `{ version: 1, conversationIds: [] }` without throwing, logging a `logger.warn` only when an error is thrown (including invalid JSON). A parsed body that is not an object, or whose `conversationIds` is not an array, SHALL silently normalize to an empty list, and non-string entries SHALL be dropped.
 
 Write path SHALL follow `UserConfigService.writeConfig`: `DialClientService.client.uploadFile(bucket, path, { headers: getBearerAuthHeaders(token), body })` where `body` is a `FormData` with a `Blob` of `JSON.stringify(...)` appended (a plain string/Buffer body produces a boundary-less `Content-Type` that DIAL Core rejects). Errors from `uploadFile` SHALL be mapped via `handleDialSdkError`.
 
@@ -30,8 +30,13 @@ Write path SHALL follow `UserConfigService.writeConfig`: `DialClientService.clie
 
 #### Scenario: Reading a malformed viewed-ids file returns an empty default
 
-- **WHEN** `.client_data/.viewed-scheduled-task-conversations.json` contains invalid JSON or a non-array `conversationIds`
+- **WHEN** `.client_data/.viewed-scheduled-task-conversations.json` contains invalid JSON
 - **THEN** the service logs a warning and returns `[]` without throwing
+
+#### Scenario: A non-array conversationIds normalizes to empty
+
+- **WHEN** the file parses but `conversationIds` is not an array
+- **THEN** the service returns `[]` without throwing and without logging
 
 #### Scenario: Marking a conversation as viewed persists its id
 

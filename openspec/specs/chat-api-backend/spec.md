@@ -12,7 +12,7 @@ responses follow the error mapping defined by each domain.
 
 ### Requirement: Environment variable validation at startup
 
-The application SHALL validate required environment variables at bootstrap using a `class-validator`-decorated `EnvironmentVariables` class passed to `ConfigModule.forRoot({ validate })`. The application SHALL fail fast with a clear error if `DIAL_CORE_URL`, `DIAL_API_KEY`, or `THEMES_CONFIG_URL` are missing or invalid.
+The application SHALL validate required environment variables at bootstrap using a `class-validator`-decorated `EnvironmentVariables` class passed to `ConfigModule.forRoot({ validate })`. The application SHALL fail fast with a clear `Environment validation failed` error if a required variable — `DIAL_CORE_URL`, `AUTH_SESSION_SECRET` (a 64-character hex string), or `AUTH_CALLBACK_BASE_URL` (a URL) — is missing or invalid, or if an optional variable that is set is invalid (for example `THEMES_CONFIG_URL`, which is optional but must be a URL when present). `DIAL_API_KEY` is optional.
 
 #### Scenario: Valid environment starts the application
 
@@ -28,16 +28,16 @@ The application SHALL validate required environment variables at bootstrap using
 
 ### Requirement: Icon name input validation
 
-`GET /api/themes/icon` SHALL validate the `iconName` query parameter via a DTO decorated with `@Matches(/^[a-zA-Z0-9_-]+$/)`. Requests with unsafe characters (e.g. path traversal sequences) SHALL return HTTP 400.
+`GET /api/themes/icon` SHALL validate the `iconName` query parameter via a DTO (`GetThemeIconDto`) decorated with `@IsString()` and `@Matches(/^[a-zA-Z0-9_.-]+$/)`. Requests with unsafe characters (e.g. path traversal sequences) SHALL return HTTP 400.
 
 #### Scenario: Valid icon name returns SVG
 
-- **WHEN** `iconName` contains only alphanumeric characters, dashes, and underscores
+- **WHEN** `iconName` contains only alphanumeric characters, dashes, underscores, and dots (e.g. `icon-light.svg`)
 - **THEN** the endpoint returns the SVG content with status 200
 
 #### Scenario: Path traversal attempt returns 400
 
-- **WHEN** `iconName` contains `../` or other unsafe characters
+- **WHEN** `iconName` contains `/` (e.g. `../secret`) or other characters outside the allowlist
 - **THEN** the endpoint returns HTTP 400
 
 #### Scenario: Missing iconName returns 400
@@ -68,7 +68,7 @@ The application SHALL validate required environment variables at bootstrap using
 
 ### Requirement: NestJS Logger in ThemeService
 
-`ThemeService` SHALL use an injected `Logger` instance for all log output. `console.log` calls SHALL be replaced with structured logger calls at the appropriate log level (`debug`, `log`, `warn`, `error`).
+`ThemeService` SHALL use a class-level NestJS `Logger` instance (`private readonly logger = new Logger(ThemeService.name)`) for all log output. `console.log` calls SHALL be replaced with structured logger calls at the appropriate log level (`debug`, `log`, `warn`, `error`).
 
 #### Scenario: Theme fetch logged at debug level
 
@@ -146,7 +146,7 @@ reverse-tabnabbing protection.
 #### Scenario: Security headers present on API responses
 
 - **WHEN** any API endpoint is called
-- **THEN** the response includes `X-Content-Type-Options: nosniff` and `X-Frame-Options`
+- **THEN** the response includes `X-Content-Type-Options: nosniff`, and includes `X-Frame-Options` unless iframe embedding origins are allowlisted (helmet's `frameguard` is disabled in that case and the CSP `frame-ancestors` directive governs embedding)
 
 #### Scenario: OAuth-compatible opener policy
 

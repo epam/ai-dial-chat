@@ -34,7 +34,7 @@ When `OverlayFeature.CustomApps` is enabled, `CatalogView` SHALL show the Edit b
 - **THEN** schema-less applications do NOT show an Edit button
 
 ### Requirement: `OverlayFeature.HideCustomAppCreation`
-The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL suppress the "Custom App" entry in the catalog create menu when active, without disabling the Edit button. This allows operators to permit editing existing custom apps while preventing creation of new ones.
+The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL suppress the "Custom App" entry in the catalog create menu when active (it also suppresses the schema-runner entries, see `catalog-create-app`), without disabling the Edit button. This allows operators to permit editing existing custom apps while preventing creation of new ones.
 
 #### Scenario: Create entry is suppressed while Edit stays available
 
@@ -43,7 +43,7 @@ The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL sup
 - **AND** the Edit button still renders on schema-less custom apps the user can edit
 
 ### Requirement: Skill create option in catalog
-The system SHALL add a "Skill" option to the `CatalogView` create button, unconditionally (no `OverlayFeature` gate), alongside the runner, Prompt, Toolset and Custom App entries. The "Skill" option SHALL be a nested submenu with two children: "Write instructions", which navigates to `ROUTES.SkillEditor` with no query parameters (the Skill Editor returns to `ROUTES.Catalog` on its own), and "Upload", which opens a native file picker restricted to a single ZIP archive and imports it as a new Skill (see `skill-archive-import`).
+The system SHALL add a "Skill" option to the `CatalogView` create button, unconditionally (no `OverlayFeature` gate), alongside the runner, Prompt, Toolset and Custom App entries. The "Skill" option SHALL be a nested submenu with two children: "Write instructions", which navigates to `ROUTES.SkillEditor` with no query parameters (the Skill Editor returns to `ROUTES.Catalog` on its own), and "Upload", which calls the host's `onSkillUploadClick` to open the "Upload skill" dialog (`SkillArchiveUploadDialog`, a ui-kit `FileDropzone` accepting `.zip,.md`) that imports a ZIP archive or a standalone `SKILL.md` as a new Skill (see `skill-archive-import`). The menu is built by `useCatalogEditNavigation` (`libs/chat-hooks/src/catalog/useCatalogEditNavigation/useCatalogEditNavigation.ts`); when the create-menu search query is non-empty, a query matching the "Skill" label keeps both children, otherwise only the matching children are kept and the "Skill" entry is dropped when none match.
 
 The submenu SHALL be operable by keyboard (arrow-key navigation into and within the submenu, `Enter`/`Space` to activate a child, `Escape` to close) and SHALL NOT require hover to open or navigate on touch/mobile viewports. The parent item and both children SHALL meet the touch-target size the shared `Dropdown` applies to every menu row — the menu is rendered by the ui-kit component, so this capability inherits that sizing rather than setting its own.
 
@@ -59,9 +59,9 @@ The submenu SHALL be operable by keyboard (arrow-key navigation into and within 
 - **WHEN** a user selects "Write instructions" from the Skill submenu
 - **THEN** the app navigates to `/skill-editor` with no query string and the Skill Editor renders in create mode with `SKILL.md` selected by default
 
-#### Scenario: Clicking "Upload" opens a file picker for a ZIP archive
+#### Scenario: Clicking "Upload" opens the Upload skill dialog
 - **WHEN** a user selects "Upload" from the Skill submenu
-- **THEN** a native file picker opens restricted to a single ZIP archive, and selecting a file begins the archive import flow described in `skill-archive-import`
+- **THEN** the "Upload skill" dialog opens with a file dropzone accepting `.zip,.md`, and picking or dropping a file begins the import flow described in `skill-archive-import`
 
 #### Scenario: Submenu is keyboard-navigable
 - **WHEN** a keyboard user tabs to the "Skill" entry and presses the key that opens its submenu

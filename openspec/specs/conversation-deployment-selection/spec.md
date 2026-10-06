@@ -31,12 +31,12 @@ deploymentId!: string;
 Where `DEPLOYMENT_ID_PATTERN` is defined in `apps/chat-api/src/common/validators/deployment-id.pattern.ts`:
 
 ```ts
-export const DEPLOYMENT_ID_PATTERN = /^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/;
+export const DEPLOYMENT_ID_PATTERN = /^(?:[\w.\-:@/()]|%[\dA-Fa-f]{2})+$/;
 export const DEPLOYMENT_ID_VALIDATION_MESSAGE =
   'Must contain only supported characters or valid percent-encoded bytes';
 ```
 
-No default is allowed. If `deploymentId` is absent or fails validation, `ValidationPipe` MUST respond 400.
+The pattern allows word characters, `.`, `-`, `:`, `@`, `/`, `(`, `)`, and valid `%XX` bytes. No default is allowed. If `deploymentId` is absent or fails validation, `ValidationPipe` MUST respond 400.
 
 The Swagger `@ApiResponse({ status: 400 })` annotation on the `createConversation` handler MUST list missing/invalid `deploymentId` as an example of a 400 case.
 
@@ -101,7 +101,7 @@ After adding `deploymentId` to `CreateConversationDto`, the following MUST run a
 3. `npm exec nx build chat-api-client -- --skip-nx-cache`
 4. `npm exec nx lint chat-api-client`
 
-`apps/chat/src/server-api/conversations.api.ts` SHALL export `createConversation` accepting and forwarding `deploymentId`:
+`apps/chat/src/server-api/conversations.api.ts` SHALL export `createConversation` accepting and forwarding `deploymentId` (plus an optional `skills` list forwarded as `custom_content.skills`):
 
 ```ts
 export const createConversation = (
@@ -110,12 +110,16 @@ export const createConversation = (
   attachments?: AttachmentDto[],
   configurationValue?: Record<string, unknown>,
   formValue?: Record<string, unknown>,
+  skills?: RequestSkill[],
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
       deploymentId,
-      ...(attachments?.length || configurationValue || formValue
+      ...(attachments?.length ||
+      configurationValue ||
+      formValue ||
+      skills?.length
         ? {
             custom_content: {
               ...(attachments?.length ? { attachments } : {}),
@@ -123,6 +127,7 @@ export const createConversation = (
                 ? { configuration_value: configurationValue }
                 : {}),
               ...(formValue ? { form_value: formValue } : {}),
+              ...(skills?.length ? { skills } : {}),
             },
           }
         : {}),
@@ -133,7 +138,7 @@ export const createConversation = (
 #### Scenario: Generated client accepts deploymentId in CreateConversationDto
 
 - **WHEN** `npm run openapi` runs
-- **THEN** the generated `CreateConversationDto` type in `@epam/chat-api-client` includes `deploymentId: string` as a required field
+- **THEN** the generated `CreateConversationDto` type in `@epam/ai-dial-chat-api-client` includes `deploymentId: string` as a required field
 
 #### Scenario: Frontend wrapper forwards all custom_content fields
 
@@ -154,12 +159,25 @@ export const createConversation = (
 // Regular message send (handleCreateConversation):
 if (!selectedItemId) return;
 const attachmentDtos = attachmentsToDtos(attachments || []);
-await apiCreateConversation(message, selectedItemId, attachmentDtos);
+await apiCreateConversation(
+  message,
+  selectedItemId,
+  attachmentDtos,
+  hasToolConfig ? toolConfigurationValue : undefined,
+  undefined,
+  skillsForSend,
+);
 
-// Schema starter with configuration (handleStarterSelect):
+// Submit starter (handleStarterSelect):
 if (!selectedItemId) return;
-const configurationValue = propertyKey ? { [propertyKey]: starter.const } : undefined;
-await apiCreateConversation(text, selectedItemId, [], configurationValue);
+const starterConfig = propertyKey ? { [propertyKey]: starter.const } : undefined;
+const mergedConfigurationValue = { ...starterConfig, ...toolConfigurationValue };
+await apiCreateConversation(
+  text,
+  selectedItemId,
+  [],
+  hasConfig ? mergedConfigurationValue : undefined,
+);
 ```
 
 The send callback SHALL NOT fire when `selectedItemId` is `null` — which can occur during initial load, when the deployments list is empty, or when explicitly cleared — enforced by the input component's disabled send button state and by explicit `if (!selectedItemId) return;` guards in `handleCreateConversation`, `handleStarterSelect`, and `NewConversationComposer.handleSend`.
@@ -167,7 +185,7 @@ The send callback SHALL NOT fire when `selectedItemId` is `null` — which can o
 #### Scenario: handleCreateConversation passes selectedItemId as deploymentId to apiCreateConversation
 
 - **WHEN** the user sends a message and `ConversationRoute`'s `handleCreateConversation` is invoked with `useDeployments().selectedItemId === 'item-1'`
-- **THEN** `apiCreateConversation` is called with `(message, 'item-1', attachmentDtos)`
+- **THEN** `apiCreateConversation` is called with `(message, 'item-1', attachmentDtos, <active tool configuration or undefined>, undefined, <selected skills>)`
 
 #### Scenario: handleCreateConversation is a no-op when selectedItemId is null
 
@@ -240,7 +258,7 @@ State ownership: `ConversationRoute` owns the derived starter list, intro text, 
 #### Scenario: Submit Quick Apps starter creates a conversation without schema configuration
 
 - **WHEN** a user selects a Quick Apps starter whose normalized `submit` flag is true
-- **THEN** `apiCreateConversation` is called with the starter text, selected deployment id, and attachments only
+- **THEN** `apiCreateConversation` is called with the starter text, the selected deployment id, an empty attachments array, and only the active tool configuration (if any) as `configurationValue`
 - **AND** no schema `configuration_value` is added to the first message
 
 #### Scenario: Each schema starter uses its own prompt even when a shared description is present
@@ -305,7 +323,12 @@ On mount, the route's effect SHALL:
 
 1. If router state carries an explicit `deploymentId` (`routeDeploymentId`, e.g. the overlay
    conversation-list bridge opening the composer with a preselected deployment), call
-   `restoreSelectedItemId(routeDeploymentId)` as today — this explicit preselection takes priority.
+   `restoreSelectedItemId(routeDeploymentId)` — this explicit preselection takes priority. The
+   state is one-shot: the effect then clears it with `navigate(pathname, { replace: true, state: null })`
+   and remembers the consumption in a ref for the lifetime of the mount, so the re-run triggered by
+   that clearing navigation does not fall through to `restoreDefaultSelection()`. A temporary
+   isolated-view branch (marked `TODO: remove in next release`) likewise pins the isolated model
+   via `restoreSelectedItemId` and never falls through to the default.
 2. Otherwise, if the optional overlay context has a pending `overlay.pendingModelId` awaiting
    resolution, do nothing and let the overlay-pending-model hook
    (`apps/chat/src/hooks/overlay/useOverlayPendingModel.ts`, mounted in `apps/chat/src/app/app.tsx`)
@@ -327,7 +350,7 @@ summary, `restoreDefaultSelection` SHALL resolve to:
 4. the operator default, when pinned (unchanged);
 5. the persisted `useUserConfig().selectedDeploymentId` (unchanged — the fall-through for an unset
    preference, which is the default behaviour);
-6. the first catalog item (unchanged).
+6. the first non-hidden catalog item, else the first catalog item (unchanged).
 
 `ConversationRoute` itself is **not** changed by this: it keeps calling `restoreDefaultSelection()`
 and remains unaware of the preference and of the overlay host's `modelId`.
@@ -348,7 +371,9 @@ existing precedence for `CreateConversationDto.deploymentId`.
 **RTL / UI impact:** None (state resolution only; no new UI).
 
 **Memoisation:** The mount effect's dependency array SHALL include `restoreSelectedItemId`,
-`restoreDefaultSelection`, `routeDeploymentId`, and `overlay?.pendingModelId` — unchanged.
+`restoreDefaultSelection`, `routeDeploymentId`, and `overlay?.pendingModelId`, plus `navigate`,
+`pathname`, `isIsolatedView`, and `isolatedModelId` for the one-shot state clearing and the
+isolated-view branch.
 `restoreDefaultSelection`'s own `useCallback` dependency array SHALL remain `[]`; the preference
 reaches it through a ref, so this effect does not re-fire when the preference changes.
 

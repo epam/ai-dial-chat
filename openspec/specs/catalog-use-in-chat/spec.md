@@ -6,7 +6,7 @@ The "Use in chat" action that selects a deployment and starts a new conversation
 ## Requirements
 ### Requirement: Use in chat selects a deployment and starts a new conversation
 
-When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type Model or Application, the system SHALL set that item's `id` as the selected deployment via `DeploymentsContext.setSelectedItemId` and navigate to `ROUTES.Root` (`/`). The navigation SHALL also carry the chosen id as router state (`{ deploymentId: string }`), so `ConversationRoute` treats the arrival as an explicit selection via `restoreSelectedItemId` instead of calling `restoreDefaultSelection`. Without it the new-chat route resets the selection to the operator default on mount (and the persisted preference has not yet propagated), discarding the pick.
+When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type Model or Application (`CatalogEntityType.Agent`), the handler (`handleUseInChat` in `apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx`, which `CatalogView` consumes) SHALL set that item's `id` as the selected deployment via `DeploymentsContext.setSelectedItemId` and navigate to `ROUTES.Root` (`/`). The navigation SHALL also carry the chosen id as router state (`{ deploymentId: string }`), so `ConversationRoute` treats the arrival as an explicit selection via `restoreSelectedItemId` instead of calling `restoreDefaultSelection`. Without it the new-chat route resets the selection to the operator default on mount (and the persisted preference has not yet propagated), discarding the pick.
 
 The `deploymentId` state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with `navigate(pathname, { replace: true, state: null })`, remembering for the lifetime of that mount that it was consumed so the clearing navigation does not re-trigger default restoration. `history.state` survives a page reload, so state left in place would make every refresh re-apply a stale pick instead of resolving the configured default.
 
@@ -17,13 +17,13 @@ The selection SHALL be persisted to user config as part of `setSelectedItemId`'s
 - **WHEN** the user uses a Model in chat and then reloads `/`
 - **THEN** the router state has already been consumed and cleared, so the selection resolves through the normal precedence chain — the pinned operator default when `defaultDeploymentPinned` is enabled
 
-When the item's type is `CatalogEntityType.Prompt`, "Use in chat" SHALL NOT change the selected deployment. Instead it SHALL navigate to `ROUTES.Root` passing the prompt's resolved body as router state (`{ promptContent: string }`), which `ConversationRoute` consumes to seed the composer's existing `message` prop through its `inputMessage` state. The currently selected deployment is left exactly as the user last set it, so a prompt can be used with whatever model is already chosen.
+When the item's type is `CatalogEntityType.Prompt`, "Use in chat" SHALL NOT change the selected deployment. The body is resolved by `resolveCatalogPrimaryAction` (`libs/chat-hooks/src/catalog/catalog-primary-action.ts`). For a body without `{{parameter}}` placeholders it SHALL navigate to `ROUTES.Root` passing the body as router state (`{ promptContent: string }`), which `ConversationRoute` consumes to seed the composer through `useComposerSeed`'s `seedMessage`. For a body with parameters it SHALL instead pass `{ pendingPrompt: { id, name, content, description } }`, which `ConversationRoute` consumes to open the "Prompt parameters" popup. The currently selected deployment is left exactly as the user last set it, so a prompt can be used with whatever model is already chosen.
 
 The prompt body SHALL travel as router state, never as a query parameter — a prompt body may be up to 50 000 characters, which would exceed URL length limits and leak content into browser history.
 
 The state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with `navigate(…, { replace: true })`, so a later back-navigation to `/` does not silently re-inject stale text. This mirrors how `CatalogView` already clears the one-shot `itemId` search param.
 
-When the prompt's body has not yet been resolved at click time, the handler SHALL resolve a public prompt through `getPublicPrompt` (with its bucket-relative sub-path), and a personal or shared prompt through `getPrompt(item.id)` — the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them. On failure it SHALL surface an error notification and stay on the catalog rather than navigating with empty text.
+When the prompt's body has not yet been resolved at click time (`item.details.promptContent.content` is absent), the handler SHALL resolve a public prompt through `getPublicPrompt` (with its bucket-relative sub-path), and a personal or shared prompt through `getPrompt(item.id)` — the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them. On failure it SHALL surface an error notification and stay on the catalog rather than navigating with empty text.
 
 #### Scenario: Use in chat on a Model navigates to the new-conversation screen with that model selected
 
@@ -50,7 +50,7 @@ When the prompt's body has not yet been resolved at click time, the handler SHAL
 
 #### Scenario: Use in chat on a Prompt pre-fills the composer
 
-- **WHEN** the user opens the catalog, selects the Prompts tab, opens a prompt's details panel, and clicks "Use in chat"
+- **WHEN** the user opens the catalog, selects the Prompts tab, opens the details panel of a prompt without `{{parameter}}` placeholders, and clicks "Use in chat"
 - **THEN** the app navigates to `/`
 - **AND** the composer's textarea contains the prompt's full body, ready to edit or send
 - **AND** the selected deployment is unchanged from before the click
@@ -93,7 +93,7 @@ The catalog details panel SHALL NOT render the "Use in chat" primary action butt
 
 `CatalogEntityType.Prompt` items SHALL render the button: a prompt is always usable in chat, since it contributes text rather than a runtime. `supportsChat` is not consulted for prompts — the field describes a deployment's interfaces and is absent on prompt items.
 
-`CatalogView`'s `isPrimaryActionVisible` predicate therefore returns `true` for `Model` and `Agent` items whose `supportsChat` is not `false`, `true` for every `Prompt` item, and `false` for `Toolset` items.
+The `isPrimaryActionVisible` predicate (returned by `useCatalogItemActions` and passed down by `CatalogView`) therefore returns `true` for `Model` and `Agent` items whose `supportsChat` is not `false`, `true` for every `Prompt` and `Skill` item, and `false` for `Toolset` items.
 
 #### Scenario: Toolset details panel has no Use in chat button
 
@@ -131,22 +131,22 @@ The catalog details panel SHALL NOT render the "Use in chat" primary action butt
 
 ### Requirement: Use in chat on a Skill attaches the skill to the composer
 
-When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type `CatalogEntityType.Skill`, the system SHALL NOT change the selected deployment. Instead it SHALL navigate to `ROUTES.Root` (`/`) passing the skill's resource URL (`skills/{bucket}/{path}`, identical to the item's `CatalogItem.id`) as one-shot router state (`{ skillId: string }`), which `ConversationRoute` consumes on mount to seed the conversation input's selected skill — single selection, replacing any prior selection (see the `skill-input-attachment` capability) — and clears with `navigate(…, { replace: true })` so a later back-navigation or reload does not re-apply a stale selection. The currently selected deployment is left exactly as the user last set it.
+When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type `CatalogEntityType.Skill`, the system SHALL NOT change the selected deployment. Instead it SHALL navigate to `ROUTES.Root` (`/`) passing the skill's resource URL (`skills/{bucket}/{path}`, identical to the item's `CatalogItem.id`) as one-shot router state (`{ skillId: string }`), which `ConversationRoute` consumes on mount through `selectSkillByUrl` (`apps/chat/src/components/SkillSelector/useSkillSelectorOverlay.tsx`): it seeds the composer with that skill's `/{name} ` mention via `seedSkillMentions`, replacing the composer's message (see the `skill-input-attachment` capability) — and clears with `navigate(…, { replace: true })` so a later back-navigation or reload does not re-apply a stale selection. The currently selected deployment is left exactly as the user last set it.
 
 The skill details panel's header SHALL offer "Use in chat" as the primary action for a Skill; while it shows, the Download action SHALL render in the Manage menu instead of the primary slot.
 
-The button's visibility SHALL NOT consult the selected deployment's skills support: it renders for every Skill, regardless of which model the chat will open with. When the chat opens with a deployment whose `features.skillsSupported` is not `true`, the attached skill renders in the `ChatSkill` error state with sending disabled (see the `skill-input-attachment` capability's error-state requirement) — the visible error state, not a hidden button, communicates the mismatch. This resolves the previously deferred model-support condition: hiding the button was rejected because the catalog does not reliably know the chat route's live deployment selection, and the error state covers both this arrival path and later model switches with one mechanism.
+The button's visibility SHALL NOT consult the selected deployment's skills support: it renders for every Skill, regardless of which model the chat will open with. When the chat opens with a deployment whose `features.skillsSupported` is not `true`, the skill mention renders through `ChatSkill`'s `isUnsupported` error state with sending disabled (see the `skill-input-attachment` capability's error-state requirement) — the visible error state, not a hidden button, communicates the mismatch. This resolves the previously deferred model-support condition: hiding the button was rejected because the catalog does not reliably know the chat route's live deployment selection, and the error state covers both this arrival path and later model switches with one mechanism.
 
 #### Scenario: Use in chat on a Skill adds it to the chat input
 
 - **WHEN** the user clicks "Use in chat" on a Skill in the catalog details panel
-- **THEN** the app navigates to `/` and the conversation input shows a chip for that skill in the accent-active control color
+- **THEN** the app navigates to `/` and the conversation input contains that skill's `/{name} ` mention, rendered inline through `ChatSkill`
 - **AND** the selected deployment is unchanged from before the click
 
 #### Scenario: Use in chat on a Skill with an unsupported selected model
 
 - **WHEN** the chat route's currently selected deployment has `features.skillsSupported` not `true`, and the user clicks "Use in chat" on a Skill
-- **THEN** the app navigates to `/` and the conversation input shows the skill's `ChatSkill` chip in the error state with its unsupported-model tooltip
+- **THEN** the app navigates to `/` and the conversation input shows the skill's `ChatSkill` mention in the `isUnsupported` error state with its unsupported-model tooltip
 - **AND** sending is disabled until the user removes the skill or switches to a deployment that supports skills
 - **AND** the selected deployment is unchanged from before the click
 

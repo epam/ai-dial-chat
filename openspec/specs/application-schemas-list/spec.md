@@ -98,13 +98,13 @@ Status translation is delegated to the shared `mapDialHttpStatus` / `handleDialF
 
 ## Generated Client
 
-After OpenAPI regeneration, `ApplicationsApi` (or a new `ApplicationSchemasApi` depending on Swagger tag) exposes:
+The controller is tagged `@ApiTags('applications')`, so after OpenAPI regeneration the generated `ApplicationsApi` (`libs/chat-api-client/src/generated/src/apis/ApplicationsApi.ts`) exposes:
 
 ```ts
 applicationsApi.listApplicationSchemas(): Promise<ApplicationSchemasResponseDto>
 ```
 
-Frontend server-api wrapper: `apps/chat/src/server-api/application-schemas.ts`
+Frontend server-api wrapper: `apps/chat/src/server-api/application-schemas.ts` (which also exports `getApplicationSchema(id)` for the sibling `GET /api/v1/application-schemas/:id` endpoint, covered by the `application-schemas-get` capability)
 
 ```ts
 export const getApplicationSchemas = (): Promise<ApplicationSchemasResponseDto> =>

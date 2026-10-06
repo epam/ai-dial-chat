@@ -8,23 +8,23 @@ The file Info action and the metadata popup behind it.
 
 ### Requirement: onGetInfo wired on useDialFileManager
 
-`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `onGetInfo(file: DialFile)`, wired to ui-kit's `DialFileManager.onGetInfo` prop, that resolves `file` to its Core-addressable `{ bucket, path }` using the same per-tab resolution already used by `onDownloadFiles` (current user bucket on `my_files`; the item's own normalized bucket for root-level `shared` items; `sharedRootMetaRef`/`resolveOwnerCoords` for nested `shared` folder children; the public bucket on `organization`), then calls the existing `getFileMetadata` server-api wrapper (`apps/chat/src/server-api/files.api.ts`, unchanged by this capability).
+`useDialFileManager` (`libs/chat-hooks/src/files/useDialFileManager/useDialFileManager.ts (@epam/ai-dial-chat-hooks)`) SHALL expose `onGetInfo(file: DialFile)`, delegated to its `useDialFileMetadata` sub-hook (`libs/chat-hooks/src/files/useDialFileMetadata/useDialFileMetadata.ts`) and wired to `DialFileManager`'s `onGetInfo` prop by `DialFileManagerShell`, that resolves `file` to its Core-addressable `{ bucket, path }` the same way `onDownloadFiles` does for a file — the item's own `bucket` when the listing row carries one, otherwise the current user's `bucket`, with the path from `resolveDialFileApiPath(file, itemBucket, rootLabel)` — then calls `getFileMetadata` on the injected `filesApi: DialFilesApi` port, which the app's `apps/chat/src/server-api/dial-files-api.adapter.ts` backs with the `getFileMetadata` server-api wrapper (`apps/chat/src/server-api/files.api.ts`).
 
-**State ownership**: `useDialFileManager` owns `fileMetadata: DialFile | undefined` and `isFileMetadataLoading: boolean`. No new context is introduced.
+**State ownership**: `useDialFileMetadata` owns `fileMetadata: DialFile | undefined` and `isFileMetadataLoading: boolean`, which `useDialFileManager` re-exposes. No new context is introduced.
 
-**Response mapping**: the `FileMetadataResponseDto` returned by `getFileMetadata` is mapped into the same `DialFile`-shaped object the hook already produces for listing rows, so `fileMetadataPopupOptions.fileMetadata` receives a value structurally consistent with any other `DialFile` the popup might otherwise see.
+**Response mapping**: the `FileMetadataResponseDto` returned by `getFileMetadata` is mapped by `mapFileMetadataToDialFile(metadata, file)` into the same `DialFile`-shaped object the hook already produces for listing rows, so `fileMetadataPopupOptions.fileMetadata` receives a value structurally consistent with any other `DialFile` the popup might otherwise see.
 
-**Memoisation**: `onGetInfo` SHALL be a `useCallback` with dependencies `[bucket, items, sharedRootMetaRef]` (or the equivalent set already used by `onDownloadFiles`'s resolution).
+**Memoisation**: `onGetInfo` SHALL be a `useCallback` with dependencies `[bucket, filesApi, rootLabel, onNotification]`.
 
 #### Scenario: Requesting info for a my_files item resolves the current user's bucket
 
 - **WHEN** `onGetInfo` is called with a file row from the `my_files` tab
 - **THEN** `getFileMetadata` is called with the current user's bucket and the file's relative path
 
-#### Scenario: Requesting info for a nested shared item resolves the owner's bucket
+#### Scenario: Requesting info for a shared item resolves the owner's bucket
 
-- **WHEN** `onGetInfo` is called with a file row nested inside a shared folder on the `shared` tab
-- **THEN** `getFileMetadata` is called with the owner bucket resolved via `sharedRootMetaRef`/`resolveOwnerCoords`, not the current user's bucket
+- **WHEN** `onGetInfo` is called with a file row on the `shared` tab whose listing row carries the owner's `bucket`
+- **THEN** `getFileMetadata` is called with that row's `bucket`, not the current user's bucket
 
 #### Scenario: Loading state is set during the request
 
@@ -34,7 +34,7 @@ The file Info action and the metadata popup behind it.
 #### Scenario: Metadata request failure surfaces via notification
 
 - **WHEN** `getFileMetadata` rejects
-- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a dedicated info-error message, and `isFileMetadataLoading` returns to `false`
+- **THEN** `onNotification` is called once with `{ variant: NotificationVariant.Error, reason: FileManagerNotificationReason.MetadataLoadFailed }`, which the app's `file-manager-notification-adapter.ts` maps to the translated `DialFileManagerI18nKeys.GetInfoError` message, and `isFileMetadataLoading` returns to `false`
 
 ---
 
@@ -62,7 +62,7 @@ The file Info action and the metadata popup behind it.
 
 ### Requirement: Info action is grid-only, file-only, and Full-profile-only
 
-`gridOptions.actionLabels` SHALL include `DialFileManagerActions.Info` for a row when `row.nodeType !== DialFileNodeType.FOLDER` AND `actionProfile === DialFileManagerActionProfile.Full`, on all three tabs (`my_files`, `shared`, `organization`). `Info` is read-only and is NOT additionally gated on `uploadEnabled`/WRITE permission. `treeOptions.actionLabels` and `bulkActionsToolbarOptions.actionLabels` SHALL NOT include `Info` — the installed ui-kit exposes no tree or bulk-toolbar surface for this action.
+`gridOptions.actionLabels` SHALL include `DialFileManagerActions.Info` whenever `actionProfile === DialFileManagerActionProfile.Full`, on all three tabs (`my_files`, `shared`, `organization`) — `useDialFileManager`'s `actionLabels` adds it outside the tab branches and `DialFileManagerShell` labels it with `labels.infoLabel` in `gridActionLabels`. The labels are grid-wide, not per row: the installed `@epam/ai-dial-react-file-manager` offers the `Info` row action only for item (file) rows, never for folder rows. `Info` is read-only and is NOT additionally gated on `uploadEnabled`/WRITE permission. `treeOptions.actionLabels` and `bulkActionsToolbarOptions.actionLabels` SHALL NOT include `Info` — the installed ui-kit exposes no tree or bulk-toolbar surface for this action.
 
 #### Scenario: Info shown for a file row on my_files with Full profile
 
@@ -77,7 +77,7 @@ The file Info action and the metadata popup behind it.
 #### Scenario: Info hidden for folder rows regardless of profile
 
 - **WHEN** the row's `nodeType` is `folder`
-- **THEN** `gridOptions.actionLabels` does NOT include `DialFileManagerActions.Info`, even if `actionProfile` is `Full`
+- **THEN** the grid's row menu offers no `Info` action for it, even though `actionProfile` is `Full` and `gridOptions.actionLabels` includes `DialFileManagerActions.Info`
 
 #### Scenario: Info hidden when actionProfile is Browse or Attach
 
@@ -93,7 +93,7 @@ The file Info action and the metadata popup behind it.
 
 ### Requirement: Folder metadata is unsupported in this capability
 
-`onGetInfo` SHALL NOT be invoked for folder rows (enforced by the action-visibility rule above, which hides `Info` for folders — there is no additional runtime guard inside `onGetInfo` itself since the action is never reachable for a folder row through the ui-kit UI in this capability).
+`onGetInfo` SHALL NOT be invoked for folder rows (enforced by the file-manager package's row menu, which offers `Info` only for item rows — there is no additional runtime guard inside `onGetInfo` itself since the action is never reachable for a folder row through the package UI in this capability).
 
 #### Scenario: Folder rows never trigger a metadata request
 

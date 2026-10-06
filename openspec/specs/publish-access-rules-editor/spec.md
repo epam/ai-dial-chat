@@ -30,19 +30,19 @@ export interface PublicationRule {
 
 ### Requirement: Rules section renders in the Publish sidebar for all three publishable types
 
-`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL render the access-rules section inside the destination-folder block, after the callout, the author field and the credentials checkbox, as the last element of the same scrollable body — never inside the pinned `PublishFooter`. This section SHALL render identically regardless of which host (`PublishConversationPanelContainer` or `DetailsPanel`) supplies it, since both wire the same controlled props.
+`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL render the access-rules section inside the destination-folder block, after the callout, the author field and the credentials checkbox, as the last element of the same scrollable body — never inside the pinned `PublishFooter`. This section SHALL render identically regardless of which host supplies it — `PublishConversationPanelContainer` (through the `StandalonePublishPanel` wrapper, which forwards the same rule props) or `DetailsPanel` (rendering `PublishPanel` directly) — since both wire the same controlled props.
 
-`PublishPanelProps` SHALL gain three new required props:
+`PublishPanelProps` (declared in `PublishPanel.tsx`) SHALL carry three required props:
 ```ts
 rules: PublicationRule[];
 onRulesChange: (rules: PublicationRule[]) => void;
 ruleSourceOptions: string[];
 ```
-plus new optional fields on `PublishPanelLabels` for the section heading, chip separator/remove/clear labels, the rule editor's field labels and placeholders, and validation error strings.
+plus optional `isRulesLoading?: boolean` and `hasRulesLoadError?: boolean` (both default `false`), and an optional `PublishPanelLabels.accessRulesLabels?: PublishAccessRulesLabels` carrying the section heading, folder-scope hints, chip separator/remove/clear labels, function labels, live-region announcements, and a nested `editorLabels?: PublishAccessRuleEditorLabels` for the rule editor's field labels, placeholders, and validation error strings.
 
 #### Scenario: Section appears identically for a conversation, an application, and a toolset
 - **WHEN** the Publish sidebar opens for a conversation, an application, or a toolset
-- **THEN** the same "Allow access if all match" section renders in the same position (after the folder picker, before publish history) with the same controls in all three cases
+- **THEN** the same "Allow access if all match" section renders in the same position (after the folder picker, callout, author field, and optional credentials checkbox, as the last element of the scrollable body) with the same controls in all three cases
 
 #### Scenario: Section renders below the folder-selection callout
 - **WHEN** a replace-warning or no-access callout is shown below the folder picker
@@ -50,7 +50,7 @@ plus new optional fields on `PublishPanelLabels` for the section heading, chip s
 
 ### Requirement: Users can add, remove, and clear rules
 
-The rules section SHALL render each entry in `rules` as a removable chip showing its `source`, a translated label for `function`, and its `targets` joined with a localized "Or" separator. An "Add rule" trigger SHALL open the single-rule editor (see next requirement). A "Clear all" control SHALL be rendered only when `rules.length > 0` and SHALL call `onRulesChange([])` when activated. Removing one chip SHALL call `onRulesChange` with `rules` filtered to exclude that entry, by array index (rules have no independent identity/order-persistence requirement beyond insertion order).
+The rules section (`PublishAccessRules`) SHALL render each entry in `rules` as a removable list row ("chip") showing its `source`, a translated label for `function` followed by `:`, and its `targets` joined with a localized "Or" separator (`orSeparatorLabel`, default `'Or'`). An "Add rule" trigger SHALL open the single-rule editor (see next requirement). A "Clear all" control SHALL be rendered only when `rules.length > 0` and SHALL call `onRulesChange([])` when activated. Removing one chip SHALL call `onRulesChange` with `rules` filtered to exclude that entry, by array index (rules have no independent identity/order-persistence requirement beyond insertion order).
 
 #### Scenario: Adding a rule appends it to the list
 - **GIVEN** the rules section shows zero or more existing chips
@@ -74,7 +74,7 @@ The rules section SHALL render each entry in `rules` as a removable chip showing
 
 ### Requirement: Single-rule editor validates EQUAL and CONTAIN rules
 
-The single-rule editor (`PublishAccessRuleEditor`) SHALL offer a source control (populated from `ruleSourceOptions`), a function control (`EQUAL` / `CONTAIN` / `REGEX`), and, for `EQUAL`/`CONTAIN`, a free-entry tag input for `targets`. The Save/Add action SHALL remain enabled regardless of validation state — it is disabled only while the host disables the section (see the submission-disabling requirement below). Activating Save while a source is missing, a function is missing, or zero targets have been entered SHALL NOT call `onSave`; instead it SHALL mark the editor as having attempted a save and show a localized inline "required" error under each incomplete field (source/function picker, or the targets input), associated with that field via its `invalid`/error-message props. On a successful save, each target SHALL be trimmed, and an exact-duplicate (post-trim, case-sensitive) target SHALL be rejected rather than added as a second identical tag.
+The single-rule editor (`PublishAccessRuleEditor`) SHALL offer a source control (populated from `ruleSourceOptions`), a function control (`EQUAL` / `CONTAIN` / `REGEX`), and, for `EQUAL`/`CONTAIN`, a free-entry tag input for `targets`. The source picker SHALL enable the `Select`'s built-in `searchable` mode once `sourceOptions.length` exceeds 8. The Save/Add action SHALL remain enabled regardless of validation state — it is disabled only while the host disables the section (see the submission-disabling requirement below). Activating Save while a source is missing, a function is missing, or zero targets have been entered SHALL NOT call `onSave`; instead it SHALL mark the editor as having attempted a save and show a localized inline "required" error under each incomplete field (source/function picker, or the targets input), associated with that field via its `invalid`/error-message props. Each target SHALL be trimmed as it is entered (`handleTargetsChange`), empty tags dropped, and an exact-duplicate (post-trim, case-sensitive) target SHALL be rejected rather than added as a second identical tag; the list is capped at `maxTargets` (default 20).
 
 Changing the source control SHALL NEVER clear `targets` or the in-progress pattern — the source and targets/pattern fields are independent state. Switching the function control between `EQUAL` and `CONTAIN` SHALL also preserve any already-entered `targets`, since both functions share the same multi-tag input; only a transition across the `EQUAL`/`CONTAIN` ↔ `REGEX` boundary clears the targets/pattern state (see the following requirement).
 
@@ -162,7 +162,7 @@ When `function` is `REGEX`, the editor SHALL offer exactly one text input (not a
 
 ### Requirement: Rules editor is disabled during submission and rules are limited to safe counts
 
-The entire access-rules section (chips' remove controls, "Add rule", "Clear all", and the single-rule editor if open) SHALL be disabled whenever the host's `isSubmitting` is `true`, matching the existing folder-picker's `disabled={isSubmitting}` behavior (`PublishFoldersTree`, `PublishPanel.tsx:232`). The UI SHALL block adding a rule once `rules.length` reaches 20, and block adding a target to a rule once that rule's `targets.length` reaches 20 (see design.md D6 for rationale on these specific limits — no upstream contract documents a limit, so these are new, explicit, symmetric frontend/backend caps).
+The entire access-rules section (chips' remove controls, "Add rule", "Clear all", and the single-rule editor if open) SHALL be disabled whenever the host's `isSubmitting` is `true`, matching the existing folder-picker's `disabled={isSubmitting}` behavior (`PublishFoldersTree` in `PublishPanel.tsx`): `PublishPanel` passes `disabled={isSubmitting}` to `PublishAccessRules`, which disables each control and adds `pointer-events-none opacity-60` to the section. The UI SHALL block adding a rule once `rules.length` reaches `maxRules` (default 20) — the "Add rule" trigger is disabled and a `maxRulesReachedLabel` hint is shown — and block adding a target to a rule once that rule's `targets.length` reaches `maxTargetsPerRule` (default 20) (no upstream contract documents a limit, so these are explicit, symmetric frontend/backend caps).
 
 #### Scenario: Rules section is disabled while a publish request is in flight
 - **GIVEN** the user has clicked Publish and a request is in flight
@@ -176,7 +176,7 @@ The entire access-rules section (chips' remove controls, "Add rule", "Clear all"
 
 ### Requirement: Rules reset when the publish panel closes
 
-`usePublishFlow`'s `rules` state SHALL reset to `[]` whenever `reset()` is called, exactly as `selectedFolderPath` already resets — both `PublishConversationPanelContainer` (which calls `publishFlow.reset()` on close, `PublishConversationPanelContainer.tsx:87-94`) and `DetailsPanel`'s equivalent close handling therefore clear rules automatically, with no additional wiring in either container. Reopening the panel for a new publish attempt SHALL start with `rules: []`, never rehydrated from a prior publication's rules (reading existing/inherited rules is out of scope for this change).
+`usePublishFlow`'s `rules` state SHALL reset to `[]` whenever `reset()` is called, exactly as `selectedFolderPath` already resets — both `PublishConversationPanelContainer` (which calls `publishFlow.reset()` in its close handler) and `DetailsPanel`'s equivalent close handling (which also calls `publishFlow.reset()`) therefore clear rules automatically, with no additional wiring in either container. Reopening the panel for a new publish attempt SHALL start with `rules: []`, never rehydrated from a prior publication's rules (reading existing/inherited rules is out of scope for this change).
 
 #### Scenario: Closing the panel discards unsaved rules
 - **GIVEN** the user has added one or more rules but not yet submitted
@@ -195,9 +195,9 @@ The entire access-rules section (chips' remove controls, "Add rule", "Clear all"
 
 ### Requirement: Selecting a folder pre-fills the editor with that folder's existing rules
 
-Whenever `selectedFolderPath` changes to a defined folder, `usePublishFlow` SHALL call the host-supplied `onFetchExistingRules(folderPath)` (if provided) and, on success, replace the current `rules` state entirely with the result — a full overwrite, not a merge or append. This includes discarding any rules the user had already added by hand for a previously selected folder. While the fetch is in flight, `isRulesLoading` SHALL be `true`; on failure, `hasRulesLoadError` SHALL be `true` and the current `rules` value SHALL be left unchanged (not cleared, not replaced with a partial/error result). When `selectedFolderPath` becomes `undefined` (the folder selection is cleared), `rules` SHALL reset to `[]`.
+Whenever `selectedFolderPath` changes to a defined folder, `usePublishFlow` SHALL call the host-supplied `onFetchExistingRules(folderPath: string[])` (if provided) and, on success, replace the current `rules` state entirely with the result — a full overwrite, not a merge or append. This includes discarding any rules the user had already added by hand for a previously selected folder. While the fetch is in flight, `isRulesLoading` SHALL be `true`; on failure, `hasRulesLoadError` SHALL be `true` and the current `rules` value SHALL be left unchanged (not cleared, not replaced with a partial/error result). When `selectedFolderPath` becomes `undefined` (the folder selection is cleared), `rules` SHALL reset to `[]` and `hasRulesLoadError` to `false`.
 
-`PublishAccessRules` SHALL show a brief, non-blocking loading indicator while `isRulesLoading` is `true`, and a non-blocking inline notice when `hasRulesLoadError` is `true` — neither state disables the "Add rule" control or blocks folder reselection; the user may continue adding rules manually regardless of lookup success or failure.
+`PublishAccessRules` SHALL show a brief, non-blocking loading indicator (a `Spinner` plus `loadingLabel`) while `isRulesLoading` is `true`, and a non-blocking inline warning `Notification` (`loadErrorLabel`) when `hasRulesLoadError` is `true` — neither state disables the "Add rule" control or blocks folder reselection; the user may continue adding rules manually regardless of lookup success or failure.
 
 #### Scenario: Selecting a folder with existing rules populates the editor
 - **GIVEN** the destination folder `Organization/Data Science` has a previously configured rule (`source: 'role'`, `function: 'CONTAIN'`, `targets: ['engineering']`)
@@ -230,7 +230,7 @@ Whenever `selectedFolderPath` changes to a defined folder, `usePublishFlow` SHAL
 
 ### Requirement: Accessibility — keyboard, ARIA associations, and live-region announcements
 
-Every chip's remove control SHALL be a real, keyboard-reachable button with an accessible name that identifies the rule being removed (e.g. incorporating `source` and the joined `targets`), not a bare icon with no label. The "Add rule" and "Clear all" controls SHALL each have accessible names. The single-rule editor's source/function controls SHALL have associated labels; the target input(s) SHALL have an associated label, and any validation error SHALL be linked to its field via `aria-describedby`. Adding a rule, removing a rule, and clearing all rules SHALL each be announced through a shared `aria-live="polite"` `role="status"` region local to the rules section (distinct from any individual button's own stable accessible name, per the project's a11y status-feedback pattern), rather than relying on the visual chip-list change alone. Pressing Escape while the single-rule editor is open (but not yet saved) SHALL cancel only that in-progress rule, without dismissing the entire Publish panel.
+Every chip's remove control SHALL be a real, keyboard-reachable button (a `GhostIconButton` with an `aria-hidden` `IconTrashX`) with an accessible name that identifies the rule being removed (`removeRuleAriaLabelTemplate`, default `'Remove rule for {source}: {targets}'`), not a bare icon with no label. The "Add rule" and "Clear all" controls SHALL each have accessible names. The single-rule editor's source/function controls SHALL have associated labels; the target input(s) SHALL have an associated label, and any validation error SHALL be linked to its field via `aria-describedby`. Adding a rule, removing a rule, and clearing all rules SHALL each be announced through a shared `aria-live="polite"` `role="status"` region local to the rules section (distinct from any individual button's own stable accessible name, per the project's a11y status-feedback pattern), rather than relying on the visual chip-list change alone. Pressing Escape while the single-rule editor is open (but not yet saved) SHALL cancel only that in-progress rule, without dismissing the entire Publish panel.
 
 #### Scenario: Removing a rule is announced
 - **WHEN** the user removes a rule's chip
@@ -259,7 +259,7 @@ Every chip's remove control SHALL be a real, keyboard-reachable button with an a
 
 ### Requirement: Responsive rendering without a desktop-only layout on mobile, and RTL-correct behavior
 
-The single-rule editor SHALL render inline within the section on desktop and as a full-screen step within the existing full-screen mobile Publish panel — matching the project's mobile-first, CSS-driven responsive convention (named `mobile`/`desktop` Tailwind breakpoints, no JS `window.innerWidth` checks). Because `libs/publish-panel` is a host-agnostic library, it SHALL implement this purely with responsive Tailwind classes (no import of `apps/chat/src/hooks/breakpoint/useBreakpoint`, which is an app-owned hook a lib may not import) — never opening a desktop-styled modal on a mobile viewport. All new elements SHALL use logical Tailwind properties (`ms-*`/`me-*`, `text-start`/`text-end`, etc.) with no new physical-direction classes; the chip-remove icon and any directional icon introduced (e.g. a chevron, if used to expand the editor) SHALL be mirrored in RTL via `rtl:scale-x-[-1]` only if it conveys direction — the "Or" separator and source/function selects are direction-agnostic and SHALL NOT be mirrored.
+The single-rule editor SHALL render inline within the section on desktop (`desktop:static`) and as a full-screen step (`fixed inset-0 z-[60]`) within the existing full-screen mobile Publish panel — matching the project's mobile-first, CSS-driven responsive convention (named `mobile`/`desktop` Tailwind breakpoints, no JS `window.innerWidth` checks). Because `libs/publish-panel` is a host-agnostic library, it SHALL implement this purely with responsive Tailwind classes (no import of `apps/chat/src/hooks/breakpoint/useBreakpoint`, which is an app-owned hook a lib may not import) — never opening a desktop-styled modal on a mobile viewport. All new elements SHALL use logical Tailwind properties (`ms-*`/`me-*`, `text-start`/`text-end`, etc.) with no new physical-direction classes; the chip-remove icon and any directional icon introduced SHALL be mirrored in RTL via `rtl:scale-x-[-1]` only if it conveys direction — the "Or" separator and source/function selects are direction-agnostic and SHALL NOT be mirrored.
 
 #### Scenario: Mobile editor never renders the desktop inline layout
 - **WHEN** the "Add rule" editor opens on a mobile viewport
@@ -271,11 +271,11 @@ The single-rule editor SHALL render inline within the section on desktop and as 
 
 #### Scenario: Symmetric icons are not mirrored
 - **WHEN** the section renders in RTL
-- **THEN** the chip remove (×) icon is not flipped, since it is a symmetric, non-directional icon
+- **THEN** the chip remove (`IconTrashX`) icon is not flipped, since it is a symmetric, non-directional icon
 
 ### Requirement: Source options support search with shared highlighting
 
-When `ruleSourceOptions` exceeds a length where a plain dropdown becomes hard to scan, the source control SHALL enable its built-in search (matching the existing `Select`'s `searchable` mode). Matched text in filtered source options SHALL be rendered using the shared `Highlight` component exported from `@epam/ai-dial-ui-kit`, per the project's search-result-highlighting convention — never a bespoke regex/`<mark>` highlighter.
+When `ruleSourceOptions` exceeds a length where a plain dropdown becomes hard to scan, (more than 8 options) the source control SHALL enable its built-in search (matching the existing `Select`'s `searchable` mode). Matched text in filtered source options SHALL be rendered using the shared `Highlight` component exported from `@epam/ai-dial-ui-kit`, per the project's search-result-highlighting convention — never a bespoke regex/`<mark>` highlighter.
 
 #### Scenario: Typing in the source search highlights matched text
 - **GIVEN** `ruleSourceOptions` includes `dial_roles` and the user types `role` in the source search field

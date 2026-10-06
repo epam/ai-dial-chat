@@ -12,7 +12,7 @@ When `RequireAuth` is mounted in overlay mode (`useOptionalOverlay()` returns a 
 
 The gate SHALL call `useOverlayProviderLogin` and render in one of two branches:
 
-**Branch A — no provider-mode configuration** (`authProviderUiModes` is `undefined` or empty in the overlay context): render a centered, direction-agnostic vertical layout containing a title, a short description, and one focusable "Log in" action built from the `PrimaryButton` wrapper from `@epam/ai-dial-kit`. This single-button behavior is identical to the previous implementation.
+**Branch A — no provider-mode configuration** (`authProviderUiModes` is `undefined` or empty in the overlay context): render a centered, direction-agnostic vertical layout containing a title, a short description, and one focusable "Log in" action built from the `PrimaryButton` wrapper from `@epam/ai-dial-ui-kit`. This single-button behavior is identical to the previous implementation.
 
 **Branch B — provider-mode configuration present**: render a provider picker. Loading, error, empty-list, and populated states are defined in the `overlay-provider-auth-ui-mode` spec. The blocked and taking-longer feedback from the external attempt is displayed below the provider list, using the same `role="alert"` / `aria-live="polite"` pattern as before.
 
@@ -50,7 +50,7 @@ Accessibility: the "Log in" button (Branch A) and all provider buttons (Branch B
 #### Scenario: Logout outside overlay mode keeps normal login navigation
 
 - **WHEN** a user confirms logout while `useOptionalOverlay()` returns `undefined`
-- **THEN** the SPA clears the current user state and navigates to `/login`, matching existing non-overlay behavior
+- **THEN** the SPA performs a full document load of `/login` via `window.location.replace(ROUTES.Login)` (which drops all in-memory user state) without calling `reset()`, matching existing non-overlay behavior
 
 #### Scenario: Login controls are disabled only while an auth attempt is starting
 
@@ -62,13 +62,13 @@ Accessibility: the "Log in" button (Branch A) and all provider buttons (Branch B
 
 ### Requirement: `useOverlayExternalLogin` opens auth outside the iframe
 
-`useOverlayExternalLogin` (`apps/chat/src/hooks/auth/useOverlayExternalLogin.ts`) SHALL expose a lifecycle state of exactly one of `idle | opening | waiting | blocked | takingLonger` and an `openLogin()` action that opens `/login?callbackUrl=<encoded-overlay-close-url>` with `window.open`.
+`useOverlayExternalLogin` (`apps/chat/src/hooks/auth/useOverlayExternalLogin.ts`) SHALL expose a lifecycle state of exactly one of the `OverlayExternalLoginStatus` members (`Idle = 'idle'`, `Opening = 'opening'`, `Waiting = 'waiting'`, `Blocked = 'blocked'`, `TakingLonger = 'takingLonger'`), an `openLogin(loginUrl?)` action that opens `loginUrl` — or, when omitted, `${window.location.origin}/login?callbackUrl=<encoded-overlay-close-url>` — with `window.open`, and a `cancelLogin()` action that tears down the current attempt and returns to `idle`.
 
 `useOverlayProviderLogin` delegates the external-window path to the same logic as `useOverlayExternalLogin`, constructing a provider-specific BFF login URL instead of the generic `/login` route. The core mechanics (sequential polling, long-wait timer, cleanup, COOP-tolerance) are unchanged.
 
 On `openLogin()` / `openProviderLogin(id)` for `External` mode, the hook SHALL synchronously, without awaiting before `window.open`:
 
-1. Build a provider-specific login target `/api/v1/auth/login/${encodeURIComponent(providerId)}?callbackUrl=<encoded-overlay-close-url>`, where overlay-close-url is `${window.location.origin}/overlay-close`. For the no-configuration single-button path, the generic target `/login?callbackUrl=<encoded-overlay-close-url>` is used.
+1. Build a provider-specific login target `/api/v1/auth/login/${encodeURIComponent(providerId)}?callbackUrl=<encoded-overlay-close-url>`, where overlay-close-url is `${window.location.origin}/overlay-close`. For the no-configuration single-button path, the generic target `${window.location.origin}/login?callbackUrl=<encoded-overlay-close-url>` is used.
 2. Call `window.open(target, '_blank')`.
 3. If the returned window handle is `null`/`undefined`, or is immediately observed as closed, set state to `blocked`.
 4. Otherwise set state to `waiting`, clear `window.opener` on the opened window best-effort, start one sequential current-user poll timer no coarser than 5000ms, and start one long-wait timer no longer than 120 seconds.

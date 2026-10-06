@@ -7,18 +7,19 @@ Sanitizing an upload's filename before conflict detection runs.
 ## Requirements
 
 ### Requirement: Sanitize upload filename before conflict detection
-The system SHALL sanitize each uploaded file's name by replacing any character matching `NOT_ALLOWED_SYMBOLS_REGEXP` (from `@epam/ai-dial-ui-kit`) with `_`, trimming trailing dots and whitespace from the base name, and preserving the original file extension. Sanitization SHALL occur inside `onValidateUpload` in `useDialFileManager`, mutating `DialUploadFileItem.name` in-place before the ui-kit performs conflict detection. The sanitized name SHALL be used for all subsequent operations including conflict popup display, upload path construction, and `POST /api/v1/files`.
+The system SHALL sanitize each uploaded file's name by replacing any character matching `NOT_ALLOWED_SYMBOLS_REGEXP` (from `@epam/ai-dial-ui-kit`) with `_`, trimming trailing dots and whitespace from the base name, and preserving the original file extension. Sanitization SHALL occur inside `onValidateUpload` (built by `useDialFileUploadBatch` in `libs/chat-hooks/src/files/useDialFileUploadBatch/useDialFileUploadBatch.ts` and returned through `useDialFileManager`), mutating `DialUploadFileItem.name` in-place before the ui-kit performs conflict detection. The sanitized name SHALL be used for all subsequent operations including conflict popup display, upload path construction, and `POST /api/v1/files`.
 
-Sanitization logic SHALL be extracted to `apps/chat/src/utils/file-name.ts` as `sanitizeFileName(name: string): string`:
-- Split name at the last `.` to isolate base name and extension.
+Sanitization logic SHALL live in `libs/chat-hooks/src/files/file-name.ts` as `sanitizeFileName(name: string): string`, exported from `@epam/ai-dial-chat-hooks` (also reused by `useAttachmentUpload` and the app's `useCatalogItemActions`):
+- Split name at the last `.` (`splitFileNameExtension`; a leading dot is not an extension) to isolate base name and extension.
 - Apply `NOT_ALLOWED_SYMBOLS_REGEXP` globally, replacing each match with `_`.
 - Trim trailing dots and whitespace from the base name.
 - Re-attach the extension unchanged.
 - If the resulting base name is empty after trimming, return the original (unsanitized) name unchanged.
+- Otherwise cap the result to 255 UTF-8 bytes with `trimFileNameToByteLimit`, truncating the base name and keeping the extension.
 
 `NOT_ALLOWED_SYMBOLS_REGEXP` MUST be imported from `@epam/ai-dial-ui-kit` — the symbol list SHALL NOT be duplicated.
 
-The `forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}` prop MUST be passed to `DialFileManager` in `DialFileManagerShell` for consistent rename / create-folder validation UX.
+The `forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}` prop MUST be passed to `DialFileManager` in `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) for consistent rename / create-folder validation UX.
 
 **State ownership:** No new state. Sanitization is a pure transformation applied in `onValidateUpload`.
 
@@ -45,8 +46,8 @@ The `forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}` prop MUST be passed to
 
 #### Scenario: Filename with trailing dot in base name
 - **WHEN** the user selects a file named `archive..tar`
-- **THEN** `sanitizeFileName('archive..tar')` returns `'archive_.tar'` (trailing dot replaced since it's a forbidden symbol, then trimmed)
-- **AND** the trailing dots on the base name are trimmed: `'archive.tar'`
+- **THEN** `sanitizeFileName('archive..tar')` returns `'archive.tar'`
+- **AND** the trailing dot on the base name `archive.` is trimmed while the `.tar` extension is kept
 
 #### Scenario: Filename with no forbidden characters is unchanged
 - **WHEN** the user selects a file named `report_2026-Q1.pdf`

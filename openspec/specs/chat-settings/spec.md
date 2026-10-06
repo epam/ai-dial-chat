@@ -49,18 +49,18 @@ The interface SHALL be re-exported from the `libs/chat-shared` barrel (`src/inde
 
 ### Requirement: DeploymentItemDto features field
 
-`DeploymentItemDto` (in `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL include an optional `features?: DeploymentFeaturesDto` field annotated with `@ApiPropertyOptional`. `DeploymentsService` SHALL read a `features` property from the raw DIAL Core deployment object and assign it to `DeploymentItemDto.features` when present; when absent, `features` SHALL be omitted (undefined).
+`DeploymentItemDto` (in `apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL include an optional `features?: DeploymentFeaturesDto` field annotated with `@ApiPropertyOptional`. `mapToDeploymentItem` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`) SHALL map the raw DIAL Core snake_case `features` object onto it: `systemPrompt` from `system_prompt` and `temperature` from `temperature` (each defaulting to `false`), plus `folderAttachments`, `mcp`, `responsesApi`, `chatCompletion`, `skillsSupported` and `tools` when the corresponding raw flag is set. `features` is populated when the raw deployment has a `features` object or is MCP-capable; otherwise it SHALL be omitted (undefined).
 
-`DeploymentFeaturesDto` SHALL mirror `DeploymentFeatures` from `@epam/ai-dial-chat-shared` with `@ApiProperty` decorators for `systemPrompt` and `temperature`.
+`DeploymentFeaturesDto` SHALL carry `@ApiProperty` decorators for `systemPrompt` and `temperature` and `@ApiPropertyOptional` for the other flags. It has no `responseFormat` field — response-format support is not read from DIAL Core (see the `+` menu requirement below).
 
 #### Scenario: DIAL Core returns deployment with features
 
-- **WHEN** the DIAL Core deployment payload includes `{ features: { systemPrompt: true, temperature: false } }`
+- **WHEN** the DIAL Core deployment payload includes `{ features: { system_prompt: true, temperature: false } }` and is not MCP-capable
 - **THEN** `DeploymentItemDto.features` equals `{ systemPrompt: true, temperature: false }`
 
 #### Scenario: DIAL Core returns deployment without features
 
-- **WHEN** the DIAL Core deployment payload does not include a `features` field
+- **WHEN** the DIAL Core deployment payload does not include a `features` field and is not MCP-capable
 - **THEN** `DeploymentItemDto.features` is undefined
 
 ---
@@ -114,17 +114,17 @@ interface ChatSettingsConfig {
 ### Requirement: Chat settings entry in the + dropdown menu
 
 The `AddAttachmentButton` component in `libs/conversation-input` SHALL accept:
-- `chatSettings?: ChatSettingsConfig` — when provided, appends a "Chat settings" item (gear icon) to the dropdown after any `extraMenuItems`.
-- `extraMenuItems?: ExtraMenuItem[]` — additional items injected by the host app (type `{ key, label, icon, onClick }`).
+- `chatSettings?: ChatSettingsConfig` — when provided, appends a settings item (`IconSettings` gear) as the last dropdown entry, after attach, `extraMenuItems`, Tools, `menuOverlays` and Record voice. Its label is `chatSettings.menuItemLabel ?? 'Chat settings'`.
+- `extraMenuItems?: ExtraMenuItem[]` — additional items of type `{ key, label, icon, onClick }`. `Input` builds this list itself (the DIAL file-system entry, from `onDialFileSystemClick`); it is not a host-facing `Input`/`ConversationInput` prop.
 
-`Input` and `ConversationInput` SHALL thread both props through to `AddAttachmentButton`.
+`Input` SHALL thread `chatSettings` through to `AddAttachmentButton`; `ConversationInput` forwards it to `Input` via its spread props.
 
-The app layer (`apps/chat`) SHALL pass `chatSettings` whenever a conversation is active.
+The app layer (`apps/chat`) SHALL build `chatSettings` with `useChatSettingsFormConfig` (`@epam/ai-dial-chat-hooks`) and pass it only when the `OverlayFeature.ChatSettings` (`chat-settings`) UI feature is enabled: `ConversationView` gates it on `chat-settings` alone, and `NewConversationComposer` additionally requires `OverlayFeature.EmptyChatSettings` (`empty-chat-settings`). `useChatSettingsFormConfig` always sets `features.responseFormat: true`, takes `systemPrompt` from the deployment features, disables `temperature` for quick apps, defaults the conversation temperature to `0.5`, and labels both the menu item and the modal title with the `settings` label (the app passes `t(BasicI18nKeys.Settings)`, "Settings").
 
-#### Scenario: "Chat settings" is always present in the dropdown
+#### Scenario: Settings item is present when the UI feature is enabled
 
-- **WHEN** the user opens the `+` dropdown for any conversation
-- **THEN** a "Chat settings" item is always present in the menu
+- **WHEN** the `chat-settings` UI feature is enabled and the user opens the `+` dropdown in an open conversation
+- **THEN** the settings item is present as the last menu entry
 
 #### Scenario: User clicks "Chat settings"
 
@@ -135,11 +135,11 @@ The app layer (`apps/chat`) SHALL pass `chatSettings` whenever a conversation is
 
 ### Requirement: ChatSettingsModal renders deployment-gated settings (desktop)
 
-`ChatSettingsModal` in `libs/conversation-input` SHALL render a `DialPopup` modal. The modal SHALL render the following sections, each conditionally gated by `features`:
+`ChatSettingsModal` in `libs/conversation-input` SHALL render a ui-kit 2.0 `Popup` (`PopupSize.Sm`). The modal SHALL render the following sections, each conditionally gated by `features`:
 
 - A **response format** radio group (`Markdown` / `Plain text`) when `features.responseFormat === true`. Default value is `ResponseFormat.Markdown`.
 - A **system prompt** textarea when `features.systemPrompt === true`.
-- A **temperature** slider (range 0–1, step 0.1) when `features.temperature === true`. Default value is `0.5`. Three labels SHALL be shown below the track: `[start, middle, end]` via `temperatureLabels` prop; defaults `['Precise', 'Neutral', 'Creative']`.
+- A **temperature** slider (range 0–1, step 0.1) when `features.temperature === true`, pre-filled from the required `initialTemperature` (the lib has no default; `useChatSettingsFormConfig` supplies `0.5` when the conversation has none). Three labels SHALL be shown below the track: `[start, middle, end]` via `temperatureLabels` prop; defaults `['Precise', 'Neutral', 'Creative']`.
 
 Sections not enabled SHALL be hidden entirely (not disabled).
 
@@ -213,7 +213,7 @@ All user-visible strings SHALL be provided as optional props (with English defau
 
 When `features.responseFormat === true`, the "Apply changes" button SHALL be disabled until the user has selected a response format value.
 
-The button SHALL show a tooltip (provided via `saveDisabledTooltip` prop, default `'Please select a response format'`) while it is disabled. When `saveDisabledTooltip` is not provided the tooltip SHALL be suppressed.
+The button SHALL show a tooltip with the `saveDisabledTooltip` prop text while it is disabled. The lib has no default for it: when `saveDisabledTooltip` is not provided the tooltip SHALL be suppressed (`useChatSettingsFormConfig` defaults it to `'Please select a response format'`).
 
 Calling `handleSubmit` programmatically while `canSubmit` is `false` SHALL be a no-op (i.e. `onSave` and `onClose` are not called).
 

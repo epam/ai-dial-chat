@@ -16,7 +16,7 @@ The BFF SHALL expose `POST /api/v1/files/rename` that accepts a batch of file/fo
 
 #### Request DTO
 
-**`RenameItemNodeType`** (string enum, `apps/chat-api/src/files/dto/rename-files.dto.ts`):
+**`RenameItemNodeType`** (`apps/chat-api/src/files/dto/rename-files.dto.ts`, an alias of the shared `DialFileNodeType` string enum in `apps/chat-api/src/files/dto/dial-file-node-type.ts`):
 ```
 Item   = 'item'
 Folder = 'folder'
@@ -26,9 +26,9 @@ Folder = 'folder'
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
-| `bucket` | `string` | `@IsString @IsNotEmpty @Matches(/^[\w.-]+$/) @MaxLength(256)` | DIAL Core bucket |
+| `bucket` | `string` | `@IsString @IsNotEmpty @Matches(BUCKET_NAME_PATTERN)` (`/^[\w.-]+$/`) `@MaxLength(256)` | DIAL Core bucket |
 | `sourcePath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative source path within bucket |
-| `destinationPath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative destination path within bucket |
+| `destinationPath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @IsNotReservedMarkerPath() @MaxLength(1024)` | Relative destination path within bucket |
 | `nodeType` | `RenameItemNodeType` | `@IsEnum(RenameItemNodeType)` | `'item'` or `'folder'` |
 | `name` | `string` | `@IsString @IsNotEmpty @MaxLength(255)` | Display name (last segment) for error messages |
 
@@ -61,6 +61,7 @@ Folder = 'folder'
 @Post('rename')
 @HttpCode(200)
 @ApiOperation({ summary: 'Rename files and folders' })
+@ApiBody({ type: RenameFilesDto })
 @ApiResponse({ status: 200, type: RenameFilesResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -74,10 +75,10 @@ async renameFiles(
 
 #### Generated-client impact
 
-- **operationId**: `filesControllerRenameFiles` → generated SDK method `filesApi.renameFiles({ renameFilesDto })`.
+- **operationId**: `renameFiles` → generated SDK method `filesApi.renameFiles({ renameFilesDto })`.
 - **Request DTO**: `RenameFilesDto` (sent as JSON body).
 - **Response DTO**: `RenameFilesResponseDto` (JSON).
-- **Frontend caller**: `apps/chat/src/server-api/files.api.ts` exposes `renameFiles(items: RenameItemDto[]): Promise<RenameFilesResponseDto>`. Uses the normal (non-Raw) generated method.
+- **Frontend caller**: `apps/chat/src/server-api/files.api.ts` exposes `renameFiles(items: RenameItemDto[]): Promise<RenameFilesResponseDto>`, re-exported from the `createFilesApiClient` wrapper in `libs/chat-hooks/src/files/create-files-api.ts`. Uses the normal (non-Raw) generated method.
 
 #### Upstream error mapping
 
@@ -172,7 +173,9 @@ When `nodeType === "folder"`, the BFF SHALL recursively list all files under the
 
 **Concurrency**: individual file moves within a folder are issued sequentially. Multiple top-level batch items run in parallel via `Promise.all`.
 
-**Mapping rule**: for a file at `child.path` under `srcPrefix`, the destination path is `destPrefix + child.path.slice(srcPrefix.length)`.
+**Mapping rule**: for an expanded file under `srcPrefix`, the destination path is `destPrefix + child.archivePath`, where `archivePath` is the file's path relative to `srcPrefix` (`expandFolderContents` is called with an empty archive root).
+
+**Expansion failure**: if `expandFolderContents` throws, the folder result is `success: false` with `error: "Rename failed"` and no `moveResource` call is made.
 
 #### Scenario: Folder rename moves all nested files
 

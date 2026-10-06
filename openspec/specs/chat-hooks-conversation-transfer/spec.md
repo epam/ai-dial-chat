@@ -82,11 +82,13 @@ When a job fails, the queue SHALL record the reason on the job as
   emitted with the same code
 
 ### Requirement: The queue settles warned jobs through a dedicated helper
-`useConversationTransferQueue` SHALL expose
-`warnJob(jobId, warningCode: ConversationTransferWarningCode)`, which settles the job with status
-`Warning`, `progress.percent` at complete, the warning code attached, and any `errorCode` cleared.
-It SHALL obey the same already-settled guard as `succeedJob`, `failJob`, and `cancelJob`: a write
-against a job that has already reached a terminal status is discarded.
+`useConversationTransferQueue` (`libs/chat-hooks/src/conversation/conversation-transfer/queue.ts`) SHALL expose
+`warnJob(jobId, warningCode: ConversationTransferWarningCode, warningNames?: string[])`, which settles the job with status
+`Warning`, `progress.percent` at complete, the warning code (and optional skipped names as `warningNames`) attached, and any `errorCode` cleared.
+It SHALL apply the same already-settled guard as `setJobProgress`: a `warnJob` write against a job whose status is no longer
+`InProgress` is discarded. `succeedJob`, `failJob`, and `cancelJob` carry no such guard inside the queue; `useConversationExport`
+and `useConversationImport` instead check `signal.aborted` before calling them, which is what keeps an aborted run from
+relabelling a canceled job.
 
 #### Scenario: A warned job settles like a success, but distinguishably
 - **WHEN** `warnJob(jobId, AttachmentSkipped)` is called on an `InProgress` job
@@ -101,7 +103,9 @@ against a job that has already reached a terminal status is discarded.
 ### Requirement: Injected generated-client operations, never a configured singleton
 `useConversationExport` and `useConversationImport` SHALL accept minimal
 `Pick<ConversationsApi, …>` / `Pick<FilesApi, …>` interfaces from
-`@epam/ai-dial-chat-api-client` as parameters and SHALL NOT import a
+`@epam/ai-dial-chat-api-client` as parameters (export: `Pick<ConversationsApi, 'getConversation' | 'listConversations'>` and
+`Pick<FilesApi, 'downloadFileRaw'>`; import: `Pick<ConversationsApi, 'saveConversation'>` and
+`Pick<FilesApi, 'listFiles' | 'uploadFile'>`) and SHALL NOT import a
 configured client instance, a `server-api` wrapper, or any app context.
 
 #### Scenario: Export operates only through injected operations
@@ -165,9 +169,10 @@ transfer is distinguishable from a clean one without reading the event stream.
 ### Requirement: UI-facing transfer contract ownership
 `@epam/ai-dial-chat-shared` SHALL canonically define the UI-facing transfer contracts:
 `ConversationTransferJobStatus`, `ConversationTransferSubjectKind`, `ConversationTransferSubject`,
-`ConversationTransferJob`, `ConversationTransferProgress`, `ConversationTransferUnitKind`, and
-`ConversationTransferErrorCode`. `ConversationTransferJobStatus` SHALL carry the members
-`InProgress`, `Success`, `Failed`, and `Canceled`.
+`ConversationTransferJob`, `ConversationTransferProgress`, `ConversationTransferProgressUnits`, `ConversationTransferUnitKind`,
+`ConversationTransferErrorCode`, and `ConversationTransferWarningCode`, all in
+`libs/chat-shared/src/models/conversation-transfer.ts`. `ConversationTransferJobStatus` SHALL carry the members
+`InProgress`, `Success`, `Warning`, `Failed`, and `Canceled`.
 `@epam/ai-dial-chat-hooks` SHALL NOT re-export any of them from its own barrel and SHALL NOT
 declare a second, parallel definition of any of them — every consumer imports from the owning
 package, per `remove-cross-package-reexports`. In particular `ConversationTransferErrorCode` SHALL
@@ -215,7 +220,7 @@ behavior exactly as implemented today.
 ### Requirement: An oversized export archive fails as `FileTooLarge` rather than crashing the tab
 
 `ConversationTransferErrorCode` SHALL include a `FileTooLarge` member. `useConversationExport` SHALL
-accept an optional `maxArchiveBytes: number` parameter with a documented default. Before building a
+accept an optional `maxArchiveBytes: number` parameter defaulting to the exported `DEFAULT_MAX_ARCHIVE_BYTES` (512 MiB). Before building a
 `.dial` archive, the hook SHALL sum the byte length of the downloaded attachments and, if the total
 exceeds `maxArchiveBytes`, SHALL fail the job with `FileTooLarge` without attempting the ZIP build.
 The hook SHALL additionally treat a `RangeError` thrown out of `buildDialArchive` as `FileTooLarge`

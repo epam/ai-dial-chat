@@ -12,7 +12,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 ### Requirement: CSRF and unauthorized generated-client middleware are host-configurable factories
 
-`@epam/ai-dial-chat-hooks` SHALL export `createCsrfMiddleware(deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void }): Middleware` and `createUnauthorizedMiddleware(deps: { notifyUnauthorized: (url: string) => void; refreshCsrfToken: () => Promise<CsrfRefreshResult>; isInvalidCsrfErrorBody: (body: string) => boolean }): Middleware`, each returning a `@epam/chat-api-client`-compatible `Middleware` object whose observable behavior is identical to `apps/chat/src/server-api/api-client.ts`'s current inline `csrfMiddleware`/`unauthorizedMiddleware`. Neither factory SHALL construct a `Configuration`, read `apps/chat`'s CSRF token directly, or import `apps/chat/src/server-api/base.ts`.
+`@epam/ai-dial-chat-hooks` SHALL export `createCsrfMiddleware(deps: CreateCsrfMiddlewareDeps): Middleware` (`deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void }`) and `createUnauthorizedMiddleware(deps: CreateUnauthorizedMiddlewareDeps): Middleware` (`deps: { notifyUnauthorized: (url: string) => void; refreshCsrfToken: () => Promise<CsrfRefreshOutcome>; isInvalidCsrfErrorBody: (body: string) => boolean; getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void; createUnauthorizedError: (url: string) => UnauthorizedErrorLike }`), from `libs/chat-hooks/src/api-transport/`, each returning an `@epam/ai-dial-chat-api-client`-compatible `Middleware` object. `CsrfRefreshOutcome` is `{ status: 'ok'; token: string } | { status: 'unauthorized' | 'failed' }`. `apps/chat/src/server-api/api-client.ts` composes both factories with its own `base.ts` capabilities (`createUnauthorizedError: (url) => new UnauthorizedError(url)`). Neither factory SHALL construct a `Configuration`, read `apps/chat`'s CSRF token directly, or import `apps/chat/src/server-api/base.ts`.
 
 #### Scenario: CSRF token injected on non-GET requests
 - **WHEN** `deps.getCsrfToken()` returns a non-null token
@@ -29,19 +29,19 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 #### Scenario: 401 response notifies and throws through injected dependencies
 - **WHEN** a response has status 401
-- **THEN** the middleware `createUnauthorizedMiddleware(deps)` returns calls `deps.notifyUnauthorized(url)` and throws `UnauthorizedError`
+- **THEN** the middleware `createUnauthorizedMiddleware(deps)` returns calls `deps.notifyUnauthorized(url)` and throws the error built by `deps.createUnauthorizedError(url)`
 
 #### Scenario: Invalid-CSRF response refreshes and retries exactly once
-- **WHEN** a response is classified invalid-CSRF by `deps.isInvalidCsrfErrorBody`
-- **THEN** the middleware calls `deps.refreshCsrfToken()`, retries the original request exactly once with any newly-set token, and surfaces that retry's outcome (success, a second invalid-CSRF/401 response, or a non-CSRF error) exactly as `apps/chat/src/server-api/api-client.ts`'s current implementation does today
+- **WHEN** a `403` response body is classified invalid-CSRF by `deps.isInvalidCsrfErrorBody`
+- **THEN** the middleware calls `deps.refreshCsrfToken()` (an `'unauthorized'` outcome notifies and throws `deps.createUnauthorizedError(url)`, a `'failed'` outcome throws a generic `Error`), retries the original request exactly once via `fetch` with the refreshed token, captures any rotated `x-csrf-token` through `deps.setCsrfToken`, and surfaces that retry's outcome: the response on success, a notify-and-throw on a 401 or a second invalid-CSRF 403, or a generic `Request failed with status …` error otherwise
 
 #### Scenario: Concurrent requests reuse an in-flight refresh
 - **WHEN** two requests concurrently trigger an invalid-CSRF retry
-- **THEN** `deps.refreshCsrfToken()` is not invoked a second time while the first refresh is still in flight, and both requests retry using the token that refresh resolves to
+- **THEN** a request whose dispatched token differs from the currently held `deps.getCsrfToken()` value reuses that newer token instead of invoking `deps.refreshCsrfToken()` again; de-duplicating concurrent refresh calls themselves is the host's `refreshCsrfToken` responsibility
 
 ### Requirement: Files API wrapper is a factory over an injected configured `FilesApi` and upload function
 
-`@epam/ai-dial-chat-hooks` SHALL export `createFilesApiClient(filesApi: FilesApi, uploadFileWithProgress: UploadFileWithProgressFn)`, returning an object reproducing every one of `apps/chat/src/server-api/files.api.ts`'s 16 current exports (`listPublicFiles`, `listSharedFiles`, `listFiles`, `uploadFile`, `uploadArchive`, `getFileMetadata`, `downloadFile`, `createFolder`, `deleteFiles`, `renameFiles`, `copyFiles`, `moveFiles`, `downloadArchive`, `revokeAccess`, `discardShared`, `listSharedByMe`) with identical signatures and behavior, including binary downloads returning the raw `Response` via the generated client's `Raw` methods.
+`@epam/ai-dial-chat-hooks` SHALL export `createFilesApiClient(filesApi: FilesApi, uploadFileWithProgress: UploadFileWithProgressFn)` (`libs/chat-hooks/src/files/create-files-api.ts`), returning an object with the 16 functions `apps/chat/src/server-api/files.api.ts` re-exports (`listPublicFiles`, `listSharedFiles`, `listFiles`, `uploadFile`, `uploadArchive`, `getFileMetadata`, `downloadFile`, `createFolder`, `deleteFiles`, `renameFiles`, `copyFiles`, `moveFiles`, `downloadArchive`, `revokeAccess`, `discardShared`, `listSharedByMe`) with identical signatures and behavior, including binary downloads returning the raw `Response` via the generated client's `Raw` methods.
 
 #### Scenario: Non-progress upload delegates to the generated client
 - **WHEN** the returned object's `uploadFile` is called without `onProgress`
@@ -57,11 +57,11 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 #### Scenario: `apps/chat` composes the factory with its own singleton
 - **WHEN** `apps/chat/src/server-api/files.api.ts` is inspected
-- **THEN** it calls `createFilesApiClient` with the app's configured `filesApi` singleton and its own `uploadFileWithProgress`, and re-exports the returned functions under their existing names so `dial-files-api.adapter.ts` and `usePublishFolders.ts` require no changes
+- **THEN** it calls `createFilesApiClient` with the app's configured `filesApi` singleton and its own `uploadFileWithProgress`, and re-exports the returned functions under their existing names so consumers such as `dial-files-api.adapter.ts`, `hooks/publish/usePublishFolders.ts`, and `hooks/skills/useSkillFileSystemPicker.ts` import them unchanged
 
 ### Requirement: Upload-with-progress is a factory over an injected XHR factory and host capabilities
 
-`@epam/ai-dial-chat-hooks` SHALL export `createUploadFileWithProgress(deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void; notifyUnauthorized: (url: string) => void; uploadUrl: string; xhrFactory?: () => XMLHttpRequest })`, returning a function reproducing `apps/chat/src/server-api/upload-file-with-progress.ts`'s current `uploadFileWithProgress` signature and behavior: progress reporting, abort via `AbortSignal`, `overwrite`/`create-only` upload mode, JSON response parsing, CSRF header attachment and rotation, and unauthorized (401) handling. `xhrFactory` SHALL default to `() => new XMLHttpRequest()` when omitted.
+`@epam/ai-dial-chat-hooks` SHALL export `createUploadFileWithProgress(deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void; notifyUnauthorized: (url: string) => void; createUnauthorizedError: (url: string) => Error; uploadUrl: string; xhrFactory?: () => XMLHttpRequest })` (`libs/chat-hooks/src/files/create-upload-file-with-progress.ts`), returning an `UploadFileWithProgressFn` that `apps/chat/src/server-api/upload-file-with-progress.ts` composes with `uploadUrl: '/api/v1/files'`, with this behavior: progress reporting, abort via `AbortSignal`, `overwrite`/`create-only` upload mode, JSON response parsing, CSRF header attachment and rotation, and unauthorized (401) handling. `xhrFactory` SHALL default to `() => new XMLHttpRequest()` when omitted.
 
 #### Scenario: Progress events are reported during upload
 - **WHEN** the returned function is called with an `onProgress` callback and the injected (or default) XHR reports upload progress events
@@ -77,7 +77,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 #### Scenario: 401 response calls the injected unauthorized callback
 - **WHEN** the upload response has status 401
-- **THEN** `deps.notifyUnauthorized` is called and the returned promise rejects with `UnauthorizedError`
+- **THEN** `deps.notifyUnauthorized` is called and the returned promise rejects with the error built by `deps.createUnauthorizedError(url)`
 
 #### Scenario: A custom `xhrFactory` is honored in tests
 - **WHEN** `deps.xhrFactory` is supplied
@@ -85,7 +85,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 ### Requirement: Chat-stream completion transport is a factory over an injected fetch and host capabilities
 
-`@epam/ai-dial-chat-hooks` SHALL export `createChatStreamApi(deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void; completionsBasePath: string; getTimezone?: () => string | undefined; fetchImpl?: typeof fetch })`, returning `{ streamCompletion, stopCompletion }` reproducing `apps/chat/src/server-api/chat-stream.api.ts`'s current signatures and behavior: streamed completion parsing across partial chunks, comments/blank lines, `[DONE]`, malformed events, backend error chunks, aborts, missing bodies, non-2xx responses (including 401 — the pre-move implementation reports a non-2xx status generically through `onChunk`'s error path/`stopCompletion`'s thrown error, with no distinct unauthorized handling), the `X-Timezone` header (present only when `deps.getTimezone` resolves a non-empty value), CSRF header attachment/rotation, and `clientChannelId` inclusion in the request body only when provided. `parseSSELine`'s decoding logic SHALL remain internal to this factory's module, not a separate public export.
+`@epam/ai-dial-chat-hooks` SHALL export `createChatStreamApi(deps: CreateChatStreamApiDeps)` (`libs/chat-hooks/src/conversation/create-chat-stream-api.ts`; `deps: { getCsrfToken: () => string | null; setCsrfToken: (token: string | null) => void; completionsBasePath: string; getTimezone?: () => string | undefined; fetchImpl?: typeof fetch; idleTimeoutMs?: number }`), returning `ChatStreamApi { streamCompletion, stopCompletion }`, which `apps/chat/src/server-api/chat-stream.api.ts` composes with `completionsBasePath: ApiEndpoints.CONVERSATIONS` and `getTimezone: getBrowserTimezone`. Behavior: streamed completion parsing across partial chunks, comments/blank lines, `[DONE]`, malformed events (skipped), backend error chunks, aborts, missing bodies, non-2xx responses (including 401, reported generically with no distinct unauthorized handling; `409` is reported as `GenerationConflictError`), a rejected `fetch`, a failed read, or a stream silent past `idleTimeoutMs` (default `DEFAULT_STREAM_IDLE_TIMEOUT_MS = 45_000`) reported as `StreamInterruptedError`, the `X-Timezone` header (present only when `deps.getTimezone` resolves a non-empty value), CSRF header attachment/rotation, and `clientChannelId` inclusion in the request body only when provided. `parseSSELine`'s decoding logic SHALL remain internal to this factory's module, not a separate public export.
 
 #### Scenario: Partial SSE chunks are buffered and parsed correctly
 - **WHEN** the response body delivers an SSE event split across multiple `fetch` stream reads
@@ -93,11 +93,11 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 #### Scenario: Comments, blank lines, and `[DONE]` are handled without invoking `onChunk` incorrectly
 - **WHEN** the stream includes SSE comment lines, blank lines, or a terminal `[DONE]` line
-- **THEN** `onComplete` is invoked at `[DONE]` and no spurious `onChunk` call is made for the comment/blank lines
+- **THEN** none of them produces an `onChunk` call, and `onComplete` is invoked once the response body is fully read (not at the `[DONE]` line itself), unless an error was already reported
 
-#### Scenario: Malformed events and backend error chunks surface through `onError`
+#### Scenario: Backend error chunks surface through `onError`; malformed events are skipped
 - **WHEN** the stream includes a malformed SSE event or a backend-emitted error chunk
-- **THEN** `onError` is invoked with the same error shape the pre-move implementation would produce, and streaming stops
+- **THEN** a malformed event (unparseable JSON) is skipped silently, while a backend error chunk invokes `onError` once — with `GenerationPersistenceError` for `error.type === 'conversation_save_failed'`, otherwise `StreamUpstreamError(error.message)` — and `onComplete` is then not invoked
 
 #### Scenario: Abort during streaming stops processing without invoking `onComplete`
 - **WHEN** the caller's `AbortSignal` is aborted mid-stream
@@ -121,7 +121,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 ### Requirement: Generation attach/replay transport is a factory-provided capability
 
-`@epam/ai-dial-chat-hooks`'s chat-stream transport factory SHALL additionally expose `attachToGeneration(path: string, signal: AbortSignal): Promise<ReadableStream<Uint8Array>>`, mirroring the existing `watchConversation` shape (a raw stream the hook itself parses) rather than a callback-based API, and SHALL NOT hardcode an `/api` path, CSRF handling, or import an app `server-api` module — the concrete REST wiring is supplied by the host app's transport implementation, consistent with every other transport capability.
+`@epam/ai-dial-chat-hooks`'s `ConversationStreamTransport` contract (`libs/chat-hooks/src/conversation/useConversationStream/useConversationStream.ts`) SHALL declare `attachToGeneration(path: string, signal: AbortSignal): Promise<ReadableStream<Uint8Array>>`, mirroring the existing `watchConversation` shape (a raw stream the hook itself parses) rather than a callback-based API. It is not part of `createChatStreamApi`'s result. The lib SHALL NOT hardcode an `/api` path, CSRF handling, or import an app `server-api` module — the concrete REST wiring is supplied by the host app's transport implementation, consistent with every other transport capability.
 
 #### Scenario: Attach delegates to the injected transport
 - **WHEN** `attachToGeneration(path, signal)` is called
@@ -137,14 +137,14 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 #### Scenario: `apps/chat` composes the concrete transport
 - **WHEN** `apps/chat/src/utils/conversation-stream-transport.ts` is inspected
-- **THEN** it supplies `attachToGeneration` backed by `apps/chat/src/server-api/chat-stream.api.ts`'s implementation, which issues a raw `fetch POST` against the app's configured completions-attach endpoint with `credentials: 'include'` and the current CSRF token, matching the existing `streamCompletion`/`watchConversation` implementation pattern in that module
+- **THEN** it supplies `attachToGeneration` backed by `apps/chat/src/server-api/conversations.api.ts`'s `attachToGeneration`, which calls the generated client's `conversationsApi.attachToGenerationRaw({ attachGenerationDto: { path } }, { signal })` (so CSRF and unauthorized handling come from the generated-client middleware) and returns the raw response body, matching that module's `watchConversation`
 
 ### Requirement: API error and trace parsing are host-agnostic public exports
 
-`@epam/ai-dial-chat-hooks` SHALL export `isConversationNotFoundError`, `getApiErrorStatus`, `getApiErrorMessage`, and `getApiErrorDetails`, reproducing `apps/chat/src/server-api/api-error.ts`'s current behavior exactly: resolving status/message/trace ID from both a generated-client `ResponseError` and a raw `base.ts`-shaped error without consuming the original response body twice, validating any candidate `traceparent` against the W3C Trace Context shape before returning a `traceId`.
+`@epam/ai-dial-chat-hooks` SHALL export `isConversationNotFoundError`, `getApiErrorStatus`, `getApiErrorMessage`, and `getApiErrorDetails` from `libs/chat-hooks/src/api-error/api-error.ts` (also re-exported by the `./utils` entry point; `apps/chat` has no `server-api/api-error.ts` of its own), with `getApiErrorDetails` returning `ApiErrorDetails { status?, message, traceId?, code?, upstreamCode?, upstreamMessage? }`: resolving status/message/trace ID by duck-typing any error carrying a `response`-shaped object — a generated-client `ResponseError` or a raw `base.ts`-shaped error — reading the body through `response.clone()` so the original body is not consumed, validating any candidate `traceparent` (body first, then the `traceparent` response header) against the W3C Trace Context shape before returning a `traceId`.
 
 #### Scenario: Message and trace ID resolve from a generated-client error
-- **WHEN** `getApiErrorDetails` is called with a `@epam/chat-api-client` `ResponseError`-shaped error whose body includes a valid `traceparent`
+- **WHEN** `getApiErrorDetails` is called with a `@epam/ai-dial-chat-api-client` `ResponseError`-shaped error whose body includes a valid `traceparent`
 - **THEN** it returns that trace ID and the resolved message without throwing
 
 #### Scenario: Message and trace ID resolve from a raw `base.ts`-shaped error identically
