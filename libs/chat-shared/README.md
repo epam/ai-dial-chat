@@ -750,7 +750,8 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 Pass `identity` to replace the default card for a resource that has no
 `EntityHeaderItem`, and `children` for a step that needs an input before it can
 be confirmed — the caller owns that input's state and disables confirming
-until it is satisfied.
+until it is satisfied. With neither `item` nor `identity` the card is omitted,
+which suits a confirmation that is not about a particular resource.
 
 ### ConfirmationFooter
 
@@ -918,6 +919,33 @@ Returns `true` when the viewport matches the mobile breakpoint.
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 
 const isMobile = useIsMobile();
+```
+
+### useUnsavedChangesGuard
+
+`useUnsavedChangesGuard(isDirty)` defers a "leave the form" action until the user confirms discarding. `guard(action)` runs `action` at once when `isDirty` is `false`; otherwise it stores the action and sets `isConfirmOpen`. `confirm()` closes the confirmation and runs the stored action, `dismiss()` closes it and drops the action. While `isDirty` is `true` the hook also registers a `beforeunload` listener so the browser warns before the page unloads. The hook renders nothing — pair it with a confirmation such as `ConfirmationDialog`, and compute `isDirty` yourself.
+
+```tsx
+import {
+  ConfirmationDialog,
+  useUnsavedChangesGuard,
+} from '@epam/ai-dial-chat-shared';
+
+const { guard, isConfirmOpen, confirm, dismiss } =
+  useUnsavedChangesGuard(isDirty);
+
+<button type="button" onClick={() => guard(goBack)}>
+  Cancel
+</button>;
+<ConfirmationDialog
+  open={isConfirmOpen}
+  title="Discard unsaved changes?"
+  message="You have unsaved changes. Leaving now will discard them."
+  confirmLabel="Discard changes"
+  cancelLabel="Keep editing"
+  onConfirm={confirm}
+  onClose={dismiss}
+/>;
 ```
 
 ## Utilities

@@ -85,6 +85,10 @@ const ScheduledTaskEditPage: FC = () => {
   const [values, setValues] = useState<ScheduledTaskCreateFormValues | null>(
     null,
   );
+  /* Values the form was hydrated with; the form compares against them to
+   * decide whether Back/Cancel needs a discard confirmation. */
+  const [initialValues, setInitialValues] =
+    useState<ScheduledTaskCreateFormValues | null>(null);
   /* Activity-window boundaries the form was hydrated with. The past-date rule
    * exempts them, so an older task whose window already started stays editable
    * while a boundary changed into the past is still rejected. */
@@ -140,7 +144,9 @@ const ScheduledTaskEditPage: FC = () => {
           return;
         }
         setTask(result);
-        setValues({ minute: '0', ...mapped.values });
+        const hydratedValues = { minute: '0', ...mapped.values };
+        setValues(hydratedValues);
+        setInitialValues(hydratedValues);
         setOriginalWindowDates({
           startDate: mapped.values.startDate,
           endDate: mapped.values.endDate,
@@ -330,6 +336,7 @@ const ScheduledTaskEditPage: FC = () => {
       onRefineInstructions={onRefineInstructions}
       labels={labels}
       values={values}
+      initialValues={initialValues ?? undefined}
       errors={effectiveErrors}
       skillSelector={
         <ScheduledTaskSkillField

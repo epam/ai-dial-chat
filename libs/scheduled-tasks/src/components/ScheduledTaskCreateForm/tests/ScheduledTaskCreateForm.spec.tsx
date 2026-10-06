@@ -200,17 +200,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Spinner: () => <div>Loading</div>,
   Label: ({
     id,
+    htmlFor,
     label,
     required,
   }: {
     id?: string;
+    htmlFor?: string;
     label: ReactNode;
     required?: boolean;
   }) => (
-    <span id={id}>
+    <label id={id} htmlFor={htmlFor}>
       {label}
       {required && ' *'}
-    </span>
+    </label>
   ),
 }));
 
@@ -631,7 +633,22 @@ describe('ScheduledTaskCreateForm', () => {
   it('names the Instructions editor through a real label association', async () => {
     await renderForm();
 
-    expect(screen.getByRole('textbox', { name: 'Instructions' })).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: /^Instructions/ })).toBeTruthy();
+  });
+
+  it('marks Instructions as required while no skill is selected', async () => {
+    await renderForm();
+
+    expect(screen.getByText('Instructions *')).toBeTruthy();
+  });
+
+  it('drops the required marker once a skill is selected', async () => {
+    await renderForm({
+      values: { ...baseValues, skillUrls: ['skills/a'] },
+    });
+
+    expect(screen.getByText('Instructions')).toBeTruthy();
+    expect(screen.queryByText('Instructions *')).toBeNull();
   });
 
   it('renders Details and Configuration as two distinct regions', async () => {

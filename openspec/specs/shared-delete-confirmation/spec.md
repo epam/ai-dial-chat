@@ -28,7 +28,7 @@ Not covered: the Files dialog's frame and actions belong to `@epam/ai-dial-react
 
 `ConfirmationView` (`libs/chat-shared/src/components/ConfirmationView/ConfirmationView.tsx`) SHALL be presentational and accept:
 
-- `item?: EntityHeaderItem` — rendered as a `ConfirmationIdentityCard` when `identity` is not set.
+- `item?: EntityHeaderItem` — rendered as a `ConfirmationIdentityCard` when `identity` is not set; with neither `item` nor `identity`, no card is rendered (a confirmation that is not about a particular resource, such as discarding unsaved changes).
 - `identity?: ReactNode` — a card rendered in place of the default one, for a resource that is not an `EntityHeaderItem`.
 - `message: ReactNode` — the body sentence; a `ReactNode` so the host can bold the name.
 - `consequences?: string[]` — bullets under the message; an empty or omitted list renders nothing.
@@ -43,6 +43,11 @@ Message and bullet colors SHALL come from `--cfm-message-text` / `--cfm-conseque
 
 - **WHEN** `consequences` is `[]`
 - **THEN** no `<ul>` is rendered
+
+#### Scenario: No resource means no identity card
+
+- **WHEN** neither `item` nor `identity` is passed
+- **THEN** no identity card is rendered and the message is the first element in the body
 
 ### Requirement: `ConfirmationFooter` renders the action row
 

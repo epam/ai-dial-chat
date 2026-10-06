@@ -113,6 +113,8 @@ Presentational create-task form: a back-navigable header, display name, a one-sh
 
 `isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
 
+Pass `initialValues` — the values the form was opened with — to guard unsaved edits: while `values` differs from it (compared by `hasScheduledTaskFormChanges`, which treats empty strings, `undefined` and empty skill lists as equal), Back and Cancel open a discard confirmation instead of calling `onBack` / `onCancel`, and the browser warns before the page unloads. The confirmation's copy comes from the optional `labels.discardTitle`, `discardMessage`, `discardConfirmLabel` and `discardCancelLabel` (English defaults). Omit `initialValues` to handle unsaved changes in the host.
+
 ```tsx
 import {
   ScheduledTaskCreateForm,
@@ -121,6 +123,16 @@ import {
 
 <ScheduledTaskCreateForm
   labels={{/* ... */}}
+  initialValues={{
+    displayName: '',
+    repeat: ScheduledTaskRepeat.Daily,
+    time: '09:00',
+    minute: '0',
+    startDate: '',
+    endDate: '',
+    modelId: '',
+    prompt: '',
+  }}
   values={{
     displayName: '',
     repeat: ScheduledTaskRepeat.Daily,
