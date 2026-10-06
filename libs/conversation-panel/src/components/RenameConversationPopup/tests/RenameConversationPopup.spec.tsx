@@ -88,16 +88,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick,
     disabled,
     'aria-label': ariaLabel,
+    'aria-busy': ariaBusy,
   }: {
     icon?: ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     'aria-label'?: string;
+    'aria-busy'?: boolean;
     tooltipProps?: unknown;
   }) => (
     <button
       type="button"
       aria-label={ariaLabel}
+      aria-busy={ariaBusy}
       onClick={onClick}
       disabled={disabled}
     >
@@ -107,7 +110,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconSparkles: () => <svg aria-hidden="true" />,
+  IconSparkles: ({
+    'aria-hidden': ariaHidden,
+  }: {
+    'aria-hidden'?: boolean;
+  }) => <svg aria-hidden={ariaHidden} />,
 }));
 
 const DEFAULT_LABELS: RenameConversationPopupLabels = {
@@ -375,11 +382,25 @@ describe('RenameConversationPopup', () => {
 
     await user.click(getAiButton());
 
-    expect(await screen.findByRole('status')).toBeTruthy();
+    /* The spinner is decorative inside the labelled button: hidden, with the busy state on the button. */
+    expect(await screen.findByText('Loading')).toBeTruthy();
+    /* Rendered, but outside the accessibility tree. */
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status', { hidden: true })).toBeTruthy();
     expect(getAiButton().disabled).toBe(true);
+    expect(getAiButton().getAttribute('aria-busy')).toBe('true');
 
     resolveGenerate('Done');
-    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Loading')).toBeNull());
+    expect(getAiButton().getAttribute('aria-busy')).toBe('false');
+  });
+
+  it('hides the sparkles icon from assistive tech inside the labelled AI button', () => {
+    render(<RenameConversationPopup {...DEFAULT_PROPS} />);
+    expect(
+      // eslint-disable-next-line testing-library/no-node-access -- an aria-hidden glyph has no accessible role or name to query
+      getAiButton().querySelector('svg')?.getAttribute('aria-hidden'),
+    ).toBe('true');
   });
 
   it('surfaces an error and leaves the input unchanged when generation fails', async () => {
@@ -442,7 +463,7 @@ describe('RenameConversationPopup', () => {
     expect(onGenerateWithAi).toHaveBeenCalledOnce();
 
     resolveGenerate('Done');
-    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Loading')).toBeNull());
   });
 
   it('ignores an AI result from a previous popup session', async () => {

@@ -420,7 +420,7 @@ When a user clicks "Preview" in a `CitationDropdown`, `useCitationMarkdownCompon
 When `annotation.body.source.attachment.type === 'application/pdf'`:
 
 1. Find the `AnnotationGroup` that owns the clicked annotation (by `sourceUrl`).
-2. `annotationsToPdfHighlights(group.annotations)` — maps every annotation whose `body.selector` contains one or more recognised PDF selectors (`pdf_bbox`, or `pdf_region` in either coordinate form) to an `InputHighlightData`. Each annotation becomes one highlight whose `bboxes` list collects all its recognised selectors, converting a `pdf_region` to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`. The highlight `id` comes from `annotationHighlightId`, which identifies the annotation itself (`annotation.index` when the wire supplied one, otherwise its `cit` id plus a digest of its selectors) rather than its position in the group.
+2. `annotationsToPdfHighlights(group.annotations)` — maps every annotation whose `body.selector` contains one or more recognised PDF selectors (`pdf_bbox`, or `pdf_region` in either coordinate form) to an `InputHighlightData`. Each annotation becomes one highlight whose `bboxes` list collects all its recognised selectors, converting a `pdf_region` to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`. The highlight `id` comes from `annotationHighlightIds(group.annotations)`, which starts from each annotation's own identity (`annotation.index` when the wire supplied one, otherwise its `cit` id plus a digest of its selectors) rather than its position in the group, disambiguating only an id an earlier entry already holds.
 3. `selectedHighlightId` is computed for the clicked annotation with the same helper, so the viewer scrolls to it on load — and so selecting another citation of the same document, even on the same page, changes the id and re-navigates.
 4. `fileName` is derived from the annotation's `attachment`: `attachment.title` is used when present; otherwise the last path segment of `attachment.url` is URL-decoded with `decodeURIComponent` (so `%20` → space, etc.).
 5. `openCanvas` is called directly with `PdfCanvasContent { type: Pdf, url, highlights, selectedHighlightId }` and the resolved `fileName`.
@@ -1125,11 +1125,11 @@ The `PdfContent` and `CodeContent` dynamic-import and runtime-preparation paths 
 
 ### Requirement: Citation highlight ids identify the annotation, not its position in the clicked group
 
-`libs/quotations/src/utils/annotation.ts` SHALL derive every citation highlight id from the annotation's own identity, so that two different citations of the same document never collapse onto one id. `annotationHighlightId(annotation, fallbackIndex)` and `annotationsToPdfHighlights` SHALL both call one shared internal helper, so the id a highlight carries and the id computed for the clicked annotation are identical by construction.
+`libs/quotations/src/utils/annotation.ts` SHALL derive every citation highlight id from the annotation's own identity, so that two different citations of the same document never collapse onto one id. `annotationsToPdfHighlights` and both canvas mappers SHALL mint a list's ids through `annotationHighlightIds(list)`, which starts from each entry's `annotationHighlightId(annotation, position)` base id, so the id a highlight carries and the id computed for the clicked annotation are identical by construction. A base id that an earlier entry of the same list already holds SHALL be disambiguated there (see the `office-annotation-highlighting` capability's highlight-id uniqueness requirement); an unambiguous base id SHALL be used unchanged.
 
-The id SHALL be resolved in this order:
+The base id SHALL be resolved in this order:
 
-1. `String(annotation.index)` when the wire supplied an `index` — it is already unique within the message and keeps ids short and stable.
+1. `String(annotation.index)` when the wire supplied an `index` — short and stable, though a payload may repeat an `index`, which `annotationHighlightIds` disambiguates.
 2. Otherwise an identity-derived id built from the annotation's `target.selector.id` when its selector is `html_tag` (the `cit` id) **and** a digest of the annotation's `body.selector` entries (single object or array), covering the PDF shapes (`pdf_bbox`, `pdf_region`) and the Office shapes (`docx_text_range`, `pptx_text_range`, `excel_rc_range`, `docx_text_anchor`, `pptx_text_anchor`). Two annotations differing in either part SHALL receive different ids; two annotations agreeing in both describe the same cited region and MAY share one.
 3. Otherwise `String(fallbackIndex)` — the annotation's position in the input list, as today.
 

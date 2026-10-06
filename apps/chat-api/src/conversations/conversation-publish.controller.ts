@@ -10,6 +10,7 @@ import {
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   getUserDisplayName,
   resolveDisplayAuthor,
@@ -51,6 +52,7 @@ export class ConversationPublishController {
       'as it always was.',
   })
   @ApiBody({ type: PublishConversationDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
     description: 'Conversation published successfully',
@@ -112,6 +114,7 @@ export class ConversationPublishController {
       'and used as the publication name, so the request is legible in the admin queue.',
   })
   @ApiBody({ type: UnpublishConversationDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Unpublish request submitted for administrator approval',
@@ -162,6 +165,7 @@ export class ConversationPublishController {
       'Returns every folder this conversation has been published to, most recent first, derived from ' +
       "DIAL Core's Publication API (`getPublications`) — never from chat-api-side storage.",
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Publish history for the conversation',

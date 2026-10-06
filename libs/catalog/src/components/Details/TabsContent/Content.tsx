@@ -8,7 +8,7 @@ import {
   ElementSize,
   InlineSelectTrigger,
 } from '@epam/ai-dial-ui-kit';
-import { FC, type ReactNode } from 'react';
+import { FC, type ReactNode, useId } from 'react';
 import type {
   CatalogContentFilePreview,
   CatalogContentFileTreeRenderProps,
@@ -104,6 +104,8 @@ export const ContentTab: FC<ContentTabProps> = ({
   const fileCountClassName =
     detailsStyles?.typography?.contentFileCountClassName ?? 'dial-tiny-text';
 
+  const fileSelectorTriggerId = useId();
+
   const hasDescription = description != null && description !== '';
 
   const fileNodes = files ?? [];
@@ -191,6 +193,7 @@ export const ContentTab: FC<ContentTabProps> = ({
             }
           >
             <InlineSelectTrigger
+              id={fileSelectorTriggerId}
               label={selectedFileName}
               size={ElementSize.Small}
               isOpen={isFileSelectorOpen}
@@ -216,7 +219,14 @@ export const ContentTab: FC<ContentTabProps> = ({
         </>
       )}
 
+      {/*
+       * With a selector, the body shows one of several files — name it after
+       * the trigger, which already carries the selected file name, so the
+       * preview is identifiable without duplicating that text.
+       */}
       <div
+        role={hasFileChoice ? 'region' : undefined}
+        aria-labelledby={hasFileChoice ? fileSelectorTriggerId : undefined}
         className={mergeClasses(
           'min-h-0 flex-1 text-start',
           filePreviewContent != null

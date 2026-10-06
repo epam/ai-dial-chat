@@ -8,7 +8,7 @@ Defines the page-level file drag-and-drop experience: the full-screen `FileDndOv
 The `FileDndOverlay` component in `libs/attachment-input` (exported from `@epam/ai-dial-attachment-input`) SHALL render as a full-screen fixed overlay (`fixed inset-0 z-[9999]`, `backdrop-blur-sm`) with a semi-transparent backdrop when its `isVisible` prop is `true`. Its props are `isVisible`, `isAttachmentsAllowed?` (default `true`), `labels?: FileDndOverlayLabels`, and `styles?: FileDndOverlayStyles`. The root element carries `role="status"` and `aria-live="polite"`.
 
 The overlay SHALL display, centered vertically and horizontally:
-1. `IconFileDescription` from `@tabler/icons-react` (size `100`, `aria-hidden`) in the accent color
+1. `IconFileDescription` from `@tabler/icons-react` (size `100`, `stroke={1}`, `aria-hidden`) in the accent color. The glyph is an illustration, so it takes the empty-state `stroke={1}` rather than `DIAL_KIT_ICON_STROKE`; the denied-state `IconFileX` follows the same rule
 2. A title with default text `'Attach files'` (configurable via `labels.title`)
 3. A subtitle with default text `'Drop files here to attach them to message'` (configurable via `labels.subtitle`)
 
@@ -43,6 +43,11 @@ Typography classes SHALL be configurable via `styles.typography.titleClassName` 
 - **AND** the icon is rendered in the error color (the `.deniedIcon` class)
 - **AND** the default title is `'No attachments allowed'`
 - **AND** the default subtitle is `"Attachments can't be added to message"`
+
+#### Scenario: Overlay illustration uses the empty-state stroke
+
+- **WHEN** `FileDndOverlay` is rendered with `isVisible={true}`, with `isAttachmentsAllowed` either `true` or `false`
+- **THEN** the rendered icon has `stroke-width="1"` and `aria-hidden="true"`
 - **AND** the overlay has `cursor-not-allowed` styling
 - **AND** the overlay is `pointer-events-auto` (intercepts rather than passes through drag events)
 - **AND** the overlay calls `preventDefault()` on `dragover` and `drop`, and because `usePageFileDrag` was given `isAttachmentsAllowed=false` its document `drop` handler adds no files

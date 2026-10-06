@@ -163,7 +163,7 @@ interface Props {
 
 **Memoisation**: `handleMessage` SHALL be wrapped in `useCallback`. The `iframeUrl` string SHALL be wrapped in `useMemo`. `triggerSave` (inside `useImperativeHandle`) is memoised on `[schema.editorUrl]`.
 
-**Accessibility**: The `<iframe>` SHALL have `title={schema.displayName}`. The spinner container SHALL have `aria-label` from `appsEditor.settingsStep.loadingLabel` and `aria-live="polite"`.
+**Accessibility**: The `<iframe>` SHALL have `title={schema.displayName}`. The loading overlay SHALL expose exactly one status region: the kit `Spinner` (itself `role="status"`, wrapping a `role="img"`) SHALL receive `ariaLabel` from `appsEditor.settingsStep.loadingLabel`. The overlay container SHALL NOT carry its own `aria-label`/`aria-live` — a name on a role-less `div` is not exposed, and adding `role="status"` there would nest a second live region around the Spinner's.
 
 **RTL / UI impact**: The embedded editor handles its own directionality. The host-owned credentials dialog SHALL inherit the host direction and use the shared forms' logical spacing and wrapping, as specified in `catalog-application-credentials`.
 

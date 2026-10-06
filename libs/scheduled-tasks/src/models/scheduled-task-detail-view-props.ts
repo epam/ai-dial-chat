@@ -12,6 +12,8 @@ export interface ScheduledTaskDetailViewLabels {
   startNowButtonLabel?: string;
   /** Label displayed while a manual execution request is pending. */
   startingLabel?: string;
+  /** Reason shown as the tooltip and accessible description of the disabled manual execution action while `isStartNowBusy` is `true`. When omitted, no reason is exposed. */
+  startNowBusyLabel?: string;
   /** Label for the header's destructive Delete action. Shown only when `onDelete` is supplied. */
   deleteButtonLabel: string;
   /** Label of the read-only indicator shown next to the title when `isDeleted` is `true`. */
@@ -134,6 +136,8 @@ export interface ScheduledTaskDetailViewProps {
   isStarting?: boolean;
   /** When `true`, the manual execution action renders disabled for host-owned eligibility state. Defaults to `false`. */
   isStartNowDisabled?: boolean;
+  /** When `true`, a run is already in progress: the manual execution action renders disabled and exposes `labels.startNowBusyLabel` as its reason. Defaults to `false`. */
+  isStartNowBusy?: boolean;
   /** Called when the user activates the header's destructive Delete action. When omitted, no Delete action renders. Suppressed while `isDeleted` is `true`. The component opens no dialog and performs no network call itself. */
   onDelete?: () => void;
   /** When `true`, the Delete action, Edit action, and Active switch render disabled rather than being removed. Defaults to `false`. */

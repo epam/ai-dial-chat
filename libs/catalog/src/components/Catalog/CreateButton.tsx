@@ -76,16 +76,10 @@ export const CreateButton: FC<CreateButtonProps> = ({
         <Dropdown
           items={searchItems}
           maxDropdownHeight={CREATE_MENU_MAX_HEIGHT_PX}
-          /* A fixed width keeps the panel from resizing as the search changes
-             the longest visible label; long labels truncate with a tooltip.
-             The kit still caps it at the viewport's available width. */
           placement="bottom-end"
           matchReferenceWidth={false}
           listClassName={CREATE_MENU_LIST_CLASS_NAME}
           menuHeader={
-            /* The panel's own 4px inset (`p-1`) would leave a strip above a
-               `top-0` sticky row where scrolled options show through, so the
-               row sticks 4px higher to cover it. */
             <div className="sticky -top-1 z-10 bg-layer-raised px-2 pb-1 pt-2">
               <Search
                 value={search.value}

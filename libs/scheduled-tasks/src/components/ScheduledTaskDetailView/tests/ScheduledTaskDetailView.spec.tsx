@@ -93,22 +93,38 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {icon}
     </button>
   ),
+  /*
+   * Mirrors the kit's documented contract: a disabled button with a visible
+   * tooltip is `aria-disabled` (still focusable) and swallows its click.
+   */
   NeutralButton: ({
     label,
     iconBefore,
     onClick,
     disabled,
+    tooltipProps,
+    'aria-describedby': ariaDescribedBy,
   }: {
     label: string;
     iconBefore?: ReactNode;
     onClick?: () => void;
     disabled?: boolean;
-  }) => (
-    <button onClick={onClick} disabled={disabled}>
-      {iconBefore}
-      {label}
-    </button>
-  ),
+    tooltipProps?: { tooltip?: string };
+    'aria-describedby'?: string;
+  }) => {
+    const isSoftDisabled = !!disabled && !!tooltipProps?.tooltip;
+    return (
+      <button
+        onClick={isSoftDisabled ? undefined : onClick}
+        disabled={isSoftDisabled ? undefined : disabled}
+        aria-disabled={isSoftDisabled || undefined}
+        aria-describedby={ariaDescribedBy}
+      >
+        {iconBefore}
+        {label}
+      </button>
+    );
+  },
   Tabs: ({
     tabs,
     activeTabId,
@@ -366,6 +382,54 @@ describe('ScheduledTaskDetailView', () => {
       'disabled',
       true,
     );
+  });
+
+  it('exposes the busy reason on a disabled Start now while a run is in progress', async () => {
+    const onStartNow = vi.fn();
+    render(
+      <ScheduledTaskDetailView
+        labels={{
+          ...labels,
+          startNowButtonLabel: 'Start now',
+          startNowBusyLabel: 'A task run is already in progress.',
+        }}
+        onBack={vi.fn()}
+        onStartNow={onStartNow}
+        isStartNowBusy
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    const startButton = screen.getByRole('button', { name: 'Start now' });
+    expect(startButton.getAttribute('aria-disabled')).toBe('true');
+    const reason = screen.getByText('A task run is already in progress.');
+    expect(
+      (startButton.getAttribute('aria-describedby') ?? '').split(' '),
+    ).toContain(reason.id);
+
+    await userEvent.click(startButton);
+    expect(onStartNow).not.toHaveBeenCalled();
+  });
+
+  it('omits the busy reason when Start now is not busy', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={{
+          ...labels,
+          startNowButtonLabel: 'Start now',
+          startNowBusyLabel: 'A task run is already in progress.',
+        }}
+        onBack={vi.fn()}
+        onStartNow={vi.fn()}
+        displayName="Daily summary"
+        runs={[]}
+      />,
+    );
+
+    const startButton = screen.getByRole('button', { name: 'Start now' });
+    expect(startButton.getAttribute('aria-describedby')).toBeNull();
+    expect(screen.queryByText('A task run is already in progress.')).toBeNull();
   });
 
   it('keeps the Start now action and mobile tabs keyboard-accessible in RTL without mirroring the play icon', async () => {

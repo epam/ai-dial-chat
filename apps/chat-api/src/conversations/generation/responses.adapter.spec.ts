@@ -927,6 +927,50 @@ describe('ResponsesAdapter', () => {
       }
     });
 
+    it.each([
+      [
+        'the SDK-parsed error',
+        () => ({
+          response: new Response(null, { status: 400 }),
+          error: { message: 'Invalid model\r\nFORGED log line' },
+        }),
+      ],
+      [
+        'the JSON raw body',
+        () => ({
+          response: new Response(
+            JSON.stringify({ message: 'Invalid model\r\nFORGED log line' }),
+            { status: 400 },
+          ),
+        }),
+      ],
+    ])(
+      'sanitizes the upstream message from %s before logging the rejection',
+      async (_label, makeDialResult) => {
+        const { adapter, mockDialClient } = makeAdapter();
+        vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue(
+          makeDialResult() as never,
+        );
+        const errorSpy = vi
+          .spyOn(adapter['logger'], 'error')
+          .mockImplementation(() => undefined);
+
+        const result = await adapter.relay(
+          { model: 'gpt-4o', input: [], stream: true, store: false },
+          'test-token',
+          new AbortController().signal,
+          makeMockRes() as never,
+          { role: ConversationMessageRole.Assistant, content: '' } as never,
+        );
+
+        expect(result.outcome).toBe('rejected');
+        expect(errorSpy).toHaveBeenCalledWith(
+          'DIAL Core rejected Responses request — status: 400: Invalid modelFORGED log line',
+        );
+        expect(JSON.stringify(errorSpy.mock.calls)).not.toMatch(/\\[rn]/);
+      },
+    );
+
     it('preserves a non-empty plain-text non-2xx body when the SDK gave no usable message', async () => {
       const { adapter, mockDialClient } = makeAdapter();
       vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({

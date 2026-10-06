@@ -100,6 +100,12 @@ The selector SHALL NOT be rendered at all when `deployments` is `undefined`, kee
 - **WHEN** `isStreaming` is `true`
 - **THEN** the trigger is non-interactive and has a visual disabled state
 
+#### Scenario: Streaming blocks every trigger presentation, including keyboard activation
+
+- **GIVEN** `isStreaming` is `true` and `isModelSelectorDisabled` is `false`
+- **WHEN** the trigger is the built-in desktop `Dropdown` (no `modelPickerOverlay`, e.g. a fixed-model host), the overlay chip, or the mobile icon button
+- **THEN** it carries `aria-disabled="true"` and the same dimmed disabled styling `isModelSelectorDisabled` applies, the built-in `Dropdown` receives `disabled`, and activating the trigger by pointer or keyboard opens no menu, overlay, or bottom sheet
+
 #### Scenario: No deployments prop — selector not rendered
 
 - **WHEN** `deployments` is `undefined`

@@ -2,6 +2,7 @@ import { Controller, Get, Param, Req } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { ApplicationSchemasService } from './application-schemas.service';
 import {
   ApplicationSchemasResponseDto,
@@ -23,6 +24,7 @@ export class ApplicationSchemasController {
       'Returns DIAL Core application type schemas visible to the authenticated user. ' +
       'Results are cached server-side for 60 seconds per user.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved schema list',
@@ -62,6 +64,7 @@ export class ApplicationSchemasController {
     description: 'Schema $id (URL-encoded)',
     example: 'https://example.com/schemas/quick-app',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved schema',

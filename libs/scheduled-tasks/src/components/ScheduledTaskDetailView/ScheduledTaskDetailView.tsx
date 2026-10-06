@@ -21,7 +21,13 @@ import {
   IconPlayerPlay,
   IconTrashX,
 } from '@tabler/icons-react';
-import { type CSSProperties, type FC, type ReactNode, useState } from 'react';
+import {
+  type CSSProperties,
+  type FC,
+  type ReactNode,
+  useId,
+  useState,
+} from 'react';
 import type { ScheduledTaskDetailViewProps } from '../../models/scheduled-task-detail-view-props';
 import { ScheduledTaskDetailTab } from '../../types/scheduled-task-detail-tab';
 import { ScheduledTaskHistorySectionVariant } from '../../types/scheduled-task-history-section-variant';
@@ -47,6 +53,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   onStartNow,
   isStarting = false,
   isStartNowDisabled = false,
+  isStartNowBusy = false,
   onDelete,
   isDeleting = false,
   isDeleted = false,
@@ -116,6 +123,11 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   const [activeTabId, setActiveTabId] = useState<string>(
     ScheduledTaskDetailTab.Details,
   );
+  const startNowBusyReasonId = useId();
+  /* The "Starting…" label already explains the pending POST, so the busy
+   * reason applies only to an already-running task. */
+  const startNowBusyReason =
+    isStartNowBusy && !isStarting ? labels.startNowBusyLabel : undefined;
 
   const detailTabs: TabItem[] = [
     { id: ScheduledTaskDetailTab.Details, label: labels.detailsTitle },
@@ -337,6 +349,11 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           )}
           {!isDeleted && onStartNow && labels.startNowButtonLabel && (
             <div aria-busy={isStarting}>
+              {startNowBusyReason && (
+                <span id={startNowBusyReasonId} className="sr-only">
+                  {startNowBusyReason}
+                </span>
+              )}
               <NeutralButton
                 label={
                   isStarting
@@ -351,7 +368,20 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                   />
                 }
                 onClick={onStartNow}
-                disabled={isDeleting || isStarting || isStartNowDisabled}
+                disabled={
+                  isDeleting ||
+                  isStarting ||
+                  isStartNowDisabled ||
+                  isStartNowBusy
+                }
+                aria-describedby={
+                  startNowBusyReason ? startNowBusyReasonId : undefined
+                }
+                tooltipProps={
+                  startNowBusyReason
+                    ? { tooltip: startNowBusyReason }
+                    : undefined
+                }
                 className="min-h-11 shrink-0"
               />
             </div>

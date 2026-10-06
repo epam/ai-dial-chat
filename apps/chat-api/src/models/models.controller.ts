@@ -2,6 +2,7 @@ import { Controller, Get, Header, Param, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   DialModelDto,
   DialModelListResponseDto,
@@ -23,6 +24,7 @@ export class ModelsController {
       "Proxies GET /openai/models using the caller's session access token. " +
       'Results are cached server-side for 30 seconds per user.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved model list',
@@ -59,6 +61,7 @@ export class ModelsController {
       "Proxies GET /openai/models/{model_name} using the caller's session access token. " +
       'Results are cached server-side for 60 seconds per user per model.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved model',

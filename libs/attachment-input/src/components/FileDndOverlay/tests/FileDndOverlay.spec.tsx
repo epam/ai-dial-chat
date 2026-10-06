@@ -16,6 +16,22 @@ describe('FileDndOverlay', () => {
     ).toBeTruthy();
   });
 
+  it.each([true, false])(
+    'draws its decorative illustration at the empty-state stroke (allowed: %s)',
+    (isAttachmentsAllowed) => {
+      render(
+        <FileDndOverlay
+          isVisible={true}
+          isAttachmentsAllowed={isAttachmentsAllowed}
+        />,
+      );
+      // eslint-disable-next-line testing-library/no-node-access -- stroke width on an aria-hidden glyph has no accessible role or text to query
+      const icon = screen.getByRole('status').querySelector('svg');
+      expect(icon?.getAttribute('stroke-width')).toBe('1');
+      expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    },
+  );
+
   it('renders custom title and subtitle', () => {
     render(
       <FileDndOverlay

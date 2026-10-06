@@ -63,12 +63,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     thinkingLabel,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
+    codeBlockDownloadLabel,
     tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     tableOpenInCanvasLabel,
     tableDownloadFilename,
     tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     assistantMessageAriaLabel = 'Assistant message',
     deploymentIconFallbackLabel = 'AI',
   } = labels ?? {};
@@ -188,11 +190,13 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                   urlTransform={markdownUrlTransform}
                   codeBlockCopyLabel={codeBlockCopyLabel}
                   codeBlockCopiedLabel={codeBlockCopiedLabel}
+                  codeBlockDownloadLabel={codeBlockDownloadLabel}
                   codeBlockTheme={codeBlockTheme}
                   tableActionLabels={tableActionLabels}
                   tableDownloadFilename={tableDownloadFilename}
                   tableOnOpenInCanvas={tableOnOpenInCanvas}
                   tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+                  mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
                 />
               </div>
             </div>

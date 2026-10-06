@@ -14,6 +14,7 @@ import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   GetOfflineCredentialsResponseDto,
   OfflineCredentialsAuthResultDto,
@@ -55,6 +56,7 @@ export class OfflineCredentialsController {
       "Returns the session user's offline-credentials consent status by " +
       'proxying DIAL Core (GET /v1/user/offline-credentials). Never cached.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved offline-credentials status',
@@ -98,6 +100,7 @@ export class OfflineCredentialsController {
       'is never logged.',
   })
   @ApiBody({ type: OfflineCredentialsSigninBodyDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Signed in successfully',

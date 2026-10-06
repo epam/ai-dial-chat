@@ -69,11 +69,15 @@ export class ShareManagementService {
     }
 
     if (result.error) {
+      /*
+       * No error body is passed: DIAL Core error bodies can echo the
+       * requested resource url, and `catalog-unshare` forbids logging the
+       * full resource path — the status plus the operation id is enough.
+       */
       return mapDialHttpStatus(
         result.response.status,
         'share.discardShared (verify shared)',
         this.logger,
-        result.error,
       );
     }
 
@@ -149,17 +153,17 @@ export class ShareManagementService {
       if (result.response.status === 400) {
         throw new NotFoundException('Resource does not exist');
       }
+      // Error body omitted for the same reason as `isSharedWithCaller`.
       return mapDialHttpStatus(
         result.response.status,
         'share.discardShared',
         this.logger,
-        result.error,
       );
     }
 
     if (!wasSharedWithCaller) {
       this.logger.warn(
-        `Discard shared resource rejected: itemId=${itemId} is not shared with the caller`,
+        `Discard shared resource rejected: resourceKind=${resolveResourceKind(resourceUrl)} is not shared with the caller`,
       );
       throw new ForbiddenException('Resource is not shared with the caller');
     }

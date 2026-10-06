@@ -826,6 +826,13 @@ The library SHALL receive only optional `onStartNow`, `isStarting`, `isStartNowD
 - **WHEN** the user activates Start now twice in one render cycle or while a known run is InProgress
 - **THEN** no overlapping POST is sent and the disabled action exposes the localized pending/busy reason
 
+#### Scenario: A known in-progress run exposes the busy reason
+
+- **GIVEN** the merged History contains a run whose status is InProgress and no Start now POST is pending
+- **THEN** `ScheduledTaskDetailPage` passes `isStartNowBusy` and `labels.startNowBusyLabel = t(scheduledTasks.detail.startBusy)` to `ScheduledTaskDetailView`
+- **AND** the Start now action renders disabled (`aria-disabled`, still focusable, click ignored) with that reason as its UI Kit tooltip and as its `aria-describedby` description
+- **AND** while the POST itself is pending the action shows the `starting` label with `aria-busy` instead of the busy reason
+
 #### Scenario: Paused or completed task runs without rescheduling
 
 - **WHEN** Start now is activated for a non-deleted paused/completed task

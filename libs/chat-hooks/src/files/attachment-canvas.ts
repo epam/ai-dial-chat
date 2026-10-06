@@ -36,7 +36,7 @@ import {
   tryBase64ToBytes,
 } from '@epam/ai-dial-chat-shared';
 import {
-  annotationHighlightId,
+  annotationHighlightIds,
   annotationsToPdfHighlights,
   annotationToOfficeHighlightLocations,
   gatherSameSourceAnnotations,
@@ -554,7 +554,7 @@ export const annotationToPdfCanvasContent = (
   );
   const selectedIndex = allAnnotations.indexOf(annotation);
   const highlights = annotationsToPdfHighlights(allAnnotations);
-  const highlightId = annotationHighlightId(annotation, selectedIndex);
+  const highlightId = annotationHighlightIds(allAnnotations)[selectedIndex];
   const page = getAnnotationPdfPage(annotation);
   const hasSelectedHighlight = highlights.some(
     (highlight) => highlight.id === highlightId,
@@ -669,13 +669,17 @@ export const annotationToOoxmlCanvasContent = (
   const highlights: OoxmlHighlight[] = [];
   let selectedHighlightId: string | undefined;
 
+  const ids = annotationHighlightIds(sameSource);
+
   sameSource.forEach((entry, index) => {
     const locations = annotationToOfficeHighlightLocations(entry);
     if (locations.length === 0) return;
 
-    const id = annotationHighlightId(entry, index);
+    const id = ids[index];
     highlights.push({ id, locations: locations.map(toOoxmlHighlightLocation) });
-    if (entry === annotation) selectedHighlightId = id;
+    if (entry === annotation && selectedHighlightId == null) {
+      selectedHighlightId = id;
+    }
   });
 
   return {

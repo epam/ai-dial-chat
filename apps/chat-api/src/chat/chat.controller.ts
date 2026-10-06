@@ -2,6 +2,7 @@ import { Body, Controller, Post, Req } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { ChatCompletionResponseDto } from '../openapi/openapi-response.dto';
 import { ChatService } from './chat.service';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
@@ -14,6 +15,7 @@ export class ChatController {
   @Post('completions')
   @ApiOperation({ summary: 'Send a chat completion request to DIAL Core' })
   @ApiBody({ type: ChatCompletionDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Chat completion response from DIAL Core',

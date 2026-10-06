@@ -6,6 +6,7 @@ import {
   buildConversationIdHeaders,
   buildJobTitleHeaders,
 } from '../../common/utils/header-value';
+import { StringUtils } from '../../common/utils/string-utils';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
@@ -162,8 +163,14 @@ export class ChatCompletionsAdapter {
          * i18n. A non-null streamErrorMessage (even '') still signals the
          * terminal error state for resume detection.
          */
+        /*
+         * Every upstream-derived message — SDK-parsed, JSON-extracted, or raw
+         * text — is sanitized before it reaches the log line; the returned
+         * `errorMessage` itself stays unmodified for the client.
+         */
+        const safeErrorMessage = StringUtils.sanitizeForLog(errorMessage, 500);
         this.logger.error(
-          `DIAL Core rejected completion request — model: ${model}, status: ${dialResult.response.status}${errorMessage ? `: ${errorMessage}` : ''}`,
+          `DIAL Core rejected completion request — model: ${StringUtils.sanitizeForLog(model)}, status: ${dialResult.response.status}${safeErrorMessage ? `: ${safeErrorMessage}` : ''}`,
         );
         return {
           outcome: 'rejected',

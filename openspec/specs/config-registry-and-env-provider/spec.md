@@ -95,23 +95,22 @@ interface AppConfigEvalContext {
   appId: string;
   userId?: string;
   roles?: string[];
-  environment?: string;
 }
 ```
 
-`AppConfigController` (`apps/chat-api/src/app-config/app-config.controller.ts`) builds the context from the validated `appId` query parameter, the optional session (`OptionalSessionGuard`): `userId` = the session user's `sub` and `roles` = the string entries of the session claims' `roles` array, and `environment` = `NODE_ENV`. Context fields MUST NOT be serialized into the client response. Providers receive the full context and MAY ignore user-specific fields; `EnvConfigProvider` reads only `roles`, for definitions that declare `allowedRolesEnvVar`.
+`AppConfigController` (`apps/chat-api/src/app-config/app-config.controller.ts`) builds the context from the validated `appId` query parameter, the optional session (`OptionalSessionGuard`): `userId` = the session user's `sub` and `roles` = the string entries of the session claims' `roles` array. The context carries no environment field: no provider reads one, and the controller does not read `process.env`. Context fields MUST NOT be serialized into the client response. Providers receive the full context and MAY ignore user-specific fields; `EnvConfigProvider` reads only `roles`, for definitions that declare `allowedRolesEnvVar`.
 
 **RTL impact:** None. **i18n impact:** None.
 
 #### Scenario: Context is built from appId
 
 - **WHEN** the controller receives `?appId=chat-ui`
-- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'`, `environment=NODE_ENV`, and — when a session is present — the session user's `userId` and `roles` is constructed and passed to `AppConfigService`
+- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'` and — when a session is present — the session user's `userId` and `roles` is constructed and passed to `AppConfigService`
 
 #### Scenario: Context does not appear in response
 
 - **WHEN** the client-config response is serialized
-- **THEN** it MUST NOT contain `userId`, `roles`, or `environment` fields
+- **THEN** it MUST NOT contain `userId` or `roles` fields
 
 ---
 

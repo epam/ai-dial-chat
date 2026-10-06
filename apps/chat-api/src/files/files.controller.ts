@@ -25,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { createHtmlPreviewCspHeader } from '../config/csp';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
@@ -93,6 +94,7 @@ export class FilesController {
       },
     },
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 201, type: FileUploadResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid bucket or path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -141,6 +143,7 @@ export class FilesController {
     summary:
       'Upload a ZIP archive and extract its contents to a destination folder',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: UploadArchiveResponseDto })
   @ApiResponse({
     status: 400,
@@ -185,6 +188,7 @@ export class FilesController {
     description:
       'Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     type: ListFilesResponseDto,
@@ -230,6 +234,7 @@ export class FilesController {
       'Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.',
     operationId: 'listPublicFiles',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     type: ListFilesResponseDto,
@@ -266,6 +271,7 @@ export class FilesController {
       'Proxies the DIAL Core sharing API to return files shared with the authenticated user.',
     operationId: 'listSharedFiles',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     type: ListFilesResponseDto,
@@ -298,6 +304,7 @@ export class FilesController {
     summary: 'List files and folders shared by the caller with others',
     operationId: 'listSharedByMe',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: ListFilesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid query parameters' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -321,6 +328,7 @@ export class FilesController {
     description:
       'Returns metadata for a single named file from DIAL Core. Path must not end with /.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     type: FileMetadataResponseDto,
@@ -349,6 +357,7 @@ export class FilesController {
   @Post('folders')
   @HttpCode(201)
   @ApiOperation({ summary: 'Create a folder' })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 201, type: CreateFolderResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid bucket, path, or name' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -377,6 +386,7 @@ export class FilesController {
   @HttpCode(200)
   @ApiProduces('application/zip')
   @ApiOperation({ summary: 'Download files and folders as a ZIP archive' })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Streamed ZIP archive',
@@ -507,6 +517,7 @@ export class FilesController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Revoke all shared access to files and folders' })
   @ApiBody({ type: RevokeAccessDto })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: RevokeAccessResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -533,6 +544,7 @@ export class FilesController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Discard resources shared with the caller' })
   @ApiBody({ type: DiscardSharedDto })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: DiscardSharedResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
@@ -588,6 +600,7 @@ export class FilesController {
 
   @Get('download')
   @ApiProduces('application/octet-stream')
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Binary file content',

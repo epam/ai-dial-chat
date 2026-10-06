@@ -290,9 +290,16 @@ export const useConversationStream = ({
   const [streamingPaths, setStreamingPaths] = useState<Set<string>>(
     () => new Set(),
   );
-  const [stoppablePath, setStoppablePath] = useState<string | null>(null);
-  const activeGenerationIdRef = useRef<string | null>(null);
-  const activeGenerationPathRef = useRef<string | null>(null);
+  /*
+   * Paths whose locally started generation Stop can reach, and that
+   * generation's id per path. Both are keyed by path so a generation started
+   * in another conversation neither hides this one's Stop nor clears its
+   * entry when it settles.
+   */
+  const [stoppablePaths, setStoppablePaths] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const activeGenerationIdsRef = useRef<Map<string, string>>(new Map());
   const resumingPathsRef = useRef<Set<string>>(new Set());
   const bufferedGenerationsRef = useRef<Map<string, BufferedGeneration>>(
     new Map(),
@@ -300,7 +307,11 @@ export const useConversationStream = ({
   /* Generation ids stopped by the user — onComplete emits notifyStopGenerating's
    * counterpart (nothing) instead of notifyGenerationEnd for these. */
   const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
-  /** Newest generation id started for each path — see `isSuperseded` in `startStream`. */
+  /*
+   * Newest generation id started for each path — see `isSuperseded` in
+   * `startStream`. Chunk staleness is checked against this per-path entry, so
+   * concurrent generations in different conversations never drop each other.
+   */
   const latestGenerationIdsRef = useRef<Map<string, string>>(new Map());
   const mountedRef = useRef(true);
   const reloadFailuresRef = useRef(
@@ -398,6 +409,26 @@ export const useConversationStream = ({
     });
   }, []);
 
+  const setPathStoppable = useCallback((path: string, isStoppable: boolean) => {
+    setStoppablePaths((prev) => {
+      if (prev.has(path) === isStoppable) return prev;
+      const next = new Set(prev);
+      if (isStoppable) next.add(path);
+      else next.delete(path);
+      return next;
+    });
+  }, []);
+
+  /* Forgets `path`'s active generation and its Stop, if `genId` is still it. */
+  const releaseActiveGeneration = useCallback(
+    (path: string, genId: string) => {
+      if (activeGenerationIdsRef.current.get(path) !== genId) return;
+      activeGenerationIdsRef.current.delete(path);
+      setPathStoppable(path, false);
+    },
+    [setPathStoppable],
+  );
+
   /*
    * One resume instance shared by the public `resumeIfAwaitingGeneration` and
    * by `startStream`'s recovery of an interrupted stream, so both see the
@@ -457,10 +488,9 @@ export const useConversationStream = ({
       /* Lands the previous generation's last chunks before it is superseded. */
       frameScheduler.flush(conversationPath);
       resumingPathsRef.current.delete(conversationPath);
-      activeGenerationIdRef.current = genId;
-      activeGenerationPathRef.current = conversationPath;
+      activeGenerationIdsRef.current.set(conversationPath, genId);
       latestGenerationIdsRef.current.set(conversationPath, genId);
-      setStoppablePath(conversationPath);
+      setPathStoppable(conversationPath, true);
 
       /*
        * `messageIndex` is the local placeholder index (for onChunk); translate it
@@ -509,11 +539,7 @@ export const useConversationStream = ({
       /* Releases this generation's streaming, stoppable, and lifecycle state. */
       const releaseGeneration = () => {
         if (!isSuperseded()) removeStreamingPath(conversationPath);
-        if (activeGenerationIdRef.current === genId) {
-          activeGenerationIdRef.current = null;
-          activeGenerationPathRef.current = null;
-          setStoppablePath(null);
-        }
+        releaseActiveGeneration(conversationPath, genId);
         completeGeneration(conversationPath, genId);
         channel?.notifyGenerationSettled?.();
       };
@@ -615,11 +641,14 @@ export const useConversationStream = ({
         signal: controller.signal,
         onChunk: (chunk) => {
           /*
-           * Drop stale chunks from a superseded generation. Background chunks
-           * still update the per-path buffer, so returning before the backend's
-           * terminal save restores the complete live message.
+           * Drop stale chunks from a generation superseded on the same path
+           * (regenerate/edit/re-submit). Staleness is keyed by path, not by the
+           * hook-wide active id: a generation started in another conversation
+           * must not cut off this one, whose chunks still update the per-path
+           * buffer so returning before the backend's terminal save restores
+           * the complete live message.
            */
-          if (activeGenerationIdRef.current !== genId) return;
+          if (isSuperseded()) return;
 
           const buffered = bufferedGenerationsRef.current.get(conversationPath);
           if (buffered?.generationId === genId) {
@@ -641,7 +670,7 @@ export const useConversationStream = ({
               const flushedBuffer =
                 bufferedGenerationsRef.current.get(conversationPath);
               if (
-                activeGenerationIdRef.current !== genId ||
+                isSuperseded() ||
                 !isPathDisplayed(conversationPath) ||
                 flushedBuffer?.generationId !== genId
               )
@@ -800,7 +829,8 @@ export const useConversationStream = ({
        * message is waited out on the recovery schedule.
        */
       const recoverConflictedStart = async (error: GenerationConflictError) => {
-        if (activeGenerationIdRef.current === genId) setStoppablePath(null);
+        if (activeGenerationIdsRef.current.get(conversationPath) === genId)
+          setPathStoppable(conversationPath, false);
         resumingPathsRef.current.add(conversationPath);
         const server = await fetchConversationForRecovery(
           () => transport.getConversation(safeDecodeURI(currentConversationId)),
@@ -901,11 +931,7 @@ export const useConversationStream = ({
               bufferedGenerationsRef.current.delete(conversationPath);
             }
             if (!isSuperseded()) removeStreamingPath(conversationPath);
-            if (activeGenerationIdRef.current === genId) {
-              activeGenerationIdRef.current = null;
-              activeGenerationPathRef.current = null;
-              setStoppablePath(null);
-            }
+            releaseActiveGeneration(conversationPath, genId);
             completeGeneration(conversationPath, genId);
             channel?.notifyGenerationSettled?.();
             if (isStopped) {
@@ -945,6 +971,8 @@ export const useConversationStream = ({
       completeGeneration,
       addStreamingPath,
       removeStreamingPath,
+      setPathStoppable,
+      releaseActiveGeneration,
       isPathDisplayed,
       channel?.channelId,
       channel?.ensureConnected,
@@ -991,10 +1019,7 @@ export const useConversationStream = ({
   const handleStop = useCallback(() => {
     if (!conversationId) return;
     const conversationPath = getConversationPath(conversationId);
-    const localGenId =
-      activeGenerationPathRef.current === conversationPath
-        ? activeGenerationIdRef.current
-        : null;
+    const localGenId = activeGenerationIdsRef.current.get(conversationPath);
     /*
      * A generation resumed after a refresh has no local id; a background
      * message carries its own, so Stop still reaches the backend for it.
@@ -1047,7 +1072,7 @@ export const useConversationStream = ({
     conversationId != null ? getConversationPath(conversationId) : null;
   const canStopStreaming =
     displayedConversationPath != null &&
-    (stoppablePath === displayedConversationPath ||
+    (stoppablePaths.has(displayedConversationPath) ||
       (isStreaming &&
         findResumedBackgroundGenerationId(conversationRef.current) != null));
 

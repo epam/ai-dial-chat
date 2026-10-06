@@ -5,10 +5,17 @@ import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppsEditorI18nKeys } from '../../../../constants/translation-keys';
 import * as AppConfigContextModule from '../../../../context/AppConfigContext';
 import * as UserContextModule from '../../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../../context/ThemeContext';
@@ -58,8 +65,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  /* Mirrors the kit: a status region wrapping a labelled image. */
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
-    <div role="status" aria-label={ariaLabel ?? 'Loading'} />
+    <div role="status">
+      <div role="img" aria-label={ariaLabel ?? 'Loading'} />
+    </div>
   ),
 }));
 
@@ -123,6 +133,17 @@ describe('AppEditorIframe', () => {
   it('shows spinner on mount', () => {
     renderIframe();
     expect(screen.getByRole('status')).toBeTruthy();
+  });
+
+  it('exposes the localized loading label inside a single status region', () => {
+    renderIframe();
+    const [status] = screen.getAllByRole('status');
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(
+      within(status).getByRole('img', {
+        name: AppsEditorI18nKeys.SettingsStepLoadingLabel,
+      }),
+    ).toBeTruthy();
   });
 
   it('hides spinner after iframe load event', () => {

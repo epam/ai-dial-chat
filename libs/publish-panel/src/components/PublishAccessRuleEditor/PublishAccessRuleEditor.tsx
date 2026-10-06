@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   GhostButton,
+  Highlight,
   Input,
   NeutralButton,
   Select,
@@ -103,6 +104,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   const [targets, setTargets] = useState<string[]>([]);
   const [pattern, setPattern] = useState('');
   const [isSourceOpen, setIsSourceOpen] = useState(false);
+  const [sourceSearchQuery, setSourceSearchQuery] = useState('');
   const [isFunctionOpen, setIsFunctionOpen] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
@@ -122,8 +124,15 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   );
 
   const sourceSelectOptions = useMemo(
-    () => sourceOptions.map((option) => ({ value: option, label: option })),
-    [sourceOptions],
+    () =>
+      sourceOptions.map((option) => ({
+        value: option,
+        label: option,
+        labelNode: sourceSearchQuery.trim() ? (
+          <Highlight text={option} query={sourceSearchQuery} maxLines={1} />
+        ) : undefined,
+      })),
+    [sourceOptions, sourceSearchQuery],
   );
 
   const functionOptions = useMemo(
@@ -232,6 +241,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
         placeholder={sourcePlaceholder}
         searchable={sourceOptions.length > SEARCHABLE_SOURCE_THRESHOLD}
         searchPlaceholder={sourcePlaceholder}
+        onSearchQueryChange={setSourceSearchQuery}
         disabled={disabled}
         open={isSourceOpen}
         onOpenChange={setIsSourceOpen}

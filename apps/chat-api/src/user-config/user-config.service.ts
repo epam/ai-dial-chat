@@ -14,66 +14,100 @@ const LEGACY_CONFIG_PATH = '.user-config.json';
 const LEGACY_TOOLSETS_PATH = 'clientdata/installed_toolsets.json';
 const LEGACY_DEPLOYMENTS_PATH = 'clientdata/installed_deployments.json';
 
+/*
+ * Only a missing file means "start from the default config". Any other non-ok
+ * status (5xx, 429, 403) is a failed read: falling back to the default there
+ * and writing it back would overwrite the user's real config.
+ */
+const MISSING_FILE_STATUS = 404;
+
 @Injectable()
 export class UserConfigService {
   private readonly logger = new Logger(UserConfigService.name);
 
   constructor(private readonly dialClient: DialClientService) {}
 
+  /**
+   * Reads the user's config, migrating legacy files on the way.
+   *
+   * @throws HttpException when DIAL Core fails the read (anything but a 404),
+   * so callers never mutate and write back a default in place of the real file.
+   */
   async readConfig(token: string, bucket: string): Promise<UserConfig> {
-    try {
-      let config = await this.readConfigFromPath(CONFIG_PATH, token, bucket);
+    let config = await this.readConfigFromPath(CONFIG_PATH, token, bucket);
 
-      if (config == null) {
-        const legacyConfig = await this.readConfigFromPath(
-          LEGACY_CONFIG_PATH,
-          token,
-          bucket,
-        );
-        if (legacyConfig != null) {
-          config = legacyConfig;
-          await this.writeConfig(config, token, bucket);
+    if (config == null) {
+      const legacyConfig = await this.readConfigFromPath(
+        LEGACY_CONFIG_PATH,
+        token,
+        bucket,
+      );
+      if (legacyConfig != null) {
+        config = legacyConfig;
+        if (await this.persistMigratedConfig(config, token, bucket)) {
           await this.deleteFileBestEffort(LEGACY_CONFIG_PATH, token, bucket);
-        } else {
-          config = createDefaultUserConfig();
         }
+      } else {
+        config = createDefaultUserConfig();
       }
-
-      const { config: merged, changed } =
-        await this.consolidateLegacyInstallationFiles(config, token, bucket);
-
-      if (changed) {
-        await this.writeConfig(merged, token, bucket);
-      }
-
-      return merged;
-    } catch {
-      this.logger.warn('Failed to read user config, using default');
-      return createDefaultUserConfig();
     }
+
+    const { config: merged, changed } =
+      await this.consolidateLegacyInstallationFiles(config, token, bucket);
+
+    if (changed) {
+      await this.persistMigratedConfig(merged, token, bucket);
+    }
+
+    return merged;
   }
 
+  /** Returns the parsed config, or `null` when the file is missing or unreadable as JSON. */
   private async readConfigFromPath(
     path: string,
     token: string,
     bucket: string,
   ): Promise<UserConfig | null> {
+    const context = 'user-config.readConfig';
+    let response: Response;
     try {
-      const { response } = (await this.dialClient.client.downloadFile(
-        bucket,
-        path,
-        {
-          headers: getBearerAuthHeaders(token),
-          parseAs: 'stream',
-        },
-      )) as { response: Response };
+      ({ response } = (await this.dialClient.client.downloadFile(bucket, path, {
+        headers: getBearerAuthHeaders(token),
+        parseAs: 'stream',
+      })) as { response: Response });
+    } catch (err) {
+      return handleDialSdkError(err, context, this.logger);
+    }
 
-      if (!response.ok) return null;
+    if (response.status === MISSING_FILE_STATUS) return null;
+    if (!response.ok) {
+      return handleDialSdkError({}, context, this.logger, response);
+    }
 
+    try {
       const text = await response.text();
       return migrateConfig(JSON.parse(text) as unknown, bucket);
     } catch {
+      this.logger.warn(`Malformed user config at ${path}, using default`);
       return null;
+    }
+  }
+
+  /*
+   * A migration write is best-effort: the config read already succeeded, so a
+   * failed write must not fail the read. The next read retries the migration.
+   */
+  private async persistMigratedConfig(
+    config: UserConfig,
+    token: string,
+    bucket: string,
+  ): Promise<boolean> {
+    try {
+      await this.writeConfig(config, token, bucket);
+      return true;
+    } catch (err) {
+      this.logger.warn('Failed to persist migrated user config', err);
+      return false;
     }
   }
 
@@ -116,6 +150,7 @@ export class UserConfigService {
     }
 
     let changed = false;
+    let isIncomplete = false;
     let current = config;
 
     for (const [path, section] of [
@@ -133,6 +168,9 @@ export class UserConfigService {
         )) as { response: Response };
 
         if (!response.ok) {
+          if (response.status !== MISSING_FILE_STATUS) {
+            isIncomplete = true;
+          }
           continue;
         }
 
@@ -184,8 +222,13 @@ export class UserConfigService {
 
         await this.deleteFileBestEffort(path, token, bucket);
       } catch {
-        // non-ok download is handled above; unexpected errors are ignored
+        // A failed read leaves the legacy file in place for the next attempt.
+        isIncomplete = true;
       }
+    }
+
+    if (isIncomplete) {
+      return { config: current, changed };
     }
 
     /*
@@ -272,28 +315,6 @@ export class UserConfigService {
       if (index !== -1) ids.splice(index, 1);
     }
 
-    await this.writeConfig(
-      { ...config, version: CURRENT_CONFIG_VERSION },
-      token,
-      bucket,
-    );
-  }
-
-  /**
-   * If `oldId` is currently pinned, replace it with `newId` in a single
-   * read-modify-write. No-ops silently when `oldId` is not pinned.
-   */
-  async migratePin(
-    oldId: string,
-    newId: string,
-    token: string,
-    bucket: string,
-  ): Promise<void> {
-    const config = await this.readConfig(token, bucket);
-    const ids = config.conversations.pinnedIds;
-    const index = ids.indexOf(oldId);
-    if (index === -1) return;
-    ids[index] = newId;
     await this.writeConfig(
       { ...config, version: CURRENT_CONFIG_VERSION },
       token,

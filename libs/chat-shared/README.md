@@ -369,6 +369,10 @@ reachable instead of being clipped; each container becomes a labelled,
 focusable `role="region"` only while it actually overflows. Pass
 `tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel` to translate those
 labels — they default to `'Scrollable table'` and `'Scrollable formula'`.
+Code blocks take `codeBlockCopyLabel`, `codeBlockCopiedLabel` and
+`codeBlockDownloadLabel` for their copy button, copied announcement and
+download button — they default to `'Copy code'`, `'Copied!'` and
+`'Download code'`.
 Supplying `tableActionLabels` opts a table into copy/download actions,
 rendered through the built-in `TableHeader`. Each icon-only action has a
 UI-kit tooltip using its localized label and a stable accessible name;
@@ -406,7 +410,9 @@ Renders a chat message body as markdown. `classNames` selects the type scale and
 defaults to `DEFAULT_MARKDOWN_CLASS_NAMES`; pass `COMPACT_MARKDOWN_CLASS_NAMES`
 to drop the body copy (`p`, `strong`) one step while leaving headings, code, and
 tables untouched. The component is memoised, so pass a stable reference rather
-than an inline object. It forwards the code-block and table action labels to
+than an inline object. It forwards the code-block labels (`codeBlockCopyLabel`,
+`codeBlockCopiedLabel`, `codeBlockDownloadLabel`), the table action labels and
+the `tableScrollRegionAriaLabel`/`mathScrollRegionAriaLabel` region labels to
 `MarkdownRenderer`. Pass `urlTransform` to rewrite markdown `href`/`src` values
 the same way as `MarkdownRenderer`. Pass `isPlainText` to render the body
 through `PlainTextRenderer` instead — the conversation's `plain_text` response

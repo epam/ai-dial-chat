@@ -192,6 +192,13 @@ No icon mirroring is required (`IconCopy` and `IconCheck` are symmetric).
 - The block MUST render exactly one such live region, empty at rest, so a copy announces once regardless of how many code blocks a message contains.
 - The code text MUST remain selectable by the user (no `user-select: none` override).
 - Focus MUST NOT be trapped inside the code block.
+- Both header buttons' accessible names MUST be host-translatable along the whole renderer chain: `MarkdownRenderer` and `MDMessageViewer` accept `codeBlockCopyLabel`, `codeBlockCopiedLabel` and `codeBlockDownloadLabel`, and `AssistantMessageBubble` reads the same three fields from `labels`, forwarding each to `MarkdownCodeBlock`'s `copyLabel`/`copiedLabel`/`downloadLabel`.
+
+#### Scenario: Host-supplied download label reaches the download button
+
+- **GIVEN** `AssistantMessageBubble` renders a fenced code block with `labels.codeBlockDownloadLabel` set
+- **WHEN** the message is not streaming
+- **THEN** the code block's download button's accessible name is that label, not `'Download code'`
 
 #### Scenario: Keyboard copy activation
 
@@ -235,8 +242,9 @@ When `isStreaming` is `true` the copy button (and the download button) MUST NOT 
 |-----|---------------|-------|
 | `buttons.copy` (existing, `ButtonsI18nKeys.Copy`) | `"Copy"` | Passed as `labels.codeBlockCopyLabel` by `ConversationMessageItem`, forwarded through `AssistantMessageBubble` to `MDMessageViewer` |
 | `buttons.copied` (existing, `ButtonsI18nKeys.Copied`) | `"Copied!"` | Passed as `labels.codeBlockCopiedLabel` by `ConversationMessageItem`, forwarded through `AssistantMessageBubble` to `MDMessageViewer` |
+| `buttons.download` (existing, `ButtonsI18nKeys.Download`) | `"Download"` | Passed as `labels.codeBlockDownloadLabel` by `ConversationMessageItem`, forwarded through `AssistantMessageBubble` and `MDMessageViewer` (`codeBlockDownloadLabel`) to `MarkdownRenderer`, which hands it to `MarkdownCodeBlock` as `downloadLabel` |
 
-No new keys are introduced. The lib defaults to English strings (`'Copy code'` / `'Copied!'`).
+No new keys are introduced. The lib defaults to English strings (`'Copy code'` / `'Copied!'` / `'Download code'`). Every other app call site that renders markdown with code blocks (`AgentDescription`, the scheduled-task instructions in `ConversationSourcesPanel`) passes the same three keys.
 
 ---
 

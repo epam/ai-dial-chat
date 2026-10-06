@@ -983,6 +983,38 @@ describe('annotationToPdfCanvasContent', () => {
     });
   });
 
+  it('gives two same-document annotations repeating one wire index distinct ids, selecting only the clicked one', () => {
+    const source = {
+      type: 'attachment',
+      attachment: { type: 'application/pdf', url: 'files/bucket/report.pdf' },
+    };
+    const first = {
+      index: 0,
+      body: {
+        source,
+        selector: { type: 'pdf_bbox', page: 1, x1: 1, y1: 1, x2: 5, y2: 5 },
+      },
+    } as Annotation;
+    const second = {
+      index: 0,
+      body: {
+        source,
+        selector: { type: 'pdf_bbox', page: 7, x1: 1, y1: 1, x2: 5, y2: 5 },
+      },
+    } as Annotation;
+    const group = {
+      annotations: [first, second],
+    } as unknown as AnnotationGroup;
+
+    const result = annotationToPdfCanvasContent(second, [group], resolvers);
+
+    expect(result?.highlights).toHaveLength(2);
+    expect(result?.highlights?.[0].id).toBe('0');
+    expect(result?.highlights?.[1].id).not.toBe('0');
+    expect(result?.selectedHighlightId).toBe(result?.highlights?.[1].id);
+    expect(result?.page).toBe(7);
+  });
+
   it('keeps sibling highlights and selects the page anchor for a page-only annotation in a group', () => {
     const source = {
       type: 'attachment',
@@ -1065,6 +1097,52 @@ describe('annotationToOoxmlCanvasContent', () => {
     end: 5,
     text: 'Hello',
     ...overrides,
+  });
+
+  it('gives two same-source annotations repeating one wire index distinct ids, selecting only the clicked one', () => {
+    const first = {
+      ...officeAnnotation('a', docxSelector({ start: 0, end: 5 })),
+      index: 0,
+    };
+    const second = {
+      ...officeAnnotation(
+        'b',
+        docxSelector({ start: 40, end: 60, text: 'later passage' }),
+      ),
+      index: 0,
+    };
+    const result = annotationToOoxmlCanvasContent(
+      second,
+      [first, second],
+      resolvers,
+    );
+
+    expect(result?.highlights).toHaveLength(2);
+    const [firstId, secondId] = result?.highlights?.map((h) => h.id) ?? [];
+    expect(firstId).toBe('0');
+    expect(secondId).not.toBe(firstId);
+    expect(result?.selectedHighlightId).toBe(secondId);
+    expect(
+      result?.highlights?.filter((h) => h.id === result?.selectedHighlightId),
+    ).toHaveLength(1);
+  });
+
+  it('keeps unambiguous wire indices as ids', () => {
+    const entries = [0, 1, 2].map((index) => ({
+      ...officeAnnotation(
+        `c${index}`,
+        docxSelector({ start: index * 10, end: index * 10 + 5 }),
+      ),
+      index,
+    }));
+    const result = annotationToOoxmlCanvasContent(
+      entries[1],
+      entries,
+      resolvers,
+    );
+
+    expect(result?.highlights?.map((h) => h.id)).toEqual(['0', '1', '2']);
+    expect(result?.selectedHighlightId).toBe('1');
   });
 
   it('keeps two ranges sharing one cit id on distinct highlights', () => {

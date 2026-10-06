@@ -79,7 +79,7 @@ const useHookHarness = ({
     ...rest,
   });
 
-  return { conversation, stream, generation };
+  return { conversation, setConversation, stream, generation };
 };
 
 describe('useConversationStream', () => {
@@ -1256,6 +1256,111 @@ describe('useConversationStream', () => {
     expect(result.current.stream.isStreaming).toBe(false);
   });
 
+  it.each([false, true])(
+    'keeps applying a background generation after another conversation starts one (batchChunksPerFrame: %s)',
+    async (batchChunksPerFrame) => {
+      vi.useFakeTimers();
+      const placeholder = (id: string, prompt: string): Conversation =>
+        makeConversation({
+          id,
+          messages: [
+            {
+              role: MessageRole.User,
+              content: prompt,
+              timestamp: '2026-01-01T00:00:00.000Z',
+            },
+            {
+              role: MessageRole.Assistant,
+              content: '',
+              timestamp: '2026-01-01T00:00:01.000Z',
+            },
+          ],
+        });
+      const textChunk = (content: string) => ({
+        id: content,
+        object: 'chat.completion.chunk' as const,
+        choices: [{ delta: { content }, finish_reason: null, index: 0 }],
+      });
+      const { result, rerender } = renderHook(
+        (props: { conversationId: string }) =>
+          useHookHarness({
+            transport,
+            conversationId: props.conversationId,
+            initialConversation: placeholder('bucket/convA', 'A?'),
+            batchChunksPerFrame,
+          }),
+        { initialProps: { conversationId: 'bucket/convA' } },
+      );
+
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/convA',
+          'A?',
+          1,
+          'gpt-4o',
+          undefined,
+          'gen-A',
+        );
+      });
+      const optionsA = capturedOptions;
+      act(() => optionsA?.onChunk(textChunk('A1 ')));
+
+      rerender({ conversationId: 'bucket/convB' });
+      act(() =>
+        result.current.setConversation(placeholder('bucket/convB', 'B?')),
+      );
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/convB',
+          'B?',
+          1,
+          'gpt-4o',
+          undefined,
+          'gen-B',
+        );
+      });
+      const optionsB = capturedOptions;
+
+      act(() => {
+        optionsA?.onChunk(textChunk('A2 '));
+        optionsB?.onChunk(textChunk('B1'));
+      });
+      act(() => vi.advanceTimersToNextFrame());
+
+      expect(result.current.conversation?.messages[1].content).toBe('B1');
+      expect(
+        result.current.stream.restoreBufferedGeneration(
+          'bucket/convA',
+          placeholder('bucket/convA', 'A?'),
+        ).messages[1].content,
+      ).toBe('A1 A2 ');
+
+      /* Back on A mid-generation: the host reloads A and restores its buffer. */
+      rerender({ conversationId: 'bucket/convA' });
+      act(() =>
+        result.current.setConversation(
+          result.current.stream.restoreBufferedGeneration(
+            'bucket/convA',
+            placeholder('bucket/convA', 'A?'),
+          ),
+        ),
+      );
+      act(() => {
+        optionsA?.onChunk(textChunk('A3'));
+        optionsB?.onChunk(textChunk(' B2'));
+      });
+      act(() => vi.advanceTimersToNextFrame());
+
+      expect(result.current.conversation?.messages[1].content).toBe('A1 A2 A3');
+      expect(
+        result.current.stream.restoreBufferedGeneration(
+          'bucket/convB',
+          placeholder('bucket/convB', 'B?'),
+        ).messages[1].content,
+      ).toBe('B1 B2');
+    },
+  );
+
   it('restores stages accumulated before and during background navigation', async () => {
     const initialConversation = makeConversation({
       messages: [
@@ -1508,6 +1613,87 @@ describe('useConversationStream', () => {
     });
 
     expect(transport.getConversation).not.toHaveBeenCalled();
+  });
+
+  describe('Stop with generations running in two conversations', () => {
+    /* A streams, the user switches to B and starts B, then returns to A. */
+    const startAThenB = async () => {
+      const view = renderHook(
+        (props: { conversationId: string }) =>
+          useHookHarness({ transport, conversationId: props.conversationId }),
+        { initialProps: { conversationId: 'bucket/convA' } },
+      );
+      await act(async () => {
+        view.result.current.stream.startStream(
+          'bucket/convA',
+          'A?',
+          0,
+          'gpt-4o',
+          undefined,
+          'gen-A',
+        );
+      });
+      const optionsA = capturedOptions;
+      view.rerender({ conversationId: 'bucket/convB' });
+      await act(async () => {
+        view.result.current.stream.startStream(
+          'bucket/convB',
+          'B?',
+          0,
+          'gpt-4o',
+          undefined,
+          'gen-B',
+        );
+      });
+      const optionsB = capturedOptions;
+      view.rerender({ conversationId: 'bucket/convA' });
+      return { ...view, optionsA, optionsB };
+    };
+
+    it("stops A's own generation, not B's, after returning to A", async () => {
+      const { result } = await startAThenB();
+
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+
+      expect(transport.stopCompletion).toHaveBeenCalledOnce();
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: 'gen-A',
+        path: 'convA',
+      });
+    });
+
+    it('keeps A stoppable after B finishes', async () => {
+      const { result, optionsB } = await startAThenB();
+
+      await act(async () => {
+        await optionsB?.onComplete();
+      });
+
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: 'gen-A',
+        path: 'convA',
+      });
+    });
+
+    it("keeps B stoppable after A finishes, and A's end clears only A", async () => {
+      const { result, rerender, optionsA } = await startAThenB();
+
+      await act(async () => {
+        await optionsA?.onComplete();
+      });
+      expect(result.current.stream.canStopStreaming).toBe(false);
+
+      rerender({ conversationId: 'bucket/convB' });
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: 'gen-B',
+        path: 'convB',
+      });
+    });
   });
 
   it('passes generationId and mode, translating regenerate index for the backend', async () => {

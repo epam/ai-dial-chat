@@ -11,6 +11,10 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import {
+  ApiDialCoreErrors,
+  DIAL_CORE_RATE_LIMITED_RESPONSE,
+} from '../common/dial/api-dial-core-errors.decorator';
 import { GetToolsetDto } from './dto/get-toolset.dto';
 import {
   GetMcpAppResourceDto,
@@ -22,17 +26,6 @@ import {
 } from './dto/mcp-app.dto';
 import { McpAppRateLimitException } from './mcp-app-rate-limit.exception';
 import { McpAppService } from './mcp-app.service';
-
-const RATE_LIMITED_RESPONSE = {
-  status: 429,
-  description: 'DIAL Core rate-limited the request',
-  headers: {
-    'Retry-After': {
-      description: 'Upstream retry delay, when provided by DIAL Core',
-      schema: { type: 'string' },
-    },
-  },
-};
 
 /** Runs `call`, forwarding DIAL Core's `Retry-After` when it rejects with 429. */
 const withRetryAfter = async <T>(
@@ -65,6 +58,7 @@ export class McpAppController {
       'Content-Type/Content-Security-Policy/X-Content-Type-Options from ' +
       'Core. Cached server-side for 30 seconds per toolset+resourceUri.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, description: 'HTML widget content' })
   @ApiResponse({ status: 400, description: 'Invalid resourceUri' })
   @ApiResponse({
@@ -73,7 +67,7 @@ export class McpAppController {
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset or resource not found' })
-  @ApiResponse(RATE_LIMITED_RESPONSE)
+  @ApiResponse(DIAL_CORE_RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -107,6 +101,7 @@ export class McpAppController {
       'given deployment (toolset or application) and returns only the ' +
       'tools that declare an MCP Apps UI resource (`_meta.ui.resourceUri`).',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: ListMcpAppToolsResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
   @ApiResponse({
@@ -114,7 +109,7 @@ export class McpAppController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
-  @ApiResponse(RATE_LIMITED_RESPONSE)
+  @ApiResponse(DIAL_CORE_RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/list failed",
@@ -145,6 +140,7 @@ export class McpAppController {
       "name, unfiltered — used to populate the toolset editor's " +
       '"Allowed tools" picker.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: ListMcpToolNamesResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid deploymentId or kind' })
   @ApiResponse({
@@ -152,7 +148,7 @@ export class McpAppController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 404, description: 'Deployment not found' })
-  @ApiResponse(RATE_LIMITED_RESPONSE)
+  @ApiResponse(DIAL_CORE_RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/list failed",
@@ -179,6 +175,7 @@ export class McpAppController {
       "Core's existing generic MCP proxy for this toolset. Not cached — " +
       'every call is a live, potentially side-effecting tool invocation.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     type: McpAppToolCallResponseDto,
@@ -194,7 +191,7 @@ export class McpAppController {
       'Caller lacks permission, or toolName is not exposed by this toolset',
   })
   @ApiResponse({ status: 404, description: 'Toolset not found' })
-  @ApiResponse(RATE_LIMITED_RESPONSE)
+  @ApiResponse(DIAL_CORE_RATE_LIMITED_RESPONSE)
   @ApiResponse({
     status: 502,
     description: "DIAL Core's proxied tools/call failed",

@@ -15,6 +15,7 @@ import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
   ApplicationExternalServiceDto,
   ExternalServiceAuthResultDto,
@@ -44,6 +45,7 @@ export class ExternalServicesController {
     description:
       'Reads the accessible application through DIAL Core, including inline services. Returns only public OAuth configuration and credential statuses; never secrets. Not cached so login/logout changes are immediately visible.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'External services, or an empty list when none are configured',
@@ -82,6 +84,7 @@ export class ExternalServicesController {
       '(GET /v1/applications/{appId}/external-services/{id}) using the ' +
       "caller's session access token.",
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved external-service metadata',
@@ -130,6 +133,7 @@ export class ExternalServicesController {
       '(POST /v1/ops/external-service/signin). Credential payloads are never logged.',
   })
   @ApiBody({ type: ExternalServiceSigninBodyDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Credentials submitted successfully',
@@ -177,6 +181,7 @@ export class ExternalServicesController {
       '(nothing to revoke) is treated as idempotent success.',
   })
   @ApiBody({ type: ExternalServiceLogoutBodyDto })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Credentials revoked successfully',

@@ -128,6 +128,8 @@ export interface MarkdownRendererProps {
   codeBlockCopyLabel?: string;
   /** Accessible label for the copy button after copying. Defaults to `'Copied!'`. */
   codeBlockCopiedLabel?: string;
+  /** Accessible label for the download button in code blocks. Defaults to `'Download code'`. */
+  codeBlockDownloadLabel?: string;
   /** Syntax highlight color theme for code blocks and tables. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
   /** Color overrides applied as CSS custom properties. */
@@ -409,6 +411,7 @@ interface MarkdownComponentOptions {
   isStreaming?: boolean;
   codeBlockCopyLabel?: string;
   codeBlockCopiedLabel?: string;
+  codeBlockDownloadLabel?: string;
   codeBlockTheme?: CodeBlockTheme;
   tableActionLabels?: MarkdownTableActionLabels;
   tableDownloadFilename?: string;
@@ -423,6 +426,7 @@ const buildMarkdownComponents = (
     isStreaming,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
+    codeBlockDownloadLabel,
     codeBlockTheme,
     tableActionLabels,
     tableDownloadFilename,
@@ -477,6 +481,7 @@ const buildMarkdownComponents = (
           theme={codeBlockTheme}
           copyLabel={codeBlockCopyLabel}
           copiedLabel={codeBlockCopiedLabel}
+          downloadLabel={codeBlockDownloadLabel}
           containerClassName={cn.codeBlockContainer}
           headerClassName={cn.codeBlockHeader}
           codeClassName={cn.codeFont}
@@ -623,6 +628,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     thinkingLabel = 'Thinking',
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
+    codeBlockDownloadLabel,
     codeBlockTheme,
     colors,
     tableActionLabels,
@@ -716,6 +722,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
           isStreaming,
           codeBlockCopyLabel,
           codeBlockCopiedLabel,
+          codeBlockDownloadLabel,
           codeBlockTheme,
           tableActionLabels,
           tableDownloadFilename,
@@ -731,6 +738,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
         isStreaming,
         codeBlockCopyLabel,
         codeBlockCopiedLabel,
+        codeBlockDownloadLabel,
         codeBlockTheme,
         tableActionLabels,
         tableDownloadFilename,

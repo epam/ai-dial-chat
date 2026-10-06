@@ -351,6 +351,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       listClassName={listClassName}
       overlayContentClassName="flex flex-col gap-1"
       items={menuItems}
+      disabled={isDisabled}
       open={hasMenuOverlays ? isDesktopMenuOpen : undefined}
       onOpenChange={hasMenuOverlays ? setIsDesktopMenuOpen : undefined}
     >

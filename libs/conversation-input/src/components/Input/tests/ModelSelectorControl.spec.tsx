@@ -90,3 +90,59 @@ describe('ModelSelectorControl — mobile', () => {
     expect(screen.getByText('GPT-4o')).toBeTruthy();
   });
 });
+
+describe('ModelSelectorControl — streaming', () => {
+  const renderControl = (
+    overrides: Partial<{ isStreaming: boolean; isMobile: boolean }> = {},
+  ) =>
+    render(
+      <ModelSelectorControl
+        deployments={makeDeployments()}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ ariaLabel: 'Select model' }}
+        isStreaming={false}
+        isMobile={false}
+        style={{}}
+        {...overrides}
+      />,
+    );
+
+  it('opens the built-in desktop menu by keyboard when not streaming', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderControl();
+
+    screen.getByRole('button', { name: /Select model/ }).focus();
+    await user.keyboard('{Enter}');
+
+    expect(
+      await screen.findByRole('menuitemradio', { name: /GPT-4o/ }),
+    ).toBeTruthy();
+  });
+
+  it('marks the built-in desktop trigger disabled and keeps its menu closed while streaming', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderControl({ isStreaming: true });
+
+    const trigger = screen.getByRole('button', { name: /Select model/ });
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
+
+    trigger.focus();
+    await user.keyboard('{Enter}');
+
+    expect(screen.queryByRole('menuitemradio', { name: /GPT-4o/ })).toBeNull();
+  });
+
+  it('keeps the mobile sheet closed on keyboard activation while streaming', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderControl({ isStreaming: true, isMobile: true });
+
+    const trigger = screen.getByRole('button', { name: /Select model/ });
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
+
+    trigger.focus();
+    await user.keyboard('{Enter}');
+
+    expect(screen.queryByRole('dialog', { name: 'Select model' })).toBeNull();
+  });
+});

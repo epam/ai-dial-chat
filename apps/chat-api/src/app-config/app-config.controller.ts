@@ -42,7 +42,6 @@ export class AppConfigController {
       appId: query.appId,
       userId: sessionUser?.sub,
       roles: extractRoles(sessionUser?.claims),
-      environment: process.env['NODE_ENV'],
     };
     return this.appConfigService.getClientConfig(context);
   }

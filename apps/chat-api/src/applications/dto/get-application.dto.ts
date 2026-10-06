@@ -1,20 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
-import {
-  DEPLOYMENT_ID_PATTERN,
-  DEPLOYMENT_ID_VALIDATION_MESSAGE,
-} from '../../common/validators/deployment-id.pattern';
+import { IsString } from 'class-validator';
+import { DEPLOYMENT_ID_PATTERN } from '../../common/validators/deployment-id.pattern';
+import { IsSafeResourceId } from '../../common/validators/safe-resource-id.validator';
 
 export class GetApplicationDto {
   @ApiProperty({
     description:
-      'Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).',
+      'Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.',
     example: 'my-app__1.0',
     pattern: DEPLOYMENT_ID_PATTERN.source,
   })
   @IsString()
-  @Matches(DEPLOYMENT_ID_PATTERN, {
-    message: DEPLOYMENT_ID_VALIDATION_MESSAGE,
-  })
+  @IsSafeResourceId()
   applicationName!: string;
 }

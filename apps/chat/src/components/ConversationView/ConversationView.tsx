@@ -551,11 +551,6 @@ const ConversationView: FC<Props> = ({
     inputAttachmentTypes,
   );
 
-  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
-    isAttachmentsAllowed,
-    !isDialFileManagerOpen,
-  );
-
   const deploymentItems = useMemo(
     () =>
       items.map(
@@ -626,6 +621,22 @@ const ConversationView: FC<Props> = ({
       !hasQuickAppStarters &&
       !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
     [hasQuickAppStarters, selectedDeploymentConfiguration],
+  );
+
+  /*
+   * While the composer input is disabled a page drop is rejected the same way
+   * as on a deployment without attachments: the denied overlay explains it and
+   * the drop is cancelled, so the browser does not open the file. Passing
+   * `isEnabled = false` instead would hide the overlay but leave the drop
+   * uncancelled. A message being edited keeps accepting drops — its editor is
+   * not governed by `isInputDisabled`.
+   */
+  const isPageDropAllowed =
+    isAttachmentsAllowed && (isEditActive || !isInputDisabled);
+
+  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
+    isPageDropAllowed,
+    !isDialFileManagerOpen,
   );
 
   const reply = useMessageSelectionReply({
@@ -971,15 +982,15 @@ const ConversationView: FC<Props> = ({
       />
       <FileDndOverlay
         isVisible={isDragging}
-        isAttachmentsAllowed={isAttachmentsAllowed}
+        isAttachmentsAllowed={isPageDropAllowed}
         labels={{
           title: t(
-            isAttachmentsAllowed
+            isPageDropAllowed
               ? BasicI18nKeys.AttachFiles
               : FileDndI18nKeys.OverlayDeniedTitle,
           ),
           subtitle: t(
-            isAttachmentsAllowed
+            isPageDropAllowed
               ? FileDndI18nKeys.OverlaySubtitle
               : FileDndI18nKeys.OverlayDeniedSubtitle,
           ),

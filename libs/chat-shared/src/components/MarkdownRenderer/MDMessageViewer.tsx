@@ -42,6 +42,8 @@ interface MDMessageViewerProps {
   codeBlockCopyLabel?: string;
   /** Accessible label for the copy button after copying. Forwarded to {@link MarkdownRenderer}. */
   codeBlockCopiedLabel?: string;
+  /** Accessible label for the code-block download button. Forwarded to {@link MarkdownRenderer}. */
+  codeBlockDownloadLabel?: string;
   /** Syntax highlight color theme for code blocks. Forwarded to {@link MarkdownRenderer}. */
   codeBlockTheme?: CodeBlockTheme;
   /** Localized labels for Markdown table actions. Forwarded to {@link MarkdownRenderer}. */
@@ -51,6 +53,8 @@ interface MDMessageViewerProps {
   tableOnOpenInCanvas?: (markdown: string) => void;
   /** Accessible label for a table's scrollable region. Forwarded to {@link MarkdownRenderer}. */
   tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's scrollable region. Forwarded to {@link MarkdownRenderer}. */
+  mathScrollRegionAriaLabel?: string;
   /**
    * Per-element typography classes. Defaults to {@link DEFAULT_MARKDOWN_CLASS_NAMES};
    * pass {@link COMPACT_MARKDOWN_CLASS_NAMES} for the smaller body scale. Give a
@@ -70,11 +74,13 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
     urlTransform,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
+    codeBlockDownloadLabel,
     codeBlockTheme,
     tableActionLabels,
     tableDownloadFilename,
     tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     classNames = DEFAULT_MARKDOWN_CLASS_NAMES,
   }) =>
     isPlainText ? (
@@ -93,11 +99,13 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
         urlTransform={urlTransform}
         codeBlockCopyLabel={codeBlockCopyLabel}
         codeBlockCopiedLabel={codeBlockCopiedLabel}
+        codeBlockDownloadLabel={codeBlockDownloadLabel}
         codeBlockTheme={codeBlockTheme}
         tableActionLabels={tableActionLabels}
         tableDownloadFilename={tableDownloadFilename}
         tableOnOpenInCanvas={tableOnOpenInCanvas}
         tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+        mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
         classNames={classNames}
       />
     ),

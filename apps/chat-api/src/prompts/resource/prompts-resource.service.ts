@@ -29,7 +29,12 @@ export class PromptsResourceService {
         (await this.dialClient.client.getPromptMetadata(
           bucket,
           encodeDialResourcePath(path),
-          { headers: getBearerAuthHeaders(token) },
+          {
+            headers: getBearerAuthHeaders(token),
+            /* Ask for the requestor's own permissions so single-prompt
+               responses can derive `canEdit` without another round trip. */
+            params: { query: { permissions: true } },
+          },
         )) as PromptWriteResult;
 
       if (response?.status === 404) {

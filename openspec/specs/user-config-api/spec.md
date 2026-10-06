@@ -45,7 +45,7 @@ interface UserConfig {
 }
 ```
 
-Default (`createDefaultUserConfig()`, a fresh object per call; missing file, parse error, or empty bucket path):
+Default (`createDefaultUserConfig()`, a fresh object per call; missing file (`404`), parse error, or empty bucket path). Any other failed read — a non-ok status other than `404` (5xx, `429`, `403`) or a thrown network error — SHALL NOT fall back to the default: `readConfig` rethrows it through `handleDialSdkError` (context `user-config.readConfig`), so neither the read nor a mutation built on it writes a default config over the user's stored file:
 ```json
 { "version": 6, "conversations": { "pinnedIds": [] }, "toolsets": { "installed": [] }, "deployments": { "installed": [], "selectedId": null }, "prompts": { "installed": [] }, "skills": { "installed": [] } }
 ```
@@ -55,7 +55,7 @@ Default (`createDefaultUserConfig()`, a fresh object per call; missing file, par
 - v1 shape (top-level `pinnedConversationIds` present, no nested `conversations`) → default config with `pinnedConversationIds` lifted into `conversations.pinnedIds` (filtering non-strings).
 - v2+ shape → read each section's array, filtering non-strings; `deployments.selectedId` is kept only when it is a string (else `null`); a bare (non-`prompts/`-prefixed) `prompts.installed` entry is qualified as `prompts/{userBucket}/{entry}`; `legacyMigrationDone` is kept only when `true`; `version` is set to 6.
 
-**File path migration (old → new):** On `readConfig`, the service first attempts to download `.client_data/.user-config.json`. If DIAL Core returns non-ok, it falls back to downloading `.user-config.json` (the legacy path). If the legacy file is found, `migrateConfig` is applied, the result is written to the new path, and the old path is deleted (best-effort; failure is logged with `logger.warn`, not thrown). If neither path yields data, the default config is returned.
+**File path migration (old → new):** On `readConfig`, the service first attempts to download `.client_data/.user-config.json`. If DIAL Core returns `404` (or the file is not valid JSON), it falls back to downloading `.user-config.json` (the legacy path). If the legacy file is found, `migrateConfig` is applied, the result is written to the new path, and the old path is deleted (best-effort; failure is logged with `logger.warn`, not thrown). Migration writes are best-effort too: a failed write is logged with `logger.warn`, the migrated config is still returned, and the legacy file is kept so the next read retries. If neither path yields data, the default config is returned.
 
 **Upload format:** unchanged — `multipart/form-data` via `FormData`.
 
@@ -65,6 +65,11 @@ Default (`createDefaultUserConfig()`, a fresh object per call; missing file, par
 
 - **WHEN** `readConfig` is called and `.client_data/.user-config.json` does not exist and `.user-config.json` does not exist
 - **THEN** `readConfig` returns the default v6 config without throwing
+
+#### Scenario: A failed read is rethrown instead of overwriting the stored config
+
+- **WHEN** DIAL Core answers the download of `.client_data/.user-config.json` with `503`, `429` or another non-`404` error, or the request throws
+- **THEN** `readConfig` rethrows the mapped error and writes nothing, and a mutation such as `updatePin` fails without uploading a config
 
 #### Scenario: Corrupt file falls back to default config
 
@@ -256,7 +261,7 @@ Error codes: unchanged from v1.
 
 ### Requirement: UserConfigModule is imported by ConversationModule and AppModule
 
-`UserConfigModule` SHALL be listed in `ConversationModule.imports` and `AppModule.imports` (it is also imported by `DeploymentsModule` and `ToolsetsModule`). `UserConfigModule` exports `UserConfigService`. `getPinnedIds` and `migratePin` operate on `config.conversations.pinnedIds`.
+`UserConfigModule` SHALL be listed in `ConversationModule.imports` and `AppModule.imports` (it is also imported by `DeploymentsModule` and `ToolsetsModule`). `UserConfigModule` exports `UserConfigService`. `getPinnedIds` and `updatePin` operate on `config.conversations.pinnedIds`.
 
 #### Scenario: Pin cleanup on conversation delete uses conversations.pinnedIds
 

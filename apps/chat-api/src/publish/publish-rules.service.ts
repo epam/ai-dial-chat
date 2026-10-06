@@ -31,8 +31,7 @@ export class PublishRulesService {
   constructor(private readonly dialClient: DialClientService) {}
 
   /**
-   * @throws {BadGatewayException} When Core returns an unexpected error
-   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   * @throws {BadGatewayException} When Core returns an unexpected error, a 5xx, or is unreachable
    */
   async getRules(
     accessToken: string,

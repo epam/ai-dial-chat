@@ -40,6 +40,7 @@ export type { AnnotationGroup } from './utils/group-annotations-by-source';
 
 export {
   annotationHighlightId,
+  annotationHighlightIds,
   annotationsToPdfHighlights,
   annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,

@@ -21,7 +21,6 @@ export interface AppConfigEvalContext {
   appId: string;
   userId?: string;
   roles?: string[];
-  environment?: string;
 }
 
 export interface ConfigProvider {

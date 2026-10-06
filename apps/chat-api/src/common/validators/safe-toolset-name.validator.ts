@@ -1,50 +1,23 @@
-import { registerDecorator, type ValidationOptions } from 'class-validator';
-import { safeDecodeURIComponent } from '../utils/uri';
-import { DEPLOYMENT_ID_PATTERN } from './deployment-id.pattern';
+import { type ValidationOptions } from 'class-validator';
+import {
+  IsSafeResourceId,
+  isSafeResourceId,
+} from './safe-resource-id.validator';
 
 /*
- * DEPLOYMENT_ID_PATTERN's character class permits `.` and `/`, so a
- * traversal payload like `../etc/passwd` (decoded from `..%2Fetc%2Fpasswd`)
- * passes it — see GitHub #7925. Toolset names legitimately need `/` for
- * custom toolset paths (`toolsets/{bucket}/{path}`, see
- * ToolsetsService.parseDialToolsetResource), so the fix adds a
- * segment-level check instead of dropping `/` from the allowlist. Decoding
- * each segment once more prevents a double-encoded slash from hiding a
- * traversal segment from that check.
+ * Toolset names legitimately need `/` for custom toolset paths
+ * (`toolsets/{bucket}/{path}`, see ToolsetsService.parseDialToolsetResource),
+ * so they use the shared segment-level traversal guard — see
+ * safe-resource-id.validator.ts and GitHub #7925.
  */
-const getDecodedSegments = (value: string): string[] =>
-  value
-    .split('/')
-    .flatMap((segment) => safeDecodeURIComponent(segment).split('/'));
+export const isSafeToolsetName = (value: unknown): value is string =>
+  isSafeResourceId(value);
 
-const hasTraversalSegment = (value: string): boolean =>
-  getDecodedSegments(value).some(
-    (segment) => segment === '' || segment === '.' || segment === '..',
-  );
-
-export const isSafeToolsetName = (value: unknown): value is string => {
-  if (typeof value !== 'string' || value.length === 0) return false;
-
-  return DEPLOYMENT_ID_PATTERN.test(value) && !hasTraversalSegment(value);
-};
-
-export const IsSafeToolsetName = (validationOptions?: ValidationOptions) => {
-  return (object: object, propertyName: string) => {
-    registerDecorator({
-      name: 'isSafeToolsetName',
-      target: object.constructor,
-      propertyName,
-      options: validationOptions,
-      validator: {
-        validate: isSafeToolsetName,
-        defaultMessage() {
-          return (
-            'Toolset name must contain only supported characters or valid ' +
-            'percent-encoded bytes, and must not contain empty, dot, or ' +
-            'dot-dot path segments, including when encoded'
-          );
-        },
-      },
-    });
-  };
-};
+export const IsSafeToolsetName = (validationOptions?: ValidationOptions) =>
+  IsSafeResourceId({
+    message:
+      'Toolset name must contain only supported characters or valid ' +
+      'percent-encoded bytes, and must not contain empty, dot, or ' +
+      'dot-dot path segments, including when encoded',
+    ...validationOptions,
+  });

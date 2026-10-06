@@ -2,6 +2,7 @@ import { Controller, Get, HttpCode, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { GetPublishRulesQueryDto } from './dto/get-publish-rules-query.dto';
 import { PublishRulesResultDto } from './dto/publish-rules-result.dto';
 import { PublishRulesService } from './publish-rules.service';
@@ -21,6 +22,7 @@ export class PublishRulesController {
       "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's " +
       '`getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: "The folder's own rules, or an empty array when it has none",
@@ -40,7 +42,8 @@ export class PublishRulesController {
   })
   @ApiResponse({
     status: 503,
-    description: 'DIAL Core is unavailable or timed out',
+    description:
+      'The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)',
   })
   async getRules(
     @Req() req: Request,

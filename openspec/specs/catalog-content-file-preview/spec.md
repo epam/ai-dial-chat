@@ -255,7 +255,7 @@ A `url` that does not start with `blob:` SHALL NOT be revoked under any circumst
 ### Requirement: i18n, RTL, accessibility, and responsive contract for the preview area
 
 - **i18n**: `texts.contentFileUnsupportedLabel` SHALL be added to `ItemDetailsTexts` with an English default (`'Preview is not supported for this file'`). `libs/catalog` SHALL NOT call `useTranslation`.
-- **Accessible identification**: the preview area SHALL expose an accessible name identifying the currently displayed file, derived from that file's tree node `name` (or, for the base file, the existing behavior is unaffected).
+- **Accessible identification**: the preview area SHALL expose an accessible name identifying the currently displayed file, derived from that file's tree node `name` (or, for the base file, the existing behavior is unaffected). Whenever the file selector renders, the preview container SHALL be `role="region"` with `aria-labelledby` pointing at the selector's `InlineSelectTrigger` (given a `useId()` id), whose accessible name is the selected file's `name` — no new label prop or string is introduced. Without a selector the container carries no role, so no unnamed region is exposed.
 - **Loading announcement**: the existing `role="status"`/`aria-live` region this capability's picker already specifies for a loading file SHALL be reused for a preview load — no second live region is introduced.
 - **No focusable editing control**: none of the four preview renderers SHALL render a focusable control other than whatever the surrounding Content tab already provides (the file selector's own trigger). A `text` preview's download control SHALL be hidden.
 - **RTL**: none of the four preview renderers SHALL introduce a physical-direction layout rule; each already inherits document direction through the components it reuses.
@@ -265,6 +265,16 @@ A `url` that does not start with `blob:` SHALL NOT be revoked under any circumst
 
 - **WHEN** the preview-rendering code in `libs/catalog` is inspected
 - **THEN** it contains no `useTranslation` call and its only new user-visible string is `contentFileUnsupportedLabel`, with an English default
+
+#### Scenario: The preview region is named after the selected file
+
+- **WHEN** the Content tab renders a selector and `selectedFileId` names the file `run.py`
+- **THEN** the preview container is a `region` whose accessible name is `run.py`, taken from the selector trigger via `aria-labelledby`
+
+#### Scenario: No region without a file choice
+
+- **WHEN** the item carries fewer than two files
+- **THEN** the preview container exposes no `region` role
 
 #### Scenario: Loading a preview announces once, through the existing region
 

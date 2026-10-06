@@ -145,6 +145,7 @@ describe('PromptController (integration)', () => {
         TEST_USER.at,
         'test-bucket',
         'my-prompt',
+        TEST_USER.bucket,
       );
       expect(service.listPrompts).not.toHaveBeenCalled();
     });
@@ -159,6 +160,7 @@ describe('PromptController (integration)', () => {
         TEST_USER.at,
         'owner-bucket',
         'Shared/greeting',
+        TEST_USER.bucket,
       );
     });
 
@@ -277,6 +279,7 @@ describe('PromptController (integration)', () => {
         'test-bucket',
         'my-prompt',
         { content: 'Updated content' },
+        TEST_USER.bucket,
       );
     });
 
@@ -291,6 +294,7 @@ describe('PromptController (integration)', () => {
         'owner-bucket',
         'my-prompt',
         { content: 'Updated content' },
+        TEST_USER.bucket,
       );
     });
 
@@ -548,6 +552,7 @@ describe('PromptController (integration)', () => {
         'test-bucket',
         'my-prompt',
         validBody,
+        TEST_USER.bucket,
       );
     });
 
@@ -564,6 +569,7 @@ describe('PromptController (integration)', () => {
         'test-bucket',
         'work/my-prompt',
         { targetFolderId: '' },
+        TEST_USER.bucket,
       );
     });
 

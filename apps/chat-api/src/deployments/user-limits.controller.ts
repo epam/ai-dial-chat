@@ -2,6 +2,7 @@ import { Controller, Get, Header, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { UserLimitStatsResponseDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 import { UserStatsQueryDto } from './dto/user-stats-query.dto';
@@ -32,6 +33,7 @@ export class UserLimitsController {
       "forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller's session access " +
       'token. Not cached — every request hits DIAL Core for real-time usage data.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved aggregate user limits',
@@ -75,6 +77,7 @@ export class UserLimitsController {
       "Proxies GET /v1/user/usage using the caller's session access token. " +
       'Not cached — every request hits DIAL Core for real-time usage data.',
   })
+  @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved user usage',

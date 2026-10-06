@@ -1711,6 +1711,63 @@ describe('ConversationStreamingService', () => {
       expect(assistantMsg.streamErrorMessage).toBe('');
     });
 
+    it.each([
+      [
+        'the SDK-parsed error',
+        {
+          response: new Response(null, { status: 400 }),
+          error: { message: 'Invalid model\nFORGED log line‮' },
+        },
+      ],
+      [
+        'the JSON raw body',
+        {
+          response: new Response(
+            JSON.stringify({ message: 'Invalid model\nFORGED log line‮' }),
+            { status: 400 },
+          ),
+        },
+      ],
+    ])(
+      'sanitizes the upstream message from %s before logging the rejection',
+      async (_label, dialResult) => {
+        vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+          data: TEST_CONVERSATION,
+        } as never);
+        vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
+          data: {},
+        } as never);
+        vi.spyOn(
+          mockDialClient.client,
+          'sendChatCompletionRequest',
+        ).mockResolvedValue(dialResult as never);
+        const errorSpy = vi
+          .spyOn(service['logger'], 'error')
+          .mockImplementation(() => undefined);
+
+        await runStreamCompletion(
+          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+          'test-token',
+          'test-bucket',
+          'test-gen-id',
+          CompletionMode.Append,
+          'Hello',
+          undefined,
+          'gpt-4o',
+          undefined,
+          'test-session-id',
+          makeMockRes() as never,
+        );
+
+        expect(errorSpy).toHaveBeenCalledWith(
+          'DIAL Core rejected completion request — model: gpt-4o, status: 400: Invalid modelFORGED log line',
+        );
+        const logged = JSON.stringify(errorSpy.mock.calls);
+        expect(logged).not.toContain('\\n');
+        expect(logged).not.toContain('\\u202e');
+      },
+    );
+
     it('saves partial message with streamErrorMessage for an in-band DIAL error chunk (no choices)', async () => {
       vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,

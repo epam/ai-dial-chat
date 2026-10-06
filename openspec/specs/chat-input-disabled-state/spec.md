@@ -11,7 +11,13 @@ The `isInputDisabled` prop on the conversation input: what it disables, what sta
 `libs/conversation-input/src/models/Input.ts` (`InputProps`) and `libs/conversation-input/src/models/ConversationInput.ts` (`ConversationInputProps`) SHALL each expose an optional prop:
 
 ```ts
-/** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons and the model selector remain usable. Defaults to `false`. */
+/**
+ * When `true`, blocks typing, the attach menu, dictation, Enter-to-send,
+ * and dropped files (`pendingDropFiles` are consumed and discarded, never
+ * added to the tray). The send button still submits a message that is
+ * already populated (e.g. by a starter). Starter/action buttons and the
+ * model selector remain usable. Defaults to `false`.
+ */
 isInputDisabled?: boolean;
 ```
 
@@ -79,14 +85,40 @@ The `Input` component's attach (`+`) button, `AddAttachmentButton`, SHALL be ren
 
 ---
 
-### Requirement: Input ignores file drop when isInputDisabled is true
+### Requirement: Input discards dropped files when isInputDisabled is true
 
-The `Input` component's `dragover` and `drop` event handlers SHALL return early when `isInputDisabled` is `true`. No files SHALL be appended to the attachment tray.
+`Input` has no drop handlers of its own; files dropped on the page reach it through the host-supplied `pendingDropFiles` prop. `Input` SHALL forward `isInputDisabled` to `useAttachments` as `isDropDisabled` (`libs/conversation-input/src/hooks/useAttachments.ts`). While it is `true`, `useAttachments` SHALL mark every new `pendingDropFiles` entry as consumed and call `onDropFilesConsumed` without building or uploading an attachment. The files are discarded, not deferred: a `File` consumed while disabled SHALL NOT be added when the input is later re-enabled, because applying a drop the user made against a disabled control at some later moment would surprise them. This is defence in depth behind the page-level rejection below.
 
-#### Scenario: Drop is ignored
+#### Scenario: Pending drop files are discarded
 
-- **WHEN** `Input` is rendered with `isInputDisabled={true}` and the user drops a file onto the component
-- **THEN** no attachment is added to the tray and `onAttachmentsChange` is not called
+- **WHEN** `Input` is rendered with `isInputDisabled={true}` and a non-empty `pendingDropFiles`
+- **THEN** no attachment is added to the tray, `onUploadAttachment` is not called, and `onDropFilesConsumed` is called once
+
+#### Scenario: Discarded files stay discarded after re-enabling
+
+- **WHEN** the same `Input` is re-rendered with `isInputDisabled={false}` and the same `File` still in `pendingDropFiles`
+- **THEN** the file is not added to the tray
+
+---
+
+### Requirement: Pages reject page-level file drops while the input is disabled
+
+`apps/chat/src/components/NewConversationComposer/NewConversationComposer.tsx` SHALL derive `isPageDropAllowed = isAttachmentsAllowed && !isInputDisabled`, and `apps/chat/src/components/ConversationView/ConversationView.tsx` SHALL derive `isPageDropAllowed = isAttachmentsAllowed && (isEditActive || !isInputDisabled)` (a message being edited is not governed by `isInputDisabled` and keeps accepting drops). Each page SHALL pass `isPageDropAllowed` as the first (`isAttachmentsAllowed`) argument of `usePageFileDrag` and as `FileDndOverlay`'s `isAttachmentsAllowed` (and its allowed/denied labels). A drag over the page therefore shows the denied overlay ("No attachments allowed"), and the drop is cancelled with `pendingFiles` left empty. The second (`isEnabled`) argument SHALL NOT be used for this: with `isEnabled = false` the hook still cancels `dragover` but leaves `drop` uncancelled, so the browser would open the dropped file and navigate away from the chat.
+
+#### Scenario: Drop on a page whose input is disabled
+
+- **WHEN** `ConversationView` renders for a deployment configuration with `isChatMessageInputDisabled: true` (no Quick Apps starters) and the user drags a file over the page and drops it
+- **THEN** the denied overlay is shown during the drag, the drop event is cancelled, nothing is uploaded, and no attachment appears in the tray
+
+#### Scenario: Drop on a page whose input is enabled
+
+- **WHEN** the same page renders with `isChatMessageInputDisabled: false` and the user drops a text file
+- **THEN** the allowed overlay is shown during the drag and the file is uploaded and added to the tray
+
+#### Scenario: New-conversation composer with a disabled input
+
+- **WHEN** `NewConversationComposer` is rendered with `isInputDisabled={true}`
+- **THEN** `usePageFileDrag` receives `isAttachmentsAllowed = false` and the overlay renders its denied labels
 
 ---
 
@@ -156,7 +188,7 @@ and pass it as `isInputDisabled={isInputDisabled}` to `ConversationInput`, where
 
 ### Requirement: Starter and action buttons remain usable when isInputDisabled is true
 
-Starter buttons (rendered via `renderFooterActions` or the starters bar), form buttons, and any other action buttons inside `ConversationInput` SHALL NOT be disabled by `isInputDisabled`. Only the free-text input path (textarea, send, attach, drop) is blocked.
+Starter buttons (rendered via `renderFooterActions` or the starters bar), form buttons, and any other action buttons inside `ConversationInput` SHALL NOT be disabled by `isInputDisabled`. Only the free-text input path (textarea, Enter-to-send, attach, dictation, drop) is blocked; the send button remains available for an already-populated message.
 
 #### Scenario: Starter buttons still clickable when input disabled
 
@@ -190,6 +222,7 @@ Starter buttons (rendered via `renderFooterActions` or the starters bar), form b
 - `isInputDisabled={true}` renders the attach button as disabled.
 - `isInputDisabled={true}` does not call `onSend` when Enter is pressed, populated message or not.
 - `isInputDisabled={false}` (or omitted) allows send via Enter.
+- `isInputDisabled={true}` consumes `pendingDropFiles` without adding them, and they stay discarded after re-enabling.
 
 #### Scenario: Input suite covers both states of the flag
 

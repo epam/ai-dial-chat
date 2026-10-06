@@ -99,8 +99,7 @@ export class PublishService {
    *
    * @throws {NotFoundException} When Core reports the entity or folder as unknown
    * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
-   * @throws {BadGatewayException} When Core returns an unexpected error
-   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   * @throws {BadGatewayException} When Core returns an unexpected error, a 5xx, or is unreachable
    */
   async publish(
     accessToken: string,
@@ -222,8 +221,7 @@ export class PublishService {
    *
    * @throws {NotFoundException} When Core reports the entity or target as unknown
    * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
-   * @throws {BadGatewayException} When Core returns an unexpected error
-   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   * @throws {BadGatewayException} When Core returns an unexpected error, a 5xx, or is unreachable
    */
   async unpublish(
     accessToken: string,

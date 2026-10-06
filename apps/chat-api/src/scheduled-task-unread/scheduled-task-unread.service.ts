@@ -11,6 +11,9 @@ import {
 const VIEWED_SCHEDULED_TASK_CONVERSATIONS_PATH =
   '.client_data/.viewed-scheduled-task-conversations.json';
 
+/* Only a missing file means "nothing viewed yet"; any other failed read must not be written back as empty. */
+const MISSING_FILE_STATUS = 404;
+
 @Injectable()
 export class ScheduledTaskUnreadService {
   private readonly logger = new Logger(ScheduledTaskUnreadService.name);
@@ -18,8 +21,16 @@ export class ScheduledTaskUnreadService {
   constructor(private readonly dialClient: DialClientService) {}
 
   async getViewedIds(token: string, bucket: string): Promise<string[]> {
-    const config = await this.readConfig(token, bucket);
-    return config.conversationIds;
+    try {
+      const config = await this.readConfig(token, bucket);
+      return config.conversationIds;
+    } catch {
+      /* A read-only lookup degrades to "nothing viewed" rather than failing the page. */
+      this.logger.warn(
+        'Failed to read viewed scheduled-task conversations, using default',
+      );
+      return [];
+    }
   }
 
   async markViewed(
@@ -44,29 +55,39 @@ export class ScheduledTaskUnreadService {
     );
   }
 
+  /** @throws HttpException when DIAL Core fails the read (anything but a 404). */
   private async readConfig(
     token: string,
     bucket: string,
   ): Promise<ViewedScheduledTaskConversations> {
+    const context = 'scheduled-task-unread.readConfig';
+    let response: Response;
     try {
-      const { response } = (await this.dialClient.client.downloadFile(
+      ({ response } = (await this.dialClient.client.downloadFile(
         bucket,
         VIEWED_SCHEDULED_TASK_CONVERSATIONS_PATH,
         {
           headers: getBearerAuthHeaders(token),
           parseAs: 'stream',
         },
-      )) as { response: Response };
+      )) as { response: Response });
+    } catch (err) {
+      return handleDialSdkError(err, context, this.logger);
+    }
 
-      if (!response.ok) {
-        return { ...DEFAULT_VIEWED_SCHEDULED_TASK_CONVERSATIONS };
-      }
+    if (response.status === MISSING_FILE_STATUS) {
+      return { ...DEFAULT_VIEWED_SCHEDULED_TASK_CONVERSATIONS };
+    }
+    if (!response.ok) {
+      return handleDialSdkError({}, context, this.logger, response);
+    }
 
+    try {
       const text = await response.text();
       return parseViewedScheduledTaskConversations(JSON.parse(text));
     } catch {
       this.logger.warn(
-        'Failed to read viewed scheduled-task conversations, using default',
+        'Malformed viewed scheduled-task conversations file, using default',
       );
       return { ...DEFAULT_VIEWED_SCHEDULED_TASK_CONVERSATIONS };
     }

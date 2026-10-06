@@ -39,7 +39,6 @@ describe('ConversationLifecycleService', () => {
   let mockUserConfigService: {
     getPinnedIds: ReturnType<typeof vi.fn>;
     updatePin: ReturnType<typeof vi.fn>;
-    migratePin: ReturnType<typeof vi.fn>;
   };
   let mockConversationNamingService: {
     maybeRenameAfterFirstReply: ReturnType<typeof vi.fn>;
@@ -64,7 +63,6 @@ describe('ConversationLifecycleService', () => {
     mockUserConfigService = {
       getPinnedIds: vi.fn().mockResolvedValue([]),
       updatePin: vi.fn().mockResolvedValue(undefined),
-      migratePin: vi.fn().mockResolvedValue(undefined),
     };
     mockConversationNamingService = {
       maybeRenameAfterFirstReply: vi.fn(),

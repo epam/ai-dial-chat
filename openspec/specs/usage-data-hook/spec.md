@@ -27,9 +27,17 @@ Below the cards it renders `ModelLimitsSection`, fed by `mapUserUsageToModelLimi
 `mapOverallCostLimitsToPeriodStatuses`. The cards region SHALL render a loading state (a kit
 `Spinner` labelled by `UsageI18nKeys.Loading`; no stale/zeroed card data) while the initial usage
 fetch is in flight (`isLoading` with no resolved `usage` yet) or `useDeployments()` is still
-loading; a `refreshToken`-triggered re-fetch keeps the previous figures on screen instead. The container SHALL include an `aria-live="polite"` region (visually hidden unless
-announcing) used to announce loading completion and error notifications (see "Deduplicated error
-notifications on fetch failure" below).
+loading; a `refreshToken`-triggered re-fetch keeps the previous figures on screen instead. The container SHALL include exactly one always-mounted, visually hidden `role="status"`
+`aria-live="polite"` region: it carries `UsageI18nKeys.Loading` while the loading state shows,
+`UsageI18nKeys.Loaded` once it ends (followed by `UsageI18nKeys.ModelLimitsEmptyState` when there are
+no model rows), and is empty after a fetch failure, because the error notification (see
+"Deduplicated error notification on fetch failure" below) already announces that. The kit `Spinner` is
+itself a status region, so its wrapper SHALL be `aria-hidden` to avoid announcing loading twice.
+
+#### Scenario: Usage tab announces state changes through one status region
+- **WHEN** the Usage tab moves from its loading state to resolved data
+- **THEN** the same single `role="status"` region changes from the loading text to the loaded text,
+  and no other status region is exposed
 
 #### Scenario: Usage tab renders the page header
 - **WHEN** the Settings page is opened and the `Usage` tab is active, regardless of loading state

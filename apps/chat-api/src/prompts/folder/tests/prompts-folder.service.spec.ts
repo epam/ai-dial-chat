@@ -224,6 +224,61 @@ describe('PromptsFolderService', () => {
   /* ------------------------------------------------------------------ */
 
   describe('movePrompt', () => {
+    it('reports a moved own-bucket prompt as mine and editable', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
+        okResponse(storedPrompt),
+      );
+      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
+        writeOk('work/my-prompt'),
+      );
+      vi.spyOn(service['dialClient'].client, 'deletePrompt').mockResolvedValue(
+        writeOk(),
+      );
+
+      const result = await service.movePrompt(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        { targetFolderId: 'work' },
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: false,
+      });
+    });
+
+    it('reports a moved prompt in another bucket as shared, not mine', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
+        okResponse(storedPrompt),
+      );
+      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
+        writeOk('work/my-prompt', 'owner-bucket'),
+      );
+      vi.spyOn(service['dialClient'].client, 'deletePrompt').mockResolvedValue(
+        writeOk(),
+      );
+
+      const result = await service.movePrompt(
+        TOKEN,
+        'owner-bucket',
+        'my-prompt',
+        { targetFolderId: 'work' },
+        BUCKET,
+      );
+
+      expect(result).toMatchObject({
+        id: 'prompts/owner-bucket/work/my-prompt',
+        isMy: false,
+        canEdit: true,
+        sharedWithMe: true,
+      });
+    });
+
     it('writes to the target path and deletes the source', async () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
@@ -240,9 +295,15 @@ describe('PromptsFolderService', () => {
         .spyOn(service['dialClient'].client, 'deletePrompt')
         .mockResolvedValue(writeOk());
 
-      const result = await service.movePrompt(TOKEN, BUCKET, 'my-prompt', {
-        targetFolderId: 'work',
-      });
+      const result = await service.movePrompt(
+        TOKEN,
+        BUCKET,
+        'my-prompt',
+        {
+          targetFolderId: 'work',
+        },
+        BUCKET,
+      );
 
       expect(result).toMatchObject({
         id: 'prompts/test-bucket/work/my-prompt',
@@ -268,9 +329,15 @@ describe('PromptsFolderService', () => {
       );
 
       await expect(
-        service.movePrompt(TOKEN, BUCKET, 'my-prompt', {
-          targetFolderId: 'work',
-        }),
+        service.movePrompt(
+          TOKEN,
+          BUCKET,
+          'my-prompt',
+          {
+            targetFolderId: 'work',
+          },
+          BUCKET,
+        ),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -281,7 +348,13 @@ describe('PromptsFolderService', () => {
       );
 
       await expect(
-        service.movePrompt(TOKEN, BUCKET, 'missing', { targetFolderId: '' }),
+        service.movePrompt(
+          TOKEN,
+          BUCKET,
+          'missing',
+          { targetFolderId: '' },
+          BUCKET,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -302,9 +375,15 @@ describe('PromptsFolderService', () => {
       );
 
       await expect(
-        service.movePrompt(TOKEN, BUCKET, 'my-prompt', {
-          targetFolderId: 'work',
-        }),
+        service.movePrompt(
+          TOKEN,
+          BUCKET,
+          'my-prompt',
+          {
+            targetFolderId: 'work',
+          },
+          BUCKET,
+        ),
       ).rejects.toThrow(BadGatewayException);
     });
   });

@@ -37,7 +37,7 @@ A new endpoint SHALL be added to `apps/chat-api/src/user-config/user-config.cont
 
 - **Method / path**: `PATCH /api/v1/user-config/skills`
 - **Authorization**: session-authenticated (a valid session cookie); operates only on the caller's own config document; no role requirement.
-- **Request body** (`UpdateInstalledSkillDto`, in `apps/chat-api/src/user-config/dto/update-installed-skill.dto.ts`): a `class-validator`-validated class with `id: string` (`@IsString`, `@MinLength(1)`, `@MaxLength(2048)`, and an allowlist `@Matches` accepting `skills/{bucket}/{path}` — the same shape `parseSkillResourceUrl` accepts, so the value can never reach a path or a log line unvalidated) and `isInstalled: boolean` (`@IsBoolean`). Both fields carry `@ApiProperty` with a description and example.
+- **Request body** (`UpdateInstalledSkillDto`, in `apps/chat-api/src/user-config/dto/update-installed-skill.dto.ts`): a `class-validator`-validated class with `id: string` (`@IsString`, `@MinLength(1)`, `@MaxLength(2048)`, and an allowlist `@Matches(SKILL_RESOURCE_URL_PATTERN)` from `apps/chat-api/src/skills/constants/skill-resource.constants.ts` accepting `skills/{bucket}/{path}` where no segment — the bucket included — is `.` or `..`, no segment is empty, `%` is not allowed (so encoded dots cannot appear), and dots inside a segment (`a.b`, `__1.0.0__`) remain valid — the same shape `parseSkillResourceUrl` accepts, so the value can never reach a path or a log line unvalidated) and `isInstalled: boolean` (`@IsBoolean`). Both fields carry `@ApiProperty` with a description and example.
 - **Success response**: `204 No Content`, no body.
 - **Error responses**: `400` missing or invalid body, `401` not authenticated, plus the upstream-failure statuses the service already maps.
 
@@ -68,6 +68,16 @@ Controller conventions (thin controller, `@ApiOperation` + `@ApiResponse` per st
 
 - **WHEN** the body's `id` is `'files/my-bucket/report.pdf'` or contains `..`
 - **THEN** the response is `400` and no config write occurs
+
+#### Scenario: Traversal in the bucket segment is rejected
+
+- **WHEN** the body's `id` is `'skills/../x'`, `'skills/./x'`, or `'skills/%2e%2e/x'`
+- **THEN** the response is `400` and no config write occurs
+
+#### Scenario: Dots inside a segment are accepted
+
+- **WHEN** the body's `id` is `'skills/my.bucket/a.b'` or `'skills/b/__1.0.0__'`
+- **THEN** validation passes
 
 #### Scenario: Unauthenticated caller
 
