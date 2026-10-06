@@ -94,7 +94,10 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
                 className="max-w-screen-sm text-base font-semibold leading-5"
               />
             </div>
-            <EntityMarkdownDescription className="mt-2 hidden max-w-screen-sm truncate whitespace-normal break-all !text-sm font-light !leading-[18px] text-secondary md:line-clamp-3">
+            <EntityMarkdownDescription
+              isInlinePreview
+              className="mt-2 hidden max-w-screen-sm truncate whitespace-normal break-all !text-sm font-light !leading-[18px] text-secondary md:line-clamp-3"
+            >
               {getModelShortDescription(entity, locale)}
             </EntityMarkdownDescription>
           </div>
