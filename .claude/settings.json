@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["mcp__typescript-lsp__*"]
+    "allow": []
   },
   "enabledPlugins": {
     "nx@nx-claude-plugins": true
