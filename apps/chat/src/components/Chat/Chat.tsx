@@ -181,6 +181,9 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
+  const installingModelIds = useAppSelector(
+    ModelsSelectors.selectInstallingModelIds,
+  );
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
   );
@@ -281,6 +284,11 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
 
   const areModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
+  );
+  const areModelsInstalledOrInstalling = selectedConversations.every(
+    (conv) =>
+      installedModelIds.has(conv.model.id) ||
+      installingModelIds.includes(conv.model.id),
   );
 
   useLayoutEffect(() => {
@@ -620,7 +628,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     !isInstalledModelsInitialized && isOptimisticDefaultModelLoad;
   const isChatReadyForInput =
     !isMarketplaceEnabled ||
-    areModelsInstalled ||
+    areModelsInstalledOrInstalling ||
     isOptimisticReadyBeforeInstalledModelsLoaded ||
     isIsolatedView ||
     isAdminPreview ||
@@ -629,7 +637,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
       !isApproveRequiredEntity &&
-      (areModelsInstalled ||
+      (areModelsInstalledOrInstalling ||
         isOptimisticReadyBeforeInstalledModelsLoaded ||
         isAdminPreview ||
         isReplay ||
