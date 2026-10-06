@@ -4,7 +4,7 @@ Panel component for displaying the processing stages of an agent or LLM response
 
 ## Overview
 
-`@epam/ai-dial-conversation-stages` visualises the intermediate reasoning and execution steps that an AI agent or model produces while streaming a response. When a model performs tool calls, retrieval operations, or multi-step reasoning, users benefit from seeing the progress rather than staring at a blank loading state. This library renders that progress as a live list of labelled stages, each showing a running spinner, a completed check, or a failure icon, with expandable markdown content, per-stage attachment tiles, per-stage copy buttons, and attempt/duration badges for retried steps. Related stages can be wrapped in a `CollapsedGroup` whose single summary line tracks the run, keeping the panel compact during long agentic runs. Use this library in any conversation view that consumes streamed agent responses; it takes the `Stage[]` array from `@epam/ai-dial-chat-shared` directly and handles all display transitions internally.
+`@epam/ai-dial-conversation-stages` visualises the intermediate reasoning and execution steps that an AI agent or model produces while streaming a response. When a model performs tool calls, retrieval operations, or multi-step reasoning, users benefit from seeing the progress rather than staring at a blank loading state. This library renders that progress as a live list of labelled stages, each showing a running spinner, a completed check, or a failure icon, with expandable markdown content, per-stage attachment tiles, per-stage copy buttons, and `×N` count badges for retried steps. Related stages can be wrapped in a `CollapsedGroup` whose single summary line tracks the run, keeping the panel compact during long agentic runs. Use this library in any conversation view that consumes streamed agent responses; it takes the `Stage[]` array from `@epam/ai-dial-chat-shared` directly and handles all display transitions internally.
 
 ## Installation
 
@@ -134,13 +134,11 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 inner `StagesPanel`, so the group and the panel it wraps are themed from one
 place.
 
-The summary line shows the step and failure counts only — no total execution
-time across all stages. Per-stage durations still render on each stage row,
-and a collapsed `×N` retry group still shows its attempts' elapsed time: when
-attempt names include a start timestamp, such as
-`(7.18s, Start: 11:21:38, End: 11:21:45)`, it reports the union of those
-intervals, so parallel attempts contribute time only once; for legacy
-duration-only names such as `[3.99s]`, it sums the available durations.
+The summary line shows the step and failure counts only. No component in this
+library shows a total execution time: neither the summary nor a collapsed `×N`
+retry group adds up stage durations. Each stage row still shows its own
+duration, parsed from its name (for example `[3.99s]` or
+`(7.18s, Start: 11:21:38, End: 11:21:45)`).
 
 ## Types
 

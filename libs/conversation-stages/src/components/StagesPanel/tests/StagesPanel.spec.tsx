@@ -316,7 +316,7 @@ describe('StagesPanel', () => {
     ).toBeNull();
   });
 
-  it('does not double-count overlapping attempts in a collapsed stage row', () => {
+  it('shows no total time on a collapsed stage row', () => {
     render(
       <StagesPanel
         stages={[
@@ -335,7 +335,8 @@ describe('StagesPanel', () => {
       />,
     );
 
-    expect(screen.getByText('40.0s')).toBeTruthy();
+    expect(screen.getByText('×2')).toBeTruthy();
+    expect(screen.queryByText('40.0s')).toBeNull();
     expect(screen.queryByText('1m 20s')).toBeNull();
   });
 

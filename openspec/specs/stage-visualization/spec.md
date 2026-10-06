@@ -228,46 +228,19 @@ When `styles.colors` is provided, `StagesPanel` SHALL apply its values as CSS cu
 
 ---
 
-### Requirement: Collapsed repeated-stage rows report elapsed execution time
+### Requirement: Stage summaries show no total execution time
 
-Collapsed repeated-stage (`×N`) rows in `StagesPanel` SHALL show the elapsed execution time represented by parseable duration metadata in stage names. When every duration-bearing stage also has a valid `Start: HH:mm:ss` timestamp, each stage SHALL be treated as the interval from its start timestamp through its declared duration, and overlapping intervals SHALL contribute to the total only once. A backward jump of more than 12 hours between consecutive stage start timestamps SHALL be treated as a midnight rollover; a wide but forward-moving range within one day SHALL remain on the same day.
-
-If any duration-bearing stage lacks a valid start timestamp, the row SHALL preserve compatibility with duration-only stage names by summing all parseable durations. If no duration can be parsed, no total-duration label SHALL be shown.
-
-#### Scenario: Fully parallel stages contribute time once
-
-- **WHEN** three finished attempts of one repeated stage each declare a duration of 40 seconds and the same start timestamp
-- **THEN** the repeated-stage row shows `40.0s`, not `2m 0s`
-
-#### Scenario: Partially overlapping stages contribute their interval union
-
-- **WHEN** one 20-second stage starts at `11:21:00`, another 20-second stage starts at `11:21:10`, and a separate 10-second stage starts at `11:21:40`
-- **THEN** the repeated-stage row shows `40.0s`
-
-#### Scenario: Duration-only metadata uses the compatibility fallback
-
-- **WHEN** two finished attempts declare `[40s]` without start timestamps
-- **THEN** the repeated-stage row shows their summed duration of `1m 20s`
-
-#### Scenario: Overlapping stages can span midnight
-
-- **WHEN** a 20-second stage starts at `23:59:50` and a 10-second stage starts at `00:00:05`
-- **THEN** the repeated-stage row shows `25.0s`
-
-#### Scenario: A wide same-day range does not imply a midnight rollover
-
-- **WHEN** ordered stages start at `00:00:00`, `11:59:59`, `12:00:00`, and `23:59:59`, with the middle two intervals overlapping across noon
-- **THEN** the middle intervals remain on the same day and the repeated-stage row shows `7.0s`
-
-#### Scenario: Stages without durations omit the total
-
-- **WHEN** none of the finished attempt names contains parseable duration metadata
-- **THEN** no total-duration label is rendered
+Neither the `CollapsedGroup` summary line nor a collapsed repeated-stage (`×N`) row in `StagesPanel` SHALL show a total execution time computed from stage durations. Each individual stage row SHALL continue to show its own duration label when its name carries parseable duration metadata.
 
 #### Scenario: The `CollapsedGroup` summary shows no total time
 
 - **WHEN** a finished `CollapsedGroup` renders stages whose names carry parseable duration metadata
 - **THEN** its summary line shows the step (and failure) counts only, with no total execution time across all stages
+
+#### Scenario: A repeated-stage row shows no total time
+
+- **WHEN** two finished attempts of one repeated stage each declare a duration of 40 seconds
+- **THEN** the collapsed `×2` row shows the count only, with neither `40.0s` nor `1m 20s`
 
 ---
 
@@ -334,7 +307,7 @@ A usable parent reference SHALL be a nonnegative integer resolving to another st
 
 ### Requirement: Repeated attempts group within one sibling list
 
-The consecutive cleaned-name `×N` rule SHALL apply independently to root nodes and to each parent's child list. An attempt SHALL retain its own descendants and body. Group counts SHALL count the attempts in that sibling run only. Repeated-attempt status and duration rules SHALL retain their existing meaning over those attempts.
+The consecutive cleaned-name `×N` rule SHALL apply independently to root nodes and to each parent's child list. An attempt SHALL retain its own descendants and body. Group counts SHALL count the attempts in that sibling run only. Repeated-attempt status rules SHALL retain their existing meaning over those attempts.
 
 #### Scenario: Equal names under different parents
 - **WHEN** child 1 of parent 0 and child 3 of parent 2 have the same name
@@ -350,7 +323,7 @@ The consecutive cleaned-name `×N` rule SHALL apply independently to root nodes 
 
 ### Requirement: Nested disclosures keep local state and message-wide summaries
 
-Stage and retry expansion SHALL be local to the panel/component subtree and keyed by stable stage identity, without a new context or persisted expansion metadata. Stage and retry disclosures SHALL initially be collapsed; the outer `CollapsedGroup` SHALL retain its streaming-open and finish-collapse policy. Updates to names/content/status and insertion of siblings SHALL preserve expansion choices for surviving stages, including when a second attempt introduces a group. Message-wide step/failure counts and live-stage selection SHALL operate over the flat input once. Existing duration interval-union and duration-only fallback behavior SHALL remain unchanged.
+Stage and retry expansion SHALL be local to the panel/component subtree and keyed by stable stage identity, without a new context or persisted expansion metadata. Stage and retry disclosures SHALL initially be collapsed; the outer `CollapsedGroup` SHALL retain its streaming-open and finish-collapse policy. Updates to names/content/status and insertion of siblings SHALL preserve expansion choices for surviving stages, including when a second attempt introduces a group. Message-wide step/failure counts and live-stage selection SHALL operate over the flat input once.
 
 #### Scenario: Streaming updates do not close a stage
 - **GIVEN** a user expanded stage 1
