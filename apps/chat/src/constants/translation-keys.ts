@@ -40,6 +40,7 @@ export enum ChatI18nKeys {
   StoppedGenerating = 'chat.stoppedGenerating',
   Thinking = 'chat.thinking',
   ScrollableTable = 'chat.scrollableTable',
+  ScrollableFormula = 'chat.scrollableFormula',
   MarkdownTableTitle = 'chat.markdownTableTitle',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',

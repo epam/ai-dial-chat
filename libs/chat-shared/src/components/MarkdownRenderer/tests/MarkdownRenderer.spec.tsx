@@ -321,6 +321,19 @@ describe('MarkdownRenderer', () => {
     ).toBeTruthy();
   });
 
+  it('passes codeBlockDownloadLabel to the download button accessible label', () => {
+    render(
+      <MarkdownRenderer
+        content={FENCED_TS_MARKDOWN}
+        codeBlockDownloadLabel="Custom download label"
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Custom download label' }),
+    ).toBeTruthy();
+  });
+
   it('applies classNames.codeBlockContainer to the block container', () => {
     render(
       <MarkdownRenderer

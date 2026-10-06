@@ -115,8 +115,10 @@ one type scale. It defaults to `ResponseFormat.Markdown`.
 Assistant tables receive copy/download controls when their table action labels
 (`tableCopyLabel`, `tableCopiedLabel`, and `tableDownloadCsvLabel`) are
 supplied; each control has a UI-kit tooltip with its localized label. The bubble forwards
-`labels.tableDownloadFilename` and `labels.tableScrollRegionAriaLabel` to the
-markdown viewer, and hides the table actions while `isStreaming` is true.
+`labels.tableDownloadFilename`, `labels.tableScrollRegionAriaLabel` and
+`labels.mathScrollRegionAriaLabel` to the markdown viewer, along with the
+code-block labels (`codeBlockCopyLabel`, `codeBlockCopiedLabel`,
+`codeBlockDownloadLabel`), and hides the table actions while `isStreaming` is true.
 Set `tableOnOpenInCanvas` together with `labels.tableOpenInCanvasLabel` to add
 an "Open in Canvas" action that receives the table serialized as Markdown
 when activated — omitting either one hides the action.
@@ -141,12 +143,14 @@ import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
   labels={{
     codeBlockCopyLabel: 'Copy code',
     codeBlockCopiedLabel: 'Copied!',
+    codeBlockDownloadLabel: 'Download code',
     tableCopyLabel: 'Copy',
     tableCopiedLabel: 'Copied!',
     tableDownloadCsvLabel: 'Download as CSV',
     tableOpenInCanvasLabel: 'Open in canvas',
     tableDownloadFilename: 'table.csv',
     tableScrollRegionAriaLabel: 'Scrollable table',
+    mathScrollRegionAriaLabel: 'Scrollable formula',
   }}
   tableOnOpenInCanvas={handleTableOpenInCanvas}
   actions={{

@@ -425,10 +425,15 @@ const ScheduledTaskDetailPage: FC = () => {
       activeStatusAnnouncement,
       startNowButtonLabel: t(ScheduledTasksI18nKeys.DetailStartNow),
       startingLabel: t(ScheduledTasksI18nKeys.DetailStarting),
+      startNowBusyLabel: t(ScheduledTasksI18nKeys.DetailStartBusy),
       startStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
     [t, activeStatusAnnouncement, runStatusLabels, startStatusAnnouncement],
+  );
+
+  const hasInProgressRun = mergedRunDtos.some(
+    (run) => run.status === ScheduledTaskRunDtoStatusEnum.InProgress,
   );
 
   const handleBack = () => {
@@ -710,11 +715,9 @@ const ScheduledTaskDetailPage: FC = () => {
           isDeleting ||
           isActiveUpdating ||
           isTaskLoading ||
-          isStartRejectedAsDeleted ||
-          mergedRunDtos.some(
-            (run) => run.status === ScheduledTaskRunDtoStatusEnum.InProgress,
-          )
+          isStartRejectedAsDeleted
         }
+        isStartNowBusy={hasInProgressRun}
         isDeleted={isTaskDeleted}
         isCompleted={isTaskCompleted}
         isActive={isTaskDeleted ? undefined : task?.isActive}

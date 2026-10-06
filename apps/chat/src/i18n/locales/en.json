@@ -61,6 +61,7 @@
     "stoppedGenerating": "You stopped generating the response",
     "thinking": "Thinking",
     "scrollableTable": "Scrollable table",
+    "scrollableFormula": "Scrollable formula",
     "markdownTableTitle": "Table",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"

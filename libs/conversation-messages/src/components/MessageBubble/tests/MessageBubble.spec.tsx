@@ -474,6 +474,21 @@ describe('AssistantMessageBubble — attachments', () => {
     expect(screen.getByRole('table')).toBeTruthy();
   });
 
+  it('forwards code block labels to assistant code blocks', () => {
+    render(
+      <AssistantMessageBubble
+        text={'```ts\nconst x = 1;\n```'}
+        labels={{
+          codeBlockCopyLabel: 'Kopieren',
+          codeBlockDownloadLabel: 'Herunterladen',
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Kopieren' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Herunterladen' })).toBeTruthy();
+  });
+
   it('forwards table action labels to completed assistant tables', () => {
     render(
       <AssistantMessageBubble

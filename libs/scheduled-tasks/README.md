@@ -159,7 +159,11 @@ import {
 
 The header can opt into host-owned Start now behavior with `onStartNow`,
 `isStarting`, `isStartNowDisabled`, and `labels.startNowButtonLabel`; use the
-optional `labels.startingLabel` while the request is pending. The host owns
+optional `labels.startingLabel` while the request is pending. Set
+`isStartNowBusy` while a run is already in progress: the action renders
+disabled and, when `labels.startNowBusyLabel` is supplied, exposes that reason
+as its tooltip and accessible description (the button stays focusable via
+`aria-disabled` so the tooltip can open). The host owns
 execution, eligibility, errors, translations, and live announcements. Below
 1280px header actions wrap while retaining their text and 44px targets. The
 back arrow mirrors in RTL, while the Start now play icon does not.
@@ -179,6 +183,7 @@ import {
   onStartNow={() => {}}
   isStarting={false}
   isStartNowDisabled={false}
+  isStartNowBusy={false}
   displayName="Daily summary"
   description="Summarizes unread inbox items every morning"
   modelLabel="GPT-4.1 mini"

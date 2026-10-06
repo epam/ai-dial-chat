@@ -84,10 +84,13 @@ export const ModelSelectorControl: FC<Props> = ({
     return null;
   }
 
-  const disabledIconClassName =
-    isStreaming || isDisabled
-      ? 'pointer-events-none opacity-50 cursor-not-allowed'
-      : undefined;
+  /* Streaming blocks the selector exactly like `isDisabled`, in every
+   * presentation: the class only stops pointer input, so each path also
+   * guards its keyboard activation and exposes `aria-disabled`. */
+  const isBlocked = isStreaming || isDisabled;
+  const disabledIconClassName = isBlocked
+    ? 'pointer-events-none opacity-50 cursor-not-allowed'
+    : undefined;
 
   const caretIcon = (
     <IconChevronDown
@@ -129,8 +132,9 @@ export const ModelSelectorControl: FC<Props> = ({
             </div>
           }
           aria-label={selectorAriaLabel}
+          aria-disabled={isBlocked || undefined}
           onClick={() => {
-            if (!isDisabled) setIsModelSheetOpen(true);
+            if (!isBlocked) setIsModelSheetOpen(true);
           }}
           className={mergeClasses(
             'w-[50px]',
@@ -204,17 +208,17 @@ export const ModelSelectorControl: FC<Props> = ({
             stays the size it was. */}
         <Button
           aria-label={selectorAriaLabel}
-          aria-disabled={isDisabled || undefined}
+          aria-disabled={isBlocked || undefined}
           tooltipProps={{ tooltip: chipTooltip }}
           className={mergeClasses(
             'h-auto min-w-0 gap-1.5 !rounded-full !border-0 px-0 py-1.5 pe-2 ps-1.5',
             styles.modelSelectorButton,
             disabledIconClassName,
-            isDisabled && styles.modelSelectorButtonDisabled,
+            isBlocked && styles.modelSelectorButtonDisabled,
             CONVERSATION_INPUT_CLASS.modelSelectorButton,
           )}
           onClick={() => {
-            if (!isStreaming && !isDisabled) {
+            if (!isBlocked) {
               onPickerToggle?.();
             }
           }}
@@ -250,8 +254,8 @@ export const ModelSelectorControl: FC<Props> = ({
 
   return (
     <div
-      className={mergeClasses(isDisabled && disabledIconClassName)}
-      aria-disabled={isDisabled || undefined}
+      className={mergeClasses(disabledIconClassName)}
+      aria-disabled={isBlocked || undefined}
     >
       <Dropdown
         items={menuItems}
@@ -269,19 +273,19 @@ export const ModelSelectorControl: FC<Props> = ({
           CONVERSATION_INPUT_CLASS.modelMenu,
         )}
         listStyle={menuStyle}
-        disabled={isDisabled}
-        onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
+        disabled={isBlocked}
+        onOpenChange={isBlocked ? undefined : handleModelSelectorOpenChange}
       >
         <Button
           aria-label={selectorAriaLabel}
-          aria-disabled={isDisabled || undefined}
+          aria-disabled={isBlocked || undefined}
           tooltipProps={{ tooltip: selectedLabel }}
           iconBefore={iconNode}
           iconAfter={caretIcon}
           className={mergeClasses(
             'h-auto gap-1 !rounded-full !border-0 p-1.5',
             styles.modelSelectorButton,
-            isDisabled && styles.modelSelectorButtonDisabled,
+            isBlocked && styles.modelSelectorButtonDisabled,
             CONVERSATION_INPUT_CLASS.modelSelectorButton,
           )}
         />

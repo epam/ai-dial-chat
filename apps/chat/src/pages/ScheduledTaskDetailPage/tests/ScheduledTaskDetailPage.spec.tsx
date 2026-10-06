@@ -192,6 +192,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isDeleting,
     isStarting,
     isStartNowDisabled,
+    isStartNowBusy,
     isDeleted,
     isCompleted,
     isActive,
@@ -223,6 +224,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       historyRetryLabel: string;
       editButtonLabel: string;
       startNowButtonLabel?: string;
+      startNowBusyLabel?: string;
       deleteButtonLabel: string;
       deletedStateLabel: string;
       activeStatusLabel: string;
@@ -237,6 +239,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isDeleting?: boolean;
     isStarting?: boolean;
     isStartNowDisabled?: boolean;
+    isStartNowBusy?: boolean;
     isDeleted?: boolean;
     isCompleted?: boolean;
     isActive?: boolean;
@@ -309,10 +312,13 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {onStartNow && (
         <button
           onClick={onStartNow}
-          disabled={isStarting || isStartNowDisabled}
+          disabled={isStarting || isStartNowDisabled || isStartNowBusy}
         >
           {isStarting ? 'starting' : labels.startNowButtonLabel}
         </button>
+      )}
+      {isStartNowBusy && labels.startNowBusyLabel && (
+        <span>busyReason:{labels.startNowBusyLabel}</span>
       )}
       {!isDeleted && !isCompleted && isActive !== undefined && (
         <>
@@ -659,6 +665,9 @@ describe('ScheduledTaskDetailPage', () => {
     await screen.findByText('scheduledTasks.detail.startAccepted');
     expect(startScheduledTaskMock).toHaveBeenCalledTimes(1);
     expect(showNotificationMock).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText('busyReason:scheduledTasks.detail.startBusy'),
+    ).toBeTruthy();
   });
 
   it('starts again after a polled completion even while History still reports InProgress', async () => {

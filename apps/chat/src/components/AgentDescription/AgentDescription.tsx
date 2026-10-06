@@ -3,6 +3,8 @@ import {
   type MarkdownRendererClassNames,
 } from '@epam/ai-dial-chat-shared';
 import { type FC, memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ButtonsI18nKeys } from '../../constants/translation-keys';
 
 /*
  * An agent description is short prose — a scope note or a disclaimer — not a
@@ -28,12 +30,19 @@ interface Props {
 }
 
 /** Renders the selected agent's own description on the empty-chat screen. */
-const AgentDescription: FC<Props> = ({ content }) => (
-  <MarkdownRenderer
-    content={content}
-    classNames={DESCRIPTION_CLASS_NAMES}
-    containerClassName="mb-4 mt-4 max-w-3xl text-center text-secondary"
-  />
-);
+const AgentDescription: FC<Props> = ({ content }) => {
+  const { t } = useTranslation();
+
+  return (
+    <MarkdownRenderer
+      content={content}
+      classNames={DESCRIPTION_CLASS_NAMES}
+      containerClassName="mb-4 mt-4 max-w-3xl text-center text-secondary"
+      codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
+      codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
+      codeBlockDownloadLabel={t(ButtonsI18nKeys.Download)}
+    />
+  );
+};
 
 export default memo(AgentDescription);

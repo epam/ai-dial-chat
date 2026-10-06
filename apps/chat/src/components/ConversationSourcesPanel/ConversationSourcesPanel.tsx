@@ -223,7 +223,12 @@ const ConversationSourcesPanelContainer: FC = () => {
         modelDisplayName={modelDisplayName}
         instructionsMarkdown={activeScheduledTask.task?.prompt}
         renderInstructions={(markdown) => (
-          <MDMessageViewer content={markdown} />
+          <MDMessageViewer
+            content={markdown}
+            codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
+            codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
+            codeBlockDownloadLabel={t(ButtonsI18nKeys.Download)}
+          />
         )}
       />
     );

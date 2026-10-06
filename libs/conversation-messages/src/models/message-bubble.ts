@@ -79,6 +79,8 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
   codeBlockCopyLabel?: string;
   /** aria-label for the code block copy button after copying. */
   codeBlockCopiedLabel?: string;
+  /** aria-label for the code block download button. */
+  codeBlockDownloadLabel?: string;
   /** Label for the copy action on a Markdown table (copies as Markdown format). */
   tableCopyLabel?: string;
   /** Status announced after a Markdown table has been copied. */
@@ -91,6 +93,8 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
   tableDownloadFilename?: string;
   /** Accessible label for a Markdown table's scrollable region. */
   tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's scrollable region. */
+  mathScrollRegionAriaLabel?: string;
   /** Fallback aria-label for the deployment icon. Defaults to `'AI'`. */
   deploymentIconFallbackLabel?: string;
 }

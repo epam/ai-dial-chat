@@ -1106,11 +1106,13 @@ const ConversationMessageItem: FC<Props> = ({
           thinkingLabel,
           codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
           codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+          codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
           tableCopyLabel: t(ButtonsI18nKeys.Copy),
           tableCopiedLabel: t(ButtonsI18nKeys.Copied),
           tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
           tableOpenInCanvasLabel: t(ButtonsI18nKeys.OpenInCanvas),
           tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+          mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
           ...statusProps,
         }}
         deploymentIconUrl={deploymentEntry?.iconUrl}
