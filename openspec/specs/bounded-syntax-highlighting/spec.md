@@ -32,7 +32,7 @@ Both viewers SHALL memoize eligibility by source text. These bounds are input-si
 
 Stage details, retry-group children, and multi-stage group panels SHALL mount only while their owning disclosure is expanded. Existing local open state and streaming completion collapse SHALL remain. Closed controls SHALL expose collapsed state and SHALL NOT contain focusable details; reopening SHALL render current stage data. The behavior SHALL be identical across viewport sizes and directions.
 
-StageItem, StageGroupRow, and CollapsedGroup SHALL each own their disclosure state in local React state. Toggle controls SHALL retain native keyboard activation and expose `aria-expanded` and stable `aria-controls` relationships; closed wrappers SHALL be inert. Existing logical layout properties, directional icons, and LTR code rendering SHALL remain.
+CollapsedGroup SHALL own its summary disclosure in local React state; StageItem and StageGroupRow disclosure choices SHALL be held in local React state by the owning stage surface through `useStageExpansion` (a keyed `expansion` map owned by CollapsedGroup or StagesPanel and passed down), with StageItem keeping a local uncontrolled fallback only when rendered standalone. Nothing is persisted. Toggle controls SHALL retain native keyboard activation and expose `aria-expanded` and stable `aria-controls` relationships; closed wrappers SHALL be inert. Existing logical layout properties, directional icons, and LTR code rendering SHALL remain.
 
 #### Scenario: Closed stage receives updated content
 - **WHEN** a closed stage receives content updates

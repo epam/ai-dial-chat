@@ -166,7 +166,7 @@ describe('PromptEditor', () => {
     });
   });
 
-  it('does not validate on its own — the host owns the storage contract', async () => {
+  it('does not validate on its own â€” the host owns the storage contract', async () => {
     const onSubmit = vi.fn();
     renderEditor({ onSubmit });
 
@@ -202,7 +202,7 @@ describe('PromptEditor', () => {
       />,
     );
 
-    await waitFor(() => expect(document.activeElement).toBe(instructions));
+    await waitFor(() => expect(instructions.matches(':focus')).toBe(true));
   });
 
   it('leaves focus to the metadata form when Name is invalid too', async () => {
@@ -219,7 +219,7 @@ describe('PromptEditor', () => {
       />,
     );
 
-    expect(document.activeElement).not.toBe(instructions);
+    expect(instructions.matches(':focus')).toBe(false);
   });
 
   it('blocks submission and announces status while saving', async () => {

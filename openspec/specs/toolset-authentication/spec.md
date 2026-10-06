@@ -4,22 +4,27 @@
 TBD - created by archiving change add-toolset-editor-flow. Update Purpose after archive.
 ## Requirements
 ### Requirement: Authentication type selection
-The Settings step SHALL present a list-style single-select for the authentication type
-with three options — None, API Key, and OAuth — driven by a single `authenticationType`
-state value so that only one option is expanded at a time.
+The Toolset Editor's Setup section (`AuthSection` in `@epam/ai-dial-toolset-editor`) SHALL
+present the authentication type as a UI-kit `SegmentedControl` with three segments — None
+(labelled "Open access" by default), OAuth, and API Key, in that order — driven by a single
+`authenticationType` state value so that only the selected type's content panel is rendered.
+Selecting a type also resets `withLogin` to that type's default (`without-login` for None,
+`with-login` otherwise).
 
 #### Scenario: Select API Key auth
-- **WHEN** a user selects the API Key option
-- **THEN** the API Key panel expands, the other panels collapse, and `authenticationType`
-  becomes the API Key value
+- **WHEN** a user selects the API Key segment
+- **THEN** only the API Key content (login-mode radios and credential fields) is rendered, and
+  `authenticationType` becomes the API Key value
 
 #### Scenario: Select None auth
-- **WHEN** a user selects the None option
-- **THEN** no credential sub-fields are shown for authentication
+- **WHEN** a user selects the None ("Open access") segment
+- **THEN** no credential sub-fields are shown; only the "Open endpoint, no credentials"
+  description is rendered
 
 ### Requirement: API Key credential fields
-When API Key auth is selected with login enabled, the system SHALL require a key header name
-and an API key value, and SHALL validate that the key header name is present.
+When API Key auth is selected, the system SHALL require a key header name in both the "with
+login" and "without login" modes, and SHALL additionally require an API key value when login
+is enabled; the API key input is rendered only in the "with login" mode.
 
 #### Scenario: Missing key header
 - **WHEN** API Key auth is selected with login and the key header name is empty
@@ -33,9 +38,9 @@ editor was opened to edit a toolset that was already saved with OAuth-with-confi
 (i.e. the editor's route carries an existing toolset id) — Core never returns a stored client
 secret, so re-entering it is not required to log in again with the already-stored value. The
 required-field indicator on the Client Secret input and the login-button gating condition SHALL
-derive from this same "editing an already-saved toolset" state, not from whether the toolset has
-merely acquired a persisted id during the current create flow (e.g. from an in-progress draft
-auto-save).
+derive from this same "editing an already-saved toolset" state (`isEditMode`, i.e. a non-empty
+route `toolsetId`), not from whether the toolset has merely acquired a persisted draft id during
+the current create flow (e.g. from an earlier "Log in" persist).
 
 #### Scenario: Missing OAuth client credentials
 - **WHEN** OAuth auth with config is selected and client id or client secret is empty
@@ -44,7 +49,7 @@ auto-save).
 #### Scenario: Client secret required while creating a new toolset
 - **WHEN** a user is creating a new toolset (the editor was not opened with an existing toolset
   id in its route) and selects OAuth with login & config, even after the in-progress draft has
-  been auto-saved and acquired an id
+  been persisted and acquired an id
 - **THEN** the Client Secret field is marked required and the Log In button stays disabled until
   a client secret is entered
 
@@ -56,14 +61,18 @@ auto-save).
   endpoints) are filled in
 
 ### Requirement: Login mode selection
-For API Key and OAuth, the system SHALL offer login-mode options (with login, without login,
-and — for OAuth — with login & config) that determine whether credential fields are required
-and whether a login is triggered on save.
+For API Key and OAuth, the system SHALL offer login-mode radios backed by the `WithLogin` enum
+(`with-login`, `without-login`, `with-config`) that determine which credential fields are
+required and whether a login is triggered. API Key offers "With login" (`with-login`) and
+"Without login" (`without-login`); OAuth offers "Standard login" (`with-login`, DIAL Core
+dynamic client registration) and "Custom login" (`with-config`, "with login & config") and has
+no without-login option. Saving the editor triggers a post-save login only for API Key in
+`with-login` mode (`onPostSaveLogin`); an OAuth login is started only from the "Log in" button.
 
 #### Scenario: Without login mode
-- **WHEN** a user selects "without login"
+- **WHEN** a user selects "Without login" for API Key auth
 - **THEN** the configuration can be saved without submitting credentials and without
-  triggering a login
+  triggering a login, and no "Log in" button is shown
 
 #### Scenario: Switching to OAuth defaults to standard login
 - **WHEN** a user switches the authentication type to OAuth
@@ -83,7 +92,9 @@ and whether a login is triggered on save.
 ### Requirement: Persist unsaved changes before login
 Clicking "Log in" (API Key or OAuth) SHALL first persist any unsaved editor changes — creating
 the toolset if it has no id yet, or updating it if the form has changed since it was last
-persisted — using the same persist logic as advancing past the General step. If the form has
+persisted — through the editor's `persistFormIfChanged` (exposed to `AuthSection` as
+`onEnsureSaved`), which uses the same host `onPersist` create/update call as the Save action
+and records a newly created id as the editor's draft toolset id. If the form has
 not changed since it was last persisted, no create/update request SHALL be sent. If persisting
 fails, the system SHALL show an error notification and SHALL NOT proceed to submit credentials
 or open the OAuth authorization popup, so login never runs against a stale endpoint or
@@ -96,7 +107,7 @@ first login for a brand-new toolset targets the id that was just created instead
 stale id.
 
 #### Scenario: Log in persists unsaved endpoint/auth changes first
-- **WHEN** a user edits the endpoint or authentication fields on the Settings step without
+- **WHEN** a user edits the endpoint or authentication fields in the Setup section without
   saving, then clicks "Log in"
 - **THEN** the system updates the toolset with the current form values before submitting
   credentials or opening the OAuth authorization popup
@@ -122,7 +133,9 @@ stale id.
 
 For OAuth login with config, the system SHALL save the OAuth configuration (Editor) or use the
 already-configured toolset (Catalog), persist the redirect state (`toolsetId`,
-`credentialsLevel`) to `sessionStorage`, and open the provider authorization URL in a new
+`credentialsLevel`, `redirectUri`, the flow's `state`, `resourceKind`, and the optional
+`offlineUsageConsent`) into the popup's own `sessionStorage` while it is still same-origin
+`about:blank`, and open the provider authorization URL in a new
 browser window/tab rather than navigating the current page away. `credentialsLevel` SHALL be an
 explicit, caller-supplied value — `USER` for the Toolset Editor; `USER` or `GLOBAL` for a
 Catalog-initiated login (`GLOBAL` only reachable by an admin managing a public toolset). The
@@ -166,8 +179,8 @@ extra fetch.
 
 #### Scenario: Initiate OAuth login from the editor
 
-- **WHEN** a user saves an OAuth toolset in login-with-config mode from the Toolset Editor, or
-  clicks "Log in" on an already-configured OAuth toolset
+- **WHEN** a user clicks "Log in" in the Toolset Editor's Setup section for an OAuth toolset
+  (saving the editor does not start an OAuth login)
 - **THEN** the system stores redirect state with `credentialsLevel: USER`, opens the provider
   authorization URL in a new window/tab, and the editor tab remains on its current page
 
@@ -180,8 +193,9 @@ extra fetch.
 
 #### Scenario: Initiate OAuth login from the Catalog at GLOBAL level
 
-- **WHEN** an admin clicks "Log in" in the "Entire organization credentials" section of an OAuth
-  toolset in the Catalog Details Panel
+- **WHEN** an admin clicks "Log in" in the "Organization credentials" row
+  (`catalog.details.credentials.organizationLabel`) of an OAuth toolset in the Catalog Details
+  Panel
 - **THEN** the system stores redirect state with `credentialsLevel: GLOBAL`, opens the provider
   authorization URL in a new window/tab, and the Catalog tab remains on its current page
 
@@ -243,7 +257,8 @@ extra fetch.
 #### Scenario: Callback without stored state
 
 - **WHEN** the callback route is reached with no valid stored redirect state
-- **THEN** the system does not attempt a login and closes the window
+- **THEN** the system does not attempt a login, reports a `missing-redirect-state` failure
+  through the popup URL (and the flow channel when a `state` is known), and closes the window
 
 #### Scenario: First login for a brand-new dynamically-registered toolset succeeds
 
@@ -307,15 +322,21 @@ between the saving state and authentication-type changes.
 
 The embedded QuickApps iframe (`AppEditorIframe.tsx`, `/apps-editor`) SHALL be able to request a
 toolset login by sending `window.parent.postMessage({ type: 'REQUEST_TOOLSET_LOGIN', toolsetId }, hostOrigin)`
-carrying only the raw toolset id, with no OAuth client configuration. The host SHALL percent-encode
-each `/`-separated segment of the raw id before using it in any backend call (via `encodeToolsetId`),
-fetch the toolset's stored OAuth configuration itself (`getToolset`), open the OAuth popup, drive the
-existing admin login handshake (`navigateToolsetOAuthPopup` + `waitForToolsetOAuthResult`, the same
+carrying only the raw toolset id, with no OAuth client configuration. The host SHALL normalize the
+id to its single-encoded form before using it in any backend call (via `normalizeToolsetId`, which
+decodes then re-applies `encodeToolsetId` per `/`-separated segment, so an id the iframe already
+encoded is not double-escaped), resolve the credentials level with `resolveToolsetCredentialsLevel`
+(`USER` for a `public`-bucket toolset, `GLOBAL` otherwise), fetch the toolset's stored OAuth
+configuration itself (`getToolset`), open the OAuth popup, drive the existing login handshake
+(`navigateToolsetOAuthPopup` + `waitForToolsetOAuthResult`, the same
 `sessionStorage`/`BroadcastChannel`/callback-route machinery the Toolset Editor's Log In button
 already uses, unchanged), and post the outcome back to the iframe as
 `{ type: 'TOOLSET_LOGIN_RESULT', toolsetId, success, credentialsLevel?, reason?, credentials? }` —
 `toolsetId` in the result SHALL be the original raw id as sent by the iframe, not the encoded form.
-Messages from an origin other than the iframe's own `editorUrl` origin SHALL be ignored.
+Failure `reason` values are `popup-blocked`, `toolset-fetch-failed`, `not-oauth`,
+`invalid-config`, `cancelled`, or the handshake's own failure reason. Messages from an origin
+other than the iframe's own `editorUrl` origin, or whose `event.source` is not the iframe's
+`contentWindow`, or that carry no non-empty string `toolsetId`, SHALL be ignored.
 
 #### Scenario: Successful OAuth login requested from QuickApps
 - **WHEN** the QuickApps iframe posts `REQUEST_TOOLSET_LOGIN` with a `toolsetId` for a toolset
@@ -327,9 +348,9 @@ Messages from an origin other than the iframe's own `editorUrl` origin SHALL be 
 #### Scenario: Raw id with reserved characters is encoded before any backend call
 - **WHEN** the requested `toolsetId` contains characters the toolsets API does not accept raw
   (e.g. a literal space)
-- **THEN** the host percent-encodes each `/`-segment of the id before calling `getToolset` or
-  initiating the OAuth popup, and echoes the original, un-encoded `toolsetId` back in the result
-  message
+- **THEN** the host percent-encodes each `/`-segment of the id (without double-encoding an
+  already-encoded segment) before calling `getToolset` or initiating the OAuth popup, and echoes
+  the original `toolsetId` exactly as received back in the result message
 
 #### Scenario: Browser blocks the login popup
 - **WHEN** the host's popup-open call is blocked by the browser
@@ -359,14 +380,17 @@ Messages from an origin other than the iframe's own `editorUrl` origin SHALL be 
 
 The embedded QuickApps iframe SHALL be able to request a toolset logout by sending
 `{ type: 'REQUEST_TOOLSET_LOGOUT', toolsetId }`. Unlike login, the host SHALL call the logout
-endpoint directly (no popup, no OAuth round-trip) using the percent-encoded id and `USER`-level
-credentials, then post `{ type: 'TOOLSET_LOGOUT_RESULT', toolsetId, success, credentialsLevel?, reason?, credentials? }`
+endpoint directly (no popup, no OAuth round-trip, and no `authenticationType` in the body) using
+the normalized id (`normalizeToolsetId`) and the credentials level from
+`resolveToolsetCredentialsLevel` (`USER` for a `public`-bucket toolset, `GLOBAL` otherwise), then
+post `{ type: 'TOOLSET_LOGOUT_RESULT', toolsetId, success, credentialsLevel?, reason?, credentials? }`
 back to the iframe, with `toolsetId` again echoed as the original raw id.
 
 #### Scenario: Successful logout requested from QuickApps
 - **WHEN** the QuickApps iframe posts `REQUEST_TOOLSET_LOGOUT` with a `toolsetId`
-- **THEN** the host calls the logout endpoint with the encoded id and `USER` credentials level,
-  and posts `TOOLSET_LOGOUT_RESULT` with `success: true` and refreshed `credentials`
+- **THEN** the host calls the logout endpoint with the encoded id and the resolved credentials
+  level, and posts `TOOLSET_LOGOUT_RESULT` with `success: true`, that `credentialsLevel`, and
+  refreshed `credentials`
 
 #### Scenario: Logout call fails
 - **WHEN** the logout endpoint call rejects

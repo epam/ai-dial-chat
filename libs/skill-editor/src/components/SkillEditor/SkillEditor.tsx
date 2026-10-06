@@ -499,8 +499,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       }
       items.push({
         key: 'upload-files',
-        label:
-          t.uploadFilesLabel ?? 'Upload files from device',
+        label: t.uploadFilesLabel ?? 'Upload files from device',
         icon: menuIcon(IconUpload),
         onClick: () =>
           openUploadDialog({
