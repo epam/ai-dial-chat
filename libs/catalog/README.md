@@ -391,6 +391,40 @@ unreadable per-segment stubs at this width. `styles.typography.folderClassName`
 styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
 `styles.colors.folderIcon` the leading folder icon.
 
+#### Multiple selection
+
+`selectionMode={CatalogSelectionMode.Multiple}` adds a leading checkbox column
+with a select-all checkbox in its header. The selection is controlled: pass the
+selected ids and update them from `onSelectionChange`.
+
+```tsx
+import { CatalogSelectionMode, ListView } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+<ListView
+  type={CatalogEntityType.Skill}
+  items={filteredItems}
+  selectionMode={CatalogSelectionMode.Multiple}
+  selectedItemIds={selectedIds}
+  onSelectionChange={setSelectedIds}
+  selectRowAriaLabel={(item) => t('catalog.selectItem', { name: item.name })}
+  selectAllAriaLabel={t('catalog.selectAll')}
+/>;
+```
+
+- A row toggles from its checkbox, a click on any other cell except the
+  Favorite star, or Space on one of its cells. `onItemClick` still fires on a
+  row click.
+- `onSelectionChange` receives a new `Set` with newly selected ids appended, so
+  its iteration order is the order the user selected items in.
+- Select-all covers every entry of `items` — not only the rows windowed into
+  the grid — and keeps selected ids that are not in `items` (e.g. filtered out
+  by the host). Its checkbox is mixed while only some listed items are selected.
+- `selectedItemId`'s single-row highlight is not drawn in this mode.
+- The label props default to `Select <item name>` and `'Select all'`.
+
 ### Favorites
 
 Renders the user's favorited items in a dedicated, paginated section.
