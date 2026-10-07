@@ -85,7 +85,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.15.0-dev.39
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
-- `@modelcontextprotocol/sdk` ^1.29.0
+- `@modelcontextprotocol/sdk` ^1.32.1
 - `@epam/pdf-highlighter-kit` ^0.0.19
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core

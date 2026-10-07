@@ -191,7 +191,7 @@ describe('ScheduledTaskRunHistoryList', () => {
     );
 
     const list = screen.getByRole('list', { name: 'History' });
-    // eslint-disable-next-line testing-library/no-node-access -- a CSS custom property has no Testing Library query
+
     expect(list.style.getPropertyValue('--strhl-row-focus-outline')).toBe(
       '#123456',
     );

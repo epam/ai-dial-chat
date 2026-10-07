@@ -118,7 +118,7 @@ const NewYearDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
       <div className="absolute bottom-2 end-2 desktop:bottom-4 desktop:end-4">
         <GhostIconButton
           className={mergeClasses(
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus focus-visible:outline-offset-2',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
             styles.giftButton,
             CELEBRATIONS_CLASS.trigger,
           )}
