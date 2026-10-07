@@ -70,6 +70,7 @@ import { resolveLocalizedText } from '../../utils/locale';
 import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
+  getNextCronOccurrence,
   resolveScheduledTaskErrorMessage,
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
@@ -370,11 +371,20 @@ const ScheduledTaskDetailPage: FC = () => {
   const cronWindow = task?.trigger.cron;
   const taskNextRunTime = task?.nextRunTime;
   const activeWindowLabel = useMemo(() => {
-    /* Without an explicit start date the window effectively begins at the next scheduled occurrence. */
-    const effectiveStartDate = cronWindow?.startDate ?? taskNextRunTime;
-    if (!effectiveStartDate || !cronWindow?.endDate) return undefined;
+    if (!cronWindow?.endDate) return undefined;
+    /*
+     * Without an explicit start date the window begins at the next scheduled
+     * occurrence: the server's `nextRunTime`, or one computed from the cron
+     * fields when the server has none (e.g. an inactive task).
+     */
+    const effectiveStartDate =
+      cronWindow.startDate ??
+      taskNextRunTime ??
+      getNextCronOccurrence(cronWindow)?.toISOString();
+    if (!effectiveStartDate) return undefined;
     const dateFormatter = new Intl.DateTimeFormat(undefined, {
       dateStyle: 'medium',
+      timeStyle: 'short',
     });
     return t(ScheduledTasksI18nKeys.DetailActiveWindowValue, {
       startDate: dateFormatter.format(new Date(effectiveStartDate)),

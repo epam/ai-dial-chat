@@ -1,6 +1,7 @@
 import {
   ScheduledTaskErrorCode,
   type ScheduledTaskDto,
+  type ScheduleTriggerDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { ApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
@@ -13,6 +14,26 @@ import {
   ScheduledTasksI18nKeys as Keys,
   ToolsetSigninI18nKeys,
 } from '../constants/translation-keys';
+
+/**
+ * Returns the next UTC time of day (today or tomorrow) at which a cron trigger
+ * with a fixed `hour`/`minute` fires, or `undefined` when either is not a
+ * plain number. Weekday and day-of-month constraints are ignored on purpose:
+ * it only supplies an approximate start for the "Active" label.
+ */
+export const getNextCronOccurrence = (
+  cron: NonNullable<ScheduleTriggerDto['cron']>,
+  from: Date = new Date(),
+): Date | undefined => {
+  const { hour, minute } = cron.fields as Record<string, string | null>;
+  if (!hour || !minute || !/^\d+$/.test(hour) || !/^\d+$/.test(minute)) {
+    return undefined;
+  }
+  const next = new Date(from);
+  next.setUTCHours(Number(hour), Number(minute), 0, 0);
+  if (next <= from) next.setUTCDate(next.getUTCDate() + 1);
+  return next;
+};
 
 /** Localizes the shared trigger descriptor in the browser's display timezone. */
 export const buildScheduleLabel = (
