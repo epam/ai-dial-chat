@@ -183,7 +183,7 @@ describe('replaceCitTagsWithSourceNames', () => {
     const group = withSourceName(makeCitGroup('e1'), 'A | B *draft*');
     expect(
       replaceCitTagsWithSourceNames('<cit data-id="e1"></cit>', [group]),
-    ).toBe('A \| B \*draft\*');
+    ).toBe(String.raw`A \| B \*draft\*`);
   });
 
   it('leaves an unresolved cit element untouched', () => {
