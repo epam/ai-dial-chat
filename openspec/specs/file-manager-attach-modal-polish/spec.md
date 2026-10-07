@@ -82,15 +82,15 @@ i18n keys:
 
 All six keys SHALL be added to `apps/chat/src/i18n/locales/en.json` and to `DialFileManagerI18nKeys`.
 
-Two contexts SHALL override the tab-specific copy, in this precedence order:
+Two contexts SHALL override the tab-specific copy:
 
-1. a settled search with no matches → `labels.searchEmptyStateTitle`;
-2. an empty subfolder (a path more than one segment deep) → `labels.folderEmptyStateTitle`.
+1. a search with no matches → `labels.searchEmptyStateTitle`, passed as the separate `searchEmptyStateTitle` prop, which `DialFileManager` renders in search mode in place of `emptyStateTitle` (see the `file-manager-search` capability);
+2. an empty subfolder (a path more than one segment deep) → `labels.folderEmptyStateTitle`, passed as `emptyStateTitle` with an empty description.
 
-Both overrides render an empty description; the tab-specific copy is used only at a tab's root with no active search.
+The tab-specific copy is used only at a tab's root outside search mode.
 
 RTL: none — text direction is inherited from the `dir` attribute on `<html>`.
-Memoisation: empty state props in `useMemo` keyed on the browsed section tab (`sectionTab ?? activeTab`), the search state (`searchResults`, `isSearching`), and the current path.
+Memoisation: empty state props in `useMemo` keyed on the browsed section tab (`sectionTab ?? activeTab`) and the current path.
 
 #### Scenario: My Files empty state shown when My Files tab is empty
 

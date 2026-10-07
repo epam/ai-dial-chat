@@ -75,6 +75,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     ...actual,
     DialFileManager: (props: {
       emptyStateTitle?: string;
+      searchEmptyStateTitle?: string;
       destinationFolderPopupOptions?: {
         copyLabel?: string;
         moveLabel?: string;
@@ -311,6 +312,20 @@ describe('DialFileManagerShell', () => {
   it('shows folderEmptyStateTitle when navigated into a subfolder', () => {
     renderShell({ path: '/My files/reports/' });
     expect(screen.getByText(baseLabels.folderEmptyStateTitle)).toBeTruthy();
+  });
+
+  it('passes searchEmptyStateTitle to DialFileManager for a search with no matches', () => {
+    renderShell({ searchResults: [], isSearching: false });
+    expect(capturedDialFileManagerProps.current?.searchEmptyStateTitle).toBe(
+      baseLabels.searchEmptyStateTitle,
+    );
+  });
+
+  it('keeps the tab empty-state title outside search mode even when stale search results remain', () => {
+    renderShell({ searchResults: [], isSearching: false });
+    expect(capturedDialFileManagerProps.current?.emptyStateTitle).toBe(
+      emptyStateCopy.title,
+    );
   });
 
   it('shows the error/retry panel and calls retry on click', async () => {
