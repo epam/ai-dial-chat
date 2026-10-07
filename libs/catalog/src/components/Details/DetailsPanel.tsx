@@ -1317,6 +1317,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 <Pricing
                   pricing={item.details?.pricing}
                   pricesSectionLabel={texts?.pricingPricesSectionLabel}
+                  characterPricesSectionLabel={
+                    texts?.pricingCharacterPricesSectionLabel
+                  }
                   limitsSectionLabel={texts?.pricingLimitsSectionLabel}
                 />
               )}

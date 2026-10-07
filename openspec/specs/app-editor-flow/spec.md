@@ -411,7 +411,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 It SHALL render the following:
 
-- Without `appId` (create mode): the `applicationEditor.setupPendingCreate` placeholder, with a `PrimaryButton` Create that calls `onSubmit` (disabled while `isSubmitting`).
+- Without `appId` (create mode): the `applicationEditor.setupPendingCreate` placeholder, with a `NeutralButton` Create that calls `onSubmit` (neutral, so the header's `PrimaryButton` stays the one primary action) (disabled while `isSubmitting`).
 - With `appId` and `schema.editorUrl`: `AppEditorIframe` only. `QuickAppSetup` SHALL NOT render `AppPreviewChat`. The preview chat is rendered at page level by `QuickAppPreview` (see `app-preview-chat` "Preview is a full-page mode"), and the iframe stays mounted while preview is shown because the whole `EntityEditor` is only hidden.
 - With `appId` but no `schema.editorUrl`: the `appsEditor.settingsStep.noEditorPlaceholder` placeholder.
 

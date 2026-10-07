@@ -722,6 +722,9 @@ const CatalogView: FC<Props> = ({
           pricingPricesSectionLabel: t(
             CatalogI18nKeys.DetailsPricingPricesSection,
           ),
+          pricingCharacterPricesSectionLabel: t(
+            CatalogI18nKeys.DetailsPricingCharacterPricesSection,
+          ),
           pricingLimitsSectionLabel: t(
             CatalogI18nKeys.DetailsPricingLimitsSection,
           ),

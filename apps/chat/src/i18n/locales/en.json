@@ -139,6 +139,7 @@
       },
       "pricing": {
         "pricesSection": "Token pricing",
+        "characterPricesSection": "Character pricing",
         "limitsSection": "Usage limits"
       },
       "limits": {
@@ -1179,7 +1180,8 @@
     },
     "schemaForm": {
       "loadFailed": "Failed to load the application settings. Please try again.",
-      "requiredMissing": "Fill in all required settings."
+      "requiredMissing": "Fill in all required settings.",
+      "empty": "This application type has no settings to configure."
     }
   },
   "toolsetEditor": {

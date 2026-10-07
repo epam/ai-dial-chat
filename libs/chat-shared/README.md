@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.39`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.50`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.39
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.50
 - `@epam/ai-dial-react-file-manager` ^0.3.0-dev.25 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -1029,14 +1029,16 @@ copyMarkdownAsRichText(message.content);
 // The same HTML on its own, for a caller that writes the clipboard itself or renders an export
 const html = markdownToRichTextHtml(message.content);
 
-// Format a USD amount, keeping decimals for sub-dollar values
+// Format a USD amount, keeping significant digits for sub-dollar values
 formatPrice(0.3); // '$0.3'
+formatPrice(0.00000015); // '$0.00000015'
 
 // Format accumulated USD usage to cents
 formatCost(0.788438); // '$0.79'
 
-// Re-quote a DIAL Core per-unit price for display
+// Re-quote a DIAL Core per-unit price per 1M tokens or characters for display
 formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
+formatUnitPrice('0.00000015', 'char_without_whitespace'); // '$0.15/M chars without whitespace'
 
 // Derive an avatar's initials and its deterministic color from a name
 const initials = extractInitials(user.displayName);
@@ -1099,24 +1101,24 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                                   |
-| -------------------------------------------- | ------------------------------------------------------------------------- |
-| `MIME_TYPE_ALIASES`                          | Non-canonical MIME spelling → canonical type, read by `normalizeMimeType` |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names            |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists          |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types           |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders             |
-| `PUBLIC_BUCKET`                              | `public`, the DIAL Core bucket holding organization-wide resources        |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step         |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                       |
-| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field      |
-| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`     |
-| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to        |
-| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap      |
-| `MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME`     | `className` stretching `MarkdownEditor` to that measured cap, bar hidden  |
-| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview        |
-| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap        |
-| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                   |
+| Constant                                     | Purpose                                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `MIME_TYPE_ALIASES`                          | Non-canonical MIME spelling → canonical type, read by `normalizeMimeType`            |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names                       |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists                     |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types                      |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders                        |
+| `PUBLIC_BUCKET`                              | `public`, the DIAL Core bucket holding organization-wide resources                   |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step                    |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                                  |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field                 |
+| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`                |
+| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to                   |
+| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap                 |
+| `MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME`     | `className` stretching `MarkdownEditor` to that cap; pair with `showDragbar={false}` |
+| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview                   |
+| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap                   |
+| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                              |
 
 ## Stylesheet
 

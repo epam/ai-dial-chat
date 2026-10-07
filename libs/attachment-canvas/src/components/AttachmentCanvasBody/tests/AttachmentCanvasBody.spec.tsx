@@ -48,13 +48,22 @@ interface PdfContentMockProps {
   url: string;
   configurePdfWorker?: () => void | Promise<void>;
   selectedPageNumber?: number;
+  onLoadError?: (url: string) => void;
 }
 
-vi.mock('../../PdfContent/PdfContent', () => ({
-  PdfContent: vi.fn(({ url }: PdfContentMockProps) => (
-    <section aria-label="pdf-content">{url}</section>
-  )),
-}));
+const pdfMounts = vi.hoisted(() => ({ onMount: vi.fn() }));
+
+vi.mock('../../PdfContent/PdfContent', async () => {
+  const { useEffect } = await import('react');
+  return {
+    PdfContent: vi.fn(({ url }: PdfContentMockProps) => {
+      useEffect(() => {
+        pdfMounts.onMount();
+      }, []);
+      return <section aria-label="pdf-content">{url}</section>;
+    }),
+  };
+});
 
 vi.mock('../../OoxmlContent/OoxmlContent', () => ({
   OoxmlContent: ({
@@ -265,6 +274,48 @@ describe('AttachmentCanvasBody', () => {
     await screen.findByRole('region', { name: 'pdf-content' });
     const [props] = vi.mocked(PdfContent).mock.calls[0];
     expect(props.selectedPageNumber).toBeUndefined();
+  });
+
+  it('remounts PdfContent when the same PDF URL is reopened after its load failed', async () => {
+    const { rerender } = renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'https://example.com/doc.pdf',
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    expect(pdfMounts.onMount).toHaveBeenCalledOnce();
+
+    const [props] = vi.mocked(PdfContent).mock.calls[0];
+    act(() => props.onLoadError?.('https://example.com/doc.pdf'));
+    rerender(
+      <AttachmentCanvasBody
+        content={{
+          type: AttachmentContentType.Pdf,
+          url: 'https://example.com/doc.pdf',
+          page: 3,
+        }}
+      />,
+    );
+    await screen.findByRole('region', { name: 'pdf-content' });
+    expect(pdfMounts.onMount).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps PdfContent mounted when the same PDF URL is reopened after a successful load', async () => {
+    const { rerender } = renderBody({
+      type: AttachmentContentType.Pdf,
+      url: 'https://example.com/doc.pdf',
+    });
+    await screen.findByRole('region', { name: 'pdf-content' });
+    rerender(
+      <AttachmentCanvasBody
+        content={{
+          type: AttachmentContentType.Pdf,
+          url: 'https://example.com/doc.pdf',
+          page: 3,
+        }}
+      />,
+    );
+    await screen.findByRole('region', { name: 'pdf-content' });
+    expect(pdfMounts.onMount).toHaveBeenCalledOnce();
   });
 
   it("announces the pdfContentLoadingLabel while PdfContent's dynamic import is pending", async () => {

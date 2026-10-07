@@ -118,6 +118,8 @@ export interface ItemDetailsTexts {
   mathScrollRegionAriaLabel?: string;
   /** "Token pricing" section heading in the Pricing tab. Default: `'Token pricing'`. */
   pricingPricesSectionLabel?: string;
+  /** Price section heading in the Pricing tab when prices are quoted per character. Default: `'Character pricing'`. */
+  pricingCharacterPricesSectionLabel?: string;
   /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */
   pricingLimitsSectionLabel?: string;
   /** Accessible label for the loading placeholder shown next to the tab row while structured details are being fetched. Default: `'Loading details'`. */

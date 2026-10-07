@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.39 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.50 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -686,6 +686,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   LimitRowLayout,
+  CatalogPricingUnit,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
@@ -713,6 +714,14 @@ DetailsConfirmationKind.Unshare; // 'unshare'
 DetailsConfirmationKind.RevokeAccess; // 'revokeAccess'
 DetailsConfirmationKind.DeleteApiKey; // 'deleteApiKey'
 DetailsConfirmationKind.Unpublish; // 'unpublish'
+
+/*
+ * `CatalogItemPricing.unit` picks the Pricing tab's price heading:
+ * `ItemDetailsTexts.pricingPricesSectionLabel` for tokens (the default),
+ * `pricingCharacterPricesSectionLabel` for characters.
+ */
+CatalogPricingUnit.Token; // 'token'
+CatalogPricingUnit.Character; // 'character'
 ```
 
 ### Details-panel confirmations

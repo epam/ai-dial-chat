@@ -1,5 +1,5 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
-import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
   memo,
@@ -244,7 +244,7 @@ const QuickAppSetup: FC<Props> = ({
         <p className="dial-small-text text-secondary">
           {t(ApplicationEditorI18nKeys.SetupPendingCreate)}
         </p>
-        <PrimaryButton
+        <NeutralButton
           label={t(ButtonsI18nKeys.Create)}
           disabled={isSubmitting}
           onClick={onSubmit}

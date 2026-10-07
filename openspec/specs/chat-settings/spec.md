@@ -139,7 +139,7 @@ The app layer (`apps/chat`) SHALL build `chatSettings` with `useChatSettingsForm
 
 - A **response format** radio group (`Markdown` / `Plain text`) when `features.responseFormat === true`. Default value is `ResponseFormat.Markdown`.
 - A **system prompt** textarea when `features.systemPrompt === true`.
-- A **temperature** slider (range 0–1, step 0.1) when `features.temperature === true`, pre-filled from the required `initialTemperature` (the lib has no default; `useChatSettingsFormConfig` supplies `0.5` when the conversation has none). Three labels SHALL be shown below the track: `[start, middle, end]` via `temperatureLabels` prop; defaults `['Precise', 'Neutral', 'Creative']`.
+- A **temperature** slider (range 0–1, step 0.1) when `features.temperature === true`, pre-filled from the required `initialTemperature` (the lib has no default; `useChatSettingsFormConfig` supplies `0.5` when the conversation has none). The kit `Slider` SHALL show the current value in a bubble above the thumb (`showTooltip`) and a tick at every step on the unfilled track (`showTicks`). Three labels SHALL be shown below the track: `[start, middle, end]` via `temperatureLabels` prop; defaults `['Precise', 'Neutral', 'Creative']`.
 
 Sections not enabled SHALL be hidden entirely (not disabled).
 

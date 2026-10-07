@@ -1,7 +1,8 @@
 import {
-  DialSchemaRenderer,
   ErrorMessageNotification,
   type JsonSchema,
+  NoDataContent,
+  SchemaRenderer,
   SchemaRendererVariant,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
@@ -16,7 +17,10 @@ import type {
 } from '../../../models/application-editor';
 import { getApplicationSchema } from '../../../server-api/application-schemas';
 import { AppsEditorQuery } from '../../../types/apps-editor';
-import { getSchemaTopLevelDefaults } from '../../../utils/application-editor';
+import {
+  getSchemaTopLevelDefaults,
+  hasVisibleSchemaProperties,
+} from '../../../utils/application-editor';
 
 type Props = ApplicationSetupProps<SchemaApplicationSetup>;
 
@@ -117,6 +121,10 @@ const SchemaAppSetup: FC<Props> = ({
     );
   }
 
+  if (!hasVisibleSchemaProperties(schema)) {
+    return <NoDataContent title={t(AppsEditorI18nKeys.SchemaFormEmpty)} />;
+  }
+
   return (
     <div className="flex flex-col gap-2">
       {errors.properties && (
@@ -124,7 +132,7 @@ const SchemaAppSetup: FC<Props> = ({
           {errors.properties}
         </p>
       )}
-      <DialSchemaRenderer
+      <SchemaRenderer
         schema={schema}
         variant={SchemaRendererVariant.Flat}
         defaultValue={defaultValue}

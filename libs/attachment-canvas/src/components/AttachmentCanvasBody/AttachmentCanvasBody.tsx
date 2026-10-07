@@ -13,6 +13,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
@@ -160,6 +161,25 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   const handleRetryPdf = useCallback(() => {
     setPdfRetryKey((key) => key + 1);
   }, []);
+
+  /*
+   * `DocumentPreview` only re-fetches when its URL changes, so reopening a PDF
+   * whose load failed (e.g. a citation for the document the Sources panel just
+   * failed to preview) would leave the stale error on screen. Every open
+   * replaces `content`, so a new object for the failed URL remounts the viewer.
+   */
+  const failedPdfUrlRef = useRef<string | undefined>(undefined);
+  const [pdfReloadKey, setPdfReloadKey] = useState(0);
+  const handlePdfLoadError = useCallback((url: string) => {
+    failedPdfUrlRef.current = url;
+  }, []);
+  useEffect(() => {
+    const failedUrl = failedPdfUrlRef.current;
+    if (failedUrl == null) return;
+    failedPdfUrlRef.current = undefined;
+    if (content.type === AttachmentContentType.Pdf && content.url === failedUrl)
+      setPdfReloadKey((key) => key + 1);
+  }, [content]);
 
   /* A `fontClassName` replaces the individual typography fields, so their vars
    * are skipped entirely when one is supplied. */
@@ -394,7 +414,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Pdf:
         return (
           <LazyContentBoundary
-            key={content.url}
+            key={`${content.url}#${pdfReloadKey}`}
             retryKey={pdfRetryKey}
             onRetry={handleRetryPdf}
             labels={{
@@ -410,6 +430,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               selectedHighlightId={content.selectedHighlightId}
               selectedPageNumber={content.page}
               loadPdf={loadPdf}
+              onLoadError={handlePdfLoadError}
               hideHeader={hidePdfToolbar}
               configurePdfWorker={configurePdfWorker}
               labels={{
@@ -513,6 +534,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     PdfContent,
     pdfRetryKey,
     handleRetryPdf,
+    pdfReloadKey,
+    handlePdfLoadError,
     tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
