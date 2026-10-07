@@ -27,11 +27,11 @@ import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConfirmationDialog,
-  ConfirmationIdentityCard,
   ConfirmationIdentityRow,
   ConversationTransferErrorCode,
   FilterTab,
   mergeClasses,
+  ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -1378,7 +1378,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         title={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
         variant={ConfirmationPopupVariant.Danger}
         identity={
-          <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+          <ResourceSummary>
             <ConfirmationIdentityRow
               icon={
                 <IconMessageCircle
@@ -1387,10 +1387,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   aria-hidden
                 />
               }
-              typeLabel={t(ConversationPanelI18nKeys.TypeLabel)}
               name={pendingDeleteTitle}
             />
-          </ConfirmationIdentityCard>
+          </ResourceSummary>
         }
         message={
           <Trans

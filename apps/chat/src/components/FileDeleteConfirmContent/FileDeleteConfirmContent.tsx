@@ -1,7 +1,7 @@
 import {
-  ConfirmationIdentityCard,
   ConfirmationIdentityRow,
   ConfirmationView,
+  ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
@@ -43,7 +43,7 @@ const FileDeleteConfirmContent: FC<Props> = ({ names }) => {
     <ConfirmationView
       variant={ConfirmationPopupVariant.Danger}
       identity={
-        <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+        <ResourceSummary>
           {/* Name only, per design: no glyph and no type label. */}
           <ConfirmationIdentityRow
             name={
@@ -54,7 +54,7 @@ const FileDeleteConfirmContent: FC<Props> = ({ names }) => {
                   })
             }
           />
-        </ConfirmationIdentityCard>
+        </ResourceSummary>
       }
       message={
         <>

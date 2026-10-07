@@ -242,11 +242,12 @@ const markdownLabels: ScheduledTaskInstructionsMarkdownLabels = {
 
 Controlled deletion presentation that leaves mutations, routing, notifications,
 and translated copy to the host. The dialog frame is the kit's `Popup`; the
-identity card, the warning sentence, the consequence bullets, and the action row
-are [`ConfirmationIdentityCard`, `ConfirmationView` and
+identity row, the warning sentence, the consequence bullets, and the action row
+are [`ResourceSummary`, `ConfirmationView` and
 `ConfirmationFooter`](../chat-shared/README.md#confirmationview) from
-`@epam/ai-dial-chat-shared`, so a delete confirmation reads the same here as in
-the catalog's details panel.
+`@epam/ai-dial-chat-shared`. The identity row sits on the plain neutral
+`ResourceSummary` surface rather than the catalog's red-tinted card: a task is
+not a catalog resource.
 
 `title` is a string rather than a node so the kit names the dialog with it.
 `body` is a node, which is how the host emphasises the task name inside its own

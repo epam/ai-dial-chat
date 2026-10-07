@@ -714,7 +714,6 @@ export enum ConversationPanelI18nKeys {
   ActionsLabel = 'conversationPanel.actions.actionsLabel',
   PinLabel = 'conversationPanel.actions.pinLabel',
   UnpinLabel = 'conversationPanel.actions.unpinLabel',
-  TypeLabel = 'conversationPanel.typeLabel',
   DeleteConfirmTitle = 'conversationPanel.delete.deleteConfirmTitle',
   DeleteConfirmMessage = 'conversationPanel.delete.confirmMessage',
   DeleteError = 'conversationPanel.delete.deleteError',

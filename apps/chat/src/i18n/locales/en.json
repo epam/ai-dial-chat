@@ -434,7 +434,6 @@
   },
   "conversationPanel": {
     "title": "Chats",
-    "typeLabel": "Chat",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
     "filter": {
