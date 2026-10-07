@@ -4,7 +4,7 @@
 
 Host-agnostic `getModelIdFromConversationId` conversation-ID parsing,
 published from `@epam/ai-dial-chat-hooks` so any DIAL-Core-backed client can
-depend on the package instead of hand-copying
+depend on the package instead of hand-copying the former app helper
 `apps/chat/src/utils/get-model-id-from-conversation-id.ts`.
 
 ## Requirements

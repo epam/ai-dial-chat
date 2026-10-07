@@ -66,7 +66,7 @@ Not allowed in SCSS (use Tailwind instead):
   border-color: var(--ci-border, var(--stroke-primary, #57647A));
 
   &:focus-within {
-    border-color: var(--ci-border-focus, var(--stroke-focus-black, #161B2D));
+    border-color: var(--ci-border-focus, var(--stroke-focus, #161B2D));
   }
 }
 

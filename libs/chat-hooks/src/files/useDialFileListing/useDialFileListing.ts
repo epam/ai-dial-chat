@@ -85,7 +85,7 @@ export interface UseDialFileListingResult {
   /**
    * Deletes the given API-path cache keys so the next listing fetch/expand for
    * that folder re-fetches from the server. The only way sibling sub-hooks may
-   * invalidate the shared cache (design.md D1).
+   * invalidate the shared cache (`openspec/changes/archive/2026-07-21-split-use-dial-file-manager/design.md` D1).
    */
   invalidateFolders: (apiPaths: string[]) => void;
   /** Merges a just-created folder into its parent's cache entry (optimistic display for create-folder). */
@@ -103,7 +103,7 @@ export interface UseDialFileListingResult {
  * tree's expand/collapse state, search, and the shared per-folder cache that
  * `useDialFileUploadBatch`/`useDialFileMutations`/`useDialFileSharing` invalidate
  * through `invalidateFolders`/`bumpRetry` after their own mutations settle
- * (design.md D1) — this hook is the sole owner/writer of that cache.
+ * (`openspec/changes/archive/2026-07-21-split-use-dial-file-manager/design.md` D1) — this hook is the sole owner/writer of that cache.
  *
  * Supports three listing sources via `activeTab`:
  * - my_files: user's own bucket via `DialFilesApi.listFiles`
@@ -682,7 +682,7 @@ export const useDialFileListing = ({
        * Results are the unfiltered recursive listing: `DialFileManager` calls
        * `onSearchFiles` once per search session and applies the name filter
        * for every later query itself. Pre-filtering here by the first query
-       * would leave nothing for a replacement query to match (issue #9125).
+       * would leave nothing for a replacement query to match ([#9125](https://github.com/epam/ai-dial-chat/issues/9125)).
        */
       searchDebounceRef.current = setTimeout(() => {
         searchDebounceRef.current = null;

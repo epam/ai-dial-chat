@@ -15,7 +15,7 @@ import type { Response } from 'express';
  *
  * A comment line is inert for consumers — every SSE reader in this repo skips
  * lines that do not start with `data:`. Same fix as the pre-BFF app carried in
- * `pages/api/client-channels/subscribe.ts` (issue #6500).
+ * `pages/api/client-channels/subscribe.ts` ([#6500](https://github.com/epam/ai-dial-chat/issues/6500)).
  */
 export const SSE_INIT_PAYLOAD = ': init\n\n';
 

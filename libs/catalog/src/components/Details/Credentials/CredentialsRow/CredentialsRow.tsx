@@ -41,6 +41,8 @@ interface CredentialsRowProps {
   authenticationType: ToolsetAuthenticationType;
   /** Already-formatted relative time since the API key was added, shown when signed in via `API_KEY`. */
   apiKeyAddedWhen?: string;
+  /** Name of the configured API key header (e.g. `X-Api-Key`). When set, a hint naming it is shown under, and describes, the API key input. */
+  apiKeyHeader?: string;
   /** Called with the entered key (or no key, for OAuth) when the row's login action is submitted. May return a promise; the row shows a spinner in place of the action label until it resolves. */
   onLogin?: (apiKey?: string) => Promise<void | boolean> | void | boolean;
   /** Called when "Log out" is clicked on a signed-in OAuth row, so the host can show a full logout-confirmation sub-view for this level. */
@@ -80,6 +82,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
   isActive,
   authenticationType,
   apiKeyAddedWhen,
+  apiKeyHeader,
   onLogin,
   onRequestLogout,
   onRequestDeleteApiKey,
@@ -136,6 +139,13 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
   const addingStatusLabel = texts?.addingApiKeyStatusLabel ?? 'Adding';
   const configuredMessage =
     texts?.apiKeyConfiguredMessage ?? 'Key has been configured';
+  const headerHintId = `${inputId}-header-hint`;
+  const headerHint = apiKeyHeader
+    ? (
+        texts?.apiKeyHeaderHint ??
+        ((header) => `Enter your API key value for "${header}" header`)
+      )(apiKeyHeader)
+    : undefined;
   const addedWhenLabel =
     apiKeyAddedWhen != null
       ? (texts?.apiKeyAddedLabel ?? ((when) => `Added ${when}`))(
@@ -202,6 +212,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
               <div className="flex items-end gap-2">
                 <Input
                   id={inputId}
+                  aria-describedby={headerHint ? headerHintId : undefined}
                   type="password"
                   autoComplete="off"
                   value={apiKey}
@@ -229,8 +240,21 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
               </div>
               {/*
                * Rendered below the input+button row, not through Input's own
-               * `error` prop, so the button never shifts when it appears.
+               * `caption`/`error` props, so the button never shifts when they
+               * appear. Input's `caption` also carries no id to describe the
+               * field by and is announced as an alert; the header hint is static.
                */}
+              {headerHint && (
+                <span
+                  id={headerHintId}
+                  className={mergeClasses(
+                    descriptionClassName,
+                    styles.rowDescription,
+                  )}
+                >
+                  {headerHint}
+                </span>
+              )}
               {hasEmptyKeyError && (
                 <span
                   role="alert"

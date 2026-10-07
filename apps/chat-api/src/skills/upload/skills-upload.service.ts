@@ -66,7 +66,7 @@ export class SkillsUploadService {
   /**
    * Creates a new skill atomically. Sends `If-None-Match: '*'` to DIAL
    * Core's `uploadSkillFolder` (its real, verified create-only mechanism —
-   * design.md's Context, read directly from Core's `EtagHeader` source) and
+   * `openspec/changes/archive/2026-08-13-fix-skill-editor-core-contract/design.md`'s Context, read directly from Core's `EtagHeader` source) and
    * sends no `If-Match`. A `412` response (Core's real create-collision
    * signal) is translated to `409 Conflict`.
    */
@@ -94,7 +94,7 @@ export class SkillsUploadService {
             headers: {
               ...getBearerAuthHeaders(accessToken),
               // Undeclared in the pinned SDK's operation type — a verified
-              // schema gap, not a speculative header (design.md D2).
+              // schema gap, not a speculative header (`openspec/changes/archive/2026-08-13-fix-skill-editor-core-contract/design.md` D2).
               'If-None-Match': '*',
             } as Record<string, string>,
             body: formData as unknown as { file: string },

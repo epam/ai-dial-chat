@@ -36,7 +36,9 @@ import '@epam/ai-dial-attachment-input/styles.css';
 
 Displays a single attachment with its name, status, and actions. Every callback receives the attachment `id`. Passing `searchQuery` highlights matches in the file name.
 
-Each action the card renders — download, retry, open-in-new-tab, remove — gets its own accessible name from `labels`, so pass every label whose action the card can show. They are laid out as one row in the tile's corner.
+Each action the card renders — download, retry, open-in-new-tab, remove — gets its own accessible name from `labels`, so pass every label whose action the card can show. They are laid out as one row in the tile's corner. The download button on both image and file tiles is named by `labels.downloadLabel` (default `'Download attachment'`), never by `clickLabel`, so a tile that is both clickable and downloadable exposes two distinctly named buttons.
+
+The tile itself is a `role="button"` Tab stop only when activating it does something: `onExpand` on a pasted-text card (named by `labels.expandLabel`, default `'Expand pasted text'`, and taking precedence over `onClick`), otherwise `onClick` (named by `labels.clickLabel`, default `'Open attachment'` on image tiles and `'Download attachment'` on file, link and pasted-text tiles). Click, `Enter` and `Space` run the same action. With neither handler — or while an image tile is still loading — the tile renders as a plain, non-focusable element.
 
 ```tsx
 import { AttachmentCard } from '@epam/ai-dial-attachment-input';
@@ -101,7 +103,7 @@ tiles through the tray it already renders instead of a descendant selector on
 
 ### AttachmentGroup
 
-Renders a sent message's attachments — image tiles plus file rows — with a header action that downloads everything downloadable at once. Collapses beyond `ATTACHMENT_COLLAPSE_THRESHOLD` items.
+Renders a sent message's attachments — image tiles plus file rows — with a header action that downloads everything downloadable at once. Collapses beyond `ATTACHMENT_COLLAPSE_THRESHOLD` items. Tiles are buttons only when `onAttachmentClick` is given, and each file tile's own download button renders only when `onDownloadAll` is given — pass `undefined`, not a no-op wrapper, to keep the group inert. `labels.clickLabel` names the tiles and `labels.downloadLabel` names their download buttons (both default to `'Download attachment'`); when the tile opens a preview instead of downloading, pass a different `clickLabel` so the two controls do not share a name.
 
 ```tsx
 import {
@@ -114,6 +116,7 @@ import {
   onAttachmentClick={handleOpenInCanvas}
   onDownloadAll={handleDownloadAll}
   selectedAttachmentId={selectedAttachmentId}
+  labels={{ clickLabel: 'Open in canvas', downloadLabel: 'Download file' }}
 />;
 ```
 

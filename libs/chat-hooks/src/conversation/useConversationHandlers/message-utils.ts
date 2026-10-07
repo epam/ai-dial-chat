@@ -2,6 +2,7 @@ import {
   type Attachment,
   type DisplayAttachment,
   type Message,
+  type MessageCustomContent,
   MessageRole,
   type RequestSkill,
 } from '@epam/ai-dial-chat-shared';
@@ -10,6 +11,15 @@ import {
 export const hasActiveToolConfig = (
   value: Record<string, boolean> | undefined,
 ): boolean => value != null && Object.keys(value).length > 0;
+
+/** Returns `customContent` with `configuration_value` set to the active tool toggles, or `customContent` unchanged when none is active. */
+export const withToolConfiguration = (
+  customContent: MessageCustomContent | undefined,
+  toolConfigurationValue: Record<string, boolean> | undefined,
+): MessageCustomContent | undefined =>
+  hasActiveToolConfig(toolConfigurationValue)
+    ? { ...customContent, configuration_value: toolConfigurationValue }
+    : customContent;
 
 /** Whether two `custom_content.skills` lists differ (compared by url, in order). */
 const isSkillsChanged = (

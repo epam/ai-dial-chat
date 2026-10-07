@@ -315,3 +315,24 @@ describe('Card — public class names', () => {
     );
   });
 });
+
+describe('Card — description markdown labels', () => {
+  it('names the description code-block buttons with the supplied labels', () => {
+    render(
+      <Card
+        item={makeItem({ description: '```ts\nconst a = 1;\n```' })}
+        markdownLabels={{
+          codeBlockCopyLabel: 'Kopieren',
+          codeBlockDownloadLabel: 'Herunterladen',
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Kopieren', hidden: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Herunterladen', hidden: true }),
+    ).toBeTruthy();
+  });
+});

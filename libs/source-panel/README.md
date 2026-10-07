@@ -100,6 +100,14 @@ const labels: ConversationSourcesPanelLabels = {
   copySourceLabel: t('Copy link'),
   sourceCopiedLabel: t('Copied!'),
   attachmentClickLabel: t('Download'),
+  // Optional: name the controls of code blocks, tables and block formulas
+  // inside a source quote. Default to 'Copy code' / 'Copied!' /
+  // 'Download code' / 'Scrollable table' / 'Scrollable formula'.
+  codeBlockCopyLabel: t('Copy'),
+  codeBlockCopiedLabel: t('Copied!'),
+  codeBlockDownloadLabel: t('Download'),
+  tableScrollRegionAriaLabel: t('Scrollable table'),
+  mathScrollRegionAriaLabel: t('Scrollable formula'),
 };
 ```
 

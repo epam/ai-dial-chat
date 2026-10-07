@@ -4,7 +4,7 @@ import { formatUsageResetTime } from '../usage-reset-time';
 
 /*
  * Boundary values taken from the real GET /api/v1/user/usage capture in
- * openspec/changes/migrate-usage-reset-times/fixtures/.
+ * openspec/changes/archive/2026-09-15-migrate-usage-reset-times/fixtures/.
  */
 const DAY_BOUNDARY = '2026-09-16T00:00:00Z';
 const MONTH_BOUNDARY = '2026-10-01T00:00:00Z';

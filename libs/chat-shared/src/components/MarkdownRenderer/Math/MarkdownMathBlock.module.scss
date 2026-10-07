@@ -17,7 +17,7 @@
   }
 
   &:focus-visible {
-    outline: 1px solid var(--cm-math-focus, var(--stroke-focus-black, #161b2d));
+    outline: 1px solid var(--cm-math-focus, var(--stroke-focus, #161b2d));
     outline-offset: 2px;
   }
 }

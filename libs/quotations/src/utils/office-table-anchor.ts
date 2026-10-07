@@ -5,9 +5,9 @@ import type {
 } from '../models/office-highlight';
 
 /*
- * TODO(#8863): Remove this compatibility adapter after the backend emits
+ * TODO([#8863](https://github.com/epam/ai-dial-chat/issues/8863)): Remove this compatibility adapter after the backend emits
  * precise table-cell ranges instead of Markdown row anchors, and persisted
- * anchors no longer require it. https://github.com/epam/ai-dial-chat/issues/8863
+ * anchors no longer require it.
  */
 const parseTableRow = (text: string): string[] | undefined => {
   const row = text.trim();

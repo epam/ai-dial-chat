@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
+import type { CatalogMarkdownLabels } from './item-details-props';
 
 /** Text overrides for `CardGrid` empty state. */
 export interface CardGridTitles {
@@ -31,6 +32,8 @@ export interface CardGridProps {
   isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Grouped empty-state text overrides. */
   titles?: CardGridTitles;
+  /** Code-block, table and formula labels forwarded to each card's description markdown. Defaults to the renderer's English labels. */
+  markdownLabels?: CatalogMarkdownLabels;
   /** Called when a card body is clicked. */
   onItemClick?: (item: CatalogItem) => void;
   /** When true, renders skeleton placeholder cards instead of actual content. */

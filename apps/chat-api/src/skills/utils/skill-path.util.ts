@@ -6,7 +6,7 @@ const WINDOWS_DRIVE_PATTERN = /^[a-zA-Z]:/;
 
 export const SKILL_RESOURCE_PREFIX = 'skills/';
 
-/** Required manifest filename at the root of every skill (design.md D4). Shared by `SkillsUploadService`'s archive validation and `SkillsMutationService`'s delete-protection guard. */
+/** Required manifest filename at the root of every skill (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D4). Shared by `SkillsUploadService`'s archive validation and `SkillsMutationService`'s delete-protection guard. */
 export const SKILL_MANIFEST_FILE = 'SKILL.md';
 
 export interface ParsedSkillResourceUrl {
@@ -36,7 +36,7 @@ export const parseSkillResourceUrl = (
 
 /**
  * Reserved-marker/structural-segment validator for a skill-relative file
- * path with no trailing slash (design.md D4). Shared by
+ * path with no trailing slash (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D4). Shared by
  * `SkillsUploadService`'s ZIP-entry validation and standalone `filePath`
  * validation (`uploadSkillFile`/`deleteSkillFile`), on top of whatever
  * `IsValidFilePath` already checks at the DTO layer. Rejects:
@@ -71,7 +71,7 @@ export const isValidSkillRelativePath = (relativePath: string): boolean => {
 };
 
 /**
- * Validates a Skill archive import's destination-name candidate (design.md
+ * Validates a Skill archive import's destination-name candidate (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md`
  * D6, `add-skill-archive-import`): a single path segment, so a manifest's
  * `name` can be used directly as the Skill's destination path without a
  * grouping folder. Reuses `isValidSkillRelativePath` for the shared safety
@@ -87,7 +87,7 @@ export interface SkillArchiveEntryPathResult {
 
 /**
  * Zip-slip + reserved-marker defense for a single whole-skill-archive entry
- * (design.md D1/D4), reusing the same directory-entry-skip shape as
+ * (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D1/D4), reusing the same directory-entry-skip shape as
  * `apps/chat-api/src/files/upload/files-upload.service.ts`'s
  * `resolveArchiveEntryPath` — directory entries (trailing `/`) are flagged
  * so callers can skip them rather than validate as a file.

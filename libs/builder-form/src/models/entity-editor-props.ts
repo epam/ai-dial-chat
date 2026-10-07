@@ -55,8 +55,11 @@ export interface EntityEditorProps {
   metadataFooter?: ReactNode;
   /** Content of the Setup section in the right column. When absent, the left column fills the width. */
   setup?: ReactNode;
-  /** Heading of the Setup section; overrides `labels.setupTitle`. */
-  setupTitle?: string;
+  /**
+   * Heading of the Setup section; overrides `labels.setupTitle`.
+   * `null` renders the section without a heading, for Setup content that carries its own (e.g. an embedded editor).
+   */
+  setupTitle?: string | null;
   /** Inline error or conflict message, rendered in a `role="alert"` region above the Setup section. */
   alert?: ReactNode;
   /** Class added to the Metadata section root, e.g. an embedding editor's own public class. */

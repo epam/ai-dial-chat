@@ -16,10 +16,12 @@ import { useUiFeature } from '../useUiFeature';
  * Settings groups offered by the navigation menus.
  *
  * Theme and "Default agent for new chats" live only in the Settings page's Preferences tab.
- * Language and the keyboard shortcut are additionally offered here, because the
- * mobile `NavigationSheet` has no Settings entry point of its own and would
- * otherwise strand mobile users. Both surfaces write through the same hooks
- * (`useLanguage`, `useKeyboardShortcutPreference`), so they cannot disagree.
+ * Language and the keyboard shortcut are additionally offered as quick
+ * shortcuts here: `Navigation` passes `languageGroup` only to the desktop
+ * `UserMenu` and `keyboardGroup` only to the mobile `NavigationSheet`. Both
+ * menus also keep a Settings entry (`onSettings`, unless the overlay host sets
+ * `OverlayFeature.HideSettingsPage`). Every surface writes through the same
+ * hooks (`useLanguage`, `useKeyboardShortcutPreference`), so they cannot disagree.
  */
 export interface NavigationMenuGroups {
   /**

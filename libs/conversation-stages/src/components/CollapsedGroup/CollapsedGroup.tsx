@@ -35,6 +35,9 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     failedCountLabel = (n: number) => `${n} failed`,
     runningAriaLabel = 'Running',
     copyAriaLabel,
+    codeBlockCopiedLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     failedAriaLabel,
     attemptLabel,
     attachmentClickLabel,
@@ -90,6 +93,9 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
 
   const panelLabels = {
     copyAriaLabel,
+    codeBlockCopiedLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
     runningAriaLabel,
     failedAriaLabel,
     attemptLabel,
@@ -116,7 +122,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   if (isStreaming) {
     /* No "Step X of Y" counter: agents add stages mid-run, so the total keeps
        growing and misleads users about how close the run is to finishing
-       (issue #9025). Between one stage settling and the next starting, keep
+       ([#9025](https://github.com/epam/ai-dial-chat/issues/9025)). Between one stage settling and the next starting, keep
        the last stage's name on screen. */
     const liveStage = findLiveStage(stages) ?? stages[stages.length - 1];
     const liveName = cleanStageName(liveStage.name).name;

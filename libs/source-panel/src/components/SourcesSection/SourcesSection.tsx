@@ -30,6 +30,16 @@ interface SourcesSectionProps {
   copyLabel: string;
   /** Status message announced to assistive tech after a source URL is copied. Defaults to `'Link copied to clipboard'`. */
   copiedLabel?: string;
+  /** Accessible label for the copy button on a code block inside a source quote. Forwarded to `MarkdownRenderer`. */
+  codeBlockCopyLabel?: string;
+  /** Status announced after a code block inside a source quote has been copied. Forwarded to `MarkdownRenderer`. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for the download button on a code block inside a source quote. Forwarded to `MarkdownRenderer`. */
+  codeBlockDownloadLabel?: string;
+  /** Accessible label for a table's scrollable region inside a source quote. Forwarded to `MarkdownRenderer`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's scrollable region inside a source quote. Forwarded to `MarkdownRenderer`. */
+  mathScrollRegionAriaLabel?: string;
   /** Current search query — used to highlight matches in source titles and quotes. */
   searchQuery?: string;
   /** Typography (font utility class) overrides for section headings and source text. */
@@ -46,6 +56,11 @@ const SourcesSection: FC<SourcesSectionProps> = ({
   sources,
   copyLabel,
   copiedLabel = 'Link copied to clipboard',
+  codeBlockCopyLabel,
+  codeBlockCopiedLabel,
+  codeBlockDownloadLabel,
+  tableScrollRegionAriaLabel,
+  mathScrollRegionAriaLabel,
   searchQuery = '',
   typography,
   colors,
@@ -135,7 +150,14 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                   'line-clamp-5 [&>div>*+*]:mt-1',
                 )}
               >
-                <MarkdownRenderer content={source.quote} />
+                <MarkdownRenderer
+                  content={source.quote}
+                  codeBlockCopyLabel={codeBlockCopyLabel}
+                  codeBlockCopiedLabel={codeBlockCopiedLabel}
+                  codeBlockDownloadLabel={codeBlockDownloadLabel}
+                  tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+                  mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
+                />
               </div>
             )}
           </li>

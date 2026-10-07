@@ -82,7 +82,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.36
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.39
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -669,6 +669,7 @@ const ResizableSidePanel = () => {
 Resolves and manages share-link data for a DIAL Core resource: loading/error state, a stale-response guard, and re-fetch when the requested access levels change. Accepts an already-configured `ShareApi` instance from `@epam/ai-dial-chat-api-client` — the hook owns only the request lifecycle, not the client's base URL, auth, or CSRF setup.
 
 ```tsx
+import type { ShareApi } from '@epam/ai-dial-chat-api-client';
 import { useShareLink } from '@epam/ai-dial-chat-hooks';
 import { ShareLinkAccess } from '@epam/ai-dial-share';
 
@@ -695,16 +696,15 @@ const ShareLinkPanel = ({
 
 #### API
 
-**Parameters**: `useShareLink(shareApi, itemId, resourceKind?, origin?)`
+**Parameters**: `useShareLink(shareApi, itemId, origin?)`
 
-| Name           | Type                                 | Description                                                                    |
-| -------------- | ------------------------------------ | ------------------------------------------------------------------------------ |
-| `shareApi`     | `Pick<ShareApi, 'createShareLink'>`  | Already-configured generated-client instance.                                  |
-| `itemId`       | `string`                             | Identifier of the resource being shared.                                       |
-| `resourceKind` | `CreateShareLinkDtoResourceKindEnum` | Optional; required only for resources whose ids need backend qualification.    |
-| `origin`       | `string`                             | Origin the returned link is anchored to. Defaults to `window.location.origin`. |
+| Name       | Type                                | Description                                                                                                                                               |
+| ---------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shareApi` | `Pick<ShareApi, 'createShareLink'>` | Already-configured generated-client instance.                                                                                                             |
+| `itemId`   | `string`                            | Identifier of the resource being shared, sent as `createShareLinkDto.itemId`.                                                                             |
+| `origin`   | `string`                            | Origin the returned link is re-anchored to (the response URL keeps its path, query and hash but takes this origin). Defaults to `window.location.origin`. |
 
-**Returns** (`UseShareLinkResult`): `{ data, isLoading, error, setAccess }` — `data` is `ShareLinkData | undefined`, `setAccess` takes a `ShareLinkAccess[]` and triggers a re-fetch.
+**Returns** (`UseShareLinkResult`): `{ data, isLoading, error, setAccess }` — `data` is `ShareLinkData | undefined`, `setAccess` takes a `ShareLinkAccess[]` and triggers a re-fetch. The initial request, and the one after every `itemId` change, asks for `[ShareLinkAccess.View]`; `isLoading` is `true` while the latest request is in flight.
 
 ### useToolsMenu
 

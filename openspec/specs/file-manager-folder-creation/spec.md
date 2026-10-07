@@ -172,15 +172,19 @@ Conflict check in `onCreateFolderValidate` is against the **cached** `items` —
 
 ## Cache update after creation
 
-After `onCreateFolder` resolves successfully:
+After `filesApi.createFolder` resolves successfully, `onCreateFolder` (`useDialFileMutations`) calls:
 ```ts
-setCache((prev) =>
-  mergeCreatedFolderIntoCache(prev, parentApiPath, created, listingPermissions),
+mergeCreatedFolder(
+  parentApiPath,
+  created,
+  listingPermissionsCache.get(parentApiPath),
 );
-setRetryCounter((c) => c + 1);
+bumpRetry();
 ```
 
-`mergeListingItems` unions cached items with incoming DIAL results on refetch so optimistically created folders are not lost when Core lags.
+`mergeCreatedFolder` (`libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts`) runs `setCache((prev) => mergeCreatedFolderIntoCache(prev, parentApiPath, created, inheritedPermissions))`. `mergeCreatedFolderIntoCache` (`libs/chat-hooks/src/files/dial-file-manager-mapping.util.ts`) returns a new `Map` whose `parentApiPath` entry has a synthesized folder `ListFilesItemDto` appended — unless a case-insensitive same-name item is already there — so the folder shows immediately, including when it was created from a destination-folder popup browsing a different parent. `bumpRetry` increments `retryCounter`, which refetches the currently browsed `folderPath`.
+
+This optimistic entry is **not** preserved across a refetch. Every listing fetch in `useDialFileListing` (the `retryCounter`-driven current-folder effect, tree expansion, and destination-popup loads) writes its result with `next.set(apiPath, flat)` / `new Map(prev).set(apiPath, flat)`, replacing the folder's cache entry outright; there is no merge of cached and incoming items (no `mergeListingItems` helper exists). After the next refetch of the parent, the folder is shown only if DIAL Core's listing returns it. DIAL Core has no empty-folder concept — a folder exists only while some object is stored under its prefix — so a created folder that the listing does not return disappears from the grid at that refetch and reappears once an object exists under it (for example after a file is uploaded into it). This is expected behaviour: the hooks keep no client-side record of created folders beyond that cache entry. A tab or session change (`setCache(new Map())`) also discards it.
 
 ---
 
@@ -257,12 +261,13 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 
 ---
 
-### Scenario: Empty folder remains visible after refresh
+### Scenario: Created folder after a refetch depends only on DIAL Core's listing
 
-- **GIVEN** a folder `empty-folder` was created at root with only a marker file
-- **WHEN** the user closes and reopens the modal (re-fetching the root listing)
-- **THEN** `empty-folder` appears in the grid (from optimistic cache merge and/or DIAL Core prefix listing)
-- **AND** navigating into `empty-folder` may list the `.dial_folder` marker (hidden by default via ui-kit "Hidden files" toggle)
+- **GIVEN** a folder `empty-folder` was created at root and is shown through the optimistic `mergeCreatedFolderIntoCache` entry
+- **WHEN** the root listing is re-fetched (for example the user closes and reopens the modal)
+- **THEN** the root cache entry is replaced by the DIAL Core result; the optimistic entry is not carried over
+- **AND** `empty-folder` appears only if DIAL Core's root listing returns it; otherwise it stays absent until an object (such as an uploaded file) exists under its prefix
+- **AND** when it is listed, navigating into it may list the `.dial_folder` marker (hidden by default via ui-kit "Hidden files" toggle)
 
 ---
 
@@ -332,7 +337,7 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 - **WHEN** `GET /api/v1/files/list?bucket=...&path=that-folder/` is called
 - **THEN** the `.dial_folder` item is included in `items`
 - **AND** the ui-kit hides it by default via the "Hidden files" toggle
-- **AND** the folder node itself is visible in the parent listing when DIAL Core returns it (optimistic cache merge covers Core lag)
+- **AND** the folder node itself is visible in the parent listing only when DIAL Core returns it; the optimistic cache entry covers only the window before the parent's next refetch
 
 ---
 
@@ -389,3 +394,27 @@ The notification SHALL NOT be raised when validation rejects the name locally or
 
 - **WHEN** the name fails client-side validation, or the BFF responds `409`
 - **THEN** no success notification is raised and the existing inline error / error toast behaviour is unchanged
+
+---
+
+### Requirement: An optimistically created folder lives only until the parent's next listing refetch
+
+After a successful `createFolder`, `useDialFileMutations.onCreateFolder` SHALL insert the created folder into its parent's listing cache through `mergeCreatedFolder` → `mergeCreatedFolderIntoCache` (`libs/chat-hooks/src/files/dial-file-manager-mapping.util.ts`) so it is displayed immediately, and SHALL NOT persist that entry beyond the parent's next listing fetch: `useDialFileListing` replaces a folder's cache entry with the fetched items (`next.set(apiPath, flat)`) and does not merge previously cached items back in. Because DIAL Core has no empty folders, a created folder that DIAL Core's listing does not return disappears from the grid at that refetch and reappears once an object (for example an uploaded file) is stored under it; this is the expected behaviour, not a defect.
+
+#### Scenario: Created folder is shown immediately
+
+- **WHEN** `createFolder` resolves for folder `drafts` under the root
+- **THEN** `mergeCreatedFolderIntoCache` appends a `drafts` folder item to the root cache entry (skipped if a case-insensitive same-name item already exists) and the folder appears in the grid before any refetch completes
+
+#### Scenario: Optimistic folder disappears on refetch when DIAL Core does not list it
+
+- **GIVEN** folder `drafts` is displayed only through the optimistic cache entry
+- **WHEN** the root listing is re-fetched and DIAL Core's response does not include `drafts`
+- **THEN** the root cache entry is replaced by the response and `drafts` is no longer shown
+- **AND** no error or notification is raised
+
+#### Scenario: Folder reappears once it holds a file
+
+- **GIVEN** folder `drafts` disappeared after a refetch
+- **WHEN** a file is uploaded into `drafts/` and the root listing is re-fetched
+- **THEN** DIAL Core lists `drafts` and it is shown again

@@ -78,7 +78,7 @@ The endpoint:
 
 The `:modelName` path parameter MUST be validated with an allowlist regex to prevent path-traversal and injection.
 
-Allowed characters: `[a-zA-Z0-9_\-.:@]` (covers known DIAL deployment name formats including dotted names like `anthropic.claude-3-5` and at-prefixed names like `@model`), enforced by `GetModelDto.modelName`'s `@Matches(/^[a-zA-Z0-9_\-.:@]+$/)` in `apps/chat-api/src/models/dto/get-model.dto.ts`. A slash is not allowed: Express decodes `%2F` back to `/` before validation, so slash-separated namespaced names are rejected whether or not the caller URL-encodes them.
+Allowed characters: `[a-zA-Z0-9_\-.:@]` (covers known DIAL deployment name formats including dotted names like `anthropic.claude-3-5` and at-prefixed names like `@model`), enforced by `GetModelDto.modelName`'s `@Matches(/^[a-zA-Z0-9_\-.:@]+$/)` in `apps/chat-api/src/models/dto/get-model.dto.ts`. A slash is not allowed: Express decodes `%2F` back to `/` before validation, so slash-separated namespaced names are rejected whether or not the caller URL-encodes them. The `@ApiProperty` description of `GetModelDto.modelName` (and therefore the generated OpenAPI parameter description) SHALL list exactly the allowed characters — alphanumeric, dash, underscore, dot, colon, and at-sign — and SHALL NOT mention slash.
 
 Any character outside the allowlist SHALL cause the BFF to return `400 Bad Request` before making any upstream call.
 

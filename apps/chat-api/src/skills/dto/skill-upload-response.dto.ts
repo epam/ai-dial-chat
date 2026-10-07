@@ -18,7 +18,7 @@ export class SkillUploadResponseDto {
  * caller (which already knows `bucket`/`path` because it supplied them),
  * `importSkillArchive`'s caller does not know the destination path in
  * advance — it is derived server-side from the archive manifest's `name` —
- * so this DTO reports it back (design.md D2, `add-skill-archive-import`).
+ * so this DTO reports it back (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md` D2, `add-skill-archive-import`).
  */
 export class SkillImportResponseDto {
   @IsString()

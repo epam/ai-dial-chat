@@ -584,11 +584,10 @@ export class ConversationStreamingService {
 
   /**
    * Streams a chat completion as raw SSE bytes. The caller (controller) is
-   * responsible for the HTTP transport: it must call `onReadyToStream` at
-   * the point the caller wants SSE response headers sent — mirroring the
-   * exact point the pre-split implementation used to call
-   * `res.setHeader(...)`/`res.flushHeaders()` — then write each yielded
-   * chunk to the response and end it once iteration completes.
+   * responsible for the HTTP transport: this service invokes
+   * `onReadyToStream` when the SSE response headers should be sent
+   * (`res.setHeader(...)` / `res.flushHeaders()`); the caller then writes
+   * each yielded chunk to the response and ends it once iteration completes.
    */
   async *streamCompletion(
     conversationPath: string,
@@ -949,7 +948,7 @@ export class ConversationStreamingService {
            * Only upstream-supplied text reaches the user. A thrown error's
            * message (e.g. undici's `terminated`) is transport detail: it is
            * logged above and persisted as '' so the frontend shows its
-           * localized fallback (issue #8979).
+           * localized fallback ([#8979](https://github.com/epam/ai-dial-chat/issues/8979)).
            */
           const partialMsg = {
             ...relayResult.assembledMessage,

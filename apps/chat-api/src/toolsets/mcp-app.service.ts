@@ -118,7 +118,7 @@ const parseJsonRpcBody = <T>(
     : JSON.parse(raw)) as JsonRpcResponse<T>;
 
 /**
- * Proxies DIAL Core's MCP Apps Phase 1 surface (`epam/ai-dial-core` PR #1745):
+ * Proxies DIAL Core's MCP Apps Phase 1 surface ([ai-dial-core#1745](https://github.com/epam/ai-dial-core/pull/1745)):
  * fetching a toolset's `ui://` resource as a raw passthrough, forwarding an
  * MCP App's self-initiated `tools/call` through Core's existing generic MCP
  * JSON-RPC proxy, and listing MCP Apps-capable tools (`tools/list`) for any

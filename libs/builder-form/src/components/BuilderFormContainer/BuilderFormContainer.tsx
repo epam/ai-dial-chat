@@ -60,12 +60,13 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
        * the same `BuilderFormActions` the header holds at the desktop
        * breakpoint: CSS cannot move one instance between the top of the page
        * and the bottom, so exactly one copy is visible (and tabbable) at any
-       * width. Opaque background and the elevation shadow come from
-       * `styles.footer`, so scrolled content never shows through it.
+       * width. Opaque background comes from `styles.footer` and the
+       * elevation shadow from `shadow-sm`, so scrolled content never shows
+       * through it.
        */}
       <div
         className={mergeClasses(
-          'sticky bottom-0 z-10 items-center gap-2 p-3',
+          'sticky bottom-0 z-10 items-center gap-2 p-3 shadow-sm',
           styles.footer,
         )}
       >

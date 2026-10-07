@@ -125,12 +125,17 @@ Changing the source control SHALL NEVER clear `targets` or the in-progress patte
 
 ### Requirement: Single-rule editor validates REGEX rules
 
-When `function` is `REGEX`, the editor SHALL offer exactly one text input (not a multi-tag input) for the pattern. A pattern longer than 200 characters SHALL be treated as invalid before attempting to construct a `RegExp`, matching the backend target-length limit and bounding synchronous parsing work on the browser's main thread. For patterns within the limit, validity SHALL be checked by attempting `new RegExp(trimmedPattern)` inside a try/catch; an empty (post-trim) pattern SHALL also be treated as invalid. An invalid pattern SHALL show a localized inline error, associated with the input via `aria-describedby`, once the field has non-empty content or the user has attempted a save; the error display SHALL NOT disable the Save action, but activating Save while the pattern is invalid SHALL NOT call `onSave`. On save, the pattern SHALL be stored as the single entry of `targets` (`targets.length === 1`), unmodified (not trimmed), because leading/trailing characters may be meaningful in a regex.
+When `function` is `REGEX`, the editor SHALL offer exactly one text input (not a multi-tag input) for the pattern. Validation (`isValidRegex` in `libs/publish-panel/src/components/PublishAccessRuleEditor/PublishAccessRuleEditor.tsx`) SHALL operate on the trimmed pattern (`pattern.trim()`): a trimmed pattern longer than 200 characters (`MAX_RULE_VALUE_LENGTH`) SHALL be treated as invalid before attempting to construct a `RegExp`, matching the backend target-length limit and bounding synchronous parsing work on the browser's main thread. For patterns within the limit, validity SHALL be checked by attempting `new RegExp(trimmedPattern)` inside a try/catch; an empty (post-trim) pattern SHALL also be treated as invalid. An invalid pattern SHALL show a localized inline error, associated with the input via `aria-describedby`, once the field has non-empty content or the user has attempted a save; the error display SHALL NOT disable the Save action, but activating Save while the pattern is invalid SHALL NOT call `onSave`. On save, `handleSave` SHALL store the trimmed pattern as the single entry of `targets` (`targets: [pattern.trim()]`, so `targets.length === 1`). Saving the trimmed value keeps the stored rule identical to the string `isValidRegex` validated and length-checked, and matches the per-tag trimming applied to `EQUAL`/`CONTAIN` targets; the consequence is that a regex cannot carry meaningful leading or trailing whitespace — a pattern that needs it must express it inside the pattern (for example `\s` or `[ ]`).
 
 #### Scenario: Valid regex is accepted
 - **GIVEN** `function` is `REGEX` and the user enters `^eng-.*$`
 - **WHEN** the user saves the rule
 - **THEN** the rule is added with `targets: ['^eng-.*$']` and no error is shown
+
+#### Scenario: Regex pattern is saved trimmed
+- **GIVEN** `function` is `REGEX` and the user enters `  ^eng-.*$  ` (with leading and trailing spaces)
+- **WHEN** the user saves the rule
+- **THEN** validity is checked against `^eng-.*$`, and `onSave` receives `targets: ['^eng-.*$']` with the surrounding whitespace removed
 
 #### Scenario: Invalid regex shows an inline error and a Save click does not save
 - **GIVEN** `function` is `REGEX` and the user enters an unbalanced pattern such as `(unclosed`

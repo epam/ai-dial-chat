@@ -100,3 +100,43 @@ Never leave Nx scaffold text ("This library was generated with Nx") in place.
 `package.json` must carry `description` (a plain sentence, not the package name)
 and `license: "Apache-2.0"` directly after `name` and `version` — see
 [`libs.md`](libs.md).
+
+## Spec references
+
+`openspec/specs/*/spec.md` is checked on every PR by two scripts
+(`openspec/changes/**` is historical and never scanned):
+
+```sh
+npm run validate:specs        # hard gate
+npm run spec:impact           # advisory; --base <ref>, default origin/development
+npm run validate:specs:test   # unit tests for both
+```
+
+`validate:specs` reads every inline `code` span and **fails** only on
+cheap, high-confidence drift: a repo path under `apps/`, `libs/`, `tools/`,
+`scripts/`, `docs/`, `openspec/` or `.github/` that does not exist (globs,
+`<placeholder>`/`{placeholder}` segments, trailing `/` and extensionless module
+specifiers are fine), and a `namespace.key` whose sentence calls it an i18n /
+translation / locale key, whose namespace exists in `en.json`, but whose full
+key does not. It **warns** (never fails) on `path:12` / `path#L12` line
+numbers — line numbers rot on the next edit, so do not put them in specs; name
+the file and the symbol instead — and on PascalCase/camelCase identifiers found
+nowhere under `apps/ libs/ tools/ scripts/`.
+
+- **Historical references:** a span is skipped when its sentence contains
+  removed, no longer, previously, supersede(s/d), former(ly), legacy,
+  replaced by, renamed, relocated, moved from, used to, deleted, never,
+  there is/are no, does/do not exist, or SHALL NOT exist/introduce/add. Write
+  "the former `apps/chat/src/x.ts`" rather than citing a deleted file as current.
+- **Allowlist:** a reference that is intentionally not a file in this repo (an
+  MCP method such as `tools/list`, a path inside a skill package or DIAL Core)
+  goes in `openspec/spec-references.allow.json` as
+  `{ "reference": "<token or * pattern>", "spec": "<capability or list>", "reason": "<why>" }`.
+  `reason` is required; an entry that matches nothing is reported so it can be
+  removed.
+
+`spec:impact` lists specs whose referenced files changed in the diff while
+neither the spec nor a delta spec for that capability did, ranked by changed
+files. Broad directories (fewer than four literal segments), hub files cited by
+more than 20 specs, and `openspec/` references are ignored. In CI it annotates
+each spec and writes a step-summary table; it never fails the job.

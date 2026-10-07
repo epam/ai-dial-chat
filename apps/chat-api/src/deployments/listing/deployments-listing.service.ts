@@ -208,7 +208,7 @@ export class DeploymentsListingService {
          * here rather than surface an incomplete duplicate.
          *
          * TODO: revisit once DIAL Core's interface_type filtering lands
-         * (https://github.com/epam/ai-dial-core/issues/1822) — if Core's
+         * ([ai-dial-core#1822](https://github.com/epam/ai-dial-core/issues/1822)) — if Core's
          * /v1/deployments payload for toolsets is enriched with
          * auth_settings/endpoint at that point, this exclusion may no
          * longer be necessary.
@@ -244,7 +244,7 @@ export class DeploymentsListingService {
     /*
      * TODO: this local re-filter compensates for DIAL Core not reliably
      * filtering by interface_type server-side. Once Core fixes this
-     * (https://github.com/epam/ai-dial-core/issues/1822), filtering will
+     * ([ai-dial-core#1822](https://github.com/epam/ai-dial-core/issues/1822)), filtering will
      * happen on Core's side and this step can likely be simplified/removed.
      */
     const filtered = withInstalled.filter((item) =>

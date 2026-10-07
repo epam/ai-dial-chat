@@ -45,6 +45,29 @@ describe('AttachmentTray', () => {
     expect(screen.getByLabelText('Download file')).toBeTruthy();
   });
 
+  it('renders inert cards when no click or expand handler is provided', () => {
+    render(<AttachmentTray attachments={[makeAttachment('1', 'a.pdf')]} />);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('forwards expandLabel to expandable pasted cards', () => {
+    render(
+      <AttachmentTray
+        attachments={[
+          {
+            ...makeAttachment('p', 'Pasted text'),
+            type: AttachmentType.Pasted,
+          },
+        ]}
+        onExpand={vi.fn()}
+        labels={{ expandLabel: 'Show pasted text' }}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Show pasted text' }),
+    ).toBeTruthy();
+  });
+
   it('disappears when last card is removed (empty list passed)', () => {
     const { rerender } = render(
       <AttachmentTray attachments={[makeAttachment('1')]} onRemove={vi.fn()} />,

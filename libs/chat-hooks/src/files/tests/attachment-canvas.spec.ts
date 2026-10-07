@@ -722,7 +722,7 @@ describe('annotationToPdfCanvasContent', () => {
     expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
   });
   /*
-   * Issue #8907: two `cit` citations of one PDF page used to produce the same
+   * [#8907](https://github.com/epam/ai-dial-chat/issues/8907): two `cit` citations of one PDF page used to produce the same
    * `selectedHighlightId` ('0', the position inside each single-annotation
    * group), so the canvas received value-identical content and the preview
    * never scrolled to the newly selected citation.

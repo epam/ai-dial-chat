@@ -160,7 +160,7 @@ export class CustomApiController {
      * Deliberately not a `@Body()`-bound DTO: NestJS Swagger documents any
      * `@Body()` parameter as a requestBody regardless of the DTO's (empty)
      * shape, which the OpenAPI generator then renders as a public `body: any`
-     * SDK parameter — exactly the query/body contract design.md §3 forbids.
+     * SDK parameter — exactly the query/body contract `openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md` §3 forbids.
      * A manual check against the raw framing headers and the parsed body
      * still rejects a nonempty payload with 400 before dispatch, without
      * adding one to the contract.

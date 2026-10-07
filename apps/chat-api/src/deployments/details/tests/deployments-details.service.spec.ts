@@ -183,6 +183,26 @@ describe('DeploymentsDetailsService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
+    it('does not cache an upstream error outcome and refetches on the next call', async () => {
+      const { service, cacheManager, sdkClient } = makeService();
+      sdkClient.configurationDeployment
+        .mockResolvedValueOnce(errResponse(404))
+        .mockResolvedValueOnce(okResponse(schema));
+
+      await expect(
+        service.getDeploymentConfiguration('statgpt', 'user-123', 'token'),
+      ).rejects.toThrow(NotFoundException);
+      expect(cacheManager.set).not.toHaveBeenCalled();
+
+      const result = await service.getDeploymentConfiguration(
+        'statgpt',
+        'user-123',
+        'token',
+      );
+      expect(result).toEqual(schema);
+      expect(sdkClient.configurationDeployment).toHaveBeenCalledTimes(2);
+    });
+
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(

@@ -24,6 +24,7 @@ import {
 } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { buildCatalogTabs } from '../../utils/catalog-tabs';
+import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import { getStyles } from '../../utils/styles';
 import { isLevelSignedIn, sleep } from '../../utils/toolset-credentials';
 import { CardGrid } from '../CardGrid/CardGrid';
@@ -510,6 +511,32 @@ export const Catalog: FC<CatalogProps> = ({
   const isFavoritesVisible = isFavoritesRendered && !isReadonly;
 
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
+  /* Keyed on the strings, not `detailsTexts`, which hosts often pass inline;
+   * a fresh object here would invalidate every virtual grid row. */
+  const {
+    copyCodeAriaLabel,
+    copiedCodeStatusLabel,
+    downloadCodeAriaLabel,
+    tableScrollRegionAriaLabel,
+    mathScrollRegionAriaLabel,
+  } = detailsTexts ?? {};
+  const cardMarkdownLabels = useMemo(
+    () =>
+      getCatalogMarkdownLabels({
+        copyCodeAriaLabel,
+        copiedCodeStatusLabel,
+        downloadCodeAriaLabel,
+        tableScrollRegionAriaLabel,
+        mathScrollRegionAriaLabel,
+      }),
+    [
+      copyCodeAriaLabel,
+      copiedCodeStatusLabel,
+      downloadCodeAriaLabel,
+      tableScrollRegionAriaLabel,
+      mathScrollRegionAriaLabel,
+    ],
+  );
   const cardGridTitles = useMemo(
     () => ({
       noResultsTitle: emptyTitle,
@@ -684,6 +711,7 @@ export const Catalog: FC<CatalogProps> = ({
                   isReadonly={isReadonly}
                   isFullWidth={isFullWidth}
                   featuredChipStyle={catalogStyles?.colors?.featuredChipStyle}
+                  markdownLabels={cardMarkdownLabels}
                 />
               </div>
 

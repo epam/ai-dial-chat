@@ -40,7 +40,7 @@ const resolveBreakpoint = (): Breakpoint => {
  *
  * Use only when a component must branch in JS — most responsive layout should
  * use Tailwind's `mobile:` / `desktop:` utility prefixes instead. See
- * `.claude/skills/responsive-design/SKILL.md` for the decision rubric.
+ * the mobile-first rule in `AGENTS.md` for when JS branching is warranted.
  *
  * @example
  * ```tsx

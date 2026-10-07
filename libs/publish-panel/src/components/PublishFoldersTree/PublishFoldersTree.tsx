@@ -90,7 +90,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   /*
    * The host `DialFoldersTree` component shows `onRenameValidate`'s result
    * inline but does not reliably block its own confirm callback on it (the
-   * error can still be visible when the folder gets created — see #7968).
+   * error can still be visible when the folder gets created — see [#7968](https://github.com/epam/ai-dial-chat/issues/7968)).
    * Track the last live-typed validation result ourselves so `handleConfirmCreatingFolder`
    * can refuse to create even when the value it receives no longer reflects
    * that error.

@@ -124,7 +124,7 @@ const sanitizeImportedTitle = (name: string): string => {
  * a bounded number of the most recently updated items only, so importing more
  * conversations than that budget left the older ones displayed under a title
  * bearing no resemblance to the one the user exported — they looked as though
- * they had never been imported (issue #8668). Writing the authoritative name
+ * they had never been imported ([#8668](https://github.com/epam/ai-dial-chat/issues/8668)). Writing the authoritative name
  * into the filename keeps both in agreement for every imported conversation,
  * no matter how many the file carries.
  *
@@ -217,7 +217,7 @@ export const rebaseConversationId = (
    * Segments after the bucket and any folder sub-paths. For deployments with
    * a path-like id (e.g. `anthropic/claude-3`), the intermediate segments
    * belong to the deployment id prefix and must be preserved in the new path,
-   * not dropped as if they were folder segments (issue #7931).
+   * not dropped as if they were folder segments ([#7931](https://github.com/epam/ai-dial-chat/issues/7931)).
    */
   const pathSegmentsAfterBucket = idSegments.slice(1);
   const pathSegmentsAfterFolder = pathSegmentsAfterBucket.slice(

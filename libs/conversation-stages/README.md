@@ -47,6 +47,9 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
   isStreaming={isStreaming}
   labels={{
     copyAriaLabel: 'Copy',
+    codeBlockCopiedLabel: 'Copied!',
+    tableScrollRegionAriaLabel: 'Scrollable table',
+    mathScrollRegionAriaLabel: 'Scrollable formula',
     runningAriaLabel: 'Running',
     failedAriaLabel: 'Failed',
     attemptLabel: (n) => `Attempt ${n}`,
@@ -55,6 +58,14 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
   onAttachmentClick={(attachment) => openPreview(attachment)}
 />;
 ```
+
+Code blocks in stage content have a copy control but no download control.
+`copyAriaLabel` names the copy button (default `'Copy stage content'`),
+`codeBlockCopiedLabel` is announced once a copy completes (default
+`'Copied!'`), `tableScrollRegionAriaLabel` names a wide table's scroll region
+(default `'Scrollable table'`), and `mathScrollRegionAriaLabel` names a wide
+block formula's scroll region (default `'Scrollable formula'`).
+`CollapsedGroupLabels` carries the same four fields and forwards them to the inner panel.
 
 ### Nested stages
 
@@ -122,6 +133,10 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
     executedLabel: 'Executed',
     stepsLabel: (count) => `${count} steps`,
     failedCountLabel: (failedCount) => `${failedCount} failed`,
+    copyAriaLabel: 'Copy stage content',
+    codeBlockCopiedLabel: 'Copied!',
+    tableScrollRegionAriaLabel: 'Scrollable table',
+    mathScrollRegionAriaLabel: 'Scrollable formula',
   }}
   styles={{ panel: { stageTextColor: 'var(--text-secondary)' } }}
   onAttachmentClick={(attachment) => openPreview(attachment)}

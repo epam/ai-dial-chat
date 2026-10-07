@@ -89,7 +89,7 @@ export interface UseTextInsertionResult {
  * The insert goes through `execCommand('insertText')` rather than a React state
  * write, because only an edit made through the browser's editing pipeline lands on
  * the textarea's native undo stack. Writing the value from React instead is what let
- * a picked prompt discard an unrecoverable draft (issue #8754).
+ * a picked prompt discard an unrecoverable draft ([#8754](https://github.com/epam/ai-dial-chat/issues/8754)).
  */
 export const useTextInsertion = ({
   insertion,
@@ -113,7 +113,7 @@ export const useTextInsertion = ({
 
     /*
      * Deferred out of the commit that asked for the insertion, for two reasons
-     * (issue #8781):
+     * ([#8781](https://github.com/epam/ai-dial-chat/issues/8781)):
      *
      * - `execCommand` dispatches `input` synchronously. Mid-commit React cannot
      *   flush that update synchronously, so it restores the textarea's value

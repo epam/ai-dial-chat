@@ -14,7 +14,7 @@ import { SKILL_MANIFEST_FILE } from '../utils/skill-path.util';
  * deletion, and grouping-folder create/delete. Folded into one service
  * rather than split further because none of these four share state, a
  * cache, or a cross-cutting dependency with each other beyond the SDK client
- * itself (design.md's service ownership map).
+ * itself (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md`'s service ownership map).
  */
 @Injectable()
 export class SkillsMutationService {
@@ -66,7 +66,7 @@ export class SkillsMutationService {
   /**
    * Deletes one file inside a skill. Rejects deleting the skill's own
    * `SKILL.md` manifest before ever calling DIAL Core — a skill without a
-   * manifest is not a valid skill (design.md D4).
+   * manifest is not a valid skill (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D4).
    */
   async deleteSkillFile(
     bucket: string,
@@ -114,7 +114,7 @@ export class SkillsMutationService {
 
   /**
    * Creates a grouping folder. The verified SDK schema declares no request
-   * headers at all for this operation (design.md D2) — there is no
+   * headers at all for this operation (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md` D2) — there is no
    * `ifMatch` parameter to forward, unlike every other mutation here.
    */
   async createSkillGroupingFolder(

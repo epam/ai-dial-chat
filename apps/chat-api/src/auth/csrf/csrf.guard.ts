@@ -47,7 +47,7 @@ export class CsrfGuard implements CanActivate {
      * so there is no ambient-credential forgery for CSRF to defend against.
      * Non-browser callers also have no Origin/Referer and no prior CSRF
      * handshake, so enforcing the checks below would make every mutating
-     * header-authenticated request fail unconditionally. See design.md
+     * header-authenticated request fail unconditionally. See `openspec/changes/archive/2026-08-07-bff-header-token-auth/design.md`
      * Decision 5 (bff-header-token-auth) for the full reasoning.
      */
     if (req.authSource === AuthSource.Header) {

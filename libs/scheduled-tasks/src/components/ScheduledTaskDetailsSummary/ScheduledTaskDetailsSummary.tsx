@@ -17,6 +17,7 @@ export const ScheduledTaskDetailsSummary: FC<
   modelDisplayName,
   instructionsMarkdown,
   renderInstructions,
+  markdownLabels,
   styles,
 }) => {
   const fieldLabelClassName =
@@ -28,7 +29,7 @@ export const ScheduledTaskDetailsSummary: FC<
     renderInstructions ? (
       renderInstructions(markdown)
     ) : (
-      <MDMessageViewer content={markdown} />
+      <MDMessageViewer content={markdown} {...markdownLabels} />
     );
 
   return (

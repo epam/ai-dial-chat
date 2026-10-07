@@ -182,7 +182,7 @@ describe('usePublishFolders', () => {
   });
 
   /*
-   * Issue #8568: "Add child" on a folder the user had not expanded yet also
+   * [#8568](https://github.com/epam/ai-dial-chat/issues/8568): "Add child" on a folder the user had not expanded yet also
    * expands it, which starts that folder's listing. The created folder used
    * to live in the same listing cache, so the listing landing afterwards
    * replaced it and the new folder vanished — while folders higher up in the

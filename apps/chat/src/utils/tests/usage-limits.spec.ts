@@ -1,6 +1,10 @@
 import type { CatalogItemLimits } from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
-import { findWorstCappedRow, getGaugeNeedleAngle } from '../usage-limits';
+import {
+  findWorstCappedRow,
+  getGaugeNeedleAngle,
+  getViewportClampShift,
+} from '../usage-limits';
 
 const limitsOf = (
   rows: CatalogItemLimits['groups'][number]['rows'],
@@ -96,5 +100,23 @@ describe('getGaugeNeedleAngle', () => {
 
   it('stops at the full mark for an overshoot', () => {
     expect(getGaugeNeedleAngle(150)).toBe(135);
+  });
+});
+
+describe('getViewportClampShift', () => {
+  it('leaves a box that already fits where it is', () => {
+    expect(getViewportClampShift(20, 300, 390, 16)).toBe(0);
+  });
+
+  it('pushes a box that overflows the left edge back to the gutter', () => {
+    expect(getViewportClampShift(-175, 183, 390, 16)).toBe(191);
+  });
+
+  it('pulls a box that overflows the right edge back to the gutter', () => {
+    expect(getViewportClampShift(200, 558, 390, 16)).toBe(-184);
+  });
+
+  it('keeps the left edge visible when the box is wider than the viewport span', () => {
+    expect(getViewportClampShift(100, 500, 300, 16)).toBe(-84);
   });
 });

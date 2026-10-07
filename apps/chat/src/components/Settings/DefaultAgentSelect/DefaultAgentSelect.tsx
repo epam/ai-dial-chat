@@ -24,7 +24,7 @@ import { DefaultAgentMode } from '../../../types/default-agent';
  * effect rather than a fixed default: with an agent pinned that is "Default
  * agent", because the pin outranks the implicit last-used selection. Showing
  * "Last used agent" there would name a mode the new chat does not follow —
- * the confusion behind Issue #8889.
+ * the confusion behind [#8889](https://github.com/epam/ai-dial-chat/issues/8889).
  */
 const DefaultAgentSelect: FC = () => {
   const { t } = useTranslation();

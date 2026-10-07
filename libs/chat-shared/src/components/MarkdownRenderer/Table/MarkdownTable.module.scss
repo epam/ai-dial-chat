@@ -62,8 +62,8 @@ tbody .row:hover td {
 .tableScrollFadeEnd {
   mask-image: linear-gradient(
     to right,
-    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 0,
-    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) calc(100% - 1rem),
+    var(--cm-table-fade, var(--stroke-black, #161b2d)) 0,
+    var(--cm-table-fade, var(--stroke-black, #161b2d)) calc(100% - 1rem),
     transparent 100%
   );
 }
@@ -71,8 +71,8 @@ tbody .row:hover td {
 :global([dir='rtl']) .tableScrollFadeEnd {
   mask-image: linear-gradient(
     to left,
-    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) 0,
-    var(--cm-table-fade, var(--stroke-focus-black, #161b2d)) calc(100% - 1rem),
+    var(--cm-table-fade, var(--stroke-black, #161b2d)) 0,
+    var(--cm-table-fade, var(--stroke-black, #161b2d)) calc(100% - 1rem),
     transparent 100%
   );
 }

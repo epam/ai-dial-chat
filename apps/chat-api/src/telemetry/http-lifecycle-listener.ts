@@ -13,7 +13,7 @@ import { parseOtelConfig } from './otel-config';
 
 /*
  * Records the one terminal data point for a monitored request and releases its
- * `requests.active` contribution — see design.md D2. `settled` is the single guard shared by
+ * `requests.active` contribution — see `openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D2. `settled` is the single guard shared by
  * every terminal event listener below: whichever of `finish`/`close`/`error`/`aborted` fires
  * first wins, and every later event on the same request/response pair is a no-op. This is what
  * guarantees "exactly one terminal recording" even though `'close'` always eventually follows
@@ -55,7 +55,7 @@ const settleRequest = (
 
 /*
  * Attaches the raw `http.Server` `'request'` listener that observes the complete HTTP transport
- * lifecycle (arrival → in-flight → terminal outcome) — see design.md D1. This fires before
+ * lifecycle (arrival → in-flight → terminal outcome) — see `openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md` D1. This fires before
  * Express body parsers, `helmet`, CORS, Nest guards/pipes, and routing ever touch the request, so
  * it sees guard rejections, body-parser failures, and unmatched routes that the existing
  * `MetricsInterceptor` (a Nest interceptor, running after all of that) never observes.
@@ -84,7 +84,7 @@ export const attachHttpLifecycleListener = (
 
       /*
        * `'close'` fires in addition to `'finish'` on a normal teardown, and instead of `'finish'`
-       * on a genuine client abort — it must never, by itself, be read as "completed" (design.md
+       * on a genuine client abort — it must never, by itself, be read as "completed" (`openspec/changes/archive/2026-09-16-complete-bff-http-observability/design.md`
        * D2/D3). `res.headersSent` at the time `'close'` fires is what distinguishes "the client
        * left before we could answer" from "the client left mid-stream".
        */

@@ -103,8 +103,10 @@ warning icon, and the level resolved for a direct "Log out" action.
 
 ### Requirement: API key login submission with level and header hint
 For `authenticationType: API_KEY` toolsets, the system SHALL present, in the personal API-key
-popover and in each `CredentialsManagementPanel` row, an API key input showing a hint naming the
-configured key header (default: `Enter your API key value for "{header}" header`) and, on submit
+popover and in each `CredentialsManagementPanel` row, an API key input that, when the toolset
+configures a key header (`credentials.apiKeyHeader`), shows a hint naming that header below the
+input as the input's accessible description (`aria-describedby`; default text
+`Enter your API key value for "{header}" header`, overridable through `apiKeyHeaderHint`), and, on submit
 ("Add"), SHALL call the toolset login endpoint with `credentialsLevel` set to the level of the
 popover or row submitted (`USER` or `GLOBAL`).
 
@@ -123,6 +125,11 @@ popover or row submitted (`USER` or `GLOBAL`).
 - **WHEN** the toolset's `API_KEY` authentication is configured with a key header (e.g.
   `X-Api-Key`)
 - **THEN** the API key input shows the hint `Enter your API key value for "X-Api-Key" header`
+  and exposes it as the input's accessible description
+
+#### Scenario: No hint without a configured header
+- **WHEN** the toolset's `API_KEY` authentication has no key header
+- **THEN** the API key input shows no header hint and has no accessible description
 
 ### Requirement: OAuth login opens in a new window at the resolved level
 For `authenticationType: OAUTH` toolsets, the system SHALL present, in the header action or a

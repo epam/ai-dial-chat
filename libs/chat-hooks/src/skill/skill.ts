@@ -273,7 +273,7 @@ export interface UnpackedSkillArchive {
 /**
  * Unpacks a whole-skill ZIP (as downloaded from `GET /api/v1/skills/download`
  * — DIAL Core's whole-resource `GET` is the one place this contract still
- * uses a ZIP, per design.md) into its manifest text, every other entry's
+ * uses a ZIP, per `openspec/changes/archive/2026-10-05-persist-skill-empty-folders/design.md`) into its manifest text, every other entry's
  * bytes, and the folders its empty-folder markers stand for. Throws if the
  * archive has no root `SKILL.md` entry.
  */

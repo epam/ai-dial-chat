@@ -6,7 +6,7 @@ import { DeploymentsLookupService } from './lookup/deployments-lookup.service';
 /*
  * Thin orchestrator for DeploymentsController. Every method here delegates
  * to exactly one of the three focused services below — see
- * openspec/changes/split-deployments-toolsets-services/design.md for the
+ * openspec/changes/archive/2026-08-07-split-deployments-toolsets-services/design.md for the
  * ownership map and why the split follows this boundary. Note that
  * ToolsetsListingService injects DeploymentsDetailsService directly (not
  * this facade) for invalidateDetailsCache — see toolsets-listing.service.ts.

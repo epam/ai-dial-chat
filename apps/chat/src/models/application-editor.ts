@@ -153,6 +153,11 @@ export interface ApplicationEditorFormDefinition<TSetup> {
   needsConfirmation?: (setup: TSetup) => boolean;
   confirmation?: ApplicationEditorConfirmation;
   Setup: ComponentType<ApplicationSetupProps<TSetup>>;
+  /** Whether `Setup` renders an embedded editor that carries its own heading, so the Setup section heading is hidden; defaults to `false`. */
+  isSetupEmbedded?: (
+    ctx: ApplicationEditorContext,
+    appId: string | undefined,
+  ) => boolean;
   /** Full-page preview of an edited application; absent for kinds without a preview. */
   Preview?: ComponentType<ApplicationPreviewProps>;
   /** Whether `Preview` applies to the application being edited, e.g. only to some schemas of the kind; defaults to `true`. */

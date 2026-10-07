@@ -1195,7 +1195,7 @@ describe('ConversationRoute', () => {
     });
   });
 
-  /* Issue #8754: a picked prompt arrived on the composer's `message` channel,
+  /* [#8754](https://github.com/epam/ai-dial-chat/issues/8754): a picked prompt arrived on the composer's `message` channel,
    * which replaces the whole textarea value, so a draft typed before opening the
    * picker was destroyed with no way to get it back. The caret-insert mechanics
    * themselves live in the Input component's own suite. */

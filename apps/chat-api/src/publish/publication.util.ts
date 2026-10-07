@@ -11,7 +11,7 @@ import { safeDecodeURIComponent } from '../common/utils/uri';
  * `TypeError: (result.data ?? []).filter is not a function`, which
  * `handleDialFetchError` reported as "DIAL Core is currently unavailable"
  * (503) — the real cause behind
- * [GH #7897](https://github.com/epam/ai-dial-chat/issues/7897), which had been
+ * [#7897](https://github.com/epam/ai-dial-chat/issues/7897), which had been
  * attributed to Core being broken and led to both publish-history fetches being
  * stubbed out. Both shapes are accepted so realigning the SDK or Core later
  * cannot reintroduce the crash.
@@ -265,7 +265,7 @@ const toTargetFolderKey = (targetFolder: string | undefined): string => {
  * audit record, not live state — so the `ADD` on its own kept claiming the
  * folder was published after an administrator had approved the unpublish
  * request. That is
- * [GH #8445](https://github.com/epam/ai-dial-chat/issues/8445): the action menu
+ * [#8445](https://github.com/epam/ai-dial-chat/issues/8445): the action menu
  * went on offering Unpublish for a copy Core had already deleted, and acting on
  * it failed with "Target resource does not exists". So an `APPROVED` `DELETE`
  * drops every `ADD` for the same target folder created at or before it, while

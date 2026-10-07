@@ -369,6 +369,9 @@ render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`
 - **WHEN** the popover opens at mobile width with long period labels and reset lines
 - **THEN** its content wraps within the viewport-relative maximum width and the page does not scroll
   horizontally
+- **AND** when the end-anchored panel would extend past either viewport edge, it is shifted
+  horizontally so the whole panel — title and "See all usage" link included — sits inside a 16px
+  viewport gutter; the shift is re-measured on window resize
 
 #### Scenario: RTL layout mirrors through the cascade
 

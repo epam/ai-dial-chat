@@ -21,7 +21,7 @@ const TEST_USER = {
 
 /*
  * Two payload fixtures reduced from the real `GET /api/v1/user/usage` capture in
- * `openspec/changes/migrate-usage-reset-times/fixtures/` — one where every
+ * `openspec/changes/archive/2026-09-15-migrate-usage-reset-times/fixtures/` — one where every
  * day/week/month stat carries `resetsAt`, one with the field stripped. The
  * capture's own shape is preserved: `resetsAt` on the day/week/month token,
  * cost, and request stats; never on the minute/hour stats; present on

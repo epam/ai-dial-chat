@@ -356,7 +356,7 @@ export class ConversationController {
      * would flush an empty 200 that leaves the exception filter nothing to
      * write. That is how a second browser tab submitting into a conversation
      * that is already generating rendered an empty answer instead of the 409
-     * this endpoint documents (issue #8688). Once the stream is open the
+     * this endpoint documents ([#8688](https://github.com/epam/ai-dial-chat/issues/8688)). Once the stream is open the
      * status is already committed, so a later failure ends the response as
      * before and only the SSE transport reports it.
      */
@@ -373,7 +373,7 @@ export class ConversationController {
     /*
      * A periodic comment keeps a quiet generation phase (a long "Thinking"
      * stage) from looking dead to intermediaries and to the client's idle
-     * watchdog (issue #8959). The relay yields raw upstream byte slices that
+     * watchdog ([#8959](https://github.com/epam/ai-dial-chat/issues/8959)). The relay yields raw upstream byte slices that
      * can end mid-line, so a tick only writes on a line boundary — a comment
      * spliced into a partial line would corrupt that SSE frame. A skipped tick
      * loses nothing: bytes are flowing.

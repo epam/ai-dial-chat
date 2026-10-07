@@ -56,7 +56,7 @@ export interface ResponsesApiRequestBody {
    * Completions `custom_fields.configuration` shape verbatim
    * (`ConversationStreamingService.streamCompletion`). Untested against
    * Core's Responses endpoint — see the "Deep Research" entry in
-   * `openspec/changes/extend-responses-api-capabilities/proposal.md` once
+   * `openspec/changes/archive/2026-09-26-extend-responses-api-capabilities/proposal.md` once
    * live-tested.
    */
   custom_fields?: { configuration: Record<string, unknown> };
@@ -67,7 +67,7 @@ export interface ResponsesApiRequestBody {
  * from persisted Chat data into the outbound Responses wire request. A bare
  * TypeScript type is not enough here — the persisted value may come from an
  * untrusted import/save payload that was never nested-validated (see
- * `design.md` Decision 4) — so this checks the actual runtime value: a
+ * `openspec/changes/archive/2026-08-06-support-responses-generation-parameters/design.md` Decision 4) — so this checks the actual runtime value: a
  * positive, finite integer within `Number.isSafeInteger` range. Anything
  * else (absent, `null`, `0`, negative, fractional, `NaN`, `Infinity`, or an
  * unsafe integer) must be omitted rather than forwarded.

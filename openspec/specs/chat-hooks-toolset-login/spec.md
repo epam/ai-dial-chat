@@ -185,8 +185,8 @@ failed state so the host page can render and announce it.
 #### Scenario: Host renders the status
 
 - **WHEN** the hook is in progress or has failed
-- **THEN** it exposes that state and renders nothing itself, leaving the page shell to present and
-  announce it in the host's own language
+- **THEN** it exposes `isInProgress` and `failureReason` and renders nothing itself, leaving the
+  page shell to present and announce them in the host's own language
 
 ### Requirement: Host retains routing, i18n, and API dispatch
 
@@ -204,3 +204,15 @@ hook sees only as its single injected exchange callback.
 
 - **WHEN** the completion hook reports progress or failure
 - **THEN** it returns state rather than text, and every string the user sees comes from the host page
+
+#### Scenario: Callback page presents the completion state
+
+- **WHEN** this application's callback page (`ToolsetAuthCallback`) renders the hook's state inside
+  the popup
+- **THEN** while the hook is in progress it renders the kit `Spinner` (a polite `role="status"`
+  region) labelled with a translated "Completing sign-in…" message; on failure it renders an error
+  section message (`role="alert"`) with a translated title and a reason-specific translated
+  message — missing code, an unverifiable request (missing redirect state or state mismatch), or a
+  failed login request; on success it renders a success section message (`role="status"`); both
+  settled states carry a Close button that calls `window.close()`, because the hook closes the
+  popup itself only after the opener acknowledges the result, and the opener messaging is unchanged

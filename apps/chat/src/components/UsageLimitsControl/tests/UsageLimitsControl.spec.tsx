@@ -1,5 +1,5 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
@@ -400,6 +400,44 @@ describe('UsageLimitsControl', () => {
         expect(dialog.className).not.toMatch(/(^|\s)(left|right)-/);
       } finally {
         document.documentElement.removeAttribute('dir');
+      }
+    });
+
+    it('shifts the panel back inside a narrow viewport instead of clipping it', async () => {
+      const user = userEvent.setup();
+      /* A 390px phone with the end-anchored 358px panel starting 175px past
+         the left edge — the geometry reported in the bug. */
+      const clientWidthSpy = vi
+        .spyOn(document.documentElement, 'clientWidth', 'get')
+        .mockReturnValue(390);
+      const rectSpy = vi
+        .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+        .mockImplementation(function (this: HTMLElement) {
+          if (this.getAttribute('role') !== 'dialog') {
+            return new DOMRect();
+          }
+          const shift = Number(
+            /translateX\((-?[\d.]+)px\)/.exec(this.style.transform)?.[1] ?? 0,
+          );
+          return new DOMRect(-175 + shift, 0, 358, 200);
+        });
+      renderControl();
+
+      try {
+        const dialog = await openPopover(user);
+
+        expect(dialog.style.transform).toBe('translateX(191px)');
+
+        /* A resize re-measures from the anchored position, so the applied
+           shift is not compounded. */
+        act(() => {
+          window.dispatchEvent(new Event('resize'));
+        });
+
+        expect(dialog.style.transform).toBe('translateX(191px)');
+      } finally {
+        clientWidthSpy.mockRestore();
+        rectSpy.mockRestore();
       }
     });
   });

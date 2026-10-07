@@ -92,7 +92,7 @@ DIAL-specific classification SHALL remain outside `libs/quotations`.
 - **THEN** Preview becomes available and the second action is Download
 - **AND** switching back restores the single Open in browser action
 
-**i18n keys** (supplied by the chat app through `CitationCardLabels`; the library reads no i18n): `citations.popup.switcher`, `basic.preview`, `citations.popup.openInBrowser`, `buttons.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.marker.ariaLabel` (dialog label), `buttons.showMore`, `buttons.showLess`.
+**i18n keys** (supplied by the chat app through `CitationCardLabels`; the library reads no i18n): `citations.popup.switcher`, `basic.preview`, `citations.popup.openInBrowser`, `buttons.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.marker.ariaLabel` (dialog label), `buttons.showMore`, `buttons.showLess`, and — for the optional `codeBlockCopyLabel` / `codeBlockCopiedLabel` / `codeBlockDownloadLabel` / `tableScrollRegionAriaLabel` / `mathScrollRegionAriaLabel` that name the quote markdown's code-block, table and block-formula controls — `buttons.copy`, `buttons.copied`, `buttons.download`, `chat.scrollableTable`, `chat.scrollableFormula`.
 **RTL**: switcher chevron icons SHALL be mirrored with `rtl:scale-x-[-1]`; all layout uses logical flex properties.
 **Accessibility**: `role="dialog"`, `aria-modal="true"`, `aria-label` from `labels.ariaLabel` (the app passes `citations.marker.ariaLabel`, "Citation from {{source}}").
 **Feature flag**: none.

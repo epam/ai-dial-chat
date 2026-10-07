@@ -320,6 +320,12 @@ When `onEdit` is supplied, the component SHALL render the Edit button; when omit
 - **WHEN** `ScheduledTaskDetailView` renders with a `renderInstructions` callback supplied
 - **THEN** the Instructions content is produced by calling that callback with the `prompt` markdown string, rather than the lib rendering markdown itself
 
+#### Scenario: Built-in instructions viewer uses host-supplied markdown labels
+
+- **WHEN** `ScheduledTaskDetailView` renders `instructionsMarkdown` without a `renderInstructions` callback and `labels` carries `codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel`
+- **THEN** the built-in `MDMessageViewer` names the code-block copy/download buttons, the copied announcement, a wide table's scroll region and a wide formula's scroll region with those labels, falling back to `'Copy code'` / `'Copied!'` / `'Download code'` / `'Scrollable table'` / `'Scrollable formula'` for any unset field
+- **AND** the chat app's `ScheduledTaskDetailPage` passes `buttons.copy`, `buttons.copied`, `buttons.download`, `chat.scrollableTable` and `chat.scrollableFormula` through `t()`
+
 #### Scenario: onBack is invoked without the lib performing navigation
 
 - **WHEN** the user activates the back control rendered by `ScheduledTaskDetailView`

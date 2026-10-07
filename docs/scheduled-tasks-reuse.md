@@ -7,15 +7,16 @@ base/theme styles once at the host root.
 
 ## Migration map
 
-| Finding                                              | Public replacement                                                                                               |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| F01 form observer / editor placeholder patch         | `ScheduledTaskCreateForm.labels.instructionsPlaceholder`                                                         |
-| F02/F10 duplicated form validation                   | `@epam/ai-dial-scheduled-tasks/validation` and checked preparation in `@epam/ai-dial-chat-hooks/scheduled-tasks` |
-| F03/F13 local request and retry state                | `useScheduledTasks` / `useScheduledTaskRuns` with an injected configured client                                  |
-| F04/F05 local schedule formatter                     | trigger descriptor and host formatter from the hooks entry                                                       |
-| F06-F08/F14/F15 private layout/icon/status selectors | documented form, list, detail/history and delete-confirmation props                                              |
-| F09 provider-bound model field                       | `DeploymentSelectorField` with host-resolved records and callbacks                                               |
-| F11 deep CSS imports                                 | `@epam/ai-dial-scheduled-tasks/styles.css`                                                                       |
+| Finding                                              | Public replacement                                                                                                                     |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| F01 form observer / editor placeholder patch         | `ScheduledTaskCreateForm.labels.instructionsPlaceholder`                                                                               |
+| F02/F10 duplicated form validation                   | `@epam/ai-dial-scheduled-tasks/validation` and checked preparation in `@epam/ai-dial-chat-hooks/scheduled-tasks`                       |
+| F03/F13 local request and retry state                | `useScheduledTasks` / `useScheduledTaskRuns` with an injected configured client                                                        |
+| F04/F05 local schedule formatter                     | trigger descriptor and host formatter from the hooks entry                                                                             |
+| F06-F08/F14/F15 private layout/icon/status selectors | documented form, list, detail/history and delete-confirmation props                                                                    |
+| F09 provider-bound model field                       | `DeploymentSelectorField` with host-resolved records and callbacks                                                                     |
+| F11 deep CSS imports                                 | `@epam/ai-dial-scheduled-tasks/styles.css`                                                                                             |
+| F12 detail model label shows the raw deployment id   | `ScheduledTaskDetailView.modelLabel` — a display name the host resolves from its deployment records, falling back to the raw stored id |
 
 The fixture at `tools/scheduled-tasks-consumer-fixture` proves this boundary
 against packed artifacts, rather than workspace aliases. It imports scheduler

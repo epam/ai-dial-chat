@@ -179,7 +179,7 @@ describe('useDialFileMutations', () => {
       // Simulates the host grid showing an inline error while the user
       // types "/New folder", then confirming with a path where the leading
       // "/" got absorbed as a path separator, leaving a clean derived name
-      // — see #7968.
+      // — see [#7968](https://github.com/epam/ai-dial-chat/issues/7968).
       act(() => {
         result.current.onCreateFolderValidate('/New folder', parentFolder);
       });

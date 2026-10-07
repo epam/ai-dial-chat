@@ -21,7 +21,7 @@ import { useOperationNotification } from '../useOperationNotification';
 export { SkillArchiveImportStatus };
 
 /*
- * Per design.md (`add-skill-archive-import`): 400/413/422 are archive-content problems
+ * Per `openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md` (`add-skill-archive-import`): 400/413/422 are archive-content problems
  * (missing/invalid manifest, unsafe path, size limits), 409 is a name collision, 429 is rate
  * limiting, and 502/503 mean DIAL Core is unavailable. Anything else (401/403/network
  * failure/...) falls back to a generic message.
@@ -69,7 +69,7 @@ interface UseSkillArchiveImportResult {
  * Host adapter for the Catalog "Upload" action: configures the import request, raises the
  * "Skill created" notification, refreshes `SkillsContext`, and translates the library
  * controller's semantic status/error outcomes — keeping that whole workflow out of `CatalogView`
- * (design.md D10, `add-skill-archive-import`).
+ * (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md` D10, `add-skill-archive-import`).
  */
 export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
   const { t } = useTranslation();

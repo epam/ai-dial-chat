@@ -33,8 +33,8 @@ const SOURCE_FOLDER_LABEL: Record<SkillSource, keyof DeploymentFolderLabels> = {
  * percent-encodes `url` (`skills/{bucket}/{...folders}/{name}`), so decoding
  * its folder segments yields the real name either way: a published folder
  * whose `parentPath` arrived encoded (`test%20folder` → `test folder`,
- * Issue #8882) and a folder literally named `test%20folder`, whose `url`
- * carries `test%2520folder` (Issue #8974). Decoding `parentPath` itself could
+ * [#8882](https://github.com/epam/ai-dial-chat/issues/8882)) and a folder literally named `test%20folder`, whose `url`
+ * carries `test%2520folder` ([#8974](https://github.com/epam/ai-dial-chat/issues/8974)). Decoding `parentPath` itself could
  * not tell those two apart. When the `url` shape does not line up with
  * `parentPath`, `parentPath` is shown verbatim.
  */
@@ -88,7 +88,7 @@ export const mapSkillToCatalogItem = (
     type: CatalogEntityType.Skill,
     name: skill.name,
     /*
-     * Listing-sourced description (Core PR #1970); folders and older Cores
+     * Listing-sourced description ([ai-dial-core#1970](https://github.com/epam/ai-dial-core/pull/1970)); folders and older Cores
      * carry none, and the details fetch's manifest frontmatter stays
      * authoritative once it lands.
      */

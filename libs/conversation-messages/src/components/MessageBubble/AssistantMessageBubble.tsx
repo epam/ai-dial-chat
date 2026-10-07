@@ -3,7 +3,6 @@ import {
   AttachmentType,
   buildCssVars,
   DeploymentIcon,
-  DisplayAttachment,
   MDMessageViewer,
   mergeClasses,
   MessageRole,
@@ -57,6 +56,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
   const {
     attachmentClickLabel,
+    attachmentDownloadLabel,
     attachmentRetryLabel,
     attachmentOpenInNewTabLabel,
     startersAriaLabel = 'Quick reply buttons',
@@ -203,15 +203,19 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           )}
           <AttachmentGroup
             attachments={visibleAttachments}
-            onAttachmentClick={(id) =>
-              onAttachmentClick?.(
-                attachments?.find((a) => a.id === id) as DisplayAttachment,
-              )
+            onAttachmentClick={
+              onAttachmentClick
+                ? (id) => {
+                    const attachment = attachments?.find((a) => a.id === id);
+                    if (attachment) onAttachmentClick(attachment);
+                  }
+                : undefined
             }
             onDownloadAll={onDownloadAll}
             onRetry={onAttachmentRetry}
             labels={{
               clickLabel: attachmentClickLabel,
+              downloadLabel: attachmentDownloadLabel,
               retryLabel: attachmentRetryLabel,
               openInNewTabLabel: attachmentOpenInNewTabLabel,
             }}

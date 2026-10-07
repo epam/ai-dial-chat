@@ -4,7 +4,7 @@ import { PromptService } from '../prompt.service';
 /*
  * PromptService is a pure delegation facade — its business logic now lives
  * in PromptsPersonalService, PromptsPublicService, and PromptsFolderService
- * (see openspec/changes/split-prompt-service/design.md). These tests only
+ * (see openspec/changes/archive/2026-08-10-split-prompt-service/design.md). These tests only
  * verify each facade method forwards to the right sub-service unchanged;
  * behavior is covered by that sub-service's own spec.
  */

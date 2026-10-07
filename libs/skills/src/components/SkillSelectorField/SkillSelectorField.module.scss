@@ -15,10 +15,10 @@
 }
 
 .invalid {
-  color: var(--ssf-error, var(--text-error, #9c2222));
-  border-color: var(--ssf-error, var(--text-error, #9c2222));
+  color: var(--ssf-error, var(--text-error, #ae2f2f));
+  border-color: var(--ssf-error, var(--text-error, #ae2f2f));
 
   input {
-    color: var(--ssf-error, var(--text-error, #9c2222));
+    color: var(--ssf-error, var(--text-error, #ae2f2f));
   }
 }

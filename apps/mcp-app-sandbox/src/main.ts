@@ -12,7 +12,7 @@ async function bootstrap() {
    * an iframe `src` (validated by its own Referer allowlist), never fetched
    * cross-origin by script. Nest/Express already send no CORS headers
    * without this call, so this documents that posture as an intentional
-   * policy rather than an accidental omission (design.md D17).
+   * policy rather than an accidental omission (`openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D17).
    */
   app.enableCors({ origin: false, credentials: false });
   /*

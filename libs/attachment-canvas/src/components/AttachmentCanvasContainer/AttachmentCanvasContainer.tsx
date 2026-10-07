@@ -95,6 +95,11 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         tableCopyLabel,
         tableCopiedLabel,
         tableDownloadCsvLabel,
+        codeBlockCopyLabel,
+        codeBlockCopiedLabel,
+        codeBlockDownloadLabel,
+        tableScrollRegionAriaLabel,
+        mathScrollRegionAriaLabel,
         ooxmlHighlightsLabel,
         ooxmlHighlightNavigatedLabel,
       } = labels ?? {};
@@ -167,6 +172,11 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             tableCopyLabel,
             tableCopiedLabel,
             tableDownloadCsvLabel,
+            codeBlockCopyLabel,
+            codeBlockCopiedLabel,
+            codeBlockDownloadLabel,
+            tableScrollRegionAriaLabel,
+            mathScrollRegionAriaLabel,
             ooxmlHighlightsLabel,
             ooxmlHighlightNavigatedLabel,
           }}

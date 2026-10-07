@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { ScheduledTaskInstructionsMarkdownLabels } from './scheduled-task-instructions';
 
 /** Props for the {@link ScheduledTaskConfigurationSection} component. */
 export interface ScheduledTaskConfigurationSectionProps {
@@ -12,6 +13,8 @@ export interface ScheduledTaskConfigurationSectionProps {
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
+  /** Code-block, table and formula labels for the built-in `MDMessageViewer`. Ignored when `renderInstructions` is supplied. */
+  markdownLabels?: ScheduledTaskInstructionsMarkdownLabels;
   /** CSS class applied to the instructions field label. Defaults to `'dial-tiny-text'`. */
   fieldLabelClassName?: string;
 }

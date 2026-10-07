@@ -135,7 +135,7 @@ export class ResponsesAdapter {
 
   /**
    * Attachment mapping (see
-   * `openspec/changes/extend-responses-api-capabilities/proposal.md` for the
+   * `openspec/changes/archive/2026-09-26-extend-responses-api-capabilities/proposal.md` for the
    * full live-test findings behind this). DIAL's own `custom_content
    * .attachments` passthrough (mirroring Chat Completions) does not work on
    * this endpoint — confirmed live, Core reports no image seen. Mapping to

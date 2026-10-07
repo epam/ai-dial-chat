@@ -11,6 +11,16 @@ export interface MarkdownWithPlaceholdersProps {
   content: string;
   /** Typography class overrides applied to `<h1>`–`<h6>`. Defaults to no override. */
   headingClassName?: string;
+  /** Accessible label for the copy button in code blocks. Forwarded to {@link MarkdownRenderer}; defaults to `'Copy code'`. */
+  codeBlockCopyLabel?: string;
+  /** Status announced after a code block has been copied. Forwarded to {@link MarkdownRenderer}; defaults to `'Copied!'`. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for the download button in code blocks. Forwarded to {@link MarkdownRenderer}; defaults to `'Download code'`. */
+  codeBlockDownloadLabel?: string;
+  /** Accessible label for a table's scrollable region. Forwarded to {@link MarkdownRenderer}; defaults to `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's scrollable region. Forwarded to {@link MarkdownRenderer}; defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
 }
 
 /* Stable identity so the renderer's plugin array does not change every render. */
@@ -24,6 +34,7 @@ const REHYPE_PLUGINS = [rehypePromptVariables];
 export const MarkdownWithPlaceholders: FC<MarkdownWithPlaceholdersProps> = ({
   content,
   headingClassName,
+  ...markdownLabels
 }) => {
   const classNames: MarkdownRendererClassNames = {
     h1: headingClassName,
@@ -39,6 +50,7 @@ export const MarkdownWithPlaceholders: FC<MarkdownWithPlaceholdersProps> = ({
       content={content}
       rehypePlugins={REHYPE_PLUGINS}
       classNames={classNames}
+      {...markdownLabels}
     />
   );
 };

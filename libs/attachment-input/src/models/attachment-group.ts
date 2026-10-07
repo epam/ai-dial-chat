@@ -7,6 +7,8 @@ export interface AttachmentGroupLabels extends AttachmentTypeLabels {
   ariaLabel?: string;
   /** Accessible label for each tile/row's click action. Defaults to `'Download attachment'`. */
   clickLabel?: string;
+  /** Accessible label for each tile's own download button (rendered when `onDownloadAll` is given). Defaults to `'Download attachment'`. */
+  downloadLabel?: string;
   /** Accessible label for each row's retry action. Defaults to `'Retry upload'`. */
   retryLabel?: string;
   /** Label for the "download all" header action, shown whenever the group has 2+ attachments. Defaults to `'Download all'`. */
