@@ -48,6 +48,7 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ErrorMessageNotification,
   Popup,
   PopupSize,
   RadioGroup,
@@ -1422,7 +1423,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onConfirm={handleConfirmDelete}
         onClose={handleCloseDeleteDialog}
       >
-        {deleteError && <span className="block text-error">{deleteError}</span>}
+        {deleteError && <ErrorMessageNotification message={deleteError} />}
       </ConfirmationDialog>
 
       <ConfirmationPopup
@@ -1493,9 +1494,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               })}
             </span>
             {unshareError && (
-              <span role="alert" className="mt-1 block text-error">
-                {unshareError}
-              </span>
+              <ErrorMessageNotification
+                className="mt-3"
+                message={unshareError}
+              />
             )}
           </>
         }
@@ -1519,9 +1521,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               })}
             </span>
             {revokeError && (
-              <span role="alert" className="mt-1 block text-error">
-                {revokeError}
-              </span>
+              <ErrorMessageNotification
+                className="mt-3"
+                message={revokeError}
+              />
             )}
           </>
         }
