@@ -285,7 +285,7 @@ Simplest path for initial release: client-side truncation from `conversation.mes
 - Only English resources are currently shipped. The earlier full Arabic coverage
   decision describes intent, not the implementation. Reply adds English strings
   only; additional translations are outside this feature's scope.
-- `applyDocumentDirection` wired to `i18n.on('languageChanged')` — sets `document.documentElement.dir` and `lang` on every locale switch
+- `applyDocumentDirection` wired to `i18n.on('languageChanged')` — sets `document.documentElement.dir` and `lang` on every locale switch from `i18n.resolvedLanguage` (the language actually rendered), so a detected browser language without a translation (e.g. `uk`) yields `lang="en"`, not `lang="uk"`
 - All layout components migrated from physical Tailwind utilities to CSS logical properties
 - Directional icons mirrored via `rtl:scale-x-[-1]`
 - Mobile slide-in panels use `start-0` + `ltr:-translate-x-full rtl:translate-x-full`
