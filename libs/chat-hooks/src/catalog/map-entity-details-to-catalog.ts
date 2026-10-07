@@ -8,6 +8,7 @@ import type {
   OverviewSection,
 } from '@epam/ai-dial-catalog';
 import {
+  CatalogPricingUnit,
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -149,6 +150,14 @@ const PRICING_KEY_LABELS: Record<string, string> = {
   cacheWrite: 'Cached write',
 };
 
+/* A per-character deployment names its input/output rows after characters. */
+const CHARACTER_PRICING_KEY_LABELS: Record<string, string> = {
+  prompt: 'Input characters',
+  completion: 'Output characters',
+};
+
+const CHARACTER_PRICING_UNIT = 'char_without_whitespace';
+
 const PRICING_KEY_ORDER = [
   'prompt',
   'completion',
@@ -163,8 +172,14 @@ const getPricingKeyRank = (key: string): number => {
   return index === -1 ? PRICING_KEY_ORDER.length : index;
 };
 
-const formatPricingKeyLabel = (key: string): string => {
-  const knownLabel = PRICING_KEY_LABELS[key];
+const formatPricingKeyLabel = (
+  key: string,
+  unit: CatalogPricingUnit,
+): string => {
+  const knownLabel =
+    (unit === CatalogPricingUnit.Character
+      ? CHARACTER_PRICING_KEY_LABELS[key]
+      : undefined) ?? PRICING_KEY_LABELS[key];
   if (knownLabel != null) return knownLabel;
 
   const words = key
@@ -182,12 +197,20 @@ const mapModelPricing = (
 ): CatalogItemPricing | undefined => {
   if (pricing == null) return undefined;
 
+  const unit =
+    pricing.unit?.toLowerCase() === CHARACTER_PRICING_UNIT
+      ? CatalogPricingUnit.Character
+      : CatalogPricingUnit.Token;
+
   const prices = [...(pricing.prices ?? [])]
     .sort((a, b) => getPricingKeyRank(a.key) - getPricingKeyRank(b.key))
-    .map(({ key, price }) => ({ label: formatPricingKeyLabel(key), price }));
+    .map(({ key, price }) => ({
+      label: formatPricingKeyLabel(key, unit),
+      price,
+    }));
 
   if (prices.length === 0) return undefined;
-  return { prices };
+  return unit === CatalogPricingUnit.Character ? { prices, unit } : { prices };
 };
 
 const mapModelApi = (
@@ -471,7 +494,7 @@ const mapPricingDto = (
     return price != null ? [{ key, price }] : [];
   });
 
-  return prices.length > 0 ? { prices } : undefined;
+  return prices.length > 0 ? { prices, unit } : undefined;
 };
 
 const mapModelDetailsDto = (

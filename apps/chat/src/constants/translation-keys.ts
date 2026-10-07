@@ -214,6 +214,7 @@ export enum CatalogI18nKeys {
   DetailsApiRequestExample = 'catalog.details.api.requestExample',
   DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
+  DetailsPricingCharacterPricesSection = 'catalog.details.pricing.characterPricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
   DetailsTabLimits = 'catalog.details.tabLimits',
   DetailsLimitsTokenGroupLabel = 'catalog.details.limits.tokenGroup',

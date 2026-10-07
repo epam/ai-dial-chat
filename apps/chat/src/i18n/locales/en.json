@@ -139,6 +139,7 @@
       },
       "pricing": {
         "pricesSection": "Token pricing",
+        "characterPricesSection": "Character pricing",
         "limitsSection": "Usage limits"
       },
       "limits": {

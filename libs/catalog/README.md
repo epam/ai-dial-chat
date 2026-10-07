@@ -626,6 +626,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   LimitRowLayout,
+  CatalogPricingUnit,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
@@ -653,6 +654,14 @@ DetailsConfirmationKind.Unshare; // 'unshare'
 DetailsConfirmationKind.RevokeAccess; // 'revokeAccess'
 DetailsConfirmationKind.DeleteApiKey; // 'deleteApiKey'
 DetailsConfirmationKind.Unpublish; // 'unpublish'
+
+/*
+ * `CatalogItemPricing.unit` picks the Pricing tab's price heading:
+ * `ItemDetailsTexts.pricingPricesSectionLabel` for tokens (the default),
+ * `pricingCharacterPricesSectionLabel` for characters.
+ */
+CatalogPricingUnit.Token; // 'token'
+CatalogPricingUnit.Character; // 'character'
 ```
 
 ### Details-panel confirmations

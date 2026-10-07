@@ -56,6 +56,8 @@ export interface ModelPriceRow {
 export interface ModelPricing {
   /** Every price DIAL Core reports for the deployment, `unit` excluded. */
   prices?: ModelPriceRow[];
+  /** DIAL Core billing unit the prices are quoted in, e.g. `token` or `char_without_whitespace`; absent means tokens. */
+  unit?: string;
 }
 
 /** API-resource identifiers for a model deployment. */

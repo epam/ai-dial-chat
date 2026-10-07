@@ -3,6 +3,7 @@ import type {
   CatalogContentPreviewType,
 } from '../types/catalog-content-type';
 import type { CodeLanguage } from '../types/code-language';
+import type { CatalogPricingUnit } from '../types/pricing-unit';
 import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemOverview } from './item-overview';
 
@@ -125,8 +126,10 @@ export interface CatalogItemLimits {
 
 /** Complete data for the Pricing tab. */
 export interface CatalogItemPricing {
-  /** Token price rows (input, output, cached, batch). */
+  /** Price rows (input, output, cached, batch). */
   prices?: PricingRow[];
+  /** Billing unit the price rows are quoted in; picks the section heading. Defaults to `CatalogPricingUnit.Token`. */
+  unit?: CatalogPricingUnit;
   /** Usage limit rows (daily, weekly, monthly). */
   limits?: UsageLimitRow[];
 }
