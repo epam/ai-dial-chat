@@ -59,28 +59,117 @@ const formatCatalogDate = (date: string): string => {
 
 const PRICING_UNIT_KEY = 'unit';
 
-const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
+/**
+ * Overview section titles and spec labels rendered by
+ * `mapEntityDetailsToCatalogDetails`. Hosts pass translated strings; every
+ * field defaults to the English text in {@link DEFAULT_ENTITY_DETAILS_LABELS}.
+ */
+export interface EntityDetailsLabels {
+  /** Default: `'Capabilities'`. */
+  capabilitiesTitle: string;
+  /** Default: `'Specification'`. */
+  specificationTitle: string;
+  /** Default: `'Configuration'`. */
+  configurationTitle: string;
+  /** Default: `'Tools'`. */
+  tools: string;
+  /** Default: `'Parallel tool calls'`. */
+  parallelToolCalls: string;
+  /** Default: `'Reasoning efforts'`. */
+  reasoningEfforts: string;
+  /** Default: `'Skills'`. */
+  skills: string;
+  /** Default: `'Provider'`. */
+  provider: string;
+  /** Default: `'Vendor'`. */
+  vendor: string;
+  /** Default: `'License'`. */
+  license: string;
+  /** Default: `'Knowledge cutoff date'`. */
+  knowledgeCutoffDate: string;
+  /** Default: `'Parameters'`. */
+  parameters: string;
+  /** Default: `'Hosted by'`. */
+  hostedBy: string;
+  /** Default: `'Release date'`. */
+  releaseDate: string;
+  /** Default: `'Context window'`. */
+  contextWindow: string;
+  /** Default: `'Max output tokens'`. */
+  maxOutputTokens: string;
+  /** Default: `'Input modalities'`. */
+  inputModalities: string;
+  /** Default: `'Input attachments'`. */
+  inputAttachments: string;
+  /** Default: `'Routes'`. */
+  routes: string;
+  /** Default: `'Configuration schema'`. */
+  configurationSchema: string;
+  /** Default: `'Authentication'`. */
+  authentication: string;
+  /** Default: `'Authorization endpoint'`. */
+  authorizationEndpoint: string;
+  /** Default: `'Token endpoint'`. */
+  tokenEndpoint: string;
+  /** Default: `'OAuth scopes'`. */
+  oauthScopes: string;
+}
+
+/** The English Overview labels `mapEntityDetailsToCatalogDetails` uses when a host passes none. */
+export const DEFAULT_ENTITY_DETAILS_LABELS: EntityDetailsLabels = {
+  capabilitiesTitle: 'Capabilities',
+  specificationTitle: 'Specification',
+  configurationTitle: 'Configuration',
+  tools: 'Tools',
+  parallelToolCalls: 'Parallel tool calls',
+  reasoningEfforts: 'Reasoning efforts',
+  skills: 'Skills',
+  provider: 'Provider',
+  vendor: 'Vendor',
+  license: 'License',
+  knowledgeCutoffDate: 'Knowledge cutoff date',
+  parameters: 'Parameters',
+  hostedBy: 'Hosted by',
+  releaseDate: 'Release date',
+  contextWindow: 'Context window',
+  maxOutputTokens: 'Max output tokens',
+  inputModalities: 'Input modalities',
+  inputAttachments: 'Input attachments',
+  routes: 'Routes',
+  configurationSchema: 'Configuration schema',
+  authentication: 'Authentication',
+  authorizationEndpoint: 'Authorization endpoint',
+  tokenEndpoint: 'Token endpoint',
+  oauthScopes: 'OAuth scopes',
+};
+
+const mapModelDetails = (
+  data: ModelEntityDetails,
+  labels: EntityDetailsLabels,
+): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
   if (data.capabilities != null) {
     const { capabilities: c } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (c.hasTools != null) specs.push({ label: 'Tools', value: c.hasTools });
+    if (c.hasTools != null)
+      specs.push({ label: labels.tools, value: c.hasTools });
     if (c.hasParallelToolCalls != null)
       specs.push({
-        label: 'Parallel tool calls',
+        label: labels.parallelToolCalls,
         value: c.hasParallelToolCalls,
       });
     if (c.reasoningEfforts?.length)
       specs.push({
-        label: 'Reasoning efforts',
+        label: labels.reasoningEfforts,
         value: c.reasoningEfforts.join(' · '),
       });
     if (c.hasSkills != null)
-      specs.push({ label: 'Skills', value: c.hasSkills });
+      specs.push({ label: labels.skills, value: c.hasSkills });
 
-    if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
+    if (specs.length > 0)
+      sections.push({ title: labels.capabilitiesTitle, specs });
   }
 
   if (data.specification != null) {
@@ -88,40 +177,42 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
     const specs: OverviewSection['specs'] = [];
 
     if (s.provider != null)
-      specs.push({ label: 'Provider', value: s.provider });
-    if (s.vendor != null) specs.push({ label: 'Vendor', value: s.vendor });
-    if (s.license != null) specs.push({ label: 'License', value: s.license });
+      specs.push({ label: labels.provider, value: s.provider });
+    if (s.vendor != null) specs.push({ label: labels.vendor, value: s.vendor });
+    if (s.license != null)
+      specs.push({ label: labels.license, value: s.license });
     if (s.knowledgeCutoffDate != null)
       specs.push({
-        label: 'Knowledge cutoff date',
+        label: labels.knowledgeCutoffDate,
         value: formatCatalogDate(s.knowledgeCutoffDate),
       });
     if (s.parameters != null)
-      specs.push({ label: 'Parameters', value: s.parameters });
+      specs.push({ label: labels.parameters, value: s.parameters });
     if (s.hostedBy != null)
-      specs.push({ label: 'Hosted by', value: s.hostedBy });
+      specs.push({ label: labels.hostedBy, value: s.hostedBy });
     if (s.createdAt != null)
       specs.push({
-        label: 'Release date',
+        label: labels.releaseDate,
         value: formatCalendarDate(s.createdAt),
       });
     if (s.contextWindowTokens != null)
       specs.push({
-        label: 'Context window',
+        label: labels.contextWindow,
         value: formatTokens(s.contextWindowTokens),
       });
     if (s.maxOutputTokens != null)
       specs.push({
-        label: 'Max output tokens',
+        label: labels.maxOutputTokens,
         value: formatTokens(s.maxOutputTokens),
       });
     if (s.inputTypes?.length)
       specs.push({
-        label: 'Input modalities',
+        label: labels.inputModalities,
         value: mimeTypesToExtensionLabels(s.inputTypes),
       });
 
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
+    if (specs.length > 0)
+      sections.push({ title: labels.specificationTitle, specs });
   }
 
   const pricing = mapModelPricing(data.pricing);
@@ -199,7 +290,10 @@ const mapModelApi = (
   return { resource: { modelId: api.modelId } };
 };
 
-const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
+const mapAgentDetails = (
+  data: AgentEntityDetails,
+  labels: EntityDetailsLabels,
+): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
   if (data.specification != null) {
@@ -207,45 +301,52 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     const specs: OverviewSection['specs'] = [];
 
     if (s.provider != null)
-      specs.push({ label: 'Provider', value: s.provider });
-    if (s.vendor != null) specs.push({ label: 'Vendor', value: s.vendor });
-    if (s.license != null) specs.push({ label: 'License', value: s.license });
+      specs.push({ label: labels.provider, value: s.provider });
+    if (s.vendor != null) specs.push({ label: labels.vendor, value: s.vendor });
+    if (s.license != null)
+      specs.push({ label: labels.license, value: s.license });
     if (s.knowledgeCutoffDate != null)
       specs.push({
-        label: 'Knowledge cutoff date',
+        label: labels.knowledgeCutoffDate,
         value: formatCatalogDate(s.knowledgeCutoffDate),
       });
     if (s.parameters != null)
-      specs.push({ label: 'Parameters', value: s.parameters });
+      specs.push({ label: labels.parameters, value: s.parameters });
     if (s.hostedBy != null)
-      specs.push({ label: 'Hosted by', value: s.hostedBy });
+      specs.push({ label: labels.hostedBy, value: s.hostedBy });
     if (s.createdAt != null)
       specs.push({
-        label: 'Release date',
+        label: labels.releaseDate,
         value: formatCalendarDate(s.createdAt),
       });
     if (s.routes?.length)
-      specs.push({ label: 'Routes', value: s.routes.join(' · ') });
+      specs.push({ label: labels.routes, value: s.routes.join(' · ') });
 
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
+    if (specs.length > 0)
+      sections.push({ title: labels.specificationTitle, specs });
   }
 
   if (data.capabilities != null) {
     const { capabilities: c } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (c.hasTools != null) specs.push({ label: 'Tools', value: c.hasTools });
+    if (c.hasTools != null)
+      specs.push({ label: labels.tools, value: c.hasTools });
     if (c.hasParallelToolCalls != null)
       specs.push({
-        label: 'Parallel tool calls',
+        label: labels.parallelToolCalls,
         value: c.hasParallelToolCalls,
       });
     if (c.hasConfiguration != null)
-      specs.push({ label: 'Configuration schema', value: c.hasConfiguration });
+      specs.push({
+        label: labels.configurationSchema,
+        value: c.hasConfiguration,
+      });
     if (c.hasSkills != null)
-      specs.push({ label: 'Skills', value: c.hasSkills });
+      specs.push({ label: labels.skills, value: c.hasSkills });
 
-    if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
+    if (specs.length > 0)
+      sections.push({ title: labels.capabilitiesTitle, specs });
   }
 
   if (data.configuration != null) {
@@ -254,11 +355,12 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
 
     if (c.inputAttachmentTypes?.length)
       specs.push({
-        label: 'Input attachments',
+        label: labels.inputAttachments,
         value: mimeTypesToExtensionLabels(c.inputAttachmentTypes),
       });
 
-    if (specs.length > 0) sections.push({ title: 'Configuration', specs });
+    if (specs.length > 0)
+      sections.push({ title: labels.configurationTitle, specs });
   }
 
   return { overview: sections.length > 0 ? { sections } : undefined };
@@ -331,7 +433,10 @@ const mapToolsetTools = (
   return { tools: names.map((name) => ({ name })) };
 };
 
-const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
+const mapToolsetDetails = (
+  data: ToolsetEntityDetails,
+  labels: EntityDetailsLabels,
+): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
   if (data.specification != null) {
@@ -339,42 +444,44 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
     const specs: OverviewSection['specs'] = [];
 
     if (s.authentication != null)
-      specs.push({ label: 'Authentication', value: s.authentication });
+      specs.push({ label: labels.authentication, value: s.authentication });
     if (s.provider != null)
-      specs.push({ label: 'Provider', value: s.provider });
-    if (s.vendor != null) specs.push({ label: 'Vendor', value: s.vendor });
-    if (s.license != null) specs.push({ label: 'License', value: s.license });
+      specs.push({ label: labels.provider, value: s.provider });
+    if (s.vendor != null) specs.push({ label: labels.vendor, value: s.vendor });
+    if (s.license != null)
+      specs.push({ label: labels.license, value: s.license });
     if (s.knowledgeCutoffDate != null)
       specs.push({
-        label: 'Knowledge cutoff date',
+        label: labels.knowledgeCutoffDate,
         value: formatCatalogDate(s.knowledgeCutoffDate),
       });
     if (s.parameters != null)
-      specs.push({ label: 'Parameters', value: s.parameters });
+      specs.push({ label: labels.parameters, value: s.parameters });
     if (s.hostedBy != null)
-      specs.push({ label: 'Hosted by', value: s.hostedBy });
+      specs.push({ label: labels.hostedBy, value: s.hostedBy });
     if (s.createdAt != null)
       specs.push({
-        label: 'Release date',
+        label: labels.releaseDate,
         value: formatCalendarDate(s.createdAt),
       });
     if (s.authStatus?.scopesSupported?.length)
       specs.push({
-        label: 'OAuth scopes',
+        label: labels.oauthScopes,
         value: s.authStatus.scopesSupported.join(' · '),
       });
     if (s.authStatus?.authorizationEndpoint != null)
       specs.push({
-        label: 'Authorization endpoint',
+        label: labels.authorizationEndpoint,
         value: s.authStatus.authorizationEndpoint,
       });
     if (s.authStatus?.tokenEndpoint != null)
       specs.push({
-        label: 'Token endpoint',
+        label: labels.tokenEndpoint,
         value: s.authStatus.tokenEndpoint,
       });
 
-    if (specs.length > 0) sections.push({ title: 'Specification', specs });
+    if (specs.length > 0)
+      sections.push({ title: labels.specificationTitle, specs });
   }
 
   return {
@@ -385,19 +492,22 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
 
 /**
  * Converts a strongly-typed entity domain model into the lib's `CatalogItemTabData` shape.
- * Every label is a fixed English string — the app's i18n keys for these labels are dropped
- * on the move, since the lib cannot import the app's translation-key enum.
+ * Section titles and spec labels come from `labels`, merged over
+ * {@link DEFAULT_ENTITY_DETAILS_LABELS} — the lib cannot import a host's
+ * translation keys, so the host passes its translated strings in.
  */
 export const mapEntityDetailsToCatalogDetails = (
   details: EntitySpecificDetails,
+  labels?: Partial<EntityDetailsLabels>,
 ): CatalogItemTabData => {
+  const resolvedLabels = { ...DEFAULT_ENTITY_DETAILS_LABELS, ...labels };
   switch (details.type) {
     case 'MODEL':
-      return mapModelDetails(details.data);
+      return mapModelDetails(details.data, resolvedLabels);
     case 'AGENT':
-      return mapAgentDetails(details.data);
+      return mapAgentDetails(details.data, resolvedLabels);
     case 'TOOLSET':
-      return mapToolsetDetails(details.data);
+      return mapToolsetDetails(details.data, resolvedLabels);
   }
 };
 

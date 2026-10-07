@@ -611,6 +611,66 @@ and `footerClassName` each default to a `dial-*-text` scale class, and
 `colors` (`LimitsTabColors`) maps to the CSS custom properties the stylesheet
 reads. See `LimitsTabProps` in the Types section.
 
+### Embedding the other details tabs
+
+`AboutTab`, `OverviewTab`, `PricingTab` and `ToolsTab` are the components
+`DetailsPanel` renders on its About, Overview, Pricing and Tools tabs. Together
+with `ContentTab` and `LimitsTab` they let a host show a catalog item's details
+inside its own surface (a popup, a side sheet) without the panel. They are
+presentation-only: they render the `CatalogItem` fields and `details` they are
+given, and every visible string comes from their props, with English defaults
+where one exists.
+
+`getCatalogDetailsTabs` (also on `@epam/ai-dial-catalog/mapping`) returns the
+tabs the panel would show for an item, in order: About unless the item is
+content-first, Content, then Overview, Pricing, Limits and Tools when their data
+is present, and Connect last when the item has a connectable endpoint. Pass
+`{ isConnectHidden: true }` to leave Connect out.
+
+```tsx
+import {
+  AboutTab,
+  CatalogDetailsTab,
+  OverviewTab,
+  ToolsTab,
+  type CatalogItem,
+} from '@epam/ai-dial-catalog';
+import { getCatalogDetailsTabs } from '@epam/ai-dial-catalog/mapping';
+
+const renderPanel = (item: CatalogItem, tab: CatalogDetailsTab) => {
+  switch (tab) {
+    case CatalogDetailsTab.About:
+      return <AboutTab content={item.description} topics={item.topics} />;
+    case CatalogDetailsTab.Overview:
+      return (
+        <OverviewTab
+          sections={item.details?.overview?.sections}
+          sectionClassName="dial-caption-text"
+          labelClassName="dial-small-text"
+          valueClassName="dial-small-text"
+          valueTrueClassName="dial-small-semi-text"
+          yesLabel="Yes"
+          noLabel="No"
+        />
+      );
+    case CatalogDetailsTab.Tools:
+      return (
+        <ToolsTab tools={item.details?.tools} labels={{ inputName: 'Name' }} />
+      );
+    default:
+      return null;
+  }
+};
+
+const tabs = getCatalogDetailsTabs(item, { isConnectHidden: true });
+```
+
+`ToolsTab`'s `labels` (`ToolsLabels`) sets the grid column headings
+(`inputName`, `inputType`, `inputRequired`, `annotationKey` and
+`annotationValue`), defaulting to `'Name'`, `'Type'`, `'Required'`, `'Key'` and
+`'Value'`. `PricingTab` takes `pricing` plus the optional `pricesSectionLabel`
+and `limitsSectionLabel`.
+
 ## Enums
 
 ```tsx

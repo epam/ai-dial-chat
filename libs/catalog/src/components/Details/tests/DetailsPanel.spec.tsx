@@ -2784,3 +2784,22 @@ describe('DetailsPanel — markdown table label', () => {
     ).toBeTruthy();
   });
 });
+
+describe('DetailsPanel — tab list', () => {
+  it('renders the tabs getCatalogDetailsTabs lists for the item, in order', () => {
+    const modelWithDetails = makeItem({
+      details: {
+        overview: { sections: [] },
+        pricing: { prices: [] },
+        limits: { groups: [] },
+      },
+    });
+
+    renderPanel({ item: modelWithDetails });
+
+    const tabNames = within(screen.getByRole('tablist'))
+      .getAllByRole('button')
+      .map((tab) => tab.textContent);
+    expect(tabNames).toEqual(['About', 'Overview', 'Pricing', 'Limits']);
+  });
+});

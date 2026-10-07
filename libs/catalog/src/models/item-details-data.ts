@@ -161,6 +161,20 @@ export interface ToolDefinition {
   annotations?: ToolAnnotation[];
 }
 
+/** Column headings of the Tools tab grids; every field has an English default. */
+export interface ToolsLabels {
+  /** Input-parameters grid, name column. Default: `'Name'`. */
+  inputName: string;
+  /** Input-parameters grid, type column. Default: `'Type'`. */
+  inputType: string;
+  /** Input-parameters grid, required column. Default: `'Required'`. */
+  inputRequired: string;
+  /** Annotations grid, key column. Default: `'Key'`. */
+  annotationKey: string;
+  /** Annotations grid, value column. Default: `'Value'`. */
+  annotationValue: string;
+}
+
 /** Complete data for the Tools tab (Toolset entities only). */
 export interface CatalogItemTools {
   /** Ordered list of tool definitions. */

@@ -32,10 +32,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
-import type {
-  CatalogContentFilePreview,
-  CatalogItemApiDetails,
-} from '../../models/item-details-data';
+import type { CatalogContentFilePreview } from '../../models/item-details-data';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
@@ -48,6 +45,10 @@ import {
   collectAllFolderIds,
   findContentNodeName,
 } from '../../utils/catalog-content-tree';
+import {
+  getCatalogDetailsTabs,
+  hasConnectableApi,
+} from '../../utils/details-tabs';
 import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import {
   canPublishCredentials,
@@ -66,29 +67,6 @@ import { LimitsTab } from './TabsContent/Limits/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
-
-/*
- * Entity types that lead with their body instead of a description. A prompt's
- * content already carries its description, so an About tab would only repeat
- * it; a skill's listing description is already rendered as the Content tab's
- * summary line, so an About tab would likewise only repeat it. Both open on
- * Content, followed by Overview.
- */
-const CONTENT_FIRST_ENTITY_TYPES = new Set<CatalogEntityType>([
-  CatalogEntityType.Prompt,
-  CatalogEntityType.Skill,
-]);
-
-/**
- * An item is worth a Connect tab only when its api data names something to
- * connect to — a single endpoint URL or a non-empty multi-endpoint list (e.g.
- * a model's Chat Completions/Responses endpoints). A resource identifier
- * alone (a model's `modelId` with no endpoints) has nothing to connect to.
- */
-const hasConnectableApi = (
-  api: CatalogItemApiDetails | undefined,
-): api is CatalogItemApiDetails =>
-  api?.resource?.endpointUrl != null || (api?.endpoints?.length ?? 0) > 0;
 
 /** One folder an item is currently published to, derived from its publish history. */
 interface PublishedFolder {
@@ -826,64 +804,18 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [isStarred, item.id, onToggleFavorite]);
 
   const tabs = useMemo(() => {
-    const result: { id: string; label: string }[] = [];
-    const isContentFirst = CONTENT_FIRST_ENTITY_TYPES.has(item.type);
-    if (!isContentFirst) {
-      result.push({
-        id: CatalogDetailsTab.About,
-        label: texts?.tabAboutLabel ?? 'About',
-      });
-    }
-    /*
-     * A content-first entity keeps its Content tab even before a body arrives
-     * (or when it has none), so the tab it opens on never shifts as details
-     * resolve.
-     */
-    if (isContentFirst || item.details?.promptContent != null) {
-      result.push({
-        id: CatalogDetailsTab.Content,
-        label: texts?.tabContentLabel ?? 'Details',
-      });
-    }
-    if (item.details?.overview != null) {
-      result.push({
-        id: CatalogDetailsTab.Overview,
-        label: texts?.tabOverviewLabel ?? 'Overview',
-      });
-    }
-    if (item.details?.pricing != null) {
-      result.push({
-        id: CatalogDetailsTab.Pricing,
-        label: texts?.tabPricingLabel ?? 'Pricing',
-      });
-    }
-    if (item.details?.limits != null) {
-      result.push({
-        id: CatalogDetailsTab.Limits,
-        label: texts?.tabLimitsLabel ?? 'Limits',
-      });
-    }
-    if (item.details?.tools != null) {
-      result.push({
-        id: CatalogDetailsTab.Tools,
-        label: texts?.tabToolsLabel ?? 'Tools',
-      });
-    }
-    /*
-     * Connect is pushed last, after every other tab, regardless of type. It
-     * needs a connectable endpoint to be worth showing — either a single
-     * endpoint URL or a non-empty multi-endpoint list (e.g. a model's Chat
-     * Completions/Responses endpoints). Items whose api data is only a
-     * resource identifier (a model's `modelId` with no endpoints) have
-     * nothing to connect to.
-     */
-    if (hasConnectableApi(item.details?.api)) {
-      result.push({
-        id: CatalogDetailsTab.Api,
-        label: texts?.tabConnectLabel ?? 'Connect',
-      });
-    }
-    return result;
+    const labels: Record<CatalogDetailsTab, string> = {
+      [CatalogDetailsTab.About]: texts?.tabAboutLabel ?? 'About',
+      [CatalogDetailsTab.Content]: texts?.tabContentLabel ?? 'Details',
+      [CatalogDetailsTab.Overview]: texts?.tabOverviewLabel ?? 'Overview',
+      [CatalogDetailsTab.Pricing]: texts?.tabPricingLabel ?? 'Pricing',
+      [CatalogDetailsTab.Limits]: texts?.tabLimitsLabel ?? 'Limits',
+      [CatalogDetailsTab.Api]: texts?.tabConnectLabel ?? 'Connect',
+      [CatalogDetailsTab.Tools]: texts?.tabToolsLabel ?? 'Tools',
+    };
+    // Which tabs show, and in what order, is the shared rule hosts embedding
+    // the tab components also use (`getCatalogDetailsTabs`).
+    return getCatalogDetailsTabs(item).map((id) => ({ id, label: labels[id] }));
   }, [item, texts]);
 
   /*

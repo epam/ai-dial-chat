@@ -1,8 +1,19 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { CatalogItemTools } from '../../../../models/item-details-data';
+import type {
+  CatalogItemTools,
+  ToolsLabels,
+} from '../../../../models/item-details-data';
 import { DataGrid } from '../DataGrid/DataGrid';
 import styles from './Tools.module.scss';
+
+const DEFAULT_TOOLS_LABELS: ToolsLabels = {
+  inputName: 'Name',
+  inputType: 'Type',
+  inputRequired: 'Required',
+  annotationKey: 'Key',
+  annotationValue: 'Value',
+};
 
 /** Props for `Tools`. */
 export interface ToolsProps {
@@ -16,6 +27,8 @@ export interface ToolsProps {
   tableHeadingClassName?: string;
   /** CSS class for grid cell text. Defaults to `'dial-tiny-text'`. */
   tableCellClassName?: string;
+  /** Grid column headings, merged over English defaults. */
+  labels?: Partial<ToolsLabels>;
 }
 
 /** Renders the Tools tab: a list of tool definitions with input schemas and annotations. */
@@ -25,7 +38,10 @@ export const Tools: FC<ToolsProps> = ({
   descriptionClassName = 'dial-small-text',
   tableHeadingClassName = 'dial-caption-text',
   tableCellClassName = 'dial-tiny-text',
+  labels,
 }) => {
+  const columnLabels = { ...DEFAULT_TOOLS_LABELS, ...labels };
+
   if (tools == null) {
     return null;
   }
@@ -57,7 +73,11 @@ export const Tools: FC<ToolsProps> = ({
 
           {tool.inputParams != null && tool.inputParams.length > 0 && (
             <DataGrid
-              columns={['Name', 'Type', 'Required']}
+              columns={[
+                columnLabels.inputName,
+                columnLabels.inputType,
+                columnLabels.inputRequired,
+              ]}
               columnsTemplate="1fr 1fr auto"
               rows={tool.inputParams.map((p) => [
                 <code
@@ -87,7 +107,10 @@ export const Tools: FC<ToolsProps> = ({
 
           {tool.annotations != null && tool.annotations.length > 0 && (
             <DataGrid
-              columns={['Key', 'Value']}
+              columns={[
+                columnLabels.annotationKey,
+                columnLabels.annotationValue,
+              ]}
               rows={tool.annotations.map((ann) => [
                 <code
                   key="key"
