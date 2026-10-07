@@ -150,10 +150,11 @@ the `files` prop and never exposes a rename/move/delete affordance.
 ### Adding files and folders
 
 The Files pane header renders an **Add** dropdown (ui-kit `ButtonDropdown`), and
-every node except `SKILL.md` has a context menu of **Add child** (folders
-only), **Add sibling** and **Delete**. Add child and Add sibling are submenus
-holding the same entries as the Add dropdown. An entry appears only when its
-host capability is supplied:
+every node except `SKILL.md` has a context menu. A folder lists the Add
+dropdown's entries directly (adding into that folder), then **Add sibling** and
+**Delete**; a file lists **Add sibling** and **Delete**. Add sibling is a
+submenu holding the same entries as the Add dropdown. An entry appears only
+when its host capability is supplied:
 
 | Entry                      | Requires                         | Behaviour                                                                                                             |
 | -------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -163,8 +164,8 @@ host capability is supplied:
 | Open DIAL file system      | `fileActions.pickFromFileSystem` | Awaits the host picker; resolved `SkillFileSourceEntry[]` open the upload dialog pre-staged (`undefined` = cancelled) |
 
 Every add action targets a folder: from the header, the selected folder (or
-the root when a file or `SKILL.md` is selected); from Add child, that folder;
-from Add sibling, the node's parent. Staged paths are prefixed with it. Files
+the root when a file or `SKILL.md` is selected); from a folder's own menu
+entries, that folder; from Add sibling, the node's parent. Staged paths are prefixed with it. Files
 from every source go through `fileActions.validateBatch` and
 `fileActions.commitBatch`, so per-file errors look the same whatever the source.
 
@@ -243,8 +244,7 @@ with `path` relative to the folder being added to. `SkillFileUploadMode`
 
 `labels` (`SkillEditorLabels`) gives every string an English default. The
 file-tree entries are `addLabel`, `createFolderLabel`, `uploadFilesLabel`,
-`uploadArchiveLabel`, `openFileSystemLabel`, `addChildLabel`,
-`addSiblingLabel`, `deleteLabel`, `newFolderDefaultName`,
+`uploadArchiveLabel`, `openFileSystemLabel`, `addSiblingLabel`, `deleteLabel`, `newFolderDefaultName`,
 `folderNameRequiredError`, `folderNameInvalidError`,
 `folderNameDuplicateError`, and the archive dialog's
 `uploadArchiveDialogTitle`, `uploadArchiveDropZoneLabel`,

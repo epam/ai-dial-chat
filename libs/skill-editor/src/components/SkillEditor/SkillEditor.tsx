@@ -571,18 +571,15 @@ export const SkillEditor: FC<SkillEditorProps> = ({
             ? SkillFileNodeKind.Folder
             : SkillFileNodeKind.File,
       };
-      const items: DropdownItem[] = [];
-      if (node.kind === SkillFileNodeKind.Folder) {
-        items.push({
-          key: 'add-child',
-          icon: renderIcon(IconPlus),
-          label: t.addChildLabel ?? 'Add child',
-          children: buildAddMenuItems(
-            resolveAddTarget(SkillAddSource.Child, node),
-            pane,
-          ),
-        });
-      }
+      /* A folder lists its add entries directly, so uploading into it takes
+         one click instead of an extra "Add child" submenu (issue #9301). */
+      const items: DropdownItem[] =
+        node.kind === SkillFileNodeKind.Folder
+          ? buildAddMenuItems(
+              resolveAddTarget(SkillAddSource.Child, node),
+              pane,
+            )
+          : [];
       items.push(
         {
           key: 'add-sibling',
@@ -605,7 +602,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     },
     [
       draftPath,
-      t.addChildLabel,
       t.addSiblingLabel,
       t.deleteLabel,
       removeIconClassName,

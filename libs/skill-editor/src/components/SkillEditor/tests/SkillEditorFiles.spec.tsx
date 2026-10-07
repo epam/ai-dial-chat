@@ -383,6 +383,16 @@ const openAddMenu = async (user: User) => {
   return screen.getAllByRole('menu')[0];
 };
 
+/* Context-menu entries rendered directly on a row, not inside a submenu list. */
+const queryDirectMenuItems = (name: string) => {
+  const nested = screen
+    .queryAllByRole('list')
+    .flatMap((list) => within(list).queryAllByRole('menuitem'));
+  return screen
+    .queryAllByRole('menuitem', { name })
+    .filter((item) => !nested.includes(item));
+};
+
 const openUploadDialog = async (user: User) => {
   const menu = await openAddMenu(user);
   await user.click(
@@ -906,17 +916,25 @@ describe('SkillEditor — Add dropdown', () => {
 });
 
 describe('SkillEditor — node menu', () => {
-  it('offers Add child, Add sibling and Delete on a folder', () => {
+  it('lists the add entries directly, then Add sibling and Delete, on a folder', () => {
     renderEditor({ files: [docsFolder] }, fullFileActions());
 
-    expect(screen.getAllByRole('list', { name: 'Add child' })).toHaveLength(2);
+    for (const name of [
+      'Create folder',
+      'Upload files from device',
+      'Upload archive from device',
+      'Open DIAL file system',
+    ]) {
+      expect(queryDirectMenuItems(name)).toHaveLength(2);
+    }
+    expect(screen.queryByRole('list', { name: 'Add child' })).toBeNull();
     expect(screen.getAllByRole('list', { name: 'Add sibling' })).toHaveLength(
       2,
     );
     expect(screen.getAllByRole('menuitem', { name: 'Delete' })).toHaveLength(2);
   });
 
-  it('offers no Add child on a file', () => {
+  it('lists no direct add entries on a file', () => {
     renderEditor(
       {
         files: [
@@ -926,10 +944,20 @@ describe('SkillEditor — node menu', () => {
       fullFileActions(),
     );
 
-    expect(screen.queryByRole('list', { name: 'Add child' })).toBeNull();
+    expect(queryDirectMenuItems('Upload files from device')).toHaveLength(0);
     expect(screen.getAllByRole('list', { name: 'Add sibling' })).toHaveLength(
       2,
     );
+  });
+
+  it('stages an upload from a folder menu inside that folder', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({ files: [docsFolder] }, fullFileActions());
+
+    await user.click(queryDirectMenuItems('Upload files from device')[0]);
+    stageFile(new File(['x'], 'c.md'));
+
+    expect(await screen.findByText('docs/c.md')).toBeTruthy();
   });
 
   it('stages an Add sibling upload next to a nested file', async () => {
@@ -1031,7 +1059,7 @@ describe('SkillEditor — Create folder', () => {
     expect(screen.queryByLabelText('Folder name')).toBeNull();
   });
 
-  it('creates a nested folder from Add child and expands its parent', async () => {
+  it('creates a nested folder from the folder menu and expands its parent', async () => {
     const user = userEvent.setup({ delay: null });
     const onCreateFolder = vi.fn();
     const onExpandedPathsChange = vi.fn();
@@ -1040,10 +1068,7 @@ describe('SkillEditor — Create folder', () => {
       fullFileActions({ onCreateFolder }),
     );
 
-    const child = screen.getAllByRole('list', { name: 'Add child' })[0];
-    await user.click(
-      within(child).getByRole('menuitem', { name: 'Create folder' }),
-    );
+    await user.click(queryDirectMenuItems('Create folder')[0]);
 
     expect(onExpandedPathsChange).toHaveBeenCalledWith(['docs']);
     const input = screen.getAllByLabelText('Folder name')[0];
@@ -1145,12 +1170,7 @@ describe('SkillEditor — Create folder', () => {
 
 describe('SkillEditor — Upload archive', () => {
   const openArchiveDialogFor = async (user: User) => {
-    const child = screen.getAllByRole('list', { name: 'Add child' })[0];
-    await user.click(
-      within(child).getByRole('menuitem', {
-        name: 'Upload archive from device',
-      }),
-    );
+    await user.click(queryDirectMenuItems('Upload archive from device')[0]);
   };
 
   it('stages archive entries under the target folder with their structure', async () => {
