@@ -471,3 +471,20 @@ Both sources are required. The `model_changed` marker is appended at the **end**
 - **GIVEN** a conversation whose messages carry neither a `model_changed` marker nor any `deploymentId`
 - **WHEN** the conversation is loaded
 - **THEN** the selector is restored to `assistantModelId || model.id`
+
+### Requirement: Restoring a stored deployment normalises a reference to the catalog id
+
+`restoreSelectedItemId` in `apps/chat/src/context/DeploymentsContext.tsx` SHALL resolve the value it receives with `findDeploymentByIdOrReference` against the loaded deployments and store the matched deployment's `id` as `selectedItemId`; when no deployment matches (for example the catalog has not loaded yet) it SHALL store the value unchanged.
+
+A stored conversation or message may address a deployment by its DIAL Core `reference` instead of its `id`. Scheduler-created conversations do this for applications: the stored model is the application's UUID `reference`, while the catalog `id` is `applications/{bucket}/{path}`. `selectedItemId` is what the next completion sends as `model`, and the backend resolves deployment details by `id` only, so sending the reference made `POST /conversations/completions` answer 404 `Resource not found` on the first follow-up message in a scheduled-task run.
+
+#### Scenario: Replying in a scheduled run of an application
+
+- **GIVEN** a scheduler-created conversation whose stored model is the application's UUID `reference`
+- **WHEN** the conversation is loaded and the user sends a message
+- **THEN** `selectedItemId` is the application's catalog `id` and the completion request's `model` is that `id`
+
+#### Scenario: Unknown value is kept
+
+- **WHEN** `restoreSelectedItemId` receives a value that matches no loaded deployment's `id` or `reference`
+- **THEN** it is stored unchanged
