@@ -16,9 +16,15 @@ describe('formatPrice', () => {
     expect(formatPrice(10000)).toBe('$10,000');
   });
 
-  it('keeps up to six decimals for sub-dollar amounts', () => {
+  it('keeps up to six significant digits for sub-dollar amounts', () => {
     expect(formatPrice(0.3)).toBe('$0.3');
     expect(formatPrice(0.000003)).toBe('$0.000003');
+    expect(formatPrice(0.1234567)).toBe('$0.123457');
+  });
+
+  it('never rounds a non-zero sub-dollar amount to zero', () => {
+    expect(formatPrice(0.00000015)).toBe('$0.00000015');
+    expect(formatPrice(0.0000035)).toBe('$0.0000035');
   });
 
   it('formats zero without decimals', () => {
@@ -36,9 +42,27 @@ describe('formatUnitPrice', () => {
     expect(formatUnitPrice('0.000015', undefined)).toBe('$15/M tokens');
   });
 
-  it('keeps the per-unit price for non-token units and spells the unit out', () => {
-    expect(formatUnitPrice('0.5', 'char_without_whitespace')).toBe(
-      '$0.5/char without whitespace',
+  it('re-quotes character prices per 1M characters without rounding', () => {
+    expect(formatUnitPrice('0.00000015', 'char_without_whitespace')).toBe(
+      '$0.15/M chars without whitespace',
+    );
+    expect(formatUnitPrice('0.0000035', 'char_without_whitespace')).toBe(
+      '$3.5/M chars without whitespace',
+    );
+    expect(formatUnitPrice('0.00000125', 'char_without_whitespace')).toBe(
+      '$1.25/M chars without whitespace',
+    );
+  });
+
+  it('never shows a non-zero per-1M price as $0', () => {
+    expect(formatUnitPrice('0.0000000000015', 'token')).toBe(
+      '$0.0000015/M tokens',
+    );
+  });
+
+  it('keeps the per-unit price for other units and spells the unit out', () => {
+    expect(formatUnitPrice('0.00000015', 'image_second')).toBe(
+      '$0.00000015/image second',
     );
   });
 

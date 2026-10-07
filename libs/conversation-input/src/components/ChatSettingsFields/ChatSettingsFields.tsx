@@ -143,7 +143,8 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
           max={1}
           step={0.1}
           labels={temperatureLabels}
-          showValue
+          showTooltip
+          showTicks
           onChange={onTemperatureChange}
         />
       )}

@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.46`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.47`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.46
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.47
 - `@epam/ai-dial-react-file-manager` ^0.3.0-dev.25 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -1029,14 +1029,16 @@ copyMarkdownAsRichText(message.content);
 // The same HTML on its own, for a caller that writes the clipboard itself or renders an export
 const html = markdownToRichTextHtml(message.content);
 
-// Format a USD amount, keeping decimals for sub-dollar values
+// Format a USD amount, keeping significant digits for sub-dollar values
 formatPrice(0.3); // '$0.3'
+formatPrice(0.00000015); // '$0.00000015'
 
 // Format accumulated USD usage to cents
 formatCost(0.788438); // '$0.79'
 
-// Re-quote a DIAL Core per-unit price for display
+// Re-quote a DIAL Core per-unit price per 1M tokens or characters for display
 formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
+formatUnitPrice('0.00000015', 'char_without_whitespace'); // '$0.15/M chars without whitespace'
 
 // Derive an avatar's initials and its deterministic color from a name
 const initials = extractInitials(user.displayName);
