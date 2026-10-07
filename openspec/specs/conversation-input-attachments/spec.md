@@ -580,19 +580,20 @@ This closes the gap where a file attached while compatible with the selected mod
 
 ---
 
-### Requirement: Input wrapper removes inline-end padding when the tray is full
+### Requirement: Full attachment tray bleeds to the inline-end edge without moving the controls
 
-When the total attachment count (prefix + new) reaches 7 or more, the `Input` wrapper SHALL drop its inline-end padding to `0`. For fewer than 7 attachments the default `p-4` (16 px on all sides) applies.
+The `Input` wrapper SHALL keep `p-4` (16 px on all sides) whatever the attachment count, so the action row — model selector, microphone and Send button — stays in place as attachments are added. When 7 or more new attachments are present, the `AttachmentTray` alone SHALL extend into the wrapper's inline-end padding (`-me-4 w-[calc(100%+1rem)]`) so its cards scroll to the edge.
 
-#### Scenario: No end padding with 7 or more attachments
+#### Scenario: Controls stay in place with 7 or more attachments
 
-- **WHEN** the combined attachment count is 7 or more
-- **THEN** the input wrapper uses `py-4 ps-4` (no inline-end padding)
+- **WHEN** 7 or more new attachments are present
+- **THEN** the input wrapper still uses `p-4`
+- **AND** the attachment tray carries `-me-4` and spans the wrapper's inline-end padding
 
-#### Scenario: Default padding with fewer than 7 attachments
+#### Scenario: Tray stays inside the padding with fewer than 7 attachments
 
-- **WHEN** the combined attachment count is 6 or fewer
-- **THEN** the input wrapper uses `p-4` (16 px on all sides)
+- **WHEN** 6 or fewer new attachments are present
+- **THEN** the attachment tray does not extend into the wrapper's padding
 
 ---
 
