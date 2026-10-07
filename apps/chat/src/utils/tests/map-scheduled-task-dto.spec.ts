@@ -1,5 +1,6 @@
 import {
   ScheduledTaskErrorCode,
+  type ScheduleCronDto,
   type ScheduledTaskDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
@@ -9,6 +10,7 @@ import {
   ToolsetSigninI18nKeys,
 } from '../../constants/translation-keys';
 import {
+  getNextCronOccurrence,
   mapScheduledTaskDtoToItem,
   mapScheduledTaskDtosToItems,
   resolveScheduledTaskErrorMessage,
@@ -347,4 +349,36 @@ describe('resolveScheduledTaskErrorMessage', () => {
       ).toBe(ScheduledTasksI18nKeys.EditErrorNotification);
     },
   );
+});
+
+describe('getNextCronOccurrence', () => {
+  /* 7 Oct 2026, 08:00 UTC. */
+  const from = new Date('2026-10-07T08:00:00.000Z');
+  const cron = (fields: Record<string, string | null>): ScheduleCronDto => ({
+    fields: fields as ScheduleCronDto['fields'],
+  });
+
+  it('returns today when the time of day is still ahead', () => {
+    expect(
+      getNextCronOccurrence(
+        cron({ hour: '9', minute: '0' }),
+        from,
+      )?.toISOString(),
+    ).toBe('2026-10-07T09:00:00.000Z');
+  });
+
+  it('returns tomorrow when the time of day has already passed', () => {
+    expect(
+      getNextCronOccurrence(
+        cron({ hour: '7', minute: '0' }),
+        from,
+      )?.toISOString(),
+    ).toBe('2026-10-08T07:00:00.000Z');
+  });
+
+  it('returns undefined when hour or minute is not a plain number', () => {
+    expect(getNextCronOccurrence(cron({ hour: '*', minute: '0' }), from)).toBe(
+      undefined,
+    );
+  });
 });
