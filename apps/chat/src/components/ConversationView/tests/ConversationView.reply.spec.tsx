@@ -499,3 +499,45 @@ describe('ConversationView Reply attachment flow', () => {
     expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
   });
 });
+
+describe('ConversationView read-only duplicate action', () => {
+  it('offers the duplicate button on a read-only conversation', () => {
+    const onDuplicateConversation = vi.fn();
+    render(
+      <ConversationView
+        {...defaults}
+        isReadOnly
+        onSend={vi.fn()}
+        onDuplicateConversation={onDuplicateConversation}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'conversationPanel.duplicateReadOnlyDescription',
+      }),
+    );
+    expect(onDuplicateConversation).toHaveBeenCalledOnce();
+  });
+
+  it('explains instead of offering the button when the model is hidden', () => {
+    render(
+      <ConversationView
+        {...defaults}
+        isReadOnly
+        isDuplicateUnavailable
+        onSend={vi.fn()}
+        onDuplicateConversation={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'conversationPanel.duplicateReadOnlyDescription',
+      }),
+    ).toBeNull();
+    expect(
+      screen.getByText('conversationPanel.duplicateUnavailableModel'),
+    ).toBeTruthy();
+  });
+});

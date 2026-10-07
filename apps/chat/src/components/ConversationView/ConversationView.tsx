@@ -169,6 +169,8 @@ interface Props {
   stoppedGeneratingText: string;
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
+  /** The conversation's model is hidden, so a read-only chat explains why it can't be duplicated instead of offering the button. */
+  isDuplicateUnavailable?: boolean;
   duplicateError?: string;
   isAudioMessageSupported?: boolean;
   isVoiceRecordingSupported?: boolean;
@@ -245,6 +247,7 @@ const ConversationView: FC<Props> = ({
   stoppedGeneratingText,
   isReadOnly = false,
   onDuplicateConversation,
+  isDuplicateUnavailable = false,
   duplicateError,
   isAudioMessageSupported = false,
   isVoiceRecordingSupported = false,
@@ -1175,16 +1178,24 @@ const ConversationView: FC<Props> = ({
             {duplicateError && (
               <ErrorMessageNotification message={duplicateError} />
             )}
-            <NeutralButton
-              label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
-              iconBefore={
-                <IconCopy
-                  size={DIAL_ICON_SIZE.MD}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              }
-              onClick={onDuplicateConversation}
-            />
+            {isDuplicateUnavailable ? (
+              <p className="dial-small-text text-center text-secondary">
+                {t(ConversationPanelI18nKeys.DuplicateUnavailableModel)}
+              </p>
+            ) : (
+              <NeutralButton
+                label={t(
+                  ConversationPanelI18nKeys.DuplicateReadOnlyDescription,
+                )}
+                iconBefore={
+                  <IconCopy
+                    size={DIAL_ICON_SIZE.MD}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
+                onClick={onDuplicateConversation}
+              />
+            )}
           </div>
         ) : (
           <>

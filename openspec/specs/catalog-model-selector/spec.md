@@ -177,6 +177,8 @@ Both surfaces that render a conversation input — `ConversationView` and `NewCo
 
 `DeploymentSelectorPanel.tsx` (`apps/chat/src/components/DeploymentSelector/`) SHALL build the selector's list from the user's favorited catalog items, filtered to conversational entity types only: `CatalogEntityType.Model` and `CatalogEntityType.Agent`. Non-conversational types (`Toolset`, `Skill`, and any other `CatalogEntityType`) SHALL be excluded — they are not things a user can talk to. Items with `isHidden` set (operator `HIDDEN_ENTITY_TAGS`) are excluded as well. An optional `pinnedItem` is placed first, ahead of the favorites, and goes through the same filter; the currently selected item is shown in its own section and is removed from the favorites list.
 
+The currently selected item is not dropped when it is `isHidden` — an existing conversation can still point at a model the operator hid afterwards (Issue #9183). Its row SHALL instead render disabled (it cannot be re-picked), carry the `deploymentSelector.unavailableLabel` translation key as its description, and offer no favorite toggle.
+
 This filter SHALL be memoised on the favorites list and `pinnedItem`, and the search query SHALL be applied on top of the already-filtered list rather than over the raw favorites.
 
 #### Scenario: Favorited application appears in the selector
@@ -193,6 +195,11 @@ This filter SHALL be memoised on the favorites list and `pinnedItem`, and the se
 
 - **WHEN** the user has favorited an item mapped to `CatalogEntityType.Toolset` or `CatalogEntityType.Skill`
 - **THEN** it does not appear in the selector
+
+#### Scenario: Hidden currently-selected model is shown as unavailable
+
+- **WHEN** `selectedItem` has `isHidden: true`
+- **THEN** the "Currently selected" row is disabled, shows "Unavailable", has no add-to-favorites button, and clicking it does not call `onSelect`
 
 #### Scenario: Search applies to the conversational subset
 

@@ -5,8 +5,10 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   deriveConversationRowActionState,
+  findDeploymentByIdOrReference,
   getApiErrorDetails,
   getConversationPath,
+  getModelIdFromConversationId,
   safeDecodeURIComponent,
   useActiveConversationSync,
   useAsyncConfirmDialog,
@@ -728,6 +730,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       );
       const history = getPublishHistory(conversationPath);
       const recipients = getRecipientsCount(contextId);
+      /* A copy would hand the operator-hidden model a fresh conversation, so a
+         row whose model was hidden via HIDDEN_ENTITY_TAGS offers no Duplicate
+         ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
+      const conversationModelId = getModelIdFromConversationId(contextId);
+      const isModelHidden =
+        !!conversationModelId &&
+        !!findDeploymentByIdOrReference(deployments, conversationModelId)
+          ?.isHidden;
 
       const {
         isReadonly: isReadonlyItem,
@@ -832,9 +842,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       };
 
       const exportActions = isConversationExportHidden ? [] : [exportAction];
+      const duplicateActions = isModelHidden ? [] : [duplicateAction];
 
       if (isReadonlyItem) {
-        const readonlyActions = [pinAction, duplicateAction, ...exportActions];
+        const readonlyActions = [
+          pinAction,
+          ...duplicateActions,
+          ...exportActions,
+        ];
         if (rawItem?.sharedWithMe) {
           readonlyActions.push({
             key: 'unshare',
@@ -870,7 +885,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               rowActionsTriggerRef.current,
             ),
         },
-        duplicateAction,
+        ...duplicateActions,
         ...exportActions,
         ...(isConversationsSharingEnabled
           ? [
@@ -1011,6 +1026,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [
       toContextId,
       getRawItem,
+      deployments,
       t,
       pinConversation,
       duplicateConversation,

@@ -51,6 +51,8 @@ export interface DeploymentSelectorLabels {
   addToFavoritesLabel?: string;
   /** Accessible label for the list of selectable deployments. Default: `'Select model'`. */
   listAriaLabel?: string;
+  /** Note on a currently-selected row whose deployment the operator has hidden. Default: `'Unavailable'`. */
+  unavailableLabel?: string;
 }
 
 /**
@@ -140,6 +142,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
     currentlySelectedLabel = 'Currently selected',
     addToFavoritesLabel = 'Add to favorites',
     listAriaLabel = 'Select model',
+    unavailableLabel = 'Unavailable',
   } = labels;
 
   const [query, setQuery] = useState('');
@@ -322,6 +325,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
     isSelectedSectionRow = false,
   ): ReactNode => {
     const isSelected = item.id === selectedId;
+    /* An existing chat can still point at a deployment the operator has since
+       hidden via HIDDEN_ENTITY_TAGS. It stays visible as the current choice but
+       can't be re-picked or starred ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
+    const isUnavailable = !!item.isHidden;
     // The selected section keeps its row when unstarred, so it never plays the exit animation.
     const isLeaving = !isSelectedSectionRow && leavingIds.has(item.id);
     return (
@@ -344,6 +351,8 @@ const DeploymentSelectorPanel: FC<Props> = ({
           mark={MenuItemMark.Tint}
           selected={isSelected}
           className="h-auto py-1.5"
+          disabled={isUnavailable}
+          description={isUnavailable ? unavailableLabel : undefined}
           icon={
             <DeploymentIcon
               src={item.iconUrl}
@@ -374,30 +383,32 @@ const DeploymentSelectorPanel: FC<Props> = ({
           }
           onClick={() => handleSelect(item)}
           rightControl={
-            <ToggleIconButton
-              icon={
-                <IconStar
-                  size={DIAL_ICON_SIZE.SM}
-                  aria-hidden
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              }
-              selectedIcon={
-                <IconStarFilled
-                  size={DIAL_ICON_SIZE.SM}
-                  className="text-warning-icon"
-                  aria-hidden
-                />
-              }
-              isSelected={isFavoriteRow}
-              aria-label={
-                isFavoriteRow ? removeFromFavoritesLabel : addToFavoritesLabel
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleFavorite(item.id, !isFavoriteRow);
-              }}
-            />
+            isUnavailable ? undefined : (
+              <ToggleIconButton
+                icon={
+                  <IconStar
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
+                selectedIcon={
+                  <IconStarFilled
+                    size={DIAL_ICON_SIZE.SM}
+                    className="text-warning-icon"
+                    aria-hidden
+                  />
+                }
+                isSelected={isFavoriteRow}
+                aria-label={
+                  isFavoriteRow ? removeFromFavoritesLabel : addToFavoritesLabel
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleFavorite(item.id, !isFavoriteRow);
+                }}
+              />
+            )
           }
         />
       </li>

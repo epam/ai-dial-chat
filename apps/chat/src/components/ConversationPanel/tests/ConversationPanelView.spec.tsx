@@ -407,7 +407,9 @@ vi.mock('../../../server-api/api-client', () => ({
   filesApi: {},
 }));
 /* A stable value, like the provider's state-backed `items`. */
-const deploymentsValue = vi.hoisted(() => ({ items: [] }));
+const deploymentsValue = vi.hoisted(() => ({
+  items: [] as { id: string; isHidden?: boolean }[],
+}));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => deploymentsValue,
 }));
@@ -685,6 +687,34 @@ describe('ConversationPanelView — navigation keeps panel inputs', () => {
 
     await waitFor(() => expect(onDuplicateReadonly).toHaveBeenCalledOnce());
   });
+
+  it.each([
+    ['an owned', false],
+    ['a shared', true],
+  ])(
+    'offers no Duplicate on %s conversation whose model is hidden',
+    (_, sharedWithMe) => {
+      deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
+      try {
+        vi.mocked(useConversations).mockReturnValue({
+          ...baseContextValue,
+          conversations: [
+            {
+              ...ordinary('conversations/bucket/hidden-model__Chat'),
+              sharedWithMe,
+            },
+          ],
+        } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+        render(<ConversationPanelView {...defaultProps} />);
+
+        expect(
+          screen.queryByRole('button', { name: 'buttons.duplicate' }),
+        ).toBeNull();
+      } finally {
+        deploymentsValue.items = [];
+      }
+    },
+  );
 });
 
 describe('ConversationPanelView — delete-all header action', () => {

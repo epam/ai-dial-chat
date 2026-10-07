@@ -298,6 +298,7 @@
     "searchPlaceholder": "Search models, agents…",
     "emptyHint": "Star a model or agent to pin it here.",
     "currentlySelectedLabel": "Currently selected",
+    "unavailableLabel": "Unavailable",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",
@@ -463,6 +464,7 @@
     },
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
     "duplicateError": "Failed to duplicate the conversation. Please try again.",
+    "duplicateUnavailableModel": "This conversation can't be duplicated because its model is no longer available.",
     "panelActionsLabel": "Conversation panel actions",
     "deleteAll": {
       "deleteAllChatsLabel": "Delete all conversations",
