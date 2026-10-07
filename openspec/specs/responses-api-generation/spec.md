@@ -112,10 +112,17 @@ The existing SDK `sendChatCompletionRequest` call, request construction from `bu
 
 On the stateless Responses path the request SHALL set `store: false` and SHALL NOT set `background`. On the background path defined by `background-responses-generation` the request SHALL set `store: true` and `background: true`; every other field (`model`, `input`, `temperature`, `max_output_tokens`, `reasoning`, `custom_fields`) SHALL be built exactly as on the stateless path.
 
+An `assistant` history message SHALL always be mapped to an `input` item whose `content` is the plain text string, even when it carries `custom_content.attachments`. DIAL Core rejects `input_text` and `input_image` content parts on an assistant item (`Invalid value: 'input_text'. Supported values are: 'output_text' and 'refusal'`), and an assistant message's attachments (for example web-search results) are outputs, not inputs, so they SHALL NOT be re-sent. Only `user` messages with valid attachments are mapped to a content-part array (`input_text` plus `input_image`).
+
 #### Scenario: Full turn history sent as input
 
 - **WHEN** a conversation has a system message and three prior turns
 - **THEN** the Responses request `input` array contains one item per message, in original order, with no `previous_response_id` or `conversation` field present
+
+#### Scenario: Assistant message with attachments is replayed as plain text
+
+- **WHEN** the conversation history contains an `assistant` message with text content and one or more `custom_content.attachments`
+- **THEN** its `input` item is `{ role: 'assistant', content: <text> }` with a string `content` and no `input_text` or `input_image` part
 
 #### Scenario: store is always false in this iteration
 
