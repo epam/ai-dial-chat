@@ -383,6 +383,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                     'Write the prompt instructions'
                   }
                   theme={markdownEditorTheme}
+                  showDragbar={false}
                 />
               </Suspense>
             </div>

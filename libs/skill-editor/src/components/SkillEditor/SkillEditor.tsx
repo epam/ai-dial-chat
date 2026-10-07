@@ -113,6 +113,7 @@ type MarkdownEditorComponent = ComponentType<{
   theme?: EditorThemes;
   id?: string;
   ariaLabel?: string;
+  showDragbar?: boolean;
 }>;
 
 const METADATA_FIELDS = [MetadataField.Name, MetadataField.Description];
@@ -863,6 +864,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 updateValues({ instructions: value });
               }}
               theme={instructionsEditorTheme}
+              showDragbar={false}
               placeholder={
                 t.instructionsPlaceholder ??
                 'Write the skill instructions in Markdown'
