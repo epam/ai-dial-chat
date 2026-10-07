@@ -76,9 +76,15 @@
   opacity: 1;
 }
 
+// An inset outline rather than a border: a border takes layout space, so it
+// shifted the row content and sat on the table edge (ag-grid rows have a fixed
+// width). z-index keeps the next row from painting over the bottom edge; it
+// stays below the sticky header (z-index 5).
 .selectedRow {
-  border: 2px solid
+  z-index: 1;
+  outline: 1px solid
     var(--cat-list-selected-border, var(--stroke-accent, #1d4ed8)) !important;
+  outline-offset: -1px;
   background-color: var(
     --cat-list-selected-bg,
     var(--bg-control-accent-alpha-active, #2764d933)
