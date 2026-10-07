@@ -368,18 +368,20 @@ const ScheduledTaskDetailPage: FC = () => {
   );
 
   const cronWindow = task?.trigger.cron;
+  const taskNextRunTime = task?.nextRunTime;
   const activeWindowLabel = useMemo(() => {
-    if (!cronWindow?.startDate || !cronWindow?.endDate) return undefined;
+    /* Without an explicit start date the window effectively begins at the next scheduled occurrence. */
+    const effectiveStartDate = cronWindow?.startDate ?? taskNextRunTime;
+    if (!effectiveStartDate || !cronWindow?.endDate) return undefined;
     const dateFormatter = new Intl.DateTimeFormat(undefined, {
       dateStyle: 'medium',
     });
     return t(ScheduledTasksI18nKeys.DetailActiveWindowValue, {
-      startDate: dateFormatter.format(new Date(cronWindow.startDate)),
+      startDate: dateFormatter.format(new Date(effectiveStartDate)),
       endDate: dateFormatter.format(new Date(cronWindow.endDate)),
     });
-  }, [cronWindow, t]);
+  }, [cronWindow, taskNextRunTime, t]);
 
-  const taskNextRunTime = task?.nextRunTime;
   const nextRunLabel = useMemo(() => {
     if (!taskNextRunTime) return undefined;
     let formatted = taskNextRunTime;

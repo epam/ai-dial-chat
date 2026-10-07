@@ -156,7 +156,7 @@
     "@epam/ai-dial-source-panel": "*",
     "@epam/ai-dial-ui-kit": "^0.15.0-dev.39",
     "@epam/ai-dial-usage-dashboard": "*",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1"
   },

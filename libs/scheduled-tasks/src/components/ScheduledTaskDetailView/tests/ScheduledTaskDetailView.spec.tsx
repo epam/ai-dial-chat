@@ -1261,7 +1261,7 @@ describe('ScheduledTaskDetailView', () => {
       const details = screen.getByRole('group', { name: 'Details' });
       expect(details.classList).toContain('overflow-y-auto');
       /* The desktop body is a structural wrapper with no semantic role. */
-      // eslint-disable-next-line testing-library/no-node-access
+
       expect(details.parentElement?.classList).toContain(
         'desktop:overflow-hidden',
       );

@@ -64,7 +64,7 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
         <IconButton
           appearance={ButtonAppearance.Link}
           className={mergeClasses(
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus focus-visible:outline-offset-[3px]',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-focus',
             styles.pumpkinButton,
             CELEBRATIONS_CLASS.trigger,
           )}

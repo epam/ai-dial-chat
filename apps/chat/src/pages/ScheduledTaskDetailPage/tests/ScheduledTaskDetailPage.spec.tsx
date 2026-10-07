@@ -1141,6 +1141,30 @@ describe('ScheduledTaskDetailPage', () => {
     ).toBeTruthy();
   });
 
+  it('renders the activity-window label from the next run time when only the end date is set', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      nextRunTime: '2026-10-07T09:00:00.000Z',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          endDate: '2026-10-08T23:59:59.999Z',
+        },
+      },
+    });
+    renderDetailPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+
+    expect(
+      screen.getByText(
+        'activeWindowLabel:scheduledTasks.detail.activeWindowValue',
+      ),
+    ).toBeTruthy();
+  });
+
   it('omits the activity-window label when the cron trigger has no bounds', async () => {
     useFeatureFlagMock.mockReturnValue(true);
     getScheduledTaskMock.mockResolvedValue({
