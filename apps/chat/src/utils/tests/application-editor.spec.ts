@@ -41,7 +41,7 @@ describe('resolveSchemaEditorKind', () => {
 });
 
 describe('getMissingRequiredProperties', () => {
-  /* The same rule DialSchemaRenderer highlights a required field by. */
+  /* The same rule SchemaRenderer highlights a required field by. */
   it('returns required names whose value is absent, null or an empty string', () => {
     expect(
       getMissingRequiredProperties(

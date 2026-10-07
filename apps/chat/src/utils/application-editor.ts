@@ -57,7 +57,7 @@ export const resolveSchemaNotificationTarget = ({
 
 /**
  * Returns the required property names that have no value: absent, `null` or an
- * empty string. Matches the rule `DialSchemaRenderer` marks a required field
+ * empty string. Matches the rule `SchemaRenderer` marks a required field
  * invalid by, so every field that blocks a save is also highlighted.
  */
 export const getMissingRequiredProperties = (

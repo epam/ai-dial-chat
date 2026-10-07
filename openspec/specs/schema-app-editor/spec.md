@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The apps editor kind for applications of a runner schema without an embedded editor: how `/apps-editor` picks it, the schema-form Setup built with `DialSchemaRenderer`, one-request creation with `applicationProperties`, editing, and required-property validation.
+The apps editor kind for applications of a runner schema without an embedded editor: how `/apps-editor` picks it, the schema-form Setup built with `SchemaRenderer`, one-request creation with `applicationProperties`, editing, and required-property validation.
 
 ## Requirements
 
@@ -37,9 +37,9 @@ While `useDeployments().isLoading` is true and `schemas` is empty, the page SHAL
 - **WHEN** the schema list is still loading and empty
 - **THEN** `ApplicationEditorPage` renders nothing until it can resolve the kind
 
-### Requirement: The schema-app Setup renders the schema with DialSchemaRenderer
+### Requirement: The schema-app Setup renders the schema with SchemaRenderer
 
-`SchemaAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/SchemaAppSetup.tsx`) SHALL load the full JSON schema for `AppsEditorQuery.Schema` through `getApplicationSchema(schemaId)` (`apps/chat/src/server-api/application-schemas.ts`) in a `useEffect` with a cancelled flag, and render it with the kit's `DialSchemaRenderer` (`variant={SchemaRendererVariant.Flat}`). `DialSchemaRenderer` is a 1.0 component with no 2.0 replacement. Its `onChange` and `onDefaultValues` SHALL both write the whole value into the setup's `properties`. An empty schema id fails without a request.
+`SchemaAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/SchemaAppSetup.tsx`) SHALL load the full JSON schema for `AppsEditorQuery.Schema` through `getApplicationSchema(schemaId)` (`apps/chat/src/server-api/application-schemas.ts`) in a `useEffect` with a cancelled flag, and render it with the kit's 2.0 `SchemaRenderer` (`variant={SchemaRendererVariant.Flat}`), which replaced the former 1.0 `DialSchemaRenderer`. Its `onChange` and `onDefaultValues` SHALL both write the whole value into the setup's `properties`. An empty schema id fails without a request.
 
 `skipUntouched` SHALL be on while no submit is blocked and off while a missing required property blocks it (`skipUntouched={!errors.properties}`), so after a blocked Create/Save every missing required field is marked invalid, not only the touched ones (WCAG 3.3.1).
 
@@ -98,7 +98,7 @@ Example body:
 }
 ```
 
-Its `validateSetup` SHALL return a `properties` error (`appsEditor.schemaForm.requiredMissing`) when any name in `requiredProperties` has no value — absent, `null` or an empty string (`getMissingRequiredProperties`). This is the rule `DialSchemaRenderer` marks a required field invalid by, so every field that blocks a save is also highlighted; `false`, `0`, a whitespace-only string and an empty array count as values. Only top-level required properties are checked; nested ones are left to the renderer's own highlighting.
+Its `validateSetup` SHALL return a `properties` error (`appsEditor.schemaForm.requiredMissing`) when any name in `requiredProperties` has no value — absent, `null` or an empty string (`getMissingRequiredProperties`). This is the rule `SchemaRenderer` marks a required field invalid by, so every field that blocks a save is also highlighted; `false`, `0`, a whitespace-only string and an empty array count as values. Only top-level required properties are checked; nested ones are left to the renderer's own highlighting.
 
 The page title SHALL use the schema's `displayName` (`appsEditor.createTitle` / `appsEditor.editTitle` with `{{type}}`), falling back to `appsEditor.defaultTypeName`. The definition reports success through `getNotificationTarget: resolveSchemaNotificationTarget`: the `Quick app` copy for the QuickApp schema, the `SchemaApp` copy naming the schema's `displayName` (e.g. "External app edited successfully") for any other known schema, and the generic `Agent` copy when the schema is unknown (see `entity-operation-notifications`). The embedded-editor kind (`quickAppDefinition`) resolves its notifications the same way.
 

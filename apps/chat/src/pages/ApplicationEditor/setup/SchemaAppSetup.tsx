@@ -1,7 +1,7 @@
 import {
-  DialSchemaRenderer,
   ErrorMessageNotification,
   type JsonSchema,
+  SchemaRenderer,
   SchemaRendererVariant,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
@@ -124,7 +124,7 @@ const SchemaAppSetup: FC<Props> = ({
           {errors.properties}
         </p>
       )}
-      <DialSchemaRenderer
+      <SchemaRenderer
         schema={schema}
         variant={SchemaRendererVariant.Flat}
         defaultValue={defaultValue}
