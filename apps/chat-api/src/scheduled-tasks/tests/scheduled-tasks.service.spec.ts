@@ -632,7 +632,7 @@ describe('ScheduledTasksService', () => {
     expect(sentBody.service_id).toBe('my-oauth-service');
     expect(sentBody.properties).toMatchObject({
       create_conversation: true,
-      stream: false,
+      stream: true,
       extra_headers: {},
       retry: null,
       timeout: null,

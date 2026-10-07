@@ -157,7 +157,7 @@ The service SHALL build the upstream body server-side with `service_id` set from
 - `url`: built by `buildScheduledTaskChatCompletionUrl(DialClientService.baseUrl)` — the base URL (backed by `DIAL_CORE_URL`) with any trailing slash stripped, followed by `/openai` (no double slashes)
 - `api_version`: `DialClientService.dialApiVersion` (the same value `ChatService.sendCompletion` sends as `api-version`, backed by `DIAL_API_VERSION`, defaulting to `2024-10-21`)
 - `create_conversation: true` — required for the Scheduler run to create a conversation under the reserved `.scheduler/{scheduleId}/{runId}/` path
-- `stream: false` — fixed; background scheduled runs are always non-streaming, and this field is NOT nested inside `payload`
+- `stream: true` — fixed (not client-controllable); this field is NOT nested inside `payload`
 - `extra_headers: {}` — fixed
 - `retry: null` — fixed
 - `timeout: null` — fixed
@@ -173,7 +173,7 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 #### Scenario: Upstream properties include the fixed Scheduler call fields
 
 - **WHEN** a valid create request is submitted
-- **THEN** the upstream request body's `properties` includes `create_conversation: true`, `stream: false`, `extra_headers: {}`, `retry: null`, and `timeout: null`, and `properties.payload` contains only `messages` and `model` (no `stream` key)
+- **THEN** the upstream request body's `properties` includes `create_conversation: true`, `stream: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, and `properties.payload` contains only `messages` and `model` (no `stream` key)
 
 #### Scenario: Upstream url is built from the normalized DIAL Core base URL
 
@@ -240,7 +240,7 @@ Skill-bearing requests SHALL additionally meet the server capability-validation 
 
 `GET /api/v1/scheduled-tasks/:scheduleId` SHALL validate `scheduleId` against the allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, proxy `GET {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, and return `ScheduledTaskDto` (`id`, `displayName`, `trigger`, `description`, and any additional narrowly-typed fields confirmed against a live upstream response). This endpoint is NOT cached.
 
-`ScheduledTaskDto` SHALL additionally include optional `model` and `prompt` string fields, mapped from the upstream schedule's `properties.payload.model` and `properties.payload.messages[0].content` (the user message) respectively via `fromUpstreamSchedule` in `apps/chat-api/src/scheduled-tasks/scheduled-tasks.mapper.ts`. Both fields are additive and MUST NOT be required — mapping MUST NOT throw when `properties`, `properties.payload`, `properties.payload.model`, or `properties.payload.messages` is absent or empty (e.g. on a schedule created with a `target_type` other than `chat_completion`, or on list-endpoint responses that omit `properties.payload` entirely).
+`ScheduledTaskDto` SHALL additionally include optional `model` and `prompt` string fields, mapped from the upstream schedule's top-level `model` (present on list items, which carry no `properties`) falling back to `properties.payload.model` (GET/create/update responses), and `properties.payload.messages[0].content` (the user message) respectively via `fromUpstreamSchedule` in `apps/chat-api/src/scheduled-tasks/scheduled-tasks.mapper.ts`. Both fields are additive and MUST NOT be required — mapping MUST NOT throw when `properties`, `properties.payload`, `properties.payload.model`, or `properties.payload.messages` is absent or empty (e.g. on a schedule created with a `target_type` other than `chat_completion`, or on list-endpoint responses that omit `properties.payload` entirely — `model` still comes from the top-level list field when present).
 
 #### Scenario: Invalid scheduleId is rejected before any upstream call
 
@@ -257,9 +257,14 @@ Skill-bearing requests SHALL additionally meet the server capability-validation 
 - **WHEN** an upstream schedule response includes `properties.payload.model: "gpt-4.1-mini-2025-04-14"` and `properties.payload.messages: [{ role: "user", content: "Summarize my inbox" }]`
 - **THEN** the mapped `ScheduledTaskDto` includes `model: "gpt-4.1-mini-2025-04-14"` and `prompt: "Summarize my inbox"`
 
+#### Scenario: model is mapped from a top-level list item field
+
+- **WHEN** an upstream list item includes a top-level `model: "gpt-4.1-mini-2025-04-14"` and no `properties`
+- **THEN** the mapped `ScheduledTaskDto` includes `model: "gpt-4.1-mini-2025-04-14"`, and the top-level value takes precedence over `properties.payload.model` when both are present
+
 #### Scenario: Missing properties.payload does not throw
 
-- **WHEN** an upstream schedule response omits `properties`, `properties.payload`, `properties.payload.model`, and/or `properties.payload.messages`
+- **WHEN** an upstream schedule response omits the top-level `model`, `properties`, `properties.payload`, `properties.payload.model`, and/or `properties.payload.messages`
 - **THEN** the mapped `ScheduledTaskDto`'s `model`/`prompt` fields are `undefined`, and mapping does not throw
 
 ### Requirement: List scheduled task runs
@@ -412,7 +417,7 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 #### Scenario: Update carries the same fixed Scheduler call properties as create
 
 - **WHEN** an authenticated, feature-enabled user submits a valid update body for an existing `scheduleId`
-- **THEN** the upstream `PUT` request body's `properties` includes `create_conversation: true`, `stream: false`, `extra_headers: {}`, `retry: null`, and `timeout: null`, matching the create request shape, and `service_id` equals the configured `SCHEDULER_SERVICE_ID` value
+- **THEN** the upstream `PUT` request body's `properties` includes `create_conversation: true`, `stream: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, matching the create request shape, and `service_id` equals the configured `SCHEDULER_SERVICE_ID` value
 
 #### Scenario: Update of unknown schedule id returns 404
 
