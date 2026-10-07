@@ -44,7 +44,7 @@ The endpoint SHALL accept optional query parameters, validated via `ListSchedule
 - `limit` — `@IsOptional() @IsInt() @Min(1) @Max(100)`. Forwarded to upstream as `limit` unchanged (the upstream `Pagination` dependency accepts `limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1)` with no upper bound of its own; 100 is a BFF-chosen sanity bound, not an upstream limit). Omitted → current single-page default behavior is preserved.
 - `offset` — `@IsOptional() @IsInt() @Min(0)`. Forwarded to upstream as `offset` unchanged (upstream: `offset: int = Query(default=0, ge=0)`). Omitted → `0`.
 - `search` — `@IsOptional() @IsString() @MaxLength(200)`, trimmed before use. Forwarded to upstream as the `name` query parameter (upstream performs a case-insensitive substring match against `display_name`). Omitted or empty after trimming → not sent upstream at all (no `name` parameter, not sent as an empty string).
-- `model` — `@IsOptional() @IsString() @MaxLength(512)`, trimmed before use. Forwarded to upstream as the `model` query parameter unchanged, so only schedules whose stored `model` equals the value are returned (the value is compared in the encoding it is stored in, for example `applications/<hash>/Daily%20plan__0.0.1`; the BFF neither decodes nor re-encodes it beyond normal query-string encoding). Omitted or empty after trimming → not sent upstream at all. Filtering, paging and `next` are all computed by upstream, so the filter composes correctly with `limit`/`offset`.
+- `model` — `@IsOptional() @IsString() @MaxLength(1024)`, trimmed before use. Forwarded to upstream as the `model` query parameter unchanged, so only schedules whose stored `model` equals the value are returned (the value is compared in the encoding it is stored in, for example `applications/<hash>/<deployment>`; the BFF neither decodes nor re-encodes it beyond normal query-string encoding). Omitted or empty after trimming → not sent upstream at all. Filtering, paging and `next` are all computed by upstream, so the filter composes correctly with `limit`/`offset`.
 - `sort` — `@IsOptional() @IsEnum(ScheduledTasksSortKey)`, where `ScheduledTasksSortKey` is `firstToRun` | `lastToRun` | `newest` | `nameAZ` (mirroring the frontend's existing sort-option enum values exactly). Mapped to the upstream `order_by`/`order_dir` query parameters:
 
   | `sort` | upstream `order_by` | upstream `order_dir` |
@@ -148,7 +148,7 @@ Example response (with `?limit=20&offset=0&search=daily&sort=firstToRun`):
 
 #### Scenario: Oversized model is rejected
 
-- **WHEN** `model` exceeds 512 characters
+- **WHEN** `model` exceeds 1024 characters
 - **THEN** the response is `400 Bad Request` and DIAL Core is never contacted
 
 ### Requirement: Create scheduled task with validated chat_completion/dial-oauth body

@@ -75,16 +75,15 @@ export class ListScheduledTasksQueryDto {
     description:
       'Only return scheduled tasks that run against this model, application or ' +
       'agent. Matched exactly against the task `model` as it is stored (for ' +
-      'example `applications/<hash>/Daily%20plan__0.0.1`), so pass the deployment ' +
+      'example `applications/<bucket-id>/<deployment-id>`), so pass the deployment ' +
       'id unchanged. Trimmed before use; an empty or whitespace-only value is ' +
       'treated as omitted.',
-    example:
-      'applications/Vkac8AzrjaqvJGULnCjMwHmfNbVHjhCGCj88kJHg8NLoChyVRk3g2gH7y12yNuiXn/Daily%20plan__0.0.1',
-    maxLength: 512,
+    example: 'applications/example-bucket-id/example-deployment-id',
+    maxLength: 1024,
   })
   @IsOptional()
   @IsString()
-  @MaxLength(512)
+  @MaxLength(1024)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   model?: string;
 }

@@ -172,9 +172,25 @@ describe('ScheduledTasksController (integration)', () => {
       );
     });
 
-    it('returns 400 when model is longer than 512 characters', async () => {
+    it('accepts the longest possible application id as model', async () => {
+      service.listScheduledTasks.mockResolvedValue({ items: [mockSchedule] });
+      // 256-character name made of spaces is stored as 256 × `%20`.
+      const model = `applications/${'b'.repeat(65)}/${'%20'.repeat(256)}__1.0.0`;
+
       await request(app.getHttpServer())
-        .get(`/api/v1/scheduled-tasks?model=${'a'.repeat(513)}`)
+        .get(`/api/v1/scheduled-tasks?model=${encodeURIComponent(model)}`)
+        .expect(200);
+
+      expect(service.listScheduledTasks).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        { model },
+      );
+    });
+
+    it('returns 400 when model is longer than 1024 characters', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/v1/scheduled-tasks?model=${'a'.repeat(1025)}`)
         .expect(400);
       expect(service.listScheduledTasks).not.toHaveBeenCalled();
     });

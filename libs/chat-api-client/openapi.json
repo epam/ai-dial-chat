@@ -7649,10 +7649,10 @@
             "name": "model",
             "required": false,
             "in": "query",
-            "description": "Only return scheduled tasks that run against this model, application or agent. Matched exactly against the task `model` as it is stored (for example `applications/<hash>/Daily%20plan__0.0.1`), so pass the deployment id unchanged. Trimmed before use; an empty or whitespace-only value is treated as omitted.",
+            "description": "Only return scheduled tasks that run against this model, application or agent. Matched exactly against the task `model` as it is stored (for example `applications/<bucket-id>/<deployment-id>`), so pass the deployment id unchanged. Trimmed before use; an empty or whitespace-only value is treated as omitted.",
             "schema": {
-              "maxLength": 512,
-              "example": "applications/Vkac8AzrjaqvJGULnCjMwHmfNbVHjhCGCj88kJHg8NLoChyVRk3g2gH7y12yNuiXn/Daily%20plan__0.0.1",
+              "maxLength": 1024,
+              "example": "applications/example-bucket-id/example-deployment-id",
               "type": "string"
             }
           }
