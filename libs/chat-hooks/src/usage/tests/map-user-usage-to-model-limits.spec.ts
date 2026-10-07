@@ -80,7 +80,7 @@ const withUsage = (
 /*
  * Reset values and top-level cost figures reproduced from the real
  * GET /api/v1/user/usage capture in
- * openspec/changes/migrate-usage-reset-times/fixtures/.
+ * openspec/changes/archive/2026-09-15-migrate-usage-reset-times/fixtures/.
  */
 const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
 const WEEK_RESETS_AT = '2026-09-21T00:00:00Z';

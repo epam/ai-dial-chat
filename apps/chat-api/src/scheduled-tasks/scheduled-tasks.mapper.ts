@@ -29,7 +29,7 @@ interface UpstreamSchedulePayload {
   /*
    * Not confirmed against a live DIAL Scheduler response or its
    * openapi.json — assumed to mirror display_name/service_id as a
-   * top-level field per design.md. Verify before relying on this in
+   * top-level field per `openspec/changes/archive/2026-07-23-add-scheduled-tasks-api/design.md`. Verify before relying on this in
    * production and update this comment once confirmed.
    */
   description?: string;
@@ -182,7 +182,7 @@ export const toUpstreamSchedulePayload = (
 /*
  * No upstream field documenting an explicit active/paused state has been
  * confirmed against a live DIAL Scheduler response or its OpenAPI spec (see
- * design.md "Decision 1" / "Open Questions" for add-scheduled-task-active-toggle).
+ * `openspec/changes/archive/2026-08-11-add-scheduled-task-active-toggle/design.md` "Decision 1" / "Open Questions" for add-scheduled-task-active-toggle).
  * This derives isActive from the only currently observed signal —
  * next_run_time — as a documented assumption, not a confirmed contract.
  * Replace with an authoritative upstream field here (and only here) once

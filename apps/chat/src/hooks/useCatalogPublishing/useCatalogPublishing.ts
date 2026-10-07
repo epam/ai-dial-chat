@@ -87,7 +87,7 @@ export const useCatalogPublishing = ({
 
   /*
    * Publish and Unpublish act on two different items, and each is offered
-   * only on the one it applies to (GH #8691, where both landed on the wrong
+   * only on the one it applies to ([#8691](https://github.com/epam/ai-dial-chat/issues/8691), where both landed on the wrong
    * side: the personal item offered nothing but Unpublish, and the public
    * copy offered nothing at all).
    *
@@ -128,7 +128,7 @@ export const useCatalogPublishing = ({
   /*
    * Load-bearing beyond the publish panel: this is the only source of the
    * folder list an unpublish request needs, and what makes the details
-   * panel's Unpublish action visible at all. The GH #7897 `503` this call
+   * panel's Unpublish action visible at all. The [#7897](https://github.com/epam/ai-dial-chat/issues/7897) `503` this call
    * was stubbed out for was never Core being down: `PublishService` called
    * `.filter` on a `getPublications` response Core returns as an envelope,
    * and the resulting `TypeError` was reported as "DIAL Core is currently

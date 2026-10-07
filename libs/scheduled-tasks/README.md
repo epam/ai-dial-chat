@@ -204,6 +204,40 @@ import {
 />;
 ```
 
+When the host omits `renderInstructions`, `instructionsMarkdown` is rendered by
+the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared`. Name its
+controls through the optional `labels.codeBlockCopyLabel`,
+`labels.codeBlockCopiedLabel`, `labels.codeBlockDownloadLabel`,
+`labels.tableScrollRegionAriaLabel` and `labels.mathScrollRegionAriaLabel`
+(the `ScheduledTaskInstructionsMarkdownLabels` fields); each falls back to the
+renderer's English default (`'Copy code'`, `'Copied!'`, `'Download code'`,
+`'Scrollable table'`, `'Scrollable formula'`). `ScheduledTaskDetailsSummary`
+takes the same fields as its `markdownLabels` prop. A host-supplied
+`renderInstructions` owns its own labels, and these are ignored.
+
+```tsx
+import {
+  ScheduledTaskDetailsSummary,
+  type ScheduledTaskInstructionsMarkdownLabels,
+} from '@epam/ai-dial-scheduled-tasks';
+
+const markdownLabels: ScheduledTaskInstructionsMarkdownLabels = {
+  codeBlockCopyLabel: t('buttons.copy'),
+  codeBlockCopiedLabel: t('buttons.copied'),
+  codeBlockDownloadLabel: t('buttons.download'),
+  tableScrollRegionAriaLabel: t('chat.scrollableTable'),
+  mathScrollRegionAriaLabel: t('chat.scrollableFormula'),
+};
+
+<ScheduledTaskDetailsSummary
+  modelLabel="Model"
+  instructionsLabel="Instructions"
+  modelDisplayName="GPT-4.1 mini"
+  instructionsMarkdown="Summarize my inbox"
+  markdownLabels={markdownLabels}
+/>;
+```
+
 ### ScheduledTaskDeleteConfirmation
 
 Controlled deletion presentation that leaves mutations, routing, notifications,
@@ -451,7 +485,7 @@ Optional label overrides (English defaults):
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 
-`styles.colors.refineActionText` and `refineErrorText` set `--stcf-refine-action-text` and `--stcf-refine-error-text`; `refineErrorText` defaults to `--text-error` with standalone fallback `#8b2020`. `refineActionText` colors the status feedback; unset, the status keeps the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`), the same as input captions. The Refine and Undo buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` has no default; the kit caption class applies when it is unset. Direction is inherited; label rows wrap, and feedback uses live regions.
+`styles.colors.refineActionText` and `refineErrorText` set `--stcf-refine-action-text` and `--stcf-refine-error-text`; `refineErrorText` defaults to `--text-error` with standalone fallback `#ae2f2f`. `refineActionText` colors the status feedback; unset, the status keeps the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`), the same as input captions. The Refine and Undo buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` has no default; the kit caption class applies when it is unset. Direction is inherited; label rows wrap, and feedback uses live regions.
 
 | Public class key | Class                                  | Element        |
 | ---------------- | -------------------------------------- | -------------- |

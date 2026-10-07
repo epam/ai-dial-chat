@@ -48,6 +48,7 @@ import {
   collectAllFolderIds,
   findContentNodeName,
 } from '../../utils/catalog-content-tree';
+import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import {
   canPublishCredentials,
   getCredentialsBannerState,
@@ -623,7 +624,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
    * caller may remove — resolves its history up front. Whether "Unpublish"
    * joins the Manage menu decides whether the header shows a menu at all or
    * promotes a lone action to a button, and that decision has to be settled
-   * before the pointer arrives rather than flip under it (GH #8989, where an
+   * before the pointer arrives rather than flip under it ([#8989](https://github.com/epam/ai-dial-chat/issues/8989), where an
    * Organization copy's only action sat behind `...`). Declared after the
    * reset above so a new item's request is not cleared in the same commit.
    */
@@ -898,6 +899,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       setActiveTab(tabs[0]?.id ?? '');
     }
   }, [item.id, tabs, activeTab]);
+
+  const markdownLabels = useMemo(
+    () => getCatalogMarkdownLabels(texts),
+    [texts],
+  );
 
   const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
   const overviewNoLabel = texts?.overviewNoLabel ?? 'No';
@@ -1336,6 +1342,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   content={item.description}
                   topics={item.topics}
                   detailsStyles={detailsStyles}
+                  markdownLabels={markdownLabels}
                 />
               )}
               {activeTab === CatalogDetailsTab.Content && (
@@ -1360,6 +1367,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   fileLoadingLabel={texts?.contentFileLoadingLabel}
                   fileUnsupportedLabel={texts?.contentFileUnsupportedLabel}
                   detailsStyles={detailsStyles}
+                  markdownLabels={markdownLabels}
                 />
               )}
               {activeTab === CatalogDetailsTab.Overview && (

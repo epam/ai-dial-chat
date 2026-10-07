@@ -242,7 +242,7 @@ describe('rebaseConversationId', () => {
   });
 
   /*
-   * Issue #8668: both chats export the *initial*, first-message-derived title
+   * [#8668](https://github.com/epam/ai-dial-chat/issues/8668): both chats export the *initial*, first-message-derived title
    * in the filename and keep the current one only in `name`. The list derives
    * a row's title from the filename for every item it does not read back, so
    * the filename has to carry the authoritative name.

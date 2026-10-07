@@ -65,3 +65,34 @@ export const getGaugeNeedleAngle = (usedPercent: number): number => {
 
   return GAUGE_ZERO_DEG + (clamped / 100) * GAUGE_SWEEP_DEG;
 };
+
+/*
+ * Space kept between the usage popover and either viewport edge. Half of the
+ * `2rem` the popover's `max-w-[calc(100vw-2rem)]` reserves, so a full-width
+ * popover sits centred with an equal gutter on both sides.
+ */
+export const USAGE_POPOVER_VIEWPORT_GUTTER_PX = 16;
+
+/**
+ * Horizontal shift, in px, that moves a box spanning `left`–`right` (viewport
+ * coordinates, before any shift) inside `[gutter, viewportWidth - gutter]`.
+ * Returns `0` when the box already fits. The left edge wins when the box is
+ * wider than the available span.
+ */
+export const getViewportClampShift = (
+  left: number,
+  right: number,
+  viewportWidth: number,
+  gutter: number = USAGE_POPOVER_VIEWPORT_GUTTER_PX,
+): number => {
+  if (left < gutter) {
+    return gutter - left;
+  }
+
+  const maxRight = viewportWidth - gutter;
+  if (right > maxRight) {
+    return Math.max(maxRight - right, gutter - left);
+  }
+
+  return 0;
+};

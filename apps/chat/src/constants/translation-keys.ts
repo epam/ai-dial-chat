@@ -251,6 +251,7 @@ export enum CatalogI18nKeys {
   CredentialsApiKeyAddedLabel = 'catalog.details.credentials.apiKeyAddedLabel',
   CredentialsAddingApiKeyStatusLabel = 'catalog.details.credentials.addingApiKeyStatusLabel',
   CredentialsApiKeyRequiredErrorMessage = 'catalog.details.credentials.apiKeyRequiredErrorMessage',
+  CredentialsApiKeyHeaderHint = 'catalog.details.credentials.apiKeyHeaderHint',
   CredentialsDeleteApiKeyConfirmMessagePersonal = 'catalog.details.credentials.deleteApiKeyConfirmMessagePersonal',
   CredentialsDeleteApiKeyConfirmMessageOrg = 'catalog.details.credentials.deleteApiKeyConfirmMessageOrg',
   CredentialsOrgFallbackBannerTitleCredentials = 'catalog.details.credentials.orgFallbackBannerTitleCredentials',
@@ -879,6 +880,7 @@ export enum AttachmentsI18nKeys {
   RemoveLabel = 'attachments.removeLabel',
   RetryLabel = 'attachments.retryLabel',
   UploadingLabel = 'attachments.uploadingLabel',
+  ExpandPastedText = 'attachments.expandPastedText',
   UnsupportedTypeTitle = 'attachments.unsupportedType.title',
   UnsupportedTypeMessage = 'attachments.unsupportedType.message',
   NoAttachmentsAllowedTitle = 'attachments.noAttachmentsAllowed.title',
@@ -1245,6 +1247,11 @@ export enum ToolsetSigninI18nKeys {
   NoCredentialsRequired = 'toolsetSignin.noCredentialsRequired',
   OfflineUsageConsent = 'toolsetSignin.offlineUsageConsent',
   OfflineUsageConsentHint = 'toolsetSignin.offlineUsageConsentHint',
+  CallbackInProgress = 'toolsetSignin.callbackInProgress',
+  CallbackSuccess = 'toolsetSignin.callbackSuccess',
+  CallbackFailedTitle = 'toolsetSignin.callbackFailedTitle',
+  CallbackMissingCode = 'toolsetSignin.callbackMissingCode',
+  CallbackRequestUnverified = 'toolsetSignin.callbackRequestUnverified',
 }
 
 export enum ErrorBoundaryI18nKeys {

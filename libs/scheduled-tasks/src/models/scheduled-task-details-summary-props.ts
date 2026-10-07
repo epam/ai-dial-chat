@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { ScheduledTaskInstructionsMarkdownLabels } from './scheduled-task-instructions';
 
 /** Typography overrides for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryTypography {
@@ -30,6 +31,8 @@ export interface ScheduledTaskDetailsSummaryProps {
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
+  /** Code-block, table and formula labels for the built-in `MDMessageViewer`. Ignored when `renderInstructions` is supplied. */
+  markdownLabels?: ScheduledTaskInstructionsMarkdownLabels;
   /** Style overrides. */
   styles?: ScheduledTaskDetailsSummaryStyles;
 }

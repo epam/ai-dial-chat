@@ -156,6 +156,14 @@ export class SkillsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
     const consumes: runtime.Consume[] = [
       { contentType: 'multipart/form-data' },
     ];
@@ -259,6 +267,15 @@ export class SkillsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/skills/grouping-folders`;
 
     const response = await this.request(
@@ -327,6 +344,15 @@ export class SkillsApi extends runtime.BaseAPI {
 
     if (requestParameters['ifMatch'] != null) {
       headerParameters['If-Match'] = String(requestParameters['ifMatch']);
+    }
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
     }
 
     let urlPath = `/api/v1/skills`;
@@ -408,6 +434,15 @@ export class SkillsApi extends runtime.BaseAPI {
       headerParameters['If-Match'] = String(requestParameters['ifMatch']);
     }
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/skills/files`;
 
     const response = await this.request(
@@ -476,6 +511,15 @@ export class SkillsApi extends runtime.BaseAPI {
       headerParameters['If-Match'] = String(requestParameters['ifMatch']);
     }
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/skills/grouping-folders`;
 
     const response = await this.request(
@@ -539,6 +583,15 @@ export class SkillsApi extends runtime.BaseAPI {
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
 
     let urlPath = `/api/v1/skills/download`;
 
@@ -615,6 +668,15 @@ export class SkillsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/skills/files/download`;
 
     const response = await this.request(
@@ -679,6 +741,15 @@ export class SkillsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/skills/metadata`;
 
     const response = await this.request(
@@ -728,6 +799,14 @@ export class SkillsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
     const consumes: runtime.Consume[] = [
       { contentType: 'multipart/form-data' },
     ];
@@ -789,6 +868,15 @@ export class SkillsApi extends runtime.BaseAPI {
     const queryParameters: runtime.HTTPQuery = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
 
     let urlPath = `/api/v1/skills/catalog`;
 
@@ -866,6 +954,15 @@ export class SkillsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/skills/files`;
 
     const response = await this.request(
@@ -934,6 +1031,15 @@ export class SkillsApi extends runtime.BaseAPI {
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
 
     let urlPath = `/api/v1/skills`;
 
@@ -1013,6 +1119,14 @@ export class SkillsApi extends runtime.BaseAPI {
       headerParameters['If-Match'] = String(requestParameters['ifMatch']);
     }
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
     const consumes: runtime.Consume[] = [
       { contentType: 'multipart/form-data' },
     ];
@@ -1126,6 +1240,14 @@ export class SkillsApi extends runtime.BaseAPI {
       headerParameters['If-Match'] = String(requestParameters['ifMatch']);
     }
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
     const consumes: runtime.Consume[] = [
       { contentType: 'multipart/form-data' },
     ];

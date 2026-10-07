@@ -999,7 +999,7 @@ describe('Input — pasted attachment expand', () => {
 
     pasteText(screen.getByRole('textbox'), text);
 
-    const card = screen.getByRole('button', { name: 'Download attachment' });
+    const card = screen.getByRole('button', { name: 'Expand pasted text' });
     fireEvent.click(card);
 
     await waitFor(() => {
@@ -1016,7 +1016,7 @@ describe('Input — pasted attachment expand', () => {
 
     pasteText(screen.getByRole('textbox'), text);
 
-    const card = screen.getByRole('button', { name: 'Download attachment' });
+    const card = screen.getByRole('button', { name: 'Expand pasted text' });
     fireEvent.click(card);
 
     await waitFor(() => {
@@ -1024,6 +1024,22 @@ describe('Input — pasted attachment expand', () => {
         `existing\n${text}`,
       );
     });
+  });
+
+  it('names a pasted card by the host-supplied expandLabel', () => {
+    render(<Input pasteTextThreshold={5} expandLabel="Развернуть текст" />);
+
+    pasteText(
+      screen.getByRole('textbox'),
+      'This is long enough to become a pasted attachment',
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Развернуть текст' }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Expand pasted text' }),
+    ).toBeNull();
   });
 
   /*
@@ -1038,9 +1054,60 @@ describe('Input — pasted attachment expand', () => {
     pasteText(screen.getByRole('textbox'), text);
 
     expect(
-      screen.queryByRole('button', { name: 'Download attachment' }),
+      screen.queryByRole('button', { name: 'Expand pasted text' }),
     ).toBeNull();
     expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
+  });
+});
+
+describe('Input — attachment click label', () => {
+  const attachment = {
+    id: 'report',
+    name: 'report.pdf',
+    file: new File([], 'report.pdf', { type: 'application/pdf' }),
+    type: AttachmentType.File,
+    contentType: 'application/pdf',
+    url: 'files/report.pdf',
+    status: RequestStatus.Idle,
+  };
+
+  it('names a clickable file tile by the host-supplied clickLabel', () => {
+    render(
+      <Input
+        initialAttachments={[attachment]}
+        onAttachmentClick={vi.fn()}
+        clickLabel="Открыть в холсте"
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Открыть в холсте' }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Download attachment' }),
+    ).toBeNull();
+  });
+
+  it('keeps expandLabel on a pasted card when a clickLabel is also given', () => {
+    render(
+      <Input
+        pasteTextThreshold={5}
+        onAttachmentClick={vi.fn()}
+        clickLabel="Открыть в холсте"
+        expandLabel="Развернуть текст"
+      />,
+    );
+
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'This is long enough to become a pasted attachment',
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Развернуть текст' }),
+    ).toBeTruthy();
   });
 });
 
@@ -1169,9 +1236,9 @@ describe('Input — message length cap', () => {
   });
 });
 
-/* Issue #8754: a picked prompt used to arrive on the `message` channel, which
+/* [#8754](https://github.com/epam/ai-dial-chat/issues/8754): a picked prompt used to arrive on the `message` channel, which
  * replaces the whole textarea value, so any draft was destroyed with no undo.
- * Issue #8781: the insert then had to survive as an *undoable* edit. */
+ * [#8781](https://github.com/epam/ai-dial-chat/issues/8781): the insert then had to survive as an *undoable* edit. */
 describe('Input — textInsertion', () => {
   const renderWithInsertion = (revision: number, text: string) =>
     render(<Input textInsertion={{ text, revision }} />);
@@ -1275,7 +1342,7 @@ describe('Input — textInsertion', () => {
     expect(textarea.value).toBe('aXYb');
   });
 
-  /* Issue #8781: the menu the prompt was picked in returns focus to its own
+  /* [#8781](https://github.com/epam/ai-dial-chat/issues/8781): the menu the prompt was picked in returns focus to its own
      opener from a microtask queued as it unmounts, which used to leave the
      caret outside the composer — and the undo shortcut with nothing to act on. */
   it('keeps the caret in the composer when the closing menu returns focus to its opener', async () => {
@@ -1344,7 +1411,7 @@ describe('Input — textInsertion', () => {
 
   /* Browsers that cannot insert into a textarea through the editing pipeline
      (Firefox) only take the value programmatically, which drops their undo
-     history — so the hook owes the user that one undo itself (issue #8781).
+     history — so the hook owes the user that one undo itself ([#8781](https://github.com/epam/ai-dial-chat/issues/8781)).
      jsdom has no `execCommand` at all, which is exactly that case. */
   describe('when the browser cannot put the insert on its undo stack', () => {
     const insertIntoDraft = async (draft: string, text = 'PROMPT') => {

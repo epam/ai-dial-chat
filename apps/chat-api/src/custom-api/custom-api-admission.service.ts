@@ -7,7 +7,7 @@ export const CUSTOM_API_MAX_PRINCIPAL_IN_FLIGHT = 4;
 
 /**
  * Local, per-process admission control for custom API calls (see
- * openspec/changes/add-configured-core-api-operations/design.md §6). Bounds
+ * openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md §6). Bounds
  * BFF memory, not Core's own business rate quotas: no queue, no cross-replica
  * coordination. A principal's counter entry exists only while it has active
  * calls and is deleted as soon as the count returns to zero, so storage is

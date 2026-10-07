@@ -10,7 +10,7 @@ import type { SkillsUploadService } from '../upload/skills-upload.service';
  * Delegation-only assertions: every public facade method must call exactly
  * the matching sub-service method with the same arguments and return its
  * result unchanged. No business logic is asserted here — that's covered in
- * each sub-service's own spec (design.md's testing ownership map).
+ * each sub-service's own spec (`openspec/changes/archive/2026-08-10-add-skills-bff-api/design.md`'s testing ownership map).
  */
 describe('SkillsService', () => {
   const makeService = () => {

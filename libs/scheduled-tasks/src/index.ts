@@ -72,6 +72,7 @@ export type {
   ScheduledTaskRunHistoryListTypography,
 } from './models/scheduled-task-run-history-list-props';
 export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
+export type { ScheduledTaskInstructionsMarkdownLabels } from './models/scheduled-task-instructions';
 export { ScheduledTaskDeleteConfirmation } from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';
 export type {
   ScheduledTaskDeleteConfirmationColors,

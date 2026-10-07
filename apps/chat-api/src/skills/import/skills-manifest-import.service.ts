@@ -15,7 +15,7 @@ import type { ExtractedSkillArchive } from './skills-archive-extraction.service'
 
 /**
  * Validates a standalone `SKILL.md` upload for `POST /api/v1/skills/import`
- * (design.md D2, `extend-skill-upload-with-skill-md`) and returns the same
+ * (`openspec/changes/archive/2026-08-20-extend-skill-upload-with-skill-md/design.md` D2, `extend-skill-upload-with-skill-md`) and returns the same
  * `{ name, skillManifest, filePaths, files }` shape
  * `SkillsArchiveExtractionService.extract` returns, so `SkillsImportService`
  * can hand either result to the unmodified `SkillsUploadService.createSkill`

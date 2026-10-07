@@ -124,6 +124,7 @@ export const CredentialsManagementPanel: FC<
             isActive={isUserActive}
             authenticationType={credentials.authenticationType}
             apiKeyAddedWhen={credentials.userApiKeyAddedWhen}
+            apiKeyHeader={credentials.apiKeyHeader}
             onLogin={(apiKey) =>
               onLogin?.(item, {
                 level: CredentialsLevel.User,
@@ -161,6 +162,7 @@ export const CredentialsManagementPanel: FC<
             isActive={isGlobalActive}
             authenticationType={credentials.authenticationType}
             apiKeyAddedWhen={credentials.globalApiKeyAddedWhen}
+            apiKeyHeader={credentials.apiKeyHeader}
             onLogin={(apiKey) =>
               onLogin?.(item, {
                 level: CredentialsLevel.Global,

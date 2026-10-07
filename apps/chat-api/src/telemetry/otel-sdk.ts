@@ -37,7 +37,7 @@ import { initializeRuntimeMetrics } from './runtime-metrics';
  * SDK client — so `HttpInstrumentation`/`UndiciInstrumentation` patch Node's `http`/`https`/
  * `undici` modules before anything else can `require()` them. Do not reorder that import, and
  * do not flip `apps/chat-api/webpack.config.js`'s `optimization: false` without re-verifying
- * this invariant (see design.md Risks).
+ * this invariant (see `openspec/changes/archive/2026-08-05-add-observability-support/design.md` Risks).
  */
 
 export const buildResource = (env: NodeJS.ProcessEnv): Resource => {

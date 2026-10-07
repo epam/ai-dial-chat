@@ -18,7 +18,7 @@ import { inferMimeTypeFromPath } from './mime-type';
  * hooks still had to install the whole quotations stack — a PDF highlighter, a
  * markdown renderer and an icon set — for one pure function over types
  * declared in this package
- * ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)). The
+ * ([#8719](https://github.com/epam/ai-dial-chat/issues/8719)). The
  * rendering side of citations stays in quotations, which imports these.
  */
 

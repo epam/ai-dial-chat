@@ -885,6 +885,7 @@ The intended direction, enforced in review:
 - [Responses API Integration](responses-api-integration.md)
 - [Observability](observability.md) — telemetry configuration, metric contracts, and Grafana dashboard examples
 - [Host Install Matrix](host-install-matrix.md) — what an embedding host installs per set of libs
+- [Reusable Chat Workflows](reusable-chat-workflows.md) — skill import, file attachment and prompt selection as public package APIs, and the client application adoption map
 - [Chat API environment variables](../apps/chat-api/README.md#environment-variables) — the full variable reference
 - [Auth subsystem](./auth/)
 - [Legacy AI DIAL Chat](https://github.com/epam/ai-dial-chat)

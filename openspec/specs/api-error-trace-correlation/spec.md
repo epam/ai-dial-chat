@@ -70,7 +70,7 @@ with the host. `message` resolution is unaffected by them.
 - **WHEN** any `apps/chat` module needs `getApiErrorDetails`, `getApiErrorMessage`,
   `getApiErrorStatus`, `isConversationNotFoundError`, or `ApiErrorDetails`
 - **THEN** it imports the name from `@epam/ai-dial-chat-hooks`, and no
-  `apps/chat/src/server-api/api-error.ts` module exists to forward it
+  former `apps/chat/src/server-api/api-error.ts` module exists to forward it
 
 #### Scenario: Domain and upstream error fields are preserved
 - **WHEN** an API call fails with a JSON body `{ "message": "DIAL Core returned a server error",

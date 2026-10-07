@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { memo, useEffect, useRef, type FC } from 'react';
 import { useCelebrationEnvironment } from '../../../context/CelebrationEnvironmentContext';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
@@ -66,7 +67,7 @@ const HalloweenWebScene: FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className={styles.scene}
+      className={mergeClasses('text-primary', styles.scene)}
       aria-hidden="true"
       data-halloween-scene="web"
     />

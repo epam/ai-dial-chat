@@ -148,6 +148,20 @@ for `handleUploadAttachment`.
   `toolConfigurationValue`, the user message's other `custom_content` is kept,
   and the regenerated user message carries the new configuration
 
+#### Scenario: Edit-resubmit uses the current tool toggles, not the stored ones
+- **WHEN** `toolConfigurationValue` has at least one active entry and
+  `handleEditMessage` re-runs the generation
+- **THEN** the outgoing `custom_content.configuration_value` is the current
+  `toolConfigurationValue` (replacing any value stored on the edited message),
+  the resolved attachments, skills and other `custom_content` are kept, and the
+  edited user message carries the same `custom_content`
+
+#### Scenario: Edit-resubmit without an active tool configuration
+- **WHEN** `toolConfigurationValue` is absent or empty and `handleEditMessage`
+  re-runs the generation
+- **THEN** no `configuration_value` is added, and any `configuration_value`
+  already stored on the edited message is sent unchanged (as for regenerate)
+
 #### Scenario: Concurrent offline upload failures are batched
 - **WHEN** multiple attachments fail to upload while offline within the
   debounce window

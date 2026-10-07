@@ -85,6 +85,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
       removeLabel,
       retryLabel,
       uploadingLabel,
+      expandLabel,
+      clickLabel,
       sendLabel,
       sendTooltip,
       emptyMessageTooltip,
@@ -355,7 +357,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
 
     /*
      * `getBoundingClientRect()` diff against `textareaAreaRef`, not
-     * `offsetLeft`/`offsetTop` — see design.md Decision 3b
+     * `offsetLeft`/`offsetTop` — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3b
      * (multi-skill-message-mentions).
      */
     const measureCaretAnchor = useCallback(() => {
@@ -849,7 +851,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * caret marker / empty-query hint of an open `/query`), and the
      * textarea's native selection is hidden whenever it does — so the
      * replacement selection highlight must follow the same condition, not
-     * just `hasActiveMentions` (Issue #9231).
+     * just `hasActiveMentions` ([#9231](https://github.com/epam/ai-dial-chat/issues/9231)).
      */
     const isMirrorActive = hasActiveMentions || mirrorInsertions.length > 0;
 
@@ -975,7 +977,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             >
               {/*
                * floating-ui's actual reference element — sized to match the
-               * caret marker's box. See design.md Decision 3b
+               * caret marker's box. See `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3b
                * (multi-skill-message-mentions).
                */}
               <span aria-hidden className="inline-block h-[1lh] w-0" />
@@ -996,7 +998,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             className={mergeClasses(
               styles.textarea,
               typography?.fontClassName || 'dial-body-paragraph-text',
-              // Bleed room for chip edges — see design.md Decision 3a.
+              // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
               'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden whitespace-pre-wrap pe-1 ps-1 [overflow-wrap:anywhere]',
             )}
           >
@@ -1139,7 +1141,13 @@ export const Input = forwardRef<InputHandle, InputProps>(
             }}
             onRetry={handleRetry}
             onExpand={handleExpand}
-            labels={{ removeLabel, retryLabel, uploadingLabel }}
+            labels={{
+              removeLabel,
+              retryLabel,
+              uploadingLabel,
+              expandLabel,
+              clickLabel,
+            }}
             styles={attachmentTray}
             onAttachmentClick={
               onAttachmentClick != null

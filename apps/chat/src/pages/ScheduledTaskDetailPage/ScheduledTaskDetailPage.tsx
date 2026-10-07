@@ -33,6 +33,7 @@ import {
 } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
+  ChatI18nKeys,
   ConversationPanelI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
@@ -430,6 +431,11 @@ const ScheduledTaskDetailPage: FC = () => {
       startNowBusyLabel: t(ScheduledTasksI18nKeys.DetailStartBusy),
       startStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
+      codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+      codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+      codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+      tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+      mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
     }),
     [t, activeStatusAnnouncement, runStatusLabels, startStatusAnnouncement],
   );

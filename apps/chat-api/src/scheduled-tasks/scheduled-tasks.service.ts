@@ -801,10 +801,10 @@ export class ScheduledTasksService {
 
   /*
    * The upstream pause/resume action's own response body is not confirmed to
-   * contain the updated schedule (see design.md "Decision 2" for
+   * contain the updated schedule (see `openspec/changes/archive/2026-08-11-add-scheduled-task-active-toggle/design.md` "Decision 2" for
    * add-scheduled-task-active-toggle) — a follow-up GET is used instead of
    * trusting the action response's shape. If that follow-up GET fails after
-   * the action itself already succeeded, per design.md "Decision 5" the
+   * the action itself already succeeded, per `openspec/changes/archive/2026-08-11-add-scheduled-task-active-toggle/design.md` "Decision 5" the
    * mutation is NOT rolled back: the caller gets isActive reflecting the
    * action just taken, with the rest of the last-known fields, rather than
    * an error that would incorrectly suggest the action didn't happen.

@@ -28,6 +28,7 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  ChatI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   PublishI18nKeys,
@@ -512,7 +513,7 @@ const CatalogView: FC<Props> = ({
       /*
        * A deleted item's id stays in the user-config favourites unless it is
        * removed here, and an item re-created later at the same resource path
-       * would come back already starred (Issue #9143). The delete itself has
+       * would come back already starred ([#9143](https://github.com/epam/ai-dial-chat/issues/9143)). The delete itself has
        * succeeded, so a failed cleanup is only logged.
        */
       if (!favoriteIds.has(item.id)) return;
@@ -715,6 +716,9 @@ const CatalogView: FC<Props> = ({
           apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
           copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
           copiedCodeStatusLabel: t(ButtonsI18nKeys.Copied),
+          downloadCodeAriaLabel: t(ButtonsI18nKeys.Download),
+          tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+          mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
           pricingPricesSectionLabel: t(
             CatalogI18nKeys.DetailsPricingPricesSection,
           ),
@@ -742,6 +746,8 @@ const CatalogView: FC<Props> = ({
           apiKeyRequiredErrorMessage: t(
             CatalogI18nKeys.CredentialsApiKeyRequiredErrorMessage,
           ),
+          apiKeyHeaderHint: (header) =>
+            t(CatalogI18nKeys.CredentialsApiKeyHeaderHint, { header }),
           apiKeyActionLabel: t(ApiI18nKeys.ApiKey),
           changeApiKeyActionLabel: t(
             CatalogI18nKeys.CredentialsChangeApiKeyActionLabel,

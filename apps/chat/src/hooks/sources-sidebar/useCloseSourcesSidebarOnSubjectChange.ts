@@ -10,7 +10,7 @@ import { useRememberedSchedule } from './useRememberedSchedule';
 
 /**
  * Closes the sources sidebar when its subject — the schedule — changes,
- * not when the route conversation id changes (issue #8840): a switch between
+ * not when the route conversation id changes ([#8840](https://github.com/epam/ai-dial-chat/issues/8840)): a switch between
  * runs of the same task keeps the sidebar open; a switch to another task,
  * a normal conversation, or a no-conversation-id route (bare
  * `/conversations`, a malformed path) closes it (#7213, #7936). Same task

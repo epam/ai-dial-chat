@@ -107,7 +107,7 @@ describe('DefaultAgentSelect', () => {
   /*
    * With an agent pinned and nothing stored, the pin is what a new chat
    * follows, so the field names the default-agent mode rather than a
-   * last-used mode that is not in effect (Issue #8889).
+   * last-used mode that is not in effect ([#8889](https://github.com/epam/ai-dial-chat/issues/8889)).
    */
   it('shows the default-agent mode when nothing is stored and an agent is pinned', () => {
     render(<DefaultAgentSelect />);

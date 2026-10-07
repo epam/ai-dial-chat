@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
+import type { CatalogMarkdownLabels } from './item-details-props';
 
 /** Row data passed to each virtual row renderer in the card grid. */
 export interface CardRowData {
@@ -29,4 +30,6 @@ export interface CardRowData {
   isReadonly?: boolean;
   /** Featured chip style override, merged over its default per-entity-type colors for every card, e.g. `{ backgroundColor, color, border }`. */
   featuredChipStyle?: CSSProperties;
+  /** Code-block, table and formula labels forwarded to each card's description markdown. Defaults to the renderer's English labels. */
+  markdownLabels?: CatalogMarkdownLabels;
 }

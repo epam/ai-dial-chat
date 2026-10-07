@@ -34,11 +34,14 @@ export const getCookieSameSite = (
     : 'lax';
 };
 
+/** Default session cookie name (`AUTH_SESSION_COOKIE_NAME`), before the insecure-mode `__Host-` strip. */
+export const DEFAULT_SESSION_COOKIE_NAME = '__Host-chat.sess';
+
 const COOKIE_NAME_DEFAULTS: Record<
   'AUTH_SESSION_COOKIE_NAME' | 'AUTH_TRANSACTION_COOKIE_NAME',
   string
 > = {
-  AUTH_SESSION_COOKIE_NAME: '__Host-chat.sess',
+  AUTH_SESSION_COOKIE_NAME: DEFAULT_SESSION_COOKIE_NAME,
   AUTH_TRANSACTION_COOKIE_NAME: '__Host-chat.tx',
 };
 

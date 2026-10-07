@@ -20,7 +20,7 @@ describe('getPublishFolderLabel', () => {
 
   /*
    * The Organization root has no path segments, so its leaf is the empty
-   * string — GH #8704, where the confirmation read `folder ""`.
+   * string — [#8704](https://github.com/epam/ai-dial-chat/issues/8704), where the confirmation read `folder ""`.
    */
   it('falls back to the root label for the segment-less public root', () => {
     expect(getPublishFolderLabel([], t)).toBe(BasicI18nKeys.Organization);

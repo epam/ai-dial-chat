@@ -346,9 +346,11 @@ export const useCatalogItemActions = ({
      */
     if (item.type === CatalogEntityType.Prompt) return true;
     /*
-     * A skill is always usable in chat. Deferred condition: once the
-     * backend exposes whether the selected default model supports skills,
-     * this rule gains that signal.
+     * A skill always shows the button and deliberately never checks the
+     * chat's deployment for skills support: the catalog cannot reliably know
+     * which deployment the chat route will open with. When that deployment
+     * lacks support, `ChatSkill`'s error state shows the mismatch and blocks
+     * sending instead (see the catalog-use-in-chat spec).
      */
     if (item.type === CatalogEntityType.Skill) return true;
     return (

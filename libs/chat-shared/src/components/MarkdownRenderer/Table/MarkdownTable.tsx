@@ -49,7 +49,7 @@ export interface MarkdownTableColors {
   border?: string;
   /** Scrollbar thumb/track color. */
   scrollbar?: string;
-  /** Edge-fade mask color. */
+  /** Edge-fade mask color; only its alpha is used. Defaults to `--stroke-focus-black`. */
   fade?: string;
   /** Divider color between rows. Defaults to `--stroke-tertiary`. */
   rowDivider?: string;

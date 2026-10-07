@@ -21,7 +21,7 @@ const isHtmlTagAnnotation = (value: unknown): value is Annotation => {
 /**
  * Derives the conversation-level fallback citation pool from
  * `conversation.customViewState.annotations`, resolving a `<cit data-id="…">`
- * element whose annotation arrived in an earlier turn (issue #9002) and is
+ * element whose annotation arrived in an earlier turn ([#9002](https://github.com/epam/ai-dial-chat/issues/9002)) and is
  * therefore absent from the current message's own citation groups.
  *
  * The field is untrusted persisted JSON — absent on most conversations,

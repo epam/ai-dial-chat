@@ -184,6 +184,16 @@ describe('EntityEditor', () => {
     ).toBeTruthy();
   });
 
+  it('renders the Setup section without a heading when setupTitle is null', () => {
+    renderEditor({ setupTitle: null, labels: { setupTitle: 'Einrichtung' } });
+
+    expect(screen.queryByRole('heading', { name: 'Setup' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Einrichtung' })).toBeNull();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Metadata' }),
+    ).toBeTruthy();
+  });
+
   it('renders under dir="rtl" with no physical-direction classes on its sections', () => {
     renderEditor({ dir: 'rtl' });
 

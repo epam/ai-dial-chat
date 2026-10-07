@@ -7,8 +7,12 @@ import type { AttachmentTypeLabels } from './attachment-card';
 
 /** Localised labels for the `FileAttachment` component. */
 export interface FileAttachmentLabels extends AttachmentTypeLabels {
-  /** Accessible label for the download action. Defaults to `'Download attachment'`. */
+  /** Accessible name of the tile when it is interactive via `onClick`. Defaults to `'Download attachment'`. */
   clickLabel?: string;
+  /** Accessible label for the corner download action. Kept separate from `clickLabel` so a tile that is both clickable and downloadable exposes two distinctly named buttons. Defaults to `'Download attachment'`. */
+  downloadLabel?: string;
+  /** Accessible name of a pasted-text tile when it is interactive via `onExpand`. Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
   /** Accessible label for the retry action. Defaults to `'Retry upload'`. */
   retryLabel?: string;
   /** Accessible label for the remove action. Defaults to `'Remove attachment'`. */

@@ -144,6 +144,10 @@ export interface EditMessageInputProps {
   retryLabel?: string;
   /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
+  /** Accessible name of each pasted-text attachment card, which expands its text back into the composer when activated. Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
+  /** Accessible name of each non-pasted attachment card when `onAttachmentClick` makes it interactive. Name it after what the host handler does (e.g. opening the attachment in a canvas). When omitted, the card default applies (`'Open attachment'` on image tiles, `'Download attachment'` on file and link tiles). Pasted-text cards keep `expandLabel`. */
+  clickLabel?: string;
   /** Accessible label for the add-menu trigger button. */
   addMenuTitle?: string;
   /** Label for the attach-file menu item. */
@@ -343,6 +347,10 @@ export interface ConversationInputProps {
   retryLabel?: string;
   /** Accessible label for each attachment card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
+  /** Accessible name of each pasted-text attachment card, which expands its text back into the composer when activated. Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
+  /** Accessible name of each non-pasted attachment card when `onAttachmentClick` makes it interactive. Name it after what the host handler does (e.g. opening the attachment in a canvas). When omitted, the card default applies (`'Open attachment'` on image tiles, `'Download attachment'` on file and link tiles). Pasted-text cards keep `expandLabel`. */
+  clickLabel?: string;
   /**
    * When `true`, blocks typing, the attach menu, dictation, Enter-to-send,
    * and dropped files (`pendingDropFiles` are consumed and discarded, never
@@ -477,7 +485,6 @@ export interface ConversationInputProps {
    * the flat deployment list. Receives `onClose` so the panel can close the
    * popover after a selection or an explicit dismiss.
    */
-  // TODO: review usage
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
   /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
   toolsMenuItems?: ToolMenuItem[];

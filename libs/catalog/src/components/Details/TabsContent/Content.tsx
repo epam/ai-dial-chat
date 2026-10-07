@@ -14,7 +14,10 @@ import type {
   CatalogContentFileTreeRenderProps,
   CatalogContentTreeNode,
 } from '../../../models/item-details-data';
-import type { ItemDetailsStyles } from '../../../models/item-details-props';
+import type {
+  CatalogMarkdownLabels,
+  ItemDetailsStyles,
+} from '../../../models/item-details-props';
 import { CatalogContentPreviewType } from '../../../types/catalog-content-type';
 import {
   countFileNodes,
@@ -68,6 +71,8 @@ export interface ContentTabProps {
   renderFileTree?: (props: CatalogContentFileTreeRenderProps) => ReactNode;
   /** Color and typography overrides for the body text, headings, and placeholder highlights. */
   detailsStyles?: ItemDetailsStyles;
+  /** Code-block, table and formula labels forwarded to the markdown body and the plain-text code preview. Defaults to the renderer's English labels. */
+  markdownLabels?: CatalogMarkdownLabels;
 }
 
 /**
@@ -95,6 +100,7 @@ export const ContentTab: FC<ContentTabProps> = ({
   filePreviewContent,
   renderFileTree,
   detailsStyles,
+  markdownLabels,
 }) => {
   const bodyClassName =
     detailsStyles?.typography?.contentClassName ?? 'dial-small-text';
@@ -150,6 +156,7 @@ export const ContentTab: FC<ContentTabProps> = ({
           <MarkdownWithPlaceholders
             content={previewToRender.text}
             headingClassName={headingClassName}
+            {...markdownLabels}
           />
         );
       case CatalogContentPreviewType.Text:
@@ -157,6 +164,8 @@ export const ContentTab: FC<ContentTabProps> = ({
           <MarkdownCodeBlock
             language={previewToRender.language ?? ''}
             value={previewToRender.text}
+            copyLabel={markdownLabels?.codeBlockCopyLabel}
+            copiedLabel={markdownLabels?.codeBlockCopiedLabel}
             hideDownload
           />
         );

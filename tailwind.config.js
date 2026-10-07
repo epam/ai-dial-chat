@@ -21,11 +21,6 @@ const shadowColors = {
 };
 
 const controlsBgColors = {
-  /*
-   * Accent gradient stops, numbered by position instead of being named after
-   * one gradient that uses them. The pre-0.14 ui-kit variable names stay in the
-   * fallback chain for themes that still set them.
-   */
   'gradient-1': 'var(--bg-gradient-1, #1D4ED8)', // blue-500
   'gradient-1-hover': 'var(--bg-gradient-1-hover, #6785FB)', // blue-200
   'gradient-1-active': 'var(--bg-gradient-1-active, #1D4ED8)', // blue-500
@@ -44,7 +39,7 @@ const controlsBgColors = {
 
   'control-neutral': 'var(--bg-control-neutral, #FCFCFC)', // grey-50
   'control-neutral-hover-muted':
-    'var(--bg-control-neutral-hover-muted, var(--bg-control-neutral-hover, #E0E6F0))', // grey-250
+    'var(--bg-control-neutral-hover-muted, #E0E6F0)', // grey-250
   'control-neutral-hover-strong':
     'var(--bg-control-neutral-hover-strong, #848E9C)', // grey-600
   'control-neutral-active': 'var(--bg-control-neutral-active, #D1DBEA)', // grey-350
@@ -54,9 +49,9 @@ const controlsBgColors = {
   'control-error': 'var(--bg-control-error, #AE2F2F)', // red-800
   'control-error-hover': 'var(--bg-control-error-hover, #BF3939)', // red-700
   'control-error-active': 'var(--bg-control-error-active, #CC4545)', // red-600
-  'control-error-alpha-hover': 'var(--bg-control-error-alpha-hover, #F764641A)', // red-800 alpha-10
+  'control-error-alpha-hover': 'var(--bg-control-error-alpha-hover, #F764641A)', // red-400 alpha-10
   'control-error-alpha-active':
-    'var(--bg-control-error-alpha-active, #F7646433)', // red-800 alpha-20
+    'var(--bg-control-error-alpha-active, #F7646433)', // red-400 alpha-20
 
   'control-disable-primary': 'var(--bg-control-disable-primary, #DCE0E8)', // grey-300
   'control-disable-secondary': 'var(--bg-control-disable-secondary, #ACB3C3)', // grey-450
@@ -100,10 +95,10 @@ const borderColors = {
   'accent-alpha': 'var(--stroke-accent-alpha, #2764D933)', // blue-500 alpha-20
   'gradient-1': 'var(--stroke-gradient-1, #5976E9)', // blue-300
   'gradient-2': 'var(--stroke-gradient-2, #885DF2)', // violet-300
-  focus: 'var(--stroke-focus-black, var(--stroke-focus, #161B2D))', // grey-1000
+  focus: 'var(--stroke-focus, #161B2D)', // grey-1000
   'accent-focus': 'var(--stroke-accent-focus, #6785FB)', // blue-200
   'error-alpha': 'var(--stroke-error-alpha, #AE2F2F73)', // red-800 alpha-45
-  'control-disable-primary': 'var(--stroke-control-disable-primary,  #848E9C)', // grey-600
+  'control-disable-primary': 'var(--stroke-control-disable-primary, #848E9C)', // grey-600
 };
 
 const textColors = {
@@ -112,7 +107,7 @@ const textColors = {
   secondary: 'var(--text-secondary, #57647a)', // grey-800
   tertiary: 'var(--text-tertiary, #848e9c)', // grey-600
   accent: 'var(--text-accent, #1D4ED8)', // blue-500
-  error: 'var(--text-error, #AE2F2F)', // red-500
+  error: 'var(--text-error, #AE2F2F)', // red-800
   warning: 'var(--text-warning, #7F6300)', // yellow-800
   'warning-icon': 'var(--text-warning-icon, #EEC840)', // yellow-500
   info: 'var(--text-info, #1D4ED8)', // blue-500
@@ -126,14 +121,10 @@ const placeholderColor = {
 const controlsTextColors = {
   'control-permanent': 'var(--text-control-permanent, #FCFCFC)', // grey-50
   'control-inverted': 'var(--text-control-inverted, #FCFCFC)', // grey-50
-  'control-disable-primary':
-    'var(--text-control-disable-primary, var(--text-control-disable-alpha, #848E9C))', // grey-600
-  'control-disable-secondary':
-    'var(--text-control-disable-secondary, var(--text-control-disable-beta, #DCE0E8))', // grey-300
-  'control-accent-hover':
-    'var(--text-control-accent-hover, var(--text-control-blue-hover, #5976E9))', // blue-300
-  'control-accent-active':
-    'var(--text-control-accent-active, var(--text-control-blue-active, #6785FB))', // blue-200
+  'control-disable-primary': 'var(--text-control-disable-primary, #848E9C)', // grey-600
+  'control-disable-secondary': 'var(--text-control-disable-secondary, #DCE0E8)', // grey-300
+  'control-accent-hover': 'var(--text-control-accent-hover, #5976E9)', // blue-300
+  'control-accent-active': 'var(--text-control-accent-active, #6785FB)', // blue-200
 };
 
 /** @type {import('tailwindcss').Config} */

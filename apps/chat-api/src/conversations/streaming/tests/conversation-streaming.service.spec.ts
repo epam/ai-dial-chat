@@ -1716,14 +1716,14 @@ describe('ConversationStreamingService', () => {
         'the SDK-parsed error',
         {
           response: new Response(null, { status: 400 }),
-          error: { message: 'Invalid model\nFORGED log line‮' },
+          error: { message: 'Invalid model\nFORGED log line\u202E' },
         },
       ],
       [
         'the JSON raw body',
         {
           response: new Response(
-            JSON.stringify({ message: 'Invalid model\nFORGED log line‮' }),
+            JSON.stringify({ message: 'Invalid model\nFORGED log line\u202E' }),
             { status: 400 },
           ),
         },
@@ -1764,7 +1764,7 @@ describe('ConversationStreamingService', () => {
         );
         const logged = JSON.stringify(errorSpy.mock.calls);
         expect(logged).not.toContain('\\n');
-        expect(logged).not.toContain('\\u202e');
+        expect(logged).not.toMatch(/[\u202A-\u202E\u2066-\u2069]/u);
       },
     );
 

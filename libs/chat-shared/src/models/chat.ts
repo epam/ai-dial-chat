@@ -101,7 +101,7 @@ export interface StatusMessageCustomContent {
 
 /**
  * A skill referenced from `custom_content.skills` — DIAL Core's `RequestSkill`
- * schema (PR #1956): an object with a non-blank `url`; Core rejects any other
+ * schema ([ai-dial-core#1956](https://github.com/epam/ai-dial-core/pull/1956)): an object with a non-blank `url`; Core rejects any other
  * entry shape (e.g. a bare string) with 400.
  */
 export interface RequestSkill {
@@ -413,7 +413,7 @@ export interface Conversation {
   /** Human-readable conversation title. */
   name: string;
   /** The AI model used for this conversation. */
-  model: { id: string }; // TODO: add more model info
+  model: { id: string };
   /** System prompt prepended to every request. */
   prompt: string;
   /** Sampling temperature passed to the model (0–1). */

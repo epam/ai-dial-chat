@@ -157,7 +157,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
    * One-shot text hand-off into the composer's textarea. The two writers differ
    * in kind, so they own separate channels: the overlay bridge's setInputContent
    * replaces the whole draft, while a picked prompt is inserted at the caret and
-   * must leave the user's own writing alone (issue #8754).
+   * must leave the user's own writing alone ([#8754](https://github.com/epam/ai-dial-chat/issues/8754)).
    */
   const [pendingInputContent, setPendingInputContent] = useState({
     revision: 0,
@@ -284,7 +284,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
    * `useCloseSourcesSidebarOnSubjectChange` (mounted in the sources panel),
    * which closes the sidebar only when its subject changes — not on every
    * conversation-id change, so switching between runs of the same task keeps
-   * it open (issue #8840).
+   * it open ([#8840](https://github.com/epam/ai-dial-chat/issues/8840)).
    */
   useEffect(
     () => () => {

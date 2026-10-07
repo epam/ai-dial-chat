@@ -3,7 +3,10 @@ import {
   type MarkdownRendererClassNames,
 } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { ItemDetailsStyles } from '../../../models/item-details-props';
+import type {
+  CatalogMarkdownLabels,
+  ItemDetailsStyles,
+} from '../../../models/item-details-props';
 import { TopicTag } from '../../TopicTag/TopicTag';
 
 interface AboutTabProps {
@@ -11,6 +14,8 @@ interface AboutTabProps {
   /** Markdown text to render, typically `item.description`. */
   content: string;
   detailsStyles?: ItemDetailsStyles;
+  /** Code-block, table and formula labels forwarded to the markdown renderer. Defaults to the renderer's English labels. */
+  markdownLabels?: CatalogMarkdownLabels;
 }
 
 /** Renders a catalog item's description as markdown, followed by its topic tags. */
@@ -18,6 +23,7 @@ export const AboutTab: FC<AboutTabProps> = ({
   topics,
   content,
   detailsStyles,
+  markdownLabels,
 }) => {
   const headingClassName =
     detailsStyles?.typography?.contentHeadingClassName ??
@@ -39,7 +45,11 @@ export const AboutTab: FC<AboutTabProps> = ({
 
   return (
     <div className="flex flex-col gap-5">
-      <MarkdownRenderer content={content} classNames={classNames} />
+      <MarkdownRenderer
+        content={content}
+        classNames={classNames}
+        {...markdownLabels}
+      />
       {topics && topics.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {topics.map((p) => (

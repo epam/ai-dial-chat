@@ -68,7 +68,7 @@ interface BuiltMoveRenameEntry {
 }
 
 /**
- * Rename-vs-move disambiguation (design.md D3): entries whose parent folder
+ * Rename-vs-move disambiguation (`openspec/changes/archive/2026-07-21-split-use-dial-file-manager/design.md` D3): entries whose parent folder
  * is unchanged become `renameDtos`; entries whose parent folder changed
  * become `preparedMoveItems`.
  */

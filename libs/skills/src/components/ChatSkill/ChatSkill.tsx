@@ -64,7 +64,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
    * `/` is rendered out-of-flow so it can be styled independently; the
    * measured width becomes the label's start padding, keeping the chip's
    * total width equal to the invisible `/{name}` text it overlays. See
-   * design.md Decision 3a (multi-skill-message-mentions).
+   * `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a (multi-skill-message-mentions).
    */
   const slashRef = useRef<HTMLSpanElement | null>(null);
   const [slashWidth, setSlashWidth] = useState<number | null>(null);
@@ -74,7 +74,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   }, [labelClassName]);
 
   /*
-   * Branch order matches design.md Decision 1: an unresolved url takes
+   * Branch order matches `openspec/changes/archive/2026-09-29-add-unresolved-skill-indicator/design.md` Decision 1: an unresolved url takes
    * precedence over the unsupported-model state, which takes precedence
    * over the normal description + "View details" content.
    */
@@ -117,11 +117,11 @@ export const ChatSkill: FC<ChatSkillProps> = ({
       {/*
        * Plain, selectable text span, not a `<button>` — sized to net-zero
        * extra width so the composer mirror can overlay it on the real
-       * textarea text. See design.md Decision 3a (multi-skill-message-mentions)
+       * textarea text. See `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a (multi-skill-message-mentions)
        * for the full rationale. `inline`, not `inline-block`: the textarea
        * may break the raw `/{name}` after any hyphen, and an atomic chip
        * cannot, so the mirror would wrap onto an extra line the textarea
-       * never grows to show (issue #9243).
+       * never grows to show ([#9243](https://github.com/epam/ai-dial-chat/issues/9243)).
        */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click/keydown only act in click-triggered mode; hover mode's tooltip is reachable via focus alone */}
       <span

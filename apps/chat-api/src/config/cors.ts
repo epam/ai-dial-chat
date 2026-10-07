@@ -7,7 +7,7 @@ import type { Request } from 'express';
 /**
  * Routes that must never receive CORS headers. MCP Apps content is fetched
  * and its tool calls forwarded only by same-origin `apps/chat` code — see
- * `design.md` D17. This denies both the resource GET and the tool-call POST
+ * `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D17. This denies both the resource GET and the tool-call POST
  * explicit defense-in-depth alongside the CSP layered on top of them,
  * independent of the origin/credentials policy the rest of the API uses.
  */

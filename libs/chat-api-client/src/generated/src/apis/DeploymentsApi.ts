@@ -60,6 +60,15 @@ export class DeploymentsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/deployments/{deployment}/configuration`;
     urlPath = urlPath.replace(
       `{${'deployment'}}`,
@@ -112,6 +121,15 @@ export class DeploymentsApi extends runtime.BaseAPI {
     const queryParameters: runtime.HTTPQuery = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
 
     let urlPath = `/api/v1/deployments/{deployment}/details`;
     urlPath = urlPath.replace(
@@ -166,6 +184,15 @@ export class DeploymentsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
     let urlPath = `/api/v1/deployments/{deployment}/limits`;
     urlPath = urlPath.replace(
       `{${'deployment'}}`,
@@ -218,6 +245,15 @@ export class DeploymentsApi extends runtime.BaseAPI {
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
 
     let urlPath = `/api/v1/deployments`;
 

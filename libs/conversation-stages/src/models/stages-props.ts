@@ -64,8 +64,14 @@ export interface StagesPanelStyles {
 
 /** User-visible strings for the `StagesPanel` component. */
 export interface StagesPanelLabels {
-  /** Accessible label for the copy button on each stage's content. Defaults to `'Copy'`. */
+  /** Accessible label for the copy button on each stage content code block. Defaults to `'Copy stage content'`. */
   copyAriaLabel?: string;
+  /** Status announced after a stage content code block has been copied. Defaults to `'Copied!'`. */
+  codeBlockCopiedLabel?: string;
+  /** Accessible label for a table's horizontally scrollable region in stage content. Defaults to `'Scrollable table'`. */
+  tableScrollRegionAriaLabel?: string;
+  /** Accessible label for a block formula's horizontally scrollable region in stage content. Defaults to `'Scrollable formula'`. */
+  mathScrollRegionAriaLabel?: string;
   /** Accessible label announced for a running stage's spinner. Defaults to `'Running'`. */
   runningAriaLabel?: string;
   /** Visually-hidden label announced alongside a failed stage's icon. Defaults to `'Failed'`. */

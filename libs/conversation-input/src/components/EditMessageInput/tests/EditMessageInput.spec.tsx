@@ -1,3 +1,4 @@
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditMessageInput } from '../EditMessageInput';
@@ -213,5 +214,70 @@ describe('EditMessageInput — skill mentions', () => {
     );
 
     expect(screen.queryByLabelText('Add')).toBeNull();
+  });
+});
+
+describe('EditMessageInput — pasted attachment label', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('forwards expandLabel to the pasted card it creates', () => {
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        pasteTextThreshold={5}
+        expandLabel="Развернуть текст"
+      />,
+    );
+
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'This is long enough to become a pasted attachment',
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Развернуть текст' }),
+    ).toBeTruthy();
+  });
+});
+
+describe('EditMessageInput — attachment click label', () => {
+  it('forwards clickLabel to a kept attachment tile opened via onAttachmentClick', () => {
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        initialAttachments={[
+          {
+            id: 'report',
+            name: 'report.pdf',
+            contentType: 'application/pdf',
+            type: AttachmentType.File,
+            status: RequestStatus.Idle,
+            url: 'files/report.pdf',
+          },
+        ]}
+        onAttachmentClick={vi.fn()}
+        clickLabel="Открыть в холсте"
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Открыть в холсте' }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Download attachment' }),
+    ).toBeNull();
   });
 });

@@ -9,8 +9,10 @@ export interface AttachmentTrayLabels {
   removeLabel?: string;
   /** Accessible label for each card's retry button (error state only). */
   retryLabel?: string;
-  /** Accessible label forwarded to each card's root when it is interactive. When omitted, the card's own default (`'Open attachment'`) applies. */
+  /** Accessible name forwarded to each card's root when it is interactive via `onAttachmentClick`. When omitted, the card's own default applies (`'Open attachment'` on image tiles, `'Download attachment'` on file, link and pasted-text tiles). */
   clickLabel?: string;
+  /** Accessible name forwarded to each pasted-text card's root when it is interactive via `onExpand`. Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
   /** Accessible label for each card's in-progress upload progress bar. Defaults to `'Uploading'`. */
   uploadingLabel?: string;
 }
@@ -31,9 +33,9 @@ export interface AttachmentTrayProps {
   onRemove?: (id: string) => void;
   /** Called when the user retries a failed attachment upload. */
   onRetry?: (id: string) => void;
-  /** Called when the user clicks a pasted-text card to expand its content back into the input. */
+  /** Called when the user clicks or keyboard-activates a pasted-text card to expand its content back into the input. Takes precedence over `onAttachmentClick` on pasted-text cards. */
   onExpand?: (id: string) => void;
-  /** Called when the user clicks or keyboard-activates an attachment card. Receives the full `DisplayAttachment` object. */
+  /** Called when the user clicks or keyboard-activates an attachment card. Receives the attachment `id`. When omitted, cards without an applicable `onExpand` are non-interactive. */
   onAttachmentClick?: (id: string) => void;
   /** Localised accessible labels for the tray region and each card's interactive elements. */
   labels?: AttachmentTrayLabels;

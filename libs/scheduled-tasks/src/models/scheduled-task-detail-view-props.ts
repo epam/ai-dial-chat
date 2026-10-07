@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import type { ScheduledTaskRunStatus } from '../types/scheduled-task-run-status';
+import type { ScheduledTaskInstructionsMarkdownLabels } from './scheduled-task-instructions';
 import type { ScheduledTaskRunItem } from './scheduled-task-run-item';
 
 /** Localized labels used by the {@link ScheduledTaskDetailView} component. */
-export interface ScheduledTaskDetailViewLabels {
+export interface ScheduledTaskDetailViewLabels extends ScheduledTaskInstructionsMarkdownLabels {
   /** Accessible label for the back-navigation control. */
   backAriaLabel: string;
   /** Label for the header's Edit action. Shown only when `onEdit` is supplied. */

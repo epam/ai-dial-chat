@@ -574,7 +574,7 @@ describe('annotationToOfficeHighlightLocations', () => {
 
 describe('annotationHighlightId', () => {
   /*
-   * Issue #8907: ids used to be the annotation's position inside the list the
+   * [#8907](https://github.com/epam/ai-dial-chat/issues/8907): ids used to be the annotation's position inside the list the
    * caller gathered, so every single-annotation `cit` group resolved to '0'
    * and the canvas could not tell two citations of one document apart.
    */

@@ -31,10 +31,7 @@
   }
 
   &:focus-visible {
-    outline-color: var(
-      --ai-tile-focus-outline,
-      var(--stroke-focus-black, #161b2d)
-    );
+    outline-color: var(--ai-tile-focus-outline, var(--stroke-focus, #161b2d));
   }
 }
 

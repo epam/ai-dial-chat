@@ -168,7 +168,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             ...favorites.filter((item) => item.id !== pinnedItem.id),
           ];
     /* Entities tagged with an operator HIDDEN_ENTITY_TAGS tag stay out of the
-       picker the same way the Catalog drops them (Issue #9150). */
+       picker the same way the Catalog drops them ([#9150](https://github.com/epam/ai-dial-chat/issues/9150)). */
     return quickItems.filter(
       (f) =>
         !f.isHidden &&

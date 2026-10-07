@@ -22,7 +22,7 @@ export interface UseScheduledTaskRunsOptions {
  * the ~10-15s range considered acceptable for per-panel polling against an
  * uncached, unthrottled proxy endpoint; 20 consecutive no-change polls
  * (5 minutes) bounds how long a stuck upstream run keeps a background tab
- * polling. See design.md - Risks for the DIAL Scheduler capacity assumption.
+ * polling. See `openspec/changes/archive/2026-09-28-refresh-scheduled-task-run-history/design.md` - Risks for the DIAL Scheduler capacity assumption.
  */
 const RUNS_POLL_INTERVAL_MS = 15_000;
 const RUNS_POLL_STOP_AFTER_NO_CHANGE = 20;

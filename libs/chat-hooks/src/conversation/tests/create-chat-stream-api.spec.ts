@@ -99,7 +99,7 @@ describe('createChatStreamApi', () => {
     });
 
   /* A second browser tab submitting into a conversation that is already
-   * generating gets a 409 from the completion endpoint (issue #8688). */
+   * generating gets a 409 from the completion endpoint ([#8688](https://github.com/epam/ai-dial-chat/issues/8688)). */
   it('reports a 409 completion response as a GenerationConflictError', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 409 }));
 

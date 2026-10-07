@@ -92,7 +92,7 @@ export class UpdateApplicationBodyDto {
   /*
    * `allow_trailing_dot` accepts fully-qualified hostnames such as
    * `svc.cluster.local.` (common for in-cluster Kubernetes services), which
-   * creation already stores unvalidated — see Issue #9103.
+   * creation already stores unvalidated — see [#9103](https://github.com/epam/ai-dial-chat/issues/9103).
    */
   @IsUrl({
     require_tld: false,

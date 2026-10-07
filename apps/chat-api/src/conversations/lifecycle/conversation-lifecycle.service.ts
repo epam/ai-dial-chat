@@ -71,7 +71,7 @@ export class ConversationLifecycleService {
     const baseName = getConversationName('New chat', firstMessage);
     const name = baseName;
     const conversationPath = `${deploymentId}__${baseName}__${uuid}`;
-    const folderId = `${bucket}`; // TODO: check
+    const folderId = `${bucket}`;
 
     const userMessage: ConversationMessageDto = {
       id: uuid,
@@ -81,7 +81,6 @@ export class ConversationLifecycleService {
       custom_content: customContent,
     };
 
-    // TODO: add temperature and other conversation settings
     const conversation: ConversationResponseDto = {
       id: `${folderId}/${conversationPath}`,
       folderId,

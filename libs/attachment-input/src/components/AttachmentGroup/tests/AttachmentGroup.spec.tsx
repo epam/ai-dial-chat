@@ -1,7 +1,7 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { ATTACHMENT_COLLAPSE_THRESHOLD } from '../../../constants/attachment-group';
 import { AttachmentGroup } from '../AttachmentGroup';
 
@@ -118,5 +118,63 @@ describe('AttachmentGroup', () => {
       />,
     );
     expect(screen.getByRole('group', { name: 'Attachments' })).toBeTruthy();
+  });
+
+  describe('interactivity', () => {
+    it('renders no buttons when the host passes no handler', () => {
+      render(<AttachmentGroup attachments={[makeFile('a'), makeImage('b')]} />);
+      expect(screen.queryAllByRole('button')).toHaveLength(0);
+    });
+
+    it('renders a working per-tile download button, but no tile button, with only onDownloadAll', () => {
+      const onDownloadAll = vi.fn();
+      const file = makeFile('a');
+      render(
+        <AttachmentGroup attachments={[file]} onDownloadAll={onDownloadAll} />,
+      );
+
+      const buttons = screen.getAllByRole('button', {
+        name: 'Download attachment',
+      });
+      expect(buttons).toHaveLength(1);
+      fireEvent.click(buttons[0]);
+      expect(onDownloadAll).toHaveBeenCalledWith([file]);
+    });
+
+    it("names each file tile's download button by downloadLabel, not clickLabel", () => {
+      const onAttachmentClick = vi.fn();
+      const onDownloadAll = vi.fn();
+      const file = makeFile('a');
+      render(
+        <AttachmentGroup
+          attachments={[file]}
+          onAttachmentClick={onAttachmentClick}
+          onDownloadAll={onDownloadAll}
+          labels={{ clickLabel: 'Open in canvas', downloadLabel: 'Save file' }}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save file' }));
+      expect(onDownloadAll).toHaveBeenCalledWith([file]);
+      expect(onAttachmentClick).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open in canvas' }));
+      expect(onAttachmentClick).toHaveBeenCalledWith('a');
+    });
+
+    it('makes tiles buttons that call onAttachmentClick when it is given', () => {
+      const onAttachmentClick = vi.fn();
+      render(
+        <AttachmentGroup
+          attachments={[makeFile('a')]}
+          onAttachmentClick={onAttachmentClick}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Download attachment' }),
+      );
+      expect(onAttachmentClick).toHaveBeenCalledWith('a');
+    });
   });
 });

@@ -41,7 +41,7 @@
  * colour-vision deficiency. */
 .highlight {
   border: 1px solid
-    var(--ac-ooxml-highlight-border, var(--stroke-accent, #5c8dea));
+    var(--ac-ooxml-highlight-border, var(--stroke-accent, #1d4ed8));
   background: var(--ac-ooxml-highlight-bg, transparent);
   border-radius: 2px;
   opacity: 0.55;

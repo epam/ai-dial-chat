@@ -97,7 +97,7 @@ describe('isMimeTypeAllowed', () => {
   });
 
   it('matches a stored content type against an aliased declared type', () => {
-    /* Issue #8939: a deployment declaring `text/json` must accept the
+    /* [#8939](https://github.com/epam/ai-dial-chat/issues/8939): a deployment declaring `text/json` must accept the
        `application/json` DIAL Core stores for a .json file. */
     expect(isMimeTypeAllowed('application/json', ['text/json'])).toBe(true);
     expect(isMimeTypeAllowed('text/json', ['application/json'])).toBe(true);

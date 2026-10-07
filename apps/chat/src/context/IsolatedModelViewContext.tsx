@@ -2,7 +2,7 @@
  * TODO: remove in next release. Temporary reinstatement of the old
  * `?isolated-model-id` query param (dropped during the chat 2.0 rewrite),
  * needed for a quick-app-in-an-iframe embedding case. See
- * openspec/changes/restore-isolated-model-id.
+ * openspec/changes/archive/2026-09-02-restore-isolated-model-id.
  */
 import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';

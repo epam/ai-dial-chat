@@ -33,7 +33,7 @@ const errResponse = (status: number) =>
  * Mirrors openapi-fetch's real behavior for a non-2xx response with an empty
  * body (e.g. DIAL Core's 404 for an unknown model has Content-Length: 0):
  * it returns `{ error: undefined, response }`, never populating `error`.
- * Regression coverage for https://github.com/epam/ai-dial-chat/issues/7926.
+ * Regression coverage for [#7926](https://github.com/epam/ai-dial-chat/issues/7926).
  */
 const emptyBodyErrResponse = (status: number) =>
   ({

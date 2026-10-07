@@ -11,7 +11,7 @@ import { UserStatsQueryDto } from './dto/user-stats-query.dto';
  * Separate from DeploymentsController because it must be mounted at `user`,
  * not `deployments` — the routes proxy DIAL Core's GET /v1/user/limits and
  * GET /v1/user/usage. Reuses DeploymentsService/DeploymentsDetailsService for
- * SDK wiring and error mapping (see openspec/changes/integrate-sdk-endpoints-update/design.md).
+ * SDK wiring and error mapping (see openspec/changes/archive/2026-08-18-integrate-sdk-endpoints-update/design.md).
  */
 @ApiTags('user')
 @Controller({ path: 'user', version: '1' })

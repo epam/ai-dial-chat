@@ -7,7 +7,7 @@ import { CustomApiRegistryService } from '../custom-api-registry.service';
 
 /*
  * Module/startup regression coverage for CUSTOM_CORE_API_CONFIG. See
- * openspec/changes/add-configured-core-api-operations/design.md §2 and the
+ * openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md §2 and the
  * acceptance criteria in proposal.md. Complements
  * custom-api-registry.service.spec.ts (parsing edge cases) with the
  * app-boundary guarantees: startup fail-closed behavior, no client-config
@@ -96,7 +96,7 @@ describe('CustomApiModule startup regression', () => {
   it('adds no BFF role/schema duplication module alongside the registry', () => {
     // A custom-api-access.service.ts or role-policy module would indicate
     // the BFF re-implementing Core's own role authorization, which
-    // design.md explicitly forbids.
+    // `openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md` explicitly forbids.
     expect(() =>
       readFileSync(join(__dirname, '../custom-api-access.service.ts'), 'utf8'),
     ).toThrow();

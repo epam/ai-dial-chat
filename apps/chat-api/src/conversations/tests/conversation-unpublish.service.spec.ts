@@ -266,7 +266,7 @@ describe('ConversationPublishService.getPublishHistory with pending removals', (
 });
 
 /*
- * GH #8445. Core keeps the original ADD publication as APPROVED forever, so
+ * [#8445](https://github.com/epam/ai-dial-chat/issues/8445). Core keeps the original ADD publication as APPROVED forever, so
  * after an administrator approved an unpublish request the conversation's row
  * menu went on offering Unpublish for a copy Core had already deleted.
  */

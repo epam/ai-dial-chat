@@ -215,6 +215,14 @@ extra fetch.
   `BroadcastChannel` until the opener acknowledges consumption, after which the callback closes
   itself
 
+#### Scenario: Callback popup shows the flow status
+
+- **WHEN** the callback popup is exchanging the code, or has reported an outcome the opener has not
+  yet acknowledged
+- **THEN** the popup announces a polite in-progress status while the exchange runs, then shows
+  either a success status or an error alert with a translated failure reason, each with a Close
+  button that closes the popup
+
 #### Scenario: External provider navigation preserves popup tracking
 
 - **WHEN** the OAuth popup navigates from Chat to a cross-origin identity provider

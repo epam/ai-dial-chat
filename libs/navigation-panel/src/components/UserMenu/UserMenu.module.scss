@@ -17,8 +17,7 @@
       --np-trigger-hover-bg,
       var(--bg-control-accent-alpha-hover, #2764d924)
     );
-    outline: 1px solid
-      var(--np-focus-outline, var(--stroke-focus-black, #161b2d));
+    outline: 1px solid var(--np-focus-outline, var(--stroke-focus, #161b2d));
     outline-offset: -1px;
   }
 }

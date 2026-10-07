@@ -39,7 +39,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   onAppInfo,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
-  /* `AppFrame`'s `onError` message, shown as a detail line under `errorLabel` — trust boundary discussed in design.md D23. */
+  /* `AppFrame`'s `onError` message, shown as a detail line under `errorLabel` — trust boundary discussed in `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D23. */
   const [errorDetail, setErrorDetail] = useState<string>();
   const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
   /*
@@ -101,7 +101,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     <div
       ref={containerRef}
       className={mergeClasses(
-        /* `min-h-[200px]` is a Loading-overlay floor, not the intended size — see design.md D19. */
+        /* `min-h-[200px]` is a Loading-overlay floor, not the intended size — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D19. */
         'relative h-full min-h-[200px] w-full',
         isFullscreen && styles.fullscreenFrame,
         !isFullscreen &&

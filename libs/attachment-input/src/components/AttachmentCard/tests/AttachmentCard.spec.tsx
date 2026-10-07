@@ -178,7 +178,7 @@ describe('AttachmentCard — upload in progress', () => {
 
   it('marks the tile busy while uploading and not busy once settled', () => {
     const { rerender } = render(
-      <AttachmentCard attachment={uploadingAttachment} />,
+      <AttachmentCard attachment={uploadingAttachment} onClick={vi.fn()} />,
     );
 
     expect(
@@ -190,6 +190,7 @@ describe('AttachmentCard — upload in progress', () => {
     rerender(
       <AttachmentCard
         attachment={{ ...uploadingAttachment, status: RequestStatus.Idle }}
+        onClick={vi.fn()}
       />,
     );
 

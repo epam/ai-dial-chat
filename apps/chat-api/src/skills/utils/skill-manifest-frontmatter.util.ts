@@ -24,7 +24,7 @@ export class InvalidSkillManifestError extends Error {}
 /**
  * Strict backend counterpart to the frontend's `parseSkillManifest`: requires
  * well-formed YAML frontmatter with non-empty string `name`/`description`
- * (design.md D6, `add-skill-archive-import`). Backend code cannot import the
+ * (`openspec/changes/archive/2026-08-20-add-skill-archive-import/design.md` D6, `add-skill-archive-import`). Backend code cannot import the
  * frontend utility (apps may not import from each other), and the frontend
  * version is deliberately lossy for rendering — this one is deliberately
  * strict for validating untrusted archive content before a Skill is created.

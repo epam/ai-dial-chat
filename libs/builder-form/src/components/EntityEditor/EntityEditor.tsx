@@ -6,7 +6,7 @@ import type { EntityEditorProps } from '../../models/entity-editor-props';
 import { EditorLayout } from '../EditorLayout/EditorLayout';
 import { EditorSection } from '../EditorSection/EditorSection';
 
-const SECTION_CLASS_NAME = 'border-0 p-4 desktop:p-6';
+const SECTION_CLASS_NAME = 'border-0 p-4 desktop:p-8';
 /* On desktop the Setup section fills the column, so full-height content (an embedded editor) can stretch. */
 const SETUP_SECTION_CLASS_NAME = 'desktop:flex-1';
 const ALERT_CLASS_NAME = 'px-4 pt-4 desktop:px-6 desktop:pt-6';
@@ -96,7 +96,11 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
           <>
             {alertRegion}
             <EditorSection
-              title={setupTitle ?? labels?.setupTitle ?? 'Setup'}
+              title={
+                setupTitle === null
+                  ? undefined
+                  : (setupTitle ?? labels?.setupTitle ?? 'Setup')
+              }
               styles={styles?.section}
               className={mergeClasses(
                 SECTION_CLASS_NAME,

@@ -28,14 +28,14 @@
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@modelcontextprotocol/ext-apps": "1.7.5",
     "pdfjs-dist": "^5.4.149",
     "@epam/ai-dial-sidebar": "*"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.15.0-dev.36",
+    "@epam/ai-dial-ui-kit": "^0.15.0-dev.39",
     "react": "^19.2.8"
   },
   "nx": {

@@ -1,7 +1,6 @@
 import { AttachmentGroup } from '@epam/ai-dial-attachment-input';
 import {
   buildCssVars,
-  DisplayAttachment,
   mergeClasses,
   MessageRole,
   useCollapsedText,
@@ -42,6 +41,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     showMoreAriaLabel,
     showLessAriaLabel,
     attachmentClickLabel,
+    attachmentDownloadLabel,
     attachmentRetryLabel,
     attachmentOpenInNewTabLabel,
     userMessageAriaLabel = 'User message',
@@ -96,15 +96,19 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
         <AttachmentGroup
           attachments={attachments ?? []}
-          onAttachmentClick={(id) =>
-            onAttachmentClick?.(
-              attachments?.find((a) => a.id === id) as DisplayAttachment,
-            )
+          onAttachmentClick={
+            onAttachmentClick
+              ? (id) => {
+                  const attachment = attachments?.find((a) => a.id === id);
+                  if (attachment) onAttachmentClick(attachment);
+                }
+              : undefined
           }
           onDownloadAll={onDownloadAll}
           onRetry={onAttachmentRetry}
           labels={{
             clickLabel: attachmentClickLabel,
+            downloadLabel: attachmentDownloadLabel,
             retryLabel: attachmentRetryLabel,
             openInNewTabLabel: attachmentOpenInNewTabLabel,
           }}
@@ -126,7 +130,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                 id={collapsibleTextId}
                 ref={contentRef}
                 className={mergeClasses(
-                  // Bleed room for chip edges — see design.md Decision 3a.
+                  // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
                   'relative -me-1 -ms-1 w-[calc(100%+8px)] overflow-hidden pe-1 ps-1',
                   isOverflowing && styles.collapsibleText,
                   isOverflowing && !isCollapsed && styles.expandedText,

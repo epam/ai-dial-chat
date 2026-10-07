@@ -40,7 +40,7 @@ export const getUserDisplayName = (claims: Record<string, unknown>): string => {
  *
  * Publish requests may carry an optional `author` so a toolset maintained by a
  * team can be attributed to the team rather than to whoever clicked Publish
- * (GH #8727). A missing, blank, or whitespace-only value is not a choice, so it
+ * ([#8727](https://github.com/epam/ai-dial-chat/issues/8727)). A missing, blank, or whitespace-only value is not a choice, so it
  * degrades to exactly the behaviour every caller had before the field existed.
  *
  * This is display text only — DIAL Core still derives the publication's real
@@ -68,7 +68,7 @@ interface PublicationAuthors {
  * recorded, otherwise `fallback`.
  *
  * The order is what makes the round trip work. `displayAuthor` is the whole
- * point of the field a publisher can edit (GH #8727) — reading `author` first
+ * point of the field a publisher can edit ([#8727](https://github.com/epam/ai-dial-chat/issues/8727)) — reading `author` first
  * means every value this API hands back names whoever clicked Publish, since
  * Core always records that, and the chosen author is never observable
  * anywhere. DIAL Chat 1.0 read the pair the same way round

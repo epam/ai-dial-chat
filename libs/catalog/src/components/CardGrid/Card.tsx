@@ -53,13 +53,14 @@ export const Card: FC<CardProps> = ({
   styles: cardStyles,
   credentialsBadgeLoggedOutLabel,
   isReadonly = false,
+  markdownLabels,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
   /*
    * Resyncs local optimistic state when the caller's `favoriteIds` reverts
    * after a failed toggle request — without this, the star stays stuck on
-   * whatever the user last clicked (issue #7924).
+   * whatever the user last clicked ([#7924](https://github.com/epam/ai-dial-chat/issues/7924)).
    */
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -204,6 +205,7 @@ export const Card: FC<CardProps> = ({
               } satisfies MarkdownRendererClassNames
             }
             components={DESCRIPTION_MARKDOWN_COMPONENTS}
+            {...markdownLabels}
           />
         )}
       </div>

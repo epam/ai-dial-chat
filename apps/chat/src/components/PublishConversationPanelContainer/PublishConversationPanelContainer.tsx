@@ -58,7 +58,7 @@ interface Props {
  * `StandalonePublishPanel`, `usePublishFolders`) to the conversation publish
  * backend endpoints for a single conversation. Unlike catalog publish, there
  * is no version — republishing to a folder that already has this
- * conversation is blocked (see design.md D2) rather than offered as an
+ * conversation is blocked (see `openspec/changes/archive/2026-07-15-add-conversation-publish/design.md` D2) rather than offered as an
  * update.
  */
 const PublishConversationPanelContainer: FC<Props> = ({

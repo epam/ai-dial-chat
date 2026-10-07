@@ -3,12 +3,8 @@ import { mkdir, writeFile } from 'fs/promises';
 import { dirname, join } from 'path';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
-import {
-  createOpenApiConfig,
-  openApiDocumentOptions,
-} from './openapi/openapi.config';
+import { createOpenApiDocument } from './openapi/openapi.config';
 
 const workspaceRoot = join(__dirname, '..', '..', '..');
 const outputPath = join(workspaceRoot, 'libs/chat-api-client/openapi.json');
@@ -45,11 +41,7 @@ const generateOpenApiSpec = async () => {
     }),
   );
 
-  const document = SwaggerModule.createDocument(
-    app,
-    createOpenApiConfig(port),
-    openApiDocumentOptions,
-  );
+  const document = createOpenApiDocument(app, port);
 
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(document, null, 2)}\n`);

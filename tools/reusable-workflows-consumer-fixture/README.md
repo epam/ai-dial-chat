@@ -2,7 +2,9 @@
 
 A single script (`scripts/run.mjs`) that proves `@epam/ai-dial-skills`'s and
 `@epam/ai-dial-prompts`'s published package boundaries actually hold, per
-`openspec/changes/extract-reusable-chat-workflows/design.md`'s Decision 5.
+[`extract-reusable-chat-workflows` design](../../openspec/changes/archive/2026-09-21-extract-reusable-chat-workflows/design.md)'s
+Decision 5. The client application adoption map built on it is
+[`docs/reusable-chat-workflows.md`](../../docs/reusable-chat-workflows.md).
 
 ## Why this exists
 

@@ -49,7 +49,7 @@ export const conversationStreamTransport: ConversationStreamTransport = {
 
 /**
  * Logs the raw error of a failed completion stream. The message bubble shows
- * only localized or upstream-supplied text (issue #8979), so the transport
+ * only localized or upstream-supplied text ([#8979](https://github.com/epam/ai-dial-chat/issues/8979)), so the transport
  * detail (e.g. `Failed to fetch`) is kept for debugging here instead.
  */
 export const logConversationStreamError = (error: Error): void => {

@@ -210,7 +210,7 @@ export const resolveCustomApiDestination = (
 /**
  * Immutable, server-only registry of allowlisted Core GET operations, parsed
  * once from CUSTOM_CORE_API_CONFIG at startup. See
- * openspec/changes/add-configured-core-api-operations/design.md §2.
+ * openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md §2.
  */
 @Injectable()
 export class CustomApiRegistryService {

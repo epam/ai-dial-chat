@@ -7,7 +7,7 @@ import { ToolsetsMutationService } from './mutation/toolsets-mutation.service';
  * Thin orchestrator for ToolsetsController and other domains that inject
  * ToolsetsService directly (external-services, client-channel, share). Every
  * method here delegates to exactly one of the three focused services below —
- * see openspec/changes/split-deployments-toolsets-services/design.md for the
+ * see openspec/changes/archive/2026-08-07-split-deployments-toolsets-services/design.md for the
  * ownership map and why the split follows this boundary.
  */
 @Injectable()
