@@ -76,7 +76,8 @@ Slicing strategy: **contract-first, then switch**. Slice 1 adds the workspace li
   - run `npm install` so that `package-lock.json` links the workspace lib and prunes `@epam/ai-dial-shared`;
   - run `npm run docs:install-matrix`.
   - Verification: `npm ls @epam/ai-dial-shared` is empty; `npm ls @epam/ai-dial-visualizer-connector` resolves to `libs/visualizer-connector`.
-- [ ] 2.4 Verification: `npm run verify:changed`, plus `npm run build:quiet`, because the bundling of `attachment-canvas` and `chat` is affected.
+- [x] 2.4 Verification: `npm run verify:changed`, plus `npm run build:quiet`, because the bundling of `attachment-canvas` and `chat` is affected.
+  - Result: `typecheck:affected`, `test:changed` and `build:quiet` pass. `lint:affected` fails only on the `@epam/ai-dial-celebrations` errors that already exist on `development` (see 4.3).
 
 ## 3. Slice 3: docs and specs
 
@@ -96,8 +97,10 @@ Slicing strategy: **contract-first, then switch**. Slice 1 adds the workspace li
 
 ## 4. Close
 
-- [ ] 4.1 `npm run verify:full`
-- [ ] 4.2 Follow-up (out of scope; record it, do not implement it): port `@epam/ai-dial-chat-visualizer-connector` (iframe side) into `libs/chat-visualizer-connector`. Use strict origin equality instead of `startsWith`, and decide the first npm release version for the workspace package, which must be greater than `0.48.0`.
-- [ ] 4.3 Follow-up (out of scope; these failures already exist on `development` and are not caused by this change):
-  - `libs/attachment-canvas/src/components/AttachmentCanvasBody/tests/AttachmentCanvasBody.spec.tsx` › "renders plain code content when no language is set" fails because its `@epam/ai-dial-chat-shared` mock lacks `isSyntaxHighlightingAllowed`;
+- [x] 4.1 `npm run verify:full`
+  - Result: `typecheck:full` and `test:full` pass. `lint:check` fails only on `@epam/ai-dial-celebrations`, whose errors already exist on `development` (see 4.3).
+- [x] 4.2 Follow-up (out of scope; record it, do not implement it): port `@epam/ai-dial-chat-visualizer-connector` (iframe side) into `libs/chat-visualizer-connector`. Use strict origin equality instead of `startsWith`, and decide the first npm release version for the workspace package, which must be greater than `0.48.0`.
+- [x] 4.3 Follow-up (out of scope; these failures already exist on `development` and are not caused by this change):
+  - `libs/attachment-canvas/src/components/AttachmentCanvasBody/tests/AttachmentCanvasBody.spec.tsx` › "renders plain code content when no language is set" used to fail because its `@epam/ai-dial-chat-shared` mock lacked `isSyntaxHighlightingAllowed`; it passes as of 2026-10-07, so nothing remains to follow up;
+  - `npm exec nx lint @epam/ai-dial-celebrations` reports two `prettier/prettier` Tailwind class-order errors (focus-visible outline classes) in `libs/celebrations/src/new-year/components/NewYear/NewYearDecor.tsx`;
   - `npm run validate:docs` reports `@modelcontextprotocol/sdk` declared at `^1.32.1` (`attachment-canvas`, `mcp-apps`) and at `^1.29.0` (`chat-hooks`).
