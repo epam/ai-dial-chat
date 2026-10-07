@@ -11,6 +11,8 @@ export interface UseScheduledTasksOptions {
   debounceMs?: number;
   initialSearch?: string;
   initialSort?: ListScheduledTasksSortEnum;
+  /** Restricts the list to tasks of one model/application; changing it reloads from the first page. */
+  model?: string;
 }
 
 /** Shared scheduler-list lifecycle with generation-scoped stale-response guards. */
@@ -22,6 +24,7 @@ export const useScheduledTasks = (
     debounceMs = 300,
     initialSearch = '',
     initialSort = 'first_to_run' as ListScheduledTasksSortEnum,
+    model,
   }: UseScheduledTasksOptions = {},
 ) => {
   const [items, setItems] = useState<ScheduledTaskDto[]>([]);
@@ -76,6 +79,7 @@ export const useScheduledTasks = (
           offset: 0,
           search: debouncedSearch,
           sort: sortKey,
+          model,
           signal: controller.signal,
         });
         if (generation.current !== current) return;
@@ -95,7 +99,7 @@ export const useScheduledTasks = (
     };
     void run();
     return cleanup;
-  }, [client, debouncedSearch, enabled, pageSize, reload, sortKey]);
+  }, [client, debouncedSearch, enabled, model, pageSize, reload, sortKey]);
 
   const loadMore = useCallback(() => {
     if (!enabled || !hasMore || isLoading || loadingMore.current) return;
@@ -114,6 +118,7 @@ export const useScheduledTasks = (
           signal: controller.signal,
           search: debouncedSearch,
           sort: sortKey,
+          model,
         });
         if (generation.current !== current) return;
         setItems((previous) => {
@@ -144,7 +149,16 @@ export const useScheduledTasks = (
         }
       }
     })();
-  }, [client, debouncedSearch, enabled, hasMore, isLoading, pageSize, sortKey]);
+  }, [
+    client,
+    debouncedSearch,
+    enabled,
+    hasMore,
+    isLoading,
+    model,
+    pageSize,
+    sortKey,
+  ]);
 
   const refetch = useCallback(() => setReload((value) => value + 1), []);
   return {
