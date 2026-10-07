@@ -46,7 +46,7 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.49`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.50`
 - `@epam/ai-dial-react-file-manager` `^0.3.0-dev.25`
 - `@epam/ai-dial-chat-shared` `*`
 
