@@ -14,6 +14,7 @@ export { CatalogLimitStatus } from './models/item-details-data';
 export { DetailsConfirmationKind } from './types/details-confirmation';
 export { DeploymentSize } from './types/deployment-icon-size';
 export { CatalogViewMode } from './types/view-mode';
+export { CatalogSelectionMode } from './types/selection-mode';
 export { LimitRowLayout } from './types/limit-row-layout';
 export {
   CatalogContentNodeType,

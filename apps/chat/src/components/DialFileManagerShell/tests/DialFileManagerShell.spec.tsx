@@ -33,6 +33,8 @@ interface CapturedTreeOptions extends CapturedActionLabels {
 
 const capturedDialFileManagerProps: {
   current: {
+    emptyStateTitle?: string;
+    searchEmptyStateTitle?: string;
     onCreateFolder?: unknown;
     onFolderPopupPathChange?: unknown;
     autoSelectUploadedItems?: boolean;

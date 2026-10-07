@@ -1,5 +1,6 @@
 import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  findDeploymentByIdOrReference,
   getApiErrorDetails,
   getConversationPath,
   getFormSchemaToolSyncKey,
@@ -100,6 +101,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
+    items: deployments,
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
     selectedDeploymentConfiguration,
@@ -222,8 +224,21 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [conversationId],
   );
 
+  /* A copy would hand the operator-hidden model a fresh conversation, so a chat
+     whose model was hidden via HIDDEN_ENTITY_TAGS can't be duplicated
+     ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
+  const conversationModelId =
+    conversation?.assistantModelId || conversation?.model.id;
+  const isConversationModelHidden = useMemo(
+    () =>
+      !!conversationModelId &&
+      !!findDeploymentByIdOrReference(deployments, conversationModelId)
+        ?.isHidden,
+    [deployments, conversationModelId],
+  );
+
   const handleDuplicateConversation = useCallback(async () => {
-    if (!conversationId) return;
+    if (!conversationId || isConversationModelHidden) return;
     setDuplicateError(null);
     try {
       const newPath = await duplicateConversation(conversationId);
@@ -234,6 +249,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     }
   }, [
     conversationId,
+    isConversationModelHidden,
     isReadOnly,
     onDuplicateReadonly,
     duplicateConversation,
@@ -793,6 +809,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
+          isDuplicateUnavailable={isConversationModelHidden}
           duplicateError={duplicateError ?? undefined}
           isAudioMessageSupported={isAudioMessageSupported}
           isVoiceRecordingSupported={isVoiceRecordingSupported}

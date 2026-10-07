@@ -1123,8 +1123,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           isInputDisabled && styles.wrapperDisabled,
           isInputDisabled && 'cursor-not-allowed',
           'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
-          'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
-          attachments.length > 6 ? 'py-4 ps-4' : 'p-4',
+          'p-4 focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
           className,
           CONVERSATION_INPUT_CLASS.wrapper,
         )}
@@ -1148,7 +1147,18 @@ export const Input = forwardRef<InputHandle, InputProps>(
               expandLabel,
               clickLabel,
             }}
-            styles={attachmentTray}
+            styles={{
+              ...attachmentTray,
+              /*
+               * A full tray bleeds into the wrapper's inline-end padding so the
+               * cards scroll to the edge; the wrapper itself keeps `p-4`, so
+               * the action row and its controls never shift.
+               */
+              className: mergeClasses(
+                attachments.length > 6 && '-me-4 w-[calc(100%+1rem)]',
+                attachmentTray?.className,
+              ),
+            }}
             onAttachmentClick={
               onAttachmentClick != null
                 ? (id) => {

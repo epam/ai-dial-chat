@@ -4,6 +4,7 @@ import { Grid } from '@epam/ai-dial-ui-kit/grid';
 import type { GridApi, GridOptions } from 'ag-grid-community';
 import {
   type CSSProperties,
+  type KeyboardEvent,
   FC,
   useCallback,
   useEffect,
@@ -14,14 +15,26 @@ import { CATALOG_CLASS } from '../../constants/public-class-names';
 import type { CatalogItem } from '../../models/catalog-item';
 import { GridContext } from '../../models/grid-context';
 import { ListViewProps } from '../../models/list-props';
+import { CatalogSelectionMode } from '../../types/selection-mode';
+import {
+  toggleAllSelectedIds,
+  toggleSelectedId,
+} from '../../utils/list-selection';
 import { useRowWindow } from '../../utils/scroll-window';
-import { CATALOG_COLUMNS } from './columns';
+import { CATALOG_COLUMNS, SELECTION_COLUMN_ID } from './columns';
 import styles from './ListView.module.scss';
+import {
+  ListSelectionContext,
+  type ListSelectionContextValue,
+} from './selection-context';
 
 /** Height of every row, in pixels. Fixed, so the window's spacers are exact. */
 const ROW_HEIGHT = 60;
 const EMPTY_TYPOGRAPHY = {};
+const EMPTY_SELECTION: ReadonlySet<string> = new Set();
+const SELECT_ALL_ARIA_LABEL = 'Select all';
 const getRowId = (item: CatalogItem) => item.id;
+const getDefaultRowAriaLabel = (item: CatalogItem) => `Select ${item.name}`;
 
 /** ag-grid table view of catalog items, windowed to the rows in view. */
 export const ListView: FC<ListViewProps> = (props) => {
@@ -56,7 +69,15 @@ const WindowedListView: FC<ListViewProps> = ({
   credentialsBadgeLoggedOutLabel,
   isReadonly = false,
   columnVisibility,
+  selectionMode = CatalogSelectionMode.Single,
+  selectedItemIds = EMPTY_SELECTION,
+  onSelectionChange,
+  selectRowAriaLabel = getDefaultRowAriaLabel,
+  selectAllAriaLabel = SELECT_ALL_ARIA_LABEL,
 }) => {
+  const isMultiSelect = selectionMode === CatalogSelectionMode.Multiple;
+  /* The single-row highlight and the checkboxes would mark the same row twice. */
+  const highlightedItemId = isMultiSelect ? undefined : selectedItemId;
   const typography = listStyles?.typography ?? EMPTY_TYPOGRAPHY;
   const colors = listStyles?.colors;
   const cssVars = {
@@ -83,8 +104,75 @@ const WindowedListView: FC<ListViewProps> = ({
     [],
   );
   const columnDefs = useMemo(
-    () => CATALOG_COLUMNS(type, isReadonly, columnVisibility),
-    [type, isReadonly, columnVisibility],
+    () => CATALOG_COLUMNS(type, isReadonly, columnVisibility, isMultiSelect),
+    [type, isReadonly, columnVisibility, isMultiSelect],
+  );
+
+  /*
+   * Select-all works on every listed item, not only on the windowed rows the
+   * grid holds, so the selection state is derived from `items` here.
+   */
+  const listedIds = useMemo(() => items.map(getRowId), [items]);
+  const selectedListedCount = useMemo(
+    () => listedIds.filter((id) => selectedItemIds.has(id)).length,
+    [listedIds, selectedItemIds],
+  );
+  const toggleSelection = useCallback(
+    (id: string) => onSelectionChange?.(toggleSelectedId(selectedItemIds, id)),
+    [onSelectionChange, selectedItemIds],
+  );
+  const toggleAllSelection = useCallback(
+    () => onSelectionChange?.(toggleAllSelectedIds(selectedItemIds, listedIds)),
+    [onSelectionChange, selectedItemIds, listedIds],
+  );
+  const selectionContext = useMemo<ListSelectionContextValue | null>(
+    () =>
+      isMultiSelect
+        ? {
+            selectedIds: selectedItemIds,
+            isAllSelected:
+              listedIds.length > 0 && selectedListedCount === listedIds.length,
+            isSomeSelected:
+              selectedListedCount > 0 && selectedListedCount < listedIds.length,
+            hasItems: listedIds.length > 0,
+            toggle: toggleSelection,
+            toggleAll: toggleAllSelection,
+            getRowAriaLabel: selectRowAriaLabel,
+            selectAllAriaLabel,
+          }
+        : null,
+    [
+      isMultiSelect,
+      selectedItemIds,
+      listedIds.length,
+      selectedListedCount,
+      toggleSelection,
+      toggleAllSelection,
+      selectRowAriaLabel,
+      selectAllAriaLabel,
+    ],
+  );
+  /* Grid callbacks read the latest toggle without rebuilding the grid options. */
+  const toggleSelectionRef = useRef(toggleSelection);
+  toggleSelectionRef.current = toggleSelection;
+
+  /*
+   * Space on a row cell toggles that row. Handled on the grid's wrapper from
+   * the `row-id` AG Grid stamps on every row (from `getRowId`), rather than
+   * through `onCellKeyDown`, which only fires for the cell AG Grid's own focus
+   * service holds.
+   */
+  const handleSelectionKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== ' ' || !(event.target instanceof Element)) return;
+      // A focused checkbox already toggles on Space by itself.
+      if (event.target instanceof HTMLInputElement) return;
+      const rowId = event.target.closest('[row-id]')?.getAttribute('row-id');
+      if (rowId == null) return;
+      event.preventDefault();
+      toggleSelection(rowId);
+    },
+    [toggleSelection],
   );
   const gridOptions = useMemo<GridOptions<CatalogItem>>(
     () => ({
@@ -105,30 +193,36 @@ const WindowedListView: FC<ListViewProps> = ({
         typography,
         onToggleFavorite,
         isFavoriteVisible,
-        selectedItemId,
+        selectedItemId: highlightedItemId,
         credentialsBadgeLoggedOutLabel,
         isReadonly,
       } satisfies GridContext,
-      onCellClicked: onItemClick
-        ? (event) => {
-            const col = event.column.getColDef();
-            if (col.field === 'isStarred') return; // ignore clicks on the star column
-            if (event.data) onItemClick(event.data);
-          }
-        : undefined,
-      rowClass: onItemClick ? 'cursor-pointer' : undefined,
+      onCellClicked:
+        onItemClick || isMultiSelect
+          ? (event) => {
+              const col = event.column.getColDef();
+              if (col.field === 'isStarred') return; // ignore clicks on the star column
+              // The checkbox toggles its own row; a cell click would toggle it back.
+              if (col.colId === SELECTION_COLUMN_ID) return;
+              if (!event.data) return;
+              if (isMultiSelect) toggleSelectionRef.current(event.data.id);
+              onItemClick?.(event.data);
+            }
+          : undefined,
+      rowClass: onItemClick || isMultiSelect ? 'cursor-pointer' : undefined,
       getRowClass: (params) =>
-        params.data?.id === selectedItemId ? styles.selectedRow : undefined,
+        params.data?.id === highlightedItemId ? styles.selectedRow : undefined,
     }),
     [
       query,
       typography,
       onToggleFavorite,
       isFavoriteVisible,
-      selectedItemId,
+      highlightedItemId,
       credentialsBadgeLoggedOutLabel,
       isReadonly,
       onItemClick,
+      isMultiSelect,
     ],
   );
 
@@ -163,7 +257,7 @@ const WindowedListView: FC<ListViewProps> = ({
    */
   useEffect(() => {
     gridApiRef.current?.redrawRows();
-  }, [selectedItemId]);
+  }, [highlightedItemId]);
 
   return (
     <div
@@ -174,8 +268,11 @@ const WindowedListView: FC<ListViewProps> = ({
         CATALOG_CLASS.listView,
       )}
     >
+      {/* Delegates Space from the grid's focusable cells; see handleSelectionKeyDown. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
         ref={containerRef}
+        onKeyDown={isMultiSelect ? handleSelectionKeyDown : undefined}
         /* AG Grid can append restored columns out of visual order. Its edge
            classes keep header and cell padding aligned across tab changes. */
         className={mergeClasses(
@@ -186,20 +283,22 @@ const WindowedListView: FC<ListViewProps> = ({
         {startRow > 0 && (
           <div style={{ height: startRow * ROW_HEIGHT }} aria-hidden />
         )}
-        <Grid<CatalogItem>
-          columnDefs={columnDefs}
-          rowData={windowedItems}
-          getRowId={getRowId}
-          withoutHeaderBorders
-          /* Nothing here opens a row context menu, so the wrapper ag-grid
-             cells would otherwise get — a dropdown plus a span around every
-             one of the five renderers in every row — is pure weight. */
-          wrapCustomCellRenderers={false}
-          onGridApiChange={handleGridApiChange}
-          emptyStateTitle={emptyStateTitle}
-          additionalGridOptions={gridOptions}
-          ariaLabel={ariaLabel}
-        />
+        <ListSelectionContext.Provider value={selectionContext}>
+          <Grid<CatalogItem>
+            columnDefs={columnDefs}
+            rowData={windowedItems}
+            getRowId={getRowId}
+            withoutHeaderBorders
+            /* Nothing here opens a row context menu, so the wrapper ag-grid
+               cells would otherwise get — a dropdown plus a span around every
+               one of the five renderers in every row — is pure weight. */
+            wrapCustomCellRenderers={false}
+            onGridApiChange={handleGridApiChange}
+            emptyStateTitle={emptyStateTitle}
+            additionalGridOptions={gridOptions}
+            ariaLabel={ariaLabel}
+          />
+        </ListSelectionContext.Provider>
         {endRow < items.length && (
           <div
             style={{ height: (items.length - endRow) * ROW_HEIGHT }}

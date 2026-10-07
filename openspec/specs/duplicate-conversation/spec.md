@@ -94,11 +94,15 @@ The optimistic lifecycle is:
 - **THEN** the placeholder is removed from the list and the error is re-thrown so callers can handle it
 
 ### Requirement: Duplicate action in conversation row dropdown
-The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with `ConversationPanelI18nKeys.DuplicateError` and the response trace ID.
+The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. That model id is read from the row's resource path via `getModelIdFromConversationId`, and the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with `ConversationPanelI18nKeys.DuplicateError` and the response trace ID.
 
 #### Scenario: Duplicate action appears in menu
 - **WHEN** the user opens the three-dot menu for any conversation row
 - **THEN** a Duplicate menu item is present with the correct icon and translated label
+
+#### Scenario: Duplicate action is omitted for a hidden-model conversation
+- **WHEN** the user opens the three-dot menu for a row whose model deployment has `isHidden: true`
+- **THEN** no Duplicate menu item is present
 
 #### Scenario: Duplicate action triggers duplication and navigation
 - **WHEN** the user clicks Duplicate in the row dropdown
@@ -156,9 +160,15 @@ When a conversation is duplicated the chat settings (temperature, response forma
 ### Requirement: Read-only conversation view shows centered duplicate action button
 When a conversation is read-only (source bucket differs from user bucket), the `ConversationView` SHALL render a centered `NeutralButton` in place of the `ConversationInput` composer, preceded by an `ErrorMessageNotification` when a `duplicateError` is set. The button SHALL display an `IconCopy` icon and the translated text "Duplicate the conversation to be able to edit it".
 
+When the conversation's model (`assistantModelId || model.id`) resolves to a deployment with `isHidden: true`, `Conversation.tsx` SHALL pass `isDuplicateUnavailable` to `ConversationView`, which then renders the `conversationPanel.duplicateUnavailableModel` translation key as text instead of the button. `handleDuplicateConversation` SHALL also refuse to duplicate in that state (Issue #9183).
+
 #### Scenario: Centered button rendered for read-only conversation
 - **WHEN** `isReadOnly` is `true`
 - **THEN** the centered duplicate button is shown and the conversation composer is not
+
+#### Scenario: Hidden-model read-only conversation explains instead of offering the button
+- **WHEN** `isReadOnly` and `isDuplicateUnavailable` are both `true`
+- **THEN** no duplicate button is rendered and the unavailable-model explanation is shown
 
 #### Scenario: Button invokes onDuplicateConversation
 - **WHEN** the user clicks the centered duplicate button
@@ -169,6 +179,7 @@ The duplicate feature SHALL use these i18n keys:
 - `buttons.duplicate` (`ButtonsI18nKeys.Duplicate`): short action label used in the dropdown ("Duplicate")
 - `conversationPanel.duplicateReadOnlyDescription` (`ConversationPanelI18nKeys.DuplicateReadOnlyDescription`): full sentence used in the centered button ("Duplicate the conversation to be able to edit it")
 - `conversationPanel.duplicateError` (`ConversationPanelI18nKeys.DuplicateError`): error notification text ("Failed to duplicate the conversation. Please try again.")
+- `conversationPanel.duplicateUnavailableModel` (`ConversationPanelI18nKeys.DuplicateUnavailableModel`): read-only view text shown when the conversation's model is hidden
 
 All keys SHALL be present in every locale file (today only `apps/chat/src/i18n/locales/en.json`) and referenced through the typed enums in `apps/chat/src/constants/translation-keys.ts`.
 

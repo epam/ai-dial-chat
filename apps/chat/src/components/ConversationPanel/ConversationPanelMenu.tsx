@@ -1,11 +1,12 @@
 import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
+import { ConfirmationDialog } from '@epam/ai-dial-chat-shared';
 import {
-  ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
   ElementSize,
+  ErrorMessageNotification,
   GhostIconButton,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -19,6 +20,7 @@ import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ConversationExportI18nKeys,
   ConversationImportI18nKeys,
@@ -180,28 +182,20 @@ const ConversationPanelMenu: FC<Props> = ({
         items={menuItems}
         label={t(ConversationPanelI18nKeys.PanelActionsLabel)}
       />
-      <ConfirmationPopup
+      <ConfirmationDialog
         open={isDeletePending}
-        header={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}
+        title={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}
+        variant={ConfirmationPopupVariant.Danger}
+        message={t(ConversationPanelI18nKeys.DeleteAllConfirmDescription)}
         confirmLabel={t(ButtonsI18nKeys.DeleteAll)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
-        variant={ConfirmationPopupVariant.Danger}
         isLoading={isDeleting}
-        disableConfirmButton={isDeleting}
-        description={
-          <>
-            <span>
-              {t(ConversationPanelI18nKeys.DeleteAllConfirmDescription)}
-            </span>
-            {deleteError && (
-              <span className="mt-1 block text-error">{deleteError}</span>
-            )}
-          </>
-        }
+        loadingStatusLabel={t(BasicI18nKeys.DeletingStatus)}
         onConfirm={handleConfirm}
-        onCancel={handleCancel}
         onClose={handleCancel}
-      />
+      >
+        {deleteError && <ErrorMessageNotification message={deleteError} />}
+      </ConfirmationDialog>
     </>
   );
 };
