@@ -141,7 +141,7 @@ describe('toUpstreamSchedulePayload', () => {
         url: 'http://dial-core/openai',
         api_version: DIAL_API_VERSION,
         create_conversation: true,
-        stream: false,
+        stream: true,
         extra_headers: {},
         retry: null,
         timeout: null,
@@ -171,7 +171,7 @@ describe('toUpstreamSchedulePayload', () => {
     expect(upstream.trigger).toEqual({
       cron: { fields: { minute: '0', hour: '*' } },
     });
-    expect(upstream.properties.stream).toBe(false);
+    expect(upstream.properties.stream).toBe(true);
     expect(upstream.properties.create_conversation).toBe(true);
     expect(upstream.properties.extra_headers).toEqual({});
     expect(upstream.properties.retry).toBeNull();
@@ -404,6 +404,31 @@ describe('fromUpstreamSchedule', () => {
       isActive: false,
       isDeleted: false,
     });
+  });
+
+  it('maps top-level model from a list item', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_list',
+      display_name: 'Listed',
+      trigger: {},
+      trigger_type: 'cron',
+      model: 'gpt-4.1-mini-2025-04-14',
+    };
+
+    expect(fromUpstreamSchedule(upstream).model).toBe(
+      'gpt-4.1-mini-2025-04-14',
+    );
+  });
+
+  it('falls back to properties.payload.model when top-level model is absent', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_get',
+      display_name: 'Fetched',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      properties: { payload: { model: 'gpt-4o' } },
+    };
+
+    expect(fromUpstreamSchedule(upstream).model).toBe('gpt-4o');
   });
 
   it('maps next_run_time and created_at when present', () => {

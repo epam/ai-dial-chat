@@ -38,7 +38,7 @@ interface UpstreamSchedulePayload {
     url: string;
     api_version: string;
     create_conversation: true;
-    stream: false;
+    stream: true;
     extra_headers: Record<string, never>;
     retry: null;
     timeout: null;
@@ -70,6 +70,12 @@ export interface UpstreamScheduleResponse {
   service_id?: string;
   created_by?: string;
   description?: string;
+  /*
+   * List items expose the model as a top-level field (no nested
+   * `properties`); GET/create/update responses carry it under
+   * `properties.payload.model` — see `fromUpstreamSchedule`.
+   */
+  model?: string;
   is_deleted?: boolean;
   properties?: {
     payload?: {
@@ -154,7 +160,7 @@ export const toUpstreamSchedulePayload = (
     url: buildScheduledTaskChatCompletionUrl(dialCoreUrl),
     api_version: dialApiVersion,
     create_conversation: true,
-    stream: false,
+    stream: true,
     extra_headers: {},
     retry: null,
     timeout: null,
@@ -240,7 +246,7 @@ export const fromUpstreamSchedule = (
   serviceId: upstream.service_id,
   createdBy: upstream.created_by,
   description: upstream.description,
-  model: upstream.properties?.payload?.model,
+  model: upstream.model ?? upstream.properties?.payload?.model,
   prompt: upstream.properties?.payload?.messages?.[0]?.content,
   skillUrls:
     upstream.properties?.payload?.messages?.[0]?.custom_content?.skills?.map(
