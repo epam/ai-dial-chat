@@ -79,6 +79,18 @@ export const getSchemaTopLevelDefaults = (
     ),
   );
 
+/**
+ * Returns whether `schema` has a top-level property the schema form shows: one
+ * not marked `isHidden`, directly or through the local `$defs` entry its `$ref`
+ * points at.
+ */
+export const hasVisibleSchemaProperties = (schema: JsonSchema): boolean =>
+  Object.values(schema.properties ?? {}).some((property) => {
+    if (property.isHidden) return false;
+    const refName = property.$ref?.replace(/^#\/\$defs\//, '');
+    return !(refName && schema.$defs?.[refName]?.isHidden);
+  });
+
 /** Returns whether a registered kind renders its own page body. */
 export const isApplicationEditorPageDefinition = (
   definition: ApplicationEditorDefinition,

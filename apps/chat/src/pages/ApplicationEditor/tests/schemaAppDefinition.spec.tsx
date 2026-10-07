@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -90,11 +90,11 @@ const renderPage = (search: string) =>
 /* The layout renders its actions in the header and again in the mobile bar; take the header copy. */
 const getAction = (name: string) =>
   screen.getAllByRole('button', { name })[0] as HTMLButtonElement;
-/* The kit's schema renderer names the field's group, not its input, so the input is found inside the group. */
+/* The kit's schema renderer labels each field's input, so the input is found by that name. */
 const findLabelsInput = async () =>
-  within(await screen.findByRole('group', { name: /^Labels/ })).getByRole(
-    'textbox',
-  ) as HTMLInputElement;
+  (await screen.findByRole('textbox', {
+    name: /^Labels/,
+  })) as HTMLInputElement;
 const getNameInput = () =>
   screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false });
 
@@ -276,6 +276,20 @@ describe('ApplicationEditorPage — schema app', () => {
         ),
       );
     });
+  });
+
+  it('shows an empty state for a schema without settings', async () => {
+    vi.mocked(getApplicationSchema).mockResolvedValue({
+      ...FULL_SCHEMA,
+      properties: {},
+      required: undefined,
+    });
+    renderPage(createSearch);
+
+    expect(
+      await screen.findByText(AppsEditorI18nKeys.SchemaFormEmpty),
+    ).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: /^Labels/ })).toBeNull();
   });
 
   it('shows the load error when the schema cannot be fetched', async () => {

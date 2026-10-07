@@ -1,6 +1,7 @@
 import {
   ErrorMessageNotification,
   type JsonSchema,
+  NoDataContent,
   SchemaRenderer,
   SchemaRendererVariant,
   Spinner,
@@ -16,7 +17,10 @@ import type {
 } from '../../../models/application-editor';
 import { getApplicationSchema } from '../../../server-api/application-schemas';
 import { AppsEditorQuery } from '../../../types/apps-editor';
-import { getSchemaTopLevelDefaults } from '../../../utils/application-editor';
+import {
+  getSchemaTopLevelDefaults,
+  hasVisibleSchemaProperties,
+} from '../../../utils/application-editor';
 
 type Props = ApplicationSetupProps<SchemaApplicationSetup>;
 
@@ -115,6 +119,10 @@ const SchemaAppSetup: FC<Props> = ({
         <Spinner ariaLabel={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)} />
       </div>
     );
+  }
+
+  if (!hasVisibleSchemaProperties(schema)) {
+    return <NoDataContent title={t(AppsEditorI18nKeys.SchemaFormEmpty)} />;
   }
 
   return (

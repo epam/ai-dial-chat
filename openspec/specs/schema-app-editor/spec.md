@@ -49,6 +49,7 @@ Its states SHALL be:
 |---|---|
 | schema loading, or edit mode before the saved properties arrive | a centred `Spinner` labelled `appsEditor.settingsStep.loadingLabel` |
 | schema load failed | `ErrorMessageNotification` with `appsEditor.schemaForm.loadFailed` |
+| ready, but no top-level property is shown (none declared, or every one `isHidden` directly or through its `$defs` reference — `hasVisibleSchemaProperties`) | `NoDataContent` with `appsEditor.schemaForm.empty` instead of the renderer |
 | ready, create mode | the renderer without `defaultValue`, so it fills in the schema's defaults |
 | ready, edit mode | the renderer, with `defaultValue` set to the schema's top-level `default`s overlaid by the saved `properties` (`getSchemaTopLevelDefaults`), so a property added to the schema after the app was saved gets its default |
 | required property missing on submit | a `role="alert"` line with `appsEditor.schemaForm.requiredMissing` above the renderer, and every missing required field marked invalid |

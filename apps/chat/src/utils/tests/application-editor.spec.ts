@@ -4,6 +4,7 @@ import { NotifiableEntity } from '../../types/entity-notification';
 import {
   getMissingRequiredProperties,
   getSchemaTopLevelDefaults,
+  hasVisibleSchemaProperties,
   resolveSchemaEditorKind,
   resolveSchemaNotificationTarget,
 } from '../application-editor';
@@ -122,5 +123,32 @@ describe('resolveSchemaNotificationTarget', () => {
         contextFor('https://example.com/schemas/unknown'),
       ),
     ).toEqual({ entity: NotifiableEntity.Agent });
+  });
+});
+
+describe('hasVisibleSchemaProperties', () => {
+  it('is false for a schema without properties', () => {
+    expect(hasVisibleSchemaProperties({ properties: {} })).toBe(false);
+    expect(hasVisibleSchemaProperties({ type: 'object' })).toBe(false);
+  });
+
+  it('is true when a top-level property is shown', () => {
+    expect(
+      hasVisibleSchemaProperties({
+        properties: { prompt: { type: 'string' } },
+      }),
+    ).toBe(true);
+  });
+
+  it('ignores properties hidden directly or through their $ref', () => {
+    expect(
+      hasVisibleSchemaProperties({
+        properties: {
+          token: { type: 'string', isHidden: true },
+          internal: { $ref: '#/$defs/Internal' },
+        },
+        $defs: { Internal: { type: 'object', isHidden: true } },
+      }),
+    ).toBe(false);
   });
 });
