@@ -1,14 +1,11 @@
-import {
-  mergeClasses,
-  type Annotation,
-  type HtmlTagSelector,
-} from '@epam/ai-dial-chat-shared';
+import { mergeClasses, type Annotation } from '@epam/ai-dial-chat-shared';
 import { useMemo, type ReactNode } from 'react';
 import type { Components } from 'react-markdown';
 import type { CitationCardLabels } from '../../components/CitationCard/CitationCard';
 import { CitationDropdown } from '../../components/CitationDropdown/CitationDropdown';
 import type { CitationMarkerLabels } from '../../components/CitationMarker/CitationMarker';
 import {
+  buildCitGroupsByTagId,
   escapeUnsupportedCitTags,
   injectCitationSentinels,
   replaceSentinelsInChildren,
@@ -35,13 +32,6 @@ export interface UseCitationMarkdownComponentsCallbacks {
   };
 }
 
-/**
- * Returns the `data-id` this `html_tag` group's `<cit>` element carries, or
- * `undefined` for a non-`html_tag` group. Narrowed via an explicit cast
- * rather than control-flow narrowing, because `AnnotationSelector`'s open
- * catch-all variant (`{ type: string; [key: string]: unknown }`) also
- * satisfies `type === 'html_tag'` and would otherwise widen `.id` to `unknown`.
- */
 /*
  * Shared empty map for messages without citations: a fresh `{}` per render would
  * break the memo on MarkdownRenderer and re-parse every assistant message.
@@ -54,13 +44,6 @@ const NO_CITATION_COMPONENTS: Components = {};
  * `markdownComponents` memo on every re-render even when nothing changed.
  */
 const EMPTY_FALLBACK_GROUPS: AnnotationGroup[] = [];
-
-const citTagId = (group: AnnotationGroup): string | undefined => {
-  const selector = group.primaryAnnotation.target?.selector;
-  return selector?.type === 'html_tag'
-    ? (selector as HtmlTagSelector).id
-    : undefined;
-};
 
 const renderCitTagAsText = (
   dataId: string | undefined,
@@ -132,19 +115,7 @@ export const useCitationMarkdownComponents = (
   const hasCitElement = processedContent.includes('<cit');
 
   const markdownComponents = useMemo((): Components => {
-    /*
-     * Pool groups are inserted first so a message's own groups (inserted
-     * after) overwrite them on a colliding id — message groups always win.
-     */
-    const citGroupsByTagId = new Map<string, AnnotationGroup>();
-    for (const group of fallbackGroups) {
-      const tagId = citTagId(group);
-      if (tagId != null) citGroupsByTagId.set(tagId, group);
-    }
-    for (const group of groups) {
-      const tagId = citTagId(group);
-      if (tagId != null) citGroupsByTagId.set(tagId, group);
-    }
+    const citGroupsByTagId = buildCitGroupsByTagId(groups, fallbackGroups);
 
     const renderGroup = (group: AnnotationGroup) => {
       const { cardLabels, markerLabels } = buildLabels(group);

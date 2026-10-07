@@ -1,4 +1,7 @@
-import type { TextCharacterRangeSelector } from '@epam/ai-dial-chat-shared';
+import type {
+  HtmlTagSelector,
+  TextCharacterRangeSelector,
+} from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type { AnnotationGroup } from './group-annotations-by-source';
 
@@ -82,6 +85,74 @@ export const escapeUnsupportedCitTags = (content: string): string =>
  */
 export const stripCitTagsWhileStreaming = (content: string): string => {
   return escapeUnsupportedCitTags(content).replace(CIT_ELEMENT_RE, '');
+};
+
+/*
+ * Narrowed via an explicit cast rather than control-flow narrowing, because
+ * `AnnotationSelector`'s open catch-all variant (`{ type: string; [key:
+ * string]: unknown }`) also satisfies `type === 'html_tag'` and would
+ * otherwise widen `.id` to `unknown`.
+ */
+const citTagId = (group: AnnotationGroup): string | undefined => {
+  const selector = group.primaryAnnotation.target?.selector;
+  return selector?.type === 'html_tag'
+    ? (selector as HtmlTagSelector).id
+    : undefined;
+};
+
+/** Returns `html_tag` groups keyed by the `data-id` of the `<cit>` element they resolve; a message's own `groups` win over `fallbackGroups` on a colliding id. */
+export const buildCitGroupsByTagId = (
+  groups: AnnotationGroup[],
+  fallbackGroups: AnnotationGroup[] = [],
+): Map<string, AnnotationGroup> => {
+  const citGroupsByTagId = new Map<string, AnnotationGroup>();
+  // Fallback groups go first so the message's own groups overwrite them.
+  for (const group of [...fallbackGroups, ...groups]) {
+    const tagId = citTagId(group);
+    if (tagId != null) citGroupsByTagId.set(tagId, group);
+  }
+  return citGroupsByTagId;
+};
+
+/** Captures the `data-id` value of a supported paired citation element. */
+const CIT_ELEMENT_WITH_ID_RE =
+  /<cit\s+data-id=(?:"([^"]+)"|'([^']+)')\s*>\s*<\/cit>/g;
+
+/** Backslash-escapes characters Markdown reads as syntax, including the `|` that would split a table cell. */
+const escapeMarkdownText = (text: string): string =>
+  text.replace(/[\\`*_[\]<>|]/g, '\\$&');
+
+/**
+ * Returns `content` with every supported `<cit data-id="…"></cit>` element
+ * that resolves to a group replaced by that group's `sourceName` as plain
+ * Markdown text — the label its citation marker shows on screen. Unresolved
+ * tags are left untouched.
+ */
+export const replaceCitTagsWithSourceNames = (
+  content: string,
+  groups: AnnotationGroup[],
+  fallbackGroups: AnnotationGroup[] = [],
+): string => {
+  if (!content.includes('<cit')) return content;
+
+  const citGroupsByTagId = buildCitGroupsByTagId(groups, fallbackGroups);
+  if (citGroupsByTagId.size === 0) return content;
+
+  /*
+   * Content that leaves the renderer (clipboard, export) never runs the `cit`
+   * component override, so an empty citation element would otherwise turn
+   * into nothing — emptying, e.g., a references-table cell whose only content
+   * is the citation (issue #9245).
+   */
+  return content.replace(
+    CIT_ELEMENT_WITH_ID_RE,
+    (markup, doubleQuotedId?: string, singleQuotedId?: string) => {
+      const group = citGroupsByTagId.get(
+        doubleQuotedId ?? singleQuotedId ?? '',
+      );
+      return group ? escapeMarkdownText(group.sourceName) : markup;
+    },
+  );
 };
 
 /**
