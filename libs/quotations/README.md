@@ -221,6 +221,7 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
+- `replaceCitTagsWithSourceNames(content, groups, fallbackGroups?)` — replaces each supported `<cit data-id="…"></cit>` element that resolves to a group (message `groups` first, then `fallbackGroups`) with the group's Markdown-escaped `sourceName`, leaving unresolved tags untouched. Use it before serializing content outside the renderer (e.g. the message Copy action), where the `cit` override never runs and the element would otherwise copy as nothing
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups
 - `isReferenceOnlyAttachment(dto)` — returns true for RAG/grounding chunks without a direct URL
 - `parsePdfPageReference(url)` — parses a PDF URL with optional `#page=N` fragment

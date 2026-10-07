@@ -64,6 +64,7 @@ import {
   getReferenceAttachmentGroups,
   groupAnnotations,
   isReferenceOnlyAttachment,
+  replaceCitTagsWithSourceNames,
   useAnnotations,
   useCitationCard,
   useCitationMarkdownComponents,
@@ -613,6 +614,18 @@ const ConversationMessageItem: FC<Props> = ({
       isCompactTypography,
       fallbackCitationGroups,
     );
+  /* The Copy actions serialize markdown outside the renderer, so a `<cit>`
+     element has to be swapped for the source name its marker shows — a
+     references-table title cell is otherwise copied empty (issue #9245). */
+  const copyContent = useMemo(
+    () =>
+      replaceCitTagsWithSourceNames(
+        msg.content,
+        citationGroups,
+        fallbackCitationGroups,
+      ),
+    [msg.content, citationGroups, fallbackCitationGroups],
+  );
   const referenceGroups = useMemo(
     () => getReferenceAttachmentGroups(msg.custom_content?.attachments),
     [msg.custom_content?.attachments],
@@ -947,6 +960,7 @@ const ConversationMessageItem: FC<Props> = ({
             },
             tooltips,
             ariaLabels,
+            copyContent,
           ),
           /* Regenerate/copy/like/dislike stay mounted while a response streams,
              so they have to be disabled — otherwise a second generation or a
