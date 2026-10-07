@@ -57,6 +57,7 @@ export type {
   ToolAnnotation,
   ToolDefinition,
   ToolInputParam,
+  ToolsLabels,
   UsageLimitGroup,
   UsageLimitProgressRow,
   UsageLimitRow,
@@ -149,6 +150,18 @@ export type { ContentTabProps } from './components/Details/TabsContent/Content';
 
 export { LimitsTab } from './components/Details/TabsContent/Limits/Limits';
 export type { LimitsTabColors, LimitsTabProps } from './models/limits-props';
+
+// The remaining details tabs, for hosts that render a catalog item's details
+// in their own surface instead of `DetailsPanel`. Public names follow the
+// `ContentTab`/`LimitsTab` convention; the internal components keep theirs.
+export { AboutTab } from './components/Details/TabsContent/About';
+export type { AboutTabProps } from './components/Details/TabsContent/About';
+export { Overview as OverviewTab } from './components/Details/TabsContent/Overview';
+export type { OverviewProps as OverviewTabProps } from './components/Details/TabsContent/Overview';
+export { Pricing as PricingTab } from './components/Details/TabsContent/Pricing';
+export type { PricingProps as PricingTabProps } from './components/Details/TabsContent/Pricing';
+export { Tools as ToolsTab } from './components/Details/TabsContent/Tools/Tools';
+export type { ToolsProps as ToolsTabProps } from './components/Details/TabsContent/Tools/Tools';
 
 export { DetailsPanel } from './components/Details/DetailsPanel';
 

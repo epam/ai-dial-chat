@@ -3082,6 +3082,22 @@ const entityDetails = mapDeploymentDetailsDtoToEntityDetails(detailsDto);
 const tabData = mapEntityDetailsToCatalogDetails(entityDetails);
 ```
 
+The Overview section titles and spec labels default to English (`DEFAULT_ENTITY_DETAILS_LABELS`). A host that shows the Overview in another language passes `labels` (`Partial<EntityDetailsLabels>`), merged over those defaults. Only the strings change, never which rows appear or their order:
+
+```ts
+import {
+  type EntityDetailsLabels,
+  mapEntityDetailsToCatalogDetails,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const labels: Partial<EntityDetailsLabels> = {
+  specificationTitle: 'Spécification',
+  hostedBy: 'Hébergé par',
+};
+
+const translated = mapEntityDetailsToCatalogDetails(entityDetails, labels);
+```
+
 ### mapDeploymentToCatalogItem / mapToolsetToCatalogItem / mapDeploymentToolsetCredentials / resolveDeploymentFolder
 
 Maps a deployment or toolset listing row into a catalog `CatalogItem`. Both take a `folderLabels` (`DeploymentFolderLabels`, the translated Personal/Shared/Public folder labels) and a `resolveIconUrl` callback — the host owns icon-URL construction, not the library.
@@ -3323,6 +3339,7 @@ const { onFetchDetails, onLoadContentFile, onLoadSkillDetailsFile } =
     skillOverviewLabels, // SkillOverviewLabels
     promptOverviewLabels, // PromptOverviewLabels
     deploymentLimitsLabels, // DeploymentLimitsLabels
+    entityDetailsLabels, // optional Partial<EntityDetailsLabels>, memoised
   });
 
 // Fetch full details for a catalog item (returns undefined on failure)

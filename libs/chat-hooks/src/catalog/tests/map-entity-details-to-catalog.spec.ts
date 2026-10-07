@@ -6,6 +6,7 @@ import {
   type ToolsetEntityDetails,
 } from '../entity-details';
 import {
+  DEFAULT_ENTITY_DETAILS_LABELS,
   mapDeploymentDetailsDtoToEntityDetails,
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
@@ -426,5 +427,67 @@ describe('mapToolsetCredentials', () => {
       isPublic: true,
       isManageableByAdmin: true,
     });
+  });
+});
+
+describe('mapEntityDetailsToCatalogDetails — host-supplied labels', () => {
+  const modelDto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+    {
+      id: 'gpt-4o',
+      type: 'model',
+      modelDetails: {
+        owner: 'OpenAI',
+        catalogProperties: { provider: 'OpenAI' },
+      },
+    };
+  const toolsetDto: Parameters<
+    typeof mapDeploymentDetailsDtoToEntityDetails
+  >[0] = {
+    id: 'toolsets/public/search',
+    type: 'toolset',
+    toolsetDetails: {
+      owner: 'Search Inc.',
+      catalogProperties: { provider: 'Search Inc.' },
+    },
+  };
+
+  it('keeps the former English labels by default', () => {
+    expect(DEFAULT_ENTITY_DETAILS_LABELS).toMatchObject({
+      capabilitiesTitle: 'Capabilities',
+      specificationTitle: 'Specification',
+      configurationTitle: 'Configuration',
+      provider: 'Provider',
+      hostedBy: 'Hosted by',
+      knowledgeCutoffDate: 'Knowledge cutoff date',
+      oauthScopes: 'OAuth scopes',
+    });
+    expect(Object.keys(DEFAULT_ENTITY_DETAILS_LABELS)).toHaveLength(24);
+  });
+
+  it.each([
+    ['model', modelDto],
+    ['toolset', toolsetDto],
+  ])('renames only the overridden strings for a %s', (_, dto) => {
+    const details = mapDeploymentDetailsDtoToEntityDetails(dto);
+    const english = mapEntityDetailsToCatalogDetails(details);
+    const french = mapEntityDetailsToCatalogDetails(details, {
+      specificationTitle: 'Spécification',
+      hostedBy: 'Hébergé par',
+    });
+
+    const specification = french.overview?.sections.find(
+      (s) => s.title === 'Spécification',
+    );
+    expect(specification).toBeDefined();
+    expect(specification?.specs.map((spec) => spec.label)).toEqual(
+      english.overview?.sections
+        .find((s) => s.title === 'Specification')
+        ?.specs.map((spec) =>
+          spec.label === 'Hosted by' ? 'Hébergé par' : spec.label,
+        ),
+    );
+    expect(specification?.specs.map((spec) => spec.label)).toContain(
+      'Provider',
+    );
   });
 });

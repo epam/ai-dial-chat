@@ -16,6 +16,7 @@ import { buildDeploymentConnectApi } from './deployment-endpoint-url';
 import type { DeploymentLimitsLabels } from './map-deployment-limits-to-catalog';
 import { mapDeploymentLimitsDtoToCatalogLimits } from './map-deployment-limits-to-catalog';
 import {
+  type EntityDetailsLabels,
   mapDeploymentDetailsDtoToEntityDetails,
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
@@ -65,6 +66,12 @@ export interface UseCatalogItemDetailsOptions {
   promptOverviewLabels: PromptOverviewLabels;
   /** Labels for deployment limits table. */
   deploymentLimitsLabels: DeploymentLimitsLabels;
+  /**
+   * Overview section titles and spec labels for models, agents and toolsets,
+   * merged over the English defaults. Memoise it like the other label objects:
+   * a new object on every render recreates `onFetchDetails`.
+   */
+  entityDetailsLabels?: Partial<EntityDetailsLabels>;
 }
 
 /** Returned callbacks from `useCatalogItemDetails`. All callbacks are stable for stable inputs. */
@@ -116,6 +123,7 @@ export const useCatalogItemDetails = ({
   skillOverviewLabels,
   promptOverviewLabels,
   deploymentLimitsLabels,
+  entityDetailsLabels,
 }: UseCatalogItemDetailsOptions): UseCatalogItemDetailsResult => {
   /*
    * The skill pipeline (manifest, file listing, in-package file loads) lives
@@ -157,7 +165,10 @@ export const useCatalogItemDetails = ({
         ]);
 
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
-        const catalogDetails = mapEntityDetailsToCatalogDetails(entityDetails);
+        const catalogDetails = mapEntityDetailsToCatalogDetails(
+          entityDetails,
+          entityDetailsLabels,
+        );
         const mcpResourceKind = resolveMcpResourceKind(
           item.type,
           item.supportsMcp,
@@ -201,6 +212,7 @@ export const useCatalogItemDetails = ({
       isAdmin,
       deploymentLimitsLabels,
       dialCoreExternalUrl,
+      entityDetailsLabels,
       promptOverviewLabels,
       onFetchSkillDetails,
     ],
