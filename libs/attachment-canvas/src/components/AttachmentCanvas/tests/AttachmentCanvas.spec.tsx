@@ -27,7 +27,10 @@ vi.mock('react-json-view-lite', () => ({
   defaultStyles: {},
 }));
 
-vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+vi.mock('@epam/ai-dial-visualizer-connector', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@epam/ai-dial-visualizer-connector')
+  >()),
   VisualizerConnector: vi.fn().mockImplementation(function () {
     return {
       ready: vi.fn().mockReturnValue(new Promise(() => undefined)),

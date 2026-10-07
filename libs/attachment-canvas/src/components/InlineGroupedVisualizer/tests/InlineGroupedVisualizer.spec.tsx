@@ -13,7 +13,10 @@ const sendMock = vi.fn();
 const destroyMock = vi.fn();
 const subscriptions = new Map<string, (payload: unknown) => void>();
 
-vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+vi.mock('@epam/ai-dial-visualizer-connector', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@epam/ai-dial-visualizer-connector')
+  >()),
   VisualizerConnector: vi.fn().mockImplementation(function (root: HTMLElement) {
     /* The real connector creates the iframe itself; the renderer titles that
      * node, so the fake has to create one too for the name to be assertable. */

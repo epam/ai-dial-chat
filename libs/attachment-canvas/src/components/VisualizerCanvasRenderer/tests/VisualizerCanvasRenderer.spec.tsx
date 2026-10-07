@@ -1,4 +1,4 @@
-import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
+import { VisualizerConnectorRequests } from '@epam/ai-dial-visualizer-connector';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -25,7 +25,10 @@ const subscribeMock = vi.fn(
 let lastConstructorRoot: HTMLElement | undefined;
 let lastConstructorOptions: Record<string, unknown> | undefined;
 
-vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+vi.mock('@epam/ai-dial-visualizer-connector', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@epam/ai-dial-visualizer-connector')
+  >()),
   VisualizerConnector: vi.fn().mockImplementation(function (
     root: HTMLElement,
     options: Record<string, unknown>,
@@ -68,10 +71,10 @@ describe('VisualizerCanvasRenderer', () => {
 
     expect(lastConstructorOptions).toMatchObject({
       domain: content.url,
-      hostDomain: window.location.origin,
       visualizerName: content.visualizerName,
       requestTimeout: content.requestTimeout,
     });
+    expect(lastConstructorOptions).not.toHaveProperty('hostDomain');
     expect(lastConstructorRoot).toBeInstanceOf(HTMLElement);
   });
 
@@ -83,7 +86,7 @@ describe('VisualizerCanvasRenderer', () => {
 
     await waitFor(() => expect(sendMock).toHaveBeenCalledOnce());
     expect(sendMock).toHaveBeenCalledWith(
-      VisualizerConnectorRequests.sendVisualizeData,
+      VisualizerConnectorRequests.SendVisualizeData,
       {
         mimeType: content.mimeType,
         visualizerData: {
@@ -271,7 +274,7 @@ describe('VisualizerCanvasRenderer — grouped content', () => {
 
     await waitFor(() => expect(sendMock).toHaveBeenCalledOnce());
     expect(sendMock).toHaveBeenCalledWith(
-      VisualizerConnectorRequests.sendGroupedVisualizeData,
+      VisualizerConnectorRequests.SendGroupedVisualizeData,
       {
         attachments: groupedContent.attachments,
         layout: groupedContent.layout,
@@ -287,7 +290,7 @@ describe('VisualizerCanvasRenderer — grouped content', () => {
 
     await waitFor(() => expect(sendMock).toHaveBeenCalledOnce());
     expect(sendMock).not.toHaveBeenCalledWith(
-      VisualizerConnectorRequests.sendVisualizeData,
+      VisualizerConnectorRequests.SendVisualizeData,
       expect.anything(),
     );
   });
