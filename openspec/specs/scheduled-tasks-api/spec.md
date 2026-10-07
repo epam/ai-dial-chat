@@ -44,6 +44,7 @@ The endpoint SHALL accept optional query parameters, validated via `ListSchedule
 - `limit` — `@IsOptional() @IsInt() @Min(1) @Max(100)`. Forwarded to upstream as `limit` unchanged (the upstream `Pagination` dependency accepts `limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1)` with no upper bound of its own; 100 is a BFF-chosen sanity bound, not an upstream limit). Omitted → current single-page default behavior is preserved.
 - `offset` — `@IsOptional() @IsInt() @Min(0)`. Forwarded to upstream as `offset` unchanged (upstream: `offset: int = Query(default=0, ge=0)`). Omitted → `0`.
 - `search` — `@IsOptional() @IsString() @MaxLength(200)`, trimmed before use. Forwarded to upstream as the `name` query parameter (upstream performs a case-insensitive substring match against `display_name`). Omitted or empty after trimming → not sent upstream at all (no `name` parameter, not sent as an empty string).
+- `model` — `@IsOptional() @IsString() @MaxLength(512)`, trimmed before use. Forwarded to upstream as the `model` query parameter unchanged, so only schedules whose stored `model` equals the value are returned (the value is compared in the encoding it is stored in, for example `applications/<hash>/Daily%20plan__0.0.1`; the BFF neither decodes nor re-encodes it beyond normal query-string encoding). Omitted or empty after trimming → not sent upstream at all. Filtering, paging and `next` are all computed by upstream, so the filter composes correctly with `limit`/`offset`.
 - `sort` — `@IsOptional() @IsEnum(ScheduledTasksSortKey)`, where `ScheduledTasksSortKey` is `firstToRun` | `lastToRun` | `newest` | `nameAZ` (mirroring the frontend's existing sort-option enum values exactly). Mapped to the upstream `order_by`/`order_dir` query parameters:
 
   | `sort` | upstream `order_by` | upstream `order_dir` |
@@ -55,7 +56,7 @@ The endpoint SHALL accept optional query parameters, validated via `ListSchedule
 
   Omitted → the service SHALL still send an explicit `order_by=next_run_time&order_dir=asc` upstream, as if `sort=firstToRun` had been supplied — the BFF never relies on upstream's own default (`created_at desc`) so the endpoint's documented default is always the one actually observed. When ordering by `next_run_time`, schedules with no next run time (paused/inactive schedules) SHALL sort last — this is upstream behavior, not something the BFF or its callers implement.
 
-Results MUST be cached per user and per normalized `{limit, offset, search, sort}` combination for 30 seconds under a key that includes the normalized query params (e.g. `` `scheduled-tasks:list:{userSub}:{normalizedParams}` ``), with defaults applied before serialization (an omitted `sort` and an explicit `sort=firstToRun` MUST normalize to the same cache key). Every cached variant for that user MUST be invalidated immediately after a successful `createScheduledTask` or `updateScheduledTask` call for that same user.
+Results MUST be cached per user and per normalized `{limit, offset, search, sort, model}` combination for 30 seconds under a key that includes the normalized query params (e.g. `` `scheduled-tasks:list:{userSub}:{normalizedParams}` ``), with defaults applied before serialization (an omitted `sort` and an explicit `sort=firstToRun` MUST normalize to the same cache key, and a list without `model` MUST keep the key it had before the filter existed while a `model` value adds a percent-encoded segment so different models never share an entry). Every cached variant for that user MUST be invalidated immediately after a successful `createScheduledTask` or `updateScheduledTask` call for that same user.
 
 The endpoint MUST respond with `Cache-Control: private, no-store` (not a `max-age` directive). Freshness is owned entirely by the server-side cache-manager invalidation above; a `max-age` response header would let the browser's own HTTP cache serve a stale list for up to that many seconds after a create/update, bypassing server-side invalidation entirely and making a just-created task invisible until a hard reload — this was an observed bug, not a hypothetical.
 
@@ -134,6 +135,21 @@ Example response (with `?limit=20&offset=0&search=daily&sort=firstToRun`):
 
 - **WHEN** `search` is omitted, an empty string, or a string that trims to empty
 - **THEN** the upstream request is made without a `name` parameter, equivalent to an unfiltered list request
+
+#### Scenario: A model filter is forwarded upstream and cached per model
+
+- **WHEN** `model=applications/hash/Daily%20plan__0.0.1` is supplied
+- **THEN** the upstream request carries `model=applications%2Fhash%2FDaily%2520plan__0.0.1` (the stored value, query-encoded once) and the result is cached separately from the unfiltered list and from other models
+
+#### Scenario: Empty model is not sent upstream
+
+- **WHEN** `model` is omitted, an empty string, or a string that trims to empty
+- **THEN** the upstream request is made without a `model` parameter
+
+#### Scenario: Oversized model is rejected
+
+- **WHEN** `model` exceeds 512 characters
+- **THEN** the response is `400 Bad Request` and DIAL Core is never contacted
 
 ### Requirement: Create scheduled task with validated chat_completion/dial-oauth body
 

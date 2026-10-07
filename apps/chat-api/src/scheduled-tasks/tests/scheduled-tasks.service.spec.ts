@@ -364,6 +364,55 @@ describe('ScheduledTasksService', () => {
     );
   });
 
+  it('forwards the model filter upstream unchanged and caches per model', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
+      makeExternalServices() as never,
+    );
+    const model = 'applications/hash/Daily%20plan__0.0.1';
+
+    await service.listScheduledTasks('user-1', 'token', { model });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?model=applications%2Fhash%2FDaily%2520plan__0.0.1&order_by=next_run_time&order_dir=asc',
+      expect.objectContaining({ method: 'GET' }),
+    );
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'scheduled-tasks:list:user-1:0::0::firstToRun:applications%2Fhash%2FDaily%2520plan__0.0.1',
+      expect.anything(),
+      30_000,
+    );
+  });
+
+  it('does not send an upstream model param when model is empty', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
+      makeExternalServices() as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', { model: '' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?order_by=next_run_time&order_dir=asc',
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
   it('percent-encodes a search value containing a colon in the cache key', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

@@ -156,6 +156,29 @@ describe('ScheduledTasksController (integration)', () => {
       );
     });
 
+    it('forwards a valid model query param to the service', async () => {
+      service.listScheduledTasks.mockResolvedValue({ items: [mockSchedule] });
+
+      await request(app.getHttpServer())
+        .get(
+          '/api/v1/scheduled-tasks?model=applications%2Fhash%2FDaily%2520plan__0.0.1',
+        )
+        .expect(200);
+
+      expect(service.listScheduledTasks).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        { model: 'applications/hash/Daily%20plan__0.0.1' },
+      );
+    });
+
+    it('returns 400 when model is longer than 512 characters', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/v1/scheduled-tasks?model=${'a'.repeat(513)}`)
+        .expect(400);
+      expect(service.listScheduledTasks).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when limit is out of range', async () => {
       await request(app.getHttpServer())
         .get('/api/v1/scheduled-tasks?limit=101')
