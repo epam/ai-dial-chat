@@ -505,24 +505,15 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       ? 'bg-layer-base'
       : 'bg-layer-sunken';
 
+  /* Search-mode copy goes through `searchEmptyStateTitle`: in search mode
+     `DialFileManager` ignores `emptyStateTitle` and falls back to "No data". */
   const emptyStateCopy = useMemo((): EmptyStateCopy => {
-    if (searchResults != null && !isSearching) {
-      return { title: labels.searchEmptyStateTitle, description: '' };
-    }
     const isInSubfolder = path.split('/').filter(Boolean).length > 1;
     if (isInSubfolder) {
       return { title: labels.folderEmptyStateTitle, description: '' };
     }
     return labels.emptyStateByTab[gateTab];
-  }, [
-    searchResults,
-    isSearching,
-    path,
-    labels.searchEmptyStateTitle,
-    labels.folderEmptyStateTitle,
-    labels.emptyStateByTab,
-    gateTab,
-  ]);
+  }, [path, labels.folderEmptyStateTitle, labels.emptyStateByTab, gateTab]);
 
   return (
     <>
@@ -582,6 +573,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             autoSelectUploadedItems={autoSelectUploadedItems}
             emptyStateTitle={emptyStateCopy.title}
             emptyStateDescription={emptyStateCopy.description}
+            searchEmptyStateTitle={labels.searchEmptyStateTitle}
             uploadEnabled={uploadEnabled}
             sharedWithMeIds={sharedWithMeIds}
             sharedByMePaths={sharedByMePaths}
