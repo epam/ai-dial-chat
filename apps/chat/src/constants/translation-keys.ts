@@ -1113,7 +1113,6 @@ export enum SkillEditorI18nKeys {
   CreateFolder = 'skillEditor.createFolder',
   UploadArchive = 'skillEditor.uploadArchive',
   OpenFileSystem = 'skillEditor.openFileSystem',
-  AddChild = 'skillEditor.addChild',
   AddSibling = 'skillEditor.addSibling',
   NewFolderDefaultName = 'skillEditor.newFolderDefaultName',
   FolderNameRequired = 'skillEditor.folderNameRequired',

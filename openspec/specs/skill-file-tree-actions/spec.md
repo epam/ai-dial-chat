@@ -1,7 +1,7 @@
 # skill-file-tree-actions Specification
 
 ## Purpose
-Specifies how `libs/skill-editor`'s file tree adds and removes content: the Files pane's Add dropdown, the per-node Add child / Add sibling / Delete menu, the target-folder rule, inline folder creation, archive expansion, picking files from the host's file system, and the editor-only nature of empty folders — with every source staged through the upload dialog and every host detail supplied through `fileActions`.
+Specifies how `libs/skill-editor`'s file tree adds and removes content: the Files pane's Add dropdown, the per-node add entries / Add sibling / Delete menu, the target-folder rule, inline folder creation, archive expansion, picking files from the host's file system, and the editor-only nature of empty folders — with every source staged through the upload dialog and every host detail supplied through `fileActions`.
 
 ## Requirements
 
@@ -25,7 +25,7 @@ Labels (each with an English default): `addLabel` ("Add"), `createFolderLabel` (
 
 ### Requirement: Target folder of an add action
 
-Every add action SHALL resolve a **target folder** path (`''` for the skill root). From the header Add dropdown the target SHALL be the selected node when it is a folder, and the root otherwise (including when `SKILL.md` or a supporting file is selected). From a node's **Add child** submenu the target SHALL be that folder; from **Add sibling** it SHALL be the node's parent folder (root for a top-level node). Files staged by any add action SHALL have their resolved relative path prefixed with `<target>/` when the target is not the root; a folder created by Create folder SHALL be created at `<target>/<name>`.
+Every add action SHALL resolve a **target folder** path (`''` for the skill root). From the header Add dropdown the target SHALL be the selected node when it is a folder, and the root otherwise (including when `SKILL.md` or a supporting file is selected). From the add entries listed directly in a folder's context menu the target SHALL be that folder; from **Add sibling** it SHALL be the node's parent folder (root for a top-level node). Files staged by any add action SHALL have their resolved relative path prefixed with `<target>/` when the target is not the root; a folder created by Create folder SHALL be created at `<target>/<name>`.
 
 #### Scenario: Header upload with a folder selected
 - **WHEN** the folder `docs` is selected and the user uploads `a.md` from the header Add dropdown
@@ -41,15 +41,19 @@ Every add action SHALL resolve a **target folder** path (`''` for the skill root
 
 ### Requirement: Per-node context menu
 
-For every node other than `SKILL.md`, `getContextMenuItems` SHALL return, in this order: **Add child** (folders only), **Add sibling**, and **Delete**. Add child and Add sibling SHALL each be a submenu (`DropdownItem.children`) containing the same entries the header Add dropdown would show, targeting the folder defined by the target-folder rule. Delete SHALL behave as today's Remove: the node (and, for a folder, everything under it) is removed immediately with no confirmation and `fileActions.onRemoveNode(path)` is called; a removed selection falls back to `SKILL.md`. Delete SHALL render as a danger item (`DropdownItem.danger`), so its label and icon take the error color; `removeIconClassName` stays an optional icon-color override with no default. `SKILL.md` SHALL keep returning an empty menu. Labels: `addChildLabel` ("Add child"), `addSiblingLabel` ("Add sibling"), `deleteLabel` ("Delete"). App keys: `skillEditor.addChild`, `skillEditor.addSibling`; Delete reuses `ButtonsI18nKeys.Delete`.
+For every node other than `SKILL.md`, `getContextMenuItems` SHALL return, in this order: for a folder, the same entries the header Add dropdown would show, listed directly (no intermediate submenu) and targeting that folder, so uploading into a specific folder takes one menu level; then **Add sibling**; then **Delete**. Add sibling SHALL be a submenu (`DropdownItem.children`) containing the same entries the header Add dropdown would show, targeting the node's parent folder. Delete SHALL behave as today's Remove: the node (and, for a folder, everything under it) is removed immediately with no confirmation and `fileActions.onRemoveNode(path)` is called; a removed selection falls back to `SKILL.md`. Delete SHALL render as a danger item (`DropdownItem.danger`), so its label and icon take the error color; `removeIconClassName` stays an optional icon-color override with no default. `SKILL.md` SHALL keep returning an empty menu. Labels: `addSiblingLabel` ("Add sibling"), `deleteLabel` ("Delete"). App key: `skillEditor.addSibling`; Delete reuses `ButtonsI18nKeys.Delete`.
 
 #### Scenario: Folder menu
 - **WHEN** the user opens the context menu of a folder node
-- **THEN** it lists Add child, Add sibling and Delete
+- **THEN** it lists Create folder, Upload files from device, Upload archive from device and Open DIAL file system directly (each subject to its host capability), then Add sibling and Delete
+
+#### Scenario: Uploading into a folder from its menu
+- **WHEN** the user chooses Upload files from device in the context menu of folder `docs` and stages `c.md`
+- **THEN** the staged candidate path is `docs/c.md`
 
 #### Scenario: File menu
 - **WHEN** the user opens the context menu of a supporting-file node
-- **THEN** it lists Add sibling and Delete, and no Add child
+- **THEN** it lists Add sibling and Delete, and no direct add entries
 
 #### Scenario: SKILL.md stays protected
 - **WHEN** the user opens the context menu of `SKILL.md`
@@ -70,7 +74,7 @@ App keys: `skillEditor.newFolderDefaultName`, `skillEditor.folderNameRequired`, 
 - **THEN** `fileActions.onCreateFolder('scripts')` is called and, once the host adds the node, `scripts` is selected
 
 #### Scenario: Creating a nested folder
-- **WHEN** the user chooses Add child → Create folder on `docs`, types `img` and confirms
+- **WHEN** the user chooses Create folder in the context menu of `docs`, types `img` and confirms
 - **THEN** `docs` is expanded and `fileActions.onCreateFolder('docs/img')` is called
 
 #### Scenario: Duplicate name is rejected
