@@ -3,6 +3,8 @@ import {
   FeaturedChip,
   MarkdownRenderer,
   MarkdownRendererClassNames,
+  MarkdownRendererColors,
+  MarkdownRendererProps,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -11,6 +13,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   FolderPath,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import {
@@ -22,6 +25,7 @@ import {
   useState,
 } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
+import { useIsVerticallyClamped } from '../../hooks/useIsVerticallyClamped/useIsVerticallyClamped';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
@@ -31,6 +35,39 @@ import { TopicsLine } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
 
 const DESCRIPTION_MARKDOWN_COMPONENTS = { img: () => null };
+
+const TOOLTIP_TEXT_CLASS_NAME = 'dial-small-text';
+
+const TOOLTIP_MARKDOWN_CLASS_NAMES = {
+  p: TOOLTIP_TEXT_CLASS_NAME,
+  ul: TOOLTIP_TEXT_CLASS_NAME,
+  ol: TOOLTIP_TEXT_CLASS_NAME,
+  h1: TOOLTIP_TEXT_CLASS_NAME,
+  h2: TOOLTIP_TEXT_CLASS_NAME,
+  h3: TOOLTIP_TEXT_CLASS_NAME,
+  h4: TOOLTIP_TEXT_CLASS_NAME,
+  h5: TOOLTIP_TEXT_CLASS_NAME,
+  h6: TOOLTIP_TEXT_CLASS_NAME,
+  strong: 'dial-small-semi-text',
+} satisfies MarkdownRendererClassNames;
+
+/*
+ * The tooltip is not interactive, so links render as plain text, and the
+ * renderer's own colors — tuned for a light surface — resolve to the bubble's
+ * inverted text color instead.
+ */
+const TOOLTIP_MARKDOWN_COMPONENTS: MarkdownRendererProps['components'] = {
+  img: () => null,
+  a: ({ children }) => <span>{children}</span>,
+};
+
+const TOOLTIP_MARKDOWN_COLORS: MarkdownRendererColors = {
+  blockquoteText: 'currentColor',
+  tableHeaderText: 'currentColor',
+  headingSixText: 'currentColor',
+  inlineCodeBackground: 'transparent',
+  inlineCodeText: 'currentColor',
+};
 
 const isLinkEvent = (
   event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
@@ -65,6 +102,9 @@ export const Card: FC<CardProps> = ({
   useEffect(() => {
     setIsStarred(initialIsStarred);
   }, [item.id, initialIsStarred]);
+
+  const { ref: descriptionRef, isClamped: isDescriptionClamped } =
+    useIsVerticallyClamped<HTMLDivElement>(item.description);
 
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ?? 'dial-small-paragraph-text';
@@ -176,39 +216,61 @@ export const Card: FC<CardProps> = ({
         }
       />
 
-      <div
-        className={mergeClasses(
-          /*
-           * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
-           * limits the text to 2 lines but `overflow: hidden` clips at the box
-           * height, so any box taller than 2 lines paints the clamped-away
-           * lines. `2lh` tracks whichever typography class is applied.
-           */
-          'line-clamp-2 min-h-[2lh] break-words',
-          styles.description,
-        )}
+      {/* Only while the clamp actually hides text — a description that fits
+       * gets no tooltip repeating what is already on screen (#9334).
+       * `whitespace-normal` undoes the bubble's `pre-wrap`, which would turn
+       * the newlines between rendered markdown blocks into blank lines. */}
+      <Tooltip
+        asChild
+        hideTooltip={!isDescriptionClamped}
+        contentClassName="whitespace-normal"
+        tooltip={
+          item.description && (
+            <MarkdownRenderer
+              content={item.description}
+              classNames={TOOLTIP_MARKDOWN_CLASS_NAMES}
+              colors={TOOLTIP_MARKDOWN_COLORS}
+              components={TOOLTIP_MARKDOWN_COMPONENTS}
+              {...markdownLabels}
+            />
+          )
+        }
       >
-        {item.description && (
-          <MarkdownRenderer
-            content={item.description}
-            classNames={
-              {
-                p: descriptionClassName,
-                ul: descriptionClassName,
-                ol: descriptionClassName,
-                h1: descriptionClassName,
-                h2: descriptionClassName,
-                h3: descriptionClassName,
-                h4: descriptionClassName,
-                h5: descriptionClassName,
-                h6: descriptionClassName,
-              } satisfies MarkdownRendererClassNames
-            }
-            components={DESCRIPTION_MARKDOWN_COMPONENTS}
-            {...markdownLabels}
-          />
-        )}
-      </div>
+        <div
+          ref={descriptionRef}
+          className={mergeClasses(
+            /*
+             * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
+             * limits the text to 2 lines but `overflow: hidden` clips at the box
+             * height, so any box taller than 2 lines paints the clamped-away
+             * lines. `2lh` tracks whichever typography class is applied.
+             */
+            'line-clamp-2 min-h-[2lh] break-words',
+            styles.description,
+          )}
+        >
+          {item.description && (
+            <MarkdownRenderer
+              content={item.description}
+              classNames={
+                {
+                  p: descriptionClassName,
+                  ul: descriptionClassName,
+                  ol: descriptionClassName,
+                  h1: descriptionClassName,
+                  h2: descriptionClassName,
+                  h3: descriptionClassName,
+                  h4: descriptionClassName,
+                  h5: descriptionClassName,
+                  h6: descriptionClassName,
+                } satisfies MarkdownRendererClassNames
+              }
+              components={DESCRIPTION_MARKDOWN_COMPONENTS}
+              {...markdownLabels}
+            />
+          )}
+        </div>
+      </Tooltip>
 
       {/* `mt-auto` pins the topics row and footer to the card bottom — the job
        * `flex-1` on the description used to do before it broke the clamp. */}

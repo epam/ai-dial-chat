@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import {
@@ -299,6 +299,74 @@ describe('Card — description rendering', () => {
     );
     expect(descriptionDiv?.className).toContain('line-clamp-2');
     expect(descriptionDiv?.className).toContain('min-h-[2lh]');
+  });
+});
+
+describe('Card — description tooltip', () => {
+  const LONG_DESCRIPTION =
+    'First sentence of a long description. Second sentence lost to the clamp.';
+  /* Past the kit's 500ms hover-open delay. */
+  const TOOLTIP_OPEN_DELAY = 600;
+
+  /* jsdom does no layout, so the clamp is simulated through the two
+   * dimensions the card compares. */
+  const mockDescriptionHeights = (scrollHeight: number) => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(
+      scrollHeight,
+    );
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(40);
+  };
+
+  const hoverAndWait = async (element: HTMLElement) => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    await user.hover(element);
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_OPEN_DELAY);
+    });
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('shows the full description in a tooltip when the clamp hides text', async () => {
+    mockDescriptionHeights(120);
+    render(<Card item={makeItem({ description: LONG_DESCRIPTION })} />);
+
+    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
+
+    expect(screen.getByRole('tooltip').textContent).toBe(LONG_DESCRIPTION);
+  });
+
+  it('shows no tooltip when the description fits in two lines', async () => {
+    mockDescriptionHeights(40);
+    render(<Card item={makeItem({ description: 'Short.' })} />);
+
+    await hoverAndWait(screen.getByText('Short.'));
+
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('renders links inside the tooltip as plain text', async () => {
+    mockDescriptionHeights(120);
+    render(
+      <Card
+        item={makeItem({
+          description: 'See [the docs](https://example.com) for details.',
+        })}
+      />,
+    );
+
+    await hoverAndWait(screen.getByRole('link', { name: 'the docs' }));
+
+    const tooltip = screen.getByRole('tooltip');
+    expect(tooltip.textContent).toBe('See the docs for details.');
+    expect(within(tooltip).queryByRole('link')).toBeNull();
   });
 });
 
