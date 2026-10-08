@@ -58,7 +58,17 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   const [slashWidth, setSlashWidth] = useState<number | null>(null);
 
   useLayoutEffect(() => {
-    setSlashWidth(slashRef.current?.getBoundingClientRect().width ?? null);
+    const slash = slashRef.current;
+    const measure = () =>
+      setSlashWidth(slash?.getBoundingClientRect().width ?? null);
+    measure();
+
+    /* A label that inherits its font (the composer's) changes size with no
+     * `labelClassName` change, e.g. when the input switches breakpoint. */
+    if (!slash || typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(slash);
+    return () => resizeObserver.disconnect();
   }, [labelClassName]);
 
   /*

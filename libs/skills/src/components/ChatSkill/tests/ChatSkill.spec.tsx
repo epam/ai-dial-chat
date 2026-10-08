@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
@@ -222,5 +222,44 @@ describe('ChatSkill', () => {
       .className.split(' ');
     expect(chipClasses).toContain('inline');
     expect(chipClasses).not.toContain('inline-block');
+  });
+});
+
+describe('ChatSkill — slash width', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('re-measures the slash when its inherited font changes size', () => {
+    let notifyResize: () => void = () => undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          notifyResize = callback;
+        }
+        observe = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue({ width: 5 } as DOMRect);
+
+    render(
+      <ChatSkill
+        name="summarize"
+        path="skills/bucket/summarize"
+        onViewDetails={vi.fn()}
+      />,
+    );
+    const name = screen.getByText('summarize');
+    expect(name.style.paddingInlineStart).toBe('5px');
+
+    rectSpy.mockReturnValue({ width: 6 } as DOMRect);
+    act(() => notifyResize());
+
+    expect(name.style.paddingInlineStart).toBe('6px');
   });
 });

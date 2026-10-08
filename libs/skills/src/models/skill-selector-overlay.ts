@@ -101,6 +101,13 @@ export interface UseSkillSelectorOverlayOptions {
    */
   historyChipLabelClassName?: string;
   /**
+   * Class applied to the label of each mention rendered in an active composer.
+   * Pass color classes only: the label inherits the input's own font, which
+   * keeps it exactly as wide as the invisible text under it. Defaults to
+   * `'text-accent'`.
+   */
+  activeMentionLabelClassName?: string;
+  /**
    * Trigger used by mentions rendered in an active composer. Unset retains
    * `ChatSkill`'s hover-and-focus default; history chips are unaffected.
    */

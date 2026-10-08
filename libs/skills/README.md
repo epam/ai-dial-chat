@@ -518,6 +518,10 @@ a tap opens it instead.
 A live-composing mention also renders as a real `ChatSkill` chip — with
 `isUnsupported` error styling applied when the skill is not supported — via
 `HighlightedTextRange.render`, consistent with how history segments render.
+Its label takes `activeMentionLabelClassName` (default `'text-accent'`) rather
+than `historyChipLabelClassName`: it overlays the textarea's invisible text, so
+it must inherit the input's font to stay exactly as wide as that text and keep
+the native caret on the visible text. Pass color classes only.
 
 Row and chip descriptions come from the listing entries the host injects —
 no per-skill fetch happens anywhere in the flow, and opening a tooltip
