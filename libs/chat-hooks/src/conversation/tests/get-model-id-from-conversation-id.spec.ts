@@ -1,5 +1,10 @@
+import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
-import { getModelIdFromConversationId } from '../get-model-id-from-conversation-id';
+import {
+  findDeploymentForConversationId,
+  getModelIdCandidatesFromConversationId,
+  getModelIdFromConversationId,
+} from '../get-model-id-from-conversation-id';
 
 describe('getModelIdFromConversationId', () => {
   it('returns the deployment id for a simple (single-segment) deployment', () => {
@@ -110,5 +115,83 @@ describe('getModelIdFromConversationId', () => {
         'conversations/bucket/.scheduler/schedule-id/anthropic/claude-3__title__run-id',
       ),
     ).toBe('anthropic/claude-3');
+  });
+
+  it('keeps the version suffix of an application conversation stored in a folder', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/folder/applications/app-bucket/my-app__1.0__title',
+      ),
+    ).toBe('folder/applications/app-bucket/my-app__1.0');
+  });
+});
+
+describe('getModelIdCandidatesFromConversationId', () => {
+  it('lists every path suffix of the extracted id, longest first', () => {
+    expect(
+      getModelIdCandidatesFromConversationId(
+        'conversations/bucket/folder/anthropic/claude-3__title',
+      ),
+    ).toEqual(['folder/anthropic/claude-3', 'anthropic/claude-3', 'claude-3']);
+  });
+
+  it('returns an empty array for an unrecognised id', () => {
+    expect(
+      getModelIdCandidatesFromConversationId('bucket/gpt-4__title'),
+    ).toEqual([]);
+  });
+});
+
+describe('findDeploymentForConversationId', () => {
+  const deployments = [
+    { id: 'gpt-4o', reference: 'gpt-4o-ref' },
+    { id: 'anthropic/claude-3' },
+    { id: 'claude-3' },
+    { id: 'applications/app-bucket/my-app__1.0' },
+  ] as DeploymentItemDto[];
+
+  it('finds the deployment of a conversation stored in a folder', () => {
+    expect(
+      findDeploymentForConversationId(
+        deployments,
+        'conversations/bucket/qa-run-20260929/gpt-4o__title__uuid',
+      )?.id,
+    ).toBe('gpt-4o');
+  });
+
+  it('prefers the longest matching multi-segment deployment id', () => {
+    expect(
+      findDeploymentForConversationId(
+        deployments,
+        'conversations/bucket/folder/anthropic/claude-3__title',
+      )?.id,
+    ).toBe('anthropic/claude-3');
+  });
+
+  it('finds a versioned application conversation stored in a folder', () => {
+    expect(
+      findDeploymentForConversationId(
+        deployments,
+        'conversations/bucket/folder/applications/app-bucket/my-app__1.0__title',
+      )?.id,
+    ).toBe('applications/app-bucket/my-app__1.0');
+  });
+
+  it('matches a deployment by reference', () => {
+    expect(
+      findDeploymentForConversationId(
+        deployments,
+        'conversations/bucket/folder/gpt-4o-ref__title',
+      )?.id,
+    ).toBe('gpt-4o');
+  });
+
+  it('returns undefined when no candidate matches', () => {
+    expect(
+      findDeploymentForConversationId(
+        deployments,
+        'conversations/bucket/folder/unknown__title',
+      ),
+    ).toBeUndefined();
   });
 });

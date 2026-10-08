@@ -1,3 +1,6 @@
+import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import { findDeploymentByIdOrReference } from '../catalog/deployment-id';
+
 const CONVERSATION_NAME_SEPARATOR = '__';
 const VERSION_METADATA_SEPARATOR_REGEX = /[-+]/;
 const VERSION_NUMBER_PART_REGEX = /^\d+$/;
@@ -95,7 +98,13 @@ export const getModelIdFromConversationId = (
   const prefixParts = deploymentSegments
     .slice(0, separatorIndex)
     .filter(Boolean);
-  const isApplicationDeployment = prefixParts[0] === APPLICATIONS_PATH_SEGMENT;
+  /*
+   * An application id is `applications/{bucket}/{name}__{version}`, so its
+   * `applications` segment sits two places before the separator segment —
+   * also when a conversation folder precedes it.
+   */
+  const isApplicationDeployment =
+    prefixParts.at(-2) === APPLICATIONS_PATH_SEGMENT;
   const lastDeploymentPart = getDeploymentIdPartFromFilenamePart(
     separatorSegment,
     isApplicationDeployment,
@@ -104,3 +113,35 @@ export const getModelIdFromConversationId = (
   const allParts = [...prefixParts, lastDeploymentPart].filter(Boolean);
   return allParts.length > 0 ? allParts.join('/') : undefined;
 };
+
+/**
+ * Returns every deployment id a conversation id may belong to, longest first,
+ * or an empty array when the format is unrecognised.
+ */
+export const getModelIdCandidatesFromConversationId = (
+  id: string,
+): string[] => {
+  const modelId = getModelIdFromConversationId(id);
+  if (!modelId) return [];
+
+  /*
+   * A conversation stored in a folder (`{bucket}/{folder}/{deploymentId}__…`)
+   * has the same shape as one on a multi-segment deployment id, so the parser
+   * folds the folder into the id. Each `/`-separated suffix is a candidate;
+   * longest first keeps a genuine multi-segment id ahead of its own suffixes.
+   */
+  const parts = modelId.split('/');
+  return parts.map((_, index) => parts.slice(index).join('/'));
+};
+
+/**
+ * Returns the deployment a conversation belongs to, resolved from its id
+ * alone, or `undefined` when no candidate matches `deployments`.
+ */
+export const findDeploymentForConversationId = (
+  deployments: DeploymentItemDto[],
+  conversationId: string,
+): DeploymentItemDto | undefined =>
+  getModelIdCandidatesFromConversationId(conversationId)
+    .map((candidate) => findDeploymentByIdOrReference(deployments, candidate))
+    .find(Boolean);

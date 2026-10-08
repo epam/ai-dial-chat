@@ -689,18 +689,28 @@ describe('ConversationPanelView — navigation keeps panel inputs', () => {
   });
 
   it.each([
-    ['an owned', false],
-    ['a shared', true],
+    ['an owned', false, 'conversations/bucket/hidden-model__Chat'],
+    ['a shared', true, 'conversations/bucket/hidden-model__Chat'],
+    [
+      'an owned in-folder',
+      false,
+      'conversations/bucket/qa-run/hidden-model__Chat__uuid',
+    ],
+    [
+      'a shared in-folder',
+      true,
+      'conversations/bucket/qa-run/nested/hidden-model__Chat',
+    ],
   ])(
     'offers no Duplicate on %s conversation whose model is hidden',
-    (_, sharedWithMe) => {
+    (_, sharedWithMe, conversationId) => {
       deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
       try {
         vi.mocked(useConversations).mockReturnValue({
           ...baseContextValue,
           conversations: [
             {
-              ...ordinary('conversations/bucket/hidden-model__Chat'),
+              ...ordinary(conversationId),
               sharedWithMe,
             },
           ],
