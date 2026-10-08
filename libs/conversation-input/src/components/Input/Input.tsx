@@ -257,7 +257,14 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * `focus` event that precedes it can fire before the browser has placed
      * the caret — reading `selectionStart` there is unreliable across
      * browsers — so `onFocus` defers one frame, by when it always has.
+     *
+     * The deferred call goes through a ref to the latest handler: an edit
+     * landing inside that frame (a paste right after focusing) re-renders
+     * with a new message, and the focus-time handler would evaluate the
+     * caret against the stale one and close a menu the edit just opened.
      */
+    const latestCommandMenuCaretMoveRef = useRef(handleCommandMenuCaretMove);
+    latestCommandMenuCaretMoveRef.current = handleCommandMenuCaretMove;
     const handleTextareaClick = () => {
       handleCommandMenuCaretMove(
         textareaRef.current?.selectionStart ?? message.length,
@@ -265,8 +272,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
     };
     const handleTextareaFocus = () => {
       requestAnimationFrame(() => {
-        handleCommandMenuCaretMove(
-          textareaRef.current?.selectionStart ?? message.length,
+        const textarea = textareaRef.current;
+        latestCommandMenuCaretMoveRef.current(
+          textarea?.selectionStart ?? textarea?.value.length ?? 0,
         );
       });
     };
