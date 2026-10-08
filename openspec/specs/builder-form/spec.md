@@ -61,7 +61,7 @@ The back-button and title portion of the header row SHALL be visible at all view
 - **THEN** the back arrow icon visually points in the reading-direction-correct "back" direction
 
 ### Requirement: EditorLayout — mobile/tablet action bar
-Below the `desktop` breakpoint, `EditorLayout` SHALL render the same `actions` content in a dedicated bar pinned to the bottom of the page, outside the scrollable body container, instead of in the header. The bar SHALL only render when `actions` is provided, and SHALL NOT overlap `leftContent`/`rightContent` — the scrollable body occupies the remaining vertical space above it via normal flex layout, not absolute/fixed positioning. Each direct child of `actions` SHALL grow to share the bar's width equally (accounting for the bar's padding and inter-button gap). The bar SHALL reverse the DOM order of `actions`' direct children, so the last child (the primary action, e.g. Save/Create) renders at the inline-start side and the first child (e.g. Cancel) renders at the inline-end side — the mirror of the header's inline-end-anchored order — using a writing-mode-aware reversal (`flex-row-reverse`) so the placement stays correct in RTL.
+Below the `desktop` breakpoint, `EditorLayout` SHALL render the same `actions` content in a dedicated bar pinned to the bottom of the page, outside the scrollable body container, instead of in the header. The bar SHALL only render when `actions` is provided, and SHALL NOT overlap `leftContent`/`centerContent` — the scrollable body occupies the remaining vertical space above it via normal flex layout, not absolute/fixed positioning. Each direct child of `actions` SHALL grow to share the bar's width equally (accounting for the bar's padding and inter-button gap). The bar SHALL reverse the DOM order of `actions`' direct children, so the last child (the primary action, e.g. Save/Create) renders at the inline-start side and the first child (e.g. Cancel) renders at the inline-end side — the mirror of the header's inline-end-anchored order — using a writing-mode-aware reversal (`flex-row-reverse`) so the placement stays correct in RTL.
 
 #### Scenario: Actions render in a bottom bar on mobile/tablet
 - **WHEN** the host passes `actions` and `EditorLayout` renders below desktop width
@@ -82,21 +82,35 @@ Below the `desktop` breakpoint, `EditorLayout` SHALL render the same `actions` c
 ### Requirement: EditorLayout — two-column responsive body
 `EditorLayout` SHALL render its body as a two-column layout on desktop and a single stacked column on mobile:
 
-- **Desktop** (≥ `desktop` breakpoint): `leftContent` occupies a fixed 400 px column on the inline-start side; `rightContent` (when provided) occupies the remaining `flex-1` space, separated by a `border-e` divider. The body container is `overflow-hidden` and each column scrolls independently through its own `overflow-y-auto`.
-- **Mobile** (below `desktop` breakpoint): `leftContent` renders first (top), `rightContent` renders below it; both span full width. The body container is a single scrollable column.
-- When `rightContent` is absent or `undefined`, `leftContent` expands to full width at all viewport sizes.
+- **Desktop** (≥ `desktop` breakpoint): `leftContent` occupies a fixed 400 px column on the inline-start side; `centerContent` (when provided) occupies the remaining `flex-1` space, separated by a `border-e` divider. The body container is `overflow-hidden` and each column scrolls independently through its own `overflow-y-auto`.
+- **Mobile** (below `desktop` breakpoint): `leftContent` renders first (top), `centerContent` renders below it; both span full width. The body container is a single scrollable column.
+- When `centerContent` is absent or `undefined`, `leftContent` expands to full width at all viewport sizes.
 
 #### Scenario: Two columns on desktop
-- **WHEN** `EditorLayout` renders with both `leftContent` and `rightContent` at ≥ desktop width
+- **WHEN** `EditorLayout` renders with both `leftContent` and `centerContent` at ≥ desktop width
 - **THEN** the two panels appear side by side, separated by a vertical divider
 
 #### Scenario: Single column on mobile
-- **WHEN** `EditorLayout` renders with both `leftContent` and `rightContent` at < desktop width
+- **WHEN** `EditorLayout` renders with both `leftContent` and `centerContent` at < desktop width
 - **THEN** the two panels stack vertically, `leftContent` on top
 
 #### Scenario: Single-panel mode
-- **WHEN** `rightContent` is absent
+- **WHEN** `centerContent` is absent
 - **THEN** `leftContent` fills the full available width at all viewport sizes
+
+### Requirement: EditorLayout — optional host side panel
+
+`EditorLayout` SHALL accept an optional `rightContent?: ReactNode`, and `EntityEditor` SHALL provide it from its `asideData` section (see "EntityEditor — the standard entity editor layout"). When it is omitted, the layout SHALL be exactly the existing two-column layout. When it is provided, the library SHALL render it verbatim in a plain column wrapper (no landmark role of its own, like the other columns), with no knowledge of what it contains; the host owns the content and its inner spacing.
+
+On desktop the panel SHALL be a third column at the inline end, below the header row, with its own vertical scroll and a divider on its inline-start edge drawn with a logical border (`border-s`). Its width SHALL be a fixed `400px`, not configurable. The divider color SHALL reuse `styles.colors.sidebarBorderColor`, so no separate color override exists. On mobile and tablet the panel SHALL be stacked after the other content. The panel SHALL use logical direction utilities only.
+
+#### Scenario: No panel keeps the two-column layout
+- **WHEN** a host renders `EditorLayout` or `EntityEditor` without `rightContent`
+- **THEN** no side column is rendered and the layout is unchanged
+
+#### Scenario: Host content is rendered in a side panel after the columns
+- **WHEN** a host passes `rightContent={<QualityCheck />}`
+- **THEN** `<QualityCheck />` renders in a column that follows the left and right columns in the DOM
 
 ### Requirement: EditorSection — visual section wrapper
 `EditorSection` SHALL render a bordered/card visual region with:
@@ -442,10 +456,15 @@ BuilderFormHeader and its containing public shell SHALL accept and forward optio
 - When `setup` is absent, `alert` (wrapped in `role="alert"`) renders above that section instead.
 - `metadataFooter`, when provided, below that section.
 
-**Right column (`rightContent`)**
+**Center column (`centerContent`)**
 
 - When `setup` is provided: `alert` (wrapped in `role="alert"`, when provided), then an `EditorSection` titled `setupTitle ?? labels.setupTitle` (default `'Setup'`) that contains `setup`.
-- When `setup` is absent, `rightContent` SHALL be omitted so the left column fills the width.
+- When `setup` is absent, `centerContent` SHALL be omitted so the left column fills the width.
+
+**Right column (`rightContent`)**
+
+- When `asideData` is provided, `EntityEditor` SHALL pass `rightContent` an `EditorSection` that contains `asideData`, with a heading only when `asideTitle` is set, the shared section padding, `asideSectionClassName` merged onto it and the public class `BUILDER_FORM_CLASS.asideSection`. The `<aside>` landmark is rendered by `EditorLayout` and named `labels.asideAriaLabel` (default `'Side panel'`).
+- When `asideData` is absent, `rightContent` SHALL be omitted and the layout is the existing two columns.
 
 Mobile behaviour (sections stacked, Metadata first, actions in the bottom bar) is inherited from `EditorLayout`.
 
