@@ -45,7 +45,7 @@ The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL sup
 ### Requirement: Skill create option in catalog
 The system SHALL add a "Skill" option to the `CatalogView` create button, unconditionally (no `OverlayFeature` gate), alongside the runner, Prompt, Toolset and Custom App entries. The "Skill" option SHALL be a nested submenu with two children: "Write instructions", which navigates to `ROUTES.SkillEditor` with no query parameters (the Skill Editor returns to `ROUTES.Catalog` on its own), and "Upload", which calls the host's `onSkillUploadClick` to open the "Upload skill" dialog (`SkillArchiveUploadDialog`, a ui-kit `FileDropzone` accepting `.zip,.md`) that imports a ZIP archive or a standalone `SKILL.md` as a new Skill (see `skill-archive-import`). The menu is built by `useCatalogEditNavigation` (`libs/chat-hooks/src/catalog/useCatalogEditNavigation/useCatalogEditNavigation.ts`); when the create-menu search query is non-empty, a query matching the "Skill" label keeps both children, otherwise only the matching children are kept and the "Skill" entry is dropped when none match.
 
-The submenu SHALL be operable by keyboard (arrow-key navigation into and within the submenu, `Enter`/`Space` to activate a child, `Escape` to close) and SHALL NOT require hover to open or navigate on touch/mobile viewports. The parent item and both children SHALL meet the touch-target size the shared `Dropdown` applies to every menu row — the menu is rendered by the ui-kit component, so this capability inherits that sizing rather than setting its own.
+The submenu SHALL be operable by keyboard (arrow-key navigation into and within the submenu, `Enter`/`Space` to activate a child, `Escape` to close) and SHALL NOT require hover to open or navigate on touch/mobile viewports. The parent item and both children SHALL meet the touch-target size the shared `Dropdown` applies to every menu row — the menu is rendered by the ui-kit component, so this capability inherits that sizing rather than setting its own. Below the desktop breakpoint (`useIsMobile`) the Create menu SHALL NOT open as a floating dropdown, whose side flyout falls off a phone screen: `CreateButton` SHALL open the ui-kit `BottomSheet` instead (`CreateMenuSheet`), with the search field and the options on its root page; tapping "Skill" SHALL drill into a page of its own titled "Skill" listing "Write instructions" and "Upload", with a header back button returning to the root page. Choosing an option SHALL run it and close the sheet, and closing the sheet SHALL clear the search query. The back and close buttons are named by `titles.createMenuBackLabel` and `titles.createMenuCloseLabel`.
 
 #### Scenario: Skill option is always present
 - **WHEN** `CatalogView`'s Create dropdown is opened
@@ -70,6 +70,10 @@ The submenu SHALL be operable by keyboard (arrow-key navigation into and within 
 #### Scenario: Submenu is usable on touch/mobile without hover
 - **WHEN** a touch user taps the "Skill" entry on a mobile viewport
 - **THEN** the submenu opens and both children are tappable, with no interaction that depends on a hover-only affordance
+
+#### Scenario: Create menu opens as a bottom sheet on a phone
+- **WHEN** a user taps Create at a viewport below the desktop breakpoint (e.g. 375px wide) and then taps "Skill"
+- **THEN** the menu is a bottom sheet spanning the screen width, the Skill page replaces the root page inside it with both "Write instructions" and "Upload" fully on screen, and the page does not widen beyond the viewport
 
 ---
 

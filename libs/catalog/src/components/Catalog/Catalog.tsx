@@ -602,6 +602,8 @@ export const Catalog: FC<CatalogProps> = ({
                 searchPlaceholder={titles?.createSearchPlaceholder}
                 searchClearLabel={titles?.createSearchClearLabel}
                 noResultsLabel={titles?.createNoResultsLabel}
+                backLabel={titles?.createMenuBackLabel}
+                closeLabel={titles?.createMenuCloseLabel}
               />
             )}
           </div>

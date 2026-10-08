@@ -665,6 +665,8 @@ const CatalogView: FC<Props> = ({
           createSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
           createSearchClearLabel: t(BasicI18nKeys.ClearSearch),
           createNoResultsLabel: t(BasicI18nKeys.NoResults),
+          createMenuBackLabel: t(NavigationI18nKeys.Back),
+          createMenuCloseLabel: t(ButtonsI18nKeys.Close),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
           searchPlaceholder,

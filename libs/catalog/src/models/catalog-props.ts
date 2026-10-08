@@ -90,6 +90,10 @@ export interface CatalogTitles {
   createSearchClearLabel?: string;
   /** Text shown when the Create menu search leaves no options. Default: 'No results found'. */
   createNoResultsLabel?: string;
+  /** Accessible name of the back button in the mobile Create menu sheet. Default: 'Back'. */
+  createMenuBackLabel?: string;
+  /** Accessible name of the close button in the mobile Create menu sheet. Default: 'Close'. */
+  createMenuCloseLabel?: string;
 }
 
 /** Controlled search field rendered at the top of the Create menu. */
