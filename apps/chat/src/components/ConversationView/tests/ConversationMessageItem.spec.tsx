@@ -1984,6 +1984,17 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
     expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
   });
 
+  it('lets a long unbroken error text wrap instead of overflowing the banner', () => {
+    const longPath =
+      'Access denied to the skill skills/5Cky3SaEsMKzmtxBLUw5gTUHRyoqLL3J13vRDkn3x4QtubPvqJ6gSSLknbMRBB8vcn/english-wording-check';
+    renderFailed(longPath);
+
+    const { className } = screen.getByText(longPath);
+
+    expect(className).toContain('min-w-0');
+    expect(className).toContain('[overflow-wrap:anywhere]');
+  });
+
   it.each([
     { mobile: false, direction: 'ltr' },
     { mobile: true, direction: 'ltr' },
