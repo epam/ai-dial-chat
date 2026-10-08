@@ -48,7 +48,10 @@ import type {
   TriggerSaveGeneralPayload,
   TriggerSaveMessage,
 } from '../../../types/apps-editor';
-import { AppsEditorEvent } from '../../../types/apps-editor';
+import {
+  AppsEditorEvent,
+  AppsEditorIframeQuery,
+} from '../../../types/apps-editor';
 import { ROUTES } from '../../../types/routes';
 import { toolsetDtoToForm } from '../../../utils/toolsets';
 
@@ -113,19 +116,27 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const [isLoggedOut, setIsLoggedOut] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
+    /* Single source for the name sent in the iframe URL and used as the
+     * postMessage type prefix (`${applicationName}/readyToInteract`, ...). */
+    const applicationName = schema.displayName ?? '';
+
     const iframeUrl = useMemo(() => {
       const providerId = user?.providerId ?? '';
       const params = new URLSearchParams({
-        authProvider: providerId,
-        id: appId,
-        theme: currentTheme,
-        applicationCredentials: String(
+        [AppsEditorIframeQuery.AuthProvider]: providerId,
+        [AppsEditorIframeQuery.Id]: appId,
+        [AppsEditorIframeQuery.Theme]: currentTheme,
+        [AppsEditorIframeQuery.ApplicationCredentials]: String(
           isApplicationAuthCapable && isApplicationAuthEnabled,
         ),
       });
+      if (applicationName) {
+        params.set(AppsEditorIframeQuery.ApplicationName, applicationName);
+      }
       return `${schema.editorUrl}?${params.toString()}`;
     }, [
       schema.editorUrl,
+      applicationName,
       appId,
       user?.providerId,
       currentTheme,
@@ -396,7 +407,6 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const handleMessage = useCallback(
       (event: MessageEvent) => {
         if (!targetOrigin || event.origin !== targetOrigin) return;
-        const displayName = schema.displayName ?? '';
         switch (event.data?.type) {
           case AppsEditorEvent.RequestApplicationCredentials:
             if (
@@ -409,16 +419,16 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
               setCredentialsAppId(normalizeDeploymentId(event.data.appId));
             }
             break;
-          case `${displayName}/${AppsEditorEvent.ReadyToInteract}`:
+          case `${applicationName}/${AppsEditorEvent.ReadyToInteract}`:
             setIsUiLoading(false);
             break;
-          case `${displayName}/${AppsEditorEvent.ReadyToSave}`:
+          case `${applicationName}/${AppsEditorEvent.ReadyToSave}`:
             setIsReadyToSave(true);
             break;
-          case `${displayName}/${AppsEditorEvent.LoggedOut}`:
+          case `${applicationName}/${AppsEditorEvent.LoggedOut}`:
             setIsLoggedOut(true);
             break;
-          case `${displayName}/${AppsEditorEvent.UpdatedSuccess}`:
+          case `${applicationName}/${AppsEditorEvent.UpdatedSuccess}`:
             onUpdated?.();
             break;
           case AppsEditorEvent.SaveSuccess:
@@ -451,7 +461,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       },
       [
         targetOrigin,
-        schema.displayName,
+        applicationName,
         onUpdated,
         onSaveSuccess,
         onSaveError,
