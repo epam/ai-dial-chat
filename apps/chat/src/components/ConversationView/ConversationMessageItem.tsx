@@ -1118,7 +1118,7 @@ const ConversationMessageItem: FC<Props> = ({
                     title={t(ChatI18nKeys.StreamErrorTitle)}
                     message={
                       <span className="flex flex-wrap items-center justify-between gap-2 text-start">
-                        <span>
+                        <span className="min-w-0 [overflow-wrap:anywhere]">
                           {msg.streamErrorMessage ||
                             t(ChatI18nKeys.StreamError)}
                         </span>
