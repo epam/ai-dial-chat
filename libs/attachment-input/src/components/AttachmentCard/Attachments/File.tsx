@@ -43,7 +43,6 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   labels,
   styles: rowStyles,
   onDownload,
-  isPasted,
   isLink,
   cssVars,
   onExpand,
@@ -129,9 +128,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     }
   };
 
-  const displayName = useMemo(() => {
-    return isPasted ? name : getNameWithoutExtension(name);
-  }, [isPasted, name]);
+  const displayName = useMemo(() => getNameWithoutExtension(name), [name]);
 
   const onOpenInNewTab = useCallback((): void => {
     window.open(attachment.referenceUrl, '_blank', 'noopener,noreferrer');

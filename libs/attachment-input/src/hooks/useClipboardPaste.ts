@@ -7,7 +7,7 @@ import { generateAttachmentId } from '../utils/attachment';
 export interface UseClipboardPasteLabels {
   /** Name template a pasted image is derived from, with the paste timestamp inserted before the extension. Defaults to `'Screenshot.png'`. */
   screenshotName?: string;
-  /** Default file name given to pasted plain text when it has no usable preview. Defaults to `'Pasted text'`. */
+  /** Name prefix of a pasted plain-text file, which gets the paste timestamp and a `.txt` extension appended. Defaults to `'Pasted text'`. */
   pastedTextName?: string;
 }
 
@@ -99,13 +99,12 @@ export const useClipboardPaste = (
 
       const text = event.clipboardData.getData('text/plain');
       if (text.length > threshold) {
-        const trimmed = text.trim();
-        const MAX_PREVIEW = 80;
-        const preview =
-          trimmed.length > MAX_PREVIEW
-            ? `${trimmed.slice(0, MAX_PREVIEW).trimEnd()}…`
-            : trimmed;
-        const fileName = preview || pastedTextName;
+        /*
+         * The name is never derived from the pasted content: JSON or code puts
+         * path-forbidden characters in it, and without an extension the stored
+         * file has no previewable type.
+         */
+        const fileName = `${pastedTextName} ${formatPasteTimestamp(new Date())}.txt`;
         const file = new File([text], fileName, {
           type: 'text/plain',
         });

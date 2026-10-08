@@ -358,6 +358,33 @@ This prevents two erroneous banners: the "Attachments not supported" notificatio
 
 ---
 
+### Requirement: Pasted-text attachments get a content-independent `.txt` file name
+
+When `useClipboardPaste` (`libs/attachment-input/src/hooks/useClipboardPaste.ts`) converts long pasted plain text into an `AttachmentType.Pasted` attachment, it SHALL name both the `Attachment` and its backing `File` `<pastedTextName> <YYYY-MM-DD HH-mm-ss>.txt`, where `pastedTextName` comes from `UseClipboardPasteLabels.pastedTextName` (default `'Pasted text'`). The name SHALL NOT be derived from the pasted content, so JSON, code, or any text containing characters a DIAL Core file path forbids cannot corrupt it, and the `.txt` extension lets the attachment canvas select a text previewer. The attachment card SHALL show the name without its extension.
+
+#### Scenario: Pasted JSON produces a readable name
+
+- **WHEN** the user pastes JSON longer than `pasteTextThreshold` characters
+- **THEN** the attachment name matches `Pasted text <timestamp>.txt` and contains no characters from the pasted content
+- **AND** the `File` carries the same name and the type `text/plain`
+
+#### Scenario: Pasted-text attachment opens in the canvas preview
+
+- **WHEN** a pasted-text attachment has been uploaded and the user opens it from the sent message
+- **THEN** the attachment canvas renders its text instead of "Preview is not supported for this file"
+
+#### Scenario: Pasted-text card omits the extension
+
+- **WHEN** a pasted-text attachment is shown in the composer tray
+- **THEN** the card label is `Pasted text <timestamp>` without `.txt`
+
+#### Scenario: Localised prefix
+
+- **WHEN** `labels.pastedTextName` is `'Вставленный'`
+- **THEN** the attachment name is `Вставленный <timestamp>.txt`
+
+---
+
 ### Requirement: Message length validation
 
 The `Input` component SHALL refuse to send a message whose text length is ≥

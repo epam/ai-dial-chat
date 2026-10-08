@@ -65,8 +65,6 @@ export interface FileAttachmentProps {
   labels?: FileAttachmentLabels;
   /** Style overrides for the row. */
   styles?: FileAttachmentStyles;
-  /** Whether the attachment is pasted (vs. prompt). Defaults to `false`. */
-  isPasted?: boolean;
   /** Whether the attachment is a link (vs. a file). Defaults to `false`. */
   isLink?: boolean;
   /** CSS custom properties applied to the root element. */

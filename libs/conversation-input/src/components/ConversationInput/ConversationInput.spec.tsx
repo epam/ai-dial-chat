@@ -211,7 +211,10 @@ describe('ConversationInput — attachments', () => {
       },
     });
 
-    expect(screen.getByText(text)).toBeTruthy();
+    expect(
+      screen.getByText(/^Pasted text \d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}$/),
+    ).toBeTruthy();
+    expect(screen.queryByText(text)).toBeNull();
   });
 
   it('pasting short text does not create an attachment card', () => {
