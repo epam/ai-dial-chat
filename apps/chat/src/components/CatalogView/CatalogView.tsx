@@ -703,6 +703,11 @@ const CatalogView: FC<Props> = ({
           contentFileUnsupportedLabel: t(
             CatalogI18nKeys.DetailsContentFileUnsupported,
           ),
+          toolsSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+          toolsSearchClearLabel: t(BasicI18nKeys.ClearSearch),
+          toolsCountLabel: (count: number) =>
+            t(CatalogI18nKeys.DetailsToolCount, { count }),
+          toolsNoResultsLabel: t(BasicI18nKeys.NoResults),
           primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
           editActionLabel: t(ButtonsI18nKeys.Edit),
           downloadActionLabel: t(ButtonsI18nKeys.Download),

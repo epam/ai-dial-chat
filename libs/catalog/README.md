@@ -619,7 +619,9 @@ with `ContentTab` and `LimitsTab` they let a host show a catalog item's details
 inside its own surface (a popup, a side sheet) without the panel. They are
 presentation-only: they render the `CatalogItem` fields and `details` they are
 given, and every visible string comes from their props, with English defaults
-where one exists.
+where one exists. `OverviewTab` also takes an optional
+`sectionContainerClassName` for the wrapper around each section's table
+(default `'px-6'`), so a host surface with its own padding can pass `''`.
 
 `getCatalogDetailsTabs` (also on `@epam/ai-dial-catalog/mapping`) returns the
 tabs the panel would show for an item, in order: About unless the item is
@@ -665,11 +667,19 @@ const renderPanel = (item: CatalogItem, tab: CatalogDetailsTab) => {
 const tabs = getCatalogDetailsTabs(item, { isConnectHidden: true });
 ```
 
-`ToolsTab`'s `labels` (`ToolsLabels`) sets the grid column headings
-(`inputName`, `inputType`, `inputRequired`, `annotationKey` and
-`annotationValue`), defaulting to `'Name'`, `'Type'`, `'Required'`, `'Key'` and
-`'Value'`. `PricingTab` takes `pricing` plus the optional `pricesSectionLabel`
-and `limitsSectionLabel`.
+`ToolsTab` opens with a search field that narrows the list by tool name or
+description (case-insensitive), and a count of the tools shown. Its `labels`
+(`ToolsLabels`) sets the grid column headings (`inputName`, `inputType`,
+`inputRequired`, `annotationKey` and `annotationValue`), defaulting to
+`'Name'`, `'Type'`, `'Required'`, `'Key'` and `'Value'`, plus
+`searchPlaceholder` (`'Search...'`), `searchClearLabel` (`'Clear search'`),
+`toolCount` (``(count) => `${count} tools` ``) and `noResults`
+(`'No results found'`). In `DetailsPanel` the same strings come from
+`ItemDetailsTexts`' `toolsSearchPlaceholder`, `toolsSearchClearLabel`,
+`toolsCountLabel` and `toolsNoResultsLabel`.
+
+`PricingTab` takes `pricing` plus the optional `pricesSectionLabel` and
+`limitsSectionLabel`.
 
 ### Embedding the header, Connect tab and credentials
 

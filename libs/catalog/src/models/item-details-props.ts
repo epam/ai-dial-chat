@@ -73,6 +73,14 @@ export interface ItemDetailsTexts {
   contentFileErrorLabel?: string;
   /** Body text shown when a picked file's preview type is `unsupported`. Default: `'Preview is not supported for this file'`. */
   contentFileUnsupportedLabel?: string;
+  /** Placeholder and accessible name of the Tools tab's search field. Default: `'Search...'`. */
+  toolsSearchPlaceholder?: string;
+  /** Accessible name of the Tools search field's clear button. Default: `'Clear search'`. */
+  toolsSearchClearLabel?: string;
+  /** Returns the tool-count text above the Tools list. Default: ``(count) => `${count} tools` ``. */
+  toolsCountLabel?: (count: number) => string;
+  /** Text shown when the Tools search matches no tool. Default: `'No results found'`. */
+  toolsNoResultsLabel?: string;
   /** Label on the "Featured" tag chip shown when the entity is featured. Default: `'Featured'`. */
   featuredLabel?: string;
   /**
@@ -430,6 +438,8 @@ export interface ItemDetailsColors {
   toolsDivider?: string;
   /** Tool description text color. Fallback: `--text-secondary`. */
   toolsDescriptionText?: string;
+  /** Tool count text color above the Tools list. Fallback: `--text-secondary`. */
+  toolsCountText?: string;
   /** Spec-grid outer border color. Fallback: `--stroke-secondary`. */
   gridBorder?: string;
   /** Spec-grid header text color. Fallback: `--text-secondary`. */

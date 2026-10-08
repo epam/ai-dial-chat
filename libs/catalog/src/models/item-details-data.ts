@@ -164,7 +164,7 @@ export interface ToolDefinition {
   annotations?: ToolAnnotation[];
 }
 
-/** Column headings of the Tools tab grids; every field has an English default. */
+/** Visible strings of the Tools tab; every field has an English default. */
 export interface ToolsLabels {
   /** Input-parameters grid, name column. Default: `'Name'`. */
   inputName: string;
@@ -176,6 +176,14 @@ export interface ToolsLabels {
   annotationKey: string;
   /** Annotations grid, value column. Default: `'Value'`. */
   annotationValue: string;
+  /** Placeholder and accessible name of the tools search field. Default: `'Search...'`. */
+  searchPlaceholder: string;
+  /** Accessible name of the search field's clear button. Default: `'Clear search'`. */
+  searchClearLabel: string;
+  /** Returns the count text above the list, given the number of tools shown. Default: ``(count) => `${count} tools` ``. */
+  toolCount: (count: number) => string;
+  /** Text shown when the search matches no tool. Default: `'No results found'`. */
+  noResults: string;
 }
 
 /** Complete data for the Tools tab (Toolset entities only). */

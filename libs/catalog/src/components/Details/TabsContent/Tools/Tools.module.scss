@@ -3,6 +3,10 @@
     var(--cat-tools-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
+.count {
+  color: var(--cat-tools-count-text, var(--text-secondary, #57647a));
+}
+
 .description {
   color: var(--cat-tools-description-text, var(--text-secondary, #57647a));
 }

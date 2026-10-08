@@ -263,6 +263,8 @@
       "contentFileLoading": "Loading file",
       "contentFileError": "Failed to load this file.",
       "contentFileUnsupported": "Preview is not supported for this file",
+      "toolCount_one": "{{count}} tool",
+      "toolCount_other": "{{count}} tools",
       "downloadingStatus": "Downloading"
     },
     "create": {
