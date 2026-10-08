@@ -635,12 +635,15 @@ import { ItemHeader } from '@epam/ai-dial-chat-shared';
 
 ### EntityTypeLabel
 
-Entity type rendered as plain uppercase text, colored per type.
+Entity type rendered as plain uppercase text, colored per type. It shows the raw
+type value (`MODEL`, `TOOLSET`, …) unless `label` supplies the visible text, e.g. a
+translated type name; the color still follows `type`.
 
 ```tsx
 import { CatalogEntityType, EntityTypeLabel } from '@epam/ai-dial-chat-shared';
 
 <EntityTypeLabel type={CatalogEntityType.Model} />;
+<EntityTypeLabel type={CatalogEntityType.Toolset} label="Toolset" />;
 ```
 
 ### FeaturedChip
@@ -671,7 +674,8 @@ Entity identity block: deployment icon, type label, name, version, and an
 optional featured chip. `item` needs only the `EntityHeaderItem` fields, so any
 richer catalog model can be passed directly. `statusBadge` renders an
 arbitrary badge in the same corner, ahead of the featured chip. `featuredChipStyle`
-forwards to the featured chip's own `style` override (see `FeaturedChip` above).
+forwards to the featured chip's own `style` override (see `FeaturedChip` above). `typeLabel`
+forwards to `EntityTypeLabel`'s `label`.
 
 ```tsx
 import { EntityHeader } from '@epam/ai-dial-chat-shared';
@@ -681,6 +685,7 @@ import { EntityHeader } from '@epam/ai-dial-chat-shared';
   iconSize={48}
   query={searchQuery}
   featuredLabel="Featured"
+  typeLabel="Model"
   footer={<span>{item.lastUsed}</span>}
 />;
 ```

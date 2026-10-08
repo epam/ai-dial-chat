@@ -14,6 +14,18 @@ describe('EntityTypeLabel', () => {
     expect(label.className).not.toMatch(/bg-|background/);
   });
 
+  it('renders a host-supplied label instead of the raw type', () => {
+    render(
+      <EntityTypeLabel
+        type={CatalogEntityType.Toolset}
+        label="Набор инструментов"
+      />,
+    );
+
+    expect(screen.getByText('Набор инструментов')).toBeTruthy();
+    expect(screen.queryByText(CatalogEntityType.Toolset)).toBeNull();
+  });
+
   it('renders PROMPT as its own label', () => {
     render(<EntityTypeLabel type={CatalogEntityType.Prompt} />);
 

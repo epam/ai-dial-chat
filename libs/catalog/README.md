@@ -680,6 +680,10 @@ The rest of the details view is public for the same hosts:
 - `CredentialsBanner` is the note under the header about which credentials are active. `getCredentialsBannerState` (also on `@epam/ai-dial-catalog/mapping`) returns its `CredentialsBannerState`, or `undefined` when no banner applies.
 - `CredentialsApiKeyOverlay` is the personal API-key popover on its own, and `CredentialsManagementPanel` the admin view of personal and organization credentials.
 
+`texts.entityTypeLabels` (shared with `DetailsPanel`) sets the visible type in the
+header per entity type, e.g. translated names; a type without an entry keeps the raw
+value (`TOOLSET`, …).
+
 The host owns the confirmation steps: `DetailsHeader` calls `onRequestLogout` and `CredentialsManagementPanel` calls `onRequestLogout` / `onRequestDeleteApiKey` instead of signing out directly.
 
 ```tsx
@@ -691,6 +695,7 @@ import {
   type CatalogItem,
 } from '@epam/ai-dial-catalog';
 import { getCredentialsBannerState } from '@epam/ai-dial-catalog/mapping';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 const ToolsetDetails = ({ item }: { item: CatalogItem }) => {
   const bannerState =
@@ -704,7 +709,10 @@ const ToolsetDetails = ({ item }: { item: CatalogItem }) => {
         item={item}
         onLogin={(_, { level, apiKey }) => signIn(item.id, level, apiKey)}
         onLogout={(_, { level }) => signOut(item.id, level)}
-        texts={{ hasPrimaryAction: false }}
+        texts={{
+          hasPrimaryAction: false,
+          entityTypeLabels: { [CatalogEntityType.Toolset]: 'Toolset' },
+        }}
       />
       {item.credentials != null && bannerState != null && (
         <CredentialsBanner

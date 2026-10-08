@@ -1061,6 +1061,7 @@ export const Header: FC<HeaderProps> = ({
         iconSize={52}
         nameClassName={mergeClasses(nameClassName, styles.name)}
         featuredLabel={texts?.featuredLabel ?? 'Featured'}
+        typeLabel={texts?.entityTypeLabels?.[item.type]}
         featuredChipStyle={detailsStyles?.colors?.featuredChipStyle}
         statusBadge={statusBadge}
         footer={

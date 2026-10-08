@@ -1,3 +1,4 @@
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
   PublicationRule,
   PublishFolderNode,
@@ -74,6 +75,11 @@ export interface ItemDetailsTexts {
   contentFileUnsupportedLabel?: string;
   /** Label on the "Featured" tag chip shown when the entity is featured. Default: `'Featured'`. */
   featuredLabel?: string;
+  /**
+   * Visible entity type in the header, per type (e.g. translated names). A
+   * type that is absent keeps the raw `item.type` value (`'TOOLSET'`, …).
+   */
+  entityTypeLabels?: Partial<Record<CatalogEntityType, string>>;
   /** Label on the header badge shown when `item.details?.limits?.status` is `CatalogLimitStatus.RunningLow`. Default: `'Running low'`. */
   limitRunningLowLabel?: string;
   /** Label on the header badge shown when `item.details?.limits?.status` is `CatalogLimitStatus.LimitReached`. Default: `'Limit reached'`. */
