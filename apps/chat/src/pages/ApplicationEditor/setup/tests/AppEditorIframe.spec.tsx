@@ -151,6 +151,8 @@ describe('AppEditorIframe', () => {
         displayName,
       } as unknown as ComponentProps<typeof AppEditorIframe>['schema'],
     });
+    // An empty or missing displayName leaves the iframe without a title to query it by.
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const iframe = container.querySelector('iframe') as HTMLIFrameElement;
     expect(new URL(iframe.src).searchParams.has('applicationName')).toBe(false);
   });
