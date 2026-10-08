@@ -155,6 +155,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   onRefineInstructions,
   fileActions,
   supportingFileContent,
+  asideData,
   onSubmit,
   onCancel,
   onBack,
@@ -896,6 +897,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
       <EntityEditor
         {...editorProps}
+        asideData={asideData}
         isSubmitting={isSubmitting}
         metadataSectionClassName={FILES_SECTION_CLASS_NAME}
         metadata={

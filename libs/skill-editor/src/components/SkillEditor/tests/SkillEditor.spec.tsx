@@ -656,3 +656,27 @@ describe('SkillEditor — public class names', () => {
     expect(root?.getAttribute('dir')).toBe('rtl');
   });
 });
+
+describe('SkillEditor — asideData', () => {
+  it('renders no side panel by default', () => {
+    renderEditor();
+
+    expect(screen.queryByText('quality check')).toBeNull();
+  });
+
+  it('renders the host panel next to the form', () => {
+    renderEditor({ asideData: <p>quality check</p> });
+
+    expect(screen.getByText('quality check')).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
+  });
+
+  it.each([
+    ['loading', { isLoading: true }],
+    ['a load error', { hasLoadError: true }],
+  ])('does not render the panel while %s', (_name, props) => {
+    renderEditor({ ...props, asideData: <p>quality check</p> });
+
+    expect(screen.queryByText('quality check')).toBeNull();
+  });
+});

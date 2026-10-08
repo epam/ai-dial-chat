@@ -671,6 +671,60 @@ const tabs = getCatalogDetailsTabs(item, { isConnectHidden: true });
 `'Value'`. `PricingTab` takes `pricing` plus the optional `pricesSectionLabel`
 and `limitsSectionLabel`.
 
+### Embedding the header, Connect tab and credentials
+
+The rest of the details view is public for the same hosts:
+
+- `DetailsHeader` is the panel's identity block and action row (`DetailsHeaderProps`). Every action is opt-in and hidden when its prop is absent; with `onLogin` / `onLogout` it renders the toolset credentials action exactly as the panel does, including the personal API-key popover.
+- `ApiTab` is the Connect tab (`ApiTabProps`), rendering `details.api`.
+- `CredentialsBanner` is the note under the header about which credentials are active. `getCredentialsBannerState` (also on `@epam/ai-dial-catalog/mapping`) returns its `CredentialsBannerState`, or `undefined` when no banner applies.
+- `CredentialsApiKeyOverlay` is the personal API-key popover on its own, and `CredentialsManagementPanel` the admin view of personal and organization credentials.
+
+The host owns the confirmation steps: `DetailsHeader` calls `onRequestLogout` and `CredentialsManagementPanel` calls `onRequestLogout` / `onRequestDeleteApiKey` instead of signing out directly.
+
+```tsx
+import {
+  ApiTab,
+  CredentialsBanner,
+  CredentialsLevel,
+  DetailsHeader,
+  type CatalogItem,
+} from '@epam/ai-dial-catalog';
+import { getCredentialsBannerState } from '@epam/ai-dial-catalog/mapping';
+
+const ToolsetDetails = ({ item }: { item: CatalogItem }) => {
+  const bannerState =
+    item.credentials != null
+      ? getCredentialsBannerState(item.credentials)
+      : undefined;
+
+  return (
+    <>
+      <DetailsHeader
+        item={item}
+        onLogin={(_, { level, apiKey }) => signIn(item.id, level, apiKey)}
+        onLogout={(_, { level }) => signOut(item.id, level)}
+        texts={{ hasPrimaryAction: false }}
+      />
+      {item.credentials != null && bannerState != null && (
+        <CredentialsBanner
+          state={bannerState}
+          authenticationType={item.credentials.authenticationType}
+        />
+      )}
+      {item.details?.api != null && <ApiTab api={item.details.api} />}
+    </>
+  );
+};
+
+declare const signIn: (
+  id: string,
+  level: CredentialsLevel,
+  apiKey?: string,
+) => Promise<void>;
+declare const signOut: (id: string, level: CredentialsLevel) => Promise<void>;
+```
+
 ## Enums
 
 ```tsx
