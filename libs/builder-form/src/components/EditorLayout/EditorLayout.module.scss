@@ -12,9 +12,7 @@
   );
 }
 
-.sidebarBorder {
-  border-inline-end-color: var(
-    --el-sidebar-border-color,
-    var(--stroke-tertiary, #e0e6f0)
-  );
+/* Divider between a side column and the main column; the border width utility picks the side. */
+.columnBorder {
+  border-color: var(--el-sidebar-border-color, var(--stroke-tertiary, #e0e6f0));
 }

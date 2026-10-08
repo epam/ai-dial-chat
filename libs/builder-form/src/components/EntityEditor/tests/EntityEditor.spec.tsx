@@ -231,3 +231,53 @@ describe('EntityEditor', () => {
     ).toBeTruthy();
   });
 });
+
+describe('EntityEditor asideData', () => {
+  it('renders no aside by default', () => {
+    renderEditor();
+
+    expect(screen.queryByText('quality check')).toBeNull();
+  });
+
+  it('renders the host content inside its own section', () => {
+    renderEditor({ asideData: <p>quality check</p> });
+
+    expect(
+      closestWithClass(
+        screen.getByText('quality check'),
+        BUILDER_FORM_CLASS.asideSection,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('renders the section after the Metadata and Setup sections without a heading by default', () => {
+    renderEditor({ asideData: <p>quality check</p> });
+
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(2);
+  });
+
+  it('renders the section heading when asideTitle is set', () => {
+    renderEditor({
+      asideData: <p>quality check</p>,
+      asideTitle: 'Quality check',
+    });
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Quality check' }),
+    ).toBeTruthy();
+  });
+
+  it('merges asideSectionClassName onto the section', () => {
+    renderEditor({
+      asideData: <p>quality check</p>,
+      asideSectionClassName: 'host-aside',
+    });
+
+    const section = closestWithClass(
+      screen.getByText('quality check'),
+      BUILDER_FORM_CLASS.asideSection,
+    );
+    expect(section?.classList.contains('host-aside')).toBe(true);
+    expect(section?.classList.contains(BUILDER_FORM_CLASS.section)).toBe(true);
+  });
+});

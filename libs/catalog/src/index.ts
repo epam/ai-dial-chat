@@ -164,6 +164,20 @@ export type { PricingProps as PricingTabProps } from './components/Details/TabsC
 export { Tools as ToolsTab } from './components/Details/TabsContent/Tools/Tools';
 export type { ToolsProps as ToolsTabProps } from './components/Details/TabsContent/Tools/Tools';
 
+// The Connect tab, the details header and the toolset credentials views, for
+// the same hosts. `ApiTab` follows the tab naming; `DetailsHeader` avoids a
+// bare `Header` at the package root.
+export { ApiDetails as ApiTab } from './components/Details/ApiDetails';
+export type { ApiDetailsProps as ApiTabProps } from './components/Details/ApiDetails';
+export { Header as DetailsHeader } from './components/Details/Header/Header';
+export type { HeaderProps as DetailsHeaderProps } from './components/Details/Header/Header';
+export { CredentialsBanner } from './components/Details/Credentials/CredentialsBanner/CredentialsBanner';
+export type { CredentialsBannerProps } from './components/Details/Credentials/CredentialsBanner/CredentialsBanner';
+export { CredentialsApiKeyOverlay } from './components/Details/Header/CredentialsApiKeyOverlay/CredentialsApiKeyOverlay';
+export type { CredentialsApiKeyOverlayProps } from './components/Details/Header/CredentialsApiKeyOverlay/CredentialsApiKeyOverlay';
+export { CredentialsManagementPanel } from './components/Details/Credentials/CredentialsManagementPanel/CredentialsManagementPanel';
+export type { CredentialsManagementPanelProps } from './components/Details/Credentials/CredentialsManagementPanel/CredentialsManagementPanel';
+
 export { DetailsPanel } from './components/Details/DetailsPanel';
 
 export { AppIdentity } from './components/AppIdentity/AppIdentity';

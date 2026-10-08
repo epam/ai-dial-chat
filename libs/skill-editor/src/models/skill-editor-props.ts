@@ -385,6 +385,14 @@ export interface SkillEditorProps {
    * `labels.supportingFileNote` when omitted.
    */
   supportingFileContent?: ReactNode;
+  /**
+   * Host-rendered content of an Aside section in an extra column at the
+   * inline end, below the header, on desktop; stacked after the form on
+   * mobile/tablet. The library renders it verbatim with no knowledge of what
+   * it contains. Not rendered while the skill is loading or failed to load.
+   * Omit for the default layout.
+   */
+  asideData?: ReactNode;
   /** Called with the current values when the form is submitted. */
   onSubmit: (values: SkillEditorValues) => void;
   /** Called when the form is dismissed without saving. */

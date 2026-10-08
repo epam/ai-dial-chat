@@ -16,7 +16,7 @@ import { CredentialsRow } from '../CredentialsRow/CredentialsRow';
 import styles from './CredentialsManagementPanel.module.scss';
 
 /** Props for {@link CredentialsManagementPanel}. */
-interface CredentialsManagementPanelProps {
+export interface CredentialsManagementPanelProps {
   /** Item whose personal and organization credentials are managed. */
   item: CatalogItem;
   /** Called when a login action (OAuth or API-key add) is submitted for either level. May return a promise; the submitting row shows a spinner in place of its action label until it resolves. */

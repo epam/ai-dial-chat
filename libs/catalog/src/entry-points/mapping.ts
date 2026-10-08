@@ -9,6 +9,7 @@
 // Enums
 export {
   CredentialsBadgeState,
+  CredentialsBannerState,
   CredentialsLevel,
   CredentialStatus,
   CredentialsUiState,
@@ -29,6 +30,7 @@ export { getCatalogDetailsTabs } from '../utils/details-tabs';
 export type { CatalogDetailsTabsOptions } from '../utils/details-tabs';
 export {
   getCredentialsBadgeState,
+  getCredentialsBannerState,
   getCredentialsUiState,
   getSignedInLevel,
 } from '../utils/toolset-credentials';

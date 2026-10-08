@@ -11,7 +11,9 @@ import type { EditorLayoutProps } from '../../models/editor-layout-props';
 import styles from './EditorLayout.module.scss';
 
 /**
- * Two-column editor shell with a header row (back button, title, actions).
+ * Editor shell with a header row (back button, title, actions) and a body of
+ * `leftContent` and `centerContent`, plus an optional third column,
+ * `rightContent`, at the inline end.
  * On mobile/tablet, `actions` move out of the header into a dedicated bar
  * pinned to the bottom of the page, outside the scrollable body.
  */
@@ -21,6 +23,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
   backAriaLabel = 'Back',
   actions,
   leftContent,
+  centerContent,
   rightContent,
   isSaving = false,
   labels,
@@ -84,21 +87,31 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
         )}
       </div>
 
-      {/* Body: two-column on desktop, stacked on mobile */}
+      {/* Body: two columns (three with `rightContent`) on desktop, stacked on mobile */}
       <div className="flex flex-1 flex-col overflow-y-auto desktop:flex-row desktop:overflow-hidden">
         <div
           className={mergeClasses(
-            rightContent != null
+            centerContent != null
               ? 'desktop:w-[400px] desktop:shrink-0 desktop:overflow-y-auto desktop:border-e'
               : 'desktop:flex-1',
             'desktop:overflow-y-auto',
-            rightContent != null ? styles.sidebarBorder : undefined,
+            centerContent != null ? styles.columnBorder : undefined,
           )}
         >
           {leftContent}
         </div>
-        {rightContent != null && (
+        {centerContent != null && (
           <div className="desktop:flex desktop:min-h-0 desktop:flex-1 desktop:flex-col desktop:overflow-y-auto">
+            {centerContent}
+          </div>
+        )}
+        {rightContent != null && (
+          <div
+            className={mergeClasses(
+              'desktop:w-[400px] desktop:shrink-0 desktop:overflow-y-auto desktop:border-s',
+              styles.columnBorder,
+            )}
+          >
             {rightContent}
           </div>
         )}
