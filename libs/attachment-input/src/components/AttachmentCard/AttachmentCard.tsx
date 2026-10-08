@@ -70,7 +70,6 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       onRemove={onRemove}
       onDownload={onDownload}
       isLink={isLink}
-      isPasted={isPasted}
       styles={cardStyles}
       labels={labels}
       onExpand={onExpand}
