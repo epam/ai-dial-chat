@@ -265,3 +265,39 @@ describe('Input — selection highlight while a /query is typed', () => {
     }
   });
 });
+
+describe('Input — command menu opened by a paste', () => {
+  it('opens filtered by the pasted query when the textarea was empty', async () => {
+    const { textarea } = renderWithMenu();
+    await userEvent.click(textarea);
+
+    await userEvent.paste('/al');
+
+    expect(textarea.value).toBe('/al');
+    expect(
+      screen.getAllByRole('option').map((option) => option.textContent),
+    ).toEqual(['alpha']);
+  });
+
+  it('opens filtered by the pasted query when the textarea already held text', async () => {
+    const { textarea } = renderWithMenu();
+    await userEvent.type(textarea, 'hello ');
+
+    await userEvent.paste('/al');
+
+    expect(textarea.value).toBe('hello /al');
+    expect(
+      screen.getAllByRole('option').map((option) => option.textContent),
+    ).toEqual(['alpha']);
+  });
+
+  it('opens nothing when the paste leaves a non-command word at the caret', async () => {
+    const { textarea } = renderWithMenu();
+    await userEvent.click(textarea);
+
+    await userEvent.paste('/s sdf');
+
+    expect(textarea.value).toBe('/s sdf');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+});

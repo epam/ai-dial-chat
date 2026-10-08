@@ -17,7 +17,7 @@ A delete confirmation SHALL present, in this order:
 
 The surfaces that render it are the catalog details panel (in place, see `catalog-details-confirmation-subview`), the scheduled task detail page, the chat panel's single-chat delete, and the Files page body (see `file-manager-delete-ui`).
 
-Not covered: the Files dialog's frame and actions belong to `@epam/ai-dial-react-file-manager`; from `0.3.0-dev.25` they match this block (close control, text Cancel, danger Delete with a trash icon), but they are the package's own, not `ConfirmationFooter`. `AvatarPickerModal` composes its body from three label props rather than a content node and keeps its own wording. "Delete all conversations" has no single resource to name and stays on the kit's `ConfirmationPopup` (see `conversation-panel-header-menu`).
+Not covered: the Files dialog's frame and actions belong to `@epam/ai-dial-react-file-manager`; from `0.3.0` they match this block (close control, text Cancel, danger Delete with a trash icon), but they are the package's own, not `ConfirmationFooter`. `AvatarPickerModal` composes its body from three label props rather than a content node and keeps its own wording. "Delete all conversations" has no single resource to name and stays on the kit's `ConfirmationPopup` (see `conversation-panel-header-menu`).
 
 #### Scenario: A delete surface shows the full block
 
