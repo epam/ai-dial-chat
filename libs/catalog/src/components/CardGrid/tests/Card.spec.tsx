@@ -49,19 +49,21 @@ describe('Card — long version', () => {
     );
 
     const version = screen.getByText('With Google Search Grounding');
-    expect(version.className).toContain('flex-1');
     expect(version.className).toContain('min-w-0');
     expect(version.className).toContain('text-end');
     expect(version.className).not.toContain('max-w-[30%]');
   });
 
-  it('caps the name at 66% of the row so the version keeps the rest', () => {
+  it('splits the row by content so a short version does not cap the name', () => {
     render(<Card item={makeItem()} />);
 
     const name = screen.getByText('Claude');
-    expect(name.className).toContain('max-w-[66%]');
+    expect(name.className).not.toContain('max-w-[66%]');
     expect(name.className).toContain('min-w-0');
     expect(name.className).toContain('truncate');
+    expect(name.parentElement?.className).toContain(
+      'grid-cols-[minmax(0,auto)_minmax(0,auto)]',
+    );
   });
 
   it('lets the name take the whole row when there is no version', () => {
@@ -69,7 +71,7 @@ describe('Card — long version', () => {
 
     const name = screen.getByText('Claude');
     expect(name.className).toContain('flex-1');
-    expect(name.className).not.toContain('max-w-[66%]');
+    expect(name.parentElement?.className).not.toContain('grid');
   });
 });
 
