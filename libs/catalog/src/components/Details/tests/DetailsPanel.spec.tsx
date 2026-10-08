@@ -13,6 +13,7 @@ import type { CatalogItem } from '../../../models/catalog-item';
 import type {
   CatalogContentFilePreview,
   CatalogContentTreeNode,
+  ToolsLabels,
 } from '../../../models/item-details-data';
 import {
   CatalogContentNodeType,
@@ -285,7 +286,15 @@ vi.mock('../TabsContent/Limits/Limits', () => ({
   LimitsTab: () => <div>Limits content</div>,
 }));
 vi.mock('../TabsContent/Tools/Tools', () => ({
-  Tools: () => <div>Tools</div>,
+  Tools: ({ labels }: { labels?: Partial<ToolsLabels> }) => (
+    <div
+      data-testid="tools-tab"
+      data-search-placeholder={labels?.searchPlaceholder}
+      data-tool-count={labels?.toolCount?.(1)}
+    >
+      Tools
+    </div>
+  ),
 }));
 vi.mock('../ApiDetails', () => ({
   ApiDetails: ({ endpointSectionLabel }: { endpointSectionLabel?: string }) => (
@@ -1778,6 +1787,32 @@ describe('DetailsPanel', () => {
 
     const tablist = screen.getByRole('tablist');
     expect(tablist.textContent).toBe('AboutToolsConnect');
+  });
+
+  it('passes the host-supplied Tools search and count texts to the Tools tab', async () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: { tools: { tools: [{ name: 'notion-fetch' }] } },
+        })}
+        texts={{
+          toolsSearchPlaceholder: 'Rechercher',
+          toolsCountLabel: (count) => `${count} outil`,
+        }}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(
+      within(screen.getByRole('tablist')).getByRole('button', {
+        name: 'Tools',
+      }),
+    );
+
+    const toolsTab = screen.getByTestId('tools-tab');
+    expect(toolsTab.dataset.searchPlaceholder).toBe('Rechercher');
+    expect(toolsTab.dataset.toolCount).toBe('1 outil');
   });
 
   it('places Connect last among every other available tab', () => {

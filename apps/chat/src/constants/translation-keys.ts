@@ -206,6 +206,7 @@ export enum CatalogI18nKeys {
   DetailsContentFileLoading = 'catalog.details.contentFileLoading',
   DetailsContentFileError = 'catalog.details.contentFileError',
   DetailsContentFileUnsupported = 'catalog.details.contentFileUnsupported',
+  DetailsToolCount = 'catalog.details.toolCount',
   DetailsSkillDownloadError = 'catalog.details.skillDownloadError',
   DetailsDownloadingStatus = 'catalog.details.downloadingStatus',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',

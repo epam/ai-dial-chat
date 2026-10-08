@@ -665,11 +665,19 @@ const renderPanel = (item: CatalogItem, tab: CatalogDetailsTab) => {
 const tabs = getCatalogDetailsTabs(item, { isConnectHidden: true });
 ```
 
-`ToolsTab`'s `labels` (`ToolsLabels`) sets the grid column headings
-(`inputName`, `inputType`, `inputRequired`, `annotationKey` and
-`annotationValue`), defaulting to `'Name'`, `'Type'`, `'Required'`, `'Key'` and
-`'Value'`. `PricingTab` takes `pricing` plus the optional `pricesSectionLabel`
-and `limitsSectionLabel`.
+`ToolsTab` opens with a search field that narrows the list by tool name or
+description (case-insensitive), and a count of the tools shown. Its `labels`
+(`ToolsLabels`) sets the grid column headings (`inputName`, `inputType`,
+`inputRequired`, `annotationKey` and `annotationValue`), defaulting to
+`'Name'`, `'Type'`, `'Required'`, `'Key'` and `'Value'`, plus
+`searchPlaceholder` (`'Search...'`), `searchClearLabel` (`'Clear search'`),
+`toolCount` (``(count) => `${count} tools` ``) and `noResults`
+(`'No results found'`). In `DetailsPanel` the same strings come from
+`ItemDetailsTexts`' `toolsSearchPlaceholder`, `toolsSearchClearLabel`,
+`toolsCountLabel` and `toolsNoResultsLabel`.
+
+`PricingTab` takes `pricing` plus the optional `pricesSectionLabel` and
+`limitsSectionLabel`.
 
 ### Embedding the header, Connect tab and credentials
 

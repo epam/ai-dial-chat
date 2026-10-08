@@ -32,7 +32,10 @@ import {
   type ReactNode,
 } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
-import type { CatalogContentFilePreview } from '../../models/item-details-data';
+import type {
+  CatalogContentFilePreview,
+  ToolsLabels,
+} from '../../models/item-details-data';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
@@ -243,6 +246,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-api-heading-text': detailsColors?.apiHeadingText,
     '--cat-tools-divider': detailsColors?.toolsDivider,
     '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
+    '--cat-tools-count-text': detailsColors?.toolsCountText,
     '--cat-grid-border': detailsColors?.gridBorder,
     '--cat-grid-header-text': detailsColors?.gridHeaderText,
     '--cat-grid-header-bg': detailsColors?.gridHeaderBackground,
@@ -837,6 +841,20 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     [texts],
   );
 
+  // Only the strings the host set: an `undefined` would override the tab's English default.
+  const toolsLabels = useMemo(() => {
+    const labels: Partial<ToolsLabels> = {};
+    if (texts?.toolsSearchPlaceholder != null)
+      labels.searchPlaceholder = texts.toolsSearchPlaceholder;
+    if (texts?.toolsSearchClearLabel != null)
+      labels.searchClearLabel = texts.toolsSearchClearLabel;
+    if (texts?.toolsCountLabel != null)
+      labels.toolCount = texts.toolsCountLabel;
+    if (texts?.toolsNoResultsLabel != null)
+      labels.noResults = texts.toolsNoResultsLabel;
+    return labels;
+  }, [texts]);
+
   const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
   const overviewNoLabel = texts?.overviewNoLabel ?? 'No';
 
@@ -1345,7 +1363,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   />
                 )}
               {activeTab === CatalogDetailsTab.Tools && (
-                <Tools tools={item.details?.tools} />
+                <Tools tools={item.details?.tools} labels={toolsLabels} />
               )}
             </div>
           </>
