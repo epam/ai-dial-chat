@@ -124,6 +124,69 @@ describe('AppEditorIframe', () => {
     expect(url.searchParams.get('theme')).toBe('dark');
   });
 
+  it('includes applicationName in the iframe src', () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('applicationName')).toBe(
+      'QuickApp',
+    );
+  });
+
+  it('encodes applicationName with spaces and dots and round-trips it', () => {
+    renderIframe({ schema: { ...SCHEMA, displayName: 'Quick app 2.0' } });
+    const iframe = screen.getByTitle('Quick app 2.0') as HTMLIFrameElement;
+    expect(iframe.src).toContain('applicationName=Quick+app+2.0');
+    expect(new URL(iframe.src).searchParams.get('applicationName')).toBe(
+      'Quick app 2.0',
+    );
+  });
+
+  it.each([
+    ['empty', ''],
+    ['undefined', undefined],
+  ])('omits applicationName when displayName is %s', (_label, displayName) => {
+    const { container } = renderIframe({
+      schema: {
+        ...SCHEMA,
+        displayName,
+      } as unknown as ComponentProps<typeof AppEditorIframe>['schema'],
+    });
+    const iframe = container.querySelector('iframe') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.has('applicationName')).toBe(false);
+  });
+
+  it('changes the iframe src and re-gates readiness when displayName changes', () => {
+    const onReadyChange = vi.fn();
+    const { rerender } = render(
+      <AppEditorIframe {...DEFAULT_PROPS} onReadyChange={onReadyChange} />,
+    );
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToSave}`,
+        },
+        origin: 'https://editor.example.com',
+      }),
+    );
+    expect(onReadyChange).toHaveBeenCalledWith(true);
+    onReadyChange.mockClear();
+
+    rerender(
+      <AppEditorIframe
+        {...DEFAULT_PROPS}
+        schema={{ ...SCHEMA, displayName: 'Other App' }}
+        onReadyChange={onReadyChange}
+      />,
+    );
+
+    const iframe = screen.getByTitle('Other App') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('applicationName')).toBe(
+      'Other App',
+    );
+    expect(onReadyChange).toHaveBeenCalledWith(false);
+  });
+
   it('delegates local-network-access to the embedded iframe', () => {
     renderIframe();
     const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
