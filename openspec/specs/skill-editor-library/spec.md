@@ -104,6 +104,22 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **WHEN** a host never passes `supportingFileContent`
 - **THEN** `SkillEditor` behaves exactly as it did before this prop existed
 
+### Requirement: Host-rendered aside content
+
+`SkillEditor` SHALL accept an optional `asideData?: ReactNode` prop and forward it to `EntityEditor`, which renders it in an Aside section in a third column at the inline end, below the header row (see the builder-form "EditorLayout — optional host side panel" requirement). The library SHALL have no knowledge of what it contains. The panel SHALL NOT be rendered while the skill is loading (`isLoading`) or when loading failed (`hasLoadError`), because the form itself is not shown in those states. Omitting the prop SHALL preserve the existing layout exactly.
+
+#### Scenario: Host panel renders next to the form
+- **WHEN** the host passes `asideData={<QualityCheck />}` and the skill has loaded
+- **THEN** `<QualityCheck />` renders in a column beside the form, under the header
+
+#### Scenario: Panel is not shown while loading or after a load error
+- **WHEN** `isLoading` or `hasLoadError` is `true`
+- **THEN** the library does not render `asideData`
+
+#### Scenario: Omitting the prop preserves prior behavior
+- **WHEN** a host never passes `asideData`
+- **THEN** `SkillEditor` behaves exactly as it did before this prop existed
+
 ### Requirement: Adding and removing supporting files and folders
 `SkillEditor` SHALL expose an **Add** dropdown in the Files pane header and, in each non-`SKILL.md` node's context menu, the same add entries listed directly for a folder plus an **Add sibling** submenu (specified by the `skill-file-tree-actions` capability). Supporting files SHALL be added only through the upload dialog (specified by the `skill-file-drag-drop` capability) — whether their source is the device, an archive expanded by `fileActions.extractArchive`, or the DIAL file system via `fileActions.pickFromFileSystem` — so a user always stages one or more files, reviews them, and commits the whole valid batch at once, rather than a single file being added directly on selection. Validation SHALL be performed through a host-supplied `fileActions.validateBatch` callback (returning per-candidate and batch-level results) and commit SHALL be performed through a host-supplied `fileActions.commitBatch` callback, so the app boundary's path-safety, size, count, and duplicate-detection rules apply without the library encoding any DIAL-specific policy itself. The library SHALL offer creating an empty folder only when the host supplies `fileActions.onCreateFolder`; it SHALL NOT offer creating an empty file. Removing an already-committed supporting file or folder from the editor's tree (as opposed to removing a not-yet-committed staged candidate inside the upload dialog) SHALL happen immediately on the **Delete** action, with no confirmation step — the entry SHALL be removed from local state and the host-supplied removal callback invoked synchronously when Delete is activated.
 

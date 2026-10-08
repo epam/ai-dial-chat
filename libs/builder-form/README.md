@@ -91,7 +91,7 @@ callback remain the header's own contract.
 
 ### EditorLayout
 
-Full-height editor shell with a header and a responsive two-column body. On desktop, `actions` render at the end of the header row. On mobile/tablet, `actions` instead render in a bordered bar pinned to the bottom of the page, outside the scrollable body, so they never overlap `leftContent`/`rightContent`; each button grows to share the bar's width equally, and the primary action (the last child, e.g. Save/Create) is placed on the inline-start side with Cancel on the inline-end side — the reverse of the header's order.
+Full-height editor shell with a header and a responsive two-column body (three with the optional `rightContent`). On desktop, `actions` render at the end of the header row. On mobile/tablet, `actions` instead render in a bordered bar pinned to the bottom of the page, outside the scrollable body, so they never overlap `leftContent`/`centerContent`; each button grows to share the bar's width equally, and the primary action (the last child, e.g. Save/Create) is placed on the inline-start side with Cancel on the inline-end side — the reverse of the header's order.
 
 ```tsx
 import { EditorLayout } from '@epam/ai-dial-builder-form';
@@ -110,26 +110,27 @@ import { GhostButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
   isSaving={isSubmitting}
   labels={{ savingStatusLabel: 'Saving' }}
   leftContent={<MetadataSection />}
-  rightContent={<SetupSection />}
+  centerContent={<SetupSection />}
 />;
 ```
 
 **Props**
 
-| Prop            | Type                 | Required | Default  | Description                                                                                                      |
-| --------------- | -------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
-| `title`         | `string`             | ✓        | —        | Heading text rendered as `<h1>` in the header row.                                                               |
-| `onBack`        | `() => void`         | ✓        | —        | Called when the back-arrow button is clicked.                                                                    |
-| `backAriaLabel` | `string`             |          | `'Back'` | Accessible label for the back-arrow button.                                                                      |
-| `actions`       | `ReactNode`          |          | —        | Cancel + Save buttons. Rendered inline-end in the header on desktop, or in a pinned bottom bar on mobile/tablet. |
-| `leftContent`   | `ReactNode`          |          | —        | Left column (Metadata).                                                                                          |
-| `rightContent`  | `ReactNode`          |          | —        | Right column (Setup). When absent, left content fills full width.                                                |
-| `isSaving`      | `boolean`            |          | `false`  | When `true`, announces `savingStatusLabel` via `aria-live`.                                                      |
-| `labels`        | `EditorLayoutLabels` |          | —        | Text overrides with English defaults.                                                                            |
-| `styles`        | `EditorLayoutStyles` |          | —        | CSS custom property overrides.                                                                                   |
-| `dir`           | `'ltr' \| 'rtl'`     |          | —        | Explicit direction override forwarded to the root element.                                                       |
+| Prop            | Type                 | Required | Default  | Description                                                                                                                                      |
+| --------------- | -------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `title`         | `string`             | ✓        | —        | Heading text rendered as `<h1>` in the header row.                                                                                               |
+| `onBack`        | `() => void`         | ✓        | —        | Called when the back-arrow button is clicked.                                                                                                    |
+| `backAriaLabel` | `string`             |          | `'Back'` | Accessible label for the back-arrow button.                                                                                                      |
+| `actions`       | `ReactNode`          |          | —        | Cancel + Save buttons. Rendered inline-end in the header on desktop, or in a pinned bottom bar on mobile/tablet.                                 |
+| `leftContent`   | `ReactNode`          |          | —        | Left column (Metadata).                                                                                                                          |
+| `centerContent` | `ReactNode`          |          | —        | Center column (Setup). When absent, left content fills full width.                                                                               |
+| `rightContent`  | `ReactNode`          |          | —        | Host-rendered side panel in an extra column at the inline end, below the header (stacked after the content on mobile/tablet). Rendered verbatim. |
+| `isSaving`      | `boolean`            |          | `false`  | When `true`, announces `savingStatusLabel` via `aria-live`.                                                                                      |
+| `labels`        | `EditorLayoutLabels` |          | —        | Text overrides with English defaults.                                                                                                            |
+| `styles`        | `EditorLayoutStyles` |          | —        | CSS custom property overrides.                                                                                                                   |
+| `dir`           | `'ltr' \| 'rtl'`     |          | —        | Explicit direction override forwarded to the root element.                                                                                       |
 
-When `rightContent` is omitted, `leftContent` expands to full width at all viewport sizes.
+When `centerContent` is omitted, `leftContent` expands to full width at all viewport sizes.
 
 ### EditorSection
 
@@ -237,7 +238,7 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
 
 ### EntityEditor
 
-The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` title, Cancel and a primary button in the header, a "Metadata" `EditorSection` in the 360px left column and a "Setup" `EditorSection` in the right column. `title`, `onBack`, `onCancel`, `onSubmit`, `submitLabel`, and `metadata` are required.
+The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` title, Cancel and a primary button in the header, a "Metadata" `EditorSection` in the 360px left column and a "Setup" `EditorSection` in the center column. `title`, `onBack`, `onCancel`, `onSubmit`, `submitLabel`, and `metadata` are required.
 
 - `isSubmitting` disables Cancel and the primary button and announces `labels.savingStatusLabel`.
 - `isSubmitDisabled` disables only the primary button. Use it for a host-owned readiness reason (an embedded editor that is not ready to save), not for validation — a submit attempt with invalid fields should show the errors instead.
@@ -246,6 +247,7 @@ The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` tit
 - `metadataFooter` renders below the Metadata section in the left column.
 - `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading; `null` renders the section without one, for Setup content that carries its own heading (e.g. an embedded editor).
 - `alert` renders in a `role="alert"` region above the Setup section (above Metadata when there is no Setup).
+- `asideData` fills an Aside section in an extra, third column at the inline end, below the header (a fixed 400px wide on desktop, stacked after the content on mobile/tablet). `asideTitle` adds a heading (none by default, for content that carries its own), `asideSectionClassName` is merged onto the section root. Omit it for the default two-column layout.
 
 ```tsx
 import { EntityEditor, MetadataForm } from '@epam/ai-dial-builder-form';
@@ -569,12 +571,13 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. Selected
 elements therefore carry a stable public class.
 
-| Key               | Class                                | Element                                                        |
-| ----------------- | ------------------------------------ | -------------------------------------------------------------- |
-| `layout`          | `dial-builder-form-layout`           | The editor layout root, holding the header and the columns     |
-| `section`         | `dial-builder-form-section`          | Every `EditorSection` box, titled or not                       |
-| `metadataSection` | `dial-builder-form-metadata-section` | The Metadata section `EntityEditor` renders in the left column |
-| `setupSection`    | `dial-builder-form-setup-section`    | The Setup section `EntityEditor` renders in the right column   |
+| Key               | Class                                | Element                                                                               |
+| ----------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `layout`          | `dial-builder-form-layout`           | The editor layout root, holding the header and the columns                            |
+| `section`         | `dial-builder-form-section`          | Every `EditorSection` box, titled or not                                              |
+| `metadataSection` | `dial-builder-form-metadata-section` | The Metadata section `EntityEditor` renders in the left column                        |
+| `setupSection`    | `dial-builder-form-setup-section`    | The Setup section `EntityEditor` renders in the center column                         |
+| `asideSection`    | `dial-builder-form-aside-section`    | The Aside section `EntityEditor` renders in the third column, when `asideData` is set |
 
 ```tsx
 import { BUILDER_FORM_CLASS } from '@epam/ai-dial-builder-form';
