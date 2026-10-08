@@ -1,12 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { InteractiveTooltip, TooltipPlacement } from '@epam/ai-dial-ui-kit';
 import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type FC,
-  type KeyboardEvent,
-} from 'react';
+  InteractiveTooltip,
+  InteractiveTooltipTrigger,
+  TooltipPlacement,
+} from '@epam/ai-dial-ui-kit';
+import { useLayoutEffect, useRef, useState, type FC } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
@@ -37,27 +35,17 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   } = labels;
 
   /*
-   * Hover mode leaves the tooltip uncontrolled. Click mode supplies its open
-   * state, disabling the kit's hover/focus triggers while retaining dismissal.
-   * A "View details" click remounts the card in its closed state.
+   * Hover mode opens the kit's tooltip on hover or focus; click mode opens it
+   * on a click, tap or Enter/Space and keeps it open until dismissed — the only
+   * way to reach it on a touch screen. A "View details" click remounts the
+   * card in its closed state.
    */
   const [tooltipGeneration, setTooltipGeneration] = useState(0);
-  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const isClickTriggered = detailsTrigger === 'click';
 
   const handleViewDetails = () => {
-    setIsTooltipOpen(false);
     setTooltipGeneration((generation) => generation + 1);
     onViewDetails(path);
-  };
-
-  const openTooltipOnKeyboardActivation = (event: KeyboardEvent) => {
-    if (!isClickTriggered || (event.key !== 'Enter' && event.key !== ' ')) {
-      return;
-    }
-
-    event.preventDefault();
-    setIsTooltipOpen(true);
   };
 
   /*
@@ -109,9 +97,12 @@ export const ChatSkill: FC<ChatSkillProps> = ({
       key={tooltipGeneration}
       asChild
       placement={TooltipPlacement.Top}
-      open={isClickTriggered ? isTooltipOpen : undefined}
-      onOpenChange={isClickTriggered ? setIsTooltipOpen : undefined}
-      contentClassName="max-w-[550px]"
+      trigger={
+        isClickTriggered
+          ? InteractiveTooltipTrigger.Click
+          : InteractiveTooltipTrigger.Hover
+      }
+      contentClassName="max-w-[min(550px,calc(100vw-10px))]"
       content={renderTooltipContent()}
     >
       {/*
@@ -123,7 +114,6 @@ export const ChatSkill: FC<ChatSkillProps> = ({
        * cannot, so the mirror would wrap onto an extra line the textarea
        * never grows to show ([#9243](https://github.com/epam/ai-dial-chat/issues/9243)).
        */}
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click/keydown only act in click-triggered mode; hover mode's tooltip is reachable via focus alone */}
       <span
         tabIndex={0}
         className={mergeClasses(
@@ -137,8 +127,6 @@ export const ChatSkill: FC<ChatSkillProps> = ({
           SKILLS_CLASS.chip,
         )}
         aria-label={`/${name}`}
-        onClick={isClickTriggered ? () => setIsTooltipOpen(true) : undefined}
-        onKeyDown={openTooltipOnKeyboardActivation}
       >
         <span
           ref={slashRef}
