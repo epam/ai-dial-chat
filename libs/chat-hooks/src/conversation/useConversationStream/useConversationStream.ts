@@ -48,6 +48,9 @@ import {
  */
 const CHANNEL_WAIT_TIMEOUT_MS = 20000;
 
+/* Status of a terminal save that DIAL Core rejected for its credentials. */
+const UNAUTHORIZED_STATUS = 401;
+
 /** Options accepted by {@link ConversationStreamTransport.streamCompletion}. */
 export interface StreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -104,6 +107,16 @@ export interface ConversationStreamTransport {
   getConversation(
     conversationId: string,
     signal?: AbortSignal,
+  ): Promise<Conversation>;
+  /**
+   * Saves `conversation` at the bucket-stripped `path`, resolving with the saved
+   * conversation. Used only for the single recovery save after the backend's
+   * terminal save was rejected with `401`; without it that failure shows the
+   * persistence warning immediately.
+   */
+  saveConversation?(
+    path: string,
+    conversation: Conversation,
   ): Promise<Conversation>;
 }
 
@@ -747,17 +760,45 @@ export const useConversationStream = ({
           bufferedGenerationsRef.current.get(conversationPath);
         const buffered =
           currentBuffer?.generationId === genId ? currentBuffer : undefined;
-        if (buffered) {
-          if (error instanceof GenerationPersistenceError) {
-            buffered.message = {
-              ...buffered.message,
-              streamErrorMessage: generationPersistenceErrorMessage,
-            };
-          } else {
-            bufferedGenerationsRef.current.delete(conversationPath);
-          }
+        if (buffered && !(error instanceof GenerationPersistenceError)) {
+          bufferedGenerationsRef.current.delete(conversationPath);
         }
         releaseGeneration();
+        /*
+         * The backend's terminal save holds the credentials captured when this
+         * completion started, so a long generation can outlive them and the
+         * save is rejected with 401 while this tab's session is still valid
+         * ([#9324](https://github.com/epam/ai-dial-chat/issues/9324)). A 401
+         * means nothing was stored, so one save from here cannot duplicate a
+         * committed write; the warning is shown only if that save fails too.
+         */
+        if (
+          buffered &&
+          transport.saveConversation &&
+          error instanceof GenerationPersistenceError &&
+          error.status === UNAUTHORIZED_STATUS
+        ) {
+          void saveUnsavedAnswer(
+            error,
+            buffered,
+            transport.saveConversation.bind(transport),
+          );
+          return;
+        }
+        showFailure(error, buffered);
+      };
+
+      /* Writes the displayable error text onto the failed generation's message. */
+      const showFailure = (
+        error: Error,
+        buffered: BufferedGeneration | undefined,
+      ) => {
+        if (buffered && error instanceof GenerationPersistenceError) {
+          buffered.message = {
+            ...buffered.message,
+            streamErrorMessage: generationPersistenceErrorMessage,
+          };
+        }
         /* Surface the error only on the conversation the user is viewing,
          * and never over the generation that superseded this one. */
         if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
@@ -788,6 +829,50 @@ export const useConversationStream = ({
           conversationRef.current = updated;
           return updated;
         });
+      };
+
+      /*
+       * Saves the received answer once over the stored conversation, then shows
+       * the saved copy, or the persistence warning if the read or save fails.
+       */
+      const saveUnsavedAnswer = async (
+        error: GenerationPersistenceError,
+        buffered: BufferedGeneration,
+        saveConversation: NonNullable<
+          ConversationStreamTransport['saveConversation']
+        >,
+      ) => {
+        const isSaveCurrent = () =>
+          mountedRef.current &&
+          !isSuperseded() &&
+          bufferedGenerationsRef.current.get(conversationPath) === buffered;
+        try {
+          const stored = await transport.getConversation(
+            safeDecodeURI(currentConversationId),
+          );
+          if (!isSaveCurrent()) return;
+          /* Same unsaved-placeholder check as `reloadConversation`: any other
+           * stored copy is not this turn's start state, so saving over it would
+           * rewrite history. */
+          if (
+            buffered.messageIndex !== stored.messages.length - 1 ||
+            !isAwaitingGenerationResume(stored)
+          ) {
+            showFailure(error, buffered);
+            return;
+          }
+          const saved = await saveConversation(
+            conversationPath,
+            restoreBufferedMessage(stored, buffered),
+          );
+          if (!isSaveCurrent()) return;
+          bufferedGenerationsRef.current.delete(conversationPath);
+          if (!isPathDisplayed(conversationPath)) return;
+          setConversation(saved);
+          conversationRef.current = saved;
+        } catch {
+          if (isSaveCurrent()) showFailure(error, buffered);
+        }
       };
 
       /* Settles a generation that recovery resolved: finished on the server, or resumed there. */

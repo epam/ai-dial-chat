@@ -226,9 +226,12 @@ describe('completion persistence over HTTP', () => {
       })
       .expect(200);
 
-  it.each([401, 503])(
+  it.each([
+    [401, 401],
+    [503, 502],
+  ])(
     'reports HTTP %i on the terminal write after delivering text and stages',
-    async (status) => {
+    async (status, reportedStatus) => {
       terminalStatus = status;
       const response = await complete();
       expect(response.text).toContain('Visible answer');
@@ -247,6 +250,7 @@ describe('completion persistence over HTTP', () => {
       expect(stored.messages.at(-1)?.custom_content?.stages ?? []).toEqual([]);
       expect(registry.attach('c:test-session', 'test-path')).toBeUndefined();
       expect(response.text).toContain('conversation_save_failed');
+      expect(response.text).toContain(`"status":${reportedStatus}`);
       expect(response.text).not.toContain('fixture token expired');
       expect(response.text).not.toContain('fixture storage unavailable');
       expect(terminalEvents).toEqual([
