@@ -44,7 +44,7 @@ export interface UpdateApplicationRequest {
  */
 export class ApplicationsApi extends runtime.BaseAPI {
   /**
-   * Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list and deployments list caches on success.
+   * Creates a new application for the authenticated session user by proxying DIAL Core. With createOnly, atomically rejects an existing name/version with 409. With preserveApplicationProperties, stores schema settings verbatim. Invalidates the applications list and deployments list caches on success.
    * Create a new application
    */
   async createApplicationRaw(
@@ -90,7 +90,7 @@ export class ApplicationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list and deployments list caches on success.
+   * Creates a new application for the authenticated session user by proxying DIAL Core. With createOnly, atomically rejects an existing name/version with 409. With preserveApplicationProperties, stores schema settings verbatim. Invalidates the applications list and deployments list caches on success.
    * Create a new application
    */
   async createApplication(

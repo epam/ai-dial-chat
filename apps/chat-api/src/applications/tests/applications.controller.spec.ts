@@ -145,6 +145,42 @@ describe('ApplicationsController (integration)', () => {
       expect(service.createApplication).not.toHaveBeenCalled();
     });
 
+    it('accepts template settings and create-only options through validation', async () => {
+      const body = {
+        ...validBody,
+        createOnly: true,
+        preserveApplicationProperties: true,
+        applicationProperties: {
+          features: { timestamp: null },
+          custom: { enabled: true },
+        },
+        inputAttachmentTypes: ['image/png'],
+        maxInputAttachments: 3,
+      };
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send(body)
+        .expect(201);
+      expect(service.createApplication).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        body,
+      );
+    });
+
+    it.each([
+      { createOnly: 'true' },
+      { preserveApplicationProperties: 'true' },
+      { inputAttachmentTypes: ['invalid'] },
+      { maxInputAttachments: -1 },
+    ])('rejects malformed create options: %j', async (options) => {
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ ...validBody, ...options })
+        .expect(400);
+      expect(service.createApplication).not.toHaveBeenCalled();
+    });
+
     it('returns 201 when type is omitted (custom app with no schema)', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/applications')
