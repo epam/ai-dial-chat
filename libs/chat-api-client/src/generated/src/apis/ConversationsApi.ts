@@ -22,6 +22,7 @@ import type {
   CreateConversationDto,
   DeleteAllConversationsBodyDto,
   DeleteConversationsBodyDto,
+  DuplicateConversationErrorDto,
   DuplicateConversationResponseDto,
   GenerateTitleResponseDto,
   PublishConversationDto,

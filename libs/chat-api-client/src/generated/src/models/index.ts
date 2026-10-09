@@ -1282,6 +1282,17 @@ export interface ConversationDeletionResultDto {
    */
   failed: Array<ConversationDeletionFailureDto>;
 }
+
+/**
+ * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+ * @export
+ */
+export const ConversationErrorCode = {
+  ConversationDuplicateModelHidden: 'conversationDuplicateModelHidden',
+} as const;
+export type ConversationErrorCode =
+  (typeof ConversationErrorCode)[keyof typeof ConversationErrorCode];
+
 /**
  *
  * @export
@@ -4040,6 +4051,38 @@ export interface DownloadArchiveDto {
    */
   items: Array<ArchiveItemDto>;
 }
+/**
+ *
+ * @export
+ * @interface DuplicateConversationErrorDto
+ */
+export interface DuplicateConversationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof DuplicateConversationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DuplicateConversationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DuplicateConversationErrorDto
+   */
+  message: string;
+  /**
+   * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+   * @type {ConversationErrorCode}
+   * @memberof DuplicateConversationErrorDto
+   */
+  code?: ConversationErrorCode;
+}
+
 /**
  *
  * @export

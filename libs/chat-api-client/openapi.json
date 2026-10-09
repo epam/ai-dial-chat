@@ -3490,7 +3490,14 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "DIAL Core denied access to the resource"
+            "description": "The caller cannot read the source conversation, or (`code: conversationDuplicateModelHidden`) the conversation's current model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateConversationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Source conversation not found"
@@ -12933,6 +12940,37 @@
           }
         },
         "required": ["newPath"]
+      },
+      "ConversationErrorCode": {
+        "type": "string",
+        "enum": ["conversationDuplicateModelHidden"],
+        "description": "Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`."
+      },
+      "DuplicateConversationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation's model is not available for new conversations"
+          },
+          "code": {
+            "description": "Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "error", "message"]
       },
       "DeleteConversationsBodyDto": {
         "type": "object",

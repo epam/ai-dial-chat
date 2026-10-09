@@ -1,4 +1,7 @@
-import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
+import {
+  ConversationErrorCode,
+  type ConversationResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   findDeploymentByIdOrReference,
   getApiErrorDetails,
@@ -244,8 +247,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       const newPath = await duplicateConversation(conversationId);
       if (isReadOnly) onDuplicateReadonly?.();
       navigate(getConversationRoute(newPath));
-    } catch {
-      setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
+    } catch (error) {
+      const { code } = await getApiErrorDetails(error);
+      setDuplicateError(
+        t(
+          code === ConversationErrorCode.ConversationDuplicateModelHidden
+            ? ConversationPanelI18nKeys.DuplicateUnavailableModel
+            : ConversationPanelI18nKeys.DuplicateError,
+        ),
+      );
     }
   }, [
     conversationId,
