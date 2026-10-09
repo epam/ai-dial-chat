@@ -24,7 +24,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.Success:
       return (
         <IconCircleCheck
-          size={DIAL_ICON_SIZE.SM}
+          size={DIAL_ICON_SIZE.MD}
           className={styles.successIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -33,7 +33,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.Error:
       return (
         <IconCircleX
-          size={DIAL_ICON_SIZE.SM}
+          size={DIAL_ICON_SIZE.MD}
           className={styles.errorIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -42,13 +42,13 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.InProgress:
       return (
         <span aria-hidden>
-          <Spinner size={DIAL_ICON_SIZE.SM} />
+          <Spinner size={DIAL_ICON_SIZE.MD} />
         </span>
       );
     case ScheduledTaskRunStatus.Missed:
       return (
         <IconAlertTriangle
-          size={DIAL_ICON_SIZE.SM}
+          size={DIAL_ICON_SIZE.MD}
           className={styles.missedIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -82,7 +82,9 @@ export const ScheduledTaskRunHistoryList: FC<
 }) => {
   const { colors, typography } = listStyles ?? {};
   const runTimestampClassName =
-    typography?.runTimestampClassName ?? 'dial-small-text';
+    typography?.runTimestampClassName ?? 'dial-small-paragraph-text';
+  const runTimestampUnreadClassName =
+    typography?.runTimestampUnreadClassName ?? 'dial-small-paragraph-semi-text';
   const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
   const unreadIndicatorLabel = labels.unreadIndicatorLabel ?? 'Unread';
 
@@ -142,36 +144,40 @@ export const ScheduledTaskRunHistoryList: FC<
         aria-label={accessibleName}
         aria-current={isCurrent ? 'true' : undefined}
         className={mergeClasses(
-          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full pe-2',
-          styles.rowLayout,
+          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
           isCurrent && styles.currentRun,
           isClickable && 'cursor-pointer',
           isClickable && styles.interactiveRow,
         )}
       >
-        <span className="flex items-center gap-2 truncate">
-          {/*
-           * A fixed 12x12 slot is always reserved before the timestamp so its
-           * horizontal position stays identical across rows whether or not
-           * the unread dot itself is rendered.
-           */}
-          <span className="relative flex size-3 shrink-0 items-center justify-center">
-            {run.isUnread && (
-              <span
-                className={mergeClasses(
-                  'size-[5.33px] rounded-full',
-                  styles.unreadDot,
-                )}
-                aria-hidden
-              />
+        <span className="flex min-w-0 items-center gap-2">
+          <RunStatusIcon status={run.status} />
+          <span
+            className={mergeClasses(
+              run.isUnread
+                ? runTimestampUnreadClassName
+                : runTimestampClassName,
+              'truncate',
             )}
-          </span>
-          <span className={mergeClasses(runTimestampClassName, 'truncate')}>
+          >
             {run.timestampLabel}
           </span>
         </span>
-        <span className="flex min-h-[var(--strhl-row-min-height,32px)] w-14 shrink-0 items-center justify-end">
-          <RunStatusIcon status={run.status} />
+        {/*
+         * A fixed 12x12 slot is always reserved at the row's end so the
+         * timestamp's width stays identical across rows whether or not the
+         * unread dot itself is rendered.
+         */}
+        <span className="relative flex size-3 shrink-0 items-center justify-center">
+          {run.isUnread && (
+            <span
+              className={mergeClasses(
+                'size-[5.33px] rounded-full',
+                styles.unreadDot,
+              )}
+              aria-hidden
+            />
+          )}
         </span>
       </li>
     );
@@ -182,10 +188,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <li
         key={`history-skeleton-${index}`}
         aria-hidden="true"
-        className={mergeClasses(
-          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 pe-2',
-          styles.rowLayout,
-        )}
+        className="flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 px-3"
       >
         <Skeleton
           variant={SkeletonVariant.Rectangular}

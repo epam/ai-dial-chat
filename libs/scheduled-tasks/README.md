@@ -288,6 +288,98 @@ import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
 when neither is given. Pass `typeLabel` in sentence case — the label uppercases
 itself.
 
+### ScheduledTaskConversationHistorySection
+
+History accordion of a task conversation's sources panel: the schedule's
+paginated runs with the current run highlighted and a "Show more" footer. It is
+the accordion-wrapped counterpart of `ScheduledTaskRunHistoryList` — expanded by
+default, resetting to expanded whenever `scheduleId` changes — while the list
+itself stays bare for hosts that need their own chrome. Runs, loading/error
+state, pagination callbacks, and labels are all supplied by the host; a run row
+renders as clickable only when its item carries a `conversationId` and
+`onRunClick` is supplied.
+
+```tsx
+import {
+  ScheduledTaskConversationHistorySection,
+  ScheduledTaskRunStatus,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskConversationHistorySection
+  scheduleId={schedule.id}
+  items={[
+    {
+      id: 'run_1',
+      status: ScheduledTaskRunStatus.Success,
+      timestampLabel: 'today at 9:01 AM (99s)',
+      conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+    },
+  ]}
+  isLoading={false}
+  isLoadingMore={false}
+  error={null}
+  onRetry={refetchRuns}
+  hasMore={true}
+  onLoadMore={loadMoreRuns}
+  currentRunId="run_1"
+  onRunClick={(run) => navigateToConversation(run.conversationId)}
+  labels={{
+    title: 'History',
+    emptyLabel: 'No runs yet',
+    errorLabel: 'Failed to load history',
+    retryLabel: 'Retry',
+    showMoreLabel: 'Show more',
+    runStatusLabels: {
+      [ScheduledTaskRunStatus.Success]: 'Succeeded',
+      [ScheduledTaskRunStatus.Error]: 'Failed',
+      [ScheduledTaskRunStatus.InProgress]: 'Running',
+      [ScheduledTaskRunStatus.Missed]: 'Missed',
+    },
+    currentRunLabel: 'Current run',
+    unreadIndicatorLabel: 'Unread',
+  }}
+/>;
+```
+
+### ScheduledTaskConversationDetailsSection
+
+Details accordion of a task conversation's sources panel: the run's own
+Model/Skill/Instructions summary via `ScheduledTaskDetailsSummary`, or the
+scoped unavailable message while the task's details cannot load — `state:
+'error'` additionally renders a retry action wired to `onRetry`, `state:
+'unavailable'` does not. Collapsed by default; resets to collapsed whenever
+`scheduleId` changes. All field values, the markdown renderer, and labels are
+supplied by the host. When `renderInstructions` is omitted, the summary's
+built-in `MDMessageViewer` renders the instructions — name its controls through
+`markdownLabels` (`ScheduledTaskInstructionsMarkdownLabels`, the same prop
+`ScheduledTaskDetailsSummary` takes); ignored when `renderInstructions` is
+supplied.
+
+```tsx
+import {
+  ScheduledTaskConversationDetailsSection,
+  ScheduledTaskConversationDetailsState,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskConversationDetailsSection
+  scheduleId={schedule.id}
+  state={ScheduledTaskConversationDetailsState.Ready}
+  onRetry={refetchTask}
+  modelDisplayName="GPT-4.1 mini"
+  skillDisplayNames={['Daily digest skill', 'Report skill']}
+  instructionsMarkdown={task.prompt}
+  renderInstructions={(markdown) => <MarkdownViewer content={markdown} />}
+  labels={{
+    title: 'Details',
+    modelLabel: 'Model',
+    instructionsLabel: 'Instructions',
+    skillLabel: 'Skill',
+    unavailableLabel: 'Task details are unavailable',
+    retryLabel: 'Retry',
+  }}
+/>;
+```
+
 ## Validation entry point
 
 ### Optional skill configuration
