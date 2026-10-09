@@ -123,8 +123,9 @@ const INSTRUCTIONS_EDITOR_BOTTOM_GAP = 24;
 /* Filling never shrinks the editor below a usable height. */
 const INSTRUCTIONS_EDITOR_MIN_HEIGHT = 300;
 
-/* Paddings of the Files column and the selected-file column, as before the shared editor. */
+/* Paddings of the Files column, the selected-file column and the host aside column, as before the shared editor. */
 const FILES_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
+const ASIDE_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
 const SETUP_SECTION_CLASS_NAME =
   'gap-4 px-4 py-6 desktop:gap-5 desktop:px-8 desktop:py-6';
 
@@ -155,6 +156,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   onRefineInstructions,
   fileActions,
   supportingFileContent,
+  asideData,
   onSubmit,
   onCancel,
   onBack,
@@ -896,6 +898,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
       <EntityEditor
         {...editorProps}
+        asideData={asideData}
+        asideSectionClassName={ASIDE_SECTION_CLASS_NAME}
         isSubmitting={isSubmitting}
         metadataSectionClassName={FILES_SECTION_CLASS_NAME}
         metadata={

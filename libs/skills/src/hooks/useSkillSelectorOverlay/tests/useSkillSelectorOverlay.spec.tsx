@@ -165,6 +165,50 @@ describe('useSkillSelectorOverlay', () => {
     expect(historyChip[0].props.detailsTrigger).toBeUndefined();
   });
 
+  it('keeps the history typography off active mention chips so they inherit the input font', () => {
+    const { result } = renderHook(() =>
+      useSkillSelectorOverlay({
+        ...baseOptions,
+        historyChipLabelClassName: 'dial-small-paragraph-text text-accent',
+      }),
+    );
+
+    act(() => {
+      result.current.seedSkillMentions('/abc', [{ url: abcSkill.url }]);
+    });
+
+    const activeChip = assertDefined(
+      result.current.activeMentions[0].render,
+    )() as ReactElement<ChatSkillProps>;
+    const historyChips = result.current.renderHistorySkills([
+      { url: abcSkill.url },
+    ]) as ReactElement<ChatSkillProps>[];
+
+    expect(activeChip.props.labelClassName).toBe('text-accent');
+    expect(historyChips[0].props.labelClassName).toBe(
+      'dial-small-paragraph-text text-accent',
+    );
+  });
+
+  it('applies the configured class to active mention chips', () => {
+    const { result } = renderHook(() =>
+      useSkillSelectorOverlay({
+        ...baseOptions,
+        activeMentionLabelClassName: 'text-primary',
+      }),
+    );
+
+    act(() => {
+      result.current.seedSkillMentions('/abc', [{ url: abcSkill.url }]);
+    });
+
+    const activeChip = assertDefined(
+      result.current.activeMentions[0].render,
+    )() as ReactElement<ChatSkillProps>;
+
+    expect(activeChip.props.labelClassName).toBe('text-primary');
+  });
+
   it('forwards the history trigger only to history chips', () => {
     const { result } = renderHook(() =>
       useSkillSelectorOverlay({

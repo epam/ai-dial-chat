@@ -2,8 +2,8 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
+  GhostIconButton,
   NeutralButton,
-  ToggleIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { FC, ReactNode } from 'react';
@@ -34,7 +34,7 @@ export const CopyIconButton: FC<CopyButtonProps> = ({
   isDisabled = false,
 }) => {
   return (
-    <ToggleIconButton
+    <GhostIconButton
       size={size}
       icon={
         isCopied ? (

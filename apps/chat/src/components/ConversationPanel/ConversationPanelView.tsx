@@ -5,10 +5,9 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   deriveConversationRowActionState,
-  findDeploymentByIdOrReference,
+  findDeploymentForConversationId,
   getApiErrorDetails,
   getConversationPath,
-  getModelIdFromConversationId,
   safeDecodeURIComponent,
   useActiveConversationSync,
   useAsyncConfirmDialog,
@@ -734,11 +733,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       /* A copy would hand the operator-hidden model a fresh conversation, so a
          row whose model was hidden via HIDDEN_ENTITY_TAGS offers no Duplicate
          ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
-      const conversationModelId = getModelIdFromConversationId(contextId);
-      const isModelHidden =
-        !!conversationModelId &&
-        !!findDeploymentByIdOrReference(deployments, conversationModelId)
-          ?.isHidden;
+      const isModelHidden = !!findDeploymentForConversationId(
+        deployments,
+        contextId,
+      )?.isHidden;
 
       const {
         isReadonly: isReadonlyItem,

@@ -77,12 +77,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.25
+- `@epam/ai-dial-react-file-manager` ^0.3.0
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.51
+- `@epam/ai-dial-ui-kit` ^0.15.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -2166,7 +2166,7 @@ mapStages([
 before normalization — every field optional and nullable — so the generated
 `StageDto` satisfies `RawStage` with no cast.
 
-### getModelIdFromConversationId
+### getModelIdFromConversationId / findDeploymentForConversationId
 
 Extracts the deployment/model ID from a DIAL Core conversation ID (`{deploymentId}__{title}`, including scheduler paths and versioned application IDs).
 
@@ -2174,6 +2174,24 @@ Extracts the deployment/model ID from a DIAL Core conversation ID (`{deploymentI
 import { getModelIdFromConversationId } from '@epam/ai-dial-chat-hooks';
 
 getModelIdFromConversationId('conversations/bucket/gpt-4__My%20chat'); // 'gpt-4'
+```
+
+`getModelIdCandidatesFromConversationId` lists every `/`-separated suffix of that id, longest first, because a conversation stored inside a folder has the same path shape as one on a multi-segment deployment id. `findDeploymentForConversationId` returns the first candidate that matches a deployment by `id` or `reference`.
+
+```ts
+import {
+  findDeploymentForConversationId,
+  getModelIdCandidatesFromConversationId,
+} from '@epam/ai-dial-chat-hooks';
+
+getModelIdCandidatesFromConversationId(
+  'conversations/bucket/folder/gpt-4__My%20chat',
+); // ['folder/gpt-4', 'gpt-4']
+
+findDeploymentForConversationId(
+  deployments,
+  'conversations/bucket/folder/gpt-4__My%20chat',
+); // the `gpt-4` deployment
 ```
 
 ### virtualPathToApiPath / resolveDialFileApiPath

@@ -62,6 +62,7 @@ export const useSkillSelectorOverlay = ({
   onToggleFavorite,
   labels,
   historyChipLabelClassName,
+  activeMentionLabelClassName = 'text-accent',
   activeMentionDetailsTrigger,
   historyDetailsTrigger,
   renderCatalogContent,
@@ -151,6 +152,11 @@ export const useSkillSelectorOverlay = ({
    * `renderHistorySkills` below), via `HighlightedTextRange.render` — not a
    * bespoke highlight span — so hover tooltip, "View details", and the
    * hover-only background all behave identically while typing and once sent.
+   *
+   * Unlike history chips, the label carries no type-scale class of its own:
+   * it overlays the textarea's invisible text, so it must inherit the input's
+   * font. A different size makes the chip narrower or wider than the text
+   * under it, and the native caret drifts away from the visible text (#9243).
    */
   const activeMentions = useMemo<HighlightedTextRange[]>(
     () =>
@@ -162,7 +168,7 @@ export const useSkillSelectorOverlay = ({
           <ChatSkill
             name={anchor.name}
             path={anchor.url}
-            labelClassName={historyChipLabelClassName}
+            labelClassName={activeMentionLabelClassName}
             description={skillByUrl.get(anchor.url)?.description}
             isUnsupported={!isSkillsSupported}
             detailsTrigger={activeMentionDetailsTrigger}
@@ -178,7 +184,7 @@ export const useSkillSelectorOverlay = ({
       mentions.anchors,
       isSkillsSupported,
       skillByUrl,
-      historyChipLabelClassName,
+      activeMentionLabelClassName,
       activeMentionDetailsTrigger,
       panelLabels,
       unsupportedTooltipLabel,

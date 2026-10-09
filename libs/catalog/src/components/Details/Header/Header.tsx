@@ -105,10 +105,19 @@ interface ManageAction {
   onClick: () => void;
 }
 
-interface HeaderProps {
+/**
+ * Props for {@link Header}, exported as `DetailsHeaderProps`: the details
+ * view's identity block and action row. Every action is opt-in and hidden
+ * when its prop is absent.
+ */
+export interface HeaderProps {
+  /** The item whose identity, folder and actions are shown. */
   item: CatalogItem;
+  /** Called by the primary "Use in chat" action. The action is hidden when absent. */
   onUseInChat?: (item: CatalogItem) => void;
+  /** Returns `false` to hide the primary action for an item. */
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
+  /** Called by Share when no `shareOverlay` is given. Share is hidden when both are absent. */
   onShare?: (item: CatalogItem) => void;
   /**
    * Renders the Share popover content. When provided, choosing Share opens
@@ -129,6 +138,7 @@ interface HeaderProps {
    * one surface or the other, never both.
    */
   isSharePrimary?: (item: CatalogItem) => boolean;
+  /** Called by the Manage menu's "Edit" entry, shown only for an editable item. */
   onEdit?: (item: CatalogItem) => void;
   /**
    * Called when "Download" is clicked. In the Manage menu, fire-and-forget:
@@ -159,10 +169,12 @@ interface HeaderProps {
   onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
   /** Additional caller-supplied rule for whether "Revoke access" is shown, combined (AND) with the built-in `isMyApp` rule and the recipient count. Defaults to `true` when absent. */
   isRevokeShareVisible?: (item: CatalogItem) => boolean;
+  /** Called by the credentials action to sign in (OAuth) or to add an API key, for the given credentials level. May return a promise. */
   onLogin?: (
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
   ) => Promise<void> | void;
+  /** Called to sign out or remove an API key for the given credentials level, when no confirmation is requested through `onRequestLogout`. May return a promise. */
   onLogout?: (
     item: CatalogItem,
     params: { level: CredentialsLevel },
@@ -179,7 +191,9 @@ interface HeaderProps {
    * without signing out immediately.
    */
   onRequestLogout?: () => void;
+  /** Text overrides, shared with `DetailsPanel`. */
   texts?: ItemDetailsTexts;
+  /** Style overrides, shared with `DetailsPanel`. */
   detailsStyles?: ItemDetailsStyles;
   /**
    * Controls whether the "Publish" action is shown. Defaults to the same rule
@@ -1047,6 +1061,7 @@ export const Header: FC<HeaderProps> = ({
         iconSize={52}
         nameClassName={mergeClasses(nameClassName, styles.name)}
         featuredLabel={texts?.featuredLabel ?? 'Featured'}
+        typeLabel={texts?.entityTypeLabels?.[item.type]}
         featuredChipStyle={detailsStyles?.colors?.featuredChipStyle}
         statusBadge={statusBadge}
         footer={

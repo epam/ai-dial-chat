@@ -27,6 +27,9 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
   metadataFooter,
   setup,
   setupTitle,
+  asideData,
+  asideTitle,
+  asideSectionClassName,
   alert,
   metadataSectionClassName,
   setupSectionClassName,
@@ -49,6 +52,21 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
       backAriaLabel={labels?.backAriaLabel ?? 'Back'}
       isSaving={isSubmitting}
       labels={{ savingStatusLabel: labels?.savingStatusLabel ?? 'Saving' }}
+      rightContent={
+        asideData != null ? (
+          <EditorSection
+            title={asideTitle}
+            styles={styles?.section}
+            className={mergeClasses(
+              SECTION_CLASS_NAME,
+              asideSectionClassName,
+              BUILDER_FORM_CLASS.asideSection,
+            )}
+          >
+            {asideData}
+          </EditorSection>
+        ) : undefined
+      }
       styles={styles?.layout}
       dir={dir}
       actions={
@@ -91,7 +109,7 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
           {metadataFooter}
         </>
       }
-      rightContent={
+      centerContent={
         hasSetup ? (
           <>
             {alertRegion}
