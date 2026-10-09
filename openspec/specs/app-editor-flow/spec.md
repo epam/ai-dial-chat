@@ -134,6 +134,7 @@ navigation, no entering preview — and the page clears `isSaving` and stays ope
   - `applicationCredentials` SHALL be `true` only when both `useFeatureFlag('liveChatInteraction')` and `useUiFeature(OverlayFeature.LiveChatInteraction)` are enabled, otherwise `false`
 - Render a full-height `<iframe>` (`className="size-full border-none"`) with `allow="local-network-access=*"` so the embedded app — and any window it opens via `window.open` (e.g. an identity-provider login popup) — can request and receive the Local Network Access permission when the embedded app's or its identity provider's origin resolves to a private/internal IP address.
 - Show a `<Spinner />` overlay until the iframe dispatches `load` or fires a `readyToInteract` postMessage event; after either, hide the spinner.
+- Report the embedded editor as not responding when no postMessage from its origin arrives within `EDITOR_RESPONSE_TIMEOUT_MS` (15 seconds) of the iframe (re)loading. A `load` event does not count, because the browser fires it for its own error page when the editor host is unreachable. While not responding, hide the spinner and render a `WarningMessageNotification` above the iframe titled `appsEditor.settingsStep.unresponsiveTitle`, with the message `appsEditor.settingsStep.unresponsiveMessage` naming the editor origin and a `buttons.reload` action that remounts the iframe with the same URL and restarts the wait. The iframe stays visible and interactive. Any later message from the editor origin clears the state. Report every change through the optional `onUnresponsiveChange` prop.
 - Add a `window.addEventListener('message', handleMessage)` listener on mount and remove it on unmount (`useEffect` cleanup).
 - In `handleMessage`, after verifying `event.origin` matches `schema.editorUrl`'s origin:
   - `event.data.type === \`${displayName}/${AppsEditorEvent.ReadyToInteract}\`` → set loading=false
@@ -159,8 +160,11 @@ interface Props {
   onSaveError?: (error: string) => void;
   onReadyChange?: (isReady: boolean) => void;
   onLoggedOutChange?: (isLoggedOut: boolean) => void;
+  onUnresponsiveChange?: (isUnresponsive: boolean) => void;
 }
 ```
+
+`QuickAppSetup` SHALL treat a not-responding editor like a logged-out one: it does not surface the generic `appsEditor.error.settingsNotReady` error and clears one already shown.
 
 **Memoisation**: `handleMessage` SHALL be wrapped in `useCallback`. The `iframeUrl` string SHALL be wrapped in `useMemo`. `triggerSave` (inside `useImperativeHandle`) is memoised on `[schema.editorUrl]`.
 
@@ -208,6 +212,21 @@ interface Props {
 
 - **WHEN** a `message` event arrives with `data.type = "<displayName>/readyToInteract"`
 - **THEN** the `Spinner` is no longer rendered
+
+#### Scenario: Unreachable editor is reported as not responding
+
+- **WHEN** no message arrives from the editor origin within 15 seconds of the iframe loading, even if the iframe fired `load`
+- **THEN** the spinner is hidden, a warning naming the editor origin with a Reload button is shown above the iframe, and `onUnresponsiveChange(true)` is called
+
+#### Scenario: Late editor message clears the not-responding warning
+
+- **WHEN** the warning is shown and a message then arrives from the editor origin
+- **THEN** the warning is removed and `onUnresponsiveChange(false)` is called
+
+#### Scenario: Reload remounts the editor
+
+- **WHEN** the user activates Reload in the not-responding warning
+- **THEN** the iframe is remounted with the same URL, the spinner is shown again, and the 15-second wait restarts
 
 #### Scenario: onUpdated called on updatedApplicationSuccess
 
