@@ -1045,7 +1045,7 @@ const ChatPage = ({
 | `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
 | `batchChunksPerFrame`       | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
 
-`ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
+`ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`. A sixth, optional `saveConversation(path, conversation)` saves a conversation at the bucket-stripped `path` and resolves with the saved copy; the hook uses it only for the recovery save described below.
 
 **Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout.
 
@@ -1107,10 +1107,22 @@ buffered answer and keeps the reload notification. These failure and retry
 states are transient and are discarded on unmount.
 
 `createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
-`GenerationPersistenceError`, even after an upstream `[DONE]` frame. The error
+`GenerationPersistenceError`, even after an upstream `[DONE]` frame. A numeric
+`error.status` on that chunk (the rejected write's status, sent only for a
+completed answer) is exposed as
+`GenerationPersistenceError.status`; it is `undefined` when absent. The error
 class (including its static `type`) and the default message are exported from
 `@epam/ai-dial-chat-hooks`. Custom transports can report this error through
 `onError`; the hook uses the host's warning rather than raw upstream error text.
+
+When a stream started by `startStream` reports this error with `status: 401`
+and the transport implements `saveConversation`, the backend's terminal save
+was refused for its credentials, which can expire during a long generation.
+The hook then makes one recovery save instead of showing the warning: it reads
+the conversation through `getConversation`, restores the received answer at its
+index, and saves it once. The warning is shown only if that read or save fails.
+Any other status, a missing status, an attached generation, or a transport
+without `saveConversation` shows the warning immediately, as before.
 
 #### applyChunkToMessages / mergeStages
 
