@@ -106,11 +106,15 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 
 ### Requirement: Host-rendered aside content
 
-`SkillEditor` SHALL accept an optional `asideData?: ReactNode` prop and forward it to `EntityEditor`, which renders it in an Aside section in a third column at the inline end, below the header row (see the builder-form "EditorLayout — optional host side panel" requirement). The library SHALL have no knowledge of what it contains. The panel SHALL NOT be rendered while the skill is loading (`isLoading`) or when loading failed (`hasLoadError`), because the form itself is not shown in those states. Omitting the prop SHALL preserve the existing layout exactly.
+`SkillEditor` SHALL accept an optional `asideData?: ReactNode` prop and forward it to `EntityEditor`, which renders it in an Aside section in a third column at the inline end, below the header row (see the builder-form "EditorLayout — optional host side panel" requirement). The library SHALL have no knowledge of what it contains. The panel SHALL NOT be rendered while the skill is loading (`isLoading`) or when loading failed (`hasLoadError`), because the form itself is not shown in those states. The Aside section SHALL be padded like the Files and selected-file sections on desktop (`desktop:px-8 desktop:py-6`), by passing the same padding to `EntityEditor` as `asideSectionClassName`. Omitting the prop SHALL preserve the existing layout exactly.
 
 #### Scenario: Host panel renders next to the form
 - **WHEN** the host passes `asideData={<QualityCheck />}` and the skill has loaded
 - **THEN** `<QualityCheck />` renders in a column beside the form, under the header
+
+#### Scenario: Aside section is padded like its neighbours
+- **WHEN** the host passes `asideData` and the skill has loaded
+- **THEN** the Aside section carries the same desktop padding classes as the Files section
 
 #### Scenario: Panel is not shown while loading or after a load error
 - **WHEN** `isLoading` or `hasLoadError` is `true`
