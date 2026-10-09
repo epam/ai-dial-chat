@@ -474,13 +474,24 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   ]);
 
   const loadConversation = useCallback(
-    async (id: string, initialData?: Conversation | null) => {
+    async (
+      id: string,
+      initialData: Conversation | null | undefined,
+      signal: AbortSignal,
+    ) => {
       if (!initialData) {
         setIsFetching(true);
       }
       try {
         const loadedConversation: Conversation =
-          initialData ?? ((await apiGetConversation(id)) as Conversation);
+          initialData ??
+          ((await apiGetConversation(id, signal)) as Conversation);
+        /*
+         * The user opened another conversation while this one was loading.
+         * Applying it now would show it under the other conversation's route,
+         * and the follow-up model/status writes would save it over that one.
+         */
+        if (signal.aborted) return;
         const result = restoreBufferedGeneration(id, loadedConversation);
         if (result.name) {
           updateConversationTitle(id, result.name);
@@ -566,9 +577,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         }
       } catch (error) {
+        if (signal.aborted) return;
         if (notificationShownForRef.current !== id) {
           notificationShownForRef.current = id;
           const { traceId } = await getApiErrorDetails(error);
+          if (signal.aborted) return;
           showErrorNotification({
             message: t(ChatI18nKeys.ConversationNotFound),
             requestId: traceId,
@@ -582,7 +595,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         }
         navigate(ROUTES.Root);
       } finally {
-        setIsFetching(false);
+        // A superseded load must not clear the loading state of its successor.
+        if (!signal.aborted) {
+          setIsFetching(false);
+        }
       }
     },
     [
@@ -617,7 +633,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       setIsFetching(false);
       return;
     }
-    void loadConversationRef.current(conversationId, prefetchedConversation);
+    const controller = new AbortController();
+    void loadConversationRef.current(
+      conversationId,
+      prefetchedConversation,
+      controller.signal,
+    );
+    return () => controller.abort();
     /*
      * prefetchedConversation intentionally omitted: it is router state captured at mount,
      * re-running when it changes would re-initialize an already-loaded conversation.
