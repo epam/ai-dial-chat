@@ -889,7 +889,10 @@ describe('AppEditorIframe — toolset login request', () => {
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
     const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
+      atob(
+        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+          btoa('{}'),
+      ),
     ).state;
 
     postOAuthResult(flowId, {
@@ -934,7 +937,10 @@ describe('AppEditorIframe — toolset login request', () => {
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
     const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
+      atob(
+        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+          btoa('{}'),
+      ),
     ).state;
 
     postOAuthResult(flowId, {
@@ -977,7 +983,10 @@ describe('AppEditorIframe — toolset login request', () => {
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
     const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
+      atob(
+        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+          btoa('{}'),
+      ),
     ).state;
 
     postOAuthResult(flowId, {

@@ -19,8 +19,11 @@ import {
   parseExternalServiceUrl,
   ToolsetAuthTypes,
   ToolsetOAuthFailureReason,
+  ToolsetOAuthResultType,
   useOAuthCallbackCompletion,
   type OAuthExchangeParams,
+  type ToolsetOAuthMainWindowOutcome,
+  type ToolsetRedirectState,
 } from '@epam/ai-dial-chat-hooks';
 import {
   Button,
@@ -35,11 +38,13 @@ import {
 import type { FC } from 'react';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
+  ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
+import { useNotification } from '../../context/NotificationContext';
 import {
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
@@ -51,15 +56,43 @@ import { ROUTES } from '../../types/routes';
 import { getToolsetOAuthFailureMessageKey } from '../../utils/toolsets';
 
 /**
- * This route only ever runs inside the popup window the login flow opened —
- * it never navigates, since the editor/Catalog tab that opened it never
- * navigated away either.
+ * Runs inside the popup window the popup login flow opened — it never
+ * navigates, since the editor/Catalog tab that opened it never navigated
+ * away either — or, for a main-window redirect flow
+ * (`navigateToolsetOAuthRedirect`, used by the scheduled-task save path),
+ * completes in the main window and sends the user back to the flow's
+ * `returnPath`, toasting the scheduled-tasks login-failure message on a
+ * failed exchange.
  */
 const ToolsetAuthCallback: FC = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { showErrorNotification } = useNotification();
 
-  const exchange = useCallback(
+  /*
+   * Main-window completion: the redirect flow has no popup to close and no
+   * opener listening, so this route owns what the user sees next — back to
+   * the page that started the flow, with the scheduled-tasks login-failure
+   * toast when the exchange failed (the page's own save path can't announce
+   * it: the flow unloaded that page).
+   */
+  const handleMainWindowComplete = useCallback(
+    (
+      outcome: ToolsetOAuthMainWindowOutcome,
+      redirectState: ToolsetRedirectState,
+    ) => {
+      if (outcome.type === ToolsetOAuthResultType.Failure) {
+        showErrorNotification({
+          message: t(ScheduledTasksI18nKeys.AutoLoginFailedNotification),
+        });
+      }
+      navigate(redirectState.returnPath ?? ROUTES.ScheduledTasks);
+    },
+    [navigate, showErrorNotification, t],
+  );
+
+  const onExchange = useCallback(
     async ({
       code,
       redirectUri,
@@ -129,7 +162,8 @@ const ToolsetAuthCallback: FC = () => {
      * `redirect_uri`.
      */
     callbackPath: ROUTES.ToolsetEditorCallback,
-    exchange,
+    exchange: onExchange,
+    onMainWindowComplete: handleMainWindowComplete,
   });
 
   const handleClose = useCallback(() => {

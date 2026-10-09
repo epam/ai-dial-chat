@@ -42,6 +42,21 @@ const PALETTE: readonly AvatarColorEntry[] = [
   },
 ];
 
+/*
+ * The palette keyed by its `--bg-visual-*` token suffix, so a host can pin a
+ * specific pair (e.g. a fixed brand identity) instead of relying on the
+ * name hash — the same entries `pickAvatarColor` draws from.
+ */
+export const AVATAR_COLORS = {
+  green1: PALETTE[0],
+  violet2: PALETTE[1],
+  brown: PALETTE[2],
+  red: PALETTE[3],
+  green2: PALETTE[4],
+  blue: PALETTE[5],
+  violet1: PALETTE[6],
+} satisfies Record<string, AvatarColorEntry>;
+
 /** Returns a deterministic colour-pair for the given display name. */
 export const pickAvatarColor = (name: string): AvatarColorEntry => {
   let sum = 0;

@@ -12,6 +12,7 @@ import { getToolsetOAuthChannelName } from '../../../oauth/handshake';
 import {
   ToolsetOAuthCallbackQuery,
   ToolsetOAuthResultType,
+  TOOLSET_REDIRECT_STATE_KEY,
 } from '../../../oauth/types';
 import {
   ToolsetLoginOutcomeType,
@@ -357,7 +358,10 @@ describe('useCatalogToolsetCredentials', () => {
 
       await waitFor(() => expect(capturedPopup).toBeDefined());
       const flowId = JSON.parse(
-        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+        atob(
+          capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+            btoa('{}'),
+        ),
       ).state;
 
       postOAuthResult(flowId, {
@@ -416,7 +420,10 @@ describe('useCatalogToolsetCredentials', () => {
 
       await waitFor(() => expect(capturedPopup).toBeDefined());
       const flowId = JSON.parse(
-        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+        atob(
+          capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+            btoa('{}'),
+        ),
       ).state;
 
       postOAuthResult(flowId, {

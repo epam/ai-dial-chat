@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   initiateOAuthLogin,
   navigateToolsetOAuthPopup,
+  navigateToolsetOAuthRedirect,
   openToolsetOAuthPopup,
 } from '../popup';
 import {
@@ -45,7 +46,7 @@ const readRedirectState = (popup: FakePopup) => {
     string,
   ];
   expect(key).toBe(TOOLSET_REDIRECT_STATE_KEY);
-  return JSON.parse(value) as Record<string, unknown>;
+  return JSON.parse(atob(value)) as Record<string, unknown>;
 };
 
 afterEach(() => {
@@ -230,5 +231,57 @@ describe('navigateToolsetOAuthPopup', () => {
     });
     expect(popup.close).toHaveBeenCalledOnce();
     expect(popup.sessionStorage.setItem).not.toHaveBeenCalled();
+  });
+});
+
+describe('navigateToolsetOAuthRedirect', () => {
+  const RETURN_PATH = '/scheduled-tasks/sched_123/edit';
+
+  /*
+   * jsdom cannot observe the main-window navigation (`location.href` is
+   * unforgeable and navigation is "not implemented"), so these tests assert
+   * the written redirect state and the result; the navigation itself is
+   * covered by the scheduled-task page tests that drive this path.
+   */
+  const readMainWindowRedirectState = () => {
+    const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
+    expect(raw).not.toBeNull();
+    return JSON.parse(atob(raw as string)) as Record<string, unknown>;
+  };
+
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
+  it('writes main-window redirect state with the return path into this window and returns Started', () => {
+    const result = navigateToolsetOAuthRedirect(
+      validOAuthConfig,
+      TOOLSET_ID,
+      CALLBACK_PATH,
+      RETURN_PATH,
+      ToolsetCredentialsLevel.User,
+      OAuthResourceKind.OfflineCredentials,
+    );
+
+    expect(result).toBe(ToolsetOAuthInitiationResultType.Started);
+    expect(readMainWindowRedirectState()).toMatchObject({
+      toolsetId: TOOLSET_ID,
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      resourceKind: OAuthResourceKind.OfflineCredentials,
+      redirectUri: `${window.location.origin}${CALLBACK_PATH}`,
+      returnPath: RETURN_PATH,
+    });
+  });
+
+  it('returns InvalidConfig without writing any redirect state when the auth config cannot build a URL', () => {
+    const result = navigateToolsetOAuthRedirect(
+      { authorizationEndpoint: 'https://auth.example.com/authorize' },
+      TOOLSET_ID,
+      CALLBACK_PATH,
+      RETURN_PATH,
+    );
+
+    expect(result).toBe(ToolsetOAuthInitiationResultType.InvalidConfig);
+    expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull();
   });
 });

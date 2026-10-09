@@ -297,26 +297,30 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           </p>
         </div>
 
-        <PrimaryButton
-          /* The kit wraps `label` in its own span (carrying `textClassName`)
-           * that stays a flex item even when its content is hidden — the gap
-           * then pushes the icon off-center. Hiding the wrapper span itself
-           * below the desktop breakpoint removes the flex item entirely, so
-           * the plus icon alone carries the action, centered. `aria-label`
-           * keeps the accessible name stable at every width. */
-          label={labels.createButtonLabel}
-          textClassName={styles.createButtonLabel}
-          aria-label={labels.createButtonLabel}
-          iconBefore={
-            <IconPlus
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
-          onClick={onCreateClick}
-          className={mergeClasses('shrink-0', styles.createButton)}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          <PrimaryButton
+            /* The kit wraps `label` in its own span (carrying `textClassName`)
+             * that stays a flex item even when its content is hidden — the gap
+             * then pushes the icon off-center. Hiding the wrapper span itself
+             * below the desktop breakpoint removes the flex item entirely, so
+             * the plus icon alone carries the action, centered. `aria-label`
+             * keeps the accessible name stable at every width. The same
+             * `.actionButton*` collapse pair applies to every header action
+             * button (see `.actionButton` in the module stylesheet). */
+            label={labels.createButtonLabel}
+            textClassName={styles.actionButtonLabel}
+            aria-label={labels.createButtonLabel}
+            iconBefore={
+              <IconPlus
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            onClick={onCreateClick}
+            className={styles.actionButton}
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

@@ -2,14 +2,7 @@ import {
   ScheduledTasks,
   ScheduledTasksSortKey,
 } from '@epam/ai-dial-scheduled-tasks';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -23,14 +16,12 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useOfflineCredentialsAuth } from '../../hooks/offlineCredentials/useOfflineCredentialsAuth';
 import {
   OfflineCredentialsGateStatus,
   useOfflineCredentialsGate,
 } from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
-import {
-  OfflineCredentialsLoginOutcomeType,
-  useOfflineCredentialsLogin,
-} from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { OfflineCredentialsLoginOutcomeType } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
 import { useScheduledTasks } from '../../hooks/scheduled-tasks/useScheduledTasks';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
@@ -41,15 +32,35 @@ interface NavigationState {
   refresh?: boolean;
 }
 
+/*
+ * Banner retry presentation for each terminal login outcome — every outcome
+ * other than Success (which the authoritative gate refetch resolves to a
+ * hidden banner).
+ */
+const RETRY_BANNER_STATES: Partial<
+  Record<OfflineCredentialsLoginOutcomeType, ScheduledTasksLoginBannerState>
+> = {
+  [OfflineCredentialsLoginOutcomeType.PopupBlocked]:
+    ScheduledTasksLoginBannerState.RetryPopupBlocked,
+  [OfflineCredentialsLoginOutcomeType.Cancelled]:
+    ScheduledTasksLoginBannerState.RetryCancelled,
+  [OfflineCredentialsLoginOutcomeType.TimedOut]:
+    ScheduledTasksLoginBannerState.RetryTimeout,
+  [OfflineCredentialsLoginOutcomeType.Failure]:
+    ScheduledTasksLoginBannerState.RetryFailed,
+};
+
 const resolveBannerState = ({
   isLoggingIn,
-  retryState,
+  loginOutcome,
   status,
 }: {
   isLoggingIn: boolean;
-  retryState: ScheduledTasksLoginBannerState | undefined;
+  loginOutcome: OfflineCredentialsLoginOutcomeType | undefined;
   status: OfflineCredentialsGateStatus;
 }): ScheduledTasksLoginBannerState | undefined => {
+  const retryState =
+    loginOutcome != null ? RETRY_BANNER_STATES[loginOutcome] : undefined;
   if (isLoggingIn) return ScheduledTasksLoginBannerState.LoginInProgress;
   if (retryState) return retryState;
   if (
@@ -90,12 +101,11 @@ const ScheduledTasksPage: FC = () => {
     connect,
     refetch: refetchCredentials,
   } = useOfflineCredentialsGate();
-  const { login } = useOfflineCredentialsLogin();
-  const [retryState, setRetryState] = useState<
-    ScheduledTasksLoginBannerState | undefined
-  >(undefined);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const { isLoggingIn, loginOutcome, liveAnnouncement, logIn } =
+    useOfflineCredentialsAuth({
+      connect,
+      refetch: refetchCredentials,
+    });
 
   useEffect(() => {
     const state = location.state as NavigationState | null;
@@ -116,46 +126,9 @@ const ScheduledTasksPage: FC = () => {
     [navigate],
   );
 
-  const handleLogIn = useCallback(() => {
-    if (!connect) return;
-    setIsLoggingIn(true);
-    setRetryState(undefined);
-    setLiveAnnouncement('');
-
-    const run = async (): Promise<void> => {
-      const outcome = await login(connect, refetchCredentials);
-      setIsLoggingIn(false);
-
-      switch (outcome.type) {
-        case OfflineCredentialsLoginOutcomeType.Success:
-          setLiveAnnouncement(
-            t(
-              ScheduledTasksI18nKeys.OfflineCredentialsBannerSuccessAnnouncement,
-            ),
-          );
-          setRetryState(undefined);
-          break;
-        case OfflineCredentialsLoginOutcomeType.PopupBlocked:
-          setRetryState(ScheduledTasksLoginBannerState.RetryPopupBlocked);
-          break;
-        case OfflineCredentialsLoginOutcomeType.Cancelled:
-          setRetryState(ScheduledTasksLoginBannerState.RetryCancelled);
-          break;
-        case OfflineCredentialsLoginOutcomeType.TimedOut:
-          setRetryState(ScheduledTasksLoginBannerState.RetryTimeout);
-          break;
-        case OfflineCredentialsLoginOutcomeType.Failure:
-        default:
-          setRetryState(ScheduledTasksLoginBannerState.RetryFailed);
-          break;
-      }
-    };
-    void run();
-  }, [connect, login, refetchCredentials, t]);
-
   const bannerState = resolveBannerState({
     isLoggingIn,
-    retryState,
+    loginOutcome,
     status: credentialsStatus,
   });
 
@@ -255,7 +228,7 @@ const ScheduledTasksPage: FC = () => {
             ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
           )}
           liveAnnouncement={liveAnnouncement}
-          onLogIn={connect ? handleLogIn : undefined}
+          onLogIn={connect ? logIn : undefined}
         />
       }
     />

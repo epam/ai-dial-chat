@@ -54,7 +54,26 @@ export interface ToolsetRedirectState {
    * route has no other way to learn it. Absent means "not granted".
    */
   offlineUsageConsent?: boolean;
+  /**
+   * Main-window mode marker, written by `navigateToolsetOAuthRedirect`: the
+   * flow redirected this same window (not a popup) to the provider, so the
+   * callback should hand completion to the host's `onMainWindowComplete`
+   * (which sends the user back to this path) instead of reporting over the
+   * flow channel and closing a popup. Absent in every popup flow.
+   */
+  returnPath?: string;
 }
+
+/**
+ * Completion outcome handed to the host's `onMainWindowComplete` callback —
+ * see `useOAuthCallbackCompletion`.
+ */
+export type ToolsetOAuthMainWindowOutcome =
+  | { type: ToolsetOAuthResultType.Success }
+  | {
+      type: ToolsetOAuthResultType.Failure;
+      reason: ToolsetOAuthFailureReason;
+    };
 
 export type ToolsetOAuthInitiationResult =
   | {

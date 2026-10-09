@@ -184,6 +184,7 @@ describe('ScheduledTasksPage', () => {
     useOfflineCredentialsGateMock.mockReturnValue({
       status: 'hidden',
       connect: undefined,
+      connected: false,
       refetch: refetchCredentialsMock,
     });
     useOfflineCredentialsLoginMock.mockReturnValue({ login: loginMock });
@@ -523,6 +524,37 @@ describe('ScheduledTasksPage', () => {
       );
       expect(screen.queryByRole('alert')).toBeNull();
     });
+  });
+
+  it('renders no disconnect/logout affordance in any gate state', () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    const gateStates = [
+      { status: 'checking', connect: undefined, connected: false },
+      { status: 'hidden', connect: undefined, connected: true },
+      { status: 'available', connect: CONNECT_SETTINGS, connected: false },
+      { status: 'unavailable', connect: undefined, connected: false },
+      { status: 'error', connect: undefined, connected: false },
+    ];
+    for (const gateState of gateStates) {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        ...gateState,
+        refetch: refetchCredentialsMock,
+      });
+      const view = renderScheduledTasksPage();
+
+      /* The logout surface lives in the Settings Extensions section now —
+         no gate state on this page offers a revoke. */
+      expect(
+        screen.queryByRole('button', { name: 'buttons.logOut' }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('dialog', {
+          name: 'scheduledTasks.disconnect.confirmTitle',
+        }),
+      ).toBeNull();
+
+      view.unmount();
+    }
   });
 });
 
