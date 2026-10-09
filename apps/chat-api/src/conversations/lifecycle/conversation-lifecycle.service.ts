@@ -35,8 +35,8 @@ import {
   updateConversationUnlessPending,
 } from '../generation/background-message';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
-import type { MetadataResult } from '../types/conversation.types';
 import { ConversationErrorCode } from '../types/conversation-error-code.enum';
+import type { MetadataResult } from '../types/conversation.types';
 import {
   buildConversationUrl,
   getConversationName,

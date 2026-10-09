@@ -9,8 +9,8 @@ import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../../openapi/openapi-response.dto';
 import { BackgroundGenerationStatus } from '../../dto/background-generation.dto';
-import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { ConversationLifecycleService } from '../conversation-lifecycle.service';
 
 vi.mock('../../../common/dial/dial-error.mapper', () => ({
