@@ -19,10 +19,8 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  Button,
-  ButtonAppearance,
-  ButtonVariant,
   ElementSize,
+  NeutralButton,
   Popup,
   Spinner,
   WarningMessageNotification,
@@ -646,9 +644,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             })}
             textClassName="break-words"
             action={
-              <Button
-                variant={ButtonVariant.Neutral}
-                appearance={ButtonAppearance.Outlined}
+              <NeutralButton
                 size={ElementSize.Small}
                 label={t(ButtonsI18nKeys.Reload)}
                 onClick={handleReload}
