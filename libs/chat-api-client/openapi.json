@@ -9738,7 +9738,7 @@
           "iconUrl": {
             "type": "string",
             "example": "files/6FEup.../uploads/2026-06/icon.png",
-            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager."
+            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager. An empty string removes the stored icon; omit the field (or send null) to keep it."
           },
           "topics": {
             "example": ["nlp", "assistant"],

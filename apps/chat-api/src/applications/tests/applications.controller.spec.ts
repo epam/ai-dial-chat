@@ -208,6 +208,22 @@ describe('ApplicationsController (integration)', () => {
       );
     });
 
+    it('forwards an empty iconUrl to the service as an explicit clear', async () => {
+      const clearBody = { ...validBody, iconUrl: '' };
+
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(clearBody)
+        .expect(200);
+
+      expect(service.updateApplication).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+        clearBody,
+      );
+    });
+
     it('returns 400 when name is missing', async () => {
       await request(app.getHttpServer())
         .patch('/api/v1/applications/my-app')

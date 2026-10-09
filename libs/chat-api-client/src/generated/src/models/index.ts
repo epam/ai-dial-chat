@@ -7690,7 +7690,7 @@ export interface UpdateApplicationBodyDto {
    */
   description?: string;
   /**
-   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager. An empty string removes the stored icon; omit the field (or send null) to keep it.
    * @type {string}
    * @memberof UpdateApplicationBodyDto
    */

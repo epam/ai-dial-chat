@@ -607,6 +607,39 @@ describe('ApplicationsService', () => {
       });
     });
 
+    it('removes the stored icon when iconUrl is an empty string', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, iconUrl: 'files/test-bucket/icon.png' }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        iconUrl: '',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('iconUrl');
+      expect(sentBody).toMatchObject({
+        displayName: updateBody.name,
+        application_properties: existingApp.application_properties,
+      });
+    });
+
+    it('keeps the stored icon when iconUrl is omitted', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, iconUrl: 'files/test-bucket/icon.png' }),
+      );
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ iconUrl: 'files/test-bucket/icon.png' });
+    });
+
     it('preserves application_properties when applicationProperties is explicitly null', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
