@@ -1,7 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
-import { MarketplaceEntity } from '@/src/types/marketplace';
+import { DetailsEntity, MarketplaceEntity } from '@/src/types/marketplace';
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
@@ -57,12 +57,20 @@ export const marketplaceSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ saveFilters: boolean; selectedTab?: MarketplaceTabs }>,
+      }: PayloadAction<{
+        saveFilters: boolean;
+        selectedTab?: MarketplaceTabs;
+        detailsEntity?: DetailsEntity;
+      }>,
     ) => {
       const selectedTab = payload.selectedTab ?? state.selectedTab;
 
       if (!payload.saveFilters) {
-        return { ...initialState, selectedTab };
+        return {
+          ...initialState,
+          selectedTab,
+          detailsEntity: payload.detailsEntity,
+        };
       }
 
       return {
@@ -74,7 +82,7 @@ export const marketplaceSlice = createSlice({
         tableSort: state.tableSort,
         selectedEntitiesTab: state.selectedEntitiesTab,
         selectedTab,
-        detailsEntity: state.detailsEntity,
+        detailsEntity: payload.detailsEntity ?? state.detailsEntity,
       };
     },
     initQueryParams: (state) => state,

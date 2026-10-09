@@ -1039,18 +1039,19 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
       const targetUrl = redirectUrl ?? returnUrl;
 
-      const route = targetUrl
-        ? getInternalRoute(targetUrl, router)
-        : publicationUrl
-          ? { pathname: Routes.Chat }
-          : {
-              pathname: Routes.Marketplace,
-              query: {
-                [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
-                [MarketplaceQueryParams.entitiesTab]:
-                  MarketplaceEntitiesTabs.AGENTS,
-              },
-            };
+      const route: { pathname: string; query?: Record<string, string> } =
+        targetUrl
+          ? getInternalRoute(targetUrl, router)
+          : publicationUrl
+            ? { pathname: Routes.Chat }
+            : {
+                pathname: Routes.Marketplace,
+                query: {
+                  [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
+                  [MarketplaceQueryParams.entitiesTab]:
+                    MarketplaceEntitiesTabs.AGENTS,
+                },
+              };
 
       const actions: Observable<AppAction>[] = [
         of(PromptsActions.clearSkillValidations()),
@@ -1066,6 +1067,11 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
       if (isInternalRoute(route.pathname ?? '', Routes.Marketplace, router)) {
         if (payload.shouldSelectApplication && reference) {
+          // keep reference in the URL so marketplace init doesn't drop the details view
+          route.query = {
+            ...route.query,
+            [MarketplaceQueryParams.model]: reference,
+          };
           actions.push(
             of(
               MarketplaceActions.setDetailsEntity({
