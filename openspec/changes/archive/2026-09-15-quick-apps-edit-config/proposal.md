@@ -4,7 +4,7 @@ The Apps editor's Settings step for a Quick App is currently saved only by an em
 externally-owned editor via a cross-repo `postMessage` protocol (`quick-app-authoring` spec).
 Any other caller that wants to save an existing Quick App's orchestrator/skills/tool-set
 configuration — a Quick Apps frontend that proxies its own save into DIAL Core, or a future
-in-repo Edit flow modeled on `ai-dial-chat-pg`'s Agent Builder (load deployment details, edit,
+in-repo Edit flow modeled on an existing downstream Agent Builder (load deployment details, edit,
 save back by the same id) — has no supported way to do it through this backend: `PATCH
 /api/v1/applications/:applicationName` explicitly excludes `applicationProperties` from its DTO
 today, by design ("this endpoint can never mutate a Quick App's schema type or its

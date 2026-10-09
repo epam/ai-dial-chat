@@ -527,8 +527,8 @@ describe('useOpenAttachmentCanvas routing', () => {
       mockResolveHtml.mockResolvedValue(htmlContent);
 
       const attachment = {
-        id: 'PG AI Factory scope roadmap',
-        name: 'PG AI Factory scope roadmap',
+        id: 'AI Factory scope roadmap',
+        name: 'AI Factory scope roadmap',
         contentType: 'text/html',
         type: AttachmentType.File,
         url: 'files/7bKTZyWQAe8Aht4USAmWYAHdXd9qgc3aFhBJ5V9tg27DrzkZDvwwaXoQnRLkchfngQ/uploads/2026-08/pg_ai_factory_scope_roadmap.html',
@@ -540,8 +540,8 @@ describe('useOpenAttachmentCanvas routing', () => {
       expect(opened).toBe(true);
       expect(mockOpenCanvas).toHaveBeenCalledWith(
         htmlContent,
-        'PG AI Factory scope roadmap',
-        'PG AI Factory scope roadmap',
+        'AI Factory scope roadmap',
+        'AI Factory scope roadmap',
       );
     });
 

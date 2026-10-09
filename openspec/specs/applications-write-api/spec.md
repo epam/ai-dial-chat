@@ -113,6 +113,15 @@ untouched, and `displayVersion` is carried through unless the body supplies `ver
 be written only when present (non-`null`) in the body — `topics` additionally only when non-empty, so
 `topics: []` carries the stored `descriptionKeywords` through unchanged.
 
+**`iconUrl` clear semantics:** `iconUrl` is the one General-step field a caller can explicitly
+remove. An empty string (`iconUrl: ""`) SHALL be accepted by `UpdateApplicationBodyDto` — it
+skips the `@IsValidResourceReference()` check, while any other string (including whitespace)
+must still be a valid `http(s)://` URL or DIAL file id — and the service SHALL drop the
+`iconUrl` key from the merged body so the persisted resource no longer carries an icon. An
+omitted or `null` `iconUrl` SHALL keep the stored icon. The create endpoint is unaffected (a new
+application has no icon to clear). This is how the Agent Builder's "Reset to default" avatar
+action removes a previously saved icon from an existing agent.
+
 **`applicationProperties` replacement semantics:**
 - When the request body omits `applicationProperties`, or supplies it as `null`, the stored
   `application_properties` SHALL be carried through unchanged — `@IsOptional()` already treats
@@ -228,6 +237,22 @@ additional role restriction.
 - **WHEN** the update request omits `version`
 - **THEN** the stored `displayVersion` is carried through unchanged
 - **AND** when the request does supply `version`, it replaces `displayVersion`
+
+#### Scenario: An empty iconUrl removes the stored icon
+- **WHEN** an application's stored resource has an `iconUrl` and an update supplies
+  `iconUrl: ""`
+- **THEN** the request passes validation, and the merged body sent to DIAL Core's
+  `saveCustomApplication` has no `iconUrl` key, while every other stored field is carried
+  through as usual
+
+#### Scenario: An omitted iconUrl keeps the stored icon
+- **WHEN** an update omits `iconUrl` (or sends `null`)
+- **THEN** the merged body carries the stored `iconUrl` through unchanged
+
+#### Scenario: A non-empty invalid iconUrl is still rejected
+- **WHEN** an update supplies an `iconUrl` that is neither empty nor a valid resource reference
+  (for example `" "` or `files/bucket/../x.png`)
+- **THEN** the endpoint responds with a 400 and does not call DIAL Core
 
 #### Scenario: Deployment-level fields are written only when supplied
 - **WHEN** the update request omits `endpoint`, `features`, `inputAttachmentTypes`, or

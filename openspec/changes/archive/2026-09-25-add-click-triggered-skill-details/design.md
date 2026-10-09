@@ -22,7 +22,7 @@
 
 `ChatSkill` SHALL accept an optional `detailsTrigger` union (`'hover' | 'click'`) that defaults to `'hover'`. In click mode it SHALL own a controlled `InteractiveTooltip` open state. Passing `open` to that UI-kit component disables its hover and focus interactions; the chip's click, Enter, and Space handlers open the description card, while the tooltip's existing dismissal callback closes it.
 
-This keeps the interaction and its accessibility behavior with the component that owns the tooltip. A PG-only clone of the rendered React node was rejected because it cannot safely replace the component's internal tooltip state or cover every active-mention render path. Changing the default was rejected because it would alter published-library behavior for every host.
+This keeps the interaction and its accessibility behavior with the component that owns the tooltip. A host-only clone of the rendered React node was rejected because it cannot safely replace the component's internal tooltip state or cover every active-mention render path. Changing the default was rejected because it would alter published-library behavior for every host.
 
 ### The selector hook limits the option to live mentions
 
