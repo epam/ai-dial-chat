@@ -259,6 +259,16 @@ describe('useConversationPanelItems — item identity and deployment lookup', ()
 
     expect(result.current[0].iconTooltip).toBe('By reference');
   });
+
+  it('resolves the deployment of a conversation stored in a folder', () => {
+    const { result } = renderItems(
+      makeParams({
+        items: [makeItem('conversations/bucket/qa-run/model-1__Chat__uuid')],
+      }),
+    );
+
+    expect(result.current[0].iconTooltip).toBe('Model 1');
+  });
 });
 
 describe('getConversationSource', () => {

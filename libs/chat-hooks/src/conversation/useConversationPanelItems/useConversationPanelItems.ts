@@ -5,7 +5,10 @@ import type {
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { safeDecodeURIComponent } from '../../shared/string-utils';
-import { getModelIdFromConversationId } from '../get-model-id-from-conversation-id';
+import {
+  getModelIdCandidatesFromConversationId,
+  getModelIdFromConversationId,
+} from '../get-model-id-from-conversation-id';
 
 /**
  * Classifies a conversation's ownership using the shared filter-tab contract.
@@ -116,14 +119,17 @@ export const useConversationPanelItems = ({
     () => (item: ConversationListItemDto) => {
       const id = toPanelConversationId(item.id);
       const modelId = getModelIdFromConversationId(item.id);
-      const deployment = modelId ? findDeployment(modelId) : undefined;
       /*
        * modelId is guessed from the conversation's resource path, which
-       * cannot reliably distinguish a real conversation folder from a
-       * multi-segment deployment id when the deployment itself isn't found
-       * in `deployments` (e.g. unavailable/deleted) — so the fallback tooltip
-       * shows only the last path segment, not the full percent-encoded path.
+       * cannot distinguish a real conversation folder from a multi-segment
+       * deployment id, so each suffix of it is tried, longest first. When
+       * none matches (e.g. the deployment is unavailable/deleted) the
+       * fallback tooltip shows only the last path segment, not the full
+       * percent-encoded path.
        */
+      const deployment = getModelIdCandidatesFromConversationId(item.id)
+        .map(findDeployment)
+        .find(Boolean);
       const fallbackTooltip = modelId
         ? safeDecodeURIComponent(modelId.split('/').pop() ?? modelId)
         : '';

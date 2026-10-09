@@ -94,7 +94,7 @@ The optimistic lifecycle is:
 - **THEN** the placeholder is removed from the list and the error is re-thrown so callers can handle it
 
 ### Requirement: Duplicate action in conversation row dropdown
-The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. That model id is read from the row's resource path via `getModelIdFromConversationId`, and the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with `ConversationPanelI18nKeys.DuplicateError` and the response trace ID.
+The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. That deployment is resolved from the row's resource path via `findDeploymentForConversationId` (which tries every suffix of the path-derived id, so a conversation stored inside a folder is matched too), and the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with `ConversationPanelI18nKeys.DuplicateError` and the response trace ID.
 
 #### Scenario: Duplicate action appears in menu
 - **WHEN** the user opens the three-dot menu for any conversation row
@@ -102,6 +102,10 @@ The conversation row three-dot dropdown in `ConversationPanelView` SHALL include
 
 #### Scenario: Duplicate action is omitted for a hidden-model conversation
 - **WHEN** the user opens the three-dot menu for a row whose model deployment has `isHidden: true`
+- **THEN** no Duplicate menu item is present
+
+#### Scenario: Duplicate action is omitted for a hidden-model conversation stored in a folder
+- **WHEN** the user opens the three-dot menu for a row whose id is `conversations/{bucket}/{folder}/{deploymentId}__{title}` and the `{deploymentId}` deployment has `isHidden: true`
 - **THEN** no Duplicate menu item is present
 
 #### Scenario: Duplicate action triggers duplication and navigation
