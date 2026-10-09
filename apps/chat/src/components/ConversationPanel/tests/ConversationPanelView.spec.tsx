@@ -1,5 +1,6 @@
 import {
   ConversationDeletionFailureDtoCodeEnum,
+  ConversationErrorCode,
   type ConversationDeletionResultDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
@@ -725,6 +726,45 @@ describe('ConversationPanelView — navigation keeps panel inputs', () => {
       }
     },
   );
+
+  it.each([
+    [
+      'the unavailable-model text when the server refuses a hidden current model',
+      ConversationErrorCode.ConversationDuplicateModelHidden,
+      'conversationPanel.duplicateUnavailableModel',
+    ],
+    [
+      'the generic error for any other failure',
+      undefined,
+      'conversationPanel.duplicateError',
+    ],
+  ])('shows %s', async (_, code, expectedMessage) => {
+    /* The path names a visible model; the model the chat was switched to is
+       hidden, which only the server can see (#9183). */
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [ordinary('conversations/bucket/visible-model__Chat')],
+      duplicateConversation: vi.fn().mockRejectedValue({
+        response: new Response(JSON.stringify({ statusCode: 403, code }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      }),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: 'error',
+          message: expectedMessage,
+        }),
+      ),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
 });
 
 describe('ConversationPanelView — delete-all header action', () => {

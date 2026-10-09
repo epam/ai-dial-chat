@@ -4,6 +4,7 @@ import type { SkillMentionAnchor } from '../../models/skill-mention-anchor';
 import { matchSkillMentions } from '../../utils/skill-mention-matching';
 import {
   diffTextChange,
+  findInsertedTextOffset,
   findMentionAtCaret,
   insertAnchor,
   reconcileAnchors,
@@ -57,6 +58,19 @@ export interface UseSkillMentionsResult {
     skills: RequestSkill[] | undefined,
     resolveName: (url: string) => string,
   ) => void;
+  /**
+   * Registers text about to be inserted into the draft (e.g. a picked prompt)
+   * with the mentions found in it, offsets relative to `text`. The next
+   * `onDraftChange` that lands `text` tracks them as anchors; any other
+   * change discards them.
+   */
+  expectInsertion: (text: string, mentions: SkillMentionAnchor[]) => void;
+}
+
+/* Text the host is about to insert, with the mentions it carries (offsets relative to `text`). */
+interface PendingInsertion {
+  text: string;
+  mentions: SkillMentionAnchor[];
 }
 
 /**
@@ -72,9 +86,35 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
   const anchorsRef = useRef(anchors);
   anchorsRef.current = anchors;
 
+  const pendingInsertionRef = useRef<PendingInsertion | null>(null);
+
   const onDraftChange = useCallback((nextValue: string) => {
     const change: TextChange = diffTextChange(draftRef.current, nextValue);
-    setAnchors((prevAnchors) => reconcileAnchors(prevAnchors, change));
+    /* One-shot: whichever edit comes next either lands the pending text or supersedes it. */
+    const pending = pendingInsertionRef.current;
+    pendingInsertionRef.current = null;
+    const insertedAt =
+      pending == null
+        ? undefined
+        : findInsertedTextOffset(nextValue, change, pending.text);
+
+    setAnchors((prevAnchors) => {
+      const reconciled = reconcileAnchors(prevAnchors, change);
+      if (pending == null || insertedAt == null) return reconciled;
+
+      const inserted = pending.mentions
+        .map((mention) => ({ ...mention, start: mention.start + insertedAt }))
+        .filter(
+          (mention) =>
+            nextValue.startsWith(`/${mention.name}`, mention.start) &&
+            !reconciled.some(
+              (anchor) =>
+                anchor.start < mention.start + mention.length &&
+                mention.start < anchor.start + anchor.length,
+            ),
+        );
+      return [...reconciled, ...inserted].sort((a, b) => a.start - b.start);
+    });
     /*
      * Updated synchronously (not only through the render-time `draftRef.current
      * = draft` assignment above) so `insertMention`, called immediately after
@@ -138,6 +178,14 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
     return anchors.map((anchor) => ({ url: anchor.url }));
   }, [anchors]);
 
+  const expectInsertion = useCallback(
+    (text: string, mentions: SkillMentionAnchor[]) => {
+      pendingInsertionRef.current =
+        mentions.length > 0 ? { text, mentions } : null;
+    },
+    [],
+  );
+
   const reset = useCallback(() => {
     setDraft('');
     setAnchors([]);
@@ -184,8 +232,10 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
       orderedSkills,
       reset,
       seedFromMessage,
+      expectInsertion,
     }),
     [
+      expectInsertion,
       draft,
       anchors,
       onDraftChange,
