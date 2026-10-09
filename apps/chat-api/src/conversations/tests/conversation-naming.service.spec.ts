@@ -269,25 +269,25 @@ describe('ConversationNamingService', () => {
 
   it('qualifies an application conversation path with the session bucket before reading it back', async () => {
     await service['runMaybeRenameAfterFirstReply'](
-      'applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+      'applications/public/demo/demo-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
       'test-token',
       'test-bucket',
       makeConversation({
-        id: 'test-bucket/applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+        id: 'test-bucket/applications/public/demo/demo-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
       }),
     );
 
     expect(
       mockConversationPersistence.readConversationWithEtag,
     ).toHaveBeenCalledWith(
-      'applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+      'applications/public/demo/demo-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
       'test-token',
       'test-bucket',
     );
     expect(
       mockConversationPersistence.saveConversationIfMatch,
     ).toHaveBeenCalledWith(
-      'applications/public/pg/pg-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
+      'applications/public/demo/demo-agent__1.0.0__hello__6df498f6-df3c-446c-a651-5ad321f1e53c',
       'test-token',
       'test-bucket',
       expect.objectContaining({ llmNamingDone: true }),
