@@ -26,8 +26,8 @@ interface UseMentionSelectionMirrorResult {
   selectionRects: DOMRect[];
   /** Recomputes `selectionRects` from the textarea's current native selection. */
   updateSelectionRects: () => void;
-  /** Copies the textarea's vertical scroll offset onto the mirror; wire it to the textarea's `onScroll`. */
-  syncMirrorScroll: () => void;
+  /** Copies the textarea's vertical scroll offset and scrollbar gutter onto the mirror; wire it to the textarea's `onScroll`. */
+  syncMirrorToTextarea: () => void;
 }
 
 /*
@@ -61,11 +61,21 @@ export const useMentionSelectionMirror = ({
    * hand. Otherwise a message taller than the box keeps showing its top
    * while the transparent textarea scrolls underneath
    * ([#9352](https://github.com/epam/ai-dial-chat/issues/9352)).
+   *
+   * It also has to wrap lines at the same points. Once the text outgrows the
+   * box the textarea shows a vertical scrollbar that narrows its content
+   * area, while the `overflow-hidden` mirror shows none — so a word at the
+   * end of a line wraps in the textarea but not in the mirror, and the
+   * mention/caret drift onto different lines
+   * ([#9355](https://github.com/epam/ai-dial-chat/issues/9355)). A stable
+   * gutter on the mirror reserves the same scrollbar width.
    */
-  const syncMirrorScroll = useCallback(() => {
+  const syncMirrorToTextarea = useCallback(() => {
     const textareaEl = textareaRef.current;
     const mirrorEl = mirrorRef.current;
     if (textareaEl == null || mirrorEl == null) return;
+    const hasScrollbar = textareaEl.offsetWidth > textareaEl.clientWidth;
+    mirrorEl.style.scrollbarGutter = hasScrollbar ? 'stable' : '';
     mirrorEl.scrollTop = textareaEl.scrollTop;
   }, [textareaRef]);
 
@@ -121,9 +131,9 @@ export const useMentionSelectionMirror = ({
    * textarea may already be scrolled away from the top.
    */
   useLayoutEffect(() => {
-    if (isMirrorActive) syncMirrorScroll();
+    if (isMirrorActive) syncMirrorToTextarea();
     updateSelectionRects();
-  }, [isMirrorActive, syncMirrorScroll, updateSelectionRects, message]);
+  }, [isMirrorActive, syncMirrorToTextarea, updateSelectionRects, message]);
 
   useEffect(() => {
     if (!isMirrorActive) return undefined;
@@ -131,10 +141,18 @@ export const useMentionSelectionMirror = ({
     if (textareaEl == null || typeof ResizeObserver === 'undefined') {
       return undefined;
     }
-    const observer = new ResizeObserver(updateSelectionRects);
+    const observer = new ResizeObserver(() => {
+      syncMirrorToTextarea();
+      updateSelectionRects();
+    });
     observer.observe(textareaEl);
     return () => observer.disconnect();
-  }, [isMirrorActive, textareaRef, updateSelectionRects]);
+  }, [isMirrorActive, textareaRef, syncMirrorToTextarea, updateSelectionRects]);
 
-  return { mirrorRef, selectionRects, updateSelectionRects, syncMirrorScroll };
+  return {
+    mirrorRef,
+    selectionRects,
+    updateSelectionRects,
+    syncMirrorToTextarea,
+  };
 };

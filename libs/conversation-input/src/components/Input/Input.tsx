@@ -863,7 +863,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       mirrorRef,
       selectionRects,
       updateSelectionRects,
-      syncMirrorScroll,
+      syncMirrorToTextarea,
     } = useMentionSelectionMirror({ textareaRef, message, isMirrorActive });
 
     /*
@@ -877,7 +877,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
     }, [measureCaretAnchor, markerOffset, message]);
 
     const handleTextareaScroll = () => {
-      syncMirrorScroll();
+      syncMirrorToTextarea();
       if (markerOffset != null) measureCaretAnchor();
     };
 

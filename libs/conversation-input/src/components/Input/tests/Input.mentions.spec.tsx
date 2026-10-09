@@ -213,4 +213,32 @@ describe('Input — highlight mirror scroll sync (#9352)', () => {
 
     expect(getMirror().scrollTop).toBe(200);
   });
+
+  it('reserves a scrollbar gutter on the mirror while the textarea shows a scrollbar (#9355)', () => {
+    const { rerender } = render(<Input message={longMessage} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    /* jsdom has no layout: a vertical scrollbar is what makes offsetWidth exceed clientWidth. */
+    Object.defineProperty(textarea, 'offsetWidth', { value: 300 });
+    Object.defineProperty(textarea, 'clientWidth', { value: 285 });
+
+    rerender(
+      <Input
+        message={longMessage}
+        activeMentions={[{ start: 0, length: 7 }]}
+      />,
+    );
+
+    expect(getMirror().style.scrollbarGutter).toBe('stable');
+  });
+
+  it('leaves the mirror without a gutter while the textarea has no scrollbar', () => {
+    render(
+      <Input
+        message={longMessage}
+        activeMentions={[{ start: 0, length: 7 }]}
+      />,
+    );
+
+    expect(getMirror().style.scrollbarGutter).toBe('');
+  });
 });
