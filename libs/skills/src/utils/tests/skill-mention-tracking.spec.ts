@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SkillMentionAnchor } from '../../models/skill-mention-anchor';
 import {
   diffTextChange,
+  findInsertedTextOffset,
   findMentionAtCaret,
   insertAnchor,
   reconcileAnchors,
@@ -174,5 +175,35 @@ describe('findMentionAtCaret', () => {
 
   it('returns undefined for an empty anchor list', () => {
     expect(findMentionAtCaret([], 0)).toBeUndefined();
+  });
+});
+
+describe('findInsertedTextOffset', () => {
+  it('returns where the inserted text landed', () => {
+    const previous = 'hello world';
+    const next = 'hello /report world';
+
+    expect(
+      findInsertedTextOffset(next, diffTextChange(previous, next), '/report '),
+    ).toBe(6);
+  });
+
+  it('finds text whose edges repeat the characters around the caret', () => {
+    const previous = 'ba';
+    const next = 'baba';
+
+    /* Inserted `ab` after the `b`; the prefix diff reports the region at 2. */
+    expect(
+      findInsertedTextOffset(next, diffTextChange(previous, next), 'ab'),
+    ).toBe(1);
+  });
+
+  it('returns undefined when the change is shorter than the text', () => {
+    const previous = 'hello';
+    const next = 'hello!';
+
+    expect(
+      findInsertedTextOffset(next, diffTextChange(previous, next), '/report'),
+    ).toBeUndefined();
   });
 });
