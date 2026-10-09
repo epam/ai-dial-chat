@@ -43,6 +43,11 @@ describe('Card — selected state', () => {
 });
 
 describe('Card — name and version split', () => {
+  /* The name box is the clamped wrapper around the kit `Highlight` that holds the text. */
+  const getNameBox = () =>
+    // eslint-disable-next-line testing-library/no-node-access -- the name box has no role or name of its own; it is the text's direct parent.
+    screen.getByText('Claude').parentElement as HTMLElement;
+
   it('gives the version a 34% grow share capped at its own width', () => {
     render(
       <Card item={makeItem({ version: 'With Google Search Grounding' })} />,
@@ -57,9 +62,8 @@ describe('Card — name and version split', () => {
   it('gives the name a 66% grow share instead of a hard cap, so a short version leaves no gap', () => {
     render(<Card item={makeItem()} />);
 
-    const name = screen.getByText('Claude');
+    const name = getNameBox();
     expect(name.className).toContain('min-w-0');
-    expect(name.className).toContain('truncate');
     expect(name.className).toContain('flex-[66_1_0%]');
     expect(name.className).toContain('max-w-max');
     expect(name.className).not.toContain('max-w-[66%]');
@@ -68,9 +72,42 @@ describe('Card — name and version split', () => {
   it('lets the name take the whole row when there is no version', () => {
     render(<Card item={makeItem({ version: undefined })} />);
 
-    const name = screen.getByText('Claude');
+    const name = getNameBox();
     expect(name.className).toContain('flex-1');
     expect(name.className).not.toContain('flex-[66_1_0%]');
+  });
+});
+
+describe('Card — long name (#9121)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('wraps the name onto at most two lines instead of truncating it to one', () => {
+    render(<Card item={makeItem()} />);
+
+    // eslint-disable-next-line testing-library/no-node-access -- the clamped name box has no role or name of its own; it is the text's direct parent.
+    const name = screen.getByText('Claude').parentElement as HTMLElement;
+    expect(name.className).toContain('line-clamp-2');
+    expect(name.className).toContain('break-words');
+  });
+
+  it('shows the full name in a tooltip only while the clamp hides part of it', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(72);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(48);
+    const longName = 'HEAD RACKETSPORTS — Product Knowledge Base Assistant';
+    render(<Card item={makeItem({ name: longName, description: '' })} />);
+
+    await userEvent
+      .setup({ advanceTimers: vi.advanceTimersByTime })
+      .hover(screen.getByText(longName));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(screen.getByRole('tooltip').textContent).toBe(longName);
+    vi.useRealTimers();
   });
 });
 
@@ -335,8 +372,8 @@ describe('Card — description tooltip', () => {
     vi.restoreAllMocks();
   });
 
-  /* The panel is portaled out of the card; its kit class is the only hook to it. */
   const getPanel = () =>
+    // eslint-disable-next-line testing-library/no-node-access -- the panel is portaled out of the card with no role or name; its kit class is the only hook to it.
     document.querySelector<HTMLElement>('.dial-kit-interactive-tooltip');
 
   it('shows the full description in a panel when the clamp hides text', async () => {
