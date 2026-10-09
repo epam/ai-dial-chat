@@ -209,4 +209,56 @@ describe('useOfflineCredentialsGate', () => {
     expect(refetched).toEqual({ available: true, connected: true });
     expect(result.current.status).toBe(OfflineCredentialsGateStatus.Hidden);
   });
+
+  it('reports connected:true once the check reports a stored grant', async () => {
+    vi.mocked(getOfflineCredentials).mockResolvedValue({
+      available: true,
+      connected: true,
+    });
+
+    const { result } = renderHook(() => useOfflineCredentialsGate(), {
+      wrapper: makeWrapper(),
+    });
+
+    expect(result.current.connected).toBe(false);
+    await waitFor(() => expect(result.current.connected).toBe(true));
+  });
+
+  it('updates connected across refetches', async () => {
+    vi.mocked(getOfflineCredentials)
+      .mockResolvedValueOnce({ available: true, connected: true })
+      .mockResolvedValueOnce({ available: true, connected: false });
+
+    const { result } = renderHook(() => useOfflineCredentialsGate(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.connected).toBe(true));
+
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    expect(result.current.connected).toBe(false);
+    expect(result.current.status).toBe(OfflineCredentialsGateStatus.Available);
+  });
+
+  it('keeps the last resolved connected value when a check fails', async () => {
+    vi.mocked(getOfflineCredentials)
+      .mockResolvedValueOnce({ available: true, connected: true })
+      .mockRejectedValueOnce(new Error('network down'));
+
+    const { result } = renderHook(() => useOfflineCredentialsGate(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.connected).toBe(true));
+
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    expect(result.current.status).toBe(OfflineCredentialsGateStatus.Error);
+    expect(result.current.connected).toBe(true);
+  });
 });

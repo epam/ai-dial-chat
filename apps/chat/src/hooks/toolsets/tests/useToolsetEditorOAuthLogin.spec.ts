@@ -41,7 +41,10 @@ let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
 
 const readFlowId = () =>
   JSON.parse(
-    capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
+    atob(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        btoa('{}'),
+    ),
   ).state as string;
 
 const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
@@ -98,7 +101,10 @@ describe('useToolsetEditorOAuthLogin — configured client', () => {
     await vi.waitFor(() => expect(capturedPopup).toBeDefined());
 
     const state = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
+      atob(
+        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+          btoa('{}'),
+      ),
     );
     expect(state.toolsetId).toBe(TOOLSET_ID);
     expect(state.credentialsLevel).toBe(ToolsetCredentialsLevel.User);

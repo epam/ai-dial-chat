@@ -75,6 +75,27 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   };
 });
 
+const checkScheduledTaskAuthSessionErrorMock = vi.fn();
+vi.mock('../../../utils/scheduled-task-auth-error', () => ({
+  checkScheduledTaskAuthSessionError: (...args: unknown[]) =>
+    checkScheduledTaskAuthSessionErrorMock(...args),
+}));
+
+const reserveLoginPopupMock = vi.fn();
+const autoLoginMock = vi.fn();
+vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskAuthAutoLogin', () => ({
+  useScheduledTaskAuthAutoLogin: () => ({
+    reserveLoginPopup: () => reserveLoginPopupMock(),
+    autoLogin: (...args: unknown[]) => autoLoginMock(...args),
+  }),
+}));
+
+const CONNECT = {
+  clientId: 'dial-apps',
+  authorizationEndpoint: 'https://identity.example.com/authorize',
+  scopes: ['openid', 'offline_access'],
+};
+
 vi.mock(
   '../../../components/DeploymentSelector/DeploymentSelectorFieldTrigger',
   () => ({
@@ -456,6 +477,12 @@ describe('ScheduledTaskEditPage', () => {
     useAppConfigMock.mockReturnValue({ status: 'ready', config: {} });
     getApiErrorStatusMock.mockReturnValue(undefined);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: undefined });
+    /* Matches the real check's non-throwing contract — it never resolves
+       undefined, so an unconfigured mock must not model that impossible
+       state (the handler dereferences the result unguarded). */
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: false,
+    });
   });
   /* Always restores real timers, even when a fake-timer test times out
    and skips its own cleanup. */
@@ -820,6 +847,202 @@ describe('ScheduledTaskEditPage', () => {
       expect(showNotificationMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Quota exceeded for schedules' }),
       ),
+    );
+  });
+  it('drives the reserved-popup login, retries the save, and navigates to the detail route when a 403 is attributed to the logged-out scheduler service', async () => {
+    const closePopupMock = vi.fn();
+    const reservedPopup = {
+      closed: false,
+      close: closePopupMock,
+    } as unknown as Window;
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock
+      .mockRejectedValueOnce(new Error('forbidden'))
+      .mockResolvedValueOnce({ id: 'sched_123' });
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    reserveLoginPopupMock.mockReturnValue(reservedPopup);
+    autoLoginMock.mockResolvedValue({ type: 'success' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    /* The login runs in the popup reserved at click time — the page never unloads. */
+    await waitFor(() => expect(autoLoginMock).toHaveBeenCalledOnce());
+    expect(autoLoginMock).toHaveBeenCalledWith(CONNECT, reservedPopup);
+    /* The submit is retried once after the successful login. */
+    await waitFor(() =>
+      expect(updateScheduledTaskMock).toHaveBeenCalledTimes(2),
+    );
+    expect(await screen.findByText('scheduled task detail page')).toBeTruthy();
+    expect(showNotificationMock).toHaveBeenCalledOnce();
+    /* The unused popup reservation is released. */
+    expect(closePopupMock).toHaveBeenCalledOnce();
+  });
+
+  it('shows the login-failed toast and keeps the form when the popup login fails', async () => {
+    const closePopupMock = vi.fn();
+    reserveLoginPopupMock.mockReturnValue({
+      closed: false,
+      close: closePopupMock,
+    } as unknown as Window);
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    autoLoginMock.mockResolvedValue({ type: 'failure' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'displayName' }),
+      ' edited',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    expect(showNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.autoLoginFailedNotification',
+        requestId: 'trace-403',
+      }),
+    );
+    /* One submit attempt only — a failed login never triggers the retry. */
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+    /* The form and its unsaved edit stay intact — no navigation, no reset. */
+    expect(
+      (
+        screen.getByRole('textbox', {
+          name: 'displayName',
+        }) as HTMLInputElement
+      ).value,
+    ).toBe('Daily summary edited');
+    expect(screen.queryByText('scheduled task detail page')).not.toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: 'buttons.save' })
+        .hasAttribute('disabled'),
+    ).toBe(false);
+    /* The reservation is released even though the login failed. */
+    expect(closePopupMock).toHaveBeenCalledOnce();
+  });
+
+  it('stays silent and keeps the form when the user closes the login popup', async () => {
+    reserveLoginPopupMock.mockReturnValue({
+      closed: true,
+      close: vi.fn(),
+    } as unknown as Window);
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    autoLoginMock.mockResolvedValue({ type: 'cancelled' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(autoLoginMock).toHaveBeenCalledOnce());
+    /* A user-closed popup is a cancellation, not a failure — no toast, no retry. */
+    expect(showNotificationMock).not.toHaveBeenCalled();
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+  });
+
+  it('re-attempts the popup login when Save is activated again after a failed login', async () => {
+    reserveLoginPopupMock.mockImplementation(() => ({
+      closed: false,
+      close: vi.fn(),
+    }));
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    autoLoginMock.mockResolvedValue({ type: 'failure' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    const save = screen.getByRole('button', { name: 'buttons.save' });
+    await userEvent.click(save);
+    await waitFor(() => {
+      expect(autoLoginMock).toHaveBeenCalledOnce();
+    });
+
+    await userEvent.click(save);
+
+    await waitFor(() => {
+      expect(autoLoginMock).toHaveBeenCalledTimes(2);
+    });
+    /* Each submit reserves its own popup. */
+    expect(reserveLoginPopupMock).toHaveBeenCalledTimes(2);
+    expect(updateScheduledTaskMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the generic error toast when a 403 is attributed but no usable client settings exist', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: undefined,
+    });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    expect(showNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.edit.errorNotification',
+        requestId: 'trace-403',
+      }),
+    );
+    expect(autoLoginMock).not.toHaveBeenCalled();
+    expect(reserveLoginPopupMock).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the generic error toast when a 403 is not attributed to the auth session', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: false,
+    });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    expect(showNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.edit.errorNotification',
+        requestId: 'trace-403',
+      }),
+    );
+    expect(showNotificationMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.autoLoginFailedNotification',
+      }),
     );
   });
 });

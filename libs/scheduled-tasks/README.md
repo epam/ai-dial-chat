@@ -45,6 +45,8 @@ The sort control's trigger shows the active option's label, falling back to `lab
 
 `banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated). It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
 
+The create button (and any future header action button) collapses to an icon-only 40px circle below 1280px through a shared CSS class pair written against every header action button.
+
 ```tsx
 import {
   ScheduledTasks,

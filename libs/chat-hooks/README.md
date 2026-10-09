@@ -2596,11 +2596,24 @@ const url = buildToolsetAuthorizeUrl(
 );
 ```
 
-### openToolsetOAuthPopup / navigateToolsetOAuthPopup / initiateOAuthLogin
+### openToolsetOAuthPopup / navigateToolsetOAuthPopup / initiateOAuthLogin / navigateToolsetOAuthRedirect
 
 `openToolsetOAuthPopup` opens a blank, same-origin popup. Call it as the very first synchronous statement of a click handler, before any `await` — that ordering is what makes a blocked popup detectable and keeps the browser treating the open as user-triggered.
 
 `initiateOAuthLogin` is the one-shot path for a config already known synchronously: it validates the config, opens the popup, writes the redirect state into **the popup's own** `sessionStorage`, sets the popup's `opener` to `null`, and navigates it to the provider. `navigateToolsetOAuthPopup` is the deferred path for a config that can only be fetched after the popup is open — it closes the already-open popup and returns `InvalidConfig` when no authorize URL can be built.
+
+`navigateToolsetOAuthRedirect` is the main-window counterpart of `navigateToolsetOAuthPopup`: it builds the same authorize URL and redirect state from the same arguments (plus a `returnPath`), writes the state into **the current window's own** `sessionStorage`, and navigates the current window to the provider. `window.location` navigation needs no user-gesture activation, so a caller that has already run async work since its last click — where the popup flow would be blocked — can still start the flow. The initiating page unloads on `Started`; the callback route detects main-window mode through the stored `returnPath` and hands completion to the host's `onMainWindowComplete` (see `useOAuthCallbackCompletion`). Returns `ToolsetOAuthInitiationResultType.Started` or `.InvalidConfig` — main-window mode has no popup to block.
+
+**Parameters** (`navigateToolsetOAuthRedirect`):
+
+| Name               | Type                      | Description                                                                   |
+| ------------------ | ------------------------- | ----------------------------------------------------------------------------- |
+| `auth`             | `ToolsetOAuthSettings`    | OAuth client settings.                                                        |
+| `toolsetId`        | `string`                  | Resource id, or an opaque correlation id for the non-toolset resource kinds.  |
+| `callbackPath`     | `string`                  | The host's own OAuth callback route.                                          |
+| `returnPath`       | `string`                  | Where the callback should send the user back to after the exchange completes. |
+| `credentialsLevel` | `ToolsetCredentialsLevel` | Defaults to `ToolsetCredentialsLevel.User`.                                   |
+| `resourceKind`     | `OAuthResourceKind`       | Defaults to `OAuthResourceKind.Toolset`.                                      |
 
 **Parameters** (`navigateToolsetOAuthPopup`):
 
@@ -2731,15 +2744,18 @@ if (outcome.type === ToolsetLoginOutcomeType.PopupBlocked) {
 
 Runs inside the OAuth callback popup and completes the flow: reads and clears the redirect state from the popup's own `sessionStorage`, removes the authorization code from the visible URL **before** any request, validates the returned `state` against the stored one, performs the exchange through the injected callback, then reports the outcome into the popup URL and over the flow channel until the opener acknowledges it, closing the popup afterwards. It runs its effect once per mount even under StrictMode double-invocation, renders nothing, and produces no user-visible text.
 
+In main-window mode — a redirect state carrying a `returnPath`, written by `navigateToolsetOAuthRedirect` — the same completion runs in the main window, but the outcome is handed to the host's `onMainWindowComplete` instead of the popup URL/flow-channel reporting: there is no popup to close and no opener listening.
+
 Per-resource-kind dispatch stays in the host page — the hook sees only the one injected `exchange` callback.
 
 **Parameters**:
 
-| Name           | Type                                                                          | Description                                                                                                                               |
-| -------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `searchParams` | `URLSearchParams`                                                             | Callback query parameters; `code` and `state` are read from it.                                                                           |
-| `callbackPath` | `string`                                                                      | Used to build the echoed `redirect_uri` when the stored redirect state carries none.                                                      |
-| `exchange`     | `(params: OAuthExchangeParams) => Promise<ToolsetOAuthFailureReason \| null>` | Performs the exchange. Resolve `null` for success, a reason for a host-side validation failure; a rejection reports `LoginRequestFailed`. |
+| Name                   | Type                                                                                    | Description                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `searchParams`         | `URLSearchParams`                                                                       | Callback query parameters; `code` and `state` are read from it.                                                                                                                                                                                                                                                                                     |
+| `callbackPath`         | `string`                                                                                | Used to build the echoed `redirect_uri` when the stored redirect state carries none.                                                                                                                                                                                                                                                                |
+| `exchange`             | `(params: OAuthExchangeParams) => Promise<ToolsetOAuthFailureReason \| null>`           | Performs the exchange. Resolve `null` for success, a reason for a host-side validation failure; a rejection reports `LoginRequestFailed`.                                                                                                                                                                                                           |
+| `onMainWindowComplete` | `(outcome: ToolsetOAuthMainWindowOutcome, redirectState: ToolsetRedirectState) => void` | Called instead of the popup reporting when the stored redirect state carries a `returnPath` (written by `navigateToolsetOAuthRedirect`) — there is no popup to close and no opener listening, so the host owns what the user sees next (typically navigating back to `returnPath`). Absent, or in a popup flow, the popup reporting runs unchanged. |
 
 **Returns**:
 

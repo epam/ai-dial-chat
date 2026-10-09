@@ -1,10 +1,16 @@
 import type { SettingsPanelItem } from '@epam/ai-dial-settings-panel';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
-import { IconAdjustmentsHorizontal, IconChartBar } from '@tabler/icons-react';
+import {
+  IconAdjustmentsHorizontal,
+  IconChartBar,
+  IconPlugConnected,
+} from '@tabler/icons-react';
 import type { ComponentType } from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BasicI18nKeys, SettingsI18nKeys } from '../constants/translation-keys';
+import { useFeatureFlag } from '../context/AppConfigContext';
+import ExtensionsTab from '../pages/SettingsPage/ExtensionsTab/ExtensionsTab';
 import PreferencesTab from '../pages/SettingsPage/PreferencesTab/PreferencesTab';
 import UsageTab from '../pages/SettingsPage/UsageTab/UsageTab';
 import { SettingsTabs } from '../types/settings-tabs';
@@ -25,6 +31,7 @@ export interface UseSettingsTabConfigResult {
  */
 export const useSettingsTabConfig = (): UseSettingsTabConfigResult => {
   const { t } = useTranslation();
+  const isScheduledTasksEnabled = useFeatureFlag('scheduledTasksEnabled');
 
   const entries: SettingsTabConfigEntry[] = useMemo(
     () => [
@@ -56,8 +63,32 @@ export const useSettingsTabConfig = (): UseSettingsTabConfigResult => {
         },
         Component: UsageTab,
       },
+      /*
+       * The Extensions entry is withheld unless the feature behind its whole
+       * domain is on: the BFF's offline-credentials endpoints 403 unless
+       * `scheduledTasksEnabled`/`liveChatInteraction` is enabled, so an
+       * always-rendered tab would show a permanently dead section.
+       */
+      ...(isScheduledTasksEnabled
+        ? [
+            {
+              item: {
+                id: SettingsTabs.Extensions,
+                label: t(SettingsI18nKeys.Extensions),
+                icon: (
+                  <IconPlugConnected
+                    size={DIAL_ICON_SIZE.MD}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                ),
+              },
+              Component: ExtensionsTab as ComponentType,
+            },
+          ]
+        : []),
     ],
-    [t],
+    [t, isScheduledTasksEnabled],
   );
 
   return useMemo(

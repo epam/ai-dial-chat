@@ -95,12 +95,14 @@ describe('OfflineCredentialsController (integration)', () => {
   let service: {
     getOfflineCredentialsStatus: ReturnType<typeof vi.fn>;
     signIn: ReturnType<typeof vi.fn>;
+    signOut: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     service = {
       getOfflineCredentialsStatus: vi.fn(),
       signIn: vi.fn().mockResolvedValue(undefined),
+      signOut: vi.fn().mockResolvedValue(undefined),
     };
   });
 
@@ -291,6 +293,101 @@ describe('OfflineCredentialsController (integration)', () => {
         .send({ code: 'auth-code', redirectUri: ALLOWED_REDIRECT_URI });
 
       expect(res.status).toBe(502);
+    });
+  });
+
+  describe('POST /api/v1/offline-credentials/signout', () => {
+    it('signs out and returns success', async () => {
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/offline-credentials/signout')
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.headers['cache-control']).toBe('private, no-store');
+      expect(res.body).toEqual({ success: true });
+      expect(service.signOut).toHaveBeenCalledWith('test-access-token');
+      expect(service.signOut).toHaveBeenCalledOnce();
+    });
+
+    it('returns idempotent success when Core reports 404 (no grant stored)', async () => {
+      app = await buildApp(service);
+      /* The service absorbs a Core 404 (no grant left to revoke) by
+         resolving — this pins that the HTTP layer never surfaces such an
+         outcome as an error, matching the endpoint's advertised contract. */
+      service.signOut.mockResolvedValue(undefined);
+
+      const res = await request(app.getHttpServer()).post(
+        '/api/v1/offline-credentials/signout',
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true });
+    });
+
+    it('returns 401 when there is no session', async () => {
+      app = await buildApp(service, { authenticated: false });
+
+      const res = await request(app.getHttpServer()).post(
+        '/api/v1/offline-credentials/signout',
+      );
+
+      expect(res.status).toBe(401);
+      expect(service.signOut).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when scheduledTasksEnabled is disabled', async () => {
+      app = await buildApp(service, { featureEnabled: false });
+
+      const res = await request(app.getHttpServer()).post(
+        '/api/v1/offline-credentials/signout',
+      );
+
+      expect(res.status).toBe(403);
+      expect(service.signOut).not.toHaveBeenCalled();
+    });
+
+    it('allows sign-out for live chat when Scheduled Tasks is disabled', async () => {
+      app = await buildApp(service, {
+        featureEnabled: false,
+        liveChatEnabled: true,
+      });
+
+      const res = await request(app.getHttpServer()).post(
+        '/api/v1/offline-credentials/signout',
+      );
+
+      expect(res.status).toBe(200);
+      expect(service.signOut).toHaveBeenCalledWith('test-access-token');
+    });
+
+    it('returns 502 when the service reports Core failure', async () => {
+      app = await buildApp(service);
+      service.signOut.mockRejectedValue(
+        new BadGatewayException(
+          'sign out offline-credentials (Core reported failure)',
+        ),
+      );
+
+      const res = await request(app.getHttpServer()).post(
+        '/api/v1/offline-credentials/signout',
+      );
+
+      expect(res.status).toBe(502);
+    });
+
+    it('returns 503 when DIAL Core is unreachable', async () => {
+      app = await buildApp(service);
+      service.signOut.mockRejectedValue(
+        new ServiceUnavailableException('DIAL Core is unreachable'),
+      );
+
+      const res = await request(app.getHttpServer()).post(
+        '/api/v1/offline-credentials/signout',
+      );
+
+      expect(res.status).toBe(503);
     });
   });
 });

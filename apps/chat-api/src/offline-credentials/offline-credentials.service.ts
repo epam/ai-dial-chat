@@ -124,4 +124,52 @@ export class OfflineCredentialsService {
       );
     }
   }
+
+  /**
+   * Revokes the user's stored offline-credentials grant by proxying DIAL Core
+   * (`POST /v1/user/offline-credentials/signout`). A Core 404 is the
+   * idempotent success state — there was no grant left to revoke.
+   */
+  async signOut(accessToken: string): Promise<void> {
+    const authHeaders = getBearerAuthHeaders(accessToken);
+    this.logger.debug('Signing out offline-credentials');
+
+    try {
+      const response = await this.dialClient.client.offlineCredentialsSignOut({
+        headers: authHeaders,
+      });
+      this.logger.debug(
+        `DIAL Core offlineCredentialsSignOut response: status=${response.response.status} errorPresent=${response.error != null}`,
+      );
+      /*
+       * Mirrors ExternalServicesService.signOut: a 404 from Core means there
+       * was no grant left to revoke, which is the idempotent success state a
+       * sign-out call wants, not an error.
+       */
+      if (response.error && response.response.status !== 404) {
+        return mapDialHttpStatus(
+          response.response.status,
+          'sign out offline-credentials',
+          this.logger,
+          response.error,
+          extractDialErrorMessage(response.error),
+        );
+      }
+      if (!response.error && !response.data) {
+        return mapDialHttpStatus(
+          502,
+          'sign out offline-credentials (Core reported failure)',
+          this.logger,
+        );
+      }
+      this.logger.debug('Signed out offline-credentials');
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        'sign out offline-credentials',
+        this.logger,
+        0,
+      );
+    }
+  }
 }

@@ -1,0 +1,6 @@
+/* Dividers inside the table sit on the thin stroke (0.5px), one step below
+   the 1px main stroke controls and standalone dividers use (the same rule as
+   ModelLimitsSection). */
+.row {
+  border-block-start: 0.5px solid var(--stroke-tertiary, #e0e6f0);
+}

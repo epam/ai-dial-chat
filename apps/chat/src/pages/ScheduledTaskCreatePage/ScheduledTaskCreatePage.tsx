@@ -1,4 +1,7 @@
-import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
+import {
+  ScheduledTaskErrorCode,
+  TextRefinementPurpose,
+} from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { prepareScheduledTaskCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
@@ -22,6 +25,8 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { OfflineCredentialsLoginOutcomeType } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { useScheduledTaskAuthAutoLogin } from '../../hooks/scheduled-tasks/useScheduledTaskAuthAutoLogin';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
@@ -30,6 +35,7 @@ import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
+import { checkScheduledTaskAuthSessionError } from '../../utils/scheduled-task-auth-error';
 import {
   getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
@@ -60,7 +66,8 @@ const ScheduledTaskCreatePage: FC = () => {
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
-  const { key: draftKey } = useLocation();
+  const location = useLocation();
+  const { key: draftKey } = location;
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
@@ -127,6 +134,102 @@ const ScheduledTaskCreatePage: FC = () => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
+  const showAutoLoginFailedNotification = useCallback(
+    (traceId?: string) =>
+      showErrorNotification({
+        message: t(ScheduledTasksI18nKeys.AutoLoginFailedNotification),
+        requestId: traceId,
+      }),
+    [showErrorNotification, t],
+  );
+
+  const { reserveLoginPopup, autoLogin } = useScheduledTaskAuthAutoLogin();
+
+  /**
+   * Handles a failed submit; resolves `true` only when the failure was
+   * attributed to the logged-out external Scheduler auth service and the
+   * reserved-popup auto-login succeeded, so the caller retries the submit
+   * once. Every other path resolves `false` after surfacing its own
+   * feedback (field errors or a toast).
+   */
+  const handleSubmitError = useCallback(
+    async (error: unknown, reservedPopup: Window | null): Promise<boolean> => {
+      try {
+        const details = await getApiErrorDetails(error);
+        const { traceId, code } = details;
+        const fieldErrors = mapScheduledTaskApiError(code, t);
+        if (fieldErrors) {
+          setErrors(fieldErrors);
+          return false;
+        }
+
+        /*
+         * A revoked scheduler consent is fixed by an administrator, not by a
+         * login: it short-circuits before the 403 disambiguation below, so a
+         * consent revocation is never mistaken for a logged-out auth
+         * service and never drives the auto-login.
+         */
+        if (code === ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired) {
+          showErrorNotification({
+            message: resolveScheduledTaskErrorMessage(
+              details,
+              ScheduledTasksI18nKeys.CreateErrorNotification,
+              t,
+            ),
+            requestId: traceId,
+          });
+          return false;
+        }
+
+        /*
+         * A bare 403 is either a genuine permission denial or the external
+         * Scheduler auth service being logged out (Core returns the same
+         * bare status for both). One fresh status check disambiguates
+         * (issue #9046); an attributed failure with usable client settings
+         * drives the reserved-popup auto-login, so the page and its unsaved
+         * form state stay alive while the OAuth popup runs — the popup was
+         * reserved synchronously at click time, because one opened after
+         * the save POST would be blocked by the popup blocker. A
+         * user-closed popup stays silent; every other failed outcome takes
+         * the failed-login toast. An attributed failure with no usable
+         * authorize URL, or with no usable settings at all, keeps the
+         * generic error handling below.
+         */
+        const check = await checkScheduledTaskAuthSessionError(error);
+        if (check.isAuthSessionError && check.connect != null) {
+          const outcome = await autoLogin(check.connect, reservedPopup);
+          if (outcome.type === OfflineCredentialsLoginOutcomeType.Success) {
+            return true;
+          }
+          if (outcome.type !== OfflineCredentialsLoginOutcomeType.Cancelled) {
+            showAutoLoginFailedNotification(traceId);
+          }
+          return false;
+        }
+
+        showErrorNotification({
+          /* DIAL Scheduler's own reason when it sent one; never the BFF's
+           * generic English-only `message`. */
+          message: resolveScheduledTaskErrorMessage(
+            details,
+            ScheduledTasksI18nKeys.CreateErrorNotification,
+            t,
+          ),
+          requestId: traceId,
+        });
+        return false;
+      } catch {
+        /* The error handler itself must never surface as an unhandled
+           rejection on top of a failed submit. */
+        showErrorNotification({
+          message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
+        });
+        return false;
+      }
+    },
+    [autoLogin, showAutoLoginFailedNotification, showErrorNotification, t],
+  );
+
   const handleSubmit = useCallback(async () => {
     const prepared = prepareScheduledTaskCreateBody(values, {
       now: new Date(),
@@ -137,36 +240,52 @@ const ScheduledTaskCreatePage: FC = () => {
       return;
     }
 
+    /*
+     * Reserved while the click's user activation is still fresh — see
+     * useScheduledTaskAuthAutoLogin. Closed in the finally below when the
+     * submit never needed a login.
+     */
+    const reservedPopup = reserveLoginPopup();
+
+    let isCreated = false;
     setIsSubmitting(true);
     try {
-      await createScheduledTask(prepared.body);
-      showSuccessNotification({
-        message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
-      });
-      navigate(returnUrl, { state: { refresh: true } });
-    } catch (error) {
-      const details = await getApiErrorDetails(error);
-      const fieldErrors = mapScheduledTaskApiError(details.code, t);
-      if (fieldErrors) {
-        setErrors(fieldErrors);
-        setIsSubmitting(false);
-        return;
+      try {
+        await createScheduledTask(prepared.body);
+        isCreated = true;
+      } catch (error) {
+        if (await handleSubmitError(error, reservedPopup)) {
+          try {
+            await createScheduledTask(prepared.body);
+            isCreated = true;
+          } catch (retryError) {
+            /*
+             * The post-login retry takes the generic path — its fresh status
+             * check reports connected, so it cannot re-trigger the
+             * auto-login.
+             */
+            await handleSubmitError(retryError, null);
+          }
+        }
       }
-      showErrorNotification({
-        message: resolveScheduledTaskErrorMessage(
-          details,
-          ScheduledTasksI18nKeys.CreateErrorNotification,
-          t,
-        ),
-        requestId: details.traceId,
-      });
+      if (isCreated) {
+        showSuccessNotification({
+          message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
+        });
+        navigate(returnUrl, { state: { refresh: true } });
+      }
+    } finally {
+      if (reservedPopup && !reservedPopup.closed) {
+        reservedPopup.close();
+      }
       setIsSubmitting(false);
     }
   }, [
     values,
     isSkillsSupported,
     showSuccessNotification,
-    showErrorNotification,
+    handleSubmitError,
+    reserveLoginPopup,
     t,
     navigate,
     returnUrl,

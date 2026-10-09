@@ -26,6 +26,8 @@ export interface UseOfflineCredentialsGateResult {
   status: OfflineCredentialsGateStatus;
   /** OAuth client settings from the most recent check — set only while `status` is `Available`. */
   connect: OfflineCredentialsConnectSettings | undefined;
+  /** Whether the most recent successful check reported a stored offline-credentials grant; a failed check keeps the last resolved value. `false` before the first check resolves. */
+  connected: boolean;
   /**
    * Re-runs the status check and returns its freshly resolved
    * `{ available, connected }` result (or `null` on failure/abort), so a
@@ -53,6 +55,7 @@ export const useOfflineCredentialsGate =
     const [connect, setConnect] = useState<
       OfflineCredentialsConnectSettings | undefined
     >(undefined);
+    const [connected, setConnected] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const fetchStatus =
@@ -88,6 +91,7 @@ export const useOfflineCredentialsGate =
                 : OfflineCredentialsGateStatus.Unavailable,
           );
           setConnect(connectSettings);
+          setConnected(connected);
           return { available, connected, connect: connectSettings };
         } catch {
           if (controller.signal.aborted) return null;
@@ -98,11 +102,17 @@ export const useOfflineCredentialsGate =
       }, []);
 
     useEffect(() => {
-      void fetchStatus();
+      fetchStatus();
+
       return () => {
         abortControllerRef.current?.abort();
       };
     }, [pathname, fetchStatus]);
 
-    return { status, connect, refetch: fetchStatus };
+    return {
+      status,
+      connect,
+      connected,
+      refetch: fetchStatus,
+    };
   };

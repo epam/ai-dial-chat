@@ -635,9 +635,21 @@
     "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line",
     "preferences": "Preferences",
     "preferencesDescription": "Personalize how the chat looks and behaves.",
+    "extensions": "Extensions",
     "defaultAgent": "Default agent for new chats",
     "defaultAgentOptionDefault": "Default agent",
     "defaultAgentOptionLastUsed": "Last used agent"
+  },
+  "extensions": {
+    "description": "Access additional tools and capabilities through extensions.",
+    "nameColumnLabel": "Name",
+    "descriptionColumnLabel": "Description",
+    "actionsColumnLabel": "Actions",
+    "service": {
+      "defaultName": "Dial native",
+      "description": "Provides access to built-in apps within the platform.",
+      "authorizeTooltip": "Authorize to use this extension"
+    }
   },
   "attachments": {
     "downloadFile": "Download file",
@@ -855,7 +867,15 @@
       "failedMessage": "Login failed. Please try again.",
       "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
       "loggingInLabel": "Logging in…"
-    }
+    },
+    "disconnect": {
+      "confirmTitle": "Log out from Dial native",
+      "confirmDescription": "Are you sure you want to log out?",
+      "confirmDescriptionSecondary": "You'll lose access to built-in apps until you log back in.",
+      "failedMessage": "Log out failed. Please try again.",
+      "successAnnouncement": "You're signed out. Scheduled tasks will no longer run automatically."
+    },
+    "autoLoginFailedNotification": "Couldn't sign in to the external scheduler service. Try saving the task again."
   },
   "dialFileManager": {
     "attach": "Attach",
