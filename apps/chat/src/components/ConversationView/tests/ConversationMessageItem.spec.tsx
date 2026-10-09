@@ -1572,7 +1572,7 @@ describe('ConversationMessageItem — markdown file URLs', () => {
         msg={{
           role: MessageRole.Assistant,
           content:
-            '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/pg/chart.png)',
+            '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/demo/chart.png)',
           timestamp: '2024-01-01T00:00:02Z',
         }}
         index={1}
@@ -1584,7 +1584,7 @@ describe('ConversationMessageItem — markdown file URLs', () => {
         .getByRole('img', { name: 'Silver Lake chart' })
         .getAttribute('src'),
     ).toBe(
-      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
+      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png',
     );
   });
 });

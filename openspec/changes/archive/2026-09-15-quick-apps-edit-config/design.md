@@ -22,7 +22,7 @@ This change makes the write side accept `applicationProperties` (opt-in — ever
 that never sends the field is unaffected) and fixes the read side's field collision, so that a
 future Edit flow (in this repo, or an external Quick Apps frontend proxying into DIAL Core) can
 reliably do load → edit → save-by-same-id against this backend's existing endpoints, the same
-shape `ai-dial-chat-pg`'s Agent Builder already does for its own entity.
+shape an existing downstream Agent Builder already uses for its own entity.
 
 ## Goals / Non-Goals
 

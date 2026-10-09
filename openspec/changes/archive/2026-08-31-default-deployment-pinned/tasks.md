@@ -22,16 +22,16 @@
   describe('sort pinning', () => {
     it('hoists the operator-default deployment to position 0 when it sorts after other items alphabetically', async () => {
       const zAgent = { id: 'z-agent', displayName: 'Z Agent', type: 'model' as const };
-      const pgAgent = { id: 'pg-agent', displayName: 'PG Agent', type: 'model' as const };
+      const mAgent = { id: 'm-agent', displayName: 'M Agent', type: 'model' as const };
       const aAgent = { id: 'a-agent', displayName: 'A Agent', type: 'model' as const };
-      mockGetDeployments.mockResolvedValueOnce({ deployments: [zAgent, pgAgent, aAgent] });
-      contextMocks.defaultDeploymentId = 'pg-agent';
+      mockGetDeployments.mockResolvedValueOnce({ deployments: [zAgent, mAgent, aAgent] });
+      contextMocks.defaultDeploymentId = 'm-agent';
 
       const { result } = renderHook(() => useDeployments(), { wrapper: DeploymentsProvider });
 
       await waitFor(() =>
         expect(result.current.items.map((item) => item.id)).toEqual([
-          'pg-agent',
+          'm-agent',
           'a-agent',
           'z-agent',
         ]),

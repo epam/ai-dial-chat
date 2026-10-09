@@ -115,9 +115,9 @@ Assistant message content rendered by `MarkdownRenderer`/`MDMessageViewer` (`lib
 Values that are not DIAL file ids (e.g. `https://` URLs) SHALL be passed through unchanged. The host transform's output SHALL still be passed through react-markdown's own `defaultUrlTransform`, so an unsafe protocol (e.g. `javascript:`) returned by a host transform is still stripped.
 
 #### Scenario: Markdown image src is rewritten to a download URL
-- **GIVEN** assistant markdown content `![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/pg/chart.png)`
+- **GIVEN** assistant markdown content `![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/demo/chart.png)`
 - **WHEN** the message is rendered
-- **THEN** the rendered `<img>` has `src="/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png"`
+- **THEN** the rendered `<img>` has `src="/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png"`
 
 #### Scenario: Markdown link href is rewritten to a download URL
 - **GIVEN** assistant markdown content `[report](files/bucket/report.pdf)` and a host `urlTransform`

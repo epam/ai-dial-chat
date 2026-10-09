@@ -12,7 +12,7 @@ Run `npm run test:file -- libs/conversation-input/src/components/Input/tests/Inp
 ## 2. Documentation and specification
 
 - [x] 2.1 Update `libs/conversation-input/README.md` with the optional prop, fallback behavior, and a host usage example. Sync the delta to `openspec/specs/conversation-input-send-tooltip/spec.md`.
-- [x] 2.2 Validate docs and specs, run `npm run verify:full` once, and record any unrelated baseline failures. Prepare a pg-chat integration patch for the compatible release without changing published-version pins.
+- [x] 2.2 Validate docs and specs, run `npm run verify:full` once, and record any unrelated baseline failures. No published-version pins were changed.
 
 ### Verification
 

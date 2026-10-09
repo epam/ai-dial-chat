@@ -58,7 +58,7 @@ exist.
 ## Non-goals
 
 - No new library, backend/OpenAPI contract, route, storage schema, feature
-  flag, UI redesign, or downstream `ai-dial-chat-pg` migration.
+  flag, UI redesign, or downstream consumer migration.
 - No move of configured clients, auth/session state, app contexts, i18n,
   navigation, notifications, or browser-download policy into a library.
 - No change to the built-in catalog content-preview request/stale-response

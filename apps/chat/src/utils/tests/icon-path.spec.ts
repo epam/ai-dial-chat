@@ -120,10 +120,10 @@ describe('resolveMarkdownUrl', () => {
   it('rewrites a DIAL file ID to the BFF download URL', () => {
     expect(
       resolveMarkdownUrl(
-        'files/9gRuhxHb/appdata/applications/public/pg/chart.png',
+        'files/9gRuhxHb/appdata/applications/public/demo/chart.png',
       ),
     ).toBe(
-      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
+      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png',
     );
   });
 
