@@ -51,7 +51,12 @@ sent an in-band error chunk with `error.type === 'conversation_save_failed'`
 `generationPersistenceErrorMessage` parameter (defaulting to
 `DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE`) to `streamErrorMessage` and
 keep the received answer in the buffer, as
-`backend-owned-generation-persistence` defines.
+`backend-owned-generation-persistence` defines. The one exception is a
+`GenerationPersistenceError` whose `status` is `401` on a stream started by
+`startStream` when the transport implements `saveConversation`. There, the
+warning is deferred until the single recovery save fails, and never written
+if it succeeds, as "A credentials-rejected terminal save gets one client
+recovery save" defines.
 
 When the transport reports a `StreamInterruptedError` — the network
 connection carrying the stream was lost or stalled while the backend-owned
@@ -192,7 +197,8 @@ path is displayed. It SHALL expose
 conversation unchanged when no buffer exists and otherwise restores the
 buffered message at its recorded index. Completion and error callbacks SHALL
 clear the buffer because the backend's terminal save is then authoritative,
-except where the received answer must survive: a `GenerationPersistenceError`,
+except where the received answer must survive: a `GenerationPersistenceError`
+(until its single recovery save succeeds, when one applies),
 a terminal reload that still shows the unsaved placeholder, or a rejected
 terminal reload keep the buffer (see `backend-owned-generation-persistence`),
 and a reload that shows a pending background message hands it to the resume
@@ -566,3 +572,79 @@ continue.
 - **WHEN** the immediate re-check still returns an awaiting conversation
 - **THEN** the watch continues and resolves on a later qualifying
   `UPDATE` event, as before
+
+### Requirement: A credentials-rejected terminal save gets one client recovery save
+
+`useConversationStream` SHALL own this behavior; no new context is introduced. It applies only when both of these hold:
+
+- the generation was started by `startStream` in the mounted hook;
+- its completion stream reports a `GenerationPersistenceError` whose `status` is `401`.
+
+It SHALL NOT apply to:
+
+- a `GenerationPersistenceError` with any other `status` or with no `status`;
+- a generation joined through attach, replay, or resume;
+- the reload heuristic that keeps the warning when the stored copy still shows the unsaved placeholder.
+
+`ConversationStreamTransport` SHALL gain an optional `saveConversation(path, conversation)` method:
+
+- `path` is the same bucket-stripped conversation path that `streamCompletion` receives.
+- It resolves with the saved conversation and rejects on any failure.
+- The host implements it against its own client save. The library SHALL NOT construct an endpoint path, read credentials, or import a generated client for it.
+- In this repository the app adapter in `apps/chat/src/utils/conversation-stream-transport.ts` implements it with `saveConversation` from `apps/chat/src/server-api/conversations.api.ts`.
+
+When the conditions above hold and the transport implements `saveConversation`, the hook SHALL:
+
+1. Settle the generation as it does today: streaming and stop controls are released, and the received answer stays buffered and displayed. It SHALL NOT write the persistence warning yet.
+2. Make exactly one recovery attempt for that generation:
+   1. read the stored conversation through `transport.getConversation`;
+   2. restore the received answer at its recorded index; when the stored conversation does not end at that index in this turn's unsaved placeholder (the same check the terminal reload uses), treat the attempt as failed without saving;
+   3. save the result once through `transport.saveConversation`.
+3. Then, depending on the result:
+   - **On success**, release that generation's buffer and never show the persistence warning for it. While the conversation is still displayed and the generation was not superseded, it SHALL show the saved conversation.
+   - **On failure** (the read or the save rejects), write the persistence warning exactly as the immediate path does today: into the buffered message, and into the displayed message while the conversation is displayed and the generation was not superseded. It SHALL NOT try again.
+
+When the transport does not implement `saveConversation`, or the conditions above do not hold, the warning SHALL be written immediately, as today.
+
+The recovery SHALL NOT change displayed state for a superseded generation, for a buffer that a newer generation replaced, or for a conversation that is no longer displayed. It SHALL still save the received answer when the conversation is no longer displayed.
+
+`onStreamError` SHALL still receive the original `GenerationPersistenceError` once, when the stream reports it. The recovery outcome is not reported through it.
+
+No new user-visible strings (no i18n keys), no UI, no RTL impact, no feature flag, no metric or analytics event, no cache, and no new memoized callback are introduced.
+
+#### Scenario: A 401 terminal save failure is recovered without any warning
+
+- **GIVEN** a stream started in this tab has received an answer, and the transport implements `saveConversation`
+- **WHEN** the stream reports `conversation_save_failed` with `status: 401`, and the recovery read and save resolve
+- **THEN** the hook makes one read and one `saveConversation` call with the received answer at its index, and the persistence warning is never shown for that message
+
+#### Scenario: No warning is shown while the recovery is in flight
+
+- **WHEN** the stream reports `conversation_save_failed` with `status: 401` and the recovery save has not resolved yet
+- **THEN** the received answer is displayed without the persistence warning, and streaming and stop controls are already released
+
+#### Scenario: A failed recovery shows today's warning
+
+- **WHEN** the recovery read or save rejects
+- **THEN** the displayed message shows the persistence warning, the received answer stays buffered, and no further save is attempted for that generation
+
+#### Scenario: Any other persistence failure keeps today's behavior
+
+- **WHEN** the stream reports `conversation_save_failed` with a `status` other than `401`, or with no `status`
+- **THEN** the hook shows the persistence warning immediately and makes no recovery read or save
+
+#### Scenario: A host without saveConversation keeps today's behavior
+
+- **WHEN** the transport does not implement `saveConversation` and the stream reports `conversation_save_failed` with `status: 401`
+- **THEN** the hook shows the persistence warning immediately and makes no recovery read or save
+
+#### Scenario: A superseded generation never touches displayed state
+
+- **GIVEN** a recovery is in flight
+- **WHEN** the user starts a new generation on the same conversation, or navigates to another conversation, before it settles
+- **THEN** the recovery result, success or failure, does not change the displayed conversation or the newer generation's buffer
+
+#### Scenario: Attach subscribers do not save
+
+- **WHEN** a generation joined through attach or resume ends with an `error` event whose `errorType` is `conversation_save_failed`
+- **THEN** the hook keeps the replayed answer with the persistence warning and makes no recovery save

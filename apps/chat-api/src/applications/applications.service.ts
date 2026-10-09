@@ -2,6 +2,7 @@ import type { components } from '@epam/ai-dial-typescript-sdk';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
+  ConflictException,
   Inject,
   Injectable,
   Logger,
@@ -146,7 +147,9 @@ export class ApplicationsService {
         inputAttachmentTypes,
         maxInputAttachments,
         remainingProperties,
-      } = hoistApplicationFields(body.applicationProperties);
+      } = body.preserveApplicationProperties
+        ? { remainingProperties: body.applicationProperties ?? {} }
+        : hoistApplicationFields(body.applicationProperties);
 
       const { displayName, description } = composeLocalizedFields(
         body.name,
@@ -185,21 +188,29 @@ export class ApplicationsService {
           skills_supported: true,
         } as (typeof dialBody)['features'];
       }
-      if (inputAttachmentTypes != null)
-        dialBody.inputAttachmentTypes = inputAttachmentTypes;
-      if (maxInputAttachments != null)
-        dialBody.maxInputAttachments = maxInputAttachments;
+      const attachmentTypes = body.inputAttachmentTypes ?? inputAttachmentTypes;
+      const attachmentLimit = body.maxInputAttachments ?? maxInputAttachments;
+      if (attachmentTypes != null)
+        dialBody.inputAttachmentTypes = attachmentTypes;
+      if (attachmentLimit != null)
+        dialBody.maxInputAttachments = attachmentLimit;
 
       const response = await this.dialClient.client.saveCustomApplication(
         bucket,
         encodedPath,
         {
-          headers: authHeaders,
+          headers: {
+            ...authHeaders,
+            ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
+          },
           body: dialBody,
         },
       );
 
       if (response.error) {
+        if (body.createOnly && response.response.status === 412) {
+          throw new ConflictException('Application name already taken');
+        }
         return mapDialHttpStatus(
           response.response.status,
           'create application',

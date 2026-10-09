@@ -1,3 +1,4 @@
+import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import type { ConversationStreamTransport } from '@epam/ai-dial-chat-hooks';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import {
@@ -7,6 +8,7 @@ import {
 import {
   attachToGeneration,
   getConversation,
+  saveConversation,
   watchConversation,
 } from '../server-api/conversations.api';
 
@@ -45,6 +47,11 @@ export const conversationStreamTransport: ConversationStreamTransport = {
   attachToGeneration: (path, signal) => attachToGeneration(path, signal),
   getConversation: async (conversationId, signal) =>
     (await getConversation(conversationId, signal)) as Conversation,
+  saveConversation: async (path, conversation) =>
+    (await saveConversation(
+      path,
+      conversation as unknown as ConversationResponseDto,
+    )) as Conversation,
 };
 
 /**

@@ -1953,6 +1953,30 @@ export interface CreateApplicationBodyDto {
    */
   applicationProperties?: object;
   /**
+   * Reject with 409 if the name/version already exists; checked atomically by DIAL Core.
+   * @type {boolean}
+   * @memberof CreateApplicationBodyDto
+   */
+  createOnly?: boolean;
+  /**
+   * Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities.
+   * @type {boolean}
+   * @memberof CreateApplicationBodyDto
+   */
+  preserveApplicationProperties?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateApplicationBodyDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateApplicationBodyDto
+   */
+  maxInputAttachments?: number;
+  /**
    *
    * @type {Array<LocaleTextEntryDto>}
    * @memberof CreateApplicationBodyDto

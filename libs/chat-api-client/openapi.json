@@ -379,7 +379,7 @@
         "tags": ["applications"]
       },
       "post": {
-        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list and deployments list caches on success.",
+        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. With createOnly, atomically rejects an existing name/version with 409. With preserveApplicationProperties, stores schema settings verbatim. Invalidates the applications list and deployments list caches on success.",
         "operationId": "createApplication",
         "parameters": [],
         "requestBody": {
@@ -9680,6 +9680,27 @@
               "contexts": [],
               "tool_sets": []
             }
+          },
+          "createOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "Reject with 409 if the name/version already exists; checked atomically by DIAL Core."
+          },
+          "preserveApplicationProperties": {
+            "type": "boolean",
+            "default": false,
+            "description": "Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities."
+          },
+          "inputAttachmentTypes": {
+            "example": ["image/png"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "example": 5
           },
           "locales": {
             "type": "array",
