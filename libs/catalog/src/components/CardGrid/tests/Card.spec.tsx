@@ -336,39 +336,57 @@ describe('Card — description tooltip', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows the full description in a tooltip when the clamp hides text', async () => {
+  /* The panel is portaled out of the card; its kit class is the only hook to it. */
+  const getPanel = () =>
+    document.querySelector<HTMLElement>('.dial-kit-interactive-tooltip');
+
+  it('shows the full description in a panel when the clamp hides text', async () => {
     mockDescriptionHeights(120);
     render(<Card item={makeItem({ description: LONG_DESCRIPTION })} />);
 
     await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
 
-    expect(screen.getByRole('tooltip').textContent).toBe(LONG_DESCRIPTION);
+    expect(getPanel()?.textContent).toBe(LONG_DESCRIPTION);
   });
 
-  it('shows no tooltip when the description fits in two lines', async () => {
+  it('caps the panel at the viewport height and lets it scroll (#9363)', async () => {
+    mockDescriptionHeights(120);
+    render(<Card item={makeItem({ description: LONG_DESCRIPTION })} />);
+
+    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
+
+    expect(getPanel()?.className).toContain('max-h-[calc(100dvh-16px)]');
+    expect(getPanel()?.className).toContain('overflow-y-auto');
+  });
+
+  it('shows no panel when the description fits in two lines', async () => {
     mockDescriptionHeights(40);
     render(<Card item={makeItem({ description: 'Short.' })} />);
 
     await hoverAndWait(screen.getByText('Short.'));
 
-    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(getPanel()).toBeNull();
   });
 
-  it('renders links inside the tooltip as plain text', async () => {
+  it('does not open the card when the panel content is clicked', async () => {
     mockDescriptionHeights(120);
+    const onClick = vi.fn();
     render(
       <Card
-        item={makeItem({
-          description: 'See [the docs](https://example.com) for details.',
-        })}
+        item={makeItem({ description: LONG_DESCRIPTION })}
+        onClick={onClick}
       />,
     );
 
-    await hoverAndWait(screen.getByRole('link', { name: 'the docs' }));
+    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
+    const panelText = within(getPanel() as HTMLElement).getByText(
+      LONG_DESCRIPTION,
+    );
+    await userEvent
+      .setup({ advanceTimers: vi.advanceTimersByTime })
+      .click(panelText);
 
-    const tooltip = screen.getByRole('tooltip');
-    expect(tooltip.textContent).toBe('See the docs for details.');
-    expect(within(tooltip).queryByRole('link')).toBeNull();
+    expect(onClick).not.toHaveBeenCalled();
   });
 });
 
