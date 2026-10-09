@@ -1,4 +1,6 @@
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
+import type { SkillListingEntry } from '../models/favorite-skill-item';
+import type { SkillMentionAnchor } from '../models/skill-mention-anchor';
 
 /** One resolved mention location, or omitted for a skill whose text mention could not be found. */
 export interface ResolvedSkillMention {
@@ -54,6 +56,50 @@ export const matchSkillMentions = (
       searchFrom = foundAt + 1;
     }
   });
+
+  return result;
+};
+
+/**
+ * Returns every `/{name}` run in `text` that names one of `skills`, as mention
+ * anchors with offsets into `text`. A run must start the text or follow
+ * whitespace and end at a word boundary; the longest matching name wins, and
+ * a name shared by several skills resolves to the first of them in `skills`.
+ */
+export const findSkillMentionsInText = (
+  text: string,
+  skills: Pick<SkillListingEntry, 'url' | 'name'>[],
+): SkillMentionAnchor[] => {
+  const urlByName = new Map<string, string>();
+  skills.forEach((skill) => {
+    if (skill.name !== '' && !urlByName.has(skill.name)) {
+      urlByName.set(skill.name, skill.url);
+    }
+  });
+  /* Longest first: names may contain spaces, so `/Weekly report` must win over `/Weekly`. */
+  const names = [...urlByName.keys()].sort((a, b) => b.length - a.length);
+
+  const result: SkillMentionAnchor[] = [];
+  let index = text.indexOf('/');
+  while (index !== -1) {
+    const isRunStart = index === 0 || /\s/.test(text[index - 1]);
+    const nameStart = index + 1;
+    const name = isRunStart
+      ? names.find(
+          (candidate) =>
+            text.startsWith(candidate, nameStart) &&
+            isWordBoundaryChar(text[nameStart + candidate.length]),
+        )
+      : undefined;
+    const url = name == null ? undefined : urlByName.get(name);
+
+    if (name != null && url != null) {
+      result.push({ url, name, start: index, length: name.length + 1 });
+      index = text.indexOf('/', nameStart + name.length);
+    } else {
+      index = text.indexOf('/', nameStart);
+    }
+  }
 
   return result;
 };

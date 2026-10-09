@@ -585,4 +585,47 @@ describe('useSkillSelectorOverlay', () => {
       expect(result.current.seedSkillMentions).toBe(firstSeed);
     });
   });
+
+  describe('recognizeMentionsInInsertion (issue #9354)', () => {
+    it('turns a listed /name in inserted text into a mention', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      act(() => {
+        result.current.recognizeMentionsInInsertion('Please /csd this');
+      });
+      act(() => {
+        result.current.onDraftChange('Please /csd this');
+      });
+
+      expect(result.current.selectedSkills).toEqual([{ url: csdSkill.url }]);
+      expect(result.current.activeMentions).toMatchObject([
+        { start: 7, length: 4 },
+      ]);
+    });
+
+    it('leaves inserted text plain on a deployment without skills support', () => {
+      const { result } = renderHook(() =>
+        useSkillSelectorOverlay({ ...baseOptions, isSkillsSupported: false }),
+      );
+
+      act(() => {
+        result.current.recognizeMentionsInInsertion('Please /csd this');
+      });
+      act(() => {
+        result.current.onDraftChange('Please /csd this');
+      });
+
+      expect(result.current.selectedSkills).toBeUndefined();
+    });
+
+    it('keeps an ordinary paste of /name as plain text', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      act(() => {
+        result.current.onDraftChange('Please /csd this');
+      });
+
+      expect(result.current.selectedSkills).toBeUndefined();
+    });
+  });
 });

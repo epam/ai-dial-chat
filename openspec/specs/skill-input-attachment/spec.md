@@ -192,6 +192,27 @@ The conversation input SHALL track skills as an ordered list of mentions inside 
 
 ---
 
+### Requirement: Skill mentions in an inserted prompt
+
+When the user inserts a saved prompt into a chat input (the Prompts Add-menu entry or its parameters popup, on the new-conversation composer and the ongoing-conversation input), every `/{name}` run in the inserted text that names a skill from `SkillsContext`'s `skills` + `sharedWithMe` + `publicSkills` SHALL become a tracked mention, exactly as if that skill had been selected at that position ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). The host SHALL call the overlay hook's `recognizeMentionsInInsertion(text)` before handing the text to the composer's insertion channel, and `useSkillMentions` SHALL track the mentions once that insertion reaches `onDraftChange`. A run SHALL start the text or follow whitespace and end at whitespace, `/`, or the end of the text; the longest listed name SHALL win, and a name shared by several skills SHALL resolve to the first match in personal, then shared-with-me, then public order. Recognition SHALL apply only to prompt insertion: an ordinary paste of `/{name}` stays plain text (see the slash command dropdown requirement), and on a deployment without skills support the inserted text SHALL stay plain.
+
+#### Scenario: A prompt with a skill call is inserted
+
+- **WHEN** a skill named `report` is listed and the user inserts a prompt whose text is `Run /report on this`
+- **THEN** `/report` renders as a `ChatSkill` element inside the input and the skill is in `orderedSkills`
+
+#### Scenario: A prompt naming an unknown skill is inserted
+
+- **WHEN** the user inserts a prompt containing `/unknown` and no listed skill has that name
+- **THEN** `/unknown` stays plain text
+
+#### Scenario: A prompt is inserted on a deployment without skills support
+
+- **WHEN** the current deployment does not support skills and the user inserts a prompt containing `/report`
+- **THEN** `/report` stays plain text and sending is not blocked
+
+---
+
 ### Requirement: `ChatSkill` inline component
 
 `libs/skills` SHALL export a `ChatSkill` component that renders a single used skill (one mention): a focusable (`tabIndex={0}`) inline text `<span>` with `aria-label` `/{name}` whose visible text is `/` followed by the skill's name (e.g. `/my-skill`), sized to the same width as the raw `/{name}` text so the composer mirror can overlay it on the real textarea text, wrapped in the ui-kit `InteractiveTooltip` (`asChild`, `TooltipPlacement.Top` flipping with direction — the favorite rows keep their end-side placement — and a 550px max panel width via `contentClassName`). The component SHALL accept the skill's metadata — `name`, `description` (optional — the listing's value, rendered directly with no fetch), and `path` (the skill's resource URL) — plus an `onViewDetails(path)` callback, an optional `isUnsupported` flag selecting the error state (see the error-state requirement), an optional `unresolvedReason` (`SkillUnresolvedReason.Deleted` or `NotShared`) for a url that resolved to no loaded listing entry, a `detailsTrigger` of `'hover'` (default: uncontrolled tooltip opening on hover and keyboard focus) or `'click'` (controlled tooltip opening on click or Enter/Space), a `labelClassName` for the `/{name}` label (default `dial-body-paragraph-text text-accent`), an `unsupportedLabelClassName` color added to the label in the error state (default `text-error`), an `unsupportedClassName` added to the chip in the error state (default `bg-error`), and `labels` overrides with English defaults (`viewDetailsLabel`, `unsupportedTooltipLabel`, `deletedTooltipLabel`, `notSharedTooltipLabel`). The chip SHALL carry no remove control of its own — removal is the input's whole-mention Backspace gesture (the "Selected skill renders inline inside the input" requirement below). Activating the chip SHALL have no action of its own beyond opening the tooltip. The tooltip's content SHALL be the shared `SkillInfoTooltipContent` component the favorite-skill rows render, chosen in this order: when `unresolvedReason` is set, a fixed icon plus the deleted (trash-can icon) or not-shared (lock icon) message alone; otherwise when `isUnsupported` is set, the unsupported-model message alone; otherwise the description paragraph (omitted when absent) above the "View details" link button with `IconEye`. "View details" SHALL invoke `onViewDetails(path)` and close the tooltip (the click remounts it, so the fresh instance starts closed; reopening takes a fresh hover, focus, or click). The same component SHALL be used in the conversation input and in the conversation history (see `skill-message-payload`), so the skill's visual form is identical everywhere; history rendering passes `unresolvedReason` but never `isUnsupported`.

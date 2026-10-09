@@ -26,6 +26,8 @@ interface UseMentionSelectionMirrorResult {
   selectionRects: DOMRect[];
   /** Recomputes `selectionRects` from the textarea's current native selection. */
   updateSelectionRects: () => void;
+  /** Copies the textarea's vertical scroll offset and scrollbar gutter onto the mirror; wire it to the textarea's `onScroll`. */
+  syncMirrorToTextarea: () => void;
 }
 
 /*
@@ -52,6 +54,30 @@ export const useMentionSelectionMirror = ({
 }: UseMentionSelectionMirrorParams): UseMentionSelectionMirrorResult => {
   const mirrorRef = useRef<HTMLDivElement | null>(null);
   const [selectionRects, setSelectionRects] = useState<DOMRect[]>([]);
+
+  /*
+   * The mirror is `overflow-hidden` and paints the only visible copy of the
+   * text while active, so it has to follow the textarea's scroll offset by
+   * hand. Otherwise a message taller than the box keeps showing its top
+   * while the transparent textarea scrolls underneath
+   * ([#9352](https://github.com/epam/ai-dial-chat/issues/9352)).
+   *
+   * It also has to wrap lines at the same points. Once the text outgrows the
+   * box the textarea shows a vertical scrollbar that narrows its content
+   * area, while the `overflow-hidden` mirror shows none — so a word at the
+   * end of a line wraps in the textarea but not in the mirror, and the
+   * mention/caret drift onto different lines
+   * ([#9355](https://github.com/epam/ai-dial-chat/issues/9355)). A stable
+   * gutter on the mirror reserves the same scrollbar width.
+   */
+  const syncMirrorToTextarea = useCallback(() => {
+    const textareaEl = textareaRef.current;
+    const mirrorEl = mirrorRef.current;
+    if (textareaEl == null || mirrorEl == null) return;
+    const hasScrollbar = textareaEl.offsetWidth > textareaEl.clientWidth;
+    mirrorEl.style.scrollbarGutter = hasScrollbar ? 'stable' : '';
+    mirrorEl.scrollTop = textareaEl.scrollTop;
+  }, [textareaRef]);
 
   const updateSelectionRects = useCallback(() => {
     const textareaEl = textareaRef.current;
@@ -80,13 +106,18 @@ export const useMentionSelectionMirror = ({
       return;
     }
 
+    /*
+     * Absolutely positioned children of a scrolled box sit in its content
+     * coordinates, so the viewport diff is shifted by the mirror's scroll
+     * offset to stay on the selected text once the message is scrolled.
+     */
     const containerRect = mirrorEl.getBoundingClientRect();
     setSelectionRects(
       Array.from(range.getClientRects()).map(
         (rect) =>
           new DOMRect(
             rect.left - containerRect.left,
-            rect.top - containerRect.top,
+            rect.top - containerRect.top + mirrorEl.scrollTop,
             rect.width,
             rect.height,
           ),
@@ -94,9 +125,15 @@ export const useMentionSelectionMirror = ({
     );
   }, [isMirrorActive, textareaRef]);
 
+  /*
+   * Also runs when the mirror mounts: it appears only once a mention is
+   * inserted (e.g. after picking a skill in the browser), by which time the
+   * textarea may already be scrolled away from the top.
+   */
   useLayoutEffect(() => {
+    if (isMirrorActive) syncMirrorToTextarea();
     updateSelectionRects();
-  }, [updateSelectionRects, message]);
+  }, [isMirrorActive, syncMirrorToTextarea, updateSelectionRects, message]);
 
   useEffect(() => {
     if (!isMirrorActive) return undefined;
@@ -104,10 +141,18 @@ export const useMentionSelectionMirror = ({
     if (textareaEl == null || typeof ResizeObserver === 'undefined') {
       return undefined;
     }
-    const observer = new ResizeObserver(updateSelectionRects);
+    const observer = new ResizeObserver(() => {
+      syncMirrorToTextarea();
+      updateSelectionRects();
+    });
     observer.observe(textareaEl);
     return () => observer.disconnect();
-  }, [isMirrorActive, textareaRef, updateSelectionRects]);
+  }, [isMirrorActive, textareaRef, syncMirrorToTextarea, updateSelectionRects]);
 
-  return { mirrorRef, selectionRects, updateSelectionRects };
+  return {
+    mirrorRef,
+    selectionRects,
+    updateSelectionRects,
+    syncMirrorToTextarea,
+  };
 };

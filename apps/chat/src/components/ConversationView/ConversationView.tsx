@@ -267,34 +267,7 @@ const ConversationView: FC<Props> = ({
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
-  const {
-    renderOverlay: renderPromptsOverlay,
-    promptCatalogModal,
-    parametersPopup: promptParametersPopup,
-  } = usePromptSelectorOverlay({
-    onInsertText: onInsertText ?? (() => undefined),
-  });
   const { t } = useTranslation();
-  const promptsMenuOverlays = useMemo(
-    () =>
-      onInsertText && renderPromptsOverlay
-        ? [
-            {
-              key: 'prompts',
-              title: t(PromptSelectorI18nKeys.AddMenuLabel),
-              icon: (
-                <IconPrompt
-                  size={BASE_ICON_SIZE}
-                  aria-hidden
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              ),
-              renderOverlay: renderPromptsOverlay,
-            },
-          ]
-        : undefined,
-    [onInsertText, renderPromptsOverlay, t],
-  );
   const { language } = useLanguage();
   const {
     items,
@@ -332,11 +305,46 @@ const ConversationView: FC<Props> = ({
     selectedSkills,
     isSkillUnsupported,
     resetSkillMentions,
+    recognizeMentionsInInsertion,
     renderHistorySkillSegments,
     renderHistorySkills,
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
+
+  /* A `/skill-name` written in a prompt's text becomes a real mention once inserted ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). */
+  const handlePromptInsertText = useCallback(
+    (text: string) => {
+      recognizeMentionsInInsertion(text);
+      onInsertText?.(text);
+    },
+    [recognizeMentionsInInsertion, onInsertText],
+  );
+  const {
+    renderOverlay: renderPromptsOverlay,
+    promptCatalogModal,
+    parametersPopup: promptParametersPopup,
+  } = usePromptSelectorOverlay({ onInsertText: handlePromptInsertText });
+  const promptsMenuOverlays = useMemo(
+    () =>
+      onInsertText && renderPromptsOverlay
+        ? [
+            {
+              key: 'prompts',
+              title: t(PromptSelectorI18nKeys.AddMenuLabel),
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              renderOverlay: renderPromptsOverlay,
+            },
+          ]
+        : undefined,
+    [onInsertText, renderPromptsOverlay, t],
+  );
   /*
    * A second, independent hook instance drives the edit surface's mention
    * tracking. Sharing the composer's instance would make starting an edit

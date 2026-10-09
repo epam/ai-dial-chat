@@ -27,7 +27,10 @@ import type {
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
 import { SkillUnresolvedReason } from '../../types/skill-unresolved-reason';
-import { matchSkillMentions } from '../../utils/skill-mention-matching';
+import {
+  findSkillMentionsInText,
+  matchSkillMentions,
+} from '../../utils/skill-mention-matching';
 import { findSlashQueryAtCaret } from '../../utils/skill-mention-tracking';
 import { getSkillFallbackName, getSkillUrlBucket } from '../../utils/skill-url';
 import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
@@ -277,6 +280,22 @@ export const useSkillSelectorOverlay = ({
     setMessageRevision((revision) => revision + 1);
     setCaretPositionOverride(undefined);
   }, [mentions]);
+
+  /*
+   * Skipped on a deployment without skills support: a recognized mention
+   * there would only flag the message as unsupported and block sending a
+   * prompt the user picked as plain text.
+   */
+  const { expectInsertion } = mentions;
+  const recognizeMentionsInInsertion = useCallback(
+    (text: string) => {
+      expectInsertion(
+        text,
+        isSkillsSupported ? findSkillMentionsInText(text, allSkills) : [],
+      );
+    },
+    [expectInsertion, isSkillsSupported, allSkills],
+  );
 
   const seedSkillMentions = useCallback(
     (content: string, entries: RequestSkill[] | undefined) => {
@@ -604,6 +623,7 @@ export const useSkillSelectorOverlay = ({
     selectedSkills: mentions.orderedSkills,
     resetSkillMentions,
     seedSkillMentions,
+    recognizeMentionsInInsertion,
     renderHistorySkillSegments,
     renderHistorySkills,
   };

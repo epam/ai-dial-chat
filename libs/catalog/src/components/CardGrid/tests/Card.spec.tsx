@@ -42,36 +42,72 @@ describe('Card — selected state', () => {
   });
 });
 
-describe('Card — long version', () => {
-  it('lets the version fill the space the name leaves, right-aligned', () => {
+describe('Card — name and version split', () => {
+  /* The name box is the clamped wrapper around the kit `Highlight` that holds the text. */
+  const getNameBox = () =>
+    // eslint-disable-next-line testing-library/no-node-access -- the name box has no role or name of its own; it is the text's direct parent.
+    screen.getByText('Claude').parentElement as HTMLElement;
+
+  it('gives the version a 34% grow share capped at its own width', () => {
     render(
       <Card item={makeItem({ version: 'With Google Search Grounding' })} />,
     );
 
     const version = screen.getByText('With Google Search Grounding');
     expect(version.className).toContain('min-w-0');
-    expect(version.className).toContain('text-end');
-    expect(version.className).not.toContain('max-w-[30%]');
+    expect(version.className).toContain('flex-[34_1_0%]');
+    expect(version.className).toContain('max-w-max');
   });
 
-  it('splits the row by content so a short version does not cap the name', () => {
+  it('gives the name a 66% grow share instead of a hard cap, so a short version leaves no gap', () => {
     render(<Card item={makeItem()} />);
 
-    const name = screen.getByText('Claude');
-    expect(name.className).not.toContain('max-w-[66%]');
+    const name = getNameBox();
     expect(name.className).toContain('min-w-0');
-    expect(name.className).toContain('truncate');
-    expect(name.parentElement?.className).toContain(
-      'grid-cols-[minmax(0,auto)_minmax(0,auto)]',
-    );
+    expect(name.className).toContain('flex-[66_1_0%]');
+    expect(name.className).toContain('max-w-max');
+    expect(name.className).not.toContain('max-w-[66%]');
   });
 
   it('lets the name take the whole row when there is no version', () => {
     render(<Card item={makeItem({ version: undefined })} />);
 
-    const name = screen.getByText('Claude');
+    const name = getNameBox();
     expect(name.className).toContain('flex-1');
-    expect(name.parentElement?.className).not.toContain('grid');
+    expect(name.className).not.toContain('flex-[66_1_0%]');
+  });
+});
+
+describe('Card — long name (#9121)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('wraps the name onto at most two lines instead of truncating it to one', () => {
+    render(<Card item={makeItem()} />);
+
+    // eslint-disable-next-line testing-library/no-node-access -- the clamped name box has no role or name of its own; it is the text's direct parent.
+    const name = screen.getByText('Claude').parentElement as HTMLElement;
+    expect(name.className).toContain('line-clamp-2');
+    expect(name.className).toContain('break-words');
+  });
+
+  it('shows the full name in a tooltip only while the clamp hides part of it', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(72);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(48);
+    const longName = 'HEAD RACKETSPORTS — Product Knowledge Base Assistant';
+    render(<Card item={makeItem({ name: longName, description: '' })} />);
+
+    await userEvent
+      .setup({ advanceTimers: vi.advanceTimersByTime })
+      .hover(screen.getByText(longName));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(screen.getByRole('tooltip').textContent).toBe(longName);
+    vi.useRealTimers();
   });
 });
 
@@ -336,39 +372,57 @@ describe('Card — description tooltip', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows the full description in a tooltip when the clamp hides text', async () => {
+  const getPanel = () =>
+    // eslint-disable-next-line testing-library/no-node-access -- the panel is portaled out of the card with no role or name; its kit class is the only hook to it.
+    document.querySelector<HTMLElement>('.dial-kit-interactive-tooltip');
+
+  it('shows the full description in a panel when the clamp hides text', async () => {
     mockDescriptionHeights(120);
     render(<Card item={makeItem({ description: LONG_DESCRIPTION })} />);
 
     await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
 
-    expect(screen.getByRole('tooltip').textContent).toBe(LONG_DESCRIPTION);
+    expect(getPanel()?.textContent).toBe(LONG_DESCRIPTION);
   });
 
-  it('shows no tooltip when the description fits in two lines', async () => {
+  it('caps the panel at the viewport height and lets it scroll (#9363)', async () => {
+    mockDescriptionHeights(120);
+    render(<Card item={makeItem({ description: LONG_DESCRIPTION })} />);
+
+    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
+
+    expect(getPanel()?.className).toContain('max-h-[calc(100dvh-16px)]');
+    expect(getPanel()?.className).toContain('overflow-y-auto');
+  });
+
+  it('shows no panel when the description fits in two lines', async () => {
     mockDescriptionHeights(40);
     render(<Card item={makeItem({ description: 'Short.' })} />);
 
     await hoverAndWait(screen.getByText('Short.'));
 
-    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(getPanel()).toBeNull();
   });
 
-  it('renders links inside the tooltip as plain text', async () => {
+  it('does not open the card when the panel content is clicked', async () => {
     mockDescriptionHeights(120);
+    const onClick = vi.fn();
     render(
       <Card
-        item={makeItem({
-          description: 'See [the docs](https://example.com) for details.',
-        })}
+        item={makeItem({ description: LONG_DESCRIPTION })}
+        onClick={onClick}
       />,
     );
 
-    await hoverAndWait(screen.getByRole('link', { name: 'the docs' }));
+    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
+    const panelText = within(getPanel() as HTMLElement).getByText(
+      LONG_DESCRIPTION,
+    );
+    await userEvent
+      .setup({ advanceTimers: vi.advanceTimersByTime })
+      .click(panelText);
 
-    const tooltip = screen.getByRole('tooltip');
-    expect(tooltip.textContent).toBe('See the docs for details.');
-    expect(within(tooltip).queryByRole('link')).toBeNull();
+    expect(onClick).not.toHaveBeenCalled();
   });
 });
 
