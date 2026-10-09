@@ -26,6 +26,8 @@ interface UseMentionSelectionMirrorResult {
   selectionRects: DOMRect[];
   /** Recomputes `selectionRects` from the textarea's current native selection. */
   updateSelectionRects: () => void;
+  /** Copies the textarea's vertical scroll offset onto the mirror; wire it to the textarea's `onScroll`. */
+  syncMirrorScroll: () => void;
 }
 
 /*
@@ -52,6 +54,20 @@ export const useMentionSelectionMirror = ({
 }: UseMentionSelectionMirrorParams): UseMentionSelectionMirrorResult => {
   const mirrorRef = useRef<HTMLDivElement | null>(null);
   const [selectionRects, setSelectionRects] = useState<DOMRect[]>([]);
+
+  /*
+   * The mirror is `overflow-hidden` and paints the only visible copy of the
+   * text while active, so it has to follow the textarea's scroll offset by
+   * hand. Otherwise a message taller than the box keeps showing its top
+   * while the transparent textarea scrolls underneath
+   * ([#9352](https://github.com/epam/ai-dial-chat/issues/9352)).
+   */
+  const syncMirrorScroll = useCallback(() => {
+    const textareaEl = textareaRef.current;
+    const mirrorEl = mirrorRef.current;
+    if (textareaEl == null || mirrorEl == null) return;
+    mirrorEl.scrollTop = textareaEl.scrollTop;
+  }, [textareaRef]);
 
   const updateSelectionRects = useCallback(() => {
     const textareaEl = textareaRef.current;
@@ -80,13 +96,18 @@ export const useMentionSelectionMirror = ({
       return;
     }
 
+    /*
+     * Absolutely positioned children of a scrolled box sit in its content
+     * coordinates, so the viewport diff is shifted by the mirror's scroll
+     * offset to stay on the selected text once the message is scrolled.
+     */
     const containerRect = mirrorEl.getBoundingClientRect();
     setSelectionRects(
       Array.from(range.getClientRects()).map(
         (rect) =>
           new DOMRect(
             rect.left - containerRect.left,
-            rect.top - containerRect.top,
+            rect.top - containerRect.top + mirrorEl.scrollTop,
             rect.width,
             rect.height,
           ),
@@ -94,9 +115,15 @@ export const useMentionSelectionMirror = ({
     );
   }, [isMirrorActive, textareaRef]);
 
+  /*
+   * Also runs when the mirror mounts: it appears only once a mention is
+   * inserted (e.g. after picking a skill in the browser), by which time the
+   * textarea may already be scrolled away from the top.
+   */
   useLayoutEffect(() => {
+    if (isMirrorActive) syncMirrorScroll();
     updateSelectionRects();
-  }, [updateSelectionRects, message]);
+  }, [isMirrorActive, syncMirrorScroll, updateSelectionRects, message]);
 
   useEffect(() => {
     if (!isMirrorActive) return undefined;
@@ -109,5 +136,5 @@ export const useMentionSelectionMirror = ({
     return () => observer.disconnect();
   }, [isMirrorActive, textareaRef, updateSelectionRects]);
 
-  return { mirrorRef, selectionRects, updateSelectionRects };
+  return { mirrorRef, selectionRects, updateSelectionRects, syncMirrorScroll };
 };

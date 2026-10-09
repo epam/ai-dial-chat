@@ -383,10 +383,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
       });
     }, []);
 
-    useLayoutEffect(() => {
-      measureCaretAnchor();
-    }, [measureCaretAnchor, markerOffset, message]);
-
     /*
      * Auto-resizing the textarea's own width (e.g. a container resize) can
      * reflow where the marker's line wraps without changing `message` or
@@ -863,8 +859,27 @@ export const Input = forwardRef<InputHandle, InputProps>(
      */
     const isMirrorActive = hasActiveMentions || mirrorInsertions.length > 0;
 
-    const { mirrorRef, selectionRects, updateSelectionRects } =
-      useMentionSelectionMirror({ textareaRef, message, isMirrorActive });
+    const {
+      mirrorRef,
+      selectionRects,
+      updateSelectionRects,
+      syncMirrorScroll,
+    } = useMentionSelectionMirror({ textareaRef, message, isMirrorActive });
+
+    /*
+     * Declared after `useMentionSelectionMirror` so its layout effect has
+     * already scrolled the mirror into sync: the caret marker lives inside
+     * the mirror, and measuring it first would anchor the command menu to
+     * the unscrolled position.
+     */
+    useLayoutEffect(() => {
+      measureCaretAnchor();
+    }, [measureCaretAnchor, markerOffset, message]);
+
+    const handleTextareaScroll = () => {
+      syncMirrorScroll();
+      if (markerOffset != null) measureCaretAnchor();
+    };
 
     const textarea = (
       <textarea
@@ -892,6 +907,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           onChange?.(e.target.value);
         }}
         onSelect={updateSelectionRects}
+        onScroll={handleTextareaScroll}
         onFocus={handleTextareaFocus}
         onClick={handleTextareaClick}
         onKeyDown={handleKeyDown}

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input';
 
 describe('Input — skill mention highlighting', () => {
@@ -149,5 +149,68 @@ describe('Input — caretPositionOverride', () => {
     await waitFor(() => expect(textarea.value).toBe('hello world!'));
 
     expect(setSelectionRange).not.toHaveBeenCalled();
+  });
+});
+
+describe('Input — highlight mirror scroll sync (#9352)', () => {
+  const longMessage = `/report ${'line\n'.repeat(40)}end`;
+  const scrollTops = new WeakMap<Element, number>();
+  const originalScrollTop = Object.getOwnPropertyDescriptor(
+    Element.prototype,
+    'scrollTop',
+  );
+
+  /* jsdom has no layout, so its `scrollTop` setter is a no-op; back it with a plain store. */
+  beforeEach(() => {
+    Object.defineProperty(Element.prototype, 'scrollTop', {
+      configurable: true,
+      get(this: Element) {
+        return scrollTops.get(this) ?? 0;
+      },
+      set(this: Element, value: number) {
+        scrollTops.set(this, value);
+      },
+    });
+  });
+
+  afterEach(() => {
+    if (originalScrollTop) {
+      Object.defineProperty(Element.prototype, 'scrollTop', originalScrollTop);
+    }
+  });
+
+  const getMirror = () =>
+    // eslint-disable-next-line testing-library/no-node-access -- the mirror has no role or name; the highlighted mention run is its direct child.
+    screen.getByText('/report').parentElement as HTMLDivElement;
+
+  it('scrolls the mirror along with the textarea while a mention is active', () => {
+    render(
+      <Input
+        message={longMessage}
+        activeMentions={[{ start: 0, length: 7 }]}
+      />,
+    );
+    const textarea = screen.getByRole('textbox', {
+      hidden: true,
+    }) as HTMLTextAreaElement;
+    textarea.scrollTop = 120;
+    fireEvent.scroll(textarea);
+
+    expect(getMirror().scrollTop).toBe(120);
+  });
+
+  it('starts the mirror at the textarea scroll offset when a mention appears after scrolling', () => {
+    const { rerender } = render(<Input message={longMessage} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    textarea.scrollTop = 200;
+
+    rerender(
+      <Input
+        message={longMessage}
+        activeMentions={[{ start: 0, length: 7 }]}
+      />,
+    );
+
+    expect(getMirror().scrollTop).toBe(200);
   });
 });
