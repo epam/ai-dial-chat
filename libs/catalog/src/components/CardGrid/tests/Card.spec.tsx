@@ -42,28 +42,27 @@ describe('Card — selected state', () => {
   });
 });
 
-describe('Card — long version', () => {
-  it('lets the version fill the space the name leaves, right-aligned', () => {
+describe('Card — name and version split', () => {
+  it('gives the version a 34% grow share capped at its own width', () => {
     render(
       <Card item={makeItem({ version: 'With Google Search Grounding' })} />,
     );
 
     const version = screen.getByText('With Google Search Grounding');
     expect(version.className).toContain('min-w-0');
-    expect(version.className).toContain('text-end');
-    expect(version.className).not.toContain('max-w-[30%]');
+    expect(version.className).toContain('flex-[34_1_0%]');
+    expect(version.className).toContain('max-w-max');
   });
 
-  it('splits the row by content so a short version does not cap the name', () => {
+  it('gives the name a 66% grow share instead of a hard cap, so a short version leaves no gap', () => {
     render(<Card item={makeItem()} />);
 
     const name = screen.getByText('Claude');
-    expect(name.className).not.toContain('max-w-[66%]');
     expect(name.className).toContain('min-w-0');
     expect(name.className).toContain('truncate');
-    expect(name.parentElement?.className).toContain(
-      'grid-cols-[minmax(0,auto)_minmax(0,auto)]',
-    );
+    expect(name.className).toContain('flex-[66_1_0%]');
+    expect(name.className).toContain('max-w-max');
+    expect(name.className).not.toContain('max-w-[66%]');
   });
 
   it('lets the name take the whole row when there is no version', () => {
@@ -71,7 +70,7 @@ describe('Card — long version', () => {
 
     const name = screen.getByText('Claude');
     expect(name.className).toContain('flex-1');
-    expect(name.parentElement?.className).not.toContain('grid');
+    expect(name.className).not.toContain('flex-[66_1_0%]');
   });
 });
 

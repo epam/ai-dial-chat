@@ -19,7 +19,7 @@ export interface AppIdentityProps {
   type: CatalogEntityType;
   /** Display name. Truncates when the available width is exceeded. */
   name: string;
-  /** Version string shown flush-end of the name, aligned to the top of the name. It keeps only its own width when short; name and version share the row equally only when both overflow. */
+  /** Version string shown flush-end of the name, aligned to the top of the name. The name takes up to 66% of the row and the version the remaining 34%; whichever side is shorter keeps only its own width and hands the rest to the other. */
   version?: string;
   /**
    * Relative time string for the last-used row (size 'lg' only).
@@ -102,22 +102,16 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         <EntityTypeLabel type={type} className={typography?.typeClassName} />
 
         <div className="flex min-w-0 flex-col">
-          {/* With a version, the row is a two-track grid whose tracks grow
-              from 0 towards their content in equal steps: a short version
-              keeps only its own width and the name gets the rest, and only
-              when both are long does each end up with half the row (#9325). */}
-          <div
-            className={mergeClasses(
-              'min-w-0 items-start overflow-hidden',
-              version
-                ? 'grid grid-cols-[minmax(0,auto)_minmax(0,auto)] gap-x-1'
-                : 'flex gap-1',
-            )}
-          >
+          {/* With a version, name and version grow from 0 in a 66:34 ratio,
+              each capped at its own content width (`max-w-max`): a short
+              side keeps only its width and the other gets the rest, and only
+              when both are long does the name stop at 66% of the row. */}
+          <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <EllipsisTooltip
               text={query ? <Highlight text={name} query={query} /> : name}
               className={mergeClasses(
-                'min-w-0 flex-1',
+                'min-w-0',
+                version ? 'max-w-max flex-[66_1_0%]' : 'flex-1',
                 typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
@@ -126,7 +120,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
               <EllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'min-w-0 text-end tabular-nums',
+                  'min-w-0 max-w-max flex-[34_1_0%] tabular-nums',
                   typography?.versionClassName ?? 'dial-tiny-text',
                   styles.version,
                 )}
