@@ -70,6 +70,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
+  IconChevronDown: () => <svg />,
 }));
 vi.mock('../../Toolbar/Toolbar', () => ({
   Toolbar: ({

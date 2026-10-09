@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.51`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.51
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.25 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0
+- `@epam/ai-dial-react-file-manager` ^0.3.0 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -635,12 +635,15 @@ import { ItemHeader } from '@epam/ai-dial-chat-shared';
 
 ### EntityTypeLabel
 
-Entity type rendered as plain uppercase text, colored per type.
+Entity type rendered as plain uppercase text, colored per type. It shows the raw
+type value (`MODEL`, `TOOLSET`, …) unless `label` supplies the visible text, e.g. a
+translated type name; the color still follows `type`.
 
 ```tsx
 import { CatalogEntityType, EntityTypeLabel } from '@epam/ai-dial-chat-shared';
 
 <EntityTypeLabel type={CatalogEntityType.Model} />;
+<EntityTypeLabel type={CatalogEntityType.Toolset} label="Toolset" />;
 ```
 
 ### FeaturedChip
@@ -671,7 +674,8 @@ Entity identity block: deployment icon, type label, name, version, and an
 optional featured chip. `item` needs only the `EntityHeaderItem` fields, so any
 richer catalog model can be passed directly. `statusBadge` renders an
 arbitrary badge in the same corner, ahead of the featured chip. `featuredChipStyle`
-forwards to the featured chip's own `style` override (see `FeaturedChip` above).
+forwards to the featured chip's own `style` override (see `FeaturedChip` above). `typeLabel`
+forwards to `EntityTypeLabel`'s `label`.
 
 ```tsx
 import { EntityHeader } from '@epam/ai-dial-chat-shared';
@@ -681,6 +685,7 @@ import { EntityHeader } from '@epam/ai-dial-chat-shared';
   iconSize={48}
   query={searchQuery}
   featuredLabel="Featured"
+  typeLabel="Model"
   footer={<span>{item.lastUsed}</span>}
 />;
 ```

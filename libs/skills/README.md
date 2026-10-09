@@ -53,9 +53,9 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.51`
+- `@epam/ai-dial-ui-kit` `^0.15.0`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.25` — `SkillDetailsSidePanel`
+- `@epam/ai-dial-react-file-manager` `^0.3.0` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
 
 ## Components
@@ -518,6 +518,10 @@ a tap opens it instead.
 A live-composing mention also renders as a real `ChatSkill` chip — with
 `isUnsupported` error styling applied when the skill is not supported — via
 `HighlightedTextRange.render`, consistent with how history segments render.
+Its label takes `activeMentionLabelClassName` (default `'text-accent'`) rather
+than `historyChipLabelClassName`: it overlays the textarea's invisible text, so
+it must inherit the input's font to stay exactly as wide as that text and keep
+the native caret on the visible text. Pass color classes only.
 
 Row and chip descriptions come from the listing entries the host injects —
 no per-skill fetch happens anywhere in the flow, and opening a tooltip

@@ -19,7 +19,7 @@ export interface AppIdentityProps {
   type: CatalogEntityType;
   /** Display name. Truncates when the available width is exceeded. */
   name: string;
-  /** Version string shown flush-right of the name, aligned to the top of the name. */
+  /** Version string shown flush-end of the name, aligned to the top of the name. It keeps only its own width when short; name and version share the row equally only when both overflow. */
   version?: string;
   /**
    * Relative time string for the last-used row (size 'lg' only).
@@ -102,11 +102,22 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         <EntityTypeLabel type={type} className={typography?.typeClassName} />
 
         <div className="flex min-w-0 flex-col">
-          <div className="flex min-w-0 items-start gap-1 overflow-hidden">
+          {/* With a version, the row is a two-track grid whose tracks grow
+              from 0 towards their content in equal steps: a short version
+              keeps only its own width and the name gets the rest, and only
+              when both are long does each end up with half the row (#9325). */}
+          <div
+            className={mergeClasses(
+              'min-w-0 items-start overflow-hidden',
+              version
+                ? 'grid grid-cols-[minmax(0,auto)_minmax(0,auto)] gap-x-1'
+                : 'flex gap-1',
+            )}
+          >
             <EllipsisTooltip
               text={query ? <Highlight text={name} query={query} /> : name}
               className={mergeClasses(
-                version ? 'min-w-0 max-w-[66%] shrink-0' : 'min-w-0 flex-1',
+                'min-w-0 flex-1',
                 typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
@@ -115,7 +126,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
               <EllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'min-w-0 flex-1 text-end tabular-nums',
+                  'min-w-0 text-end tabular-nums',
                   typography?.versionClassName ?? 'dial-tiny-text',
                   styles.version,
                 )}

@@ -14,6 +14,8 @@ export interface EntityHeaderProps {
   nameClassName?: string;
   /** CSS class for the entity type label. Default: 'dial-caption-lead-semi-text'. */
   typeClassName?: string;
+  /** Visible type text, e.g. a translated type name. Default: the raw `item.type` value. */
+  typeLabel?: string;
   /** CSS class applied to the icon badge, e.g. to set border-radius. Default: 'rounded-[14px]'. */
   iconBadgeClassName?: string;
   /** Typography CSS class for the version text. Falls back to `ItemHeader`'s own default when omitted. */
@@ -45,6 +47,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   versionClassName,
   showVersion = true,
   typeClassName = 'dial-caption-lead-semi-text',
+  typeLabel,
   iconBadgeClassName = 'rounded-[14px]',
   featuredChipClassName,
   featuredChipStyle,
@@ -71,7 +74,11 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
         )}
       >
         <div className="relative flex flex-row items-center justify-between">
-          <EntityTypeLabel type={item.type} className={typeClassName} />
+          <EntityTypeLabel
+            type={item.type}
+            className={typeClassName}
+            label={typeLabel}
+          />
           {(statusBadge != null || (hasFeaturedTag && item.isFeatured)) && (
             <div className="absolute end-0 top-[-6px] flex items-center gap-2">
               {statusBadge}

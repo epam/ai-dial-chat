@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   ButtonAppearance,
@@ -21,6 +21,7 @@ import {
 } from '../../constants/create-menu';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
 import { highlightDropdownLabels } from '../../utils/create-menu';
+import { CreateMenuSheet } from './CreateMenuSheet';
 
 /** Props for the catalog Create button. */
 export interface CreateButtonProps {
@@ -41,9 +42,13 @@ export interface CreateButtonProps {
   searchClearLabel?: string;
   /** Text shown when a search leaves no options. Defaults to `'No results found'`. */
   noResultsLabel?: string;
+  /** Accessible name of the mobile menu sheet's back button. Defaults to `'Back'`. */
+  backLabel?: string;
+  /** Accessible name of the mobile menu sheet's close button. Defaults to `'Close'`. */
+  closeLabel?: string;
 }
 
-/** Renders a plain primary button, a split-chevron dropdown, or a searchable dropdown. */
+/** Renders a plain primary button, a split-chevron dropdown, a searchable dropdown, or — on mobile — a menu sheet. */
 export const CreateButton: FC<CreateButtonProps> = ({
   label,
   options,
@@ -52,9 +57,55 @@ export const CreateButton: FC<CreateButtonProps> = ({
   searchPlaceholder = 'Search',
   searchClearLabel = 'Clear search',
   noResultsLabel = 'No results found',
+  backLabel = 'Back',
+  closeLabel = 'Close',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const chevron = (
+    <IconChevronDown
+      size={DIAL_ICON_SIZE.SM}
+      stroke={DIAL_KIT_ICON_STROKE}
+      aria-hidden
+      className={mergeClasses('transition-transform', isOpen && 'rotate-180')}
+    />
+  );
+
+  // A floating menu's side flyouts fall off a phone screen, so below the desktop breakpoint the menu is a sheet.
+  if (isMobile && (search || options?.length)) {
+    const handleSheetClose = () => {
+      setIsOpen(false);
+      search?.onChange('');
+    };
+
+    return (
+      <>
+        <Button
+          label={label}
+          variant={ButtonVariant.Primary}
+          appearance={ButtonAppearance.Solid}
+          iconAfter={chevron}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(true)}
+        />
+        <CreateMenuSheet
+          open={isOpen}
+          onClose={handleSheetClose}
+          title={label}
+          options={options ?? []}
+          search={search}
+          searchPlaceholder={searchPlaceholder}
+          searchClearLabel={searchClearLabel}
+          noResultsLabel={noResultsLabel}
+          backLabel={backLabel}
+          closeLabel={closeLabel}
+        />
+      </>
+    );
+  }
 
   if (search) {
     const searchItems: DropdownItem[] = options?.length
@@ -97,17 +148,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
             label={label}
             variant={ButtonVariant.Primary}
             appearance={ButtonAppearance.Solid}
-            iconAfter={
-              <IconChevronDown
-                size={DIAL_ICON_SIZE.SM}
-                stroke={DIAL_KIT_ICON_STROKE}
-                aria-hidden
-                className={mergeClasses(
-                  'transition-transform',
-                  isOpen && 'rotate-180',
-                )}
-              />
-            }
+            iconAfter={chevron}
             aria-haspopup="menu"
             aria-expanded={isOpen}
           />

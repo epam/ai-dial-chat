@@ -10,7 +10,7 @@ export interface EditorLayoutLabels {
 export interface EditorLayoutColors {
   /** Bottom border color of the header row. Defaults to `--stroke-tertiary`. */
   headerBorderColor?: string;
-  /** Inline-end border color of the left sidebar panel. Defaults to `--stroke-tertiary`. */
+  /** Border color of the dividers between the side columns and the main column (the left sidebar and `rightContent`). Defaults to `--stroke-tertiary`. */
   sidebarBorderColor?: string;
 }
 
@@ -32,7 +32,15 @@ export interface EditorLayoutProps {
   actions?: ReactNode;
   /** Left column content (Metadata section at desktop; top on mobile). */
   leftContent?: ReactNode;
-  /** Right column content (Setup section at desktop; bottom on mobile). When absent, left content fills full width. */
+  /** Center column content (Setup section at desktop; bottom on mobile). When absent, left content fills full width. */
+  centerContent?: ReactNode;
+  /**
+   * Host-rendered content in an extra, third column at the inline end, below
+   * the header, on desktop; stacked after the other content on mobile/tablet.
+   * Rendered verbatim — the host owns its inner spacing and
+   * look. Omit for the default two-column layout (`leftContent` and
+   * `centerContent`).
+   */
   rightContent?: ReactNode;
   /** When `true`, the SR-only saving status region announces `labels.savingStatusLabel`. */
   isSaving?: boolean;

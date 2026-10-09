@@ -559,22 +559,22 @@ export interface InputProps {
    */
   caretPositionOverride?: number;
   /**
-   * Host-injected slash-command menu. When provided, typing `triggerPrefix`
-   * as the first character of an empty textarea — or pasting into an empty
-   * textarea a value that is exactly the prefix, or the prefix plus a
-   * whitespace-free, prefix-free query — opens an overlay above the input;
-   * it stays open while the value keeps matching the prefix followed by a
-   * query with no whitespace or second prefix character, and closes on
-   * unmatch, Escape, or an outside click. Escape is the one dismissal that
-   * latches: the menu stays closed over that same word until the value stops
-   * matching and the trigger is typed or pasted again. An outside click only
+   * Host-injected slash-command menu. When provided, an overlay opens above
+   * the input whenever the whitespace-delimited word at the caret becomes
+   * `triggerPrefix` alone or followed by a whitespace-free, prefix-free
+   * query — anywhere in the textarea, whether it was empty or already held
+   * text, and whether the word was typed or pasted. It stays open while that
+   * word keeps matching, and closes on unmatch, Escape, or an outside click.
+   * Escape is the one dismissal that latches: the menu stays closed over that
+   * same word until it stops matching and the trigger is typed or pasted
+   * again. An outside click only
    * closes it for the moment — typing/deleting within the same still-matching
    * word, or moving the caret back into it (a click, or refocusing the
    * textarea), reopens it with no need to retype the trigger. A message can
    * hold more than one command-shaped word at once; the menu always tracks
    * whichever one the caret is actually in, re-evaluated on every such caret
-   * move rather than assumed from whichever word was active before. Any other
-   * pasted value, and any paste into a non-empty textarea, inserts as a
+   * move rather than assumed from whichever word was active before. A paste
+   * that leaves any other word at the caret (e.g. `/s sdf`) inserts as a
    * regular paste and opens nothing. Selection typically goes through
    * `ctx.close({ consumeQuery: true })`, which removes the `/query` text from
    * the textarea. Absent disables the mechanism.

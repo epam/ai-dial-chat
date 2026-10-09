@@ -665,6 +665,8 @@ const CatalogView: FC<Props> = ({
           createSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
           createSearchClearLabel: t(BasicI18nKeys.ClearSearch),
           createNoResultsLabel: t(BasicI18nKeys.NoResults),
+          createMenuBackLabel: t(NavigationI18nKeys.Back),
+          createMenuCloseLabel: t(ButtonsI18nKeys.Close),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
           searchPlaceholder,
@@ -701,6 +703,11 @@ const CatalogView: FC<Props> = ({
           contentFileUnsupportedLabel: t(
             CatalogI18nKeys.DetailsContentFileUnsupported,
           ),
+          toolsSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+          toolsSearchClearLabel: t(BasicI18nKeys.ClearSearch),
+          toolsCountLabel: (count: number) =>
+            t(CatalogI18nKeys.DetailsToolCount, { count }),
+          toolsNoResultsLabel: t(BasicI18nKeys.NoResults),
           primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
           editActionLabel: t(ButtonsI18nKeys.Edit),
           downloadActionLabel: t(ButtonsI18nKeys.Download),

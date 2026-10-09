@@ -127,7 +127,8 @@ navigation, no entering preview — and the page clears `isSaving` and stays ope
 
 `apps/chat/src/pages/ApplicationEditor/setup/AppEditorIframe.tsx` SHALL:
 
-- Build the iframe URL with encoded `authProvider`, `id`, `theme`, and `applicationCredentials` query parameters.
+- Build the iframe URL with encoded `authProvider`, `id`, `theme`, `applicationCredentials`, and `applicationName` query parameters.
+  - `applicationName` SHALL be `schema.displayName`, URL-encoded (e.g. `Quick app 2.0` becomes `Quick+app+2.0`), and SHALL be omitted entirely when `schema.displayName` is missing or empty. It is the same value used as the `${displayName}/` prefix when matching incoming postMessage types, so the embedded editor can name its own messages with it instead of being configured separately.
   - `providerId` from `useUser().user?.providerId`
   - `theme` from `useTheme().currentTheme`
   - `applicationCredentials` SHALL be `true` only when both `useFeatureFlag('liveChatInteraction')` and `useUiFeature(OverlayFeature.LiveChatInteraction)` are enabled, otherwise `false`
@@ -166,6 +167,21 @@ interface Props {
 **Accessibility**: The `<iframe>` SHALL have `title={schema.displayName}`. The loading overlay SHALL expose exactly one status region: the kit `Spinner` (itself `role="status"`, wrapping a `role="img"`) SHALL receive `ariaLabel` from `appsEditor.settingsStep.loadingLabel`. The overlay container SHALL NOT carry its own `aria-label`/`aria-live` — a name on a role-less `div` is not exposed, and adding `role="status"` there would nest a second live region around the Spinner's.
 
 **RTL / UI impact**: The embedded editor handles its own directionality. The host-owned credentials dialog SHALL inherit the host direction and use the shared forms' logical spacing and wrapping, as specified in `catalog-application-credentials`.
+
+#### Scenario: Iframe src includes applicationName
+
+- **WHEN** `AppEditorIframe` renders with `schema.displayName = "Quick app 2.0"`
+- **THEN** the iframe URL carries `applicationName=Quick+app+2.0`, which decodes to `Quick app 2.0` via `URLSearchParams`
+
+#### Scenario: applicationName omitted when displayName is empty
+
+- **WHEN** `AppEditorIframe` renders with `schema.displayName` empty or undefined
+- **THEN** the iframe URL contains no `applicationName` parameter
+
+#### Scenario: Iframe reloads when the schema display name changes
+
+- **WHEN** `schema.displayName` changes while `AppEditorIframe` stays mounted
+- **THEN** the iframe URL changes, the iframe reloads, and readiness (`ReadyToSave`) re-gates to false as for any other URL change
 
 #### Scenario: Iframe src includes auth params
 

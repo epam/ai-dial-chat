@@ -239,7 +239,7 @@ Every host of the file manager's delete confirmation — `ConversationView`, `Ne
 
 Names are shown as basenames: the grid reports each entry as a DIAL resource path (`files/{bucket}/path/file.pdf`), and the content uses `.split('/').pop()` so the dialog names the item, not its location.
 
-The dialog frame and action buttons belong to `@epam/ai-dial-react-file-manager` (from `0.3.0-dev.25`): it shows the header close control, a text Cancel, and a danger Delete led by a trash icon, matching the shared `ConfirmationFooter`. It passes the items with their `nodeType` to `titleRenderer` and `contentRenderer`, and names the close control from `closeLabel` (`DialFileManagerShellLabels.deleteCloseLabel`).
+The dialog frame and action buttons belong to `@epam/ai-dial-react-file-manager` (from `0.3.0`): it shows the header close control, a text Cancel, and a danger Delete led by a trash icon, matching the shared `ConfirmationFooter`. It passes the items with their `nodeType` to `titleRenderer` and `contentRenderer`, and names the close control from `closeLabel` (`DialFileManagerShellLabels.deleteCloseLabel`).
 
 #### Scenario: Delete single file from grid row context menu
 

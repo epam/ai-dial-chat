@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.51 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -619,7 +619,9 @@ with `ContentTab` and `LimitsTab` they let a host show a catalog item's details
 inside its own surface (a popup, a side sheet) without the panel. They are
 presentation-only: they render the `CatalogItem` fields and `details` they are
 given, and every visible string comes from their props, with English defaults
-where one exists.
+where one exists. `OverviewTab` also takes an optional
+`sectionContainerClassName` for the wrapper around each section's table
+(default `'px-6'`), so a host surface with its own padding can pass `''`.
 
 `getCatalogDetailsTabs` (also on `@epam/ai-dial-catalog/mapping`) returns the
 tabs the panel would show for an item, in order: About unless the item is
@@ -665,11 +667,19 @@ const renderPanel = (item: CatalogItem, tab: CatalogDetailsTab) => {
 const tabs = getCatalogDetailsTabs(item, { isConnectHidden: true });
 ```
 
-`ToolsTab`'s `labels` (`ToolsLabels`) sets the grid column headings
-(`inputName`, `inputType`, `inputRequired`, `annotationKey` and
-`annotationValue`), defaulting to `'Name'`, `'Type'`, `'Required'`, `'Key'` and
-`'Value'`. `PricingTab` takes `pricing` plus the optional `pricesSectionLabel`
-and `limitsSectionLabel`.
+`ToolsTab` opens with a search field that narrows the list by tool name or
+description (case-insensitive), and a count of the tools shown. Its `labels`
+(`ToolsLabels`) sets the grid column headings (`inputName`, `inputType`,
+`inputRequired`, `annotationKey` and `annotationValue`), defaulting to
+`'Name'`, `'Type'`, `'Required'`, `'Key'` and `'Value'`, plus
+`searchPlaceholder` (`'Search...'`), `searchClearLabel` (`'Clear search'`),
+`toolCount` (``(count) => `${count} tools` ``) and `noResults`
+(`'No results found'`). In `DetailsPanel` the same strings come from
+`ItemDetailsTexts`' `toolsSearchPlaceholder`, `toolsSearchClearLabel`,
+`toolsCountLabel` and `toolsNoResultsLabel`.
+
+`PricingTab` takes `pricing` plus the optional `pricesSectionLabel` and
+`limitsSectionLabel`.
 
 ### Embedding the header, Connect tab and credentials
 
@@ -679,6 +689,10 @@ The rest of the details view is public for the same hosts:
 - `ApiTab` is the Connect tab (`ApiTabProps`), rendering `details.api`.
 - `CredentialsBanner` is the note under the header about which credentials are active. `getCredentialsBannerState` (also on `@epam/ai-dial-catalog/mapping`) returns its `CredentialsBannerState`, or `undefined` when no banner applies.
 - `CredentialsApiKeyOverlay` is the personal API-key popover on its own, and `CredentialsManagementPanel` the admin view of personal and organization credentials.
+
+`texts.entityTypeLabels` (shared with `DetailsPanel`) sets the visible type in the
+header per entity type, e.g. translated names; a type without an entry keeps the raw
+value (`TOOLSET`, …).
 
 The host owns the confirmation steps: `DetailsHeader` calls `onRequestLogout` and `CredentialsManagementPanel` calls `onRequestLogout` / `onRequestDeleteApiKey` instead of signing out directly.
 
@@ -691,6 +705,7 @@ import {
   type CatalogItem,
 } from '@epam/ai-dial-catalog';
 import { getCredentialsBannerState } from '@epam/ai-dial-catalog/mapping';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 const ToolsetDetails = ({ item }: { item: CatalogItem }) => {
   const bannerState =
@@ -704,7 +719,10 @@ const ToolsetDetails = ({ item }: { item: CatalogItem }) => {
         item={item}
         onLogin={(_, { level, apiKey }) => signIn(item.id, level, apiKey)}
         onLogout={(_, { level }) => signOut(item.id, level)}
-        texts={{ hasPrimaryAction: false }}
+        texts={{
+          hasPrimaryAction: false,
+          entityTypeLabels: { [CatalogEntityType.Toolset]: 'Toolset' },
+        }}
       />
       {item.credentials != null && bannerState != null && (
         <CredentialsBanner

@@ -602,6 +602,8 @@ export const Catalog: FC<CatalogProps> = ({
                 searchPlaceholder={titles?.createSearchPlaceholder}
                 searchClearLabel={titles?.createSearchClearLabel}
                 noResultsLabel={titles?.createNoResultsLabel}
+                backLabel={titles?.createMenuBackLabel}
+                closeLabel={titles?.createMenuCloseLabel}
               />
             )}
           </div>
@@ -678,7 +680,10 @@ export const Catalog: FC<CatalogProps> = ({
           className={mergeClasses(
             tabFiltered.length > 0
               ? [
-                  'min-h-full w-full px-8 py-6',
+                  /* `flex-1`, not `min-h-full`: 100% of the scroll body plus
+                     the Favorites/Toolbar/Tabs above it always overflowed, so
+                     a lone result still showed a scrollbar (#9325). */
+                  'w-full flex-1 px-8 py-6',
                   /* Tailwind's JIT cannot scan a variable, so the cap is a
                      literal here and `CONTENT_MAX_WIDTH` in
                      `constants/virtual-grid.ts` — which the virtualizer reads

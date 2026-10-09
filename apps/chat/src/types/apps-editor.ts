@@ -7,6 +7,15 @@ export enum AppsEditorQuery {
   AppId = 'appId',
 }
 
+/** Query params the host sends to the embedded QuickApps iframe URL. */
+export enum AppsEditorIframeQuery {
+  AuthProvider = 'authProvider',
+  Id = 'id',
+  Theme = 'theme',
+  ApplicationCredentials = 'applicationCredentials',
+  ApplicationName = 'applicationName',
+}
+
 export enum AppsEditorEvent {
   /** Sent once the embedded QuickApps iframe's UI has rendered. Controls only the loading-spinner overlay — it does NOT indicate the iframe's data model is loaded/safe to save; see `ReadyToSave`. */
   ReadyToInteract = 'readyToInteract',
