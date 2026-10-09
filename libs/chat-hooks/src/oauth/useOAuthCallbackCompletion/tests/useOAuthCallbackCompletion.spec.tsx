@@ -25,7 +25,10 @@ const CALLBACK_PATH = '/toolset-editor/callback';
 const TOOLSET_ID = 'toolsets/b/my__1.0.0';
 
 const setRedirectState = (state: ToolsetRedirectState) =>
-  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
+  sessionStorage.setItem(
+    TOOLSET_REDIRECT_STATE_KEY,
+    btoa(JSON.stringify(state)),
+  );
 
 /** Consumes the first result and acknowledges it so the callback can close. */
 const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
@@ -44,17 +47,20 @@ interface HarnessProps {
   exchange: UseOAuthCallbackCompletionParams['exchange'];
   search: string;
   callbackPath?: string;
+  onMainWindowComplete?: UseOAuthCallbackCompletionParams['onMainWindowComplete'];
 }
 
 const Harness: FC<HarnessProps> = ({
   exchange,
   search,
   callbackPath = CALLBACK_PATH,
+  onMainWindowComplete,
 }) => {
   const { isInProgress, failureReason } = useOAuthCallbackCompletion({
     searchParams: new URLSearchParams(search),
     callbackPath,
     exchange,
+    onMainWindowComplete,
   });
 
   return (
@@ -386,6 +392,67 @@ describe('useOAuthCallbackCompletion', () => {
 
       await reported;
       await screen.findByText(ToolsetOAuthFailureReason.LoginRequestFailed);
+    });
+  });
+
+  describe('main-window completion', () => {
+    /*
+     * A stored `returnPath` marks a main-window redirect flow (written by
+     * `navigateToolsetOAuthRedirect`): the host callback replaces the popup
+     * reporting — no flow channel, no popup close.
+     */
+    const renderMainWindowCompletion = (search: string) =>
+      render(
+        <Harness
+          exchange={exchange}
+          search={search}
+          onMainWindowComplete={onMainWindowComplete}
+        />,
+      );
+
+    const onMainWindowComplete =
+      vi.fn<
+        NonNullable<UseOAuthCallbackCompletionParams['onMainWindowComplete']>
+      >();
+
+    it('hands the success outcome and the redirect state to the host instead of reporting to a popup', async () => {
+      setRedirectState({
+        toolsetId: TOOLSET_ID,
+        state: 'flow-mw-1',
+        returnPath: '/scheduled-tasks/sched_1/edit',
+      });
+      renderMainWindowCompletion('?code=test-code&state=flow-mw-1');
+
+      await waitFor(() => expect(onMainWindowComplete).toHaveBeenCalledOnce());
+      expect(onMainWindowComplete).toHaveBeenCalledWith(
+        { type: ToolsetOAuthResultType.Success },
+        expect.objectContaining({
+          toolsetId: TOOLSET_ID,
+          returnPath: '/scheduled-tasks/sched_1/edit',
+        }),
+      );
+      /* Main-window mode: no popup to close and no opener listening. */
+      expect(mockClose).not.toHaveBeenCalled();
+    });
+
+    it('hands the failure reason to the host when the exchange reports one', async () => {
+      exchange.mockResolvedValue(ToolsetOAuthFailureReason.LoginRequestFailed);
+      setRedirectState({
+        toolsetId: TOOLSET_ID,
+        state: 'flow-mw-2',
+        returnPath: '/scheduled-tasks/new',
+      });
+      renderMainWindowCompletion('?code=test-code&state=flow-mw-2');
+
+      await waitFor(() => expect(onMainWindowComplete).toHaveBeenCalledOnce());
+      expect(onMainWindowComplete).toHaveBeenCalledWith(
+        {
+          type: ToolsetOAuthResultType.Failure,
+          reason: ToolsetOAuthFailureReason.LoginRequestFailed,
+        },
+        expect.objectContaining({ returnPath: '/scheduled-tasks/new' }),
+      );
+      expect(mockClose).not.toHaveBeenCalled();
     });
   });
 });

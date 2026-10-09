@@ -25,7 +25,7 @@ const STUB_CONTROLLER = {
 } as unknown as UseDialFileManagerResult;
 
 const TAB_LABELS: Record<DialFileManagerTabs, string> = {
-  [DialFileManagerTabs.All]: 'All',
+  [DialFileManagerTabs.All]: 'All files',
   [DialFileManagerTabs.MyFiles]: 'My files',
   [DialFileManagerTabs.Shared]: 'Shared with me',
   [DialFileManagerTabs.Organization]: 'Organization',

@@ -36,7 +36,7 @@ export interface Props {
   cancelledMessage: string;
   timeoutMessage: string;
   failedMessage: string;
-  /** Transient status announced through the aria-live region after the banner hides (e.g. a success confirmation), without any visible banner content. */
+  /** Transient status announced through the aria-live region — while the banner is visible (e.g. a disconnect success alongside the reappeared banner) and after it hides (e.g. a login success), without any visible banner content. */
   liveAnnouncement: string;
   /** Omitted when Core reports that no offline OAuth client is available. */
   onLogIn?: () => void;
@@ -169,7 +169,7 @@ const ScheduledTasksLoginBanner: FC<Props> = ({
         />
       )}
       <span role="status" aria-live="polite" className="sr-only">
-        {isRetry ? retryMessage : ''}
+        {isRetry ? retryMessage : liveAnnouncement}
       </span>
     </div>
   );

@@ -23,7 +23,10 @@ import * as toolsetsApi from '../../../server-api/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 
 const setRedirectState = (state: ToolsetRedirectState) =>
-  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
+  sessionStorage.setItem(
+    TOOLSET_REDIRECT_STATE_KEY,
+    btoa(JSON.stringify(state)),
+  );
 
 /** Consumes the first result and acknowledges it so the callback can close. */
 const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
@@ -56,6 +59,18 @@ vi.mock('../../../server-api/offline-credentials', () => ({
   signInOfflineCredentials: vi.fn(),
 }));
 
+const showErrorNotificationMock = vi.fn();
+vi.mock('../../../context/NotificationContext', () => ({
+  useNotification: () => ({
+    showErrorNotification: showErrorNotificationMock,
+    showSuccessNotification: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
+  default: () => <div>Loading</div>,
+}));
+
 const renderCallback = (
   search = '?code=test-code',
   route = '/auth/toolset-signin',
@@ -67,6 +82,10 @@ const renderCallback = (
         <Route
           path="/toolset-editor/callback"
           element={<ToolsetAuthCallback />}
+        />
+        <Route
+          path="/scheduled-tasks/:scheduleId/edit"
+          element={<div>edit page</div>}
         />
       </Routes>
     </MemoryRouter>,
@@ -309,6 +328,45 @@ describe('ToolsetAuthCallback', () => {
     });
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
     expect(externalServicesApi.signInExternalService).not.toHaveBeenCalled();
+  });
+
+  it("navigates back to the flow's return path after a successful main-window offline-credentials exchange", async () => {
+    setRedirectState({
+      toolsetId: 'offline-credentials',
+      state: 'flow-main-window-1',
+      resourceKind: OAuthResourceKind.OfflineCredentials,
+      returnPath: '/scheduled-tasks/sched_123/edit',
+    });
+    vi.mocked(offlineCredentialsApi.signInOfflineCredentials).mockResolvedValue(
+      { success: true },
+    );
+
+    renderCallback('?code=auth-code-xyz&state=flow-main-window-1');
+
+    expect(await screen.findByText('edit page')).toBeTruthy();
+    expect(mockClose).not.toHaveBeenCalled();
+    expect(showErrorNotificationMock).not.toHaveBeenCalled();
+  });
+
+  it('toasts the scheduled-tasks login failure and navigates back when the main-window exchange fails', async () => {
+    setRedirectState({
+      toolsetId: 'offline-credentials',
+      state: 'flow-main-window-2',
+      resourceKind: OAuthResourceKind.OfflineCredentials,
+      returnPath: '/scheduled-tasks/sched_123/edit',
+    });
+    vi.mocked(offlineCredentialsApi.signInOfflineCredentials).mockRejectedValue(
+      new Error('network error'),
+    );
+
+    renderCallback('?code=auth-code-xyz&state=flow-main-window-2');
+
+    expect(await screen.findByText('edit page')).toBeTruthy();
+    expect(showErrorNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.autoLoginFailedNotification',
+      }),
+    );
   });
 
   it('falls back to the editor callback route for a redirect state that stored no redirect URI', async () => {

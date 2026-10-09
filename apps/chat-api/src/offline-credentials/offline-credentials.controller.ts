@@ -132,4 +132,46 @@ export class OfflineCredentialsController {
     await this.offlineCredentialsService.signIn(at, body);
     return { success: true };
   }
+
+  @Post('signout')
+  @UseGuards(FeatureGuard)
+  @RequireFeature(
+    FeatureKey.ScheduledTasksEnabled,
+    FeatureKey.LiveChatInteraction,
+  )
+  @HttpCode(200)
+  @Header('Cache-Control', 'private, no-store')
+  @ApiOperation({
+    operationId: 'signOutOfflineCredentials',
+    summary: 'Sign out offline credentials',
+    description:
+      "Revokes the session user's stored offline-credentials grant by " +
+      'proxying DIAL Core (POST /v1/user/offline-credentials/signout). A ' +
+      'Core 404 is treated as idempotent success — there was no grant left ' +
+      'to revoke. The authorization token is never logged.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Signed out successfully (including idempotent Core 404)',
+    type: OfflineCredentialsAuthResultDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response or reported failure',
+  })
+  @ApiResponse({ status: 503, description: 'DIAL Core is unreachable' })
+  async signOut(@Req() req: Request): Promise<OfflineCredentialsAuthResultDto> {
+    const { at } = req.user as SessionUser;
+    await this.offlineCredentialsService.signOut(at);
+    return { success: true };
+  }
 }

@@ -35,9 +35,18 @@ export default defineConfig({
      *
      * `test.env` overrides whatever the host process/Nx already loaded for every worker, so this
      * makes the suite deterministic regardless of what an individual developer's `.env` contains.
+     *
+     * `UTILITY_MODEL` is pinned empty for the same reason: `AppModule`'s
+     * `ConfigModule.forRoot({ envFilePath: ['.env.local', '.env'] })` writes the developer's
+     * local `UTILITY_MODEL` into the worker's `process.env` whenever an `AppModule`-importing
+     * spec runs in it, and `Nest's ConfigService.get` falls back to `process.env` when the
+     * internal value is `undefined` — so `app-config.service.spec.ts`'s
+     * "refinement unavailable for model undefined" case would flake by worker file-scheduling
+     * order depending on the local `.env` contents.
      */
     env: {
       OTEL_SDK_DISABLED: 'true',
+      UTILITY_MODEL: '',
     },
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',

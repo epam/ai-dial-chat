@@ -23,6 +23,17 @@ import {
 } from '../../../server-api/skills.api';
 import SkillEditor from '../SkillEditor';
 
+/*
+ * Every test in this file drives the full upload pipeline (dialog, file
+ * input, upload, zip re-pack of the skill bundle) before asserting — the
+ * file takes ~60s even on an idle machine. Under a fully parallel suite
+ * run the worker can be loaded enough that the 5s default test timeout is
+ * exceeded on otherwise-green tests (observed on the createSkill case,
+ * which passes standalone), so double the budget for this file only.
+ * Mirrors SkillEditorPreview.spec.tsx's own bump.
+ */
+vi.setConfig({ testTimeout: 10_000 });
+
 const buildSkillResponse = (
   manifest: string,
   etag: string | null = '"etag-1"',

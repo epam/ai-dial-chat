@@ -16,3 +16,7 @@ export const signInOfflineCredentials = (
   offlineCredentialsApi.signInOfflineCredentials({
     offlineCredentialsSigninBodyDto: body,
   });
+
+export const signOutOfflineCredentials =
+  (): Promise<OfflineCredentialsAuthResultDto> =>
+    offlineCredentialsApi.signOutOfflineCredentials();
