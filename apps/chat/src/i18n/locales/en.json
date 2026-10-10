@@ -1172,7 +1172,9 @@
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
-      "noEditorPlaceholder": "Editor not available for this application type yet."
+      "noEditorPlaceholder": "Editor not available for this application type yet.",
+      "unresponsiveTitle": "The editor is not responding",
+      "unresponsiveMessage": "{{host}} did not respond. It may be down or unreachable from your network."
     },
     "error": {
       "createFailed": "Failed to create application. Please try again.",

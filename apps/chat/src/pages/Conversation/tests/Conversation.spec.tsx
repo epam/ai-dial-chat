@@ -3,6 +3,7 @@ import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import type { Conversation, ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
@@ -333,6 +334,93 @@ describe('ConversationPage — a conversation the backend no longer has', () => 
       ),
     );
     expect(updateConversationTitle).toHaveBeenCalledOnce();
+  });
+});
+
+describe('ConversationPage — opening another conversation mid-load', () => {
+  const OTHER_ID = 'conversations/bucket/claude__Small';
+
+  /* A load whose response the test releases after the user has moved on. */
+  const deferLoad = () => {
+    let resolve: (value: unknown) => void = () => undefined;
+    let reject: (reason: unknown) => void = () => undefined;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+
+  const makeOther = (): Conversation =>
+    ({
+      ...makeConversation(),
+      id: OTHER_ID,
+      name: 'Small',
+      model: { id: 'claude' },
+      assistantModelId: 'claude',
+    }) as Conversation;
+
+  const switchToOther = (rerender: (ui: ReactElement) => void) => {
+    routerMocks.conversationId = OTHER_ID;
+    rerender(<ConversationPage />);
+  };
+
+  it('aborts the superseded request and ignores its late response', async () => {
+    const updateConversationTitle = vi.fn();
+    mockUseConversations.mockReturnValue({
+      ...mockUseConversations(),
+      updateConversationTitle,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    const firstLoad = deferLoad();
+    mockGetConversation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .mockReturnValueOnce(firstLoad.promise as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .mockResolvedValueOnce(makeOther() as any);
+
+    const { rerender } = render(<ConversationPage />);
+    switchToOther(rerender);
+
+    await waitFor(() =>
+      expect(updateConversationTitle).toHaveBeenCalledWith(OTHER_ID, 'Small'),
+    );
+    const firstSignal = mockGetConversation.mock.calls[0][1];
+    expect(firstSignal?.aborted).toBe(true);
+
+    await act(async () => {
+      firstLoad.resolve({
+        ...makeConversation(),
+        messages: [{ role: 'user', content: 'go', timestamp: 't' }],
+      });
+    });
+
+    expect(updateConversationTitle).not.toHaveBeenCalledWith(
+      CONVERSATION_ID,
+      'Hello',
+    );
+    expect(streamMocks.startStream).not.toHaveBeenCalled();
+  });
+
+  it('neither notifies nor navigates away when the superseded request fails', async () => {
+    const firstLoad = deferLoad();
+    mockGetConversation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .mockReturnValueOnce(firstLoad.promise as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .mockResolvedValueOnce(makeOther() as any);
+
+    const { rerender } = render(<ConversationPage />);
+    switchToOther(rerender);
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      firstLoad.reject(notFoundError);
+    });
+
+    expect(routerMocks.navigate).not.toHaveBeenCalledWith(ROUTES.Root);
+    expect(removeConversationFromList).not.toHaveBeenCalled();
+    expect(showNotification).not.toHaveBeenCalled();
   });
 });
 

@@ -6,6 +6,7 @@ import {
   ToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -14,8 +15,11 @@ import {
 } from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys } from '../../../../constants/translation-keys';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../../../constants/translation-keys';
 import * as AppConfigContextModule from '../../../../context/AppConfigContext';
 import * as UserContextModule from '../../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../../context/ThemeContext';
@@ -24,7 +28,9 @@ import * as toolsetsApi from '../../../../server-api/toolsets';
 import { AppsEditorEvent } from '../../../../types/apps-editor';
 import { AuthStatus } from '../../../../types/auth-status';
 import type { AppEditorIframeHandle } from '../AppEditorIframe';
-import AppEditorIframe from '../AppEditorIframe';
+import AppEditorIframe, {
+  EDITOR_RESPONSE_TIMEOUT_MS,
+} from '../AppEditorIframe';
 
 vi.mock('../../../../context/AppConfigContext', () => ({
   useFeatureFlag: vi.fn(() => true),
@@ -61,6 +67,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <div role="dialog">
       {children}
       <button onClick={onClose}>Close credentials</button>
+    </div>
+  ),
+  Button: ({ label, onClick }: { label: string; onClick: () => void }) => (
+    <button onClick={onClick}>{label}</button>
+  ),
+  ButtonAppearance: { Outlined: 'outlined' },
+  ButtonVariant: { Neutral: 'neutral' },
+  ElementSize: { Small: 'small' },
+  WarningMessageNotification: ({
+    title,
+    message,
+    action,
+  }: {
+    title: React.ReactNode;
+    message: React.ReactNode;
+    action: React.ReactNode;
+  }) => (
+    <div role="alert">
+      <p>{title}</p>
+      <p>{message}</p>
+      {action}
     </div>
   ),
   DIAL_KIT_ICON_STROKE: 1.5,
@@ -310,6 +337,118 @@ describe('AppEditorIframe', () => {
       'message',
       expect.any(Function),
     );
+  });
+});
+
+describe('AppEditorIframe — unresponsive editor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const postFromEditor = (type: string) =>
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type },
+        origin: 'https://editor.example.com',
+      }),
+    );
+
+  const expireResponseTimeout = () =>
+    act(() => {
+      vi.advanceTimersByTime(EDITOR_RESPONSE_TIMEOUT_MS);
+    });
+
+  it('warns instead of spinning when the editor sends no message in time, even after a load event', () => {
+    const onUnresponsiveChange = vi.fn();
+    renderIframe({ onUnresponsiveChange });
+    // An unreachable host still fires load for the browser's own error page.
+    fireEvent.load(screen.getByTitle('QuickApp'));
+
+    expireResponseTimeout();
+
+    const alert = screen.getByRole('alert');
+    expect(
+      within(alert).getByText(AppsEditorI18nKeys.SettingsStepUnresponsiveTitle),
+    ).toBeTruthy();
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(onUnresponsiveChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('keeps the spinner and no warning before the timeout', () => {
+    renderIframe();
+    act(() => {
+      vi.advanceTimersByTime(EDITOR_RESPONSE_TIMEOUT_MS - 1);
+    });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status')).toBeTruthy();
+  });
+
+  it('never warns once the editor has sent a message', () => {
+    renderIframe();
+    postFromEditor(`${SCHEMA.displayName}/${AppsEditorEvent.LoggedOut}`);
+    expireResponseTimeout();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('ignores messages from other origins when deciding the editor responded', () => {
+    renderIframe();
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToInteract}`,
+        },
+        origin: 'https://evil.example.com',
+      }),
+    );
+    expireResponseTimeout();
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('clears the warning when a late message arrives', () => {
+    const onUnresponsiveChange = vi.fn();
+    renderIframe({ onUnresponsiveChange });
+    expireResponseTimeout();
+
+    postFromEditor(`${SCHEMA.displayName}/${AppsEditorEvent.ReadyToInteract}`);
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(onUnresponsiveChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('remounts the iframe and restarts the wait on Reload', () => {
+    renderIframe();
+    const firstIframe = screen.getByTitle('QuickApp');
+    expireResponseTimeout();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Reload }),
+    );
+
+    expect(screen.getByTitle('QuickApp')).not.toBe(firstIframe);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status')).toBeTruthy();
+
+    expireResponseTimeout();
+    expect(screen.getByRole('alert')).toBeTruthy();
   });
 });
 
