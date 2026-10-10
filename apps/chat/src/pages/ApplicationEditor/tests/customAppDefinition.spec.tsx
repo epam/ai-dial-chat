@@ -174,6 +174,19 @@ describe('ApplicationEditorPage — custom app', () => {
     ).toBeNull();
   });
 
+  it('opens the create form with version 1.0.0 and an empty name', () => {
+    renderPage();
+
+    expect(
+      (
+        screen.getByLabelText(EditorI18nKeys.VersionLabel, {
+          exact: false,
+        }) as HTMLInputElement
+      ).value,
+    ).toBe('1.0.0');
+    expect((getNameInput() as HTMLInputElement).value).toBe('');
+  });
+
   it('shows the name-required error on blur', async () => {
     renderPage();
 

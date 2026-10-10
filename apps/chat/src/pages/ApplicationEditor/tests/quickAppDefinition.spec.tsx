@@ -159,6 +159,16 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(getAction(ButtonsI18nKeys.Create).disabled).toBe(false);
     });
 
+    it('opens with version 1.0.0 and an empty name', () => {
+      renderPage(createSearch);
+
+      expect(
+        (screen.getByLabelText(EditorI18nKeys.VersionLabel) as HTMLInputElement)
+          .value,
+      ).toBe('1.0.0');
+      expect((getNameInput() as HTMLInputElement).value).toBe('');
+    });
+
     it('blocks the request and shows the required error for an empty name', async () => {
       renderPage(createSearch);
 
@@ -172,6 +182,7 @@ describe('ApplicationEditorPage — quick app', () => {
       renderPage(createSearch);
 
       await user.type(getNameInput(), 'Bad/name');
+      await user.clear(screen.getByLabelText(EditorI18nKeys.VersionLabel));
       await user.type(
         screen.getByLabelText(EditorI18nKeys.VersionLabel),
         'v1-beta',
@@ -196,6 +207,7 @@ describe('ApplicationEditorPage — quick app', () => {
         expect.objectContaining({
           name: 'My App',
           type: SCHEMA.id,
+          version: '1.0.0',
           applicationProperties: {
             orchestrator: {
               system_prompt: { type: 'custom', variables: {}, content: '' },
@@ -315,6 +327,7 @@ describe('ApplicationEditorPage — quick app', () => {
     it('forwards the Metadata to the embedded editor on Save, reasserts, confirms and exits', async () => {
       renderPage(editSearch);
       await typeName();
+      await user.clear(screen.getByLabelText(EditorI18nKeys.VersionLabel));
       await user.type(
         screen.getByLabelText(EditorI18nKeys.VersionLabel),
         '2.0.0',

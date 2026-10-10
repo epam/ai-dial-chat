@@ -1,3 +1,4 @@
+import { DEFAULT_DEPLOYMENT_VERSION } from '@epam/ai-dial-builder-form';
 import type {
   CustomAppFormData,
   CustomAppGeneralFormData,
@@ -5,7 +6,7 @@ import type {
 
 export const DEFAULT_CUSTOM_APP_GENERAL_FORM: CustomAppGeneralFormData = {
   name: '',
-  version: '1.0.0',
+  version: DEFAULT_DEPLOYMENT_VERSION,
   iconUrl: '',
   description: '',
   topics: [],

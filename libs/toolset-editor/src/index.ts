@@ -32,13 +32,11 @@ export type {
 } from './models/toolset-form';
 export {
   AUTH_TYPE_ICONS,
-  DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
   ToolsetTransportType,
 } from './constants/toolsets';
 export {
   getDefaultToolsetForm,
-  getStorageSafeUniqueToolsetName,
   isToolsetAuthValid,
   isToolsetFormValid,
   isValidEndpointUrl,
