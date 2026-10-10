@@ -75,6 +75,7 @@ export type {
 } from './models/validation';
 export { DeploymentCreationFieldErrorCode } from './models/validation';
 export {
+  DEFAULT_DEPLOYMENT_VERSION,
   NAME_PATTERN,
   SEMVER_VERSION_PATTERN,
   VERSION_PATTERN,

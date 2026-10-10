@@ -445,6 +445,26 @@ version (`1.0.0`, `1.0.0-beta.1`, `1.0.0+build.5`; not `1.2`, `1.0.0.0` or
 version format. All three are exported so a host can pre-filter
 input with the same rule the validator applies.
 
+`DEFAULT_DEPLOYMENT_VERSION` (`'1.0.0'`) is the version a deployment create
+form opens with. The library never applies it on its own; a host seeds it into
+its create-mode values:
+
+```ts
+import {
+  DEFAULT_DEPLOYMENT_VERSION,
+  type DeploymentCreationFormValues,
+} from '@epam/ai-dial-builder-form';
+
+const createDefaults: DeploymentCreationFormValues = {
+  name: '',
+  description: '',
+  iconUrl: '',
+  version: DEFAULT_DEPLOYMENT_VERSION,
+  topics: [],
+  otherLocales: [],
+};
+```
+
 ## Hooks
 
 ### useMetadataForm

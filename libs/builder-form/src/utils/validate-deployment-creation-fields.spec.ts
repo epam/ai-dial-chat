@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { DeploymentCreationFormValues } from '../models/deployment-creation-form';
 import { DeploymentCreationFieldErrorCode } from '../models/validation';
 import {
+  DEFAULT_DEPLOYMENT_VERSION,
   SEMVER_VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from './validate-deployment-creation-fields';
@@ -160,6 +161,20 @@ describe('validateDeploymentCreationFields', () => {
       ...baseValues,
       version: 'bad version!',
     });
+    expect(errors.version).toBeUndefined();
+  });
+});
+
+describe('DEFAULT_DEPLOYMENT_VERSION', () => {
+  it('is 1.0.0', () => {
+    expect(DEFAULT_DEPLOYMENT_VERSION).toBe('1.0.0');
+  });
+
+  it('passes the SemVer version check', () => {
+    const errors = validateDeploymentCreationFields(
+      { ...baseValues, version: DEFAULT_DEPLOYMENT_VERSION },
+      { validateVersionPattern: SEMVER_VERSION_PATTERN },
+    );
     expect(errors.version).toBeUndefined();
   });
 });

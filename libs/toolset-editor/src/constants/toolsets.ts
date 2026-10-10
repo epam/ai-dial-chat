@@ -1,4 +1,5 @@
 import {
+  DEFAULT_DEPLOYMENT_VERSION,
   SEMVER_VERSION_PATTERN,
   type DeploymentCreationFormValidationOptions,
 } from '@epam/ai-dial-builder-form';
@@ -13,11 +14,8 @@ export enum ToolsetTransportType {
   Sse = 'SSE',
 }
 
-/** Default display name seeded into a new toolset form. */
-export const DEFAULT_TOOLSET_NAME = 'New toolset';
-
-/** Default display version seeded into a new toolset form. */
-export const DEFAULT_TOOLSET_VERSION = '1.0.0';
+/** Default display version seeded into a new toolset form; the shared deployment default. */
+export const DEFAULT_TOOLSET_VERSION = DEFAULT_DEPLOYMENT_VERSION;
 
 /** Metadata checks for a toolset: the version must be SemVer 2.0.0, as DIAL Admin requires. */
 export const TOOLSET_METADATA_VALIDATION_OPTIONS: DeploymentCreationFormValidationOptions =

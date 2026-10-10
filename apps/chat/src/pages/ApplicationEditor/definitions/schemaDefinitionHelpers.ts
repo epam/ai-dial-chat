@@ -1,4 +1,7 @@
-import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
+import {
+  DEFAULT_DEPLOYMENT_VERSION,
+  type DeploymentCreationFormValues,
+} from '@epam/ai-dial-builder-form';
 import {
   appendLocaleCode,
   composeLocalePayload,
@@ -15,11 +18,11 @@ import { PRIMARY_LOCALE } from '../../../utils/locale';
 /* Shared by the schema-based kinds (the embedded-editor quick app and the
    schema form), which differ only in their Setup and how they persist it. */
 
-export const SCHEMA_APP_EMPTY_METADATA: DeploymentCreationFormValues = {
+export const SCHEMA_APP_DEFAULT_METADATA: DeploymentCreationFormValues = {
   name: '',
   description: '',
   iconUrl: '',
-  version: '',
+  version: DEFAULT_DEPLOYMENT_VERSION,
   topics: [],
   otherLocales: [],
 };
