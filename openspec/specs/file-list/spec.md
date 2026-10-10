@@ -37,21 +37,21 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
   "items": [
     {
       "name": "subfolder",
-      "path": "folder/subfolder/",
-      "folderId": "user-bucket:folder/subfolder/",
+      "path": "files/user-bucket/folder/subfolder/",
+      "folderId": "user-bucket:files/user-bucket/folder/subfolder/",
       "nodeType": "folder",
       "bucket": "user-bucket",
-      "parentPath": "folder/",
+      "parentPath": "folder",
       "url": "files/user-bucket/folder/subfolder/",
       "updatedAt": 1710000000000
     },
     {
       "name": "report.pdf",
-      "path": "folder/report.pdf",
-      "folderId": "user-bucket:folder/",
+      "path": "files/user-bucket/folder/report.pdf",
+      "folderId": "user-bucket:folder",
       "nodeType": "item",
       "bucket": "user-bucket",
-      "parentPath": "folder/",
+      "parentPath": "folder",
       "url": "files/user-bucket/folder/report.pdf",
       "contentLength": 12345,
       "contentType": "application/pdf",
@@ -133,7 +133,7 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 - **GIVEN** a bucket whose storage has only object keys such as `reports/q1.pdf` and `reports/q2.pdf` but no physical object at `reports/`
 - **WHEN** DIAL Core returns an item with `nodeType: "FOLDER"` for the `reports/` prefix
-- **THEN** the response includes a folder item with `path: "reports/"`, `folderId: "my-bucket:reports/"`, `nodeType: "folder"`, and no `contentLength` or `contentType`
+- **THEN** the response includes a folder item with `path: "files/my-bucket/reports/"`, `folderId: "my-bucket:files/my-bucket/reports/"`, `nodeType: "folder"`, and no `contentLength` or `contentType`
 
 ---
 
@@ -248,7 +248,7 @@ The system SHALL map each item in the DIAL Core folder response to a `ListFilesI
 - `updatedAt` → forwarded as `number` (Unix ms) from DIAL; note that `DialModifiedEntity.updatedAt` is typed as `string` in the ui-kit — callers must cast if using the TypeScript type directly.
 - `bucket` → propagated from the request query parameter (DIAL items may not include it).
 - `permissions`, `resourceType` → forwarded from the DIAL item; `author` → the item's `author`, else `owner`, else the first `sharedBy` user (falling back to the same lookup on its nested `items`).
-- `path` for every item is derived from the DIAL item's `url`, falling back to `${parentPath}/${name}` (or `name`) when `url` is absent.
+- `path` for every item is derived from the DIAL item's `url`, falling back to `${parentPath}/${name}` (or `name`) when `url` is absent. Because DIAL Core returns `url` as the full storage path, `path` is the full resource path `files/{bucket}/{…}` (still percent-encoded as DIAL Core returns it), not a bucket-relative path; consequently a folder's `folderId` is `${bucket}:files/{bucket}/{…}/`, while a file's `folderId` uses the bucket-relative `parentPath`. The file manager and `expandFolderContents` rely on this full-path form, so callers SHALL NOT assume `path` is bucket-relative.
 
 `ListFilesResponseDto` additionally carries an optional folder-level `permissions` array: DIAL Core's own listing `permissions` when present, otherwise the value `resolveListingPermissions` derives from the visible items.
 
