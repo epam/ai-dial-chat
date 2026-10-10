@@ -33,7 +33,7 @@ Where `DEPLOYMENT_ID_PATTERN` is defined in `apps/chat-api/src/common/validators
 ```ts
 export const DEPLOYMENT_ID_PATTERN = /^(?:[\w.\-:@/()]|%[\dA-Fa-f]{2})+$/;
 export const DEPLOYMENT_ID_VALIDATION_MESSAGE =
-  'Must contain only supported characters or valid percent-encoded bytes';
+  '$property must contain only supported characters or valid percent-encoded bytes';
 ```
 
 The pattern allows word characters, `.`, `-`, `:`, `@`, `/`, `(`, `)`, and valid `%XX` bytes. No default is allowed. If `deploymentId` is absent or fails validation, `ValidationPipe` MUST respond 400.

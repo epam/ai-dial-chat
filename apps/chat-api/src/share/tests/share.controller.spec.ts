@@ -477,6 +477,7 @@ describe('ShareController (integration)', () => {
         validBody.itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -491,6 +492,7 @@ describe('ShareController (integration)', () => {
         'prompts/owner-bucket/Work/AI/summarize',
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -565,6 +567,7 @@ describe('ShareController (integration)', () => {
         itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -580,6 +583,7 @@ describe('ShareController (integration)', () => {
         itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -595,6 +599,7 @@ describe('ShareController (integration)', () => {
         itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 

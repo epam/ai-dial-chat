@@ -450,6 +450,24 @@ describe('ShareManagementService', () => {
   });
 
   describe('revokeShared', () => {
+    it('rejects a resource outside the caller bucket with 403 without calling DIAL Core', async () => {
+      const { service } = makeService();
+      const spy = vi.spyOn(
+        service['dialClient'].client,
+        'revokeSharedResources',
+      );
+
+      await expect(
+        service.revokeShared(
+          'applications/other-bucket/my-app',
+          'token-abc',
+          'user-sub-1',
+          'owner-bucket',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
     it('calls DIAL Core revokeSharedResources with the resource url and invalidates both caches on success', async () => {
       const { service, deploymentsService, toolsetsService } = makeService();
       const spy = vi
@@ -460,6 +478,7 @@ describe('ShareManagementService', () => {
         'applications/owner-bucket/my-app',
         'token-abc',
         'user-sub-1',
+        'owner-bucket',
       );
 
       expect(spy).toHaveBeenCalledWith({
@@ -485,6 +504,7 @@ describe('ShareManagementService', () => {
         'conversations/owner-bucket/my-chat',
         'token-abc',
         'user-sub-1',
+        'owner-bucket',
       );
 
       expect(spy).toHaveBeenCalledWith({
@@ -504,6 +524,7 @@ describe('ShareManagementService', () => {
         'skills/owner-bucket/team-a/docs-helper',
         'token-abc',
         'user-sub-1',
+        'owner-bucket',
       );
 
       expect(spy).toHaveBeenCalledWith({
@@ -536,6 +557,7 @@ describe('ShareManagementService', () => {
         'applications/owner-bucket/never-shared',
         'token-abc',
         'user-sub-1',
+        'owner-bucket',
       );
 
       expect(sharedSpy).not.toHaveBeenCalled();
@@ -550,7 +572,7 @@ describe('ShareManagementService', () => {
       ).mockResolvedValue(errResponse(400));
 
       await expect(
-        service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
+        service.revokeShared('applications/x/y', 'token', 'user-sub-1', 'x'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -562,7 +584,7 @@ describe('ShareManagementService', () => {
       ).mockResolvedValue(errResponse(403));
 
       await expect(
-        service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
+        service.revokeShared('applications/x/y', 'token', 'user-sub-1', 'x'),
       ).rejects.toThrow(ForbiddenException);
       expect(deploymentsService.invalidateListCache).not.toHaveBeenCalled();
       expect(toolsetsService.invalidateListCache).not.toHaveBeenCalled();
@@ -576,7 +598,7 @@ describe('ShareManagementService', () => {
       ).mockResolvedValue(errResponse(401));
 
       await expect(
-        service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
+        service.revokeShared('applications/x/y', 'token', 'user-sub-1', 'x'),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -588,7 +610,7 @@ describe('ShareManagementService', () => {
       ).mockResolvedValue(errResponse(404));
 
       await expect(
-        service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
+        service.revokeShared('applications/x/y', 'token', 'user-sub-1', 'x'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -600,7 +622,7 @@ describe('ShareManagementService', () => {
       ).mockResolvedValue(errResponse(429));
 
       await expect(
-        service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
+        service.revokeShared('applications/x/y', 'token', 'user-sub-1', 'x'),
       ).rejects.toMatchObject({ status: HttpStatus.TOO_MANY_REQUESTS });
     });
 
@@ -612,7 +634,7 @@ describe('ShareManagementService', () => {
       ).mockResolvedValue(errResponse(502));
 
       await expect(
-        service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
+        service.revokeShared('applications/x/y', 'token', 'user-sub-1', 'x'),
       ).rejects.toThrow(BadGatewayException);
     });
 
@@ -624,7 +646,7 @@ describe('ShareManagementService', () => {
       ).mockRejectedValue(new TypeError('fetch failed'));
 
       await expect(
-        service.revokeShared('applications/x/y', 'token', 'user-sub-1'),
+        service.revokeShared('applications/x/y', 'token', 'user-sub-1', 'x'),
       ).rejects.toThrow(ServiceUnavailableException);
     });
 
@@ -638,6 +660,7 @@ describe('ShareManagementService', () => {
         'prompts/my-bucket/Work/AI/summarize',
         'token-abc',
         'user-sub-1',
+        'my-bucket',
       );
 
       expect(spy).toHaveBeenCalledWith({

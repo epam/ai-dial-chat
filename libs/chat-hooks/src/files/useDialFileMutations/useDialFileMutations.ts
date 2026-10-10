@@ -39,6 +39,7 @@ import {
   RESERVED_MARKER_NAME,
   type SharedRootMeta,
 } from '../dial-file-manager.model';
+import { splitFileNameExtension } from '../file-name';
 import type {
   FileManagerNotification,
   FileNameValidationError,
@@ -532,7 +533,20 @@ export const useDialFileMutations = ({
       if (!value || value.trim() === '') {
         return { reason: FileNameValidationErrorReason.Empty };
       }
-      if (value === RESERVED_MARKER_NAME) {
+      /*
+       * The file manager appends the original extension to a renamed file
+       * before validating, so a file typed as `.dial_folder` arrives as
+       * `.dial_folder<ext>`; the reserved name is checked against both forms.
+       */
+      const originalExtension =
+        item.nodeType === DialFileNodeType.ITEM
+          ? splitFileNameExtension(item.name).extension
+          : '';
+      if (
+        value === RESERVED_MARKER_NAME ||
+        (originalExtension !== '' &&
+          value === `${RESERVED_MARKER_NAME}${originalExtension}`)
+      ) {
         return { reason: FileNameValidationErrorReason.ReservedName };
       }
       if (hasForbiddenNameSymbols(value, forbiddenSymbolsRegExp)) {

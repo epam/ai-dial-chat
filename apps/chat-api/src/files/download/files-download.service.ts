@@ -46,7 +46,12 @@ export class FilesDownloadService {
         response: Response;
       };
 
-      if (error != null) {
+      /*
+       * openapi-fetch leaves `error` undefined for an error response with an
+       * empty body (Content-Length: 0), so `response.ok` must be checked too —
+       * otherwise a Core 404 is streamed to the browser as an empty 200.
+       */
+      if (error != null || !response.ok) {
         return handleDialSdkError(
           error,
           'files.downloadFile',

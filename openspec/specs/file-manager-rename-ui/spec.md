@@ -17,7 +17,7 @@ Client-side rename validation and the rename save flow in the file-manager shell
 | # | Rule | Error key |
 |---|------|-----------|
 | 1 | Empty or whitespace-only name | `dialFileManager.renameNameEmpty` |
-| 2 | Name equals reserved `.dial_folder` | `dialFileManager.renameReservedName` |
+| 2 | Name equals reserved `.dial_folder`, or — for a file — `.dial_folder` followed by the file's original extension, the form `DialFileManager` passes after appending that extension | `dialFileManager.renameReservedName` |
 | 3 | Name contains `/`, `\`, or a forbidden symbol (per `forbiddenSymbolsRegExp`) | File: `dialFileManager.forbiddenSymbolsTooltip`; folder: `dialFileManager.folderNameInvalidChars` |
 | 4 | Name length > 255 | `dialFileManager.renameNameTooLong` |
 | 5 | Duplicate sibling name (case-insensitive, among `currentFolder.items` excluding the item itself) | `dialFileManager.renameDuplicateName` |

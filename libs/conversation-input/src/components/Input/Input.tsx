@@ -945,12 +945,16 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * `matchReferenceWidth={false}` drops the kit's default min-width equal
      * to the (now zero-size) reference, so the overlay sizes to its content.
      */
-    const commandMenuArea =
-      commandMenu == null ? (
-        textarea
-      ) : (
-        <>
-          {textarea}
+    /*
+     * Always the same Fragment with the textarea as its first child, so toggling
+     * `commandMenu` (e.g. switching to a skills-capable model) never changes the
+     * textarea's parent type and never remounts it (focus, caret and IME state
+     * survive).
+     */
+    const commandMenuArea = (
+      <>
+        {textarea}
+        {commandMenu != null && (
           <div
             aria-hidden
             className={mergeClasses(
@@ -1007,8 +1011,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
               <span aria-hidden className="inline-block h-[1lh] w-0" />
             </Dropdown>
           </div>
-        </>
-      );
+        )}
+      </>
+    );
 
     const textareaArea = (
       <div

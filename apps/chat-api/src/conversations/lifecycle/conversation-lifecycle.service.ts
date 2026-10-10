@@ -444,19 +444,30 @@ export class ConversationLifecycleService {
       const result = results[i];
 
       if (result.status === 'fulfilled') {
-        const { error } = result.value as { error?: unknown };
-        if (error == null) {
+        const { error, response } = result.value as {
+          error?: unknown;
+          response?: Response;
+        };
+        /*
+         * The SDK's `error` is the parsed DIAL Core error body and carries no
+         * `status`; the HTTP status lives on `response`. An empty error body
+         * also leaves `error` undefined, so `response.ok` decides success.
+         */
+        const status =
+          response?.status ??
+          (isHttpLikeError(error) ? error.status : undefined);
+        if (error == null && (response?.ok ?? true)) {
           deleted++;
           void this.pinConversation(id, false, token, bucket).catch((err) =>
             this.logger.error('Failed to clean up pin on bulk delete', err),
           );
-        } else if (isHttpLikeError(error) && error.status === 404) {
+        } else if (status === 404) {
           alreadyAbsent++;
-        } else if (isHttpLikeError(error) && error.status === 403) {
+        } else if (status === 403) {
           failed.push({ id, code: 'FORBIDDEN' });
         } else {
           this.logger.error(
-            `deleteConversations[${i}] UPSTREAM_ERROR id=${id} errorStatus=${isHttpLikeError(error) ? error.status : 'n/a'} error=${JSON.stringify(error)}`,
+            `deleteConversations[${i}] UPSTREAM_ERROR id=${id} errorStatus=${status ?? 'n/a'} error=${JSON.stringify(error)}`,
           );
           failed.push({ id, code: 'UPSTREAM_ERROR' });
         }

@@ -17,7 +17,7 @@ The endpoint SHALL:
 - Use the session `accessToken` as the Bearer credential, via `getBearerAuthHeaders`.
 - Call SDK `revokeSharedResources({ headers, body: { resources: [{ url: toShareResourceUrl(itemId) }] } })` with no bucket/path reconstruction. `toShareResourceUrl` (`apps/chat-api/src/share/utils/share-resource.util.ts`) passes every `itemId` through unchanged except a `prompts/` id, which is re-encoded with `encodeDialResourcePath` because prompt list ids are the decoded, human-readable path.
 - NOT perform any pre-flight `getSharedResources` check. Unlike `discardShared`, a resource with no current recipients is a legitimate no-op success for the owner, not a condition to surface as an error.
-- Rely on DIAL Core to enforce ownership; a caller who does not own the resource SHALL surface as `403 Forbidden` via `mapDialHttpStatus`.
+- Check ownership before calling DIAL Core: every allowlisted `itemId` is `{type}/{bucket}/{path}`, and when `{bucket}` is not the caller's session bucket the endpoint SHALL respond `403 Forbidden` (`'Only the resource owner can revoke shared access'`) without calling DIAL Core. DIAL Core answers a non-owner with a generic `400`, which the mapping below would otherwise turn into `404`. This bucket comparison is not a `getSharedResources` pre-flight.
 - On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, unconditionally regardless of `itemId` type, mirroring `ShareManagementService.discardShared`. Conversations, skills, and prompts have no equivalent server-side list cache, so for those `itemId` types this is a harmless no-op.
 - Respond `200 OK` with `RevokeSharedAccessResponseDto { success: true }`. DIAL Core returns an empty 200 body for this operation, so the response is synthesized by the BFF.
 - Map upstream failures via the fetch-shaped `mapDialHttpStatus` / `handleDialFetchError` pair (the 400 case is handled inline in `ShareManagementService.revokeShared` before `mapDialHttpStatus` is reached): DIAL Core 400 → 404 (`'Resource does not exist'`, since the DTO already rejects malformed itemIds so a Core 400 can only mean an unresolvable resource — same reasoning as `discardShared`), 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
@@ -43,7 +43,7 @@ Content-Type: application/json
 
 **Generated-client impact**: no new operation — `revokeSharedAccess` already exists; only the accepted `itemId` shape widens. Request DTO `RevokeSharedAccessDto { itemId: string }`, response DTO `RevokeSharedAccessResponseDto { success: boolean }` are unchanged in shape. Regenerating via `npm run openapi` updates only the Swagger-derived `@ApiProperty.example`/description text if changed, not the DTO's field list.
 
-Authorization: any authenticated session user may call the endpoint; DIAL Core authorizes the specific resource, rejecting non-owners with 403. The endpoint is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — `apps/chat-api` reads no feature-flag environment variables, and neither the share-create nor the discard endpoint is gated.
+Authorization: any authenticated session user may call the endpoint; the BFF rejects an `itemId` outside the caller's bucket with 403, and DIAL Core still authorizes the specific resource. The endpoint is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — `apps/chat-api` reads no feature-flag environment variables, and neither the share-create nor the discard endpoint is gated.
 
 Observability: no new metrics. The endpoint is covered by the existing global `MetricsInterceptor` and the structured log lines above.
 
@@ -59,8 +59,8 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 
 #### Scenario: Non-owner is rejected
 
-- **WHEN** a caller who does not own the resource calls the endpoint for it
-- **THEN** DIAL Core's forbidden response is mapped to `403 Forbidden` and neither cache is invalidated
+- **WHEN** a caller whose session bucket is `my-bucket` calls the endpoint with `{ itemId: "applications/other-bucket/my-app" }`
+- **THEN** the endpoint responds `403 Forbidden` without calling DIAL Core, and neither cache is invalidated
 
 #### Scenario: Invalid itemId shape rejected
 
@@ -334,7 +334,7 @@ The entry's icon SHALL carry `aria-hidden` (the entry's own label names it). The
 
 ### Requirement: Tests — backend and catalog revoke flow
 
-`apps/chat-api/src/share/management/tests/share-management.service.spec.ts`, `apps/chat-api/src/share/tests/share.controller.spec.ts`, and `apps/chat-api/src/share/tests/revoke-shared-access.dto.spec.ts` (with `share.service.spec.ts` covering only facade delegation) SHALL together cover: a successful revoke (correct Core body, both caches invalidated, `{ success: true }`); no `getSharedResources` call being made; each mapped status (400→404, 401, 403, 404, 429, 5xx→502, network→503); DTO rejection of a malformed, empty, over-length, traversal-containing, and wrong-resource-type `itemId`; the unauthenticated case; and, newly, a successful revoke for a `skills/{bucket}/{path}` `itemId` alongside a malformed `skills/...` `itemId` rejection.
+`apps/chat-api/src/share/management/tests/share-management.service.spec.ts`, `apps/chat-api/src/share/tests/share.controller.spec.ts`, and `apps/chat-api/src/share/tests/revoke-shared-access.dto.spec.ts` (with `share.service.spec.ts` covering only facade delegation) SHALL together cover: a successful revoke (correct Core body, both caches invalidated, `{ success: true }`); no `getSharedResources` call being made; each mapped status (400→404, 401, 403, 404, 429, 5xx→502, network→503); a 403 for an `itemId` outside the caller's bucket with no DIAL Core call; DTO rejection of a malformed, empty, over-length, traversal-containing, and wrong-resource-type `itemId`; the unauthenticated case; and, newly, a successful revoke for a `skills/{bucket}/{path}` `itemId` alongside a malformed `skills/...` `itemId` rejection.
 
 `libs/catalog/src/components/Details/Header/tests/Header.spec.tsx` and `libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx` SHALL cover: entry visibility for owned vs shared-with-me vs callback-absent items; clicking opens the confirmation without invoking the callback; confirming calls `onRevokeShare` exactly once with the panel staying open on success; a rejection returns to the details content with the panel still open; and a second rapid confirm click not double-invoking the callback. These cases are entity-type-agnostic and SHALL be exercised with a `Skill` fixture alongside the existing `Application`/`Toolset` fixtures.
 
