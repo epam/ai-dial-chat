@@ -4,11 +4,15 @@
 The toolset create/edit screen: a flat, single-page `EditorLayout`-based editor for MCP toolsets (no wizard/step navigation), covering the route and load behavior, the Metadata and Setup sections, the Connect toolset section, and save behavior. The editor surface is owned by the host-agnostic `ToolsetEditor` component from `@epam/ai-dial-toolset-editor` (see the `toolset-editor-library` spec); the `/toolset-editor` app page is a thin adapter that loads the entity, builds labels, and wires the server callbacks.
 ## Requirements
 ### Requirement: Toolset editor route and entry modes
-The system SHALL provide a `/toolset-editor` route that opens the toolset editor in either create mode (no `id` search param) or edit mode (`id` search param present). In edit mode the system SHALL load the toolset by id before rendering the form; if the toolset cannot be found the system SHALL redirect away from the editor rather than render an empty form.
+The system SHALL provide a `/toolset-editor` route that opens the toolset editor in either create mode (no `id` search param) or edit mode (`id` search param present). In create mode the system SHALL render the form immediately from `getDefaultToolsetForm()` — an empty Name and the Version `DEFAULT_TOOLSET_VERSION` (`1.0.0`, an alias of builder-form's `DEFAULT_DEPLOYMENT_VERSION`), the same create-mode Name/Version defaults every application kind uses — without first listing the user's toolsets. In edit mode the system SHALL load the toolset by id before rendering the form; if the toolset cannot be found the system SHALL redirect away from the editor rather than render an empty form.
 
 #### Scenario: Open editor in create mode
 - **WHEN** a user navigates to `/toolset-editor` with no `id` search param
-- **THEN** the editor opens as a flat single-page form with all fields visible and default values populated, including an auto-generated conflict-free toolset name
+- **THEN** the editor opens as a flat single-page form with all fields visible, the Name field empty, the Version field showing `1.0.0`, and no list-toolsets request issued
+
+#### Scenario: Create is blocked until a name is entered
+- **WHEN** the create-mode form is otherwise valid but the Name field is empty
+- **THEN** the Create action stays disabled and no create request is sent; typing a name enables it
 
 #### Scenario: Open editor in edit mode
 - **WHEN** a user navigates to `/toolset-editor?id=<toolsetName>` for an existing toolset
@@ -72,18 +76,6 @@ full-replacement semantics every other Metadata-section field already has on upd
 - **THEN** the update request omits `locales`/`primaryLocale` and DIAL Core's `displayName`/
   `description` for that toolset become plain strings again
 
-### Requirement: Name-uniqueness check compares against the primary locale
-The default-name-collision check performed when opening the editor in create mode SHALL compare
-the candidate name against each existing toolset's name resolved to the primary locale, not to
-the viewer's active UI locale (see "Unique name generation" for the collision check itself),
-since the candidate name itself is always primary-locale content.
-
-#### Scenario: Collision check ignores the viewer's UI language
-- **WHEN** the viewer's UI language differs from the primary locale and an existing toolset's
-  `displayName` is a locale map
-- **THEN** the collision check compares against that toolset's primary-locale name, not the
-  name resolved for the viewer's UI language
-
 ### Requirement: Form-only editor layout
 The editor SHALL use the shared `EntityEditor` from `@epam/ai-dial-builder-form` (composed by the toolset-editor lib's `ToolsetEditor`), which wraps `EditorLayout` and two `EditorSection`s, to render a header row and a two-column body. The left column SHALL contain a Metadata `EditorSection` (Avatar, Name, Version, Description, Locales, Tags fields). The right column SHALL contain a Setup `EditorSection` (Endpoint, Protocol, Allowed tools, Authentication fields). On mobile, the two sections SHALL stack vertically (Metadata on top, Setup below). On desktop the Cancel and primary (Create in create mode, Save in edit mode) actions render in the header actions slot; below the `desktop` breakpoint `EditorLayout` moves the same actions into a bottom action bar outside the scrollable body. The editor SHALL NOT render a wizard step indicator or a separate live preview pane.
 
@@ -141,15 +133,6 @@ The Connect toolset section SHALL render inside the Setup `EditorSection` at the
 - **WHEN** the user clicks "Copy URL" in the Connect toolset section
 - **THEN** the clipboard receives the toolset's MCP URL and the button shows transient copied feedback announced via `aria-live="polite"`
 
-### Requirement: Unique name generation
-When creating a new toolset, the system SHALL generate a storage-safe, conflict-free default
-name by appending a numeric suffix when the default name collides with an existing toolset
-name.
-
-#### Scenario: Default name collides
-- **WHEN** the default toolset name already exists among the user's toolsets
-- **THEN** the generated default name is suffixed so it does not collide with any existing name
-
 ### Requirement: Save and exit
 The editor SHALL persist the toolset via the backend write API on save and SHALL surface a saving state. On successful save it SHALL raise a success notification and navigate to the return URL (the catalog, `ROUTES.Catalog`); on failure it SHALL keep the user in the editor and show an error.
 
@@ -170,4 +153,3 @@ The success notification SHALL be raised through `useOperationNotification` with
 #### Scenario: Save failure
 - **WHEN** the backend returns an error during save
 - **THEN** the editor remains open, shows an error notification, clears the saving state, and shows no success notification
-

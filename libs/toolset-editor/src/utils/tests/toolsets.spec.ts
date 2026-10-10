@@ -1,14 +1,9 @@
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { describe, expect, it } from 'vitest';
-import {
-  DEFAULT_TOOLSET_NAME,
-  DEFAULT_TOOLSET_VERSION,
-  ToolsetTransportType,
-} from '../../constants/toolsets';
+import { ToolsetTransportType } from '../../constants/toolsets';
 import type { ToolsetFormData } from '../../models/toolset-form';
 import {
   getDefaultToolsetForm,
-  getStorageSafeUniqueToolsetName,
   isToolsetAuthValid,
   isToolsetFormValid,
   isValidEndpointUrl,
@@ -32,31 +27,11 @@ const baseForm = (): ToolsetFormData => ({
   },
 });
 
-describe('getStorageSafeUniqueToolsetName', () => {
-  it('returns the default name when no collision exists', () => {
-    expect(
-      getStorageSafeUniqueToolsetName({
-        defaultName: 'New toolset',
-        existingNames: ['Other'],
-      }),
-    ).toBe('New toolset');
-  });
-
-  it('appends a numeric suffix when the default name is taken', () => {
-    expect(
-      getStorageSafeUniqueToolsetName({
-        defaultName: 'New toolset',
-        existingNames: ['New toolset', 'New toolset 1'],
-      }),
-    ).toBe('New toolset 2');
-  });
-});
-
 describe('getDefaultToolsetForm', () => {
-  it('returns the default create-mode form state', () => {
+  it('returns an empty name and version 1.0.0 with the default Setup fields', () => {
     expect(getDefaultToolsetForm()).toEqual({
-      name: DEFAULT_TOOLSET_NAME,
-      version: DEFAULT_TOOLSET_VERSION,
+      name: '',
+      version: '1.0.0',
       iconUrl: '',
       description: '',
       topics: [],
@@ -70,14 +45,6 @@ describe('getDefaultToolsetForm', () => {
         isLoggedIn: false,
       },
     });
-  });
-
-  it('derives a collision-free name from the existing toolset names', () => {
-    const form = getDefaultToolsetForm([
-      DEFAULT_TOOLSET_NAME,
-      `${DEFAULT_TOOLSET_NAME} 1`,
-    ]);
-    expect(form.name).toBe(`${DEFAULT_TOOLSET_NAME} 2`);
   });
 });
 

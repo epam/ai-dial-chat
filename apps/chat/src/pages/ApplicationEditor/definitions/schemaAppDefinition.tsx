@@ -27,7 +27,7 @@ import {
 } from '../../../utils/application-editor';
 import SchemaAppSetup from '../setup/SchemaAppSetup';
 import {
-  SCHEMA_APP_EMPTY_METADATA,
+  SCHEMA_APP_DEFAULT_METADATA,
   getSchemaAppMetadataLabelOverrides,
   getSchemaAppTitle,
   getSchemaId,
@@ -108,7 +108,7 @@ export const schemaAppDefinition =
       validateVersionPattern: SEMVER_VERSION_PATTERN,
     },
     getMetadataLabelOverrides: getSchemaAppMetadataLabelOverrides,
-    defaultMetadata: SCHEMA_APP_EMPTY_METADATA,
+    defaultMetadata: SCHEMA_APP_DEFAULT_METADATA,
     defaultSetup: EMPTY_SETUP,
     loadSetup,
     validateSetup,

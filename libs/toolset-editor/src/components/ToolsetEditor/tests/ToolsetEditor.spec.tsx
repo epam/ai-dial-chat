@@ -12,6 +12,7 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
 } from '../../../models/toolset-form';
+import { getDefaultToolsetForm } from '../../../utils/toolsets';
 import { ToolsetEditor } from '../ToolsetEditor';
 
 vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
@@ -388,6 +389,29 @@ describe('ToolsetEditor', () => {
 
     await waitFor(() => expect(saveButton.disabled).toBe(false));
     expect(onPersist).not.toHaveBeenCalled();
+  });
+
+  it('keeps Create disabled on a default form until a name is entered, then persists it with version 1.0.0', async () => {
+    renderEditor({ initialForm: getDefaultToolsetForm() });
+
+    await user.click(
+      screen.getByRole('button', { name: 'fill-api-key-toolset' }),
+    );
+    const createButton = screen.getByRole('button', {
+      name: 'Create',
+    }) as HTMLButtonElement;
+    expect(createButton.disabled).toBe(true);
+
+    await user.click(screen.getByRole('button', { name: 'rename' }));
+    await waitFor(() => expect(createButton.disabled).toBe(false));
+    await user.click(createButton);
+
+    await waitFor(() =>
+      expect(onPersist).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Renamed', version: '1.0.0' }),
+        '',
+      ),
+    );
   });
 
   it('shows validation errors after an invalid field becomes dirty', async () => {
