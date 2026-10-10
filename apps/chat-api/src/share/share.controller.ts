@@ -251,7 +251,7 @@ export class ShareController {
     @Req() req: Request,
     @Body() body: RevokeSharedAccessDto,
   ): Promise<RevokeSharedAccessResponseDto> {
-    const { at, sub } = req.user as SessionUser;
-    return this.shareService.revokeShared(body.itemId, at, sub);
+    const { at, sub, bucket } = req.user as SessionUser;
+    return this.shareService.revokeShared(body.itemId, at, sub, bucket);
   }
 }
