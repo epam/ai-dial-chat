@@ -293,9 +293,17 @@ matching the refresh that already happens on a successful login, so a toolset ca
 badge outside the editor (e.g. in the Catalog) reflects the logged-out status without requiring
 an unrelated navigation or page refresh first.
 
+"Disabling the authentication type selector" here and in the saving requirement below means
+the type cannot be changed: every non-selected segment of the `SegmentedControl` is disabled,
+while the selected segment stays enabled and checked so the current type remains perceivable
+and focusable rather than being rendered as dimmed, disabled content.
+
 #### Scenario: Disabled fields when logged in
 - **WHEN** the loaded toolset is already logged in
-- **THEN** the auth type selector and credential fields are disabled and only Log out is active
+- **THEN** every non-selected auth type segment and the credential fields are disabled and only
+  Log out is active
+- **AND** the selected auth type segment stays enabled and checked, and activating it does not
+  change the authentication type
 
 #### Scenario: Confirm logout
 - **WHEN** a user clicks Log out and confirms the dialog
@@ -323,8 +331,8 @@ between the saving state and authentication-type changes.
 
 #### Scenario: Saving disables auth controls
 - **WHEN** a save is in progress
-- **THEN** the authentication type selector and credential fields are disabled until the
-  save completes
+- **THEN** every non-selected authentication type segment and the credential fields are
+  disabled until the save completes, while the selected segment stays enabled and checked
 
 ### Requirement: QuickApps toolset login relay via postMessage
 

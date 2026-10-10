@@ -45,6 +45,7 @@ const okDownload = (
 ) => ({
   error: undefined,
   response: {
+    ok: true,
     status: 200,
     body,
     headers: { get: (h: string) => headers[h] ?? null },
@@ -53,7 +54,7 @@ const okDownload = (
 
 const errResponse = (status: number) => ({
   error: new Error('HTTP error'),
-  response: { status, headers: { get: () => null } },
+  response: { ok: false, status, headers: { get: () => null } },
   data: undefined,
 });
 
@@ -114,6 +115,18 @@ describe('FilesDownloadService', () => {
     it('throws NotFoundException on 404', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.downloadFile.mockResolvedValue(errResponse(404));
+      await expect(service.downloadFile('b', 'p', 't')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException on an empty-body 404 (error undefined)', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.downloadFile.mockResolvedValue({
+        error: undefined,
+        response: { ok: false, status: 404, headers: { get: () => null } },
+        data: undefined,
+      });
       await expect(service.downloadFile('b', 'p', 't')).rejects.toThrow(
         NotFoundException,
       );

@@ -703,6 +703,12 @@ describe('ConversationLifecycleService', () => {
   describe('deleteConversations', () => {
     let deleteConversationSpy: ReturnType<typeof vi.spyOn>;
 
+    /* Real SDK shape: the error body has no status; the status is on response. */
+    const coreError = (status: number) => ({
+      error: { message: 'DIAL Core error' },
+      response: new Response(null, { status }),
+    });
+
     beforeEach(() => {
       deleteConversationSpy = vi
         .spyOn(mockDialClient.client, 'deleteConversation')
@@ -745,9 +751,7 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('counts DIAL Core 404 as alreadyAbsent: 1', async () => {
-      deleteConversationSpy.mockResolvedValueOnce({
-        error: { status: 404 },
-      } as never);
+      deleteConversationSpy.mockResolvedValueOnce(coreError(404) as never);
       const id = 'conversations/test-bucket/chat';
       const result = await service.deleteConversations(
         [id],
@@ -759,10 +763,34 @@ describe('ConversationLifecycleService', () => {
       expect(result.failed).toHaveLength(0);
     });
 
-    it('counts DIAL Core 500 as UPSTREAM_ERROR in failed', async () => {
+    it('counts DIAL Core 403 as FORBIDDEN in failed', async () => {
+      deleteConversationSpy.mockResolvedValueOnce(coreError(403) as never);
+      const id = 'conversations/test-bucket/chat';
+      const result = await service.deleteConversations(
+        [id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.failed).toEqual([{ id, code: 'FORBIDDEN' }]);
+    });
+
+    it('treats an empty-body DIAL Core 404 (error undefined) as alreadyAbsent', async () => {
       deleteConversationSpy.mockResolvedValueOnce({
-        error: { status: 500 },
+        error: undefined,
+        response: new Response(null, { status: 404 }),
       } as never);
+      const id = 'conversations/test-bucket/chat';
+      const result = await service.deleteConversations(
+        [id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.alreadyAbsent).toBe(1);
+      expect(result.deleted).toBe(0);
+    });
+
+    it('counts DIAL Core 500 as UPSTREAM_ERROR in failed', async () => {
+      deleteConversationSpy.mockResolvedValueOnce(coreError(500) as never);
       const id = 'conversations/test-bucket/chat';
       const result = await service.deleteConversations(
         [id],
@@ -781,8 +809,8 @@ describe('ConversationLifecycleService', () => {
       ];
       deleteConversationSpy
         .mockResolvedValueOnce({ data: {}, error: null } as never)
-        .mockResolvedValueOnce({ error: { status: 404 } } as never)
-        .mockResolvedValueOnce({ error: { status: 500 } } as never);
+        .mockResolvedValueOnce(coreError(404) as never)
+        .mockResolvedValueOnce(coreError(500) as never);
 
       const result = await service.deleteConversations(
         ids,
@@ -809,7 +837,7 @@ describe('ConversationLifecycleService', () => {
       const absent = 'conversations/test-bucket/absent';
       deleteConversationSpy
         .mockResolvedValueOnce({ data: {}, error: null } as never)
-        .mockResolvedValueOnce({ error: { status: 404 } } as never);
+        .mockResolvedValueOnce(coreError(404) as never);
 
       await service.deleteConversations(
         [deleted, absent],

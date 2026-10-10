@@ -11,19 +11,20 @@ The system SHALL expose `POST /api/v1/conversations/duplicate?path=<sourcePath>`
 
 ```json
 {
-  "newPath": "conversations/user-bucket/gpt-4o__My%20chat__550e8400-e29b-41d4-a716-446655440000"
+  "newPath": "conversations/user-bucket/gpt-4o__My%20chat"
 }
 ```
 
 The returned `newPath` is the encoded full DIAL Core resource path and SHALL be treated as an opaque conversation identifier by callers.
 
-The duplicated conversation SHALL keep the source conversation's stored display name, sanitised via `prepareEntityName`, without adding a numeric title suffix. Its destination storage path SHALL always end with a fresh `generateUUID()` segment:
+The duplicated conversation SHALL keep the source conversation's stored display name, sanitised via `prepareEntityName`, without adding a numeric title suffix. Its destination storage path SHALL be the clean path, and SHALL gain a fresh `generateUUID()` segment only when a resource already exists there:
 
 ```
-{deploymentId}__{displayName}__{uuid}
+{deploymentKey}__{displayName}            // clean path is free
+{deploymentKey}__{displayName}__{uuid}    // clean path is taken
 ```
 
-The UUID is unconditional, including when the corresponding unsuffixed destination path is free. `duplicateConversation` SHALL NOT perform a destination path-existence check. A trailing UUID from the source path SHALL NOT be reused. Existing legacy source paths without a UUID remain valid inputs.
+`duplicateConversation` SHALL perform exactly one destination path-existence check, a lookup of that single candidate path (never a listing of the caller's conversations). A trailing UUID from the source path SHALL NOT be reused. The full rule, and why it differs from `createConversation`, lives in the `auto-index-duplicate-names` capability (Requirement: `duplicateConversation` path gains a fresh UUID segment only on collision). Existing legacy source paths without a UUID remain valid inputs.
 
 Generated-client impact:
 - OpenAPI operationId: `duplicateConversation`
@@ -44,18 +45,19 @@ This behavior does not require a new API version: UUID-suffixed `newPath` values
 
 #### Scenario: Successful duplication from shared conversation
 - **WHEN** an authenticated user calls `POST /api/v1/conversations/duplicate?path=other-bucket/gpt-4o__My%20chat__<source-uuid>`
-- **THEN** the system copies the conversation to the user's bucket and returns `{ newPath: "conversations/<user-bucket>/gpt-4o__My%20chat__<fresh-uuid>" }` with HTTP 201
+- **THEN** the system copies the conversation to the user's bucket and returns `{ newPath: "conversations/<user-bucket>/gpt-4o__My%20chat" }` with HTTP 201 when that clean path is free
 
-#### Scenario: UUID is appended when the unsuffixed destination path is free
+#### Scenario: No UUID is appended when the unsuffixed destination path is free
 - **GIVEN** no resource exists at `gpt-4o__My chat` in the user's bucket
 - **WHEN** the user duplicates a conversation named `"My chat"`
-- **THEN** the duplicate is stored at `gpt-4o__My chat__<fresh-uuid>`
-- **AND** no destination metadata lookup is performed
+- **THEN** a single destination metadata lookup of `gpt-4o__My chat` is performed
+- **AND** the duplicate is stored at `gpt-4o__My chat`, with no UUID segment
 
 #### Scenario: Repeated duplicates retain the display name and receive different ids
 - **WHEN** the same conversation named `"My chat"` is duplicated twice
 - **THEN** both duplicated conversations keep `name: "My chat"` without a numeric suffix
-- **AND** their `newPath` values end with different freshly generated UUIDs
+- **AND** the first `newPath` is the clean `gpt-4o__My%20chat` path (when it was free), while the second ends with a freshly generated UUID because the first duplicate now occupies the clean path
+- **AND** the two `newPath` values differ
 
 #### Scenario: Missing path parameter
 - **WHEN** the request omits the `path` query parameter

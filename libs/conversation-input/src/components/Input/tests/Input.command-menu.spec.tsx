@@ -301,3 +301,17 @@ describe('Input — command menu opened by a paste', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 });
+
+describe('Input — command menu toggling', () => {
+  it('keeps the same textarea node when the command menu is added and removed', () => {
+    const onSend = vi.fn();
+    const { rerender } = render(<Input onSend={onSend} />);
+    const textarea = screen.getByRole('textbox');
+
+    rerender(<Input onSend={onSend} commandMenu={buildCommandMenu(vi.fn())} />);
+    expect(screen.getByRole('textbox')).toBe(textarea);
+
+    rerender(<Input onSend={onSend} />);
+    expect(screen.getByRole('textbox')).toBe(textarea);
+  });
+});
