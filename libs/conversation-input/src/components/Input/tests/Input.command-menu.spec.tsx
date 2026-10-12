@@ -302,6 +302,20 @@ describe('Input — command menu opened by a paste', () => {
   });
 });
 
+describe('Input — command menu toggling', () => {
+  it('keeps the same textarea node when the command menu is added and removed', () => {
+    const onSend = vi.fn();
+    const { rerender } = render(<Input onSend={onSend} />);
+    const textarea = screen.getByRole('textbox');
+
+    rerender(<Input onSend={onSend} commandMenu={buildCommandMenu(vi.fn())} />);
+    expect(screen.getByRole('textbox')).toBe(textarea);
+
+    rerender(<Input onSend={onSend} />);
+    expect(screen.getByRole('textbox')).toBe(textarea);
+  });
+});
+
 describe('Input — commandMenu.onTextPaste (issue #9354)', () => {
   const renderWithPasteHandler = (pasteTextThreshold?: number) => {
     const calls: string[] = [];
