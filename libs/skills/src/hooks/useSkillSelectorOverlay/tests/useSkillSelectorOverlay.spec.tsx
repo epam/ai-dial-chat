@@ -618,7 +618,7 @@ describe('useSkillSelectorOverlay', () => {
       expect(result.current.selectedSkills).toBeUndefined();
     });
 
-    it('keeps an ordinary paste of /name as plain text', () => {
+    it('keeps /name plain when it is typed rather than inserted', () => {
       const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
       act(() => {
@@ -626,6 +626,25 @@ describe('useSkillSelectorOverlay', () => {
       });
 
       expect(result.current.selectedSkills).toBeUndefined();
+    });
+
+    it('turns a listed /name in pasted text into a mention via commandMenu.onTextPaste', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      act(() => {
+        result.current.onDraftChange('Hi ');
+      });
+      act(() => {
+        result.current.commandMenu?.onTextPaste?.('/csd now');
+      });
+      act(() => {
+        result.current.onDraftChange('Hi /csd now');
+      });
+
+      expect(result.current.selectedSkills).toEqual([{ url: csdSkill.url }]);
+      expect(result.current.activeMentions).toMatchObject([
+        { start: 3, length: 4 },
+      ]);
     });
   });
 });

@@ -25,7 +25,7 @@ import {
 import QuickAppPreview from '../setup/QuickAppPreview';
 import QuickAppSetup from '../setup/QuickAppSetup';
 import {
-  SCHEMA_APP_EMPTY_METADATA,
+  SCHEMA_APP_DEFAULT_METADATA,
   getSchemaAppMetadataLabelOverrides,
   getSchemaAppTitle,
   getSchemaId,
@@ -105,7 +105,7 @@ export const quickAppDefinition =
       validateVersionPattern: SEMVER_VERSION_PATTERN,
     },
     getMetadataLabelOverrides: getSchemaAppMetadataLabelOverrides,
-    defaultMetadata: SCHEMA_APP_EMPTY_METADATA,
+    defaultMetadata: SCHEMA_APP_DEFAULT_METADATA,
     defaultSetup: EMPTY_SETUP,
     validateSetup: () => ({}),
     Setup: QuickAppSetup,

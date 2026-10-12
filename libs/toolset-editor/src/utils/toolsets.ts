@@ -4,7 +4,6 @@ import {
 } from '@epam/ai-dial-builder-form';
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import {
-  DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
   TOOLSET_METADATA_VALIDATION_OPTIONS,
   ToolsetTransportType,
@@ -14,38 +13,15 @@ import type {
   ToolsetFormData,
 } from '../models/toolset-form';
 
-/**
- * Returns a storage-safe toolset name that does not collide with any existing
- * name, appending a numeric suffix when the default name is taken.
- */
-export const getStorageSafeUniqueToolsetName = ({
-  defaultName = DEFAULT_TOOLSET_NAME,
-  existingNames,
-}: {
-  /** Candidate name to make unique. Defaults to `DEFAULT_TOOLSET_NAME`. */
-  defaultName?: string;
-  /** Names already taken by the user's toolsets. */
-  existingNames: string[];
-}): string => {
-  const taken = new Set(existingNames);
-  if (!taken.has(defaultName)) return defaultName;
-
-  let suffix = 1;
-  while (taken.has(`${defaultName} ${suffix}`)) suffix += 1;
-  return `${defaultName} ${suffix}`;
-};
-
 const getDefaultAuthFormData = (): ToolsetAuthFormData => ({
   authenticationType: ToolsetAuthTypes.None,
   withLogin: WithLogin.WithoutLogin,
   isLoggedIn: false,
 });
 
-/** Returns the form state a brand-new toolset editor opens with. */
-export const getDefaultToolsetForm = (
-  existingNames: string[] = [],
-): ToolsetFormData => ({
-  name: getStorageSafeUniqueToolsetName({ existingNames }),
+/** Returns the form state a brand-new toolset editor opens with: an empty name and the default version. */
+export const getDefaultToolsetForm = (): ToolsetFormData => ({
+  name: '',
   version: DEFAULT_TOOLSET_VERSION,
   iconUrl: '',
   description: '',

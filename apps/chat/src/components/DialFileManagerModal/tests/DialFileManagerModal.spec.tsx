@@ -10,7 +10,11 @@ import {
   DialFileNodeType,
   FileManagerColumnKey,
 } from '@epam/ai-dial-react-file-manager';
-import { NotificationVariant, type FilterChipItem } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonVariant,
+  NotificationVariant,
+  type FilterChipItem,
+} from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useCallback, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -219,6 +223,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       contentClassName?: string;
       gridClassName?: string;
       gridOptions?: {
+        filterable?: boolean;
         additionalGridOptions?: {
           domLayout?: string;
           rowSelection?: {
@@ -244,6 +249,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         hideHiddenFilesLabel?: string;
         isNewButtonDisabled?: boolean;
         disabledNewButtonTooltip?: string;
+        newButtonVariant?: string;
       };
       bulkActionsToolbarOptions?: {
         getSelectionLabel: (count: number) => string;
@@ -301,6 +307,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         })}
         data-upload-enabled={uploadEnabled}
         data-new-button-disabled={toolbarOptions?.isNewButtonDisabled}
+        data-new-button-variant={toolbarOptions?.newButtonVariant}
+        data-grid-filterable={String(gridOptions?.filterable)}
         data-new-button-tooltip={toolbarOptions?.disabledNewButtonTooltip}
         data-show-hidden-files-toggle={toolbarOptions?.showHiddenFilesToggle}
         data-hidden-files-label={toolbarOptions?.hiddenFilesSwitcherLabel}
@@ -386,10 +394,11 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         >
           Invoke tab-change handler
         </button>
-        {selectedPaths?.size ? (
+        {/* Like the real file manager, the bulk toolbar needs its options. */}
+        {bulkActionsToolbarOptions && selectedPaths?.size ? (
           <>
             <span>
-              {bulkActionsToolbarOptions?.getSelectionLabel(selectedPaths.size)}
+              {bulkActionsToolbarOptions.getSelectionLabel(selectedPaths.size)}
             </span>
             <button
               type="button"
@@ -634,7 +643,7 @@ describe('DialFileManagerModal', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
-    expect(fileManager.classList.contains('bg-layer-sunken')).toBe(true);
+    expect(fileManager.classList.contains('bg-layer-base')).toBe(true);
     expect(fileManager.getAttribute('data-content-class')).toBe('px-0 pb-0');
     expect(fileManager.getAttribute('data-grid-class')).toBe(
       'size-full gap-6 px-6 py-4',
@@ -686,8 +695,9 @@ describe('DialFileManagerModal', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog.classList.contains('!h-[min(800px,100dvh)]')).toBe(true);
-    expect(dialog.classList.contains('!bg-layer-sunken')).toBe(true);
+    expect(dialog.classList.contains('!h-[min(900px,100dvh)]')).toBe(true);
+    expect(dialog.classList.contains('!bg-layer-base')).toBe(true);
+    expect(dialog.classList.contains('md:!max-w-[1600px]')).toBe(true);
 
     /* These assert pure CSS-level styling (which class is present), for which
        no semantic query applies — this repo's spec conventions carve out
@@ -823,22 +833,34 @@ describe('DialFileManagerModal', () => {
     ).toBe('false');
   });
 
-  it('shows the selection count and clears the selection', () => {
+  it('configures the picker without column filters and with a neutral Add button', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-grid-filterable')).toBe('false');
+    expect(manager.getAttribute('data-new-button-variant')).toBe(
+      String(ButtonVariant.Neutral),
+    );
+  });
 
-    expect(screen.getByText('1 item selected')).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
-    ).toBe(false);
+  it('enables Attach once a file is selected and renders no bulk-actions toolbar', () => {
+    render(<DialFileManagerModal {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
-
-    expect(screen.queryByText('1 item selected')).toBeNull();
     expect(
       screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
     ).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(false);
+    /* Attach is a picker: the bulk toolbar (selection count, clear, bulk
+       Download/Delete) is not offered. */
+    expect(screen.queryByText('1 item selected')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Clear selection' }),
+    ).toBeNull();
   });
 
   it('blocks dot-prefixed hidden files from attach selection', () => {
@@ -878,7 +900,6 @@ describe('DialFileManagerModal', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
 
-    expect(screen.getByText('1 item selected')).toBeTruthy();
     expect(onAttach).toHaveBeenCalledWith({
       files: [expect.objectContaining({ name: 'report.pdf' })],
       folderPaths: [],
@@ -1058,7 +1079,9 @@ describe('DialFileManagerModal — tab navigation', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
-    expect(screen.getByText('1 item selected')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(false);
     expect(screen.queryByRole('button', { name: 'Shared' })).toBeNull();
 
     fireEvent.click(
@@ -1068,7 +1091,9 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(mockHandleTabChange).toHaveBeenCalledWith(
       DialFileManagerTabs.Shared,
     );
-    expect(screen.queryByText('1 item selected')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
   });
 });
 
@@ -1084,7 +1109,8 @@ describe('DialFileManagerModal — per-tab Delete action visibility', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-has-delete')).toBe('true');
-    expect(manager.getAttribute('data-has-bulk-delete')).toBe('true');
+    /* Attach renders no bulk-actions toolbar, so bulk Delete is never offered. */
+    expect(manager.getAttribute('data-has-bulk-delete')).toBe('false');
   });
 
   it('omits Delete from actionLabels on shared tab', () => {

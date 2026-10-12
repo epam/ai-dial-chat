@@ -75,7 +75,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     await import('@epam/ai-dial-chat-hooks');
 
   interface StubProps {
-    initialForm: { name: string };
+    initialForm: { name: string; version: string };
     toolsetId: string;
     onOAuthLogin: unknown;
     labels?: { layout?: { createLabel?: string } };
@@ -99,6 +99,12 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     };
   }
 
+  /* Stands in for the name the user types in the real editor: create mode opens with an empty one. */
+  const submittedForm = <T extends { name: string }>(form: T): T => ({
+    ...form,
+    name: form.name || 'Typed toolset',
+  });
+
   const apiKeyLoginAuth = {
     authenticationType: ToolsetAuthTypes.ApiKey,
     withLogin: WithLogin.WithLogin,
@@ -111,6 +117,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     return (
       <div>
         <span>{props.initialForm.name}</span>
+        <span>{`seeded-version-${props.initialForm.version}`}</span>
         <span>{props.toolsetId}</span>
         <span>{props.onOAuthLogin ? 'oauth-handler' : 'no-oauth-handler'}</span>
         <span>{props.labels?.layout?.createLabel}</span>
@@ -139,7 +146,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
           type="button"
           onClick={async () => {
             const id = await props.onPersist(
-              props.initialForm,
+              submittedForm(props.initialForm),
               props.toolsetId,
             );
             setPersistResult(id ?? 'null');
@@ -169,7 +176,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         </button>
         <button
           type="button"
-          onClick={() => props.onSaveSuccess(props.initialForm)}
+          onClick={() => props.onSaveSuccess(submittedForm(props.initialForm))}
         >
           adapter-save-success
         </button>
@@ -259,7 +266,6 @@ describe('ApplicationEditorPage — toolset', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    vi.mocked(toolsetsApi.listToolsets).mockResolvedValue({ data: [] });
     vi.mocked(toolsetsApi.createToolset).mockResolvedValue({
       id: NEW_TOOLSET_ID,
     });
@@ -299,21 +305,13 @@ describe('ApplicationEditorPage — toolset', () => {
     );
   });
 
-  it('seeds create mode with a collision-free default name derived from existing toolsets', async () => {
-    vi.mocked(toolsetsApi.listToolsets).mockResolvedValue({
-      data: [{ ...editDto(), displayName: 'New toolset' }],
-    });
+  it('seeds create mode with an empty name and version 1.0.0 without listing toolsets', async () => {
     renderPage();
 
-    expect(await screen.findByText('New toolset 1')).toBeTruthy();
+    expect(await screen.findByText('seeded-version-1.0.0')).toBeTruthy();
+    expect(screen.queryByText('New toolset')).toBeNull();
+    expect(toolsetsApi.listToolsets).not.toHaveBeenCalled();
     expect(toolsetsApi.getToolset).not.toHaveBeenCalled();
-  });
-
-  it('falls back to the plain default form when listing toolsets fails', async () => {
-    vi.mocked(toolsetsApi.listToolsets).mockRejectedValue(new Error('fail'));
-    renderPage();
-
-    expect(await screen.findByText('New toolset')).toBeTruthy();
   });
 
   it('shows the route fallback while the edit target is still loading', () => {
@@ -371,7 +369,7 @@ describe('ApplicationEditorPage — toolset', () => {
       await screen.findByText(`persist-result-${NEW_TOOLSET_ID}`),
     ).toBeTruthy();
     expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'New toolset' }),
+      expect.objectContaining({ name: 'Typed toolset', version: '1.0.0' }),
     );
   });
 
@@ -531,7 +529,7 @@ describe('ApplicationEditorPage — toolset', () => {
     expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
       NotifiableEntity.Toolset,
       EntityOperation.Created,
-      { name: 'New toolset' },
+      { name: 'Typed toolset' },
     );
   });
 

@@ -26,6 +26,9 @@ export const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
 export const SEMVER_VERSION_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(?:\+[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?$/;
 
+/** Version a new deployment's create form opens with; a SemVer 2.0.0 value the host seeds into its create-mode metadata. */
+export const DEFAULT_DEPLOYMENT_VERSION = '1.0.0';
+
 /** Validates the General-step fields and returns untranslated error codes; has no side effects. */
 export const validateDeploymentCreationFields = (
   values: DeploymentCreationFormValues,

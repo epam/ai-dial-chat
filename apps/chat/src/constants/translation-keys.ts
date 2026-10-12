@@ -1156,6 +1156,8 @@ export enum AppsEditorI18nKeys {
   GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  SettingsStepUnresponsiveTitle = 'appsEditor.settingsStep.unresponsiveTitle',
+  SettingsStepUnresponsiveMessage = 'appsEditor.settingsStep.unresponsiveMessage',
   SavingOverlayLabel = 'appsEditor.savingOverlay',
   PreviewChatPlaceholder = 'appsEditor.previewChat.placeholder',
   PreviewChatAriaLabel = 'appsEditor.previewChat.ariaLabel',

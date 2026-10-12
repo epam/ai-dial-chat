@@ -245,7 +245,8 @@ export interface UseSkillSelectorOverlayResult {
    * prompt): once the insertion reaches `onDraftChange`, every `/{name}` run
    * in it that names a listed skill becomes a tracked mention. Call right
    * before handing `text` to the composer's insertion channel. A no-op on a
-   * deployment without skills support; an ordinary paste stays plain text.
+   * deployment without skills support. A paste into the input goes through
+   * the same recognition via `commandMenu.onTextPaste`.
    */
   recognizeMentionsInInsertion: (text: string) => void;
   /**

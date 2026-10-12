@@ -241,20 +241,19 @@ export const useDialFileListing = ({
         setListingPermissionsCache((prev) =>
           new Map(prev).set(folderPath, permissions),
         );
-        // Capture root-level shared item paths for sharedWithMeIds and subfolder navigation
+        /*
+         * Capture root-level shared item paths for sharedWithMeIds. They have to match
+         * the row paths `buildFromCache` produces — `/<rootLabel>/<name>` — and not the
+         * item's location inside the owner's bucket: DIAL Core lists shared items flat,
+         * so a file nested under the owner's folders still shows up as a root row.
+         */
         if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
           setSharedRootIds(
-            flat.map((item) => {
-              const relative = dialCorePathToRelative(
-                item.path,
-                item.bucket ?? '',
-              );
-              return buildSharedItemVirtualPath(
-                relative,
-                rootLabel,
-                item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder,
-              );
-            }),
+            flat.map((item) =>
+              item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder
+                ? `/${rootLabel}/${item.name}/`
+                : `/${rootLabel}/${item.name}`,
+            ),
           );
           sharedRootMetaRef.current = new Map(
             flat.map((item) => [

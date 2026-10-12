@@ -192,9 +192,9 @@ The conversation input SHALL track skills as an ordered list of mentions inside 
 
 ---
 
-### Requirement: Skill mentions in an inserted prompt
+### Requirement: Skill mentions in an inserted prompt or pasted text
 
-When the user inserts a saved prompt into a chat input (the Prompts Add-menu entry or its parameters popup, on the new-conversation composer and the ongoing-conversation input), every `/{name}` run in the inserted text that names a skill from `SkillsContext`'s `skills` + `sharedWithMe` + `publicSkills` SHALL become a tracked mention, exactly as if that skill had been selected at that position ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). The host SHALL call the overlay hook's `recognizeMentionsInInsertion(text)` before handing the text to the composer's insertion channel, and `useSkillMentions` SHALL track the mentions once that insertion reaches `onDraftChange`. A run SHALL start the text or follow whitespace and end at whitespace, `/`, or the end of the text; the longest listed name SHALL win, and a name shared by several skills SHALL resolve to the first match in personal, then shared-with-me, then public order. Recognition SHALL apply only to prompt insertion: an ordinary paste of `/{name}` stays plain text (see the slash command dropdown requirement), and on a deployment without skills support the inserted text SHALL stay plain.
+When the user inserts a saved prompt into a chat input (the Prompts Add-menu entry or its parameters popup, on the new-conversation composer and the ongoing-conversation input), or pastes text that lands inline in any chat input where the slash command menu is mounted (a paste converted into an attachment is excluded), every `/{name}` run in the inserted text that names a skill from `SkillsContext`'s `skills` + `sharedWithMe` + `publicSkills` SHALL become a tracked mention, exactly as if that skill had been selected at that position ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). The host SHALL call the overlay hook's `recognizeMentionsInInsertion(text)` before handing the text to the composer's insertion channel, and `useSkillMentions` SHALL track the mentions once that insertion reaches `onDraftChange`. A run SHALL start the text or follow whitespace and end at whitespace, `/`, or the end of the text; the longest listed name SHALL win, and a name shared by several skills SHALL resolve to the first match in personal, then shared-with-me, then public order. For a paste, the overlay hook's `commandMenu` SHALL pass `recognizeMentionsInInsertion` as `CommandMenuConfig.onTextPaste`, which `Input` calls with the pasted plain text (line endings normalized to `\n`) before the `onChange` that carries it, so no host wiring is needed. A paste still opens the slash command dropdown by the caret rule of the slash command dropdown requirement, on top of any mention it produced. On a deployment without skills support the inserted or pasted text SHALL stay plain.
 
 #### Scenario: A prompt with a skill call is inserted
 
@@ -210,6 +210,11 @@ When the user inserts a saved prompt into a chat input (the Prompts Add-menu ent
 
 - **WHEN** the current deployment does not support skills and the user inserts a prompt containing `/report`
 - **THEN** `/report` stays plain text and sending is not blocked
+
+#### Scenario: A copied skill call is pasted
+
+- **WHEN** a skill named `report` is listed and the user pastes `Run /report on this` (e.g. copied from a sent message) into the input
+- **THEN** `/report` renders as a `ChatSkill` element inside the input and the skill is in `orderedSkills`
 
 ---
 

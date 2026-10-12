@@ -1359,6 +1359,60 @@ describe('useDialFileManager', () => {
         );
       });
 
+      it('omits Size and Modified Date columns on Shared tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager(
+            buildOptions({
+              bucket: BUCKET,
+              activeTab: DialFileManagerTabs.Shared,
+            }),
+          ),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.visibleColumns).not.toContain(
+          FileManagerColumnKey.Size,
+        );
+        expect(result.current.visibleColumns).not.toContain(
+          FileManagerColumnKey.UpdatedAt,
+        );
+      });
+
+      it('lists shared files nested in the owner bucket in sharedWithMeIds by their row path', async () => {
+        const nestedFile: ListFilesItemDto = {
+          name: 'report.md',
+          path: `files/${OWNER_BUCKET}/folder/nested/report.md`,
+          url: `files/${OWNER_BUCKET}/folder/nested/report.md`,
+          folderId: `${OWNER_BUCKET}:files/${OWNER_BUCKET}/folder/`,
+          nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+          bucket: OWNER_BUCKET,
+          permissions: ['READ'],
+          author: 'Owner User',
+        };
+        mockListSharedFiles.mockResolvedValue({
+          bucket: '',
+          path: '',
+          items: [nestedFile, sharedRootItem],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager(
+            buildOptions({
+              bucket: BUCKET,
+              activeTab: DialFileManagerTabs.Shared,
+              rootLabel: 'Shared',
+            }),
+          ),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        await waitFor(() =>
+          expect(result.current.sharedWithMeIds).toHaveLength(2),
+        );
+
+        const rowPaths = result.current.items[0].items?.map((row) => row.path);
+        expect(rowPaths).toEqual(['/Shared/report.md', '/Shared/team-docs/']);
+        expect(result.current.sharedWithMeIds).toEqual(rowPaths);
+      });
+
       it('keeps Author values on Shared tab root items', async () => {
         mockListSharedFiles.mockResolvedValue({
           bucket: '',
@@ -1394,7 +1448,7 @@ describe('useDialFileManager', () => {
         );
       });
 
-      it('omits Author column on Organization tab', async () => {
+      it('shows Name, Modified Date, Size and Author on Organization tab', async () => {
         const { result } = renderHook(() =>
           useDialFileManager(
             buildOptions({
@@ -1404,9 +1458,13 @@ describe('useDialFileManager', () => {
           ),
         );
         await waitFor(() => expect(result.current.isLoading).toBe(false));
-        expect(result.current.visibleColumns).not.toContain(
+        expect(result.current.visibleColumns).toEqual([
+          FileManagerColumnKey.Name,
+          FileManagerColumnKey.UpdatedAt,
+          FileManagerColumnKey.Size,
           FileManagerColumnKey.Author,
-        );
+          FileManagerColumnKey.Actions,
+        ]);
       });
     });
 
