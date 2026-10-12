@@ -69,11 +69,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <button onClick={onClose}>Close credentials</button>
     </div>
   ),
-  Button: ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick}>{label}</button>
-  ),
-  ButtonAppearance: { Outlined: 'outlined' },
-  ButtonVariant: { Neutral: 'neutral' },
+  NeutralButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
   ElementSize: { Small: 'small' },
   WarningMessageNotification: ({
     title,
