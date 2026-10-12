@@ -74,11 +74,13 @@ const QuickAppSetup: FC<Props> = ({
   const pendingSaveRef = useRef<PendingSave | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [isEditorValid, setIsEditorValid] = useState(true);
   const [isUnresponsive, setIsUnresponsive] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   // Without an app there is nothing to save yet, so the page's Create stays available.
-  const isReady = appId ? hasEditor && isEditorReady : true;
+  // An invalid form (e.g. blank Instructions) gates Save/Preview like a not-ready editor.
+  const isReady = appId ? hasEditor && isEditorReady && isEditorValid : true;
   useEffect(() => {
     onReadyChange(isReady);
   }, [isReady, onReadyChange]);
@@ -95,6 +97,7 @@ const QuickAppSetup: FC<Props> = ({
     if (readyKeyRef.current === key) return;
     readyKeyRef.current = key;
     setIsEditorReady(false);
+    setIsEditorValid(true);
     setIsLoggedOut(false);
     setIsUnresponsive(false);
   }, [schema, appId]);
@@ -281,6 +284,7 @@ const QuickAppSetup: FC<Props> = ({
             onSaveSuccess={handleSaveSuccess}
             onSaveError={handleSaveError}
             onReadyChange={setIsEditorReady}
+            onValidityChange={setIsEditorValid}
             onLoggedOutChange={setIsLoggedOut}
             onUnresponsiveChange={setIsUnresponsive}
           />
