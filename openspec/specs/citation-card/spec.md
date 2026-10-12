@@ -58,6 +58,7 @@ interface CitationDropdownProps {
   onOpenInBrowser: (annotation: Annotation) => void;
   isDownloadEnabled?: boolean;
   isPreviewOpen?: boolean;
+  previewFilesOnMarkerClick?: boolean;
   icon?: ReactNode;
   headerIcon?: ReactNode;
   cardLabels: CitationCardLabels;
@@ -67,6 +68,10 @@ interface CitationDropdownProps {
 }
 ```
 `CitationDropdown` SHALL only invoke `citationCard.closePopup()` on preview (see next requirement) when `onPreview` is provided; when `onPreview` is absent, there is no preview action to wrap. When `isPreviewOpen` is `true` (the host's preview panel is already open) and a preview action exists, a marker click SHALL preview the active annotation directly instead of opening the card.
+
+When `previewFilesOnMarkerClick` is `true` (defaults to `false`), a marker click SHALL likewise preview the active annotation directly — calling `onPreview` exactly once and opening no card — whenever a preview action exists for it (`onPreview` is provided and `isPreviewable` does not return `false`), the group holds exactly one annotation, and the annotation is not a web link. An annotation is a web link when its source attachment type is `text/html` or `application/xhtml+xml`; this classification SHALL be the single helper `isWebLinkAnnotation` in `libs/quotations/src/utils/citation-source-kind.ts`, shared with the card's "Open in browser" vs "Download" label so the two cannot disagree. A web-link annotation, one with no preview action, or a group holding more than one annotation SHALL open the card exactly as when the flag is `false` — the card's switcher is the only way to reach a grouped marker's other citations, which may point at different files. The flag is a plain boolean; DIAL-specific previewability stays in the host's `isPreviewable` callback.
+
+The chat app SHALL pass `previewFilesOnMarkerClick: true` for inline message citations (`citationCallbacks` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) and SHALL NOT pass it to the reference-chip `CitationDropdown` row, so reference chips keep opening the card.
 
 `useCitationMarkdownComponents` SHALL accept an optional host-supplied
 `isPreviewable(annotation)` callback and forward it to `CitationDropdown`.
@@ -126,6 +131,36 @@ DIAL-specific classification SHALL remain outside `libs/quotations`.
 
 - **WHEN** `CitationCard` is rendered without an `onPreview` prop
 - **THEN** no "Preview" button is rendered, and the footer shows a single button labelled "Open in browser"
+
+#### Scenario: File citation marker opens the canvas without a card
+
+- **WHEN** `previewFilesOnMarkerClick` is `true`, the canvas is closed, and the user clicks (or taps, or activates with Enter/Space) a marker whose active annotation has an `application/pdf` DIAL-file source
+- **THEN** `onPreview` is called once with that annotation, the canvas opens at the cited page with its highlight, and no `role="dialog"` citation card is rendered
+
+#### Scenario: Web-link citation marker still opens the card
+
+- **WHEN** `previewFilesOnMarkerClick` is `true`, the canvas is closed, and the user clicks a marker whose active annotation has a `text/html` source
+- **THEN** the citation card opens with the quote and its "Open in browser" action, and `onPreview` is not called
+
+#### Scenario: Non-previewable source still opens the card
+
+- **WHEN** `previewFilesOnMarkerClick` is `true` and `isPreviewable` returns `false` for the active annotation
+- **THEN** the marker click opens the citation card
+
+#### Scenario: Multi-citation file marker still opens the card
+
+- **WHEN** `previewFilesOnMarkerClick` is `true` and the marker's group holds two PDF annotations
+- **THEN** the marker click opens the citation card with its Previous/Next switcher, and `onPreview` is called only from the card's "Preview" action
+
+#### Scenario: Flag omitted preserves the card-first behaviour
+
+- **WHEN** `previewFilesOnMarkerClick` is omitted, the canvas is closed, and the user clicks a marker with a PDF source
+- **THEN** the citation card opens, as before this change
+
+#### Scenario: Reference chips are unaffected
+
+- **WHEN** the user clicks a reference-only PDF-page chip in the chat app while the canvas is closed
+- **THEN** the citation card opens, as before this change
 
 ---
 

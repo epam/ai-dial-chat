@@ -1,12 +1,20 @@
+/*
+ * The marker's own 240px cap is wider than a narrow (mobile) message column,
+ * so the trigger is also capped at its line box and lets the marker shrink
+ * into it — the label then ellipsises instead of overflowing the bubble.
+ */
 .trigger {
+  // Leaves room for the trigger's `ms-1` (0.25rem) start margin.
+  max-width: calc(100% - 0.25rem);
+
+  > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   td &,
   th & {
     max-width: 100%;
     margin-inline-start: 0;
-
-    > * {
-      min-width: 0;
-      max-width: 100%;
-    }
   }
 }

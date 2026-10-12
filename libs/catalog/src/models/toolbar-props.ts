@@ -22,6 +22,8 @@ export interface ToolbarColors {
   countText?: string;
   /** Vertical divider color next to sort dropdown. Fallback: `--stroke-secondary`. */
   divider?: string;
+  /** Dot on the mobile browse-settings button while a filter is applied. Fallback: `--bg-control-accent`. */
+  settingsActiveDot?: string;
 }
 
 /** Grouped style overrides for `Toolbar`. */
@@ -30,6 +32,36 @@ export interface ToolbarStyles {
   typography?: ToolbarTypography;
   /** Color overrides applied as CSS custom properties. */
   colors?: ToolbarColors;
+}
+
+/** Text of the mobile browse-settings sheet. Every field has an English default in `Toolbar`. */
+export interface BrowseSettingsSheetLabels {
+  /** Title of the root page. Default: 'Browse settings'. */
+  title: string;
+  /** Root row and page title for the view mode. Default: 'View'. */
+  view: string;
+  /** Root row and page title for the sort order. Default: 'Sorting'. */
+  sorting: string;
+  /** Root row and page title for the filters. Default: 'Filtering'. */
+  filtering: string;
+  /** Grid view option. Default: 'Cards'. */
+  gridView: string;
+  /** List view option. Default: 'List'. */
+  listView: string;
+  /** Label of the "My" filter row. Default: 'My'. */
+  myApps: string;
+  /** Heading of the topics section. Default: 'Topics'. */
+  topics: string;
+  /** Filter footer Clear button. Default: 'Clear'. */
+  clear: string;
+  /** Filter footer Apply button. Default: 'Apply'. */
+  apply: string;
+  /** Accessible name of the header's back button. Default: 'Back'. */
+  back: string;
+  /** Accessible name of the header's close button. Default: 'Close'. */
+  close: string;
+  /** Formats the applied-filter summary on the root Filtering row. Default: `${selected} of ${total}`. */
+  formatFilterCount: (selected: number, total: number) => string;
 }
 
 /** Props for Toolbar. */
@@ -89,4 +121,6 @@ export interface ToolbarProps {
   onSortChange?: (sortKey: string) => void;
   /** The sort control's own name, prepended to its accessible name. Default: 'Sort'. */
   sortLabel?: string;
+  /** Text of the mobile browse-settings button and sheet; `title` also names the button. `myApps`/`topics` fall back to `filterMyAppsLabel`/`filterTopicsLabel`. */
+  browseSettingsLabels?: Partial<BrowseSettingsSheetLabels>;
 }
