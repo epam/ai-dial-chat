@@ -25,6 +25,8 @@ export interface UseCitationMarkdownComponentsCallbacks {
   isDownloadEnabled?: boolean;
   /** Whether the host's preview panel is open; a marker click then previews directly instead of showing the card. Defaults to `false`. */
   isPreviewOpen?: boolean;
+  /** Whether a marker click previews a single-citation file source directly instead of showing the card; web-link (HTML/XHTML) sources and multi-citation groups keep the card. Defaults to `false`. */
+  previewFilesOnMarkerClick?: boolean;
   /** Builds the translated label bundles used by a given citation group's card and marker. */
   buildLabels(group: AnnotationGroup): {
     cardLabels: CitationCardLabels;
@@ -102,6 +104,7 @@ export const useCitationMarkdownComponents = (
     onOpenInBrowser,
     isDownloadEnabled = true,
     isPreviewOpen = false,
+    previewFilesOnMarkerClick = false,
     buildLabels,
   } = callbacks;
 
@@ -129,6 +132,7 @@ export const useCitationMarkdownComponents = (
           onOpenInBrowser={onOpenInBrowser}
           isDownloadEnabled={isDownloadEnabled}
           isPreviewOpen={isPreviewOpen}
+          previewFilesOnMarkerClick={previewFilesOnMarkerClick}
           cardLabels={cardLabels}
           markerLabels={markerLabels}
         />
@@ -193,6 +197,7 @@ export const useCitationMarkdownComponents = (
     onOpenInBrowser,
     isDownloadEnabled,
     isPreviewOpen,
+    previewFilesOnMarkerClick,
     buildLabels,
     isCompactTypography,
     hasCitElement,

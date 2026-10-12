@@ -14,7 +14,7 @@ conversion, or `@epam/ai-dial-attachment-canvas`.
 
 ### Requirement: Citation-aware markdown hook exported from the package root
 
-`@epam/ai-dial-quotations` SHALL export a hook (`useCitationMarkdownComponents`) that, given raw markdown content, a list of `AnnotationGroup`s (which may mix URL-keyed groups and `cit`-id-keyed groups), a callbacks object (`UseCitationMarkdownComponentsCallbacks`: required `onPreview`, `onOpenInBrowser`, `buildLabels`, plus optional `isPreviewable(annotation)` (defaults to allowing preview), `isDownloadEnabled` (defaults to `true`) and `isPreviewOpen` (defaults to `false`), all forwarded to each `CitationDropdown`), and the positional parameters `isStreaming = false`, `isCompactTypography = false`, and `fallbackGroups` (in that order), returns `{ processedContent: string; markdownComponents: Components }` for `react-markdown`. The hook SHALL NOT import `react-i18next`, any application context, any attachment-canvas hook, or any application DTO-conversion helper.
+`@epam/ai-dial-quotations` SHALL export a hook (`useCitationMarkdownComponents`) that, given raw markdown content, a list of `AnnotationGroup`s (which may mix URL-keyed groups and `cit`-id-keyed groups), a callbacks object (`UseCitationMarkdownComponentsCallbacks`: required `onPreview`, `onOpenInBrowser`, `buildLabels`, plus optional `isPreviewable(annotation)` (defaults to allowing preview), `isDownloadEnabled` (defaults to `true`), `isPreviewOpen` (defaults to `false`) and `previewFilesOnMarkerClick` (defaults to `false`), all forwarded to each `CitationDropdown`), and the positional parameters `isStreaming = false`, `isCompactTypography = false`, and `fallbackGroups` (in that order), returns `{ processedContent: string; markdownComponents: Components }` for `react-markdown`. The hook SHALL NOT import `react-i18next`, any application context, any attachment-canvas hook, or any application DTO-conversion helper.
 
 The hook SHALL additionally accept an optional pool of **fallback** `AnnotationGroup`s, supplied by the host, which are groups not belonging to this message. The pool's only effect SHALL be on `data-id` resolution, described below. It SHALL be optional and default to an empty pool, so every existing call site keeps its current behaviour.
 
@@ -69,6 +69,11 @@ Because a pool-only match still needs a `cit` override to exist, the empty-overr
 - **WHEN** `content` contains `<cit data-id="zz"></cit>` and neither `groups` nor the fallback pool has that id
 - **THEN** the element is serialized back to the literal text `<cit data-id="zz"></cit>`
 
+#### Scenario: previewFilesOnMarkerClick is forwarded to every dropdown
+
+- **WHEN** the callbacks object sets `previewFilesOnMarkerClick: true` and the user activates a rendered marker whose displayed annotation is a previewable PDF source
+- **THEN** `onPreview` is called once with that annotation and no citation card is rendered
+
 ### Requirement: A repeated citation marker owns its own popup
 
 When one message's content resolves more than one rendered marker to the **same** `AnnotationGroup` — a `<cit data-id="X"></cit>` element occurring several times, or a reference chip whose group shares a `groupKey` with an inline group — each rendered occurrence SHALL be an independent popup owner.
@@ -77,7 +82,7 @@ The hook SHALL achieve this without changing citation data: it SHALL NOT dedupli
 
 Consequently:
 
-- Activating any marker SHALL open exactly one card, anchored to that marker's own trigger element — except when the host passes `isPreviewOpen: true` and the displayed annotation is previewable, in which case activating the marker calls `onPreview` directly for that annotation and opens no card.
+- Activating any marker SHALL open exactly one card, anchored to that marker's own trigger element — except when the host passes `isPreviewOpen: true` and the displayed annotation is previewable, in which case activating the marker calls `onPreview` directly for that annotation and opens no card; and except when the host passes `previewFilesOnMarkerClick: true` and the group holds a single previewable annotation that is not a web link (see the `citation-card` capability), which likewise calls `onPreview` directly and opens no card.
 - At most one citation card SHALL be present in the document at any time within one message.
 - Activating a different occurrence SHALL transfer the open card to it.
 - `onPreview` and `onOpenInBrowser` SHALL each be invoked **exactly once** per user activation, with the `Annotation` the open card is currently displaying, and with that annotation reference-identical to the object held in the `groups` array the hook was given.
@@ -114,6 +119,11 @@ Consequently:
 
 - **WHEN** two occurrences of one `data-id` are in two different paragraphs
 - **THEN** activating either opens exactly one card and its actions fire once
+
+#### Scenario: Repeated file-citation markers each preview their own annotation
+
+- **WHEN** `previewFilesOnMarkerClick` is `true`, the content repeats `<cit data-id="e1"></cit>` twice, `"e1"` resolves to a PDF-source group, and the user activates the second marker
+- **THEN** `onPreview` is invoked exactly once with the group's displayed annotation (reference-identical to the one in `groups`) and no card is present in the document
 
 ### Requirement: Preview and browser-open actions are delegated to injected callbacks
 
