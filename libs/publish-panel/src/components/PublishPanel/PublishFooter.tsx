@@ -82,17 +82,21 @@ export const PublishFooter: FC<PublishFooterProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex items-center justify-end gap-2 border-t px-3.5 py-4 rtl:flex-row-reverse rtl:justify-start',
+        'flex items-center justify-end gap-2 border-t px-4 py-4 desktop:px-3.5 rtl:flex-row-reverse rtl:justify-start',
         styles.footer,
       )}
     >
+      {/* Below the desktop breakpoint Cancel and the submit action split the row
+          in half, as the mobile design puts it. */}
       <GhostButton
         label={cancelLabel}
+        className="mobile:flex-1"
         disabled={isSubmitLoading}
         onClick={onCancel}
       />
       <NeutralButton
         label={submitLabel}
+        className="mobile:flex-1"
         disabled={isSubmitDisabled}
         iconBefore={
           isSubmitLoading ? <Spinner size={DIAL_ICON_SIZE.SM} /> : undefined

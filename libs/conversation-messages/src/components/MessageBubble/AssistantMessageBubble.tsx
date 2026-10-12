@@ -91,8 +91,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
     : (attachments ?? []);
+  /*
+   * Whitespace-only content (e.g. `\n\n` streamed before the stages) renders
+   * nothing, but an empty text container would still take a column gap and
+   * push the content below it out of line with the deployment icon.
+   */
+  const hasText = !!text?.trim();
   const { slotRef, firstLineIndent } = useInlineStartIndent(
-    beforeContent != null && !!text,
+    beforeContent != null && hasText,
   );
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
@@ -142,10 +148,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
            * is empty, or above the streaming placeholder while the first
            * token has not arrived yet.
            */}
-          {beforeContent != null && !text && (
+          {beforeContent != null && !hasText && (
             <div className="min-w-0">{beforeContent}</div>
           )}
-          {(text || (isStreaming && hasThinkingPlaceholder)) && (
+          {(hasText || (isStreaming && hasThinkingPlaceholder)) && (
             <div
               aria-live="polite"
               aria-atomic="false"
@@ -163,11 +169,13 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                  * host-supplied slot content of any element type must never
                  * receive the indent.
                  */
-                beforeContent != null && text && FIRST_LINE_INDENT_CLASS_NAME,
+                beforeContent != null &&
+                  hasText &&
+                  FIRST_LINE_INDENT_CLASS_NAME,
                 CONVERSATION_MESSAGES_CLASS.assistantContent,
               )}
             >
-              {beforeContent != null && text && (
+              {beforeContent != null && hasText && (
                 <div ref={slotRef} className="absolute start-0 top-0">
                   {beforeContent}
                 </div>

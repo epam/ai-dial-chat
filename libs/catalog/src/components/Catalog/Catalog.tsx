@@ -23,7 +23,10 @@ import {
   getTopicOptions,
 } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
-import { buildCatalogTabs } from '../../utils/catalog-tabs';
+import {
+  buildCatalogTabs,
+  scrollSelectedTabIntoView,
+} from '../../utils/catalog-tabs';
 import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import { getStyles } from '../../utils/styles';
 import { isLevelSignedIn, sleep } from '../../utils/toolset-credentials';
@@ -238,6 +241,15 @@ export const Catalog: FC<CatalogProps> = ({
   }, [firstTabId]);
 
   const activeTab = controlledActiveTab ?? internalActiveTab;
+
+  /* The tab row scrolls sideways on narrow screens, so a selected tab past
+     its end (restored on load, or picked from the host) is brought into view. */
+  const tabsRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (tabsRowRef.current != null) {
+      scrollSelectedTabIntoView(tabsRowRef.current);
+    }
+  }, [activeTab, tabs.length]);
 
   const handleActiveTabChange = useCallback(
     (tabId: string) => {
@@ -582,7 +594,7 @@ export const Catalog: FC<CatalogProps> = ({
     >
       {(!hidePageTitle || isCreateButtonVisible) && (
         <div className={mergeClasses('shrink-0', styles.heading)}>
-          <div className="flex h-[64px] w-full items-center justify-between px-8">
+          <div className="flex h-[64px] w-full items-center justify-between px-4 desktop:px-8">
             {!hidePageTitle && (
               <h1
                 className={mergeClasses(
@@ -612,7 +624,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
         {isFavoritesVisible && (
-          <div className="w-full px-8">
+          <div className="w-full px-4 desktop:px-8">
             <Favorites
               items={favorites}
               totalCount={favorites.length}
@@ -630,7 +642,7 @@ export const Catalog: FC<CatalogProps> = ({
           </div>
         )}
 
-        <div className="w-full px-4 pt-6">
+        <div className="w-full pt-6 desktop:px-4">
           <Toolbar
             totalCount={myAppsFiltered.length}
             viewMode={viewMode}
@@ -655,6 +667,7 @@ export const Catalog: FC<CatalogProps> = ({
             filterFromLabel={titles?.filterFromLabel}
             filterMyAppsLabel={titles?.filterMyAppsLabel}
             filterTopicsLabel={titles?.filterTopicsLabel}
+            browseSettingsLabels={titles?.browseSettings}
           />
         </div>
 
@@ -662,8 +675,17 @@ export const Catalog: FC<CatalogProps> = ({
             dropped rather than rendered as a single inert tab. `activeTab`
             still resolves to that one type, so the grid is unaffected. */}
         {tabs.length > 1 && (
-          <div className="min-w-0 shrink-0 overflow-x-auto px-8">
+          /* The tabs keep their natural width and the row scrolls sideways
+             when they outgrow a narrow screen, rather than each tab shrinking
+             until its label and count clip. The scrollbar is hidden, as in
+             the design; touch and trackpad swipes still scroll the row. */
+          <div
+            ref={tabsRowRef}
+            className="min-w-0 shrink-0 overflow-x-auto px-4 [scrollbar-width:none] desktop:px-8"
+          >
             <Tabs
+              tabListClassName="w-max min-w-full"
+              tabClassName="shrink-0 whitespace-nowrap"
               tabs={tabs.map((tab) => ({
                 id: tab.id,
                 label:
@@ -683,7 +705,7 @@ export const Catalog: FC<CatalogProps> = ({
                   /* `flex-1`, not `min-h-full`: 100% of the scroll body plus
                      the Favorites/Toolbar/Tabs above it always overflowed, so
                      a lone result still showed a scrollbar (#9325). */
-                  'w-full flex-1 px-8 py-6',
+                  'w-full flex-1 px-4 py-6 desktop:px-8',
                   /* Tailwind's JIT cannot scan a variable, so the cap is a
                      literal here and `CONTENT_MAX_WIDTH` in
                      `constants/virtual-grid.ts` — which the virtualizer reads
@@ -691,7 +713,7 @@ export const Catalog: FC<CatalogProps> = ({
                   !isFullWidth && 'mx-auto max-w-[1180px]',
                 ]
               : 'min-h-[180px] flex-1',
-            tabFiltered.length === 0 && 'px-8 py-6',
+            tabFiltered.length === 0 && 'px-4 py-6 desktop:px-8',
           )}
         >
           {customEmptyState != null ? (

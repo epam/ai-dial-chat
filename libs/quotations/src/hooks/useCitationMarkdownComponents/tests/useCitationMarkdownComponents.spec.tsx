@@ -463,6 +463,51 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
   });
 
+  it('forwards previewFilesOnMarkerClick so a file marker previews without a card', async () => {
+    const group = makeCitGroup('e1');
+    const callbacks = makeCallbacks({ previewFilesOnMarkerClick: true });
+    render(
+      <Host
+        content='Alice did X<cit data-id="e1"></cit>'
+        groups={[group]}
+        callbacks={callbacks}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: `Citation from ${group.sourceName}` }),
+    );
+
+    expect(callbacks.onPreview).toHaveBeenCalledExactlyOnceWith(
+      group.primaryAnnotation,
+      group,
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('previews the reference-identical annotation once from a repeated file marker when previewFilesOnMarkerClick is set', async () => {
+    const group = makeCitGroup('e1');
+    const callbacks = makeCallbacks({ previewFilesOnMarkerClick: true });
+    render(
+      <Host
+        content='Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>'
+        groups={[group]}
+        callbacks={callbacks}
+      />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: `Citation from ${group.sourceName}`,
+    });
+    await userEvent.click(markers[1]);
+
+    expect(callbacks.onPreview).toHaveBeenCalledOnce();
+    expect(vi.mocked(callbacks.onPreview).mock.calls[0][0]).toBe(
+      group.primaryAnnotation,
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('previewing a card opened from a repeated marker invokes onPreview exactly once', async () => {
     const group = makeCitGroup('e1');
     const callbacks = makeCallbacks();

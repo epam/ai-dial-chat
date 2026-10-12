@@ -300,6 +300,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconFileZip: () => null,
   IconJson: () => null,
   IconChevronDown: () => null,
+  IconChevronRight: () => null,
   IconChevronUp: () => null,
   IconCircleCheckFilled: () => null,
   IconRefresh: () => null,
