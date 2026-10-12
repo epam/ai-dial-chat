@@ -434,7 +434,11 @@ describe('ApplicationEditorPage — quick app', () => {
           name: AppsEditorI18nKeys.EditTitle,
         }),
       ).toBeNull();
-      expect(backToSetup.matches(':focus')).toBe(true);
+      /*
+       * The preview opens after the save promise settles outside `act`, so the
+       * passive focus effect can run after `findByRole` has already resolved.
+       */
+      await waitFor(() => expect(backToSetup.matches(':focus')).toBe(true));
     });
 
     it('returns to the same embedded editor on Back to setup and focuses Preview', async () => {
