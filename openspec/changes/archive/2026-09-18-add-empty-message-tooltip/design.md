@@ -1,6 +1,6 @@
 ## Context
 
-The library owns the live draft, attachment tray, and inline-start content. The parent chat passes Send message to `sendTooltip`; pg-chat currently passes Type a message first unconditionally. The published package consumed by pg-chat does not yet support separate text for the empty state.
+The library owns the live draft, attachment tray, and inline-start content. The parent chat passes Send message to `sendTooltip`; a downstream host currently passes Type a message first unconditionally. The published package it consumes does not yet support separate text for the empty state.
 
 ## Goals / Non-Goals
 
@@ -14,17 +14,17 @@ Add `emptyMessageTooltip?: string` to both public prop interfaces and resolve it
 
 Use content presence rather than `canSend`: missing models, blocked uploads, and host-disabled sending do not imply an empty message. Attachments and inline-start skills count as content, consistent with existing sendability.
 
-Keep localization in hosts. pg-chat will use `sendTooltip={t(ChatI18nKeys.SendMessage)}` and `emptyMessageTooltip={t(ChatI18nKeys.SendDisabledTooltip)}` once a compatible package is released. No app/API/context imports enter the library, and no additional hooks or memoization are needed.
+Keep localization in hosts. A downstream host can use `sendTooltip={t(ChatI18nKeys.SendMessage)}` and `emptyMessageTooltip={t(ChatI18nKeys.SendDisabledTooltip)}` once a compatible package is released. No app/API/context imports enter the library, and no additional hooks or memoization are needed.
 
 ## Risks / Trade-offs
 
 - Compatibility regression: cover callers that omit the new prop with empty and populated messages.
 - Stale hint: test typing, clearing, prop changes, and reset after sending against the actual component.
-- Unreleased API: keep pg-chat integration as a patch until it consumes a compatible package; do not invent a registry version.
+- Unreleased API: downstream hosts adopt it only after consuming a compatible package; do not invent a registry version.
 
 ## Migration Plan
 
-Release the library through its existing release process, update pg-chat's dependency, and apply the two-prop wiring at both composer call sites. Parent callers need no migration. Removing the new prop restores the previous behavior.
+Release the library through its existing release process, and downstream hosts can update their dependency and pass the two props at their composer call sites. Parent callers need no migration. Removing the new prop restores the previous behavior.
 
 ## Open Questions
 

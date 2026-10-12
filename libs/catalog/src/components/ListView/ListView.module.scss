@@ -90,3 +90,12 @@
     var(--bg-control-accent-alpha-active, #2764d933)
   ) !important;
 }
+
+/* Name/version colors the list cell took from `ItemHeader` before it stopped using it. */
+.name {
+  color: var(--text-primary, #161b2d);
+}
+
+.version {
+  color: var(--text-secondary, #57647a);
+}

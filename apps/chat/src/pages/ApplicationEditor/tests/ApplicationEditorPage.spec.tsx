@@ -263,4 +263,27 @@ describe('APPLICATION_EDITOR_DEFINITIONS', () => {
     );
     expect(quickApp && isApplicationEditorPageDefinition(quickApp)).toBe(false);
   });
+
+  it('opens every form-based kind with an empty name and version 1.0.0', async () => {
+    const { APPLICATION_EDITOR_DEFINITIONS } =
+      await vi.importActual<typeof import('../definitions')>('../definitions');
+    const definitions = APPLICATION_EDITOR_DEFINITIONS as Partial<
+      Record<ApplicationEditorKind, ApplicationEditorDefinition>
+    >;
+
+    for (const kind of [
+      ApplicationEditorKind.CustomApp,
+      ApplicationEditorKind.QuickApp,
+      ApplicationEditorKind.SchemaApp,
+    ]) {
+      const definition = definitions[kind];
+      if (!definition || isApplicationEditorPageDefinition(definition)) {
+        throw new Error(`${kind} is not a form-based definition`);
+      }
+      expect(definition.defaultMetadata).toMatchObject({
+        name: '',
+        version: '1.0.0',
+      });
+    }
+  });
 });

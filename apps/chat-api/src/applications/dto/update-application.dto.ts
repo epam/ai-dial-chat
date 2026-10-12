@@ -65,10 +65,18 @@ export class UpdateApplicationBodyDto {
     example: 'files/6FEup.../uploads/2026-06/icon.png',
     description:
       'An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) ' +
-      'picked through the file manager.',
+      'picked through the file manager. An empty string removes the stored ' +
+      'icon; omit the field (or send null) to keep it.',
   })
   @IsString()
   @IsOptional()
+  /*
+   * `''` is the explicit "remove the icon" signal (see
+   * `ApplicationsService.updateApplication`), so it skips the
+   * resource-reference check; any other string must still be a valid
+   * reference.
+   */
+  @ValidateIf((body: UpdateApplicationBodyDto) => body.iconUrl !== '')
   @IsValidResourceReference()
   iconUrl?: string;
 

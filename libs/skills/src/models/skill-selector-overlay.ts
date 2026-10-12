@@ -241,6 +241,14 @@ export interface UseSkillSelectorOverlayResult {
     skills: RequestSkill[] | undefined,
   ) => void;
   /**
+   * Marks `text` as about to be inserted into the composer (e.g. a picked
+   * prompt): once the insertion reaches `onDraftChange`, every `/{name}` run
+   * in it that names a listed skill becomes a tracked mention. Call right
+   * before handing `text` to the composer's insertion channel. A no-op on a
+   * deployment without skills support; an ordinary paste stays plain text.
+   */
+  recognizeMentionsInInsertion: (text: string) => void;
+  /**
    * Renders a user message's `content` and `custom_content.skills` as an
    * ordered array interleaving plain-text runs and `ChatSkill` elements at
    * each mention's actual text position — for `UserMessageBubble`'s

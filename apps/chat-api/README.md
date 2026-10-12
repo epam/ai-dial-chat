@@ -81,12 +81,21 @@ The backend saves an empty assistant placeholder before streaming and attempts
 one terminal save after the model finishes, stops, or fails. If that write
 rejects, the completion stream emits an error with
 `error.type: "conversation_save_failed"` before EOF; an attached generation
-subscriber receives `type: "error"` with the same value in `errorType`.
+subscriber receives `type: "error"` with the same value in `errorType`. The
+stream error of a completed answer also carries `error.status`, the status of
+the HTTP error the write raised (`401` when DIAL Core rejected the credentials,
+`502` for a storage `5xx`), and never the storage response body. A stopped,
+aborted, or failed answer is reported without `status`, because its write
+carries terminal markers the client does not hold.
 Upstream `[DONE]` alone is not confirmation of persistence. The error uses safe
 fallback text, and the original failure is logged as `Failed to save ... conversation`.
-No automatic write retry is performed because a rejected request can have an
-ambiguous commit outcome. Clients retain received output and warn that it may
-be lost after reloading or leaving the page; this is not durable recovery.
+The backend performs no automatic write retry because a rejected request can
+have an ambiguous commit outcome. Clients retain received output and warn that
+it may be lost after reloading or leaving the page; this is not durable
+recovery. The one exception is `status: 401`: the write was refused before
+anything was stored, so the client that started the generation makes one
+recovery save through the ordinary conversation save, which carries its own,
+current session.
 
 The terminal write uses the token captured when the completion request started.
 A token expiring during generation can therefore make the terminal write fail

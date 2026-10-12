@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   ServiceUnavailableException,
@@ -262,6 +263,73 @@ describe('ApplicationsService', () => {
 
       return { getUserBucketSpy, saveCustomApplicationSpy };
     };
+
+    it('atomically rejects an existing application without invalidating caches', async () => {
+      const { service, cacheManager } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(
+        service,
+        undefined,
+        errResponse(412),
+      );
+      await expect(
+        service.createApplication('user1', 'token', {
+          ...body,
+          createOnly: true,
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20App__1.0.0',
+        expect.objectContaining({
+          headers: { Authorization: 'Bearer token', 'If-None-Match': '*' },
+        }),
+      );
+      expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+
+    it('keeps legacy writes unconditional when createOnly is absent', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+      await service.createApplication('user1', 'token', body);
+      expect(
+        saveCustomApplicationSpy.mock.calls[0][2].headers,
+      ).not.toHaveProperty('If-None-Match');
+    });
+
+    it('preserves all template settings independently of Core attachment capabilities', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+      const properties = {
+        features: { timestamp: null, file_loading: { size_limit: 123 } },
+        endpoint: 'schema-specific-value',
+        inputAttachmentTypes: ['schema-specific-value'],
+        maxInputAttachments: 99,
+        orchestrator: {
+          deployment: {
+            deployment_id: 'model-a',
+            parameters: { temperature: 0.3 },
+          },
+        },
+        unknownOption: { enabled: true },
+      };
+      await service.createApplication('user1', 'token', {
+        ...body,
+        createOnly: true,
+        preserveApplicationProperties: true,
+        applicationProperties: properties,
+        inputAttachmentTypes: ['image/png'],
+        maxInputAttachments: 3,
+      });
+      const sentBody = saveCustomApplicationSpy.mock.calls[0][2].body;
+      expect(sentBody).toMatchObject({
+        application_properties: properties,
+        features: { skills_supported: true },
+        inputAttachmentTypes: ['image/png'],
+        maxInputAttachments: 3,
+      });
+      expect(sentBody?.features).not.toHaveProperty('timestamp');
+      expect(sentBody).not.toHaveProperty('endpoint');
+    });
 
     it('creates application, returns composite id, and invalidates cache', async () => {
       const { service, cacheManager, deploymentsService } = makeService();
@@ -605,6 +673,39 @@ describe('ApplicationsService', () => {
         application_type_schema_id: existingApp.application_type_schema_id,
         displayVersion: existingApp.displayVersion,
       });
+    });
+
+    it('removes the stored icon when iconUrl is an empty string', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, iconUrl: 'files/test-bucket/icon.png' }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        iconUrl: '',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('iconUrl');
+      expect(sentBody).toMatchObject({
+        displayName: updateBody.name,
+        application_properties: existingApp.application_properties,
+      });
+    });
+
+    it('keeps the stored icon when iconUrl is omitted', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, iconUrl: 'files/test-bucket/icon.png' }),
+      );
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ iconUrl: 'files/test-bucket/icon.png' });
     });
 
     it('preserves application_properties when applicationProperties is explicitly null', async () => {

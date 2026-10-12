@@ -3,6 +3,9 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
+  IsNumber,
+  Min,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -95,6 +98,40 @@ export class CreateApplicationBodyDto {
   @IsObject()
   @IsOptional()
   applicationProperties?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    default: false,
+    description:
+      'Reject with 409 if the name/version already exists; checked atomically by DIAL Core.',
+  })
+  @IsBoolean()
+  @IsOptional()
+  createOnly?: boolean;
+
+  @ApiPropertyOptional({
+    default: false,
+    description:
+      'Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities.',
+  })
+  @IsBoolean()
+  @IsOptional()
+  preserveApplicationProperties?: boolean;
+
+  @ApiPropertyOptional({ example: ['image/png'], type: [String] })
+  @IsArray()
+  @IsString({ each: true })
+  @Matches(/^([a-zA-Z0-9!*\-.+]+|\*)\/([a-zA-Z0-9!*\-.+]+|\*)$/, {
+    each: true,
+    message: 'Attachment types must be MIME types, for example image/png',
+  })
+  @IsOptional()
+  inputAttachmentTypes?: string[];
+
+  @ApiPropertyOptional({ example: 5 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  maxInputAttachments?: number;
 
   /*
    * Additional (non-primary) locale translations for `name`/`description`.

@@ -1,4 +1,5 @@
 import {
+  ConversationErrorCode,
   ResponseError,
   type ConversationListItemDto,
   type DeploymentItemDto,
@@ -802,9 +803,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             );
             navigate(getConversationRoute(newPath));
           } catch (error) {
-            const { traceId } = await getApiErrorDetails(error);
+            const { traceId, code } = await getApiErrorDetails(error);
+            /* The row only knows the model from the path, which keeps the
+               model the chat was created with; the server checks the model
+               it uses now and refuses a hidden one (#9183). */
             showErrorNotification({
-              message: t(ConversationPanelI18nKeys.DuplicateError),
+              message: t(
+                code === ConversationErrorCode.ConversationDuplicateModelHidden
+                  ? ConversationPanelI18nKeys.DuplicateUnavailableModel
+                  : ConversationPanelI18nKeys.DuplicateError,
+              ),
               requestId: traceId,
             });
           }

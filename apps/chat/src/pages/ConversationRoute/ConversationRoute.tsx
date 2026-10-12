@@ -115,32 +115,6 @@ const ConversationRoute: FC = () => {
     setInputInsertion((prev) => ({ revision: prev.revision + 1, text }));
   }, []);
   const {
-    renderOverlay: renderPromptsOverlay,
-    promptCatalogModal,
-    parametersPopup: promptParametersPopup,
-    openParametersPopup,
-  } = usePromptSelectorOverlay({ onInsertText: handleInsertText });
-  const promptsMenuOverlays = useMemo(
-    () =>
-      renderPromptsOverlay
-        ? [
-            {
-              key: 'prompts',
-              title: t(PromptSelectorI18nKeys.AddMenuLabel),
-              icon: (
-                <IconPrompt
-                  size={BASE_ICON_SIZE}
-                  aria-hidden
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              ),
-              renderOverlay: renderPromptsOverlay,
-            },
-          ]
-        : undefined,
-    [renderPromptsOverlay, t],
-  );
-  const {
     items,
     selectedItemId,
     setSelectedItemId,
@@ -172,9 +146,45 @@ const ConversationRoute: FC = () => {
     selectSkillByUrl,
     resetSkillMentions,
     seedSkillMentions,
+    recognizeMentionsInInsertion,
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
+
+  /* A `/skill-name` written in a prompt's text becomes a real mention once inserted ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). */
+  const handlePromptInsertText = useCallback(
+    (text: string) => {
+      recognizeMentionsInInsertion(text);
+      handleInsertText(text);
+    },
+    [recognizeMentionsInInsertion, handleInsertText],
+  );
+  const {
+    renderOverlay: renderPromptsOverlay,
+    promptCatalogModal,
+    parametersPopup: promptParametersPopup,
+    openParametersPopup,
+  } = usePromptSelectorOverlay({ onInsertText: handlePromptInsertText });
+  const promptsMenuOverlays = useMemo(
+    () =>
+      renderPromptsOverlay
+        ? [
+            {
+              key: 'prompts',
+              title: t(PromptSelectorI18nKeys.AddMenuLabel),
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              renderOverlay: renderPromptsOverlay,
+            },
+          ]
+        : undefined,
+    [renderPromptsOverlay, t],
+  );
 
   useComposerSeedSource(skillMessageRevision, () =>
     seedComposerText(skillMessage),

@@ -379,7 +379,7 @@
         "tags": ["applications"]
       },
       "post": {
-        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list and deployments list caches on success.",
+        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. With createOnly, atomically rejects an existing name/version with 409. With preserveApplicationProperties, stores schema settings verbatim. Invalidates the applications list and deployments list caches on success.",
         "operationId": "createApplication",
         "parameters": [],
         "requestBody": {
@@ -3490,7 +3490,14 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "DIAL Core denied access to the resource"
+            "description": "The caller cannot read the source conversation, or (`code: conversationDuplicateModelHidden`) the conversation's current model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateConversationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Source conversation not found"
@@ -9681,6 +9688,27 @@
               "tool_sets": []
             }
           },
+          "createOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "Reject with 409 if the name/version already exists; checked atomically by DIAL Core."
+          },
+          "preserveApplicationProperties": {
+            "type": "boolean",
+            "default": false,
+            "description": "Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities."
+          },
+          "inputAttachmentTypes": {
+            "example": ["image/png"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "example": 5
+          },
           "locales": {
             "type": "array",
             "items": {
@@ -9738,7 +9766,7 @@
           "iconUrl": {
             "type": "string",
             "example": "files/6FEup.../uploads/2026-06/icon.png",
-            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager."
+            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager. An empty string removes the stored icon; omit the field (or send null) to keep it."
           },
           "topics": {
             "example": ["nlp", "assistant"],
@@ -12933,6 +12961,37 @@
           }
         },
         "required": ["newPath"]
+      },
+      "ConversationErrorCode": {
+        "type": "string",
+        "enum": ["conversationDuplicateModelHidden"],
+        "description": "Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`."
+      },
+      "DuplicateConversationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation's model is not available for new conversations"
+          },
+          "code": {
+            "description": "Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "error", "message"]
       },
       "DeleteConversationsBodyDto": {
         "type": "object",

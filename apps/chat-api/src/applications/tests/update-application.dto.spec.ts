@@ -148,6 +148,19 @@ describe('UpdateApplicationBodyDto', () => {
     expect(errors).toHaveLength(0);
   });
 
+  it('passes with an empty iconUrl as an explicit clear', async () => {
+    const errors = await validateDto({ ...BASE_BODY, iconUrl: '' });
+    expect(errors).toHaveLength(0);
+  });
+
+  it.each([' ', 'not-a-reference', 'files/bucket/../secret.png'])(
+    'rejects an iconUrl %j that is neither empty nor a resource reference',
+    async (iconUrl) => {
+      const errors = await validateDto({ ...BASE_BODY, iconUrl });
+      expect(errors.some((e) => e.property === 'iconUrl')).toBe(true);
+    },
+  );
+
   it('passes with a valid locale entry and primaryLocale', async () => {
     const errors = await validateDto({
       ...BASE_BODY,

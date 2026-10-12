@@ -400,6 +400,7 @@ const {
   selectedSkills,
   resetSkillMentions,
   seedSkillMentions,
+  recognizeMentionsInInsertion,
   renderHistorySkillSegments,
   renderHistorySkills,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
@@ -494,6 +495,15 @@ mention and the draft alongside it — call after a successful send.
 `seedSkillMentions(content, skills)` seeds the draft and its tracked mentions
 from a persisted message — call once when entering edit mode on a message
 that carries `custom_content.skills`.
+`recognizeMentionsInInsertion(text)` marks text the host is about to insert
+into the composer (a picked prompt): once that insertion reaches
+`onDraftChange`, every `/{name}` run in it that names a listed skill becomes a
+tracked mention. A run must start the text or follow whitespace; the longest
+listed name wins, and a name shared by several skills resolves to the first
+of `skills`, then `sharedWithMe`, then `publicSkills`. Call it right before
+handing the text to the composer's insertion channel. It does nothing while
+`isSkillsSupported` is `false`, and an ordinary paste of `/{name}` stays plain
+text.
 
 `renderHistorySkillSegments(content, skills)` renders a **user** message's
 `content` and `custom_content.skills` as an ordered array interleaving

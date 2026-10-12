@@ -35,7 +35,7 @@ Generated-client impact:
 Error codes:
 - `400 Bad Request` — `path` is missing, empty, or invalid
 - `401 Unauthorized` — the caller has no valid session
-- `403 Forbidden` — the caller cannot read the source conversation
+- `403 Forbidden` — the caller cannot read the source conversation, or the body carries `code: conversationDuplicateModelHidden` (`ConversationErrorCode.DuplicateModelHidden`, response DTO `DuplicateConversationErrorDto`) because the conversation's current model is operator-hidden (see below)
 - `404 Not Found` — the source conversation does not exist
 - `502 Bad Gateway` — DIAL Core rejects the read or save operation
 - `503 Service Unavailable` — DIAL Core is unreachable
@@ -93,8 +93,22 @@ The optimistic lifecycle is:
 - **WHEN** the backend returns an error
 - **THEN** the placeholder is removed from the list and the error is re-thrown so callers can handle it
 
+### Requirement: Backend refuses to duplicate a conversation whose current model is hidden
+After reading the source conversation, `ConversationLifecycleService.duplicateConversation` SHALL resolve the model the conversation uses now — `assistantModelId || model.id` from the stored body, not the deployment id in the resource path — through `DeploymentsService.resolveDeploymentItem`. When that deployment has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183) the endpoint SHALL throw `ForbiddenException` with `code: conversationDuplicateModelHidden` and SHALL NOT save a copy. A model that no longer resolves to a deployment does not block the copy.
+
+The path keeps the model a conversation was created with, so a chat later switched to a hidden model is only caught here; the row dropdown below cannot see the switch.
+
+#### Scenario: Chat switched to a hidden model is refused
+- **GIVEN** a conversation stored at `{visibleModel}__{title}` whose `assistantModelId` names a hidden deployment
+- **WHEN** the client calls the duplicate endpoint
+- **THEN** the response is 403 with `code: conversationDuplicateModelHidden` and no copy is saved
+
+#### Scenario: Visible current model is duplicated
+- **WHEN** the conversation's current model resolves to a deployment without `isHidden`
+- **THEN** the copy is saved as usual
+
 ### Requirement: Duplicate action in conversation row dropdown
-The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. That deployment is resolved from the row's resource path via `findDeploymentForConversationId` (which tries every suffix of the path-derived id, so a conversation stored inside a folder is matched too), and the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with `ConversationPanelI18nKeys.DuplicateError` and the response trace ID.
+The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. That deployment is resolved from the row's resource path via `findDeploymentForConversationId` (which tries every suffix of the path-derived id, so a conversation stored inside a folder is matched too), and the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with the response trace ID and `ConversationPanelI18nKeys.DuplicateUnavailableModel` when the response `code` is `conversationDuplicateModelHidden`, otherwise `ConversationPanelI18nKeys.DuplicateError`. Because the row resolves the model from the path, a row whose chat was switched to a hidden model still offers Duplicate; the server refuses that copy.
 
 #### Scenario: Duplicate action appears in menu
 - **WHEN** the user opens the three-dot menu for any conversation row
@@ -164,7 +178,7 @@ When a conversation is duplicated the chat settings (temperature, response forma
 ### Requirement: Read-only conversation view shows centered duplicate action button
 When a conversation is read-only (source bucket differs from user bucket), the `ConversationView` SHALL render a centered `NeutralButton` in place of the `ConversationInput` composer, preceded by an `ErrorMessageNotification` when a `duplicateError` is set. The button SHALL display an `IconCopy` icon and the translated text "Duplicate the conversation to be able to edit it".
 
-When the conversation's model (`assistantModelId || model.id`) resolves to a deployment with `isHidden: true`, `Conversation.tsx` SHALL pass `isDuplicateUnavailable` to `ConversationView`, which then renders the `conversationPanel.duplicateUnavailableModel` translation key as text instead of the button. `handleDuplicateConversation` SHALL also refuse to duplicate in that state (Issue #9183).
+When the conversation's model (`assistantModelId || model.id`) resolves to a deployment with `isHidden: true`, `Conversation.tsx` SHALL pass `isDuplicateUnavailable` to `ConversationView`, which then renders the `conversationPanel.duplicateUnavailableModel` translation key as text instead of the button. `handleDuplicateConversation` SHALL also refuse to duplicate in that state (Issue #9183), and when the server refuses with `code: conversationDuplicateModelHidden` it shows the same `conversationPanel.duplicateUnavailableModel` text as its inline error.
 
 #### Scenario: Centered button rendered for read-only conversation
 - **WHEN** `isReadOnly` is `true`
@@ -183,7 +197,7 @@ The duplicate feature SHALL use these i18n keys:
 - `buttons.duplicate` (`ButtonsI18nKeys.Duplicate`): short action label used in the dropdown ("Duplicate")
 - `conversationPanel.duplicateReadOnlyDescription` (`ConversationPanelI18nKeys.DuplicateReadOnlyDescription`): full sentence used in the centered button ("Duplicate the conversation to be able to edit it")
 - `conversationPanel.duplicateError` (`ConversationPanelI18nKeys.DuplicateError`): error notification text ("Failed to duplicate the conversation. Please try again.")
-- `conversationPanel.duplicateUnavailableModel` (`ConversationPanelI18nKeys.DuplicateUnavailableModel`): read-only view text shown when the conversation's model is hidden
+- `conversationPanel.duplicateUnavailableModel` (`ConversationPanelI18nKeys.DuplicateUnavailableModel`): read-only view text shown when the conversation's model is hidden, and the error text when the server refuses a duplicate with `conversationDuplicateModelHidden`
 
 All keys SHALL be present in every locale file (today only `apps/chat/src/i18n/locales/en.json`) and referenced through the typed enums in `apps/chat/src/constants/translation-keys.ts`.
 

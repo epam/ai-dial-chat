@@ -140,7 +140,7 @@ Feature flag: none.
 
 ### Requirement: Attach modal uses compact chrome around a raised folder panel
 
-`FileManagerAttachModal` SHALL retain its fixed responsive height of `min(800px, 100dvh)` and sunken background. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
+`FileManagerAttachModal` SHALL retain its fixed responsive height of `min(900px, 100dvh)` and the base-layer background, and SHALL let the popup grow to a maximum width of 1600px from the `md` breakpoint. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
 
 In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's horizontal and bottom padding and apply grid spacing through `contentClassName="px-0 pb-0"` and `gridClassName="size-full gap-6 px-6 py-4"` (Standalone keeps `gridClassName="size-full"` and no `contentClassName`). Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
 
@@ -154,3 +154,23 @@ In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, suppl
 
 - **WHEN** the shell renders in Standalone mode
 - **THEN** its visible tree heading and existing content/grid spacing remain unchanged
+
+### Requirement: Attach is a picker without bulk actions or column filters
+
+In Attach mode, `DialFileManagerShell` SHALL NOT supply `bulkActionsToolbarOptions`, so the bulk-actions toolbar (selection count, `Clear selection`, bulk Download and Delete) is not rendered: the footer's `Attach` button is the only action on the selection. It SHALL turn column filtering off in the grid (`gridOptions.filterable: false`), because the search bar replaces it, and SHALL render the toolbar's Add button with the neutral button variant (`toolbarOptions.newButtonVariant`), because the footer owns the primary action. Standalone mode SHALL keep column filters, the bulk-actions toolbar and the default Add button. The shell's surface SHALL be the base layer in both Standalone and Attach modes, with the tree panel raised on top of it.
+
+#### Scenario: Selecting files shows no bulk toolbar in Attach
+
+- **WHEN** a user selects a file in the attach modal
+- **THEN** the `Attach` button becomes enabled, no selection count or `Clear selection` control is rendered, and no bulk Download or Delete is offered
+
+#### Scenario: Attach picker configuration
+
+- **WHEN** the attach modal renders
+- **THEN** the grid has column filtering turned off and the Add button uses the neutral variant
+
+#### Scenario: Standalone keeps filters and bulk actions
+
+- **WHEN** the standalone File storage page renders
+- **THEN** column filters and the bulk-actions toolbar remain available
+

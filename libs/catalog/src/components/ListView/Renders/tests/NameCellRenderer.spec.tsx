@@ -81,6 +81,17 @@ describe('NameCellRenderer — long version', () => {
     expect(heading.className).toContain('min-w-0');
     expect(heading.className).toContain('shrink');
   });
+
+  it('wraps a long name onto at most two lines within the row (#9121)', () => {
+    const longName = 'HEAD RACKETSPORTS — Product Knowledge Base Assistant';
+    render(<NameCellRenderer {...makeParams(makeItem({ name: longName }))} />);
+
+    const heading = screen.getByRole('heading', { level: 3, name: longName });
+    // eslint-disable-next-line testing-library/no-node-access -- the clamped name box has no role or name of its own; it is the heading's only child.
+    const nameBox = heading.firstElementChild as HTMLElement;
+    expect(nameBox.className).toContain('line-clamp-2');
+    expect(nameBox.className).toContain('whitespace-normal');
+  });
 });
 
 describe('NameCellRenderer — density', () => {

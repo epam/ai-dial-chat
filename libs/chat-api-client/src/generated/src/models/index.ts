@@ -1282,6 +1282,17 @@ export interface ConversationDeletionResultDto {
    */
   failed: Array<ConversationDeletionFailureDto>;
 }
+
+/**
+ * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+ * @export
+ */
+export const ConversationErrorCode = {
+  ConversationDuplicateModelHidden: 'conversationDuplicateModelHidden',
+} as const;
+export type ConversationErrorCode =
+  (typeof ConversationErrorCode)[keyof typeof ConversationErrorCode];
+
 /**
  *
  * @export
@@ -1952,6 +1963,30 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   applicationProperties?: object;
+  /**
+   * Reject with 409 if the name/version already exists; checked atomically by DIAL Core.
+   * @type {boolean}
+   * @memberof CreateApplicationBodyDto
+   */
+  createOnly?: boolean;
+  /**
+   * Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities.
+   * @type {boolean}
+   * @memberof CreateApplicationBodyDto
+   */
+  preserveApplicationProperties?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateApplicationBodyDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateApplicationBodyDto
+   */
+  maxInputAttachments?: number;
   /**
    *
    * @type {Array<LocaleTextEntryDto>}
@@ -4040,6 +4075,38 @@ export interface DownloadArchiveDto {
    */
   items: Array<ArchiveItemDto>;
 }
+/**
+ *
+ * @export
+ * @interface DuplicateConversationErrorDto
+ */
+export interface DuplicateConversationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof DuplicateConversationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DuplicateConversationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DuplicateConversationErrorDto
+   */
+  message: string;
+  /**
+   * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+   * @type {ConversationErrorCode}
+   * @memberof DuplicateConversationErrorDto
+   */
+  code?: ConversationErrorCode;
+}
+
 /**
  *
  * @export
@@ -7690,7 +7757,7 @@ export interface UpdateApplicationBodyDto {
    */
   description?: string;
   /**
-   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager. An empty string removes the stored icon; omit the field (or send null) to keep it.
    * @type {string}
    * @memberof UpdateApplicationBodyDto
    */

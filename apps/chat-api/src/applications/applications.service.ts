@@ -2,6 +2,7 @@ import type { components } from '@epam/ai-dial-typescript-sdk';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
+  ConflictException,
   Inject,
   Injectable,
   Logger,
@@ -146,7 +147,9 @@ export class ApplicationsService {
         inputAttachmentTypes,
         maxInputAttachments,
         remainingProperties,
-      } = hoistApplicationFields(body.applicationProperties);
+      } = body.preserveApplicationProperties
+        ? { remainingProperties: body.applicationProperties ?? {} }
+        : hoistApplicationFields(body.applicationProperties);
 
       const { displayName, description } = composeLocalizedFields(
         body.name,
@@ -185,21 +188,29 @@ export class ApplicationsService {
           skills_supported: true,
         } as (typeof dialBody)['features'];
       }
-      if (inputAttachmentTypes != null)
-        dialBody.inputAttachmentTypes = inputAttachmentTypes;
-      if (maxInputAttachments != null)
-        dialBody.maxInputAttachments = maxInputAttachments;
+      const attachmentTypes = body.inputAttachmentTypes ?? inputAttachmentTypes;
+      const attachmentLimit = body.maxInputAttachments ?? maxInputAttachments;
+      if (attachmentTypes != null)
+        dialBody.inputAttachmentTypes = attachmentTypes;
+      if (attachmentLimit != null)
+        dialBody.maxInputAttachments = attachmentLimit;
 
       const response = await this.dialClient.client.saveCustomApplication(
         bucket,
         encodedPath,
         {
-          headers: authHeaders,
+          headers: {
+            ...authHeaders,
+            ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
+          },
           body: dialBody,
         },
       );
 
       if (response.error) {
+        if (body.createOnly && response.response.status === 412) {
+          throw new ConflictException('Application name already taken');
+        }
         return mapDialHttpStatus(
           response.response.status,
           'create application',
@@ -288,7 +299,13 @@ export class ApplicationsService {
       };
       if (description != null)
         mergedBody.description = description as unknown as string;
-      if (body.iconUrl != null) mergedBody.iconUrl = body.iconUrl;
+      /*
+       * An empty `iconUrl` is an explicit clear: the key is dropped from the
+       * merged body so the fully replaced resource no longer carries an icon.
+       * Omitted or `null` keeps the stored icon, like every other field here.
+       */
+      if (body.iconUrl === '') delete mergedBody.iconUrl;
+      else if (body.iconUrl != null) mergedBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0) {
         mergedBody.descriptionKeywords = body.topics;
       }

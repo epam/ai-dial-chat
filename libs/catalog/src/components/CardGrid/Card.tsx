@@ -3,8 +3,6 @@ import {
   FeaturedChip,
   MarkdownRenderer,
   MarkdownRendererClassNames,
-  MarkdownRendererColors,
-  MarkdownRendererProps,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -13,7 +11,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   FolderPath,
-  Tooltip,
+  InteractiveTooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import {
@@ -51,28 +49,21 @@ const TOOLTIP_MARKDOWN_CLASS_NAMES = {
   strong: 'dial-small-semi-text',
 } satisfies MarkdownRendererClassNames;
 
-/*
- * The tooltip is not interactive, so links render as plain text, and the
- * renderer's own colors — tuned for a light surface — resolve to the bubble's
- * inverted text color instead.
- */
-const TOOLTIP_MARKDOWN_COMPONENTS: MarkdownRendererProps['components'] = {
-  img: () => null,
-  a: ({ children }) => <span>{children}</span>,
-};
-
-const TOOLTIP_MARKDOWN_COLORS: MarkdownRendererColors = {
-  blockquoteText: 'currentColor',
-  tableHeaderText: 'currentColor',
-  headingSixText: 'currentColor',
-  inlineCodeBackground: 'transparent',
-  inlineCodeText: 'currentColor',
-};
-
 const isLinkEvent = (
   event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
 ): boolean =>
   event.target instanceof Element && event.target.closest('a') !== null;
+
+/*
+ * React bubbles events from a portal through its React ancestors, so a click
+ * or key press inside the description panel (portaled out of the card) would
+ * otherwise reach the card's own handlers and open the details.
+ */
+const isOutsideCardEvent = (
+  event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
+): boolean =>
+  !(event.target instanceof Node) ||
+  !event.currentTarget.contains(event.target);
 
 /** Browse grid card: AppIdentity header + description + topic chips + breadcrumbs + star. */
 export const Card: FC<CardProps> = ({
@@ -131,13 +122,13 @@ export const Card: FC<CardProps> = ({
 
   const handleClick = onClick
     ? (e: MouseEvent<HTMLElement>) => {
-        if (!isLinkEvent(e)) onClick(item);
+        if (!isLinkEvent(e) && !isOutsideCardEvent(e)) onClick(item);
       }
     : undefined;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
-      if (!onClick || isLinkEvent(e)) return;
+      if (!onClick || isLinkEvent(e) || isOutsideCardEvent(e)) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         onClick(item);
@@ -217,20 +208,21 @@ export const Card: FC<CardProps> = ({
       />
 
       {/* Only while the clamp actually hides text — a description that fits
-       * gets no tooltip repeating what is already on screen (#9334).
-       * `whitespace-normal` undoes the bubble's `pre-wrap`, which would turn
-       * the newlines between rendered markdown blocks into blank lines. */}
-      <Tooltip
+       * gets no panel repeating what is already on screen (#9334).
+       * An interactive panel rather than a plain tooltip: it stays open while
+       * the pointer moves into it, so a description taller than the viewport
+       * can be scrolled — the panel is capped at the viewport height, and the
+       * kit's flip/shift keep a side-placed panel inside it (#9363). */}
+      <InteractiveTooltip
         asChild
         hideTooltip={!isDescriptionClamped}
-        contentClassName="whitespace-normal"
-        tooltip={
+        contentClassName="max-h-[calc(100dvh-16px)] overflow-y-auto"
+        content={
           item.description && (
             <MarkdownRenderer
               content={item.description}
               classNames={TOOLTIP_MARKDOWN_CLASS_NAMES}
-              colors={TOOLTIP_MARKDOWN_COLORS}
-              components={TOOLTIP_MARKDOWN_COMPONENTS}
+              components={DESCRIPTION_MARKDOWN_COMPONENTS}
               {...markdownLabels}
             />
           )
@@ -270,7 +262,7 @@ export const Card: FC<CardProps> = ({
             />
           )}
         </div>
-      </Tooltip>
+      </InteractiveTooltip>
 
       {/* `mt-auto` pins the topics row and footer to the card bottom — the job
        * `flex-1` on the description used to do before it broke the clamp. */}

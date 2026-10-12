@@ -1,14 +1,15 @@
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  DeploymentIcon,
-  ItemHeader,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  EllipsisTooltip,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
+import { ClampedName } from '../../ClampedName/ClampedName';
 import { CredentialsBadge } from '../../CredentialsBadge/CredentialsBadge';
 import styles from '../ListView.module.scss';
 
@@ -37,28 +38,39 @@ export const NameCellRenderer: FC<
           loggedOutLabel={context?.credentialsBadgeLoggedOutLabel}
         />
       </div>
-      <ItemHeader
-        title={data.name}
-        postfix={data.version}
-        postfixClassName={versionClassName}
-        query={searchQuery}
-        titleClassName={nameClassName}
-        /* `flex-1` gives the header the cell's width. Without it the header is
-           only as wide as its own text, and `ItemHeader` caps the version at
-           30% of that — which truncated "2026-07-15" to "2026-07-…" while the
-           rest of the column sat empty. */
-        className="min-w-0 flex-1 items-baseline gap-1.5"
-        trailing={
-          isSelected ? (
-            <IconCheck
-              size={DIAL_ICON_SIZE.SM}
-              className={mergeClasses('shrink-0', styles.selectedCheck)}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ) : undefined
-        }
-      />
+      {/* Not `ItemHeader`: its title is single-line, and a long agent name
+       * has to wrap within the 60px row instead of truncating (#9121). The
+       * header keeps the cell's width (`flex-1`) so the version, capped at
+       * 30%, is measured against the column rather than the name's own text. */}
+      <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
+        <h3
+          className={mergeClasses('min-w-0 shrink', nameClassName, styles.name)}
+        >
+          <ClampedName
+            name={data.name}
+            query={searchQuery}
+            className="whitespace-normal"
+          />
+        </h3>
+        {data.version && (
+          <EllipsisTooltip
+            text={data.version}
+            className={mergeClasses(
+              'max-w-[30%] shrink-0',
+              versionClassName,
+              styles.version,
+            )}
+          />
+        )}
+        {isSelected && (
+          <IconCheck
+            size={DIAL_ICON_SIZE.SM}
+            className={mergeClasses('ms-auto shrink-0', styles.selectedCheck)}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        )}
+      </div>
     </div>
   );
 };

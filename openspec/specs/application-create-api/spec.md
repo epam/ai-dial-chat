@@ -40,6 +40,10 @@ The endpoint SHALL:
                          //   — defaults to "1.0.0" in the service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
   applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional
+  createOnly?: boolean;  // optional; default false for legacy callers
+  preserveApplicationProperties?: boolean; // optional; default false
+  inputAttachmentTypes?: string[]; // optional MIME types; Core capability
+  maxInputAttachments?: number; // optional nonnegative Core capability
   locales?: LocaleTextEntryDto[];  // optional additional-locale name/description entries,
                                    //   @IsArray, @ArrayMaxSize(20), @ValidateNested({ each: true })
   primaryLocale?: string;          // locale `name`/`description` are authored in; required only when
@@ -161,3 +165,27 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 - **WHEN** DIAL Core times out or is unreachable
 - **THEN** the endpoint responds 503
+
+### Requirement: Safe template creation
+
+A caller MAY set `createOnly: true` to send `If-None-Match: *` on the DIAL Core write.
+Core SHALL check existence atomically with the write. The BFF SHALL translate Core's
+412 precondition failure to 409 and SHALL NOT invalidate caches on failure.
+Omitting the option retains legacy unconditional write semantics.
+
+A caller MAY set `preserveApplicationProperties: true` to store `applicationProperties`
+verbatim, including keys named `features`, `endpoint`, `inputAttachmentTypes`, and
+`maxInputAttachments`. No schema settings SHALL be hoisted in this mode. Top-level
+`inputAttachmentTypes` and `maxInputAttachments` configure Core capabilities separately;
+they take precedence over legacy nested capability values when both are provided.
+The Quick App Core `skills_supported` flag remains enabled independently of schema features.
+The `createApplication` operation and generated client SHALL expose these optional fields.
+
+#### Scenario: Concurrent creation with the same name
+- **WHEN** two callers create the same name/version with `createOnly: true`
+- **THEN** only the first write succeeds and the second returns 409 without replacing it
+
+#### Scenario: Template includes hidden settings
+- **WHEN** a caller sets `preserveApplicationProperties: true` and supplies schema features
+- **THEN** those features and unknown settings are retained under `application_properties`
+- **AND** top-level attachment capabilities do not replace same-named schema settings

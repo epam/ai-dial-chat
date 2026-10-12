@@ -4,13 +4,7 @@ The library adds `emptyMessageTooltip` without modifying parent-app callers. The
 
 ## Consumer integration
 
-`pg-chat-integration.patch` updates both pg-chat composer call sites and adds its OpenSpec contract. `git apply --check` passes against `C:/dial_projects/ai-dial-chat-pg` as of this change. Apply it only after pg-chat consumes a published version of `@epam/ai-dial-conversation-input` that includes `emptyMessageTooltip`. Its current `1.2.0-dev.45` does not include the API. No release number was invented, package published, or dependency pin changed.
-
-From the pg-chat repository, after upgrading the dependency:
-
-```powershell
-git apply C:/dial_projects/ai-dial-chat/openspec/changes/add-empty-message-tooltip/pg-chat-integration.patch
-```
+Downstream hosts adopt `emptyMessageTooltip` by passing it at their composer call sites once they consume a published version of `@epam/ai-dial-conversation-input` that includes it. No release number was invented, package published, or dependency pin changed.
 
 ## Checks
 

@@ -97,6 +97,10 @@ const findLabelsInput = async () =>
   })) as HTMLInputElement;
 const getNameInput = () =>
   screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false });
+const getVersionInput = () =>
+  screen.getByLabelText(EditorI18nKeys.VersionLabel, {
+    exact: false,
+  }) as HTMLInputElement;
 
 const createSearch = `schema=${SCHEMA_ID}`;
 const editSearch = `${createSearch}&appId=${encodeURIComponent(APP_ID)}`;
@@ -200,6 +204,42 @@ describe('ApplicationEditorPage — schema app', () => {
       EntityOperation.Created,
       { name: 'Classifier', type: SUMMARY.displayName },
     );
+  });
+
+  it('opens the create form with version 1.0.0 and an empty name', async () => {
+    renderPage(createSearch);
+
+    await findLabelsInput();
+    expect(getVersionInput().value).toBe('1.0.0');
+    expect((getNameInput() as HTMLInputElement).value).toBe('');
+  });
+
+  it('sends the default version when the Version field is left untouched', async () => {
+    renderPage(createSearch);
+
+    await user.type(getNameInput(), 'Classifier');
+    await user.type(await findLabelsInput(), 'spam,ham');
+    await user.click(getAction(ButtonsI18nKeys.Create));
+
+    await waitFor(() =>
+      expect(createApplication).toHaveBeenCalledWith(
+        expect.objectContaining({ version: '1.0.0' }),
+      ),
+    );
+  });
+
+  it('omits the version when the user clears the Version field', async () => {
+    renderPage(createSearch);
+
+    await user.type(getNameInput(), 'Classifier');
+    await user.clear(getVersionInput());
+    await user.type(await findLabelsInput(), 'spam,ham');
+    await user.click(getAction(ButtonsI18nKeys.Create));
+
+    await waitFor(() => expect(createApplication).toHaveBeenCalled());
+    expect(
+      vi.mocked(createApplication).mock.calls[0][0].version,
+    ).toBeUndefined();
   });
 
   describe('editing', () => {

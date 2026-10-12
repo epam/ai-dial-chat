@@ -129,7 +129,7 @@ No new i18n keys: recovery reuses the typing indicator, and the fallback reuses 
 
 #### Scenario: Other errors keep today's behavior
 - **WHEN** `onError` receives a `GenerationPersistenceError`, `StreamUpstreamError`, a `GenerationConflictError` for a start that did not pass `resumeOnConflict`, or any other error that is not a `StreamInterruptedError`
-- **THEN** it is settled exactly as before this change, with no re-fetch
+- **THEN** it is settled exactly as before this change, with no interruption re-fetch; a `GenerationPersistenceError` whose `status` is `401` is then handled by `chat-hooks-conversation-stream` "A credentials-rejected terminal save gets one client recovery save", which is not part of this recovery
 
 #### Scenario: An opted-in conflict uses the conflict handover, not this recovery
 - **WHEN** `onError` receives a `GenerationConflictError` for a start that passed `resumeOnConflict: true`

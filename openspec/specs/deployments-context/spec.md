@@ -464,13 +464,13 @@ When `pinnedId` is `null`, `undefined`, or not present in the sorted array, `sor
 
 #### Scenario: Operator default is hoisted to position 0 in sorted list
 
-- **WHEN** deployments `["z-agent", "pg-agent", "a-agent"]` are returned, `defaultDeploymentPinned === true`, and `defaultDeploymentId === "pg-agent"`
-- **THEN** `items` is ordered `["pg-agent", "a-agent", "z-agent"]`
+- **WHEN** deployments `["z-agent", "m-agent", "a-agent"]` are returned, `defaultDeploymentPinned === true`, and `defaultDeploymentId === "m-agent"`
+- **THEN** `items` is ordered `["m-agent", "a-agent", "z-agent"]`
 
 #### Scenario: Disabled flag keeps the list alphabetical
 
-- **WHEN** deployments `["z-agent", "pg-agent", "a-agent"]` are returned, `defaultDeploymentPinned === false`, and `defaultDeploymentId === "pg-agent"`
-- **THEN** `items` is ordered `["a-agent", "pg-agent", "z-agent"]`
+- **WHEN** deployments `["z-agent", "m-agent", "a-agent"]` are returned, `defaultDeploymentPinned === false`, and `defaultDeploymentId === "m-agent"`
+- **THEN** `items` is ordered `["a-agent", "m-agent", "z-agent"]`
 
 #### Scenario: Operator default remains visible when an existing conversation uses another deployment
 
