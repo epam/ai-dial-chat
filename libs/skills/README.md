@@ -53,9 +53,9 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.1`
+- `@epam/ai-dial-ui-kit` `^0.15.3`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-react-file-manager` `^0.3.0` — `SkillDetailsSidePanel`
+- `@epam/ai-dial-react-file-manager` `^0.3.1` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
 
 ## Components
