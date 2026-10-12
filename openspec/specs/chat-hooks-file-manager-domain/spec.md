@@ -125,7 +125,7 @@ own package (`@epam/ai-dial-chat-shared`), not from
 `@epam/ai-dial-chat-hooks` SHALL export the file-manager domain model
 constants and types (in `libs/chat-hooks/src/files/dial-file-manager.model.ts`
 and `dial-file-manager.types.ts`: `UPLOAD_CONCURRENCY`, `RESERVED_MARKER_NAME`,
-`DATE_OPTIONS`, `COLUMNS_WITH_AUTHOR`/`COLUMNS_WITHOUT_AUTHOR`,
+`DATE_OPTIONS`, `COLUMNS_MY_FILES`/`COLUMNS_SHARED`/`COLUMNS_ORGANIZATION`,
 `CORE_PERMISSION_MAP`, `SharedRootMeta`, `PreparedCopyMoveItem`,
 `CopyMoveResult`, `UseDialFileManagerOptions`, `UseDialFileManagerResult`,
 `FileManagerNotification`) unchanged in
