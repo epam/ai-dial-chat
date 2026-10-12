@@ -27,7 +27,7 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 The shared `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`) SHALL build `gridOptions` from per-tab fields of its controller. `useDialFileManager` (`@epam/ai-dial-chat-hooks`) computes them for each source section, and `useDialFileManagerSections` exposes the browsed section's values (its `sectionTab`; the shell falls back to `activeTab` for controllers without section composition):
 
-- `visibleColumns` is `COLUMNS_WITH_AUTHOR` on the Shared section and `COLUMNS_WITHOUT_AUTHOR` otherwise (see `file-manager-tabs` spec).
+- `visibleColumns` is `COLUMNS_SHARED` on the Shared section, `COLUMNS_ORGANIZATION` on the Organization section and `COLUMNS_MY_FILES` otherwise (see `file-manager-tabs` spec).
 - `actionLabels` includes `Delete` only on the `DialFileManagerTabs.MyFiles` section; the shell maps each present action onto its translated label and adds `Info` to the grid labels when the controller supplies it.
 - `dateLocale` is the host's `locale` option, which `useDialFileManagerHostOptions` sets to `i18n.language`.
 - `dateOptions` is `DATE_OPTIONS`: `{ year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }`.

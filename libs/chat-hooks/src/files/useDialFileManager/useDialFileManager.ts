@@ -16,8 +16,9 @@ import {
   isShareActionsAllowed,
 } from '../dial-file-manager-path.util';
 import {
-  COLUMNS_WITH_AUTHOR,
-  COLUMNS_WITHOUT_AUTHOR,
+  COLUMNS_MY_FILES,
+  COLUMNS_ORGANIZATION,
+  COLUMNS_SHARED,
   DATE_OPTIONS,
 } from '../dial-file-manager.model';
 import type {
@@ -136,13 +137,16 @@ export const useDialFileManager = ({
     return canWriteCurrentFolder;
   }, [activeTab, listing.folderPath, canWriteCurrentFolder]);
 
-  const visibleColumns = useMemo(
-    (): FileManagerColumnKey[] =>
-      activeTab === DialFileManagerTabs.Shared
-        ? COLUMNS_WITH_AUTHOR
-        : COLUMNS_WITHOUT_AUTHOR,
-    [activeTab],
-  );
+  const visibleColumns = useMemo((): FileManagerColumnKey[] => {
+    switch (activeTab) {
+      case DialFileManagerTabs.Shared:
+        return COLUMNS_SHARED;
+      case DialFileManagerTabs.Organization:
+        return COLUMNS_ORGANIZATION;
+      default:
+        return COLUMNS_MY_FILES;
+    }
+  }, [activeTab]);
 
   const actionLabels = useMemo(() => {
     const result: Partial<Record<DialFileManagerActions, string>> = {};
