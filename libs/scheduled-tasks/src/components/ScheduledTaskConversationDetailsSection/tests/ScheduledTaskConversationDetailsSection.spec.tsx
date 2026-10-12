@@ -48,6 +48,7 @@ vi.mock(
       instructionsLabel,
       instructionsMarkdown,
       markdownLabels,
+      instructionsClassNames,
     }: {
       modelLabel: string;
       modelDisplayName?: string;
@@ -62,6 +63,7 @@ vi.mock(
         tableScrollRegionAriaLabel?: string;
         mathScrollRegionAriaLabel?: string;
       };
+      instructionsClassNames?: { p?: string };
     }) => (
       <div>
         {modelDisplayName && <p>{`${modelLabel}: ${modelDisplayName}`}</p>}
@@ -76,6 +78,7 @@ vi.mock(
             {`${markdownLabels.codeBlockCopyLabel}/${markdownLabels.codeBlockCopiedLabel}/${markdownLabels.codeBlockDownloadLabel}`}
           </p>
         )}
+        {instructionsClassNames?.p && <p>{instructionsClassNames.p}</p>}
       </div>
     ),
   }),
@@ -177,6 +180,23 @@ describe('ScheduledTaskConversationDetailsSection', () => {
       />,
     );
     expect(screen.getByText('Kopiuj/Skopiowano/Pobierz')).toBeTruthy();
+  });
+
+  it('forwards the supplied instructions classNames to the summary', async () => {
+    const user = userEvent.setup();
+    render(
+      <ScheduledTaskConversationDetailsSection
+        scheduleId="schedule-1"
+        state={ScheduledTaskConversationDetailsState.Ready}
+        instructionsMarkdown="Do the thing"
+        instructionsClassNames={{ p: 'custom-p' }}
+        labels={labels}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Details' }));
+
+    expect(screen.getByText('custom-p')).toBeTruthy();
   });
 
   it('shows the unavailable message with retry wired to onRetry when the details fetch failed', async () => {

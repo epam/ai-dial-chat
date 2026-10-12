@@ -195,6 +195,30 @@ describe('ScheduledTaskDetailsSummary', () => {
     });
   });
 
+  it('defaults the built-in viewer to the small 14/20 scale and forwards a host map wholesale', () => {
+    render(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        instructionsLabel="Instructions"
+        instructionsMarkdown="plain instructions"
+      />,
+    );
+    expect(viewerCalls.at(-1)?.classNames).toMatchObject({
+      p: expect.stringContaining('dial-small-text'),
+      h1: expect.stringContaining('dial-small-semi-text'),
+    });
+
+    render(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        instructionsLabel="Instructions"
+        instructionsMarkdown="plain instructions"
+        instructionsClassNames={{ p: 'custom-p' }}
+      />,
+    );
+    expect(viewerCalls.at(-1)?.classNames).toEqual({ p: 'custom-p' });
+  });
+
   it('lets a host override the field label and value classes', () => {
     render(
       <ScheduledTaskDetailsSummary

@@ -55,7 +55,7 @@ RTL: `ps-3` and `px-3` are logical utilities; the row order flips with `dir` aut
 
 The Details section's field labels (Model, Skill, Instructions) SHALL render at `dial-tiny-text text-secondary` (12px/16px, #57647A) and field values at `dial-small-text` (14px/20px) — the `ScheduledTaskDetailsSummary` typography defaults, overridable through its `styles.typography` props.
 
-The Instructions markdown SHALL render its text at `dial-small-text` (14px/20px) through a custom `MarkdownRendererClassNames` passed by the app's `TaskDetailsSection` (paragraphs and lists at `dial-small-text`, headings at `dial-small-semi-text`), because neither built-in markdown preset matches 14/20 (default is 16/26, COMPACT is 14/24).
+The Instructions markdown SHALL render its text at `dial-small-text` (14px/20px) through the summary's built-in `MDMessageViewer`, whose classNames SHALL default to that 14/20 scale (paragraphs and lists at `dial-small-text`, headings at `dial-small-semi-text`) — overridable through the `instructionsClassNames` prop, and ignored when `renderInstructions` is supplied — because neither built-in markdown preset matches 14/20 (default is 16/26, COMPACT is 14/24).
 
 #### Scenario: Labels are secondary and values are small
 

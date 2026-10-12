@@ -1,9 +1,9 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Accordion, GhostButton } from '@epam/ai-dial-ui-kit';
+import { Accordion, ButtonVariant, GhostButton } from '@epam/ai-dial-ui-kit';
 import { useEffect, useState, type FC } from 'react';
 import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item';
 import type { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
 import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
+import { SectionAccordionTitle } from '../SectionAccordionTitle/SectionAccordionTitle';
 
 /**
  * Localized labels used by the
@@ -93,6 +93,7 @@ export const ScheduledTaskConversationHistorySection: FC<
     hasMore && !isLoading && onLoadMore && labels.showMoreLabel ? (
       <li className="pt-2">
         <GhostButton
+          variant={ButtonVariant.Primary}
           label={labels.showMoreLabel}
           onClick={onLoadMore}
           disabled={isLoadingMore}
@@ -103,16 +104,9 @@ export const ScheduledTaskConversationHistorySection: FC<
   return (
     <Accordion
       title={
-        /*
-         * `block` breaks the title out of the kit title span's `dial-body-text`
-         * strut (line-height 24) — an inline child can never shrink a line box
-         * below the parent's strut, so the 12/16 title needs its own block.
-         * `py-1` grows that block to the design's 24px title height, keeping
-         * the 16px text line vertically centered.
-         */
-        <span className={mergeClasses(titleClassName, 'block truncate py-1')}>
+        <SectionAccordionTitle className={titleClassName}>
           {labels.title}
-        </span>
+        </SectionAccordionTitle>
       }
       expanded={isExpanded}
       onToggle={setIsExpanded}

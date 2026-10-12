@@ -207,15 +207,19 @@ import {
 ```
 
 When the host omits `renderInstructions`, `instructionsMarkdown` is rendered by
-the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared`. Name its
-controls through the optional `labels.codeBlockCopyLabel`,
-`labels.codeBlockCopiedLabel`, `labels.codeBlockDownloadLabel`,
-`labels.tableScrollRegionAriaLabel` and `labels.mathScrollRegionAriaLabel`
-(the `ScheduledTaskInstructionsMarkdownLabels` fields); each falls back to the
-renderer's English default (`'Copy code'`, `'Copied!'`, `'Download code'`,
-`'Scrollable table'`, `'Scrollable formula'`). `ScheduledTaskDetailsSummary`
-takes the same fields as its `markdownLabels` prop. A host-supplied
-`renderInstructions` owns its own labels, and these are ignored.
+the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared` at the
+summary's small 14/20 scale (paragraphs and lists at `dial-small-text`,
+headings at `dial-small-semi-text`) — pass `instructionsClassNames` (a
+`MarkdownRendererClassNames` map, replacing the default wholesale) to change
+it. Name the viewer's controls through the optional
+`labels.codeBlockCopyLabel`, `labels.codeBlockCopiedLabel`,
+`labels.codeBlockDownloadLabel`, `labels.tableScrollRegionAriaLabel` and
+`labels.mathScrollRegionAriaLabel` (the `ScheduledTaskInstructionsMarkdownLabels`
+fields); each falls back to the renderer's English default (`'Copy code'`,
+`'Copied!'`, `'Download code'`, `'Scrollable table'`, `'Scrollable formula'`).
+`ScheduledTaskDetailsSummary` takes the same fields as its `markdownLabels`
+prop. A host-supplied `renderInstructions` owns its own labels and classNames,
+and these are ignored.
 
 ```tsx
 import {
@@ -350,12 +354,14 @@ Model/Skill/Instructions summary via `ScheduledTaskDetailsSummary`, or the
 scoped unavailable message while the task's details cannot load — `state:
 'error'` additionally renders a retry action wired to `onRetry`, `state:
 'unavailable'` does not. Collapsed by default; resets to collapsed whenever
-`scheduleId` changes. All field values, the markdown renderer, and labels are
-supplied by the host. When `renderInstructions` is omitted, the summary's
-built-in `MDMessageViewer` renders the instructions — name its controls through
-`markdownLabels` (`ScheduledTaskInstructionsMarkdownLabels`, the same prop
-`ScheduledTaskDetailsSummary` takes); ignored when `renderInstructions` is
-supplied.
+`scheduleId` changes. All field values and labels are supplied by the host.
+When `renderInstructions` is omitted, the summary's built-in
+`MDMessageViewer` renders the instructions at the summary's small 14/20 scale —
+name its controls through `markdownLabels`
+(`ScheduledTaskInstructionsMarkdownLabels`, the same prop
+`ScheduledTaskDetailsSummary` takes) and rescale it through
+`instructionsClassNames` (the same prop `ScheduledTaskDetailsSummary` takes);
+both are ignored when `renderInstructions` is supplied.
 
 ```tsx
 import {
@@ -370,7 +376,13 @@ import {
   modelDisplayName="GPT-4.1 mini"
   skillDisplayNames={['Daily digest skill', 'Report skill']}
   instructionsMarkdown={task.prompt}
-  renderInstructions={(markdown) => <MarkdownViewer content={markdown} />}
+  markdownLabels={{
+    codeBlockCopyLabel: 'Copy code',
+    codeBlockCopiedLabel: 'Copied!',
+    codeBlockDownloadLabel: 'Download code',
+    tableScrollRegionAriaLabel: 'Scrollable table',
+    mathScrollRegionAriaLabel: 'Scrollable formula',
+  }}
   labels={{
     title: 'Details',
     modelLabel: 'Model',

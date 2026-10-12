@@ -1,9 +1,10 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import type { MarkdownRendererClassNames } from '@epam/ai-dial-chat-shared';
 import { Accordion, GhostButton } from '@epam/ai-dial-ui-kit';
 import { ReactNode, useEffect, useState, type FC } from 'react';
 import type { ScheduledTaskDetailsSummaryStyles } from '../../models/scheduled-task-details-summary-props';
 import type { ScheduledTaskInstructionsMarkdownLabels } from '../../models/scheduled-task-instructions';
 import { ScheduledTaskDetailsSummary } from '../ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
+import { SectionAccordionTitle } from '../SectionAccordionTitle/SectionAccordionTitle';
 
 /**
  * Display state of a task conversation's own details, mapped from the host's
@@ -53,6 +54,8 @@ export interface ScheduledTaskConversationDetailsSectionProps {
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
+  /** Class names forwarded to the summary's built-in instructions `MDMessageViewer`. Defaults to the summary's small 14/20 scale; a supplied map replaces it wholesale. Ignored when `renderInstructions` is supplied. */
+  instructionsClassNames?: MarkdownRendererClassNames;
   /** Code-block, table and formula labels for the summary's built-in `MDMessageViewer` renderer. Ignored when `renderInstructions` is supplied. */
   markdownLabels?: ScheduledTaskInstructionsMarkdownLabels;
   /** Style overrides forwarded to the inner `ScheduledTaskDetailsSummary`. */
@@ -81,6 +84,7 @@ export const ScheduledTaskConversationDetailsSection: FC<
   skillDisplayNames,
   instructionsMarkdown,
   renderInstructions,
+  instructionsClassNames,
   markdownLabels,
   summaryStyles,
   labels,
@@ -115,6 +119,7 @@ export const ScheduledTaskConversationDetailsSection: FC<
       modelDisplayName={modelDisplayName}
       instructionsMarkdown={instructionsMarkdown}
       renderInstructions={renderInstructions}
+      instructionsClassNames={instructionsClassNames}
       markdownLabels={markdownLabels}
       styles={summaryStyles}
     />
@@ -123,16 +128,9 @@ export const ScheduledTaskConversationDetailsSection: FC<
   return (
     <Accordion
       title={
-        /*
-         * `block` breaks the title out of the kit title span's `dial-body-text`
-         * strut (line-height 24) — an inline child can never shrink a line box
-         * below the parent's strut, so the 12/16 title needs its own block.
-         * `py-1` grows that block to the design's 24px title height, keeping
-         * the 16px text line vertically centered.
-         */
-        <span className={mergeClasses(titleClassName, 'block truncate py-1')}>
+        <SectionAccordionTitle className={titleClassName}>
           {labels.title}
-        </span>
+        </SectionAccordionTitle>
       }
       expanded={isExpanded}
       onToggle={setIsExpanded}

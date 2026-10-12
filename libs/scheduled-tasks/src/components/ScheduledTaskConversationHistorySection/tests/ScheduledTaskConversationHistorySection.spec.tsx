@@ -32,14 +32,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   GhostButton: ({
     label,
+    variant,
     onClick,
     disabled,
   }: {
     label: string;
+    variant?: string;
     onClick?: () => void;
     disabled?: boolean;
   }) => (
-    <button onClick={onClick} disabled={disabled}>
+    <button data-variant={variant} onClick={onClick} disabled={disabled}>
       {label}
     </button>
   ),
@@ -143,6 +145,9 @@ describe('ScheduledTaskConversationHistorySection', () => {
 
     await user.click(screen.getByRole('button', { name: 'Show more' }));
     expect(onLoadMore).toHaveBeenCalledOnce();
+    expect(
+      screen.getByRole('button', { name: 'Show more' }).dataset.variant,
+    ).toBe('primary');
 
     rerender(
       <ScheduledTaskConversationHistorySection
