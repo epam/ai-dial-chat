@@ -981,6 +981,16 @@ export class EnvironmentVariables {
   ALLOW_VISUALIZER_SEND_MESSAGES?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  USAGE_LIMITS_CONTROL_ENABLED?: boolean = false;
+
+  @IsOptional()
   @IsString()
   SCHEDULER_APP_ID?: string;
 

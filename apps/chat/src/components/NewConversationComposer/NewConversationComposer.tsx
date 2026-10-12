@@ -47,7 +47,7 @@ import {
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
@@ -211,6 +211,7 @@ const NewConversationComposer: FC<Props> = ({
   const {
     config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
   } = useAppConfig();
+  const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const { isEnabled: isCelebrationEnabled, consumeSecretPhrase } =
     useCelebration();
@@ -657,11 +658,13 @@ const NewConversationComposer: FC<Props> = ({
           toolsMenuTitle={toolsMenuTitle}
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={
-            <UsageLimitsControl
-              deploymentId={
-                selectedDeployment?.id ?? selectedDeploymentId ?? undefined
-              }
-            />
+            isUsageLimitsControlEnabled ? (
+              <UsageLimitsControl
+                deploymentId={
+                  selectedDeployment?.id ?? selectedDeploymentId ?? undefined
+                }
+              />
+            ) : undefined
           }
         />
         {!isStartersBelowGreeting && startersBlock}

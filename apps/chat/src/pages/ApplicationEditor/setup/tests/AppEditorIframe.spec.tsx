@@ -552,6 +552,31 @@ describe('AppEditorIframe — ready-to-save readiness', () => {
     expect(onReadyChange).not.toHaveBeenCalledWith(true);
   });
 
+  it('reports form validity from the editor window and ignores other sources', () => {
+    const onValidityChange = vi.fn();
+    renderIframe({ onValidityChange });
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+
+    const post = (isValid: boolean, source: MessageEventSource | null) =>
+      fireEvent(
+        window,
+        new MessageEvent('message', {
+          data: { type: AppsEditorEvent.ValidityState, payload: { isValid } },
+          origin: 'https://editor.example.com',
+          source,
+        }),
+      );
+
+    post(false, null);
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+
+    post(false, getEditorWindow());
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+
+    post(true, getEditorWindow());
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+  });
+
   it('reports logged out once a loggedOut message arrives', () => {
     const onLoggedOutChange = vi.fn();
     renderIframe({ onLoggedOutChange });

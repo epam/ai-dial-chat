@@ -89,7 +89,7 @@ import {
   PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -419,6 +419,7 @@ const ConversationView: FC<Props> = ({
   const {
     config: { maxAttachmentFileSizeBytes },
   } = useAppConfig();
+  const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
@@ -1309,12 +1310,16 @@ const ConversationView: FC<Props> = ({
                 commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
-                  <UsageLimitsControl
-                    deploymentId={
-                      selectedDeployment?.id ?? activeDeploymentId ?? undefined
-                    }
-                    isGenerationInProgress={isAssistantTyping}
-                  />
+                  isUsageLimitsControlEnabled ? (
+                    <UsageLimitsControl
+                      deploymentId={
+                        selectedDeployment?.id ??
+                        activeDeploymentId ??
+                        undefined
+                      }
+                      isGenerationInProgress={isAssistantTyping}
+                    />
+                  ) : undefined
                 }
               />
             </Suspense>

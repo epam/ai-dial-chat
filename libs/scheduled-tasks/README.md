@@ -436,7 +436,9 @@ the class names used by the published JavaScript.
 - `gridLayout` (or CardGrid's `layout`) supports `maxColumns` (3),
   `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
   `cardHeight` (232px). Columns respond to the available container width;
-  skeletons inherit the same height.
+  skeletons inherit the same height. `cardHeight` applies from the desktop
+  breakpoint (1280px) up; below it cards and skeletons size to their content,
+  the title wraps to two lines and the description clamps to two lines.
 - CardGrid accepts every card badge label.
 - Form `styles.layout.detailsWidth` and `columnGap` configure the shared
   builder layout. The scheduler uses two wrapping columns without an empty

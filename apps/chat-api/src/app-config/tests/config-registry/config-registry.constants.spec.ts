@@ -133,6 +133,22 @@ describe('CONFIG_DEFINITIONS', () => {
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
 
+  it('contains the client-visible features.usageLimitsControl entry, off by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.usageLimitsControl',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.usageLimitsControl',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
+    });
+  });
+
   it('contains an open-ended client-visible event selection without a feature flag', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'ui.activeEventId',

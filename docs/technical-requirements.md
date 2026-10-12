@@ -54,7 +54,8 @@ selection into another conversation.
 #### Token-usage limits control
 
 The app-owned `UsageLimitsControl` is passed to the isolated Conversation Input
-library through `usageLimitsSlot`. It reads `dayTokenStats`, `weekTokenStats`,
+library through `usageLimitsSlot` — only while the `features.usageLimitsControl`
+flag (`USAGE_LIMITS_CONTROL_ENABLED`, off by default) is on. It reads `dayTokenStats`, `weekTokenStats`,
 and `monthTokenStats`, plus the day/week/month cost stats; the minute stats are
 deliberately not shown, being rolling-minute counters the user cannot act on.
 

@@ -1,3 +1,11 @@
 .card {
   --stcs-skeleton-bg: var(--bg-control-disable-primary, #dce0e8);
 }
+
+/* Mirrors ScheduledTaskCard's mobile auto height so placeholders match the
+ * compact cards they stand in for; see that module for the selector rationale. */
+.card.card {
+  @media (max-width: 1279px) {
+    block-size: auto;
+  }
+}

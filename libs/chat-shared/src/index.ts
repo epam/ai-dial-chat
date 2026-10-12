@@ -63,6 +63,8 @@ export * from './components/ConfirmationIdentityRow/ConfirmationIdentityRow';
 export * from './components/ConfirmationView/ConfirmationView';
 export * from './components/ConfirmationView/ConfirmationFooter';
 export * from './components/ConfirmationDialog/ConfirmationDialog';
+export * from './components/DeleteConfirmationView/DeleteConfirmationView';
+export * from './components/DeleteConfirmationDialog/DeleteConfirmationDialog';
 export * from './components/MarkdownRenderer/Table/TableHeader';
 export * from './components/TextRefinementField/TextRefinementField';
 export * from './entry-points/markdown';

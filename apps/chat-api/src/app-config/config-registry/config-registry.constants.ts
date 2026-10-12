@@ -382,6 +382,19 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
   },
   {
+    key: 'features.usageLimitsControl',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the conversation input shows the token/cost usage-limits control ' +
+      'next to the model selector. Off by default.',
+    owner: 'chat-team',
+    envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',

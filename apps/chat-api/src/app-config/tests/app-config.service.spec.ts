@@ -1420,6 +1420,7 @@ describe('AppConfigService', () => {
         'scheduledTasksEnabled',
         'defaultDeploymentPinned',
         'visualizerSendMessages',
+        'usageLimitsControl',
       ]);
     });
 

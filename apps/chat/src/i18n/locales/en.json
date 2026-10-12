@@ -998,13 +998,13 @@
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "crossSectionTransferUnsupported": "Copying and moving between My files, Shared, and Organization isn't supported yet.",
     "searchPlaceholder": {
-      "myFiles": "Search in My files",
-      "shared": "Search in Shared with me files",
-      "organization": "Search in Organization files"
+      "myFiles": "Search in My files...",
+      "shared": "Search in Shared files...",
+      "organization": "Search in Organization files..."
     },
     "tab": {
       "all": "All",
-      "myFiles": "My Files",
+      "myFiles": "My files",
       "shared": "Shared"
     },
     "myFiles": {
