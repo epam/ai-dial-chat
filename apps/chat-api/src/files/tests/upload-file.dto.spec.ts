@@ -54,17 +54,15 @@ describe('UploadFileDto', () => {
     expect(errors.some((e) => e.property === 'path')).toBe(true);
   });
 
-  it('strips extra fields (whitelist)', async () => {
-    const instance = plainToInstance(UploadFileDto, {
+  it('rejects undeclared fields (forbidNonWhitelisted)', async () => {
+    const errors = await validateDto({
       bucket: 'my-bucket',
       path: 'file.txt',
       admin: true,
     });
-    const errors = await validate(instance, { whitelist: true });
-    expect(errors).toHaveLength(0);
-    expect(
-      (instance as unknown as Record<string, unknown>)['admin'],
-    ).toBeUndefined();
+    expect(errors.map((e) => e.constraints)).toContainEqual({
+      whitelistValidation: 'property admin should not exist',
+    });
   });
 
   it('accepts bucket with dots and hyphens', async () => {

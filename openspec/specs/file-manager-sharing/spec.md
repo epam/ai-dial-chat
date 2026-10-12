@@ -217,20 +217,20 @@ async listSharedByMe(
 
 ### Requirement: onUnshareFiles and onRemoveFilesAccess wired on useDialFileManager
 
-`useDialFileManager` SHALL expose `onUnshareFiles(files: DialFile[])` and `onRemoveFilesAccess(files: DialFile[])` from its composed `useDialFileSharing` (`libs/chat-hooks/src/files/useDialFileSharing/useDialFileSharing.ts`), wired to the corresponding ui-kit `DialFileManager` props, calling `filesApi.discardShared`/`filesApi.revokeAccess` respectively on the injected `DialFilesApi` port with the resolved `bucket`/path list (each item's own `bucket`, falling back to the hook's). An empty `files` array is a no-op. Both call the BFF immediately — no confirmation dialog is shown before the request is sent (see design.md D5).
+`useDialFileManager` SHALL expose `onUnshareFiles(files: DialFile[])` and `onRemoveFilesAccess(files: DialFile[])` from its composed `useDialFileSharing` (`libs/chat-hooks/src/files/useDialFileSharing/useDialFileSharing.ts`), wired to the corresponding ui-kit `DialFileManager` props, calling `filesApi.discardShared`/`filesApi.revokeAccess` respectively on the injected `DialFilesApi` port with the resolved `bucket`/path list (each item's own `bucket`, falling back to the hook's). An empty `files` array is a no-op. Both call the BFF as soon as they are invoked: the confirmation step lives in the host, not in the hook (see "Unshare asks for confirmation" below).
 
 **State ownership**: `useDialFileSharing` owns `isUnsharing`/`isRemovingAccess`.
 
-**Cache invalidation**: on success, `onUnshareFiles` increments `retryCounter` for the `shared` tab; `onRemoveFilesAccess` increments `retryCounter` for the `my_files` tab (refreshing both the listing and `sharedByMePaths`).
+**Cache invalidation**: on success, `onUnshareFiles` first drops the unshared root rows from the cached `shared` listing (`removeSharedRootItems` from `useDialFileListing`), then increments `retryCounter` for the `shared` tab; `onRemoveFilesAccess` increments `retryCounter` for the `my_files` tab (refreshing both the listing and `sharedByMePaths`).
 
-**Notifications**: failure emits `onNotification({ variant: NotificationVariant.Error, reason })` with `FileManagerNotificationReason.UnshareFailed` or `RemoveAccessFailed`; the lib has no `t`, and the app's notification adapter (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`) translates each reason to its dedicated i18n message. Success shows no toast — the item disappearing from the refreshed listing is the confirmation.
+**Notifications**: failure emits `onNotification({ variant: NotificationVariant.Error, reason })` with `FileManagerNotificationReason.UnshareFailed` or `RemoveAccessFailed`; the lib has no `t`, and the app's notification adapter (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`) translates each reason to its dedicated i18n message. A successful unshare emits `onOperationSuccess({ kind: FileOperationKind.FilesUnshared, name, count })`, which the adapter's `handleFileOperationSuccess` shows as a success toast (`dialFileManager.unshareSuccessTitle` with `unshareSuccessMessageSingle` / `unshareSuccessMessageMultiple`); Remove access shows no toast.
 
-**Memoisation**: both SHALL be `useCallback`s with dependencies `[bucket, rootLabel, onNotification, filesApi, bumpRetry]`.
+**Memoisation**: both SHALL be `useCallback`s; `onUnshareFiles` depends on `[bucket, rootLabel, onNotification, onOperationSuccess, removeSharedRootItems, filesApi, bumpRetry]`, `onRemoveFilesAccess` on `[bucket, rootLabel, onNotification, filesApi, bumpRetry]`.
 
 #### Scenario: Unshare removes a shared-with-me item
 
 - **WHEN** the user triggers `Unshare` on an item in the `shared` tab and `discardShared` succeeds
-- **THEN** the `shared` tab's listing is refreshed and the item no longer appears, with no toast shown
+- **THEN** the item leaves the `shared` listing at once, the listing is refreshed, and a success toast is shown
 
 #### Scenario: Remove access fails and shows a toast
 
@@ -260,6 +260,22 @@ async listSharedByMe(
 
 ---
 
+### Requirement: Unshare asks for confirmation
+
+`DialFileManagerPage` and `DialFileManagerModal` SHALL wrap the file manager controller with `useFileUnshareConfirmation` (`apps/chat/src/components/FileUnshareConfirmation/useFileUnshareConfirmation.tsx`). The wrapped `onUnshareFiles` SHALL only record the selected items; the real `onUnshareFiles` SHALL run when the user confirms in a `ConfirmationDialog` (Danger variant) rendered next to the file manager. The dialog title is `dialFileManager.unshareConfirmTitleFile` / `unshareConfirmTitleFolder` for one item (by `nodeType`) and `unshareConfirmTitleMultiple` for several. It shows the item name (or the item count), the warning that the item becomes unavailable and is shown as not supported in conversations that reference it, a "cannot be undone" consequence, and Cancel / Unshare buttons. Several items are listed, up to 10, followed by `dialFileManager.unshareConfirmMoreItems`. Cancel or dismissing the dialog sends no request.
+
+#### Scenario: Confirming unshares the selection
+
+- **WHEN** the user clicks Unshare on a shared item and then confirms in the dialog
+- **THEN** `onUnshareFiles` runs for that item, the item disappears from the Shared list, and a success toast is shown
+
+#### Scenario: Cancelling changes nothing
+
+- **WHEN** the user clicks Unshare and then Cancel
+- **THEN** the dialog closes, `discardShared` is not called, and the item stays in the list
+
+---
+
 ### Requirement: i18n keys for sharing
 
 The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching members added to `DialFileManagerI18nKeys` in `apps/chat/src/constants/translation-keys.ts`:
@@ -268,6 +284,15 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 |-----|--------------------------|
 | `dialFileManager.unshareAction` | `Unshare` |
 | `dialFileManager.removeAccessAction` | `Remove access` |
+| `dialFileManager.unshareConfirmTitleFile` | `Unshare file` |
+| `dialFileManager.unshareConfirmTitleFolder` | `Unshare folder` |
+| `dialFileManager.unshareConfirmTitleMultiple` | `Unshare items` |
+| `dialFileManager.unshareConfirmMessageSingle` | `Are you sure you want to unshare <bold>{{name}}</bold>? …` |
+| `dialFileManager.unshareConfirmMessageMultiple` | `Are you sure you want to unshare <bold>{{count}} items</bold>? …` |
+| `dialFileManager.unshareConfirmMoreItems` | `… and {{count}} more` |
+| `dialFileManager.unshareSuccessTitle` | `Unshared successfully` |
+| `dialFileManager.unshareSuccessMessageSingle` | `File “{{name}}” was successfully unshared` |
+| `dialFileManager.unshareSuccessMessageMultiple` | `{{count}} items were successfully unshared` |
 | `dialFileManager.unshareError` | `Failed to remove the shared item` |
 | `dialFileManager.removeAccessError` | `Failed to remove access` |
 

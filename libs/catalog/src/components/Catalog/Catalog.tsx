@@ -23,7 +23,10 @@ import {
   getTopicOptions,
 } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
-import { buildCatalogTabs } from '../../utils/catalog-tabs';
+import {
+  buildCatalogTabs,
+  scrollSelectedTabIntoView,
+} from '../../utils/catalog-tabs';
 import { getTabCreateButtonConfig } from '../../utils/create-menu';
 import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import { getStyles } from '../../utils/styles';
@@ -246,6 +249,15 @@ export const Catalog: FC<CatalogProps> = ({
   }, [firstTabId]);
 
   const activeTab = controlledActiveTab ?? internalActiveTab;
+
+  /* The tab row scrolls sideways on narrow screens, so a selected tab past
+     its end (restored on load, or picked from the host) is brought into view. */
+  const tabsRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (tabsRowRef.current != null) {
+      scrollSelectedTabIntoView(tabsRowRef.current);
+    }
+  }, [activeTab, tabs.length]);
 
   const handleActiveTabChange = useCallback(
     (tabId: string) => {
@@ -696,7 +708,10 @@ export const Catalog: FC<CatalogProps> = ({
              gutter is a margin on the scroll box rather than padding, so the
              row clips 16px in from the edge, in line with the search field,
              whether or not it is scrolled. */
-          <div className="mx-4 min-w-0 shrink-0 overflow-x-auto [scrollbar-width:none] desktop:mx-8">
+          <div
+            ref={tabsRowRef}
+            className="mx-4 min-w-0 shrink-0 overflow-x-auto [scrollbar-width:none] desktop:mx-8"
+          >
             <Tabs
               tabListClassName="w-max min-w-full"
               tabClassName="shrink-0 whitespace-nowrap"

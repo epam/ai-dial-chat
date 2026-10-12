@@ -28,14 +28,21 @@ export const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
   hour12: false,
 };
 
-export const COLUMNS_WITHOUT_AUTHOR: FileManagerColumnKey[] = [
+export const COLUMNS_MY_FILES: FileManagerColumnKey[] = [
   FileManagerColumnKey.Name,
   FileManagerColumnKey.UpdatedAt,
   FileManagerColumnKey.Size,
   FileManagerColumnKey.Actions,
 ];
 
-export const COLUMNS_WITH_AUTHOR: FileManagerColumnKey[] = [
+/* Shared items carry no meaningful size or modification date, so Shared shows the owner instead. */
+export const COLUMNS_SHARED: FileManagerColumnKey[] = [
+  FileManagerColumnKey.Name,
+  FileManagerColumnKey.Author,
+  FileManagerColumnKey.Actions,
+];
+
+export const COLUMNS_ORGANIZATION: FileManagerColumnKey[] = [
   FileManagerColumnKey.Name,
   FileManagerColumnKey.UpdatedAt,
   FileManagerColumnKey.Size,

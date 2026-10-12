@@ -250,6 +250,21 @@ describe('PromptsResourceService', () => {
       expect(result).toEqual([]);
     });
 
+    it('lists a folder with a trailing slash so DIAL Core resolves it as a folder', async () => {
+      const { service, dialClient } = makeService();
+      const metadataSpy = vi
+        .spyOn(dialClient.client, 'getPromptMetadata')
+        .mockResolvedValue(okResponse({ items: [metaItem('first')] }));
+
+      await service.listPromptMetadataItems(TOKEN, BUCKET, 'My Folder/Sub');
+
+      expect(metadataSpy).toHaveBeenCalledWith(
+        BUCKET,
+        'My%20Folder/Sub/',
+        expect.any(Object),
+      );
+    });
+
     it('loads every metadata page', async () => {
       const { service, dialClient } = makeService();
       const metadataSpy = vi

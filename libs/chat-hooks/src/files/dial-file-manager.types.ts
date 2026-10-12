@@ -144,6 +144,8 @@ export enum FileOperationKind {
   /** A copy whose every item landed in its own source folder (Duplicate). */
   FileDuplicated = 'fileDuplicated',
   FilesDuplicated = 'filesDuplicated',
+  /** One or more shared-with-me items were removed from the Shared tab. */
+  FilesUnshared = 'filesUnshared',
 }
 
 /**
