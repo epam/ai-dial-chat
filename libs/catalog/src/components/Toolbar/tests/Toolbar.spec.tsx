@@ -61,6 +61,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
+  IconAdjustmentsHorizontal: () => null,
+  IconChevronRight: () => null,
   IconFilter: () => null,
   IconX: () => null,
   IconChevronDown: () => null,

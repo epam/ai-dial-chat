@@ -24,7 +24,7 @@ import {
   useState,
 } from 'react';
 import { ToolbarTypography } from '../../models/toolbar-props';
-import { getFromLabel } from '../../utils/catalog-filter';
+import { getFromLabel, toggleTopic } from '../../utils/catalog-filter';
 import styles from './Filter.module.scss';
 
 /** Props for Filter. */
@@ -101,16 +101,6 @@ const getFilterButtonLabel = (
   if (isMyAppsActive) return myAppsLabel;
   if (hasTopics) return getFromLabel(checked, values, defaultLabel);
   return defaultLabel;
-};
-
-const toggleTopic = (topic: string, checked: Set<string>): Set<string> => {
-  const next = new Set(checked);
-  if (next.has(topic)) {
-    next.delete(topic);
-  } else {
-    next.add(topic);
-  }
-  return next;
 };
 
 /** Source-filter dropdown: checkbox list for topics and My Apps toggle, with buffered Clear/Apply controls. */

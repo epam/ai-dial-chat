@@ -1,4 +1,8 @@
-import { ItemHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  ItemHeader,
+  mergeClasses,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonDropdown,
@@ -7,17 +11,27 @@ import {
   DIAL_KIT_ICON_STROKE,
   DropdownItem,
   ElementSize,
+  GhostIconButton,
   MenuItemMark,
   Search,
   SegmentedControl,
   SegmentedControlItem,
   SelectOption,
 } from '@epam/ai-dial-ui-kit';
-import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
-import { FC, ReactNode, useMemo } from 'react';
-import { ToolbarStyles } from '../../../models/toolbar-props';
+import {
+  IconAdjustmentsHorizontal,
+  IconLayoutGrid,
+  IconLayoutList,
+} from '@tabler/icons-react';
+import { FC, ReactNode, useMemo, useState } from 'react';
+import {
+  BrowseSettingsSheetLabels,
+  ToolbarStyles,
+} from '../../../models/toolbar-props';
+import { DEFAULT_BROWSE_SETTINGS_LABELS } from '../../../constants/browse-settings';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
+import { BrowseSettingsSheet } from '../BrowseSettingsSheet';
 import styles from '../Toolbar.module.scss';
 
 interface TitleRowProps {
@@ -45,7 +59,11 @@ interface TitleRowProps {
   filterFromLabel?: string;
   filterMyAppsLabel?: string;
   filterTopicsLabel?: string;
+  browseSettingsLabels?: Partial<BrowseSettingsSheetLabels>;
 }
+
+/* Shared, never mutated: the filter components copy before editing. */
+const EMPTY_FILTERS = new Set<string>();
 
 /** Browse section header: title + view toggle + sort, then search + filter row below. */
 export const TitleRow: FC<TitleRowProps> = ({
@@ -73,7 +91,18 @@ export const TitleRow: FC<TitleRowProps> = ({
   filterFromLabel,
   filterMyAppsLabel,
   filterTopicsLabel,
+  browseSettingsLabels,
 }) => {
+  const isMobile = useIsMobile();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const isFilterActive = (isMyAppsActive ?? false) || (filters?.size ?? 0) > 0;
+  const sheetLabels: BrowseSettingsSheetLabels = {
+    ...DEFAULT_BROWSE_SETTINGS_LABELS,
+    myApps: filterMyAppsLabel ?? DEFAULT_BROWSE_SETTINGS_LABELS.myApps,
+    topics: filterTopicsLabel ?? DEFAULT_BROWSE_SETTINGS_LABELS.topics,
+    ...browseSettingsLabels,
+  };
+
   const titleClassName =
     browseStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
   const countClassName =
@@ -136,8 +165,9 @@ export const TitleRow: FC<TitleRowProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Row 1: title | view toggle | divider | sort. Wraps so the controls
-          drop below the title instead of overflowing a narrow (mobile) modal. */}
+      {/* Row 1: title | view toggle | divider | sort. Below the desktop
+          breakpoint the controls move into the browse-settings sheet, so the
+          row holds the title alone. */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
         {browseHeaderRenderer ?? (
           <ItemHeader
@@ -154,39 +184,36 @@ export const TitleRow: FC<TitleRowProps> = ({
           />
         )}
 
-        {/* At mobile the controls take their own full-width line: view toggle
-            at the start, sort at the end, no divider between them. */}
-        <div className="ms-auto flex shrink-0 items-center gap-2 mobile:w-full mobile:justify-between">
-          <SegmentedControl
-            aria-label={viewToggleLabel}
-            value={viewMode}
-            onChange={onViewModeChange}
-            items={viewModeItems}
-          />
+        {!isMobile && (
+          <div className="ms-auto flex shrink-0 items-center gap-2">
+            <SegmentedControl
+              aria-label={viewToggleLabel}
+              value={viewMode}
+              onChange={onViewModeChange}
+              items={viewModeItems}
+            />
 
-          {sortOptions != null && sortOptions.length > 0 && (
-            <>
-              <div
-                className={mergeClasses(
-                  'h-4 w-px shrink-0 mobile:hidden',
-                  styles.divider,
-                )}
-              />
+            {sortOptions != null && sortOptions.length > 0 && (
+              <>
+                <div
+                  className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
+                />
 
-              {/* The trigger shows the applied order and the menu marks it
+                {/* The trigger shows the applied order and the menu marks it
                   with the design's trailing check. */}
-              <ButtonDropdown
-                items={sortItems}
-                label={activeSortLabel}
-                variant={ButtonVariant.Primary}
-                appearance={ButtonAppearance.Ghost}
-              />
-            </>
-          )}
-        </div>
+                <ButtonDropdown
+                  items={sortItems}
+                  label={activeSortLabel}
+                  variant={ButtonVariant.Primary}
+                  appearance={ButtonAppearance.Ghost}
+                />
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="mb-5 flex items-center gap-3">
+      <div className="mb-5 flex items-center gap-3 mobile:mb-3 mobile:gap-2">
         <div role="search" className="flex-1">
           <Search
             value={query}
@@ -197,17 +224,65 @@ export const TitleRow: FC<TitleRowProps> = ({
             aria-label={searchPlaceholder}
           />
         </div>
-        <Filter
-          checked={filters ?? new Set()}
-          onChange={onFiltersChange ?? (() => undefined)}
-          values={filterValues}
-          isMyAppsActive={isMyAppsActive}
-          onMyAppsChange={onMyAppsChange}
-          defaultLabel={filterFromLabel}
-          myAppsLabel={filterMyAppsLabel}
-          topicsLabel={filterTopicsLabel}
-          typography={browseStyles?.typography}
-        />
+        {isMobile ? (
+          <>
+            <span className="relative shrink-0">
+              <GhostIconButton
+                size={ElementSize.Large}
+                aria-label={sheetLabels.title}
+                aria-haspopup="dialog"
+                aria-expanded={isSettingsOpen}
+                onClick={() => setIsSettingsOpen(true)}
+                icon={
+                  <IconAdjustmentsHorizontal
+                    size={DIAL_ICON_SIZE.LG}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                  />
+                }
+              />
+              {isFilterActive && (
+                <span
+                  className={mergeClasses(
+                    'pointer-events-none absolute end-2.5 top-2.5 size-2 rounded-full',
+                    styles.settingsDot,
+                  )}
+                  aria-hidden
+                />
+              )}
+            </span>
+            <BrowseSettingsSheet
+              open={isSettingsOpen}
+              onClose={() => setIsSettingsOpen(false)}
+              viewMode={viewMode}
+              onViewModeChange={onViewModeChange}
+              sortOptions={sortOptions}
+              sortKey={sortKey}
+              onSortChange={onSortChange}
+              filters={filters ?? EMPTY_FILTERS}
+              onFiltersChange={onFiltersChange ?? (() => undefined)}
+              filterValues={filterValues}
+              isMyAppsActive={isMyAppsActive}
+              onMyAppsChange={onMyAppsChange}
+              labels={sheetLabels}
+              typography={browseStyles?.typography}
+            />
+          </>
+        ) : (
+          <Filter
+            checked={filters ?? EMPTY_FILTERS}
+            onChange={onFiltersChange ?? (() => undefined)}
+            values={filterValues}
+            isMyAppsActive={isMyAppsActive}
+            onMyAppsChange={onMyAppsChange}
+            defaultLabel={filterFromLabel}
+            myAppsLabel={filterMyAppsLabel}
+            topicsLabel={filterTopicsLabel}
+            clearLabel={browseSettingsLabels?.clear}
+            applyLabel={browseSettingsLabels?.apply}
+            typography={browseStyles?.typography}
+          />
+        )}
       </div>
     </div>
   );

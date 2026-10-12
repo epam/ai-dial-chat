@@ -680,6 +680,22 @@ const CatalogView: FC<Props> = ({
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
+          filterMyAppsLabel: t(CatalogI18nKeys.BrowseSettingsMy),
+          filterTopicsLabel: t(CatalogI18nKeys.BrowseSettingsTopics),
+          browseSettings: {
+            title: t(CatalogI18nKeys.BrowseSettingsTitle),
+            view: t(CatalogI18nKeys.BrowseSettingsView),
+            sorting: t(CatalogI18nKeys.BrowseSettingsSorting),
+            filtering: t(CatalogI18nKeys.BrowseSettingsFiltering),
+            gridView: t(CatalogI18nKeys.BrowseSettingsCards),
+            listView: t(CatalogI18nKeys.BrowseSettingsList),
+            clear: t(ButtonsI18nKeys.Clear),
+            apply: t(ButtonsI18nKeys.Apply),
+            back: t(NavigationI18nKeys.Back),
+            close: t(ButtonsI18nKeys.Close),
+            formatFilterCount: (selected, total) =>
+              t(CatalogI18nKeys.BrowseSettingsFilterCount, { selected, total }),
+          },
           ariaLabel: t(NavigationI18nKeys.Catalog),
           tabLabels: {
             [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),

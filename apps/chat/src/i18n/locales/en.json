@@ -123,6 +123,17 @@
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
     "viewToggleLabel": "View mode",
+    "browseSettings": {
+      "title": "Browse settings",
+      "view": "View",
+      "sorting": "Sorting",
+      "filtering": "Filtering",
+      "cards": "Cards",
+      "list": "List",
+      "my": "My",
+      "topics": "Topics",
+      "filterCount": "{{selected}} of {{total}}"
+    },
     "details": {
       "tabTools": "Tools",
       "tabContent": "Details",
@@ -359,6 +370,7 @@
     "sort": "Sort",
     "close": "Close",
     "apply": "Apply",
+    "clear": "Clear",
     "edit": "Edit",
     "connect": "Connect",
     "link": "Link",

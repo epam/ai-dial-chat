@@ -83,6 +83,7 @@ export { Catalog } from './components/Catalog/Catalog';
 
 export { Toolbar } from './components/Toolbar/Toolbar';
 export type {
+  BrowseSettingsSheetLabels,
   ToolbarColors,
   ToolbarProps,
   ToolbarStyles,

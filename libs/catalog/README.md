@@ -251,6 +251,33 @@ navigation (a category tree, etc.).
 />
 ```
 
+#### Mobile browse settings
+
+Below the desktop breakpoint (`useIsMobile` from `@epam/ai-dial-chat-shared`)
+the Browse toolbar drops the view toggle, the sort dropdown and the filter
+dropdown. In their place, next to the search field, it shows one settings
+button that opens a bottom sheet with View, Sorting and Filtering pages.
+
+- View and sort apply as soon as they are picked.
+- Filters stay buffered until Apply, as on desktop.
+- The button shows a dot while a topic or the "My" filter is applied.
+
+Each sheet string is an optional entry of `titles.browseSettings`
+(`BrowseSettingsSheetLabels`). `myApps` and `topics` fall back to
+`titles.filterMyAppsLabel` and `titles.filterTopicsLabel`. On desktop, `clear`
+and `apply` also label the filter dropdown's footer.
+
+```tsx
+import type { BrowseSettingsSheetLabels } from '@epam/ai-dial-catalog';
+
+const browseSettings: Partial<BrowseSettingsSheetLabels> = {
+  title: 'Browse settings',
+  formatFilterCount: (selected, total) => `${selected} of ${total}`,
+};
+
+<Catalog items={items} titles={{ browseSettings }} />;
+```
+
 #### Custom empty state
 
 By default, the Browse section renders a `PanelEmptyState` (an icon plus

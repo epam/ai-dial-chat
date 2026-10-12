@@ -20,6 +20,7 @@ import type {
   CatalogItemDetailsFetchResult,
 } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
+import type { BrowseSettingsSheetLabels } from './toolbar-props';
 
 /**
  * Live search/filter/tab state passed to `CatalogProps.renderEmptyState` when
@@ -94,6 +95,8 @@ export interface CatalogTitles {
   createMenuBackLabel?: string;
   /** Accessible name of the close button in the mobile Create menu sheet. Default: 'Close'. */
   createMenuCloseLabel?: string;
+  /** Text of the mobile browse-settings button and sheet, which replaces the view, sort and filter controls below the desktop breakpoint. */
+  browseSettings?: Partial<BrowseSettingsSheetLabels>;
 }
 
 /** Controlled search field rendered at the top of the Create menu. */
