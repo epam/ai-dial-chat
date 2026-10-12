@@ -76,7 +76,7 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
   });
 
   return (
-    <div style={cssVars} className="flex flex-col gap-4 px-6 py-4">
+    <div style={cssVars} className="flex flex-col gap-4 px-4 py-4 desktop:px-6">
       {identity ??
         (item != null && (
           <ConfirmationIdentityCard

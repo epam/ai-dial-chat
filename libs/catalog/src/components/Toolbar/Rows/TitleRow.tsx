@@ -24,11 +24,11 @@ import {
   IconLayoutList,
 } from '@tabler/icons-react';
 import { FC, ReactNode, useMemo, useState } from 'react';
+import { DEFAULT_BROWSE_SETTINGS_LABELS } from '../../../constants/browse-settings';
 import {
   BrowseSettingsSheetLabels,
   ToolbarStyles,
 } from '../../../models/toolbar-props';
-import { DEFAULT_BROWSE_SETTINGS_LABELS } from '../../../constants/browse-settings';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
 import { BrowseSettingsSheet } from '../BrowseSettingsSheet';

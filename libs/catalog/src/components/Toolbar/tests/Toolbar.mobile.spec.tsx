@@ -15,7 +15,7 @@ const sortOptions = [
   { value: 'name', label: 'Name A-Z' },
 ];
 
-const renderToolbar = (
+const setupToolbar = (
   overrides: Partial<Parameters<typeof Toolbar>[0]> = {},
 ) => {
   const props = {
@@ -46,7 +46,7 @@ const openSheet = async () => {
 
 describe('Toolbar — mobile', () => {
   it('replaces the view toggle, sort and filter dropdowns with one settings button', () => {
-    renderToolbar();
+    setupToolbar();
 
     expect(screen.queryByRole('radiogroup')).toBeNull();
     expect(
@@ -59,7 +59,7 @@ describe('Toolbar — mobile', () => {
   });
 
   it('lists View, Sorting and Filtering on the root page', async () => {
-    renderToolbar();
+    setupToolbar();
 
     const sheet = await openSheet();
 
@@ -71,7 +71,7 @@ describe('Toolbar — mobile', () => {
   });
 
   it('applies a view mode on pick and closes the sheet', async () => {
-    const props = renderToolbar();
+    const props = setupToolbar();
 
     const sheet = await openSheet();
     await userEvent.click(
@@ -86,7 +86,7 @@ describe('Toolbar — mobile', () => {
   });
 
   it('marks the applied sort order and applies a new one', async () => {
-    const props = renderToolbar();
+    const props = setupToolbar();
 
     const sheet = await openSheet();
     await userEvent.click(
@@ -106,7 +106,7 @@ describe('Toolbar — mobile', () => {
   });
 
   it('buffers filter changes until Apply', async () => {
-    const props = renderToolbar();
+    const props = setupToolbar();
 
     const sheet = await openSheet();
     await userEvent.click(
@@ -128,7 +128,7 @@ describe('Toolbar — mobile', () => {
   });
 
   it('clears every filter', async () => {
-    const props = renderToolbar({
+    const props = setupToolbar({
       filters: new Set(['Business']),
       isMyAppsActive: true,
     });
@@ -144,7 +144,7 @@ describe('Toolbar — mobile', () => {
   });
 
   it('summarises the applied filters on the Filtering row', async () => {
-    renderToolbar({
+    setupToolbar({
       filters: new Set(['Business', 'Analysis']),
       browseSettingsLabels: {
         formatFilterCount: (selected, total) => `${selected}/${total}`,
@@ -159,7 +159,7 @@ describe('Toolbar — mobile', () => {
   });
 
   it('uses the host-supplied labels', async () => {
-    renderToolbar({
+    setupToolbar({
       browseSettingsLabels: { title: 'Réglages', view: 'Affichage' },
     });
 

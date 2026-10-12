@@ -1151,7 +1151,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           )}
 
         {!isConfirmationOpen && isPublishOpen && (
-          <div className="p-[22px]">
+          <div className="p-4 desktop:p-[22px]">
             <PublishPanel
               resource={{
                 title: item.name,

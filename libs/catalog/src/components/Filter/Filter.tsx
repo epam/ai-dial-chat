@@ -175,6 +175,7 @@ export const Filter: FC<FilterProps> = ({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
 
   const focusRow = useCallback(
     (index: number) => {
@@ -208,14 +209,15 @@ export const Filter: FC<FilterProps> = ({
   };
 
   /*
-   * Arrow keys navigate checkbox rows; Escape closes. Footer buttons stop
-   * propagation of Arrow keys so they don't accidentally move row focus.
+   * Arrow keys navigate checkbox rows; Escape closes. Arrow keys pressed on
+   * the footer buttons are ignored so they don't accidentally move row focus.
    */
   const handleMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'ArrowDown') {
+    const isInFooter = footerRef.current?.contains(e.target as Node) ?? false;
+    if (e.key === 'ArrowDown' && !isInFooter) {
       e.preventDefault();
       focusRow(focusedIndex + 1);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp' && !isInFooter) {
       e.preventDefault();
       focusRow(focusedIndex - 1);
     } else if (e.key === 'Escape') {
@@ -351,11 +353,7 @@ export const Filter: FC<FilterProps> = ({
               'mt-1 flex shrink-0 items-center px-1 py-3',
               styles.footer,
             )}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                e.stopPropagation();
-              }
-            }}
+            ref={footerRef}
           >
             <GhostButton label={clearLabel} onClick={handleClear} />
 

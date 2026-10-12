@@ -23,7 +23,10 @@ import {
   getTopicOptions,
 } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
-import { buildCatalogTabs } from '../../utils/catalog-tabs';
+import {
+  buildCatalogTabs,
+  scrollSelectedTabIntoView,
+} from '../../utils/catalog-tabs';
 import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import { getStyles } from '../../utils/styles';
 import { isLevelSignedIn, sleep } from '../../utils/toolset-credentials';
@@ -238,6 +241,15 @@ export const Catalog: FC<CatalogProps> = ({
   }, [firstTabId]);
 
   const activeTab = controlledActiveTab ?? internalActiveTab;
+
+  /* The tab row scrolls sideways on narrow screens, so a selected tab past
+     its end (restored on load, or picked from the host) is brought into view. */
+  const tabsRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (tabsRowRef.current != null) {
+      scrollSelectedTabIntoView(tabsRowRef.current);
+    }
+  }, [activeTab, tabs.length]);
 
   const handleActiveTabChange = useCallback(
     (tabId: string) => {
@@ -667,7 +679,10 @@ export const Catalog: FC<CatalogProps> = ({
              when they outgrow a narrow screen, rather than each tab shrinking
              until its label and count clip. The scrollbar is hidden, as in
              the design; touch and trackpad swipes still scroll the row. */
-          <div className="min-w-0 shrink-0 overflow-x-auto px-4 [scrollbar-width:none] desktop:px-8">
+          <div
+            ref={tabsRowRef}
+            className="min-w-0 shrink-0 overflow-x-auto px-4 [scrollbar-width:none] desktop:px-8"
+          >
             <Tabs
               tabListClassName="w-max min-w-full"
               tabClassName="shrink-0 whitespace-nowrap"
