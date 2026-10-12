@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import { CardShell, FolderPath, Highlight } from '@epam/ai-dial-ui-kit';
 import type { FC, KeyboardEvent } from 'react';
 import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
@@ -14,8 +18,10 @@ import styles from './ScheduledTaskCard.module.scss';
  * resolved status is paused/completed — via `getScheduledTaskStatus`), and
  * location breadcrumb. Renders on the shared `CardShell` from
  * `@epam/ai-dial-ui-kit` (radius, padding, shadow, hover lift), the same
- * shell the Catalog browse card uses. The card has a fixed height; a long
- * description is clamped with an ellipsis, and the status pill (plus the
+ * shell the Catalog browse card uses. From the desktop breakpoint up the card
+ * has a fixed height and a one-line title; below it the card sizes to its
+ * content with a two-line title. A long description is clamped with an
+ * ellipsis (four lines on desktop, two below), and the status pill (plus the
  * location breadcrumb, when present) is pinned to the bottom regardless of
  * description length.
  */
@@ -27,6 +33,9 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   styles: cardStyles,
   className,
 }) => {
+  /* `Highlight` takes a numeric `maxLines`, so the two-line mobile title
+   * branches in JS rather than CSS. */
+  const isMobile = useIsMobile();
   const newBadgeLabel = labels?.newBadgeLabel ?? 'NEW';
   const pausedBadgeLabel = labels?.pausedBadgeLabel ?? 'Paused';
   const completedBadgeLabel = labels?.completedBadgeLabel ?? 'Completed';
@@ -119,17 +128,18 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       style={cssVars}
       className={mergeClasses(
         'h-[var(--st-card-height,232px)]',
+        styles.card,
         onCardClick && 'cursor-pointer',
         className,
         SCHEDULED_TASKS_CLASS.card,
       )}
       {...cardClickProps}
     >
-      <div className="flex min-w-0 shrink-0 items-center gap-2">
+      <div className="flex min-w-0 shrink-0 items-start gap-2 desktop:items-center">
         <Highlight
           text={item.displayName}
           query={searchQuery}
-          maxLines={1}
+          maxLines={isMobile ? 2 : 1}
           className={mergeClasses(titleClassName, styles.title)}
         />
         {item.isNew && (
