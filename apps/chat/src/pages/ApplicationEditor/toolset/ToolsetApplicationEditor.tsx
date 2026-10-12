@@ -53,7 +53,6 @@ import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import {
   createToolset,
   getToolset,
-  listToolsets,
   loginToolset,
   logoutToolset,
   updateToolset,
@@ -63,11 +62,7 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import {
-  buildAdditionalLocaleOptions,
-  PRIMARY_LOCALE,
-  resolveLocalizedText,
-} from '../../../utils/locale';
+import { buildAdditionalLocaleOptions } from '../../../utils/locale';
 import {
   extractToolsetApiErrorMessage,
   fetchToolsetAuthSettings,
@@ -131,20 +126,7 @@ const ToolsetApplicationEditor: FC = () => {
         return;
       }
 
-      try {
-        const { data } = await listToolsets();
-        if (!cancelled) {
-          setInitialForm(
-            getDefaultToolsetForm(
-              (data ?? []).map((item) =>
-                resolveLocalizedText(item.displayName, PRIMARY_LOCALE),
-              ),
-            ),
-          );
-        }
-      } catch {
-        if (!cancelled) setInitialForm(getDefaultToolsetForm());
-      }
+      setInitialForm(getDefaultToolsetForm());
     };
 
     void load();
