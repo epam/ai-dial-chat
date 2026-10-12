@@ -502,8 +502,9 @@ tracked mention. A run must start the text or follow whitespace; the longest
 listed name wins, and a name shared by several skills resolves to the first
 of `skills`, then `sharedWithMe`, then `publicSkills`. Call it right before
 handing the text to the composer's insertion channel. It does nothing while
-`isSkillsSupported` is `false`, and an ordinary paste of `/{name}` stays plain
-text.
+`isSkillsSupported` is `false`. Text pasted into the input is recognized the
+same way with no host wiring: the returned `commandMenu` passes this function
+as its `onTextPaste`.
 
 `renderHistorySkillSegments(content, skills)` renders a **user** message's
 `content` and `custom_content.skills` as an ordered array interleaving
