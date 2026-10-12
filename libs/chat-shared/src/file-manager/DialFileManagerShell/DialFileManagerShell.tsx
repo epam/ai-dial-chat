@@ -540,7 +540,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           )}
         >
           <DialFileManager
-            className={mergeClasses('min-h-0 w-full grow', surfaceClassName)}
+            /* Cancels the file manager's own compact-view root padding, which doubles attach's grid inset. */
+            className={mergeClasses(
+              'min-h-0 w-full grow',
+              surfaceClassName,
+              isAttachVariant && 'p-0',
+            )}
             contentClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'px-0 pb-0'

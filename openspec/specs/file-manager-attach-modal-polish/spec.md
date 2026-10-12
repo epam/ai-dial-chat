@@ -140,15 +140,21 @@ Feature flag: none.
 
 ### Requirement: Attach modal uses compact chrome around a raised folder panel
 
-`FileManagerAttachModal` SHALL retain its fixed responsive height of `min(900px, 100dvh)` and the base-layer background, and SHALL let the popup grow to a maximum width of 1600px from the `md` breakpoint. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
+`FileManagerAttachModal` SHALL retain its fixed responsive height of `min(900px, 100dvh)` and the base-layer background, and SHALL let the popup grow to a maximum width of 1600px at the `desktop` breakpoint. At the `mobile` breakpoint it SHALL cover the whole viewport like `CatalogModal`: the overlay drops its padding (`overlayClassName="mobile:p-0"`) and the popup takes the full height and width with no rounded corners. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
 
-In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's horizontal and bottom padding and apply grid spacing through `contentClassName="px-0 pb-0"` and `gridClassName="size-full gap-6 px-6 py-4"` (Standalone keeps `gridClassName="size-full"` and no `contentClassName`). Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
+In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's horizontal and bottom padding and apply grid spacing through `contentClassName="px-0 pb-0"` and `gridClassName="size-full gap-6 px-6 py-4"` (Standalone keeps `gridClassName="size-full"` and no `contentClassName`). In Attach mode it SHALL also pass `p-0` to the `DialFileManager` root, so the package's compact-view root padding does not stack on the grid padding and the grid content lines up with the popup header and footer. Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
 
 #### Scenario: Attach chrome and grid spacing
 
 - **WHEN** the file attachment modal renders
 - **THEN** its header has no bottom padding, its footer has no top padding, the raised folder panel has no visible heading, and the grid has the specified internal padding
 - **AND** the tab strip retains an accessible name through `tabsAriaLabel`
+
+#### Scenario: Attach modal is full-screen at the mobile breakpoint
+
+- **WHEN** the file attachment modal renders on a viewport of 1279px or narrower
+- **THEN** it fills the viewport edge-to-edge with no overlay padding and no rounded corners
+- **AND** at 1280px and wider it stays a centered popup up to 1600px wide
 
 #### Scenario: Standalone shell retains its presentation
 
