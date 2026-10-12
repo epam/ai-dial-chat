@@ -301,6 +301,17 @@ export const handleFileOperationSuccess = (
         { name: event.name ?? '' },
       );
       return;
+    case FileOperationKind.FilesUnshared:
+      showSuccessNotification({
+        title: t(DialFileManagerI18nKeys.UnshareSuccessTitle),
+        message: t(
+          event.count === 1
+            ? DialFileManagerI18nKeys.UnshareSuccessMessageSingle
+            : DialFileManagerI18nKeys.UnshareSuccessMessageMultiple,
+          { name: event.name, count: event.count },
+        ),
+      });
+      return;
     case FileOperationKind.FileCopied:
     case FileOperationKind.FilesCopied:
     case FileOperationKind.FileMoved:

@@ -96,6 +96,11 @@ export interface UseDialFileListingResult {
   ) => void;
   /** Forces the listing effect to re-fetch the currently browsed folder. */
   bumpRetry: () => void;
+  /**
+   * Drops the named root rows from the Shared tab's cached listing, so an
+   * unshared item disappears at once instead of waiting for the refetch.
+   */
+  removeSharedRootItems: (names: string[]) => void;
 }
 
 /**
@@ -496,6 +501,29 @@ export const useDialFileListing = ({
     [],
   );
 
+  const removeSharedRootItems = useCallback(
+    (names: string[]) => {
+      if (names.length === 0) return;
+      const removed = new Set(names);
+      setCache((prev) => {
+        const root = prev.get('');
+        if (root == null) return prev;
+        const next = new Map(prev);
+        next.set(
+          '',
+          root.filter((item) => !removed.has(item.name)),
+        );
+        return next;
+      });
+      setSharedRootIds((prev) =>
+        prev?.filter(
+          (id) => !names.some((name) => id === `/${rootLabel}/${name}`),
+        ),
+      );
+    },
+    [rootLabel],
+  );
+
   const onFolderPopupPathChange = useCallback(
     (nextPath?: string) => {
       if (!isActive) return;
@@ -777,5 +805,6 @@ export const useDialFileListing = ({
     invalidateFolders,
     mergeCreatedFolder,
     bumpRetry,
+    removeSharedRootItems,
   };
 };
