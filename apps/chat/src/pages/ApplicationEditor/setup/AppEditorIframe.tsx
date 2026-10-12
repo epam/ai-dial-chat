@@ -84,6 +84,12 @@ interface Props {
   onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
   /**
+   * Notifies the host whenever the embedded editor reports whether its form
+   * is valid (`AppsEditorEvent.ValidityState`). `true` until the editor says
+   * otherwise, and re-gated to `true` when the iframe reloads.
+   */
+  onValidityChange?: (isValid: boolean) => void;
+  /**
    * Notifies the host whenever the iframe's readiness to save changes.
    * Reflects `AppsEditorEvent.ReadyToSave` (the embedded editor's own data
    * model is loaded/validated and it is safe to trigger a save) — not the
@@ -115,6 +121,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       onUpdated,
       onSaveSuccess,
       onSaveError,
+      onValidityChange,
       onReadyChange,
       onLoggedOutChange,
       onUnresponsiveChange,
@@ -135,6 +142,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const [isUiLoading, setIsUiLoading] = useState(true);
     const [isReadyToSave, setIsReadyToSave] = useState(false);
     const [isLoggedOut, setIsLoggedOut] = useState(false);
+    const [isFormValid, setIsFormValid] = useState(true);
     const [hasEditorResponded, setHasEditorResponded] = useState(false);
     const [isResponseTimedOut, setIsResponseTimedOut] = useState(false);
     // Bumped by Reload to remount the iframe with the same URL.
@@ -464,6 +472,14 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           case AppsEditorEvent.SaveError:
             onSaveError?.(event.data?.error ?? '');
             break;
+          case AppsEditorEvent.ValidityState:
+            if (
+              event.source === iframeRef.current?.contentWindow &&
+              typeof event.data?.payload?.isValid === 'boolean'
+            ) {
+              setIsFormValid(event.data.payload.isValid);
+            }
+            break;
           case AppsEditorEvent.RequestToolsetLogin:
             if (
               event.source === iframeRef.current?.contentWindow &&
@@ -572,6 +588,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       setIsReadyToSave(false);
       setIsLoggedOut(false);
+      setIsFormValid(true);
       setCredentialsAppId(null);
       setHasEditorResponded(false);
       setIsResponseTimedOut(false);
@@ -589,6 +606,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       onReadyChange?.(isReadyToSave);
     }, [isReadyToSave, onReadyChange]);
+
+    useEffect(() => {
+      onValidityChange?.(isFormValid);
+    }, [isFormValid, onValidityChange]);
 
     useEffect(() => {
       onLoggedOutChange?.(isLoggedOut);
