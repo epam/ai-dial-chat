@@ -915,9 +915,9 @@ describe('DialFileManagerShell', () => {
     const labels: DialFileManagerShellLabels = {
       ...baseLabels,
       searchPlaceholderByTab: {
-        [DialFileManagerTabs.MyFiles]: 'Search in My files',
-        [DialFileManagerTabs.Shared]: 'Search in Shared with me files',
-        [DialFileManagerTabs.Organization]: 'Search in Organization files',
+        [DialFileManagerTabs.MyFiles]: 'Search in My files...',
+        [DialFileManagerTabs.Shared]: 'Search in Shared files...',
+        [DialFileManagerTabs.Organization]: 'Search in Organization files...',
       },
     };
     const placeholder = (): string | undefined =>
@@ -928,7 +928,7 @@ describe('DialFileManagerShell', () => {
         activeTab: DialFileManagerTabs.Shared,
         labels,
       });
-      expect(placeholder()).toBe('Search in Shared with me files');
+      expect(placeholder()).toBe('Search in Shared files...');
     });
 
     it('names the browsed section on the All tab', () => {
@@ -936,7 +936,7 @@ describe('DialFileManagerShell', () => {
         activeTab: DialFileManagerTabs.All,
         labels,
       });
-      expect(placeholder()).toBe('Search in Organization files');
+      expect(placeholder()).toBe('Search in Organization files...');
     });
 
     it('leaves the default placeholder when the host passes none', () => {

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the one delete confirmation every surface that deletes a single resource or a selection shows, and the `@epam/ai-dial-chat-shared` components it is built from: `ConfirmationView`, `ConfirmationFooter`, `ConfirmationIdentityCard`, `ConfirmationIdentityRow`, and `ConfirmationDialog`. Surface-specific copy, API calls, and post-delete behaviour stay in each surface's own spec — `catalog-details-confirmation-subview`, `scheduled-task-detail-page`, `file-manager-delete-ui`, and the chat panel's single-chat delete described below.
+Defines the one delete confirmation every surface that deletes a single resource or a selection shows, and the `@epam/ai-dial-chat-shared` components it is built from: `ConfirmationView`, `ConfirmationFooter`, `ConfirmationIdentityCard`, `ConfirmationIdentityRow`, `ConfirmationDialog`, and the delete-specific `DeleteConfirmationView` and `DeleteConfirmationDialog`. Surface-specific copy, API calls, and post-delete behaviour stay in each surface's own spec — `catalog-details-confirmation-subview`, `scheduled-task-detail-page`, `file-manager-delete-ui`, and the chat panel's single-chat delete described below.
 
 ## Requirements
 
@@ -31,6 +31,7 @@ Not covered: the Files dialog's frame and actions belong to `@epam/ai-dial-react
 - `item?: EntityHeaderItem` — rendered as a `ConfirmationIdentityCard` when `identity` is not set; with neither `item` nor `identity`, no card is rendered (a confirmation that is not about a particular resource, such as discarding unsaved changes).
 - `identity?: ReactNode` — a card rendered in place of the default one, for a resource that is not an `EntityHeaderItem`.
 - `message: ReactNode` — the body sentence; a `ReactNode` so the host can bold the name.
+- `details?: ReactNode` — content between the message and the bullets, such as the names a bulk action affects. It SHALL render outside the message paragraph, so a list placed there stays valid HTML.
 - `consequences?: string[]` — bullets under the message; an empty or omitted list renders nothing.
 - `variant?: ConfirmationPopupVariant` — default `Info`.
 - `messageClassName?: string` — typography for the message and the bullets, default `'dial-small-text'`.
@@ -94,12 +95,36 @@ Overrides arrive through `styles.colors` (`background`, `dangerBackground`, `dan
 - **WHEN** the dialog is open with `title="Delete chat"`
 - **THEN** its accessible name is "Delete chat"
 
+### Requirement: `DeleteConfirmationView` renders a delete body for one resource or a selection
+
+`DeleteConfirmationView` (`libs/chat-shared/src/components/DeleteConfirmationView/DeleteConfirmationView.tsx`) SHALL compose `ConfirmationView` in the `Danger` variant from `names: string[]`, an optional host-supplied `icon` and `typeLabel`, a host-composed `message`, optional `consequences`, `maxListedNames` (default 10), `labels`, `styles`, and `children`:
+
+- **One name:** a plain `ResourceSummary` with a `ConfirmationIdentityRow` showing `icon`, `typeLabel`, and the name; no name list.
+- **Several names:** the card shows `labels.itemCount(count)` (default `"{count} items"`) with no icon or type label, and the first `maxListedNames` names are listed through `details`; the rest collapse into one `labels.moreItems(rest)` entry (default `"… and {count} more"`), colored like the consequences.
+- **Consequences:** `consequences` followed by `labels.cannotBeUndone` (default `"Cannot be undone"`), which is always the last bullet.
+
+The lib SHALL hold no i18n; every string has an English default the host overrides.
+
+#### Scenario: A selection is counted and listed
+
+- **WHEN** `names` is `["a.pdf", "b.pdf"]`
+- **THEN** the card reads "2 items", both names are listed under the message, and the last bullet is "Cannot be undone"
+
+### Requirement: `DeleteConfirmationDialog` presents the delete body as a dialog
+
+`DeleteConfirmationDialog` SHALL wrap `DeleteConfirmationView` and a `Danger` `ConfirmationFooter` in the kit's `Popup`, with the same dismissal rules as `ConfirmationDialog`: `title` is a `string`, `size` defaults to `PopupSize.Sm`, and while `isLoading` is `true` every dismissal route is ignored. Its `labels` add `confirm` (default `"Delete"`), `cancel` (default `"Cancel"`), and `deleting` (default `"Deleting…"`, announced while the request runs) to the view's labels; `styles` adds `popupClassName` and `titleClassName`.
+
+#### Scenario: Default labels without a host translation
+
+- **WHEN** the dialog is rendered with no `labels`
+- **THEN** its actions read "Cancel" and "Delete" and the last bullet reads "Cannot be undone"
+
 ### Requirement: The chat panel's single-chat delete uses the shared dialog
 
-`ConversationPanelView` SHALL confirm deleting one conversation with `ConfirmationDialog` in the `Danger` variant:
+`ConversationPanelView` SHALL confirm deleting one conversation with `DeleteConfirmationDialog`, its strings supplied by `useDeleteConfirmationLabels`:
 
 - **Title:** "Delete chat" (`conversationPanel.delete.deleteConfirmTitle`).
-- **Identity:** a `ConfirmationIdentityRow` with `IconMessageCircle` and the conversation title, on a plain `ResourceSummary` surface — no danger tint and no type label, per design.
+- **Identity:** `names={[title]}` with `IconMessageCircle` — a plain `ResourceSummary` row with no danger tint and no type label, per design.
 - **Message:** `conversationPanel.delete.confirmMessage` with the title bold via `CONFIRMATION_BOLD_COMPONENTS`.
 - **Consequences:** `basic.consequenceCannotBeUndone`.
 - **Actions:** `buttons.delete` / `buttons.cancel`, with `basic.deletingStatus` announced while the request runs.
