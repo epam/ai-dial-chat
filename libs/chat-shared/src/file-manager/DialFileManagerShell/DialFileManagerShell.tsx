@@ -8,6 +8,7 @@ import {
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
 import {
+  ButtonVariant,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   PrimaryButton,
   Spinner,
@@ -276,9 +277,13 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     return withoutRemoveAccess;
   }, [actionLabels, allSelectedItemsSharedByMe]);
 
+  const isAttachVariant = variant === DialFileManagerVariant.Attach;
+
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
+      /* Attach is a picker: column filters are redundant next to the search bar. */
+      ...(isAttachVariant ? { filterable: false } : {}),
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -292,6 +297,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       actionLabels: gridActionLabels,
     }),
     [
+      isAttachVariant,
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -343,6 +349,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   const toolbarOptions = useMemo(
     () => ({
       showHiddenFilesToggle: true,
+      /* The attach footer owns the primary action, so the "Add" button is neutral. */
+      ...(isAttachVariant ? { newButtonVariant: ButtonVariant.Neutral } : {}),
       hiddenFilesSwitcherLabel: labels.hiddenFilesLabel,
       showHiddenFilesLabel: labels.showHiddenFilesLabel,
       hideHiddenFilesLabel: labels.hideHiddenFilesLabel,
@@ -357,6 +365,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       },
     }),
     [
+      isAttachVariant,
       labels.hiddenFilesLabel,
       labels.showHiddenFilesLabel,
       labels.hideHiddenFilesLabel,
@@ -369,12 +378,16 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     ],
   );
 
+  /* Attach is a file picker: bulk Download/Delete would act on files the user only meant to pick. */
   const bulkActionsToolbarOptions = useMemo(
-    () => ({
-      getSelectionLabel: labels.getSelectionLabel,
-      actionLabels: bulkActionLabels,
-    }),
-    [labels.getSelectionLabel, bulkActionLabels],
+    () =>
+      isAttachVariant
+        ? undefined
+        : {
+            getSelectionLabel: labels.getSelectionLabel,
+            actionLabels: bulkActionLabels,
+          },
+    [isAttachVariant, labels.getSelectionLabel, bulkActionLabels],
   );
 
   const deleteConfirmationOptions = useMemo(
@@ -498,12 +511,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     labels,
   );
 
-  /* The standalone File storage page sits on the base layer; the attach
-     modal keeps the sunken surface behind its raised tree panel. */
-  const surfaceClassName =
-    variant === DialFileManagerVariant.Standalone
-      ? 'bg-layer-base'
-      : 'bg-layer-sunken';
+  /* Standalone and attach hosts share the base layer; the attach tree panel
+     stays raised on top of it. */
+  const surfaceClassName = 'bg-layer-base';
 
   /* Search-mode copy goes through `searchEmptyStateTitle`: in search mode
      `DialFileManager` ignores `emptyStateTitle` and falls back to "No data". */
