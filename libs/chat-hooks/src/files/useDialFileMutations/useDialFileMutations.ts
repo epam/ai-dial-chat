@@ -39,7 +39,6 @@ import {
   RESERVED_MARKER_NAME,
   type SharedRootMeta,
 } from '../dial-file-manager.model';
-import { splitFileNameExtension } from '../file-name';
 import type {
   FileManagerNotification,
   FileNameValidationError,
@@ -53,6 +52,7 @@ import {
 import type { DialFilesApi } from '../dial-files-api';
 import { DownloadDestinationType } from '../download-destination';
 import type { DownloadDestinationHandlers } from '../download-destination';
+import { splitFileNameExtension } from '../file-name';
 import {
   resolveDialFileApiPath,
   virtualPathToApiPath,
