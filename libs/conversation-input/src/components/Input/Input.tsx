@@ -600,12 +600,20 @@ export const Input = forwardRef<InputHandle, InputProps>(
           }
         }
         handleClipboardPaste(e);
+        if (e.defaultPrevented) return;
+
+        /* A textarea stores `\r\n` as `\n`, so the reported text must match what lands in `onChange`. */
+        const pastedText = e.clipboardData
+          .getData('text/plain')
+          .replace(/\r\n?/g, '\n');
+        if (pastedText !== '') commandMenu?.onTextPaste?.(pastedText);
       },
       [
         isPasteAsAttachmentEnabled,
         maxMessageLength,
         onMessageTooLong,
         handleClipboardPaste,
+        commandMenu,
       ],
     );
 
