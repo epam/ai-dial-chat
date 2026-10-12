@@ -194,6 +194,12 @@ export const useDialFileUploadBatch = ({
                 names,
                 restCount,
               });
+            } else {
+              onNotification?.({
+                variant: NotificationVariant.Success,
+                reason: FileManagerNotificationReason.UploadCompleted,
+                folder: destinationApiPath || rootLabel,
+              });
             }
           }
         } catch {
