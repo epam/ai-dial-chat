@@ -279,6 +279,38 @@ describe('ApplicationEditorPage — quick app', () => {
       );
       expect(screen.queryByText(/embedded-editor-/)).toBeNull();
     });
+
+    it('shows a name conflict on a 409 and clears it once the name changes', async () => {
+      /* Shape thrown by the generated client: a ResponseError carrying `response`. */
+      vi.mocked(createApplication).mockRejectedValue({
+        response: {
+          status: 409,
+          json: () =>
+            Promise.resolve({ message: 'Application name already taken' }),
+        },
+      });
+      renderPage(createSearch);
+
+      await user.type(getNameInput(), 'My App');
+      await user.click(getAction(ButtonsI18nKeys.Create));
+
+      expect(
+        await screen.findByText(AppsEditorI18nKeys.ErrorNameConflict),
+      ).toBeTruthy();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: NotificationVariant.Error,
+          message: AppsEditorI18nKeys.ErrorNameConflict,
+        }),
+      );
+      expect(screen.queryByText(/embedded-editor-/)).toBeNull();
+
+      await user.type(getNameInput(), ' 2');
+
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorNameConflict),
+      ).toBeNull();
+    });
   });
 
   describe('edit mode', () => {

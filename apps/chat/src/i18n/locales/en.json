@@ -1205,6 +1205,7 @@
     },
     "error": {
       "createFailed": "Failed to create application. Please try again.",
+      "nameConflict": "An application with this name and version already exists.",
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
