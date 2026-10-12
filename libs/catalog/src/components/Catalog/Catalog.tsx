@@ -23,10 +23,8 @@ import {
   getTopicOptions,
 } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
-import {
-  buildCatalogTabs,
-  scrollSelectedTabIntoView,
-} from '../../utils/catalog-tabs';
+import { buildCatalogTabs } from '../../utils/catalog-tabs';
+import { getTabCreateButtonConfig } from '../../utils/create-menu';
 import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
 import { getStyles } from '../../utils/styles';
 import { isLevelSignedIn, sleep } from '../../utils/toolset-credentials';
@@ -34,9 +32,10 @@ import { CardGrid } from '../CardGrid/CardGrid';
 import { DetailsPanel } from '../Details/DetailsPanel';
 import { Favorites } from '../Favorites/Favorites';
 import { ListView } from '../ListView/ListView';
+import { PersonalEmptyState } from '../PersonalEmptyState/PersonalEmptyState';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
-import { CreateButton } from './CreateButton';
+import { CreateButton, type CreateButtonProps } from './CreateButton';
 
 /**
  * How many times the post-login/post-logout details refetch retries before
@@ -113,6 +112,7 @@ export const Catalog: FC<CatalogProps> = ({
   onCreateClick,
   createOptions,
   createSearch,
+  createMenuByTab,
   hideCreateButton = false,
   hidePageTitle = false,
   isReadonly = false,
@@ -146,6 +146,11 @@ export const Catalog: FC<CatalogProps> = ({
     titles?.searchPlaceholder ?? 'Search models, tools, agents…';
   const noResultsTitle =
     titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
+  const myAppsEmptyTitle =
+    titles?.myAppsEmptyTitle ?? (() => 'No personal items yet');
+  const myAppsEmptyDescription =
+    titles?.myAppsEmptyDescription ??
+    "Create your first one, it'll show up right here.";
   const featuredLabel = titles?.featuredLabel ?? 'Featured';
   const gridViewLabel = titles?.gridViewLabel ?? 'Grid view';
   const listViewLabel = titles?.listViewLabel ?? 'List view';
@@ -241,15 +246,6 @@ export const Catalog: FC<CatalogProps> = ({
   }, [firstTabId]);
 
   const activeTab = controlledActiveTab ?? internalActiveTab;
-
-  /* The tab row scrolls sideways on narrow screens, so a selected tab past
-     its end (restored on load, or picked from the host) is brought into view. */
-  const tabsRowRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (tabsRowRef.current != null) {
-      scrollSelectedTabIntoView(tabsRowRef.current);
-    }
-  }, [activeTab, tabs.length]);
 
   const handleActiveTabChange = useCallback(
     (tabId: string) => {
@@ -573,6 +569,36 @@ export const Catalog: FC<CatalogProps> = ({
         isMyAppsActive,
       })
     : undefined;
+  /* A tab missing from `createMenuByTab` has no personal entities at all
+     (models), so it keeps the default empty state. */
+  const isPersonalEmptyStateVisible =
+    isResultSetEmpty &&
+    isMyAppsActive &&
+    !query &&
+    filters.size === 0 &&
+    (createMenuByTab == null ||
+      createMenuByTab[activeTab as CatalogEntityType] != null);
+
+  const createButtonProps: CreateButtonProps = {
+    label: createLabel,
+    options: createOptions,
+    onClick: onCreateClick,
+    search: createSearch,
+    searchPlaceholder: titles?.createSearchPlaceholder,
+    searchClearLabel: titles?.createSearchClearLabel,
+    noResultsLabel: titles?.createNoResultsLabel,
+    backLabel: titles?.createMenuBackLabel,
+    closeLabel: titles?.createMenuCloseLabel,
+  };
+  /* The empty state creates only the active tab's type; without a per-tab
+     menu it falls back to the header's full menu. */
+  const tabCreateButton = createMenuByTab
+    ? getTabCreateButtonConfig(createMenuByTab[activeTab as CatalogEntityType])
+    : createButtonProps;
+  const emptyStateCreateButton: CreateButtonProps | undefined =
+    isCreateButtonVisible && tabCreateButton != null
+      ? { ...createButtonProps, ...tabCreateButton }
+      : undefined;
 
   if (isLoading) {
     return (
@@ -605,19 +631,7 @@ export const Catalog: FC<CatalogProps> = ({
                 {pageTitle}
               </h1>
             )}
-            {isCreateButtonVisible && (
-              <CreateButton
-                label={createLabel}
-                options={createOptions}
-                onClick={onCreateClick}
-                search={createSearch}
-                searchPlaceholder={titles?.createSearchPlaceholder}
-                searchClearLabel={titles?.createSearchClearLabel}
-                noResultsLabel={titles?.createNoResultsLabel}
-                backLabel={titles?.createMenuBackLabel}
-                closeLabel={titles?.createMenuCloseLabel}
-              />
-            )}
+            {isCreateButtonVisible && <CreateButton {...createButtonProps} />}
           </div>
         </div>
       )}
@@ -678,11 +692,11 @@ export const Catalog: FC<CatalogProps> = ({
           /* The tabs keep their natural width and the row scrolls sideways
              when they outgrow a narrow screen, rather than each tab shrinking
              until its label and count clip. The scrollbar is hidden, as in
-             the design; touch and trackpad swipes still scroll the row. */
-          <div
-            ref={tabsRowRef}
-            className="min-w-0 shrink-0 overflow-x-auto px-4 [scrollbar-width:none] desktop:px-8"
-          >
+             the design; touch and trackpad swipes still scroll the row. The
+             gutter is a margin on the scroll box rather than padding, so the
+             row clips 16px in from the edge, in line with the search field,
+             whether or not it is scrolled. */
+          <div className="mx-4 min-w-0 shrink-0 overflow-x-auto [scrollbar-width:none] desktop:mx-8">
             <Tabs
               tabListClassName="w-max min-w-full"
               tabClassName="shrink-0 whitespace-nowrap"
@@ -716,9 +730,15 @@ export const Catalog: FC<CatalogProps> = ({
             tabFiltered.length === 0 && 'px-4 py-6 desktop:px-8',
           )}
         >
-          {customEmptyState != null ? (
-            customEmptyState
-          ) : (
+          {customEmptyState != null && customEmptyState}
+          {customEmptyState == null && isPersonalEmptyStateVisible && (
+            <PersonalEmptyState
+              title={myAppsEmptyTitle(activeTab)}
+              description={myAppsEmptyDescription}
+              createButton={emptyStateCreateButton}
+            />
+          )}
+          {customEmptyState == null && !isPersonalEmptyStateVisible && (
             <>
               <div
                 inert={viewMode !== CatalogViewMode.Grid}

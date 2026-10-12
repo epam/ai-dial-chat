@@ -156,6 +156,7 @@ const SigninRow: FC<SigninRowProps> = ({
         <div className="flex justify-end gap-2">
           <GhostButton
             label={t(ToolsetSigninI18nKeys.RowDecline)}
+            className="mobile:flex-1"
             disabled={isProcessing}
             onClick={() => onDecline(event.id)}
           />
@@ -167,6 +168,7 @@ const SigninRow: FC<SigninRowProps> = ({
                 <Spinner size={16} ariaLabel={t(ButtonsI18nKeys.LogIn)} />
               ) : undefined
             }
+            className="mobile:flex-1"
             disabled={isProcessing || !canSubmitLogin}
             onClick={() => onLogin(event, info)}
           />

@@ -68,7 +68,10 @@ import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { getCatalogSearchPlaceholder } from '../../utils/catalog';
+import {
+  getCatalogMyAppsEmptyTitle,
+  getCatalogSearchPlaceholder,
+} from '../../utils/catalog';
 import {
   findSchemaDisplayName,
   resolveCatalogItemEntity,
@@ -536,7 +539,13 @@ const CatalogView: FC<Props> = ({
     [deployments, favoriteIds, notifyOperationSuccess, schemas, toggleFavorite],
   );
 
-  const { handleEdit, handleDelete, createOptions, createSearch } =
+  const {
+    handleEdit,
+    handleDelete,
+    createOptions,
+    createSearch,
+    createMenuByType,
+  } =
     useCatalogEditNavigation({
       deployments,
       isCustomAppsEnabled,
@@ -584,6 +593,7 @@ const CatalogView: FC<Props> = ({
         favorites={favorites}
         createOptions={createOptions}
         createSearch={createSearch}
+        createMenuByTab={createMenuByType}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
         isFullWidth={isFullWidth}
@@ -672,6 +682,8 @@ const CatalogView: FC<Props> = ({
           searchPlaceholder,
           noResultsTitle: (query) =>
             t(CatalogI18nKeys.NoResultsTitle, { query }),
+          myAppsEmptyTitle: (tab) => getCatalogMyAppsEmptyTitle(tab, t),
+          myAppsEmptyDescription: t(CatalogI18nKeys.MyAppsEmptyDescription),
           sortLabel: t(ButtonsI18nKeys.Sort),
           sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
           sortNewestLabel: t(CatalogI18nKeys.SortNewest),

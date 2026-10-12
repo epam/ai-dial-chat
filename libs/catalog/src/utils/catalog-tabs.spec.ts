@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
-import { buildCatalogTabs, scrollSelectedTabIntoView } from './catalog-tabs';
+import { buildCatalogTabs } from './catalog-tabs';
 
 const makeItem = (
   overrides: Partial<CatalogItem> & Pick<CatalogItem, 'id' | 'name'>,
@@ -78,47 +78,5 @@ describe('buildCatalogTabs', () => {
     expect(tabs).toEqual([
       { id: CatalogEntityType.Prompt, label: 'Подсказки' },
     ]);
-  });
-});
-
-describe('scrollSelectedTabIntoView', () => {
-  const rect = (left: number, right: number) => ({ left, right }) as DOMRect;
-
-  const makeRow = (tabLeft: number, tabRight: number, scrollLeft = 0) => {
-    const row = document.createElement('div');
-    row.style.paddingInlineStart = '16px';
-    row.style.paddingInlineEnd = '16px';
-    row.getBoundingClientRect = () => rect(0, 360);
-    const tab = document.createElement('button');
-    tab.setAttribute('role', 'tab');
-    tab.setAttribute('aria-selected', 'true');
-    tab.getBoundingClientRect = () => rect(tabLeft, tabRight);
-    row.appendChild(tab);
-    row.scrollLeft = scrollLeft;
-    return row;
-  };
-
-  it('scrolls forward when the selected tab is past the end of the row', () => {
-    const row = makeRow(380, 460);
-
-    scrollSelectedTabIntoView(row);
-
-    expect(row.scrollLeft).toBe(116);
-  });
-
-  it('scrolls back when the selected tab is before the start of the row', () => {
-    const row = makeRow(-40, 40, 100);
-
-    scrollSelectedTabIntoView(row);
-
-    expect(row.scrollLeft).toBe(44);
-  });
-
-  it('leaves the row alone when the selected tab is already visible', () => {
-    const row = makeRow(100, 200, 30);
-
-    scrollSelectedTabIntoView(row);
-
-    expect(row.scrollLeft).toBe(30);
   });
 });
