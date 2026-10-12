@@ -9,7 +9,10 @@ import {
   AttachmentsI18nKeys,
   ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
-import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
+import {
+  useAppConfig as mockUseAppConfig,
+  useFeatureFlag as mockUseFeatureFlag,
+} from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import NewConversationComposer from '../NewConversationComposer';
@@ -42,6 +45,12 @@ const {
 
 vi.mock('../../../hooks/useUiFeature');
 
+vi.mock('../../UsageLimitsControl/UsageLimitsControl', () => ({
+  default: ({ deploymentId }: { deploymentId?: string }) => (
+    <output aria-label="usage-limits">{deploymentId}</output>
+  ),
+}));
+
 vi.mock('@epam/ai-dial-conversation-input', () => ({
   ConversationInput: ({
     deployments,
@@ -54,6 +63,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     welcomeText,
     expandLabel,
     clickLabel,
+    usageLimitsSlot,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -65,6 +75,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     welcomeText?: string;
     expandLabel?: string;
     clickLabel?: string;
+    usageLimitsSlot?: ReactNode;
   }) => {
     capturedInputProps.onSend = onSend;
     capturedInputProps.expandLabel = expandLabel;
@@ -72,6 +83,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     return (
       <div data-testid="conversation-input">
         {belowWelcomeSlot}
+        {usageLimitsSlot}
         Conversation input
         <output aria-label="deployments">
           {deployments === undefined
@@ -236,10 +248,47 @@ describe('NewConversationComposer', () => {
     capturedInputProps.clickLabel = undefined;
     mockUsePageFileDrag.mockClear();
     pageDrag.isDragging = false;
+    vi.mocked(mockUseFeatureFlag).mockReturnValue(false);
     mockUseUiFeature.mockImplementation(
       (feature) =>
         feature === OverlayFeature.EmptyChatSettings ||
         feature === OverlayFeature.ChatSettings,
+    );
+  });
+
+  it('omits the usage limits control while the usageLimitsControl flag is off', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    await screen.findByText('Conversation input');
+    expect(screen.queryByLabelText('usage-limits')).toBeNull();
+  });
+
+  it('renders the usage limits control for the selected deployment when the usageLimitsControl flag is on', async () => {
+    vi.mocked(mockUseFeatureFlag).mockImplementation(
+      (key) => key === 'usageLimitsControl',
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    expect((await screen.findByLabelText('usage-limits')).textContent).toBe(
+      'gpt-4o',
     );
   });
 

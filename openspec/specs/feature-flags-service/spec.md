@@ -21,6 +21,7 @@ enum FeatureKey {
   ResponsesBackgroundEnabled = 'features.responsesBackgroundEnabled',
   DefaultDeploymentPinned = 'features.defaultDeploymentPinned',
   VisualizerSendMessages = 'features.visualizerSendMessages',
+  UsageLimitsControl = 'features.usageLimitsControl',
 }
 ```
 
