@@ -32,6 +32,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
+  AppsEditorI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
@@ -208,10 +209,29 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       )
     : undefined;
 
-  const metadataErrors = useMemo(
-    () => translateDeploymentCreationErrors(metadata.visibleErrorCodes, t),
-    [metadata.visibleErrorCodes, t],
-  );
+  /*
+   * The name/version pair a create was rejected for with 409. The conflict
+   * error stays on the Name field until the user changes either value.
+   */
+  const [conflictedIdentity, setConflictedIdentity] = useState<{
+    name: string;
+    version: string;
+  } | null>(null);
+  const isNameConflicted =
+    conflictedIdentity != null &&
+    conflictedIdentity.name === metadata.values.name.trim() &&
+    conflictedIdentity.version === metadata.values.version.trim();
+
+  const metadataErrors = useMemo(() => {
+    const errors = translateDeploymentCreationErrors(
+      metadata.visibleErrorCodes,
+      t,
+    );
+    if (isNameConflicted && !errors.name) {
+      errors.name = t(AppsEditorI18nKeys.ErrorNameConflict);
+    }
+    return errors;
+  }, [isNameConflicted, metadata.visibleErrorCodes, t]);
 
   const { markTouched } = metadata;
   const handleNameBlur = useCallback(
@@ -306,7 +326,20 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       );
       navigate(returnUrl);
     } catch (error) {
-      const { message, traceId } = await getApiErrorDetails(error);
+      const { message, status, traceId } = await getApiErrorDetails(error);
+      if (!isEditMode && status === 409) {
+        /* Inline on Name, plus a notification: an all-at-once create may be
+         * submitted from the Setup step, where the Name field is not visible. */
+        setConflictedIdentity({
+          name: metadata.values.name.trim(),
+          version: metadata.values.version.trim(),
+        });
+        showErrorNotification({
+          message: t(AppsEditorI18nKeys.ErrorNameConflict),
+          requestId: traceId,
+        });
+        return;
+      }
       showErrorNotification({
         message:
           message ??
