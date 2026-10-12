@@ -43,12 +43,13 @@ const SettingsPage: FC = () => {
   const ActiveTabComponent = tabComponents[activeItem.id as SettingsTabs];
 
   return (
-    /* Mobile stacks the section list above the active tab, full width; the
+    /* Mobile stacks the section list above the active tab, full width, with
+     * bottom padding so the active last tab doesn't cover the divider; the
      * desktop keeps the 240px side column. */
     <div className="flex size-full min-h-0 flex-col bg-layer-base desktop:flex-row">
       <h1 className="sr-only">{t(BasicI18nKeys.Settings)}</h1>
       <SettingsPanel
-        className="shrink-0 border-b border-b-tertiary desktop:w-[240px] desktop:border-b-0 desktop:border-e desktop:border-e-tertiary desktop:shadow-sm"
+        className="shrink-0 border-b border-b-tertiary pb-2 desktop:w-[240px] desktop:border-b-0 desktop:pb-0 desktop:border-e desktop:border-e-tertiary desktop:shadow-sm"
         sectionLabel={t(BasicI18nKeys.Settings)}
         items={items}
         activeId={activeItem.id}
