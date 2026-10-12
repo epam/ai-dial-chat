@@ -644,6 +644,7 @@ describe('DialFileManagerModal', () => {
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
     expect(fileManager.classList.contains('bg-layer-base')).toBe(true);
+    expect(fileManager.classList.contains('p-0')).toBe(true);
     expect(fileManager.getAttribute('data-content-class')).toBe('px-0 pb-0');
     expect(fileManager.getAttribute('data-grid-class')).toBe(
       'size-full gap-6 px-6 py-4',
@@ -697,7 +698,12 @@ describe('DialFileManagerModal', () => {
     const dialog = screen.getByRole('dialog');
     expect(dialog.classList.contains('!h-[min(900px,100dvh)]')).toBe(true);
     expect(dialog.classList.contains('!bg-layer-base')).toBe(true);
-    expect(dialog.classList.contains('md:!max-w-[1600px]')).toBe(true);
+    expect(dialog.classList.contains('!max-w-[1600px]')).toBe(true);
+    expect(dialog.classList.contains('mobile:!h-full')).toBe(true);
+    expect(dialog.classList.contains('mobile:!max-w-full')).toBe(true);
+    expect(dialog.classList.contains('mobile:rounded-none')).toBe(true);
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(dialog.closest('.mobile\\:p-0')).toBeTruthy();
 
     /* These assert pure CSS-level styling (which class is present), for which
        no semantic query applies — this repo's spec conventions carve out
