@@ -19,6 +19,7 @@ interface IframeStubProps {
   onSaveError?: (error: string) => void;
   onReadyChange?: (isReady: boolean) => void;
   onLoggedOutChange?: (isLoggedOut: boolean) => void;
+  onUnresponsiveChange?: (isUnresponsive: boolean) => void;
 }
 
 /* Records every render of the embedded-editor stub, so tests can play the iframe's messages. */
@@ -286,6 +287,37 @@ describe('QuickAppSetup', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60000);
     });
+
+    expect(
+      screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+    ).toBeNull();
+  });
+
+  it('does not surface the not-ready error once the editor is reported unresponsive', async () => {
+    vi.useFakeTimers();
+    mountSetup({ appId: 'app' });
+
+    act(() => getIframeProps()?.onUnresponsiveChange?.(true));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60000);
+    });
+
+    expect(
+      screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+    ).toBeNull();
+  });
+
+  it('clears an already-shown not-ready error once the editor is reported unresponsive', async () => {
+    vi.useFakeTimers();
+    mountSetup({ appId: 'app' });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60000);
+    });
+    expect(
+      screen.getByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+    ).toBeTruthy();
+
+    act(() => getIframeProps()?.onUnresponsiveChange?.(true));
 
     expect(
       screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),

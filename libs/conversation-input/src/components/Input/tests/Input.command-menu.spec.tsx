@@ -301,3 +301,49 @@ describe('Input — command menu opened by a paste', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 });
+
+describe('Input — commandMenu.onTextPaste (issue #9354)', () => {
+  const renderWithPasteHandler = (pasteTextThreshold?: number) => {
+    const calls: string[] = [];
+    const onTextPaste = vi.fn((text: string) => calls.push(`paste:${text}`));
+    const onChange = vi.fn((value: string) => calls.push(`change:${value}`));
+    render(
+      <Input
+        onSend={vi.fn()}
+        onChange={onChange}
+        pasteTextThreshold={pasteTextThreshold}
+        commandMenu={{ ...buildCommandMenu(vi.fn()), onTextPaste }}
+      />,
+    );
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    return { calls, onTextPaste, textarea };
+  };
+
+  it('reports an inline paste before the change that carries it', async () => {
+    const { calls, textarea } = renderWithPasteHandler();
+    await userEvent.click(textarea);
+
+    await userEvent.paste('Run /alpha');
+
+    expect(calls).toEqual(['paste:Run /alpha', 'change:Run /alpha']);
+  });
+
+  it('reports the pasted text with line endings normalized to \n', async () => {
+    const { onTextPaste, textarea } = renderWithPasteHandler();
+    await userEvent.click(textarea);
+
+    await userEvent.paste('one\r\ntwo');
+
+    expect(onTextPaste).toHaveBeenCalledWith('one\ntwo');
+  });
+
+  it('does not report a paste that becomes an attachment', async () => {
+    const { onTextPaste, textarea } = renderWithPasteHandler(5);
+    await userEvent.click(textarea);
+
+    await userEvent.paste('a long pasted text');
+
+    expect(textarea.value).toBe('');
+    expect(onTextPaste).not.toHaveBeenCalled();
+  });
+});

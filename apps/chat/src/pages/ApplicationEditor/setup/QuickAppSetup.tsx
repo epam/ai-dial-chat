@@ -74,6 +74,7 @@ const QuickAppSetup: FC<Props> = ({
   const pendingSaveRef = useRef<PendingSave | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [isUnresponsive, setIsUnresponsive] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   // Without an app there is nothing to save yet, so the page's Create stays available.
@@ -95,26 +96,31 @@ const QuickAppSetup: FC<Props> = ({
     readyKeyRef.current = key;
     setIsEditorReady(false);
     setIsLoggedOut(false);
+    setIsUnresponsive(false);
   }, [schema, appId]);
 
-  // Read by the readiness timeout so a LoggedOut signal arriving at any point before it fires is honored.
-  const isLoggedOutRef = useRef(isLoggedOut);
+  /*
+   * A logged-out or unresponsive editor never becomes ready, and both already
+   * explain why, so the generic "not ready" error would mislead. Read through
+   * a ref by the readiness timeout so a signal arriving before it fires is honored.
+   */
+  const isNotReadyExplained = isLoggedOut || isUnresponsive;
+  const isNotReadyExplainedRef = useRef(isNotReadyExplained);
   useEffect(() => {
-    isLoggedOutRef.current = isLoggedOut;
-  }, [isLoggedOut]);
+    isNotReadyExplainedRef.current = isNotReadyExplained;
+  }, [isNotReadyExplained]);
 
-  // A logged-out editor never becomes ready, so the generic "not ready" error would mislead.
   useEffect(() => {
-    if (!isLoggedOut) return;
+    if (!isNotReadyExplained) return;
     setSaveError((prev) =>
       prev === t(AppsEditorI18nKeys.ErrorSettingsNotReady) ? '' : prev,
     );
-  }, [isLoggedOut, t]);
+  }, [isNotReadyExplained, t]);
 
   useEffect(() => {
     if (!hasEditor || isEditorReady) return;
     const timeoutId = setTimeout(() => {
-      if (isLoggedOutRef.current) return;
+      if (isNotReadyExplainedRef.current) return;
       setSaveError(t(AppsEditorI18nKeys.ErrorSettingsNotReady));
     }, SETUP_READY_TIMEOUT_MS);
     return () => clearTimeout(timeoutId);
@@ -276,6 +282,7 @@ const QuickAppSetup: FC<Props> = ({
             onSaveError={handleSaveError}
             onReadyChange={setIsEditorReady}
             onLoggedOutChange={setIsLoggedOut}
+            onUnresponsiveChange={setIsUnresponsive}
           />
         </div>
       </div>

@@ -504,6 +504,8 @@ export const useSkillSelectorOverlay = ({
             triggerPrefix: SKILL_TRIGGER_PREFIX,
             menuLabel: addMenuLabel,
             emptyQueryHint: emptyQueryHintLabel,
+            /* A pasted `/{name}` that names a listed skill becomes a mention, exactly like an inserted prompt's (#9354). */
+            onTextPaste: recognizeMentionsInInsertion,
             renderMenu: ({
               query,
               caretPosition,
@@ -555,6 +557,7 @@ export const useSkillSelectorOverlay = ({
       mentions.anchors,
       onToggleFavorite,
       panelLabels,
+      recognizeMentionsInInsertion,
     ],
   );
 
