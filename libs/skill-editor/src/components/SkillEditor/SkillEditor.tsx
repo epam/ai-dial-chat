@@ -29,10 +29,12 @@ import {
   ButtonDropdown,
   ButtonVariant,
   CaptionText,
+  DIAL_ICON_SIZE,
   EditorThemes,
   ElementSize,
   ErrorText,
   GhostButton,
+  GhostIconButton,
   Label,
   PrimaryButton,
   Spinner,
@@ -561,26 +563,24 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const buildContextMenuItems = useCallback(
     (item: DialFile, pane: SkillFilesPane): DropdownItem[] => {
-      if (item.path === SKILL_MANIFEST_PATH || item.path === draftPath) {
+      /* A file has no menu: its only action is the inline delete button. */
+      if (
+        item.path === draftPath ||
+        item.nodeType !== DialFileNodeType.FOLDER
+      ) {
         return [];
       }
       const node: SkillFileTreeNode = {
         path: item.path,
         name: item.name,
-        kind:
-          item.nodeType === DialFileNodeType.FOLDER
-            ? SkillFileNodeKind.Folder
-            : SkillFileNodeKind.File,
+        kind: SkillFileNodeKind.Folder,
       };
       /* A folder lists its add entries directly, so uploading into it takes
          one click instead of an extra "Add child" submenu (issue #9301). */
-      const items: DropdownItem[] =
-        node.kind === SkillFileNodeKind.Folder
-          ? buildAddMenuItems(
-              resolveAddTarget(SkillAddSource.Child, node),
-              pane,
-            )
-          : [];
+      const items = buildAddMenuItems(
+        resolveAddTarget(SkillAddSource.Child, node),
+        pane,
+      );
       items.push(
         {
           key: 'add-sibling',
@@ -620,6 +620,26 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [buildContextMenuItems],
   );
 
+  const renderItemActions = useCallback(
+    (item: DialFile) => {
+      if (
+        item.nodeType === DialFileNodeType.FOLDER ||
+        item.path === SKILL_MANIFEST_PATH
+      ) {
+        return null;
+      }
+      return (
+        <GhostIconButton
+          size={ElementSize.Small}
+          icon={renderIcon(IconTrashX, removeIconClassName, DIAL_ICON_SIZE.SM)}
+          aria-label={t.deleteLabel ?? 'Delete'}
+          onClick={() => handleRemoveNode(item.path)}
+        />
+      );
+    },
+    [t.deleteLabel, removeIconClassName, handleRemoveNode],
+  );
+
   const renderFilesPane = (pane: SkillFilesPane) => (
     <div className="flex flex-col gap-2 desktop:gap-5">
       <div className="flex items-center justify-between">
@@ -643,6 +663,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           onExpandedPathsChange={handleExpandedPathsChange}
           onItemClick={handleTreeItemClick}
           getContextMenuItems={getContextMenuItems[pane]}
+          renderItemActions={renderItemActions}
           renamedPath={draftPane === pane ? draftPath : undefined}
           onRenameSave={draftFolder.handleSave}
           onRenameCancel={draftFolder.handleCancel}

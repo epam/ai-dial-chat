@@ -102,6 +102,7 @@ const renderFileNode = (file: DialFile, props: TreeProps): ReactNode => (
       <button onClick={() => props.onItemClick?.(file)}>{file.name}</button>
     )}
     {renderMenuItems(props.getContextMenuItems?.(file) ?? [])}
+    {props.renderItemActions?.(file)}
     {file.items?.map((child) => renderFileNode(child, props))}
   </li>
 );
@@ -214,6 +215,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  GhostIconButton: ({
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => <button aria-label={ariaLabel} onClick={onClick} />,
   NeutralButton: ({
     label,
     onClick,
@@ -445,7 +453,7 @@ describe('SkillEditor — files pane', () => {
     expect(screen.getAllByRole('button', { name: 'SKILL.md' })[0]).toBeTruthy();
   });
 
-  it('exposes no menu for the protected SKILL.md node', () => {
+  it('gives a file an inline Delete button and no menu, and SKILL.md neither', () => {
     renderEditor({
       files: [
         { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
@@ -453,10 +461,9 @@ describe('SkillEditor — files pane', () => {
     });
 
     // One Delete per rendered pane (mobile + desktop) for notes.md; none for SKILL.md.
-    expect(screen.getAllByRole('menuitem', { name: 'Delete' })).toHaveLength(2);
-    expect(screen.getAllByRole('list', { name: 'Add sibling' })).toHaveLength(
-      2,
-    );
+    expect(screen.getAllByRole('button', { name: 'Delete' })).toHaveLength(2);
+    expect(screen.queryAllByRole('menuitem')).toHaveLength(0);
+    expect(screen.queryByRole('list', { name: 'Add sibling' })).toBeNull();
   });
 
   it('commits a staged file when the batch validates and the user confirms', async () => {
@@ -663,7 +670,7 @@ describe('SkillEditor — files pane', () => {
       buildFileActions({ onRemoveNode }),
     );
 
-    await user.click(screen.getAllByRole('menuitem', { name: 'Delete' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
     expect(onRemoveNode).toHaveBeenCalledWith('notes.md');
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -680,7 +687,7 @@ describe('SkillEditor — files pane', () => {
     });
 
     await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
-    await user.click(screen.getAllByRole('menuitem', { name: 'Delete' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
     expect(onSelectedPathChange).toHaveBeenLastCalledWith('SKILL.md');
     expect(
@@ -934,7 +941,7 @@ describe('SkillEditor — node menu', () => {
     expect(screen.getAllByRole('menuitem', { name: 'Delete' })).toHaveLength(2);
   });
 
-  it('lists no direct add entries on a file', () => {
+  it('gives a file no menu, only the inline Delete button', () => {
     renderEditor(
       {
         files: [
@@ -944,10 +951,9 @@ describe('SkillEditor — node menu', () => {
       fullFileActions(),
     );
 
-    expect(queryDirectMenuItems('Upload files from device')).toHaveLength(0);
-    expect(screen.getAllByRole('list', { name: 'Add sibling' })).toHaveLength(
-      2,
-    );
+    expect(screen.queryAllByRole('menuitem')).toHaveLength(0);
+    expect(screen.queryByRole('list', { name: 'Add sibling' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Delete' })).toHaveLength(2);
   });
 
   it('stages an upload from a folder menu inside that folder', async () => {
@@ -960,19 +966,29 @@ describe('SkillEditor — node menu', () => {
     expect(await screen.findByText('docs/c.md')).toBeTruthy();
   });
 
-  it('stages an Add sibling upload next to a nested file', async () => {
+  it('stages an Add sibling upload next to a nested folder', async () => {
     const user = userEvent.setup({ delay: null });
-    renderEditor({ files: [docsFile] }, fullFileActions());
+    renderEditor(
+      {
+        files: [
+          docsFolder,
+          { path: 'docs/sub', name: 'sub', kind: SkillFileNodeKind.Folder },
+        ],
+      },
+      fullFileActions(),
+    );
 
-    // Scope to a.md's own row; the implied docs folder has an Add sibling of its own.
-    const [fileRow] = screen
+    // Scope to sub's own row; the parent docs folder has an Add sibling of its own.
+    const [folderRow] = screen
       .getAllByRole('listitem')
       .filter(
         (row) =>
-          within(row).queryByRole('button', { name: 'a.md' }) &&
+          within(row).queryByRole('button', { name: 'sub' }) &&
           within(row).queryAllByRole('listitem').length === 0,
       );
-    const sibling = within(fileRow).getByRole('list', { name: 'Add sibling' });
+    const sibling = within(folderRow).getByRole('list', {
+      name: 'Add sibling',
+    });
     await user.click(
       within(sibling).getByRole('menuitem', {
         name: 'Upload files from device',
@@ -998,14 +1014,7 @@ describe('SkillEditor — node menu', () => {
   });
 
   it('renders Delete as a danger item and leaves the Add entries neutral', () => {
-    renderEditor(
-      {
-        files: [
-          { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
-        ],
-      },
-      fullFileActions(),
-    );
+    renderEditor({ files: [docsFolder] }, fullFileActions());
 
     for (const item of screen.getAllByRole('menuitem', { name: 'Delete' })) {
       expect(item.className).toBe('text-error');
@@ -1017,10 +1026,11 @@ describe('SkillEditor — node menu', () => {
     }
   });
 
-  it('labels the Delete entry with a host deleteLabel', () => {
+  it('labels the folder Delete entry and the file Delete button with a host deleteLabel', () => {
     renderEditor(
       {
         files: [
+          docsFolder,
           { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
         ],
         labels: { deleteLabel: 'Entfernen' },
@@ -1029,6 +1039,9 @@ describe('SkillEditor — node menu', () => {
     );
 
     expect(screen.getAllByRole('menuitem', { name: 'Entfernen' })).toHaveLength(
+      2,
+    );
+    expect(screen.getAllByRole('button', { name: 'Entfernen' })).toHaveLength(
       2,
     );
   });
