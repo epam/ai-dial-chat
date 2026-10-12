@@ -150,10 +150,10 @@ the `files` prop and never exposes a rename/move/delete affordance.
 ### Adding files and folders
 
 The Files pane header renders an **Add** dropdown (ui-kit `ButtonDropdown`), and
-every node except `SKILL.md` has a context menu. A folder lists the Add
-dropdown's entries directly (adding into that folder), then **Add sibling** and
-**Delete**; a file lists **Add sibling** and **Delete**. Add sibling is a
-submenu holding the same entries as the Add dropdown. An entry appears only
+every folder has a context menu. A folder lists the Add dropdown's entries
+directly (adding into that folder), then **Add sibling** and **Delete**. A file
+has no menu, only an inline **Delete** button shown on row hover; `SKILL.md` has
+neither. Add sibling is a submenu holding the same entries as the Add dropdown. An entry appears only
 when its host capability is supplied:
 
 | Entry                      | Requires                         | Behaviour                                                                                                             |
