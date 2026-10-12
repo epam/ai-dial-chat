@@ -1,0 +1,9 @@
+// Reads the same vars `ConfirmationView` sets on its root, so one override themes the whole body.
+
+.names {
+  color: var(--cfm-message-text, var(--text-primary, #161b2d));
+}
+
+.more {
+  color: var(--cfm-consequence-text, var(--text-secondary, #57647a));
+}

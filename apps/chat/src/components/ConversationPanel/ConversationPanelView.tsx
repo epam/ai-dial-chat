@@ -28,12 +28,10 @@ import {
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  ConfirmationDialog,
-  ConfirmationIdentityRow,
   ConversationTransferErrorCode,
+  DeleteConfirmationDialog,
   FilterTab,
   mergeClasses,
-  ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -106,6 +104,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';
+import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTransferQueueLabels } from '../../hooks/useTransferQueueLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -204,6 +203,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
+  const deleteConfirmationLabels = useDeleteConfirmationLabels();
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -1396,23 +1396,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         />
       </div>
 
-      <ConfirmationDialog
+      <DeleteConfirmationDialog
         open={isDeletePending}
         title={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
-        variant={ConfirmationPopupVariant.Danger}
-        identity={
-          <ResourceSummary>
-            <ConfirmationIdentityRow
-              icon={
-                <IconMessageCircle
-                  size={DIAL_ICON_SIZE.MD}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  aria-hidden
-                />
-              }
-              name={pendingDeleteTitle}
-            />
-          </ResourceSummary>
+        names={[pendingDeleteTitle]}
+        icon={
+          <IconMessageCircle
+            size={DIAL_ICON_SIZE.MD}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+          />
         }
         message={
           <Trans
@@ -1421,16 +1414,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             components={CONFIRMATION_BOLD_COMPONENTS}
           />
         }
-        consequences={[t(BasicI18nKeys.ConsequenceCannotBeUndone)]}
-        confirmLabel={t(ButtonsI18nKeys.Delete)}
-        cancelLabel={t(ButtonsI18nKeys.Cancel)}
+        labels={deleteConfirmationLabels}
         isLoading={isDeleting}
-        loadingStatusLabel={t(BasicI18nKeys.DeletingStatus)}
         onConfirm={handleConfirmDelete}
         onClose={handleCloseDeleteDialog}
       >
         {deleteError && <ErrorMessageNotification message={deleteError} />}
-      </ConfirmationDialog>
+      </DeleteConfirmationDialog>
 
       <ConfirmationPopup
         open={isUnpublishPending}

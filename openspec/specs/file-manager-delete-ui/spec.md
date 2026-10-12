@@ -231,10 +231,10 @@ Every host of the file manager's delete confirmation — `ConversationView`, `Ne
 />
 ```
 
-`FileDeleteConfirmContent` (`apps/chat/src/components/FileDeleteConfirmContent/FileDeleteConfirmContent.tsx`) SHALL render the shared `ConfirmationView` from `@epam/ai-dial-chat-shared` in its `ConfirmationPopupVariant.Danger` variant (see the `shared-delete-confirmation` spec), so the Files body matches every other delete surface:
+`FileDeleteConfirmContent` (`apps/chat/src/components/FileDeleteConfirmContent/FileDeleteConfirmContent.tsx`) SHALL render the shared `DeleteConfirmationView` from `@epam/ai-dial-chat-shared` with the basenames as `names` and its strings from `useDeleteConfirmationLabels` (see the `shared-delete-confirmation` spec), so the Files body matches every other delete surface:
 
 - **Identity card** — a plain neutral `ResourceSummary` (no danger tint) wrapping a `ConfirmationIdentityRow` with no icon and no type label: the item's name for a single item, the pluralized count (`dialFileManager.deleteConfirmItemCount`, e.g. "3 items") for several.
-- **Message** — `dialFileManager.deleteConfirmMessageSingle` / `deleteConfirmMessageMultiple`, with the name or the count bold via `CONFIRMATION_BOLD_COMPONENTS`. For several items the message is followed by a list of the selected names, capped at ten (`MAX_LISTED_NAMES`), with a trailing "… and N more" row (`dialFileManager.deleteConfirmMoreItems`) when the selection is longer, so a long selection cannot push the actions off screen.
+- **Message** — `dialFileManager.deleteConfirmMessageSingle` / `deleteConfirmMessageMultiple`, with the name or the count bold via `CONFIRMATION_BOLD_COMPONENTS`. For several items the message is followed by a list of the selected names, capped at ten (`DELETE_CONFIRMATION_MAX_LISTED_NAMES`) and rendered outside the message paragraph, with a trailing "… and N more" row (`dialFileManager.deleteConfirmMoreItems`) when the selection is longer, so a long selection cannot push the actions off screen.
 - **Consequences** — the single bullet `basic.consequenceCannotBeUndone` ("Cannot be undone").
 
 Names are shown as basenames: the grid reports each entry as a DIAL resource path (`files/{bucket}/path/file.pdf`), and the content uses `.split('/').pop()` so the dialog names the item, not its location.

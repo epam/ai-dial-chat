@@ -759,7 +759,8 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 ```
 
 Pass `identity` to replace the default card for a resource that has no
-`EntityHeaderItem`, and `children` for a step that needs an input before it can
+`EntityHeaderItem`, `details` for content between the message and the bullets
+(such as the names a bulk action affects), and `children` for a step that needs an input before it can
 be confirmed — the caller owns that input's state and disables confirming
 until it is satisfied. With neither `item` nor `identity` the card is omitted,
 which suits a confirmation that is not about a particular resource.
@@ -848,6 +849,63 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
   onConfirm={handleDelete}
   onClose={closeDelete}
 />;
+```
+
+### DeleteConfirmationView
+
+The delete confirmation body every delete surface shows, built on
+[`ConfirmationView`](#confirmationview). Pass `names`: one name goes in a
+neutral `ResourceSummary` card, with the optional `icon` and `typeLabel`;
+several are counted in the card (`labels.itemCount`) and listed under the
+message, up to `maxListedNames` (10), with the rest summed up by
+`labels.moreItems`. `consequences` are listed before the final
+`labels.cannotBeUndone` bullet. Use it bare where a host owns the dialog frame,
+such as the file manager's `deleteConfirmBody`.
+
+```tsx
+import { DeleteConfirmationView } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationView
+  names={['report.pdf', 'notes.txt']}
+  message={
+    <>
+      Are you sure you want to delete <strong>2 items</strong>? This action is
+      permanent and cannot be undone.
+    </>
+  }
+/>;
+```
+
+### DeleteConfirmationDialog
+
+[`DeleteConfirmationView`](#deleteconfirmationview) in the kit's `Popup` with a
+danger [`ConfirmationFooter`](#confirmationfooter), for one resource or a
+selection. Like [`ConfirmationDialog`](#confirmationdialog), it blocks every
+dismissal route while `isLoading` is set. All strings have English defaults and
+can be overridden through `labels` (`confirm`, `cancel`, `deleting`,
+`cannotBeUndone`, `itemCount`, `moreItems`). `children` render after the
+consequences, for an inline error.
+
+```tsx
+import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationDialog
+  open={isDeleteOpen}
+  title="Delete chat"
+  names={[conversation.title]}
+  icon={<IconMessageCircle aria-hidden />}
+  message={
+    <>
+      Are you sure you want to delete <strong>{conversation.title}</strong>?
+      This action is permanent and cannot be undone.
+    </>
+  }
+  isLoading={isDeleting}
+  onConfirm={handleDelete}
+  onClose={closeDelete}
+>
+  {error && <ErrorMessageNotification message={error} />}
+</DeleteConfirmationDialog>;
 ```
 
 ### TextRefinementField
