@@ -114,6 +114,11 @@
       "skills": "skills"
     },
     "noResultsTitle": "No results for \"{{query}}\"",
+    "myAppsEmpty": {
+      "title": "No personal {{entities}} yet",
+      "titleGeneric": "No personal items yet",
+      "description": "Create your first one, it'll show up right here."
+    },
     "sorts": {
       "recentlyUpdated": "Recently Updated",
       "newest": "Newest",

@@ -1,4 +1,8 @@
-import type { CatalogCreateSearch, CatalogItem } from '@epam/ai-dial-catalog';
+import type {
+  CatalogCreateSearch,
+  CatalogItem,
+  CatalogTabCreateMenu,
+} from '@epam/ai-dial-catalog';
 import type {
   ApplicationSchemaSummaryDto,
   DeploymentItemDto,
@@ -13,6 +17,14 @@ import {
 } from '../../shared/application-schema';
 import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
+
+// Every label this hook builds is a string, so runners and the static options sort together.
+const sortByLabel = (options: DropdownItem[]): DropdownItem[] =>
+  [...options].sort((a, b) =>
+    String(a.label ?? '').localeCompare(String(b.label ?? ''), undefined, {
+      sensitivity: 'base',
+    }),
+  );
 
 /** A host notification `useCatalogEditNavigation` asks to be shown for a failed delete. */
 export interface CatalogEditNavigationNotification {
@@ -103,6 +115,8 @@ export interface UseCatalogEditNavigationResult {
   createOptions: DropdownItem[];
   /** The Create menu's search field state, or `undefined` when no runner option is offered. */
   createSearch: CatalogCreateSearch | undefined;
+  /** The Create menu narrowed to each entity type; models have no entry since they cannot be created. */
+  createMenuByType: Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>;
 }
 
 /**
@@ -222,47 +236,43 @@ export const useCatalogEditNavigation = ({
     ],
   );
 
-  const createOptions = useMemo<DropdownItem[]>(() => {
+  const createMenuParts = useMemo(() => {
     const query = createSearchQuery.trim().toLocaleLowerCase();
     const isMatch = (label: string) =>
       !query || label.toLocaleLowerCase().includes(query);
-    const options: DropdownItem[] = [];
-
-    if (isRunnerCreationEnabled) {
-      runnerSchemas
-        .map((schema) => ({
-          id: schema.id,
-          label: schema.displayName || schema.id,
-        }))
-        .filter((runner) => isMatch(runner.label))
-        .forEach((runner) => {
-          options.push({
+    const runnerOptions: DropdownItem[] = isRunnerCreationEnabled
+      ? runnerSchemas
+          .map((schema) => ({
+            id: schema.id,
+            label: schema.displayName || schema.id,
+          }))
+          .filter((runner) => isMatch(runner.label))
+          .map((runner) => ({
             key: `runner:${runner.id}`,
             label: runner.label,
             onClick: () => onNavigate(urls.buildQuickAppCreateUrl(runner.id)),
-          });
-        });
-    }
+          }))
+      : [];
 
-    if (isToolsetsEnabled && isMatch(labels.createToolset)) {
-      options.push({
-        key: 'toolset',
-        label: labels.createToolset,
-        onClick: () => onNavigate(urls.buildToolsetCreateUrl()),
-      });
-    }
+    const toolsetOption: DropdownItem | undefined =
+      isToolsetsEnabled && isMatch(labels.createToolset)
+        ? {
+            key: 'toolset',
+            label: labels.createToolset,
+            onClick: () => onNavigate(urls.buildToolsetCreateUrl()),
+          }
+        : undefined;
 
-    if (
+    const customAppOption: DropdownItem | undefined =
       isCustomAppsEnabled &&
       !isHideCustomAppCreationEnabled &&
       isMatch(labels.createCustomApp)
-    ) {
-      options.push({
-        key: 'custom-app',
-        label: labels.createCustomApp,
-        onClick: () => onNavigate(urls.buildCustomAppCreateUrl()),
-      });
-    }
+        ? {
+            key: 'custom-app',
+            label: labels.createCustomApp,
+            onClick: () => onNavigate(urls.buildCustomAppCreateUrl()),
+          }
+        : undefined;
 
     const skillChildren: DropdownItem[] = [
       {
@@ -280,28 +290,23 @@ export const useCatalogEditNavigation = ({
     const visibleSkillChildren = isMatch(labels.createSkill)
       ? skillChildren
       : skillChildren.filter((child) => isMatch(String(child.label)));
-    if (visibleSkillChildren.length > 0) {
-      options.push({
-        key: 'skill',
-        label: labels.createSkill,
-        children: visibleSkillChildren,
-      });
-    }
 
-    if (isPromptsEnabled && isMatch(labels.createPrompt)) {
-      options.push({
-        key: 'prompt',
-        label: labels.createPrompt,
-        onClick: () => onNavigate(urls.buildPromptCreateUrl()),
-      });
-    }
+    const promptOption: DropdownItem | undefined =
+      isPromptsEnabled && isMatch(labels.createPrompt)
+        ? {
+            key: 'prompt',
+            label: labels.createPrompt,
+            onClick: () => onNavigate(urls.buildPromptCreateUrl()),
+          }
+        : undefined;
 
-    // Every label this hook builds is a string, so runners and the static options sort together.
-    return options.sort((a, b) =>
-      String(a.label ?? '').localeCompare(String(b.label ?? ''), undefined, {
-        sensitivity: 'base',
-      }),
-    );
+    return {
+      runnerOptions,
+      toolsetOption,
+      customAppOption,
+      visibleSkillChildren,
+      promptOption,
+    };
   }, [
     createSearchQuery,
     isRunnerCreationEnabled,
@@ -316,6 +321,28 @@ export const useCatalogEditNavigation = ({
     onSkillUploadClick,
   ]);
 
+  const createOptions = useMemo<DropdownItem[]>(() => {
+    const {
+      runnerOptions,
+      toolsetOption,
+      customAppOption,
+      visibleSkillChildren,
+      promptOption,
+    } = createMenuParts;
+    const options: DropdownItem[] = [...runnerOptions];
+    if (toolsetOption) options.push(toolsetOption);
+    if (customAppOption) options.push(customAppOption);
+    if (visibleSkillChildren.length > 0) {
+      options.push({
+        key: 'skill',
+        label: labels.createSkill,
+        children: visibleSkillChildren,
+      });
+    }
+    if (promptOption) options.push(promptOption);
+    return sortByLabel(options);
+  }, [createMenuParts, labels.createSkill]);
+
   const createSearch = useMemo<CatalogCreateSearch | undefined>(
     () =>
       isRunnerCreationEnabled && runnerSchemas.length > 0
@@ -324,10 +351,39 @@ export const useCatalogEditNavigation = ({
     [isRunnerCreationEnabled, runnerSchemas.length, createSearchQuery],
   );
 
+  const createMenuByType = useMemo<
+    Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>
+  >(() => {
+    const {
+      runnerOptions,
+      toolsetOption,
+      customAppOption,
+      visibleSkillChildren,
+      promptOption,
+    } = createMenuParts;
+    // Models are never created from the catalog, so they get no entry.
+    return {
+      [CatalogEntityType.Agent]: {
+        options: sortByLabel(
+          customAppOption ? [...runnerOptions, customAppOption] : runnerOptions,
+        ),
+        search: createSearch,
+      },
+      [CatalogEntityType.Toolset]: {
+        options: toolsetOption ? [toolsetOption] : [],
+      },
+      [CatalogEntityType.Skill]: { options: visibleSkillChildren },
+      [CatalogEntityType.Prompt]: {
+        options: promptOption ? [promptOption] : [],
+      },
+    };
+  }, [createMenuParts, createSearch]);
+
   return {
     handleEdit,
     handleDelete,
     createOptions,
     createSearch,
+    createMenuByType,
   };
 };

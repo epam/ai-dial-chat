@@ -82,7 +82,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0
+- `@epam/ai-dial-ui-kit` ^0.15.1
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -3570,12 +3570,13 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name            | Type                                   | Description                                                                                                                                                   |
-| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                        |
-| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                    |
-| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query. |
-| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                             |
+| Name               | Type                                                       | Description                                                                                                                                                                                                        |
+| ------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `handleEdit`       | `(item: CatalogItem) => void`                              | Navigates to the right editor URL for the item's type.                                                                                                                                                             |
+| `handleDelete`     | `(item: CatalogItem) => Promise<void>`                     | Deletes the item and notifies the outcome.                                                                                                                                                                         |
+| `createOptions`    | `DropdownItem[]`                                           | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query.                                                      |
+| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                                                                  |
+| `createMenuByType` | `Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>` | The same menu narrowed per entity type, for `Catalog`'s `createMenuByTab` prop: agents get the runners and custom app (with `createSearch`), toolsets, skills and prompts their own options; models have no entry. |
 
 ```tsx
 import {

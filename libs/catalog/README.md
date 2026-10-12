@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.1 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -282,7 +282,27 @@ const browseSettings: Partial<BrowseSettingsSheetLabels> = {
 
 By default, the Browse section renders a `PanelEmptyState` (an icon plus
 `titles.noResultsTitle`) when the current search/filter/tab combination
-matches nothing. Pass `renderEmptyState` to replace it with any node — e.g. a
+matches nothing. While the "My Apps" filter is on with no search query and no
+topic filter, it instead renders a personal empty state: the heading from
+`titles.myAppsEmptyTitle(activeTab)`, the `titles.myAppsEmptyDescription` line
+and — unless the catalog is read-only or `hideCreateButton` is set — the same
+Create button as the page header, in its secondary variant. Pass
+`createMenuByTab` to narrow that button to the active tab's type: a single
+option runs directly, several open a menu, and a tab with no entry (e.g. models,
+which are never personal) keeps the default empty state instead:
+
+```tsx
+<Catalog
+  items={catalogItems}
+  favorites={favoriteItems}
+  titles={{
+    myAppsEmptyTitle: (activeTab) => `No personal ${activeTab}s yet`,
+    myAppsEmptyDescription: "Create your first one, it'll show up right here.",
+  }}
+/>
+```
+
+Pass `renderEmptyState` to replace either default with any node — e.g. a
 richer illustration, description, and a scoped "Create" call to action:
 
 ```tsx

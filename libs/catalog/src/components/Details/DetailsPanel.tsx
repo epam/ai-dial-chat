@@ -1258,10 +1258,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             {!isReadonly && isOpen && renderCredentials?.(item)}
 
             <div className="flex items-center px-6">
+              {/* The tab row scrolls on its own so a narrow panel never scrolls sideways as a whole. */}
               <Tabs
                 tabs={tabs}
                 activeTabId={activeTab}
                 onTabChange={setActiveTab}
+                className={mergeClasses(
+                  'min-w-0 flex-1 overflow-x-auto',
+                  styles.tabsScroll,
+                )}
+                tabClassName="shrink-0"
               />
               {isDetailsLoading && (
                 <div
