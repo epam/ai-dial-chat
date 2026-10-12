@@ -136,8 +136,9 @@ export const TitleRow: FC<TitleRowProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Row 1: title | view toggle | divider | sort */}
-      <div className="flex items-center gap-2">
+      {/* Row 1: title | view toggle | divider | sort. Wraps so the controls
+          drop below the title instead of overflowing a narrow (mobile) modal. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
         {browseHeaderRenderer ?? (
           <ItemHeader
             title={title}
@@ -153,7 +154,9 @@ export const TitleRow: FC<TitleRowProps> = ({
           />
         )}
 
-        <div className="ms-auto flex shrink-0 items-center gap-2">
+        {/* At mobile the controls take their own full-width line: view toggle
+            at the start, sort at the end, no divider between them. */}
+        <div className="ms-auto flex shrink-0 items-center gap-2 mobile:w-full mobile:justify-between">
           <SegmentedControl
             aria-label={viewToggleLabel}
             value={viewMode}
@@ -164,7 +167,10 @@ export const TitleRow: FC<TitleRowProps> = ({
           {sortOptions != null && sortOptions.length > 0 && (
             <>
               <div
-                className={mergeClasses('h-4 w-px shrink-0', styles.divider)}
+                className={mergeClasses(
+                  'h-4 w-px shrink-0 mobile:hidden',
+                  styles.divider,
+                )}
               />
 
               {/* The trigger shows the applied order and the menu marks it

@@ -1425,7 +1425,7 @@
     "reloadCancelLabel": "Cancel",
     "unsavedChangesTitle": "Discard unsaved changes?",
     "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
-    "unsavedChangesConfirmLabel": "Discard changes",
+    "unsavedChangesConfirmLabel": "Discard",
     "unsavedChangesCancelLabel": "Keep editing",
     "uploadDialogTitle": "Upload files from device",
     "uploadDropZoneLabel": "Drag and drop it or click here to upload",
