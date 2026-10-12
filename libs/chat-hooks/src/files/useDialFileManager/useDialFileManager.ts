@@ -116,6 +116,8 @@ export const useDialFileManager = ({
     rootLabel,
     bumpRetry: listing.bumpRetry,
     onNotification,
+    onOperationSuccess,
+    removeSharedRootItems: listing.removeSharedRootItems,
   });
 
   const metadata = useDialFileMetadata({
