@@ -245,7 +245,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     >
       <div
         className={mergeClasses(
-          'flex min-h-16 shrink-0 items-center justify-between gap-2 px-4 py-2 desktop:h-16 desktop:flex-nowrap desktop:px-8 desktop:py-0',
+          'flex min-h-16 shrink-0 items-start justify-between gap-2 px-4 py-2 desktop:h-16 desktop:flex-nowrap desktop:items-center desktop:px-8 desktop:py-0',
           styles.header,
         )}
       >
@@ -395,7 +395,12 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                     ? { tooltip: startNowBusyReason }
                     : undefined
                 }
-                className="min-h-11 shrink-0"
+                textClassName={styles.actionLabel}
+                className={mergeClasses(
+                  'min-h-11 shrink-0',
+                  styles.actionButton,
+                  styles.roundActionButton,
+                )}
               />
             </div>
           )}
