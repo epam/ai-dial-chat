@@ -32,6 +32,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
       <UserMessageBubble
         {...props}
         textSegments={textSegments}
+        markdownUrlTransform={markdownUrlTransform}
         onAttachmentClick={onAttachmentClick}
       />
     );

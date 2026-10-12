@@ -4,7 +4,7 @@ Message display components for rendering conversation history — user, assistan
 
 ## Overview
 
-`@epam/ai-dial-conversation-messages` provides the visual building blocks for rendering a chat transcript. It solves the problem of consistently displaying messages from different roles — users, assistant, and system — without duplicating bubble layout, markdown rendering, or action toolbar logic across every view that needs a conversation thread. Each role has a dedicated bubble component: `UserMessageBubble` renders plain text with collapse-on-overflow and optional attachments, `AssistantMessageBubble` renders streaming markdown with code blocks, quick-reply starters, a deployment icon, and a slot for extra content such as a stages panel, and `StatusMessageBubble` renders a full-width info banner for in-timeline notices like a model switch. The `MessageActions` toolbar provides role-appropriate actions in a consistent position relative to any bubble — copy, edit, and delete for user messages, regenerate, copy, and like/dislike for assistant messages. All components accept `styles` overrides so host applications can theme the transcript area without forking the components.
+`@epam/ai-dial-conversation-messages` provides the visual building blocks for rendering a chat transcript. It solves the problem of consistently displaying messages from different roles — users, assistant, and system — without duplicating bubble layout, markdown rendering, or action toolbar logic across every view that needs a conversation thread. Each role has a dedicated bubble component: `UserMessageBubble` renders markdown (with raw HTML kept literal) with collapse-on-overflow and optional attachments, `AssistantMessageBubble` renders streaming markdown with code blocks, quick-reply starters, a deployment icon, and a slot for extra content such as a stages panel, and `StatusMessageBubble` renders a full-width info banner for in-timeline notices like a model switch. The `MessageActions` toolbar provides role-appropriate actions in a consistent position relative to any bubble — copy, edit, and delete for user messages, regenerate, copy, and like/dislike for assistant messages. All components accept `styles` overrides so host applications can theme the transcript area without forking the components.
 
 ## Installation
 
@@ -81,24 +81,37 @@ For a complete hook, message body, action and upload composition, see
 
 ### UserMessageBubble
 
-Renders a user message with text content and optional attachments. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle. Pass `textSegments` to render an ordered array of content in place of `text` inside the same paragraph — interleaved plain-text runs and inline elements (e.g. skill-mention chips at their text position). `text` is still required alongside `textSegments`: it stays the identity/measurement input for the collapse-height calculation even when `textSegments` is what actually renders. With no `textSegments`, `text` renders unchanged.
+Renders a user message with optional attachments. The text renders as markdown through the same pipeline as `AssistantMessageBubble` (code blocks, lists, tables, links, `$$` math), except that raw HTML in the text is shown as literal characters rather than parsed. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle; the measured height includes code blocks and tables.
+
+The markdown presentation props are shared with the assistant bubble: `markdownClassNames`, `markdownUrlTransform`, `codeBlockTheme`, `tableOnOpenInCanvas`, and the code-block, table and formula labels on `labels` (`UserMessageBubbleLabels`, which extends `MarkdownContentLabels`). The bubble takes no `markdownComponents` and no `responseFormat`: user text always renders as markdown.
+
+Pass `textSegments` (a `TextSegment[]` from `@epam/ai-dial-chat-shared`) to render inline elements such as skill-mention chips at their text position. String entries are markdown source; each `{ text, node }` entry renders `node` at its position in the markdown output, or its literal `text` inside code and link text. `text` is still required alongside `textSegments`: it stays the identity input for the collapse state. With no `textSegments`, `text` renders as markdown directly.
 
 ```tsx
+import type { TextSegment } from '@epam/ai-dial-chat-shared';
 import {
   UserMessageBubble,
   BubblePosition,
 } from '@epam/ai-dial-conversation-messages';
 
+const messageTextSegments: TextSegment[] = [
+  { text: '/review', node: <SkillChip key="review" name="review" /> },
+  ' this `diff`, please',
+];
+
 <UserMessageBubble
-  text={message.content}
+  text="/review this `diff`, please"
   position={BubblePosition.Bottom}
   attachments={message.attachments}
   textSegments={messageTextSegments}
+  markdownUrlTransform={resolveMarkdownUrl}
+  codeBlockTheme={codeBlockTheme}
   onAttachmentClick={handleAttachmentClick}
   onDownloadAll={handleDownloadAll}
   labels={{
     attachmentClickLabel: 'Open in canvas',
     attachmentDownloadLabel: 'Download file',
+    codeBlockCopyLabel: 'Copy code',
   }}
   actions={{ onEdit: handleEdit, onDelete: handleDelete }}
 />;
@@ -185,7 +198,7 @@ import { StatusMessageBubble } from '@epam/ai-dial-conversation-messages';
 
 ### MessageBubble
 
-Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields (`position`, `collapsedLineCount`, `textSegments`) and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known. `beforeContent` is forwarded only to the assistant bubble; `textSegments` is forwarded only to the user bubble (status messages ignore both).
+Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields (`position`, `collapsedLineCount`, `textSegments`) and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known. `beforeContent`, `markdownComponents` and `responseFormat` are forwarded only to the assistant bubble; `textSegments` is forwarded only to the user bubble (status messages ignore all of them). The shared markdown props (`markdownClassNames`, `markdownUrlTransform`, `codeBlockTheme`, `tableOnOpenInCanvas`) reach both bubbles.
 
 ```tsx
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -315,7 +328,9 @@ import type {
   MessageBubbleColors,
   MessageBubbleTypography,
   MessageBubbleLabels,
+  UserMessageBubbleLabels,
   AssistantMessageBubbleLabels,
+  MarkdownContentLabels,
   MessageActionsProps,
   MessageActionLabels,
   MessageActionColors,

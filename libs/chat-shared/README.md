@@ -393,6 +393,10 @@ must explicitly override `components.cit` to turn it into interactive UI.
 Pass `urlTransform` to rewrite `href`/`src` values (for example mapping DIAL
 `files/{bucket}/{path}` ids to host download URLs) before they are rendered;
 the result still goes through react-markdown's protocol allowlist.
+Raw HTML in `content` is parsed into elements (then sanitized) by default; set
+`isRawHtmlEnabled={false}` to show it as the literal characters instead, for
+text a person typed, such as a question about `<div>`. `rehypePlugins` adds
+plugins that run after sanitization.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
@@ -414,7 +418,8 @@ than an inline object. It forwards the code-block labels (`codeBlockCopyLabel`,
 `codeBlockCopiedLabel`, `codeBlockDownloadLabel`), the table action labels and
 the `tableScrollRegionAriaLabel`/`mathScrollRegionAriaLabel` region labels to
 `MarkdownRenderer`. Pass `urlTransform` to rewrite markdown `href`/`src` values
-the same way as `MarkdownRenderer`. Pass `isPlainText` to render the body
+the same way as `MarkdownRenderer`; `rehypePlugins` and `isRawHtmlEnabled` are
+forwarded to it too. Pass `isPlainText` to render the body
 through `PlainTextRenderer` instead — the conversation's `plain_text` response
 format — in which case the markdown-only props are ignored.
 
@@ -431,6 +436,44 @@ import {
   urlTransform={resolveMarkdownUrl}
 />;
 ```
+
+### Inline segments in markdown
+
+Render React elements (for example skill-mention chips) at their position
+inside markdown text. Describe the text as a `TextSegment[]`: string entries
+are markdown source, and each `InlineTextSegment` (`{ text, node }`) is an
+element plus the literal source text it stands for.
+`buildInlineSegmentSource` swaps every inline segment for an opaque token the
+markdown parser leaves alone; `createRehypeInlineSegments` turns each token
+back into an element, or into the segment's literal `text` inside code, link
+text and `href`/`src` values; `createInlineSegmentComponents` renders those
+elements as each segment's `node`. If a string entry already contains a token
+character, the source falls back to plain text with no inline segments.
+
+```tsx
+import {
+  buildInlineSegmentSource,
+  createInlineSegmentComponents,
+  createRehypeInlineSegments,
+  MDMessageViewer,
+  type TextSegment,
+} from '@epam/ai-dial-chat-shared';
+
+const segments: TextSegment[] = [
+  { text: '/review', node: <SkillChip key="review" name="review" /> },
+  ' this **diff**',
+];
+const { source, inlineSegments } = buildInlineSegmentSource(segments);
+
+<MDMessageViewer
+  content={source}
+  rehypePlugins={[createRehypeInlineSegments(inlineSegments)]}
+  components={createInlineSegmentComponents(inlineSegments)}
+/>;
+```
+
+Memoise the three values on `segments`: `MDMessageViewer` is memoised, so new
+plugin and component references re-parse the markdown.
 
 ### PlainTextRenderer
 

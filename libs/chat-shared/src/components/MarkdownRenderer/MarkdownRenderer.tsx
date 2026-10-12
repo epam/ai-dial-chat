@@ -21,6 +21,7 @@ import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownConte
 import { CodeBlockTheme } from '../../types/code-editor';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { preprocessLaTeX } from '../../utils/latex';
+import { rehypeRawAsText } from '../../utils/markdown-html';
 import { mergeClasses } from '../../utils/merge-class';
 import { MarkdownCodeBlock } from './CodeBlock/CodeBlock';
 import styles from './MarkdownRenderer.module.scss';
@@ -114,6 +115,8 @@ export interface MarkdownRendererProps {
   urlTransform?: (url: string) => string;
   /** Extra rehype plugins, applied after the built-in KaTeX pass. Defaults to none. */
   rehypePlugins?: NonNullable<Options['rehypePlugins']>;
+  /** When `false`, raw HTML in `content` renders as literal text instead of being parsed into elements. Defaults to `true`. */
+  isRawHtmlEnabled?: boolean;
   /**
    * Label shown with a shimmer animation while `isStreaming` is true and no content has arrived yet.
    * Defaults to `'Thinking'`. Pass a translated string from the consuming app.
@@ -247,6 +250,14 @@ const mathMLAttributes: Record<string, string[]> = {
  */
 const preKatexRehypePlugins: NonNullable<Options['rehypePlugins']> = [
   rehypeRaw,
+];
+
+/*
+ * Replaces `rehypeRaw` when raw HTML is disabled: `rehypeSanitize` drops
+ * `raw` nodes outright, so they are turned into text before it runs.
+ */
+const rawAsTextRehypePlugins: NonNullable<Options['rehypePlugins']> = [
+  rehypeRawAsText,
 ];
 
 /**
@@ -620,6 +631,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     components,
     urlTransform,
     rehypePlugins = EMPTY_REHYPE_PLUGINS,
+    isRawHtmlEnabled = true,
     thinkingLabel = 'Thinking',
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
@@ -682,16 +694,17 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     /*
      * Pipeline order matters: raw HTML is re-parsed first, KaTeX (once loaded)
      * turns math spans into MathML, and sanitization runs last over everything
-     * both passes produced.
+     * both passes produced. With raw HTML disabled, raw nodes become literal
+     * text instead of being re-parsed.
      */
     const effectiveRehypePlugins = useMemo(
       () => [
-        ...preKatexRehypePlugins,
+        ...(isRawHtmlEnabled ? preKatexRehypePlugins : rawAsTextRehypePlugins),
         ...(katexPlugin ? [katexPlugin] : []),
         sanitizeRehypePlugin,
         ...rehypePlugins,
       ],
-      [katexPlugin, rehypePlugins],
+      [isRawHtmlEnabled, katexPlugin, rehypePlugins],
     );
 
     const cssVars = buildCssVars({

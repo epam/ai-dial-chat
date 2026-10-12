@@ -15,6 +15,8 @@ export type {
   MessageBubbleTypography,
   MessageBubbleLabels,
   AssistantMessageBubbleLabels,
+  UserMessageBubbleLabels,
+  MarkdownContentLabels,
 } from './models/message-bubble';
 export type {
   MessageSelectionReplyColors,

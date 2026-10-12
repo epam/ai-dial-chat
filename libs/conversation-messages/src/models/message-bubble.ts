@@ -5,6 +5,7 @@ import type {
   MessageRole,
   ResponseFormat,
   StarterOption,
+  TextSegment,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode, Ref } from 'react';
 import type { Components } from 'react-markdown';
@@ -71,12 +72,8 @@ export interface MessageBubbleLabels {
   statusBodyText?: string;
 }
 
-/** Localised labels for the `AssistantMessageBubble` component. */
-export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
-  /** aria-label for the quick-reply list. Defaults to `"Quick reply buttons"`. */
-  startersAriaLabel?: string;
-  /** Shimmer placeholder shown while streaming and message text is empty. Defaults to `'Thinking'`. */
-  thinkingLabel?: string;
+/** Localised labels for markdown content (code blocks, tables, formulas) inside a message bubble. */
+export interface MarkdownContentLabels {
   /** aria-label for the code block copy button. */
   codeBlockCopyLabel?: string;
   /** aria-label for the code block copy button after copying. */
@@ -97,6 +94,19 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
   tableScrollRegionAriaLabel?: string;
   /** Accessible label for a block formula's scrollable region. */
   mathScrollRegionAriaLabel?: string;
+}
+
+/** Localised labels for the `UserMessageBubble` component. */
+export interface UserMessageBubbleLabels
+  extends MessageBubbleLabels, MarkdownContentLabels {}
+
+/** Localised labels for the `AssistantMessageBubble` component. */
+export interface AssistantMessageBubbleLabels
+  extends MessageBubbleLabels, MarkdownContentLabels {
+  /** aria-label for the quick-reply list. Defaults to `"Quick reply buttons"`. */
+  startersAriaLabel?: string;
+  /** Shimmer placeholder shown while streaming and message text is empty. Defaults to `'Thinking'`. */
+  thinkingLabel?: string;
   /** Fallback aria-label for the deployment icon. Defaults to `'AI'`. */
   deploymentIconFallbackLabel?: string;
 }
@@ -127,6 +137,18 @@ interface BaseMessageBubbleProps {
   onAttachmentRetry?: (id: string) => void;
   /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */
   selectedAttachmentId?: string;
+  /** Per-element markdown typography classes. Defaults to the renderer's full-size scale; pass `COMPACT_MARKDOWN_CLASS_NAMES` for the smaller body scale. */
+  markdownClassNames?: MarkdownRendererClassNames;
+  /**
+   * Rewrites markdown `href`/`src` values before they are rendered. Forwarded
+   * to `MDMessageViewer`. Hosts use this to map DIAL file ids to download URLs.
+   * Defaults to no extra rewrite.
+   */
+  markdownUrlTransform?: (url: string) => string;
+  /** Syntax highlight theme for code blocks. Defaults to `'dark'`. */
+  codeBlockTheme?: CodeBlockTheme;
+  /** Opens serialized Markdown table content in the host canvas. */
+  tableOnOpenInCanvas?: (markdown: string) => void;
 }
 
 /** Props for `UserMessageBubble`. */
@@ -136,15 +158,16 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
   collapsedLineCount?: number;
   /**
-   * Ordered content replacing the plain-text render when present —
-   * interleaved plain-text runs and inline elements (e.g. skill-mention
-   * chips at their text position), rendered in place of `text` inside the
-   * same paragraph. `text` is still required alongside this: it remains the
-   * identity/measurement input for the collapse-height calculation
-   * (`useCollapsedText`), even though `textSegments` is what's visually
-   * rendered. Absent renders `text` directly, byte-identical to today.
+   * Ordered content rendered in place of `text` when present: markdown
+   * string runs interleaved with inline segments (e.g. skill-mention chips),
+   * each rendered at its position within the markdown output, or as its
+   * literal `text` inside code and link text. `text` is still required
+   * alongside this: it remains the identity input for the collapse state
+   * (`useCollapsedText`). Absent renders `text` as markdown directly.
    */
-  textSegments?: ReactNode[];
+  textSegments?: TextSegment[];
+  /** Localised labels for the toggle button, attachment rows, and markdown code/table actions. */
+  labels?: UserMessageBubbleLabels;
 }
 
 /** Props for `AssistantMessageBubble`. */
@@ -170,14 +193,6 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   beforeContent?: ReactNode;
   /** react-markdown component overrides. Use to inject custom renderers (e.g. citation markers) into markdown elements. */
   markdownComponents?: Components;
-  /** Per-element markdown typography classes. Defaults to the renderer's full-size scale; pass `COMPACT_MARKDOWN_CLASS_NAMES` for the smaller body scale. */
-  markdownClassNames?: MarkdownRendererClassNames;
-  /**
-   * Rewrites markdown `href`/`src` values before they are rendered. Forwarded
-   * to `MDMessageViewer`. Hosts use this to map DIAL file ids to download URLs.
-   * Defaults to no extra rewrite.
-   */
-  markdownUrlTransform?: (url: string) => string;
   /** Quick-reply buttons rendered below the message text when non-empty. */
   starters?: StarterOption[];
   /** Fires with the clicked `StarterOption`. */
@@ -190,10 +205,6 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   deploymentIconUrl?: string;
   /** Deployment name used as the icon's accessible label. */
   deploymentDisplayName?: string;
-  /** Syntax highlight theme for code blocks. Defaults to `'dark'`. */
-  codeBlockTheme?: CodeBlockTheme;
-  /** Opens serialized Markdown table content in the host canvas. */
-  tableOnOpenInCanvas?: (markdown: string) => void;
   /** Localised labels for quick replies, the thinking indicator, and code block copy actions. */
   labels?: AssistantMessageBubbleLabels;
 }

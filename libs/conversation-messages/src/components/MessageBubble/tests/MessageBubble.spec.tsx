@@ -42,14 +42,26 @@ const findMessageParagraph = (message: string) =>
   });
 
 /*
- * The collapsible wrapper around the message paragraph carries no ARIA role
- * of its own (it is only referenced via aria-controls from the toggle
- * button), so reaching it to check its inline style requires walking up from
- * the paragraph — a CSS-level check with no semantic query available.
+ * The collapsible wrapper around the message text carries no ARIA role of its
+ * own; it is reached through the toggle button's `aria-controls` to check its
+ * inline style — a CSS-level check with no semantic query available.
  */
-const getMessageTextWrapper = (message: string) =>
-  // eslint-disable-next-line testing-library/no-node-access -- see comment above
-  findMessageParagraph(message).parentElement as HTMLElement;
+const getCollapsibleTextWrapper = (toggle: HTMLElement) =>
+  document.getElementById(
+    toggle.getAttribute('aria-controls') ?? '',
+  ) as HTMLElement;
+
+/*
+ * `useCollapsedText` measures the container that wraps the rendered markdown
+ * (its child is the renderer root, whose child is the paragraph), so jsdom's
+ * zero `scrollHeight` is replaced for that element alone.
+ */
+const mockRenderedTextHeight = (height: number) =>
+  vi
+    .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+    .mockImplementation(function getScrollHeight(this: HTMLElement) {
+      return this.querySelector(':scope > div > p') ? height : 0;
+    });
 
 afterEach(() => {
   vi.useRealTimers();
@@ -181,19 +193,108 @@ describe('MessageBubble', () => {
   });
 });
 
-describe('UserMessageBubble — attachments', () => {
-  it('preserves line breaks in the message text', () => {
-    const message = 'First line\n\nSecond line\n- Item';
+describe('UserMessageBubble — markdown', () => {
+  const TS_FENCE =
+    '```ts\nconst add = (x: number) => (y: number): number => x + y;\n```';
 
-    render(<UserMessageBubble text={message} />);
+  it('renders single-newline lines on separate lines and a dash line as a list item', () => {
+    const { container } = render(
+      <UserMessageBubble text={'First line\nSecond line\n\n- Item'} />,
+    );
 
-    const paragraph = findMessageParagraph(message);
-    expect(paragraph.textContent).toBe(message);
-    expect(paragraph.className).toContain('whitespace-pre-wrap');
-    expect(paragraph.className).toContain('text-start');
-    expect(paragraph.className).toContain('[overflow-wrap:anywhere]');
+    // <br> has no accessible role, so the line break is checked on the DOM.
+    expect(container.querySelector('p br')).toBeTruthy();
+    expect(screen.getByRole('listitem').textContent).toBe('Item');
+    expect(screen.queryByText(/- Item/)).toBeNull();
   });
 
+  it('renders a fenced code block with its language label and copy button', () => {
+    render(<UserMessageBubble text={TS_FENCE} />);
+
+    expect(screen.getByText('ts')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
+    expect(screen.queryByText(/```/)).toBeNull();
+  });
+
+  it('renders bold and inline code without the markdown markers', () => {
+    render(<UserMessageBubble text="Use **bold** and `npm test`" />);
+
+    expect(screen.getByText('bold').tagName).toBe('STRONG');
+    expect(screen.getByText('npm test').tagName).toBe('CODE');
+    expect(screen.queryByText(/\*\*/)).toBeNull();
+  });
+
+  it('shows a raw HTML tag as literal text', () => {
+    render(<UserMessageBubble text="What does <div> do?" />);
+
+    expect(screen.getByText('What does <div> do?')).toBeTruthy();
+  });
+
+  it('renders a table with its actions when table labels are supplied', () => {
+    render(
+      <UserMessageBubble
+        text={TABLE_MARKDOWN}
+        labels={ASSISTANT_TABLE_LABELS}
+      />,
+    );
+
+    expect(screen.getByRole('table')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Download as CSV' }),
+    ).toBeTruthy();
+  });
+
+  it('keeps rendering markdown when the response format is plain text', () => {
+    render(
+      <MessageBubble
+        role={MessageRole.User}
+        text="**bold**"
+        responseFormat={ResponseFormat.PlainText}
+      />,
+    );
+
+    expect(screen.getByText('bold').tagName).toBe('STRONG');
+  });
+
+  it('forwards localized code block labels', () => {
+    render(
+      <UserMessageBubble
+        text={TS_FENCE}
+        labels={{
+          codeBlockCopyLabel: 'Kopieren',
+          codeBlockDownloadLabel: 'Herunterladen',
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Kopieren' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Herunterladen' })).toBeTruthy();
+  });
+
+  it('aligns lists to the inline start and keeps code LTR under dir="rtl"', () => {
+    render(
+      <div dir="rtl">
+        <UserMessageBubble text={`- عنصر\n\n${TS_FENCE}`} />
+      </div>,
+    );
+
+    expect(screen.getByRole('listitem').textContent).toBe('عنصر');
+    /*
+     * The text container and the code scroller carry no role; their
+     * direction classes/attributes are a CSS-level check.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const list = screen.getByRole('list').closest('.text-start');
+    expect(list).toBeTruthy();
+    expect(
+      // eslint-disable-next-line testing-library/no-node-access -- see comment above
+      screen.getByText(/const add/).closest('[dir="ltr"]'),
+    ).toBeTruthy();
+  });
+});
+
+describe('UserMessageBubble — attachments', () => {
   it('renders an attachment tray when attachments are provided', () => {
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
     // AttachmentGroup renders a list role
@@ -273,35 +374,31 @@ describe('UserMessageBubble — collapsed text', () => {
   const longMessage = 'Line 1\nLine 2\nLine 3';
 
   it('collapses long user messages by default', async () => {
-    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
-      function getScrollHeight(this: HTMLElement) {
-        return this.tagName === 'P' ? 72 : 0;
-      },
-    );
+    mockRenderedTextHeight(72);
 
     render(<UserMessageBubble text={longMessage} collapsedLineCount={2} />);
 
     const button = await screen.findByRole('button', { name: 'Show more' });
-    const textWrapper = getMessageTextWrapper(longMessage);
+    const textWrapper = getCollapsibleTextWrapper(button);
 
-    expect(button).toBeTruthy();
+    expect(button.getAttribute('aria-expanded')).toBe('false');
     expect(textWrapper.style.maxHeight).toBe('');
   });
 
   it('expands and collapses a long user message', async () => {
-    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
-      function getScrollHeight(this: HTMLElement) {
-        return this.tagName === 'P' ? 72 : 0;
-      },
-    );
+    mockRenderedTextHeight(72);
 
     render(<UserMessageBubble text={longMessage} collapsedLineCount={2} />);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Show more' }));
+    const showMore = await screen.findByRole('button', { name: 'Show more' });
+    const textWrapper = getCollapsibleTextWrapper(showMore);
+    fireEvent.click(showMore);
 
-    const textWrapper = getMessageTextWrapper(longMessage);
-
-    expect(screen.getByRole('button', { name: 'Show less' })).toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: 'Show less' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
     expect(textWrapper.style.maxHeight).toBe('');
 
     fireEvent.click(screen.getByRole('button', { name: 'Show less' }));
@@ -313,11 +410,7 @@ describe('UserMessageBubble — collapsed text', () => {
   });
 
   it('does not show the toggle button for short user messages', async () => {
-    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
-      function getScrollHeight(this: HTMLElement) {
-        return this.tagName === 'P' ? 24 : 0;
-      },
-    );
+    mockRenderedTextHeight(24);
 
     render(<UserMessageBubble text="Short" collapsedLineCount={2} />);
 
@@ -326,12 +419,30 @@ describe('UserMessageBubble — collapsed text', () => {
     });
   });
 
-  it('uses custom labels and aria labels for the toggle button', async () => {
-    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
-      function getScrollHeight(this: HTMLElement) {
-        return this.tagName === 'P' ? 72 : 0;
-      },
+  it('collapses a message whose rendered code block is taller than the line limit', async () => {
+    mockRenderedTextHeight(300);
+
+    render(
+      <UserMessageBubble
+        text={'Intro\n\n```ts\nconst a = 1;\n```'}
+        collapsedLineCount={2}
+      />,
     );
+
+    const showMore = await screen.findByRole('button', { name: 'Show more' });
+    expect(showMore.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(showMore);
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Show less' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
+  });
+
+  it('uses custom labels and aria labels for the toggle button', async () => {
+    mockRenderedTextHeight(72);
 
     render(
       <UserMessageBubble
@@ -362,9 +473,13 @@ describe('UserMessageBubble — collapsed text', () => {
 });
 
 describe('UserMessageBubble — textSegments', () => {
-  const segments = [<span key="chip">/Summarizer</span>, ' please summarize'];
+  const chipSegment = {
+    text: '/Summarizer',
+    node: <span key="chip">/Summarizer</span>,
+  };
+  const segments = [chipSegment, ' please summarize'];
 
-  it('renders textSegments in order inside the text paragraph, in place of text', () => {
+  it('renders an inline segment at its position inside the rendered paragraph', () => {
     render(
       <UserMessageBubble
         text="/Summarizer please summarize"
@@ -388,7 +503,34 @@ describe('UserMessageBubble — textSegments', () => {
     expect(paragraph.firstElementChild).toBe(chip);
   });
 
-  it('renders text unchanged, byte-identical, when textSegments is absent', () => {
+  it('renders an inline segment inside a rendered list item', () => {
+    render(
+      <UserMessageBubble
+        text="- /Summarizer please summarize"
+        textSegments={['- ', ...segments]}
+      />,
+    );
+
+    const item = screen.getByRole('listitem');
+    expect(within(item).getByText('/Summarizer').tagName).toBe('SPAN');
+    expect(item.textContent).toBe('/Summarizer please summarize');
+  });
+
+  it('renders a segment inside a code fence as its literal text', () => {
+    render(
+      <UserMessageBubble
+        text={'```\n/Summarizer\n```'}
+        textSegments={['```\n', chipSegment, '\n```']}
+      />,
+    );
+
+    const code = screen.getByText('/Summarizer');
+    expect(code.tagName).not.toBe('SPAN');
+    // eslint-disable-next-line testing-library/no-node-access -- the literal sits in the code element, which has no role
+    expect(code.closest('code')).toBeTruthy();
+  });
+
+  it('renders no inline element when textSegments is absent', () => {
     render(<UserMessageBubble text="Hello world" />);
 
     const paragraph = findMessageParagraph('Hello world');
@@ -398,7 +540,6 @@ describe('UserMessageBubble — textSegments', () => {
      */
     // eslint-disable-next-line testing-library/no-node-access -- see comment above
     expect(paragraph.firstElementChild).toBeNull();
-    expect(paragraph.textContent).toBe('Hello world');
   });
 
   it('renders interleaved segments correctly under dir="rtl"', () => {
@@ -416,7 +557,8 @@ describe('UserMessageBubble — textSegments', () => {
     const paragraph = chip.closest('p') as HTMLParagraphElement;
 
     expect(paragraph.textContent).toBe('/Summarizer please summarize');
-    expect(paragraph.className).toContain('text-start');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(paragraph.closest('.text-start')).toBeTruthy();
   });
 });
 

@@ -506,9 +506,12 @@ handing the text to the composer's insertion channel. It does nothing while
 text.
 
 `renderHistorySkillSegments(content, skills)` renders a **user** message's
-`content` and `custom_content.skills` as an ordered array interleaving
-plain-text runs and `ChatSkill` elements at each mention's actual text
-position — for `UserMessageBubble`'s `textSegments` prop. `renderHistorySkills(skills)`
+`content` and `custom_content.skills` as an ordered `TextSegment[]` (from
+`@epam/ai-dial-chat-shared`) interleaving markdown string runs and
+`{ text, node }` segments, where `node` is the `ChatSkill` element and `text`
+is the matched `/{name}`, at each mention's actual text position — for
+`UserMessageBubble`'s `textSegments` prop, which renders the chip inside the
+markdown output, or the literal `/{name}` inside code and link text. `renderHistorySkills(skills)`
 renders every entry as a flat list of `ChatSkill` elements, ignoring text
 position — for `AssistantMessageBubble`'s `beforeContent` slot, since
 assistant text is model-generated markdown and never authors positioned

@@ -1,5 +1,5 @@
 import { type FC, memo } from 'react';
-import type { Components } from 'react-markdown';
+import type { Components, Options } from 'react-markdown';
 import { CodeBlockTheme } from '../../types/code-editor';
 import { DEFAULT_MARKDOWN_CLASS_NAMES } from './markdown-class-names';
 import {
@@ -38,6 +38,10 @@ interface MDMessageViewerProps {
    * {@link MarkdownRenderer}. Defaults to no extra rewrite.
    */
   urlTransform?: (url: string) => string;
+  /** Extra rehype plugins forwarded to {@link MarkdownRenderer}. Defaults to none. */
+  rehypePlugins?: NonNullable<Options['rehypePlugins']>;
+  /** When `false`, raw HTML renders as literal text. Forwarded to {@link MarkdownRenderer}; defaults to `true`. */
+  isRawHtmlEnabled?: boolean;
   /** Accessible label for the copy button in code blocks. Forwarded to {@link MarkdownRenderer}. */
   codeBlockCopyLabel?: string;
   /** Accessible label for the copy button after copying. Forwarded to {@link MarkdownRenderer}. */
@@ -63,7 +67,7 @@ interface MDMessageViewerProps {
   classNames?: MarkdownRendererClassNames;
 }
 
-/** Renders assistant message content as formatted markdown, or as escaped plain text when `isPlainText` is set. */
+/** Renders message content as formatted markdown, or as escaped plain text when `isPlainText` is set. */
 export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
   ({
     content,
@@ -72,6 +76,8 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
     thinkingLabel,
     components,
     urlTransform,
+    rehypePlugins,
+    isRawHtmlEnabled,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
     codeBlockDownloadLabel,
@@ -97,6 +103,8 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
         thinkingLabel={thinkingLabel}
         components={components}
         urlTransform={urlTransform}
+        rehypePlugins={rehypePlugins}
+        isRawHtmlEnabled={isRawHtmlEnabled}
         codeBlockCopyLabel={codeBlockCopyLabel}
         codeBlockCopiedLabel={codeBlockCopiedLabel}
         codeBlockDownloadLabel={codeBlockDownloadLabel}

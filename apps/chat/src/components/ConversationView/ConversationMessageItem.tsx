@@ -929,9 +929,7 @@ const ConversationMessageItem: FC<Props> = ({
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
-        markdownUrlTransform={
-          msg.role === MessageRole.Assistant ? resolveMarkdownUrl : undefined
-        }
+        markdownUrlTransform={resolveMarkdownUrl}
         markdownClassNames={markdownClassNames}
         attachments={bubbleAttachments}
         isStreaming={isStreaming}
