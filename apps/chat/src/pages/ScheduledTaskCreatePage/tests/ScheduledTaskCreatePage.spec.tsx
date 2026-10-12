@@ -1,7 +1,12 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createContext, useContext, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
@@ -52,8 +57,12 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 }));
 
 const showNotificationMock = vi.fn();
+const dismissNotificationMock = vi.fn();
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => createNotificationContextValue(showNotificationMock),
+  useNotification: () =>
+    createNotificationContextValue(showNotificationMock, {
+      dismissNotification: dismissNotificationMock,
+    }),
 }));
 
 const getApiErrorStatusMock = vi.fn();
@@ -79,11 +88,9 @@ vi.mock('../../../utils/scheduled-task-auth-error', () => ({
     checkScheduledTaskAuthSessionErrorMock(...args),
 }));
 
-const reserveLoginPopupMock = vi.fn();
 const autoLoginMock = vi.fn();
 vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskAuthAutoLogin', () => ({
   useScheduledTaskAuthAutoLogin: () => ({
-    reserveLoginPopup: () => reserveLoginPopupMock(),
     autoLogin: (...args: unknown[]) => autoLoginMock(...args),
   }),
 }));
@@ -828,12 +835,58 @@ describe('ScheduledTaskCreatePage', () => {
     );
   });
 
-  it('drives the reserved-popup login, retries the create, and navigates to the return route when a 403 is attributed to the logged-out scheduler service', async () => {
-    const closePopupMock = vi.fn();
-    const reservedPopup = {
-      closed: false,
-      close: closePopupMock,
-    } as unknown as Window;
+  /*
+   * The login-required toast itself is not rendered by this harness (the
+   * notification context is mocked), so its action element mounts on its own
+   * for the click — the latest shown notification carries the live one.
+   */
+  const clickLoginAndRetryAction = async () => {
+    const lastCall = showNotificationMock.mock.calls.at(-1);
+    if (lastCall == null) {
+      throw new Error('no notification shown yet');
+    }
+    const { action } = lastCall[0] as { action: ReactElement };
+    const { unmount } = render(action);
+    try {
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: 'scheduledTasks.loginAndRetryAction',
+        }),
+      );
+    } finally {
+      unmount();
+    }
+  };
+
+  it('shows the login-required toast with a Log in and retry action when a 403 is attributed to the logged-out scheduler service', async () => {
+    createScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledOnce();
+    });
+    const payload = showNotificationMock.mock.calls[0][0];
+    expect(payload.message).toBe('scheduledTasks.loginRequiredNotification');
+    expect(payload.requestId).toBe('trace-403');
+    expect(payload.action).toBeTruthy();
+    /* The login waits for the user's consent — nothing is invoked automatically. */
+    expect(autoLoginMock).not.toHaveBeenCalled();
+    /* One submit attempt only — the retry happens after the login. */
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+  });
+
+  it('logs in through the toast action, retries the create, and navigates to the return route', async () => {
     createScheduledTaskMock
       .mockRejectedValueOnce(new Error('forbidden'))
       .mockResolvedValueOnce({ id: 'sched_new' });
@@ -843,7 +896,6 @@ describe('ScheduledTaskCreatePage', () => {
       isAuthSessionError: true,
       connect: CONNECT,
     });
-    reserveLoginPopupMock.mockReturnValue(reservedPopup);
     autoLoginMock.mockResolvedValue({ type: 'success' });
     renderAtRoute('/scheduled-tasks/new');
 
@@ -852,27 +904,26 @@ describe('ScheduledTaskCreatePage', () => {
       screen.getByRole('button', { name: 'buttons.create' }),
     );
 
-    /* The login runs in the popup reserved at click time — the page never unloads. */
     await vi.waitFor(() => {
-      expect(autoLoginMock).toHaveBeenCalledOnce();
+      expect(showNotificationMock).toHaveBeenCalledOnce();
     });
-    expect(autoLoginMock).toHaveBeenCalledWith(CONNECT, reservedPopup);
+    await clickLoginAndRetryAction();
+
+    /* The login runs on the action's fresh user activation — the page never unloads. */
+    expect(autoLoginMock).toHaveBeenCalledOnce();
+    expect(autoLoginMock).toHaveBeenCalledWith(CONNECT);
+    /* The actionable toast is dismissed once its action runs. */
+    expect(dismissNotificationMock).toHaveBeenCalledOnce();
     /* The submit is retried once after the successful login. */
     await vi.waitFor(() => {
       expect(createScheduledTaskMock).toHaveBeenCalledTimes(2);
     });
     expect(screen.getByText('list page')).toBeTruthy();
-    expect(showNotificationMock).toHaveBeenCalledOnce();
-    /* The unused popup reservation is released. */
-    expect(closePopupMock).toHaveBeenCalledOnce();
+    /* The login-required toast plus the normal success toast. */
+    expect(showNotificationMock).toHaveBeenCalledTimes(2);
   });
 
-  it('shows the login-failed toast and keeps the form when the popup login fails', async () => {
-    const closePopupMock = vi.fn();
-    reserveLoginPopupMock.mockReturnValue({
-      closed: false,
-      close: closePopupMock,
-    } as unknown as Window);
+  it('shows the login-failed toast and keeps the form when the login from the toast action fails', async () => {
     createScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
     getApiErrorStatusMock.mockReturnValue(403);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
@@ -891,7 +942,12 @@ describe('ScheduledTaskCreatePage', () => {
     await vi.waitFor(() => {
       expect(showNotificationMock).toHaveBeenCalledOnce();
     });
-    expect(showNotificationMock).toHaveBeenCalledWith(
+    await clickLoginAndRetryAction();
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledTimes(2);
+    });
+    expect(showNotificationMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         message: 'scheduledTasks.autoLoginFailedNotification',
         requestId: 'trace-403',
@@ -905,15 +961,9 @@ describe('ScheduledTaskCreatePage', () => {
       'value',
       'Daily summary',
     );
-    /* The reservation is released even though the login failed. */
-    expect(closePopupMock).toHaveBeenCalledOnce();
   });
 
-  it('stays silent and keeps the form when the user closes the login popup', async () => {
-    reserveLoginPopupMock.mockReturnValue({
-      closed: true,
-      close: vi.fn(),
-    } as unknown as Window);
+  it('stays silent and keeps the form when the user cancels the login from the toast action', async () => {
     createScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
     getApiErrorStatusMock.mockReturnValue(403);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
@@ -930,18 +980,19 @@ describe('ScheduledTaskCreatePage', () => {
     );
 
     await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledOnce();
+    });
+    await clickLoginAndRetryAction();
+
+    await vi.waitFor(() => {
       expect(autoLoginMock).toHaveBeenCalledOnce();
     });
-    /* A user-closed popup is a cancellation, not a failure — no toast, no retry. */
-    expect(showNotificationMock).not.toHaveBeenCalled();
+    /* A user-cancelled login is not a failure — no login-failed toast, no retry. */
+    expect(showNotificationMock).toHaveBeenCalledOnce();
     expect(createScheduledTaskMock).toHaveBeenCalledOnce();
   });
 
-  it('re-attempts the popup login when Save is activated again after a failed login', async () => {
-    reserveLoginPopupMock.mockImplementation(() => ({
-      closed: false,
-      close: vi.fn(),
-    }));
+  it('re-runs the full login path when Save is activated again after a failed login', async () => {
     createScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
     getApiErrorStatusMock.mockReturnValue(403);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
@@ -956,16 +1007,23 @@ describe('ScheduledTaskCreatePage', () => {
     const submit = screen.getByRole('button', { name: 'buttons.create' });
     await userEvent.click(submit);
     await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledOnce();
+    });
+    await clickLoginAndRetryAction();
+    await vi.waitFor(() => {
       expect(autoLoginMock).toHaveBeenCalledOnce();
     });
 
+    /* A fresh Save activation gets a fresh login-required toast. */
     await userEvent.click(submit);
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledTimes(3);
+    });
+    await clickLoginAndRetryAction();
 
     await vi.waitFor(() => {
       expect(autoLoginMock).toHaveBeenCalledTimes(2);
     });
-    /* Each submit reserves its own popup. */
-    expect(reserveLoginPopupMock).toHaveBeenCalledTimes(2);
     expect(createScheduledTaskMock).toHaveBeenCalledTimes(2);
   });
 
@@ -994,8 +1052,6 @@ describe('ScheduledTaskCreatePage', () => {
       }),
     );
     expect(autoLoginMock).not.toHaveBeenCalled();
-    /* The popup was still reserved at click time, then released unused. */
-    expect(reserveLoginPopupMock).toHaveBeenCalledOnce();
   });
 
   it('keeps the generic error toast when a 403 is not attributed to the auth session', async () => {
@@ -1022,7 +1078,5 @@ describe('ScheduledTaskCreatePage', () => {
       }),
     );
     expect(autoLoginMock).not.toHaveBeenCalled();
-    /* The popup was still reserved at click time, then released unused. */
-    expect(reserveLoginPopupMock).toHaveBeenCalledOnce();
   });
 });

@@ -20,69 +20,71 @@ The Settings panel SHALL expose an "Extensions" tab (`SettingsTabs.Extensions = 
 
 The Extensions tab SHALL render a page heading "Extensions" (the `dial-h1-text` page-heading pattern used by the Usage tab) and a description "Access additional tools and capabilities through extensions." (the `dial-small-text` pattern), followed by a table listing the connected external services, built with ARIA table semantics (`role="table"`/`role="row"`/`role="columnheader"`/`role="cell"`) on the `ModelLimitsSection` pattern — column headers in the section's caption-style class, the header row hidden below the `desktop:` breakpoint with rows stacking, and grid-template columns Name / Description / trailing action on `desktop:`.
 
-The table SHALL have exactly three columns: **Name**, **Description**, and a visually empty trailing action column whose header carries an `sr-only` localized label (visually empty, still announced to screen readers). While the offline-credentials status check reports the service as available, the table SHALL render exactly one row — the external Scheduler auth service; the row SHALL NOT render while the check reports the service unavailable, and the section heading and description render in every state.
+The table SHALL have exactly three columns: **Name**, **Description**, and a visually empty trailing action column whose header carries an `sr-only` localized label (visually empty, still announced to screen readers). While the deployment has the service configured (the gate reports `Available` — configured and disconnected — or `Hidden` — connected), the table SHALL render exactly one row — the external Scheduler auth service. A Spinner SHALL stand in for the whole table while the check is in flight, and no row SHALL render while the deployment reports the service unconfigured (`Unavailable`) or the check errored (`Error`). The section heading and description render in every state.
 
 #### Scenario: Section renders heading, description, and column headers
 
 - **WHEN** the Extensions tab renders
 - **THEN** the page shows the "Extensions" heading, the description text, and a table whose header row exposes Name and Description column headers plus the visually empty action column header
 
-#### Scenario: Available service renders one row
+#### Scenario: Configured service renders one row
 
-- **WHEN** the status check reports the service as available
+- **WHEN** the gate reports `Available` (configured and disconnected) or `Hidden` (connected)
 - **THEN** the table renders exactly one row for the external Scheduler auth service
 
-#### Scenario: Unavailable service renders no rows
+#### Scenario: Unconfigured or errored check renders no rows
 
-- **WHEN** the status check reports the service as unavailable
+- **WHEN** the gate reports `Unavailable` (the deployment has no configured offline OAuth client) or `Error`
 - **THEN** the table renders no service rows, while the section heading and description remain
 
-### Requirement: Service row derives its identity from the Core-reported client identity
+#### Scenario: In-flight check shows a Spinner in place of the table
 
-The row's Name cell SHALL render a square `InitialsAvatar` carrying the service's initials beside the service display name. The display name SHALL derive from the Core-reported client identity (`connect.clientId` from the offline-credentials status response, humanized to title case — e.g. `dial-apps` → `Dial Apps`, avatar initials `DA` via `extractInitials`); when Core omits the `connect` object, the row SHALL fall back to a localized default display name. The Description cell SHALL render the localized service description ("Provides access to built-in apps within the platform.") — Core exposes no per-service description field.
+- **WHEN** the gate reports the check as in flight (`Checking`)
+- **THEN** the section renders a Spinner instead of the table, with the heading and description still present
 
-#### Scenario: Avatar and name derive from clientId
+### Requirement: Service row renders the fixed service with the localized default name
 
-- **WHEN** the status check resolves with `connect.clientId = 'dial-apps'`
-- **THEN** the Name cell renders a square avatar with the initials `DA` beside the display name `Dial Apps`
+The row's Name cell SHALL render a square `InitialsAvatar` carrying the service's initials beside the service display name. The row is the fixed Dial native service: its display name SHALL be the localized default name (`settings.extensions.service.defaultName`), never derived from the OAuth client id Core happens to report for the connected grant — a client id is a stable technical identifier, not a product name, so it is not shown to the user. The avatar initials derive from that same default display name via `extractInitials`. The Description cell SHALL render the localized service description ("Provides access to built-in apps within the platform.") — Core exposes no per-service description field.
 
-#### Scenario: Missing connect falls back to the default name
+#### Scenario: Avatar and name render from the localized default name
 
-- **WHEN** the status check resolves with no usable `connect` object
-- **THEN** the row renders with the localized default display name (and its initials) instead of failing to render
+- **WHEN** the service row renders
+- **THEN** the Name cell renders a square avatar with the default name's initials beside the localized default display name, in every connection state
 
 #### Scenario: Description cell renders the localized service description
 
 - **WHEN** the service row renders
 - **THEN** the Description cell shows the localized service description text
 
-### Requirement: Disconnected row shows a warning badge with a tooltip on the avatar
+### Requirement: Disconnected row shows a warning badge on the avatar
 
-While the last resolved gate state is disconnected (`available: true && connected: false`), the row's Name cell SHALL render a small warning badge overlaid at the avatar's bottom-inline-start corner (a relatively-positioned avatar wrapper with an absolutely-positioned badge), using the login banner's warning glyph (`IconAlertTriangleFilled`) in a warning color. The badge SHALL NOT render while the row reports connected, while the check is in flight, or on check error (no state asserted). The badge SHALL be a ui-kit `Tooltip` trigger: hover **and keyboard focus** on the badge show the localized tooltip text "Authorize to use this extension"; the icon itself stays `aria-hidden` — the tooltip text and the action cell's Log in button carry the state, so the disconnected state is never communicated by color alone. The badge's hover/focus target SHALL meet the AAA tap-target size (a padded hit area around the small glyph).
+While the last resolved gate state is disconnected (`available: true && connected: false`), the row's Name cell SHALL render a small warning badge overlaid at the avatar's bottom-**inline-end** corner (a relatively-positioned avatar wrapper with an absolutely-positioned badge), using the login banner's warning glyph (`IconAlertTriangleFilled`) in a warning color. The badge SHALL NOT render while the row reports connected, while the check is in flight, or on check error (no state asserted).
+
+The badge is informational, not an affordance: a ui-kit `Tooltip` on the badge shows the localized "Authorize to use this extension" text on hover, with the tooltip's own trigger carrying the badge position (so the hover reference has the glyph's real size); the badge is not a focusable control, so the tooltip opens on hover only. The disconnected state SHALL NOT be communicated by color alone: the badge span exposes `role="img"` with the localized accessible name (the same text the tooltip shows) — that accessible name and the action cell's Log in button label carry the state to assistive tech, and the underlying svg glyph stays `aria-hidden`.
 
 #### Scenario: Disconnected avatar carries the warning badge
 
 - **WHEN** the gate reports `available: true` and `connected: false`
-- **THEN** the avatar renders the warning badge at its bottom-inline-start corner
+- **THEN** the avatar renders the warning badge at its bottom-inline-end corner
 
 #### Scenario: Connected avatar carries no badge
 
 - **WHEN** the gate reports `connected: true`, the check is in flight, or the check errored
 - **THEN** the avatar renders no warning badge
 
-#### Scenario: Tooltip shows on hover and on keyboard focus
+#### Scenario: Tooltip shows the localized authorize text on hover
 
-- **WHEN** the pointer hovers over, or keyboard focus reaches, the warning badge
-- **THEN** the tooltip shows the localized "Authorize to use this extension" text; on blur/pointer-leave the tooltip hides
+- **WHEN** the pointer hovers over the warning badge
+- **THEN** the tooltip shows the localized "Authorize to use this extension" text; on pointer-leave the tooltip hides
 
-#### Scenario: The warning icon itself is not announced
+#### Scenario: The badge's accessible name carries the state
 
 - **WHEN** the warning badge renders
-- **THEN** its icon is `aria-hidden` and the disconnected state is carried by the tooltip text and the action cell's Log in button label
+- **THEN** its span exposes `role="img"` with the localized accessible name (the authorize text), the svg glyph is `aria-hidden`, and the tooltip is a hover enhancement — the disconnected state is never communicated by color alone
 
 ### Requirement: Row action switches between Log in and Log out with the connection state
 
-The row's action cell SHALL render a state-dependent action: **Log out** while the gate reports `connected: true` (and the check itself has not errored), **Log in** while the gate reports `available: true && connected: false`, and an empty cell while the check is in flight or errored. The Log out button SHALL carry the `IconLogout` glyph (icon-before, `aria-hidden`, the kit's stroke token — the same glyph the removed Scheduled Tasks header Disconnect action used; the button label is the accessible name). The Log in action SHALL be the existing offline-credentials login flow (`useOfflineCredentialsLogin`) driven with the gate's `connect` settings — the same flow the Scheduled Tasks page banner drives; the button SHALL be disabled (with an in-flight label) while a login is in flight.
+The row's action cell SHALL render a state-dependent action: **Log out** while the gate reports `connected: true`, **Log in** while a login is possible (the gate's `connect` settings present), and an empty cell when the row renders but Core sent no usable `connect` settings — while the check is in flight the section shows a Spinner with no table at all, and while the check errored no row renders. The Log out button SHALL carry the `IconLogout` glyph (icon-before, `aria-hidden`, the kit's stroke token — the same glyph the removed Scheduled Tasks header Disconnect action used; the button label is the accessible name). The Log in action SHALL be the existing offline-credentials login flow (`useOfflineCredentialsLogin`) driven with the gate's `connect` settings — the same flow the Scheduled Tasks page banner drives; the button SHALL be disabled (with an in-flight label) while a login is in flight.
 
 #### Scenario: Connected row shows the Log out button
 
@@ -94,9 +96,9 @@ The row's action cell SHALL render a state-dependent action: **Log out** while t
 - **WHEN** the gate reports `available: true` and `connected: false`
 - **THEN** the row's action cell renders the Log in button, and activating it starts the OAuth popup login flow
 
-#### Scenario: In-flight or errored check renders an empty action cell
+#### Scenario: Row without usable connect settings renders an empty action cell
 
-- **WHEN** the check is in flight or errored
+- **WHEN** the row renders (the service is configured) but the check carried no usable `connect` object
 - **THEN** the row's action cell renders no button
 
 #### Scenario: Log in button is disabled while the flow is in flight
@@ -177,14 +179,14 @@ All user-visible strings on the Extensions tab (tab label, section heading, sect
 
 ### Requirement: Extensions section supports RTL and meets AAA accessibility defaults
 
-The Extensions tab SHALL use logical Tailwind/CSS properties only (no physical-direction classes for directional layout) — including the warning badge's bottom-**inline-start** corner placement, which mirrors with the writing direction — and SHALL NOT mirror its symmetric icons (`IconPlugConnected`, `IconLogout`, the filled warning glyph) in RTL. The table SHALL stay keyboard-operable: both row action buttons are real focusable controls with localized accessible names, the warning badge's tooltip opens on keyboard focus (not hover only) with a padded hit area meeting the AAA tap target, the confirm dialog traps focus while open, the visually empty action column header carries its `sr-only` localized label, and dynamic outcomes (successful login/revoke, failure, login retry outcomes) are announced through polite `aria-live` regions with no state communicated by color alone.
+The Extensions tab SHALL use logical Tailwind/CSS properties only (no physical-direction classes for directional layout) — including the warning badge's bottom-**inline-end** corner placement, which mirrors with the writing direction — and SHALL NOT mirror its symmetric icons (`IconPlugConnected`, `IconLogout`, the filled warning glyph) in RTL. The table SHALL stay keyboard-operable: both row action buttons are real focusable controls with localized accessible names, the warning badge carries its localized accessible name (the state is announced, not color-only; the tooltip remains a hover enhancement), the confirm dialog traps focus while open, the visually empty action column header carries its `sr-only` localized label, and dynamic outcomes (successful login/revoke, failure, login retry outcomes) are announced through polite `aria-live` regions with no state communicated by color alone.
 
 #### Scenario: RTL layout mirrors without icon mirroring
 
 - **WHEN** the document direction is `rtl`
-- **THEN** the table, rows, warning badge (at the bottom-inline-start corner), and dialog lay out mirrored via logical properties, and the icons are not mirrored
+- **THEN** the table, rows, warning badge (at the bottom-inline-end corner), and dialog lay out mirrored via logical properties, and the icons are not mirrored
 
 #### Scenario: Keyboard-only login and logout flows
 
-- **WHEN** a keyboard-only user focuses the warning badge (tooltip opens), reaches the row's Log in or Log out button, opens the dialog, and confirms or cancels
-- **THEN** every step is reachable and operable by keyboard, focus is trapped within the open dialog, and the outcome is announced
+- **WHEN** a keyboard-only user reaches the row's Log in or Log out button, opens the dialog, and confirms or cancels
+- **THEN** every step is reachable and operable by keyboard, focus is trapped within the open dialog, the outcome is announced, and the warning state is readable through the badge's accessible name

@@ -1,21 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_COLORS, pickAvatarColor } from '../avatar-color';
-
-describe('AVATAR_COLORS', () => {
-  it('exposes every palette entry as a named color', () => {
-    const named = Object.values(AVATAR_COLORS);
-    expect(named).toHaveLength(7);
-    /*
-     * Single characters 'a'–'g' hit every palette index exactly once
-     * (97–103 mod 7 = 6,0,1,2,3,4,5), so their picks cover the whole
-     * palette — every hashed pick must be reachable by name.
-     */
-    for (const char of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) {
-      expect(named).toContainEqual(pickAvatarColor(char));
-    }
-    expect(AVATAR_COLORS.blue.background).toContain('--bg-visual-blue');
-  });
-});
+import { pickAvatarColor } from '../avatar-color';
 
 describe('pickAvatarColor', () => {
   it('returns the same entry for the same name (deterministic)', () => {

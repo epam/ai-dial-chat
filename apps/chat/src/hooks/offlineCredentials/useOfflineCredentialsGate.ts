@@ -102,7 +102,7 @@ export const useOfflineCredentialsGate =
       }, []);
 
     useEffect(() => {
-      fetchStatus();
+      void fetchStatus();
 
       return () => {
         abortControllerRef.current?.abort();

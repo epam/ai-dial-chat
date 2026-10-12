@@ -894,7 +894,9 @@
       "failedMessage": "Log out failed. Please try again.",
       "successAnnouncement": "You're signed out. Scheduled tasks will no longer run automatically."
     },
-    "autoLoginFailedNotification": "Couldn't sign in to the external scheduler service. Try saving the task again."
+    "autoLoginFailedNotification": "Couldn't sign in to the external scheduler service. Try saving the task again.",
+    "loginRequiredNotification": "Couldn't save the task because you're signed out of the external scheduler service.",
+    "loginAndRetryAction": "Log in and retry"
   },
   "dialFileManager": {
     "attach": "Attach",

@@ -5,7 +5,12 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthResultType,
   WithLogin,
+  type ToolsetRedirectState,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  decodeJsonFromBase64,
+  encodeJsonToBase64,
+} from '@epam/ai-dial-chat-shared';
 import {
   ToolsetOAuthLoginStatus,
   type ToolsetAuthFormData,
@@ -40,11 +45,9 @@ const makeFakePopup = () => {
 let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
 
 const readFlowId = () =>
-  JSON.parse(
-    atob(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-        btoa('{}'),
-    ),
+  decodeJsonFromBase64<ToolsetRedirectState>(
+    capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+      encodeJsonToBase64({}),
   ).state as string;
 
 const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
@@ -100,11 +103,9 @@ describe('useToolsetEditorOAuthLogin — configured client', () => {
     const { promise } = runLogin(configuredAuth());
     await vi.waitFor(() => expect(capturedPopup).toBeDefined());
 
-    const state = JSON.parse(
-      atob(
-        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-          btoa('{}'),
-      ),
+    const state = decodeJsonFromBase64<ToolsetRedirectState>(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        encodeJsonToBase64({}),
     );
     expect(state.toolsetId).toBe(TOOLSET_ID);
     expect(state.credentialsLevel).toBe(ToolsetCredentialsLevel.User);

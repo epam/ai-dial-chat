@@ -533,6 +533,8 @@ export enum ScheduledTasksI18nKeys {
   DisconnectFailedMessage = 'scheduledTasks.disconnect.failedMessage',
   DisconnectSuccessAnnouncement = 'scheduledTasks.disconnect.successAnnouncement',
   AutoLoginFailedNotification = 'scheduledTasks.autoLoginFailedNotification',
+  LoginRequiredNotification = 'scheduledTasks.loginRequiredNotification',
+  LoginAndRetryAction = 'scheduledTasks.loginAndRetryAction',
 }
 
 export enum ConversationI18nKeys {

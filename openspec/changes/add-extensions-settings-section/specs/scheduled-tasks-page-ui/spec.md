@@ -17,7 +17,7 @@ Removes the `ScheduledTasks` lib component's optional second header action (the 
 - `isLoading` is `false`, `error` is unset, and `items` is non-empty → the content region renders a single flat `ScheduledTaskCardGrid` of `ScheduledTaskCard`s, **in the order they were received** (no client-side reordering by `sortKey` — sort order is now applied server-side, see the "Server-driven search and sort over the full remote dataset" requirement). There is no grouping/sectioning of any kind — no section heading, no count badge — regardless of task ownership. When `isLoadingMore` is `true`, exactly `skeletonCount` `ScheduledTaskCardSkeleton` elements render as **trailing children inside that same `ScheduledTaskCardGrid`** (via its `trailingSkeletonCount` prop) — not in a separate grid container — so they continue filling the current CSS grid row (via `grid-auto-flow`) instead of unconditionally starting a new row and leaving a gap in a partially-filled last row.
 - A scroll sentinel is rendered at the end of the content region's scrollable area; when it becomes visible and `hasMore && !isLoadingMore && !isLoading`, `onLoadMore` is invoked (if provided).
 
-The create (and any future header action) button SHALL collapse to an icon-only 40px circle below 1280px (the `desktop:` breakpoint mirroring `MOBILE_MAX_WIDTH_PX`), via the shared CSS class pair (label-span hide + circle pill) that remains applicable to every header action button — not a per-button media-query block.
+The create button SHALL collapse to an icon-only 40px circle below 1280px (the `desktop:` breakpoint mirroring `MOBILE_MAX_WIDTH_PX`), via the module's `.createButton`/`.createButtonLabel` class pair (label-span hide + circle pill).
 
 The component MUST NOT import from `apps/chat`, `server-api`, any generated API client, routing, feature-flag context, auth, env, or analytics — all such knowledge is passed in via props. Fetching, pagination-state management, sort-state management, and DTO mapping happen in the app; the lib performs no sorting of `items` itself — `sortKey`/`onSortChange` are used only to drive the toolbar control's UI state (selected option, `aria-selected`), not to reorder rendered cards.
 
@@ -79,7 +79,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: The header button collapses on narrow viewports
 
 - **WHEN** the viewport is narrower than 1280px
-- **THEN** the create button renders as an icon-only 40px circle via the shared collapse class, and the header row does not overflow
+- **THEN** the create button renders as an icon-only 40px circle via the collapse class, and the header row does not overflow
 
 #### Scenario: Lib has no host or integration imports
 

@@ -1,8 +1,8 @@
+import { decodeJsonFromBase64 } from '@epam/ai-dial-chat-shared';
 import { useEffect, useRef, useState } from 'react';
 import { getToolsetOAuthChannelName } from '../handshake';
 import type {
   ToolsetOAuthChannelMessage,
-  ToolsetOAuthMainWindowOutcome,
   ToolsetOAuthResultAcknowledgement,
   ToolsetRedirectState,
 } from '../models';
@@ -51,19 +51,6 @@ export interface UseOAuthCallbackCompletionParams {
   exchange: (
     params: OAuthExchangeParams,
   ) => Promise<ToolsetOAuthFailureReason | null>;
-  /**
-   * Main-window completion: called with the outcome and the stored redirect
-   * state when the state carries a `returnPath` (written by
-   * `navigateToolsetOAuthRedirect`) instead of reporting into the popup URL
-   * and the flow channel — there is no popup to close and no opener
-   * listening, so the host owns what the user sees next (typically
-   * navigating back to `returnPath`). Absent, or in a popup flow, the popup
-   * reporting runs unchanged.
-   */
-  onMainWindowComplete?: (
-    outcome: ToolsetOAuthMainWindowOutcome,
-    redirectState: ToolsetRedirectState,
-  ) => void;
 }
 
 /** State {@link useOAuthCallbackCompletion} exposes for the host page to render. */
@@ -85,12 +72,20 @@ const isResultAcknowledgement = (
 const readRedirectState = (): ToolsetRedirectState | null => {
   const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
   if (!raw) return null;
+  /*
+   * The wrap shipped mid-stream, so both formats can be in storage: a flow
+   * started before the deploy stored raw JSON, one after stores the wrap.
+   * Attempt each parser in turn rather than sniffing either format — a
+   * value that fits neither (malformed) resolves null.
+   */
   try {
-    /* Mirrors writeRedirectState's base64 wrap — an encoding, not
-       encryption; see popup.ts. */
-    return JSON.parse(atob(raw)) as ToolsetRedirectState;
+    return decodeJsonFromBase64<ToolsetRedirectState>(raw);
   } catch {
-    return null;
+    try {
+      return JSON.parse(raw) as ToolsetRedirectState;
+    } catch {
+      return null;
+    }
   }
 };
 
@@ -164,7 +159,6 @@ export const useOAuthCallbackCompletion = ({
   searchParams,
   callbackPath,
   exchange,
-  onMainWindowComplete,
 }: UseOAuthCallbackCompletionParams): UseOAuthCallbackCompletionResult => {
   const [isInProgress, setIsInProgress] = useState(true);
   const [failureReason, setFailureReason] =
@@ -176,8 +170,6 @@ export const useOAuthCallbackCompletion = ({
   exchangeRef.current = exchange;
   const callbackPathRef = useRef(callbackPath);
   callbackPathRef.current = callbackPath;
-  const onMainWindowCompleteRef = useRef(onMainWindowComplete);
-  onMainWindowCompleteRef.current = onMainWindowComplete;
 
   useEffect(() => {
     if (hasRun.current) return;
@@ -190,33 +182,11 @@ export const useOAuthCallbackCompletion = ({
       sessionStorage.removeItem(TOOLSET_REDIRECT_STATE_KEY);
       const flowId = redirectState?.state ?? state ?? undefined;
 
-      /*
-       * Main-window mode (a `returnPath` written by
-       * `navigateToolsetOAuthRedirect`): the host callback replaces the
-       * popup reporting — there is no popup URL to mark and no opener
-       * listening on the flow channel, and `window.close()` on a
-       * non-script-opened window is a no-op anyway.
-       */
-      const mainWindowRedirectState =
-        redirectState?.returnPath != null ? redirectState : null;
-
       const settle = (
         flowId: string | undefined,
         message: ToolsetOAuthChannelMessage,
       ) => {
-        if (mainWindowRedirectState != null) {
-          onMainWindowCompleteRef.current?.(
-            message.type === ToolsetOAuthResultType.Success
-              ? { type: ToolsetOAuthResultType.Success }
-              : {
-                  type: ToolsetOAuthResultType.Failure,
-                  reason: message.reason,
-                },
-            mainWindowRedirectState,
-          );
-        } else {
-          reportResult(flowId, message);
-        }
+        reportResult(flowId, message);
         setIsInProgress(false);
         setFailureReason(
           message.type === ToolsetOAuthResultType.Failure

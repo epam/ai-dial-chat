@@ -426,7 +426,11 @@ describe('ConversationView Reply attachment flow', () => {
     fireEvent.change(textarea, { target: { value: 'My draft' } });
     fireEvent.click(await selectPassage());
     await waitFor(() => expect(upload).toHaveBeenCalledOnce());
-    expect(await upload.mock.calls[0][0].file!.text()).toBe('Selected passage');
+    const uploadedFile = upload.mock.calls[0]?.[0]?.file;
+    if (uploadedFile == null) {
+      throw new Error('expected an uploaded file');
+    }
+    expect(await uploadedFile.text()).toBe('Selected passage');
     expect((textarea as HTMLTextAreaElement).value).toBe('My draft');
     expect(document.activeElement).toBe(textarea);
     await waitFor(() =>

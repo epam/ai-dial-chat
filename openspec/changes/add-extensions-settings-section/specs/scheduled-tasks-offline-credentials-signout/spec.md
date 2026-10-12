@@ -8,17 +8,17 @@ Relocates the user-facing half of the signout capability from the Scheduled Task
 
 ### Requirement: Gate result exposes the resolved connected state
 
-The route-scoped offline-credentials status check (`useOfflineCredentialsGate`, state owner) SHALL additionally expose on its result, alongside `status`: the last resolved `connected` boolean (updated from the same Core response in the same `fetchStatus` pass, including inside `refetch`, defaulting to `false` before the first resolution) and the Core OAuth client id from the same response (`serviceClientId`, set whenever Core returns a complete `connect` object — regardless of connection state, since the login-only `connect` settings are derived only while a login is possible; `undefined` when Core returns none). A failed check SHALL NOT flip `connected` to `false` from a previously resolved `true`, nor change `serviceClientId`, unless a later successful check reports otherwise — mirroring the login flow's "a failed check must not falsely report disconnected" rule. No new React context is introduced; the state stays in the existing hook. The Extensions settings section consumes `serviceClientId` for the service row's display-name derivation (see the `settings-extensions` capability).
+The route-scoped offline-credentials status check (`useOfflineCredentialsGate`, state owner) SHALL additionally expose on its result, alongside `status`: the last resolved `connected` boolean (updated from the same Core response in the same `fetchStatus` pass, including inside `refetch`, defaulting to `false` before the first resolution). A failed check SHALL NOT flip `connected` to `false` from a previously resolved `true` unless a later successful check reports otherwise — mirroring the login flow's "a failed check must not falsely report disconnected" rule. No new React context is introduced; the state stays in the existing hook.
 
-#### Scenario: Connected user reads the boolean and the client id
+#### Scenario: Connected user reads the boolean
 
-- **WHEN** the status check resolves `{ available: true, connected: true, connect: { client_id: 'dial-apps', … } }`
-- **THEN** the gate result reports `connected: true` and `serviceClientId: 'dial-apps'` while the same route entry lasts
+- **WHEN** the status check resolves `{ available: true, connected: true }`
+- **THEN** the gate result reports `connected: true` while the same route entry lasts
 
 #### Scenario: Failed check does not flip a known-connected state
 
 - **WHEN** a previously resolved `connected: true` gate re-fetches and the request fails
-- **THEN** the gate does not report `connected: false` from that failure (the error status governs the banner; `connected` and `serviceClientId` keep the last resolved values until a successful check reports otherwise)
+- **THEN** the gate does not report `connected: false` from that failure (the error status governs the banner; `connected` keeps the last resolved value until a successful check reports otherwise)
 
 ### Requirement: Disconnect affordance renders only for a connected user
 

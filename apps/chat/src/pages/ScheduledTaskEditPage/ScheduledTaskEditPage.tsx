@@ -2,11 +2,14 @@ import {
   TextRefinementPurpose,
   ScheduledTaskErrorCode,
 } from '@epam/ai-dial-chat-api-client';
-import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ScheduledTaskDto,
+  UpdateScheduledTaskBodyDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
-  getApiErrorDetails,
   getApiErrorStatus,
   mapScheduledTaskDtoToFormValues,
+  type ApiErrorDetails,
 } from '@epam/ai-dial-chat-hooks';
 import { prepareScheduledTaskUpdateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
@@ -38,10 +41,9 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { OfflineCredentialsLoginOutcomeType } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
-import { useScheduledTaskAuthAutoLogin } from '../../hooks/scheduled-tasks/useScheduledTaskAuthAutoLogin';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
+import { useScheduledTaskSubmit } from '../../hooks/scheduled-tasks/useScheduledTaskSubmit';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import {
   getScheduledTask,
@@ -49,12 +51,9 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
-import { checkScheduledTaskAuthSessionError } from '../../utils/scheduled-task-auth-error';
 import {
   getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
-  mapScheduledTaskApiError,
 } from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -71,7 +70,7 @@ const ScheduledTaskEditPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
-  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { showSuccessNotification } = useNotification();
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
 
@@ -100,7 +99,6 @@ const ScheduledTaskEditPage: FC = () => {
     endDate?: string;
   }>({});
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
   /* A capability change invalidates a prior server rejection. Local validation
    * below continues to block a selected skill until support is confirmed. */
@@ -220,112 +218,16 @@ const ScheduledTaskEditPage: FC = () => {
     setTaskFetchToken((token) => token + 1);
   }, []);
 
-  const showAutoLoginFailedNotification = useCallback(
-    (traceId?: string) =>
-      showErrorNotification({
-        message: t(ScheduledTasksI18nKeys.AutoLoginFailedNotification),
-        requestId: traceId,
-      }),
-    [showErrorNotification, t],
-  );
-
-  const { reserveLoginPopup, autoLogin } = useScheduledTaskAuthAutoLogin();
-
-  /**
-   * Handles a failed submit; resolves `true` only when the failure was
-   * attributed to the logged-out external Scheduler auth service and the
-   * reserved-popup auto-login succeeded, so the caller retries the submit
-   * once. Every other path resolves `false` after surfacing its own
-   * feedback (field errors, the not-found state, or a toast).
+  /*
+   * The whole submit orchestration (in-flight state, failure branches,
+   * login-required toast, login-and-retry handshake) is the shared
+   * `useScheduledTaskSubmit` flow — the handlers below supply this page's
+   * own pieces, plus its not-found branch.
    */
-  const handleSubmitError = useCallback(
-    async (error: unknown, reservedPopup: Window | null): Promise<boolean> => {
-      try {
-        const details = await getApiErrorDetails(error);
-        const { traceId, code } = details;
-        const fieldErrors = mapScheduledTaskApiError(code, t);
-        if (fieldErrors) {
-          setErrors(fieldErrors);
-          return false;
-        }
-        if (
-          getApiErrorStatus(error) === 404 &&
-          code !== ScheduledTaskErrorCode.ScheduledTaskDeploymentUnavailable
-        ) {
-          setIsNotFound(true);
-          return false;
-        }
 
-        /*
-         * A revoked scheduler consent is fixed by an administrator, not by a
-         * login: it short-circuits before the 403 disambiguation below, so a
-         * consent revocation is never mistaken for a logged-out auth
-         * service and never drives the auto-login.
-         */
-        if (code === ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired) {
-          showErrorNotification({
-            message: resolveScheduledTaskErrorMessage(
-              details,
-              ScheduledTasksI18nKeys.EditErrorNotification,
-              t,
-            ),
-            requestId: traceId,
-          });
-          return false;
-        }
-
-        /*
-         * A bare 403 is either a genuine permission denial or the external
-         * Scheduler auth service being logged out (Core returns the same
-         * bare status for both). One fresh status check disambiguates
-         * (issue #9046); an attributed failure with usable client settings
-         * drives the reserved-popup auto-login, so the page and its unsaved
-         * form state stay alive while the OAuth popup runs — the popup was
-         * reserved synchronously at click time, because one opened after
-         * the save POST would be blocked by the popup blocker. A
-         * user-closed popup stays silent; every other failed outcome takes
-         * the failed-login toast. An attributed failure with no usable
-         * authorize URL, or with no usable settings at all, keeps the
-         * generic error handling below.
-         */
-        const check = await checkScheduledTaskAuthSessionError(error);
-        if (check.isAuthSessionError && check.connect != null) {
-          const outcome = await autoLogin(check.connect, reservedPopup);
-          if (outcome.type === OfflineCredentialsLoginOutcomeType.Success) {
-            return true;
-          }
-          if (outcome.type !== OfflineCredentialsLoginOutcomeType.Cancelled) {
-            showAutoLoginFailedNotification(traceId);
-          }
-          return false;
-        }
-
-        showErrorNotification({
-          /* DIAL Scheduler's own reason when it sent one; never the BFF's
-           * generic English-only `message`. */
-          message: resolveScheduledTaskErrorMessage(
-            details,
-            ScheduledTasksI18nKeys.EditErrorNotification,
-            t,
-          ),
-          requestId: traceId,
-        });
-        return false;
-      } catch {
-        /* The error handler itself must never surface as an unhandled
-           rejection on top of a failed submit. */
-        showErrorNotification({
-          message: t(ScheduledTasksI18nKeys.EditErrorNotification),
-        });
-        return false;
-      }
-    },
-    [autoLogin, showAutoLoginFailedNotification, showErrorNotification, t],
-  );
-
-  const handleSubmit = useCallback(async () => {
-    if (!values) return;
-
+  /** Prepares the update body from the current values; `null` while the form is not loaded yet or validation fails (field errors already applied). */
+  const prepareUpdateBody = useCallback(() => {
+    if (!values) return null;
     const prepared = prepareScheduledTaskUpdateBody(values, {
       now: new Date(),
       isSkillsSupported,
@@ -334,61 +236,53 @@ const ScheduledTaskEditPage: FC = () => {
     });
     if (!prepared.ok) {
       setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
-      return;
+      return null;
     }
+    return prepared.body;
+  }, [values, originalWindowDates, isSkillsSupported, t]);
 
-    /*
-     * Reserved while the click's user activation is still fresh — see
-     * useScheduledTaskAuthAutoLogin. Closed in the finally below when the
-     * submit never needed a login.
-     */
-    const reservedPopup = reserveLoginPopup();
+  /** Performs the update request for this task. */
+  const saveTaskUpdate = useCallback(
+    (body: UpdateScheduledTaskBodyDto) => updateScheduledTask(scheduleId, body),
+    [scheduleId],
+  );
 
-    let isSaved = false;
-    setIsSubmitting(true);
-    try {
-      try {
-        await updateScheduledTask(scheduleId, prepared.body);
-        isSaved = true;
-      } catch (error) {
-        if (await handleSubmitError(error, reservedPopup)) {
-          try {
-            await updateScheduledTask(scheduleId, prepared.body);
-            isSaved = true;
-          } catch (retryError) {
-            /*
-             * The post-login retry takes the generic path — its fresh status
-             * check reports connected, so it cannot re-trigger the
-             * auto-login.
-             */
-            await handleSubmitError(retryError, null);
-          }
-        }
+  /** Runs the normal update success path (success toast + navigation back to the task detail). */
+  const handleUpdateSuccess = useCallback(() => {
+    showSuccessNotification({
+      message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
+    });
+    navigate(returnUrl);
+  }, [showSuccessNotification, t, navigate, returnUrl]);
+
+  /**
+   * Marks a bare 404 as the task's not-found state and reports it fully
+   * handled; a mapped deployment-unavailable code still takes the shared
+   * branches.
+   */
+  const handleTaskNotFoundError = useCallback(
+    (error: unknown, details: ApiErrorDetails) => {
+      if (
+        getApiErrorStatus(error) === 404 &&
+        details.code !==
+          ScheduledTaskErrorCode.ScheduledTaskDeploymentUnavailable
+      ) {
+        setIsNotFound(true);
+        return true;
       }
-      if (isSaved) {
-        showSuccessNotification({
-          message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
-        });
-        navigate(returnUrl);
-      }
-    } finally {
-      if (reservedPopup && !reservedPopup.closed) {
-        reservedPopup.close();
-      }
-      setIsSubmitting(false);
-    }
-  }, [
-    values,
-    originalWindowDates,
-    isSkillsSupported,
-    showSuccessNotification,
-    handleSubmitError,
-    reserveLoginPopup,
-    t,
-    navigate,
-    returnUrl,
-    scheduleId,
-  ]);
+      return false;
+    },
+    [],
+  );
+
+  const { isSubmitting, handleSubmit } = useScheduledTaskSubmit({
+    prepare: prepareUpdateBody,
+    save: saveTaskUpdate,
+    onSuccess: handleUpdateSuccess,
+    onFieldErrors: setErrors,
+    errorKey: ScheduledTasksI18nKeys.EditErrorNotification,
+    handleExtraError: handleTaskNotFoundError,
+  });
 
   const handleSubmitVoid = useCallback(
     () => void handleSubmit(),

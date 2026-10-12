@@ -4,7 +4,12 @@ import {
   getToolsetOAuthChannelName,
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetCredentialsLevel,
+  type ToolsetRedirectState,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  decodeJsonFromBase64,
+  encodeJsonToBase64,
+} from '@epam/ai-dial-chat-shared';
 import {
   act,
   fireEvent,
@@ -888,12 +893,13 @@ describe('AppEditorIframe — toolset login request', () => {
     sendLoginRequest('toolsets/b/my__1.0.0');
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
-    const flowId = JSON.parse(
-      atob(
-        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-          btoa('{}'),
-      ),
-    ).state;
+    const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        encodeJsonToBase64({}),
+    );
+    if (flowId == null) {
+      throw new Error('expected a stored flow id');
+    }
 
     postOAuthResult(flowId, {
       type: 'success',
@@ -936,12 +942,13 @@ describe('AppEditorIframe — toolset login request', () => {
     sendLoginRequest('toolsets/b/my__1.0.0');
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
-    const flowId = JSON.parse(
-      atob(
-        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-          btoa('{}'),
-      ),
-    ).state;
+    const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        encodeJsonToBase64({}),
+    );
+    if (flowId == null) {
+      throw new Error('expected a stored flow id');
+    }
 
     postOAuthResult(flowId, {
       type: 'success',
@@ -982,12 +989,13 @@ describe('AppEditorIframe — toolset login request', () => {
     sendLoginRequest('toolsets/b/my__1.0.0');
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
-    const flowId = JSON.parse(
-      atob(
-        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-          btoa('{}'),
-      ),
-    ).state;
+    const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        encodeJsonToBase64({}),
+    );
+    if (flowId == null) {
+      throw new Error('expected a stored flow id');
+    }
 
     postOAuthResult(flowId, {
       type: 'failure',

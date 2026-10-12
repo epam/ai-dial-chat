@@ -11,6 +11,9 @@ import {
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { memo, useCallback, useState, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import ExtensionServiceRow, {
+  EXTENSIONS_GRID_COLUMNS,
+} from '../../../components/ExtensionServiceRow/ExtensionServiceRow';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -23,9 +26,6 @@ import {
   OfflineCredentialsGateStatus,
   useOfflineCredentialsGate,
 } from '../../../hooks/offlineCredentials/useOfflineCredentialsGate';
-import ExtensionServiceRow, {
-  EXTENSIONS_GRID_COLUMNS,
-} from './../../../components/ExtensionServiceRow/ExtensionServiceRow';
 import styles from './ExtensionsTab.module.scss';
 
 const ExtensionsTab: FC = () => {

@@ -1,4 +1,4 @@
-import { generateUUID } from '@epam/ai-dial-chat-shared';
+import { encodeJsonToBase64, generateUUID } from '@epam/ai-dial-chat-shared';
 import {
   buildToolsetAuthorizeUrl,
   getToolsetRedirectUri,
@@ -17,11 +17,12 @@ import {
 
 /**
  * Writes the redirect state into the given context's own `sessionStorage`
- * under the shared key — the single owner of the stored format for both the
- * popup and the main-window flows, so the two can never drift apart. The
- * payload is base64-wrapped (`btoa`) — an encoding, not encryption: the state
- * carries only flow-correlation ids and paths, never tokens or codes, and the
- * wrap keeps it opaque to storage-scanning tooling.
+ * under the shared key, base64-wrapped through `encodeJsonToBase64` — the
+ * single owner of the stored format, so every writer and reader can never
+ * drift apart. The state carries only flow-correlation ids and paths, never
+ * tokens or codes; the wrap's Unicode safety keeps any user-named resource
+ * id storable (`btoa` alone throws on characters above `U+00FF`, which would
+ * strand the already-open popup).
  */
 const writeRedirectState = (
   storage: Pick<Storage, 'setItem'>,
@@ -29,7 +30,7 @@ const writeRedirectState = (
 ): void => {
   storage.setItem(
     TOOLSET_REDIRECT_STATE_KEY,
-    btoa(JSON.stringify(redirectState)),
+    encodeJsonToBase64(redirectState),
   );
 };
 
@@ -120,60 +121,6 @@ export const navigateToolsetOAuthPopup = (
     resourceKind,
     offlineUsageConsent,
   );
-};
-
-/**
- * Outcome of `navigateToolsetOAuthRedirect` — main-window mode has no popup to
- * block, so `Blocked` cannot occur.
- */
-export type ToolsetOAuthRedirectResult =
-  | ToolsetOAuthInitiationResultType.Started
-  | ToolsetOAuthInitiationResultType.InvalidConfig;
-
-/**
- * The main-window counterpart of `navigateToolsetOAuthPopup`: builds the same
- * authorize URL and redirect state (plus `returnPath`) from the same
- * arguments, but writes the state into *this* window's own `sessionStorage`
- * and navigates the current window to the provider's authorization page.
- * `window.location` navigation needs no user-gesture activation, so a caller
- * that has already run async work since its last click — where the popup
- * flow would be blocked — can still start the flow. The initiating page
- * unloads on `Started`; the callback route detects main-window mode through
- * the stored `returnPath` and hands completion to the host's
- * `onMainWindowComplete` instead of the popup/`BroadcastChannel` machinery.
- */
-export const navigateToolsetOAuthRedirect = (
-  auth: ToolsetOAuthSettings,
-  toolsetId: string,
-  callbackPath: string,
-  returnPath: string,
-  credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
-  resourceKind: OAuthResourceKind = OAuthResourceKind.Toolset,
-): ToolsetOAuthRedirectResult => {
-  const redirectUri = getToolsetRedirectUri(callbackPath);
-  const state = generateUUID();
-  const url = buildToolsetAuthorizeUrl(auth, redirectUri, state);
-  if (!url) {
-    return ToolsetOAuthInitiationResultType.InvalidConfig;
-  }
-
-  const redirectState: ToolsetRedirectState = {
-    toolsetId,
-    credentialsLevel,
-    redirectUri,
-    state,
-    resourceKind,
-    returnPath,
-  };
-  writeRedirectState(sessionStorage, redirectState);
-  /*
-   * A same-window navigation carries no `window.opener` relationship to
-   * sever: the state was written into this window's own storage, which the
-   * callback route (same origin again after the provider redirects back)
-   * reads directly.
-   */
-  window.location.href = url;
-  return ToolsetOAuthInitiationResultType.Started;
 };
 
 /**

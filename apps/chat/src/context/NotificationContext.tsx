@@ -15,6 +15,12 @@ export interface NotificationItem {
   title?: string;
   message?: ReactNode;
   /**
+   * Optional control (typically a small `Button`) rendered at the toast's
+   * inline end, after the text. Action-bearing notifications stay until
+   * manually dismissed, so the action cannot vanish before it is used.
+   */
+  action?: ReactNode;
+  /**
    * Validated 32-hex W3C trace ID, shown as a "Request ID" under the
    * notification. Omitted for client-only/validation errors and any non-error
    * notification.
@@ -35,11 +41,12 @@ export type ShowVariantNotificationOptions = Omit<
 
 type ShowVariantNotification = (
   options: ShowVariantNotificationOptions,
-) => void;
+) => string;
 
 export interface NotificationContextType {
   notifications: NotificationItem[];
-  showNotification: (options: ShowNotificationOptions) => void;
+  /** Queues the notification and resolves its id, for later dismissal. */
+  showNotification: (options: ShowNotificationOptions) => string;
   showInfoNotification: ShowVariantNotification;
   showSuccessNotification: ShowVariantNotification;
   showWarningNotification: ShowVariantNotification;
@@ -59,10 +66,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
-  const showNotification = useCallback((options: ShowNotificationOptions) => {
-    const id = generateUUID();
-    setNotifications((prev) => [...prev, { ...options, id }]);
-  }, []);
+  const showNotification = useCallback(
+    (options: ShowNotificationOptions): string => {
+      const id = generateUUID();
+      setNotifications((prev) => [...prev, { ...options, id }]);
+      return id;
+    },
+    [],
+  );
 
   const showInfoNotification = useCallback<ShowVariantNotification>(
     (options) =>
