@@ -301,7 +301,11 @@ export const BrowseSettingsSheet: FC<BrowseSettingsSheetProps> = ({
               filterStyles.footer,
             )}
           >
-            <GhostButton label={labels.clear} onClick={handleClear} />
+            <GhostButton
+              label={labels.clear}
+              className="flex-1"
+              onClick={handleClear}
+            />
             <PrimaryButton
               label={labels.apply}
               className="flex-1"
