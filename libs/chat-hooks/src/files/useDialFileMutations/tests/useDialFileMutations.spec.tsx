@@ -435,6 +435,26 @@ describe('useDialFileMutations', () => {
       });
     });
 
+    it('returns a reservedName error when the file manager appended the original extension', () => {
+      const { result } = renderMutations();
+      const error = result.current.onRenameValidate(
+        `${HIDDEN_FILE}.pdf`,
+        dummyItem,
+      );
+      expect(error).toEqual({
+        reason: FileNameValidationErrorReason.ReservedName,
+      });
+    });
+
+    it('does not treat a folder named ".dial_folder.pdf" as reserved', () => {
+      const { result } = renderMutations();
+      const error = result.current.onRenameValidate(`${HIDDEN_FILE}.pdf`, {
+        ...dummyItem,
+        nodeType: DialFileNodeType.FOLDER,
+      });
+      expect(error).toBeNull();
+    });
+
     it('returns a forbiddenSymbols error for a name containing forward slash', () => {
       const { result } = renderMutations();
       const error = result.current.onRenameValidate('a/b', dummyItem);

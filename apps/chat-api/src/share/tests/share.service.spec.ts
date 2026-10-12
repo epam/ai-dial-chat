@@ -90,12 +90,18 @@ describe('ShareService (facade)', () => {
   it('delegates revokeShared to ShareManagementService', async () => {
     const { service, shareManagementService } = makeService();
 
-    const result = await service.revokeShared('item-id', 'token', 'user-sub');
+    const result = await service.revokeShared(
+      'item-id',
+      'token',
+      'user-sub',
+      'bucket',
+    );
 
     expect(shareManagementService.revokeShared).toHaveBeenCalledWith(
       'item-id',
       'token',
       'user-sub',
+      'bucket',
     );
     expect(result).toBe('revoke-shared-result');
   });

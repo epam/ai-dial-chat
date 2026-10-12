@@ -110,7 +110,7 @@ raw backslashes, leading slashes, and traversal segments remain invalid.
 ---
 
 ### Requirement: Upload DTO validation
-The system SHALL parse and validate the `bucket` and `path` form fields through a `UploadFileDto` class decorated with `class-validator` and `@ApiProperty`. The global `ValidationPipe` (whitelist + forbidNonWhitelisted) MUST reject any undeclared fields and strip them before the handler runs.
+The system SHALL parse and validate the `bucket` and `path` form fields through a `UploadFileDto` class decorated with `class-validator` and `@ApiProperty`. The global `ValidationPipe` (whitelist + forbidNonWhitelisted) MUST reject a request that carries any undeclared field with `400 Bad Request`, so the request never reaches the handler.
 
 The `UploadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/upload-file.dto.ts`; it extends `FileParamsDto` (`apps/chat-api/src/files/dto/file-params.dto.ts`), which declares `bucket` and `path`, and adds the optional `uploadMode`.
 
@@ -125,9 +125,10 @@ The `UploadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/upload-file
 - **WHEN** `bucket` is an empty string
 - **THEN** `ValidationPipe` returns `400 Bad Request` with an error message identifying the `bucket` field
 
-#### Scenario: Extra fields stripped
+#### Scenario: Extra fields rejected
 - **WHEN** the form body includes an undeclared field such as `admin: true`
-- **THEN** the field is absent from the validated DTO and does not reach the service layer
+- **THEN** `ValidationPipe` returns `400 Bad Request` with the message `property admin should not exist`
+- **AND** the request does not reach the service layer
 
 ---
 
