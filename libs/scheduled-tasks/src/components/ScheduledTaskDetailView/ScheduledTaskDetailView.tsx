@@ -335,7 +335,8 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               }
               onClick={onDelete}
               disabled={isDeleting}
-              className="min-h-11 shrink-0"
+              textClassName={styles.actionLabel}
+              className={mergeClasses('min-h-11 shrink-0', styles.actionButton)}
             />
           )}
 
@@ -351,7 +352,12 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               }
               onClick={onEdit}
               disabled={isDeleting}
-              className="min-h-11 shrink-0"
+              textClassName={styles.actionLabel}
+              className={mergeClasses(
+                'min-h-11 shrink-0',
+                styles.actionButton,
+                styles.roundActionButton,
+              )}
             />
           )}
           {!isDeleted && onStartNow && labels.startNowButtonLabel && (
@@ -403,7 +409,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
        */}
       <div
         className={mergeClasses(
-          'min-w-0 items-center gap-2 px-8 py-3',
+          'min-w-0 items-center gap-2 px-4 py-3',
           styles.mobileTitleRow,
         )}
       >
@@ -453,13 +459,19 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         !error &&
         (isMobile ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <Tabs
-              ariaLabel={labels.tabsAriaLabel ?? 'Scheduled task sections'}
-              className="px-8"
-              tabs={detailTabs}
-              activeTabId={activeTabId}
-              onTabChange={setActiveTabId}
-            />
+            {/* Pinned to the top of the scroller so the section switch stays
+             * reachable while a long Configuration or History panel scrolls. */}
+            <div
+              className={mergeClasses('sticky top-0 z-10', styles.stickyTabs)}
+            >
+              <Tabs
+                ariaLabel={labels.tabsAriaLabel ?? 'Scheduled task sections'}
+                className="px-4"
+                tabs={detailTabs}
+                activeTabId={activeTabId}
+                onTabChange={setActiveTabId}
+              />
+            </div>
             {/*
              * One panel renders at a time. Its accessible name comes from the
              * active tab's label — the kit's tab elements expose no
@@ -468,7 +480,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
             <div
               role="tabpanel"
               aria-label={activeTabLabel}
-              className="flex flex-1 flex-col gap-5 px-8 py-6"
+              className="flex flex-1 flex-col gap-5 px-4 py-6"
             >
               {renderActiveTabPanel()}
             </div>
