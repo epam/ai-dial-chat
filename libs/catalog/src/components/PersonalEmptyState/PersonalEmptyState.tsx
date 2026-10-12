@@ -1,9 +1,6 @@
 import { ButtonVariant, NoDataContent } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import {
-  CreateButton,
-  type CreateButtonProps,
-} from '../Catalog/CreateButton';
+import { CreateButton, type CreateButtonProps } from '../Catalog/CreateButton';
 
 /** Props for `PersonalEmptyState`. */
 export interface PersonalEmptyStateProps {
