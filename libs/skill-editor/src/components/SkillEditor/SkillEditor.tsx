@@ -29,8 +29,6 @@ import {
   ButtonDropdown,
   ButtonVariant,
   CaptionText,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ElementSize,
   ErrorText,
@@ -633,13 +631,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           variant={ButtonVariant.Neutral}
           appearance={ButtonAppearance.Solid}
           size={ElementSize.Small}
-          iconBefore={
-            <IconPlus
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
           items={headerAddItems[pane]}
         />
       </div>
