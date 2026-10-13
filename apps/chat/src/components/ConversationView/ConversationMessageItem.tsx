@@ -36,6 +36,7 @@ import {
   type ResponseFormat,
   type RequestSkill,
   type StarterOption,
+  type TextSegment,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type {
@@ -310,7 +311,7 @@ interface Props {
   renderHistorySkillSegments?: (
     content: string,
     skills: RequestSkill[] | undefined,
-  ) => ReactNode[] | null;
+  ) => TextSegment[] | null;
   /**
    * Renders a message's `custom_content.skills` entries as a flat list of
    * `ChatSkill` history elements for the bubble's `beforeContent` slot (the

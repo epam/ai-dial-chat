@@ -47,6 +47,7 @@ const findMessageParagraph = (message: string) =>
  * inline style — a CSS-level check with no semantic query available.
  */
 const getCollapsibleTextWrapper = (toggle: HTMLElement) =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
   document.getElementById(
     toggle.getAttribute('aria-controls') ?? '',
   ) as HTMLElement;
@@ -60,6 +61,7 @@ const mockRenderedTextHeight = (height: number) =>
   vi
     .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
     .mockImplementation(function getScrollHeight(this: HTMLElement) {
+      // eslint-disable-next-line testing-library/no-node-access -- jsdom scrollHeight stub must locate the measured wrapper; see above
       return this.querySelector(':scope > div > p') ? height : 0;
     });
 
@@ -203,6 +205,7 @@ describe('UserMessageBubble — markdown', () => {
     );
 
     // <br> has no accessible role, so the line break is checked on the DOM.
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     expect(container.querySelector('p br')).toBeTruthy();
     expect(screen.getByRole('listitem').textContent).toBe('Item');
     expect(screen.queryByText(/- Item/)).toBeNull();
