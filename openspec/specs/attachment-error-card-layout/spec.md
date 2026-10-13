@@ -22,7 +22,7 @@ When `AttachmentCard` renders a non-image attachment in the error state (`status
 
 When a `searchQuery` is supplied, the name SHALL render through the shared `Highlight` component (capped at the same two lines) rather than as plain text.
 
-**Tile size.** The tile is a fixed `84px` square from the shared tile base class in both states; the error state changes no dimension.
+**Tile size.** The tile is a fixed `100px` square from the shared tile base class in both states; the error state changes no dimension.
 
 No new SCSS tokens are introduced. `styles.nameText` continues to style the file name and `styles.typeText` the icon and type label; the error state adds only `styles.tileError`.
 
@@ -57,7 +57,7 @@ No new SCSS tokens are introduced. `styles.nameText` continues to style the file
 
 - **WHEN** a card has a filename longer than the tile width
 - **THEN** the filename wraps to at most two lines, breaking mid-word if needed, and the full name is available through the element's `title`
-- **AND** the tile keeps its fixed 84 px square footprint
+- **AND** the tile keeps its fixed 100 px square footprint
 
 #### Scenario: Long file-type label is ellipsed
 
