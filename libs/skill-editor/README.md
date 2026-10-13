@@ -176,11 +176,8 @@ treats a folder as a plain node in `files` whether or not anything is under it;
 persisting it is the host's concern. The DIAL Chat host keeps an empty folder
 across Save and reload through a storage marker the library never sees.
 
-**Delete** first opens a `DeleteConfirmationDialog` (from
-`@epam/ai-dial-chat-shared`) naming the node; a folder's confirmation also
-warns that everything inside it goes too. Only confirming removes the node (a
-folder with everything under it) and calls `fileActions.onRemoveNode(path)`;
-cancelling, Escape, or an outside click leaves the tree unchanged. The library
+**Delete** removes the node (a folder with everything under it) immediately,
+with no confirmation, and calls `fileActions.onRemoveNode(path)`. The library
 never offers creating an empty file.
 
 `onValuesChange` reports the complete current `SkillEditorValues` whenever the
@@ -252,12 +249,7 @@ file-tree entries are `addLabel`, `createFolderLabel`, `uploadFilesLabel`,
 `folderNameDuplicateError`, and the archive dialog's
 `uploadArchiveDialogTitle`, `uploadArchiveDropZoneLabel`,
 `uploadArchiveDropZoneMobileLabel`, `uploadArchiveErrorMessage`,
-`uploadArchiveEmptyMessage` and `uploadArchiveExtractingAriaLabel`. The
-delete confirmation takes `deleteFileConfirmTitle`, `deleteFolderConfirmTitle`,
-`deleteConfirmMessage(name)` (a `ReactNode`, so the host can bold the name),
-`deleteFolderConsequence`, and `deleteConfirmation` — a
-`DeleteConfirmationDialogLabels` object for the dialog's buttons and shared
-bullets.
+`uploadArchiveEmptyMessage` and `uploadArchiveExtractingAriaLabel`.
 `styles.typography.menuIconClassName`
 colors the Add-menu icons (`'text-secondary'` by default);
 the Delete entry renders as a danger (red) item, and `removeIconClassName`

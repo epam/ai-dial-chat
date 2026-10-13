@@ -1142,7 +1142,6 @@ export enum SkillEditorI18nKeys {
   UploadArchive = 'skillEditor.uploadArchive',
   OpenFileSystem = 'skillEditor.openFileSystem',
   AddSibling = 'skillEditor.addSibling',
-  DeleteFolderConsequence = 'skillEditor.deleteFolderConsequence',
   NewFolderDefaultName = 'skillEditor.newFolderDefaultName',
   FolderNameRequired = 'skillEditor.folderNameRequired',
   FolderNameInvalid = 'skillEditor.folderNameInvalid',
