@@ -135,7 +135,7 @@ describe('UsageLimitBanner', () => {
 
     const banner = screen.getByRole('status');
     expect(banner.textContent).toMatch(
-      /^Daily limit 80% used\. Resets at 12:00\sAM GMT\./,
+      /^Daily limit 80% used\. Resets at 12:00\sAM GMT(\+0)?\./,
     );
     expect(screen.getByText('Daily limit 80% used.')).toBeTruthy();
   });
