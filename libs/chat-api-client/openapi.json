@@ -10010,6 +10010,11 @@
             "type": "string",
             "description": "Application type schema id from DIAL Core (present only for application deployments)"
           },
+          "viewerUrl": {
+            "type": "string",
+            "description": "Custom Viewer URL from DIAL Core viewer_url (present only for application deployments that configure one)",
+            "example": "https://viewer.example.com/"
+          },
           "inputAttachmentTypes": {
             "description": "Accepted MIME types for input attachments from DIAL Core (e.g. [\"audio/*\", \"image/*\"])",
             "type": "array",

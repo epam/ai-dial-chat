@@ -36,6 +36,33 @@ describe('mapToDeploymentItem isFeatured', () => {
   });
 });
 
+describe('mapToDeploymentItem viewerUrl', () => {
+  const map = (overrides: Partial<RawDeploymentDto>) =>
+    mapToDeploymentItem(raw(overrides), new Set(), new Set());
+
+  it('exposes viewer_url for an application', () => {
+    const item = map({
+      object: 'application',
+      viewer_url: 'https://viewer.example.com/',
+    });
+
+    expect(item?.viewerUrl).toBe('https://viewer.example.com/');
+  });
+
+  it('never exposes viewer_url for a model', () => {
+    const item = map({ viewer_url: 'https://viewer.example.com/' });
+
+    expect(item?.viewerUrl).toBeUndefined();
+  });
+
+  it('omits a missing or empty viewer_url', () => {
+    expect(map({ object: 'application' })?.viewerUrl).toBeUndefined();
+    expect(
+      map({ object: 'application', viewer_url: '' })?.viewerUrl,
+    ).toBeUndefined();
+  });
+});
+
 describe('redactApplicationFunctionEnv', () => {
   it('drops function.env and keeps the other function fields', () => {
     const redacted = redactApplicationFunctionEnv({

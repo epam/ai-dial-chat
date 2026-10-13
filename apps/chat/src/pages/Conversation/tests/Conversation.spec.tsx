@@ -79,6 +79,35 @@ vi.mock('../../../components/ConversationView/ConversationView', () => ({
     </div>
   ),
 }));
+/* Exposes the viewer's conversation callbacks as buttons so tests can fire them. */
+vi.mock('../../../components/CustomViewer/CustomViewerFrame', () => ({
+  default: ({
+    conversationId,
+    onConversationCreated,
+    onConversationUpdated,
+  }: {
+    conversationId?: string;
+    onConversationCreated?: (id: string) => void;
+    onConversationUpdated?: (id: string) => void;
+  }) => (
+    <div>
+      {`custom-viewer:${conversationId}`}
+      <button
+        type="button"
+        onClick={() => onConversationCreated?.('conversations/bucket/New chat')}
+      >
+        viewer-created
+      </button>
+      <button
+        type="button"
+        onClick={() => onConversationUpdated?.(CONVERSATION_ID_FOR_MOCK)}
+      >
+        viewer-updated
+      </button>
+    </div>
+  ),
+}));
+const CONVERSATION_ID_FOR_MOCK = 'conversations/bucket/gpt-4o__Hello';
 vi.mock(
   '../../../components/ConversationView/Rate/NegativeFeedbackModal',
   () => ({
@@ -724,5 +753,108 @@ describe('ConversationPage — tool toggle driven by an assistant form_schema', 
     await waitFor(() =>
       expect(chip().getAttribute('aria-pressed')).toBe('true'),
     );
+  });
+});
+
+describe('ConversationPage — Custom Viewer', () => {
+  const viewerApp = {
+    id: 'gpt-4o',
+    displayName: 'Explorer',
+    type: 'application',
+    viewerUrl: 'https://viewer.example.com/',
+  };
+
+  beforeEach(() => {
+    vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue(
+      createDeploymentsContextValue({
+        selectedItemId: 'gpt-4o',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        items: [viewerApp as any],
+      }),
+    );
+    mockUseConversations.mockReturnValue({
+      ...mockUseConversations(),
+      refreshConversations: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+  });
+
+  it('renders the viewer instead of the conversation view', async () => {
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    render(<ConversationPage />);
+
+    expect(
+      await screen.findByText(`custom-viewer:${CONVERSATION_ID}`),
+    ).toBeTruthy();
+    expect(screen.queryByText('conversation-view')).toBeNull();
+  });
+
+  it('never auto-starts a generation for a viewer conversation', async () => {
+    const conversation = makeConversation();
+    conversation.messages = [
+      { role: 'user', content: 'hi', timestamp: 't' },
+    ] as Conversation['messages'];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockGetConversation.mockResolvedValueOnce(conversation as any);
+
+    render(<ConversationPage />);
+
+    await screen.findByText(`custom-viewer:${CONVERSATION_ID}`);
+    expect(streamMocks.startStream).not.toHaveBeenCalled();
+  });
+
+  it('reloads the open conversation in place when the viewer updates it', async () => {
+    mockGetConversation.mockResolvedValue(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+    const { refreshConversations } = mockUseConversations();
+
+    render(<ConversationPage />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'viewer-updated' }),
+    );
+
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalledTimes(2));
+    expect(refreshConversations).toHaveBeenCalled();
+    expect(screen.getByText(`custom-viewer:${CONVERSATION_ID}`)).toBeTruthy();
+  });
+
+  it('refreshes the list and opens a conversation the viewer created', async () => {
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+    const { refreshConversations } = mockUseConversations();
+
+    render(<ConversationPage />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'viewer-created' }),
+    );
+
+    expect(refreshConversations).toHaveBeenCalledWith([
+      'conversations/bucket/New chat',
+    ]);
+    expect(routerMocks.navigate).toHaveBeenCalledWith(
+      expect.stringContaining('/conversations/bucket/New'),
+    );
+  });
+
+  it('keeps the regular conversation view for a non-viewer model', async () => {
+    vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue(
+      createDeploymentsContextValue({ selectedItemId: 'gpt-4o' }),
+    );
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    render(<ConversationPage />);
+
+    expect(await screen.findByText('conversation-view')).toBeTruthy();
   });
 });

@@ -36,8 +36,12 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import CustomViewerFrame from '../../components/CustomViewer/CustomViewerFrame';
 import ScheduledTaskConversationBanner from '../../components/ScheduledTaskConversationBanner/ScheduledTaskConversationBanner';
-import { getConversationRoute } from '../../constants/routes';
+import {
+  getConversationRoute,
+  normalizeConversationId,
+} from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -60,6 +64,7 @@ import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useVisualizerMessageSendHandler } from '../../hooks/conversation/useVisualizerMessageSendHandler';
+import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   conversationsApi as configuredConversationsApi,
@@ -78,6 +83,7 @@ import {
   conversationStreamTransport,
   logConversationStreamError,
 } from '../../utils/conversation-stream-transport';
+import { resolveCustomViewer } from '../../utils/custom-viewer';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -109,7 +115,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     selectedItemId: currentSelectedItemId,
     selectedDeploymentConfiguration,
     isLoading: isDeploymentsLoading,
+    schemas,
   } = useDeployments();
+  /* Read by `loadConversation` without making it depend on the catalog. */
+  const viewerLookupRef = useRef({ deployments, schemas });
+  useEffect(() => {
+    viewerLookupRef.current = { deployments, schemas };
+  }, [deployments, schemas]);
   const {
     toolsMenuItems,
     onToolToggle,
@@ -155,6 +167,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     bumpConversationActivity,
     watchForDisplayNameUpdate,
     removeConversationFromList,
+    refreshConversations,
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
@@ -232,6 +245,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
      ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
   const conversationModelId =
     conversation?.assistantModelId || conversation?.model.id;
+  const { viewer: customViewer, isResolving: isCustomViewerResolving } =
+    useCustomViewer(conversationModelId);
   const isConversationModelHidden = useMemo(
     () =>
       !!conversationModelId &&
@@ -507,6 +522,26 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (modelToSelect) {
           restoreSelectedItemId(modelToSelect);
         }
+        /*
+         * A Custom Viewer drives its own conversation, so the chat must never
+         * auto-start or resume a generation for it — the viewer app may not
+         * even expose a completion endpoint.
+         */
+        const { deployments: knownDeployments, schemas: knownSchemas } =
+          viewerLookupRef.current;
+        const isViewerConversation = !!resolveCustomViewer(
+          findDeploymentByIdOrReference(
+            knownDeployments,
+            result.assistantModelId || result.model.id,
+          ),
+          knownSchemas,
+        );
+        if (isViewerConversation) {
+          setConversation(result);
+          conversationRef.current = result;
+          return;
+        }
+
         if (restoredToolConfigIdRef.current !== id) {
           restoredToolConfigIdRef.current = id;
           restoreToolConfiguration(getLatestToolConfiguration(result.messages));
@@ -800,7 +835,41 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [activeScheduledTaskStatus],
   );
 
-  if (isFetching)
+  const handleCustomViewerConversationCreated = useCallback(
+    (createdId: string) => {
+      void refreshConversations([createdId]);
+      const route = getConversationRoute(createdId);
+      if (route !== ROUTES.Root) navigate(route);
+    },
+    [refreshConversations, navigate],
+  );
+
+  const handleCustomViewerConversationUpdated = useCallback(
+    async (updatedId: string) => {
+      void refreshConversations();
+      const isOpenConversation =
+        !!conversationId &&
+        (updatedId === conversationRef.current?.id ||
+          normalizeConversationId(updatedId) === conversationId);
+      if (!isOpenConversation) return;
+      try {
+        /* Reloaded in place: going through loadConversation would show the
+         * page spinner and remount the viewer iframe. */
+        const reloaded = (await apiGetConversation(
+          conversationId,
+        )) as Conversation;
+        setConversation(reloaded);
+        conversationRef.current = reloaded;
+      } catch {
+        console.warn(
+          'Custom viewer: failed to reload the updated conversation',
+        );
+      }
+    },
+    [conversationId, refreshConversations],
+  );
+
+  if (isFetching || (conversation && isCustomViewerResolving))
     return (
       <div className="flex size-full items-center justify-center">
         <Spinner />
@@ -809,6 +878,19 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   if (!conversation) {
     return null;
+  }
+
+  if (customViewer) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden">
+        <CustomViewerFrame
+          viewer={customViewer}
+          conversationId={conversation.id}
+          onConversationCreated={handleCustomViewerConversationCreated}
+          onConversationUpdated={handleCustomViewerConversationUpdated}
+        />
+      </div>
+    );
   }
 
   return (

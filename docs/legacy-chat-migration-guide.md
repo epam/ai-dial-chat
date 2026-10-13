@@ -284,6 +284,23 @@ shapes, and the feature-flag set all changed.
 path, and `apps/chat-overlay-sandbox` is a ready-made host page for verifying an
 integration against a real deployment before touching your own.
 
+## Custom Viewers
+
+Applications configured with `viewer_url` or `dial:applicationTypeViewerUrl`
+keep working without changes to their DIAL Core configuration. On the chat side:
+
+- Move the viewer origin from `ALLOWED_IFRAME_SOURCES` (dropped) to
+  `ALLOWED_IFRAME_ORIGINS`.
+- The `playback` query parameter is no longer sent; 1.0 has no playback mode.
+- The viewer title — and with it the `<title>/` message namespace — is the
+  display name as configured, no longer localised. A viewer whose `appName`
+  matched a translated title must switch to the configured one.
+- From `CREATED_CONVERSATION_SUCCESS` and `UPDATED_CONVERSATION_SUCCESS` only
+  `payload.conversation.id` is read; the chat reloads the conversation itself.
+- The iframe sandbox no longer allows forms, popups, downloads or presentation.
+
+[Custom Viewers](custom-viewers.md) has the full contract.
+
 ## User data
 
 Both chats store conversations in the same DIAL Core buckets, so a deployment
@@ -333,5 +350,6 @@ though not through the overlay API.
 - [Chat API](../apps/chat-api/README.md#environment-variables) — the full variable reference for 1.0
 - [Chat Overlay Migration Guide](chat-overlay-migration-guide.md) — embedding and UI feature flags
 - [Theme Customization](theme-customization.md) — theming and legacy theme migration
+- [Custom Viewers](custom-viewers.md) — application viewers in 1.0
 - [Architecture](architecture.md) — how 1.0 is put together
 - [Auth subsystem](./auth/) — OIDC, session cookie, refresh, logout

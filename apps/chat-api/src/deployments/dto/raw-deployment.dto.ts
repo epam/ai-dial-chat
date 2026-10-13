@@ -22,6 +22,8 @@ export interface RawDeploymentDto {
   display_version?: string;
   interfaces?: string | string[];
   application_type_schema_id?: string;
+  /** Custom Viewer page that replaces the conversation UI for this application. */
+  viewer_url?: string;
   input_attachment_types?: string[];
   max_input_attachments?: number;
   description_keywords?: string[];

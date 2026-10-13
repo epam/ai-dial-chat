@@ -295,6 +295,12 @@ export const mapToDeploymentItem = (
       type === DeploymentItemType.Application && raw.application_type_schema_id
         ? raw.application_type_schema_id
         : undefined,
+    viewerUrl:
+      type === DeploymentItemType.Application &&
+      typeof raw.viewer_url === 'string' &&
+      raw.viewer_url.length > 0
+        ? raw.viewer_url
+        : undefined,
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
       : undefined,
