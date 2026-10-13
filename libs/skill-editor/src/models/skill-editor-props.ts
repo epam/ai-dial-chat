@@ -1,7 +1,4 @@
-import type {
-  DeleteConfirmationDialogLabels,
-  TextRefinementLabels,
-} from '@epam/ai-dial-chat-shared';
+import type { TextRefinementLabels } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { SkillFileNodeKind } from '../types/skill-file-node-kind';
@@ -176,16 +173,6 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   addSiblingLabel?: string;
   /** Node context-menu action that removes the node. Defaults to `'Delete'`. */
   deleteLabel?: string;
-  /** Title of the confirmation shown before a file is deleted. Defaults to `'Delete file'`. */
-  deleteFileConfirmTitle?: string;
-  /** Title of the confirmation shown before a folder is deleted. Defaults to `'Delete folder'`. */
-  deleteFolderConfirmTitle?: string;
-  /** Builds the delete confirmation's warning sentence, given the node name. Defaults to a sentence naming it in bold. */
-  deleteConfirmMessage?: (name: string) => ReactNode;
-  /** Consequence listed when deleting a folder. Defaults to `'Everything inside it will be deleted'`. */
-  deleteFolderConsequence?: string;
-  /** Strings of the delete confirmation's actions and shared bullets. Each field has the `DeleteConfirmationDialog` default. */
-  deleteConfirmation?: DeleteConfirmationDialogLabels;
   /** Name prefilled in a folder being created inline. Defaults to `'New folder'`. */
   newFolderDefaultName?: string;
   /** Inline error for an empty folder name. Defaults to `'Enter a folder name'`. */
