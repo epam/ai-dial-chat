@@ -1020,7 +1020,14 @@ const ConversationView: FC<Props> = ({
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          /*
+           * `relative` makes the scroller the containing block for absolutely
+           * positioned descendants (e.g. `sr-only` live regions in message
+           * actions). Without it they overflow the `overflow-hidden` wrapper
+           * above, which keyboard selection (Shift+ArrowUp) can then scroll,
+           * pushing the whole message list out of view (#9137).
+           */
+          className="relative flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
           <div
             ref={contentRef}

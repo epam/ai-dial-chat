@@ -49,7 +49,7 @@ Peers:
 
 - `react` ^19.2.8
 - `@epam/ai-dial-ui-kit` ^0.15.3
-- `@epam/ai-dial-react-file-manager` ^0.3.2 \*
+- `@epam/ai-dial-react-file-manager` ^0.3.3 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
