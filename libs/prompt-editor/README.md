@@ -101,6 +101,13 @@ const EditPromptPage = () => {
 host that loads asynchronously should memoise it and produce a new object only
 once the data has arrived.
 
+When any field differs from the seeded values, Back and Cancel open a
+"Discard unsaved changes?" confirmation instead of calling `onBack` /
+`onCancel` straight away, and the browser warns before the page unloads.
+`onBack` / `onCancel` run only once the user confirms; the copy comes from
+`labels.discardTitle`, `discardMessage`, `discardConfirmLabel` and
+`discardCancelLabel`.
+
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
 AI action (and Undo) beside the Description label; omit it to hide the action.

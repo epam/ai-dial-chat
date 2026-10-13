@@ -23,6 +23,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
   PromptEditorI18nKeys,
+  SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
@@ -260,6 +261,10 @@ const PromptEditorPage: FC = () => {
       contentLoadingAriaLabel: t(PromptEditorI18nKeys.ContentLoadingAriaLabel),
       charactersRemaining: (count) =>
         t(PromptEditorI18nKeys.CharactersRemaining, { count }),
+      discardTitle: t(SkillEditorI18nKeys.UnsavedChangesTitle),
+      discardMessage: t(SkillEditorI18nKeys.UnsavedChangesMessage),
+      discardConfirmLabel: t(SkillEditorI18nKeys.UnsavedChangesConfirmLabel),
+      discardCancelLabel: t(SkillEditorI18nKeys.UnsavedChangesCancelLabel),
     }),
     [t, refinementLabels],
   );
