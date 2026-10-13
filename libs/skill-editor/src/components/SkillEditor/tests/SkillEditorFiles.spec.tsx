@@ -228,6 +228,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  DangerButton: ({
+    label,
+    onClick,
+    disabled,
+  }: {
+    label: ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
+  ConfirmationPopupVariant: { Danger: 'danger', Info: 'info' },
   PrimaryButton: ({
     label,
     onClick,
@@ -360,6 +374,8 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
   IconDatabase: () => <svg />,
+  IconFile: () => <svg />,
+  IconFolder: () => <svg />,
   IconFileText: () => <svg />,
   IconFileZip: () => <svg />,
   IconFolderPlus: () => <svg />,
@@ -651,7 +667,7 @@ describe('SkillEditor — files pane', () => {
     expect(screen.queryByText('Upload files')).toBeNull();
   });
 
-  it('removes a supporting entry immediately, with no confirmation', async () => {
+  it('asks for confirmation before removing a supporting file', async () => {
     const user = userEvent.setup({ delay: null });
     const onRemoveNode = vi.fn();
     renderEditor(
@@ -665,8 +681,55 @@ describe('SkillEditor — files pane', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
+    expect(onRemoveNode).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog', { name: 'Delete file' });
+    expect(within(dialog).getAllByText('notes.md').length).toBeGreaterThan(0);
+
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
     expect(onRemoveNode).toHaveBeenCalledWith('notes.md');
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('keeps the file when the delete confirmation is cancelled', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onRemoveNode = vi.fn();
+    renderEditor(
+      {
+        files: [
+          { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+        ],
+      },
+      buildFileActions({ onRemoveNode }),
+    );
+
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+    const dialog = screen.getByRole('dialog', { name: 'Delete file' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(onRemoveNode).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('uses the host-supplied delete confirmation copy', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+      labels: {
+        deleteFileConfirmTitle: 'Remove the file',
+        deleteConfirmMessage: (name) => `Really drop ${name}?`,
+        deleteConfirmation: { confirm: 'Drop', cancel: 'Keep' },
+      },
+    });
+
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+
+    const dialog = screen.getByRole('dialog', { name: 'Remove the file' });
+    expect(within(dialog).getByText('Really drop notes.md?')).toBeTruthy();
+    expect(within(dialog).getByRole('button', { name: 'Drop' })).toBeTruthy();
+    expect(within(dialog).getByRole('button', { name: 'Keep' })).toBeTruthy();
   });
 
   it('resets the selection to SKILL.md when the removed node was selected', async () => {
@@ -681,6 +744,11 @@ describe('SkillEditor — files pane', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
     await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Delete',
+      }),
+    );
 
     expect(onSelectedPathChange).toHaveBeenLastCalledWith('SKILL.md');
     expect(
@@ -992,7 +1060,7 @@ describe('SkillEditor — node menu', () => {
     expect(await screen.findByText('docs/c.md')).toBeTruthy();
   });
 
-  it('deletes a folder subtree immediately', async () => {
+  it('deletes a folder subtree after confirmation', async () => {
     const user = userEvent.setup({ delay: null });
     const onRemoveNode = vi.fn();
     renderEditor(
@@ -1001,6 +1069,14 @@ describe('SkillEditor — node menu', () => {
     );
 
     await user.click(screen.getAllByRole('menuitem', { name: 'Delete' })[0]);
+
+    expect(onRemoveNode).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog', { name: 'Delete folder' });
+    expect(
+      within(dialog).getByText('Everything inside it will be deleted'),
+    ).toBeTruthy();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
     expect(onRemoveNode).toHaveBeenCalledWith('docs');
     expect(screen.queryByRole('dialog')).toBeNull();

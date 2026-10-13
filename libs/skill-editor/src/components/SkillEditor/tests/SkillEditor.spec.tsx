@@ -39,6 +39,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <button aria-haspopup="menu">{label}</button>
   ),
   DIAL_KIT_ICON_STROKE: 1.5,
+  ConfirmationPopupVariant: { Danger: 'danger', Info: 'info' },
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
   TextareaResize: { Vertical: 'vertical' },
@@ -287,6 +288,8 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
   IconDatabase: () => <svg />,
+  IconFile: () => <svg />,
+  IconFolder: () => <svg />,
   IconFileZip: () => <svg />,
   IconFolderPlus: () => <svg />,
   IconPlus: () => <svg />,

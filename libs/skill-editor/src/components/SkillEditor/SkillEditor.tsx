@@ -9,6 +9,7 @@ import {
 } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  DeleteConfirmationDialog,
   MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
@@ -43,7 +44,9 @@ import {
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 import {
   IconDatabase,
+  IconFile,
   IconFileZip,
+  IconFolder,
   IconFolderPlus,
   IconPlus,
   IconTrashX,
@@ -98,6 +101,13 @@ interface UploadRequest {
   initialFiles?: File[];
   initialEntries?: SkillFileSourceEntry[];
 }
+
+const defaultDeleteConfirmMessage = (name: string): ReactNode => (
+  <>
+    Are you sure you want to delete <strong>{name}</strong>? This action is
+    permanent and cannot be undone.
+  </>
+);
 
 const DEFAULT_UPLOAD_REQUEST: UploadRequest = {
   mode: SkillFileUploadMode.Files,
@@ -460,15 +470,29 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [handleSelectedPathChange, draftPath],
   );
 
-  const handleRemoveNode = useCallback(
-    (path: string) => {
-      fileActions.onRemoveNode(path);
-      if (selectedPath === path) {
-        handleSelectedPathChange(SKILL_MANIFEST_PATH);
-      }
-    },
-    [fileActions, selectedPath, handleSelectedPathChange],
-  );
+  /* The node awaiting delete confirmation; kept through the dialog's close so its copy doesn't blank out. */
+  const [pendingRemoveNode, setPendingRemoveNode] =
+    useState<SkillFileTreeNode | null>(null);
+  const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
+
+  const handleRemoveNode = useCallback((node: SkillFileTreeNode) => {
+    setPendingRemoveNode(node);
+    setIsRemoveConfirmOpen(true);
+  }, []);
+
+  const handleCloseRemoveConfirm = useCallback(() => {
+    setIsRemoveConfirmOpen(false);
+  }, []);
+
+  const handleConfirmRemove = useCallback(() => {
+    setIsRemoveConfirmOpen(false);
+    if (!pendingRemoveNode) return;
+    const { path } = pendingRemoveNode;
+    fileActions.onRemoveNode(path);
+    if (selectedPath === path) {
+      handleSelectedPathChange(SKILL_MANIFEST_PATH);
+    }
+  }, [pendingRemoveNode, fileActions, selectedPath, handleSelectedPathChange]);
 
   const { startDraft } = draftFolder;
   const { onCreateFolder, extractArchive, pickFromFileSystem } = fileActions;
@@ -596,7 +620,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           label: t.deleteLabel ?? 'Delete',
           danger: true,
           icon: renderIcon(IconTrashX, removeIconClassName),
-          onClick: () => handleRemoveNode(item.path),
+          onClick: () => handleRemoveNode(node),
         },
       );
       return items;
@@ -633,7 +657,13 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           size={ElementSize.Small}
           icon={renderIcon(IconTrashX, removeIconClassName, DIAL_ICON_SIZE.SM)}
           aria-label={t.deleteLabel ?? 'Delete'}
-          onClick={() => handleRemoveNode(item.path)}
+          onClick={() =>
+            handleRemoveNode({
+              path: item.path,
+              name: item.name,
+              kind: SkillFileNodeKind.File,
+            })
+          }
         />
       );
     },
@@ -801,6 +831,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   }
 
   const isManifestSelected = selectedPath === SKILL_MANIFEST_PATH;
+  const isPendingFolder = pendingRemoveNode?.kind === SkillFileNodeKind.Folder;
+  const pendingRemoveName = pendingRemoveNode?.name ?? '';
   const setupTitle = isManifestSelected
     ? SKILL_MANIFEST_PATH
     : (t.selectedFileHeading?.(selectedNode?.name ?? selectedPath) ??
@@ -987,6 +1019,31 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         initialFiles={uploadRequest.initialFiles}
         initialEntries={uploadRequest.initialEntries}
         labels={labels}
+      />
+
+      <DeleteConfirmationDialog
+        open={isRemoveConfirmOpen}
+        title={
+          isPendingFolder
+            ? (t.deleteFolderConfirmTitle ?? 'Delete folder')
+            : (t.deleteFileConfirmTitle ?? 'Delete file')
+        }
+        names={[pendingRemoveName]}
+        icon={renderIcon(isPendingFolder ? IconFolder : IconFile)}
+        message={(t.deleteConfirmMessage ?? defaultDeleteConfirmMessage)(
+          pendingRemoveName,
+        )}
+        consequences={
+          isPendingFolder
+            ? [
+                t.deleteFolderConsequence ??
+                  'Everything inside it will be deleted',
+              ]
+            : undefined
+        }
+        labels={t.deleteConfirmation}
+        onConfirm={handleConfirmRemove}
+        onClose={handleCloseRemoveConfirm}
       />
     </div>
   );

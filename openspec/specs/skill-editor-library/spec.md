@@ -125,7 +125,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **THEN** `SkillEditor` behaves exactly as it did before this prop existed
 
 ### Requirement: Adding and removing supporting files and folders
-`SkillEditor` SHALL expose an **Add** dropdown in the Files pane header and, in each non-`SKILL.md` node's context menu, the same add entries listed directly for a folder plus an **Add sibling** submenu (specified by the `skill-file-tree-actions` capability). Supporting files SHALL be added only through the upload dialog (specified by the `skill-file-drag-drop` capability) — whether their source is the device, an archive expanded by `fileActions.extractArchive`, or the DIAL file system via `fileActions.pickFromFileSystem` — so a user always stages one or more files, reviews them, and commits the whole valid batch at once, rather than a single file being added directly on selection. Validation SHALL be performed through a host-supplied `fileActions.validateBatch` callback (returning per-candidate and batch-level results) and commit SHALL be performed through a host-supplied `fileActions.commitBatch` callback, so the app boundary's path-safety, size, count, and duplicate-detection rules apply without the library encoding any DIAL-specific policy itself. The library SHALL offer creating an empty folder only when the host supplies `fileActions.onCreateFolder`; it SHALL NOT offer creating an empty file. Removing an already-committed supporting file or folder from the editor's tree (as opposed to removing a not-yet-committed staged candidate inside the upload dialog) SHALL happen immediately on the **Delete** action, with no confirmation step — the entry SHALL be removed from local state and the host-supplied removal callback invoked synchronously when Delete is activated.
+`SkillEditor` SHALL expose an **Add** dropdown in the Files pane header and, in each non-`SKILL.md` node's context menu, the same add entries listed directly for a folder plus an **Add sibling** submenu (specified by the `skill-file-tree-actions` capability). Supporting files SHALL be added only through the upload dialog (specified by the `skill-file-drag-drop` capability) — whether their source is the device, an archive expanded by `fileActions.extractArchive`, or the DIAL file system via `fileActions.pickFromFileSystem` — so a user always stages one or more files, reviews them, and commits the whole valid batch at once, rather than a single file being added directly on selection. Validation SHALL be performed through a host-supplied `fileActions.validateBatch` callback (returning per-candidate and batch-level results) and commit SHALL be performed through a host-supplied `fileActions.commitBatch` callback, so the app boundary's path-safety, size, count, and duplicate-detection rules apply without the library encoding any DIAL-specific policy itself. The library SHALL offer creating an empty folder only when the host supplies `fileActions.onCreateFolder`; it SHALL NOT offer creating an empty file. Removing an already-committed supporting file or folder from the editor's tree (as opposed to removing a not-yet-committed staged candidate inside the upload dialog) SHALL require an explicit confirmation step: the **Delete** action SHALL open a delete confirmation dialog naming the entry (and, for a folder, stating that everything inside it is deleted too), and only confirming it SHALL remove the entry from local state and invoke the host-supplied removal callback. Cancelling or dismissing the dialog SHALL leave the tree unchanged and SHALL NOT invoke the callback.
 
 #### Scenario: Uploading files from the device adds them as supporting files
 - **WHEN** a user activates Add → Upload files from device, stages one or more local files in the resulting dialog, and confirms
@@ -143,9 +143,17 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **WHEN** a host renders `SkillEditor` without `fileActions.onCreateFolder`
 - **THEN** no Create folder entry is present in the Add dropdown or any node submenu
 
-#### Scenario: Removing a committed supporting entry happens immediately, with no confirmation
+#### Scenario: Removing a committed supporting entry asks for confirmation
 - **WHEN** a user triggers the Delete action on a non-`SKILL.md` node already present in the editor's file tree
-- **THEN** the entry is removed from the tree immediately, the host's removal callback is invoked with that entry's path, and no confirmation prompt is shown
+- **THEN** a delete confirmation dialog naming the entry opens, and the host's removal callback is not invoked yet
+
+#### Scenario: Confirming the deletion removes the entry
+- **WHEN** the user confirms the delete confirmation dialog
+- **THEN** the entry is removed from the tree and the host's removal callback is invoked with that entry's path
+
+#### Scenario: Cancelling the deletion keeps the entry
+- **WHEN** the user cancels or dismisses the delete confirmation dialog
+- **THEN** the entry stays in the tree and the host's removal callback is not invoked
 
 #### Scenario: Removing a staged (not yet committed) candidate needs no such confirmation
 - **WHEN** a user removes a row from the still-open upload dialog's staged list before confirming the batch

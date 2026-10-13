@@ -32,12 +32,14 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePreview';
 import SkillFileSystemModal from '../../components/SkillFileSystemModal/SkillFileSystemModal';
+import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import {
   ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
   EditorI18nKeys,
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
@@ -47,6 +49,7 @@ import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
 import { useSkillFileSystemPicker } from '../../hooks/skills/useSkillFileSystemPicker';
+import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import {
@@ -363,6 +366,7 @@ const SkillEditorPage: FC = () => {
     retryLoad();
   }, [clearConflict, retryLoad]);
 
+  const deleteConfirmationLabels = useDeleteConfirmationLabels();
   const labels = useMemo<SkillEditorLabels>(
     () => ({
       ...refinementLabels,
@@ -375,6 +379,19 @@ const SkillEditorPage: FC = () => {
       openFileSystemLabel: t(SkillEditorI18nKeys.OpenFileSystem),
       addSiblingLabel: t(SkillEditorI18nKeys.AddSibling),
       deleteLabel: t(ButtonsI18nKeys.Delete),
+      deleteFileConfirmTitle: t(DialFileManagerI18nKeys.DeleteConfirmTitleFile),
+      deleteFolderConfirmTitle: t(
+        DialFileManagerI18nKeys.DeleteConfirmTitleFolder,
+      ),
+      deleteConfirmMessage: (name) => (
+        <Trans
+          i18nKey={DialFileManagerI18nKeys.DeleteConfirmMessageSingle}
+          values={{ name }}
+          components={CONFIRMATION_BOLD_COMPONENTS}
+        />
+      ),
+      deleteFolderConsequence: t(SkillEditorI18nKeys.DeleteFolderConsequence),
+      deleteConfirmation: deleteConfirmationLabels,
       newFolderDefaultName: t(SkillEditorI18nKeys.NewFolderDefaultName),
       folderNameRequiredError: t(SkillEditorI18nKeys.FolderNameRequired),
       folderNameInvalidError: t(SkillEditorI18nKeys.FolderNameInvalid),
@@ -433,7 +450,7 @@ const SkillEditorPage: FC = () => {
       dropOverlayTitle: t(SkillEditorI18nKeys.DropOverlayTitle),
       dropOverlaySubtitle: t(SkillEditorI18nKeys.DropOverlaySubtitle),
     }),
-    [t, isEditMode, loadState, refinementLabels],
+    [t, isEditMode, loadState, refinementLabels, deleteConfirmationLabels],
   );
 
   if (!bucket) {
