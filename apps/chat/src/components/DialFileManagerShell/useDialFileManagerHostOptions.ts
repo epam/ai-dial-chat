@@ -54,9 +54,7 @@ export const useDialFileManagerHostOptions = (): DialFileManagerHostOptions => {
       [DialFileManagerActions.RemoveAccess]: t(
         DialFileManagerI18nKeys.RemoveAccessAction,
       ),
-      [DialFileManagerActions.Unshare]: t(
-        DialFileManagerI18nKeys.UnshareAction,
-      ),
+      [DialFileManagerActions.Unshare]: t(ButtonsI18nKeys.RemoveFromMyList),
       [DialFileManagerActions.Info]: t(DialFileManagerI18nKeys.InfoAction),
     }),
     [t],

@@ -262,7 +262,7 @@ async listSharedByMe(
 
 ### Requirement: Unshare asks for confirmation
 
-`DialFileManagerPage` and `DialFileManagerModal` SHALL wrap the file manager controller with `useFileUnshareConfirmation` (`apps/chat/src/components/FileUnshareConfirmation/useFileUnshareConfirmation.tsx`). The wrapped `onUnshareFiles` SHALL only record the selected items; the real `onUnshareFiles` SHALL run when the user confirms in a `ConfirmationDialog` (Danger variant) rendered next to the file manager. The dialog title is `dialFileManager.unshareConfirmTitleFile` / `unshareConfirmTitleFolder` for one item (by `nodeType`) and `unshareConfirmTitleMultiple` for several. It shows the item name (or the item count), the warning that the item becomes unavailable and is shown as not supported in conversations that reference it, a "cannot be undone" consequence, and Cancel / Unshare buttons. Several items are listed, up to 10, followed by `dialFileManager.unshareConfirmMoreItems`. Cancel or dismissing the dialog sends no request.
+`DialFileManagerPage` and `DialFileManagerModal` SHALL wrap the file manager controller with `useFileUnshareConfirmation` (`apps/chat/src/components/FileUnshareConfirmation/useFileUnshareConfirmation.tsx`). The wrapped `onUnshareFiles` SHALL only record the selected items; the real `onUnshareFiles` SHALL run when the user confirms in a `ConfirmationDialog` (Danger variant) rendered next to the file manager. The dialog title is `dialFileManager.unshareConfirmTitleFile` / `unshareConfirmTitleFolder` for one item (by `nodeType`) and `unshareConfirmTitleMultiple` for several. It shows the item name (or the item count), the warning that the item becomes unavailable and is shown as not supported in conversations that reference it, a "cannot be undone" consequence, and Cancel / Remove from My List buttons. The Unshare action, its confirm button, and the conversation and catalog shared-with-me actions all use the same `buttons.removeFromMyList` label (`ButtonsI18nKeys.RemoveFromMyList`), so the shared list reads the same everywhere. Several items are listed, up to 10, followed by `dialFileManager.unshareConfirmMoreItems`. Cancel or dismissing the dialog sends no request.
 
 #### Scenario: Confirming unshares the selection
 
@@ -278,21 +278,20 @@ async listSharedByMe(
 
 ### Requirement: i18n keys for sharing
 
-The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching members added to `DialFileManagerI18nKeys` in `apps/chat/src/constants/translation-keys.ts`:
+The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching members added to `DialFileManagerI18nKeys` in `apps/chat/src/constants/translation-keys.ts`. The Unshare action label itself is not a file-manager key: it reuses `ButtonsI18nKeys.RemoveFromMyList` ("Remove from My List").
 
 | Key | English value (example) |
 |-----|--------------------------|
-| `dialFileManager.unshareAction` | `Unshare` |
 | `dialFileManager.removeAccessAction` | `Remove access` |
-| `dialFileManager.unshareConfirmTitleFile` | `Unshare file` |
-| `dialFileManager.unshareConfirmTitleFolder` | `Unshare folder` |
-| `dialFileManager.unshareConfirmTitleMultiple` | `Unshare items` |
-| `dialFileManager.unshareConfirmMessageSingle` | `Are you sure you want to unshare <bold>{{name}}</bold>? …` |
-| `dialFileManager.unshareConfirmMessageMultiple` | `Are you sure you want to unshare <bold>{{count}} items</bold>? …` |
+| `dialFileManager.unshareConfirmTitleFile` | `Remove file from My List?` |
+| `dialFileManager.unshareConfirmTitleFolder` | `Remove folder from My List?` |
+| `dialFileManager.unshareConfirmTitleMultiple` | `Remove items from My List?` |
+| `dialFileManager.unshareConfirmMessageSingle` | `Remove <bold>{{name}}</bold> from your list? …` |
+| `dialFileManager.unshareConfirmMessageMultiple` | `Remove <bold>{{count}} items</bold> from your list? …` |
 | `dialFileManager.unshareConfirmMoreItems` | `… and {{count}} more` |
-| `dialFileManager.unshareSuccessTitle` | `Unshared successfully` |
-| `dialFileManager.unshareSuccessMessageSingle` | `File “{{name}}” was successfully unshared` |
-| `dialFileManager.unshareSuccessMessageMultiple` | `{{count}} items were successfully unshared` |
+| `dialFileManager.unshareSuccessTitle` | `Removed from My List` |
+| `dialFileManager.unshareSuccessMessageSingle` | `“{{name}}” was removed from your list` |
+| `dialFileManager.unshareSuccessMessageMultiple` | `{{count}} items were removed from your list` |
 | `dialFileManager.unshareError` | `Failed to remove the shared item` |
 | `dialFileManager.removeAccessError` | `Failed to remove access` |
 

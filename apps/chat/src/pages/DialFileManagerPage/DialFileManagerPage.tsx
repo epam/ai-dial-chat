@@ -270,7 +270,7 @@ const DialFileManagerPage: FC = () => {
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
-      unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
       unsharingLabel: t(DialFileManagerI18nKeys.UnsharingLabel),
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
