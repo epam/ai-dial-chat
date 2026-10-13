@@ -366,10 +366,10 @@ describe('PromptEditor', () => {
     await screen.findByPlaceholderText('Write the prompt instructions');
 
     expect(screen.getByText('Use 50000 characters or fewer.')).toBeTruthy();
+    const instructions = screen.getByRole('group', { name: /Instructions/ });
     expect(
-      screen
-        .getByRole('group', { name: /Instructions/ })
-        .querySelector('[class*="contentInvalid"]'),
+      // eslint-disable-next-line testing-library/no-node-access -- the invalid state is a CSS class on the unlabeled editor wrapper, which has no accessible role or text to query
+      instructions.querySelector('[class*="contentInvalid"]'),
     ).toBeTruthy();
   });
 
