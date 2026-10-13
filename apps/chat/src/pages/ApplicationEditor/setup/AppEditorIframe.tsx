@@ -18,7 +18,13 @@ import {
   waitForToolsetOAuthResult,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { Popup, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  ElementSize,
+  NeutralButton,
+  Popup,
+  Spinner,
+  WarningMessageNotification,
+} from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
   memo,
@@ -55,6 +61,13 @@ import {
 import { ROUTES } from '../../../types/routes';
 import { toolsetDtoToForm } from '../../../utils/toolsets';
 
+/**
+ * How long the embedded editor has to send its first postMessage before it is
+ * reported as not responding. A load event is not enough: the browser also
+ * fires it for its own error page when the editor host is unreachable.
+ */
+export const EDITOR_RESPONSE_TIMEOUT_MS = 15000;
+
 export interface AppEditorIframeHandle {
   triggerSave: (general?: TriggerSaveGeneralPayload) => void;
 }
@@ -71,6 +84,12 @@ interface Props {
   onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
   /**
+   * Notifies the host whenever the embedded editor reports whether its form
+   * is valid (`AppsEditorEvent.ValidityState`). `true` until the editor says
+   * otherwise, and re-gated to `true` when the iframe reloads.
+   */
+  onValidityChange?: (isValid: boolean) => void;
+  /**
    * Notifies the host whenever the iframe's readiness to save changes.
    * Reflects `AppsEditorEvent.ReadyToSave` (the embedded editor's own data
    * model is loaded/validated and it is safe to trigger a save) — not the
@@ -85,6 +104,13 @@ interface Props {
    * authenticated" state from a genuine readiness failure.
    */
   onLoggedOutChange?: (isLoggedOut: boolean) => void;
+  /**
+   * Notifies the host whenever the embedded editor is reported as not
+   * responding: no postMessage arrived from its origin within
+   * `EDITOR_RESPONSE_TIMEOUT_MS`. Like `onLoggedOutChange`, it explains why
+   * `ReadyToSave` never arrives, so the host can skip its generic error.
+   */
+  onUnresponsiveChange?: (isUnresponsive: boolean) => void;
 }
 
 const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
@@ -95,8 +121,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       onUpdated,
       onSaveSuccess,
       onSaveError,
+      onValidityChange,
       onReadyChange,
       onLoggedOutChange,
+      onUnresponsiveChange,
     },
     ref,
   ) {
@@ -114,6 +142,12 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const [isUiLoading, setIsUiLoading] = useState(true);
     const [isReadyToSave, setIsReadyToSave] = useState(false);
     const [isLoggedOut, setIsLoggedOut] = useState(false);
+    const [isFormValid, setIsFormValid] = useState(true);
+    const [hasEditorResponded, setHasEditorResponded] = useState(false);
+    const [isResponseTimedOut, setIsResponseTimedOut] = useState(false);
+    // Bumped by Reload to remount the iframe with the same URL.
+    const [reloadKey, setReloadKey] = useState(0);
+    const isUnresponsive = isResponseTimedOut && !hasEditorResponded;
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     /* Single source for the name sent in the iframe URL and used as the
@@ -407,6 +441,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const handleMessage = useCallback(
       (event: MessageEvent) => {
         if (!targetOrigin || event.origin !== targetOrigin) return;
+        setHasEditorResponded(true);
         switch (event.data?.type) {
           case AppsEditorEvent.RequestApplicationCredentials:
             if (
@@ -436,6 +471,14 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             break;
           case AppsEditorEvent.SaveError:
             onSaveError?.(event.data?.error ?? '');
+            break;
+          case AppsEditorEvent.ValidityState:
+            if (
+              event.source === iframeRef.current?.contentWindow &&
+              typeof event.data?.payload?.isValid === 'boolean'
+            ) {
+              setIsFormValid(event.data.payload.isValid);
+            }
             break;
           case AppsEditorEvent.RequestToolsetLogin:
             if (
@@ -536,7 +579,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       return () => {
         iframe.removeEventListener('load', handleLoad);
       };
-    }, [iframeUrl]);
+    }, [iframeUrl, reloadKey]);
 
     /* Re-gates readiness-to-save (and the logged-out flag) whenever the
      * iframe reloads for a different app/schema, so stale values from the
@@ -545,16 +588,41 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       setIsReadyToSave(false);
       setIsLoggedOut(false);
+      setIsFormValid(true);
       setCredentialsAppId(null);
-    }, [iframeUrl]);
+      setHasEditorResponded(false);
+      setIsResponseTimedOut(false);
+    }, [iframeUrl, reloadKey]);
+
+    useEffect(() => {
+      if (hasEditorResponded) return undefined;
+      const timeoutId = setTimeout(
+        () => setIsResponseTimedOut(true),
+        EDITOR_RESPONSE_TIMEOUT_MS,
+      );
+      return () => clearTimeout(timeoutId);
+    }, [hasEditorResponded, iframeUrl, reloadKey]);
 
     useEffect(() => {
       onReadyChange?.(isReadyToSave);
     }, [isReadyToSave, onReadyChange]);
 
     useEffect(() => {
+      onValidityChange?.(isFormValid);
+    }, [isFormValid, onValidityChange]);
+
+    useEffect(() => {
       onLoggedOutChange?.(isLoggedOut);
     }, [isLoggedOut, onLoggedOutChange]);
+
+    useEffect(() => {
+      onUnresponsiveChange?.(isUnresponsive);
+    }, [isUnresponsive, onUnresponsiveChange]);
+
+    const handleReload = useCallback(() => {
+      setIsUiLoading(true);
+      setReloadKey((key) => key + 1);
+    }, []);
 
     useImperativeHandle(
       ref,
@@ -572,7 +640,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     );
 
     return (
-      <div className="relative size-full">
+      <div className="flex size-full flex-col gap-2">
         {credentialsAppId &&
           isApplicationAuthCapable &&
           isApplicationAuthEnabled && (
@@ -589,24 +657,43 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
               />
             </Popup>
           )}
-        {isUiLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-layer-sunken">
-            {/*
-             * The kit Spinner is itself the role="status" live region; naming
-             * its image here exposes the label without nesting a second one.
-             */}
-            <Spinner
-              ariaLabel={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}
-            />
-          </div>
+        {isUnresponsive && (
+          <WarningMessageNotification
+            title={t(AppsEditorI18nKeys.SettingsStepUnresponsiveTitle)}
+            message={t(AppsEditorI18nKeys.SettingsStepUnresponsiveMessage, {
+              host: targetOrigin ?? schema.editorUrl,
+            })}
+            textClassName="break-words"
+            action={
+              <NeutralButton
+                size={ElementSize.Small}
+                label={t(ButtonsI18nKeys.Reload)}
+                onClick={handleReload}
+              />
+            }
+          />
         )}
-        <iframe
-          ref={iframeRef}
-          src={iframeUrl}
-          title={schema.displayName}
-          className="size-full border-none"
-          allow="local-network-access=*"
-        />
+        <div className="relative min-h-0 flex-1">
+          {isUiLoading && !isUnresponsive && (
+            <div className="absolute inset-0 flex items-center justify-center bg-layer-sunken">
+              {/*
+               * The kit Spinner is itself the role="status" live region; naming
+               * its image here exposes the label without nesting a second one.
+               */}
+              <Spinner
+                ariaLabel={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}
+              />
+            </div>
+          )}
+          <iframe
+            key={reloadKey}
+            ref={iframeRef}
+            src={iframeUrl}
+            title={schema.displayName}
+            className="size-full border-none"
+            allow="local-network-access=*"
+          />
+        </div>
       </div>
     );
   },

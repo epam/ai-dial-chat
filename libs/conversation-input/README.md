@@ -224,6 +224,73 @@ label and send behavior are unaffected.
 Hosts supply localized strings through these props. The parent chat keeps its
 existing `sendTooltip` prop without opting into `emptyMessageTooltip`.
 
+`aboveInputSlot` renders a host-supplied node directly above the input, inside
+the same width-constrained container (`700px` on the welcome screen, `748px`
+otherwise), separated from it by a fixed block-axis gap. Omitting it, or
+passing `null`, adds no element and leaves the layout unchanged. The lib does
+not inspect the node — the host decides what to render and when.
+`belowWelcomeSlot` sits higher, between the welcome heading and the composer.
+For a usage-limit notice, pass a [`UsageLimitBannerView`](#usagelimitbannerview).
+
+```tsx
+<ConversationInput
+  onSend={handleSend}
+  aboveInputSlot={<p role="status">Daily limit 80% used.</p>}
+/>
+```
+
+### UsageLimitBannerView
+
+A presentational usage-limit notice built for `aboveInputSlot`: a section
+message whose markup mirrors the kit `Notification` (general variant — neutral
+`bg-layer-sunken` surface), with a limit sentence in semibold and an optional
+reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
+filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
+Both announce politely through `role="status"`, because the banner reports
+state rather than replying to an action.
+
+The component holds no state and knows nothing about usage data. The host
+decides when to render it and passes every string already translated and
+formatted: `limitText` verbatim, and `reset` as the visible `label`, the
+`isoValue` for the `<time dateTime>`, and an optional `ariaLabel` spoken instead
+of `label` (the `<time>` is then hidden and an `sr-only` sibling carries it).
+The close button renders only when `onClose` is supplied; dismissal state is the
+host's. Its accessible name is `closeAriaLabel` (default
+`'Close notification'`).
+
+```tsx
+import {
+  ConversationInput,
+  UsageLimitBannerSeverity,
+  UsageLimitBannerView,
+} from '@epam/ai-dial-conversation-input';
+
+<ConversationInput
+  onSend={handleSend}
+  aboveInputSlot={
+    isBannerVisible ? (
+      <UsageLimitBannerView
+        severity={UsageLimitBannerSeverity.Warning}
+        limitText="Daily limit 80% used."
+        reset={{
+          isoValue: '2026-10-14T00:00:00Z',
+          label: 'Resets at 3:00 AM GMT+3.',
+          ariaLabel:
+            'Usage resets Oct 14, 2026, 3:00 AM Eastern European Summer Time',
+        }}
+        onClose={handleDismiss}
+        closeAriaLabel="Close usage notice"
+      />
+    ) : undefined
+  }
+/>;
+```
+
+`limitTextClassName` (default `'dial-small-paragraph-semi-text'`) and
+`resetTextClassName` (default `'dial-small-paragraph-text'`) take classes from
+the kit type scale; `className` lands on the banner root next to
+`dial-ci-usage-banner`.
+
 ### EditMessageInput
 
 Renders the input in edit mode for revising an existing message. `onCancel` and `onSave` are required; `onSave` receives the new text, the attachments the user kept, and any newly added ones.
@@ -258,7 +325,7 @@ Base text input with auto-resize and keyboard shortcut handling. Use directly wh
 
 `onChange` (on `Input`, `ConversationInput`, and `EditMessageInput`) fires with the textarea's current value on every change — typing, deleting, pasting, undo/redo — not only on send/save. Omit it to ignore keystrokes between sends, as before this prop existed on `ConversationInput`/`EditMessageInput`; a host tracking live state derived from the draft (e.g. skill-mention anchors that must reconcile as the user edits around them) wires this alongside `activeMentions`/`onBackspaceAtCaret`.
 
-`commandMenu` (on `Input`, `ConversationInput`, and `EditMessageInput`) mounts a host-injected slash-command menu. The trigger is evaluated against the whitespace-delimited word around the caret, not the whole textarea value, so it opens whenever the configured `triggerPrefix` starts that word — typed as its first character anywhere in the text (start, middle, or after other words/mentions), or arriving in a paste that produces such a word. The menu stays open while the caret's word keeps matching the prefix followed by a query with no whitespace or second prefix character, and closes the moment it stops (including when the caret moves to a different, non-matching word); selection typically goes through `ctx.close({ consumeQuery: true })`, which removes that `/query` text from wherever it sits in the textarea. `ctx.caretPosition` gives the triggering word's start offset, for splicing a selection's result in at that same spot. A dismissed menu also reopens the moment its word returns to exactly the bare `triggerPrefix` — whether reached by typing it fresh, or by backspacing down to it after typing more and dismissing (e.g. `/sdf` → dismiss → Backspace ×3 → `/` reopens) — even though dismissing at any other query value keeps that same word's menu closed until the word stops matching and starts again.
+`commandMenu` (on `Input`, `ConversationInput`, and `EditMessageInput`) mounts a host-injected slash-command menu. The trigger is evaluated against the whitespace-delimited word around the caret, not the whole textarea value, so it opens whenever the configured `triggerPrefix` starts that word — typed as its first character anywhere in the text (start, middle, or after other words/mentions), or arriving in a paste that produces such a word. The menu stays open while the caret's word keeps matching the prefix followed by a query with no whitespace or second prefix character, and closes the moment it stops (including when the caret moves to a different, non-matching word); selection typically goes through `ctx.close({ consumeQuery: true })`, which removes that `/query` text from wherever it sits in the textarea. `ctx.caretPosition` gives the triggering word's start offset, for splicing a selection's result in at that same spot. A dismissed menu also reopens the moment its word returns to exactly the bare `triggerPrefix` — whether reached by typing it fresh, or by backspacing down to it after typing more and dismissing (e.g. `/sdf` → dismiss → Backspace ×3 → `/` reopens) — even though dismissing at any other query value keeps that same word's menu closed until the word stops matching and starts again. `onTextPaste(text)` receives the plain text of every paste that lands inline in the textarea (not one converted into an attachment), with line endings normalized to `\n`, just before the `onChange` that carries it — e.g. so a host can recognize trigger-prefixed words in pasted text.
 
 `menuOverlays` (on `ConversationInput` and `EditMessageInput`) adds host-injected entries to the `+` menu, alongside the built-in attach-file/tools/chat-settings items. On `EditMessageInput`, these render from its own external add-button (the edit surface hides `Input`'s built-in action bar), so they remain available even when `hideAttachFile` hides the attach-file entry. Each entry's `renderOverlay(onClose, caretPosition)` also receives the textarea's caret offset at the moment the overlay opened, so a selection made in it can splice text into `message` at that exact position (via `messageRevision`/`caretPositionOverride`) instead of always appending at the end.
 
@@ -405,6 +472,12 @@ The model-selector menu carries its own set:
 | `dial-ci-model-menu-item`          | Every deployment row, desktop and mobile        |
 | `dial-ci-model-menu-item-selected` | The selected row, **additive** to the row class |
 
+`UsageLimitBannerView` carries one:
+
+| Class                  | Element                       |
+| ---------------------- | ----------------------------- |
+| `dial-ci-usage-banner` | The usage-limit banner's root |
+
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
 if you need to distinguish them: the desktop dropdown (a Floating UI portal), a
 host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
@@ -491,6 +564,13 @@ import { ActionRowLayout } from '@epam/ai-dial-conversation-input';
 
 ActionRowLayout.Stacked; // textarea on its own line, controls wrap below (default)
 ActionRowLayout.Inline; // add button, textarea and footer actions share one line
+```
+
+```tsx
+import { UsageLimitBannerSeverity } from '@epam/ai-dial-conversation-input';
+
+UsageLimitBannerSeverity.Warning; // running low — filled warning icon
+UsageLimitBannerSeverity.Reached; // limit reached — filled error icon
 ```
 
 ### Action row layout

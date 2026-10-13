@@ -114,6 +114,11 @@
       "skills": "skills"
     },
     "noResultsTitle": "No results for \"{{query}}\"",
+    "myAppsEmpty": {
+      "title": "No personal {{entities}} yet",
+      "titleGeneric": "No personal items yet",
+      "description": "Create your first one, it'll show up right here."
+    },
     "sorts": {
       "recentlyUpdated": "Recently Updated",
       "newest": "Newest",
@@ -123,6 +128,17 @@
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
     "viewToggleLabel": "View mode",
+    "browseSettings": {
+      "title": "Browse settings",
+      "view": "View",
+      "sorting": "Sorting",
+      "filtering": "Filtering",
+      "cards": "Cards",
+      "list": "List",
+      "my": "My",
+      "topics": "Topics",
+      "filterCount": "{{selected}} of {{total}}"
+    },
     "details": {
       "tabTools": "Tools",
       "tabContent": "Details",
@@ -359,6 +375,7 @@
     "sort": "Sort",
     "close": "Close",
     "apply": "Apply",
+    "clear": "Clear",
     "edit": "Edit",
     "connect": "Connect",
     "link": "Link",
@@ -957,9 +974,9 @@
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "itemCopiedSuccessfully": "Item copied successfully",
-    "itemsCopiedSuccessfully": "Items copied successfully",
+    "itemsCopiedSuccessfully": "{{count}} items copied to folder successfully",
     "itemMovedSuccessfully": "Item moved successfully",
-    "itemsMovedSuccessfully": "Items moved successfully",
+    "itemsMovedSuccessfully": "{{count}} items moved to folder successfully",
     "itemCopiedToFolder": "“{{fileName}}” copied to {{folder}}",
     "itemsCopiedToFolder": "{{count}} items copied to {{folder}}",
     "itemMovedToFolder": "“{{fileName}}” moved to {{folder}}",
@@ -981,13 +998,13 @@
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "crossSectionTransferUnsupported": "Copying and moving between My files, Shared, and Organization isn't supported yet.",
     "searchPlaceholder": {
-      "myFiles": "Search in My files",
-      "shared": "Search in Shared with me files",
-      "organization": "Search in Organization files"
+      "myFiles": "Search in My files...",
+      "shared": "Search in Shared files...",
+      "organization": "Search in Organization files..."
     },
     "tab": {
       "all": "All",
-      "myFiles": "My Files",
+      "myFiles": "My files",
       "shared": "Shared"
     },
     "myFiles": {
@@ -1007,8 +1024,17 @@
     "page": {
       "navLabel": "File Manager"
     },
-    "unshareAction": "Unshare",
-    "unsharingLabel": "Unsharing…",
+    "unshareConfirmTitleFile": "Remove file from My List?",
+    "unshareConfirmTitleFolder": "Remove folder from My List?",
+    "unshareConfirmTitleMultiple": "Remove items from My List?",
+    "unshareConfirmMoreItems_one": "… and {{count}} more",
+    "unshareConfirmMoreItems_other": "… and {{count}} more",
+    "unshareConfirmMessageSingle": "Remove <bold>{{name}}</bold> from your list? It will become unavailable to you, and in any conversation that references it, it will be shown as not supported.",
+    "unshareConfirmMessageMultiple": "Remove <bold>{{count}} items</bold> from your list? They will become unavailable to you, and in any conversation that references them, they will be shown as not supported.",
+    "unshareSuccessTitle": "Removed from My List",
+    "unshareSuccessMessageSingle": "“{{name}}” was removed from your list",
+    "unshareSuccessMessageMultiple": "{{count}} items were removed from your list",
+    "unsharingLabel": "Removing from My List…",
     "removeAccessAction": "Remove access",
     "removingAccessLabel": "Removing access…",
     "unshareError": "Failed to remove the shared item",
@@ -1172,10 +1198,13 @@
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
-      "noEditorPlaceholder": "Editor not available for this application type yet."
+      "noEditorPlaceholder": "Editor not available for this application type yet.",
+      "unresponsiveTitle": "The editor is not responding",
+      "unresponsiveMessage": "{{host}} did not respond. It may be down or unreachable from your network."
     },
     "error": {
       "createFailed": "Failed to create application. Please try again.",
+      "nameConflict": "An application with this name and version already exists.",
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
@@ -1303,6 +1332,17 @@
       "value": "{{used}} / {{total}}",
       "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
       "fullUsageLink": "See all usage"
+    },
+    "usageBanner": {
+      "warningDay": "Daily limit {{percent}}% used.",
+      "warningWeek": "Weekly limit {{percent}}% used.",
+      "warningMonth": "Monthly limit {{percent}}% used.",
+      "reachedDay": "Daily limit reached.",
+      "reachedWeek": "Weekly limit reached.",
+      "reachedMonth": "Monthly limit reached.",
+      "resetsAtTime": "Resets at {{time}}.",
+      "resetsOnDate": "Resets on {{date}}.",
+      "closeLabel": "Close usage notice"
     }
   },
   "customApp": {
@@ -1423,7 +1463,7 @@
     "reloadCancelLabel": "Cancel",
     "unsavedChangesTitle": "Discard unsaved changes?",
     "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
-    "unsavedChangesConfirmLabel": "Discard changes",
+    "unsavedChangesConfirmLabel": "Discard",
     "unsavedChangesCancelLabel": "Keep editing",
     "uploadDialogTitle": "Upload files from device",
     "uploadDropZoneLabel": "Drag and drop it or click here to upload",

@@ -25,6 +25,7 @@ import DialFileManagerShell from '../../components/DialFileManagerShell/DialFile
 import { useDialFileManagerHostOptions } from '../../components/DialFileManagerShell/useDialFileManagerHostOptions';
 import { getFileDeleteConfirmTitle } from '../../components/FileDeleteConfirmContent/file-delete-confirm-title';
 import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
+import { useFileUnshareConfirmation } from '../../components/FileUnshareConfirmation/useFileUnshareConfirmation';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -89,6 +90,9 @@ const DialFileManagerPage: FC = () => {
     actionProfile: DialFileManagerActionProfile.Full,
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
+
+  const { controller, unshareConfirmation } =
+    useFileUnshareConfirmation(hookResult);
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
     () => new Set(),
@@ -266,7 +270,7 @@ const DialFileManagerPage: FC = () => {
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
-      unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
       unsharingLabel: t(DialFileManagerI18nKeys.UnsharingLabel),
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
@@ -294,7 +298,7 @@ const DialFileManagerPage: FC = () => {
   return (
     <div className="flex size-full min-h-0 flex-col">
       <DialFileManagerShell
-        hookResult={hookResult}
+        hookResult={controller}
         labels={labels}
         activeTab={activeTab}
         tabs={tabs}
@@ -307,6 +311,7 @@ const DialFileManagerPage: FC = () => {
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
       />
+      {unshareConfirmation}
     </div>
   );
 };

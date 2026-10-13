@@ -596,6 +596,7 @@ const ConversationMessageItem: FC<Props> = ({
       isPreviewable: isCitationPreviewable,
       onOpenInBrowser: handleCitationOpenInBrowser,
       isPreviewOpen: isCanvasOpen,
+      previewFilesOnMarkerClick: true,
       buildLabels: buildCitationLabels,
     }),
     [

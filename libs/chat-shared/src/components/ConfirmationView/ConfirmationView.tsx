@@ -39,6 +39,8 @@ export interface ConfirmationViewProps {
   identity?: ReactNode;
   /** Body copy explaining what confirming does. */
   message: ReactNode;
+  /** Content rendered between the message and the consequence bullets, for example the list of items a bulk action affects. */
+  details?: ReactNode;
   /** Consequences listed as bullets under the message. An empty or omitted list renders nothing. */
   consequences?: string[];
   /** Palette of the identity card. Default: `ConfirmationPopupVariant.Info`. */
@@ -63,6 +65,7 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
   item,
   identity,
   message,
+  details,
   consequences,
   variant = ConfirmationPopupVariant.Info,
   messageClassName = 'dial-small-text',
@@ -76,7 +79,7 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
   });
 
   return (
-    <div style={cssVars} className="flex flex-col gap-4 px-6 py-4">
+    <div style={cssVars} className="flex flex-col gap-4 px-4 py-4 desktop:px-6">
       {identity ??
         (item != null && (
           <ConfirmationIdentityCard
@@ -101,6 +104,8 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
       >
         {message}
       </p>
+
+      {details}
 
       {consequences != null && consequences.length > 0 && (
         <ul

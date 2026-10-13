@@ -89,7 +89,7 @@ import {
   PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -114,6 +114,7 @@ import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConf
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
+import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 import { ConversationReloadNotification } from './ConversationReloadNotification';
@@ -290,6 +291,10 @@ const ConversationView: FC<Props> = ({
         }
       : undefined;
   }, [items, activeDeploymentId, language]);
+  /* Exactly one usage surface is composed: the dial when the flag is on,
+     otherwise the banner above the input. */
+  const usageDeploymentId =
+    selectedDeployment?.id ?? activeDeploymentId ?? undefined;
 
   const {
     skillMenuOverlay,
@@ -419,6 +424,7 @@ const ConversationView: FC<Props> = ({
   const {
     config: { maxAttachmentFileSizeBytes },
   } = useAppConfig();
+  const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
@@ -1014,7 +1020,14 @@ const ConversationView: FC<Props> = ({
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          /*
+           * `relative` makes the scroller the containing block for absolutely
+           * positioned descendants (e.g. `sr-only` live regions in message
+           * actions). Without it they overflow the `overflow-hidden` wrapper
+           * above, which keyboard selection (Shift+ArrowUp) can then scroll,
+           * pushing the whole message list out of view (#9137).
+           */
+          className="relative flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
           <div
             ref={contentRef}
@@ -1309,12 +1322,20 @@ const ConversationView: FC<Props> = ({
                 commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
-                  <UsageLimitsControl
-                    deploymentId={
-                      selectedDeployment?.id ?? activeDeploymentId ?? undefined
-                    }
-                    isGenerationInProgress={isAssistantTyping}
-                  />
+                  isUsageLimitsControlEnabled ? (
+                    <UsageLimitsControl
+                      deploymentId={usageDeploymentId}
+                      isGenerationInProgress={isAssistantTyping}
+                    />
+                  ) : undefined
+                }
+                aboveInputSlot={
+                  isUsageLimitsControlEnabled ? undefined : (
+                    <UsageLimitBanner
+                      deploymentId={usageDeploymentId}
+                      isGenerationInProgress={isAssistantTyping}
+                    />
+                  )
                 }
               />
             </Suspense>

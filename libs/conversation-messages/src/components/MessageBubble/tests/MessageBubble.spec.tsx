@@ -971,6 +971,18 @@ describe('AssistantMessageBubble — inline-start slot', () => {
     expect(getTextContainer(container)).toBeNull();
   });
 
+  it('renders no text container for whitespace-only text', () => {
+    const { container } = render(
+      <AssistantMessageBubble
+        text={'\n\n'}
+        afterContent={<span>Stages</span>}
+      />,
+    );
+
+    expect(getTextContainer(container)).toBeNull();
+    expect(screen.getByText('Stages')).toBeTruthy();
+  });
+
   it('renders no slot and no indent class when beforeContent is absent', () => {
     const { container } = render(<AssistantMessageBubble text="Hello world" />);
 

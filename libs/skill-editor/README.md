@@ -25,7 +25,7 @@ file it is its preview.
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.20 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.3 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -46,8 +46,8 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0`
-- `@epam/ai-dial-react-file-manager` `^0.3.0`
+- `@epam/ai-dial-ui-kit` `^0.15.3`
+- `@epam/ai-dial-react-file-manager` `^0.3.5`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -150,10 +150,10 @@ the `files` prop and never exposes a rename/move/delete affordance.
 ### Adding files and folders
 
 The Files pane header renders an **Add** dropdown (ui-kit `ButtonDropdown`), and
-every node except `SKILL.md` has a context menu. A folder lists the Add
-dropdown's entries directly (adding into that folder), then **Add sibling** and
-**Delete**; a file lists **Add sibling** and **Delete**. Add sibling is a
-submenu holding the same entries as the Add dropdown. An entry appears only
+every folder has a context menu. A folder lists the Add dropdown's entries
+directly (adding into that folder), then **Add sibling** and **Delete**. A file
+has no menu, only an inline **Delete** button shown on row hover; `SKILL.md` has
+neither. Add sibling is a submenu holding the same entries as the Add dropdown. An entry appears only
 when its host capability is supplied:
 
 | Entry                      | Requires                         | Behaviour                                                                                                             |

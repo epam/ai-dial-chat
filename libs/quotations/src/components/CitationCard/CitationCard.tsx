@@ -3,7 +3,6 @@ import {
   buildCssVars,
   MarkdownRenderer,
   mergeClasses,
-  MIMEType,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_KIT_ICON_STROKE,
@@ -26,6 +25,7 @@ import {
   useState,
 } from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
+import { isWebLinkAnnotation } from '../../utils/citation-source-kind';
 import {
   getSourceFileExtension,
   type AnnotationGroup,
@@ -140,11 +140,7 @@ export const CitationCard: FC<CitationCardProps> = ({
   const total = group.annotations.length;
   const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
   const hasSwitcher = total > 1;
-  const sourceContentType = annotation.body?.source?.attachment?.type;
-  const isWebLink =
-    onPreview == null ||
-    sourceContentType === MIMEType.HTML ||
-    sourceContentType === MIMEType.XHTML;
+  const isWebLink = onPreview == null || isWebLinkAnnotation(annotation);
   const fileExtension = isWebLink
     ? undefined
     : getSourceFileExtension(annotation);

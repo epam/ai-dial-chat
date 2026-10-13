@@ -36,7 +36,7 @@ export default defineConfig(() => ({
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
-      rollupTypes: true,
+      insertTypesEntry: true,
     }),
     createVerifyPublishedStyles({
       root: import.meta.dirname,

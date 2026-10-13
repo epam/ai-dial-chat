@@ -117,15 +117,23 @@ exception, reported through `onNotification` as a `Success`-variant
   `{ kind: 'filesDownloaded', count: 3 }`, and the hook produces no
   translated text itself
 
-### Requirement: Sharing mutations bump retry silently on success
+### Requirement: Sharing mutations refresh the listing on success
 
 `useDialFileSharing`'s `onUnshareFiles` and `onRemoveFilesAccess` SHALL call
-the injected `bumpRetry` on success without emitting any success
-notification, and SHALL report failures through `onNotification` with a
-structured reason.
+the injected `bumpRetry` on success and SHALL report failures through
+`onNotification` with a structured reason. `onUnshareFiles` SHALL additionally
+call the injected `removeSharedRootItems` with the unshared items' names before
+`bumpRetry`, so the rows leave the cached Shared listing at once, and SHALL emit
+`onOperationSuccess({ kind: FileOperationKind.FilesUnshared, name, count })`
+(`name` = the first item's name, `count` = the number of items).
+`onRemoveFilesAccess` emits no success event.
 
-#### Scenario: A successful unshare triggers a retry with no success toast
+#### Scenario: A successful unshare removes the rows and reports success
 
 - **WHEN** `onUnshareFiles` succeeds
-- **THEN** `bumpRetry` is called and `onOperationSuccess`/`onNotification`
-  is not called for a success case
+- **THEN** `removeSharedRootItems` is called with the unshared names, `onOperationSuccess` is called with `FileOperationKind.FilesUnshared`, and `bumpRetry` is called
+
+#### Scenario: A successful remove-access only refreshes
+
+- **WHEN** `onRemoveFilesAccess` succeeds
+- **THEN** `bumpRetry` is called and `onOperationSuccess` is not called

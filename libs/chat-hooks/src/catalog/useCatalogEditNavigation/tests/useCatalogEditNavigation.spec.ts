@@ -697,4 +697,50 @@ describe('useCatalogEditNavigation', () => {
       expect(onSkillUploadClick).toHaveBeenCalledOnce();
     });
   });
+
+  describe('createMenuByType', () => {
+    const keysOf = (
+      menu: { options: { key: string }[] } | undefined,
+    ): string[] | undefined => menu?.options.map((option) => option.key);
+
+    it('splits the Create menu by entity type and gives models no entry', () => {
+      const { result } = renderEditNavigation({
+        isCustomAppsEnabled: true,
+        schemas: [quickAppSchema],
+      });
+      const menu = result.current.createMenuByType;
+
+      expect(menu[CatalogEntityType.Model]).toBeUndefined();
+      expect(keysOf(menu[CatalogEntityType.Agent])).toEqual([
+        'custom-app',
+        'runner:foo-quickapps2',
+      ]);
+      expect(keysOf(menu[CatalogEntityType.Toolset])).toEqual(['toolset']);
+      expect(keysOf(menu[CatalogEntityType.Skill])).toEqual([
+        'skill-write-instructions',
+        'skill-upload',
+      ]);
+      expect(keysOf(menu[CatalogEntityType.Prompt])).toEqual(['prompt']);
+    });
+
+    it('gives the agent menu the runner search field', () => {
+      const { result } = renderEditNavigation({ schemas: [quickAppSchema] });
+
+      expect(
+        result.current.createMenuByType[CatalogEntityType.Agent]?.search,
+      ).toBe(result.current.createSearch);
+    });
+
+    it('leaves a disabled type with no options', () => {
+      const { result } = renderEditNavigation({
+        isToolsetsEnabled: false,
+        isPromptsEnabled: false,
+      });
+      const menu = result.current.createMenuByType;
+
+      expect(keysOf(menu[CatalogEntityType.Toolset])).toEqual([]);
+      expect(keysOf(menu[CatalogEntityType.Prompt])).toEqual([]);
+      expect(keysOf(menu[CatalogEntityType.Agent])).toEqual([]);
+    });
+  });
 });

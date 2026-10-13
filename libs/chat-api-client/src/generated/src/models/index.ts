@@ -1157,6 +1157,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   maxAttachmentFileSizeBytes: number;
+  /**
+   * Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  usageLimitsWarningThresholdPercent: number;
 }
 
 /**
@@ -1964,7 +1970,7 @@ export interface CreateApplicationBodyDto {
    */
   applicationProperties?: object;
   /**
-   * Reject with 409 if the name/version already exists; checked atomically by DIAL Core.
+   * Never overwrite an existing application: when the name/version path is taken, create at the next free path (name-2, name-3, ...), checked atomically by DIAL Core; 409 only when every candidate is taken.
    * @type {boolean}
    * @memberof CreateApplicationBodyDto
    */

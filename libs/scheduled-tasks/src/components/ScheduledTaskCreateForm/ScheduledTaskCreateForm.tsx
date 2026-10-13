@@ -289,7 +289,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             role="group"
             aria-label={labels.detailsSectionTitle}
             className={mergeClasses(
-              'flex flex-1 flex-col gap-5 border-e py-6',
+              /* The column divider only makes sense side by side; below the
+               * desktop breakpoint the columns stack and it would draw a
+               * stray vertical line down the Details section. */
+              'flex flex-1 flex-col gap-5 py-6 desktop:border-e',
               styles.detailsColumn,
               styles.formColumn,
             )}

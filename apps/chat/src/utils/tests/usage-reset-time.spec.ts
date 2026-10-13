@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { UsageI18nKeys } from '../../constants/translation-keys';
-import { formatUsageResetTime } from '../usage-reset-time';
+import {
+  ConversationInputUsageBannerI18nKeys,
+  UsageI18nKeys,
+} from '../../constants/translation-keys';
+import { UsagePeriod } from '../../types/usage-limits';
+import {
+  formatUsageResetShort,
+  formatUsageResetTime,
+} from '../usage-reset-time';
 
 /*
  * Boundary values taken from the real GET /api/v1/user/usage capture in
@@ -14,6 +21,13 @@ const t = (key: string, options?: Record<string, unknown>): string => {
   const dateTime = String(options?.dateTime ?? '');
   if (key === UsageI18nKeys.ResetsAtAriaLabel) {
     return `Usage resets ${dateTime}`;
+  }
+  /* Mirrors conversationInput.usageBanner.resetsAtTime / resetsOnDate. */
+  if (key === ConversationInputUsageBannerI18nKeys.ResetsAtTime) {
+    return `Resets at ${String(options?.time)}.`;
+  }
+  if (key === ConversationInputUsageBannerI18nKeys.ResetsOnDate) {
+    return `Resets on ${String(options?.date)}.`;
   }
   return `Resets ${dateTime}`;
 };
@@ -126,5 +140,67 @@ describe('formatUsageResetTime', () => {
     } as unknown as typeof Intl.DateTimeFormat);
 
     expect(formatUsageResetTime(DAY_BOUNDARY, 'en-US', t)).toBeUndefined();
+  });
+});
+
+describe('formatUsageResetShort', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('renders a daily boundary as a time with its zone offset', () => {
+    mockResolvedZone('Europe/Istanbul');
+
+    const display = formatUsageResetShort(
+      '2026-10-13T00:00:00Z',
+      UsagePeriod.Day,
+      'en',
+      t,
+    );
+
+    expect(display).toEqual({
+      isoValue: '2026-10-13T00:00:00Z',
+      label: 'Resets at 3:00 AM GMT+3.',
+      ariaLabel: expect.stringMatching(/^Usage resets Oct 13, 2026/),
+    });
+  });
+
+  it('renders a monthly boundary as a short date without the current year', () => {
+    vi.useFakeTimers({ now: new Date('2026-10-20T12:00:00Z') });
+    mockResolvedZone('UTC');
+
+    expect(
+      formatUsageResetShort('2026-11-01T00:00:00Z', UsagePeriod.Month, 'en', t)
+        ?.label,
+    ).toBe('Resets on Nov 1.');
+  });
+
+  it('includes the year when the boundary falls in another year', () => {
+    vi.useFakeTimers({ now: new Date('2026-12-20T12:00:00Z') });
+    mockResolvedZone('UTC');
+
+    expect(
+      formatUsageResetShort('2027-01-01T00:00:00Z', UsagePeriod.Week, 'en', t)
+        ?.label,
+    ).toBe('Resets on Jan 1, 2027.');
+  });
+
+  it.each([undefined, '', 'not-a-date'])(
+    'returns undefined for the resetsAt value %j',
+    (resetsAt) => {
+      expect(
+        formatUsageResetShort(resetsAt, UsagePeriod.Day, 'en', t),
+      ).toBeUndefined();
+    },
+  );
+
+  it('returns undefined when Intl throws', () => {
+    vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => {
+      throw new RangeError('Incomplete Intl');
+    });
+
+    expect(
+      formatUsageResetShort(MONTH_BOUNDARY, UsagePeriod.Month, 'en', t),
+    ).toBeUndefined();
   });
 });

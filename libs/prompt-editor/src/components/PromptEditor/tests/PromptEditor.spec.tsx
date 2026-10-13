@@ -279,6 +279,100 @@ describe('PromptEditor', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
+  it('asks before discarding edits on Cancel, and keeps editing when dismissed', async () => {
+    const onCancel = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onCancel,
+    });
+
+    await user.type(await screen.findByDisplayValue('Summarize:'), ' the text');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByText('Discard unsaved changes?')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+    expect(screen.getByDisplayValue('Summarize: the text')).toBeTruthy();
+  });
+
+  it('leaves through Back once discarding edits is confirmed', async () => {
+    const onBack = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onBack,
+    });
+
+    await user.type(await screen.findByDisplayValue('Summarize:'), ' the text');
+    await user.click(screen.getByRole('button', { name: 'Back to prompts' }));
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('leaves without asking once edits are reverted', async () => {
+    const onCancel = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onCancel,
+    });
+
+    const name = screen.getByRole('textbox', { name: /Name/ });
+    await user.type(name, 'x');
+    await user.type(name, '{Backspace}');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+  });
+
+  it('stops the description at its limit and shows a live counter', async () => {
+    renderEditor({ descriptionMaxLength: 5 });
+
+    const description = screen.getByRole('textbox', { name: /Description/ });
+    expect(description.getAttribute('maxlength')).toBe('5');
+    expect(screen.queryByText(/\/5$/)).toBeNull();
+
+    await user.type(description, 'abc');
+
+    expect(screen.getByText('3/5')).toBeTruthy();
+  });
+
+  it('reports each edited field through onFieldChange', async () => {
+    const onFieldChange = vi.fn();
+    renderEditor({ onFieldChange });
+
+    await user.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
+    await user.type(screen.getByRole('textbox', { name: /Description/ }), 'b');
+    await user.type(
+      await screen.findByPlaceholderText('Write the prompt instructions'),
+      'c',
+    );
+
+    expect(onFieldChange).toHaveBeenCalledWith('name', 'a');
+    expect(onFieldChange).toHaveBeenCalledWith('description', 'b');
+    expect(onFieldChange).toHaveBeenCalledWith('content', 'c');
+  });
+
+  it('marks the instructions editor invalid while it has an error', async () => {
+    renderEditor({ errors: { content: 'Use 50000 characters or fewer.' } });
+
+    await screen.findByPlaceholderText('Write the prompt instructions');
+
+    expect(screen.getByText('Use 50000 characters or fewer.')).toBeTruthy();
+    const instructions = screen.getByRole('group', { name: /Instructions/ });
+    expect(
+      // eslint-disable-next-line testing-library/no-node-access -- the invalid state is a CSS class on the unlabeled editor wrapper, which has no accessible role or text to query
+      instructions.querySelector('[class*="contentInvalid"]'),
+    ).toBeTruthy();
+  });
+
   it('announces the characters remaining only near the limit', async () => {
     renderEditor({ contentMaxLength: 12, counterAnnounceThreshold: 4 });
 

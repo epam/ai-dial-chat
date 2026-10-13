@@ -23,6 +23,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
   PromptEditorI18nKeys,
+  SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
@@ -49,6 +50,15 @@ interface FormErrors {
   description?: PromptFieldError;
   content?: PromptFieldError;
 }
+
+const FIELD_VALIDATORS: Record<
+  keyof PromptEditorValues,
+  (value: string) => PromptFieldError | null
+> = {
+  name: validatePromptName,
+  description: validatePromptDescription,
+  content: validatePromptContent,
+};
 
 const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
@@ -150,6 +160,26 @@ const PromptEditorPage: FC = () => {
       ),
     };
   }, [errors, resolveNameError, t]);
+
+  /*
+   * Length and name-pattern errors show while the user types; a Required error
+   * keeps its submit timing, so it only persists (never appears) here.
+   */
+  const handleFieldChange = useCallback(
+    (field: keyof PromptEditorValues, value: string) => {
+      setErrors((previous) => {
+        const error = FIELD_VALIDATORS[field](value) ?? undefined;
+        const nextError =
+          error === PromptFieldError.Required &&
+          previous[field] !== PromptFieldError.Required
+            ? undefined
+            : error;
+        if (nextError === previous[field]) return previous;
+        return { ...previous, [field]: nextError };
+      });
+    },
+    [],
+  );
 
   const handleCancel = useCallback(() => {
     navigate(returnUrl);
@@ -260,6 +290,10 @@ const PromptEditorPage: FC = () => {
       contentLoadingAriaLabel: t(PromptEditorI18nKeys.ContentLoadingAriaLabel),
       charactersRemaining: (count) =>
         t(PromptEditorI18nKeys.CharactersRemaining, { count }),
+      discardTitle: t(SkillEditorI18nKeys.UnsavedChangesTitle),
+      discardMessage: t(SkillEditorI18nKeys.UnsavedChangesMessage),
+      discardConfirmLabel: t(SkillEditorI18nKeys.UnsavedChangesConfirmLabel),
+      discardCancelLabel: t(SkillEditorI18nKeys.UnsavedChangesCancelLabel),
     }),
     [t, refinementLabels],
   );
@@ -281,6 +315,7 @@ const PromptEditorPage: FC = () => {
         currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
       }
       onSubmit={handleSubmit}
+      onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}
       onRetry={handleRetry}

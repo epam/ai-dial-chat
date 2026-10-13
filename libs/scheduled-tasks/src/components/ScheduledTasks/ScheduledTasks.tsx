@@ -280,7 +280,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex h-full w-full flex-col gap-6 overflow-y-auto px-8 py-4',
+        'flex h-full w-full flex-col gap-4 overflow-y-auto px-4 py-4 desktop:gap-6 desktop:px-8',
         styles.container,
         className,
       )}

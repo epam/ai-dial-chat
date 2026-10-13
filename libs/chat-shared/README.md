@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.3`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0
-- `@epam/ai-dial-react-file-manager` ^0.3.0 \*
+- `@epam/ai-dial-ui-kit` ^0.15.3
+- `@epam/ai-dial-react-file-manager` ^0.3.5 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -802,7 +802,8 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 ```
 
 Pass `identity` to replace the default card for a resource that has no
-`EntityHeaderItem`, and `children` for a step that needs an input before it can
+`EntityHeaderItem`, `details` for content between the message and the bullets
+(such as the names a bulk action affects), and `children` for a step that needs an input before it can
 be confirmed — the caller owns that input's state and disables confirming
 until it is satisfied. With neither `item` nor `identity` the card is omitted,
 which suits a confirmation that is not about a particular resource.
@@ -891,6 +892,63 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
   onConfirm={handleDelete}
   onClose={closeDelete}
 />;
+```
+
+### DeleteConfirmationView
+
+The delete confirmation body every delete surface shows, built on
+[`ConfirmationView`](#confirmationview). Pass `names`: one name goes in a
+neutral `ResourceSummary` card, with the optional `icon` and `typeLabel`;
+several are counted in the card (`labels.itemCount`) and listed under the
+message, up to `maxListedNames` (10), with the rest summed up by
+`labels.moreItems`. `consequences` are listed before the final
+`labels.cannotBeUndone` bullet. Use it bare where a host owns the dialog frame,
+such as the file manager's `deleteConfirmBody`.
+
+```tsx
+import { DeleteConfirmationView } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationView
+  names={['report.pdf', 'notes.txt']}
+  message={
+    <>
+      Are you sure you want to delete <strong>2 items</strong>? This action is
+      permanent and cannot be undone.
+    </>
+  }
+/>;
+```
+
+### DeleteConfirmationDialog
+
+[`DeleteConfirmationView`](#deleteconfirmationview) in the kit's `Popup` with a
+danger [`ConfirmationFooter`](#confirmationfooter), for one resource or a
+selection. Like [`ConfirmationDialog`](#confirmationdialog), it blocks every
+dismissal route while `isLoading` is set. All strings have English defaults and
+can be overridden through `labels` (`confirm`, `cancel`, `deleting`,
+`cannotBeUndone`, `itemCount`, `moreItems`). `children` render after the
+consequences, for an inline error.
+
+```tsx
+import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationDialog
+  open={isDeleteOpen}
+  title="Delete chat"
+  names={[conversation.title]}
+  icon={<IconMessageCircle aria-hidden />}
+  message={
+    <>
+      Are you sure you want to delete <strong>{conversation.title}</strong>?
+      This action is permanent and cannot be undone.
+    </>
+  }
+  isLoading={isDeleting}
+  onConfirm={handleDelete}
+  onClose={closeDelete}
+>
+  {error && <ErrorMessageNotification message={error} />}
+</DeleteConfirmationDialog>;
 ```
 
 ### TextRefinementField

@@ -382,6 +382,19 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
   },
   {
+    key: 'features.usageLimitsControl',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the conversation input shows the token/cost usage-limits control ' +
+      'next to the model selector. Off by default.',
+    owner: 'chat-team',
+    envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',
@@ -440,5 +453,17 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Maximum attachment/upload file size in bytes, surfaced to the client so it can reject an oversized file before attempting to upload it. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that already bounds the POST /api/v1/files Multer limit — so the frontend pre-check and the backend enforcement can never diverge.',
     owner: 'chat-team',
     envVar: 'FILE_UPLOAD_MAX_BYTES',
+  },
+  {
+    key: 'usageLimits.warningThresholdPercent',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'client',
+    defaultValue: 75,
+    critical: false,
+    description:
+      'Percentage (1–99) of a capped day/week/month token or cost limit at which the composer shows its usage banner above the input. Governs the banner only — the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.',
+    owner: 'chat-team',
+    envVar: 'USAGE_LIMITS_WARNING_THRESHOLD_PERCENT',
   },
 ];

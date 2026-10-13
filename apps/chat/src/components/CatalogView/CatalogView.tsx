@@ -68,7 +68,10 @@ import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { getCatalogSearchPlaceholder } from '../../utils/catalog';
+import {
+  getCatalogMyAppsEmptyTitle,
+  getCatalogSearchPlaceholder,
+} from '../../utils/catalog';
 import {
   findSchemaDisplayName,
   resolveCatalogItemEntity,
@@ -536,30 +539,35 @@ const CatalogView: FC<Props> = ({
     [deployments, favoriteIds, notifyOperationSuccess, schemas, toggleFavorite],
   );
 
-  const { handleEdit, handleDelete, createOptions, createSearch } =
-    useCatalogEditNavigation({
-      deployments,
-      isCustomAppsEnabled,
-      isSchemaAppsEnabled,
-      isHideCustomAppCreationEnabled,
-      isToolsetsEnabled,
-      isPromptsEnabled,
-      schemas,
-      urls: catalogEditUrls,
-      onNavigate: navigate,
-      deletePrompt,
-      deleteToolset,
-      deleteSkill,
-      deleteApplication,
-      refetchPrompts,
-      refetchToolsets,
-      refetchSkills,
-      refetchDeployments,
-      onDeleteSuccess: handleDeleteSuccess,
-      labels: catalogEditNavigationLabels,
-      onNotify: showErrorNotification,
-      onSkillUploadClick: openSkillArchiveDialog,
-    });
+  const {
+    handleEdit,
+    handleDelete,
+    createOptions,
+    createSearch,
+    createMenuByType,
+  } = useCatalogEditNavigation({
+    deployments,
+    isCustomAppsEnabled,
+    isSchemaAppsEnabled,
+    isHideCustomAppCreationEnabled,
+    isToolsetsEnabled,
+    isPromptsEnabled,
+    schemas,
+    urls: catalogEditUrls,
+    onNavigate: navigate,
+    deletePrompt,
+    deleteToolset,
+    deleteSkill,
+    deleteApplication,
+    refetchPrompts,
+    refetchToolsets,
+    refetchSkills,
+    refetchDeployments,
+    onDeleteSuccess: handleDeleteSuccess,
+    labels: catalogEditNavigationLabels,
+    onNotify: showErrorNotification,
+    onSkillUploadClick: openSkillArchiveDialog,
+  });
 
   if (!isCatalogEnabled && !isSelectorMode) {
     return null;
@@ -584,6 +592,7 @@ const CatalogView: FC<Props> = ({
         favorites={favorites}
         createOptions={createOptions}
         createSearch={createSearch}
+        createMenuByTab={createMenuByType}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
         isFullWidth={isFullWidth}
@@ -672,6 +681,8 @@ const CatalogView: FC<Props> = ({
           searchPlaceholder,
           noResultsTitle: (query) =>
             t(CatalogI18nKeys.NoResultsTitle, { query }),
+          myAppsEmptyTitle: (tab) => getCatalogMyAppsEmptyTitle(tab, t),
+          myAppsEmptyDescription: t(CatalogI18nKeys.MyAppsEmptyDescription),
           sortLabel: t(ButtonsI18nKeys.Sort),
           sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
           sortNewestLabel: t(CatalogI18nKeys.SortNewest),
@@ -680,6 +691,22 @@ const CatalogView: FC<Props> = ({
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
+          filterMyAppsLabel: t(CatalogI18nKeys.BrowseSettingsMy),
+          filterTopicsLabel: t(CatalogI18nKeys.BrowseSettingsTopics),
+          browseSettings: {
+            title: t(CatalogI18nKeys.BrowseSettingsTitle),
+            view: t(CatalogI18nKeys.BrowseSettingsView),
+            sorting: t(CatalogI18nKeys.BrowseSettingsSorting),
+            filtering: t(CatalogI18nKeys.BrowseSettingsFiltering),
+            gridView: t(CatalogI18nKeys.BrowseSettingsCards),
+            listView: t(CatalogI18nKeys.BrowseSettingsList),
+            clear: t(ButtonsI18nKeys.Clear),
+            apply: t(ButtonsI18nKeys.Apply),
+            back: t(NavigationI18nKeys.Back),
+            close: t(ButtonsI18nKeys.Close),
+            formatFilterCount: (selected, total) =>
+              t(CatalogI18nKeys.BrowseSettingsFilterCount, { selected, total }),
+          },
           ariaLabel: t(NavigationI18nKeys.Catalog),
           tabLabels: {
             [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),

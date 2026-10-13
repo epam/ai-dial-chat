@@ -152,6 +152,11 @@ const ScheduledTaskDetailPage: FC = () => {
     startFeedbackPending.current = false;
   }, [scheduleId, isEnabled]);
 
+  /* Set from the manually started run below; the history hook is created
+     first because the start hook consumes its loaded runs. */
+  const [hasAcceptedInProgressRun, setHasAcceptedInProgressRun] =
+    useState(false);
+
   const {
     items: runDtos,
     isLoading: runsIsLoading,
@@ -166,6 +171,7 @@ const ScheduledTaskDetailPage: FC = () => {
     scheduleId,
     isEnabled && Boolean(scheduleId),
     task?.nextRunTime,
+    hasAcceptedInProgressRun,
   );
 
   const isTaskDeleted = task?.isDeleted === true;
@@ -247,6 +253,14 @@ const ScheduledTaskDetailPage: FC = () => {
       cancelled.value = true;
     };
   }, [isEnabled, scheduleId, taskFetchToken]);
+
+  useEffect(() => {
+    setHasAcceptedInProgressRun(
+      mergeScheduledTaskRuns(acceptedRuns, runDtos).some(
+        (run) => run.status === ScheduledTaskRunDtoStatusEnum.InProgress,
+      ),
+    );
+  }, [acceptedRuns, runDtos]);
 
   const mergedRunDtos = useMemo(
     () => mergeScheduledTaskRuns(acceptedRuns, runDtos),

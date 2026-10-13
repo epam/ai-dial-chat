@@ -21,7 +21,7 @@ import {
 } from '../../utils/map-scheduled-task-run-dto';
 
 const CARD_CLASS_NAME =
-  'flex items-center justify-between gap-2 rounded-xl border border-secondary bg-layer-sunken py-3 ps-6 pe-2';
+  'flex items-center justify-between gap-2 rounded-xl border border-secondary bg-layer-sunken py-3 ps-4 pe-2 desktop:ps-6';
 
 /**
  * Compact summary rendered above a scheduled-task conversation's messages,
@@ -115,7 +115,12 @@ const ScheduledTaskConversationBanner: FC = () => {
       <p className="dial-small-semi-text min-w-0 flex-1 break-words text-primary">
         {displayName}
         {timestampLabel && (
-          <span className="dial-small-text"> {timestampLabel}</span>
+          /* Own line on mobile so the run time stays readable beside the
+           * Task details link; inline after the name on desktop. */
+          <span className="dial-small-text block desktop:inline">
+            {' '}
+            {timestampLabel}
+          </span>
         )}
       </p>
       <Link

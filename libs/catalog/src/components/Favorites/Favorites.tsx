@@ -222,7 +222,8 @@ export const Favorites: FC<FavoritesProps> = ({
       gridRef.current.querySelectorAll<HTMLElement>('[data-card-id]');
     const nextPositions = new Map<string, DOMRect>();
     cards.forEach((card) => {
-      nextPositions.set(card.dataset.cardId!, getLayoutRect(card));
+      const { cardId } = card.dataset;
+      if (cardId) nextPositions.set(cardId, getLayoutRect(card));
     });
 
     if (!pageChanged && !columnsChanged) {
@@ -255,7 +256,8 @@ export const Favorites: FC<FavoritesProps> = ({
       const flipDuration = targetHeight > prevHeight ? 280 : 220;
       const movers: HTMLElement[] = [];
       cards.forEach((card) => {
-        const id = card.dataset.cardId!;
+        const id = card.dataset.cardId;
+        if (!id) return;
         const prev = cardPositions.current.get(id);
         const next = nextPositions.get(id);
         if (!prev || !next) return;

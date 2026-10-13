@@ -199,6 +199,46 @@ describe('shared useScheduledTaskRuns', () => {
       expect(listScheduledTaskRuns).toHaveBeenCalledTimes(2);
     });
 
+    it('polls while pollWhileActive is set even if no loaded run is in progress, and stops once it is cleared', async () => {
+      const listScheduledTaskRuns = vi
+        .fn<ScheduledTasksApiClient['listScheduledTaskRuns']>()
+        .mockResolvedValueOnce({
+          items: [],
+          next: null,
+        } as ListScheduledTaskRunsResponseDto)
+        .mockResolvedValue({
+          items: [
+            makeRun({
+              id: 'run-1',
+              status: ScheduledTaskRunDtoStatusEnum.Success,
+            }),
+          ],
+          next: null,
+        } as ListScheduledTaskRunsResponseDto);
+      const client = makeClient(listScheduledTaskRuns);
+
+      const { result, rerender } = renderHook(
+        ({ pollWhileActive }) =>
+          useScheduledTaskRuns(client, {
+            scheduleId: 'sched',
+            pollWhileActive,
+          }),
+        { initialProps: { pollWhileActive: true } },
+      );
+      await flush();
+      expect(listScheduledTaskRuns).toHaveBeenCalledOnce();
+
+      await advance(15_000);
+      expect(listScheduledTaskRuns).toHaveBeenCalledTimes(2);
+      expect(result.current.items[0].status).toBe(
+        ScheduledTaskRunDtoStatusEnum.Success,
+      );
+
+      rerender({ pollWhileActive: false });
+      await advance(30_000);
+      expect(listScheduledTaskRuns).toHaveBeenCalledTimes(2);
+    });
+
     it('does not poll while no run is in progress', async () => {
       const listScheduledTaskRuns = vi
         .fn<ScheduledTasksApiClient['listScheduledTaskRuns']>()
@@ -246,7 +286,7 @@ describe('shared useScheduledTaskRuns', () => {
       expect(pollSignal?.aborted).toBe(false);
     });
 
-    it('stops polling after 20 consecutive polls that each fail, without polling indefinitely', async () => {
+    it('stops polling after 48 consecutive polls that each fail, without polling indefinitely', async () => {
       const listScheduledTaskRuns = vi
         .fn<ScheduledTasksApiClient['listScheduledTaskRuns']>()
         .mockResolvedValueOnce({
@@ -264,14 +304,14 @@ describe('shared useScheduledTaskRuns', () => {
       renderHook(() => useScheduledTaskRuns(client, { scheduleId: 'sched' }));
       await flush();
 
-      for (let tick = 0; tick < 21; tick += 1) {
+      for (let tick = 0; tick < 49; tick += 1) {
         await advance(15_000);
       }
 
-      /* 1 initial + 20 polls — the 21st timer tick is never scheduled
+      /* 1 initial + 48 polls — the 49th timer tick is never scheduled
          because the interval is cleared when noChangeCount reaches
-         RUNS_POLL_STOP_AFTER_NO_CHANGE (20). */
-      expect(listScheduledTaskRuns).toHaveBeenCalledTimes(21);
+         RUNS_POLL_STOP_AFTER_NO_CHANGE (48). */
+      expect(listScheduledTaskRuns).toHaveBeenCalledTimes(49);
     });
 
     it("stops the previous schedule's polling and aborts its in-flight background request when scheduleId changes", async () => {
@@ -316,7 +356,7 @@ describe('shared useScheduledTaskRuns', () => {
       expect(listScheduledTaskRuns).toHaveBeenCalledTimes(3);
     });
 
-    it('stops polling after 20 consecutive polls with no status change', async () => {
+    it('stops polling after 48 consecutive polls with no status change', async () => {
       const inProgressPage = {
         items: [
           makeRun({
@@ -334,13 +374,13 @@ describe('shared useScheduledTaskRuns', () => {
       renderHook(() => useScheduledTaskRuns(client, { scheduleId: 'sched' }));
       await flush();
 
-      for (let tick = 0; tick < 21; tick += 1) {
+      for (let tick = 0; tick < 49; tick += 1) {
         await advance(15_000);
       }
 
-      /* 1 initial + 20 polls (the 21st scheduled tick never fires: the
-         interval was cleared once the 20th no-change poll completed). */
-      expect(listScheduledTaskRuns).toHaveBeenCalledTimes(21);
+      /* 1 initial + 48 polls (the 49th scheduled tick never fires: the
+         interval was cleared once the 48th no-change poll completed). */
+      expect(listScheduledTaskRuns).toHaveBeenCalledTimes(49);
     });
 
     it('merges a background refresh without resetting pagination or scroll-relevant state', async () => {

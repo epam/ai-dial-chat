@@ -1,3 +1,8 @@
 .contentError {
   color: var(--pe-content-error, var(--text-error, #ae2f2f));
 }
+
+/* Outranks the kit's `.dial-kit-markdown-editor .w-md-editor` border colour. */
+.contentInvalid :global(.dial-kit-markdown-editor .w-md-editor) {
+  border-color: var(--pe-content-invalid-border, var(--stroke-error, #ae2f2f));
+}

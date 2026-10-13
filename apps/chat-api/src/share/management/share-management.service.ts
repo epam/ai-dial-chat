@@ -261,12 +261,17 @@ export class ShareManagementService {
    * Unlike `discardShared` there is no pre-flight `getSharedResources` check:
    * for an owner, a resource that currently has no recipients already has the
    * requested outcome, so DIAL Core's no-op success is the correct answer
-   * rather than something to surface as an error. Ownership itself is
-   * enforced by DIAL Core, which answers `403` for a non-owner.
+   * rather than something to surface as an error.
+   *
+   * Ownership is checked here, before DIAL Core is called: every allowlisted
+   * itemId is `{type}/{bucket}/{path}`, and only the owner of `{bucket}` can
+   * revoke. DIAL Core answers a non-owner with a generic `400`, which would
+   * otherwise be indistinguishable from the not-found case below.
    *
    * `itemId` is always a full DIAL Core resource path, and only its owner
    * can revoke its shared access.
    *
+   * @throws {ForbiddenException} When the resource is not in the caller's bucket
    * @throws {NotFoundException} When the resource does not exist
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
@@ -275,8 +280,15 @@ export class ShareManagementService {
     itemId: string,
     accessToken: string,
     userSub: string,
+    sessionBucket: string,
   ): Promise<RevokeSharedAccessResponseDto> {
     this.logger.log('Revoke shared access started');
+
+    if (itemId.split('/')[1] !== sessionBucket) {
+      throw new ForbiddenException(
+        'Only the resource owner can revoke shared access',
+      );
+    }
 
     const resourceUrl = toShareResourceUrl(itemId);
 

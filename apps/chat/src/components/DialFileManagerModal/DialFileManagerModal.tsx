@@ -35,6 +35,7 @@ import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholde
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 import { getFileDeleteConfirmTitle } from '../FileDeleteConfirmContent/file-delete-confirm-title';
+import { useFileUnshareConfirmation } from '../FileUnshareConfirmation/useFileUnshareConfirmation';
 
 interface Props {
   isOpen: boolean;
@@ -152,6 +153,8 @@ const DialFileManagerModal: FC<Props> = ({
   });
 
   const { isAnyOperationInProgress } = hookResult;
+  const { controller, unshareConfirmation } =
+    useFileUnshareConfirmation(hookResult);
 
   const handleSkippedUnsupportedFiles = useCallback(() => {
     showInfoNotification({
@@ -447,7 +450,7 @@ const DialFileManagerModal: FC<Props> = ({
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
-      unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
       unsharingLabel: t(DialFileManagerI18nKeys.UnsharingLabel),
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
@@ -492,34 +495,37 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   return (
-    <FileManagerAttachModal
-      isOpen={isOpen}
-      onClose={onClose}
-      onAttach={onAttach}
-      onSkippedUnsupportedFiles={handleSkippedUnsupportedFiles}
-      onCountLimitExceeded={handleCountLimitExceeded}
-      controller={hookResult}
-      isAnyOperationInProgress={isAnyOperationInProgress}
-      activeTab={activeTab}
-      tabs={tabs}
-      onTabChange={handleTabChange}
-      labels={labels}
-      variant={DialFileManagerVariant.Attach}
-      actionProfile={DialFileManagerActionProfile.Attach}
-      selectedPaths={selectedPaths}
-      onSelectedPathsChange={handleSelectedPathsChange}
-      resolveFolderPath={resolveFolderPath}
-      isFileTypeAllowed={isFileTypeAllowed}
-      maxSelectableFileSize={maxSelectableFileSize}
-      maximumAttachmentsAmount={maximumAttachmentsAmount}
-      existingAttachmentsAmount={existingAttachmentsAmount}
-      isRowSelectable={isRowSelectable}
-      getDisabledTooltip={getDisabledTooltip}
-      unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
-      allowedFileTypes={allowedFileTypes}
-      autoSelectUploadedItems={autoSelectUploadedItems}
-      oversizedUploadMessage={oversizedUploadMessage}
-    />
+    <>
+      <FileManagerAttachModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onAttach={onAttach}
+        onSkippedUnsupportedFiles={handleSkippedUnsupportedFiles}
+        onCountLimitExceeded={handleCountLimitExceeded}
+        controller={controller}
+        isAnyOperationInProgress={isAnyOperationInProgress}
+        activeTab={activeTab}
+        tabs={tabs}
+        onTabChange={handleTabChange}
+        labels={labels}
+        variant={DialFileManagerVariant.Attach}
+        actionProfile={DialFileManagerActionProfile.Attach}
+        selectedPaths={selectedPaths}
+        onSelectedPathsChange={handleSelectedPathsChange}
+        resolveFolderPath={resolveFolderPath}
+        isFileTypeAllowed={isFileTypeAllowed}
+        maxSelectableFileSize={maxSelectableFileSize}
+        maximumAttachmentsAmount={maximumAttachmentsAmount}
+        existingAttachmentsAmount={existingAttachmentsAmount}
+        isRowSelectable={isRowSelectable}
+        getDisabledTooltip={getDisabledTooltip}
+        unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
+        allowedFileTypes={allowedFileTypes}
+        autoSelectUploadedItems={autoSelectUploadedItems}
+        oversizedUploadMessage={oversizedUploadMessage}
+      />
+      {unshareConfirmation}
+    </>
   );
 };
 

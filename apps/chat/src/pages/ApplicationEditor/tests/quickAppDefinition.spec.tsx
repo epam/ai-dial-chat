@@ -279,6 +279,38 @@ describe('ApplicationEditorPage — quick app', () => {
       );
       expect(screen.queryByText(/embedded-editor-/)).toBeNull();
     });
+
+    it('shows a name conflict on a 409 and clears it once the name changes', async () => {
+      /* Shape thrown by the generated client: a ResponseError carrying `response`. */
+      vi.mocked(createApplication).mockRejectedValue({
+        response: {
+          status: 409,
+          json: () =>
+            Promise.resolve({ message: 'Application name already taken' }),
+        },
+      });
+      renderPage(createSearch);
+
+      await user.type(getNameInput(), 'My App');
+      await user.click(getAction(ButtonsI18nKeys.Create));
+
+      expect(
+        await screen.findByText(AppsEditorI18nKeys.ErrorNameConflict),
+      ).toBeTruthy();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: NotificationVariant.Error,
+          message: AppsEditorI18nKeys.ErrorNameConflict,
+        }),
+      );
+      expect(screen.queryByText(/embedded-editor-/)).toBeNull();
+
+      await user.type(getNameInput(), ' 2');
+
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorNameConflict),
+      ).toBeNull();
+    });
   });
 
   describe('edit mode', () => {
@@ -434,7 +466,11 @@ describe('ApplicationEditorPage — quick app', () => {
           name: AppsEditorI18nKeys.EditTitle,
         }),
       ).toBeNull();
-      expect(backToSetup.matches(':focus')).toBe(true);
+      /*
+       * The preview opens after the save promise settles outside `act`, so the
+       * passive focus effect can run after `findByRole` has already resolved.
+       */
+      await waitFor(() => expect(backToSetup.matches(':focus')).toBe(true));
     });
 
     it('returns to the same embedded editor on Back to setup and focuses Preview', async () => {

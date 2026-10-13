@@ -24,6 +24,7 @@ import { preprocessLaTeX } from '../../utils/latex';
 import { rehypeRawAsText } from '../../utils/markdown-html';
 import { mergeClasses } from '../../utils/merge-class';
 import { MarkdownCodeBlock } from './CodeBlock/CodeBlock';
+import { rehypePreserveSpaces } from './markdown-whitespace';
 import styles from './MarkdownRenderer.module.scss';
 import { MarkdownMathBlock } from './Math/MarkdownMathBlock';
 import {
@@ -693,15 +694,17 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
 
     /*
      * Pipeline order matters: raw HTML is re-parsed first, KaTeX (once loaded)
-     * turns math spans into MathML, and sanitization runs last over everything
-     * both passes produced. With raw HTML disabled, raw nodes become literal
-     * text instead of being re-parsed.
+     * turns math spans into MathML, sanitization runs over everything both
+     * passes produced, and space runs are then preserved on the sanitized tree.
+     * With raw HTML disabled, raw nodes become literal text instead of being
+     * re-parsed.
      */
     const effectiveRehypePlugins = useMemo(
       () => [
         ...(isRawHtmlEnabled ? preKatexRehypePlugins : rawAsTextRehypePlugins),
         ...(katexPlugin ? [katexPlugin] : []),
         sanitizeRehypePlugin,
+        rehypePreserveSpaces,
         ...rehypePlugins,
       ],
       [isRawHtmlEnabled, katexPlugin, rehypePlugins],

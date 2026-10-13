@@ -7,9 +7,12 @@ const OVERFLOW_TOLERANCE = 1;
 export interface UseIsVerticallyClampedResult<TElement extends HTMLElement> {
   /** Ref attached to the clamped element whose overflow is measured. */
   ref: RefObject<TElement | null>;
-  /** Whether the element's content is taller than its visible box. */
+  /** Whether the element, or one of its direct children, is taller inside than its visible box. */
   isClamped: boolean;
 }
+
+const isOverflowing = (element: Element): boolean =>
+  element.scrollHeight - element.clientHeight > OVERFLOW_TOLERANCE;
 
 /**
  * Tracks whether a `line-clamp-*` (or any `overflow: hidden`) element hides
@@ -27,8 +30,15 @@ export const useIsVerticallyClamped = <TElement extends HTMLElement>(
     const element = ref.current;
     if (!element) return;
 
+    /*
+     * The clamp can land on a child instead of the element itself: a wrapped
+     * component that clamps its own text (the kit's `Highlight` does) leaves
+     * the wrapper exactly as tall as the clipped child, so only the child
+     * reports the overflow (#9400).
+     */
     setIsClamped(
-      element.scrollHeight - element.clientHeight > OVERFLOW_TOLERANCE,
+      isOverflowing(element) ||
+        Array.from(element.children).some(isOverflowing),
     );
   }, []);
 

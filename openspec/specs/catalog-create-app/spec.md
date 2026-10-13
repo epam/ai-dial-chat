@@ -116,6 +116,38 @@ While schemas are still loading, `schemas` is empty and no runner option is offe
 - **WHEN** the catalog opens an existing runner app for editing
 - **THEN** it calls `buildQuickAppEditUrl` with the app's schema id and its id
 
+### Requirement: The Create menu is also offered narrowed to each entity type
+
+Alongside `createOptions`, `useCatalogEditNavigation` SHALL return `createMenuByType: Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>`, where `CatalogTabCreateMenu` (`{ options: DropdownItem[]; search?: CatalogCreateSearch }`, exported from `@epam/ai-dial-catalog`) is the Create menu restricted to one entity type. It is built from the same gated, search-filtered options as `createOptions`, so every gate and the search query apply identically:
+
+| Type | `options` | `search` |
+|---|---|---|
+| `CatalogEntityType.Agent` | the `runner:*` options plus `custom-app`, sorted by label as in `createOptions` | `createSearch` |
+| `CatalogEntityType.Toolset` | `toolset`, or none | — |
+| `CatalogEntityType.Skill` | the `skill` group's visible children (`skill-write-instructions`, `skill-upload`), flattened — no `skill` parent | — |
+| `CatalogEntityType.Prompt` | `prompt`, or none | — |
+
+`CatalogEntityType.Model` SHALL have no entry, because models are never created from the catalog. A type whose gate is off keeps its entry with an empty `options` array, so the host can still tell "creatable type, nothing enabled" from "not creatable at all".
+
+`CatalogView` SHALL pass `createMenuByType` to `Catalog` as `createMenuByTab`, which uses it only for the personal empty state (see `catalog-personal-empty-state`); the header Create button keeps the full `createOptions` menu.
+
+#### Scenario: The menu is split by entity type and models get no entry
+
+- **WHEN** runners, Toolset, Custom App and Prompt are all enabled
+- **THEN** `createMenuByType` has entries for Agent (runners and `custom-app`), Toolset (`toolset`), Skill (`skill-write-instructions`, `skill-upload`) and Prompt (`prompt`), and no entry for Model
+
+#### Scenario: The agent menu carries the runner search
+
+- **WHEN** runner options are offered
+- **THEN** the Agent entry's `search` is the same `createSearch` the full menu uses, and no other entry has a `search`
+
+#### Scenario: A disabled type keeps an empty entry
+
+- **WHEN** `OverlayFeature.Toolsets` is off
+- **THEN** the Toolset entry is present with an empty `options` array
+
+---
+
 ### Requirement: The Create menu is searchable while it offers runners
 
 `useCatalogEditNavigation` SHALL own the Create menu's search query and return `createSearch: CatalogCreateSearch | undefined` (`{ value: string; onChange: (value: string) => void }`, exported from `@epam/ai-dial-catalog`). It SHALL be defined only while runner options are enabled (`SchemaApps` on, `HideCustomAppCreation` off) and at least one runner schema exists; otherwise it is `undefined` and `CreateButton` renders the plain split-chevron dropdown.

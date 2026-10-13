@@ -64,7 +64,7 @@ const StageAttachmentRow: FC<StageAttachmentRowProps> = ({
   );
 
   return (
-    <div role="list" className="flex flex-wrap gap-3">
+    <div role="list" className="flex flex-wrap gap-2">
       {attachments.map((attachment) => (
         <div key={attachment.id} role="listitem">
           <AttachmentCard

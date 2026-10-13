@@ -11,6 +11,8 @@ vi.mock('react-syntax-highlighter', () => ({
   ),
 }));
 
+const NBSP = String.fromCharCode(0xa0);
+
 const TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |
 | Alpha | A long table value |`;
@@ -503,6 +505,26 @@ describe('MarkdownRenderer', () => {
     // <br> has no accessible role, so its absence is checked via querySelectorAll.
     // eslint-disable-next-line testing-library/no-node-access
     expect(codeEl.querySelectorAll('br').length).toBe(0);
+  });
+
+  it('keeps every space of a run of consecutive spaces in prose visible', () => {
+    render(<MarkdownRenderer content="A        A" />);
+
+    const paragraph = screen.getByRole('paragraph');
+    expect(paragraph.textContent).toBe(`A${NBSP.repeat(7)} A`);
+  });
+
+  it('keeps consecutive spaces in a table cell visible', () => {
+    render(<MarkdownRenderer content={'| Name |\n| --- |\n| a   b |'} />);
+
+    expect(screen.getByRole('cell').textContent).toBe(`a${NBSP}${NBSP} b`);
+  });
+
+  it('leaves consecutive spaces inside an inline code span untouched', () => {
+    render(<MarkdownRenderer content="Use `a   b` here" />);
+
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.querySelector('code')?.textContent).toBe('a   b');
   });
 
   it('renders double-dollar LaTeX as a KaTeX math element once the engine loads', async () => {

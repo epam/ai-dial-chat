@@ -103,6 +103,14 @@ export interface PromptEditorLabels extends TextRefinementLabels {
   contentLoadingAriaLabel?: string;
   /** Builds the characters-remaining announcement. Defaults to `` `${count} characters remaining` ``. */
   charactersRemaining?: (count: number) => string;
+  /** Title of the confirmation shown when leaving with unsaved changes. Defaults to `'Discard unsaved changes?'`. */
+  discardTitle?: string;
+  /** Message of the unsaved-changes confirmation. Defaults to `'You have unsaved changes. Leaving now will discard them.'`. */
+  discardMessage?: string;
+  /** Confirm button label of the unsaved-changes confirmation. Defaults to `'Discard'`. */
+  discardConfirmLabel?: string;
+  /** Cancel button label of the unsaved-changes confirmation. Defaults to `'Keep editing'`. */
+  discardCancelLabel?: string;
 }
 
 /** Typography class overrides for `PromptEditor`. */
@@ -117,6 +125,8 @@ export interface PromptEditorTypography {
 export interface PromptEditorColors {
   /** Prompt validation error text. Fallback: `--text-error`. */
   contentErrorText?: string;
+  /** Border of the instructions editor while it has an error. Fallback: `--stroke-error`. */
+  contentInvalidBorder?: string;
 }
 
 /** Grouped style overrides for `PromptEditor`. */
@@ -145,7 +155,7 @@ export interface PromptEditorProps {
   isSaving?: boolean;
   /** Inline validation messages to render under the fields. */
   errors?: PromptEditorErrors;
-  /** Maximum description length used for the characters-remaining announcement. Defaults to `2000`. */
+  /** Hard limit on the description, shown as a `length/limit` counter under it and used for the characters-remaining announcement. Defaults to `2000`. */
   descriptionMaxLength?: number;
   /** Maximum content length used for the characters-remaining announcement. Defaults to `50000`. */
   contentMaxLength?: number;
@@ -153,9 +163,11 @@ export interface PromptEditorProps {
   counterAnnounceThreshold?: number;
   /** Called with the current values when the form is submitted. */
   onSubmit: (values: PromptEditorValues) => void;
-  /** Called when the form is dismissed without saving. */
+  /** Called with each edited field and its new value, e.g. to validate while the user types. */
+  onFieldChange?: (field: keyof PromptEditorValues, value: string) => void;
+  /** Called when the form is dismissed without saving; with unsaved edits, only after the user confirms discarding them. */
   onCancel: () => void;
-  /** Called when the header back button is activated. Defaults to `onCancel`. */
+  /** Called when the header back button is activated, behind the same unsaved-changes confirmation. Defaults to `onCancel`. */
   onBack?: () => void;
   /** Called when the retry button in the load-error state is activated. */
   onRetry?: () => void;

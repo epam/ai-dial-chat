@@ -1,7 +1,11 @@
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import { Grid } from '@epam/ai-dial-ui-kit/grid';
-import type { GridApi, GridOptions } from 'ag-grid-community';
+import type {
+  GridApi,
+  GridOptions,
+  GridSizeChangedEvent,
+} from 'ag-grid-community';
 import {
   type CSSProperties,
   type KeyboardEvent,
@@ -157,6 +161,22 @@ const WindowedListView: FC<ListViewProps> = ({
   toggleSelectionRef.current = toggleSelection;
 
   /*
+   * The kit's Grid refits columns on every size change. With `autoHeight` and
+   * a row window, scrolling changes the grid's height whenever the slice
+   * grows or shrinks, and each refit discarded a column the user had resized.
+   * Only a width change needs the columns refitted.
+   */
+  const gridWidthRef = useRef<number | null>(null);
+  const handleGridSizeChanged = useCallback(
+    (event: GridSizeChangedEvent<CatalogItem>) => {
+      if (event.clientWidth === gridWidthRef.current) return;
+      gridWidthRef.current = event.clientWidth;
+      event.api.sizeColumnsToFit();
+    },
+    [],
+  );
+
+  /*
    * Space on a row cell toggles that row. Handled on the grid's wrapper from
    * the `row-id` AG Grid stamps on every row (from `getRowId`), rather than
    * through `onCellKeyDown`, which only fires for the cell AG Grid's own focus
@@ -188,6 +208,7 @@ const WindowedListView: FC<ListViewProps> = ({
       suppressAnimationFrame: true,
       suppressScrollOnNewData: true,
       defaultColDef: { filter: false, floatingFilter: false },
+      onGridSizeChanged: handleGridSizeChanged,
       context: {
         searchQuery: query,
         typography,
@@ -223,6 +244,7 @@ const WindowedListView: FC<ListViewProps> = ({
       isReadonly,
       onItemClick,
       isMultiSelect,
+      handleGridSizeChanged,
     ],
   );
 

@@ -9,6 +9,15 @@ import {
 } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
+const { mockUseIsMobile } = vi.hoisted(() => ({
+  mockUseIsMobile: vi.fn(() => false),
+}));
+
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
+  useIsMobile: mockUseIsMobile,
+}));
+
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   CardShell: ({
@@ -22,12 +31,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text,
     query,
     className,
+    maxLines,
   }: {
     text: string;
     query?: string;
     className?: string;
+    maxLines?: number;
   }) => {
-    if (!query) return <span className={className}>{text}</span>;
+    if (!query)
+      return (
+        <span className={className} data-max-lines={maxLines}>
+          {text}
+        </span>
+      );
     const index = text.toLowerCase().indexOf(query.toLowerCase());
     if (index === -1) return <span className={className}>{text}</span>;
     return (
@@ -114,6 +130,25 @@ describe('ScheduledTaskCard', () => {
     expect(screen.getByRole('group').className).toContain(
       'h-[var(--st-card-height,232px)]',
     );
+  });
+
+  it('keeps the title on one line at desktop widths', () => {
+    mockUseIsMobile.mockReturnValue(false);
+    render(<ScheduledTaskCard item={buildItem()} />);
+
+    expect(
+      screen.getByText('Competitor Updates').getAttribute('data-max-lines'),
+    ).toBe('1');
+  });
+
+  it('lets the title wrap to two lines at mobile widths', () => {
+    mockUseIsMobile.mockReturnValue(true);
+    render(<ScheduledTaskCard item={buildItem()} />);
+
+    expect(
+      screen.getByText('Competitor Updates').getAttribute('data-max-lines'),
+    ).toBe('2');
+    mockUseIsMobile.mockReturnValue(false);
   });
 
   it('clamps a long description instead of growing the card', () => {

@@ -20,6 +20,7 @@ import type {
   CatalogItemDetailsFetchResult,
 } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
+import type { BrowseSettingsSheetLabels } from './toolbar-props';
 
 /**
  * Live search/filter/tab state passed to `CatalogProps.renderEmptyState` when
@@ -53,6 +54,14 @@ export interface CatalogTitles {
    * Default: (q) => `No results for "${q}"`.
    */
   noResultsTitle?: (query: string) => string;
+  /**
+   * Returns the empty-state heading shown while the "My Apps" filter is on, no
+   * search or topic filter is applied and the active tab has nothing to show.
+   * Default: () => 'No personal items yet'.
+   */
+  myAppsEmptyTitle?: (activeTab: string) => string;
+  /** Secondary line of the "My Apps" empty state. Default: "Create your first one, it'll show up right here.". */
+  myAppsEmptyDescription?: string;
   /** The sort control's own name, prepended to its accessible name. Default: 'Sort'. */
   sortLabel?: string;
   /** Label for the "Recently Updated" sort option. Default: 'Recently Updated'. */
@@ -94,6 +103,8 @@ export interface CatalogTitles {
   createMenuBackLabel?: string;
   /** Accessible name of the close button in the mobile Create menu sheet. Default: 'Close'. */
   createMenuCloseLabel?: string;
+  /** Text of the mobile browse-settings button and sheet, which replaces the view, sort and filter controls below the desktop breakpoint. */
+  browseSettings?: Partial<BrowseSettingsSheetLabels>;
 }
 
 /** Controlled search field rendered at the top of the Create menu. */
@@ -102,6 +113,14 @@ export interface CatalogCreateSearch {
   value: string;
   /** Called with the new query on every edit, and with `''` when the menu closes. */
   onChange: (value: string) => void;
+}
+
+/** Create menu offered for one entity type, e.g. by the personal empty state of that type's tab. */
+export interface CatalogTabCreateMenu {
+  /** Menu options; a single option without `children` makes the button run its `onClick` directly. */
+  options: DropdownItem[];
+  /** When provided, the menu shows a search field; the host filters `options` by its value. */
+  search?: CatalogCreateSearch;
 }
 
 /** Props for Catalog. */
@@ -404,6 +423,14 @@ export interface CatalogProps {
   onCreateClick?: () => void;
   /** When provided, the Create menu shows a search field; the host filters `createOptions` by its value. */
   createSearch?: CatalogCreateSearch;
+  /**
+   * Create menu per entity-type tab, used by the personal empty state so its
+   * Create button only creates the active tab's type. A tab with no entry has
+   * no personal entities and keeps the default empty state; an entry with no
+   * options shows the personal empty state without a button. When omitted, the empty state reuses
+   * `createOptions` / `onCreateClick` / `createSearch`.
+   */
+  createMenuByTab?: Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>;
   /** Hides the "Create" button entirely, e.g. when rendering as a read-only picker. Default: false. */
   hideCreateButton?: boolean;
   /**

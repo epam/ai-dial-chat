@@ -4,6 +4,7 @@ import { Dropdown } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useCallback, useId, useMemo } from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 import { useCitationCardContext } from '../../context/CitationCardContext';
+import { isWebLinkAnnotation } from '../../utils/citation-source-kind';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 import {
   CitationCard,
@@ -33,6 +34,8 @@ export interface CitationDropdownProps {
   isDownloadEnabled?: boolean;
   /** Whether the host's preview panel is open; a marker click then previews the active annotation directly instead of showing the card. Defaults to `false`. */
   isPreviewOpen?: boolean;
+  /** Whether a marker click previews a single-citation file source directly instead of showing the card; web-link (HTML/XHTML) sources and multi-citation groups keep the card. Defaults to `false`. */
+  previewFilesOnMarkerClick?: boolean;
   /** Optional icon rendered before the marker's label. */
   icon?: ReactNode;
   /** Optional icon rendered in the card header. When absent, no header icon is shown. */
@@ -55,6 +58,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   onOpenInBrowser,
   isDownloadEnabled = true,
   isPreviewOpen = false,
+  previewFilesOnMarkerClick = false,
   icon,
   headerIcon,
   cardLabels,
@@ -88,12 +92,26 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   );
 
   const handleMarkerOpen = useCallback(() => {
-    if (isPreviewOpen && handlePreview) {
+    /* A multi-citation group keeps the card: its switcher is the only way to
+       reach the other citations, which may point at different files. */
+    const isSingleFileCitation =
+      group.annotations.length === 1 && !isWebLinkAnnotation(annotation);
+    const previewsDirectly =
+      isPreviewOpen || (previewFilesOnMarkerClick && isSingleFileCitation);
+    if (previewsDirectly && handlePreview) {
       handlePreview(annotation);
       return;
     }
     citationCard.openPopup(ownerKey);
-  }, [isPreviewOpen, handlePreview, annotation, citationCard, ownerKey]);
+  }, [
+    isPreviewOpen,
+    previewFilesOnMarkerClick,
+    group.annotations.length,
+    handlePreview,
+    annotation,
+    citationCard,
+    ownerKey,
+  ]);
 
   const renderCard = useCallback(
     () => (

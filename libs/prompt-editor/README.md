@@ -18,7 +18,7 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 
 ## Installation
 
-Requires UI Kit ^0.15.0 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.3 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -39,7 +39,7 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0`
+- `@epam/ai-dial-ui-kit` `^0.15.3`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,
@@ -100,6 +100,20 @@ const EditPromptPage = () => {
 `initialValues` re-seeds the fields whenever its object identity changes, so a
 host that loads asynchronously should memoise it and produce a new object only
 once the data has arrived.
+
+When any field differs from the seeded values, Back and Cancel open a
+"Discard unsaved changes?" confirmation instead of calling `onBack` /
+`onCancel` straight away, and the browser warns before the page unloads.
+`onBack` / `onCancel` run only once the user confirms; the copy comes from
+`labels.discardTitle`, `discardMessage`, `discardConfirmLabel` and
+`discardCancelLabel`.
+
+Description stops accepting input at `descriptionMaxLength` and shows a
+`length/limit` counter under it once it has text. Name and Instructions take
+any length; to flag an over-limit value while the user types, pass
+`onFieldChange(field, value)`, validate there, and feed the resulting messages
+back through `errors`. An Instructions error also gives the editor an error
+border.
 
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with

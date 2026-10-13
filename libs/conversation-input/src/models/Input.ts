@@ -214,6 +214,13 @@ export interface CommandMenuConfig {
   emptyQueryHint?: string;
   /** Accessible name for the menu region. When absent, the content is rendered without a labeled wrapper. */
   menuLabel?: string;
+  /**
+   * Called with the plain text of a paste that lands inline in the textarea
+   * (not converted into an attachment), line endings normalized to `\n`, just
+   * before the `onChange` that carries it — e.g. to recognize trigger-prefixed
+   * words in the pasted text.
+   */
+  onTextPaste?: (text: string) => void;
 }
 
 /**

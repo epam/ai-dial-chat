@@ -27,6 +27,7 @@ export type {
   CatalogCreateSearch,
   CatalogEmptyStateContext,
   CatalogProps,
+  CatalogTabCreateMenu,
   CatalogTitles,
 } from './models/catalog-props';
 export type {
@@ -83,6 +84,7 @@ export { Catalog } from './components/Catalog/Catalog';
 
 export { Toolbar } from './components/Toolbar/Toolbar';
 export type {
+  BrowseSettingsSheetLabels,
   ToolbarColors,
   ToolbarProps,
   ToolbarStyles,

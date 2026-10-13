@@ -151,6 +151,10 @@ export interface DeploymentCreationFormProps {
   nameCaption?: string;
   /** Marks the description field as required. The host still owns the validation. */
   isDescriptionRequired?: boolean;
+  /** Hard limit on the description length; the textarea stops accepting input at it. */
+  descriptionMaxLength?: number;
+  /** Helper text rendered under the description field, e.g. a `120/2000` counter. */
+  descriptionCaption?: string;
   /**
    * Wraps the Description textarea, e.g. in a label row with extra actions.
    * When set, the textarea renders without its own label, so the returned node

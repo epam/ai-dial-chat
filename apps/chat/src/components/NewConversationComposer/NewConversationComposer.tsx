@@ -47,7 +47,7 @@ import {
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
@@ -66,6 +66,7 @@ import { buildNetworkUploadErrorNotification } from '../../utils/attachment-netw
 import { resolveLocalizedText } from '../../utils/locale';
 import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
+import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
 const ConversationInput = lazy(async () => {
@@ -211,6 +212,11 @@ const NewConversationComposer: FC<Props> = ({
   const {
     config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
   } = useAppConfig();
+  const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
+  /* Exactly one usage surface is composed: the dial when the flag is on,
+     otherwise the banner above the input. */
+  const usageDeploymentId =
+    selectedDeployment?.id ?? selectedDeploymentId ?? undefined;
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const { isEnabled: isCelebrationEnabled, consumeSecretPhrase } =
     useCelebration();
@@ -657,11 +663,14 @@ const NewConversationComposer: FC<Props> = ({
           toolsMenuTitle={toolsMenuTitle}
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={
-            <UsageLimitsControl
-              deploymentId={
-                selectedDeployment?.id ?? selectedDeploymentId ?? undefined
-              }
-            />
+            isUsageLimitsControlEnabled ? (
+              <UsageLimitsControl deploymentId={usageDeploymentId} />
+            ) : undefined
+          }
+          aboveInputSlot={
+            isUsageLimitsControlEnabled ? undefined : (
+              <UsageLimitBanner deploymentId={usageDeploymentId} />
+            )
           }
         />
         {!isStartersBelowGreeting && startersBlock}

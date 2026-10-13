@@ -779,6 +779,24 @@ describe('FilesBatchOperationsService', () => {
       });
     });
 
+    it('returns success=false for an empty-body DIAL Core 404 (error undefined)', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue({
+        error: undefined,
+        response: { status: 404 },
+        data: undefined,
+      });
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: false,
+        error: 'Not found',
+      });
+    });
+
     it('returns success=false with "Copy failed" for unexpected errors', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.copyResource.mockRejectedValue(new TypeError('fetch failed'));

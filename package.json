@@ -121,7 +121,7 @@
     "typescript-eslint": "^8.40.0",
     "unplugin-swc": "^1.5.9",
     "vite": "^8.0.0",
-    "vite-plugin-dts": "~4.5.0",
+    "vite-plugin-dts": "~5.1.2",
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "~4.1.11",
     "webpack-cli": "7.2.3",
@@ -129,10 +129,10 @@
     "webpack": "5.110.3"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.3.0",
+    "@epam/ai-dial-react-file-manager": "0.3.5",
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0",
     "@epam/ai-dial-shared": "0.48.0",
-    "@epam/ai-dial-ui-kit": "^0.15.0",
+    "@epam/ai-dial-ui-kit": "^0.15.3",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",

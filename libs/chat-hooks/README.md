@@ -77,12 +77,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0
+- `@epam/ai-dial-react-file-manager` ^0.3.5
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0
+- `@epam/ai-dial-ui-kit` ^0.15.3
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -2096,7 +2096,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`FileNameValidationErrorReason`** — library-owned enum identifying why a file/folder name failed validation: `Empty`, `ForbiddenSymbols`, `ReservedName`, `TooLong`, `DuplicateName`.
 - **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`.
 - **`FileOperationSuccessEvent`** — the structured success event `useDialFileMutations` emits through `onOperationSuccess`, carrying a `kind` (`FileOperationKind`) plus optional `name`/`count`/`destinationFolderName`/`isFolder`.
-- **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`, `FileDuplicated`, `FilesDuplicated` (a copy whose every item stays in its own source folder — the Duplicate action).
+- **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`, `FileDuplicated`, `FilesDuplicated` (a copy whose every item stays in its own source folder — the Duplicate action), `FilesUnshared` (shared-with-me items removed from the Shared tab).
 - **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
 - **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent? }`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
 - **`deriveActionProfile(variant)`** — maps a `DialFileManagerVariant` (`Attach | Standalone | FolderPicker`) to the `DialFileManagerActionProfile` it gates (`Attach | Browse | Full`). Both enums, and `FileUploadValidationResult`, are owned and exported by `@epam/ai-dial-chat-shared`; import them from there.
@@ -3570,12 +3570,13 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name            | Type                                   | Description                                                                                                                                                   |
-| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                        |
-| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                    |
-| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query. |
-| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                             |
+| Name               | Type                                                       | Description                                                                                                                                                                                                        |
+| ------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `handleEdit`       | `(item: CatalogItem) => void`                              | Navigates to the right editor URL for the item's type.                                                                                                                                                             |
+| `handleDelete`     | `(item: CatalogItem) => Promise<void>`                     | Deletes the item and notifies the outcome.                                                                                                                                                                         |
+| `createOptions`    | `DropdownItem[]`                                           | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query.                                                      |
+| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                                                                  |
+| `createMenuByType` | `Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>` | The same menu narrowed per entity type, for `Catalog`'s `createMenuByTab` prop: agents get the runners and custom app (with `createSearch`), toolsets, skills and prompts their own options; models have no entry. |
 
 ```tsx
 import {

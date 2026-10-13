@@ -296,6 +296,47 @@ describe('validate', () => {
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(expected);
   });
 
+  it('defaults USAGE_LIMITS_CONTROL_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.USAGE_LIMITS_CONTROL_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses USAGE_LIMITS_CONTROL_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      USAGE_LIMITS_CONTROL_ENABLED: rawValue,
+    });
+    expect(config.USAGE_LIMITS_CONTROL_ENABLED).toBe(expected);
+  });
+
+  it('defaults USAGE_LIMITS_WARNING_THRESHOLD_PERCENT to 75 when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.USAGE_LIMITS_WARNING_THRESHOLD_PERCENT).toBe(75);
+  });
+
+  it('parses USAGE_LIMITS_WARNING_THRESHOLD_PERCENT=90', () => {
+    const config = validate({
+      ...baseConfig,
+      USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: '90',
+    });
+    expect(config.USAGE_LIMITS_WARNING_THRESHOLD_PERCENT).toBe(90);
+  });
+
+  it.each(['0', '100', 'abc', '80.5'])(
+    'rejects USAGE_LIMITS_WARNING_THRESHOLD_PERCENT=%s at startup',
+    (rawValue) => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: rawValue,
+        }),
+      ).toThrow(/USAGE_LIMITS_WARNING_THRESHOLD_PERCENT/);
+    },
+  );
+
   it('defaults ALLOW_VISUALIZER_SEND_MESSAGES to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(false);

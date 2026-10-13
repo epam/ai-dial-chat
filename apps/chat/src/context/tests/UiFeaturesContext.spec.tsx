@@ -41,6 +41,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       applicationVisualizers: {},
       publicationFilterSources: ['title', 'role', 'dial_roles'],
       maxAttachmentFileSizeBytes: 536_870_912,
+      usageLimitsWarningThresholdPercent: 75,
     },
   } satisfies AppConfigState);
 

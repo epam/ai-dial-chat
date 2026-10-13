@@ -149,7 +149,9 @@ export class PromptsResourceService {
       const { data, error, response } =
         (await this.dialClient.client.getPromptMetadata(
           bucket,
-          folderSubPath ? encodeDialResourcePath(folderSubPath) : '',
+          /* DIAL Core resolves a path without a trailing `/` as an item, so a
+             folder listing must end with `/` or Core answers 404. */
+          folderSubPath ? `${encodeDialResourcePath(folderSubPath)}/` : '',
           {
             headers: getBearerAuthHeaders(token),
             params: {

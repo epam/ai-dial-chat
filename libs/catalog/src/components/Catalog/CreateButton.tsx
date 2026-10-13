@@ -14,7 +14,7 @@ import {
   Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
-import { FC, useRef, useState } from 'react';
+import { FC, MouseEvent, useRef, useState } from 'react';
 import {
   CREATE_MENU_LIST_CLASS_NAME,
   CREATE_MENU_MAX_HEIGHT_PX,
@@ -33,7 +33,7 @@ export interface CreateButtonProps {
    */
   options?: DropdownItem[];
   /** Called when the button is clicked and no `options` are present. */
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   /** When provided, the dropdown shows a search field above `options`; the host filters `options` by its value. */
   search?: CatalogCreateSearch;
   /** Placeholder and accessible name of the search field. Defaults to `'Search'`. */
@@ -46,6 +46,8 @@ export interface CreateButtonProps {
   backLabel?: string;
   /** Accessible name of the mobile menu sheet's close button. Defaults to `'Close'`. */
   closeLabel?: string;
+  /** Colour variant of the button. Defaults to `ButtonVariant.Primary`. */
+  variant?: ButtonVariant;
 }
 
 /** Renders a plain primary button, a split-chevron dropdown, a searchable dropdown, or — on mobile — a menu sheet. */
@@ -59,6 +61,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
   noResultsLabel = 'No results found',
   backLabel = 'Back',
   closeLabel = 'Close',
+  variant = ButtonVariant.Primary,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -84,7 +87,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
       <>
         <Button
           label={label}
-          variant={ButtonVariant.Primary}
+          variant={variant}
           appearance={ButtonAppearance.Solid}
           iconAfter={chevron}
           aria-haspopup="dialog"
@@ -146,7 +149,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
         >
           <Button
             label={label}
-            variant={ButtonVariant.Primary}
+            variant={variant}
             appearance={ButtonAppearance.Solid}
             iconAfter={chevron}
             aria-haspopup="menu"
@@ -158,12 +161,17 @@ export const CreateButton: FC<CreateButtonProps> = ({
   }
 
   if (!options?.length) {
-    return (
-      <PrimaryButton
+    const plusIcon = (
+      <IconPlus size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
+    );
+    return variant === ButtonVariant.Primary ? (
+      <PrimaryButton label={label} iconBefore={plusIcon} onClick={onClick} />
+    ) : (
+      <Button
         label={label}
-        iconBefore={
-          <IconPlus size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
-        }
+        variant={variant}
+        appearance={ButtonAppearance.Solid}
+        iconBefore={plusIcon}
         onClick={onClick}
       />
     );
@@ -174,7 +182,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
       <ButtonDropdown
         appearance={ButtonAppearance.Solid}
         label={label}
-        variant={ButtonVariant.Primary}
+        variant={variant}
         items={options}
       />
     </div>
