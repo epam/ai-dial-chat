@@ -151,4 +151,49 @@ describe('BottomSheetShell', () => {
     const backdrop = panel.closest('.z-popup') as HTMLElement;
     expect(backdrop.style.getPropertyValue('--ci-backdrop')).toBe('blue');
   });
+
+  it('adds overlayClassName and overlayStyle to the backdrop, after the colour overrides', () => {
+    render(
+      <BottomSheetShell
+        isOpen
+        title="Sheet"
+        closeLabel="Close"
+        onClose={vi.fn()}
+        colors={{ backdrop: 'blue' }}
+        overlayClassName="host-backdrop"
+        overlayStyle={
+          { '--ci-backdrop': 'purple', zIndex: 2000 } as CSSProperties
+        }
+      >
+        Body
+      </BottomSheetShell>,
+    );
+
+    const panel = screen.getByRole('dialog');
+    // eslint-disable-next-line testing-library/no-node-access -- the backdrop has no role; its class and inline style are the assertion
+    const backdrop = panel.closest('.z-popup') as HTMLElement;
+    expect(backdrop.classList.contains('host-backdrop')).toBe(true);
+    expect(backdrop.style.getPropertyValue('--ci-backdrop')).toBe('purple');
+    expect(backdrop.style.zIndex).toBe('2000');
+  });
+
+  it('portals the sheet into the element named by portalId', () => {
+    render(
+      <>
+        <section aria-label="Host panel" id="host-panel" />
+        <BottomSheetShell
+          isOpen
+          title="Sheet"
+          closeLabel="Close"
+          onClose={vi.fn()}
+          portalId="host-panel"
+        >
+          Body
+        </BottomSheetShell>
+      </>,
+    );
+
+    const hostPanel = screen.getByRole('region', { name: 'Host panel' });
+    expect(hostPanel.contains(screen.getByRole('dialog'))).toBe(true);
+  });
 });
