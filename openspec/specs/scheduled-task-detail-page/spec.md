@@ -147,7 +147,7 @@ The detail page SHALL render a History panel listing the task's runs, fetched vi
 
 The hook SHALL additionally keep the History panel fresh without a manual reload, via two background-refresh triggers that merge into `items` rather than resetting them (`refetch()`'s existing full-reset-to-page-0 behavior is unchanged and is never invoked by either trigger):
 
-- **Poll while a run is in progress**: while any entry in `items` has `status === ScheduledTaskRunDtoStatusEnum.InProgress`, the hook SHALL re-fetch page 0 (`offset: 0, limit: 10`) every 15 seconds and merge the response into `items` by `id` — an existing `id` is updated in place at its current array position (no reordering), an unseen `id` is prepended, and no entry absent from the response is removed. Polling SHALL stop as soon as no entry has `InProgress` status, or after 20 consecutive polls that each either leave the merge unchanged or fail outright (5 minutes total), whichever happens first — a poll that errors counts toward the stop threshold the same as one that resolves with no change, so a permanently-failing upstream does not poll indefinitely.
+- **Poll while a run is in progress**: while any entry in `items` has `status === ScheduledTaskRunDtoStatusEnum.InProgress`, or the caller passes `pollWhileActive: true` (for a run it started itself and tracks outside `items`, such as the detail page's accepted Start now run, which is not yet in `items`), the hook SHALL re-fetch page 0 (`offset: 0, limit: 10`) every 15 seconds and merge the response into `items` by `id` — an existing `id` is updated in place at its current array position (no reordering), an unseen `id` is prepended, and no entry absent from the response is removed. Polling SHALL stop as soon as no entry has `InProgress` status and `pollWhileActive` is not set, or after 48 consecutive polls that each either leave the merge unchanged or fail outright (12 minutes total, past the 10-minute backend run timeout), whichever happens first — a poll that errors counts toward the stop threshold the same as one that resolves with no change, so a permanently-failing upstream does not poll indefinitely.
 - **One-shot refresh at the next scheduled run**: when `nextRunTime` is a future instant, the hook SHALL schedule exactly one refresh for 5 seconds after that instant, merged the same way as the poll trigger. When `nextRunTime` is already in the past when the hook first receives it, it SHALL refresh once immediately instead of scheduling a future timer.
 
 Both triggers SHALL run only while `document.visibilityState === 'visible'`; while hidden, no refresh fires, and on returning to visible the hook SHALL perform at most one catch-up refresh if a scheduled one was missed while hidden. Neither trigger SHALL fire while `isLoading` or `isLoadingMore` is `true` — this includes the one-shot trigger for an already-past `nextRunTime`: if `nextRunTime` is supplied (or first found to be past) while the initial fetch is still in flight, the immediate refresh SHALL be deferred until that fetch settles, issuing a second, distinct `listScheduledTaskRuns({ offset: 0 })` request rather than racing or replacing the initial one. Each background-refresh request (poll tick or one-shot) SHALL use its own `AbortController`, exactly as the initial fetch and `loadMore` already do. A background refresh that fails SHALL leave `items` and the foreground `error`/`loadMoreError` state untouched — it SHALL NOT surface the failure to the user — and SHALL simply be retried on the next tick. All timers and listeners created by either trigger, and any in-flight background-refresh request, SHALL be cleared/aborted on unmount and on `scheduleId` change, alongside the existing initial-fetch `AbortController` cleanup.
@@ -201,15 +201,20 @@ Below the desktop breakpoint (mobile and tablet, where the body renders as tabs)
 - **WHEN** `items` contains a run with `status === ScheduledTaskRunDtoStatusEnum.InProgress`
 - **THEN** the hook re-fetches page 0 every 15 seconds and merges the response into `items`; once a subsequent merge leaves no entry with `InProgress` status, no further poll is scheduled
 
-#### Scenario: Polling stops after 20 consecutive polls with no status change
+#### Scenario: Polling continues for a started run that is not yet in the loaded history
 
-- **WHEN** a run stays `InProgress` across 20 consecutive 15-second polls with no status change in the merged response
+- **WHEN** the caller passes `pollWhileActive: true` and no entry in `items` has `InProgress` status (for example after Start now, once the 2-second status poll has given up)
+- **THEN** the hook still re-fetches page 0 every 15 seconds, merges the started run into `items`, and stops once `pollWhileActive` is cleared and no entry is `InProgress`
+
+#### Scenario: Polling stops after 48 consecutive polls with no status change
+
+- **WHEN** a run stays `InProgress` across 48 consecutive 15-second polls with no status change in the merged response
 - **THEN** the hook stops polling entirely for that run without further requests, even though the run is still `InProgress`
 
 #### Scenario: A poll that errors counts toward the stop threshold the same as one with no change
 
-- **WHEN** a run stays `InProgress` and 20 consecutive 15-second polls each either resolve with no status change or reject outright, in any mix
-- **THEN** the hook stops polling entirely once the 20th such poll completes, without waiting for a poll that never resolves successfully
+- **WHEN** a run stays `InProgress` and 48 consecutive 15-second polls each either resolve with no status change or reject outright, in any mix
+- **THEN** the hook stops polling entirely once the 48th such poll completes, without waiting for a poll that never resolves successfully
 
 #### Scenario: A background refresh merges without resetting pagination or scroll position
 
