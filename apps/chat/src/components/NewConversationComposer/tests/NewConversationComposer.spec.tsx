@@ -51,6 +51,12 @@ vi.mock('../../UsageLimitsControl/UsageLimitsControl', () => ({
   ),
 }));
 
+vi.mock('../../UsageLimitBanner/UsageLimitBanner', () => ({
+  default: ({ deploymentId }: { deploymentId?: string }) => (
+    <output aria-label="usage-banner">{deploymentId}</output>
+  ),
+}));
+
 vi.mock('@epam/ai-dial-conversation-input', () => ({
   ConversationInput: ({
     deployments,
@@ -64,6 +70,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     expandLabel,
     clickLabel,
     usageLimitsSlot,
+    aboveInputSlot,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -76,6 +83,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     expandLabel?: string;
     clickLabel?: string;
     usageLimitsSlot?: ReactNode;
+    aboveInputSlot?: ReactNode;
   }) => {
     capturedInputProps.onSend = onSend;
     capturedInputProps.expandLabel = expandLabel;
@@ -83,6 +91,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     return (
       <div data-testid="conversation-input">
         {belowWelcomeSlot}
+        {aboveInputSlot}
         {usageLimitsSlot}
         Conversation input
         <output aria-label="deployments">
@@ -256,7 +265,7 @@ describe('NewConversationComposer', () => {
     );
   });
 
-  it('omits the usage limits control while the usageLimitsControl flag is off', async () => {
+  it('shows the usage banner instead of the usage limits control while the usageLimitsControl flag is off', async () => {
     render(
       <Suspense fallback={null}>
         <NewConversationComposer
@@ -268,7 +277,9 @@ describe('NewConversationComposer', () => {
       </Suspense>,
     );
 
-    await screen.findByText('Conversation input');
+    expect((await screen.findByLabelText('usage-banner')).textContent).toBe(
+      'gpt-4o',
+    );
     expect(screen.queryByLabelText('usage-limits')).toBeNull();
   });
 
@@ -290,6 +301,7 @@ describe('NewConversationComposer', () => {
     expect((await screen.findByLabelText('usage-limits')).textContent).toBe(
       'gpt-4o',
     );
+    expect(screen.queryByLabelText('usage-banner')).toBeNull();
   });
 
   it('passes a translated expand label for pasted-text attachment cards', async () => {

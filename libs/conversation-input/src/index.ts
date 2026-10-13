@@ -4,6 +4,12 @@ export type { BottomSheetShellProps } from './components/BottomSheetShell/Bottom
 export { ConversationInput } from './components/ConversationInput/ConversationInput';
 export { EditMessageInput } from './components/EditMessageInput/EditMessageInput';
 export { Input } from './components/Input/Input';
+export { UsageLimitBannerView } from './components/UsageLimitBannerView/UsageLimitBannerView';
+export { UsageLimitBannerSeverity } from './models/UsageLimitBanner';
+export type {
+  UsageLimitBannerReset,
+  UsageLimitBannerViewProps,
+} from './models/UsageLimitBanner';
 export type {
   ConversationInputColors,
   ConversationInputProps,

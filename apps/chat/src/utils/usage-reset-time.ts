@@ -1,4 +1,8 @@
-import { UsageI18nKeys } from '../constants/translation-keys';
+import {
+  ConversationInputUsageBannerI18nKeys,
+  UsageI18nKeys,
+} from '../constants/translation-keys';
+import { UsagePeriod } from '../types/usage-limits';
 
 /**
  * A DIAL Core `resetsAt` instant, normalized into the preformatted strings the
@@ -97,6 +101,80 @@ export const formatUsageResetTime = (
       ariaLabel: t(UsageI18nKeys.ResetsAtAriaLabel, {
         dateTime: spokenDateTime,
       }),
+    };
+  } catch {
+    return undefined;
+  }
+};
+
+/** A `resetsAt` instant as the one-sentence reset notice the composer usage banner renders. */
+export interface ShortResetTimeDisplay {
+  /** Machine-readable instant for a `<time dateTime>` attribute, e.g. '2026-10-13T00:00:00Z'. */
+  isoValue: string;
+  /** Visible sentence, e.g. 'Resets at 3:00 AM GMT+3.' or 'Resets on Oct 19.'. */
+  label: string;
+  /** Accessible expansion with the full date, time and zone name, from `formatUsageResetTime`. */
+  ariaLabel: string;
+}
+
+/**
+ * Formats DIAL Core's `resetsAt` as the banner's reset sentence: a time with
+ * its zone offset for a daily period, a short date (with the year only when it
+ * is not the current one) for a weekly or monthly period.
+ *
+ * Returns `undefined` on the same failure paths as `formatUsageResetTime`,
+ * whose spoken form it reuses, so the caller renders the period sentence alone.
+ */
+export const formatUsageResetShort = (
+  resetsAt: string | undefined,
+  period: UsagePeriod,
+  activeLocale: string,
+  t: TranslateFn,
+): ShortResetTimeDisplay | undefined => {
+  const full = formatUsageResetTime(resetsAt, activeLocale, t);
+  if (full == null) {
+    return undefined;
+  }
+
+  try {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const zoneOverride = timeZone ? { timeZone } : {};
+    const boundary = new Date(full.resetsAtMs);
+
+    if (period === UsagePeriod.Day) {
+      const time = new Intl.DateTimeFormat(activeLocale, {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'shortOffset',
+        ...zoneOverride,
+      }).format(boundary);
+
+      return {
+        isoValue: full.isoValue,
+        label: t(ConversationInputUsageBannerI18nKeys.ResetsAtTime, { time }),
+        ariaLabel: full.ariaLabel,
+      };
+    }
+
+    // Compared in the viewer's zone, the same one the date is shown in.
+    const yearFormatter = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      ...zoneOverride,
+    });
+    const isOtherYear =
+      yearFormatter.format(boundary) !== yearFormatter.format(new Date());
+
+    const date = new Intl.DateTimeFormat(activeLocale, {
+      month: 'short',
+      day: 'numeric',
+      ...(isOtherYear ? { year: 'numeric' } : {}),
+      ...zoneOverride,
+    }).format(boundary);
+
+    return {
+      isoValue: full.isoValue,
+      label: t(ConversationInputUsageBannerI18nKeys.ResetsOnDate, { date }),
+      ariaLabel: full.ariaLabel,
     };
   } catch {
     return undefined;

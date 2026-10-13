@@ -149,6 +149,23 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
+  it('contains the client-visible usageLimits.warningThresholdPercent entry, 75 by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'usageLimits.warningThresholdPercent',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'usageLimits.warningThresholdPercent',
+      type: 'config',
+      valueType: 'number',
+      visibility: 'client',
+      defaultValue: 75,
+      critical: false,
+      owner: 'chat-team',
+      envVar: 'USAGE_LIMITS_WARNING_THRESHOLD_PERCENT',
+    });
+  });
+
   it('contains an open-ended client-visible event selection without a feature flag', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'ui.activeEventId',

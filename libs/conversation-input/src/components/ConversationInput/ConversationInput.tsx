@@ -11,6 +11,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   welcomeText,
   descriptionText,
   belowWelcomeSlot,
+  aboveInputSlot,
   styles: stylesProp,
   className,
   inputClassName,
@@ -71,6 +72,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           welcomeText ? 'max-w-[700px]' : 'max-w-[748px]',
         )}
       >
+        {aboveInputSlot != null && <div className="mb-2">{aboveInputSlot}</div>}
         <Input
           placeholder={placeholder}
           isStreaming={isStreaming}

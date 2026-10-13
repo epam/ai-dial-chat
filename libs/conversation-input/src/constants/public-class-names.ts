@@ -47,4 +47,6 @@ export const CONVERSATION_INPUT_CLASS = {
    * `DIAL_KIT_CLASS.menuItemCheck`; this package owns no class for it.
    */
   modelMenuItemSelected: 'dial-ci-model-menu-item-selected',
+  /** The root of `UsageLimitBannerView`, the usage-limit notice a host places in `aboveInputSlot`. */
+  usageBanner: 'dial-ci-usage-banner',
 } as const;
