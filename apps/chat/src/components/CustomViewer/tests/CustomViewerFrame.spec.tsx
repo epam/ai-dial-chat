@@ -43,7 +43,10 @@ vi.mock('../../../context/ThemeContext', () => ({
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { providerId: 'keycloak' } }),
 }));
-vi.mock('../../../hooks/language/useLanguage', () => ({
+vi.mock('../../../hooks/language/useLanguage', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../../../hooks/language/useLanguage')
+  >()),
   useLanguage: () => ({ language: 'en' }),
 }));
 
