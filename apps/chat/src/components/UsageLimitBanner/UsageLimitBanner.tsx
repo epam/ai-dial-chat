@@ -102,6 +102,7 @@ const UsageLimitBanner: FC<Props> = ({
       limitText={display.periodSentence}
       reset={display.reset}
       onClose={handleClose}
+      closeAriaLabel={t(ConversationInputUsageBannerI18nKeys.CloseLabel)}
     />
   );
 };

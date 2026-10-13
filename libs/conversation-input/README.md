@@ -241,12 +241,13 @@ For a usage-limit notice, pass a [`UsageLimitBannerView`](#usagelimitbannerview)
 
 ### UsageLimitBannerView
 
-A presentational usage-limit notice built for `aboveInputSlot`: the kit
-`Notification` as a section message, with a limit sentence in semibold and an
-optional reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the
-warning variant and `UsageLimitBannerSeverity.Reached` the error variant. Both
-announce politely through `role="status"`, not the kit's assertive `alert`,
-because the banner reports state rather than replying to an action.
+A presentational usage-limit notice built for `aboveInputSlot`: a section
+message whose markup mirrors the kit `Notification` (general variant — neutral
+`bg-layer-sunken` surface), with a limit sentence in semibold and an optional
+reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
+filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
+Both announce politely through `role="status"`, because the banner reports
+state rather than replying to an action.
 
 The component holds no state and knows nothing about usage data. The host
 decides when to render it and passes every string already translated and
@@ -254,8 +255,8 @@ formatted: `limitText` verbatim, and `reset` as the visible `label`, the
 `isoValue` for the `<time dateTime>`, and an optional `ariaLabel` spoken instead
 of `label` (the `<time>` is then hidden and an `sr-only` sibling carries it).
 The close button renders only when `onClose` is supplied; dismissal state is the
-host's. Its accessible name comes from `@epam/ai-dial-ui-kit`, which exposes no
-prop to change it.
+host's. Its accessible name is `closeAriaLabel` (default
+`'Close notification'`).
 
 ```tsx
 import {
@@ -278,15 +279,16 @@ import {
             'Usage resets Oct 14, 2026, 3:00 AM Eastern European Summer Time',
         }}
         onClose={handleDismiss}
+        closeAriaLabel="Close usage notice"
       />
     ) : undefined
   }
 />;
 ```
 
-`limitTextClassName` (default `'dial-body-semi-text'`) and `resetTextClassName`
-(no default — the reset inherits the notification's message typography) take
-classes from the kit type scale; `className` lands on the banner root next to
+`limitTextClassName` (default `'dial-small-paragraph-semi-text'`) and
+`resetTextClassName` (default `'dial-small-paragraph-text'`) take classes from
+the kit type scale; `className` lands on the banner root next to
 `dial-ci-usage-banner`.
 
 ### EditMessageInput
@@ -472,9 +474,9 @@ The model-selector menu carries its own set:
 
 `UsageLimitBannerView` carries one:
 
-| Class                  | Element                                    |
-| ---------------------- | ------------------------------------------ |
-| `dial-ci-usage-banner` | The usage-limit banner's notification root |
+| Class                  | Element                       |
+| ---------------------- | ----------------------------- |
+| `dial-ci-usage-banner` | The usage-limit banner's root |
 
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
 if you need to distinguish them: the desktop dropdown (a Floating UI portal), a
@@ -567,8 +569,8 @@ ActionRowLayout.Inline; // add button, textarea and footer actions share one lin
 ```tsx
 import { UsageLimitBannerSeverity } from '@epam/ai-dial-conversation-input';
 
-UsageLimitBannerSeverity.Warning; // running low — warning variant
-UsageLimitBannerSeverity.Reached; // limit reached — error variant
+UsageLimitBannerSeverity.Warning; // running low — filled warning icon
+UsageLimitBannerSeverity.Reached; // limit reached — filled error icon
 ```
 
 ### Action row layout

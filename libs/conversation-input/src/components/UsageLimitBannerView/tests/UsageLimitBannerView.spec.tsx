@@ -1,21 +1,9 @@
-import {
-  DIAL_KIT_ICON_STROKE,
-  Notification,
-  NotificationType,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageLimitBannerSeverity } from '../../../models/UsageLimitBanner';
 import type { UsageLimitBannerViewProps } from '../../../models/UsageLimitBanner';
 import { UsageLimitBannerView } from '../UsageLimitBannerView';
-
-/* The real Notification renders; the spy only records the props it gets. */
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return { ...actual, Notification: vi.fn(actual.Notification) };
-});
 
 const RESET = {
   isoValue: '2026-11-01T00:00:00Z',
@@ -38,20 +26,46 @@ describe('UsageLimitBannerView', () => {
   });
 
   it.each([
-    [UsageLimitBannerSeverity.Warning, NotificationVariant.Warning],
-    [UsageLimitBannerSeverity.Reached, NotificationVariant.Error],
-  ])('renders the %s severity as a %s section message', (severity, variant) => {
-    renderView({ severity, onClose: vi.fn() });
+    [
+      UsageLimitBannerSeverity.Warning,
+      'tabler-icon-alert-triangle-filled',
+      'text-warning',
+    ],
+    [
+      UsageLimitBannerSeverity.Reached,
+      'tabler-icon-alert-circle-filled',
+      'text-error',
+    ],
+  ])(
+    'renders the %s severity with the %s icon',
+    (severity, iconClass, colorClass) => {
+      renderView({ severity });
 
-    expect(vi.mocked(Notification)).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        type: NotificationType.SectionMessage,
-        variant,
-        closable: true,
-        iconStroke: DIAL_KIT_ICON_STROKE,
-      }),
-      undefined,
+      // eslint-disable-next-line testing-library/no-node-access -- the icon is aria-hidden; its glyph and color classes are the assertion
+      const icon = screen.getByRole('status').querySelector('svg');
+      expect(icon?.classList.contains(iconClass)).toBe(true);
+      // eslint-disable-next-line testing-library/no-node-access -- the color class sits on the icon's wrapper
+      expect(icon?.parentElement?.classList.contains(colorClass)).toBe(true);
+    },
+  );
+
+  it('names the close button with the default and a custom label', () => {
+    const { rerender } = renderView({ onClose: vi.fn() });
+    expect(
+      screen.getByRole('button', { name: 'Close notification' }),
+    ).toBeTruthy();
+
+    rerender(
+      <UsageLimitBannerView
+        severity={UsageLimitBannerSeverity.Warning}
+        limitText="Daily limit 80% used."
+        onClose={vi.fn()}
+        closeAriaLabel="Close usage notice"
+      />,
     );
+    expect(
+      screen.getByRole('button', { name: 'Close usage notice' }),
+    ).toBeTruthy();
   });
 
   it.each([UsageLimitBannerSeverity.Warning, UsageLimitBannerSeverity.Reached])(
@@ -95,8 +109,8 @@ describe('UsageLimitBannerView', () => {
     renderView({ reset: RESET });
 
     expect(
-      screen.getByText('Resets on Nov 1.').getAttribute('aria-hidden'),
-    ).toBeNull();
+      screen.getByText('Resets on Nov 1.').hasAttribute('aria-hidden'),
+    ).toBe(false);
   });
 
   it('renders only the limit sentence without a reset', () => {
@@ -121,6 +135,7 @@ describe('UsageLimitBannerView', () => {
     renderView({ onClose });
 
     await userEvent.tab();
+    // eslint-disable-next-line testing-library/no-node-access -- keyboard reachability is observable through the active element
     expect(document.activeElement).toBe(screen.getByRole('button'));
     await userEvent.keyboard('{Enter}');
 
@@ -146,7 +161,7 @@ describe('UsageLimitBannerView', () => {
     expect(
       screen
         .getByText('Daily limit 80% used.')
-        .classList.contains('dial-body-semi-text'),
+        .classList.contains('dial-small-paragraph-semi-text'),
     ).toBe(true);
 
     rerender(

@@ -1342,7 +1342,8 @@
       "reachedWeek": "Weekly limit reached.",
       "reachedMonth": "Monthly limit reached.",
       "resetsAtTime": "Resets at {{time}}.",
-      "resetsOnDate": "Resets on {{date}}."
+      "resetsOnDate": "Resets on {{date}}.",
+      "closeLabel": "Close usage notice"
     }
   },
   "customApp": {

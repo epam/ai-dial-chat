@@ -1353,6 +1353,7 @@ export enum ConversationInputUsageBannerI18nKeys {
   ReachedMonth = 'conversationInput.usageBanner.reachedMonth',
   ResetsAtTime = 'conversationInput.usageBanner.resetsAtTime',
   ResetsOnDate = 'conversationInput.usageBanner.resetsOnDate',
+  CloseLabel = 'conversationInput.usageBanner.closeLabel',
 }
 
 export enum NotificationI18nKeys {
