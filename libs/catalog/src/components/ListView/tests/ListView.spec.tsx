@@ -293,6 +293,34 @@ describe('ListView', () => {
     expect(screen.queryByRole('button', { name: 'star item-180' })).toBeNull();
   });
 
+  it('keeps manually resized columns when only the grid height changes', () => {
+    render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[makeItem({ id: 'x', name: 'x' })]}
+      />,
+    );
+    const onGridSizeChanged =
+      vi.mocked(Grid).mock.lastCall?.[0].additionalGridOptions
+        ?.onGridSizeChanged;
+    const sizeColumnsToFit = vi.fn();
+    const fireSizeChanged = (clientWidth: number, clientHeight: number) =>
+      onGridSizeChanged?.({
+        clientWidth,
+        clientHeight,
+        api: { sizeColumnsToFit },
+      } as unknown as Parameters<NonNullable<typeof onGridSizeChanged>>[0]);
+
+    fireSizeChanged(1100, 1800);
+    expect(sizeColumnsToFit).toHaveBeenCalledOnce();
+
+    fireSizeChanged(1100, 2400);
+    expect(sizeColumnsToFit).toHaveBeenCalledOnce();
+
+    fireSizeChanged(900, 2400);
+    expect(sizeColumnsToFit).toHaveBeenCalledTimes(2);
+  });
+
   it('can clear and restore results after the table has been mounted', () => {
     const items = [makeItem({ id: 'item-1', name: 'Test' })];
     const { rerender } = render(
