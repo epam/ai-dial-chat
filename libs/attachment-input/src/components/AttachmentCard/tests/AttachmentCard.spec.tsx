@@ -231,3 +231,48 @@ describe('AttachmentCard — long filename', () => {
     expect(name.className).toContain('line-clamp-2');
   });
 });
+
+/* eslint-disable testing-library/no-container, testing-library/no-node-access -- the decorative type glyph is aria-hidden, so it has no role or text to query */
+describe('AttachmentCard — type glyph', () => {
+  const idleFile: DisplayAttachment = {
+    ...failedAttachment,
+    name: 'report.csv',
+    contentType: 'text/csv',
+    status: RequestStatus.Idle,
+    errorReason: undefined,
+  };
+
+  it('renders the kit color file-type icon for a file attachment', () => {
+    const { container } = render(<AttachmentCard attachment={idleFile} />);
+
+    expect(container.querySelector('.dial-kit-file-icon')).toBeTruthy();
+  });
+
+  it('keeps the outline glyph for a prompt attachment', () => {
+    const { container } = render(
+      <AttachmentCard
+        attachment={{ ...idleFile, type: AttachmentType.Prompt }}
+      />,
+    );
+
+    expect(container.querySelector('.dial-kit-file-icon')).toBeNull();
+    expect(screen.getByText('Prompt')).toBeTruthy();
+  });
+});
+
+/* eslint-enable testing-library/no-container, testing-library/no-node-access */
+
+describe('AttachmentCard — remove action visibility', () => {
+  it('keeps the remove button visible below the desktop breakpoint', () => {
+    render(
+      <AttachmentCard
+        attachment={{ ...failedAttachment, status: RequestStatus.Idle }}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Remove attachment').className).toContain(
+      'mobile:opacity-100',
+    );
+  });
+});

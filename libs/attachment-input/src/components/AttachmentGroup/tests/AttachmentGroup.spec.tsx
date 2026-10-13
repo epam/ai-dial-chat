@@ -68,7 +68,7 @@ describe('AttachmentGroup', () => {
       );
       const grid = screen.getByRole('list');
       expect(grid.className).toContain('grid');
-      expect(grid.className).toContain('grid-cols-[repeat(5,83px)]');
+      expect(grid.className).toContain('grid-cols-[repeat(5,100px)]');
       expect(
         screen.queryByRole('button', { name: /show \d+ more/i }),
       ).toBeNull();
@@ -102,7 +102,7 @@ describe('AttachmentGroup', () => {
 
       const rootClassName = container.firstElementChild?.className ?? '';
       expect(rootClassName).toContain('w-full');
-      expect(rootClassName).toContain('max-w-[492px]');
+      expect(rootClassName).toContain('max-w-[532px]');
       // Without min-w-0, a shrink-to-fit ancestor (the message bubble's own
       // `w-fit` wrapper) treats this group's grid content as its floor and
       // never actually narrows on a real mobile viewport.

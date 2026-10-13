@@ -96,8 +96,8 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
       aria-label={ariaLabel}
       style={cssVars}
       className={mergeClasses(
-        'flex flex-col gap-1',
-        isCollapsible ? 'w-full min-w-0 max-w-[492px]' : 'max-w-[420px]',
+        'flex flex-col gap-2',
+        isCollapsible ? 'w-full min-w-0 max-w-[532px]' : 'max-w-[424px]',
         styles.container,
         className,
       )}
@@ -138,8 +138,8 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
         role="list"
         aria-label={headerLabel}
         className={mergeClasses(
-          'gap-3',
-          isCollapsible ? 'grid grid-cols-[repeat(5,83px)]' : 'flex flex-wrap',
+          'gap-2',
+          isCollapsible ? 'grid grid-cols-[repeat(5,100px)]' : 'flex flex-wrap',
         )}
       >
         {attachments.map((attachment, index) => (

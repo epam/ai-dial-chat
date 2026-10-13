@@ -53,6 +53,8 @@ export interface AttachmentCardColors {
   nameText?: string;
   /** Type/meta text color. */
   typeText?: string;
+  /** Image placeholder icon color while the preview loads. Defaults to `--text-secondary`. */
+  placeholderIcon?: string;
   /** Hover download icon background color. */
   hoverIconBackground?: string;
   /** Hover download icon color. */
@@ -65,7 +67,7 @@ export interface AttachmentCardColors {
 export interface AttachmentCardTypography {
   /** Utility class applied to the file name text. Defaults to `'dial-tiny-text'`. */
   fontClassName?: string;
-  /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
+  /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-tiny-text'`. */
   metaClassName?: string;
 }
 

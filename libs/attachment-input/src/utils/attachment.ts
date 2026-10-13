@@ -239,31 +239,44 @@ export const getExtFromContentType = (
   return undefined;
 };
 
+/** Returns the attachment's bare file extension (no leading dot), from its content type first and its name second, or `undefined` when neither yields one. */
+export const getAttachmentExtension = (
+  attachment: DisplayAttachment,
+): string | undefined => {
+  const { name, contentType } = attachment;
+  // Prioritize contentType over name-derived extension
+  if (contentType) {
+    const ext = getExtFromContentType(contentType);
+    if (ext) return ext;
+  }
+  if (name == null) return undefined;
+  // Guard against trailing dots (e.g. sentence endings)
+  const lastDot = name.lastIndexOf('.');
+  if (lastDot > 0 && lastDot < name.length - 1) {
+    return name.slice(lastDot + 1).toLowerCase();
+  }
+  return undefined;
+};
+
+/** Returns `true` when the attachment's type glyph is a file-type icon rather than a prompt or pasted-text glyph. */
+export const hasFileTypeGlyph = (attachment: DisplayAttachment): boolean =>
+  attachment.type !== AttachmentType.Prompt &&
+  attachment.type !== AttachmentType.Pasted;
+
 const getBottomLabel = (
   attachment: DisplayAttachment,
   typeLabels: AttachmentTypeLabels,
 ): string => {
-  const { type, name, contentType } = attachment;
+  const { type, name } = attachment;
   if (type === AttachmentType.Prompt) return typeLabels.promptLabel ?? 'Prompt';
   if (type === AttachmentType.Pasted) return typeLabels.pastedLabel ?? 'Pasted';
   if (type === AttachmentType.Image) return typeLabels.imageLabel ?? 'Image';
 
-  // Prioritize contentType over name-derived extension
-  if (contentType) {
-    const ext = getExtFromContentType(contentType);
-    if (ext) return `.${ext}`;
-  }
+  const ext = getAttachmentExtension(attachment);
+  if (ext) return `.${ext}`;
 
   // name may be missing on some backend payloads despite the required type
-  if (name == null) return '';
-
-  // Fall back to name extension; guard against trailing dots (e.g. sentence endings)
-  const lastDot = name.lastIndexOf('.');
-  if (lastDot > 0 && lastDot < name.length - 1) {
-    return `.${name.slice(lastDot + 1).toLowerCase()}`;
-  }
-
-  return name;
+  return name ?? '';
 };
 
 /** Derives the display state (icons, labels, color classes) an AttachmentCard needs to render a given attachment. */

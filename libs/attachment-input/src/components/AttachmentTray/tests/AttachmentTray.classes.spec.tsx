@@ -250,7 +250,7 @@ describe('AttachmentTray — card style forwarding', () => {
 
     expect(
       tile!.querySelector(
-        `.${ATTACHMENT_INPUT_CLASS.tileType} .dial-caption-text`,
+        `.${ATTACHMENT_INPUT_CLASS.tileType} .dial-tiny-text`,
       ),
     ).toBeTruthy();
   });
