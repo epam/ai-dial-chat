@@ -108,6 +108,13 @@ When any field differs from the seeded values, Back and Cancel open a
 `labels.discardTitle`, `discardMessage`, `discardConfirmLabel` and
 `discardCancelLabel`.
 
+Description stops accepting input at `descriptionMaxLength` and shows a
+`length/limit` counter under it once it has text. Name and Instructions take
+any length; to flag an over-limit value while the user types, pass
+`onFieldChange(field, value)`, validate there, and feed the resulting messages
+back through `errors`. An Instructions error also gives the editor an error
+border.
+
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
 AI action (and Undo) beside the Description label; omit it to hide the action.

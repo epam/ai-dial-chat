@@ -104,6 +104,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   contentMaxLength = DEFAULT_CONTENT_MAX_LENGTH,
   counterAnnounceThreshold = DEFAULT_ANNOUNCE_THRESHOLD,
   onSubmit,
+  onFieldChange,
   onCancel,
   onBack = onCancel,
   onRetry,
@@ -142,8 +143,9 @@ export const PromptEditor: FC<PromptEditorProps> = ({
       value: PromptEditorValues[K],
     ) => {
       setValues((previous) => ({ ...previous, [field]: value }));
+      onFieldChange?.(field, value);
     },
-    [],
+    [onFieldChange],
   );
 
   /* MetadataForm edits the shared deployment shape; the prompt keeps only Name and Description. */
@@ -168,8 +170,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           description: patch.description,
         }),
       }));
+      if (patch.name !== undefined) onFieldChange?.('name', patch.name);
+      if (patch.description !== undefined) {
+        onFieldChange?.('description', patch.description);
+      }
     },
-    [],
+    [onFieldChange],
   );
 
   const metadataErrors = useMemo(
@@ -284,6 +290,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
 
   const cssVars = buildCssVars({
     '--pe-content-error': colors?.contentErrorText,
+    '--pe-content-invalid-border': colors?.contentInvalidBorder,
   });
 
   const editorProps = {
@@ -370,6 +377,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
               fields={METADATA_FIELDS}
               renderDescription={renderRefinableDescription}
               labels={metadataLabels}
+              descriptionMaxLength={descriptionMaxLength}
+              descriptionCaption={
+                values.description
+                  ? `${values.description.length}/${descriptionMaxLength}`
+                  : undefined
+              }
             />
             <div
               role="group"
@@ -394,6 +407,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
                   MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
                   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+                  errors?.content != null && styles.contentInvalid,
                 )}
               >
                 <Suspense
