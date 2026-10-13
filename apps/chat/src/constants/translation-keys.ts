@@ -666,7 +666,6 @@ export enum DialFileManagerI18nKeys {
   SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
-  UnshareAction = 'dialFileManager.unshareAction',
   UnshareConfirmTitleFile = 'dialFileManager.unshareConfirmTitleFile',
   UnshareConfirmTitleFolder = 'dialFileManager.unshareConfirmTitleFolder',
   UnshareConfirmTitleMultiple = 'dialFileManager.unshareConfirmTitleMultiple',
