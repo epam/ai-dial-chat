@@ -102,7 +102,7 @@ export class CreateApplicationBodyDto {
   @ApiPropertyOptional({
     default: false,
     description:
-      'Reject with 409 if the name/version already exists; checked atomically by DIAL Core.',
+      'Never overwrite an existing application: when the name/version path is taken, create at the next free path (name-2, name-3, ...), checked atomically by DIAL Core; 409 only when every candidate is taken.',
   })
   @IsBoolean()
   @IsOptional()

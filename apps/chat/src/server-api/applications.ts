@@ -14,7 +14,8 @@ export const getApplications = (): Promise<ApplicationsResponseDto> =>
  * Always a conditional create: the app's storage path is derived from its
  * name and version, so an unconditional write would silently overwrite an
  * existing app (including a renamed one that still owns the original path).
- * The backend answers 409 when the path is already taken.
+ * The backend creates at the next free path instead (the returned `id` is
+ * authoritative) and answers 409 only when no candidate path is free.
  */
 export const createApplication = (
   body: CreateApplicationBodyDto,

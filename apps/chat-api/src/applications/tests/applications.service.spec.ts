@@ -264,7 +264,36 @@ describe('ApplicationsService', () => {
       return { getUserBucketSpy, saveCustomApplicationSpy };
     };
 
-    it('atomically rejects an existing application without invalidating caches', async () => {
+    it('creates at the next free path when the name path is already taken', async () => {
+      const { service, cacheManager } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+      saveCustomApplicationSpy
+        .mockResolvedValueOnce(errResponse(412))
+        .mockResolvedValueOnce(errResponse(412));
+      const result = await service.createApplication('user1', 'token', {
+        ...body,
+        createOnly: true,
+      });
+      expect(
+        saveCustomApplicationSpy.mock.calls.map(([, path]) => path),
+      ).toEqual(['My%20App__1.0.0', 'My%20App-2__1.0.0', 'My%20App-3__1.0.0']);
+      for (const [, , options] of saveCustomApplicationSpy.mock.calls) {
+        expect(options.headers).toEqual({
+          Authorization: 'Bearer token',
+          'If-None-Match': '*',
+        });
+      }
+      /* The retried request still carries the name the user entered. */
+      expect(saveCustomApplicationSpy.mock.calls[2][2].body).toBe(
+        saveCustomApplicationSpy.mock.calls[0][2].body,
+      );
+      expect(result).toEqual({
+        id: 'applications/test-bucket/My%20App-3__1.0.0',
+      });
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+    });
+
+    it('rejects with 409 once every candidate path is taken, without invalidating caches', async () => {
       const { service, cacheManager } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(
         service,
@@ -277,14 +306,31 @@ describe('ApplicationsService', () => {
           createOnly: true,
         }),
       ).rejects.toBeInstanceOf(ConflictException);
-      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+      expect(saveCustomApplicationSpy).toHaveBeenCalledTimes(20);
+      expect(saveCustomApplicationSpy).toHaveBeenLastCalledWith(
         'test-bucket',
-        'My%20App__1.0.0',
+        'My%20App-20__1.0.0',
         expect.objectContaining({
           headers: { Authorization: 'Bearer token', 'If-None-Match': '*' },
         }),
       );
       expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+
+    it('does not retry a create-only request on a non-conflict error', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403),
+      );
+      await expect(
+        service.createApplication('user1', 'token', {
+          ...body,
+          createOnly: true,
+        }),
+      ).rejects.toThrow();
+      expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
     });
 
     it('keeps legacy writes unconditional when createOnly is absent', async () => {

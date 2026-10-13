@@ -169,9 +169,15 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 ### Requirement: Safe template creation
 
 A caller MAY set `createOnly: true` to send `If-None-Match: *` on the DIAL Core write.
-Core SHALL check existence atomically with the write. The BFF SHALL translate Core's
-412 precondition failure to 409 and SHALL NOT invalidate caches on failure.
-Omitting the option retains legacy unconditional write semantics.
+Core SHALL check existence atomically with the write. The storage path is derived from
+the name at creation and does not follow a later rename, so a taken path does not mean
+an app with that name is visible to the user. On Core's 412 precondition failure the BFF
+SHALL retry at the next candidate path (`<name>-2__<version>`, `<name>-3__<version>`, …,
+up to 20 candidates in total), each attempt again with `If-None-Match: *`, keeping the
+display name the caller supplied and returning the `id` of the path actually created.
+Only when every candidate is taken SHALL the BFF respond 409, without invalidating caches.
+Any other Core error is not retried. Omitting the option retains legacy unconditional
+write semantics.
 
 A caller MAY set `preserveApplicationProperties: true` to store `applicationProperties`
 verbatim, including keys named `features`, `endpoint`, `inputAttachmentTypes`, and
@@ -183,7 +189,15 @@ The `createApplication` operation and generated client SHALL expose these option
 
 #### Scenario: Concurrent creation with the same name
 - **WHEN** two callers create the same name/version with `createOnly: true`
-- **THEN** only the first write succeeds and the second returns 409 without replacing it
+- **THEN** neither write replaces the other: the first takes `<name>__<version>` and the second is created at `<name>-2__<version>`
+
+#### Scenario: Name of a renamed app is reused
+- **WHEN** an app created as `Test_QuickApp` was later renamed, and a caller creates a new app named `Test_QuickApp` with `createOnly: true`
+- **THEN** the renamed app is untouched and the new app is created at the next free path with the display name `Test_QuickApp`
+
+#### Scenario: Every candidate path is taken
+- **WHEN** all 20 candidate paths respond 412
+- **THEN** the endpoint responds 409 and neither cache is invalidated
 
 #### Scenario: Template includes hidden settings
 - **WHEN** a caller sets `preserveApplicationProperties: true` and supplies schema features

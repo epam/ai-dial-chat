@@ -40,6 +40,22 @@ import { hoistApplicationFields } from './utils/application-body-mapping';
 
 type DialApplication = components['schemas']['Application'];
 
+/*
+ * How many storage paths a create-only request tries before giving up with
+ * 409: the original `name__version`, then `name-2__version` up to this count.
+ */
+const MAX_CREATE_PATH_ATTEMPTS = 20;
+
+/** Storage path of the `attempt`-th (1-based) create-only candidate. */
+const buildApplicationPath = (
+  name: string,
+  version: string,
+  attempt: number,
+): string => {
+  const baseName = attempt === 1 ? name : `${name}-${attempt}`;
+  return `${baseName}__${version}`;
+};
+
 @Injectable()
 export class ApplicationsService {
   private readonly logger = new Logger(ApplicationsService.name);
@@ -138,8 +154,6 @@ export class ApplicationsService {
       }
 
       const version = body.version ?? '1.0.0';
-      const appPath = `${body.name}__${version}`;
-      const encodedPath = encodeURIComponent(appPath);
 
       const {
         endpoint,
@@ -195,20 +209,33 @@ export class ApplicationsService {
       if (attachmentLimit != null)
         dialBody.maxInputAttachments = attachmentLimit;
 
-      const response = await this.dialClient.client.saveCustomApplication(
-        bucket,
-        encodedPath,
-        {
-          headers: {
-            ...authHeaders,
-            ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
+      /*
+       * The storage path is derived from the name at creation and never
+       * follows a later rename, so a path can be held by an app the user now
+       * sees under another name. Instead of rejecting a name nothing visible
+       * owns, a create-only request moves on to the next free path; each try
+       * is still atomic via `If-None-Match`, so no existing app is overwritten.
+       */
+      const maxAttempts = body.createOnly ? MAX_CREATE_PATH_ATTEMPTS : 1;
+      let appPath = '';
+      let encodedPath = '';
+      for (let attempt = 1; ; attempt++) {
+        appPath = buildApplicationPath(body.name, version, attempt);
+        encodedPath = encodeURIComponent(appPath);
+        const response = await this.dialClient.client.saveCustomApplication(
+          bucket,
+          encodedPath,
+          {
+            headers: {
+              ...authHeaders,
+              ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
+            },
+            body: dialBody,
           },
-          body: dialBody,
-        },
-      );
-
-      if (response.error) {
+        );
+        if (!response.error) break;
         if (body.createOnly && response.response.status === 412) {
+          if (attempt < maxAttempts) continue;
           throw new ConflictException('Application name already taken');
         }
         return mapDialHttpStatus(
