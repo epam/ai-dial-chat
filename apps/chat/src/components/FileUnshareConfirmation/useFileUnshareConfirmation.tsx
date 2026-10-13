@@ -125,7 +125,7 @@ export const useFileUnshareConfirmation = <T extends UnshareController>(
           )
         }
         consequences={[t(BasicI18nKeys.ConsequenceCannotBeUndone)]}
-        confirmLabel={t(DialFileManagerI18nKeys.UnshareAction)}
+        confirmLabel={t(ButtonsI18nKeys.RemoveFromMyList)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         onConfirm={handleConfirm}
         onClose={handleClose}
