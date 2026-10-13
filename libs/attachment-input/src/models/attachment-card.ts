@@ -53,6 +53,8 @@ export interface AttachmentCardColors {
   nameText?: string;
   /** Type/meta text color. */
   typeText?: string;
+  /** Image placeholder icon color while the preview loads. Defaults to `--text-secondary`. */
+  placeholderIcon?: string;
   /** Hover download icon background color. */
   hoverIconBackground?: string;
   /** Hover download icon color. */

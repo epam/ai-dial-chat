@@ -60,7 +60,7 @@
 }
 
 .placeholderIcon {
-  color: var(--text-secondary, #57647a);
+  color: var(--ai-tile-placeholder-icon, var(--text-secondary, #57647a));
 }
 
 .retryIcon {
