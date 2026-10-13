@@ -20,6 +20,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
+  ErrorText,
   Label,
   NeutralButton,
   Spinner,
@@ -434,16 +435,13 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                   />
                 </Suspense>
               </div>
-              {errors?.content != null && (
-                <p
-                  className={mergeClasses(
-                    helperTextClassName,
-                    styles.contentError,
-                  )}
-                >
-                  {errors.content}
-                </p>
-              )}
+              <ErrorText
+                text={errors?.content}
+                className={mergeClasses(
+                  helperTextClassName,
+                  styles.contentError,
+                )}
+              />
             </div>
             <span role="status" aria-live="polite" className="sr-only">
               {descriptionRemaining != null &&
