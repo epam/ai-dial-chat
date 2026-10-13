@@ -279,6 +279,59 @@ describe('PromptEditor', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
+  it('asks before discarding edits on Cancel, and keeps editing when dismissed', async () => {
+    const onCancel = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onCancel,
+    });
+
+    await user.type(await screen.findByDisplayValue('Summarize:'), ' the text');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByText('Discard unsaved changes?')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+    expect(screen.getByDisplayValue('Summarize: the text')).toBeTruthy();
+  });
+
+  it('leaves through Back once discarding edits is confirmed', async () => {
+    const onBack = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onBack,
+    });
+
+    await user.type(await screen.findByDisplayValue('Summarize:'), ' the text');
+    await user.click(screen.getByRole('button', { name: 'Back to prompts' }));
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('leaves without asking once edits are reverted', async () => {
+    const onCancel = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onCancel,
+    });
+
+    const name = screen.getByRole('textbox', { name: /Name/ });
+    await user.type(name, 'x');
+    await user.type(name, '{Backspace}');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+  });
+
   it('announces the characters remaining only near the limit', async () => {
     renderEditor({ contentMaxLength: 12, counterAnnounceThreshold: 4 });
 
