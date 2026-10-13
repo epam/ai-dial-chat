@@ -3,7 +3,6 @@ import type {
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
-
 import { buildCustomViewerUrl, resolveCustomViewer } from '../custom-viewer';
 
 const app = (overrides: Partial<DeploymentItemDto> = {}): DeploymentItemDto =>

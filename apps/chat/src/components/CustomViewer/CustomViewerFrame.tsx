@@ -6,7 +6,6 @@ import { Spinner } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 import { type FC, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import { CustomViewerI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -87,9 +86,11 @@ const CustomViewerFrame: FC<Props> = ({
 
   /* Callbacks are read through refs so a new identity never remounts the iframe. */
   const onCreatedRef = useRef(onConversationCreated);
-  onCreatedRef.current = onConversationCreated;
   const onUpdatedRef = useRef(onConversationUpdated);
-  onUpdatedRef.current = onConversationUpdated;
+  useEffect(() => {
+    onCreatedRef.current = onConversationCreated;
+    onUpdatedRef.current = onConversationUpdated;
+  }, [onConversationCreated, onConversationUpdated]);
 
   const frameTitle = t(CustomViewerI18nKeys.FrameTitle, {
     viewerTitle: title,

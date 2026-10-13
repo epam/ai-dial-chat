@@ -3,7 +3,6 @@ import {
   type DeploymentItemDto,
   DeploymentItemDtoTypeEnum,
 } from '@epam/ai-dial-chat-api-client';
-
 import type {
   CustomViewer,
   CustomViewerUrlParams,

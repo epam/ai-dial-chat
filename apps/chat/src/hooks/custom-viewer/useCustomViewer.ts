@@ -1,6 +1,5 @@
 import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import { useMemo } from 'react';
-
 import { useDeployments } from '../../context/DeploymentsContext';
 import type { CustomViewer } from '../../models/custom-viewer';
 import { resolveCustomViewer } from '../../utils/custom-viewer';

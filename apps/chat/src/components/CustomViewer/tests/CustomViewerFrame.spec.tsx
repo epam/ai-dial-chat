@@ -4,7 +4,6 @@ import {
 } from '@epam/ai-dial-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { CustomViewerI18nKeys } from '../../../constants/translation-keys';
 import type { CustomViewer } from '../../../models/custom-viewer';
 import CustomViewerFrame from '../CustomViewerFrame';

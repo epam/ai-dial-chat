@@ -35,8 +35,8 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
-import CustomViewerFrame from '../../components/CustomViewer/CustomViewerFrame';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import CustomViewerFrame from '../../components/CustomViewer/CustomViewerFrame';
 import ScheduledTaskConversationBanner from '../../components/ScheduledTaskConversationBanner/ScheduledTaskConversationBanner';
 import {
   getConversationRoute,
@@ -63,8 +63,8 @@ import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
-import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useVisualizerMessageSendHandler } from '../../hooks/conversation/useVisualizerMessageSendHandler';
+import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   conversationsApi as configuredConversationsApi,
@@ -79,11 +79,11 @@ import {
 import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { resolveCustomViewer } from '../../utils/custom-viewer';
 import {
   conversationStreamTransport,
   logConversationStreamError,
 } from '../../utils/conversation-stream-transport';
+import { resolveCustomViewer } from '../../utils/custom-viewer';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -119,7 +119,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   } = useDeployments();
   /* Read by `loadConversation` without making it depend on the catalog. */
   const viewerLookupRef = useRef({ deployments, schemas });
-  viewerLookupRef.current = { deployments, schemas };
+  useEffect(() => {
+    viewerLookupRef.current = { deployments, schemas };
+  }, [deployments, schemas]);
   const {
     toolsMenuItems,
     onToolToggle,

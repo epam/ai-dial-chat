@@ -3,7 +3,6 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useSyncExternalStore } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { CustomViewerI18nKeys } from '../../../constants/translation-keys';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';

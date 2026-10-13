@@ -4,7 +4,6 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useCustomViewer } from '../useCustomViewer';
 

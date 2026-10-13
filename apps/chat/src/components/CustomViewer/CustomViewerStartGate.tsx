@@ -6,7 +6,6 @@ import {
 import { IconPlayerPlay } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import { CustomViewerI18nKeys } from '../../constants/translation-keys';
 
 interface Props {
