@@ -623,7 +623,8 @@ describe('AppConfigContext', () => {
 
     it('falls back to 75 when the response omits the field', async () => {
       const { usageLimitsWarningThresholdPercent: _omitted, ...config } = {
-        ...(READY_RESPONSE as unknown as { config: Record<string, unknown> }).config,
+        ...(READY_RESPONSE as unknown as { config: Record<string, unknown> })
+          .config,
         usageLimitsWarningThresholdPercent: undefined,
       };
       mockGetClientConfig.mockResolvedValue({

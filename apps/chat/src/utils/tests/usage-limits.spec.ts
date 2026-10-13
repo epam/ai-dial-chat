@@ -1,6 +1,8 @@
 import type { CatalogItemLimits } from '@epam/ai-dial-catalog';
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
+import { UsageLimitBannerSeverity } from '@epam/ai-dial-conversation-input';
 import { describe, expect, it } from 'vitest';
+import { UsagePeriod } from '../../types/usage-limits';
 import {
   findWorstCappedRow,
   getGaugeNeedleAngle,
@@ -8,8 +10,6 @@ import {
   isCappedStat,
   selectUsageBannerSource,
 } from '../usage-limits';
-import { UsageLimitBannerSeverity } from '@epam/ai-dial-conversation-input';
-import { UsagePeriod } from '../../types/usage-limits';
 
 const limitsOf = (
   rows: CatalogItemLimits['groups'][number]['rows'],

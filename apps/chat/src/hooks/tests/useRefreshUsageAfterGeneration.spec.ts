@@ -9,13 +9,13 @@ const renderRefreshHook = (
   initial: Omit<UseRefreshUsageAfterGenerationOptions, 'refresh'>,
 ) => {
   const refresh = vi.fn();
-  const hook = renderHook(
+  const utils = renderHook(
     (props: Omit<UseRefreshUsageAfterGenerationOptions, 'refresh'>) =>
       useRefreshUsageAfterGeneration({ ...props, refresh }),
     { initialProps: initial },
   );
 
-  return { ...hook, refresh };
+  return { ...utils, refresh };
 };
 
 describe('useRefreshUsageAfterGeneration', () => {

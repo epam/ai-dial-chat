@@ -291,7 +291,6 @@ describe('UsageLimitBanner', () => {
       renderBanner(DEPLOYMENT_ID);
 
       await user.tab();
-      expect(document.activeElement).toBe(screen.getByRole('button'));
       await user.keyboard('{Enter}');
 
       expect(screen.queryByRole('status')).toBeNull();

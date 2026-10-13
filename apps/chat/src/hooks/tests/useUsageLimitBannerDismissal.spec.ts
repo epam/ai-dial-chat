@@ -15,27 +15,35 @@ describe('useUsageLimitBannerDismissal', () => {
   });
 
   it('reads a dismissed key as dismissed in a second hook instance', () => {
-    const first = renderHook(() => useUsageLimitBannerDismissal());
-    const second = renderHook(() => useUsageLimitBannerDismissal());
+    const { result: firstResult } = renderHook(() =>
+      useUsageLimitBannerDismissal(),
+    );
+    const { result: secondResult } = renderHook(() =>
+      useUsageLimitBannerDismissal(),
+    );
 
     act(() => {
-      first.result.current.dismiss(KEY);
+      firstResult.current.dismiss(KEY);
     });
 
-    expect(first.result.current.isDismissed(KEY)).toBe(true);
-    expect(second.result.current.isDismissed(KEY)).toBe(true);
+    expect(firstResult.current.isDismissed(KEY)).toBe(true);
+    expect(secondResult.current.isDismissed(KEY)).toBe(true);
   });
 
   it('keeps a dismissal for a hook mounted after it', () => {
-    const first = renderHook(() => useUsageLimitBannerDismissal());
+    const { result: firstResult, unmount } = renderHook(() =>
+      useUsageLimitBannerDismissal(),
+    );
     act(() => {
-      first.result.current.dismiss(KEY);
+      firstResult.current.dismiss(KEY);
     });
-    first.unmount();
+    unmount();
 
-    const later = renderHook(() => useUsageLimitBannerDismissal());
+    const { result: laterResult } = renderHook(() =>
+      useUsageLimitBannerDismissal(),
+    );
 
-    expect(later.result.current.isDismissed(KEY)).toBe(true);
+    expect(laterResult.current.isDismissed(KEY)).toBe(true);
   });
 
   it('does not read another key as dismissed', () => {
