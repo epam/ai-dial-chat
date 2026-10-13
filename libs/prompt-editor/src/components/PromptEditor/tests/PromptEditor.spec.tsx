@@ -332,6 +332,47 @@ describe('PromptEditor', () => {
     expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
   });
 
+  it('stops the description at its limit and shows a live counter', async () => {
+    renderEditor({ descriptionMaxLength: 5 });
+
+    const description = screen.getByRole('textbox', { name: /Description/ });
+    expect(description.getAttribute('maxlength')).toBe('5');
+    expect(screen.queryByText(/\/5$/)).toBeNull();
+
+    await user.type(description, 'abc');
+
+    expect(screen.getByText('3/5')).toBeTruthy();
+  });
+
+  it('reports each edited field through onFieldChange', async () => {
+    const onFieldChange = vi.fn();
+    renderEditor({ onFieldChange });
+
+    await user.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
+    await user.type(screen.getByRole('textbox', { name: /Description/ }), 'b');
+    await user.type(
+      await screen.findByPlaceholderText('Write the prompt instructions'),
+      'c',
+    );
+
+    expect(onFieldChange).toHaveBeenCalledWith('name', 'a');
+    expect(onFieldChange).toHaveBeenCalledWith('description', 'b');
+    expect(onFieldChange).toHaveBeenCalledWith('content', 'c');
+  });
+
+  it('marks the instructions editor invalid while it has an error', async () => {
+    renderEditor({ errors: { content: 'Use 50000 characters or fewer.' } });
+
+    await screen.findByPlaceholderText('Write the prompt instructions');
+
+    expect(screen.getByText('Use 50000 characters or fewer.')).toBeTruthy();
+    expect(
+      screen
+        .getByRole('group', { name: /Instructions/ })
+        .querySelector('[class*="contentInvalid"]'),
+    ).toBeTruthy();
+  });
+
   it('announces the characters remaining only near the limit', async () => {
     renderEditor({ contentMaxLength: 12, counterAnnounceThreshold: 4 });
 

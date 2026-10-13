@@ -25,6 +25,8 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
   isNameReadOnly,
   nameCaption,
   isDescriptionRequired,
+  descriptionMaxLength,
+  descriptionCaption,
   renderDescription,
   focusRequestKey,
   labels,
@@ -84,6 +86,8 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
         isNameReadOnly={isNameReadOnly}
         nameCaption={nameCaption}
         isDescriptionRequired={isDescriptionRequired}
+        descriptionMaxLength={descriptionMaxLength}
+        descriptionCaption={descriptionCaption}
         renderDescription={renderDescription}
         focusRequestKey={focusRequestKey}
       />

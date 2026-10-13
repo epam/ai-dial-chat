@@ -51,6 +51,15 @@ interface FormErrors {
   content?: PromptFieldError;
 }
 
+const FIELD_VALIDATORS: Record<
+  keyof PromptEditorValues,
+  (value: string) => PromptFieldError | null
+> = {
+  name: validatePromptName,
+  description: validatePromptDescription,
+  content: validatePromptContent,
+};
+
 const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -151,6 +160,26 @@ const PromptEditorPage: FC = () => {
       ),
     };
   }, [errors, resolveNameError, t]);
+
+  /*
+   * Length and name-pattern errors show while the user types; a Required error
+   * keeps its submit timing, so it only persists (never appears) here.
+   */
+  const handleFieldChange = useCallback(
+    (field: keyof PromptEditorValues, value: string) => {
+      setErrors((previous) => {
+        const error = FIELD_VALIDATORS[field](value) ?? undefined;
+        const nextError =
+          error === PromptFieldError.Required &&
+          previous[field] !== PromptFieldError.Required
+            ? undefined
+            : error;
+        if (nextError === previous[field]) return previous;
+        return { ...previous, [field]: nextError };
+      });
+    },
+    [],
+  );
 
   const handleCancel = useCallback(() => {
     navigate(returnUrl);
@@ -286,6 +315,7 @@ const PromptEditorPage: FC = () => {
         currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
       }
       onSubmit={handleSubmit}
+      onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}
       onRetry={handleRetry}

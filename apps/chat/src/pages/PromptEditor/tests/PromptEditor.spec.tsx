@@ -281,6 +281,45 @@ describe('PromptEditor', () => {
     expect(screen.getByText('promptEditor.error.contentTooLong')).toBeTruthy();
   });
 
+  it('shows an over-long name error while typing and clears it once shortened', async () => {
+    render(<PromptEditor />);
+
+    const nameField = screen.getByRole('textbox', {
+      name: /promptEditor.nameLabel/,
+    });
+    await user.click(nameField);
+    await user.paste('x'.repeat(257));
+
+    expect(screen.getByText('promptEditor.error.nameTooLong')).toBeTruthy();
+
+    await user.type(nameField, '{Backspace}');
+
+    expect(screen.queryByText('promptEditor.error.nameTooLong')).toBeNull();
+  });
+
+  it('shows an over-long instructions error while typing', async () => {
+    render(<PromptEditor />);
+
+    await user.click(
+      await screen.findByPlaceholderText('promptEditor.contentPlaceholder'),
+    );
+    await user.paste('x'.repeat(50001));
+
+    expect(screen.getByText('promptEditor.error.contentTooLong')).toBeTruthy();
+  });
+
+  it('does not flag an emptied name as required until submit', async () => {
+    render(<PromptEditor />);
+
+    const nameField = screen.getByRole('textbox', {
+      name: /promptEditor.nameLabel/,
+    });
+    await user.type(nameField, 'a');
+    await user.clear(nameField);
+
+    expect(screen.queryByText('promptEditor.error.required')).toBeNull();
+  });
+
   it('shows an inline name error on a 409 conflict and stays on the form', async () => {
     /* Shape thrown by the generated client: a ResponseError carrying `response`. */
     vi.mocked(createPrompt).mockRejectedValue({
