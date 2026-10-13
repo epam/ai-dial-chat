@@ -1157,6 +1157,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   maxAttachmentFileSizeBytes: number;
+  /**
+   * Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  usageLimitsWarningThresholdPercent: number;
 }
 
 /**

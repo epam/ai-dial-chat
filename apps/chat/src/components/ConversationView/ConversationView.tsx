@@ -114,6 +114,7 @@ import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConf
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
+import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 import { ConversationReloadNotification } from './ConversationReloadNotification';
@@ -290,6 +291,10 @@ const ConversationView: FC<Props> = ({
         }
       : undefined;
   }, [items, activeDeploymentId, language]);
+  /* Exactly one usage surface is composed: the dial when the flag is on,
+     otherwise the banner above the input. */
+  const usageDeploymentId =
+    selectedDeployment?.id ?? activeDeploymentId ?? undefined;
 
   const {
     skillMenuOverlay,
@@ -1312,14 +1317,18 @@ const ConversationView: FC<Props> = ({
                 usageLimitsSlot={
                   isUsageLimitsControlEnabled ? (
                     <UsageLimitsControl
-                      deploymentId={
-                        selectedDeployment?.id ??
-                        activeDeploymentId ??
-                        undefined
-                      }
+                      deploymentId={usageDeploymentId}
                       isGenerationInProgress={isAssistantTyping}
                     />
                   ) : undefined
+                }
+                aboveInputSlot={
+                  isUsageLimitsControlEnabled ? undefined : (
+                    <UsageLimitBanner
+                      deploymentId={usageDeploymentId}
+                      isGenerationInProgress={isAssistantTyping}
+                    />
+                  )
                 }
               />
             </Suspense>

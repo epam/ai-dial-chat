@@ -489,7 +489,7 @@ describe('AppConfigContext', () => {
       mockGetClientConfig.mockResolvedValue({
         ...READY_RESPONSE,
         config: {
-          ...(READY_RESPONSE as { config: object }).config,
+          ...(READY_RESPONSE as unknown as { config: object }).config,
           customVisualizers: [entry],
         },
       } as unknown as ClientConfigResponseDto);
@@ -526,7 +526,7 @@ describe('AppConfigContext', () => {
       mockGetClientConfig.mockResolvedValue({
         ...READY_RESPONSE,
         config: {
-          ...(READY_RESPONSE as { config: object }).config,
+          ...(READY_RESPONSE as unknown as { config: object }).config,
           publicationFilterSources: ['roles', 'department'],
         },
       } as unknown as ClientConfigResponseDto);
@@ -570,7 +570,7 @@ describe('AppConfigContext', () => {
       mockGetClientConfig.mockResolvedValue({
         ...READY_RESPONSE,
         config: {
-          ...(READY_RESPONSE as { config: object }).config,
+          ...(READY_RESPONSE as unknown as { config: object }).config,
           maxAttachmentFileSizeBytes: 104_857_600,
         },
       } as unknown as ClientConfigResponseDto);
@@ -595,6 +595,48 @@ describe('AppConfigContext', () => {
       expect(result.current.config.maxAttachmentFileSizeBytes).toBe(
         536_870_912,
       );
+    });
+  });
+
+  describe('usageLimitsWarningThresholdPercent', () => {
+    it('defaults to 75 before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.config.usageLimitsWarningThresholdPercent).toBe(75);
+    });
+
+    it('surfaces an operator-configured value from a successful API call', async () => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as unknown as { config: object }).config,
+          usageLimitsWarningThresholdPercent: 90,
+        },
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.usageLimitsWarningThresholdPercent).toBe(90);
+    });
+
+    it('falls back to 75 when the response omits the field', async () => {
+      const { usageLimitsWarningThresholdPercent: _omitted, ...config } = {
+        ...(READY_RESPONSE as unknown as { config: Record<string, unknown> })
+          .config,
+        usageLimitsWarningThresholdPercent: undefined,
+      };
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config,
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.usageLimitsWarningThresholdPercent).toBe(75);
     });
   });
 });

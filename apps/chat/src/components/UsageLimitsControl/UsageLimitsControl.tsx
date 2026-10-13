@@ -26,6 +26,7 @@ import { ConversationInputI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useDeploymentUsageLimits } from '../../hooks/useDeploymentUsageLimits';
+import { useRefreshUsageAfterGeneration } from '../../hooks/useRefreshUsageAfterGeneration';
 import { SettingsTabs } from '../../types/settings-tabs';
 import { resolveLocalizedText } from '../../utils/locale';
 import {
@@ -62,8 +63,6 @@ const UsageLimitsControl: FC<Props> = ({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const wasGenerationInProgressRef = useRef(isGenerationInProgress);
-  const hasPendingGenerationRefreshRef = useRef(false);
 
   const labels = useMemo(
     () => ({
@@ -114,17 +113,11 @@ const UsageLimitsControl: FC<Props> = ({
     );
   }, [deployments, deploymentId, activeLocale]);
 
-  useEffect(() => {
-    if (wasGenerationInProgressRef.current && !isGenerationInProgress) {
-      hasPendingGenerationRefreshRef.current = true;
-    }
-    wasGenerationInProgressRef.current = isGenerationInProgress;
-
-    if (hasPendingGenerationRefreshRef.current && !isLoading) {
-      hasPendingGenerationRefreshRef.current = false;
-      refresh();
-    }
-  }, [isGenerationInProgress, isLoading, refresh]);
+  useRefreshUsageAfterGeneration({
+    isGenerationInProgress,
+    isLoading,
+    refresh,
+  });
 
   useEffect(() => {
     if (!isOpen) return;

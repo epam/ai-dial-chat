@@ -153,6 +153,7 @@ describe('AppConfigService', () => {
         'dial_roles',
       ]);
       expect(result.config.maxAttachmentFileSizeBytes).toBe(536_870_912);
+      expect(result.config.usageLimitsWarningThresholdPercent).toBe(75);
     });
 
     it('surfaces an operator-configured maxAttachmentFileSizeBytes value', async () => {
@@ -162,6 +163,15 @@ describe('AppConfigService', () => {
       const result = await service.getClientConfig(ctx);
 
       expect(result.config.maxAttachmentFileSizeBytes).toBe(104_857_600);
+    });
+
+    it('surfaces an operator-configured usageLimitsWarningThresholdPercent value', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'usageLimits.warningThresholdPercent' ? 90 : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.usageLimitsWarningThresholdPercent).toBe(90);
     });
 
     it('surfaces an operator-configured publicationFilterSources list verbatim', async () => {
@@ -1412,6 +1422,7 @@ describe('AppConfigService', () => {
         'customVariables',
         'publicationFilterSources',
         'maxAttachmentFileSizeBytes',
+        'usageLimitsWarningThresholdPercent',
       ]);
       expect(Object.keys(result.features)).toEqual([
         'footer',

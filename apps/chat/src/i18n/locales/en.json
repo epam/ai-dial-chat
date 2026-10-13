@@ -1333,6 +1333,17 @@
       "value": "{{used}} / {{total}}",
       "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
       "fullUsageLink": "See all usage"
+    },
+    "usageBanner": {
+      "warningDay": "Daily limit {{percent}}% used.",
+      "warningWeek": "Weekly limit {{percent}}% used.",
+      "warningMonth": "Monthly limit {{percent}}% used.",
+      "reachedDay": "Daily limit reached.",
+      "reachedWeek": "Weekly limit reached.",
+      "reachedMonth": "Monthly limit reached.",
+      "resetsAtTime": "Resets at {{time}}.",
+      "resetsOnDate": "Resets on {{date}}.",
+      "closeLabel": "Close usage notice"
     }
   },
   "customApp": {

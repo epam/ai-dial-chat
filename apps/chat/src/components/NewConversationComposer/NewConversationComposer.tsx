@@ -66,6 +66,7 @@ import { buildNetworkUploadErrorNotification } from '../../utils/attachment-netw
 import { resolveLocalizedText } from '../../utils/locale';
 import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
+import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
 const ConversationInput = lazy(async () => {
@@ -212,6 +213,10 @@ const NewConversationComposer: FC<Props> = ({
     config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
+  /* Exactly one usage surface is composed: the dial when the flag is on,
+     otherwise the banner above the input. */
+  const usageDeploymentId =
+    selectedDeployment?.id ?? selectedDeploymentId ?? undefined;
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const { isEnabled: isCelebrationEnabled, consumeSecretPhrase } =
     useCelebration();
@@ -659,12 +664,13 @@ const NewConversationComposer: FC<Props> = ({
           toolsChipLabels={toolsChipLabels}
           usageLimitsSlot={
             isUsageLimitsControlEnabled ? (
-              <UsageLimitsControl
-                deploymentId={
-                  selectedDeployment?.id ?? selectedDeploymentId ?? undefined
-                }
-              />
+              <UsageLimitsControl deploymentId={usageDeploymentId} />
             ) : undefined
+          }
+          aboveInputSlot={
+            isUsageLimitsControlEnabled ? undefined : (
+              <UsageLimitBanner deploymentId={usageDeploymentId} />
+            )
           }
         />
         {!isStartersBelowGreeting && startersBlock}

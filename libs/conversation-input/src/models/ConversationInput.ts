@@ -287,6 +287,8 @@ export interface ConversationInputProps {
   descriptionText?: string;
   /** Slot rendered between the welcome heading and the input, e.g. conversation starters. */
   belowWelcomeSlot?: ReactNode;
+  /** Slot rendered directly above the input within the composer's width, e.g. a host notice. Omitted or `null` leaves the layout unchanged. */
+  aboveInputSlot?: ReactNode;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
   /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
