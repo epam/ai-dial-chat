@@ -171,6 +171,7 @@ const renderPanel = ({
   onDownloadAll = undefined as (() => void) | undefined,
   title = undefined as ReactNode,
   additionalSections = undefined as ReactNode,
+  sectionClassName = undefined as string | undefined,
 } = {}) =>
   render(
     <ConversationSourcesPanel
@@ -185,6 +186,7 @@ const renderPanel = ({
       labels={LABELS}
       title={title}
       additionalSections={additionalSections}
+      styles={sectionClassName ? { sectionClassName } : undefined}
     />,
   );
 
@@ -232,6 +234,41 @@ describe('ConversationSourcesPanel', () => {
   it('renders sources section', () => {
     renderPanel({ sources: [makeSource('https://example.com', 'Example')] });
     expect(screen.getByText('Example')).toBeTruthy();
+  });
+
+  it('indents every file and source section through styles.sectionClassName, leaving the default unindented', () => {
+    const { rerender } = renderPanel({
+      uploaded: [makeAttachment('upload.pdf')],
+      generated: [makeAttachment('result.csv')],
+      sources: [makeSource('https://example.com', 'Example')],
+    });
+
+    for (const name of ['Uploaded files', 'Generated files', 'Sources']) {
+      // eslint-disable-next-line testing-library/no-node-access -- the section element has no semantic query; only its class is asserted
+      const section = screen.getByRole('heading', { name }).closest('section');
+      /* The lib default keeps its sections at the body padding — the host opts into the accordion gutter. */
+      expect(section?.className).not.toContain('px-4');
+    }
+
+    rerender(
+      <ConversationSourcesPanel
+        isOpen
+        onClose={vi.fn()}
+        uploaded={[makeAttachment('upload.pdf')]}
+        generated={[makeAttachment('result.csv')]}
+        sources={[makeSource('https://example.com', 'Example')]}
+        isMobile={false}
+        labels={LABELS}
+        styles={{ sectionClassName: 'px-4' }}
+      />,
+    );
+
+    for (const name of ['Uploaded files', 'Generated files', 'Sources']) {
+      // eslint-disable-next-line testing-library/no-node-access -- the section element has no semantic query; only its class is asserted
+      const section = screen.getByRole('heading', { name }).closest('section');
+      /* The host's History/Details accordions add the kit's own px-4 on top of the body padding, so the host passes sectionClassName to line up with them. */
+      expect(section?.className).toContain('px-4');
+    }
   });
 
   it('hides the download-all button when onDownloadAll is omitted', () => {

@@ -1,11 +1,12 @@
+import type { MarkdownRendererClassNames } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type { ScheduledTaskInstructionsMarkdownLabels } from './scheduled-task-instructions';
 
 /** Typography overrides for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryTypography {
-  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text'`. */
+  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text text-secondary'`. */
   fieldLabelClassName?: string;
-  /** CSS class applied to the resolved model value. Defaults to `'dial-body-text'`. */
+  /** CSS class applied to the resolved field values. Defaults to `'dial-small-text'`. */
   fieldValueClassName?: string;
 }
 
@@ -31,6 +32,8 @@ export interface ScheduledTaskDetailsSummaryProps {
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
+  /** Class names for the built-in instructions `MDMessageViewer`. Defaults to the summary's small 14/20 scale (paragraphs and lists at `'dial-small-text'`, headings at `'dial-small-semi-text'`); a supplied map replaces it wholesale. Ignored when `renderInstructions` is supplied. */
+  instructionsClassNames?: MarkdownRendererClassNames;
   /** Code-block, table and formula labels for the built-in `MDMessageViewer`. Ignored when `renderInstructions` is supplied. */
   markdownLabels?: ScheduledTaskInstructionsMarkdownLabels;
   /** Style overrides. */

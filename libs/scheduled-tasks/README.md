@@ -207,15 +207,19 @@ import {
 ```
 
 When the host omits `renderInstructions`, `instructionsMarkdown` is rendered by
-the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared`. Name its
-controls through the optional `labels.codeBlockCopyLabel`,
-`labels.codeBlockCopiedLabel`, `labels.codeBlockDownloadLabel`,
-`labels.tableScrollRegionAriaLabel` and `labels.mathScrollRegionAriaLabel`
-(the `ScheduledTaskInstructionsMarkdownLabels` fields); each falls back to the
-renderer's English default (`'Copy code'`, `'Copied!'`, `'Download code'`,
-`'Scrollable table'`, `'Scrollable formula'`). `ScheduledTaskDetailsSummary`
-takes the same fields as its `markdownLabels` prop. A host-supplied
-`renderInstructions` owns its own labels, and these are ignored.
+the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared` at the
+summary's small 14/20 scale (paragraphs and lists at `dial-small-text`,
+headings at `dial-small-semi-text`) — pass `instructionsClassNames` (a
+`MarkdownRendererClassNames` map, replacing the default wholesale) to change
+it. Name the viewer's controls through the optional
+`labels.codeBlockCopyLabel`, `labels.codeBlockCopiedLabel`,
+`labels.codeBlockDownloadLabel`, `labels.tableScrollRegionAriaLabel` and
+`labels.mathScrollRegionAriaLabel` (the `ScheduledTaskInstructionsMarkdownLabels`
+fields); each falls back to the renderer's English default (`'Copy code'`,
+`'Copied!'`, `'Download code'`, `'Scrollable table'`, `'Scrollable formula'`).
+`ScheduledTaskDetailsSummary` takes the same fields as its `markdownLabels`
+prop. A host-supplied `renderInstructions` owns its own labels and classNames,
+and these are ignored.
 
 ```tsx
 import {
@@ -289,6 +293,106 @@ import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
 `icon` and `typeLabel` are optional; the card falls back to the task name alone
 when neither is given. Pass `typeLabel` in sentence case — the label uppercases
 itself.
+
+### ScheduledTaskConversationHistorySection
+
+History accordion of a task conversation's sources panel: the schedule's
+paginated runs with the current run highlighted and a "Show more" footer. It is
+the accordion-wrapped counterpart of `ScheduledTaskRunHistoryList` — expanded by
+default, resetting to expanded whenever `scheduleId` changes — while the list
+itself stays bare for hosts that need their own chrome. Runs, loading/error
+state, pagination callbacks, and labels are all supplied by the host; a run row
+renders as clickable only when its item carries a `conversationId` and
+`onRunClick` is supplied.
+
+```tsx
+import {
+  ScheduledTaskConversationHistorySection,
+  ScheduledTaskRunStatus,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskConversationHistorySection
+  scheduleId={schedule.id}
+  items={[
+    {
+      id: 'run_1',
+      status: ScheduledTaskRunStatus.Success,
+      timestampLabel: 'today at 9:01 AM (99s)',
+      conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+    },
+  ]}
+  isLoading={false}
+  isLoadingMore={false}
+  error={null}
+  onRetry={refetchRuns}
+  hasMore={true}
+  onLoadMore={loadMoreRuns}
+  currentRunId="run_1"
+  onRunClick={(run) => navigateToConversation(run.conversationId)}
+  labels={{
+    title: 'History',
+    emptyLabel: 'No runs yet',
+    errorLabel: 'Failed to load history',
+    retryLabel: 'Retry',
+    showMoreLabel: 'Show more',
+    runStatusLabels: {
+      [ScheduledTaskRunStatus.Success]: 'Succeeded',
+      [ScheduledTaskRunStatus.Error]: 'Failed',
+      [ScheduledTaskRunStatus.InProgress]: 'Running',
+      [ScheduledTaskRunStatus.Missed]: 'Missed',
+    },
+    currentRunLabel: 'Current run',
+    unreadIndicatorLabel: 'Unread',
+  }}
+/>;
+```
+
+### ScheduledTaskConversationDetailsSection
+
+Details accordion of a task conversation's sources panel: the run's own
+Model/Skill/Instructions summary via `ScheduledTaskDetailsSummary`, or the
+scoped unavailable message while the task's details cannot load — `state:
+'error'` additionally renders a retry action wired to `onRetry`, `state:
+'unavailable'` does not. Collapsed by default; resets to collapsed whenever
+`scheduleId` changes. All field values and labels are supplied by the host.
+When `renderInstructions` is omitted, the summary's built-in
+`MDMessageViewer` renders the instructions at the summary's small 14/20 scale —
+name its controls through `markdownLabels`
+(`ScheduledTaskInstructionsMarkdownLabels`, the same prop
+`ScheduledTaskDetailsSummary` takes) and rescale it through
+`instructionsClassNames` (the same prop `ScheduledTaskDetailsSummary` takes);
+both are ignored when `renderInstructions` is supplied.
+
+```tsx
+import {
+  ScheduledTaskConversationDetailsSection,
+  ScheduledTaskConversationDetailsState,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskConversationDetailsSection
+  scheduleId={schedule.id}
+  state={ScheduledTaskConversationDetailsState.Ready}
+  onRetry={refetchTask}
+  modelDisplayName="GPT-4.1 mini"
+  skillDisplayNames={['Daily digest skill', 'Report skill']}
+  instructionsMarkdown={task.prompt}
+  markdownLabels={{
+    codeBlockCopyLabel: 'Copy code',
+    codeBlockCopiedLabel: 'Copied!',
+    codeBlockDownloadLabel: 'Download code',
+    tableScrollRegionAriaLabel: 'Scrollable table',
+    mathScrollRegionAriaLabel: 'Scrollable formula',
+  }}
+  labels={{
+    title: 'Details',
+    modelLabel: 'Model',
+    instructionsLabel: 'Instructions',
+    skillLabel: 'Skill',
+    unavailableLabel: 'Task details are unavailable',
+    retryLabel: 'Retry',
+  }}
+/>;
+```
 
 ## Validation entry point
 
