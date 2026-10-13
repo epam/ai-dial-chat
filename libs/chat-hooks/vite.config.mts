@@ -38,7 +38,13 @@ export default defineConfig(({ command }) => ({
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
-      rollupTypes: true,
+      insertTypesEntry: true,
+      /* resolve.alias points these packages at sibling sources for the JS
+       * build only; published declarations must keep the package names. */
+      aliasesExclude: [
+        '@epam/ai-dial-attachment-canvas',
+        '@epam/ai-dial-mcp-apps',
+      ],
     }),
   ],
   build: {
