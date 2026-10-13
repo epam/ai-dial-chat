@@ -192,6 +192,33 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       );
     });
 
+    it('maps a resolved usage warning threshold verbatim', () => {
+      const config = createDefaultClientConfig();
+
+      applyClientConfigValue(
+        config,
+        'usageLimits.warningThresholdPercent',
+        makeInput({ resolved: 90 }),
+      );
+
+      expect(config.usageLimitsWarningThresholdPercent).toBe(90);
+    });
+
+    it.each(['90', null, undefined])(
+      'falls back to a 75% usage warning threshold for a resolved %j',
+      (resolved) => {
+        const config = createDefaultClientConfig();
+
+        applyClientConfigValue(
+          config,
+          'usageLimits.warningThresholdPercent',
+          makeInput({ resolved }),
+        );
+
+        expect(config.usageLimitsWarningThresholdPercent).toBe(75);
+      },
+    );
+
     it('forwards the warn callback to the announcements normalizer', () => {
       const warn = vi.fn();
       const config = createDefaultClientConfig();

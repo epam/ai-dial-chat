@@ -9460,6 +9460,11 @@
             "type": "number",
             "description": "Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.",
             "example": 536870912
+          },
+          "usageLimitsWarningThresholdPercent": {
+            "type": "number",
+            "description": "Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.",
+            "example": 75
           }
         },
         "required": [
@@ -9477,7 +9482,8 @@
           "applicationVisualizers",
           "customVariables",
           "publicationFilterSources",
-          "maxAttachmentFileSizeBytes"
+          "maxAttachmentFileSizeBytes",
+          "usageLimitsWarningThresholdPercent"
         ]
       },
       "ClientConfigMetadataDto": {

@@ -454,4 +454,16 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'FILE_UPLOAD_MAX_BYTES',
   },
+  {
+    key: 'usageLimits.warningThresholdPercent',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'client',
+    defaultValue: 75,
+    critical: false,
+    description:
+      'Percentage (1–99) of a capped day/week/month token or cost limit at which the composer shows its usage banner above the input. Governs the banner only — the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.',
+    owner: 'chat-team',
+    envVar: 'USAGE_LIMITS_WARNING_THRESHOLD_PERCENT',
+  },
 ];

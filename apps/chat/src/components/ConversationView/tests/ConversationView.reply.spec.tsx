@@ -110,6 +110,9 @@ vi.mock('../../FooterMessage/FooterMessage', () => ({ default: () => null }));
 vi.mock('../../UsageLimitsControl/UsageLimitsControl', () => ({
   default: () => null,
 }));
+vi.mock('../../UsageLimitBanner/UsageLimitBanner', () => ({
+  default: () => null,
+}));
 vi.mock('../ConversationMessageItem', () => ({
   default: ({
     msg,
