@@ -8,6 +8,7 @@ import type {
   CustomViewer,
   CustomViewerUrlParams,
 } from '../models/custom-viewer';
+import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 
 const ALLOWED_VIEWER_PROTOCOLS = new Set(['http:', 'https:']);
 
@@ -42,7 +43,7 @@ export const resolveCustomViewer = (
   if (isSafeViewerUrl(deployment.viewerUrl)) {
     return toViewer(
       deployment.viewerUrl,
-      deployment.displayName,
+      resolveLocalizedText(deployment.displayName, PRIMARY_LOCALE),
       deployment.id,
     );
   }
