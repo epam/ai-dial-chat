@@ -15,17 +15,23 @@ export interface UseScheduledTaskRunsOptions {
    * The caller already holds the task DTO — this hook never fetches it.
    */
   nextRunTime?: string | null;
+  /**
+   * Keeps the 15s background poll running even when no loaded run is
+   * `InProgress`. For a run the caller started itself and tracks outside this
+   * hook, which the first poll then merges into `items`.
+   */
+  pollWhileActive?: boolean;
 }
 
 /**
  * Background-refresh timing for scheduled-task run history. 15s sits inside
  * the ~10-15s range considered acceptable for per-panel polling against an
- * uncached, unthrottled proxy endpoint; 20 consecutive no-change polls
- * (5 minutes) bounds how long a stuck upstream run keeps a background tab
+ * uncached, unthrottled proxy endpoint; 48 consecutive no-change polls
+ * (12 minutes — past the 10-minute backend run timeout) bounds how long a stuck upstream run keeps a background tab
  * polling. See `openspec/changes/archive/2026-09-28-refresh-scheduled-task-run-history/design.md` - Risks for the DIAL Scheduler capacity assumption.
  */
 const RUNS_POLL_INTERVAL_MS = 15_000;
-const RUNS_POLL_STOP_AFTER_NO_CHANGE = 20;
+const RUNS_POLL_STOP_AFTER_NO_CHANGE = 48;
 const NEXT_RUN_REFRESH_DELAY_MS = 5_000;
 
 /* setTimeout's delay is a 32-bit signed int — a longer value silently
@@ -101,6 +107,7 @@ export const useScheduledTaskRuns = (
     enabled = true,
     pageSize = 10,
     nextRunTime,
+    pollWhileActive = false,
   }: UseScheduledTaskRunsOptions,
 ) => {
   const [items, setItems] = useState<ScheduledTaskRunDto[]>([]);
@@ -126,9 +133,11 @@ export const useScheduledTaskRuns = (
   isLoadingRef.current = isLoading;
   isLoadingMoreRef.current = isLoadingMore;
 
-  const hasInProgressRun = items.some(
-    (run) => run.status === ScheduledTaskRunDtoStatusEnum.InProgress,
-  );
+  const hasInProgressRun =
+    pollWhileActive ||
+    items.some(
+      (run) => run.status === ScheduledTaskRunDtoStatusEnum.InProgress,
+    );
 
   useEffect(() => {
     const current = ++generation.current;
