@@ -922,6 +922,7 @@ describe('MarkdownRenderer', () => {
       const { container } = render(<MarkdownRenderer content="a<br>b" />);
 
       // <br> has no accessible role, so this needs direct DOM access.
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
       expect(container.querySelector('br')).toBeTruthy();
       expect(screen.queryByText(/<br>/)).toBeNull();
     });
