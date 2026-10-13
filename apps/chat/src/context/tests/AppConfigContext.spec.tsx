@@ -489,7 +489,7 @@ describe('AppConfigContext', () => {
       mockGetClientConfig.mockResolvedValue({
         ...READY_RESPONSE,
         config: {
-          ...(READY_RESPONSE as { config: object }).config,
+          ...(READY_RESPONSE as unknown as { config: object }).config,
           customVisualizers: [entry],
         },
       } as unknown as ClientConfigResponseDto);
@@ -526,7 +526,7 @@ describe('AppConfigContext', () => {
       mockGetClientConfig.mockResolvedValue({
         ...READY_RESPONSE,
         config: {
-          ...(READY_RESPONSE as { config: object }).config,
+          ...(READY_RESPONSE as unknown as { config: object }).config,
           publicationFilterSources: ['roles', 'department'],
         },
       } as unknown as ClientConfigResponseDto);
@@ -570,7 +570,7 @@ describe('AppConfigContext', () => {
       mockGetClientConfig.mockResolvedValue({
         ...READY_RESPONSE,
         config: {
-          ...(READY_RESPONSE as { config: object }).config,
+          ...(READY_RESPONSE as unknown as { config: object }).config,
           maxAttachmentFileSizeBytes: 104_857_600,
         },
       } as unknown as ClientConfigResponseDto);
@@ -609,7 +609,7 @@ describe('AppConfigContext', () => {
       mockGetClientConfig.mockResolvedValue({
         ...READY_RESPONSE,
         config: {
-          ...(READY_RESPONSE as { config: object }).config,
+          ...(READY_RESPONSE as unknown as { config: object }).config,
           usageLimitsWarningThresholdPercent: 90,
         },
       } as unknown as ClientConfigResponseDto);
@@ -623,7 +623,7 @@ describe('AppConfigContext', () => {
 
     it('falls back to 75 when the response omits the field', async () => {
       const { usageLimitsWarningThresholdPercent: _omitted, ...config } = {
-        ...(READY_RESPONSE as { config: Record<string, unknown> }).config,
+        ...(READY_RESPONSE as unknown as { config: Record<string, unknown> }).config,
         usageLimitsWarningThresholdPercent: undefined,
       };
       mockGetClientConfig.mockResolvedValue({
