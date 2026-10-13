@@ -1603,6 +1603,59 @@ describe('ConversationMessageItem — markdown file URLs', () => {
   });
 });
 
+describe('ConversationMessageItem — user message markdown', () => {
+  const writeText = vi.fn(() => Promise.resolve());
+
+  beforeEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+  });
+
+  it('renders a fenced code block in a user message', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...USER_MESSAGE, content: '```ts\nconst x = 1;\n```' }}
+      />,
+    );
+
+    expect(screen.getByText('ts')).toBeTruthy();
+    expect(screen.queryByText(/```/)).toBeNull();
+  });
+
+  it('copies the raw markdown source of a rendered user message', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...USER_MESSAGE, content: '**bold**' }}
+      />,
+    );
+
+    expect(screen.getByText('bold').tagName).toBe('STRONG');
+    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+
+    expect(writeText).toHaveBeenCalledWith('**bold**');
+  });
+
+  it('rewrites DIAL file ids in user markdown links to download URLs', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          ...USER_MESSAGE,
+          content: '[the chart](files/9gRuhxHb/uploads/chart.png)',
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('link', { name: 'the chart' }).getAttribute('href'),
+    ).toBe('/api/v1/files/download?bucket=9gRuhxHb&path=uploads%2Fchart.png');
+  });
+});
+
 describe('ConversationMessageItem — application visualizers', () => {
   const ASSISTANT_WITH_ATTACHMENTS: Message = {
     role: MessageRole.Assistant,

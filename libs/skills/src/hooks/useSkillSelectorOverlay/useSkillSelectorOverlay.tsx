@@ -1,4 +1,4 @@
-import type { RequestSkill } from '@epam/ai-dial-chat-shared';
+import type { RequestSkill, TextSegment } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   HighlightedTextRange,
@@ -317,7 +317,7 @@ export const useSkillSelectorOverlay = ({
     (
       content: string,
       entries: RequestSkill[] | undefined,
-    ): ReactNode[] | null => {
+    ): TextSegment[] | null => {
       if (entries == null || entries.length === 0) {
         return null;
       }
@@ -327,7 +327,7 @@ export const useSkillSelectorOverlay = ({
         entries,
         resolveName,
       );
-      const segments: ReactNode[] = [];
+      const segments: TextSegment[] = [];
       let cursor = 0;
 
       resolvedMentions.forEach((mention) => {
@@ -343,23 +343,26 @@ export const useSkillSelectorOverlay = ({
             ? resolveUnresolvedReason(skillEntry.url, viewerBucket)
             : undefined;
 
-        segments.push(
-          <ChatSkill
-            key={`${skillEntry.url}-${mention.start}`}
-            name={name}
-            path={skillEntry.url}
-            labelClassName={historyChipLabelClassName}
-            description={skill?.description}
-            unresolvedReason={unresolvedReason}
-            detailsTrigger={historyDetailsTrigger}
-            onViewDetails={setDetailsSkillId}
-            labels={{
-              viewDetailsLabel: panelLabels?.viewDetailsLabel,
-              deletedTooltipLabel,
-              notSharedTooltipLabel,
-            }}
-          />,
-        );
+        segments.push({
+          text: content.slice(mention.start, mention.start + mention.length),
+          node: (
+            <ChatSkill
+              key={`${skillEntry.url}-${mention.start}`}
+              name={name}
+              path={skillEntry.url}
+              labelClassName={historyChipLabelClassName}
+              description={skill?.description}
+              unresolvedReason={unresolvedReason}
+              detailsTrigger={historyDetailsTrigger}
+              onViewDetails={setDetailsSkillId}
+              labels={{
+                viewDetailsLabel: panelLabels?.viewDetailsLabel,
+                deletedTooltipLabel,
+                notSharedTooltipLabel,
+              }}
+            />
+          ),
+        });
         cursor = mention.start + mention.length;
       });
 

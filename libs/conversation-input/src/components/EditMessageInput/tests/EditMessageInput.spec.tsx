@@ -281,3 +281,16 @@ describe('EditMessageInput — attachment click label', () => {
     ).toBeNull();
   });
 });
+
+describe('EditMessageInput — markdown source', () => {
+  it('pre-fills the textarea with the raw markdown source of the message', () => {
+    const source = '```ts\nconst x = 1;\n```\n\n**bold**';
+    render(
+      <EditMessageInput onCancel={vi.fn()} onSave={vi.fn()} message={source} />,
+    );
+
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
+      source,
+    );
+  });
+});

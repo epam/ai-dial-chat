@@ -893,4 +893,51 @@ describe('MarkdownRenderer', () => {
       ).toBe('');
     });
   });
+
+  describe('isRawHtmlEnabled', () => {
+    it('renders a raw HTML tag as literal text when disabled', () => {
+      render(
+        <MarkdownRenderer
+          content="What does <div> do?"
+          isRawHtmlEnabled={false}
+        />,
+      );
+
+      expect(screen.getByText('What does <div> do?')).toBeTruthy();
+    });
+
+    it('creates no element from raw HTML when disabled', () => {
+      render(
+        <MarkdownRenderer
+          content='<img src="x" alt="probe" onerror="alert(1)">'
+          isRawHtmlEnabled={false}
+        />,
+      );
+
+      expect(screen.queryByRole('img')).toBeNull();
+      expect(screen.getByText(/<img src="x"/)).toBeTruthy();
+    });
+
+    it('still parses a raw <br> into a line break by default', () => {
+      const { container } = render(<MarkdownRenderer content="a<br>b" />);
+
+      // <br> has no accessible role, so this needs direct DOM access.
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
+      expect(container.querySelector('br')).toBeTruthy();
+      expect(screen.queryByText(/<br>/)).toBeNull();
+    });
+
+    it('still strips javascript: links when disabled', () => {
+      render(
+        <MarkdownRenderer
+          content="[x](javascript:alert(1))"
+          isRawHtmlEnabled={false}
+        />,
+      );
+
+      expect(
+        screen.getByText('x', { selector: 'a' }).getAttribute('href') ?? '',
+      ).not.toContain('javascript:');
+    });
+  });
 });

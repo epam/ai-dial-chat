@@ -1,4 +1,4 @@
-import type { RequestSkill } from '@epam/ai-dial-chat-shared';
+import type { RequestSkill, TextSegment } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   HighlightedTextRange,
@@ -251,7 +251,7 @@ export interface UseSkillSelectorOverlayResult {
   recognizeMentionsInInsertion: (text: string) => void;
   /**
    * Renders a user message's `content` and `custom_content.skills` as an
-   * ordered array interleaving plain-text runs and `ChatSkill` elements at
+   * ordered array interleaving markdown string runs and `ChatSkill` segments (each with its matched `/{name}` text) at
    * each mention's actual text position — for `UserMessageBubble`'s
    * `textSegments` prop. Resolves each entry's name from the listing pools
    * matched on its url, falling back to the url's last non-empty segment;
@@ -267,7 +267,7 @@ export interface UseSkillSelectorOverlayResult {
   renderHistorySkillSegments: (
     content: string,
     skills: RequestSkill[] | undefined,
-  ) => ReactNode[] | null;
+  ) => TextSegment[] | null;
   /**
    * Renders every entry of `skills` as a flat list of `ChatSkill` elements,
    * ignoring text position — for `AssistantMessageBubble`'s `beforeContent`

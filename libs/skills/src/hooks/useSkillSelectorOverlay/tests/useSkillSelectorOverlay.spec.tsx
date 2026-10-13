@@ -1,3 +1,4 @@
+import type { InlineTextSegment } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -227,13 +228,12 @@ describe('useSkillSelectorOverlay', () => {
     const historyChips = result.current.renderHistorySkills([
       { url: abcSkill.url },
     ]) as ReactElement<ChatSkillProps>[];
-    const segmentChip = assertDefined(
+    const segment = assertDefined(
       result.current.renderHistorySkillSegments('/abc', [
         { url: abcSkill.url },
       ]),
-    ).find(
-      (segment) => typeof segment !== 'string',
-    ) as ReactElement<ChatSkillProps>;
+    ).find((segment) => typeof segment !== 'string') as InlineTextSegment;
+    const segmentChip = segment.node as ReactElement<ChatSkillProps>;
 
     expect(activeChip.props.detailsTrigger).toBeUndefined();
     expect(historyChips[0].props).toMatchObject({ detailsTrigger: 'click' });
@@ -447,7 +447,8 @@ describe('useSkillSelectorOverlay', () => {
 
       expect(historySegments).not.toBeNull();
       expect(historySegments).toHaveLength(4);
-      expect(historySegments?.[0]).not.toBe(undefined);
+      expect(historySegments?.[0]).toMatchObject({ text: '/abc' });
+      expect(historySegments?.[2]).toMatchObject({ text: '/csd' });
       expect(typeof historySegments?.[1]).toBe('string');
       expect(
         (historySegments?.[1] as string).startsWith(' please summarize'),
@@ -473,7 +474,10 @@ describe('useSkillSelectorOverlay', () => {
         [{ url: 'skills/bucket/gone' }],
       );
 
-      expect((historySegments?.[0] as ReactElement).props).toMatchObject({
+      expect(
+        ((historySegments?.[0] as InlineTextSegment).node as ReactElement)
+          .props,
+      ).toMatchObject({
         unresolvedReason: SkillUnresolvedReason.Deleted,
       });
     });
@@ -487,7 +491,10 @@ describe('useSkillSelectorOverlay', () => {
         [{ url: 'skills/other-bucket/foreign' }],
       );
 
-      expect((historySegments?.[0] as ReactElement).props).toMatchObject({
+      expect(
+        ((historySegments?.[0] as InlineTextSegment).node as ReactElement)
+          .props,
+      ).toMatchObject({
         unresolvedReason: SkillUnresolvedReason.NotShared,
       });
     });
@@ -502,7 +509,8 @@ describe('useSkillSelectorOverlay', () => {
       );
 
       expect(
-        (historySegments?.[0] as ReactElement).props as {
+        ((historySegments?.[0] as InlineTextSegment).node as ReactElement)
+          .props as {
           unresolvedReason?: string;
         },
       ).toHaveProperty('unresolvedReason', undefined);
