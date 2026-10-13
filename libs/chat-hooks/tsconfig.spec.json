@@ -18,6 +18,7 @@
     "rootDir": "."
   },
   "include": [
+    "src/test-setup.ts",
     "vite.config.ts",
     "vite.config.mts",
     "vitest.config.ts",
