@@ -22,12 +22,14 @@ export const ClampedName: FC<ClampedNameProps> = ({
   const { ref, isClamped } = useIsVerticallyClamped<HTMLSpanElement>(name);
 
   /*
-   * The clamp lives on this wrapper, not on `Highlight`'s own `maxLines`: the
-   * kit's stylesheet orders `.block` after `.line-clamp-2`, so the `display:
-   * block` its ellipsis span also carries cancels that clamp. `Highlight` only
-   * marks the query here, and its own width-based ellipsis tooltip never
-   * fires for wrapped text, so the clipped name gets this tooltip instead
-   * ([#9121](https://github.com/epam/ai-dial-chat/issues/9121)).
+   * Either this wrapper or `Highlight`'s own span ends up clipping the name:
+   * the kit's `mergeClasses` drops that span's `block` in favour of its
+   * `line-clamp-2`, so the span clamps itself and the wrapper grows only as
+   * tall as the clipped span. `useIsVerticallyClamped` checks both. The kit's
+   * own ellipsis tooltip measures width only and never fires for wrapped
+   * text, so the clipped name gets this tooltip instead
+   * ([#9121](https://github.com/epam/ai-dial-chat/issues/9121),
+   * [#9400](https://github.com/epam/ai-dial-chat/issues/9400)).
    */
   return (
     <Tooltip asChild tooltip={name} hideTooltip={!isClamped}>
