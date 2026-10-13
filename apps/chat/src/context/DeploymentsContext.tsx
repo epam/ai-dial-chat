@@ -369,6 +369,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           getDeployments([
             ListDeploymentsInterfaceTypeEnum.Chat,
             ListDeploymentsInterfaceTypeEnum.Mcp,
+            ListDeploymentsInterfaceTypeEnum.CustomUi,
           ]),
           getApplicationSchemas(),
           listToolsets(),
@@ -499,6 +500,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           [
             ListDeploymentsInterfaceTypeEnum.Chat,
             ListDeploymentsInterfaceTypeEnum.Mcp,
+            ListDeploymentsInterfaceTypeEnum.CustomUi,
           ],
           refresh,
         );

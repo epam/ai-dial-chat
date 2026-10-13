@@ -652,6 +652,19 @@ Overlay mode is enabled per deployment with `OVERLAY_ENABLED` plus an `ALLOWED_I
 
 Libraries know nothing about the overlay. The protocol lives in `libs/chat-overlay` as pure types plus a DOM host client; everything that touches app state is wired through `OverlayContext` bridges registered by the page components.
 
+## Custom Viewers — an application's own conversation UI
+
+The reverse direction: an application configured with a viewer URL (DIAL Core `viewer_url`, or `dial:applicationTypeViewerUrl` on its application type schema) has its message list and input replaced by its own page in an iframe.
+
+| Piece                              | Where                                   | Role                                                                                                        |
+| ---------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `DeploymentItemDto.viewerUrl`      | `apps/chat-api/src/deployments`         | Entity-level URL mapped from DIAL Core; the schema-level URL already rides on `/api/v1/application-schemas` |
+| `resolveCustomViewer`              | `apps/chat/src/utils/custom-viewer.ts`  | Picks the URL (direct first, then schema) and the title that namespaces every message                       |
+| `useCustomViewer`                  | `apps/chat/src/hooks/custom-viewer`     | Resolves it over `DeploymentsContext`'s deployments and schemas                                             |
+| `CustomViewerFrame` / `…StartGate` | `apps/chat/src/components/CustomViewer` | The iframe (through `@epam/ai-dial-visualizer-connector`) and the new-chat Start button                     |
+
+`ConversationPage` renders the frame instead of `ConversationView` and never streams for such a conversation; `ConversationRoute` shows the Start gate and lets the viewer create the conversation. The viewer origin must be in `ALLOWED_IFRAME_ORIGINS`. Protocol, payloads and limits are in [Custom Viewers](custom-viewers.md). No library is involved — all viewer code is app-level.
+
 ---
 
 ## Authentication
@@ -880,6 +893,7 @@ The intended direction, enforced in review:
 
 - [Legacy Chat Migration Guide](legacy-chat-migration-guide.md) — moving a deployment from the legacy DIAL Chat to 1.0
 - [Chat Overlay Migration Guide](chat-overlay-migration-guide.md) — embedding and migrating from the legacy overlay
+- [Custom Viewers](custom-viewers.md) — an application's own iframe UI in place of the conversation view
 - [Theme Customization](theme-customization.md) — theme configuration, tokens, and legacy theme migration
 - [Technical Requirements](technical-requirements.md)
 - [Responses API Integration](responses-api-integration.md)

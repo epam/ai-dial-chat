@@ -197,6 +197,19 @@ describe('DeploymentsContext', () => {
     });
   });
 
+  it('requests chat, MCP and custom-viewer deployments so viewer-only applications are listed', async () => {
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(mockGetDeployments).toHaveBeenCalledWith([
+      'chat',
+      'mcp',
+      'custom_ui',
+    ]);
+  });
+
   it('sets selectedItemId to first item on successful load', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,

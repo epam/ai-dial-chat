@@ -1586,3 +1586,10 @@ export enum ApplicationCredentialsI18nKeys {
   SharedCredentials = 'applicationCredentials.sharedCredentials',
   ConfirmLogout = 'applicationCredentials.confirmLogout',
 }
+
+export enum CustomViewerI18nKeys {
+  StartWorking = 'customViewer.startWorking',
+  FrameTitle = 'customViewer.frameTitle',
+  Loading = 'customViewer.loading',
+  InvalidUrl = 'customViewer.invalidUrl',
+}

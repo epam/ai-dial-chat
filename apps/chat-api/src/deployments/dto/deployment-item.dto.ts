@@ -149,6 +149,13 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
+      'Custom Viewer URL from DIAL Core viewer_url (present only for application deployments that configure one)',
+    example: 'https://viewer.example.com/',
+  })
+  viewerUrl?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])',
   })
   inputAttachmentTypes?: string[];

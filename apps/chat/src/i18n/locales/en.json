@@ -1724,5 +1724,11 @@
     "success": "Text refined. Undo is available.",
     "restored": "Original text restored.",
     "unchanged": "No changes were needed."
+  },
+  "customViewer": {
+    "startWorking": "Start working with the {{viewerTitle}}",
+    "frameTitle": "{{viewerTitle}} viewer",
+    "loading": "Loading viewer…",
+    "invalidUrl": "This application's viewer URL is not valid."
   }
 }

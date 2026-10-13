@@ -2950,6 +2950,12 @@ export interface DeploymentItemDto {
    */
   applicationTypeSchemaId?: string;
   /**
+   * Custom Viewer URL from DIAL Core viewer_url (present only for application deployments that configure one)
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  viewerUrl?: string;
+  /**
    * Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])
    * @type {Array<string>}
    * @memberof DeploymentItemDto
