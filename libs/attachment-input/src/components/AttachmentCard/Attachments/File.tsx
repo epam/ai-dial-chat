@@ -3,7 +3,14 @@ import {
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { Spinner, Highlight } from '@epam/ai-dial-ui-kit';
+import {
+  DialItemType,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  FileIcon,
+  Highlight,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type HTMLAttributes,
@@ -17,7 +24,9 @@ import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import type { FileAttachmentProps } from '../../../models/attachment-file-row';
 import {
   getAttachmentCardState,
+  getAttachmentExtension,
   getNameWithoutExtension,
+  hasFileTypeGlyph,
 } from '../../../utils/attachment';
 import {
   DownloadAction,
@@ -77,6 +86,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     : '';
 
   const { BottomIcon: Glyph, typeLabel } = getAttachmentCardState(attachment);
+  const isFileTypeGlyph = hasFileTypeGlyph(attachment);
 
   const canDownload = !isError && !isLoading && onDownload && !isLink;
 
@@ -136,7 +146,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   const tileClassName = mergeClasses(
     ATTACHMENT_TILE_BASE_CLASS,
-    'group/attachment-tile relative flex-col justify-between items-start gap-1 overflow-hidden p-1.5',
+    'group/attachment-tile relative flex-col justify-between items-start gap-1 overflow-hidden p-3',
     styles.tile,
     !isError && styles.hovered,
     isSelected && styles.selected,
@@ -149,9 +159,9 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     <div
       title={displayName}
       className={mergeClasses(
-        typography?.nameClassName ?? 'dial-caption-text',
+        typography?.nameClassName ?? 'dial-tiny-text',
         /*
-         * `w-full` is load-bearing here: the tile is a fixed-width (84px)
+         * `w-full` is load-bearing here: the tile is a fixed-width (100px)
          * column flex container with `items-start`, so the name div is sized to
          * its min-content width. `break-words` (overflow-wrap: break-word) does
          * not shrink min-content, so a filename with one long unbreakable run
@@ -181,11 +191,26 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         ATTACHMENT_INPUT_CLASS.tileType,
       )}
     >
-      <Glyph size={16} className={styles.typeText} aria-hidden />
+      {isFileTypeGlyph ? (
+        <FileIcon
+          type={DialItemType.File}
+          name={name ?? ''}
+          fileExtension={getAttachmentExtension(attachment)}
+          size={DIAL_ICON_SIZE.SM}
+          decorative
+        />
+      ) : (
+        <Glyph
+          size={DIAL_ICON_SIZE.SM}
+          className={styles.typeText}
+          stroke={DIAL_KIT_ICON_STROKE}
+          aria-hidden
+        />
+      )}
 
       <span
         className={mergeClasses(
-          typography?.metaClassName ?? 'dial-caption-text',
+          typography?.metaClassName ?? 'dial-tiny-text',
           'min-w-0 flex-1 truncate',
           styles.typeText,
         )}

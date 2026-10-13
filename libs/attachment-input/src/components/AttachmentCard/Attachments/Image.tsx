@@ -162,7 +162,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
             overlay={
               <IconPhoto
                 size={DIAL_ICON_SIZE.LG}
-                className={styles.typeText}
+                className={styles.placeholderIcon}
                 aria-hidden
                 stroke={DIAL_KIT_ICON_STROKE}
               />

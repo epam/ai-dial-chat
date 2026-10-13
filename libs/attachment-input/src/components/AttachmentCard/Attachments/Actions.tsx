@@ -111,8 +111,11 @@ export const OpenLinkAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   );
 };
 
-/** Remove button for attachments. */
-export const RemoveAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
+/** Remove button for attachments; always visible below the desktop breakpoint, where there is no hover to reveal it. */
+export const RemoveAction: FC<Omit<ActionProps, 'icon'>> = ({
+  className,
+  ...props
+}) => {
   return (
     <ActionButton
       icon={
@@ -122,6 +125,7 @@ export const RemoveAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
           stroke={DIAL_KIT_ICON_STROKE}
         />
       }
+      className={mergeClasses('mobile:opacity-100', className)}
       {...props}
     />
   );

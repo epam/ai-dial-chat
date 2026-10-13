@@ -1,9 +1,9 @@
 /*
  * These two are not layout — they stand in for Tailwind's preflight, which the
  * published styles.css does not carry. The utility layer itself does ship
- * (`size-[84px]`, `border` and the rest are emitted into dist/index.css by this
+ * (`size-[100px]`, `border` and the rest are emitted into dist/index.css by this
  * lib's own Tailwind pass), but both utilities assume the preflight reset: a
- * host that imports only our stylesheet got a 86px tile, because `size-[84px]`
+ * host that imports only our stylesheet got a 102px tile, because `size-[100px]`
  * sizes the content box without `border-box`, and no visible border at all,
  * because `border` sets only `border-width` while the initial `border-style` is
  * `none`.
@@ -56,7 +56,11 @@
 }
 
 .typeText {
-  color: var(--ai-tile-type-text, var(--text-secondary, #57647a));
+  color: var(--ai-tile-type-text, var(--text-primary, #161b2d));
+}
+
+.placeholderIcon {
+  color: var(--text-secondary, #57647a);
 }
 
 .retryIcon {

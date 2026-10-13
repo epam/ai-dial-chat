@@ -31,9 +31,9 @@ export interface FileAttachmentLabels extends AttachmentTypeLabels {
 
 /** Typography overrides for the `FileAttachment` component. */
 export interface FileAttachmentTypography {
-  /** Typography class applied to the file name text. Defaults to `'dial-caption-text'`. */
+  /** Typography class applied to the file name text. Defaults to `'dial-tiny-text'`. */
   nameClassName?: string;
-  /** Typography class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
+  /** Typography class applied to the bottom meta label (file type / status). Defaults to `'dial-tiny-text'`. */
   metaClassName?: string;
 }
 
