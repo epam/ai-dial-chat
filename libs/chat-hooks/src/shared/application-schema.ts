@@ -26,6 +26,21 @@ export const isQuickAppSchema = (schema?: QuickAppSchemaLike): boolean =>
   (!!schema.id?.endsWith('quickapps2') ||
     schema.displayName === 'Quick app 2.0');
 
+const MIND_MAP_SCHEMA_TOKEN = 'mindmap';
+
+const normalizeSchemaToken = (value?: string): string =>
+  value?.toLocaleLowerCase().replace(/[^a-z0-9]/g, '') ?? '';
+
+/*
+ * TODO: like `isQuickAppSchema`, this matches on schema id / display name
+ * because DIAL Core does not yet expose a stable capability/type field.
+ */
+/** True when `schema` is the Mind Map schema (its id or display name contains "mind map", ignoring case and separators). */
+export const isMindMapSchema = (schema?: QuickAppSchemaLike): boolean =>
+  !!schema &&
+  (normalizeSchemaToken(schema.id).includes(MIND_MAP_SCHEMA_TOKEN) ||
+    normalizeSchemaToken(schema.displayName).includes(MIND_MAP_SCHEMA_TOKEN));
+
 /** An application schema with a resolved id, as returned by {@link getRunnerSchemas}. */
 export type RunnerSchema<T extends QuickAppSchemaLike> = T & { id: string };
 
