@@ -4,7 +4,7 @@ import {
   InteractiveTooltipTrigger,
   TooltipPlacement,
 } from '@epam/ai-dial-ui-kit';
-import { useLayoutEffect, useRef, useState, type FC } from 'react';
+import { useLayoutEffect, useState, type FC } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
@@ -54,22 +54,31 @@ export const ChatSkill: FC<ChatSkillProps> = ({
    * total width equal to the invisible `/{name}` text it overlays. See
    * `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a (multi-skill-message-mentions).
    */
-  const slashRef = useRef<HTMLSpanElement | null>(null);
+  /*
+   * Held in state, not a ref: "View details" remounts the chip, and the
+   * measurement must follow the new `/` node. A ref left the observer on the
+   * detached node, whose 0px resize collapsed the padding so the name slid
+   * under the slash ([#9422](https://github.com/epam/ai-dial-chat/issues/9422)).
+   */
+  const [slash, setSlash] = useState<HTMLSpanElement | null>(null);
   const [slashWidth, setSlashWidth] = useState<number | null>(null);
 
   useLayoutEffect(() => {
-    const slash = slashRef.current;
-    const measure = () =>
-      setSlashWidth(slash?.getBoundingClientRect().width ?? null);
+    if (!slash) return;
+    const measure = () => {
+      // A node leaving the DOM reports 0px — keep the last real width.
+      if (!slash.isConnected) return;
+      setSlashWidth(slash.getBoundingClientRect().width);
+    };
     measure();
 
     /* A label that inherits its font (the composer's) changes size with no
      * `labelClassName` change, e.g. when the input switches breakpoint. */
-    if (!slash || typeof ResizeObserver === 'undefined') return;
+    if (typeof ResizeObserver === 'undefined') return;
     const resizeObserver = new ResizeObserver(measure);
     resizeObserver.observe(slash);
     return () => resizeObserver.disconnect();
-  }, [labelClassName]);
+  }, [slash, labelClassName]);
 
   /*
    * Branch order matches `openspec/changes/archive/2026-09-29-add-unresolved-skill-indicator/design.md` Decision 1: an unresolved url takes
@@ -139,7 +148,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
         aria-label={`/${name}`}
       >
         <span
-          ref={slashRef}
+          ref={setSlash}
           aria-hidden
           className="inset-inline-start-0 pointer-events-none absolute top-0 select-none"
         >
