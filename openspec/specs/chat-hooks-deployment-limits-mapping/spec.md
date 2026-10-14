@@ -167,7 +167,7 @@ details. The labels object SHALL:
   `usage.thisWeekTitle`, `usage.thisMonthTitle`), so the panel and Settings → Usage name the same
   periods identically;
 - take `tokenGroup`, `followsCostLimit`, and the three formatter callbacks from `CatalogI18nKeys`;
-- set `formatResetTime` to `formatUsageResetTime` (`apps/chat/src/utils/usage-reset-time.ts`) bound to
+- set `formatResetTime` to `formatUsageResetTime` (`libs/chat-hooks/src/usage/usage-reset-time.ts`) bound to
   the active language and `t`, the same formatter the Usage tab and the conversation-input popover
   use.
 

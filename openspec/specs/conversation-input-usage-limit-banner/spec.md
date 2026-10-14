@@ -89,7 +89,7 @@ spacing SHALL use logical or block-axis utilities.
 
 The app-owned `UsageLimitBanner` SHALL read the selected deployment's `DeploymentLimitsResponseDto`
 (component file `apps/chat/src/components/UsageLimitBanner/UsageLimitBanner.tsx`) through
-`useDeploymentUsageLimits` (`apps/chat/src/hooks/useDeploymentUsageLimits.ts`).
+`useDeploymentUsageLimits` (`libs/chat-hooks/src/usage/useDeploymentUsageLimits/useDeploymentUsageLimits.ts`).
 It SHALL consider the day, week, and month rows of both the token stats
 (`dayTokenStats`, `weekTokenStats`, `monthTokenStats`) and the cost stats
 (`dayCostStats`, `weekCostStats`, `monthCostStats`). The minute stats are excluded.
@@ -165,7 +165,7 @@ Reset sentence, from the source row's `resetsAt`, formatted in the viewer's
 locale and timezone:
 - **Day:** time with zone offset, through `conversationInput.usageBanner.resetsAtTime`, "Resets at {{time}}." (e.g. "Resets at 3:00 AM GMT+3.").
 - **Week and month:** date, through `conversationInput.usageBanner.resetsOnDate`, "Resets on {{date}}." (e.g. "Resets on Oct 19."). The year is included when it differs from the current year.
-- The value SHALL be wrapped in `<time dateTime={iso}>` and carry the full accessible expansion that `formatUsageResetTime` (`apps/chat/src/utils/usage-reset-time.ts`) already produces.
+- The value SHALL be wrapped in `<time dateTime={iso}>` and carry the full accessible expansion that `formatUsageResetTime` (`libs/chat-hooks/src/usage/usage-reset-time.ts`) already produces.
 - When `resetsAt` is absent or unparseable, the reset sentence is omitted and the period sentence renders alone.
 
 #### Scenario: Daily warning wording
@@ -199,7 +199,7 @@ Dismissals SHALL be held in memory for the lifetime of the browser tab, shared
 by both composers so that moving between the new-chat screen and a
 conversation does not resurrect a dismissed banner. They are owned by the hook
 `useUsageLimitBannerDismissal` in
-`apps/chat/src/hooks/useUsageLimitBannerDismissal.ts`, a module-scoped store
+`libs/chat-hooks/src/usage/useUsageLimitBannerDismissal/useUsageLimitBannerDismissal.ts`, a module-scoped store
 read through `useSyncExternalStore`. They SHALL NOT be written to
 `localStorage`, `sessionStorage`, or the user config. A page reload clears them.
 

@@ -522,9 +522,7 @@ describe('useCatalogEditNavigation', () => {
           key: 'runner:ocr-schema',
           domEvent: {} as never,
         });
-      expect(onNavigate).toHaveBeenCalledWith(
-        'create:quick-app:ocr-schema',
-      );
+      expect(onNavigate).toHaveBeenCalledWith('create:quick-app:ocr-schema');
     });
 
     it('lists every runner option, sorted alphabetically', () => {
