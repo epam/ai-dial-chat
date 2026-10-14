@@ -296,6 +296,17 @@ call" requirement for how the frontend closes that gap by calling this endpoint 
 specifically to re-trigger the force-merge described here, after the embedded editor's own save
 completes.
 
+`createApplication` (and only create) SHALL also default the Quick App's top-level
+`features.system_prompt_supported` to `false`, because DIAL Core treats an unset flag as
+supported and chat would otherwise show a system prompt field for an app whose prompt lives in its
+orchestrator config. A caller-supplied `system_prompt_supported` wins, and `updateApplication`
+does not touch the flag.
+
+#### Scenario: A Quick App create defaults system_prompt_supported to false
+- **WHEN** an authenticated user POSTs an application create body whose `type` matches
+  `isQuickAppSchema`, with no `features` supplied
+- **THEN** the DIAL Core save body's top-level `features.system_prompt_supported` is `false`
+
 #### Scenario: A Quick App create forces skills_supported to true
 - **WHEN** an authenticated user POSTs an application create body whose `type` matches
   `isQuickAppSchema`, with no `features` supplied

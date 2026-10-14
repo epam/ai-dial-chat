@@ -398,7 +398,10 @@ describe('ApplicationsService', () => {
               'https://mydial.epam.com/custom_application_schemas/quickapps2',
             description: 'A description',
             iconUrl: 'https://example.com/icon.svg',
-            features: { skills_supported: true },
+            features: {
+              system_prompt_supported: false,
+              skills_supported: true,
+            },
           },
         }),
       );
@@ -544,7 +547,26 @@ describe('ApplicationsService', () => {
       await service.createApplication('user1', 'token', body);
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
-      expect(sentBody.features).toEqual({ skills_supported: true });
+      expect(sentBody.features).toEqual({
+        system_prompt_supported: false,
+        skills_supported: true,
+      });
+    });
+
+    it('lets caller-supplied features override the system_prompt_supported default for a Quick App', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        applicationProperties: { features: { system_prompt_supported: true } },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({
+        system_prompt_supported: true,
+        skills_supported: true,
+      });
     });
 
     it('merges skills_supported alongside caller-supplied features for a Quick App', async () => {
@@ -558,6 +580,7 @@ describe('ApplicationsService', () => {
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody.features).toEqual({
+        system_prompt_supported: false,
         timestamp: true,
         skills_supported: true,
       });
