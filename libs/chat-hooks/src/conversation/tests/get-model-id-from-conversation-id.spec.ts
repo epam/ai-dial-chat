@@ -124,6 +124,14 @@ describe('getModelIdFromConversationId', () => {
       ),
     ).toBe('folder/applications/app-bucket/my-app__1.0');
   });
+
+  it('keeps the version suffix of a public application nested in folders', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/applications/public/epam/agent/epam-agent__1.0.0__fdfddff__9a4f30a6-6441-4e98-b584-e2510646943b',
+      ),
+    ).toBe('applications/public/epam/agent/epam-agent__1.0.0');
+  });
 });
 
 describe('getModelIdCandidatesFromConversationId', () => {
@@ -148,7 +156,17 @@ describe('findDeploymentForConversationId', () => {
     { id: 'anthropic/claude-3' },
     { id: 'claude-3' },
     { id: 'applications/app-bucket/my-app__1.0' },
+    { id: 'applications/public/epam/agent/epam-agent__1.0.0' },
   ] as DeploymentItemDto[];
+
+  it('finds a versioned public application nested in folders', () => {
+    expect(
+      findDeploymentForConversationId(
+        deployments,
+        'conversations/bucket/applications/public/epam/agent/epam-agent__1.0.0__title__uuid',
+      )?.id,
+    ).toBe('applications/public/epam/agent/epam-agent__1.0.0');
+  });
 
   it('finds the deployment of a conversation stored in a folder', () => {
     expect(
