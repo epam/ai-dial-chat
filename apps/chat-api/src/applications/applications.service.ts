@@ -195,9 +195,15 @@ export class ApplicationsService {
        * Quick App — a deliberate coupling of generic application-write logic
        * to Quick-App-specific business rules, accepted as the least-bad of
        * those three options.
+       *
+       * `system_prompt_supported` is also written as `false` on creation only:
+       * DIAL Core treats an unset flag as supported, so without it the chat
+       * shows the system prompt field for a Quick App whose prompt is owned by
+       * its orchestrator config. Updates leave it untouched.
        */
       if (isQuickAppSchema(body.type)) {
         dialBody.features = {
+          system_prompt_supported: false,
           ...dialBody.features,
           skills_supported: true,
         } as (typeof dialBody)['features'];
