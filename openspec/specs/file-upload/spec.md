@@ -7,9 +7,9 @@ Uploading a file to DIAL Core through the BFF, with DTO validation and environme
 ## Requirements
 
 ### Requirement: Upload file to DIAL Core via BFF
-The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` request with a `file` field (binary), `bucket` and `path` form fields, and an optional `uploadMode` field. The endpoint SHALL validate all inputs, apply conditional DIAL Core headers based on `uploadMode`, and proxy the upload to DIAL Core `PUT /v1/files/{bucket}/{path}` (via the DIAL SDK client's `uploadFile`, from `FilesUploadService` in `apps/chat-api/src/files/upload/files-upload.service.ts`) under the authenticated user's session. The endpoint SHALL return `201 Created` with a `FileUploadResponseDto` on success.
+The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` request with a `file` field (binary), `bucket` and `path` form fields, and an optional `uploadMode` field. The endpoint SHALL validate all inputs, apply conditional DIAL Core headers based on `uploadMode`, and proxy the upload to DIAL Core `PUT /v1/files/{bucket}/{path}` (a streamed multipart request issued by `FilesUploadService` in `apps/chat-api/src/files/upload/files-upload.service.ts`, using the same raw-`fetch` upload helper as archive entries because the DIAL SDK upload helper requires a whole `FormData`/`Blob`) under the authenticated user's session. The endpoint SHALL return `201 Created` with a `FileUploadResponseDto` on success.
 
-The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately. The multer `memoryStorage` engine MUST be used (registered in `apps/chat-api/src/files/files.module.ts`) with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB).
+The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately, in bounded chunks (not as one `Blob`), so the transfer can be observed for progress. The multer `memoryStorage` engine MUST be used (registered in `apps/chat-api/src/files/files.module.ts`) with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB).
 
 - **Swagger**: `@ApiConsumes('multipart/form-data')` and `@ApiBody` with schema describing `file`, `bucket`, `path`, and optional `uploadMode` fields.
 - **operationId**: `uploadFile` → generated SDK method `filesApi.uploadFile(...)`.
@@ -40,6 +40,8 @@ Malformed percent escapes, encoded separators or dots (`%2E`, `%2F`, `%5C`),
 raw backslashes, leading slashes, and traversal segments remain invalid.
 
 **DIAL Core 412 handling for `create-only`:** When DIAL Core returns `412 Precondition Failed` in response to `If-None-Match: *`, the BFF SHALL map this to `409 Conflict` with body `{ "message": "File already exists at this path" }`. This indicates a race condition (file was created by another request after the client checked) and SHALL be surfaced as an upload failure for that file.
+
+**Transfer limits:** the transfer to DIAL Core SHALL be bounded by progress, not by one absolute timer. It SHALL be aborted when (a) no data has been handed to the connection for `FILE_TRANSFER_TIMEOUT_MS` (stalled), (b) DIAL Core has not answered 2 minutes after the last chunk was handed over, or (c) the whole transfer has run for 30 minutes. A slow transfer that keeps making progress SHALL NOT be aborted by (a), however long it takes, until (c). Limits (b) and (c) are fixed and not configurable. Each abort returns `503 Service Unavailable` with a message naming the cause (stalled / DIAL Core did not respond / maximum duration), not `DIAL Core is unreachable`.
 
 **Success response (201):** `FileUploadResponseDto`
 ```json
@@ -100,8 +102,28 @@ raw backslashes, leading slashes, and traversal segments remain invalid.
 - **THEN** the system returns `429 Too Many Requests` to the browser
 
 #### Scenario: DIAL Core is unreachable
-- **WHEN** the fetch to DIAL Core times out or the connection is refused
+- **WHEN** the connection to DIAL Core is refused or fails before any transfer limit is hit
 - **THEN** the system returns `503 Service Unavailable`
+
+#### Scenario: Large upload slower than the old absolute timeout
+- **WHEN** a file whose transfer to DIAL Core takes longer than `FILE_TRANSFER_TIMEOUT_MS` is uploaded
+- **AND** data keeps being accepted by the connection (each gap shorter than `FILE_TRANSFER_TIMEOUT_MS`)
+- **THEN** the upload completes and the BFF returns `201 Created`
+
+#### Scenario: Transfer stalls
+- **WHEN** no data is accepted by the connection to DIAL Core for `FILE_TRANSFER_TIMEOUT_MS`
+- **THEN** the request to DIAL Core is aborted
+- **AND** the system returns `503 Service Unavailable` with a message stating the upload stalled
+
+#### Scenario: DIAL Core does not respond after the file is sent
+- **WHEN** the whole file has been handed to the connection and DIAL Core does not answer within 2 minutes
+- **THEN** the request to DIAL Core is aborted
+- **AND** the system returns `503 Service Unavailable` with a message stating DIAL Core did not respond
+
+#### Scenario: Maximum transfer duration reached
+- **WHEN** one transfer to DIAL Core runs for 30 minutes, even though data is still flowing
+- **THEN** the request to DIAL Core is aborted
+- **AND** the system returns `503 Service Unavailable` with a message stating the maximum duration was exceeded
 
 #### Scenario: DIAL Core returns unexpected 5xx
 - **WHEN** DIAL Core returns a 5xx status code
@@ -135,7 +157,7 @@ The `UploadFileDto` SHALL be defined at `apps/chat-api/src/files/dto/upload-file
 The system SHALL add `FILE_UPLOAD_MAX_BYTES` and `FILE_TRANSFER_TIMEOUT_MS` to `EnvironmentVariables` with sensible defaults and class-validator decorators.
 
 - `FILE_UPLOAD_MAX_BYTES`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1)`, default `536_870_912` (512 MB).
-- `FILE_TRANSFER_TIMEOUT_MS`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1000)`, default `30_000`.
+- `FILE_TRANSFER_TIMEOUT_MS`: `@IsOptional()`, `@Transform(parseInt)`, `@IsInt()`, `@Min(1000)`, default `30_000`. Bounds DIAL Core file download, listing, delete and other file-operation requests as a whole-request timeout. For `POST /api/v1/files` it is instead the maximum time the transfer may go without moving data.
 
 Both variables SHALL be documented in `apps/chat-api/README.md` and added as commented placeholders to `apps/chat-api/.env.template`.
 

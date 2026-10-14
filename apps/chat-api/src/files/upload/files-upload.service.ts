@@ -20,7 +20,6 @@ import { ConfigService } from '@nestjs/config';
 import * as yauzl from 'yauzl';
 import {
   handleDialFetchError,
-  handleDialSdkError,
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
@@ -38,6 +37,14 @@ import type {
 } from '../dto/upload-archive.dto';
 import type { FileUploadResponseDto } from '../dto/upload-file-response.dto';
 import type { UploadMode } from '../dto/upload-file.dto';
+import {
+  UPLOAD_MAX_DURATION_MS,
+  UPLOAD_RESPONSE_TIMEOUT_MS,
+  UploadAbortReason,
+  UploadWatchdog,
+  type UploadWatchdogLimits,
+  sliceBuffer,
+} from './upload-watchdog';
 
 interface ArchiveEntryPathResult {
   isDirectory: boolean;
@@ -117,16 +124,27 @@ const buildDeduplicatedFilePath = (path: string, index: number): string => {
 const isConflictError = (err: unknown): boolean =>
   err instanceof HttpException && err.getStatus() === HttpStatus.CONFLICT;
 
-const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
-  const formData = new FormData();
-  const fileName = file.originalname ?? getFileNameFromPath(path);
-  formData.append(
-    'file',
-    new Blob([file.buffer], { type: file.mimetype }),
-    fileName,
-  );
-  return formData;
+const UPLOAD_ABORT_MESSAGES: Record<UploadAbortReason, string> = {
+  [UploadAbortReason.Stalled]:
+    'File upload stalled: no data reached DIAL Core within the idle limit',
+  [UploadAbortReason.ResponseTimeout]:
+    'DIAL Core did not respond after the file was sent',
+  [UploadAbortReason.MaxDuration]:
+    'File upload exceeded the maximum allowed duration',
 };
+
+interface StreamUploadOptions {
+  /** Sends `If-None-Match: *` so DIAL Core rejects an existing path with 412. Defaults to true. */
+  createOnly?: boolean;
+  fileName?: string;
+  contentType?: string;
+  /**
+   * Encodes `path` for the DIAL Core URL. Archive entries carry plain names
+   * (encode once); a single-file request path may already be percent-encoded
+   * (decode each segment once, then encode).
+   */
+  encodePath?: (path: string) => string;
+}
 
 @Injectable()
 export class FilesUploadService {
@@ -141,12 +159,20 @@ export class FilesUploadService {
     return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
   }
 
+  private getUploadLimits(): UploadWatchdogLimits {
+    return {
+      idleMs: this.getTimeoutMs(),
+      responseMs: UPLOAD_RESPONSE_TIMEOUT_MS,
+      maxDurationMs: UPLOAD_MAX_DURATION_MS,
+    };
+  }
+
   /*
-   * Parallels uploadFileStream() below: both independently implement the
-   * DIAL Core create-only upload contract (`If-None-Match: '*'`, 412 -> 409
-   * Conflict). uploadFileStream() can't reuse this SDK/FormData path without
-   * re-buffering the staged archive entry into memory (design D2). If the
-   * upload contract changes, update both.
+   * The buffered file is handed to DIAL Core as a stream of bounded chunks so
+   * the transfer is bounded by progress (idle / response timeouts) instead of
+   * one absolute timer that large files outlive. Shares the DIAL Core upload
+   * contract (`If-None-Match: '*'`, 412 -> 409 Conflict) with archive entries
+   * through uploadFileStream().
    */
   async uploadFile(
     bucket: string,
@@ -155,60 +181,47 @@ export class FilesUploadService {
     token: string,
     uploadMode?: UploadMode,
   ): Promise<FileUploadResponseDto> {
+    this.logger.debug(
+      `Uploading file to DIAL Core: bucket=${bucket}, path=${path}, mimetype=${file.mimetype}, size=${file.buffer.length}, uploadMode=${uploadMode ?? 'overwrite'}`,
+    );
+
+    const watchdog = new UploadWatchdog(this.getUploadLimits());
+
     try {
-      this.logger.debug(
-        `Uploading file to DIAL Core: bucket=${bucket}, path=${path}, mimetype=${file.mimetype}, size=${file.buffer.length}, uploadMode=${uploadMode ?? 'overwrite'}`,
+      await this.uploadFileStream(
+        bucket,
+        path,
+        Readable.from(watchdog.watch(sliceBuffer(file.buffer))),
+        token,
+        watchdog.signal,
+        {
+          createOnly: uploadMode === 'create-only',
+          fileName: file.originalname ?? getFileNameFromPath(path),
+          contentType: file.mimetype,
+          encodePath: encodeDialResourcePath,
+        },
       );
-
-      const conditionalHeaders =
-        uploadMode === 'create-only' ? { 'If-None-Match': '*' } : {};
-
-      const { data, error, response } =
-        (await this.dialClient.client.uploadFile(
-          bucket,
-          encodeDialResourcePath(path),
-          {
-            headers: {
-              ...getBearerAuthHeaders(token),
-              ...conditionalHeaders,
-            },
-            body: buildUploadFormData(file, path) as unknown as string,
-            signal: AbortSignal.timeout(this.getTimeoutMs()),
-          },
-        )) as { data?: { url?: string }; error?: unknown; response: Response };
-
-      if (error != null) {
-        if (response.status === 412) {
-          this.logger.warn(
-            `DIAL Core upload precondition failed (412): bucket=${bucket}, path=${path} — mapping to 409 Conflict`,
-          );
-          throw new HttpException(
-            'File already exists at this path',
-            HttpStatus.CONFLICT,
-          );
-        }
-        this.logger.warn(
-          `DIAL Core upload returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
-        );
-        return handleDialSdkError(
-          error,
-          'files.uploadFile',
-          this.logger,
-          response,
-        );
-      }
 
       const url = buildDialFileUrl(bucket, path);
       this.logger.debug(
-        `File upload succeeded: bucket=${bucket}, path=${path}, url=${url}, upstreamUrl=${data?.url ?? ''}`,
+        `File upload succeeded: bucket=${bucket}, path=${path}, url=${url}`,
       );
       return { url };
     } catch (err) {
-      if (err instanceof HttpException) {
-        throw err;
+      if (watchdog.reason !== undefined) {
+        this.logger.error(
+          `Upload aborted (${watchdog.reason}) for ${bucket}/${path}, size=${file.buffer.length}`,
+        );
+        throw new ServiceUnavailableException(
+          UPLOAD_ABORT_MESSAGES[watchdog.reason],
+        );
       }
-      this.logger.error(`Upload failed for ${bucket}/${path}`, err);
-      return handleDialSdkError(err, 'files.uploadFile', this.logger);
+      if (!(err instanceof HttpException)) {
+        this.logger.error(`Upload failed for ${bucket}/${path}`, err);
+      }
+      throw err;
+    } finally {
+      watchdog.dispose();
     }
   }
 
@@ -526,11 +539,11 @@ export class FilesUploadService {
   }
 
   /*
-   * Parallels uploadFile() above: both independently implement the DIAL Core
-   * create-only upload contract (`If-None-Match: '*'`, 412 -> 409 Conflict).
-   * This raw-fetch path exists only so archive extraction can stream from
-   * disk instead of re-buffering into a FormData/Blob (design D2). If the
-   * upload contract changes, update both.
+   * Single DIAL Core upload implementation, shared by uploadFile() (buffered
+   * single files) and archive extraction (staged files streamed from disk).
+   * Raw fetch instead of the SDK helper, which requires a whole FormData/Blob.
+   * Create-only (`If-None-Match: '*'`, 412 -> 409 Conflict) unless
+   * `options.createOnly` is false.
    */
   private async uploadFileStream(
     bucket: string,
@@ -538,7 +551,14 @@ export class FilesUploadService {
     fileStream: Readable,
     token: string,
     signal: AbortSignal,
+    options: StreamUploadOptions = {},
   ): Promise<void> {
+    const {
+      createOnly = true,
+      fileName = getFileNameFromPath(path),
+      contentType = 'application/octet-stream',
+      encodePath = encodeDialFilePath,
+    } = options;
     this.throwIfArchiveUploadAborted(signal);
 
     /* boundary is UUIDv4 and cannot be influenced by user input — safe to
@@ -547,7 +567,8 @@ export class FilesUploadService {
     const multipartStream = this.createMultipartFileStream(
       fileStream,
       boundary,
-      getFileNameFromPath(path),
+      fileName,
+      contentType,
     );
     const abortCurrentUpload = (): void => {
       const error = new Error('ARCHIVE_UPLOAD_ABORTED');
@@ -563,12 +584,12 @@ export class FilesUploadService {
        * staged file again. Raw fetch lets archive uploads stream from disk.
        */
       const response = await this.dialClient.fetchCore(
-        this.buildDialUploadUrl(bucket, path),
+        this.buildDialUploadUrl(bucket, encodePath(path)),
         {
           method: 'PUT',
           headers: {
             ...getBearerAuthHeaders(token),
-            'If-None-Match': '*',
+            ...(createOnly ? { 'If-None-Match': '*' } : {}),
             'Content-Type': `multipart/form-data; boundary=${boundary}`,
           },
           body: Readable.toWeb(multipartStream) as RequestInit['body'],
@@ -606,12 +627,14 @@ export class FilesUploadService {
     fileStream: Readable,
     boundary: string,
     fileName: string,
+    contentType: string,
   ): Readable {
     const safeFileName = fileName.replace(/[\r\n"]/g, '_');
+    const safeContentType = contentType.replace(/[\r\n]/g, '');
 
     async function* parts(): AsyncGenerator<Buffer> {
       yield Buffer.from(
-        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeFileName}"\r\nContent-Type: application/octet-stream\r\n\r\n`,
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeFileName}"\r\nContent-Type: ${safeContentType}\r\n\r\n`,
       );
       for await (const chunk of fileStream) {
         yield Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
@@ -622,9 +645,9 @@ export class FilesUploadService {
     return Readable.from(parts());
   }
 
-  private buildDialUploadUrl(bucket: string, path: string): string {
+  private buildDialUploadUrl(bucket: string, encodedPath: string): string {
     const baseUrl = StringUtils.stripTrailingSlashes(this.dialClient.baseUrl);
-    return `${baseUrl}/v1/files/${encodeURIComponent(bucket)}/${encodeDialFilePath(path)}`;
+    return `${baseUrl}/v1/files/${encodeURIComponent(bucket)}/${encodedPath}`;
   }
 
   private async removeArchiveUploadTempDirectory(
