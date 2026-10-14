@@ -115,13 +115,15 @@ any length; to flag an over-limit value while the user types, pass
 back through `errors`. An Instructions error also gives the editor an error
 border.
 
-The optional `onRefineDescription` callback,
-`(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
-AI action (and Undo) beside the Description label; omit it to hide the action.
+The optional `onRefineDescription` and `onRefineInstructions` callbacks,
+each `(value: string, signal: AbortSignal) => Promise<string>`, add a Refine
+with AI action (and Undo) beside the Description and Instructions labels
+respectively; omit a callback to hide its action. Only one field refines at a
+time — while either request is pending both actions and Save are disabled.
 `PromptEditorLabels` extends `TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`, so the refinement copy (`refineWithAiLabel`,
-`refineUndoLabel`, …) is passed through `labels`. Save is disabled while a
-request is pending, and a new `initialValues` identity resets Undo.
+`refineUndoLabel`, …) is passed through `labels`. A new `initialValues`
+identity resets Undo.
 
 ### `PromptFolderField`
 

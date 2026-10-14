@@ -332,6 +332,7 @@ These optional server-only variables replace the complete built-in instruction f
 | `TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT`     | Refine an application description                   | Built-in |
 | `TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT`         | Refine a toolset description                        | Built-in |
 | `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT`          | Refine a prompt description                         | Built-in |
+| `TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT`         | Refine prompt instructions                          | Built-in |
 | `CONVERSATION_NAMING_SYSTEM_PROMPT`                  | Automatic naming and the Rename conversation action | Built-in |
 | `TRANSCRIPTION_PROMPT`                               | Dedicated audio transcription via `ASR_MODEL`       | Built-in |
 
