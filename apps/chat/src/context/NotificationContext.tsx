@@ -28,7 +28,15 @@ export interface NotificationItem {
   requestId?: string;
 }
 
-export type ShowNotificationOptions = Omit<NotificationItem, 'id'>;
+export type ShowNotificationOptions = Omit<NotificationItem, 'id'> & {
+  /**
+   * Caller-supplied notification id, for later dismissal. Defaults to a
+   * generated one. Supply it when the caller must dismiss the notification
+   * and builds the dismissal reference before the show call — e.g. an action
+   * rendered inside the toast that dismisses its own notification.
+   */
+  id?: string;
+};
 
 /*
  * Payload of the variant-scoped helpers (`showErrorNotification` and friends):
@@ -68,7 +76,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const showNotification = useCallback(
     (options: ShowNotificationOptions): string => {
-      const id = generateUUID();
+      const id = options.id ?? generateUUID();
       setNotifications((prev) => [...prev, { ...options, id }]);
       return id;
     },

@@ -97,8 +97,8 @@ describe('entry-point barrels stay in sync with the root barrel', () => {
   );
   expect(
     entryPointFiles.length,
-    'expected 20 entry-point barrels under src/entry-points/',
-  ).toBe(20);
+    'expected 21 entry-point barrels under src/entry-points/',
+  ).toBe(21);
 
   const entryDeclsByFile = new Map(
     entryPointFiles.map((file) => [

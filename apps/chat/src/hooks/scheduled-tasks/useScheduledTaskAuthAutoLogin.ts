@@ -1,13 +1,12 @@
-import { useCallback } from 'react';
-import { getOfflineCredentials } from '../../server-api/offline-credentials';
 import type {
   OfflineCredentialsConnectSettings,
+  OfflineCredentialsLoginOutcome,
   OfflineCredentialsStatusResult,
-} from '../offlineCredentials/useOfflineCredentialsGate';
-import {
-  useOfflineCredentialsLogin,
-  type OfflineCredentialsLoginOutcome,
-} from '../offlineCredentials/useOfflineCredentialsLogin';
+} from '@epam/ai-dial-chat-hooks';
+import { mapOfflineCredentialsResponse } from '@epam/ai-dial-chat-hooks';
+import { useCallback } from 'react';
+import { getOfflineCredentials } from '../../server-api/offline-credentials';
+import { useOfflineCredentialsLogin } from '../offlineCredentials/useOfflineCredentialsLogin';
 
 /**
  * Login orchestration for the scheduled-task create/edit save-failure path.
@@ -36,7 +35,7 @@ export const useScheduledTaskAuthAutoLogin = (): {
   const refetch =
     useCallback(async (): Promise<OfflineCredentialsStatusResult | null> => {
       try {
-        return await getOfflineCredentials();
+        return mapOfflineCredentialsResponse(await getOfflineCredentials());
       } catch {
         return null;
       }

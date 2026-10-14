@@ -7,7 +7,13 @@ import {
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
-import { EditorThemes } from '@epam/ai-dial-ui-kit';
+import {
+  Button,
+  ButtonAppearance,
+  ButtonVariant,
+  EditorThemes,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
@@ -158,6 +164,19 @@ const ScheduledTaskCreatePage: FC = () => {
     onSuccess: handleCreateSuccess,
     onFieldErrors: setErrors,
     errorKey: ScheduledTasksI18nKeys.CreateErrorNotification,
+    /*
+     * The page owns the login-and-retry action's presentation (the kit's own
+     * retry-action doc example shape); the hook owns its behavior.
+     */
+    renderLoginAndRetryAction: (onAction) => (
+      <Button
+        variant={ButtonVariant.Neutral}
+        appearance={ButtonAppearance.Outlined}
+        size={ElementSize.Small}
+        label={t(ScheduledTasksI18nKeys.LoginAndRetryAction)}
+        onClick={onAction}
+      />
+    ),
   });
 
   if (appConfigStatus !== UserConfigStatus.Ready) {

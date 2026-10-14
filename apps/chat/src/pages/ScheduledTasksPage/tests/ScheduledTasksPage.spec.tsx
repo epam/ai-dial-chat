@@ -37,18 +37,31 @@ vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsGate', () => ({
   useOfflineCredentialsGate: () => useOfflineCredentialsGateMock(),
 }));
 
-const loginMock = vi.fn();
-const useOfflineCredentialsLoginMock = vi.fn();
-vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsLogin', () => ({
-  OfflineCredentialsLoginOutcomeType: {
-    Success: 'success',
-    Failure: 'failure',
-    PopupBlocked: 'popup-blocked',
-    Cancelled: 'cancelled',
-    TimedOut: 'timed-out',
-  },
-  useOfflineCredentialsLogin: () => useOfflineCredentialsLoginMock(),
+const logInMock = vi.fn();
+const useOfflineCredentialsAuthMock = vi.fn();
+/*
+ * The app auth wiring is the test seam: the shared hook is outcome-based, so
+ * the page spec drives login outcomes directly instead of the OAuth popup
+ * flow (covered by the lib's own spec).
+ */
+vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsAuth', () => ({
+  useOfflineCredentialsAuth: () => useOfflineCredentialsAuthMock(),
 }));
+
+const makeAuthResult = (
+  overrides?: Partial<{
+    isLoggingIn: boolean;
+    loginOutcome: string | undefined;
+    isLoggingOut: boolean;
+  }>,
+) => ({
+  isLoggingIn: false,
+  loginOutcome: undefined,
+  isLoggingOut: false,
+  logIn: logInMock,
+  logOut: vi.fn(),
+  ...overrides,
+});
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
   ScheduledTasksSortKey: {
@@ -187,7 +200,7 @@ describe('ScheduledTasksPage', () => {
       connected: false,
       refetch: refetchCredentialsMock,
     });
-    useOfflineCredentialsLoginMock.mockReturnValue({ login: loginMock });
+    useOfflineCredentialsAuthMock.mockReturnValue(makeAuthResult());
   });
 
   it('renders a fallback instead of NotFound while app config is still loading', () => {
@@ -441,24 +454,20 @@ describe('ScheduledTasksPage', () => {
       ).toBeTruthy();
     });
 
-    it('calls the login hook with the connect settings and refetch when Log in is clicked', async () => {
+    it('starts the auth flow login when the banner Log in is activated', async () => {
       useFeatureFlagMock.mockReturnValue(true);
       useOfflineCredentialsGateMock.mockReturnValue({
         status: 'available',
         connect: CONNECT_SETTINGS,
         refetch: refetchCredentialsMock,
       });
-      loginMock.mockResolvedValue({ type: 'success' });
       renderScheduledTasksPage();
 
       await userEvent.click(
         screen.getByRole('button', { name: 'buttons.logIn' }),
       );
 
-      expect(loginMock).toHaveBeenCalledWith(
-        CONNECT_SETTINGS,
-        refetchCredentialsMock,
-      );
+      expect(logInMock).toHaveBeenCalledOnce();
     });
 
     it.each([
@@ -478,12 +487,10 @@ describe('ScheduledTasksPage', () => {
           connect: CONNECT_SETTINGS,
           refetch: refetchCredentialsMock,
         });
-        loginMock.mockResolvedValue({ type: outcomeType });
-        renderScheduledTasksPage();
-
-        await userEvent.click(
-          screen.getByRole('button', { name: 'buttons.logIn' }),
+        useOfflineCredentialsAuthMock.mockReturnValue(
+          makeAuthResult({ loginOutcome: outcomeType }),
         );
+        renderScheduledTasksPage();
 
         expect(
           await screen.findByRole('button', { name: 'buttons.retry' }),
@@ -493,35 +500,37 @@ describe('ScheduledTasksPage', () => {
         await userEvent.click(
           screen.getByRole('button', { name: 'buttons.retry' }),
         );
-        expect(loginMock).toHaveBeenCalledTimes(2);
+        expect(logInMock).toHaveBeenCalledOnce();
       },
     );
 
-    it('hides the banner once a successful login is confirmed', async () => {
+    it('hides the banner once a successful login outcome resolves with the announcement spoken', () => {
       useFeatureFlagMock.mockReturnValue(true);
-      useOfflineCredentialsGateMock
-        .mockReturnValueOnce({
-          status: 'available',
-          connect: CONNECT_SETTINGS,
-          refetch: refetchCredentialsMock,
-        })
-        .mockReturnValue({
-          status: 'hidden',
-          connect: undefined,
-          refetch: refetchCredentialsMock,
-        });
-      loginMock.mockResolvedValue({ type: 'success' });
-      renderScheduledTasksPage();
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: CONNECT_SETTINGS,
+        refetch: refetchCredentialsMock,
+      });
+      const view = renderScheduledTasksPage();
 
       expect(screen.getByRole('alert')).toBeTruthy();
 
-      await userEvent.click(
-        screen.getByRole('button', { name: 'buttons.logIn' }),
+      view.unmount();
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        refetch: refetchCredentialsMock,
+      });
+      useOfflineCredentialsAuthMock.mockReturnValue(
+        makeAuthResult({ loginOutcome: 'success' }),
       );
+      renderScheduledTasksPage();
 
-      await screen.findByText(
-        'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
-      );
+      expect(
+        screen.getByText(
+          'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
+        ),
+      ).toBeTruthy();
       expect(screen.queryByRole('alert')).toBeNull();
     });
   });

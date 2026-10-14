@@ -18,7 +18,14 @@ import {
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
 } from '@epam/ai-dial-scheduled-tasks';
-import { EditorThemes, GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  Button,
+  ButtonAppearance,
+  ButtonVariant,
+  EditorThemes,
+  ElementSize,
+  GhostButton,
+} from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -282,6 +289,19 @@ const ScheduledTaskEditPage: FC = () => {
     onFieldErrors: setErrors,
     errorKey: ScheduledTasksI18nKeys.EditErrorNotification,
     handleExtraError: handleTaskNotFoundError,
+    /*
+     * The page owns the login-and-retry action's presentation (the kit's own
+     * retry-action doc example shape); the hook owns its behavior.
+     */
+    renderLoginAndRetryAction: (onAction) => (
+      <Button
+        variant={ButtonVariant.Neutral}
+        appearance={ButtonAppearance.Outlined}
+        size={ElementSize.Small}
+        label={t(ScheduledTasksI18nKeys.LoginAndRetryAction)}
+        onClick={onAction}
+      />
+    ),
   });
 
   const handleSubmitVoid = useCallback(

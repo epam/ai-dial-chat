@@ -1,8 +1,19 @@
 import {
+  OfflineCredentialsGateStatus,
+  OfflineCredentialsLoginOutcomeType,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ScheduledTasks,
   ScheduledTasksSortKey,
 } from '@epam/ai-dial-scheduled-tasks';
-import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -17,15 +28,12 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useOfflineCredentialsAuth } from '../../hooks/offlineCredentials/useOfflineCredentialsAuth';
-import {
-  OfflineCredentialsGateStatus,
-  useOfflineCredentialsGate,
-} from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
-import { OfflineCredentialsLoginOutcomeType } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { useOfflineCredentialsGate } from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
 import { useScheduledTasks } from '../../hooks/scheduled-tasks/useScheduledTasks';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { mapScheduledTaskDtosToItems } from '../../utils/map-scheduled-task-dto';
+import { OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS } from '../../utils/offline-credentials-announcements';
 import NotFoundPage from '../NotFound/NotFound';
 
 interface NavigationState {
@@ -101,11 +109,25 @@ const ScheduledTasksPage: FC = () => {
     connect,
     refetch: refetchCredentials,
   } = useOfflineCredentialsGate();
-  const { isLoggingIn, loginOutcome, liveAnnouncement, logIn } =
-    useOfflineCredentialsAuth({
-      connect,
-      refetch: refetchCredentials,
-    });
+  const { isLoggingIn, loginOutcome, logIn } = useOfflineCredentialsAuth({
+    connect,
+    refetch: refetchCredentials,
+  });
+
+  /*
+   * The shared auth hook is outcome-based (the lib holds no i18n), so the
+   * page maps the terminal login outcome onto the polite announcement text
+   * both surfaces announce; a new attempt resets the outcome, and the
+   * announcement with it.
+   */
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  useEffect(() => {
+    setLiveAnnouncement(
+      loginOutcome != null
+        ? t(OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS[loginOutcome])
+        : '',
+    );
+  }, [loginOutcome, t]);
 
   useEffect(() => {
     const state = location.state as NavigationState | null;

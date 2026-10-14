@@ -44,7 +44,7 @@ describe('UsageLimitBannerView', () => {
       // eslint-disable-next-line testing-library/no-node-access -- the icon is aria-hidden; its glyph and color classes are the assertion
       const icon = screen.getByRole('status').querySelector('svg');
       expect(icon?.classList.contains(iconClass)).toBe(true);
-      // eslint-disable-next-line testing-library/no-node-access -- the color class sits on the icon's wrapper
+
       expect(icon?.parentElement?.classList.contains(colorClass)).toBe(true);
     },
   );

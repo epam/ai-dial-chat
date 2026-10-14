@@ -1,4 +1,8 @@
 import {
+  OfflineCredentialsGateStatus,
+  OfflineCredentialsLogoutOutcomeType,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ExtensionsSection,
   type ExtensionServiceItem,
 } from '@epam/ai-dial-settings-panel';
@@ -12,7 +16,14 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconLogin, IconLogout } from '@tabler/icons-react';
-import { memo, useCallback, useState, type FC, type ReactNode } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+  type FC,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
@@ -22,10 +33,11 @@ import {
   SettingsI18nKeys,
 } from '../../../constants/translation-keys';
 import { useOfflineCredentialsAuth } from '../../../hooks/offlineCredentials/useOfflineCredentialsAuth';
+import { useOfflineCredentialsGate } from '../../../hooks/offlineCredentials/useOfflineCredentialsGate';
 import {
-  OfflineCredentialsGateStatus,
-  useOfflineCredentialsGate,
-} from '../../../hooks/offlineCredentials/useOfflineCredentialsGate';
+  getOfflineCredentialsLogoutAnnouncementKey,
+  OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS,
+} from '../../../utils/offline-credentials-announcements';
 
 const ExtensionsTab: FC = () => {
   const { t } = useTranslation();
@@ -35,11 +47,25 @@ const ExtensionsTab: FC = () => {
     connected,
     refetch: refetchCredentials,
   } = useOfflineCredentialsGate();
-  const { isLoggingIn, liveAnnouncement, isLoggingOut, logIn, logOut } =
+  const { isLoggingIn, loginOutcome, isLoggingOut, logIn, logOut } =
     useOfflineCredentialsAuth({
       connect,
       refetch: refetchCredentials,
     });
+
+  /*
+   * The shared auth hook is outcome-based (the lib holds no i18n), so the tab
+   * maps the terminal login outcome onto its polite announcement text; a new
+   * attempt resets the outcome, and the announcement with it.
+   */
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  useEffect(() => {
+    setLiveAnnouncement(
+      loginOutcome != null
+        ? t(OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS[loginOutcome])
+        : '',
+    );
+  }, [loginOutcome, t]);
 
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [isLogoutFailed, setIsLogoutFailed] = useState(false);
@@ -56,20 +82,22 @@ const ExtensionsTab: FC = () => {
   }, [isLoggingOut]);
 
   /*
-   * The shared auth flow's `logOut` resolves whether a fresh status refetch
-   * confirmed the disconnection; the dialog itself — its open state and its
-   * failure presentation — stays local to the tab.
+   * The shared auth flow's `logOut` resolves the outcome of the revoke; the
+   * dialog itself — its open state and its failure presentation — stays
+   * local to the tab, and the tab maps the outcome onto the announcement
+   * text itself.
    */
   const handleLogoutConfirm = useCallback(async () => {
     if (isLoggingOut) return;
     setIsLogoutFailed(false);
-    const isDisconnected = await logOut();
-    if (isDisconnected) {
+    const outcome = await logOut();
+    setLiveAnnouncement(t(getOfflineCredentialsLogoutAnnouncementKey(outcome)));
+    if (outcome === OfflineCredentialsLogoutOutcomeType.Disconnected) {
       setIsLogoutDialogOpen(false);
     } else {
       setIsLogoutFailed(true);
     }
-  }, [isLoggingOut, logOut]);
+  }, [isLoggingOut, logOut, t]);
 
   /*
    * Aria-table semantics: an empty action cell is legitimate (the state is

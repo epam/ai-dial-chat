@@ -1,3 +1,9 @@
+import {
+  OfflineCredentialsConnectSettings,
+  OfflineCredentialsGateStatus,
+  OfflineCredentialsLoginOutcomeType,
+  OfflineCredentialsLogoutOutcomeType,
+} from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,11 +14,8 @@ import {
   ScheduledTasksI18nKeys,
   SettingsI18nKeys,
 } from '../../../../constants/translation-keys';
-import {
-  OfflineCredentialsGateStatus,
-  useOfflineCredentialsGate,
-} from '../../../../hooks/offlineCredentials/useOfflineCredentialsGate';
-import { OfflineCredentialsLoginOutcomeType } from '../../../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { useOfflineCredentialsAuth as useAppOfflineCredentialsAuth } from '../../../../hooks/offlineCredentials/useOfflineCredentialsAuth';
+import { useOfflineCredentialsGate } from '../../../../hooks/offlineCredentials/useOfflineCredentialsGate';
 import ExtensionsTab from '../ExtensionsTab';
 
 vi.mock(
@@ -29,52 +32,63 @@ vi.mock(
   }),
 );
 
+/*
+ * The app auth wiring is the test seam: the shared hook is outcome-based, so
+ * the tab spec drives login/logout outcomes directly instead of the OAuth
+ * popup flow (covered by the lib's own spec).
+ */
 vi.mock(
-  '../../../../hooks/offlineCredentials/useOfflineCredentialsLogin',
+  '../../../../hooks/offlineCredentials/useOfflineCredentialsAuth',
   () => ({
-    OfflineCredentialsLoginOutcomeType: {
-      Success: 'success',
-      Failure: 'failure',
-      PopupBlocked: 'popup-blocked',
-      Cancelled: 'cancelled',
-      TimedOut: 'timed-out',
-    },
-    useOfflineCredentialsLogin: () => ({ login: loginMock }),
+    useOfflineCredentialsAuth: vi.fn(),
   }),
 );
 
-vi.mock('../../../../server-api/offline-credentials', () => ({
-  signOutOfflineCredentials: () => signOutOfflineCredentialsMock(),
-}));
-
 const useOfflineCredentialsGateMock = vi.mocked(useOfflineCredentialsGate);
-const loginMock = vi.fn();
-const signOutOfflineCredentialsMock = vi.fn();
-const refetchCredentialsMock = vi.fn();
-
-const CONNECT = {
-  clientId: 'dial-apps',
-  authorizationEndpoint: 'https://identity.example.com/authorize',
-  scopes: ['openid', 'offline_access'],
-};
+const useOfflineCredentialsAuthMock = vi.mocked(useAppOfflineCredentialsAuth);
+const logInMock = vi.fn();
+const logOutMock = vi.fn();
 
 const makeGateResult = (
   overrides?: Partial<{
     status: OfflineCredentialsGateStatus;
-    connect: typeof CONNECT | undefined;
+    connect: OfflineCredentialsConnectSettings | undefined;
     connected: boolean;
   }>,
 ) => ({
   status: OfflineCredentialsGateStatus.Available,
-  connect: CONNECT,
+  connect: {
+    clientId: 'dial-apps',
+    authorizationEndpoint: 'https://identity.example.com/authorize',
+    scopes: ['openid', 'offline_access'],
+  } satisfies OfflineCredentialsConnectSettings,
   connected: false,
-  refetch: refetchCredentialsMock,
+  refetch: vi.fn(),
   ...overrides,
 });
 
-const renderTab = (gateResult?: ReturnType<typeof makeGateResult>) => {
+const makeAuthResult = (
+  overrides?: Partial<{
+    isLoggingIn: boolean;
+    loginOutcome: OfflineCredentialsLoginOutcomeType | undefined;
+    isLoggingOut: boolean;
+  }>,
+) => ({
+  isLoggingIn: false,
+  loginOutcome: undefined,
+  isLoggingOut: false,
+  logIn: logInMock,
+  logOut: logOutMock,
+  ...overrides,
+});
+
+const renderTab = (
+  gateResult?: ReturnType<typeof makeGateResult>,
+  authResult?: ReturnType<typeof makeAuthResult>,
+) => {
   useOfflineCredentialsGateMock.mockReturnValue(gateResult ?? makeGateResult());
-  render(<ExtensionsTab />);
+  useOfflineCredentialsAuthMock.mockReturnValue(authResult ?? makeAuthResult());
+  return render(<ExtensionsTab />);
 };
 
 describe('ExtensionsTab', () => {
@@ -227,25 +241,23 @@ describe('ExtensionsTab', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('disables the Log in action and swaps its label while the flow is in flight', async () => {
-    loginMock.mockReturnValue(
-      new Promise(() => {
-        /** */
-      }),
-    );
+  it('starts the auth flow login when the Log in action is activated', async () => {
     renderTab();
 
-    const logInButton = screen.getByRole('button', {
-      name: ButtonsI18nKeys.LogIn,
-    });
-    await userEvent.click(logInButton);
+    await userEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+    );
 
-    await waitFor(() => {
-      const inFlightButton = screen.getByRole('button', {
-        name: ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
-      });
-      expect(inFlightButton.hasAttribute('disabled')).toBe(true);
+    expect(logInMock).toHaveBeenCalledOnce();
+  });
+
+  it('renders the Log in action disabled with its in-flight label while a login is in flight', () => {
+    renderTab(undefined, makeAuthResult({ isLoggingIn: true }));
+
+    const inFlightButton = screen.getByRole('button', {
+      name: ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
     });
+    expect(inFlightButton.hasAttribute('disabled')).toBe(true);
   });
 
   it.each([
@@ -271,21 +283,20 @@ describe('ExtensionsTab', () => {
     ],
   ])(
     'announces the login outcome through the polite live region (%s)',
-    async (outcomeType, expectedAnnouncement) => {
-      loginMock.mockResolvedValue({ type: outcomeType });
-      renderTab();
+    (outcomeType, expectedAnnouncement) => {
+      /* The tab is memoized with no props, so outcomes are driven through
+         fresh renders — the effect maps the outcome on mount. */
+      renderTab(undefined, makeAuthResult({ loginOutcome: outcomeType }));
 
-      await userEvent.click(
-        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByRole('status').textContent).toBe(
-          expectedAnnouncement,
-        );
-      });
+      expect(screen.getByRole('status').textContent).toBe(expectedAnnouncement);
     },
   );
+
+  it('renders no announcement while a new login attempt is in flight', () => {
+    renderTab(undefined, makeAuthResult({ isLoggingIn: true }));
+
+    expect(screen.getByRole('status').textContent).toBe('');
+  });
 
   it('requires an explicit confirmation before revoking', async () => {
     renderTab(
@@ -302,7 +313,7 @@ describe('ExtensionsTab', () => {
     expect(
       screen.getByText(ScheduledTasksI18nKeys.DisconnectConfirmTitle),
     ).toBeTruthy();
-    expect(signOutOfflineCredentialsMock).not.toHaveBeenCalled();
+    expect(logOutMock).not.toHaveBeenCalled();
 
     await userEvent.click(
       screen.getByRole('button', { name: ButtonsI18nKeys.Cancel }),
@@ -311,15 +322,13 @@ describe('ExtensionsTab', () => {
     expect(
       screen.queryByText(ScheduledTasksI18nKeys.DisconnectConfirmTitle),
     ).toBeNull();
-    expect(signOutOfflineCredentialsMock).not.toHaveBeenCalled();
+    expect(logOutMock).not.toHaveBeenCalled();
   });
 
-  it('revokes on confirm when the fresh check reports disconnected and announces the outcome', async () => {
-    signOutOfflineCredentialsMock.mockResolvedValue({ success: true });
-    refetchCredentialsMock.mockResolvedValue({
-      available: true,
-      connected: false,
-    });
+  it('closes the dialog and announces success when the logout is confirmed as disconnected', async () => {
+    logOutMock.mockResolvedValue(
+      OfflineCredentialsLogoutOutcomeType.Disconnected,
+    );
     renderTab(
       makeGateResult({
         status: OfflineCredentialsGateStatus.Hidden,
@@ -341,99 +350,66 @@ describe('ExtensionsTab', () => {
         screen.queryByText(ScheduledTasksI18nKeys.DisconnectConfirmTitle),
       ).toBeNull();
     });
-    expect(signOutOfflineCredentialsMock).toHaveBeenCalledOnce();
-    expect(refetchCredentialsMock).toHaveBeenCalledOnce();
+    expect(logOutMock).toHaveBeenCalledOnce();
     expect(screen.getByRole('status').textContent).toBe(
       ScheduledTasksI18nKeys.DisconnectSuccessAnnouncement,
     );
   });
 
-  it('keeps the dialog open with the failed message when the signout request fails', async () => {
-    signOutOfflineCredentialsMock.mockRejectedValue(new Error('network'));
+  it.each([
+    OfflineCredentialsLogoutOutcomeType.NotDisconnected,
+    OfflineCredentialsLogoutOutcomeType.Failed,
+  ])(
+    'keeps the dialog open with the failed message when the logout resolves %s',
+    async (outcome) => {
+      logOutMock.mockResolvedValue(outcome);
+      renderTab(
+        makeGateResult({
+          status: OfflineCredentialsGateStatus.Hidden,
+          connected: true,
+        }),
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+      );
+      await userEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', {
+          name: ButtonsI18nKeys.LogOut,
+        }),
+      );
+
+      const dialog = screen.getByRole('dialog');
+      await waitFor(() => {
+        expect(
+          within(dialog).getByText(
+            ScheduledTasksI18nKeys.DisconnectFailedMessage,
+          ),
+        ).toBeTruthy();
+      });
+      expect(
+        within(dialog).getByText(ScheduledTasksI18nKeys.DisconnectConfirmTitle),
+      ).toBeTruthy();
+    },
+  );
+
+  it('drops the confirm control from the dialog while a logout is in flight, so a revoke cannot be duplicated', async () => {
     renderTab(
       makeGateResult({
         status: OfflineCredentialsGateStatus.Hidden,
         connected: true,
       }),
+      makeAuthResult({ isLoggingOut: true }),
     );
 
     await userEvent.click(
       screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
-    );
-    await userEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: ButtonsI18nKeys.LogOut,
-      }),
     );
 
     const dialog = screen.getByRole('dialog');
-    await waitFor(() => {
-      expect(
-        within(dialog).getByText(
-          ScheduledTasksI18nKeys.DisconnectFailedMessage,
-        ),
-      ).toBeTruthy();
-    });
     expect(
-      within(dialog).getByText(ScheduledTasksI18nKeys.DisconnectConfirmTitle),
-    ).toBeTruthy();
-  });
-
-  it('keeps the dialog open when the POST succeeds but the fresh check fails', async () => {
-    signOutOfflineCredentialsMock.mockResolvedValue({ success: true });
-    refetchCredentialsMock.mockResolvedValue(null);
-    renderTab(
-      makeGateResult({
-        status: OfflineCredentialsGateStatus.Hidden,
-        connected: true,
-      }),
-    );
-
-    await userEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
-    );
-    await userEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: ButtonsI18nKeys.LogOut,
-      }),
-    );
-
-    const dialog = screen.getByRole('dialog');
-    await waitFor(() => {
-      expect(
-        within(dialog).getByText(
-          ScheduledTasksI18nKeys.DisconnectFailedMessage,
-        ),
-      ).toBeTruthy();
-    });
-    expect(
-      within(dialog).getByText(ScheduledTasksI18nKeys.DisconnectConfirmTitle),
-    ).toBeTruthy();
-  });
-
-  it('does not duplicate the signout request on repeated confirms', async () => {
-    signOutOfflineCredentialsMock.mockReturnValue(
-      new Promise(() => {
-        /** */
-      }),
-    );
-    renderTab(
-      makeGateResult({
-        status: OfflineCredentialsGateStatus.Hidden,
-        connected: true,
-      }),
-    );
-
-    await userEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
-    );
-    const confirmButton = within(screen.getByRole('dialog')).getByRole(
-      'button',
-      { name: ButtonsI18nKeys.LogOut },
-    );
-    await userEvent.click(confirmButton);
-    await userEvent.click(confirmButton);
-
-    expect(signOutOfflineCredentialsMock).toHaveBeenCalledOnce();
+      within(dialog).queryByRole('button', { name: ButtonsI18nKeys.LogOut }),
+    ).toBeNull();
+    expect(logOutMock).not.toHaveBeenCalled();
   });
 });

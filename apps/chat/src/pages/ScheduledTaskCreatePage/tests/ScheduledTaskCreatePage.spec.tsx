@@ -67,6 +67,7 @@ vi.mock('../../../context/NotificationContext', () => ({
 
 const getApiErrorStatusMock = vi.fn();
 const getApiErrorDetailsMock = vi.fn();
+const checkScheduledTaskAuthSessionErrorMock = vi.fn();
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
@@ -79,14 +80,10 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
       getApiErrorStatusMock(error) ?? actual.getApiErrorStatus(error),
     getApiErrorDetails: (error: unknown) =>
       getApiErrorDetailsMock(error) ?? actual.getApiErrorDetails(error),
+    checkScheduledTaskAuthSessionError: (...args: unknown[]) =>
+      checkScheduledTaskAuthSessionErrorMock(...args),
   };
 });
-
-const checkScheduledTaskAuthSessionErrorMock = vi.fn();
-vi.mock('../../../utils/scheduled-task-auth-error', () => ({
-  checkScheduledTaskAuthSessionError: (...args: unknown[]) =>
-    checkScheduledTaskAuthSessionErrorMock(...args),
-}));
 
 const autoLoginMock = vi.fn();
 vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskAuthAutoLogin', () => ({

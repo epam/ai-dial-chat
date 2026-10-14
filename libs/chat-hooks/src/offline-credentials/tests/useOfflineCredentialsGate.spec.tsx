@@ -1,37 +1,28 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { ReactNode, StrictMode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { StrictMode, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getOfflineCredentials } from '../../../server-api/offline-credentials';
 import {
   OfflineCredentialsGateStatus,
   useOfflineCredentialsGate,
-} from '../useOfflineCredentialsGate';
+  type UseOfflineCredentialsGateOptions,
+} from '../useOfflineCredentialsGate/useOfflineCredentialsGate';
 
-vi.mock('../../../server-api/offline-credentials', () => ({
-  getOfflineCredentials: vi.fn(),
-}));
+const getOfflineCredentialsMock = vi.fn();
 
-const makeWrapper =
-  (initialPath = '/scheduled-tasks') =>
-  ({ children }: { children: ReactNode }) => (
-    <MemoryRouter initialEntries={[initialPath]}>
-      <Routes>
-        <Route path="*" element={children} />
-      </Routes>
-    </MemoryRouter>
-  );
+/*
+ * The client pick the hook accepts; the fake passes the init overrides
+ * through to the mock so the tests can observe the abort signal the hook
+ * hands to the client.
+ */
+const offlineCredentialsClient = {
+  getOfflineCredentials: (initOverrides?: { signal?: AbortSignal }) =>
+    getOfflineCredentialsMock(initOverrides),
+} as unknown as UseOfflineCredentialsGateOptions['offlineCredentialsClient'];
 
 const makeStrictModeWrapper =
-  (initialPath = '/scheduled-tasks') =>
+  () =>
   ({ children }: { children: ReactNode }) => (
-    <StrictMode>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <Routes>
-          <Route path="*" element={children} />
-        </Routes>
-      </MemoryRouter>
-    </StrictMode>
+    <StrictMode>{children}</StrictMode>
   );
 
 describe('useOfflineCredentialsGate', () => {
@@ -40,14 +31,14 @@ describe('useOfflineCredentialsGate', () => {
   });
 
   it('fetches status once on mount and reports available:true, connected:false as Available', async () => {
-    vi.mocked(getOfflineCredentials).mockResolvedValue({
+    getOfflineCredentialsMock.mockResolvedValue({
       available: true,
       connected: false,
     });
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     expect(result.current.status).toBe(OfflineCredentialsGateStatus.Checking);
     await waitFor(() =>
@@ -55,33 +46,33 @@ describe('useOfflineCredentialsGate', () => {
         OfflineCredentialsGateStatus.Available,
       ),
     );
-    expect(getOfflineCredentials).toHaveBeenCalledOnce();
+    expect(getOfflineCredentialsMock).toHaveBeenCalledOnce();
   });
 
   it('reports Hidden when already connected', async () => {
-    vi.mocked(getOfflineCredentials).mockResolvedValue({
+    getOfflineCredentialsMock.mockResolvedValue({
       available: true,
       connected: true,
     });
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     await waitFor(() =>
       expect(result.current.status).toBe(OfflineCredentialsGateStatus.Hidden),
     );
   });
 
-  it('reports Unavailable when disconnected and Core cannot offer login', async () => {
-    vi.mocked(getOfflineCredentials).mockResolvedValue({
+  it('reports Unavailable when disconnected and the deployment offers no offline OAuth client', async () => {
+    getOfflineCredentialsMock.mockResolvedValue({
       available: false,
       connected: false,
     });
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     await waitFor(() =>
       expect(result.current.status).toBe(
@@ -91,13 +82,11 @@ describe('useOfflineCredentialsGate', () => {
   });
 
   it('sets Error and never falls back to Available on fetch failure', async () => {
-    vi.mocked(getOfflineCredentials).mockRejectedValue(
-      new Error('network down'),
-    );
+    getOfflineCredentialsMock.mockRejectedValue(new Error('network down'));
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     await waitFor(() =>
       expect(result.current.status).toBe(OfflineCredentialsGateStatus.Error),
@@ -108,14 +97,15 @@ describe('useOfflineCredentialsGate', () => {
   });
 
   it('renders without duplicating status requests under React StrictMode', async () => {
-    vi.mocked(getOfflineCredentials).mockResolvedValue({
+    getOfflineCredentialsMock.mockResolvedValue({
       available: true,
       connected: false,
     });
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeStrictModeWrapper(),
-    });
+    const { result } = renderHook(
+      () => useOfflineCredentialsGate({ offlineCredentialsClient }),
+      { wrapper: makeStrictModeWrapper() },
+    );
 
     await waitFor(() =>
       expect(result.current.status).toBe(
@@ -133,25 +123,23 @@ describe('useOfflineCredentialsGate', () => {
      * cleanup — is exercised directly by the next test, which simulates the
      * mount -> cleanup -> mount StrictMode performs.
      */
-    expect(getOfflineCredentials).toHaveBeenCalledOnce();
+    expect(getOfflineCredentialsMock).toHaveBeenCalledOnce();
   });
 
   it('settles on exactly one non-aborted status request across a mount -> cleanup -> mount cycle (StrictMode shape)', async () => {
     const signals: AbortSignal[] = [];
-    vi.mocked(getOfflineCredentials).mockImplementation((signal) => {
-      if (signal) signals.push(signal);
+    getOfflineCredentialsMock.mockImplementation((initOverrides) => {
+      if (initOverrides?.signal) signals.push(initOverrides.signal);
       return Promise.resolve({ available: true, connected: false });
     });
 
-    const { unmount: unmountFirst } = renderHook(
-      () => useOfflineCredentialsGate(),
-      { wrapper: makeWrapper() },
+    const { unmount: unmountFirst } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
     );
     unmountFirst();
 
-    const { result: secondResult } = renderHook(
-      () => useOfflineCredentialsGate(),
-      { wrapper: makeWrapper() },
+    const { result: secondResult } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
     );
 
     await waitFor(() =>
@@ -160,26 +148,26 @@ describe('useOfflineCredentialsGate', () => {
       ),
     );
 
-    expect(getOfflineCredentials).toHaveBeenCalledTimes(2);
+    expect(getOfflineCredentialsMock).toHaveBeenCalledTimes(2);
     expect(signals[0]?.aborted).toBe(true);
     expect(signals[1]?.aborted).toBe(false);
   });
 
   it('aborts the in-flight request on unmount', async () => {
     let capturedSignal: AbortSignal | undefined;
-    vi.mocked(getOfflineCredentials).mockImplementation(
-      (signal) =>
+    getOfflineCredentialsMock.mockImplementation(
+      (initOverrides) =>
         new Promise((_resolve, reject) => {
-          capturedSignal = signal;
-          signal?.addEventListener('abort', () =>
+          capturedSignal = initOverrides?.signal;
+          capturedSignal?.addEventListener('abort', () =>
             reject(new DOMException('Aborted', 'AbortError')),
           );
         }),
     );
 
-    const { unmount } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { unmount } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     unmount();
 
@@ -187,13 +175,13 @@ describe('useOfflineCredentialsGate', () => {
   });
 
   it('refetches and returns the freshly resolved result when refetch is called', async () => {
-    vi.mocked(getOfflineCredentials)
+    getOfflineCredentialsMock
       .mockResolvedValueOnce({ available: true, connected: false })
       .mockResolvedValueOnce({ available: true, connected: true });
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     await waitFor(() =>
       expect(result.current.status).toBe(
@@ -211,27 +199,27 @@ describe('useOfflineCredentialsGate', () => {
   });
 
   it('reports connected:true once the check reports a stored grant', async () => {
-    vi.mocked(getOfflineCredentials).mockResolvedValue({
+    getOfflineCredentialsMock.mockResolvedValue({
       available: true,
       connected: true,
     });
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     expect(result.current.connected).toBe(false);
     await waitFor(() => expect(result.current.connected).toBe(true));
   });
 
   it('updates connected across refetches', async () => {
-    vi.mocked(getOfflineCredentials)
+    getOfflineCredentialsMock
       .mockResolvedValueOnce({ available: true, connected: true })
       .mockResolvedValueOnce({ available: true, connected: false });
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     await waitFor(() => expect(result.current.connected).toBe(true));
 
@@ -244,13 +232,13 @@ describe('useOfflineCredentialsGate', () => {
   });
 
   it('keeps the last resolved connected value when a check fails', async () => {
-    vi.mocked(getOfflineCredentials)
+    getOfflineCredentialsMock
       .mockResolvedValueOnce({ available: true, connected: true })
       .mockRejectedValueOnce(new Error('network down'));
 
-    const { result } = renderHook(() => useOfflineCredentialsGate(), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() =>
+      useOfflineCredentialsGate({ offlineCredentialsClient }),
+    );
 
     await waitFor(() => expect(result.current.connected).toBe(true));
 

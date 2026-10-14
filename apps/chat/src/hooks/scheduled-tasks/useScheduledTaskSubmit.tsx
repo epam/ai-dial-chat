@@ -1,27 +1,27 @@
 import { ScheduledTaskErrorCode } from '@epam/ai-dial-chat-api-client';
 import {
+  checkScheduledTaskAuthSessionError,
   getApiErrorDetails,
+  OfflineCredentialsLoginOutcomeType,
   type ApiErrorDetails,
+  type OfflineCredentialsConnectSettings,
+  type OfflineCredentialsLoginOutcome,
 } from '@epam/ai-dial-chat-hooks';
+import { generateUUID } from '@epam/ai-dial-chat-shared';
 import type { ScheduledTaskCreateFormErrors } from '@epam/ai-dial-scheduled-tasks';
 import {
-  Button,
-  ButtonAppearance,
-  ButtonVariant,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
-import { useCallback, useEffect, useRef, useState } from 'react';
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
+import { getOfflineCredentials } from '../../server-api/offline-credentials';
 import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
-import { checkScheduledTaskAuthSessionError } from '../../utils/scheduled-task-auth-error';
 import { mapScheduledTaskApiError } from '../../utils/scheduled-task-form-validation';
-import type { OfflineCredentialsConnectSettings } from '../offlineCredentials/useOfflineCredentialsGate';
-import {
-  OfflineCredentialsLoginOutcomeType,
-  type OfflineCredentialsLoginOutcome,
-} from '../offlineCredentials/useOfflineCredentialsLogin';
 import { useScheduledTaskAuthAutoLogin } from './useScheduledTaskAuthAutoLogin';
 
 /** Options the scheduled-task create/edit pages pass into the shared submit flow. */
@@ -47,6 +47,13 @@ export interface UseScheduledTaskSubmitOptions<B> {
    * error as fully handled, so no shared branch runs.
    */
   handleExtraError?: (error: unknown, details: ApiErrorDetails) => boolean;
+  /**
+   * Renders the login-required toast's "Log in and retry" action from the
+   * hook-supplied activation handler — the page owns the presentation
+   * (button, styling, translated label), the hook owns the behavior.
+   * Omitted hosts get the login-required toast without the retry action.
+   */
+  renderLoginAndRetryAction?: (onAction: () => void) => ReactNode;
 }
 
 export interface UseScheduledTaskSubmitResult {
@@ -68,7 +75,8 @@ export interface UseScheduledTaskSubmitResult {
  * login-and-retry handshake — so the two pages cannot drift in the parts that
  * are identical. Each page supplies only its own pieces: the body
  * preparation, the save request, the success path, the field-error sink, the
- * generic failure key, and (edit only) its not-found branch.
+ * generic failure key, the login-and-retry action's rendering, and (edit
+ * only) its not-found branch.
  */
 export const useScheduledTaskSubmit = <B,>({
   prepare,
@@ -77,6 +85,7 @@ export const useScheduledTaskSubmit = <B,>({
   onFieldErrors,
   errorKey,
   handleExtraError,
+  renderLoginAndRetryAction,
 }: UseScheduledTaskSubmitOptions<B>): UseScheduledTaskSubmitResult => {
   const { t } = useTranslation();
   const { showErrorNotification, dismissNotification } = useNotification();
@@ -190,7 +199,10 @@ export const useScheduledTaskSubmit = <B,>({
          * authorize URL, or with no usable settings at all, keeps the
          * generic error handling below.
          */
-        const check = await checkScheduledTaskAuthSessionError(error);
+        const check = await checkScheduledTaskAuthSessionError(
+          error,
+          getOfflineCredentials,
+        );
         if (
           !isLoginRetry &&
           check.isAuthSessionError &&
@@ -198,28 +210,19 @@ export const useScheduledTaskSubmit = <B,>({
         ) {
           const { connect } = check;
           /*
-           * `toastId` is filled by the `showErrorNotification` call below and
-           * read only when the action is clicked, so the closure always sees
-           * the assigned value. Dismissed when the action runs, so a
+           * The id is caller-supplied, so the action's handler can dismiss
+           * its own toast: computed before the action is built, so a
            * completed or failed login-and-retry cannot leave a stale
            * actionable toast behind.
            */
-          let toastId = '';
-          const action = (
-            <Button
-              variant={ButtonVariant.Neutral}
-              appearance={ButtonAppearance.Outlined}
-              size={ElementSize.Small}
-              label={t(ScheduledTasksI18nKeys.LoginAndRetryAction)}
-              onClick={() =>
-                void handleLoginAndRetry(connect, toastId, traceId)
-              }
-            />
-          );
-          toastId = showErrorNotification({
+          const toastId = generateUUID();
+          showErrorNotification({
+            id: toastId,
             message: t(ScheduledTasksI18nKeys.LoginRequiredNotification),
             requestId: traceId,
-            action,
+            action: renderLoginAndRetryAction?.(
+              () => void handleLoginAndRetry(connect, toastId, traceId),
+            ),
           });
           return;
         }
@@ -242,6 +245,7 @@ export const useScheduledTaskSubmit = <B,>({
       handleExtraError,
       handleLoginAndRetry,
       onFieldErrors,
+      renderLoginAndRetryAction,
       showErrorNotification,
       t,
       errorKey,

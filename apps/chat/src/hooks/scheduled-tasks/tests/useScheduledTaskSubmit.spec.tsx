@@ -18,15 +18,22 @@ vi.mock('../../../context/NotificationContext', () => ({
 }));
 
 const getApiErrorDetailsMock = vi.fn();
-vi.mock('@epam/ai-dial-chat-hooks', () => ({
-  getApiErrorDetails: (...args: unknown[]) => getApiErrorDetailsMock(...args),
-}));
-
 const checkScheduledTaskAuthSessionErrorMock = vi.fn();
-vi.mock('../../../utils/scheduled-task-auth-error', () => ({
-  checkScheduledTaskAuthSessionError: (...args: unknown[]) =>
-    checkScheduledTaskAuthSessionErrorMock(...args),
-}));
+/*
+ * Partial mock: the submit hook reads the real `OfflineCredentialsLoginOutcomeType`
+ * enum at runtime, so the actual module stays available and only the helpers
+ * it stubs are overridden.
+ */
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    getApiErrorDetails: (...args: unknown[]) => getApiErrorDetailsMock(...args),
+    checkScheduledTaskAuthSessionError: (...args: unknown[]) =>
+      checkScheduledTaskAuthSessionErrorMock(...args),
+  };
+});
 
 /* Returns the passed error key, so generic-toast assertions read the key directly. */
 const resolveScheduledTaskErrorMessageMock = vi.fn();
@@ -69,6 +76,13 @@ const Harness = () => {
     onFieldErrors: onFieldErrorsMock,
     errorKey: ScheduledTasksI18nKeys.CreateErrorNotification,
     handleExtraError: handleExtraErrorMock,
+    /* The pages render the kit Button; the harness renders a plain one —
+       both land in the toast's action slot with the same accessible name. */
+    renderLoginAndRetryAction: (onAction) => (
+      <button type="button" onClick={onAction}>
+        scheduledTasks.loginAndRetryAction
+      </button>
+    ),
   });
   return (
     <>
@@ -230,6 +244,37 @@ describe('useScheduledTaskSubmit', () => {
     /* The login waits for the user's consent — nothing is invoked automatically. */
     expect(autoLoginMock).not.toHaveBeenCalled();
     expect(saveMock).toHaveBeenCalledOnce();
+  });
+
+  it('shows the login-required toast without the retry action when the host supplies no action renderer', async () => {
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    saveMock.mockRejectedValue(new Error('forbidden'));
+    const NoActionRendererHarness = () => {
+      const { handleSubmit } = useScheduledTaskSubmit({
+        prepare: prepareMock,
+        save: saveMock,
+        onSuccess: onSuccessMock,
+        onFieldErrors: onFieldErrorsMock,
+        errorKey: ScheduledTasksI18nKeys.CreateErrorNotification,
+      });
+      return (
+        <button type="button" onClick={() => void handleSubmit()}>
+          save
+        </button>
+      );
+    };
+    render(<NoActionRendererHarness />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    const payload = showNotificationMock.mock.calls[0][0];
+    expect(payload.message).toBe('scheduledTasks.loginRequiredNotification');
+    /* An omitted renderer explicitly opts out of the retry affordance. */
+    expect(payload.action).toBeUndefined();
   });
 
   it('retries the re-prepared save after the toast action logs in', async () => {

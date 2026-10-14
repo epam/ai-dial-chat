@@ -1,118 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
-import { getOfflineCredentials } from '../../server-api/offline-credentials';
-
-export enum OfflineCredentialsGateStatus {
-  Checking = 'checking',
-  Hidden = 'hidden',
-  Available = 'available',
-  Unavailable = 'unavailable',
-  Error = 'error',
-}
-
-export interface OfflineCredentialsConnectSettings {
-  clientId: string;
-  authorizationEndpoint: string;
-  scopes: string[];
-}
-
-export interface OfflineCredentialsStatusResult {
-  available: boolean;
-  connected: boolean;
-  connect?: OfflineCredentialsConnectSettings;
-}
-
-export interface UseOfflineCredentialsGateResult {
-  status: OfflineCredentialsGateStatus;
-  /** OAuth client settings from the most recent check — set only while `status` is `Available`. */
-  connect: OfflineCredentialsConnectSettings | undefined;
-  /** Whether the most recent successful check reported a stored offline-credentials grant; a failed check keeps the last resolved value. `false` before the first check resolves. */
-  connected: boolean;
-  /**
-   * Re-runs the status check and returns its freshly resolved
-   * `{ available, connected }` result (or `null` on failure/abort), so a
-   * caller such as `useOfflineCredentialsLogin` can decide a login outcome
-   * from the same authoritative call that also updates `status`.
-   */
-  refetch: () => Promise<OfflineCredentialsStatusResult | null>;
-}
+import { useOfflineCredentialsGate as useLibOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks';
+import { offlineCredentialsApi } from '../../server-api/api-client';
 
 /**
- * Route-scoped offline-credentials status check for the Scheduled Tasks list
- * route (see `ScheduledTasksPage`). Fires on mount and on every pathname
- * change (re-fireable per route entry, not a once-ever guard, since the user
- * can navigate in and out of Scheduled Tasks repeatedly within a session),
- * cancels the in-flight request on unmount/route change, and never collapses
- * a fetch failure into `connected: false` — a failed check must not
- * incorrectly trigger the login-required banner.
+ * App wiring for the shared offline-credentials gate: pre-wires the lib hook
+ * with the app's configured generated client. Fires the status check on
+ * mount, aborts it in flight on unmount; re-run any time via `refetch`.
  */
-export const useOfflineCredentialsGate =
-  (): UseOfflineCredentialsGateResult => {
-    const { pathname } = useLocation();
-    const [status, setStatus] = useState<OfflineCredentialsGateStatus>(
-      OfflineCredentialsGateStatus.Checking,
-    );
-    const [connect, setConnect] = useState<
-      OfflineCredentialsConnectSettings | undefined
-    >(undefined);
-    const [connected, setConnected] = useState(false);
-    const abortControllerRef = useRef<AbortController | null>(null);
-
-    const fetchStatus =
-      useCallback(async (): Promise<OfflineCredentialsStatusResult | null> => {
-        abortControllerRef.current?.abort();
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-        setStatus(OfflineCredentialsGateStatus.Checking);
-
-        try {
-          const response = await getOfflineCredentials(controller.signal);
-          if (controller.signal.aborted) return null;
-
-          const available = response.available ?? false;
-          const connected = response.connected ?? false;
-          const connectSettings =
-            available &&
-            !connected &&
-            response.connect?.clientId != null &&
-            response.connect?.authorizationEndpoint != null
-              ? {
-                  clientId: response.connect.clientId,
-                  authorizationEndpoint: response.connect.authorizationEndpoint,
-                  scopes: response.connect.scopes ?? [],
-                }
-              : undefined;
-
-          setStatus(
-            connected
-              ? OfflineCredentialsGateStatus.Hidden
-              : available
-                ? OfflineCredentialsGateStatus.Available
-                : OfflineCredentialsGateStatus.Unavailable,
-          );
-          setConnect(connectSettings);
-          setConnected(connected);
-          return { available, connected, connect: connectSettings };
-        } catch {
-          if (controller.signal.aborted) return null;
-          setStatus(OfflineCredentialsGateStatus.Error);
-          setConnect(undefined);
-          return null;
-        }
-      }, []);
-
-    useEffect(() => {
-      void fetchStatus();
-
-      return () => {
-        abortControllerRef.current?.abort();
-      };
-    }, [pathname, fetchStatus]);
-
-    return {
-      status,
-      connect,
-      connected,
-      refetch: fetchStatus,
-    };
-  };
+export const useOfflineCredentialsGate = () =>
+  useLibOfflineCredentialsGate({
+    offlineCredentialsClient: offlineCredentialsApi,
+  });
