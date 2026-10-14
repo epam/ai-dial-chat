@@ -99,12 +99,14 @@ export const getModelIdFromConversationId = (
     .slice(0, separatorIndex)
     .filter(Boolean);
   /*
-   * An application id is `applications/{bucket}/{name}__{version}`, so its
-   * `applications` segment sits two places before the separator segment —
-   * also when a conversation folder precedes it.
+   * An application id is `applications/{bucket}/{...folders}/{name}__{version}`
+   * (e.g. `applications/public/epam/agent/epam-agent__1.0.0`), so its
+   * `applications` segment sits anywhere before the bucket segment — also
+   * when a conversation folder precedes it.
    */
-  const isApplicationDeployment =
-    prefixParts.at(-2) === APPLICATIONS_PATH_SEGMENT;
+  const isApplicationDeployment = prefixParts
+    .slice(0, -1)
+    .includes(APPLICATIONS_PATH_SEGMENT);
   const lastDeploymentPart = getDeploymentIdPartFromFilenamePart(
     separatorSegment,
     isApplicationDeployment,
