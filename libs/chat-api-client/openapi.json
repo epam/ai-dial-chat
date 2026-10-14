@@ -15314,7 +15314,8 @@
           "scheduled-task-instructions",
           "application-description",
           "toolset-description",
-          "prompt-description"
+          "prompt-description",
+          "prompt-instructions"
         ],
         "description": "Server-owned rewriting purpose"
       },
@@ -15334,7 +15335,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 32000,
-            "description": "Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, either Instructions 32000.",
+            "description": "Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.",
             "example": "Use this skill to explain project documentation."
           }
         },

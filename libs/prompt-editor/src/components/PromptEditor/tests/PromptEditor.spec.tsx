@@ -451,4 +451,66 @@ describe('PromptEditor', () => {
       expect(description.value).toBe('Draft');
     });
   });
+
+  describe('instructions refinement', () => {
+    const initialValues = {
+      name: 'summarize',
+      description: 'Draft',
+      content: 'Summarize:',
+    };
+
+    it('replaces the instructions with the refined text and offers Undo', async () => {
+      const refined = '## Summarize\n- Key points';
+      const onRefineInstructions = vi.fn().mockResolvedValue(refined);
+      const onFieldChange = vi.fn();
+      renderEditor({ initialValues, onRefineInstructions, onFieldChange });
+
+      await user.click(
+        await screen.findByRole('button', { name: 'Refine with AI' }),
+      );
+
+      expect(onRefineInstructions).toHaveBeenCalledWith(
+        'Summarize:',
+        expect.any(AbortSignal),
+      );
+      const content = await screen.findByRole<HTMLTextAreaElement>('textbox', {
+        name: /Instructions/,
+      });
+      await waitFor(() => expect(content.value).toBe(refined));
+      expect(onFieldChange).toHaveBeenCalledWith('content', refined);
+
+      await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+      expect(content.value).toBe('Summarize:');
+    });
+
+    it('blocks the other refinement and submission while instructions refine', async () => {
+      const onRefineInstructions = vi.fn(
+        () => new Promise<string>(() => undefined),
+      );
+      const onRefineDescription = vi.fn().mockResolvedValue('Refined');
+      const onSubmit = vi.fn();
+      renderEditor({
+        initialValues,
+        onRefineDescription,
+        onRefineInstructions,
+        onSubmit,
+      });
+
+      await screen.findByRole('textbox', { name: /Instructions/ });
+      const [descriptionAction, instructionsAction] = screen.getAllByRole(
+        'button',
+        { name: 'Refine with AI' },
+      );
+      await user.click(instructionsAction);
+
+      expect(onRefineInstructions).toHaveBeenCalledOnce();
+      await waitFor(() =>
+        expect(descriptionAction.hasAttribute('disabled')).toBe(true),
+      );
+      await user.click(screen.getByRole('button', { name: 'Create' }));
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(onRefineDescription).not.toHaveBeenCalled();
+    });
+  });
 });

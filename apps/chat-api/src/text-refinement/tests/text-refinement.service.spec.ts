@@ -10,6 +10,7 @@ import {
 } from '../dto/refine-text.dto';
 import { APPLICATION_DESCRIPTION_PROMPT } from '../prompts/application-description.prompt';
 import { PROMPT_DESCRIPTION_PROMPT } from '../prompts/prompt-description.prompt';
+import { PROMPT_INSTRUCTIONS_PROMPT } from '../prompts/prompt-instructions.prompt';
 import { wrapRefinementDraft } from '../prompts/refinement-draft.prompt';
 import { SCHEDULED_TASK_DESCRIPTION_PROMPT } from '../prompts/scheduled-task-description.prompt';
 import { SCHEDULED_TASK_INSTRUCTIONS_PROMPT } from '../prompts/scheduled-task-instructions.prompt';
@@ -112,6 +113,11 @@ describe('TextRefinementService', () => {
       TextRefinementPurpose.PromptDescription,
       'TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT',
       PROMPT_DESCRIPTION_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.PromptInstructions,
+      'TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT',
+      PROMPT_INSTRUCTIONS_PROMPT,
     ],
   ] as const)('%s prompt configuration', (purpose, key, defaultPrompt) => {
     it.each([

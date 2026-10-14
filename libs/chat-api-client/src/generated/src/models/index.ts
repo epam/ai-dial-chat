@@ -5867,7 +5867,7 @@ export interface RefineTextRequestDto {
    */
   purpose: TextRefinementPurpose;
   /**
-   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, either Instructions 32000.
+   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.
    * @type {string}
    * @memberof RefineTextRequestDto
    */
@@ -6998,6 +6998,7 @@ export const TextRefinementPurpose = {
   ApplicationDescription: 'application-description',
   ToolsetDescription: 'toolset-description',
   PromptDescription: 'prompt-description',
+  PromptInstructions: 'prompt-instructions',
 } as const;
 export type TextRefinementPurpose =
   (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];

@@ -9,6 +9,7 @@ export enum TextRefinementPurpose {
   ApplicationDescription = 'application-description',
   ToolsetDescription = 'toolset-description',
   PromptDescription = 'prompt-description',
+  PromptInstructions = 'prompt-instructions',
 }
 
 export const TEXT_REFINEMENT_LIMITS: Record<TextRefinementPurpose, number> = {
@@ -19,6 +20,7 @@ export const TEXT_REFINEMENT_LIMITS: Record<TextRefinementPurpose, number> = {
   [TextRefinementPurpose.ApplicationDescription]: 2000,
   [TextRefinementPurpose.ToolsetDescription]: 2000,
   [TextRefinementPurpose.PromptDescription]: 2000,
+  [TextRefinementPurpose.PromptInstructions]: 32000,
 };
 
 export class RefineTextRequestDto {
@@ -36,7 +38,7 @@ export class RefineTextRequestDto {
     minLength: 1,
     maxLength: 32000,
     description:
-      'Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, either Instructions 32000.',
+      'Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.',
     example: 'Use this skill to explain project documentation.',
   })
   @IsString()

@@ -267,6 +267,9 @@ const PromptEditorPage: FC = () => {
   const onRefineDescription = useTextRefinementCallback(
     TextRefinementPurpose.PromptDescription,
   );
+  const onRefineInstructions = useTextRefinementCallback(
+    TextRefinementPurpose.PromptInstructions,
+  );
   const refinementLabels = useTextRefinementLabels();
   const labels = useMemo<PromptEditorLabels>(
     () => ({
@@ -320,6 +323,7 @@ const PromptEditorPage: FC = () => {
       onCancel={handleCancel}
       onRetry={handleRetry}
       onRefineDescription={onRefineDescription}
+      onRefineInstructions={onRefineInstructions}
     />
   );
 };
