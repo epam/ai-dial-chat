@@ -226,6 +226,15 @@ export const SUBPATH_FIXTURES = [
       ...CHAT_SHARED_ROOT_PEERS,
     ],
   },
+  {
+    name: 'usage-limits',
+    subpath: 'usage-limits',
+    peers: [
+      '@epam/ai-dial-conversation-input',
+      '@epam/ai-dial-chat-shared',
+      ...CHAT_SHARED_ROOT_PEERS,
+    ],
+  },
 ];
 
 /**
@@ -246,6 +255,7 @@ export const ALL_OPTIONAL_PEERS = [
   '@epam/ai-dial-catalog',
   '@epam/ai-dial-chat-overlay',
   '@epam/ai-dial-chat-shared',
+  '@epam/ai-dial-conversation-input',
   '@epam/ai-dial-mcp-apps',
   '@epam/ai-dial-publish-panel',
   '@epam/ai-dial-quotations',

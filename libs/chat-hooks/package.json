@@ -124,6 +124,12 @@
       "import": "./dist/usage.js",
       "default": "./dist/usage.js"
     },
+    "./usage-limits": {
+      "@epam/source": "./src/entry-points/usage-limits.ts",
+      "types": "./dist/usage-limits.d.ts",
+      "import": "./dist/usage-limits.js",
+      "default": "./dist/usage-limits.js"
+    },
     "./mcp-apps": {
       "@epam/source": "./src/entry-points/mcp-apps.ts",
       "types": "./dist/mcp-apps.d.ts",
@@ -146,6 +152,7 @@
     "@epam/ai-dial-catalog": "*",
     "@epam/ai-dial-chat-overlay": "*",
     "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-conversation-input": "*",
     "@epam/ai-dial-mcp-apps": "*",
     "@epam/ai-dial-publish-panel": "*",
     "@epam/ai-dial-quotations": "*",
@@ -174,6 +181,9 @@
       "optional": true
     },
     "@epam/ai-dial-chat-shared": {
+      "optional": true
+    },
+    "@epam/ai-dial-conversation-input": {
       "optional": true
     },
     "@epam/ai-dial-mcp-apps": {
