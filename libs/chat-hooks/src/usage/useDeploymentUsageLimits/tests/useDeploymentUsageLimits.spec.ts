@@ -1,13 +1,10 @@
+import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { useDeploymentUsageLimits } from '../useDeploymentUsageLimits';
 
-vi.mock('../../server-api/deployment-limits', () => ({
-  getDeploymentLimits: vi.fn(),
-}));
-
-const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
+const mockGetDeploymentLimits =
+  vi.fn<(deploymentId: string) => Promise<DeploymentLimitsResponseDto>>();
 
 describe('useDeploymentUsageLimits', () => {
   beforeEach(() => {
@@ -15,7 +12,9 @@ describe('useDeploymentUsageLimits', () => {
   });
 
   it('does not fetch without a deployment ID', () => {
-    const { result } = renderHook(() => useDeploymentUsageLimits(undefined));
+    const { result } = renderHook(() =>
+      useDeploymentUsageLimits(undefined, mockGetDeploymentLimits),
+    );
 
     expect(result.current).toMatchObject({
       limitsDto: undefined,
@@ -29,7 +28,9 @@ describe('useDeploymentUsageLimits', () => {
     const dto = { dayTokenStats: { used: 2500, total: 10000 } };
     mockGetDeploymentLimits.mockResolvedValue(dto);
 
-    const { result } = renderHook(() => useDeploymentUsageLimits('gpt-4o'));
+    const { result } = renderHook(() =>
+      useDeploymentUsageLimits('gpt-4o', mockGetDeploymentLimits),
+    );
 
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -41,7 +42,9 @@ describe('useDeploymentUsageLimits', () => {
   it('surfaces a non-blocking request error', async () => {
     mockGetDeploymentLimits.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() => useDeploymentUsageLimits('gpt-4o'));
+    const { result } = renderHook(() =>
+      useDeploymentUsageLimits('gpt-4o', mockGetDeploymentLimits),
+    );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -55,7 +58,8 @@ describe('useDeploymentUsageLimits', () => {
     });
 
     const { rerender } = renderHook(
-      ({ id }: { id: string }) => useDeploymentUsageLimits(id),
+      ({ id }: { id: string }) =>
+        useDeploymentUsageLimits(id, mockGetDeploymentLimits),
       { initialProps: { id: 'gpt-4o' } },
     );
 
@@ -93,7 +97,8 @@ describe('useDeploymentUsageLimits', () => {
       );
 
     const { result, rerender } = renderHook(
-      ({ id }: { id: string }) => useDeploymentUsageLimits(id),
+      ({ id }: { id: string }) =>
+        useDeploymentUsageLimits(id, mockGetDeploymentLimits),
       { initialProps: { id: 'first' } },
     );
 
@@ -118,7 +123,9 @@ describe('useDeploymentUsageLimits', () => {
         }),
     );
 
-    const { result } = renderHook(() => useDeploymentUsageLimits('gpt-4o'));
+    const { result } = renderHook(() =>
+      useDeploymentUsageLimits('gpt-4o', mockGetDeploymentLimits),
+    );
 
     act(() => result.current.refresh());
     expect(mockGetDeploymentLimits).toHaveBeenCalledTimes(1);
@@ -141,7 +148,9 @@ describe('useDeploymentUsageLimits', () => {
       monthTokenStats: { used: 100, total: 1000 },
     });
 
-    const { result } = renderHook(() => useDeploymentUsageLimits('gpt-4o'));
+    const { result } = renderHook(() =>
+      useDeploymentUsageLimits('gpt-4o', mockGetDeploymentLimits),
+    );
     await waitFor(() => expect(result.current.limitsDto).toBeDefined());
 
     mockGetDeploymentLimits.mockRejectedValueOnce(new Error('Refresh failed'));
@@ -149,5 +158,23 @@ describe('useDeploymentUsageLimits', () => {
     await waitFor(() => expect(result.current.hasError).toBe(true));
 
     expect(result.current.limitsDto).toBeDefined();
+  });
+});
+
+describe('useDeploymentUsageLimits fetch-function identity', () => {
+  it('does not re-fetch when the caller passes a new function each render', async () => {
+    const fetchLimits = vi.fn().mockResolvedValue({
+      monthTokenStats: { used: 1, total: 10 },
+    });
+
+    const { result, rerender } = renderHook(() =>
+      useDeploymentUsageLimits('gpt-4o', (id: string) => fetchLimits(id)),
+    );
+    await waitFor(() => expect(result.current.limitsDto).toBeDefined());
+
+    rerender();
+    rerender();
+
+    expect(fetchLimits).toHaveBeenCalledTimes(1);
   });
 });

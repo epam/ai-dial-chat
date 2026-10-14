@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { UsagePeriod } from '../usage-period';
 import {
-  ConversationInputUsageBannerI18nKeys,
-  UsageI18nKeys,
-} from '../../constants/translation-keys';
-import { UsagePeriod } from '../../types/usage-limits';
-import {
+  USAGE_RESET_I18N_KEYS,
   formatUsageResetShort,
   formatUsageResetTime,
 } from '../usage-reset-time';
@@ -19,14 +16,14 @@ const MONTH_BOUNDARY = '2026-10-01T00:00:00Z';
 /* Mirrors the en.json values for usage.resetsAtLabel / usage.resetsAtAriaLabel. */
 const t = (key: string, options?: Record<string, unknown>): string => {
   const dateTime = String(options?.dateTime ?? '');
-  if (key === UsageI18nKeys.ResetsAtAriaLabel) {
+  if (key === USAGE_RESET_I18N_KEYS.resetsAtAriaLabel) {
     return `Usage resets ${dateTime}`;
   }
   /* Mirrors conversationInput.usageBanner.resetsAtTime / resetsOnDate. */
-  if (key === ConversationInputUsageBannerI18nKeys.ResetsAtTime) {
+  if (key === USAGE_RESET_I18N_KEYS.resetsAtTime) {
     return `Resets at ${String(options?.time)}.`;
   }
-  if (key === ConversationInputUsageBannerI18nKeys.ResetsOnDate) {
+  if (key === USAGE_RESET_I18N_KEYS.resetsOnDate) {
     return `Resets on ${String(options?.date)}.`;
   }
   return `Resets ${dateTime}`;

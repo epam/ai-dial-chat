@@ -1,13 +1,25 @@
-import {
-  ConversationInputUsageBannerI18nKeys,
-  UsageI18nKeys,
-} from '../constants/translation-keys';
-import { UsagePeriod } from '../types/usage-limits';
+import { UsagePeriod } from './usage-period';
+
+/**
+ * i18n key strings the consuming app's translation bundle must define for the
+ * reset-time formatters to produce translated strings. The values are the
+ * default key paths used by AI DIAL Chat.
+ */
+export const USAGE_RESET_I18N_KEYS = {
+  /** Visible label for a full reset time. Receives `{ dateTime: string }`. */
+  resetsAtLabel: 'usage.resetsAtLabel',
+  /** Spoken label for a full reset time. Receives `{ dateTime: string }`. */
+  resetsAtAriaLabel: 'usage.resetsAtAriaLabel',
+  /** Short daily reset sentence. Receives `{ time: string }`. */
+  resetsAtTime: 'conversationInput.usageBanner.resetsAtTime',
+  /** Short weekly/monthly reset sentence. Receives `{ date: string }`. */
+  resetsOnDate: 'conversationInput.usageBanner.resetsOnDate',
+} as const;
 
 /**
  * A DIAL Core `resetsAt` instant, normalized into the preformatted strings the
  * usage dashboard renders. Every `Date` and `Intl` call for reset times lives
- * in this module: `@epam/ai-dial-usage-dashboard` receives only these strings
+ * in this module: the display components receive only these strings
  * and never sees a raw timestamp, a locale, or a timezone.
  */
 export interface ResetTimeDisplay {
@@ -21,7 +33,11 @@ export interface ResetTimeDisplay {
   ariaLabel: string;
 }
 
-type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
+/** A translate function compatible with i18next's `TFunction`. */
+export type TranslateFn = (
+  key: string,
+  options?: Record<string, unknown>,
+) => string;
 
 /**
  * Formats DIAL Core's `resetsAt` for display in the viewer's locale and
@@ -97,8 +113,8 @@ export const formatUsageResetTime = (
     return {
       resetsAtMs,
       isoValue: resetsAt,
-      label: t(UsageI18nKeys.ResetsAtLabel, { dateTime }),
-      ariaLabel: t(UsageI18nKeys.ResetsAtAriaLabel, {
+      label: t(USAGE_RESET_I18N_KEYS.resetsAtLabel, { dateTime }),
+      ariaLabel: t(USAGE_RESET_I18N_KEYS.resetsAtAriaLabel, {
         dateTime: spokenDateTime,
       }),
     };
@@ -151,7 +167,7 @@ export const formatUsageResetShort = (
 
       return {
         isoValue: full.isoValue,
-        label: t(ConversationInputUsageBannerI18nKeys.ResetsAtTime, { time }),
+        label: t(USAGE_RESET_I18N_KEYS.resetsAtTime, { time }),
         ariaLabel: full.ariaLabel,
       };
     }
@@ -173,7 +189,7 @@ export const formatUsageResetShort = (
 
     return {
       isoValue: full.isoValue,
-      label: t(ConversationInputUsageBannerI18nKeys.ResetsOnDate, { date }),
+      label: t(USAGE_RESET_I18N_KEYS.resetsOnDate, { date }),
       ariaLabel: full.ariaLabel,
     };
   } catch {

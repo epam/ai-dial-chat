@@ -1,7 +1,12 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getDeploymentLimits } from '../server-api/deployment-limits';
 
+/** Host-configured call that fetches the limits of one deployment. */
+export type GetDeploymentLimits = (
+  deploymentId: string,
+) => Promise<DeploymentLimitsResponseDto>;
+
+/** Return shape of {@link useDeploymentUsageLimits}. */
 export interface UseDeploymentUsageLimitsResult {
   /** Raw limits response for the selected deployment, or `undefined` before the first success. */
   limitsDto: DeploymentLimitsResponseDto | undefined;
@@ -14,7 +19,11 @@ export interface UseDeploymentUsageLimitsResult {
 }
 
 /**
- * Fetches the selected deployment's token limits.
+ * Fetches the selected deployment's usage limits via the provided
+ * `getDeploymentLimits` function. The hook accepts the fetch function as a
+ * parameter so the caller supplies an already-configured API client — the hook
+ * never constructs or imports one itself. The function's identity is not a
+ * re-fetch trigger; only `deploymentId` and `refresh()` are.
  *
  * A monotonic request ID prevents a slower response for a previous deployment
  * from replacing the current value. Refresh failures preserve the last known
@@ -27,6 +36,7 @@ export interface UseDeploymentUsageLimitsResult {
  */
 export const useDeploymentUsageLimits = (
   deploymentId: string | undefined,
+  getDeploymentLimits: GetDeploymentLimits,
 ): UseDeploymentUsageLimitsResult => {
   const [limitsDto, setLimitsDto] = useState<DeploymentLimitsResponseDto>();
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +45,8 @@ export const useDeploymentUsageLimits = (
   const fetchIdRef = useRef(0);
   const isLoadingRef = useRef(false);
   const previousDeploymentIdRef = useRef<string | undefined>(undefined);
+  const getDeploymentLimitsRef = useRef(getDeploymentLimits);
+  getDeploymentLimitsRef.current = getDeploymentLimits;
 
   const refresh = useCallback(() => {
     if (isLoadingRef.current) return;
@@ -58,7 +70,6 @@ export const useDeploymentUsageLimits = (
       setLimitsDto(undefined);
     }
 
-    const controller = new AbortController();
     const currentFetchId = ++fetchIdRef.current;
     let cancelled = false;
 
@@ -68,7 +79,7 @@ export const useDeploymentUsageLimits = (
 
     const fetchLimits = async () => {
       try {
-        const dto = await getDeploymentLimits(deploymentId);
+        const dto = await getDeploymentLimitsRef.current(deploymentId);
         if (cancelled || currentFetchId !== fetchIdRef.current) return;
         setLimitsDto(dto);
       } catch {
@@ -86,7 +97,6 @@ export const useDeploymentUsageLimits = (
 
     return () => {
       cancelled = true;
-      controller.abort();
     };
   }, [deploymentId, refreshCounter]);
 

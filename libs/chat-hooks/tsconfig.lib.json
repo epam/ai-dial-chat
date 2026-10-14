@@ -56,6 +56,9 @@
     },
     {
       "path": "../mcp-apps/tsconfig.lib.json"
+    },
+    {
+      "path": "../conversation-input/tsconfig.lib.json"
     }
   ],
   "exclude": [

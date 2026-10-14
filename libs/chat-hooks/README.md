@@ -74,6 +74,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-catalog` \*
 - `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
+- `@epam/ai-dial-conversation-input` \*
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
@@ -149,6 +150,7 @@ whether you need to `npm install` it.
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
 | `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                               |
 | `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                         |
+| `./usage-limits`          | `@epam/ai-dial-conversation-input`, `@epam/ai-dial-chat-shared`                                                                                     | —                                                         |
 | `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                         |
 
 Five of the peers above (`@epam/ai-dial-catalog`,
@@ -407,6 +409,48 @@ setRefreshToken((token) => token + 1);
 | `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` until the first response resolves. Retained across a `refreshToken`-triggered re-fetch. |
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
+
+### useUsageLimitBanner
+
+Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's limits, refreshes them once after each generation ends, picks the day/week/month token or cost limit closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
+
+```tsx
+import { useUsageLimitBanner } from '@epam/ai-dial-chat-hooks/usage-limits';
+import { UsageLimitBannerView } from '@epam/ai-dial-conversation-input';
+import { useTranslation } from 'react-i18next';
+import { getDeploymentLimits } from './server-api/deployment-limits'; // host-owned configured call
+
+const UsageBanner = ({ deploymentId, isGenerating }) => {
+  const { t, i18n } = useTranslation();
+  const { banner } = useUsageLimitBanner({
+    deploymentId,
+    isGenerationInProgress: isGenerating,
+    getDeploymentLimits,
+    warningThresholdPercent: 75,
+    activeLocale: i18n.language,
+    t,
+  });
+
+  return banner ? <UsageLimitBannerView {...banner} /> : null;
+};
+```
+
+**Options** (`UseUsageLimitBannerOptions`):
+
+| Name                      | Type                                                             | Description                                                                                         |
+| ------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                    |
+| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one limits refresh.                                                |
+| `getDeploymentLimits`     | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch — the hook never constructs a client. Its identity is not a re-fetch trigger. |
+| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                       |
+| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                          |
+| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                              |
+
+**Returns** (`UseUsageLimitBannerResult`): `banner` — `severity`, `limitText`, `reset`, `onClose`, `closeAriaLabel`, or `undefined` when nothing should render (no deployment, below the threshold, or dismissed).
+
+`USAGE_BANNER_I18N_KEYS` and `USAGE_RESET_I18N_KEYS` list the default key paths passed to `t` (include them in your translation bundle); the sentences receive `{ percent }`, `{ time }` and `{ date }`. Dismissals are keyed `${deploymentId}:${period}:${severity}`, so a banner returns when usage escalates from warning to reached, and are held in a module-scoped, in-memory store shared by every consumer of the same package copy.
+
+The pieces are exported separately for hosts that render their own banner or a usage dial: `useDeploymentUsageLimits(deploymentId, getDeploymentLimits)` (race-safe fetch, keeps the last response when a refresh fails), `useRefreshUsageAfterGeneration({ isGenerationInProgress, isLoading, refresh })`, `useUsageLimitBannerDismissal()` (plus `resetUsageLimitBannerDismissals()` for test isolation), `selectUsageBannerSource(dto, thresholdPercent)`, `isCappedStat(total)`, `UsagePeriod`, `formatUsageResetTime(resetsAt, locale, t)` and `formatUsageResetShort(resetsAt, period, locale, t)`. Both formatters return `undefined` on an absent, unparseable or `Intl`-less value, so a missing reset time never hides the limit itself.
 
 ### useConversationScroll
 

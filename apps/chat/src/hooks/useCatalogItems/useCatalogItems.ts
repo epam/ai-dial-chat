@@ -13,6 +13,7 @@ import {
   deriveFavoriteItems,
   filterCatalogItemsBySelector,
   filterHiddenOwnedItems,
+  formatUsageResetTime,
   getRunnerSchemas,
   isQuickAppSchema,
   mapPromptToCatalogItem,
@@ -45,7 +46,6 @@ import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
-import { formatUsageResetTime } from '../../utils/usage-reset-time';
 
 interface UseCatalogItemsParams {
   schemas: ApplicationSchemaSummaryDto[];
