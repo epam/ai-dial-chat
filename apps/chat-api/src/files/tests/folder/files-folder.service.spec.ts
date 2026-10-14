@@ -8,7 +8,6 @@ import { FilesUploadService } from '../../upload/files-upload.service';
 
 type SdkClient = {
   getFileMetadata: ReturnType<typeof vi.fn>;
-  uploadFile: ReturnType<typeof vi.fn>;
 };
 
 function makeService(configOverrides: Record<string, unknown> = {}) {
@@ -23,13 +22,14 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
 
   const sdkClient: SdkClient = {
     getFileMetadata: vi.fn(),
-    uploadFile: vi.fn(),
   };
+  const fetchCore = vi.fn();
 
   const dialClient = {
     client: sdkClient,
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
+    fetchCore,
   } as unknown as DialClientService;
 
   const filesUploadService = new FilesUploadService(dialClient, configService);
@@ -39,14 +39,17 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
     filesUploadService,
   );
 
-  return { service, sdkClient };
+  return { service, sdkClient, fetchCore };
 }
 
-const okUpload = (url: string) => ({
-  error: undefined,
-  response: { status: 200, headers: { get: () => null } },
-  data: { url },
-});
+const respondWith =
+  (status: number) => async (_: string, init: RequestInit) => {
+    const reader = (init.body as ReadableStream).getReader();
+    while (!(await reader.read()).done) {
+      /* drain the marker upload body */
+    }
+    return new Response(null, { status });
+  };
 
 const errResponse = (status: number) => ({
   error: new Error('HTTP error'),
@@ -67,11 +70,9 @@ describe('FilesFolderService', () => {
     });
 
     it('returns CreateFolderResponseDto on success', async () => {
-      const { service, sdkClient } = makeService();
+      const { service, sdkClient, fetchCore } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue(notFound());
-      sdkClient.uploadFile.mockResolvedValue(
-        okUpload('my-bucket/reports/.dial_folder'),
-      );
+      fetchCore.mockImplementation(respondWith(201));
 
       const result = await service.createFolder(
         'my-bucket',
@@ -87,15 +88,13 @@ describe('FilesFolderService', () => {
         nodeType: 'folder',
         folderId: 'my-bucket:files/my-bucket/reports/2026/',
       });
-      expect(sdkClient.uploadFile).toHaveBeenCalledWith(
-        'my-bucket',
-        'reports/2026/.dial_folder',
-        expect.any(Object),
+      expect(fetchCore.mock.calls[0][0]).toBe(
+        'http://dial-core/v1/files/my-bucket/reports/2026/.dial_folder',
       );
     });
 
     it('throws ConflictException when marker already exists at target path', async () => {
-      const { service, sdkClient } = makeService();
+      const { service, sdkClient, fetchCore } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue({
         error: undefined,
         response: { status: 200, headers: { get: () => null } },
@@ -109,11 +108,11 @@ describe('FilesFolderService', () => {
       await expect(
         service.createFolder('my-bucket', 'appdata/', '213123123', 'token'),
       ).rejects.toThrow(ConflictException);
-      expect(sdkClient.uploadFile).not.toHaveBeenCalled();
+      expect(fetchCore).not.toHaveBeenCalled();
     });
 
     it('uploads marker when metadata probe returns parent folder marker', async () => {
-      const { service, sdkClient } = makeService();
+      const { service, sdkClient, fetchCore } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue({
         error: undefined,
         response: { status: 200, headers: { get: () => null } },
@@ -123,7 +122,7 @@ describe('FilesFolderService', () => {
           url: 'files/my-bucket/asdasd/d/.dial_folder',
         },
       });
-      sdkClient.uploadFile.mockResolvedValue(okUpload('any'));
+      fetchCore.mockImplementation(respondWith(201));
 
       await service.createFolder(
         'my-bucket',
@@ -132,10 +131,8 @@ describe('FilesFolderService', () => {
         'token',
       );
 
-      expect(sdkClient.uploadFile).toHaveBeenCalledWith(
-        'my-bucket',
-        'asdasd/d/New%20folder%201/.dial_folder',
-        expect.any(Object),
+      expect(fetchCore.mock.calls[0][0]).toBe(
+        'http://dial-core/v1/files/my-bucket/asdasd/d/New%20folder%201/.dial_folder',
       );
     });
 
@@ -149,9 +146,9 @@ describe('FilesFolderService', () => {
     });
 
     it('throws ForbiddenException when DIAL Core returns 403 on marker upload', async () => {
-      const { service, sdkClient } = makeService();
+      const { service, sdkClient, fetchCore } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue(notFound());
-      sdkClient.uploadFile.mockResolvedValue(errResponse(403));
+      fetchCore.mockImplementation(respondWith(403));
 
       await expect(
         service.createFolder('my-bucket', '', 'reports', 'token'),
@@ -159,9 +156,9 @@ describe('FilesFolderService', () => {
     });
 
     it('normalizes parentPath to include trailing slash', async () => {
-      const { service, sdkClient } = makeService();
+      const { service, sdkClient, fetchCore } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue(notFound());
-      sdkClient.uploadFile.mockResolvedValue(okUpload('any'));
+      fetchCore.mockImplementation(respondWith(201));
 
       const result = await service.createFolder(
         'my-bucket',
@@ -174,9 +171,9 @@ describe('FilesFolderService', () => {
     });
 
     it('handles empty parentPath as root', async () => {
-      const { service, sdkClient } = makeService();
+      const { service, sdkClient, fetchCore } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue(notFound());
-      sdkClient.uploadFile.mockResolvedValue(okUpload('any'));
+      fetchCore.mockImplementation(respondWith(201));
 
       const result = await service.createFolder(
         'my-bucket',

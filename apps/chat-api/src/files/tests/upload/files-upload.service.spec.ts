@@ -1,4 +1,6 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { type IncomingHttpHeaders, createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32 } from 'node:zlib';
@@ -17,6 +19,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import { FilesUploadService } from '../../upload/files-upload.service';
+import { UPLOAD_RESPONSE_TIMEOUT_MS } from '../../upload/upload-watchdog';
 
 type SdkClient = {
   uploadFile: ReturnType<typeof vi.fn>;
@@ -49,17 +52,19 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
   return { service, sdkClient, fetchCore };
 }
 
-const okUpload = (url: string) => ({
-  error: undefined,
-  response: { status: 200, headers: { get: () => null } },
-  data: { url },
-});
-
-const errResponse = (status: number) => ({
-  error: new Error('HTTP error'),
-  response: { status, headers: { get: () => null } },
-  data: undefined,
-});
+const readBody = async (body: unknown, delayMs = 0): Promise<Buffer> => {
+  const reader = (body as ReadableStream<Uint8Array>).getReader();
+  const parts: Buffer[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parts.push(Buffer.from(value));
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return Buffer.concat(parts);
+};
 
 const mockFile = { buffer: Buffer.from('hello'), mimetype: 'application/pdf' };
 
@@ -176,9 +181,27 @@ describe('FilesUploadService', () => {
   });
 
   describe('uploadFile', () => {
+    const putCall = (fetchCore: ReturnType<typeof vi.fn>) => {
+      const [url, init] = fetchCore.mock.calls[0] as [string, RequestInit];
+      return { url, init, headers: init.headers as Record<string, string> };
+    };
+
+    const respondWith =
+      (status: number) => async (_: string, init: unknown) => {
+        await readBody((init as RequestInit).body);
+        return new Response(null, { status });
+      };
+
+    const hangUntilAborted = (init: RequestInit): Promise<never> =>
+      new Promise((_, reject) => {
+        init.signal?.addEventListener('abort', () =>
+          reject(new DOMException('aborted', 'AbortError')),
+        );
+      });
+
     it('returns FileUploadResponseDto on success', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(201));
 
       const result = await service.uploadFile(
         'bucket',
@@ -190,8 +213,8 @@ describe('FilesUploadService', () => {
     });
 
     it('builds the returned file URL from bucket and path', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(okUpload('ignored-upstream-url'));
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(201));
 
       const result = await service.uploadFile(
         'user-bucket',
@@ -203,136 +226,257 @@ describe('FilesUploadService', () => {
       expect(result).toEqual({
         url: 'files/user-bucket/uploads/2026-06/IMG_4740%202.jpg',
       });
-      expect(sdkClient.uploadFile).toHaveBeenCalledWith(
-        'user-bucket',
-        'uploads/2026-06/IMG_4740%202.jpg',
-        expect.any(Object),
+      expect(putCall(fetchCore).url).toBe(
+        'http://dial-core/v1/files/user-bucket/uploads/2026-06/IMG_4740%202.jpg',
       );
     });
 
-    it('calls SDK with bucket, path, authorization and multipart form data', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(
-        okUpload('files/bucket/path/file.pdf'),
-      );
+    it('PUTs authorization and a multipart body carrying the file bytes, name and mimetype', async () => {
+      const { service, fetchCore } = makeService();
+      let sentBody = '';
+      fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+        sentBody = (await readBody(init.body)).toString();
+        return new Response(null, { status: 201 });
+      });
 
-      await service.uploadFile('bucket', 'path/file.pdf', mockFile, 'my-token');
-      expect(sdkClient.uploadFile).toHaveBeenCalledWith(
+      await service.uploadFile(
         'bucket',
         'path/file.pdf',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer my-token',
-          }),
-          body: expect.any(FormData),
-        }),
+        { ...mockFile, originalname: 'report.pdf' },
+        'my-token',
       );
-      expect(sdkClient.uploadFile.mock.calls[0][2].headers).not.toHaveProperty(
-        'Content-Type',
+
+      const { init, headers } = putCall(fetchCore);
+      expect(init.method).toBe('PUT');
+      expect(headers.Authorization).toBe('Bearer my-token');
+      expect(headers['Content-Type']).toMatch(
+        /^multipart\/form-data; boundary=dial-upload-/,
       );
+      expect(sentBody).toContain('filename="report.pdf"');
+      expect(sentBody).toContain('Content-Type: application/pdf');
+      expect(sentBody).toContain('hello');
     });
 
-    it('throws UnauthorizedException on 401', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(errResponse(401));
-      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
-        UnauthorizedException,
+    it('delivers a multi-chunk file byte for byte', async () => {
+      const { service, fetchCore } = makeService();
+      const payload = Buffer.alloc(200_000, 'x');
+      let received: Buffer = Buffer.alloc(0);
+      fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+        received = await readBody(init.body);
+        return new Response(null, { status: 201 });
+      });
+
+      await service.uploadFile(
+        'b',
+        'big.bin',
+        { buffer: payload, mimetype: 'application/octet-stream' },
+        't',
       );
+
+      const text = received.toString('latin1');
+      expect(text.split('x').length - 1).toBe(payload.length);
     });
 
-    it('throws ForbiddenException on 403', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(errResponse(403));
+    it.each([
+      [401, UnauthorizedException],
+      [403, ForbiddenException],
+      [500, BadGatewayException],
+    ])('maps DIAL Core %i to the matching exception', async (status, error) => {
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(status));
       await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
-        ForbiddenException,
+        error,
       );
     });
 
     it('throws HttpException(429) on 429', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(errResponse(429));
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(429));
       await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
         HttpException,
       );
     });
 
-    it('throws BadGatewayException on 5xx', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(errResponse(500));
-      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
-        BadGatewayException,
-      );
-    });
-
     it('throws ServiceUnavailableException on network error', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockRejectedValue(new TypeError('fetch failed'));
-      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
-        ServiceUnavailableException,
-      );
-    });
-
-    it('throws ServiceUnavailableException on timeout', async () => {
-      const { service, sdkClient } = makeService();
-      const timeoutErr = Object.assign(new Error('The operation was aborted'), {
-        name: 'TimeoutError',
-      });
-      sdkClient.uploadFile.mockRejectedValue(timeoutErr);
+      const { service, fetchCore } = makeService();
+      fetchCore.mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
         ServiceUnavailableException,
       );
     });
 
     it('does not send If-None-Match when uploadMode is overwrite', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(201));
 
-      await service.uploadFile(
-        'bucket',
-        'path/file.pdf',
-        mockFile,
-        'token',
-        'overwrite',
-      );
+      await service.uploadFile('b', 'p', mockFile, 't', 'overwrite');
 
-      expect(sdkClient.uploadFile.mock.calls[0][2].headers).not.toHaveProperty(
-        'If-None-Match',
-      );
+      expect(putCall(fetchCore).headers).not.toHaveProperty('If-None-Match');
+    });
+
+    it('does not send If-None-Match when uploadMode is omitted', async () => {
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(201));
+
+      await service.uploadFile('b', 'p', mockFile, 't');
+
+      expect(putCall(fetchCore).headers).not.toHaveProperty('If-None-Match');
     });
 
     it('sends If-None-Match: * when uploadMode is create-only', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(201));
 
-      await service.uploadFile(
-        'bucket',
-        'path/file.pdf',
-        mockFile,
-        'token',
-        'create-only',
-      );
+      await service.uploadFile('b', 'p', mockFile, 't', 'create-only');
 
-      expect(sdkClient.uploadFile.mock.calls[0][2].headers).toMatchObject({
+      expect(putCall(fetchCore).headers).toMatchObject({
         'If-None-Match': '*',
       });
     });
 
     it('maps 412 from DIAL Core to ConflictException (409)', async () => {
-      const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(errResponse(412));
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(412));
 
-      await expect(
-        service.uploadFile('b', 'p', mockFile, 't', 'create-only'),
-      ).rejects.toThrow(HttpException);
+      const error = await service
+        .uploadFile('b', 'p', mockFile, 't', 'create-only')
+        .catch((err: unknown) => err);
+
+      expect(error).toBeInstanceOf(HttpException);
+      expect((error as HttpException).getStatus()).toBe(409);
+      expect((error as HttpException).message).toBe(
+        'File already exists at this path',
+      );
+    });
+
+    it('streams a multi-megabyte file to a real HTTP server with the expected headers', async () => {
+      const received = {
+        headers: {} as IncomingHttpHeaders,
+        bytes: 0,
+        url: '',
+      };
+      const server = createServer((req, res) => {
+        received.headers = req.headers;
+        received.url = req.url ?? '';
+        req.on('data', (chunk: Buffer) => {
+          received.bytes += chunk.length;
+        });
+        req.on('end', () => res.writeHead(201).end());
+      });
+      await new Promise<void>((resolve) =>
+        server.listen(0, '127.0.0.1', resolve),
+      );
+      const { port } = server.address() as AddressInfo;
 
       try {
-        await service.uploadFile('b', 'p', mockFile, 't', 'create-only');
-      } catch (err) {
-        expect((err as HttpException).getStatus()).toBe(409);
-        expect((err as HttpException).message).toBe(
-          'File already exists at this path',
+        const { service } = makeService({
+          DIAL_CORE_URL: `http://127.0.0.1:${port}`,
+        });
+        (
+          service as unknown as {
+            dialClient: { baseUrl: string; fetchCore: typeof fetch };
+          }
+        ).dialClient.baseUrl = `http://127.0.0.1:${port}`;
+        (
+          service as unknown as { dialClient: { fetchCore: typeof fetch } }
+        ).dialClient.fetchCore = globalThis.fetch;
+        const payload = Buffer.alloc(3 * 1024 * 1024, 'x');
+
+        const result = await service.uploadFile(
+          'bucket',
+          'dir/big file.csv',
+          {
+            buffer: payload,
+            mimetype: 'text/csv',
+            originalname: 'big file.csv',
+          },
+          'tok',
+          'create-only',
         );
+
+        expect(result).toEqual({ url: 'files/bucket/dir/big file.csv' });
+        expect(received.url).toBe('/v1/files/bucket/dir/big%20file.csv');
+        expect(received.headers.authorization).toBe('Bearer tok');
+        expect(received.headers['if-none-match']).toBe('*');
+        expect(received.headers['content-type']).toMatch(
+          /^multipart\/form-data; boundary=/,
+        );
+        expect(received.bytes).toBeGreaterThan(payload.length);
+        expect(received.bytes).toBeLessThan(payload.length + 1024);
+      } finally {
+        server.close();
       }
+    });
+
+    describe('progress-based timeouts', () => {
+      const MANY_CHUNKS = Buffer.alloc(64 * 1024 * 128);
+
+      it('completes a transfer that outlasts the idle limit while bytes keep flowing', async () => {
+        const { service, fetchCore } = makeService({
+          FILE_TRANSFER_TIMEOUT_MS: 150,
+        });
+        fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+          await readBody(init.body, 8);
+          return new Response(null, { status: 201 });
+        });
+
+        const startedAt = Date.now();
+        const result = await service.uploadFile(
+          'b',
+          'big.bin',
+          { buffer: MANY_CHUNKS, mimetype: 'application/octet-stream' },
+          't',
+        );
+
+        expect(result).toEqual({ url: 'files/b/big.bin' });
+        expect(Date.now() - startedAt).toBeGreaterThan(300);
+      });
+
+      it('aborts with a clear 503 when no data moves for the idle limit', async () => {
+        const { service, fetchCore } = makeService({
+          FILE_TRANSFER_TIMEOUT_MS: 100,
+        });
+        fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+          const reader = (init.body as ReadableStream).getReader();
+          await reader.read();
+          return hangUntilAborted(init);
+        });
+
+        const error = await service
+          .uploadFile(
+            'b',
+            'big.bin',
+            { buffer: MANY_CHUNKS, mimetype: 'application/octet-stream' },
+            't',
+          )
+          .catch((err: unknown) => err);
+
+        expect(error).toBeInstanceOf(ServiceUnavailableException);
+        expect((error as Error).message).toMatch(/stalled/);
+        expect((error as Error).message).not.toMatch(/unreachable/);
+      });
+
+      it('aborts with a clear 503 when DIAL Core does not answer after the last byte', async () => {
+        vi.useFakeTimers();
+        try {
+          const { service, fetchCore } = makeService();
+          fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+            await readBody(init.body);
+            return hangUntilAborted(init);
+          });
+
+          const result = service
+            .uploadFile('b', 'p', mockFile, 't')
+            .catch((err: unknown) => err);
+          await vi.advanceTimersByTimeAsync(UPLOAD_RESPONSE_TIMEOUT_MS);
+          const error = await result;
+
+          expect(error).toBeInstanceOf(ServiceUnavailableException);
+          expect((error as Error).message).toMatch(/did not respond/);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
     });
   });
 
