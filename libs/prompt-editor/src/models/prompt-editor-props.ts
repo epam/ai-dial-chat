@@ -173,6 +173,8 @@ export interface PromptEditorProps {
   onRetry?: () => void;
   /** Optional Description rewrite callback; omission hides the Refine with AI action. */
   onRefineDescription?: TextRefinementCallback;
+  /** Optional Instructions rewrite callback; omission hides the Refine with AI action. */
+  onRefineInstructions?: TextRefinementCallback;
   /** Text overrides. */
   labels?: PromptEditorLabels;
   /** Theme applied to the prompt markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */

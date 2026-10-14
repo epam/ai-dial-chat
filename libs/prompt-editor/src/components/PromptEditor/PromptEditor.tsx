@@ -110,6 +110,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   onBack = onCancel,
   onRetry,
   onRefineDescription,
+  onRefineInstructions,
   labels,
   markdownEditorTheme,
   styles: editorStyles,
@@ -216,6 +217,16 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     disabled: isSaving,
     resetKey: initialValues,
   });
+  const contentRefinement = useTextRefinement({
+    value: values.content,
+    onChange: (content) => setField('content', content),
+    onRefine: onRefineInstructions,
+    disabled: isSaving,
+    resetKey: initialValues,
+  });
+  /* One refinement per form: while either field refines, both actions and Save are disabled. */
+  const isRefining =
+    descriptionRefinement.isPending || contentRefinement.isPending;
   const renderRefinableDescription = onRefineDescription
     ? (textarea: ReactNode, fieldId: string) => (
         <TextRefinementField
@@ -224,7 +235,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           label={labels?.descriptionLabel ?? 'Description'}
           labels={labels}
           refinement={descriptionRefinement}
-          disabled={descriptionRefinement.isPending || isSaving}
+          disabled={isRefining || isSaving}
         >
           {textarea}
         </TextRefinementField>
@@ -237,7 +248,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     values.content !== seededValues.content;
   const leaveGuard = useUnsavedChangesGuard(isDirty);
   const { guard: guardLeave } = leaveGuard;
-  const { reset: resetRefinement } = descriptionRefinement;
+  const { reset: resetDescriptionRefinement } = descriptionRefinement;
+  const { reset: resetContentRefinement } = contentRefinement;
+  const resetRefinement = useCallback(() => {
+    resetDescriptionRefinement();
+    resetContentRefinement();
+  }, [resetDescriptionRefinement, resetContentRefinement]);
   const handleBack = useCallback(() => {
     guardLeave(() => {
       resetRefinement();
@@ -252,9 +268,9 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   }, [guardLeave, resetRefinement, onCancel]);
 
   const handleSubmit = useCallback(() => {
-    if (isSaving || descriptionRefinement.isPending) return;
+    if (isSaving || isRefining) return;
     onSubmit(values);
-  }, [isSaving, descriptionRefinement.isPending, onSubmit, values]);
+  }, [isSaving, isRefining, onSubmit, values]);
 
   /* MetadataForm moves focus to an invalid Name or Description itself; this
    * covers the case where only Instructions is invalid. Focus moves only when
@@ -357,6 +373,47 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   const buildCounterMessage = (count: number) =>
     labels?.charactersRemaining?.(count) ?? `${count} characters remaining`;
 
+  const contentLabel = labels?.contentLabel ?? 'Instructions';
+  const contentEditor = (
+    <div
+      ref={contentEditorCapRef}
+      className={mergeClasses(
+        MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+        MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
+        MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+        errors?.content != null && styles.contentInvalid,
+      )}
+    >
+      <Suspense
+        fallback={
+          <Spinner
+            ariaLabel={
+              labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
+            }
+          />
+        }
+      >
+        <MarkdownEditor
+          id={contentEditorId}
+          value={values.content}
+          onChange={(value) => setField('content', value)}
+          height={480}
+          placeholder={
+            labels?.contentPlaceholder ?? 'Write the prompt instructions'
+          }
+          theme={markdownEditorTheme}
+          showDragbar={false}
+        />
+      </Suspense>
+    </div>
+  );
+  const contentError = (
+    <ErrorText
+      text={errors?.content}
+      className={mergeClasses(helperTextClassName, styles.contentError)}
+    />
+  );
+
   return (
     <>
       <EntityEditor
@@ -364,7 +421,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
         onBack={handleBack}
         onCancel={handleCancel}
         isSubmitting={isSaving}
-        isSubmitDisabled={descriptionRefinement.isPending}
+        isSubmitDisabled={isRefining}
         metadataSectionClassName={mergeClasses(
           FORM_CLASS_NAME,
           PROMPT_EDITOR_CLASS.form,
@@ -385,64 +442,46 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                   : undefined
               }
             />
-            <div
-              role="group"
-              aria-labelledby={contentLabelId}
-              className="flex flex-1 flex-col gap-2"
-              style={cssVars}
-            >
-              {/*
-               * htmlFor is what names the editor's textarea; without it the
-               * label is only visible text sitting above an unnamed control.
-               */}
-              <Label
-                id={contentLabelId}
-                htmlFor={contentEditorId}
-                label={labels?.contentLabel ?? 'Instructions'}
-                required
-                className={contentLabelClassName}
-              />
-              <div
-                ref={contentEditorCapRef}
-                className={mergeClasses(
-                  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-                  MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
-                  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
-                  errors?.content != null && styles.contentInvalid,
-                )}
-              >
-                <Suspense
-                  fallback={
-                    <Spinner
-                      ariaLabel={
-                        labels?.contentLoadingAriaLabel ??
-                        'Loading prompt editor'
-                      }
-                    />
-                  }
+            {onRefineInstructions ? (
+              <div className="flex flex-1 flex-col" style={cssVars}>
+                <TextRefinementField
+                  isEnabled
+                  fieldId={contentEditorId}
+                  label={contentLabel}
+                  labelClassName={contentLabelClassName}
+                  required
+                  labels={labels}
+                  refinement={contentRefinement}
+                  disabled={isRefining || isSaving}
                 >
-                  <MarkdownEditor
-                    id={contentEditorId}
-                    value={values.content}
-                    onChange={(value) => setField('content', value)}
-                    height={480}
-                    placeholder={
-                      labels?.contentPlaceholder ??
-                      'Write the prompt instructions'
-                    }
-                    theme={markdownEditorTheme}
-                    showDragbar={false}
-                  />
-                </Suspense>
+                  <div className="flex flex-col gap-2">
+                    {contentEditor}
+                    {contentError}
+                  </div>
+                </TextRefinementField>
               </div>
-              <ErrorText
-                text={errors?.content}
-                className={mergeClasses(
-                  helperTextClassName,
-                  styles.contentError,
-                )}
-              />
-            </div>
+            ) : (
+              <div
+                role="group"
+                aria-labelledby={contentLabelId}
+                className="flex flex-1 flex-col gap-2"
+                style={cssVars}
+              >
+                {/*
+                 * htmlFor is what names the editor's textarea; without it the
+                 * label is only visible text sitting above an unnamed control.
+                 */}
+                <Label
+                  id={contentLabelId}
+                  htmlFor={contentEditorId}
+                  label={contentLabel}
+                  required
+                  className={contentLabelClassName}
+                />
+                {contentEditor}
+                {contentError}
+              </div>
+            )}
             <span role="status" aria-live="polite" className="sr-only">
               {descriptionRemaining != null &&
                 buildCounterMessage(descriptionRemaining)}

@@ -750,6 +750,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
   CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
 
   @IsOptional()

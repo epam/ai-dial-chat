@@ -16,7 +16,7 @@ The prompt keeps its single-column arrangement on that shell. `EntityEditor` SHA
 - `labels.backAriaLabel`: forwarded from `PromptEditorProps.labels.backButtonAriaLabel` (English default `'Back to prompts'`).
 - `title`: the resolved create/edit title string.
 - `metadataTitle={null}`, so the column has no section heading.
-- `metadata`: one centred column (max 1180 px) holding the shared `MetadataForm` with `fields={[MetadataField.Name, MetadataField.Description]}`, then the Instructions `MarkdownEditor` with its label, lazy `Suspense` fallback, character-counter announcements and error. The Instructions editor fills the height left below the fields.
+- `metadata`: one centred column (max 1180 px) holding the shared `MetadataForm` with `fields={[MetadataField.Name, MetadataField.Description]}`, then the Instructions `MarkdownEditor` with its label, lazy `Suspense` fallback, character-counter announcements and error. When the host supplies `onRefineDescription` / `onRefineInstructions`, the Description / Instructions label row carries the shared Refine with AI action and Undo (see `ai-text-refinement`); the app supplies both with purposes `prompt-description` / `prompt-instructions` only when `config.aiTextRefinementAvailable` is true. The Instructions editor fills the height left below the fields.
 - No `setup`, so the column takes the full width.
 - `onCancel`, `onSubmit` and `isSubmitting` (forwarded from `isSaving`).
 - `submitLabel`: `labels.createLabel` in create mode and `labels.saveLabel` in edit mode. The host resolves both through i18n (`buttons.create` / `buttons.save`).
