@@ -150,7 +150,8 @@ export const ChatSkill: FC<ChatSkillProps> = ({
         <span
           ref={setSlash}
           aria-hidden
-          className="inset-inline-start-0 pointer-events-none absolute top-0 select-none"
+          // No `top-0`: the static position keeps the slash on the name's baseline.
+          className="inset-inline-start-0 pointer-events-none absolute select-none"
         >
           /
         </span>
