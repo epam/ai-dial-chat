@@ -262,4 +262,45 @@ describe('ChatSkill — slash width', () => {
 
     expect(name.style.paddingInlineStart).toBe('6px');
   });
+
+  it('keeps the slash width after View details remounts the chip', async () => {
+    // Only the chip's own slash observers — Floating UI observes too.
+    const notifyResizes: Array<() => void> = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(private readonly callback: () => void) {}
+        observe = (target: Element) => {
+          if (target.textContent === '/') notifyResizes.push(this.callback);
+        };
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        return { width: this.isConnected ? 5 : 0 } as DOMRect;
+      },
+    );
+    const user = userEvent.setup();
+
+    render(
+      <ChatSkill
+        name="summarize"
+        path="skills/bucket/summarize"
+        description="Summarizes the supplied text."
+        detailsTrigger="click"
+        onViewDetails={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByLabelText('/summarize'));
+    await user.click(
+      await screen.findByRole('button', { name: 'View details' }),
+    );
+    // A detached node's observer reports its 0px size after removal.
+    act(() => notifyResizes.forEach((notify) => notify()));
+
+    expect(screen.getByText('summarize').style.paddingInlineStart).toBe('5px');
+  });
 });
