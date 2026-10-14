@@ -1,3 +1,12 @@
+export { ExtensionsSection } from './components/ExtensionsSection/ExtensionsSection';
+export type {
+  ExtensionServiceItem,
+  ExtensionsColors,
+  ExtensionsLabels,
+  ExtensionsSectionProps,
+  ExtensionsStyles,
+  ExtensionsTypography,
+} from './models/extensions-props';
 export { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 export type {
   SettingsPanelItem,

@@ -1,4 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  ExtensionsSection,
+  type ExtensionServiceItem,
+} from '@epam/ai-dial-settings-panel';
 import {
   Button,
   ButtonAppearance,
@@ -11,9 +14,6 @@ import {
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { memo, useCallback, useState, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import ExtensionServiceRow, {
-  EXTENSIONS_GRID_COLUMNS,
-} from '../../../components/ExtensionServiceRow/ExtensionServiceRow';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -26,7 +26,6 @@ import {
   OfflineCredentialsGateStatus,
   useOfflineCredentialsGate,
 } from '../../../hooks/offlineCredentials/useOfflineCredentialsGate';
-import styles from './ExtensionsTab.module.scss';
 
 const ExtensionsTab: FC = () => {
   const { t } = useTranslation();
@@ -138,6 +137,22 @@ const ExtensionsTab: FC = () => {
    * for the connected grant. */
   const serviceDisplayName = t(ExtensionsI18nKeys.ServiceDefaultName);
 
+  /* The presentational table shell (header row, column grid, dividers) is
+   * `ExtensionsSection` from `@epam/ai-dial-settings-panel`; this tab owns
+   * only the state that decides which row and which action render. */
+  const serviceRows: ExtensionServiceItem[] = isServiceRowVisible
+    ? [
+        {
+          id: 'dial-native',
+          displayName: serviceDisplayName,
+          description: t(ExtensionsI18nKeys.ServiceDescription),
+          isWarningVisible: status === OfflineCredentialsGateStatus.Available,
+          authorizeLabel: t(ExtensionsI18nKeys.ServiceAuthorizeTooltip),
+          action: resolveAction(),
+        },
+      ]
+    : [];
+
   return (
     <div className="flex size-full min-h-0 flex-col">
       <div className="flex flex-col gap-2 px-8 py-3">
@@ -152,53 +167,17 @@ const ExtensionsTab: FC = () => {
         {status === OfflineCredentialsGateStatus.Checking ? (
           <Spinner fullWidth={false} ariaLabel={t(BasicI18nKeys.Loading)} />
         ) : (
-          <div
-            role="table"
-            aria-label={t(SettingsI18nKeys.Extensions)}
-            className="overflow-hidden rounded-xl bg-layer-raised shadow-md"
-          >
-            <div
-              role="row"
-              className={mergeClasses(
-                'hidden gap-4 px-6 py-3 desktop:grid desktop:items-center',
-                EXTENSIONS_GRID_COLUMNS,
-                styles.headerRow,
-              )}
-            >
-              <span
-                role="columnheader"
-                className="dial-caption-lead-semi-text text-start text-secondary"
-              >
-                {t(ExtensionsI18nKeys.NameColumnLabel)}
-              </span>
-              <span
-                role="columnheader"
-                className="dial-caption-lead-semi-text text-start text-secondary"
-              >
-                {t(ExtensionsI18nKeys.DescriptionColumnLabel)}
-              </span>
-              {/* Visually empty per the design; the sr-only label keeps the
-                  header announced for screen-reader users browsing the header row. */}
-              <span role="columnheader">
-                <span className="sr-only">
-                  {t(ExtensionsI18nKeys.ActionsColumnLabel)}
-                </span>
-              </span>
-            </div>
-            <div role="rowgroup">
-              {isServiceRowVisible && (
-                <ExtensionServiceRow
-                  displayName={serviceDisplayName}
-                  description={t(ExtensionsI18nKeys.ServiceDescription)}
-                  isWarningVisible={
-                    status === OfflineCredentialsGateStatus.Available
-                  }
-                  authorizeLabel={t(ExtensionsI18nKeys.ServiceAuthorizeTooltip)}
-                  action={resolveAction()}
-                />
-              )}
-            </div>
-          </div>
+          <ExtensionsSection
+            rows={serviceRows}
+            labels={{
+              tableAriaLabel: t(SettingsI18nKeys.Extensions),
+              nameColumnLabel: t(ExtensionsI18nKeys.NameColumnLabel),
+              descriptionColumnLabel: t(
+                ExtensionsI18nKeys.DescriptionColumnLabel,
+              ),
+              actionsColumnLabel: t(ExtensionsI18nKeys.ActionsColumnLabel),
+            }}
+          />
         )}
       </div>
 
