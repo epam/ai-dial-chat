@@ -58,6 +58,7 @@ vi.mock('../../UsageLimitBanner/UsageLimitBanner', () => ({
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
+  UsageLimitBannerSeverity: { Warning: 'warning', Reached: 'reached' },
   ConversationInput: ({
     deployments,
     chatSettings,

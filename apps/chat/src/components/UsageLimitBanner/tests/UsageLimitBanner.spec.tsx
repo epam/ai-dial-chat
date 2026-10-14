@@ -1,15 +1,15 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
+import { resetUsageLimitBannerDismissals } from '@epam/ai-dial-chat-hooks';
 import {
   UsageLimitBannerSeverity,
   UsageLimitBannerView,
 } from '@epam/ai-dial-conversation-input';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig } from '../../../context/AppConfigContext';
-import { useDeploymentUsageLimits } from '../../../hooks/useDeploymentUsageLimits';
-import type { UseDeploymentUsageLimitsResult } from '../../../hooks/useDeploymentUsageLimits';
-import { resetUsageLimitBannerDismissals } from '../../../hooks/useUsageLimitBannerDismissal';
+import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import UsageLimitBanner from '../UsageLimitBanner';
 
 /* Resolves keys against the real en.json, so the assertions read the English
@@ -50,12 +50,12 @@ vi.mock(
   async () => import('../../../context/tests/app-config-context-mock'),
 );
 
-vi.mock('../../../hooks/useDeploymentUsageLimits', () => ({
-  useDeploymentUsageLimits: vi.fn(),
+vi.mock('../../../server-api/deployment-limits', () => ({
+  getDeploymentLimits: vi.fn(),
 }));
 
 const mockUseAppConfig = vi.mocked(useAppConfig);
-const mockUseDeploymentUsageLimits = vi.mocked(useDeploymentUsageLimits);
+const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
 
 /* Places the test in UTC by stubbing only the zero-argument zone resolution;
    the real formatter does the formatting (see usage-reset-time.spec.ts). */
@@ -73,9 +73,9 @@ const mockUtcZone = (): void => {
 };
 
 const DEPLOYMENT_ID = 'gpt-4o';
-/* The mocked limits hook cannot trigger a render, and `memo` skips a
-   rerender with equal props, so each data change remounts under a new key —
-   harmless here, as the dismissal store is module-scoped. */
+/* `memo` skips a rerender with equal props, so a data change remounts under a
+   new key to force a fresh fetch — harmless here, as the dismissal store is
+   module-scoped. */
 let renderKey = 0;
 const nextKey = (): number => ++renderKey;
 
@@ -88,19 +88,8 @@ const dayAt = (used: number, resetsAt: string | null = DAY_RESET) => ({
   dayTokenStats: { used, total: 100, resetsAt: resetsAt ?? undefined },
 });
 
-const setLimits = (
-  limitsDto: DeploymentLimitsResponseDto | undefined,
-  overrides: Partial<UseDeploymentUsageLimitsResult> = {},
-): UseDeploymentUsageLimitsResult => {
-  const result: UseDeploymentUsageLimitsResult = {
-    limitsDto,
-    isLoading: false,
-    hasError: false,
-    refresh: vi.fn(),
-    ...overrides,
-  };
-  mockUseDeploymentUsageLimits.mockReturnValue(result);
-  return result;
+const setLimits = (limitsDto: DeploymentLimitsResponseDto): void => {
+  mockGetDeploymentLimits.mockResolvedValue(limitsDto);
 };
 
 const setThreshold = (usageLimitsWarningThresholdPercent: number): void => {
@@ -109,8 +98,22 @@ const setThreshold = (usageLimitsWarningThresholdPercent: number): void => {
   } as ReturnType<typeof useAppConfig>);
 };
 
-const renderBanner = (deploymentId: string | undefined) =>
-  render(<UsageLimitBanner deploymentId={deploymentId} />);
+/* Lets the limits fetch settle and its state update render. */
+const settle = (): Promise<void> => act(() => Promise.resolve());
+
+const renderBanner = async (deploymentId: string | undefined) => {
+  const view = render(<UsageLimitBanner deploymentId={deploymentId} />);
+  await settle();
+  return view;
+};
+
+const remountBanner = async (
+  rerender: (ui: ReactNode) => void,
+  deploymentId: string,
+): Promise<void> => {
+  rerender(<UsageLimitBanner key={nextKey()} deploymentId={deploymentId} />);
+  await settle();
+};
 
 describe('UsageLimitBanner', () => {
   beforeEach(() => {
@@ -129,9 +132,9 @@ describe('UsageLimitBanner', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders the daily warning wording with its reset time', () => {
+  it('renders the daily warning wording with its reset time', async () => {
     setLimits(dayAt(80));
-    renderBanner(DEPLOYMENT_ID);
+    await renderBanner(DEPLOYMENT_ID);
 
     const banner = screen.getByRole('status');
     expect(banner.textContent).toMatch(
@@ -140,9 +143,9 @@ describe('UsageLimitBanner', () => {
     expect(screen.getByText('Daily limit 80% used.')).toBeTruthy();
   });
 
-  it('wraps the reset sentence in a <time> carrying the original instant and a spoken form', () => {
+  it('wraps the reset sentence in a <time> carrying the original instant and a spoken form', async () => {
     setLimits(dayAt(80));
-    renderBanner(DEPLOYMENT_ID);
+    await renderBanner(DEPLOYMENT_ID);
 
     const time = screen.getByText(/^Resets at/);
     expect(time.tagName).toBe('TIME');
@@ -150,19 +153,19 @@ describe('UsageLimitBanner', () => {
     expect(screen.getByText(/^Usage resets Oct 14, 2026/)).toBeTruthy();
   });
 
-  it('renders the reached wording with a date for a monthly limit', () => {
+  it('renders the reached wording with a date for a monthly limit', async () => {
     setLimits({
       monthCostStats: { used: 100, total: 100, resetsAt: MONTH_RESET },
     });
-    renderBanner(DEPLOYMENT_ID);
+    await renderBanner(DEPLOYMENT_ID);
 
     expect(screen.getByText('Monthly limit reached.')).toBeTruthy();
     expect(screen.getByText('Resets on Nov 1.')).toBeTruthy();
   });
 
-  it('passes the severity, translated limit sentence, and a close handler to the lib view', () => {
+  it('passes the severity, translated limit sentence, and a close handler to the lib view', async () => {
     setLimits(dayAt(100));
-    const { rerender } = renderBanner(DEPLOYMENT_ID);
+    const { rerender } = await renderBanner(DEPLOYMENT_ID);
     expect(vi.mocked(UsageLimitBannerView)).toHaveBeenLastCalledWith(
       expect.objectContaining({
         severity: UsageLimitBannerSeverity.Reached,
@@ -173,7 +176,7 @@ describe('UsageLimitBanner', () => {
     );
 
     setLimits(dayAt(80));
-    rerender(<UsageLimitBanner key={nextKey()} deploymentId={DEPLOYMENT_ID} />);
+    await remountBanner(rerender, DEPLOYMENT_ID);
     expect(vi.mocked(UsageLimitBannerView)).toHaveBeenLastCalledWith(
       expect.objectContaining({
         severity: UsageLimitBannerSeverity.Warning,
@@ -183,56 +186,52 @@ describe('UsageLimitBanner', () => {
     );
   });
 
-  it('announces politely through role="status", never role="alert"', () => {
+  it('announces politely through role="status", never role="alert"', async () => {
     setLimits(dayAt(100));
-    renderBanner(DEPLOYMENT_ID);
+    await renderBanner(DEPLOYMENT_ID);
 
     expect(screen.getByRole('status')).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('renders nothing below the threshold', () => {
+  it('renders nothing below the threshold', async () => {
     setLimits(dayAt(70));
-    renderBanner(DEPLOYMENT_ID);
+    await renderBanner(DEPLOYMENT_ID);
 
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('follows a custom threshold', () => {
+  it('follows a custom threshold', async () => {
     setThreshold(90);
     setLimits(dayAt(80));
-    const { rerender } = renderBanner(DEPLOYMENT_ID);
+    const { rerender } = await renderBanner(DEPLOYMENT_ID);
     expect(screen.queryByRole('status')).toBeNull();
 
     setLimits(dayAt(92));
-    rerender(<UsageLimitBanner key={nextKey()} deploymentId={DEPLOYMENT_ID} />);
+    await remountBanner(rerender, DEPLOYMENT_ID);
     expect(screen.getByText('Daily limit 92% used.')).toBeTruthy();
   });
 
-  it('renders nothing while the first fetch is pending', () => {
-    setLimits(undefined, { isLoading: true });
-    renderBanner(DEPLOYMENT_ID);
+  it('renders nothing while the first fetch is pending', async () => {
+    mockGetDeploymentLimits.mockReturnValue(
+      new Promise<never>(() => undefined),
+    );
+    await renderBanner(DEPLOYMENT_ID);
 
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('renders nothing without a deployment', () => {
+  it('renders nothing without a deployment', async () => {
     setLimits(dayAt(80));
-    renderBanner(undefined);
+    await renderBanner(undefined);
 
     expect(screen.queryByRole('status')).toBeNull();
+    expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
   });
 
-  it('keeps the last value when a refresh fails', () => {
-    setLimits(dayAt(80), { hasError: true });
-    renderBanner(DEPLOYMENT_ID);
-
-    expect(screen.getByText('Daily limit 80% used.')).toBeTruthy();
-  });
-
-  it('omits the reset sentence when resetsAt is absent', () => {
+  it('omits the reset sentence when resetsAt is absent', async () => {
     setLimits(dayAt(80, null));
-    renderBanner(DEPLOYMENT_ID);
+    await renderBanner(DEPLOYMENT_ID);
 
     expect(screen.getByRole('status').textContent).toBe(
       'Daily limit 80% used.',
@@ -243,44 +242,41 @@ describe('UsageLimitBanner', () => {
     it('stays hidden as usage creeps up and reappears on escalation', async () => {
       const user = userEvent.setup({ delay: null });
       setLimits(dayAt(80));
-      const { rerender } = renderBanner(DEPLOYMENT_ID);
+      const { rerender } = await renderBanner(DEPLOYMENT_ID);
 
       await user.click(screen.getByRole('button'));
       expect(screen.queryByRole('status')).toBeNull();
 
       setLimits(dayAt(85));
-      rerender(
-        <UsageLimitBanner key={nextKey()} deploymentId={DEPLOYMENT_ID} />,
-      );
+      await remountBanner(rerender, DEPLOYMENT_ID);
       expect(screen.queryByRole('status')).toBeNull();
 
       setLimits(dayAt(100));
-      rerender(
-        <UsageLimitBanner key={nextKey()} deploymentId={DEPLOYMENT_ID} />,
-      );
+      await remountBanner(rerender, DEPLOYMENT_ID);
       expect(screen.getByText('Daily limit reached.')).toBeTruthy();
     });
 
     it('reappears for another deployment', async () => {
       const user = userEvent.setup({ delay: null });
       setLimits(dayAt(80));
-      const { rerender } = renderBanner('gpt-4o');
+      const { rerender } = await renderBanner('gpt-4o');
 
       await user.click(screen.getByRole('button'));
       expect(screen.queryByRole('status')).toBeNull();
 
       rerender(<UsageLimitBanner deploymentId="claude" />);
+      await settle();
       expect(screen.getByText('Daily limit 80% used.')).toBeTruthy();
     });
 
     it('survives a remount, as when moving from the new-chat screen to a conversation', async () => {
       const user = userEvent.setup({ delay: null });
       setLimits(dayAt(80));
-      const { unmount } = renderBanner(DEPLOYMENT_ID);
+      const { unmount } = await renderBanner(DEPLOYMENT_ID);
 
       await user.click(screen.getByRole('button'));
       unmount();
-      renderBanner(DEPLOYMENT_ID);
+      await renderBanner(DEPLOYMENT_ID);
 
       expect(screen.queryByRole('status')).toBeNull();
     });
@@ -288,7 +284,7 @@ describe('UsageLimitBanner', () => {
     it('dismisses from the keyboard', async () => {
       const user = userEvent.setup({ delay: null });
       setLimits(dayAt(80));
-      renderBanner(DEPLOYMENT_ID);
+      await renderBanner(DEPLOYMENT_ID);
 
       await user.tab();
       await user.keyboard('{Enter}');
@@ -297,26 +293,30 @@ describe('UsageLimitBanner', () => {
     });
   });
 
-  it('refreshes once after a response finishes streaming', () => {
-    const { refresh } = setLimits(dayAt(80));
+  it('refetches once after a response finishes streaming', async () => {
+    setLimits(dayAt(80));
     const { rerender } = render(
       <UsageLimitBanner deploymentId="gpt-4o" isGenerationInProgress />,
     );
+    await settle();
+    expect(mockGetDeploymentLimits).toHaveBeenCalledTimes(1);
 
     rerender(
       <UsageLimitBanner deploymentId="gpt-4o" isGenerationInProgress={false} />,
     );
+    await settle();
 
-    expect(refresh).toHaveBeenCalledOnce();
+    expect(mockGetDeploymentLimits).toHaveBeenCalledTimes(2);
   });
 
-  it('keeps its content order and roles under dir="rtl"', () => {
+  it('keeps its content order and roles under dir="rtl"', async () => {
     setLimits(dayAt(80));
     render(
       <div dir="rtl">
         <UsageLimitBanner deploymentId="gpt-4o" />
       </div>,
     );
+    await settle();
 
     const banner = screen.getByRole('status');
     const sentence = screen.getByText('Daily limit 80% used.');
@@ -327,9 +327,9 @@ describe('UsageLimitBanner', () => {
     expect(banner.contains(screen.getByRole('button'))).toBe(true);
   });
 
-  it('sets no fixed width, so it wraps inside the composer on narrow screens', () => {
+  it('sets no fixed width, so it wraps inside the composer on narrow screens', async () => {
     setLimits(dayAt(80));
-    renderBanner(DEPLOYMENT_ID);
+    await renderBanner(DEPLOYMENT_ID);
 
     const banner = screen.getByRole('status');
     expect(banner.className).not.toMatch(/(^|\s)(w|min-w)-\[?\d/);

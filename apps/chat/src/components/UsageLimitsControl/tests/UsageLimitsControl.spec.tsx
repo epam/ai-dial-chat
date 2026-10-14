@@ -1,12 +1,14 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type UseDeploymentUsageLimitsResult,
+  useDeploymentUsageLimits,
+} from '@epam/ai-dial-chat-hooks';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeployments } from '../../../context/DeploymentsContext';
-import { useDeploymentUsageLimits } from '../../../hooks/useDeploymentUsageLimits';
-import type { UseDeploymentUsageLimitsResult } from '../../../hooks/useDeploymentUsageLimits';
 import UsageLimitsControl from '../UsageLimitsControl';
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
@@ -36,7 +38,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   };
 });
 
-vi.mock('../../../hooks/useDeploymentUsageLimits', () => ({
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
   useDeploymentUsageLimits: vi.fn(),
 }));
 

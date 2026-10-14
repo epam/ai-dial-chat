@@ -75,6 +75,7 @@ export default defineConfig(({ command }) => ({
         attachments: 'src/entry-points/attachments.ts',
         utils: 'src/entry-points/utils.ts',
         usage: 'src/entry-points/usage.ts',
+        'usage-limits': 'src/entry-points/usage-limits.ts',
         'mcp-apps': 'src/entry-points/mcp-apps.ts',
       },
       name: '@epam/ai-dial-chat-hooks',
@@ -131,6 +132,10 @@ export default defineConfig(({ command }) => ({
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-conversation-input': path.resolve(
+        import.meta.dirname,
+        '../conversation-input/src/index.ts',
       ),
       '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,

@@ -182,6 +182,16 @@ locale resolution, and reset-time formatting still come from host-supplied callb
 or parameters. An additional adapter needs its own equivalent justification in its
 change's design; this is not permission to move arbitrary product rules into a library.
 
+The usage-limit banner follows the same boundary: `useUsageLimitBanner` and its parts
+(`useDeploymentUsageLimits`, `useRefreshUsageAfterGeneration`, `useUsageLimitBannerDismissal`,
+`selectUsageBannerSource`, `formatUsageResetTime`, `formatUsageResetShort`) live in
+`libs/chat-hooks/src/usage/` and are exported from the root and `./usage-limits`. The
+fetch function, translate function, locale and warning threshold are parameters, so the
+hooks hold no client, i18n instance or config. The reset-time formatters are the one place
+in this directory that calls `Intl`; they are driven only by the `locale` and `t`
+arguments, and `usage-dashboard` still receives preformatted strings. The `./usage-limits`
+entry needs the optional `conversation-input` peer for `UsageLimitBannerSeverity`.
+
 These adapters are exported from both the `chat-hooks` root and its dedicated `./usage`
 entry point. They use `usage-dashboard` display enums at runtime, so consumers of
 either entry point need its optional peer installed. The dependency is one-way:

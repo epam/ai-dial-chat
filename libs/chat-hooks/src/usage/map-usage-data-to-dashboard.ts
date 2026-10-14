@@ -5,26 +5,10 @@ import type {
 import { formatCost } from '@epam/ai-dial-chat-shared';
 import type { UsageLimitCardData } from '@epam/ai-dial-usage-dashboard';
 import { UsageLimitStatus } from '@epam/ai-dial-usage-dashboard';
+import type { ResetTimeDisplay } from './usage-reset-time';
 
 /** A translate function compatible with i18next's `TFunction`. */
 type Translate = (key: string, options?: Record<string, unknown>) => string;
-
-/**
- * One reset time, already parsed and formatted by the host. Declared
- * structurally here so this library never imports an application type; the
- * host passes a value that satisfies this shape (e.g. `apps/chat`'s own
- * `ResetTimeDisplay`).
- */
-export interface ResetTimeDisplay {
-  /** Exclusive end of the period as an epoch ms value, for the host's boundary scheduling. */
-  resetsAtMs: number;
-  /** Machine-readable instant for a `<time dateTime>` attribute. */
-  isoValue: string;
-  /** Visible reset line. */
-  label: string;
-  /** Accessible expansion of the reset line. */
-  ariaLabel: string;
-}
 
 /** Formats a raw `resetsAt` into display strings, or returns `undefined` when it cannot be formatted. */
 export type FormatResetTime = (
