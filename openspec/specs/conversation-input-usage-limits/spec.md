@@ -60,7 +60,7 @@ on a defined result, set the row's `resetLabel`, `resetIsoValue`, and `resetAria
 present-or-all-absent trio. The function SHALL NOT construct a `Date`, call a date/time `Intl` API,
 or import `react-i18next`, `i18next`'s `TFunction`, or any app translation-key enum.
 
-`apps/chat/src/hooks/useDeploymentUsageLimits.ts` SHALL continue to own the fetch: an
+`libs/chat-hooks/src/usage/useDeploymentUsageLimits/useDeploymentUsageLimits.ts` SHALL continue to own the fetch: an
 `AbortController` plus a `cancelled` flag in the effect cleanup, and a monotonic request id so a
 response for an earlier deployment never overwrites the current one. Refresh failures SHALL preserve
 the last known limits and SHALL NOT affect message entry or sending.
