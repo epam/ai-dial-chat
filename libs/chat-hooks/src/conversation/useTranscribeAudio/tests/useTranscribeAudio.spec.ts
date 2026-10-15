@@ -78,7 +78,7 @@ describe('useTranscribeAudio', () => {
     expect(uploadFile).not.toHaveBeenCalled();
   });
 
-  it('uses the ASR model and preserves the audio MIME type', async () => {
+  it('uses the ASR model and sends the audio MIME type without codec parameters', async () => {
     transcribeAudio.mockResolvedValue({ transcript: 'Recognized text' });
     const { result } = renderHook(() =>
       useTranscribeAudio({
@@ -89,7 +89,9 @@ describe('useTranscribeAudio', () => {
         maxSizeBytes: 1024,
       }),
     );
-    const file = new File(['audio'], 'voice.mp4', { type: 'audio/mp4' });
+    const file = new File(['audio'], 'voice.mp4', {
+      type: 'audio/mp4;codecs=mp4a.40.2',
+    });
     const signal = new AbortController().signal;
     await expect(result.current.transcribeAudio(file, signal)).resolves.toBe(
       'Recognized text',
@@ -121,7 +123,7 @@ describe('useTranscribeAudio', () => {
     const signal = new AbortController().signal;
     await expect(
       result.current.transcribeAudio(
-        new File(['audio'], 'voice.webm', { type: 'audio/webm' }),
+        new File(['audio'], 'voice.webm', { type: 'audio/webm;codecs=opus' }),
         signal,
       ),
     ).resolves.toBe('From deployment');
