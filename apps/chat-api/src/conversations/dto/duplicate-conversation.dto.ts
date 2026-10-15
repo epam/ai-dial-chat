@@ -25,7 +25,7 @@ export class DuplicateConversationErrorDto {
     enum: ConversationErrorCode,
     enumName: 'ConversationErrorCode',
     description:
-      "Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.",
+      "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
   })
   code?: ConversationErrorCode;
 }

@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   NotFoundException,
   ServiceUnavailableException,
@@ -8,6 +9,7 @@ import {
 import type { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
+import { ConversationErrorCode } from '../../../conversations/types/conversation-error-code.enum';
 import type { DeploymentsService } from '../../../deployments/deployments.service';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import type { SkillsLookupService } from '../../../skills/lookup/skills-lookup.service';
@@ -420,6 +422,40 @@ describe('ShareInvitationService', () => {
           access: [ShareAccess.View],
         }),
       ).rejects.toThrow(BadGatewayException);
+      expect(shareSpy).not.toHaveBeenCalled();
+    });
+
+    it('refuses to share a conversation whose current model is hidden', async () => {
+      const { service, dialClient, deploymentsService } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({
+          model: { id: 'gpt-4o' },
+          assistantModelId: 'nova-lite',
+          messages: [],
+        }),
+      );
+      vi.mocked(deploymentsService.resolveDeploymentItem).mockResolvedValue({
+        id: 'nova-lite',
+        isHidden: true,
+      } as never);
+      const shareSpy = vi.spyOn(dialClient.client, 'shareResource');
+
+      const error = await service
+        .createShareLink('token-abc', 'session-bucket', {
+          itemId: 'conversations/owner-bucket/my-chat.json',
+          access: [ShareAccess.View],
+        })
+        .catch((err: unknown) => err);
+
+      expect(deploymentsService.resolveDeploymentItem).toHaveBeenCalledWith(
+        'nova-lite',
+        'token-abc',
+        'session-bucket',
+      );
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect((error as ForbiddenException).getResponse()).toMatchObject({
+        code: ConversationErrorCode.ModelHidden,
+      });
       expect(shareSpy).not.toHaveBeenCalled();
     });
 

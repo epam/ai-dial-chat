@@ -12,6 +12,7 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import { ConversationModelHiddenErrorDto } from '../conversations/dto/conversation-model-hidden-error.dto';
 import { AcceptInvitationErrorDto } from './dto/accept-invitation-error.dto';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto } from './dto/create-share-link.dto';
@@ -62,6 +63,12 @@ export class ShareController {
   @ApiResponse({
     status: 401,
     description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      "No permission to share the resource, or (`code: conversationModelHidden`) the shared conversation's model is hidden through HIDDEN_ENTITY_TAGS",
+    type: ConversationModelHiddenErrorDto,
   })
   @ApiResponse({
     status: 502,

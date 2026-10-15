@@ -3248,7 +3248,14 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "Insufficient permissions on conversation"
+            "description": "Insufficient permissions on conversation, or (`code: conversationModelHidden`) the requested model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Conversation not found"
@@ -3710,7 +3717,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks write access to the target folder"
+            "description": "Caller lacks write access to the target folder, or (`code: conversationModelHidden`) the conversation's model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Conversation not found"
@@ -5855,7 +5869,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "DIAL Core denied access to the resource"
+            "description": "No permission to share the resource, or (`code: conversationModelHidden`) the shared conversation's model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "DIAL Core resource not found"
@@ -12899,6 +12920,37 @@
         },
         "required": ["generationId", "path", "model", "mode"]
       },
+      "ConversationErrorCode": {
+        "type": "string",
+        "enum": ["conversationDuplicateModelHidden", "conversationModelHidden"],
+        "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`."
+      },
+      "ConversationModelHiddenErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation model is no longer available"
+          },
+          "code": {
+            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "error", "message"]
+      },
       "StopCompletionDto": {
         "type": "object",
         "properties": {
@@ -12987,11 +13039,6 @@
         },
         "required": ["newPath"]
       },
-      "ConversationErrorCode": {
-        "type": "string",
-        "enum": ["conversationDuplicateModelHidden"],
-        "description": "Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`."
-      },
       "DuplicateConversationErrorDto": {
         "type": "object",
         "properties": {
@@ -13008,7 +13055,7 @@
             "example": "The conversation's model is not available for new conversations"
           },
           "code": {
-            "description": "Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ConversationErrorCode"

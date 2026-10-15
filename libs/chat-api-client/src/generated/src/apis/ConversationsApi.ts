@@ -18,6 +18,7 @@ import type {
   ConversationDeletionResultDto,
   ConversationListResponseDto,
   ConversationMetadataDto,
+  ConversationModelHiddenErrorDto,
   ConversationResponseDto,
   CreateConversationDto,
   DeleteAllConversationsBodyDto,

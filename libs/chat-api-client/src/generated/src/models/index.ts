@@ -1328,11 +1328,12 @@ export interface ConversationDeletionResultDto {
 }
 
 /**
- * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+ * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
  * @export
  */
 export const ConversationErrorCode = {
   ConversationDuplicateModelHidden: 'conversationDuplicateModelHidden',
+  ConversationModelHidden: 'conversationModelHidden',
 } as const;
 export type ConversationErrorCode =
   (typeof ConversationErrorCode)[keyof typeof ConversationErrorCode];
@@ -1677,6 +1678,38 @@ export interface ConversationModelDto {
    */
   id: string;
 }
+/**
+ *
+ * @export
+ * @interface ConversationModelHiddenErrorDto
+ */
+export interface ConversationModelHiddenErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  message: string;
+  /**
+   * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
+   * @type {ConversationErrorCode}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  code?: ConversationErrorCode;
+}
+
 /**
  *
  * @export
@@ -4150,7 +4183,7 @@ export interface DuplicateConversationErrorDto {
    */
   message: string;
   /**
-   * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+   * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
    * @type {ConversationErrorCode}
    * @memberof DuplicateConversationErrorDto
    */

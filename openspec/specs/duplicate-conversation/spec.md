@@ -110,7 +110,7 @@ The path keeps the model a conversation was created with, so a chat later switch
 - **THEN** the copy is saved as usual
 
 ### Requirement: Duplicate action in conversation row dropdown
-The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. That deployment is resolved from the row's resource path via `findDeploymentForConversationId` (which tries every suffix of the path-derived id, so a conversation stored inside a folder is matched too), and the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with the response trace ID and `ConversationPanelI18nKeys.DuplicateUnavailableModel` when the response `code` is `conversationDuplicateModelHidden`, otherwise `ConversationPanelI18nKeys.DuplicateError`. Because the row resolves the model from the path, a row whose chat was switched to a hidden model still offers Duplicate; the server refuses that copy.
+The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. For the open conversation (the row matching the panel's active conversation) that deployment is the one selected in the model picker now (`useDeployments().selectedItemId`), so a chat switched onto or off a hidden model is judged by its current model. Every other row resolves it from its resource path via `findDeploymentForConversationId` (which tries every suffix of the path-derived id, so a conversation stored inside a folder is matched too). Either way the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with the response trace ID and `ConversationPanelI18nKeys.DuplicateUnavailableModel` when the response `code` is `conversationDuplicateModelHidden`, otherwise `ConversationPanelI18nKeys.DuplicateError`. A row that is not open resolves the model from the path, so one whose chat was switched to a hidden model still offers Duplicate; the server refuses that copy.
 
 #### Scenario: Duplicate action appears in menu
 - **WHEN** the user opens the three-dot menu for any conversation row
@@ -123,6 +123,11 @@ The conversation row three-dot dropdown in `ConversationPanelView` SHALL include
 #### Scenario: Duplicate action is omitted for a hidden-model conversation stored in a folder
 - **WHEN** the user opens the three-dot menu for a row whose id is `conversations/{bucket}/{folder}/{deploymentId}__{title}` and the `{deploymentId}` deployment has `isHidden: true`
 - **THEN** no Duplicate menu item is present
+
+#### Scenario: The open conversation is judged by the model selected in it now
+- **GIVEN** the open conversation is stored at `{visibleModel}__{title}` and its model picker has a hidden deployment selected
+- **WHEN** the user opens its three-dot menu
+- **THEN** no Duplicate menu item is present, and switching the picker to a visible model brings it back
 
 #### Scenario: Duplicate action triggers duplication and navigation
 - **WHEN** the user clicks Duplicate in the row dropdown

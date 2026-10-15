@@ -530,6 +530,7 @@ export enum ScheduledTasksI18nKeys {
 }
 
 export enum ConversationI18nKeys {
+  ModelUnavailableNotice = 'conversation.modelUnavailableNotice',
   StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
   StagesExecuted = 'conversation.stages.executed',

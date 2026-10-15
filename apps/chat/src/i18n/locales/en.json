@@ -435,6 +435,7 @@
     }
   },
   "conversation": {
+    "modelUnavailableNotice": "This model is no longer available. Choose another model to continue.",
     "statusMessage": {
       "modelChangedTitle": "Model switched.",
       "modelChangedBody": "The model has been switched from {{from}} to {{to}}."

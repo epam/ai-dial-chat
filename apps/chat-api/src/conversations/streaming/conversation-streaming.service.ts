@@ -67,6 +67,7 @@ import {
 } from '../utils/apply-chunk.server';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../utils/conversation-view-state.server';
+import { assertModelNotHidden } from '../utils/hidden-model';
 import {
   buildConversationUrl,
   qualifySessionConversationPath,
@@ -622,6 +623,18 @@ export class ConversationStreamingService {
     let temperatureSupported: boolean;
     let reasoningEfforts: string[] | undefined;
     try {
+      /*
+       * `model` is the one the user has selected now, so switching a
+       * conversation off a hidden model is what lets it continue.
+       */
+      await assertModelNotHidden(
+        this.deploymentsService,
+        model,
+        token,
+        bucket,
+        this.logger,
+        `stream a completion for "${conversationPath}"`,
+      );
       ({ generationApi, isBackground, temperatureSupported, reasoningEfforts } =
         await this.resolveGenerationApiForDeployment(sub, model, token));
       generationCapabilityResolutionTotal.add(1, {

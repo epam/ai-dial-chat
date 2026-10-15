@@ -53,6 +53,7 @@ import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DeleteAllConversationsBodyDto } from './dto/delete-all-conversations-body.dto';
 import { DeleteConversationsBodyDto } from './dto/delete-conversations-body.dto';
+import { ConversationModelHiddenErrorDto } from './dto/conversation-model-hidden-error.dto';
 import { ConversationDeletionResultDto } from './dto/delete-conversations.dto';
 import {
   DuplicateConversationErrorDto,
@@ -277,7 +278,9 @@ export class ConversationController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
-    description: 'Insufficient permissions on conversation',
+    description:
+      'Insufficient permissions on conversation, or (`code: conversationModelHidden`) the requested model is hidden through HIDDEN_ENTITY_TAGS',
+    type: ConversationModelHiddenErrorDto,
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({

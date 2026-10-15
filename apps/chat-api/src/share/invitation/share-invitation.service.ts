@@ -21,6 +21,10 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { resolveConversationLocation } from '../../conversations/utils/conversation.utils';
+import {
+  assertModelNotHidden,
+  getConversationModelId,
+} from '../../conversations/utils/hidden-model';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { isPromptResourceUrl } from '../../prompts/utils/prompt-mapper.util';
@@ -203,6 +207,16 @@ export class ShareInvitationService {
       );
       throw new BadGatewayException('DIAL Core returned an empty conversation');
     }
+
+    /* A share link would let every recipient keep using a hidden model (#9183). */
+    await assertModelNotHidden(
+      this.deploymentsService,
+      getConversationModelId(result.data),
+      accessToken,
+      sessionBucket,
+      this.logger,
+      `share "${resourceUrl}"`,
+    );
 
     /* See openspec/specs/conversation-share/spec.md — "Related file resources outside the conversation's own bucket are dropped". */
     return collectConversationResourceUrls(result.data).filter(
