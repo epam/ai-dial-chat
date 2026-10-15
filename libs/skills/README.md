@@ -138,7 +138,7 @@ import { ChatSkill } from '@epam/ai-dial-skills';
 
 Renders one used skill: a ui-kit `GhostButton` whose visible (and accessible)
 label is `/` followed by `name`, wrapped in the ui-kit `InteractiveTooltip`
-(`asChild`, uncontrolled, 550px max panel width, top placement flipping with
+(`asChild`, uncontrolled, 420px max panel width scrolling past 280px, top placement flipping with
 direction). The tooltip's content is the shared `SkillInfoTooltipContent` —
 the description paragraph (omitted when empty) above the "View details" link
 button — so the panel matches the favorite rows exactly. Activating the
@@ -201,6 +201,9 @@ not a description renders. The panel content itself is rendered by the shared
 the exact same panel.
 
 `onViewDetails` fires when the tooltip's "View details" button is clicked.
+Rows render without the tooltip when `onViewDetails` is omitted or
+`isRowTooltipHidden` is set; `useSkillSelectorOverlay` forwards its own
+`isRowTooltipHidden` option to both the Add-menu and slash-menu panels.
 
 Passing `listboxId` switches the panel to listbox mode — the shape a text
 field's list autocomplete drives, as the conversation input's `commandMenu`
@@ -240,8 +243,9 @@ The inner content of a skill's interactive tooltip, shared by
 `FavoriteSkillsPanel`'s rows and `ChatSkill`: the skill's `description`
 paragraph (the listing's value, omitted entirely when empty) above a
 link-style "View details" button (`IconEye` on its inline-start, label from
-`viewDetailsLabel`). The "View details" button is reachable whether or not a
-description renders.
+`viewDetailsLabel`, kit `ElementSize.Small`). The "View details" button is
+reachable whether or not a description renders. The paragraphs take
+`textClassName` (defaults to `'dial-tiny-text'`).
 
 While `unsupportedMessage` is set, the content is that message alone — no
 description paragraph and no "View details" button. That state is why

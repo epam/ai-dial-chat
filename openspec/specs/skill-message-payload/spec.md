@@ -268,7 +268,7 @@ A failed description fetch for a **resolved** skill (the url matched a pool, onl
 #### Scenario: Tapping a history chip on mobile
 
 - **WHEN** the viewport is mobile and the user taps a history skill chip (resolved or unresolved)
-- **THEN** its tooltip opens exactly as hover opens it on desktop — the app passes `historyDetailsTrigger: 'click'` on mobile because touch screens never fire hover
+- **THEN** its tooltip opens — the app passes `historyDetailsTrigger: 'click'` and `activeMentionDetailsTrigger: 'click'` on every layout, so skill chips in the chat and the input open their description on click or tap, never on hover
 
 #### Scenario: Description fetch fails for a resolved skill
 

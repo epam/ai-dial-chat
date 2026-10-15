@@ -33,6 +33,8 @@ export interface UsePromptSelectorOverlayOptions {
   onToggleFavorite: (id: string) => void;
   /** Called with the resolved prompt text (parameters already substituted, if any). */
   onInsertText: (text: string) => void;
+  /** Forwarded to the favorites panel's `isRowTooltipHidden`. Defaults to `false`. */
+  isRowTooltipHidden?: boolean;
   /** Labels forwarded to the rendered favorites panel and parameters popup. */
   labels?: UsePromptSelectorOverlayLabels;
   /** Renders the host's own lazy-loaded browse-modal content. */

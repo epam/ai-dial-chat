@@ -129,8 +129,10 @@ export const useSkillSelectorOverlay = ({
     onToggleFavorite: handleToggleFavorite,
     labels,
     historyChipLabelClassName,
-    /* Touch screens never fire hover, so a tap must open the chip's tooltip ([#9250](https://github.com/epam/ai-dial-chat/issues/9250)). */
-    historyDetailsTrigger: isMobile ? 'click' : undefined,
+    /* Skill chips open their description on click or tap, never on hover — in the chat and in the input alike (also covers touch screens, [#9250](https://github.com/epam/ai-dial-chat/issues/9250)). */
+    historyDetailsTrigger: 'click',
+    activeMentionDetailsTrigger: 'click',
+    isRowTooltipHidden: true,
     renderCatalogContent,
     detailsPanelComponent: SkillDetailsPanelContainer,
   });
