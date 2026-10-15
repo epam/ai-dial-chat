@@ -209,9 +209,7 @@ describe('ScheduledTaskCard', () => {
      * view, which pre-wraps the full description). getByText matches
      * against the whitespace-collapsed text — the same collapse the card
      * applies without pre-wrap. */
-    const description = screen.getByText(
-      'Summarize the daily inbox by sender',
-    );
+    const description = screen.getByText('Summarize the daily inbox by sender');
     expect(description.className).not.toContain('whitespace-pre-wrap');
   });
 
