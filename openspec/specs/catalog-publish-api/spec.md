@@ -223,7 +223,11 @@ A publication whose matching resource carries `action: 'DELETE'` SHALL never its
 Whether the removal also cancels the `ADD` it targets depends on its status, and the two cases differ:
 
 - A removal Core has **not** positively approved leaves the `ADD` alone. Until an administrator approves it the entity genuinely is still published there, so the folder SHALL continue to appear exactly once, sourced from its `ADD`.
-- An **approved** removal SHALL cancel every `ADD` for the same target folder that is not newer than it, removing the folder from history. Offering Unpublish for a copy Core has already deleted is exactly the failure this cancellation prevents.
+- An **approved** removal SHALL cancel every `ADD` for the same target folder and published-copy `targetUrl` that is not newer than it, removing the folder from history. Offering Unpublish for a copy Core has already deleted is exactly the failure this cancellation prevents.
+
+A removal SHALL be paired with the `ADD` it removes by the published copy it targets — the same target folder and the same `targetUrl`, compared tolerating percent-encoding — and SHALL NOT be paired by `sourceUrl`. Catalog Unpublish acts on the published copy under `public/` (see `catalog-unpublish-flow`), so the removal's `sourceUrl` is that public path and never equals the entity's own resource url, which is what the original `ADD` carries as its `sourceUrl`. `targetUrl` is the one field publish and unpublish both derive from the same helper, and Core returns it when the publication is read back. A removal therefore need not reference the entity's own resource url to cancel its `ADD`: it is recognised by the published copy it removes. A removal that targets a different published copy — a different resource name in the same folder, or the same name in another folder — SHALL cancel nothing.
+
+This applies to a removal in the caller's own bucket, which is the only bucket history reads. A removal submitted by another account lands in that account's bucket and is out of scope of this requirement.
 
 The stricter test for a removal than for a detail candidate is deliberate: cancelling an `ADD` on an *assumed* approval is the more expensive mistake, because it both hides Unpublish for a live copy and offers a Publish that Core then rejects for an already-occupied target.
 
@@ -283,6 +287,31 @@ The endpoint is load-bearing beyond the publish panel: the Unpublish action's vi
 - **GIVEN** an approved `DELETE` for a folder, followed by a newer `ADD` for that same folder
 - **WHEN** history is requested
 - **THEN** the folder appears once, sourced from the newer `ADD`
+
+#### Scenario: An approved removal submitted from the public copy cancels the ADD
+- **GIVEN** an `APPROVED` `ADD` with `sourceUrl: prompts/{bucket}/{name}` and `targetUrl: prompts/public/{folder}/{name}`, and a newer `APPROVED` `DELETE` with `sourceUrl` and `targetUrl` both `prompts/public/{folder}/{name}` in the same target folder
+- **WHEN** history is requested for `prompts/{bucket}/{name}`
+- **THEN** the folder does not appear at all
+
+#### Scenario: A pending removal submitted from the public copy leaves the folder listed
+- **GIVEN** the same `ADD` and a `PENDING` `DELETE` whose `sourceUrl` and `targetUrl` are the public path
+- **WHEN** history is requested for `prompts/{bucket}/{name}`
+- **THEN** the folder appears exactly once, sourced from the `ADD`
+
+#### Scenario: A re-publish after a removal submitted from the public copy is listed again
+- **GIVEN** an approved `DELETE` of the public copy, followed by a newer `ADD` for the same folder and `targetUrl`
+- **WHEN** history is requested
+- **THEN** the folder appears once, sourced from the newer `ADD`
+
+#### Scenario: A removal of a different published copy cancels nothing
+- **GIVEN** an approved `ADD` for the entity in folder `A`, and an approved `DELETE` whose `targetUrl` is another resource name in folder `A`, or the same resource name in folder `B`
+- **WHEN** history is requested
+- **THEN** the folder `A` entry for the entity still appears
+
+#### Scenario: Removal pairing tolerates percent-encoding
+- **GIVEN** an `ADD` whose `targetUrl` is percent-encoded and an approved `DELETE` whose `targetUrl` is the same path in plain text, or the reverse
+- **WHEN** history is requested
+- **THEN** the removal cancels the `ADD`
 
 #### Scenario: An undateable approved removal cancels its folder and is logged
 - **GIVEN** an approved `DELETE` whose `createdAt` is missing or unusable
