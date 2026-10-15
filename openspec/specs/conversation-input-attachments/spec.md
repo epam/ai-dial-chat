@@ -609,7 +609,7 @@ This closes the gap where a file attached while compatible with the selected mod
 
 ### Requirement: Full attachment tray bleeds to the inline-end edge without moving the controls
 
-The `Input` wrapper SHALL keep `p-4` (16 px on all sides) whatever the attachment count, so the action row — model selector, microphone and Send button — stays in place as attachments are added. When 7 or more new attachments are present, the `AttachmentTray` alone SHALL extend into the wrapper's inline-end padding (`-me-4 w-[calc(100%+1rem)]`) so its cards scroll to the edge.
+The `Input` wrapper SHALL keep `p-4` (16 px on all sides) whatever the attachment count, so the action row — model selector, microphone and Send button — stays in place as attachments are added. When 7 or more new attachments are present, the `AttachmentTray` alone SHALL extend into the wrapper's inline-end padding (`-me-4`; the tray has no explicit width, so it stretches into the margin) so its cards scroll to the edge.
 
 #### Scenario: Controls stay in place with 7 or more attachments
 

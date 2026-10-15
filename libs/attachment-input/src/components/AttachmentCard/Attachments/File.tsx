@@ -19,7 +19,10 @@ import {
   useId,
   useMemo,
 } from 'react';
-import { ATTACHMENT_TILE_BASE_CLASS } from '../../../constants/attachment-group';
+import {
+  ATTACHMENT_TILE_BASE_CLASS,
+  ATTACHMENT_TILE_FOCUS_RING_CLASS,
+} from '../../../constants/attachment-group';
 import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import type { FileAttachmentProps } from '../../../models/attachment-file-row';
 import {
@@ -96,18 +99,6 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     errorReason !== AttachmentErrorReason.UnsupportedType &&
     errorReason !== AttachmentErrorReason.FileTooLarge;
 
-  const cornerActionCount =
-    Number(!!canDownload) +
-    Number(!!canRetry) +
-    Number(!!isLink) +
-    Number(!!onRemove);
-  const cornerIconSpacing =
-    cornerActionCount > 1
-      ? 'pe-11'
-      : cornerActionCount === 1
-        ? 'pe-5'
-        : undefined;
-
   /*
    * Expanding a pasted tile takes precedence over `onClick`. The tile is a
    * button only when one of the two applies; otherwise it is a plain element so
@@ -115,6 +106,17 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
    */
   const isExpandAction = !!isExpandable && onExpand !== undefined;
   const hasAction = isExpandAction || onClick !== undefined;
+  const actionCount =
+    Number(!!canDownload) +
+    Number(!!canRetry) +
+    Number(!!isLink) +
+    Number(!!onRemove);
+  /*
+   * With a single focus stop inside a non-interactive tile, the tile ring
+   * stands for that action's focus. Otherwise each focus stop keeps its own
+   * ring, so it stays clear which one has focus.
+   */
+  const isProxyFocus = !hasAction && actionCount === 1;
 
   const handleClick = (): void => {
     if (isExpandAction) {
@@ -146,11 +148,13 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   const tileClassName = mergeClasses(
     ATTACHMENT_TILE_BASE_CLASS,
-    'group/attachment-tile relative flex-col justify-between items-start gap-1 overflow-hidden p-3',
+    'group/attachment-tile relative flex-col justify-between items-start gap-2 overflow-hidden p-3',
     styles.tile,
-    !isError && styles.hovered,
+    hasAction && !isError && !isLoading && styles.hovered,
+    isLoading && styles.loading,
     isSelected && styles.selected,
     isError && styles.tileError,
+    isProxyFocus && styles.proxyFocus,
     ATTACHMENT_INPUT_CLASS.tile,
     isSelected && ATTACHMENT_INPUT_CLASS.tileSelected,
   );
@@ -171,7 +175,6 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
          */
         'line-clamp-2 w-full min-w-0 break-words',
         styles.nameText,
-        !isError && cornerIconSpacing,
         ATTACHMENT_INPUT_CLASS.tileName,
       )}
     >
@@ -186,8 +189,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   const typeRow = Glyph && (
     <div
       className={mergeClasses(
-        'flex w-full items-center gap-1',
-        isError && cornerIconSpacing,
+        'flex w-full items-end gap-1',
         ATTACHMENT_INPUT_CLASS.tileType,
       )}
     >
@@ -196,12 +198,12 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
           type={DialItemType.File}
           name={name ?? ''}
           fileExtension={getAttachmentExtension(attachment)}
-          size={DIAL_ICON_SIZE.SM}
+          size={DIAL_ICON_SIZE.MD}
           decorative
         />
       ) : (
         <Glyph
-          size={DIAL_ICON_SIZE.SM}
+          size={DIAL_ICON_SIZE.MD}
           className={styles.typeText}
           stroke={DIAL_KIT_ICON_STROKE}
           aria-hidden
@@ -250,7 +252,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
           role="progressbar"
           aria-label={uploadingLabel}
           className={mergeClasses(
-            'absolute start-[-1px] top-[-1px] flex size-full items-center justify-center rounded',
+            'absolute inset-0 flex items-center justify-center rounded-[11px]',
             styles.track,
           )}
         >
@@ -258,7 +260,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         </div>
       )}
 
-      <div className="absolute end-1 top-1 flex gap-1">
+      <div className="absolute end-1 top-1 flex">
         {canDownload && (
           <DownloadAction
             ariaLabel={downloadLabel}
@@ -292,6 +294,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
             errorDescId={errorDescId}
             onClick={onRemove}
             id={id}
+            isAlwaysVisible={isLoading}
           />
         )}
       </div>
@@ -318,7 +321,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         className={mergeClasses(
           tileClassName,
           hasAction && 'cursor-pointer',
-          'focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
+          ATTACHMENT_TILE_FOCUS_RING_CLASS,
         )}
       >
         {tileContent}

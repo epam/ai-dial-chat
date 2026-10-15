@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import { AttachmentCard } from '../AttachmentCard';
 
 const failedAttachment: DisplayAttachment = {
@@ -274,5 +275,97 @@ describe('AttachmentCard — remove action visibility', () => {
     expect(screen.getByLabelText('Remove attachment').className).toContain(
       'mobile:opacity-100',
     );
+  });
+});
+
+describe('AttachmentCard — focus ring', () => {
+  /* CSS-module class marking a tile whose ring stands for its lone action's focus. */
+  const PROXY_RING = /_proxyFocus_/;
+  const idleFile: DisplayAttachment = {
+    ...failedAttachment,
+    status: RequestStatus.Idle,
+    errorReason: undefined,
+  };
+  const image: DisplayAttachment = {
+    id: 'img',
+    name: 'cat.png',
+    contentType: 'image/png',
+    type: AttachmentType.Image,
+    status: RequestStatus.Idle,
+    url: 'https://example.test/cat.png',
+  };
+  /* eslint-disable testing-library/no-node-access -- the tile root carries no role or name of its own when it is not interactive */
+  const getTileOf = (actionLabel: string) =>
+    screen
+      .getByLabelText(actionLabel)
+      .closest(`.${ATTACHMENT_INPUT_CLASS.tile}`);
+  /* eslint-enable testing-library/no-node-access */
+
+  it('rings an interactive tile on its own focus only, 1px clear of the border', () => {
+    render(
+      <AttachmentCard
+        attachment={idleFile}
+        onClick={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    const tile = screen.getByRole('button', { name: 'Download attachment' });
+    expect(tile.className).toContain('focus-visible:outline');
+    expect(tile.className).toContain('outline-offset-1');
+    expect(tile.className).not.toMatch(PROXY_RING);
+  });
+
+  it('rings a non-interactive tile while its only action has focus', () => {
+    render(<AttachmentCard attachment={idleFile} onRemove={vi.fn()} />);
+
+    expect(getTileOf('Remove attachment')?.className).toMatch(PROXY_RING);
+  });
+
+  it('leaves each action its own ring when a non-interactive tile has several', () => {
+    render(
+      <AttachmentCard
+        attachment={failedAttachment}
+        onRetry={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(getTileOf('Remove attachment')?.className).not.toMatch(PROXY_RING);
+  });
+
+  it('applies the same rule to an image tile', () => {
+    render(<AttachmentCard attachment={image} onRemove={vi.fn()} />);
+
+    expect(getTileOf('Remove attachment')?.className).toMatch(PROXY_RING);
+  });
+});
+
+describe('AttachmentCard — image upload in progress', () => {
+  const uploadingImage: DisplayAttachment = {
+    id: 'img',
+    name: 'cat.png',
+    contentType: 'image/png',
+    type: AttachmentType.Image,
+    status: RequestStatus.Loading,
+    previewUrl: 'blob:cat',
+  };
+
+  it('announces the upload and keeps remove visible', () => {
+    render(
+      <AttachmentCard
+        attachment={uploadingImage}
+        onRemove={vi.fn()}
+        onDownload={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('progressbar', { name: 'Uploading' })).toBeTruthy();
+    const removeClasses = screen
+      .getByLabelText('Remove attachment')
+      .className.split(' ');
+    expect(removeClasses).toContain('opacity-100');
+    expect(removeClasses).not.toContain('opacity-0');
+    expect(screen.queryByLabelText('Download attachment')).toBeNull();
   });
 });

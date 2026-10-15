@@ -292,7 +292,7 @@ at each renderer from `ATTACHMENT_INPUT_CLASS.tile` instead.
 - **WHEN** a tile is rendered
 - **THEN** its action buttons keep their existing
   `group-hover/attachment-tile:opacity-100` and
-  `group-focus-within/attachment-tile:opacity-100` utilities, and the tile keeps
+  `group-has-[:focus-visible]/attachment-tile:opacity-100` utilities, and the tile keeps
   `group/attachment-tile`
 
 ---
