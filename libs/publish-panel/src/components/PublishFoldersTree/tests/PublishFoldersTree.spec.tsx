@@ -1,6 +1,6 @@
 import { DialFile, DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -379,6 +379,36 @@ describe('PublishFoldersTree', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(capturedProps.current?.createdFolderPath).toBeNull();
     expect(onCreateFolder).not.toHaveBeenCalled();
+  });
+
+  it('drops the commits the editor raises on a Cancel press and on its own removal', async () => {
+    const onCreateFolder = vi.fn();
+    renderTree({ onCreateFolder });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    fireEvent.pointerDown(cancel);
+    act(() => capturedProps.current?.onCreateFolderSave?.('New folder'));
+    await userEvent.click(cancel);
+    act(() => capturedProps.current?.onCreateFolderSave?.('New folder'));
+    expect(onCreateFolder).not.toHaveBeenCalled();
+    expect(capturedProps.current?.createdFolderPath).toBeNull();
+  });
+
+  it('creates a folder again after a cancelled creation', async () => {
+    const onCreateFolder = vi.fn();
+    renderTree({ onCreateFolder, selectedPath: ['Shared'] });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    act(() => capturedProps.current?.onCreateFolderSave?.('Model releases'));
+    expect(onCreateFolder).toHaveBeenCalledWith(['Shared'], 'Model releases');
   });
 
   it('supports a custom folder-creation cancel label', async () => {
