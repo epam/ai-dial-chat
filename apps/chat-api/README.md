@@ -334,9 +334,9 @@ These optional server-only variables replace the complete built-in instruction f
 | `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT`          | Refine a prompt description                         | Built-in |
 | `TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT`         | Refine prompt instructions                          | Built-in |
 | `CONVERSATION_NAMING_SYSTEM_PROMPT`                  | Automatic naming and the Rename conversation action | Built-in |
-| `TRANSCRIPTION_PROMPT`                               | Dedicated audio transcription via `ASR_MODEL`       | Built-in |
+| `TRANSCRIPTION_PROMPT`                               | Dedicated audio transcription via `ASR_MODEL`       | None     |
 
-Unset, empty, and whitespace-only values retain the existing defaults. Nonblank overrides preserve their whitespace, Markdown, Unicode, and line breaks. They are not appended to the defaults, and placeholders are not interpolated. Prompt settings do not change model selection, authorization, feature availability, timeouts, or response validation. Refinement and naming still use `UTILITY_MODEL`; transcription uses `ASR_MODEL`.
+Unset, empty, and whitespace-only values retain the existing defaults; `TRANSCRIPTION_PROMPT` has no default, so the ASR request carries only the audio attachment, because dedicated transcription models reject text input. Nonblank overrides preserve their whitespace, Markdown, Unicode, and line breaks. They are not appended to the defaults, and placeholders are not interpolated. Prompt settings do not change model selection, authorization, feature availability, timeouts, or response validation. Refinement and naming still use `UTILITY_MODEL`; transcription uses `ASR_MODEL`.
 
 Quote multiline values in `apps/chat-api/.env`, for example:
 
