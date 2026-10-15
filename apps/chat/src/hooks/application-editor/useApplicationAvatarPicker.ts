@@ -6,7 +6,7 @@ import { dialFileToAttachment } from '@epam/ai-dial-chat-hooks';
 import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import DialFileManagerModal from '../../components/DialFileManagerModal/DialFileManagerModal';
+import AvatarFileManagerModal from '../../components/AvatarFileManagerModal/AvatarFileManagerModal';
 import {
   AVATAR_ALLOWED_MIME_TYPES,
   AVATAR_MAX_FILE_SIZE_BYTES,
@@ -60,7 +60,7 @@ export const useApplicationAvatarPicker = (): ApplicationAvatarPicker => {
   const avatarPicker = useMemo<MetadataFormAvatarPicker>(
     () => ({
       bucket,
-      FileManagerModal: DialFileManagerModal,
+      FileManagerModal: AvatarFileManagerModal,
       resolveIconUrl,
       resolveAttachedIconUrl,
       allowedMimeTypes: AVATAR_ALLOWED_MIME_TYPES,
