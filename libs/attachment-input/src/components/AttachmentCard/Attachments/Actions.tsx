@@ -30,6 +30,8 @@ interface ActionProps {
   onClick: (id: string) => void;
   /** ID of the attachment the action applies to. */
   id?: string;
+  /** Whether the button stays visible without hover or keyboard focus on the tile. */
+  isAlwaysVisible?: boolean;
 }
 
 /** Action button for completed uploads. */
@@ -41,13 +43,16 @@ const ActionButton: FC<ActionProps> = ({
   id,
   icon,
   className,
+  isAlwaysVisible,
 }) => {
   return (
     <StaticIconButton
       icon={icon}
       size={ElementSize.Small}
       className={mergeClasses(
-        'opacity-0 focus-visible:opacity-100 group-focus-within/attachment-tile:opacity-100 group-hover/attachment-tile:opacity-100',
+        isAlwaysVisible
+          ? 'opacity-100'
+          : 'opacity-0 group-hover/attachment-tile:opacity-100 group-focus-visible/attachment-tile:opacity-100 group-has-[:focus-visible]/attachment-tile:opacity-100',
         styles.actionButton,
         className,
         ATTACHMENT_INPUT_CLASS.tileAction,
