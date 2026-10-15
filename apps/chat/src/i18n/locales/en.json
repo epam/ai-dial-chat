@@ -296,7 +296,8 @@
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publish": {
       "credentialsLabel": "Publish with my credentials",
-      "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them."
+      "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them.",
+      "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again."
     },
     "skillsLoadError": "Failed to load skills",
     "tab": {

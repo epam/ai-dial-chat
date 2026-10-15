@@ -244,6 +244,7 @@ export enum CatalogI18nKeys {
   PublishFolderEmptyState = 'catalog.publishFolderEmptyState',
   PublishCredentialsLabel = 'catalog.publish.credentialsLabel',
   PublishCredentialsHint = 'catalog.publish.credentialsHint',
+  PublishVersionAlreadyPublishedWarning = 'catalog.publish.versionAlreadyPublishedWarning',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
