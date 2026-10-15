@@ -1139,7 +1139,10 @@
     "qrDownloadFileName": "share-qr-code.png",
     "loadingLabel": "Creating share link…",
     "errorTitle": "Couldn't create the share link. Please try again.",
-    "invitationAcceptError": "This share link is invalid or has expired."
+    "invitationAcceptError": "This share link is invalid or has expired.",
+    "invitationNotFound": "We are sorry, but the link you are trying to access has expired or does not exist.",
+    "invitationUsersLimitReached": "\"{{name}}\" has already been shared with the maximum specified number of users.",
+    "invitationUsersLimitReachedUnnamed": "This item has already been shared with the maximum specified number of users."
   },
   "editor": {
     "backAriaLabel": "Back to catalog",

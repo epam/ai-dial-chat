@@ -3,6 +3,44 @@
 /**
  *
  * @export
+ * @interface AcceptInvitationErrorDto
+ */
+export interface AcceptInvitationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof AcceptInvitationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  message: string;
+  /**
+   * Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.
+   * @type {ShareInvitationErrorCode}
+   * @memberof AcceptInvitationErrorDto
+   */
+  code?: ShareInvitationErrorCode;
+  /**
+   * Title of the shared conversation, present with `shareInvitationAcceptedUsersLimitReached` when the invitation shares a conversation.
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  itemName?: string;
+}
+
+/**
+ *
+ * @export
  * @interface AcceptInvitationResponseDto
  */
 export interface AcceptInvitationResponseDto {
@@ -6515,6 +6553,18 @@ export const SendCompletionDtoModeEnum = {
 } as const;
 export type SendCompletionDtoModeEnum =
   (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
+
+/**
+ * Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.
+ * @export
+ */
+export const ShareInvitationErrorCode = {
+  ShareInvitationNotFound: 'shareInvitationNotFound',
+  ShareInvitationAcceptedUsersLimitReached:
+    'shareInvitationAcceptedUsersLimitReached',
+} as const;
+export type ShareInvitationErrorCode =
+  (typeof ShareInvitationErrorCode)[keyof typeof ShareInvitationErrorCode];
 
 /**
  *

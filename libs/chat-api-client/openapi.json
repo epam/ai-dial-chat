@@ -5912,7 +5912,14 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid invitationId"
+            "description": "Validation error — invalid invitationId — or (`code: shareInvitationAcceptedUsersLimitReached`) the shared resource has already been accepted by its maximum number of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInvitationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -5921,7 +5928,14 @@
             "description": "DIAL Core denied access to the resource"
           },
           "404": {
-            "description": "Invitation not found, expired, or already revoked"
+            "description": "Invitation not found, expired, or already revoked (`code: shareInvitationNotFound`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInvitationErrorDto"
+                }
+              }
+            }
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -14341,6 +14355,45 @@
           }
         },
         "required": ["itemId"]
+      },
+      "ShareInvitationErrorCode": {
+        "type": "string",
+        "enum": [
+          "shareInvitationNotFound",
+          "shareInvitationAcceptedUsersLimitReached"
+        ],
+        "description": "Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users."
+      },
+      "AcceptInvitationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 404
+          },
+          "error": {
+            "type": "string",
+            "example": "Not Found"
+          },
+          "message": {
+            "type": "string",
+            "example": "The share link has expired or does not exist"
+          },
+          "code": {
+            "description": "Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShareInvitationErrorCode"
+              }
+            ]
+          },
+          "itemName": {
+            "type": "string",
+            "description": "Title of the shared conversation, present with `shareInvitationAcceptedUsersLimitReached` when the invitation shares a conversation.",
+            "example": "Quarterly planning"
+          }
+        },
+        "required": ["statusCode", "error", "message"]
       },
       "DiscardSharedCatalogItemDto": {
         "type": "object",

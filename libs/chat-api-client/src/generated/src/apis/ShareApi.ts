@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  AcceptInvitationErrorDto,
   AcceptInvitationResponseDto,
   CreateShareLinkDto,
   DiscardSharedCatalogItemDto,

@@ -351,6 +351,16 @@ The `itemId` SHALL be the URL of the **primary resource** in the peek response: 
 - **WHEN** the accepting call returns `400` with an error body that does not indicate the resource is already owned (e.g. an expired invitation)
 - **THEN** `acceptInvitation` throws `BadRequestException`, matching pre-existing behavior for other `400` responses
 
+#### Scenario: An expired or missing invitation carries a machine-readable code
+
+- **WHEN** either the peek or the accepting call returns `404` (DIAL Core purges an expired invitation on read and answers "Invitation <id> is not found", indistinguishable from a revoked or never-existing one)
+- **THEN** `acceptInvitation` throws `NotFoundException` whose body carries `code: shareInvitationNotFound` (`ShareInvitationErrorCode.NotFound`), and `SharedInvitationPage` shows the `share.invitationNotFound` translation key's text without a Request ID instead of the backend message
+
+#### Scenario: An invitation over its accepted-users limit carries a code and the conversation title
+
+- **WHEN** the accepting call returns `400` with an error body containing `"number of accepted users"` (DIAL Core's "Limit is exceeded on the number of accepted users for the invitation/resource: …")
+- **THEN** `acceptInvitation` throws `BadRequestException` whose body carries `code: shareInvitationAcceptedUsersLimitReached` and, when the shared resource is a conversation, `itemName` set to the title parsed from its url by `getSharedConversationTitle`; `SharedInvitationPage` shows the `share.invitationUsersLimitReached` translation key's text with that name, or the `share.invitationUsersLimitReachedUnnamed` translation key's text when no name is sent
+
 ### Requirement: Accepting an invitation invalidates the user's deployments and toolsets list caches
 
 After `acceptInvitation` resolves the shared `itemId` and successfully performs the accepting call, `ShareService` SHALL invalidate the accepting user's cached deployments list (`DeploymentsService.invalidateListCache(userSub)`) and cached toolsets list (`ToolsetsService.invalidateListCache(userSub)`) before returning. Both calls SHALL run concurrently (`Promise.all`). `ShareController.acceptInvitation` SHALL pass the session's `sub` (in addition to the existing access token and invitation id) so `ShareService` can key the invalidation per user.

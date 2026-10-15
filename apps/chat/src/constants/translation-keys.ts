@@ -1308,6 +1308,9 @@ export enum ShareI18nKeys {
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',
+  InvitationNotFound = 'share.invitationNotFound',
+  InvitationUsersLimitReached = 'share.invitationUsersLimitReached',
+  InvitationUsersLimitReachedUnnamed = 'share.invitationUsersLimitReachedUnnamed',
 }
 
 export enum VoiceRecordingI18nKeys {

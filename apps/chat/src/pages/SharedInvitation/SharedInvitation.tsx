@@ -1,3 +1,4 @@
+import { ShareInvitationErrorCode } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { FC, memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,10 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
-import { acceptInvitation } from '../../server-api/share.api';
+import {
+  acceptInvitation,
+  getAcceptInvitationErrorItemName,
+} from '../../server-api/share.api';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 
@@ -81,12 +85,37 @@ const SharedInvitationPage: FC<Props> = ({
         if (sharedSkill) mergeSharedSkill(sharedSkill);
         navigate(getTargetRoute(itemId), { replace: true });
       } catch (err) {
-        const { message: errorMessage, traceId } =
-          await getApiErrorDetails(err);
-        showErrorNotification({
-          message: errorMessage ?? t(ShareI18nKeys.InvitationAcceptError),
-          requestId: traceId,
-        });
+        const {
+          message: errorMessage,
+          traceId,
+          code,
+        } = await getApiErrorDetails(err);
+        /*
+         * Expired and over-the-limit links are expected outcomes, not faults,
+         * so they get a user-facing sentence and no Request ID.
+         */
+        if (code === ShareInvitationErrorCode.ShareInvitationNotFound) {
+          showErrorNotification({
+            message: t(ShareI18nKeys.InvitationNotFound),
+          });
+        } else if (
+          code ===
+          ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached
+        ) {
+          const itemName = await getAcceptInvitationErrorItemName(err);
+          showErrorNotification({
+            message: itemName
+              ? t(ShareI18nKeys.InvitationUsersLimitReached, {
+                  name: itemName,
+                })
+              : t(ShareI18nKeys.InvitationUsersLimitReachedUnnamed),
+          });
+        } else {
+          showErrorNotification({
+            message: errorMessage ?? t(ShareI18nKeys.InvitationAcceptError),
+            requestId: traceId,
+          });
+        }
         navigate(errorFallbackRoute, { replace: true });
       }
     };
