@@ -1,7 +1,27 @@
-import { MDMessageViewer, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  COMPACT_MARKDOWN_CLASS_NAMES,
+  MDMessageViewer,
+  mergeClasses,
+  type MarkdownRendererClassNames,
+} from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
 import type { ScheduledTaskConfigurationSectionProps } from '../../models/scheduled-task-configuration-section-props';
 import styles from './ScheduledTaskConfigurationSection.module.scss';
+
+/*
+ * Scoped record, deliberately not a change to the shared presets (which every
+ * markdown surface — chat messages, attachment canvas, quotations — consumes):
+ * COMPACT gives the instructions the 14px/24px paragraph step, and the
+ * ul/ol override keeps list items on that same step, because the renderer's
+ * list base classes set no font and <li> would otherwise inherit the ambient
+ * font (14/20) while paragraphs render 14/24. Module-level so the memoized
+ * MDMessageViewer receives a stable reference.
+ */
+const INSTRUCTIONS_CLASS_NAMES: MarkdownRendererClassNames = {
+  ...COMPACT_MARKDOWN_CLASS_NAMES,
+  ul: 'dial-small-paragraph-text mb-3 space-y-1',
+  ol: 'dial-small-paragraph-text mb-3 space-y-1',
+};
 
 /* Reads the `--stdv-subtitle-text` var the parent ScheduledTaskDetailView
  * sets on its root, so the label color stays overridable through the view's
@@ -30,7 +50,10 @@ export const ScheduledTaskConfigurationSection: FC<
         >
           {skillLabel}
         </span>
-        <p className="break-all whitespace-normal">
+        {/* overflow-wrap:anywhere breaks a skill name only when it cannot
+         * fit a line by itself; break-all would chop ordinary names at the
+         * column edge. */}
+        <p className="[overflow-wrap:anywhere] whitespace-normal">
           {skillDisplayNames?.map((name, index) => (
             <span className="block" key={`${index}:${name}`}>
               {name}
@@ -53,7 +76,11 @@ export const ScheduledTaskConfigurationSection: FC<
         {renderInstructions ? (
           renderInstructions(instructionsMarkdown)
         ) : (
-          <MDMessageViewer content={instructionsMarkdown} {...markdownLabels} />
+          <MDMessageViewer
+            content={instructionsMarkdown}
+            classNames={INSTRUCTIONS_CLASS_NAMES}
+            {...markdownLabels}
+          />
         )}
       </div>
     )}

@@ -161,8 +161,58 @@ describe('ScheduledTaskCard', () => {
     );
 
     expect(screen.getByText('a'.repeat(600)).className).toContain(
-      'line-clamp-4',
+      'line-clamp-3',
     );
+    expect(screen.getByText('a'.repeat(600)).className).toContain(
+      'max-h-[72px]',
+    );
+  });
+
+  it('renders the description as dial-small-paragraph-text by default', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({ descriptionPreview: 'Daily inbox summary' })}
+      />,
+    );
+
+    expect(screen.getByText('Daily inbox summary').className).toContain(
+      'dial-small-paragraph-text',
+    );
+  });
+
+  it('wraps an unbreakable description inside the card instead of stretching it past the grid track', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({
+          descriptionPreview: 'a'.repeat(600),
+        })}
+      />,
+    );
+
+    const description = screen.getByText('a'.repeat(600));
+    expect(description.className).toContain('min-w-0');
+    expect(description.className).toContain('[overflow-wrap:anywhere]');
+    expect(screen.getByRole('group').className).toContain('min-w-0');
+  });
+
+  it('collapses whitespace in the description preview instead of preserving the author line breaks', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({
+          descriptionPreview: '\n\nSummarize the daily inbox\nby sender',
+        })}
+      />,
+    );
+
+    /* The preview is the raw textarea description — preserved blank lines
+     * would spend the clamp budget before any text (unlike the detail
+     * view, which pre-wraps the full description). getByText matches
+     * against the whitespace-collapsed text — the same collapse the card
+     * applies without pre-wrap. */
+    const description = screen.getByText(
+      'Summarize the daily inbox by sender',
+    );
+    expect(description.className).not.toContain('whitespace-pre-wrap');
   });
 
   it('invokes onCardClick with the item id when the card body is clicked', async () => {

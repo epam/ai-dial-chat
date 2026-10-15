@@ -4,3 +4,12 @@
 .subtitleText {
   color: var(--stdv-subtitle-text, var(--text-secondary, #57647a));
 }
+
+/* Same override channel (`--stdv-description-text` from the view's
+ * `styles.colors.descriptionText`). Chained through `--text-primary` so the
+ * ink flips with the theme (dark themes set a light text-primary); #1b212d —
+ * the design's description ink — is the last-resort fallback for hosts that
+ * define no token. */
+.description {
+  color: var(--stdv-description-text, var(--text-primary, #1b212d));
+}

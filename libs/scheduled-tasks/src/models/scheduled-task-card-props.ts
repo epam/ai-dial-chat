@@ -53,10 +53,8 @@ export interface ScheduledTaskCardColors {
 export interface ScheduledTaskCardTypography {
   /** CSS class applied to the card's title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the description/prompt-preview line. Defaults to `'dial-small-text'`. */
+  /** CSS class applied to the description/prompt-preview line. Defaults to `'dial-small-paragraph-text'`; the clamp's height cap is fixed at 72px (three lines of this step's 24px line-height) — a taller step clips the last clamped line (third on desktop, second below the desktop breakpoint) mid-glyph. */
   descriptionClassName?: string;
-  /** CSS class applied to the description's size. Defaults to `'dial-tiny-text'`. */
-  descriptionSizeClassName?: string;
   /** CSS class applied to the schedule pill's label text. Defaults to `'dial-tiny-text'`. */
   scheduleLabelClassName?: string;
   /** CSS class applied to non-leaf location breadcrumb segments. Defaults to `'dial-tiny-text'`. */

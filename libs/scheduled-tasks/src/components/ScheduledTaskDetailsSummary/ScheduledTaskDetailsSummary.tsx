@@ -80,7 +80,8 @@ export const ScheduledTaskDetailsSummary: FC<
           <p
             className={mergeClasses(
               fieldValueClassName,
-              'break-all whitespace-normal',
+              // eslint-disable-next-line prettier/prettier
+              '[overflow-wrap:anywhere] whitespace-normal',
             )}
           >
             {skillDisplayNames?.map((name, index) => (
