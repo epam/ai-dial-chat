@@ -1192,7 +1192,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                * the action row and its controls never shift.
                */
               className: mergeClasses(
-                attachments.length > 6 && '-me-4 w-[calc(100%+1rem)]',
+                attachments.length > 6 && '-me-4',
                 attachmentTray?.className,
               ),
             }}

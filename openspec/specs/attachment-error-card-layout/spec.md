@@ -8,10 +8,10 @@ Specifies what the file-attachment tile changes when a non-image attachment is i
 
 ### Requirement: The error state re-styles the file tile without reordering it
 
-When `AttachmentCard` renders a non-image attachment in the error state (`status === RequestStatus.Error`), the tile SHALL keep its normal vertical order — the file name on top, the file-type row below — and SHALL express the error through styling, corner-action spacing, and an announced status instead:
+When `AttachmentCard` renders a non-image attachment in the error state (`status === RequestStatus.Error`), the tile SHALL keep its normal vertical order — the file name on top, the file-type row below — and SHALL express the error through styling, corner-action color, and an announced status instead:
 
 - **Error surface.** The tile root SHALL carry the error style token, and SHALL NOT carry the hover style token, so a tile the user cannot act on does not respond as if it were actionable.
-- **Corner-action spacing.** The tile's action buttons are absolutely positioned in the trailing top corner, so exactly one of the two text blocks must reserve room for them. In the normal state that is the **name**; in the error state it is the **file-type row**, because the error state swaps the download action for a retry action that sits alongside remove, and the type row is the one that would otherwise collide with the pair.
+- **Corner actions.** The tile's action buttons are absolutely positioned in the trailing top corner and sit over the name; neither text block reserves room for them. Each button is painted opaque in the tile's current background, so in the error state it takes the error background, and both retry and remove use the error text color.
 - **Announced status.** An `sr-only` `role="status"` `aria-live="polite"` element SHALL carry the error text, and each corner action SHALL reference it by id, so the failure reaches assistive technology even though it is conveyed visually by color alone.
 - **Disabled affordances.** Download SHALL be suppressed in the error state; retry SHALL be offered instead (when `onRetry` is supplied), except when the failure reason is `AttachmentErrorReason.UnsupportedType` or `AttachmentErrorReason.FileTooLarge`, which retrying cannot fix.
 
@@ -36,10 +36,11 @@ No new SCSS tokens are introduced. `styles.nameText` continues to style the file
 - **THEN** the filename still appears above the file-type row, as it does in the normal state
 - **AND** the tile carries the error style token and not the hover one
 
-#### Scenario: Corner-action spacing moves to the type row on error
+#### Scenario: Corner actions take the error surface
 
 - **WHEN** a non-image attachment enters the error state
-- **THEN** the reserved space for the corner action buttons moves from the filename block to the file-type row
+- **THEN** neither the filename block nor the file-type row reserves space for the corner action buttons
+- **AND** the retry and remove buttons render on the error background in the error text color
 
 #### Scenario: The error is announced, not only colored
 
