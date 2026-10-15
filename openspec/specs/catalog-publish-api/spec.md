@@ -216,7 +216,7 @@ A publication that already carries `resources` SHALL be matched without a round 
 
 The `getPublications` response SHALL be accepted both as the bare array the SDK types (`ListPublication = Publication[]`) and as the `{ publications: [...] }` envelope a live Core returns. Calling `.filter` straight on the envelope threw `TypeError: (result.data ?? []).filter is not a function`, which `handleDialFetchError` reported as "DIAL Core is currently unavailable" (503) — this, not a Core outage, is what [GH #7897](https://github.com/epam/ai-dial-chat/issues/7897) actually was, and what led to both frontend publish-history fetches being stubbed out. An unrecognised shape SHALL degrade to an empty list with a warning, never a throw.
 
-Resource-url comparison SHALL tolerate a percent-encoding difference between the url Core echoes and the url the service built, so an encoded `sourceUrl` cannot silently produce an empty history for a working publication. `entityId` SHALL be used as that resource url directly — for a Prompt just as for a Skill, since both are already full resource paths and neither goes through a bucket-qualification helper. Each entry's `folderPath` SHALL have Core's `public/` prefix and trailing slash stripped back off before being returned, so it matches the plain folder-path form the frontend sends when publishing and uses for `selectedFolderPath` comparisons. Each entry's `version` SHALL be recovered from `entityId`'s own `{name}__{version}` suffix (the same value for every entry in a single call, since `entityId` — and therefore its version — is fixed for the whole request), never from `Publication.name`; an unversioned Prompt or Skill yields an empty version.
+Resource-url comparison SHALL tolerate a percent-encoding difference between the url Core echoes and the url the service built, so an encoded `sourceUrl` cannot silently produce an empty history for a working publication. `entityId` SHALL be used as that resource url directly — for a Prompt just as for a Skill, since both are already full resource paths and neither goes through a bucket-qualification helper. Each entry's `folderPath` SHALL have Core's `public/` prefix and trailing slash stripped back off before being returned, so it matches the plain folder-path form the frontend sends when publishing and uses for `selectedFolderPath` comparisons. Each entry's `version` SHALL be recovered from the `{name}__{version}` suffix of the `targetUrl` that publication sent the entity to (`getPublicationSourceTargetUrl`), falling back to `entityId`'s own suffix when the publication carries no target — never from `Publication.name`; an unversioned Prompt or Skill yields an empty version. The target, not `entityId`, is authoritative because editing an application's or toolset's version keeps its original `{name}__{version}` path ([GitHub issue #9428](https://github.com/epam/ai-dial-chat/issues/9428)).
 
 A publication whose matching resource carries `action: 'DELETE'` SHALL never itself appear in the result. Such a publication is a removal request submitted by the unpublish endpoint (see `catalog-unpublish-api`), not a publication of the entity. Including it would list the same folder twice — once for the original `ADD`, once for the `DELETE` — and would read as a second publish to that folder.
 
@@ -368,6 +368,15 @@ The app adapter SHALL omit `version` when `CatalogItem.version` is empty and exp
 
 - **WHEN** publish history is requested for a skill id without a `__{version}` suffix
 - **THEN** every `PublishHistoryEntryDto.version` is an empty string
+
+### Requirement: A new version is published under its own target name
+
+DIAL Core stores applications and toolsets as `{name}__{version}`, but updating an existing one's version (`updateToolset`, `updateApplication`) rewrites only the version inside the resource; its path keeps the version it was created with. `PublishService.publish` SHALL therefore build the `targetUrl` resource name with `getVersionedTargetResourceName` (`apps/chat-api/src/publish/publish-target.util.ts`): for an `applications/` or `toolsets/` source whose name has a `__` suffix, the suffix is replaced by the request's `version` when that version is valid SemVer (`SEMVER_VERSION_PATTERN`, percent-encoded); every other case keeps the source's own resource name. A non-SemVer `version` never reaches the path.
+
+#### Scenario: Publishing an edited toolset's new version to a folder holding the old one
+- **GIVEN** a toolset stored at `toolsets/{bucket}/my-tool__1.0.0` whose version was edited to `1.0.1`, and `my-tool__1.0.0` already published to `Team`
+- **WHEN** it is published to `Team` with `version: '1.0.1'`
+- **THEN** the `ADD` resource's `targetUrl` is `toolsets/public/Team/my-tool__1.0.1`, so DIAL Core no longer rejects it with "Target resource already exists"
 
 ### Requirement: Publish request accepts an optional publishCredentials flag
 

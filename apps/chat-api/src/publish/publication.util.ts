@@ -59,6 +59,7 @@ export enum PublicationResourceAction {
 interface PublicationResourceLike {
   action?: string;
   sourceUrl?: string;
+  targetUrl?: string;
   /** Core's own flag: this resource was published together with the publisher's credential for it. */
   publishCredentials?: boolean;
 }
@@ -160,6 +161,13 @@ export const getPublicationSourceCredentials = (
   sourceUrl: string,
 ): boolean =>
   findPublishingResource(publication, sourceUrl)?.publishCredentials === true;
+
+/** The published copy's path the publication sends `sourceUrl` to, or `undefined` when it does not publish it. */
+export const getPublicationSourceTargetUrl = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): string | undefined =>
+  findPublishingResource(publication, sourceUrl)?.targetUrl;
 
 /**
  * Whether `publication` publishes `sourceUrl`.
