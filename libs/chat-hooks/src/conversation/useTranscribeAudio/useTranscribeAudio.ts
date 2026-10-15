@@ -1,4 +1,5 @@
 import type { FilesApi, TranscriptionApi } from '@epam/ai-dial-chat-api-client';
+import { normalizeMimeType } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
   AudioTranscriptionError,
@@ -81,6 +82,10 @@ export const useTranscribeAudio = ({
           { signal },
         );
         signal.throwIfAborted();
+        /* MediaRecorder reports codec parameters (`audio/webm;codecs=opus`),
+         * and DIAL Core rejects them against a deployment's `audio/*` filter,
+         * so send the base MIME type. */
+        const mimeType = normalizeMimeType(file.type);
         if (asrModelId) {
           if (!transcriptionApi) {
             throw new AudioTranscriptionError(
@@ -89,7 +94,7 @@ export const useTranscribeAudio = ({
           }
           return await withTranscriptionRetry(async () => {
             const response = await transcriptionApi.transcribeAudio(
-              { transcribeAudioDto: { audioUrl: url, mimeType: file.type } },
+              { transcribeAudioDto: { audioUrl: url, mimeType } },
               { signal },
             );
             return response.transcript ?? '';
@@ -104,7 +109,7 @@ export const useTranscribeAudio = ({
           () =>
             transcribeWithDeployment({
               audioUrl: url,
-              mimeType: file.type,
+              mimeType,
               deployment: selectedDeploymentId,
               signal,
             }),
