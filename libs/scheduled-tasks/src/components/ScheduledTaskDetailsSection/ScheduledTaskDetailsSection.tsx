@@ -22,19 +22,42 @@ export const ScheduledTaskDetailsSection: FC<
   fieldValueClassName = 'dial-small-text',
 }) => (
   <>
+    {/*
+     * Every field group carries min-w-0: a flex child's automatic minimum
+     * width is its content's min-content width, so without it a long
+     * unbreakable description value stretches the column past the viewport
+     * instead of letting the value wrap inside it.
+     */}
     {description && (
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <span
           className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
         >
           {labels.descriptionLabel}
         </span>
-        <p className={fieldValueClassName}>{description}</p>
+        {/* The description is free-form textarea text: pre-wrap keeps the
+         * author's line breaks, and overflow-wrap:anywhere breaks long
+         * unbroken tokens (URLs and the like) only when a token cannot fit
+         * a line by itself — ordinary words still wrap whole, unlike
+         * break-all, which chops every word at the column edge. It renders
+         * at the same 14px/20px field step as every other value in the
+         * section, with its own ink (the theme's primary text — #1b212d
+         * when no token is defined — overridable via the view's
+         * `styles.colors.descriptionText`). */}
+        <p
+          className={mergeClasses(
+            fieldValueClassName,
+            'whitespace-pre-wrap [overflow-wrap:anywhere]',
+            styles.description,
+          )}
+        >
+          {description}
+        </p>
       </div>
     )}
 
     {completedLabel && (
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <span
           className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
         >
@@ -45,7 +68,7 @@ export const ScheduledTaskDetailsSection: FC<
     )}
 
     {modelLabel && (
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <span
           className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
         >
@@ -56,7 +79,7 @@ export const ScheduledTaskDetailsSection: FC<
     )}
 
     {repeatsLabel && (
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <span
           className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
         >
@@ -67,7 +90,7 @@ export const ScheduledTaskDetailsSection: FC<
     )}
 
     {activeWindowLabel && (
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <span
           className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
         >

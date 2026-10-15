@@ -28,6 +28,6 @@ export interface ScheduledTaskDetailsSectionProps {
   completedLabel?: string;
   /** CSS class applied to each field label. Defaults to `'dial-tiny-text'`. */
   fieldLabelClassName?: string;
-  /** CSS class applied to each field value. Defaults to `'dial-small-text'`. */
+  /** CSS class applied to each field value, including the free-form description. Defaults to `'dial-small-text'` (14px/20px). */
   fieldValueClassName?: string;
 }

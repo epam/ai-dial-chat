@@ -56,7 +56,7 @@ The application SHALL expose a lazy-loaded Scheduled Task Detail page at `ROUTES
 
 ### Requirement: Detail page header shows back navigation and title, plus Active/Delete/Edit actions once loaded
 
-The detail page header SHALL render a back-navigation control and the task's `displayName` as its title on the start side. Activating the back control SHALL navigate to `ROUTES.ScheduledTasks`. Once the task has loaded successfully and `task.isDeleted` is not `true`, the header SHALL additionally render, on the inline-end side, in this order:
+The detail page header SHALL render a back-navigation control and the task's `displayName` as its title on the start side. The title SHALL ellipsize instead of stretching the header: capped at 600px on every breakpoint (phones never reach the cap and truncate at the row edge; tablets and the desktop header stop the line at 600px), shrinking below the cap on narrower viewports, and rendering its text through the kit's `EllipsisTooltip` (`@epam/ai-dial-ui-kit`) so the full name appears in a tooltip only when actually clipped and remains the heading's accessible name while clipped. Exactly one copy of the title is visible at any width — inline in the header at the desktop breakpoint, in a standalone row below it on mobile/tablet. Activating the back control SHALL navigate to `ROUTES.ScheduledTasks`. Once the task has loaded successfully and `task.isDeleted` is not `true`, the header SHALL additionally render, on the inline-end side, in this order:
 
 1. an **Active** switch (`Switch` from `@epam/ai-dial-ui-kit`) with a visible localized "Active" label, rendered only when `isActive !== undefined` on the loaded task, never an unchecked switch while the active state is unknown;
 2. a destructive **Delete** action (`GhostButton` from `@epam/ai-dial-ui-kit` with `variant={ButtonVariant.Danger}`, a leading `IconTrashX` marked `aria-hidden`, and a visible localized "Delete" label). Activating Delete SHALL open the confirmation dialog described in the "Delete confirmation dialog gates the delete request" requirement — it SHALL NOT call any API directly;
@@ -74,6 +74,11 @@ When `task.isDeleted` is `true`, the header SHALL render none of the Active swit
 
 - **WHEN** the detail page renders with a successfully loaded, non-deleted task whose `isActive` is defined
 - **THEN** the header contains a back control and the task's `displayName` on the start side, and on the end side — in order — the Active switch, a destructive Delete action with a visible "Delete" label, and a `NeutralButton` with `IconPencilMinus` and a localized "Edit" label
+
+#### Scenario: Long title ellipsizes with a tooltip instead of stretching the header
+
+- **WHEN** the loaded task's `displayName` is longer than the title's 600px cap (or longer than the width remaining in a narrower header)
+- **THEN** the title renders on one line with an ellipsis, the action buttons stay in place, and hovering the clipped title shows the full name in a tooltip — while a title that fits its line shows no tooltip
 
 #### Scenario: Edit, Active, and Delete are absent while loading or on error
 
@@ -117,17 +122,27 @@ When `task.isDeleted` is `true`, the header SHALL render none of the Active swit
 
 ### Requirement: Details and Configuration sections render read-only task metadata
 
-The detail page SHALL render a Details section showing the task's description, a "Model or Agent" value (resolved to a display name via the deployments context when possible, falling back to the raw model id), and a "Repeats" schedule label produced by the same formatter logic already used by the list page's `map-scheduled-task-dto.ts` (not duplicated inside `libs/scheduled-tasks`). The detail page SHALL render a Configuration section whose "Instructions" content is the task's `prompt` field, rendered through the same markdown stack chat assistant messages use (`MarkdownRenderer`/`MDMessageViewer` from `@epam/ai-dial-chat-shared`), as static content with no streaming/typewriter effect, and with the same default markdown class names so headings, lists, code blocks, and GFM match chat rendering.
+The detail page SHALL render a Details section showing the task's description, a "Model or Agent" value (resolved to a display name via the deployments context when possible, falling back to the raw model id), and a "Repeats" schedule label produced by the same formatter logic already used by the list page's `map-scheduled-task-dto.ts` (not duplicated inside `libs/scheduled-tasks`). The description SHALL preserve the author's line breaks and wrap ordinary words whole, breaking a token only when it cannot fit a line by itself (`overflow-wrap: anywhere`, not `break-all`, which would chop ordinary words at the column edge); it renders at the field-value step (`dial-small-text`) with its own ink chained through the theme's `--text-primary` (dark-theme safe, `#1b212d` as the last-resort fallback) and overridable through the view's `styles.colors.descriptionText`. The detail page SHALL render a Configuration section whose "Instructions" content is the task's `prompt` field, rendered through the same markdown stack chat assistant messages use (`MarkdownRenderer`/`MDMessageViewer` from `@epam/ai-dial-chat-shared`), as static content with no streaming/typewriter effect, at the compact prose step — paragraphs and list items alike at `dial-small-paragraph-text` (14px/24px) — via a lib-scoped `MarkdownRendererClassNames` record spread from `COMPACT_MARKDOWN_CLASS_NAMES` (see `libs/scheduled-tasks/src/components/ScheduledTaskConfigurationSection/ScheduledTaskConfigurationSection.tsx`); the shared presets in `libs/chat-shared/src/components/MarkdownRenderer/markdown-class-names.ts` SHALL remain untouched so chat rendering is unaffected. A host-supplied `renderInstructions` owns its own classNames, and these are ignored.
 
 #### Scenario: Details section shows description, model, and schedule
 
 - **WHEN** the task detail loads with `description`, `model`, and a schedule
 - **THEN** the Details section shows that description text, a model/agent display value, and a "Repeats" label produced by the shared schedule-label formatter
 
-#### Scenario: Instructions render through the shared markdown stack
+#### Scenario: Description wraps words whole and breaks only unbreakable tokens
+
+- **WHEN** the task's `description` contains ordinary multi-word prose and a token longer than the column width (a long URL)
+- **THEN** the prose wraps at word boundaries with no mid-word breaks, the long token breaks only where it cannot fit a line by itself, and the author's line breaks are preserved
+
+#### Scenario: Instructions render through the shared markdown stack at the compact prose step
 
 - **WHEN** the task's `prompt` contains markdown (headings, lists, a code block, and GFM syntax)
-- **THEN** the Configuration section's Instructions render that markdown through `MarkdownRenderer`/`MDMessageViewer`, matching how the same markdown renders in a chat assistant message, with no streaming/typewriter animation applied
+- **THEN** the Configuration section's Instructions render that markdown through `MarkdownRenderer`/`MDMessageViewer` with no streaming/typewriter animation, with paragraphs and list items at the 14px/24px prose step, and with the shared default presets unchanged so the same markdown renders identically in chat assistant messages
+
+#### Scenario: Host-supplied renderInstructions owns the rendering
+
+- **WHEN** the host passes `renderInstructions`
+- **THEN** the instructions render through that callback and the lib's scoped classNames record is not applied
 
 #### Scenario: Unresolvable model id falls back to raw id
 
