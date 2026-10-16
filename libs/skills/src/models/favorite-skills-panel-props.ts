@@ -42,6 +42,8 @@ export interface FavoriteSkillsPanelProps {
   onBrowse: () => void;
   /** Opens skill details; omitted hides the details tooltip. */
   onViewDetails?: (item: FavoriteSkillItem) => void;
+  /** Whether rows render without the hover/focus details tooltip, even when `onViewDetails` is set. Defaults to `false`. */
+  isRowTooltipHidden?: boolean;
   /** Additional classes applied to the panel root. */
   className?: string;
   /** Additional classes applied to each favorite row. */

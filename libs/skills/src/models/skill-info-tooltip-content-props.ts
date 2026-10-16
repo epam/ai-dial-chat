@@ -31,4 +31,6 @@ export interface SkillInfoTooltipContentProps {
    * Tab should move from row to row. Unset keeps the button's default.
    */
   viewDetailsTabIndex?: number;
+  /** CSS class applied to the description and message paragraphs. Defaults to `'dial-tiny-text'`. */
+  textClassName?: string;
 }

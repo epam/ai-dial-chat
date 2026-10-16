@@ -1,9 +1,11 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   ButtonAppearance,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconEye, IconLock, IconTrash } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -20,6 +22,7 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
   viewDetailsLabel = 'View details',
   onViewDetails,
   viewDetailsTabIndex,
+  textClassName = 'dial-tiny-text',
 }) => {
   /*
    * An unresolved url replaces the whole content: an icon plus a fixed
@@ -41,7 +44,9 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
           aria-hidden
           className="shrink-0 text-secondary"
         />
-        <p className="dial-tiny-text text-start text-primary">{message}</p>
+        <p className={mergeClasses(textClassName, 'text-start text-primary')}>
+          {message}
+        </p>
       </div>
     );
   }
@@ -52,28 +57,33 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
    * selected, so there is nothing to open details for.
    */
   if (unsupportedMessage != null) {
-    return <p className="text-start">{unsupportedMessage}</p>;
+    return (
+      <p className={mergeClasses(textClassName, 'text-start')}>
+        {unsupportedMessage}
+      </p>
+    );
   }
 
   const hasDescription = description != null && description !== '';
 
   return (
     <div className="flex flex-col gap-3">
-      {hasDescription && <p className="text-start">{description}</p>}
+      {hasDescription && (
+        <p className={mergeClasses(textClassName, 'text-start')}>
+          {description}
+        </p>
+      )}
       {/*
        * The action is reachable regardless of the description's state —
        * present or absent. `self-start` keeps the button at the
-       * content's start edge instead of stretching it across the panel;
-       * `h-[24px]` caps the kit Standard button's 40px height to the design's
-       * 24px (the Standard label class `dial-small-paragraph-semi-text`,
-       * 14px/24px semibold, already matches the design spec — the kit's
-       * `ElementSize.Small` is not used because it swaps the label to 12px
-       * tiny typography).
+       * content's start edge instead of stretching it across the panel; the
+       * kit's Small size is 24px tall with a 12px label, matching the text.
        */}
       <Button
         variant={ButtonVariant.Primary}
         appearance={ButtonAppearance.Link}
-        className="h-[24px] self-start"
+        size={ElementSize.Small}
+        className="self-start"
         label={viewDetailsLabel}
         iconBefore={
           <IconEye

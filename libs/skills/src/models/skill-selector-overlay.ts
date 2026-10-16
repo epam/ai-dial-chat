@@ -118,6 +118,8 @@ export interface UseSkillSelectorOverlayOptions {
    * layouts, where hover never fires.
    */
   historyDetailsTrigger?: ChatSkillDetailsTrigger;
+  /** Forwarded to the Add-menu and slash-menu favorites panels' `isRowTooltipHidden`. Defaults to `false`. */
+  isRowTooltipHidden?: boolean;
   /**
    * Renders the browse modal's picker content (e.g. a host catalog view);
    * receives the selection and close callbacks to wire into it, and is

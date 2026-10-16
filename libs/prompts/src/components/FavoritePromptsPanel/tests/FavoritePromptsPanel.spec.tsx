@@ -126,6 +126,19 @@ describe('FavoritePromptsPanel', () => {
 
     expect(await screen.findByText('Summarizes long text')).toBeTruthy();
   });
+
+  it('renders no row tooltip when isRowTooltipHidden is set', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderPanel({
+      favorites: [makeItem({ description: 'Summarizes long text' })],
+      isRowTooltipHidden: true,
+    });
+
+    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: 'Summarizer' }));
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(screen.queryByText('Summarizes long text')).toBeNull();
+  });
 });
 
 /*
