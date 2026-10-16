@@ -34,6 +34,7 @@ interface DropdownMockProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   renderOverlay?: () => ReactNode;
+  initialFocus?: 0 | -1;
 }
 
 interface InputMockProps {
@@ -102,8 +103,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     open,
     onOpenChange,
     renderOverlay,
+    initialFocus,
   }: DropdownMockProps) => (
-    <div>
+    <div data-testid="thumbnails-dropdown" data-initial-focus={initialFocus}>
       <span
         role="button"
         tabIndex={0}
@@ -399,6 +401,17 @@ describe('PdfContent', () => {
   });
 
   describe('page navigator input', () => {
+    it('does not focus the page input when the thumbnails panel opens', () => {
+      render(<PdfContent url="doc.pdf" highlights={[]} />);
+      setTotalPages(50);
+
+      expect(
+        screen
+          .getByTestId('thumbnails-dropdown')
+          .getAttribute('data-initial-focus'),
+      ).toBe('-1');
+    });
+
     it('navigates to a valid committed page number on Enter', () => {
       render(<PdfContent url="doc.pdf" highlights={[]} />);
       setTotalPages(50);

@@ -636,6 +636,11 @@ export const PdfContent: FC<PdfContentProps> = ({
             onOpenChange={setIsThumbnailsOpen}
             placement="bottom-start"
             matchReferenceWidth={false}
+            // Opening by click must not focus the page input: the overlay is
+            // still unpositioned at that moment, and focusing it scrolls the
+            // page to the overlay's initial spot (and raises the mobile
+            // keyboard).
+            initialFocus={-1}
             renderOverlay={() => (
               <div className="flex w-36 flex-col">
                 <div className="shrink-0 p-1">
