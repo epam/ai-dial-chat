@@ -68,9 +68,21 @@ Creating a new folder SHALL use `DialFoldersTree`'s built-in inline create-folde
 
 `onCreatePublishFolder` (`usePublishFolders` in `libs/chat-hooks`, surfaced to the app through `apps/chat/src/hooks/publish/usePublishFolders.ts`) SHALL NOT call the backend folder-creation endpoint. The folder exists only in the client-side tree until the user actually submits Publish, at which point the real publish request writes to the nested `folderPath`; DIAL Core storage creates any missing path segments implicitly, the same way writing a file to a new prefix does. This avoids leaving an orphaned empty folder on the backend when the user picks a new-folder name and then cancels or navigates away without publishing — unlike `useDialFileManager`'s "New folder" action (File Manager), which does create a real, immediately-persisted folder resource, since that flow's whole purpose is managing folders as first-class content.
 
+Pressing the inline row's "Cancel" button SHALL discard the new folder: `onCreatePublishFolder` is not called and nothing is added to the tree or selected. `DialFoldersTree`'s inline editor (`useEditableItem` in `@epam/ai-dial-ui-kit`) commits a press outside the editor, so the press on that button, and the blur raised when the editor is then removed, reach `onCreateFolderSave` before the button's click is handled. `PublishFoldersTree` therefore flags a pointer press on its own Cancel button with a capture-phase listener on `document` registered on mount, ahead of the editor's, and ignores `onCreateFolderSave` while the flag is set. The flag is cleared when the next creation starts. This is a host-side workaround for the editor's commit-on-outside-press behavior rather than a `DialFoldersTree` capability.
+
 #### Scenario: User creates a new folder under the selected parent
 - **WHEN** the user confirms a new folder name in the inline create row
 - **THEN** `onCreatePublishFolder(parentPath, name)` is called, no backend request is sent, the new folder appears in the tree immediately, and it becomes the selected folder
+
+#### Scenario: User cancels the inline create row with the Cancel button
+- **GIVEN** the inline create row is open and the user typed a valid name
+- **WHEN** the user presses the "Cancel" button next to "Create new folder"
+- **THEN** `onCreatePublishFolder` is NOT called, no folder is added to the tree, and the selection is unchanged
+
+#### Scenario: User creates a folder again after cancelling
+- **GIVEN** the user cancelled an inline create row with the Cancel button
+- **WHEN** the user opens the create row again and confirms a valid name
+- **THEN** `onCreatePublishFolder(parentPath, name)` is called
 
 #### Scenario: User cancels publish after creating a folder locally
 - **GIVEN** the user created a new folder in the destination picker and selected it
@@ -127,11 +139,18 @@ The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) whe
 - **THEN** the Header renders the Publish action
 
 ### Requirement: The submit button label never embeds the destination name
-`PublishFooter`'s submit button SHALL read a fixed label (`'Publish'`, or `'Update version {version}'` when replacing an existing version) regardless of which folder or the root is selected. The destination name SHALL NOT be interpolated into the button label, since folder/entity names of arbitrary length would overflow the button.
+`PublishFooter`'s submit button SHALL read a fixed label (`'Publish'`, or `'Update version {version}'` when replacing an existing version is allowed) regardless of which folder or the root is selected. The destination name SHALL NOT be interpolated into the button label, since folder/entity names of arbitrary length would overflow the button.
 
 #### Scenario: A long destination folder name is selected
 - **WHEN** the user selects a destination folder or the root with an arbitrarily long name
-- **THEN** the submit button still reads `'Publish'` (or the update-version label), unaffected by the destination name's length
+- **THEN** the submit button still reads `'Publish'`, unaffected by the destination name's length
+
+### Requirement: An already-published version cannot be republished to the same folder
+DIAL Core cannot overwrite a published catalog resource: an `ADD` whose target exists fails with "Target resource already exists", a `DELETE` + `ADD` pair on the same target is rejected as duplicate target urls, and `ADD_IF_ABSENT` silently skips the copy. The catalog `DetailsPanel` (`libs/catalog/src/components/Details/DetailsPanel.tsx`) SHALL therefore pass `allowReplace: false` to `derivePublishState`, `PublishPanel` and `PublishFooter`, exactly as the conversation publish flow does ([GitHub issue #9427](https://github.com/epam/ai-dial-chat/issues/9427)).
+
+#### Scenario: The selected folder already holds this version
+- **WHEN** the selected folder's publish history already contains the entity's current version
+- **THEN** the panel shows `PublishCalloutKind.ReplaceWarning` with the host-supplied text from the `catalog.publish.versionAlreadyPublishedWarning` translation key, the submit button is disabled, and it reads `'Publish'` rather than an `'Update version {version}'` label
 
 ### Requirement: Publish submission and history use real backend data
 `CatalogView` SHALL call the real `onPublish`, `getPublishHistory`, and `hasPublishWriteAccess` implementations backed by `apps/chat/src/server-api` wrappers instead of mock data (`MOCK_PUBLISH_FOLDERS`, `MOCK_PUBLISH_HISTORY`, and the mock `handlePublish`), which SHALL be deleted once parity is confirmed.

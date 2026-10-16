@@ -244,6 +244,7 @@ export enum CatalogI18nKeys {
   PublishFolderEmptyState = 'catalog.publishFolderEmptyState',
   PublishCredentialsLabel = 'catalog.publish.credentialsLabel',
   PublishCredentialsHint = 'catalog.publish.credentialsHint',
+  PublishVersionAlreadyPublishedWarning = 'catalog.publish.versionAlreadyPublishedWarning',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
@@ -529,6 +530,7 @@ export enum ScheduledTasksI18nKeys {
 }
 
 export enum ConversationI18nKeys {
+  ModelUnavailableNotice = 'conversation.modelUnavailableNotice',
   StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
   StagesExecuted = 'conversation.stages.executed',
@@ -1308,6 +1310,9 @@ export enum ShareI18nKeys {
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',
+  InvitationNotFound = 'share.invitationNotFound',
+  InvitationUsersLimitReached = 'share.invitationUsersLimitReached',
+  InvitationUsersLimitReachedUnnamed = 'share.invitationUsersLimitReachedUnnamed',
 }
 
 export enum VoiceRecordingI18nKeys {

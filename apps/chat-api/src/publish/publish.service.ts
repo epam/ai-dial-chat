@@ -23,6 +23,7 @@ import type { PublishRuleDto } from './dto/publish-rule.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
 import {
   getPublicationSourceCredentials,
+  getPublicationSourceTargetUrl,
   resolvePublicationsForSource,
   toPublicationList,
 } from './publication.util';
@@ -32,6 +33,7 @@ import {
   getPublishedTargetUrl,
   getResourceName,
   getResourceTypePrefix,
+  getVersionedTargetResourceName,
   stripPublicTargetFolder,
 } from './publish-target.util';
 
@@ -62,6 +64,15 @@ const splitEntityNameAndVersion = (
     name: safeDecodeURIComponent(resourceName.slice(0, separatorIndex)),
     version: resourceName.slice(separatorIndex + 2),
   };
+};
+
+/** The version suffix of a published copy's `targetUrl`, or `fallback` when there is no target or it carries none. */
+const getPublishedVersion = (
+  targetUrl: string | undefined,
+  fallback: string | undefined,
+): string => {
+  const version = targetUrl ? splitEntityNameAndVersion(targetUrl).version : '';
+  return version ? safeDecodeURIComponent(version) : (fallback ?? '');
 };
 
 /**
@@ -122,10 +133,15 @@ export class PublishService {
      */
     const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
+    const resourceTypePrefix = getResourceTypePrefix(sourceUrl);
     const targetUrl = getPublishedTargetUrl(
-      getResourceTypePrefix(sourceUrl),
+      resourceTypePrefix,
       folderPath,
-      getResourceName(sourceUrl),
+      getVersionedTargetResourceName(
+        resourceTypePrefix,
+        getResourceName(sourceUrl),
+        version,
+      ),
     );
     const { name: entityName, version: resourceVersion } =
       splitEntityNameAndVersion(sourceUrl);
@@ -235,11 +251,31 @@ export class PublishService {
     /* See the matching `sourceUrl` encoding comment in `publish` above. */
     const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
-    const targetUrl = getPublishedTargetUrl(
-      getResourceTypePrefix(sourceUrl),
-      folderPath,
-      getResourceName(sourceUrl),
-    );
+    const resourceTypePrefix = getResourceTypePrefix(sourceUrl);
+    /*
+     * The copy in this folder may carry a different version than the entity
+     * does now (a new version is published under a new name, see
+     * `getVersionedTargetResourceName`), so the target is read off the
+     * folder's own publication. Deriving it is the fallback for a folder
+     * whose publication cannot be read.
+     */
+    const targetUrl =
+      (await this.findPublishedTargetUrl(
+        accessToken,
+        bucket,
+        entityId,
+        folderPath,
+        version,
+      )) ??
+      getPublishedTargetUrl(
+        resourceTypePrefix,
+        folderPath,
+        getVersionedTargetResourceName(
+          resourceTypePrefix,
+          getResourceName(sourceUrl),
+          version,
+        ),
+      );
     const { name: entityName, version: resourceVersion } =
       splitEntityNameAndVersion(sourceUrl);
     const publicationVersion = version || resourceVersion;
@@ -321,49 +357,11 @@ export class PublishService {
       context: `get publish history for ${entityType} "${entityId}"`,
       logger: this.logger,
       fetch: async () => {
-        /*
-         * `url` is the caller's own-bucket list scope, not `entityId` itself
-         * (see `getPublicationsListScope`'s doc comment) — Core has no
-         * per-resource filter, so every publication in this bucket is
-         * fetched and narrowed to this entity by
-         * `resolvePublicationsForSource` below — which has to re-read each
-         * candidate individually, because this list response carries
-         * publication metadata only and no `resources` array.
-         *
-         * The scope comes from the session `bucket`, never from `entityId`:
-         * only some entity ids are full `{type}/{bucket}/{name}` resource
-         * paths. A deployment id can be a bare name (`gemini-pro-vision`),
-         * which made the extracted bucket `undefined` and the scope
-         * `publications/undefined/`; a public resource
-         * (`applications/public/...`) yielded the admin-only
-         * `publications/public/` scope instead. Both returned no history
-         * while publishing kept working, which silently hid Unpublish.
-         * `conversation-publish.service.ts` already scoped by session bucket.
-         */
-        const result = await this.dialClient.client.getPublications({
-          headers: getBearerAuthHeaders(accessToken),
-          body: { url: getPublicationsListScope(bucket) },
-        });
-        if (result.error) {
-          return mapDialHttpStatus(
-            result.response.status,
-            `get publish history for ${entityType} "${entityId}"`,
-            this.logger,
-            result.error,
-            extractDialErrorMessage(result.error),
-          );
-        }
-        const { version } = splitEntityNameAndVersion(sourceUrl);
-
-        const publications = await resolvePublicationsForSource(
-          toPublicationList<(typeof result.data)[number]>(
-            result.data,
-            this.logger,
-            `publish history for ${entityType} "${entityId}"`,
-          ),
+        const { version: sourceVersion } = splitEntityNameAndVersion(sourceUrl);
+        const publications = await this.listSourcePublications(
+          accessToken,
+          bucket,
           sourceUrl,
-          (url) => this.fetchPublication(accessToken, url),
-          this.logger,
           `publish history for ${entityType} "${entityId}"`,
         );
 
@@ -372,7 +370,15 @@ export class PublishService {
             entityId,
             entityType,
             folderPath: stripPublicTargetFolder(publication.targetFolder ?? ''),
-            version,
+            /*
+             * The version this publication put in the folder, read off its
+             * target — the source's own suffix only records the version the
+             * entity was created with (see `getVersionedTargetResourceName`).
+             */
+            version: getPublishedVersion(
+              getPublicationSourceTargetUrl(publication, sourceUrl),
+              sourceVersion,
+            ),
             publishedAt: publication.createdAt
               ? new Date(publication.createdAt).toISOString()
               : '',
@@ -385,6 +391,114 @@ export class PublishService {
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },
     });
+  }
+
+  /**
+   * Every live publication of `sourceUrl` in the caller's bucket, with its
+   * `resources` resolved.
+   *
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   */
+  private async listSourcePublications(
+    accessToken: string,
+    bucket: string,
+    sourceUrl: string,
+    context: string,
+  ) {
+    /*
+     * `url` is the caller's own-bucket list scope, not `sourceUrl` itself
+     * (see `getPublicationsListScope`'s doc comment) — Core has no
+     * per-resource filter, so every publication in this bucket is fetched
+     * and narrowed to this entity by `resolvePublicationsForSource` below —
+     * which has to re-read each candidate individually, because this list
+     * response carries publication metadata only and no `resources` array.
+     *
+     * The scope comes from the session `bucket`, never from the entity id:
+     * only some entity ids are full `{type}/{bucket}/{name}` resource paths.
+     * A deployment id can be a bare name (`gemini-pro-vision`), which made
+     * the extracted bucket `undefined` and the scope `publications/undefined/`;
+     * a public resource (`applications/public/...`) yielded the admin-only
+     * `publications/public/` scope instead. Both returned no history while
+     * publishing kept working, which silently hid Unpublish.
+     * `conversation-publish.service.ts` already scoped by session bucket.
+     */
+    const result = await this.dialClient.client.getPublications({
+      headers: getBearerAuthHeaders(accessToken),
+      body: { url: getPublicationsListScope(bucket) },
+    });
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        `get ${context}`,
+        this.logger,
+        result.error,
+        extractDialErrorMessage(result.error),
+      );
+    }
+
+    return resolvePublicationsForSource(
+      toPublicationList<(typeof result.data)[number]>(
+        result.data,
+        this.logger,
+        context,
+      ),
+      sourceUrl,
+      (url) => this.fetchPublication(accessToken, url),
+      this.logger,
+      context,
+    );
+  }
+
+  /**
+   * The published copy of `sourceUrl` in `folderPath` that an unpublish must
+   * remove: the newest live publication there, preferring one of `version`
+   * when the folder holds several. `undefined` when none can be found.
+   */
+  private async findPublishedTargetUrl(
+    accessToken: string,
+    bucket: string,
+    sourceUrl: string,
+    folderPath: string,
+    version: string | undefined,
+  ): Promise<string | undefined> {
+    const context = `published target of "${sourceUrl}" in "${folderPath}"`;
+    let publications: Awaited<ReturnType<typeof this.listSourcePublications>>;
+    try {
+      publications = await this.listSourcePublications(
+        accessToken,
+        bucket,
+        sourceUrl,
+        context,
+      );
+    } catch (err) {
+      /* The lookup only refines the target; the unpublish itself must not fail on it. */
+      this.logger.warn(
+        `Could not read ${context}; deriving it instead`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return undefined;
+    }
+    const targetUrls = publications
+      .filter(
+        (publication) =>
+          stripPublicTargetFolder(publication.targetFolder ?? '') ===
+          folderPath,
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime(),
+      )
+      .map((publication) =>
+        getPublicationSourceTargetUrl(publication, sourceUrl),
+      )
+      .filter((targetUrl): targetUrl is string => targetUrl != null);
+
+    return (
+      targetUrls.find(
+        (targetUrl) => getPublishedVersion(targetUrl, undefined) === version,
+      ) ?? targetUrls[0]
+    );
   }
 
   /**

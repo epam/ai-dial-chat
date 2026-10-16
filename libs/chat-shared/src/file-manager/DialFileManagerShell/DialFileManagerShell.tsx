@@ -119,6 +119,12 @@ export interface DialFileManagerShellProps {
   getDisabledTooltip?: (row: FileManagerGridRow) => string | undefined;
   /** Tooltip shown on files with an unsupported type. */
   unsupportedFileTypeTooltip?: string;
+  /**
+   * Classes for the folders-tree panel. Replaces the panel's default classes
+   * (including its width), so include `shrink-0` and an explicit width.
+   * Omit to keep the variant's default.
+   */
+  treeContainerClassName?: string;
 }
 
 /**
@@ -143,6 +149,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   isRowSelectable,
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
+  treeContainerClassName,
 }) => {
   const {
     items,
@@ -313,9 +320,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           ? null
           : labels.treeHeaderByTab[activeTab],
       containerClassName:
-        variant === DialFileManagerVariant.Attach
+        treeContainerClassName ??
+        (variant === DialFileManagerVariant.Attach
           ? 'min-h-0 h-full w-[360px] shrink-0 rounded-xl bg-layer-raised shadow-sm'
-          : undefined,
+          : undefined),
       tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,
       activeTab,
@@ -328,6 +336,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     }),
     [
       labels.treeHeaderByTab,
+      treeContainerClassName,
       variant,
       tabs,
       activeTab,

@@ -6,7 +6,7 @@ Specifies `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileMan
 ## Requirements
 ### Requirement: DialFileManagerShell component contract
 
-`DialFileManagerShell` in `libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx` SHALL be a functional component (its default export is `memo`-wrapped) that accepts `DialFileManagerShellProps`: `controller: FileManagerController` (the structural view contract `UseDialFileManagerResult` satisfies), `labels: DialFileManagerShellLabels` (pre-translated strings), `activeTab`, `tabs`, `onTabChange`, `selectedPaths`, `onSelectedPathsChange`, `variant`, `actionProfile`, and optional host overrides (`autoSelectUploadedItems`, `allowedFileTypes`, `maxSelectableFileSize`, `oversizedUploadMessage`, `isRowSelectable`, `getDisabledTooltip`, `unsupportedFileTypeTooltip`). The app adapter `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx` is a `memo`-wrapped component that takes `hookResult: UseDialFileManagerResult` and forwards it as `controller`. The shell SHALL NOT call `useTranslation` internally — every user-visible string it renders SHALL come from the `labels` prop, resolved by the host (`DialFileManagerModal` or `DialFileManagerPage`).
+`DialFileManagerShell` in `libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx` SHALL be a functional component (its default export is `memo`-wrapped) that accepts `DialFileManagerShellProps`: `controller: FileManagerController` (the structural view contract `UseDialFileManagerResult` satisfies), `labels: DialFileManagerShellLabels` (pre-translated strings), `activeTab`, `tabs`, `onTabChange`, `selectedPaths`, `onSelectedPathsChange`, `variant`, `actionProfile`, and optional host overrides (`autoSelectUploadedItems`, `allowedFileTypes`, `maxSelectableFileSize`, `oversizedUploadMessage`, `isRowSelectable`, `getDisabledTooltip`, `unsupportedFileTypeTooltip`, `treeContainerClassName`). The app adapter `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx` is a `memo`-wrapped component that takes `hookResult: UseDialFileManagerResult` and forwards it as `controller`. The shell SHALL NOT call `useTranslation` internally — every user-visible string it renders SHALL come from the `labels` prop, resolved by the host (`DialFileManagerModal` or `DialFileManagerPage`).
 
 The shell owns rendering: the `DialFileManager` (`@epam/ai-dial-react-file-manager`) prop assembly (grid/tree/toolbar/bulk option bags, search props, tab-specific and search empty states, `autoSelectUploadedItems`, forbidden-symbols wiring), the ui-kit `TransferQueue` for upload batches, the `aria-live` spinner overlay for download/delete/rename/unshare/remove-access, the `OperationLoaderModal` for copy/move, and the `role="alert"` error/retry panel with a `PrimaryButton` wired to `controller.retry`.
 
@@ -68,6 +68,16 @@ When `variant === 'standalone'`, `useDialFileManager` SHALL fetch the initial fo
 - the grid-editing-scroll reset
 
 `activeTab` SHALL remain the value passed as `treeOptions.activeTab` and the key for `labels.treeHeaderByTab`. In Attach mode the visible tree header SHALL be null, while `treeOptions.tabsAriaLabel` SHALL receive that label; the standalone header remains visible. `DialFileManagerShellLabels.treeHeaderByTab` and `.emptyStateByTab` stay `Record<DialFileManagerTabs, …>`, so hosts supply an `all` entry.
+
+`treeContainerClassName`, when provided, SHALL be passed as `treeOptions.containerClassName` in every variant and replaces the panel's default classes, including its width, so the host includes `shrink-0` and an explicit width. When omitted, the Attach variant keeps its default panel classes (`w-[360px]`) and the standalone variant leaves `treeOptions.containerClassName` undefined, so the file manager applies its own.
+
+#### Scenario: Host overrides the tree container classes
+- **GIVEN** the Attach variant and a `treeContainerClassName`
+- **THEN** `treeOptions.containerClassName` equals that string and not the Attach default
+
+#### Scenario: No override keeps the variant default
+- **GIVEN** no `treeContainerClassName`
+- **THEN** Attach passes the default classes containing `w-[360px]` and standalone passes `undefined`
 
 #### Scenario: Upload-archive entry on the All tab inside My files
 

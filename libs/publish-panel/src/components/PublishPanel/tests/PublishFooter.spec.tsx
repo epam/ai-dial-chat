@@ -36,6 +36,14 @@ describe('PublishFooter', () => {
     ).toBeTruthy();
   });
 
+  it('keeps the "Publish" label for an existing version when replacing is not allowed', () => {
+    renderFooter({ hasExistingPublicationInFolder: true, allowReplace: false });
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Update version 4.0.1' }),
+    ).toBeNull();
+  });
+
   it('renders the in-progress label and disables submit while submitting', () => {
     renderFooter({ isSubmitLoading: true, isSubmitDisabled: true });
     const button = screen.getByRole('button', { name: 'Publishing…' });

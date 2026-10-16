@@ -11,7 +11,7 @@ import {
   GhostButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
-import { FC, useMemo, useRef, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import type { PublishFoldersTreeProps } from '../../models/publish-folders-tree';
 import {
   collectFolderKeys,
@@ -25,6 +25,8 @@ import {
   validateFolderName,
 } from '../../utils/publish-folder-tree';
 import styles from './PublishFoldersTree.module.scss';
+
+const CANCEL_CREATING_FOLDER_ATTRIBUTE = 'data-cancel-creating-folder';
 
 /** Destination folder tree for the Publish flow, ordered by folder name at every level, with search, folder creation (trailing button and context menu), and a disabled state. */
 export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
@@ -96,6 +98,29 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
    * that error.
    */
   const lastLiveValidationErrorRef = useRef<string | null>(null);
+  /*
+   * The inline editor (`useEditableItem` in the ui-kit) commits on any press
+   * outside it, which includes the Cancel button, and again on the blur raised
+   * when the editor is removed. Both run before this component's own cancel
+   * handler. A native capture listener registered on mount runs ahead of the
+   * hook's (added once the editor opens), so it flags a press on Cancel and
+   * `handleConfirmCreatingFolder` drops the commits that follow, until the next
+   * creation starts.
+   */
+  const isCancellingRef = useRef(false);
+  useEffect(() => {
+    const flagCancelPress = (event: PointerEvent) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest(`[${CANCEL_CREATING_FOLDER_ATTRIBUTE}]`)
+      ) {
+        isCancellingRef.current = true;
+      }
+    };
+    document.addEventListener('pointerdown', flagCancelPress, true);
+    return () =>
+      document.removeEventListener('pointerdown', flagCancelPress, true);
+  }, []);
 
   const trimmedQuery = searchQuery.trim();
   const isCreatingFolder = creatingParentPath != null;
@@ -184,6 +209,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     setCreatingParentPath(parentPath);
     setCreatingFolderName(resolveNewFolderName(parentPath));
     lastLiveValidationErrorRef.current = null;
+    isCancellingRef.current = false;
     const parentKey = toFolderPathKey(parentPath);
     if (parentKey) {
       handleExpandedPathsChange(new Set(expandedPaths).add(parentKey));
@@ -249,7 +275,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   };
 
   const handleConfirmCreatingFolder = (rawValue: string) => {
-    if (!creatingParentPath) {
+    if (!creatingParentPath || isCancellingRef.current) {
       return;
     }
     const trimmed = rawValue.trim();
@@ -330,6 +356,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
             label={cancelCreatingFolderLabel}
             onClick={handleCancelCreatingFolder}
             disabled={disabled}
+            {...{ [CANCEL_CREATING_FOLDER_ATTRIBUTE]: '' }}
           />
         )}
       </div>

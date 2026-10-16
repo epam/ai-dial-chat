@@ -156,6 +156,7 @@ describe('completion persistence over HTTP', () => {
       registry,
       persistence,
       {
+        resolveDeploymentItem: vi.fn().mockResolvedValue(null),
         getDeploymentDetails: vi.fn().mockResolvedValue({
           modelDetails: { features: { chatCompletion: true } },
         }),

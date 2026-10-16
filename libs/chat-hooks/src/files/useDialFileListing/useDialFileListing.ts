@@ -17,6 +17,7 @@ import {
   fetchByTab,
   fetchForSearch,
   mapCorePermissions,
+  buildSharedSearchScope,
   mapSearchItem,
   mergeCreatedFolderIntoCache,
 } from '../dial-file-manager-mapping.util';
@@ -720,9 +721,10 @@ export const useDialFileListing = ({
           searchCancelRef.current = null;
           setIsSearching(true);
           const rootItems = cache.get('') ?? [];
+          const scope = buildSharedSearchScope(rootLabel, '', new Map());
           setSearchResults(
             rootItems.map((item) =>
-              mapSearchItem(item, item.bucket ?? bucket, rootLabel),
+              mapSearchItem(item, item.bucket ?? bucket, rootLabel, scope),
             ),
           );
           setIsSearching(false);
@@ -744,9 +746,17 @@ export const useDialFileListing = ({
               sharedRootMetaRef.current,
             );
             if (cancelled) return;
+            const scope =
+              activeTab === DialFileManagerTabs.Shared
+                ? buildSharedSearchScope(
+                    rootLabel,
+                    folderPath,
+                    sharedRootMetaRef.current,
+                  )
+                : undefined;
             setSearchResults(
               searchItems.map((item) =>
-                mapSearchItem(item, item.bucket ?? bucket, rootLabel),
+                mapSearchItem(item, item.bucket ?? bucket, rootLabel, scope),
               ),
             );
           } catch {

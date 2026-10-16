@@ -59,6 +59,8 @@ export enum PublicationResourceAction {
 interface PublicationResourceLike {
   action?: string;
   sourceUrl?: string;
+  /** The published copy's path under `public/`; the one url `publish` and `unpublish` both derive the same way. */
+  targetUrl?: string;
   /** Core's own flag: this resource was published together with the publisher's credential for it. */
   publishCredentials?: boolean;
 }
@@ -161,6 +163,13 @@ export const getPublicationSourceCredentials = (
 ): boolean =>
   findPublishingResource(publication, sourceUrl)?.publishCredentials === true;
 
+/** The published copy's path the publication sends `sourceUrl` to, or `undefined` when it does not publish it. */
+export const getPublicationSourceTargetUrl = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): string | undefined =>
+  findPublishingResource(publication, sourceUrl)?.targetUrl;
+
 /**
  * Whether `publication` publishes `sourceUrl`.
  *
@@ -184,6 +193,10 @@ export const publishesSource = (
  * Whether `publication` requests the removal of `sourceUrl`.
  *
  * Says nothing about whether the removal has happened — that is `status`.
+ * Catalog Unpublish acts on the published copy, so its removal names the public
+ * path rather than the author's own url and is not recognised here; it is
+ * paired with its `ADD` by `targetUrl` instead (see
+ * `resolvePublicationsForSource`).
  */
 export const removesSource = (
   publication: PublicationLike,
@@ -242,6 +255,42 @@ const toTargetFolderKey = (targetFolder: string | undefined): string => {
   return decoded.endsWith('/') ? decoded.slice(0, -1) : decoded;
 };
 
+/*
+ * Identity of a published copy: its folder plus its `targetUrl`, both decoded
+ * so a percent-encoded value on one side still equals plain text on the other.
+ */
+const toPublishedCopyKey = (
+  targetFolder: string | undefined,
+  targetUrl: string,
+): string =>
+  `${toTargetFolderKey(targetFolder)}\n${safeDecodeURIComponent(targetUrl)}`;
+
+/*
+ * The published copy `publication` creates for `sourceUrl`, or `undefined` when
+ * it creates none or Core reported no `targetUrl` for it.
+ */
+const getAddedCopyKey = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): string | undefined => {
+  const targetUrl = findPublishingResource(publication, sourceUrl)?.targetUrl;
+  return targetUrl
+    ? toPublishedCopyKey(publication.targetFolder, targetUrl)
+    : undefined;
+};
+
+/* The published copies `publication` asks to remove. */
+const getRemovedCopyKeys = (publication: PublicationLike): string[] =>
+  (publication.resources ?? [])
+    .filter(
+      (resource) =>
+        resource.action === PublicationResourceAction.Delete &&
+        resource.targetUrl,
+    )
+    .map((resource) =>
+      toPublishedCopyKey(publication.targetFolder, resource.targetUrl ?? ''),
+    );
+
 /**
  * Narrows a bucket-wide publication list to the publications the resource is
  * *currently* published by, re-fetching each candidate's full record.
@@ -274,6 +323,16 @@ const toTargetFolderKey = (targetFolder: string | undefined): string => {
  * re-publish visible. Only a removal Core labels `APPROVED` outright cancels
  * anything — a `PENDING` one changes nothing, because the copy is live until it
  * is approved, and neither does one whose status Core did not report.
+ *
+ * **A removal is paired with its `ADD` by the published copy it targets.**
+ * Catalog Unpublish runs on the public copy, so its `DELETE` carries the public
+ * path as both `sourceUrl` and `targetUrl` and never the author's own url that
+ * the `ADD` carries as `sourceUrl` — pairing by `sourceUrl` alone left the
+ * folder listed after an approved removal
+ * ([#9172](https://github.com/epam/ai-dial-chat/issues/9172)). So an approved
+ * `DELETE` also cancels every older `ADD` whose folder and `targetUrl` equal its
+ * own, and a removal of a different copy cancels nothing. The `sourceUrl`
+ * pairing above stays for removals that do name the entity's own url.
  *
  * A publication that already carries `resources` is matched without a round
  * trip, so a Core (or SDK mock) that does embed them costs nothing extra.
@@ -352,11 +411,22 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
    * in `publication.util.spec.ts`.
    */
   const removedAtByFolder = new Map<string, number>();
+  const removedAtByCopy = new Map<string, number>();
+  const addedCopyKeys = new Set(
+    referencing
+      .filter((publication) => publishesSource(publication, sourceUrl))
+      .map((publication) => getAddedCopyKey(publication, sourceUrl))
+      .filter((key): key is string => key != null),
+  );
   for (const publication of referencing) {
-    if (
-      !removesSource(publication, sourceUrl) ||
-      !isApprovedRemoval(publication.status)
-    ) {
+    if (!isApprovedRemoval(publication.status)) {
+      continue;
+    }
+    const removesOwnUrl = removesSource(publication, sourceUrl);
+    const removedCopyKeys = getRemovedCopyKeys(publication).filter((key) =>
+      addedCopyKeys.has(key),
+    );
+    if (!removesOwnUrl && removedCopyKeys.length === 0) {
       continue;
     }
     const folderKey = toTargetFolderKey(publication.targetFolder);
@@ -368,21 +438,32 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
       logger?.warn(
         `Approved removal "${publication.url ?? '(no url)'}" carries no usable createdAt${
           context ? ` for ${context}` : ''
-        } — cancelling every ADD in "${folderKey}", a re-publish included`,
+        } — cancelling every matching ADD in "${folderKey}", a re-publish included`,
       );
     }
-    removedAtByFolder.set(
-      folderKey,
-      Math.max(
-        removedAtByFolder.get(folderKey) ?? Number.NEGATIVE_INFINITY,
-        removedAt,
-      ),
-    );
+    if (removesOwnUrl) {
+      removedAtByFolder.set(
+        folderKey,
+        Math.max(
+          removedAtByFolder.get(folderKey) ?? Number.NEGATIVE_INFINITY,
+          removedAt,
+        ),
+      );
+    }
+    for (const copyKey of removedCopyKeys) {
+      removedAtByCopy.set(
+        copyKey,
+        Math.max(
+          removedAtByCopy.get(copyKey) ?? Number.NEGATIVE_INFINITY,
+          removedAt,
+        ),
+      );
+    }
   }
 
-  if (removedAtByFolder.size > 0) {
+  if (removedAtByFolder.size + removedAtByCopy.size > 0) {
     logger?.debug(
-      `Applying ${removedAtByFolder.size} approved removal folder(s)${context ? ` for ${context}` : ''}`,
+      `Applying ${removedAtByFolder.size + removedAtByCopy.size} approved removal(s)${context ? ` for ${context}` : ''}`,
     );
   }
 
@@ -390,12 +471,11 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
     if (!publishesSource(publication, sourceUrl)) {
       return false;
     }
-    const removedAt = removedAtByFolder.get(
-      toTargetFolderKey(publication.targetFolder),
-    );
-    if (removedAt == null) {
-      return true;
-    }
-    return toPublicationTime(publication.createdAt, 0) > removedAt;
+    const addedAt = toPublicationTime(publication.createdAt, 0);
+    const copyKey = getAddedCopyKey(publication, sourceUrl);
+    return [
+      removedAtByFolder.get(toTargetFolderKey(publication.targetFolder)),
+      copyKey == null ? undefined : removedAtByCopy.get(copyKey),
+    ].every((removedAt) => removedAt == null || addedAt > removedAt);
   });
 };

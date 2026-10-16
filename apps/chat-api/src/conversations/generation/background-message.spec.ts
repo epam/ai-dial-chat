@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ConversationPersistencePort } from '../conversation-persistence.port';
-import { BackgroundGenerationStatus } from '../dto/background-generation.dto';
+import {
+  BackgroundGenerationDto,
+  BackgroundGenerationStatus,
+} from '../dto/background-generation.dto';
 import {
   ConversationMessageRole,
   type ConversationMessageDto,
@@ -78,7 +81,7 @@ const complete = (stored: ConversationMessageDto) => ({
   content: 'final answer',
   responseId: stored.responseId,
   backgroundGeneration: {
-    ...stored.backgroundGeneration!,
+    ...(stored.backgroundGeneration as BackgroundGenerationDto),
     status: BackgroundGenerationStatus.Completed,
   },
 });

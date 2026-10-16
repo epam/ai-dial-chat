@@ -16,6 +16,7 @@ import {
   resolveDisplayAuthor,
 } from '../common/utils/user-display-name';
 import { ConversationPublishService } from './conversation-publish.service';
+import { ConversationModelHiddenErrorDto } from './dto/conversation-model-hidden-error.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { PublishConversationResultDto } from './dto/publish-conversation-result.dto';
 import { PublishConversationDto } from './dto/publish-conversation.dto';
@@ -68,7 +69,9 @@ export class ConversationPublishController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Caller lacks write access to the target folder',
+    description:
+      "Caller lacks write access to the target folder, or (`code: conversationModelHidden`) the conversation's model is hidden through HIDDEN_ENTITY_TAGS",
+    type: ConversationModelHiddenErrorDto,
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({
