@@ -1,15 +1,25 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createContext, useContext, type ReactNode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import {
+  createMemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import {
+  NotFoundI18nKeys,
+  UnsavedChangesI18nKeys,
+} from '../../../constants/translation-keys';
 import {
   useAppConfig as useAppConfigMock,
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { UnsavedChangesProvider } from '../../../context/UnsavedChangesContext';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import ScheduledTaskCreatePage from '../ScheduledTaskCreatePage';
 vi.mock(
   '../../../components/ScheduledTaskSkillField/ScheduledTaskSkillField',
@@ -127,7 +137,10 @@ interface FormProps {
   isSubmitting?: boolean;
 }
 
-vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
+vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
+  hasScheduledTaskFormChanges: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).hasScheduledTaskFormChanges,
   ScheduledTaskRepeat: {
     OneTime: 'oneTime',
     Hourly: 'hourly',
@@ -252,16 +265,16 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
 }));
 
 const renderAtRoute = (initialEntry: string) =>
-  render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route
-          path="/scheduled-tasks/new"
-          element={<ScheduledTaskCreatePage />}
-        />
-        <Route path="/scheduled-tasks" element={<div>list page</div>} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithLeaveGuard(
+    <Routes>
+      <Route
+        path="/scheduled-tasks/new"
+        element={<ScheduledTaskCreatePage />}
+      />
+      <Route path="/scheduled-tasks" element={<div>list page</div>} />
+      <Route path="/catalog" element={<div>catalog page</div>} />
+    </Routes>,
+    [initialEntry],
   );
 
 const fillValidForm = async () => {
@@ -341,11 +354,19 @@ describe('ScheduledTaskCreatePage', () => {
         { status: 400 },
       ),
     });
+    const router = createMemoryRouter([
+      {
+        path: '*',
+        element: (
+          <UnsavedChangesProvider>
+            <ScheduledTaskCreatePage />
+          </UnsavedChangesProvider>
+        ),
+      },
+    ]);
     const page = (support = true) => (
       <TestSkillSupportContext value={support}>
-        <MemoryRouter>
-          <ScheduledTaskCreatePage />
-        </MemoryRouter>
+        <RouterProvider router={router} />
       </TestSkillSupportContext>
     );
     const view = render(page());
@@ -855,6 +876,80 @@ describe('ScheduledTaskCreatePage', () => {
           message: 'scheduledTasks.create.errorNotification',
         }),
       );
+    });
+  });
+
+  describe('leave guard', () => {
+    it('opens the shared dialog exactly once when an edited form leaves through navigation', async () => {
+      const { router } = renderAtRoute('/scheduled-tasks/new');
+      fireEvent.change(screen.getByRole('textbox', { name: 'displayName' }), {
+        target: { value: 'Draft' },
+      });
+
+      await act(() => router.navigate('/catalog'));
+
+      expect(
+        screen.getAllByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toHaveLength(1);
+      expect(router.state.location.pathname).toBe('/scheduled-tasks/new');
+    });
+
+    it('lands on the chosen route when changes are discarded', async () => {
+      const { router } = renderAtRoute('/scheduled-tasks/new');
+      fireEvent.change(screen.getByRole('textbox', { name: 'displayName' }), {
+        target: { value: 'Draft' },
+      });
+      await act(() => router.navigate('/catalog'));
+
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.ConfirmLabel,
+        }),
+      );
+
+      expect(await screen.findByText('catalog page')).toBeTruthy();
+      expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('routes an edited Cancel through the same dialog', async () => {
+      renderAtRoute('/scheduled-tasks/new');
+      fireEvent.change(screen.getByRole('textbox', { name: 'displayName' }), {
+        target: { value: 'Draft' },
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.cancel' }),
+      );
+
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+      expect(screen.queryByText('list page')).toBeNull();
+    });
+
+    it('leaves a reverted form immediately', async () => {
+      renderAtRoute('/scheduled-tasks/new');
+      const name = screen.getByRole('textbox', { name: 'displayName' });
+      fireEvent.change(name, { target: { value: 'Draft' } });
+      fireEvent.change(name, { target: { value: '' } });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.cancel' }),
+      );
+
+      expect(screen.getByText('list page')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('exits after a successful create without the dialog', async () => {
+      createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+      renderAtRoute('/scheduled-tasks/new');
+      await fillValidForm();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.create' }),
+      );
+
+      expect(await screen.findByText('list page')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 });

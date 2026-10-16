@@ -165,10 +165,16 @@ export interface PromptEditorProps {
   onSubmit: (values: PromptEditorValues) => void;
   /** Called with each edited field and its new value, e.g. to validate while the user types. */
   onFieldChange?: (field: keyof PromptEditorValues, value: string) => void;
-  /** Called when the form is dismissed without saving; with unsaved edits, only after the user confirms discarding them. */
+  /** Called when the form is dismissed without saving; with unsaved edits and no `onDirtyChange`, only after the user confirms discarding them. */
   onCancel: () => void;
-  /** Called when the header back button is activated, behind the same unsaved-changes confirmation. Defaults to `onCancel`. */
+  /** Called when the header back button is activated, behind the same unsaved-changes confirmation as `onCancel`. Defaults to `onCancel`. */
   onBack?: () => void;
+  /**
+   * Called with whether the form holds unsaved edits, on mount and whenever that changes.
+   * Providing it hands unsaved-changes handling to the host: the built-in discard confirmation
+   * and unload warning are turned off, and Back/Cancel call `onBack`/`onCancel` directly.
+   */
+  onDirtyChange?: (isDirty: boolean) => void;
   /** Called when the retry button in the load-error state is activated. */
   onRetry?: () => void;
   /** Optional Description rewrite callback; omission hides the Refine with AI action. */

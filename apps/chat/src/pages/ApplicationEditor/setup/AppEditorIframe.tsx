@@ -90,6 +90,12 @@ interface Props {
    */
   onValidityChange?: (isValid: boolean) => void;
   /**
+   * Notifies the host whenever the embedded editor reports unsaved edits
+   * (`AppsEditorEvent.DirtyState`). `false` until the editor says otherwise,
+   * after `SaveSuccess`, and whenever the iframe reloads.
+   */
+  onDirtyChange?: (isDirty: boolean) => void;
+  /**
    * Notifies the host whenever the iframe's readiness to save changes.
    * Reflects `AppsEditorEvent.ReadyToSave` (the embedded editor's own data
    * model is loaded/validated and it is safe to trigger a save) — not the
@@ -122,6 +128,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       onSaveSuccess,
       onSaveError,
       onValidityChange,
+      onDirtyChange,
       onReadyChange,
       onLoggedOutChange,
       onUnresponsiveChange,
@@ -143,6 +150,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const [isReadyToSave, setIsReadyToSave] = useState(false);
     const [isLoggedOut, setIsLoggedOut] = useState(false);
     const [isFormValid, setIsFormValid] = useState(true);
+    const [isFormDirty, setIsFormDirty] = useState(false);
     const [hasEditorResponded, setHasEditorResponded] = useState(false);
     const [isResponseTimedOut, setIsResponseTimedOut] = useState(false);
     // Bumped by Reload to remount the iframe with the same URL.
@@ -467,6 +475,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             onUpdated?.();
             break;
           case AppsEditorEvent.SaveSuccess:
+            setIsFormDirty(false);
             onSaveSuccess?.(event.data?.hasChanges === true);
             break;
           case AppsEditorEvent.SaveError:
@@ -480,6 +489,16 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
               setIsFormValid(event.data.payload.isValid);
             }
             break;
+          case AppsEditorEvent.DirtyState: {
+            const isDirty = event.data?.payload?.isDirty ?? event.data?.isDirty;
+            if (
+              event.source === iframeRef.current?.contentWindow &&
+              typeof isDirty === 'boolean'
+            ) {
+              setIsFormDirty(isDirty);
+            }
+            break;
+          }
           case AppsEditorEvent.RequestToolsetLogin:
             if (
               event.source === iframeRef.current?.contentWindow &&
@@ -581,7 +600,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       };
     }, [iframeUrl, reloadKey]);
 
-    /* Re-gates readiness-to-save (and the logged-out flag) whenever the
+    /* Re-gates readiness-to-save (and the logged-out and dirty flags) whenever the
      * iframe reloads for a different app/schema, so stale values from the
      * previous app don't leak into the newly loaded one — the new iframe
      * must send its own ReadyToSave/LoggedOut. */
@@ -589,6 +608,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       setIsReadyToSave(false);
       setIsLoggedOut(false);
       setIsFormValid(true);
+      setIsFormDirty(false);
       setCredentialsAppId(null);
       setHasEditorResponded(false);
       setIsResponseTimedOut(false);
@@ -610,6 +630,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       onValidityChange?.(isFormValid);
     }, [isFormValid, onValidityChange]);
+
+    useEffect(() => {
+      onDirtyChange?.(isFormDirty);
+    }, [isFormDirty, onDirtyChange]);
 
     useEffect(() => {
       onLoggedOutChange?.(isLoggedOut);

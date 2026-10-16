@@ -14,10 +14,7 @@ import {
   type SkillEditorSubmitNotification,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
-import {
-  PUBLIC_BUCKET,
-  useUnsavedChangesGuard,
-} from '@epam/ai-dial-chat-shared';
+import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -47,6 +44,7 @@ import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
 import { useSkillFileSystemPicker } from '../../hooks/skills/useSkillFileSystemPicker';
+import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import {
@@ -168,12 +166,15 @@ const SkillEditorPage: FC = () => {
 
   const [selectedPath, setSelectedPath] = useState(SKILL_MANIFEST_FILE);
   const [isDirty, setIsDirty] = useState(false);
-  const {
-    guard: guardLeave,
-    isConfirmOpen: isLeaveConfirmOpen,
-    confirm: confirmLeave,
-    dismiss: dismissLeave,
-  } = useUnsavedChangesGuard(isDirty);
+  const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
+  /* A successful save exits while `isDirty` may still read `true`. */
+  const handleSubmitNavigate = useCallback(
+    (url: string) => {
+      allowNextNavigation();
+      navigate(url);
+    },
+    [allowNextNavigation, navigate],
+  );
   const [pendingReload, setPendingReload] = useState(false);
   const [hasReturnedToManifest, setHasReturnedToManifest] = useState(false);
 
@@ -301,7 +302,7 @@ const SkillEditorPage: FC = () => {
     refetchSkills,
     client: skillEditorSubmitClient,
     messages: submitMessages,
-    onNavigate: navigate,
+    onNavigate: handleSubmitNavigate,
     onNotify: handleSubmitNotification,
   });
 
@@ -334,15 +335,11 @@ const SkillEditorPage: FC = () => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
-  const handleCancel = useCallback(() => {
-    guardLeave(navigateAway);
-  }, [guardLeave, navigateAway]);
-
   /*
    * Back is preview-aware: while a supporting file is selected it is a return
    * to the `SKILL.md` view inside the editor, not a navigation, so it neither
    * resolves `returnUrl` nor raises the unsaved-changes guard. From the
-   * manifest view it keeps today's exit behavior.
+   * manifest view it leaves, and the router-level guard intercepts that.
    */
   const handleBack = useCallback(() => {
     if (!isManifestSelected) {
@@ -350,8 +347,8 @@ const SkillEditorPage: FC = () => {
       setHasReturnedToManifest(true);
       return;
     }
-    handleCancel();
-  }, [isManifestSelected, handleCancel]);
+    navigateAway();
+  }, [isManifestSelected, navigateAway]);
 
   const handleReloadLatestClick = useCallback(() => {
     setPendingReload(true);
@@ -448,7 +445,7 @@ const SkillEditorPage: FC = () => {
         <ErrorText text={t(SkillEditorI18nKeys.BucketMissingMessage)} />
         <PrimaryButton
           label={t(ButtonsI18nKeys.Cancel)}
-          onClick={handleCancel}
+          onClick={navigateAway}
         />
       </div>
     );
@@ -493,7 +490,7 @@ const SkillEditorPage: FC = () => {
         }
         labels={labels}
         onSubmit={handleSubmit}
-        onCancel={handleCancel}
+        onCancel={navigateAway}
         onBack={handleBack}
         onRetry={retryLoad}
         backAriaLabel={
@@ -509,18 +506,6 @@ const SkillEditorPage: FC = () => {
         instructionsEditorTheme={
           currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
         }
-      />
-
-      <ConfirmationPopup
-        open={isLeaveConfirmOpen}
-        header={t(SkillEditorI18nKeys.UnsavedChangesTitle)}
-        description={t(SkillEditorI18nKeys.UnsavedChangesMessage)}
-        confirmLabel={t(SkillEditorI18nKeys.UnsavedChangesConfirmLabel)}
-        cancelLabel={t(SkillEditorI18nKeys.UnsavedChangesCancelLabel)}
-        variant={ConfirmationPopupVariant.Danger}
-        onConfirm={confirmLeave}
-        onCancel={dismissLeave}
-        onClose={dismissLeave}
       />
 
       <ConfirmationPopup

@@ -48,6 +48,18 @@ vi.mock('react-router', () => ({
   useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
+/* The router-level guard is covered by its own spec; here only its wiring is. */
+const mockAllowNextNavigation = vi.fn();
+const mockUseBuilderLeaveGuard = vi.fn((_options: { isDirty: boolean }) => ({
+  allowNextNavigation: mockAllowNextNavigation,
+}));
+vi.mock('../../../hooks/unsaved-changes/useBuilderLeaveGuard', () => ({
+  useBuilderLeaveGuard: (options: { isDirty: boolean }) =>
+    mockUseBuilderLeaveGuard(options),
+}));
+const getReportedDirty = () =>
+  mockUseBuilderLeaveGuard.mock.lastCall?.[0].isDirty;
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -314,6 +326,11 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
     );
     expect(mockNavigate).toHaveBeenCalledWith(
       '/catalog?itemId=skills%2Fmy-bucket%2Fgood-morning-breakfast',
+    );
+    /* The post-save exit must not be intercepted by the leave guard. */
+    expect(mockAllowNextNavigation).toHaveBeenCalledOnce();
+    expect(mockAllowNextNavigation.mock.invocationCallOrder[0]).toBeLessThan(
+      mockNavigate.mock.invocationCallOrder[0],
     );
   });
 
@@ -1127,51 +1144,40 @@ describe('SkillEditor page — edit mode', () => {
     await waitFor(() => expect(downloadSkill).toHaveBeenCalledTimes(2));
   });
 
-  it('confirms before discarding dirty edits on Cancel, and Keep editing leaves them intact', async () => {
+  it('reports edits to the leave guard and leaves through a plain navigation on Cancel', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    expect(getReportedDirty()).toBe(false);
 
     await user.type(
       screen.getByPlaceholderText('skillEditor.descriptionPlaceholder'),
       ' more',
     );
+    expect(getReportedDirty()).toBe(true);
 
     await user.click(getCancelButton());
 
-    expect(screen.getByText('skillEditor.unsavedChangesMessage')).toBeTruthy();
-    expect(mockNavigate).not.toHaveBeenCalled();
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'skillEditor.unsavedChangesCancelLabel',
-      }),
-    );
-
-    expect(mockNavigate).not.toHaveBeenCalled();
-    expect(screen.getByDisplayValue('Explains docs more')).toBeTruthy();
+    /* The router-level guard intercepts this; the page shows no dialog itself. */
+    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('navigates away when Discard changes is confirmed on a dirty Cancel', async () => {
+  it('reports clean to the leave guard once an edit is reverted', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
-
-    await user.type(
-      screen.getByPlaceholderText('skillEditor.descriptionPlaceholder'),
-      ' more',
+    const description = screen.getByPlaceholderText(
+      'skillEditor.descriptionPlaceholder',
     );
 
-    await user.click(getCancelButton());
-    await user.click(
-      screen.getByRole('button', {
-        name: 'skillEditor.unsavedChangesConfirmLabel',
-      }),
-    );
+    await user.type(description, ' more');
+    expect(getReportedDirty()).toBe(true);
+    await user.type(description, '{Backspace}'.repeat(' more'.length));
 
-    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(getReportedDirty()).toBe(false);
   });
 
   it('cancels immediately with no confirmation when the form is unchanged', async () => {
@@ -1364,7 +1370,6 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
     await waitFor(() => expect(isManifestViewShown()).toBe(true));
     expect(mockNavigate).not.toHaveBeenCalled();
-    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
   });
 
   it('returns to the SKILL.md view with no confirmation when Back is activated on a dirty form with a supporting file selected', async () => {
@@ -1377,7 +1382,6 @@ describe('SkillEditor page — Back control and preview round trip', () => {
     await user.click(getBackButton());
 
     await waitFor(() => expect(isManifestViewShown()).toBe(true));
-    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
@@ -1425,28 +1429,21 @@ describe('SkillEditor page — Back control and preview round trip', () => {
     expect(screen.getAllByText('new.md')[0]).toBeTruthy();
     expect(screen.getAllByText('analyzer.md')[0]).toBeTruthy();
 
-    /* Still dirty: Back from the manifest view must raise the guard again. */
+    /* Still dirty: Back from the manifest view leaves, which the guard intercepts. */
+    expect(getReportedDirty()).toBe(true);
     await user.click(getBackButton());
-    expect(screen.getByText('skillEditor.unsavedChangesMessage')).toBeTruthy();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
   });
 
-  it('keeps Back from the SKILL.md view guarded by the unsaved-changes confirmation', async () => {
+  it('leaves through a plain navigation on Back from the SKILL.md view while dirty', async () => {
     await renderEditorWithSupportingFile();
     await makeDirty();
 
     await user.click(getBackButton());
 
-    expect(screen.getByText('skillEditor.unsavedChangesMessage')).toBeTruthy();
-    expect(mockNavigate).not.toHaveBeenCalled();
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'skillEditor.unsavedChangesConfirmLabel',
-      }),
-    );
-
+    expect(getReportedDirty()).toBe(true);
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('keeps Back from the SKILL.md view navigating immediately on a clean form', async () => {
@@ -1455,10 +1452,9 @@ describe('SkillEditor page — Back control and preview round trip', () => {
     await user.click(getBackButton());
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
-    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
   });
 
-  it('keeps Cancel an editor exit from a supporting-file preview, guarded when dirty', async () => {
+  it('keeps Cancel an editor exit from a supporting-file preview while dirty', async () => {
     await renderEditorWithSupportingFile();
     await makeDirty();
 
@@ -1467,15 +1463,7 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
     await user.click(getCancelButton());
 
-    expect(screen.getByText('skillEditor.unsavedChangesMessage')).toBeTruthy();
-    expect(mockNavigate).not.toHaveBeenCalled();
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'skillEditor.unsavedChangesConfirmLabel',
-      }),
-    );
-
+    expect(getReportedDirty()).toBe(true);
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
   });
 
@@ -1488,6 +1476,5 @@ describe('SkillEditor page — Back control and preview round trip', () => {
     await user.click(getCancelButton());
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
-    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
   });
 });

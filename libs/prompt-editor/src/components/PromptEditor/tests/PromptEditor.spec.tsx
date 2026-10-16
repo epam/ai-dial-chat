@@ -332,6 +332,69 @@ describe('PromptEditor', () => {
     expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
   });
 
+  describe('with a host-owned guard (onDirtyChange)', () => {
+    const editProps = {
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+    };
+
+    it('reports clean on mount', () => {
+      const onDirtyChange = vi.fn();
+      renderEditor({ ...editProps, onDirtyChange });
+
+      expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('cancels immediately with no confirmation after an edit', async () => {
+      const onCancel = vi.fn();
+      const onDirtyChange = vi.fn();
+      renderEditor({ ...editProps, onCancel, onDirtyChange });
+
+      await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onCancel).toHaveBeenCalledOnce();
+      expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+      expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+    });
+
+    it('calls onBack directly after an edit', async () => {
+      const onBack = vi.fn();
+      renderEditor({ ...editProps, onBack, onDirtyChange: vi.fn() });
+
+      await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
+      await user.click(screen.getByRole('button', { name: 'Back to prompts' }));
+
+      expect(onBack).toHaveBeenCalledOnce();
+      expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+    });
+
+    it('reports dirty and then clean across an edit and its revert', async () => {
+      const onDirtyChange = vi.fn();
+      renderEditor({ ...editProps, onDirtyChange });
+
+      const name = screen.getByRole('textbox', { name: /Name/ });
+      await user.type(name, 'x');
+      expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+      await user.type(name, '{Backspace}');
+      expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('registers no unload warning while dirty', async () => {
+      const addSpy = vi.spyOn(window, 'addEventListener');
+      renderEditor({ ...editProps, onDirtyChange: vi.fn() });
+
+      await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
+
+      expect(addSpy).not.toHaveBeenCalledWith(
+        'beforeunload',
+        expect.any(Function),
+      );
+      addSpy.mockRestore();
+    });
+  });
+
   it('stops the description at its limit and shows a live counter', async () => {
     renderEditor({ descriptionMaxLength: 5 });
 
