@@ -31,11 +31,15 @@ const makeService = () => {
     },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
+  const deploymentsService = {
+    resolveDeploymentItem: vi.fn().mockResolvedValue(null),
+  };
   const service = new ConversationPublishService(
     dialClient,
     cacheManager as never,
+    deploymentsService as never,
   );
-  return { service, dialClient, cacheManager };
+  return { service, dialClient, cacheManager, deploymentsService };
 };
 
 const createPublicationBody = (dialClient: DialClientService, call = 0) =>

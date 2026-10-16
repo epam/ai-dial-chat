@@ -291,6 +291,12 @@ const ConversationView: FC<Props> = ({
         }
       : undefined;
   }, [items, activeDeploymentId, language]);
+  /*
+   * A model hidden through HIDDEN_ENTITY_TAGS can no longer be used, even in a
+   * conversation that already ran on it (issue #9183). The picker stays
+   * enabled: switching to a visible model is how the conversation continues.
+   */
+  const isSelectedModelHidden = !!selectedDeployment?.isHidden;
   /* Exactly one usage surface is composed: the dial when the flag is on,
      otherwise the banner above the input. */
   const usageDeploymentId =
@@ -665,6 +671,7 @@ const ConversationView: FC<Props> = ({
       !isInputDisabled &&
       !isDisabledSendEnabled &&
       !isSkillUnsupported &&
+      !isSelectedModelHidden &&
       isInputFilesEnabled &&
       isAttachmentsAllowed &&
       isTextAttachmentsAllowed &&
@@ -1220,6 +1227,14 @@ const ConversationView: FC<Props> = ({
           </div>
         ) : (
           <>
+            {isSelectedModelHidden && (
+              <p
+                role="status"
+                className="dial-small-text pb-2 text-center text-secondary"
+              >
+                {t(ConversationI18nKeys.ModelUnavailableNotice)}
+              </p>
+            )}
             <Suspense fallback={null}>
               <ConversationInput
                 key={conversation.id}
@@ -1247,7 +1262,11 @@ const ConversationView: FC<Props> = ({
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
                 isModelSelectorDisabled={isModelFixed}
-                isSendDisabled={isDisabledSendEnabled || isSkillUnsupported}
+                isSendDisabled={
+                  isDisabledSendEnabled ||
+                  isSkillUnsupported ||
+                  isSelectedModelHidden
+                }
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}

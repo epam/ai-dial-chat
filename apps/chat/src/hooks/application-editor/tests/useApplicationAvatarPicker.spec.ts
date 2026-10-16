@@ -14,7 +14,7 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 vi.mock(
-  '../../../components/DialFileManagerModal/DialFileManagerModal',
+  '../../../components/AvatarFileManagerModal/AvatarFileManagerModal',
   () => ({
     default: () => null,
   }),

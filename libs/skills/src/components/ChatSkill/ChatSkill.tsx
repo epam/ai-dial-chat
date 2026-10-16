@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { useLayoutEffect, useState, type FC } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
+import { SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME } from '../../constants/skill-info-tooltip';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
 
@@ -121,7 +122,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
           ? InteractiveTooltipTrigger.Click
           : InteractiveTooltipTrigger.Hover
       }
-      contentClassName="max-w-[min(550px,calc(100vw-10px))]"
+      contentClassName={SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME}
       content={renderTooltipContent()}
     >
       {/*

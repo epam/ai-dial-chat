@@ -72,4 +72,26 @@ describe('RevokeSharedAccessDto', () => {
     const errors = await validateDto({ itemId: 'Work/AI/summarize' });
     expect(errors.some((e) => e.property === 'itemId')).toBe(true);
   });
+
+  it('accepts a conversations itemId whose model id contains a colon', async () => {
+    const errors = await validateDto({
+      itemId:
+        'conversations/owner-bucket/anthropic.claude-haiku-4-5-20251001-v1:0__hi__ace3d220-6bf9-4774-afe7-9d641a3de401',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts a conversations itemId with dots inside a name', async () => {
+    const errors = await validateDto({
+      itemId: 'conversations/owner-bucket/gpt-4o__Wait.. what__x',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a conversations itemId with an encoded traversal segment', async () => {
+    const errors = await validateDto({
+      itemId: 'conversations/owner-bucket/%2e%2e/other-bucket/chat',
+    });
+    expect(errors).toHaveLength(1);
+  });
 });

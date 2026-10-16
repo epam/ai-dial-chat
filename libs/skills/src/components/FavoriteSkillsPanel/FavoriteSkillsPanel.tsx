@@ -21,6 +21,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
+import { SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME } from '../../constants/skill-info-tooltip';
 import type { FavoriteSkillItem } from '../../models/favorite-skill-item';
 import type { FavoriteSkillsPanelProps } from '../../models/favorite-skills-panel-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
@@ -41,6 +42,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   onToggleFavorite,
   onBrowse,
   onViewDetails,
+  isRowTooltipHidden = false,
   className,
   rowClassName,
   searchQuery,
@@ -233,10 +235,10 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
          * and renders nothing on touch-only devices, where tapping the row
          * still selects the skill.
          */}
-        {onViewDetails ? (
+        {onViewDetails && !isRowTooltipHidden ? (
           <InteractiveTooltip
             asChild
-            contentClassName="max-w-[550px]"
+            contentClassName={SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME}
             content={
               <SkillInfoTooltipContent
                 description={item.description}

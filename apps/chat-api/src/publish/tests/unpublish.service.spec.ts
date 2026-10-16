@@ -50,6 +50,93 @@ describe('PublishService.unpublish', () => {
     vi.restoreAllMocks();
   });
 
+  it('removes the copy actually published in the folder when it carries an older version than the entity now does', async () => {
+    const { service, dialClient } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([
+        {
+          targetFolder: 'public/Team/',
+          createdAt: 1_700_000_000_000,
+          resources: [
+            {
+              action: 'ADD',
+              sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+              targetUrl: 'toolsets/public/Team/my-tool__1.0.0',
+            },
+          ],
+        },
+      ]),
+    );
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_700_000_000_000 }),
+    );
+
+    await service.unpublish(
+      'token',
+      TEST_BUCKET,
+      CatalogEntityType.Toolset,
+      'toolsets/bucket-123/my-tool__1.0.0',
+      'Team',
+      '1.0.1',
+      'Test User',
+    );
+
+    expect(createPublicationBody(dialClient).resources).toEqual([
+      {
+        action: 'DELETE',
+        sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+        targetUrl: 'toolsets/public/Team/my-tool__1.0.0',
+      },
+    ]);
+  });
+
+  it('prefers the copy of the requested version when the folder holds several', async () => {
+    const { service, dialClient } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([
+        {
+          targetFolder: 'public/Team/',
+          createdAt: 1_700_000_000_000,
+          resources: [
+            {
+              sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+              targetUrl: 'toolsets/public/Team/my-tool__1.0.0',
+            },
+          ],
+        },
+        {
+          targetFolder: 'public/Team/',
+          createdAt: 1_800_000_000_000,
+          resources: [
+            {
+              sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+              targetUrl: 'toolsets/public/Team/my-tool__1.0.1',
+            },
+          ],
+        },
+      ]),
+    );
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({ createdAt: 1_800_000_000_000 }),
+    );
+
+    await service.unpublish(
+      'token',
+      TEST_BUCKET,
+      CatalogEntityType.Toolset,
+      'toolsets/bucket-123/my-tool__1.0.0',
+      'Team',
+      '1.0.0',
+      'Test User',
+    );
+
+    expect(createPublicationBody(dialClient).resources).toEqual([
+      expect.objectContaining({
+        targetUrl: 'toolsets/public/Team/my-tool__1.0.0',
+      }),
+    ]);
+  });
+
   it('calls createPublication with a single DELETE resource and returns UnpublishResultDto', async () => {
     const { service, dialClient, cacheManager } = makeService();
     vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(

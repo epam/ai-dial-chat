@@ -26,6 +26,8 @@ export interface PublishFooterProps {
   version?: string;
   /** Whether this publication already exists at the selected destination folder. */
   hasExistingPublicationInFolder: boolean;
+  /** Whether resubmitting over an existing publication replaces it; when `false` the submit label never offers an update. Default: `true`. */
+  allowReplace?: boolean;
   /** Whether the submit button should be disabled. */
   isSubmitDisabled: boolean;
   /** Whether the submit button should show its loading/spinner state. */
@@ -50,6 +52,7 @@ export interface PublishFooterColors {
 export const PublishFooter: FC<PublishFooterProps> = ({
   version,
   hasExistingPublicationInFolder,
+  allowReplace = true,
   isSubmitDisabled,
   isSubmitLoading,
   onCancel,
@@ -72,7 +75,7 @@ export const PublishFooter: FC<PublishFooterProps> = ({
     if (isSubmitLoading) {
       return publishingInProgressLabel;
     }
-    if (hasExistingPublicationInFolder && version != null) {
+    if (allowReplace && hasExistingPublicationInFolder && version != null) {
       return updateLabel.replace('{version}', version);
     }
     return publishDefaultLabel;

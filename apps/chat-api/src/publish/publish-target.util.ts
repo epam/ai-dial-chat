@@ -1,5 +1,6 @@
 import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
+import { SEMVER_VERSION_PATTERN } from '../common/validators/semver-version.pattern';
 
 /*
  * Confirmed against DIAL Core's own OpenAPI spec (`/v1/ops/publication/create`
@@ -105,3 +106,36 @@ export const getPublishedTargetUrl = (
   resourceName: string,
 ): string =>
   `${resourceTypePrefix}/${getPublicTargetFolder(folderPath)}${resourceName}`;
+
+/*
+ * DIAL Core stores applications and toolsets as `{name}__{version}`, but
+ * editing an existing one's version only rewrites the version field inside the
+ * resource — its path keeps the version it was created with. Publishing a new
+ * version must still land on a new `{name}__{version}` target, or Core rejects
+ * it because the earlier version's copy already exists there (#9428).
+ */
+const VERSIONED_RESOURCE_PREFIXES = new Set(['applications', 'toolsets']);
+const RESOURCE_VERSION_SEPARATOR = '__';
+
+/**
+ * The published copy's resource name for `version`: `resourceName`'s own
+ * `{name}__{version}` suffix replaced by `version`. Returns `resourceName`
+ * unchanged for an unversioned resource type, a name with no suffix, or a
+ * `version` that is not valid SemVer (so free text never reaches the path).
+ */
+export const getVersionedTargetResourceName = (
+  resourceTypePrefix: string,
+  resourceName: string,
+  version: string | undefined,
+): string => {
+  const separatorIndex = resourceName.lastIndexOf(RESOURCE_VERSION_SEPARATOR);
+  if (
+    !VERSIONED_RESOURCE_PREFIXES.has(resourceTypePrefix) ||
+    separatorIndex === -1 ||
+    !version ||
+    !SEMVER_VERSION_PATTERN.test(version)
+  ) {
+    return resourceName;
+  }
+  return `${resourceName.slice(0, separatorIndex)}${RESOURCE_VERSION_SEPARATOR}${encodeURIComponent(version)}`;
+};

@@ -5,7 +5,7 @@ BFF contract for a recipient discarding their own access to a conversation share
 ## Requirements
 ### Requirement: `POST /api/v1/share/discard` accepts conversation resource paths
 
-`DiscardSharedCatalogItemDto.itemId` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`) SHALL accept `conversations/{bucket}/{path}` alongside the `applications/`, `toolsets/`, `skills/`, and `prompts/` forms. The prefix allowlist is the `@IsCatalogResourcePath()` decorator (`apps/chat-api/src/share/dto/catalog-resource-path.validator.ts`, whose `CATALOG_RESOURCE_PATH_PATTERN` starts `^(?:applications|toolsets|conversations|skills|prompts)\/[^/\s]+\/`), applied together with `IsString`, `IsNotEmpty`, `IsValidFilePath`, a `@Matches(NOT_A_SKILL_FILE_PATTERN)` rule rejecting `skills/.../files/...` paths, and `MaxLength(2048)`. `ShareController`'s `@ApiOperation` description for this endpoint states it discards the caller's access to "a shared catalog entity (application or toolset), a skill, a conversation, or a prompt".
+`DiscardSharedCatalogItemDto.itemId` (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`) SHALL accept `conversations/{bucket}/{path}` alongside the `applications/`, `toolsets/`, `skills/`, and `prompts/` forms. The prefix allowlist is the `@IsCatalogResourcePath()` decorator (`apps/chat-api/src/share/dto/catalog-resource-path.validator.ts`, whose `CATALOG_RESOURCE_PATH_PATTERN` starts `^(?:applications|toolsets|conversations|skills|prompts)\/[^/\s]+\/`), applied together with `IsString`, `IsNotEmpty`, `IsDialResourceId`, a `@Matches(NOT_A_SKILL_FILE_PATTERN)` rule rejecting `skills/.../files/...` paths, and `MaxLength(2048)`. `ShareController`'s `@ApiOperation` description for this endpoint states it discards the caller's access to "a shared catalog entity (application or toolset), a skill, a conversation, or a prompt".
 
 No new NestJS endpoint, controller handler, or generated-client operationId is introduced — the existing `discardSharedCatalogItem` operation now documents and accepts a broader `itemId` shape. `ShareManagementService.discardShared` (`apps/chat-api/src/share/management/share-management.service.ts`) SHALL pass a conversation `itemId` through `toShareResourceUrl` (which percent-encodes only `prompts/` paths, so a conversation path is unchanged), first verify via DIAL Core `getSharedResources({ resourceTypes: [<kind>], with: 'me' })` whether the resource is shared with the caller, then call `discardSharedResources` with `{ resources: [{ url: itemId }] }`.
 
@@ -31,7 +31,7 @@ Content-Type: application/json
 
 #### Scenario: Invalid conversation-shaped itemId is still rejected before any DIAL Core call
 
-- **WHEN** the request body's `itemId` starts with `conversations/` but fails `IsValidFilePath` (e.g. contains `../`) or omits the bucket/path segments
+- **WHEN** the request body's `itemId` starts with `conversations/` but fails `IsDialResourceId` (e.g. contains `../`) or omits the bucket/path segments
 - **THEN** the endpoint responds `400 Bad Request` and no DIAL Core call is made
 
 #### Scenario: Non-allowlisted resource type prefix is still rejected
@@ -48,6 +48,11 @@ Content-Type: application/json
 
 - **WHEN** `POST /api/v1/share/discard` is called with an `applications/...` or `toolsets/...` itemId
 - **THEN** behavior is unchanged from the `catalog-unshare` capability — same validation, same DIAL Core call, same cache invalidation of deployments/toolsets lists
+
+#### Scenario: Conversation id with a colon in the model id is accepted
+
+- **WHEN** an authenticated user calls `POST /api/v1/share/discard` with `{ itemId: "conversations/owner-bucket/anthropic.claude-haiku-4-5-20251001-v1:0__hi__{uuid}" }` for a conversation shared with them
+- **THEN** `itemId` validation passes and the endpoint proceeds exactly as for any other conversation id
 
 ### Requirement: No server-side list cache invalidation is introduced for conversations
 

@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   deriveConversationRowActionState,
+  findDeploymentByIdOrReference,
   findDeploymentForConversationId,
   getApiErrorDetails,
   getConversationPath,
@@ -380,8 +381,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     onError: handleImportError,
   });
 
-  const { items: deployments, isLoading: isDeploymentsLoading } =
-    useDeployments();
+  const {
+    items: deployments,
+    isLoading: isDeploymentsLoading,
+    selectedItemId,
+  } = useDeployments();
 
   const panelActiveConversationId = useActiveConversationSync({
     activeConversationId,
@@ -731,13 +735,24 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       );
       const history = getPublishHistory(conversationPath);
       const recipients = getRecipientsCount(contextId);
-      /* A copy would hand the operator-hidden model a fresh conversation, so a
-         row whose model was hidden via HIDDEN_ENTITY_TAGS offers no Duplicate
-         ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
-      const isModelHidden = !!findDeploymentForConversationId(
-        deployments,
-        contextId,
-      )?.isHidden;
+      /*
+       * A duplicate, share link or published copy would put a model hidden
+       * via HIDDEN_ENTITY_TAGS back to work, so a row on one offers none of
+       * them ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)).
+       * The path only records the model a conversation was created with; for
+       * the open one the picker's selection is the model it uses now, so a
+       * conversation switched onto (or off) a hidden model is judged by that.
+       * Other rows fall back to the path, and the backend refuses the rest.
+       */
+      const activeIdAtRender = panelActiveConversationIdRef.current;
+      const isActiveRow =
+        activeIdAtRender != null &&
+        conversationIdsMatch(panelItem.id, activeIdAtRender);
+      const rowDeployment =
+        isActiveRow && selectedItemId
+          ? findDeploymentByIdOrReference(deployments, selectedItemId)
+          : findDeploymentForConversationId(deployments, contextId);
+      const isModelHidden = !!rowDeployment?.isHidden;
 
       const {
         isReadonly: isReadonlyItem,
@@ -894,7 +909,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         },
         ...duplicateActions,
         ...exportActions,
-        ...(isConversationsSharingEnabled
+        ...(isConversationsSharingEnabled && !isModelHidden
           ? [
               {
                 key: 'share',
@@ -918,7 +933,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
          * place. Republishing an already-published conversation therefore means
          * unpublishing it first — the trade the single-state menu buys.
          */
-        ...(isConversationsPublishingEnabled && publishedFolders.length === 0
+        ...(isConversationsPublishingEnabled &&
+        publishedFolders.length === 0 &&
+        !isModelHidden
           ? [
               {
                 key: 'publish',
@@ -1034,6 +1051,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       toContextId,
       getRawItem,
       deployments,
+      selectedItemId,
       t,
       pinConversation,
       duplicateConversation,

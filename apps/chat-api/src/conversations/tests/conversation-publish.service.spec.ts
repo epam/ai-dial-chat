@@ -6,6 +6,7 @@ import {
   ConversationPublishService,
   PUBLISH_WHILE_GENERATING_MESSAGE,
 } from '../conversation-publish.service';
+import { ConversationErrorCode } from '../types/conversation-error-code.enum';
 
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
@@ -29,11 +30,15 @@ const makeService = () => {
     },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
+  const deploymentsService = {
+    resolveDeploymentItem: vi.fn().mockResolvedValue(null),
+  };
   const service = new ConversationPublishService(
     dialClient,
     cacheManager as never,
+    deploymentsService as never,
   );
-  return { service, dialClient, cacheManager };
+  return { service, dialClient, cacheManager, deploymentsService };
 };
 
 describe('ConversationPublishService', () => {
@@ -250,6 +255,33 @@ describe('ConversationPublishService', () => {
       ).rejects.toMatchObject({
         status: 409,
         message: PUBLISH_WHILE_GENERATING_MESSAGE,
+      });
+      expect(dialClient.client.createPublication).not.toHaveBeenCalled();
+    });
+
+    it('refuses with conversationModelHidden when the conversation model is hidden, and publishes nothing', async () => {
+      const { service, dialClient, deploymentsService } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({ name: 'Chat', messages: [], model: { id: 'gpt-4o' } }),
+      );
+      deploymentsService.resolveDeploymentItem.mockResolvedValue({
+        id: 'gpt-4o',
+        isHidden: true,
+      });
+
+      const error = await service
+        .publish(
+          'token-abc',
+          'bucket-123',
+          'my-conversation-abc',
+          'Organization/Data Science',
+          'Test User',
+        )
+        .catch((err: unknown) => err);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect((error as ForbiddenException).getResponse()).toMatchObject({
+        code: ConversationErrorCode.ModelHidden,
       });
       expect(dialClient.client.createPublication).not.toHaveBeenCalled();
     });
