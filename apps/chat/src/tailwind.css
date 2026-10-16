@@ -17,6 +17,7 @@
 @import '../../../tools/tailwind/theme.css';
 @import 'tailwindcss/preflight.css';
 @import '../../../tools/tailwind/preflight-v3.css';
+@import './styles/base.css';
 @import 'tailwindcss/utilities.css' source(none);
 
 @source './**/*.{ts,tsx,html}';

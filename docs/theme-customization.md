@@ -174,7 +174,7 @@ The id must exist in the deployment's configuration file. See the
 
 ### Fonts are not themeable
 
-`--theme-font` exists, but `apps/chat/src/styles.scss` declares it on `html`,
+`--theme-font` exists, but `apps/chat/src/styles/base.css` declares it on `html`,
 `body`, and `#root`. A value supplied through a theme's `colors` map lands on
 `<html>` only and is shadowed for everything inside `#root`, so it has no
 practical effect. Changing the application font currently requires editing that

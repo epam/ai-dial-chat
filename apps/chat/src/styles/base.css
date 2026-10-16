@@ -1,0 +1,12 @@
+/*
+ * Document defaults. Imported by `tailwind.css` between preflight and the
+ * utilities, where v3's `@layer base` put them, so `@apply` resolves against
+ * the shared theme and a utility still wins over these rules.
+ */
+html,
+body,
+#root {
+  @apply size-full overflow-hidden bg-layer-base text-primary;
+  font-family: 'Inter', sans-serif;
+  --theme-font: 'Inter', sans-serif;
+}
