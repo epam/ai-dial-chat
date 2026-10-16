@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { IsValidFilePath } from '../../files/dto/file-path.validator';
+import { IsDialResourceId } from '../../common/validators/dial-resource-id.validator';
 import { IsCatalogResourcePath } from './catalog-resource-path.validator';
 
 /** Query parameters for `GET /api/v1/share/recipients`. */
@@ -12,7 +12,7 @@ export class GetShareRecipientsDto {
   })
   @IsString()
   @IsNotEmpty()
-  @IsValidFilePath()
+  @IsDialResourceId()
   @IsCatalogResourcePath()
   @MaxLength(2048)
   itemId!: string;

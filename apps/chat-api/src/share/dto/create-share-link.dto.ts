@@ -6,7 +6,7 @@ import {
   IsNotEmpty,
   IsString,
 } from 'class-validator';
-import { IsValidFilePath } from '../../files/dto/file-path.validator';
+import { IsDialResourceId } from '../../common/validators/dial-resource-id.validator';
 
 /**
  * Access level requested for a share link. Defined locally rather than
@@ -26,7 +26,7 @@ export class CreateShareLinkDto {
   })
   @IsString()
   @IsNotEmpty()
-  @IsValidFilePath()
+  @IsDialResourceId()
   itemId!: string;
 
   @ApiProperty({
