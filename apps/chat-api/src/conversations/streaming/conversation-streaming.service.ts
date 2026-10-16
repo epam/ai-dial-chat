@@ -67,12 +67,12 @@ import {
 } from '../utils/apply-chunk.server';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../utils/conversation-view-state.server';
-import { assertModelNotHidden } from '../utils/hidden-model';
 import {
   buildConversationUrl,
   qualifySessionConversationPath,
   resolveConversationLocation,
 } from '../utils/conversation.utils';
+import { assertModelNotHidden } from '../utils/hidden-model';
 
 const SERVER_APP_CONFIG_CONTEXT: AppConfigEvalContext = { appId: 'chat-api' };
 

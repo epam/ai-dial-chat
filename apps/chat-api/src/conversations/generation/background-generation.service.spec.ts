@@ -5,7 +5,10 @@ import {
   ConversationGenerationService,
   GenerationCancelReason,
 } from '../conversation-generation.service';
-import { BackgroundGenerationStatus } from '../dto/background-generation.dto';
+import {
+  BackgroundGenerationDto,
+  BackgroundGenerationStatus,
+} from '../dto/background-generation.dto';
 import {
   ConversationMessageRole,
   type ConversationMessageDto,
@@ -405,7 +408,7 @@ describe('BackgroundGenerationService.startAndRelay', () => {
             ...last,
             content: 'partial',
             backgroundGeneration: {
-              ...last.backgroundGeneration!,
+              ...(last.backgroundGeneration as BackgroundGenerationDto),
               status: BackgroundGenerationStatus.Stopped,
             },
           },
@@ -433,7 +436,7 @@ describe('BackgroundGenerationService.startAndRelay', () => {
           {
             ...last,
             backgroundGeneration: {
-              ...last.backgroundGeneration!,
+              ...(last.backgroundGeneration as BackgroundGenerationDto),
               status: BackgroundGenerationStatus.Stopped,
             },
           },

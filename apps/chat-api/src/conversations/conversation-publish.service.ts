@@ -15,8 +15,8 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
-import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DeploymentsService } from '../deployments/deployments.service';
+import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
 import {

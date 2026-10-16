@@ -49,11 +49,11 @@ import {
 import { ConversationService } from './conversation.service';
 import { AttachGenerationDto } from './dto/attach-generation.dto';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
+import { ConversationModelHiddenErrorDto } from './dto/conversation-model-hidden-error.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DeleteAllConversationsBodyDto } from './dto/delete-all-conversations-body.dto';
 import { DeleteConversationsBodyDto } from './dto/delete-conversations-body.dto';
-import { ConversationModelHiddenErrorDto } from './dto/conversation-model-hidden-error.dto';
 import { ConversationDeletionResultDto } from './dto/delete-conversations.dto';
 import {
   DuplicateConversationErrorDto,
