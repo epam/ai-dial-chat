@@ -99,7 +99,7 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
         {children}
         <h1>Good evening!</h1>
         {showStarters && !startersBelowComposer && starterList}
-        <div className="story-composer flex w-full min-w-0 max-w-[560px] flex-wrap items-center gap-1 rounded-lg border p-2 desktop:flex-nowrap desktop:gap-2 desktop:p-3">
+        <div className="story-composer flex w-full max-w-[560px] min-w-0 flex-wrap items-center gap-1 rounded-lg border p-2 desktop:flex-nowrap desktop:gap-2 desktop:p-3">
           <button
             type="button"
             className="story-add me-auto min-h-11 min-w-11 shrink-0 rounded border px-2 desktop:me-0"

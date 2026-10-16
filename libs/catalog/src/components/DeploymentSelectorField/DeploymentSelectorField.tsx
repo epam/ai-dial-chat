@@ -123,7 +123,7 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
     renderPanel(close)
   ) : (
     <div
-      className={mergeClasses('w-full min-w-0 max-w-full p-3', panelClassName)}
+      className={mergeClasses('w-full max-w-full min-w-0 p-3', panelClassName)}
     >
       <Search
         value={query}

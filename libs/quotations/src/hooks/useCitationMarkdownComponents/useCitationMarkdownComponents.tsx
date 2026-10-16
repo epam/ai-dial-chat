@@ -177,7 +177,7 @@ export const useCitationMarkdownComponents = (
             isCompactTypography
               ? 'dial-small-paragraph-text'
               : 'dial-body-paragraph-text',
-            'mb-3 [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
+            'mb-3 [text-wrap:pretty] [overflow-wrap:anywhere] last:mb-0',
           )}
         >
           {replaceSentinelsInChildren(children, renderMarker)}

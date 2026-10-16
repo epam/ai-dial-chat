@@ -133,7 +133,7 @@ export const StageItem: FC<StageItemProps> = ({
       </span>
       <span
         className={mergeClasses(
-          'min-w-0 max-w-[22rem] truncate',
+          'max-w-[22rem] min-w-0 truncate',
           typography?.fontClassName ?? 'dial-small-text',
           styles.stageName,
           isFailed && styles.stageNameFailed,

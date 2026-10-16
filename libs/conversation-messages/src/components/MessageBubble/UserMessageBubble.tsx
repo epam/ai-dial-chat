@@ -155,7 +155,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       onCopy={copySelectionWithoutStyles}
       className={mergeClasses('flex w-full', className)}
     >
-      <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
+      <div className="ms-auto flex w-fit max-w-full min-w-0 flex-col items-end gap-4">
         <AttachmentGroup
           attachments={attachments ?? []}
           onAttachmentClick={
@@ -181,7 +181,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           <div
             className={mergeClasses(
               styles.userBubble,
-              'flex w-fit items-center justify-end rounded-es-2xl rounded-ss-2xl border px-6 py-4',
+              'flex w-fit items-center justify-end rounded-ss-2xl rounded-es-2xl border px-6 py-4',
               positionRadius,
               bubbleClassName,
               CONVERSATION_MESSAGES_CLASS.userBubble,
@@ -193,7 +193,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                 ref={contentRef}
                 className={mergeClasses(
                   // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
-                  'relative -me-1 -ms-1 w-[calc(100%+8px)] overflow-hidden pe-1 ps-1',
+                  'relative -ms-1 -me-1 w-[calc(100%+8px)] overflow-hidden ps-1 pe-1',
                   isOverflowing && styles.collapsibleText,
                   isOverflowing && !isCollapsed && styles.expandedText,
                   isTextCollapsed && styles.collapsedText,
@@ -203,7 +203,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                   ref={textRef}
                   className={mergeClasses(
                     textClass,
-                    'min-w-0 max-w-full text-start',
+                    'max-w-full min-w-0 text-start',
                     MARKDOWN_EDGE_MARGIN_CLASS_NAME,
                   )}
                 >

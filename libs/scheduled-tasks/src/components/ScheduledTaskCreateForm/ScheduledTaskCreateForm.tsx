@@ -580,7 +580,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           </div>
 
           {skillSelector != null ? (
-            <div className="w-full min-w-0 max-w-[996px]">{skillSelector}</div>
+            <div className="w-full max-w-[996px] min-w-0">{skillSelector}</div>
           ) : (
             errors.skillUrls && (
               <div aria-live="polite">
@@ -600,7 +600,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
            * end of the label row, so an uncapped row lets it drift past the editor
            * whenever the column is wider than the cap (e.g. at browser zoom-out).
            */}
-          <div className="flex w-full min-w-0 max-w-[996px] flex-col">
+          <div className="flex w-full max-w-[996px] min-w-0 flex-col">
             <TextRefinementField
               isEnabled={Boolean(onRefineInstructions)}
               fieldId={instructionsEditorId}

@@ -120,7 +120,7 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
         },
       ]}
     >
-      <div className="flex flex-col gap-4 px-6 pb-4 pt-2">
+      <div className="flex flex-col gap-4 px-6 pt-2 pb-4">
         <div
           className={mergeClasses(
             'flex h-[72px] w-full items-center rounded-lg border px-3',

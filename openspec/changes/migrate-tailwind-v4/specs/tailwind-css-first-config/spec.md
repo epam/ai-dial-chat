@@ -72,7 +72,7 @@ Where Tailwind v4 changed a utility's default (the bare `ring` width, `outline-n
 
 ### Requirement: Tailwind linting and class ordering run against the v4 theme
 
-`eslint.config.mjs` SHALL configure `eslint-plugin-tailwindcss` (v4 line) with an absolute `cssConfigPath` to the workspace Tailwind entry, and `prettier-plugin-tailwindcss` SHALL use `tailwindStylesheet` pointing at the same entry. `tailwindcss/no-contradicting-classname` and `tailwindcss/enforces-shorthand` SHALL stay errors. `no-unnecessary-arbitrary-value`, `enforces-canonical-classname` and `important-modifier-suffix` SHALL be off.
+`eslint.config.mjs` SHALL configure `eslint-plugin-tailwindcss` (v4 line) with an absolute `cssConfigPath` to the workspace Tailwind entry, and `prettier-plugin-tailwindcss` SHALL use `tailwindStylesheet` pointing at the same entry. `tailwindcss/no-contradicting-classname` SHALL stay an error. No other plugin rule is enabled, so `no-unnecessary-arbitrary-value` (which rewrites pixel values to rem steps) and `enforces-canonical-classname` SHALL stay off.
 
 #### Scenario: A contradicting class pair is still reported
 

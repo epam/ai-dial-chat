@@ -59,12 +59,12 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
       <div
         ref={pumpkinRef}
         data-halloween-pumpkin-anchor="true"
-        className="absolute bottom-2 end-2 origin-bottom desktop:bottom-4 desktop:end-4"
+        className="absolute end-2 bottom-2 origin-bottom desktop:end-4 desktop:bottom-4"
       >
         <IconButton
           appearance={ButtonAppearance.Link}
           className={mergeClasses(
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-focus',
+            'focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-focus',
             styles.pumpkinButton,
             CELEBRATIONS_CLASS.trigger,
           )}
@@ -76,7 +76,7 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
       </div>
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 select-none overflow-hidden"
+        className="pointer-events-none absolute inset-0 overflow-hidden select-none"
       >
         {/* The mirror belongs on the web, never on the corner: a flipped
             ancestor would also flip the spider's inline transform, so it

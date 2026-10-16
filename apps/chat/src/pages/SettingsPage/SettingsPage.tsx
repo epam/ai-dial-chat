@@ -49,7 +49,7 @@ const SettingsPage: FC = () => {
     <div className="flex size-full min-h-0 flex-col bg-layer-base desktop:flex-row">
       <h1 className="sr-only">{t(BasicI18nKeys.Settings)}</h1>
       <SettingsPanel
-        className="shrink-0 border-b border-b-tertiary pb-2 desktop:w-[240px] desktop:border-b-0 desktop:border-e desktop:border-e-tertiary desktop:pb-0 desktop:shadow-sm"
+        className="shrink-0 border-b border-b-tertiary pb-2 desktop:w-[240px] desktop:border-e desktop:border-b-0 desktop:border-e-tertiary desktop:pb-0 desktop:shadow-sm"
         sectionLabel={t(BasicI18nKeys.Settings)}
         items={items}
         activeId={activeItem.id}

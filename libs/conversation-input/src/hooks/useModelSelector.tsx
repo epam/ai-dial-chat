@@ -209,7 +209,7 @@ export const useModelSelector = ({
             '--ms-search-header-bg': menuStyles?.colors?.searchHeaderBackground,
           })}
           className={mergeClasses(
-            'sticky top-0 z-10 pb-1 pe-2 pt-2',
+            'sticky top-0 z-10 pe-2 pt-2 pb-1',
             styles.searchHeader,
             menuStyles?.searchHeaderClassName,
             CONVERSATION_INPUT_CLASS.modelMenuSearch,

@@ -134,7 +134,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
           matchReferenceWidth={false}
           listClassName={CREATE_MENU_LIST_CLASS_NAME}
           menuHeader={
-            <div className="sticky -top-1 z-10 bg-layer-raised px-2 pb-1 pt-2">
+            <div className="sticky -top-1 z-10 bg-layer-raised px-2 pt-2 pb-1">
               <Search
                 value={search.value}
                 placeholder={searchPlaceholder}

@@ -122,7 +122,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
               <EllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'min-w-0 max-w-max flex-[34_1_0%] tabular-nums',
+                  'max-w-max min-w-0 flex-[34_1_0%] tabular-nums',
                   typography?.versionClassName ?? 'dial-tiny-text',
                   styles.version,
                 )}

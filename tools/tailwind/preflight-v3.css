@@ -1,0 +1,26 @@
+/*
+ * Tailwind v3 preflight behaviour that v4 dropped. The kit's stylesheet keeps
+ * the same four rules; they are repeated here because an application's
+ * preflight is unlayered and would otherwise replace the kit's (layered)
+ * copies. Imported between preflight and the utilities, where v3 had them, so
+ * a utility still wins a specificity tie (`cursor-not-allowed` on a disabled
+ * control).
+ */
+input::placeholder,
+textarea::placeholder {
+  opacity: 1;
+  color: #9ca3af;
+}
+
+button,
+[role='button'] {
+  cursor: pointer;
+}
+
+:disabled {
+  cursor: default;
+}
+
+dialog {
+  margin: auto;
+}

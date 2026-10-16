@@ -54,23 +54,27 @@ The `node_modules/@epam/ai-dial-ui-kit/**` and `…/ai-dial-react-file-manager/*
 
 - *Risk*: a class that a lib passes to a kit component (`className="…"`) lives in our source and is scanned there. Only classes that exist solely inside the kit's `dist` are dropped, and the kit's stylesheet covers those.
 
-### D4. App entry and cascade layers
+### D4. App entry: unlayered, like v3 (revised during slice 3)
 
-`apps/chat/src/styles.scss` becomes:
+The original plan put the chat's Tailwind in `@layer theme, base, components, utilities`. Implementation showed that would change the cascade. Under v3 the whole app stylesheet was unlayered and loaded after `@epam/ai-dial-ui-kit/styles.css`, so a utility the chat passes to a kit component beat the kit's unlayered `dial-*` class on source order. Layered chat utilities would lose that tie to every unlayered rule. So nothing in the app's entry is layered, which keeps the v3 cascade exactly, and the layered-variant audit the original plan needed goes away.
 
-```scss
-@layer theme, base, components, utilities;
-@import 'tailwindcss/theme.css' layer(theme);
+`apps/chat/src/tailwind.css` (a new file, imported by `main.tsx` just before `styles.scss`; Sass cannot pass `@import … theme(…)` / `@source` through):
+
+```css
+@import 'tailwindcss/theme.css' theme(reference inline);
 @import '../../../tools/tailwind/theme.css';
-@import 'tailwindcss/preflight.css' layer(base);
-@import 'tailwindcss/utilities.css' layer(utilities);
-@source '.';
-@source '../../../libs/*/src';
+@import 'tailwindcss/preflight.css';
+@import '../../../tools/tailwind/preflight-v3.css';
+@import 'tailwindcss/utilities.css' source(none);
+@source './**/*.{ts,tsx,html}';
+@source '../../../libs/*/src/**/*.{ts,tsx}';
 ```
 
-Sass's `@use 'tailwindcss/*'` does not work with v4 (it would inline v3-style CSS). The file stays `.scss` only if it still needs Sass features; otherwise it is renamed to `styles.css`. Vite then switches to `@tailwindcss/vite` (D5), so Sass never processes Tailwind directives. The existing `@layer base { html, body, #root { @apply … } }` block moves into `@layer base` after the preflight import.
+plus the interim file-manager `@source` (D3) and `@source not` for specs, tests and stories.
 
-Layer interaction: the kit puts its utilities in `@layer ui`, and the chat's go in `utilities`. Layer order is fixed where a layer first appears, and `main.tsx` imports the kit's sheet first, so the final order is `ui.*` → `theme, base, components, utilities` and unlayered SCSS modules beat both. That is the same relative order as today (v3 chat utilities were unlayered and came after the kit's sheet). One difference: the chat's own variant utilities (`hover:`, `mobile:`) are now layered, so an **unlayered** chat SCSS rule on the same property now beats them. Task 5.3 audits that case. It is the host-side half of the kit guide's step 1.
+- Tailwind's default theme is imported `reference inline` in the app too. On `:root`, v4's `--shadow-sm`/`-md`/`-lg` would shadow the DIAL theme's shadow-colour variables of the same names and feed a whole shadow into `var(--shadow-sm, #fallback)`.
+- `tools/tailwind/preflight-v3.css` carries the four v3 preflight rules the kit also keeps (placeholder colour, pointer cursor, `:disabled` cursor, centred `<dialog>`). It sits before the utilities, as v3 had them, so a utility still wins a specificity tie.
+- `styles.scss` keeps `mcp-app-ui-vars` and the `html, body, #root` block, written out as plain declarations. No chat code puts a utility on those elements, so its position after the utilities is equivalent.
 
 ### D5. `@tailwindcss/vite` for apps, `@tailwindcss/postcss` nowhere else
 
@@ -115,12 +119,12 @@ The official `@tailwindcss/upgrade` codemod is **not** run across the tree. It r
 
 ### D8. Linting and formatting
 
-`eslint-plugin-tailwindcss@4.4.1-beta.1` with `settings.tailwindcss.cssConfigPath` set to an absolute `tools/tailwind/theme.css` entry (an `index.css` there that imports Tailwind + theme, because the plugin needs a full entry). Same rule overrides as the kit: `no-unnecessary-arbitrary-value`, `enforces-canonical-classname` and `important-modifier-suffix` off. `prettier-plugin-tailwindcss` gets `tailwindStylesheet` pointing at the same entry.
+`eslint-plugin-tailwindcss@4.4.1-beta.1` with `settings.tailwindcss.cssConfigPath` set to an absolute `tools/tailwind/theme.css` entry (an `index.css` there that imports Tailwind + theme, because the plugin needs a full entry). The workspace enables only `tailwindcss/no-contradicting-classname` (it never extended the plugin's recommended set), so the kit's rule overrides are unnecessary here. v4's class order differs from v3's, so Prettier reorders classes once (pure reorders, checked in task 3.9). `prettier-plugin-tailwindcss` gets `tailwindStylesheet` pointing at the same entry.
 
 ## Risks / Trade-offs
 
 - [The kit 0.16 bump and the Tailwind v4 bump land together, so a visual regression could come from either] → Slice 1 bumps the kit and file manager alone (still on chat v3, with dist scanning removed per D3) and is verified on its own. Tailwind moves only in later slices.
-- [Layered chat variants lose to unlayered SCSS rules (D4)] → grep audit of `apps/chat/src/**/*.scss` and `libs/*/src/**/*.scss` for properties also set by a `hover:`/`focus-visible:`/`mobile:` utility on the same element. Fix by moving the SCSS rule into `@layer components`.
+- [Oxide reads class candidates out of comments and emits rules for prose words (`container`, `scale-1`)] → harmless in the app; in published lib stylesheets `container` is excluded (`@source not inline('container')`) because a host may use that class name.
 - [Published lib CSS gains `@property` / `@layer properties`] → identical to what the kit emits; documented in the tool header and the lib-styling guide.
 - [Browser baseline rises to Safari 16.4 / Chrome 111 / Firefox 128] → already imposed by kit 0.16.0; noted in `docs/architecture.md`.
 - [`eslint-plugin-tailwindcss` v4 is a beta] → pinned exact (`4.4.1-beta.1`), same as the kit; rules that misfire are switched off with a comment, never left warning.

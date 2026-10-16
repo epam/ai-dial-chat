@@ -136,7 +136,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
       <span
         tabIndex={0}
         className={mergeClasses(
-          'relative -me-1 -ms-1 inline cursor-pointer select-text rounded-full pe-1 ps-1',
+          'relative -ms-1 -me-1 inline cursor-pointer rounded-full ps-1 pe-1 select-text',
           isUnsupported
             ? unsupportedClassName
             : 'hover:bg-info focus-visible:bg-info active:bg-info',

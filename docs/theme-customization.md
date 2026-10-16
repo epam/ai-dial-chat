@@ -33,7 +33,7 @@ the themes host takes up to 5 minutes (plus that host's own cache) to appear.
 
 When `THEMES_CONFIG_URL` is unset, the configuration request fails, the
 application logs the failure and continues with its built-in palette: the
-light-theme hex fallbacks compiled into `tailwind.config.js`. The Preferences
+light-theme hex fallbacks in `tools/tailwind/theme.css`. The Preferences
 tab then shows no theme row at all.
 
 ### Configuration file format
@@ -293,7 +293,7 @@ the content.
 
 The control tokens were renamed for the role they fill instead of their opacity
 or their literal hue. **The old variable names are not honored anywhere** —
-neither `tailwind.config.js` nor the chains in `libs/*` (see
+neither `tools/tailwind/theme.css` nor the chains in `libs/*` (see
 [Styling libraries](#styling-libraries)) carry them as a fallback, so a theme
 still on the old names renders the built-in light hex for every renamed token.
 Rename them.
@@ -316,7 +316,7 @@ as `stroke-accent-alpha`. Move the value there.
 
 The focus ring variable is `stroke-focus` again. ui-kit 0.13 renamed it to
 `stroke-focus-black`; the kit now reads `--stroke-focus` first and keeps
-`--stroke-focus-black` only as its own fallback. `tailwind.config.js` and the
+`--stroke-focus-black` only as its own fallback. `tools/tailwind/theme.css` and the
 `libs/*` chains read `--stroke-focus` alone, so a theme still setting
 `stroke-focus-black` recolors only the kit's focus rings. Rename it. The
 Tailwind class moved back with it (`outline-focus-black` → `outline-focus`).
@@ -325,7 +325,7 @@ Tailwind class moved back with it (`outline-focus-black` → `outline-focus`).
 
 The accent focus ring variable is named for the role it fills instead of its
 literal hue, matching the `border-accent-focus` / `outline-accent-focus`
-classes that consume it. `tailwind.config.js`, the `libs/*` chains, and
+classes that consume it. `tools/tailwind/theme.css`, the `libs/*` chains, and
 `@epam/ai-dial-ui-kit`'s own stylesheet all read `--stroke-accent-focus` with
 no fallback to the old name, so a theme setting only `stroke-focus-blue` gets
 the built-in `#6785FB`. Rename it.
@@ -427,9 +427,8 @@ singleton host import. This preserves the same token cascade without coupling
 an embedding app to the scheduler's private composition.
 
 The chain is exactly three tiers. The middle tier names the current token only —
-it does not carry the pre-0.14 aliases that `tailwind.config.js` keeps for its
-utilities, because a lib is not supposed to know this application's rename
-history.
+it carries no pre-0.14 alias (neither does `tools/tailwind/theme.css`),
+because a lib is not supposed to know this application's rename history.
 
 The full convention — variable naming, what belongs in `.module.scss` versus
 Tailwind, the `buildCssVars` helper, and the checks that catch styles which

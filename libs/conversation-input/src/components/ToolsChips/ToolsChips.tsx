@@ -113,7 +113,7 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
             styles.chip,
             item.isSelected && styles.chipSelected,
             'flex min-w-0 items-center gap-1.5 rounded-full border py-1 transition-colors',
-            canRemove ? 'pe-1 ps-2' : 'px-2',
+            canRemove ? 'ps-2 pe-1' : 'px-2',
           )}
         >
           <button
@@ -143,7 +143,7 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
                 className={mergeClasses(
                   styles.chipState,
                   typography?.fontClassName || 'dial-small-paragraph-text',
-                  'ms-1 shrink-0 uppercase tracking-wider',
+                  'ms-1 shrink-0 tracking-wider uppercase',
                 )}
                 aria-hidden
               >

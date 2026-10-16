@@ -88,7 +88,7 @@ const HalloweenCandy: FC = () => {
   return (
     <div
       ref={host}
-      className="pointer-events-none absolute inset-0 select-none overflow-clip"
+      className="pointer-events-none absolute inset-0 overflow-clip select-none"
       aria-hidden="true"
       inert
       data-halloween-scene="candy"

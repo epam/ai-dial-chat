@@ -377,7 +377,10 @@ Values that most visibly change this app:
 1. **Tailwind utilities** for layout and spacing — the default.
 2. **SCSS modules** (`*.module.scss`) when a component needs CSS custom
    properties, pseudo-element styling, or state selectors Tailwind cannot reach.
-3. **Global styles** in `src/styles.scss`, which imports Tailwind's layers.
+3. **Global styles**: `src/tailwind.css` is the Tailwind entry (shared theme,
+   preflight, utilities, all unlayered so they load after and win over the
+   kit's stylesheet on source order), and `src/styles.scss` holds the
+   `html`/`body`/`#root` defaults and the MCP app CSS variables.
 
 The styling contract shared with `libs/*` — CSS variable naming, what belongs in
 a module versus a utility class, and the `styles={{ colors, typography }}` prop
@@ -386,9 +389,9 @@ shape — is in
 
 ### Breakpoints
 
-`tailwind.config.js` defines exactly two named screens:
+`tools/tailwind/theme.css` defines exactly two named variants:
 
-| Screen    | Query               |
+| Variant   | Query               |
 | --------- | ------------------- |
 | `mobile`  | `max-width: 1279px` |
 | `desktop` | `min-width: 1280px` |

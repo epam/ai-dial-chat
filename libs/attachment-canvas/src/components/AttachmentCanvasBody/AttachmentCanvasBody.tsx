@@ -269,7 +269,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         return (
           <pre
             className={mergeClasses(
-              'whitespace-pre-wrap break-words',
+              'break-words whitespace-pre-wrap',
               styles.body,
               typography?.fontClassName,
             )}

@@ -141,7 +141,7 @@ const NotificationContainer: FC = () => {
    * viewport, so the last one is never pushed off-screen.
    */
   return createPortal(
-    <div className="fixed left-1/2 top-6 z-[70] flex max-h-[calc(100dvh-3rem)] -translate-x-1/2 flex-col gap-2 overflow-y-auto">
+    <div className="fixed top-6 left-1/2 z-[70] flex max-h-[calc(100dvh-3rem)] -translate-x-1/2 flex-col gap-2 overflow-y-auto">
       {notifications.map((item) => (
         <NotificationEntry
           key={item.id}

@@ -127,7 +127,7 @@ export const ScheduledTaskHistorySection: FC<
       >
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 flex flex-col gap-4 rounded-t-xl px-6 pb-2 pt-5',
+            'sticky top-0 z-10 flex flex-col gap-4 rounded-t-xl px-6 pt-5 pb-2',
             styles.historyCard,
           )}
         >

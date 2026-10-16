@@ -1027,11 +1027,11 @@ const ConversationView: FC<Props> = ({
            * above, which keyboard selection (Shift+ArrowUp) can then scroll,
            * pushing the whole message list out of view (#9137).
            */
-          className="relative flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          className="relative flex w-full flex-1 flex-col overflow-x-hidden overflow-y-auto"
         >
           <div
             ref={contentRef}
-            className="mx-auto flex w-full min-w-0 max-w-[760px] shrink-0 flex-col gap-[26px] px-6 pt-7"
+            className="mx-auto flex w-full max-w-[760px] min-w-0 shrink-0 flex-col gap-[26px] px-6 pt-7"
           >
             {topContent}
             {messages.map((msg, index) => {

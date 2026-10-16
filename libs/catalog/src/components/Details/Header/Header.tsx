@@ -79,7 +79,7 @@ interface LimitStatusBadgeProps {
 const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({ status, label }) => (
   <div
     className={mergeClasses(
-      'flex h-[24px] items-center justify-center gap-1 whitespace-nowrap rounded-2xl px-2',
+      'flex h-[24px] items-center justify-center gap-1 rounded-2xl px-2 whitespace-nowrap',
       'dial-caption-lead-semi-text',
       LIMIT_STATUS_CLASSES[status],
     )}

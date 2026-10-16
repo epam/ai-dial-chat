@@ -433,7 +433,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
       <div
         role="search"
         className={mergeClasses(
-          'sticky top-0 z-10 bg-layer-raised pb-3 pt-2',
+          'sticky top-0 z-10 bg-layer-raised pt-2 pb-3',
           styles.searchHeader,
         )}
       >
@@ -459,7 +459,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
             the menu that owns them. */}
         <div role="menu" aria-label={listAriaLabel} ref={listContentRef}>
           {filteredExtraOptions.length > 0 && (
-            <ul role="group" className="flex flex-col gap-1 px-1 pb-1 pt-1">
+            <ul role="group" className="flex flex-col gap-1 px-1 pt-1 pb-1">
               {filteredExtraOptions.map(renderExtraRow)}
             </ul>
           )}

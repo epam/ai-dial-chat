@@ -88,7 +88,7 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
       onClose={handleClose}
     >
       {search && !parent && (
-        <div className="px-2 pb-1 pt-2">
+        <div className="px-2 pt-2 pb-1">
           <Search
             value={search.value}
             placeholder={searchPlaceholder}

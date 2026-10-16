@@ -648,7 +648,7 @@ export const Catalog: FC<CatalogProps> = ({
         </div>
       )}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
         {isFavoritesVisible && (
           <div className="w-full px-4 desktop:px-8">
             <Favorites
@@ -710,7 +710,7 @@ export const Catalog: FC<CatalogProps> = ({
              whether or not it is scrolled. */
           <div
             ref={tabsRowRef}
-            className="mx-4 min-w-0 shrink-0 overflow-x-auto [scrollbar-width:none] desktop:mx-8"
+            className="mx-4 min-w-0 shrink-0 [scrollbar-width:none] overflow-x-auto desktop:mx-8"
           >
             <Tabs
               tabListClassName="w-max min-w-full"

@@ -211,7 +211,7 @@ export const ModelSelectorControl: FC<Props> = ({
           aria-disabled={isBlocked || undefined}
           tooltipProps={{ tooltip: chipTooltip }}
           className={mergeClasses(
-            'h-auto min-w-0 gap-1.5 !rounded-full !border-0 px-0 py-1.5 pe-2 ps-1.5',
+            'h-auto min-w-0 gap-1.5 !rounded-full !border-0 px-0 py-1.5 ps-1.5 pe-2',
             styles.modelSelectorButton,
             disabledIconClassName,
             isBlocked && styles.modelSelectorButtonDisabled,
@@ -226,7 +226,7 @@ export const ModelSelectorControl: FC<Props> = ({
           iconAfter={caretIcon}
           textClassName="min-w-0"
           label={
-            <span className="flex min-w-0 max-w-[180px] items-baseline gap-1">
+            <span className="flex max-w-[180px] min-w-0 items-baseline gap-1">
               <span
                 className={mergeClasses(
                   'dial-small-text max-w-[180px] shrink-0 truncate',

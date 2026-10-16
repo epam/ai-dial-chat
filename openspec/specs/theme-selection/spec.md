@@ -11,8 +11,8 @@ keys.
 
 A DIAL deployment is rebranded by pointing `THEMES_CONFIG_URL` at a themes host; `chat-api` proxies
 its `config.json` at `GET /api/themes`. `ThemeProvider` applies the chosen theme's `colors` as CSS
-custom properties on the `<html>` element, over the light-theme hex fallbacks compiled into
-`tailwind.config.js`. Every theme the host serves is selectable, not only `light` and `dark`.
+custom properties on the `<html>` element, over the light-theme hex fallbacks in
+`tools/tailwind/theme.css`. Every theme the host serves is selectable, not only `light` and `dark`.
 
 **State ownership**: `ThemeContext` (`apps/chat/src/context/ThemeContext.tsx`) owns the preference;
 `useThemeOptions` derives the picker's option list from it. No new context is introduced.

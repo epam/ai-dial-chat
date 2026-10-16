@@ -74,7 +74,7 @@ export const Tools: FC<ToolsProps> = ({
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-3 pb-2 pt-4">
+      <div className="flex flex-col gap-3 pt-4 pb-2">
         <Search
           value={query}
           placeholder={columnLabels.searchPlaceholder}
@@ -131,7 +131,7 @@ export const Tools: FC<ToolsProps> = ({
                 <code
                   key="name"
                   className={mergeClasses(
-                    'text-inherit border-none bg-transparent p-0',
+                    'border-none bg-transparent p-0 text-inherit',
                     styles.code,
                   )}
                 >
@@ -140,7 +140,7 @@ export const Tools: FC<ToolsProps> = ({
                 <code
                   key="type"
                   className={mergeClasses(
-                    'text-inherit border-none bg-transparent p-0',
+                    'border-none bg-transparent p-0 text-inherit',
                     styles.code,
                   )}
                 >
@@ -163,7 +163,7 @@ export const Tools: FC<ToolsProps> = ({
                 <code
                   key="key"
                   className={mergeClasses(
-                    'text-inherit border-none bg-transparent p-0',
+                    'border-none bg-transparent p-0 text-inherit',
                     styles.code,
                   )}
                 >

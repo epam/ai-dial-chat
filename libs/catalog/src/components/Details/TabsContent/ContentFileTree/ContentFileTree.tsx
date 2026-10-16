@@ -147,7 +147,7 @@ export const ContentFileTree: FC<ContentFileTreeProps> = ({
 
   const rowClassName = (isFocused: boolean) =>
     mergeClasses(
-      'flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-2 px-3 outline-none',
+      'flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-2 px-3 outline-hidden',
       'hover:bg-control-accent-alpha-hover focus-visible:bg-control-accent-alpha-hover',
       isFocused && 'bg-control-accent-alpha-hover',
     );

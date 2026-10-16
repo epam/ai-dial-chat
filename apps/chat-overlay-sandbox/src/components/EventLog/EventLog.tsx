@@ -90,7 +90,7 @@ const EventLog: FC<EventLogProps> = ({
 
       <aside
         id={panelId}
-        className={`fixed inset-x-0 bottom-0 z-[10000] flex max-h-[65dvh] flex-col rounded-t-[18px] border border-secondary bg-layer-raised px-4 py-4 shadow-lg transition-[transform,visibility] duration-200 motion-reduce:transition-none desktop:inset-y-0 desktop:end-0 desktop:start-auto desktop:max-h-none desktop:w-[min(560px,48vw)] desktop:rounded-e-none desktop:rounded-s-2xl desktop:px-5 desktop:py-6 ${
+        className={`fixed inset-x-0 bottom-0 z-[10000] flex max-h-[65dvh] flex-col rounded-t-[18px] border border-secondary bg-layer-raised px-4 py-4 shadow-lg transition-[transform,visibility] duration-200 motion-reduce:transition-none desktop:inset-y-0 desktop:start-auto desktop:end-0 desktop:max-h-none desktop:w-[min(560px,48vw)] desktop:rounded-s-2xl desktop:rounded-e-none desktop:px-5 desktop:py-6 ${
           isOpen
             ? 'visible translate-y-0 desktop:translate-x-0 desktop:rtl:translate-x-0'
             : 'invisible translate-y-full desktop:translate-x-full desktop:translate-y-0 desktop:rtl:-translate-x-full'
@@ -130,7 +130,7 @@ const EventLog: FC<EventLogProps> = ({
 
         <div
           ref={scrollRef}
-          className="focus-visible:outline-offset-3 min-h-[120px] flex-1 overflow-auto overscroll-contain rounded-lg border border-secondary bg-layer-base px-3 py-2.5 font-mono text-[0.8125rem] leading-6 text-primary focus-visible:outline focus-visible:outline-2"
+          className="min-h-[120px] flex-1 overflow-auto overscroll-contain rounded-lg border border-secondary bg-layer-base px-3 py-2.5 font-mono text-[0.8125rem] leading-6 text-primary focus-visible:outline-2 focus-visible:outline-offset-3"
           role="log"
           aria-live="polite"
           aria-relevant="additions"

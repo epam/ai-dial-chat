@@ -1379,7 +1379,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onChange={handleImportFileChange}
       />
 
-      <div className="fixed bottom-4 end-4 z-[70] flex flex-col-reverse gap-2">
+      <div className="fixed end-4 bottom-4 z-[70] flex flex-col-reverse gap-2">
         <TransferQueue
           title={importQueueTitle}
           items={importQueueItems}

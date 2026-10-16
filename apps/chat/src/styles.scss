@@ -1,14 +1,18 @@
-@use 'tailwindcss/base';
-@use 'tailwindcss/components';
-@use 'tailwindcss/utilities';
 @use './styles/mcp-app-ui-vars';
 
-@layer base {
-  html,
-  body,
-  #root {
-    @apply size-full overflow-hidden bg-layer-base text-primary;
-    font-family: 'Inter', sans-serif;
-    --theme-font: 'Inter', sans-serif;
-  }
+/*
+ * Written out rather than `@apply`-ed: Tailwind runs on `tailwind.css`, which
+ * `main.tsx` imports just before this file. The values are what
+ * `size-full overflow-hidden bg-layer-base text-primary` compiled to.
+ */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-layer-base, #f5f7fa);
+  color: var(--text-primary, #161b2d);
+  font-family: 'Inter', sans-serif;
+  --theme-font: 'Inter', sans-serif;
 }
