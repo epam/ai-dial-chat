@@ -335,6 +335,12 @@ When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWi
 - **THEN** `sharedWithMeIds` contains `/Shared with me/{name}`, equal to that row's `path`
 - **AND** the Unshare action is enabled for that row
 
+#### Scenario: Search results on the Shared tab carry the same row path as the listing
+
+- **WHEN** the user searches on the `shared` tab and a result is a file nested in the owner's bucket
+- **THEN** its `path` is `/Shared with me/{name}` at the Shared root, or relative to the opened shared folder inside it, never the location in the owner's bucket
+- **AND** the Unshare action is enabled for it exactly as for the same row selected from the list
+
 #### Scenario: sharedWithMeIds absent on My files tab
 
 - **WHEN** the active tab is `my_files`

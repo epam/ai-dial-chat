@@ -17,6 +17,7 @@ import {
   findFirstSuccessfulCopyMoveItem,
   mapCorePermissions,
   mapFileMetadataToDialFile,
+  buildSharedSearchScope,
   mapSearchItem,
   mergeCreatedFolderIntoCache,
   updateEntry,
@@ -311,6 +312,40 @@ describe('updateEntry', () => {
     const result = updateEntry(batch, '2', { percent: 42 });
     expect(result?.files[1].percent).toBe(42);
     expect(result?.files[1].status).toBe(FileUploadStatus.Queued);
+  });
+});
+
+describe('mapSearchItem on the Shared tab', () => {
+  const nested: ListFilesItemDto = {
+    name: 'a.pdf',
+    path: 'owner/folder/a.pdf',
+    folderId: 'owner',
+    nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+    bucket: 'owner',
+    url: 'files/owner/folder/a.pdf',
+  };
+
+  it('places a file nested in the owner bucket directly under the root, like the listing row', () => {
+    const scope = buildSharedSearchScope('Shared with me', '', new Map());
+    const result = mapSearchItem(nested, 'me', 'Shared with me', scope);
+    expect(result.path).toBe('/Shared with me/a.pdf');
+    expect(result.parentPath).toBe('/Shared with me');
+  });
+
+  it('maps a nested shared-folder result relative to the shared folder', () => {
+    const meta = new Map([
+      ['shared', { bucket: 'owner', dialCorePath: 'files/owner/x/shared/' }],
+    ]);
+    const item: ListFilesItemDto = {
+      ...nested,
+      path: 'owner/x/shared/sub/b.pdf',
+      name: 'b.pdf',
+      url: 'files/owner/x/shared/sub/b.pdf',
+    };
+    const scope = buildSharedSearchScope('Shared with me', 'shared/', meta);
+    expect(mapSearchItem(item, 'me', 'Shared with me', scope).path).toBe(
+      '/Shared with me/shared/sub/b.pdf',
+    );
   });
 });
 
