@@ -109,6 +109,8 @@ Parity gate: before deleting the v3 path, a one-off script (scratch, not committ
 | `hover:`                           | every device                  | `(hover: hover)` only         | Keep (matches the kit). Where a tap state matters, add `active:`, found during the 5.3 audit                     |
 | `space-x/y-*`, `divide-*`          | `> * + *`                     | `> :not(:last-child)`         | Visual result is the same for flow layouts; spot-check RTL screens                                               |
 
+**Measured in slice 2** (the parity script, tasks 2.4): the `border` and bare-`ring` rows above do not apply. `borderColors` has no `DEFAULT`, so v3's preflight already painted `currentColor`, and no source uses a bare `ring`. The `rounded-sm` / `drop-shadow-sm` rows, and three more v4 scale moves the check found (`drop-shadow-md`, `blur-sm`, the unitless `text-*` line heights), are pinned to their v3 values in `tools/tailwind/theme.css` instead of renaming classes. `outline-none` is the only rename left.
+
 The official `@tailwindcss/upgrade` codemod is **not** run across the tree. It rewrites class spellings wholesale, which the kit deliberately avoided (Non-Goals). It may be run in dry-run mode to list candidates.
 
 ### D8. Linting and formatting
@@ -128,13 +130,13 @@ The official `@tailwindcss/upgrade` codemod is **not** run across the tree. It r
 
 Risk-first slicing, each slice merged green on its own:
 
-1. Bump the kit and file manager, drop dist scanning (chat still on v3). Verify.
+1. Bump the kit and file manager, drop the kit's dist scanning (chat still on v3). Verify.
 2. Add `tools/tailwind/theme.css` and the parity script; prove v3 vs v4 class parity on the root preset.
-3. Switch `apps/chat` (Vite plugin, entry, D7 fixes, breakpoint spec).
-4. Switch `tools/vite-lib-tailwind-utilities.mjs`, run per-lib parity, delete lib configs.
-5. Switch the sandbox, Storybook, lint and prettier; delete the root config; update docs.
+3. Engine switch in one commit: the root `tailwindcss` package, `apps/chat` (Vite plugin, entry), `tools/vite-lib-tailwind-utilities.mjs`, lib config deletion, D7 fixes, ESLint and Prettier. These cannot be split. `apps/chat` compiles every `libs/*/src` class, a v4-only rename (`outline-hidden`) would render nothing in a v3 lib build, and `eslint-plugin-tailwindcss@3` / `prettier-plugin-tailwindcss` resolve the root `tailwindcss` package.
+4. Switch the sandbox and Storybook, and delete the root config and the v3 alias.
+5. Update docs.
 
-Rollback: each slice is one revertable commit. Slices 3–5 depend on 2 only, and slice 1 is independent.
+Rollback: each slice is one revertable commit. Slices 3–4 depend on 2, and slice 1 is independent.
 
 ## Open Questions
 
