@@ -43,7 +43,7 @@ const NotFoundPage: FC = () => {
           <p
             aria-label={t(NotFoundI18nKeys.Eyebrow)}
             className={mergeClasses(
-              'relative mb-4 inline-flex items-center justify-center font-bold text-transparent [gap:0.04em]',
+              'relative mb-4 inline-flex items-center justify-center [gap:0.04em] font-bold text-transparent',
               styles.code,
             )}
           >

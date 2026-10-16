@@ -638,7 +638,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         </div>
       )}
 
-      <div className="fixed bottom-4 end-4 z-[70]">
+      <div className="fixed end-4 bottom-4 z-[70]">
         <TransferQueue
           title={labels.getUploadQueueTitle(uploadQueueItems.length)}
           items={uploadQueueItems}

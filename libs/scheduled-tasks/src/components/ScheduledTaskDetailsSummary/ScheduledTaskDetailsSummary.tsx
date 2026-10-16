@@ -80,7 +80,7 @@ export const ScheduledTaskDetailsSummary: FC<
           <p
             className={mergeClasses(
               fieldValueClassName,
-              'whitespace-normal break-all',
+              'break-all whitespace-normal',
             )}
           >
             {skillDisplayNames?.map((name, index) => (

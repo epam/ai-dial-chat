@@ -265,7 +265,7 @@ export const BrowseSettingsSheet: FC<BrowseSettingsSheetProps> = ({
                 />
                 <div
                   className={mergeClasses(
-                    'px-[10px] pb-1 pt-[10px]',
+                    'px-[10px] pt-[10px] pb-1',
                     typography?.filterSectionLabelClassName ??
                       'dial-tiny-lead-semi-text',
                     filterStyles.sectionLabel,

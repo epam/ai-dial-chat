@@ -18,7 +18,7 @@ const SecretComposer: FC = () => {
   const [result, setResult] = useState('');
   return (
     <form
-      className="bg-layer-2 fixed bottom-3 end-3 z-[80] flex gap-2 rounded border p-2"
+      className="bg-layer-2 fixed end-3 bottom-3 z-[80] flex gap-2 rounded border p-2"
       onSubmit={(event) => {
         event.preventDefault();
         setResult(

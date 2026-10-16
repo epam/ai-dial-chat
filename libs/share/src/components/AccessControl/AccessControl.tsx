@@ -145,7 +145,7 @@ export const AccessControl: FC<AccessControlProps> = ({
         <span
           aria-label={accessAriaLabel}
           className={mergeClasses(
-            'flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-3',
+            'flex h-10 shrink-0 items-center rounded-full px-3 whitespace-nowrap',
             styles.accessTriggerBtn,
           )}
         >

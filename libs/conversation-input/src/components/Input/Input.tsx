@@ -895,7 +895,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           styles.textarea,
           isMirrorActive && styles.textareaMentionMode,
           typography?.fontClassName || 'dial-body-paragraph-text',
-          'relative z-0 max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent pe-1 ps-1 outline-none [field-sizing:content]',
+          'relative z-0 [field-sizing:content] max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent ps-1 pe-1 outline-hidden',
           'disabled:cursor-not-allowed',
         )}
         ref={textareaRef}
@@ -1027,7 +1027,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       <div
         ref={textareaAreaRef}
         // Bleeds 4px past each edge, canceling the ps-1/pe-1 below.
-        className="relative -me-1 -ms-1 w-[calc(100%+8px)]"
+        className="relative -ms-1 -me-1 w-[calc(100%+8px)]"
       >
         {isMirrorActive && (
           <div
@@ -1036,7 +1036,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
               styles.textarea,
               typography?.fontClassName || 'dial-body-paragraph-text',
               // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
-              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden whitespace-pre-wrap pe-1 ps-1 [overflow-wrap:anywhere]',
+              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden ps-1 pe-1 [overflow-wrap:anywhere] whitespace-pre-wrap',
             )}
           >
             {renderHighlightedText(
@@ -1221,7 +1221,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           />
         )}
         {voiceError && (
-          <ErrorText text={voiceError} className="min-w-0 break-words px-1" />
+          <ErrorText text={voiceError} className="min-w-0 px-1 break-words" />
         )}
         {isVoiceActive && (
           <VoiceBar

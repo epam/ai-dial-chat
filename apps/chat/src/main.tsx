@@ -28,6 +28,7 @@ import { UiFeaturesProvider } from './context/UiFeaturesContext';
 import { UserConfigProvider } from './context/UserConfigContext';
 import { VisualizerMessageProvider } from './context/VisualizerMessageContext';
 import './i18n/config';
+import './tailwind.css';
 import './styles.scss';
 import { registerChunkLoadRecovery } from './utils/chunk-load-recovery';
 

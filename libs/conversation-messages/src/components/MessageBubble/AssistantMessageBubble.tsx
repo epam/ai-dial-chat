@@ -128,10 +128,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           }}
         />
       )}
-      <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">
+      <div className="flex w-full max-w-full min-w-0 flex-col items-start gap-5">
         <div
           className={mergeClasses(
-            'flex w-full min-w-0 max-w-full flex-col items-start gap-4',
+            'flex w-full max-w-full min-w-0 flex-col items-start gap-4',
             bubbleClassName,
           )}
         >
@@ -157,7 +157,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               aria-atomic="false"
               className={mergeClasses(
                 textClass,
-                'relative min-w-0 max-w-full text-start',
+                'relative max-w-full min-w-0 text-start',
                 /*
                  * `text-indent` inherits, so the indent targets the markdown
                  * container's first block child (a leading list indents its
@@ -186,7 +186,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                */}
               <div
                 ref={contentRef}
-                className="cm-bubble-markdown min-w-0 max-w-full"
+                className="cm-bubble-markdown max-w-full min-w-0"
               >
                 <MDMessageViewer
                   content={text ?? ''}

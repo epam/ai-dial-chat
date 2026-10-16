@@ -1,0 +1,8 @@
+/*
+ * A complete Tailwind entry over the workspace theme, for tools that need one
+ * file to load the whole configuration from: `eslint-plugin-tailwindcss`
+ * (`cssConfigPath`) and `prettier-plugin-tailwindcss` (`tailwindStylesheet`).
+ * Builds import `theme.css` from their own entries instead.
+ */
+@import 'tailwindcss';
+@import './theme.css';

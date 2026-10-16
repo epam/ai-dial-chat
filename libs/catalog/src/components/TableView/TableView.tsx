@@ -138,7 +138,7 @@ export const TableView: FC<TableViewProps> = ({
         <section>
           <p
             className={mergeClasses(
-              'mb-3 mt-0',
+              'mt-0 mb-3',
               sectionClassName,
               styles.sectionHeading,
             )}

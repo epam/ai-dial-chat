@@ -97,7 +97,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
       style={cssVars}
       className={mergeClasses(
         'flex flex-col gap-2',
-        isCollapsible ? 'w-full min-w-0 max-w-[532px]' : 'max-w-[424px]',
+        isCollapsible ? 'w-full max-w-[532px] min-w-0' : 'max-w-[424px]',
         styles.container,
         className,
       )}

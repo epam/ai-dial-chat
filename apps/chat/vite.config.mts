@@ -1,4 +1,5 @@
 /// <reference types='vitest' />
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
@@ -26,7 +27,7 @@ export default defineConfig(() => ({
     port: 4207,
     host: 'localhost',
   },
-  plugins: [trustedStyleNoncePlugin(), react(), svgr()],
+  plugins: [trustedStyleNoncePlugin(), tailwindcss(), react(), svgr()],
   resolve: {
     alias: {
       /* remark-math resolves math delimiters through micromark-extension-math, which only

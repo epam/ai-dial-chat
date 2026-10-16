@@ -658,7 +658,7 @@ export const PdfContent: FC<PdfContentProps> = ({
                   role="region"
                   aria-label={thumbnailsLabel}
                   onScroll={handlePanelScroll}
-                  className="max-h-[70vh] min-h-0 overflow-y-auto overflow-x-hidden p-1 [scrollbar-gutter:stable]"
+                  className="max-h-[70vh] min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto p-1"
                 >
                   <div style={{ height: topSpacerHeight }} />
                   {thumbnailItems}

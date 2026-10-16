@@ -502,7 +502,7 @@ const NewConversationComposer: FC<Props> = ({
     introText || children != null ? (
       <>
         {introText && (
-          <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">
+          <p className="dial-small-text mt-4 mb-4 max-w-3xl text-center text-secondary">
             {introText}
           </p>
         )}
@@ -538,7 +538,7 @@ const NewConversationComposer: FC<Props> = ({
           ([#9036](https://github.com/epam/ai-dial-chat/issues/9036)). */}
       <div
         className={mergeClasses(
-          'relative flex flex-auto shrink-0 flex-col items-center overflow-hidden [container-type:inline-size]',
+          '[container-type:inline-size] relative flex flex-auto shrink-0 flex-col items-center overflow-hidden',
           isInlineLayout
             ? 'justify-end px-6'
             : 'justify-center px-4 py-14 desktop:px-8 desktop:py-16',

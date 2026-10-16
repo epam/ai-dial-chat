@@ -1,6 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StorybookConfig } from '@storybook/react-vite';
+import tailwindcss from '@tailwindcss/vite';
 
 const getAbsolutePath = (value: string): string =>
   dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
@@ -37,17 +38,20 @@ const config: StorybookConfig = {
       },
     },
     build: { ...viteConfig.build, lib: false },
-    plugins: (viteConfig.plugins ?? [])
-      .flat()
-      .filter(
-        (plugin) =>
-          !(
-            plugin &&
-            typeof plugin === 'object' &&
-            'name' in plugin &&
-            LIBRARY_ONLY_PLUGINS.has(plugin.name)
-          ),
-      ),
+    plugins: [
+      ...(viteConfig.plugins ?? [])
+        .flat()
+        .filter(
+          (plugin) =>
+            !(
+              plugin &&
+              typeof plugin === 'object' &&
+              'name' in plugin &&
+              LIBRARY_ONLY_PLUGINS.has(plugin.name)
+            ),
+        ),
+      tailwindcss(),
+    ],
   }),
 };
 

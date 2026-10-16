@@ -1,0 +1,307 @@
+/*
+ * The workspace design tokens and custom variants, as Tailwind v4 theme keys.
+ * Every Tailwind entry in the workspace imports this file: `apps/chat`, the
+ * overlay sandbox, Storybook previews and `tools/vite-lib-tailwind-utilities.mjs`.
+ *
+ * `inline reference`: a utility gets the value written into it and nothing
+ * here is declared on `:root`. Several keys share a name with the theme
+ * variable they read (`--shadow-sm: … var(--shadow-sm, …)`), which would
+ * reference itself on `:root`, and a published lib's stylesheet must never
+ * replace a host's own Tailwind theme.
+ *
+ * Every colour reads the CSS variable a theme from `ThemeProvider` sets, with
+ * the light palette as its fallback. Values are carried over byte-for-byte
+ * from the former Tailwind v3 preset.
+ */
+@theme inline reference {
+  /* Backgrounds: bg-*, and fill-* through the utility below. */
+  --background-color-transparent: transparent;
+  --background-color-layer-sunken: var(
+    --bg-layer-sunken,
+    #eef1f7
+  ); /* grey-150 */
+  --background-color-layer-base: var(--bg-layer-base, #f5f7fa); /* grey-100 */
+  --background-color-layer-raised: var(
+    --bg-layer-raised,
+    #fcfcfc
+  ); /* grey-50 */
+  --background-color-error: var(--bg-error, #f3d6d8); /* red-100 */
+  --background-color-warning: var(--bg-warning, #faf0cf); /* yellow-100 */
+  --background-color-info: var(--bg-info, #e1eaf9); /* blue-100 */
+  --background-color-success: var(--bg-success, #dbf1eb); /* green-100 */
+  --background-color-backdrop: var(
+    --bg-backdrop,
+    #161b2d4d
+  ); /* grey-1000 alpha-30 */
+  /* Control backgrounds. */
+  --background-color-gradient-1: var(--bg-gradient-1, #1d4ed8); /* blue-500 */
+  --background-color-gradient-1-hover: var(
+    --bg-gradient-1-hover,
+    #6785fb
+  ); /* blue-200 */
+  --background-color-gradient-1-active: var(
+    --bg-gradient-1-active,
+    #1d4ed8
+  ); /* blue-500 */
+  --background-color-gradient-2: var(--bg-gradient-2, #885df2); /* violet-300 */
+  --background-color-gradient-2-hover: var(
+    --bg-gradient-2-hover,
+    #885df2
+  ); /* violet-300 */
+  --background-color-gradient-2-active: var(
+    --bg-gradient-2-active,
+    #7c3aed
+  ); /* violet-500 */
+  --background-color-control-accent-alpha: var(
+    --bg-control-accent-alpha,
+    #2764d90f
+  ); /* blue-500 alpha-6 */
+  --background-color-control-accent-alpha-hover: var(
+    --bg-control-accent-alpha-hover,
+    #2764d924
+  ); /* blue-500 alpha-14 */
+  --background-color-control-accent-alpha-active: var(
+    --bg-control-accent-alpha-active,
+    #2764d933
+  ); /* blue-500 alpha-20 */
+  --background-color-control-accent: var(
+    --bg-control-accent,
+    #1d4ed8
+  ); /* blue-500 */
+  --background-color-control-accent-hover: var(
+    --bg-control-accent-hover,
+    #5976e9
+  ); /* blue-300 */
+  --background-color-control-neutral: var(
+    --bg-control-neutral,
+    #fcfcfc
+  ); /* grey-50 */
+  --background-color-control-neutral-hover-muted: var(
+    --bg-control-neutral-hover-muted,
+    #e0e6f0
+  ); /* grey-250 */
+  --background-color-control-neutral-hover-strong: var(
+    --bg-control-neutral-hover-strong,
+    #848e9c
+  ); /* grey-600 */
+  --background-color-control-neutral-active: var(
+    --bg-control-neutral-active,
+    #d1dbea
+  ); /* grey-350 */
+  --background-color-control-neutral-default: var(
+    --bg-control-neutral-default,
+    #acb3c3
+  ); /* grey-450 */
+  --background-color-control-inverted: var(
+    --bg-control-inverted,
+    #57647a
+  ); /* grey-800 */
+  --background-color-control-error: var(
+    --bg-control-error,
+    #ae2f2f
+  ); /* red-800 */
+  --background-color-control-error-hover: var(
+    --bg-control-error-hover,
+    #bf3939
+  ); /* red-700 */
+  --background-color-control-error-active: var(
+    --bg-control-error-active,
+    #cc4545
+  ); /* red-600 */
+  --background-color-control-error-alpha-hover: var(
+    --bg-control-error-alpha-hover,
+    #f764641a
+  ); /* red-400 alpha-10 */
+  --background-color-control-error-alpha-active: var(
+    --bg-control-error-alpha-active,
+    #f7646433
+  ); /* red-400 alpha-20 */
+  --background-color-control-disable-primary: var(
+    --bg-control-disable-primary,
+    #dce0e8
+  ); /* grey-300 */
+  --background-color-control-disable-secondary: var(
+    --bg-control-disable-secondary,
+    #acb3c3
+  ); /* grey-450 */
+  /* Visual (illustration) backgrounds. */
+  --background-color-blue: var(--bg-visual-blue, #d6edf9); /* blue-50 */
+  --background-color-green-1: var(--bg-visual-green-1, #cde8e5); /* green-200 */
+  --background-color-green-2: var(--bg-visual-green-2, #d1f0dc); /* green-300 */
+  --background-color-brown: var(--bg-visual-brown, #fde8d8); /* brown-300 */
+  --background-color-red: var(--bg-visual-red, #fce7f3); /* red-200 */
+  --background-color-violet-1: var(
+    --bg-visual-violet-1,
+    #dde3f9
+  ); /* violet-100 */
+  --background-color-violet-2: var(
+    --bg-visual-violet-2,
+    #f1e9ff
+  ); /* violet-150 */
+
+  /* Borders: border-*, divide-*, and stroke-* / outline-* through the utilities below. */
+  --border-color-transparent: transparent;
+  --border-color-primary: var(--stroke-primary, #57647a); /* grey-800 */
+  --border-color-secondary: var(--stroke-secondary, #d1dbea); /* grey-350 */
+  --border-color-tertiary: var(--stroke-tertiary, #e0e6f0); /* grey-250 */
+  --border-color-error: var(--stroke-error, #ae2f2f); /* red-800 */
+  --border-color-warning: var(--stroke-warning, #eec840); /* yellow-500 */
+  --border-color-info: var(--stroke-info, #1d4ed8); /* blue-500 */
+  --border-color-accent: var(--stroke-accent, #1d4ed8); /* blue-500 */
+  --border-color-success: var(--stroke-success, #007274); /* green-800 */
+  --border-color-default: var(--stroke-default, #b2c2dd); /* grey-400 */
+  --border-color-accent-alpha: var(
+    --stroke-accent-alpha,
+    #2764d933
+  ); /* blue-500 alpha-20 */
+  --border-color-gradient-1: var(--stroke-gradient-1, #5976e9); /* blue-300 */
+  --border-color-gradient-2: var(--stroke-gradient-2, #885df2); /* violet-300 */
+  --border-color-focus: var(--stroke-focus, #161b2d); /* grey-1000 */
+  --border-color-accent-focus: var(
+    --stroke-accent-focus,
+    #6785fb
+  ); /* blue-200 */
+  --border-color-error-alpha: var(
+    --stroke-error-alpha,
+    #ae2f2f73
+  ); /* red-800 alpha-45 */
+  --border-color-control-disable-primary: var(
+    --stroke-control-disable-primary,
+    #848e9c
+  ); /* grey-600 */
+
+  /* Text. */
+  --text-color-transparent: transparent;
+  --text-color-primary: var(--text-primary, #161b2d); /* grey-1000 */
+  --text-color-secondary: var(--text-secondary, #57647a); /* grey-800 */
+  --text-color-tertiary: var(--text-tertiary, #848e9c); /* grey-600 */
+  --text-color-accent: var(--text-accent, #1d4ed8); /* blue-500 */
+  --text-color-error: var(--text-error, #ae2f2f); /* red-800 */
+  --text-color-warning: var(--text-warning, #7f6300); /* yellow-800 */
+  --text-color-warning-icon: var(--text-warning-icon, #eec840); /* yellow-500 */
+  --text-color-info: var(--text-info, #1d4ed8); /* blue-500 */
+  --text-color-success: var(--text-success, #007274); /* green-800 */
+  /* Control text. */
+  --text-color-control-permanent: var(
+    --text-control-permanent,
+    #fcfcfc
+  ); /* grey-50 */
+  --text-color-control-inverted: var(
+    --text-control-inverted,
+    #fcfcfc
+  ); /* grey-50 */
+  --text-color-control-disable-primary: var(
+    --text-control-disable-primary,
+    #848e9c
+  ); /* grey-600 */
+  --text-color-control-disable-secondary: var(
+    --text-control-disable-secondary,
+    #dce0e8
+  ); /* grey-300 */
+  --text-color-control-accent-hover: var(
+    --text-control-accent-hover,
+    #5976e9
+  ); /* blue-300 */
+  --text-color-control-accent-active: var(
+    --text-control-accent-active,
+    #6785fb
+  ); /* blue-200 */
+  /* Visual (illustration) text. */
+  --text-color-blue: var(--text-visual-blue, #1189c8); /* blue-250 */
+  --text-color-green-1: var(--text-visual-green-1, #059669); /* green-500 */
+  --text-color-green-2: var(--text-visual-green-2, #0d6e72); /* green-600 */
+  --text-color-green-3: var(--text-visual-green-3, #065f46); /* green-900 */
+  --text-color-brown-1: var(--text-visual-brown-1, #d36817); /* brown-400 */
+  --text-color-brown-2: var(--text-visual-brown-2, #b45309); /* brown-500 */
+  --text-color-red: var(--text-visual-red, #9d174d); /* red-900 */
+  --text-color-violet-1: var(--text-visual-violet-1, #7c3aed); /* violet-500 */
+  --text-color-violet-2: var(--text-visual-violet-2, #3730b7); /* violet-800 */
+
+  /* Placeholder text: placeholder-*. */
+  --placeholder-color-primary: var(--text-primary, #161b2d); /* grey-1000 */
+
+  /* Shadows: the design scale, plus the chat button's own two-layer shadow. */
+  --shadow-xs:
+    0 1px 4px 0 var(--shadow-xs-1, #2764d933),
+    0 1px 2px 0 var(--shadow-xs-2, #161b2d08);
+  --shadow-chat-button:
+    0 2px 12px 0 var(--shadow-xs-1, #2764d933),
+    0 2px 6px 0 var(--shadow-xs-2, #161b2d08);
+  --shadow-sm: 0 8px 10px 0 var(--shadow-sm, #2764d914);
+  --shadow-md: 0 8px 24px 0 var(--shadow-md, #2764d90f);
+  --shadow-lg: 0 8px 44px 0 var(--shadow-lg, #2764d914);
+
+  /*
+   * Tailwind v4 moved `rounded-sm`, `drop-shadow-sm`/`-md` and `blur-sm` along
+   * its scale. Pinned to the v3 values so existing classes keep rendering as
+   * before; the bare `rounded` is the 4px control radius.
+   */
+  --radius: 4px;
+  --radius-sm: 0.125rem;
+  --drop-shadow-sm: 0 1px 1px rgb(0 0 0 / 0.05);
+  --drop-shadow-md: 0 4px 3px rgb(0 0 0 / 0.07), 0 2px 2px rgb(0 0 0 / 0.06);
+  --blur-sm: 4px;
+
+  /*
+   * Tailwind v4 writes the type scale's line heights as unitless ratios,
+   * which a child with its own font size inherits as a ratio. v3 used rem, so
+   * a child kept the parent's line box; these keep the v3 values.
+   */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+
+  /*
+   * Tailwind v3's default stack, which preflight gives `html`. Tailwind 4.3
+   * swapped its own default for an `-apple-system` stack.
+   */
+  --font-sans:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+
+  --animate-fadeIn: fadeIn 100ms ease-in;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+}
+
+/*
+ * The two responsive bands. Single source: DESKTOP_BREAKPOINT_PX in
+ * libs/chat-shared/src/constants/breakpoint.ts. CSS cannot import the
+ * constant, so the literals are pinned by
+ * apps/chat/src/hooks/breakpoint/breakpoint-sync.spec.ts. Tailwind v4's
+ * `--breakpoint-*` keys only produce min-width screens, hence custom variants.
+ */
+@custom-variant mobile (@media (max-width: 1279px));
+@custom-variant desktop (@media (min-width: 1280px));
+
+/*
+ * `fill-*` paints surfaces (a tooltip arrow, a chart area), so it takes the
+ * background tokens; `stroke-*` and `outline-*` take the border ones.
+ * Tailwind resolves these utilities from `--fill-*`, `--stroke-*` and
+ * `--outline-color-*` only. The core utilities stay: `fill-none`,
+ * `fill-current`, `stroke-2`, `outline-1` and `outline-offset-2` still come
+ * from Tailwind.
+ */
+@utility fill-* {
+  fill: --value(--background-color-*);
+}
+
+@utility stroke-* {
+  stroke: --value(--border-color-*);
+}
+
+@utility outline-* {
+  outline-color: --value(--border-color-*);
+}

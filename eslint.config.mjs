@@ -6,6 +6,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tailwindcss from 'eslint-plugin-tailwindcss';
 import testingLibrary from 'eslint-plugin-testing-library';
+import { fileURLToPath } from 'node:url';
 
 export default [
   ...nx.configs['flat/base'],
@@ -24,9 +25,9 @@ export default [
   {
     // `@nx/enforce-module-boundaries` is intended to police imports between Nx
     // project source code. Bundler/tooling configs that sit at a project root
-    // (tailwind.config.js, vite.config.ts, etc.) are workspace-level concerns
-    // that legitimately reach across the source graph (e.g. a lib presetting
-    // the root Tailwind theme so its isolated build emits matching CSS). Scope
+    // (vite.config.ts, etc.) are workspace-level concerns that legitimately
+    // reach across the source graph (e.g. a lib build importing the shared
+    // Tailwind theme so its isolated build emits matching CSS). Scope
     // the rule to `**/src/**` so it governs source code only — instead of
     // adding per-path `allow` exceptions every time a build config needs to
     // reach a sibling. The rest of the lint rules below keep their broader
@@ -57,6 +58,15 @@ export default [
       'jsx-a11y': jsxA11y,
       'react-hooks': reactHooks,
       tailwindcss,
+    },
+    settings: {
+      tailwindcss: {
+        // Absolute: a relative path is resolved against the nearest
+        // package.json of each linted file, and every app and lib has its own.
+        cssConfigPath: fileURLToPath(
+          new URL('./tools/tailwind/index.css', import.meta.url),
+        ),
+      },
     },
     rules: {
       // Prettier rules

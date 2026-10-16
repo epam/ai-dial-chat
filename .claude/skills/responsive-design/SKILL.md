@@ -11,12 +11,12 @@ The chat app must render correctly on mobile/tablet (≤1279px) and desktop (≥
 
 ## Project breakpoints
 
-Defined in `tailwind.config.js` (`extend.screens`) and inherited by all lib Tailwind configs via preset:
+Defined once in `tools/tailwind/theme.css` as Tailwind v4 custom variants, which every Tailwind build in the workspace (the app, every lib's published utilities, the overlay sandbox, Storybook) imports:
 
-```js
-// tailwind.config.js — extend.screens
-mobile: { max: '1279px' },  // ≤1279 px — phones and tablets
-desktop: { min: '1280px' }, // ≥1280 px — laptops and monitors
+```css
+/* tools/tailwind/theme.css */
+@custom-variant mobile (@media (max-width: 1279px)); /* ≤1279 px — phones and tablets */
+@custom-variant desktop (@media (min-width: 1280px)); /* ≥1280 px — laptops and monitors */
 ```
 
 | Prefix        | Range    | When to use                                 |
@@ -29,7 +29,7 @@ desktop: { min: '1280px' }, // ≥1280 px — laptops and monitors
 
 > **Do not use `small_tablet:`, `large_tablet:`, `large_desktop:`** — these prefixes are not in the config and Tailwind will silently ignore any class that uses them.
 >
-> **Do not use `sm:` / `md:` / `lg:` / `xl:`** — the default Tailwind breakpoints exist in the config (via `extend`) but are out of scope for this project and should not be used.
+> **Do not use `sm:` / `md:` / `lg:` / `xl:`** — Tailwind's default breakpoints still exist (they come with its default theme) but are out of scope for this project and should not be used.
 
 ## When to use Tailwind prefixes vs. a JS hook
 
@@ -48,29 +48,22 @@ desktop: { min: '1280px' }, // ≥1280 px — laptops and monitors
 
 Never call `window.matchMedia` directly inside components — go through the hook so the SSR fallback, listener cleanup, and breakpoint names stay consistent.
 
-## Library Tailwind configs
+## Library Tailwind builds
 
-`apps/chat/tailwind.config.js` presets the root config and so inherits the named breakpoints. The component libs (`libs/conversation-input`, `libs/conversation-messages`, and any future `libs/*` that ships Tailwind classes) **must also** `presets: [require('../../tailwind.config.js')]`:
+No lib carries a Tailwind or PostCSS config. Each publishable lib's `vite.config.mts` lists `createLibTailwindUtilities` from `tools/vite-lib-tailwind-utilities.mjs`, which compiles the classes the lib's own `src/**` uses against `tools/tailwind/theme.css` and appends them to `dist/index.css`. `apps/chat` scans `libs/*/src` from its own entry (`apps/chat/src/tailwind.css`), so a lib class works in the app with no per-lib setup. A new lib that ships Tailwind classes only needs the plugin in its Vite config.
 
-```js
-module.exports = {
-  presets: [require('../../tailwind.config.js')],
-  content: [join(__dirname, 'src/**/*.{ts,tsx}')],
-};
-```
+### Why one shared theme matters
 
-### Why presetting matters
+Libs build their CSS in isolation, and that CSS is what consumers may ultimately ship. A build that did not read the shared theme would:
 
-Libs build their own CSS in isolation (via `vite build` on the lib) and that CSS is what consumers may ultimately ship. Without the preset, an isolated lib build:
+- compile `mobile:` / `desktop:` as **unknown variants** and silently drop them — responsive utilities authored in the lib disappear from the emitted CSS;
+- lose every project token (`bg-layer-base`, `text-primary`, the `control-*` family, shadows), so classes referencing them would emit nothing in any context that does not also run the host app's Tailwind pass over the lib's source.
 
-- compiles `mobile:` / `desktop:` as **unknown prefixes** and silently drops them — responsive utilities authored in the lib disappear from the emitted CSS;
-- loses every project token (`bg-layer-1`, `text-primary`, the entire `controls-*` family, fonts, shadows) because those live on the root config's `theme` — classes referencing them fall back to Tailwind defaults, which means the lib ships visibly wrong colors in any context that does not also run the host app's Tailwind pass over the lib's source.
-
-Re-declaring the theme inline per lib would duplicate ~150 lines of tokens and introduce silent drift the next time someone adds a colour to the root config. The preset keeps a single source of truth.
+Re-declaring the theme per lib would duplicate ~150 lines of tokens and drift the next time someone adds a colour. The shared file keeps a single source of truth.
 
 ### Why this is allowed by `@nx/enforce-module-boundaries`
 
-The `require('../../tailwind.config.js')` import crosses the Nx project boundary into the workspace root — exactly the kind of import the `@nx/enforce-module-boundaries` rule normally rejects. We do **not** punch a per-path `allow` hole for it. Instead, the rule is scoped in `eslint.config.mjs` to source files only (`**/src/**/*.{ts,tsx,js,jsx,…}`). Project-root build configs (`tailwind.config.js`, `vite.config.ts`, `eslint.config.mjs`) are workspace-level tooling, not application source code, so the boundary rule does not police them — which matches what that rule was designed to enforce. If you add a new lib that ships Tailwind classes, just author its `tailwind.config.js` with the same preset; no eslint changes are needed.
+The Vite configs import `tools/vite-lib-tailwind-utilities.mjs`, and the theme is read from `tools/tailwind/`, outside any Nx project. The `@nx/enforce-module-boundaries` rule is scoped in `eslint.config.mjs` to source files only (`**/src/**/*.{ts,tsx,js,jsx,…}`). Project-root build configs (`vite.config.mts`, `eslint.config.mjs`) are workspace-level tooling, not application source code, so the boundary rule does not police them — which matches what that rule was designed to enforce.
 
 This tooling exception does not weaken source-code isolation. Hand-authored files under `libs/*/src`
 must still avoid host-owned integration knowledge (API/server-api/generated-client/auth/session/env/

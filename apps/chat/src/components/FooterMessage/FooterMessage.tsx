@@ -44,11 +44,11 @@ const FooterMessage: FC = () => {
   return (
     <section
       aria-label={t(FooterMessageI18nKeys.RegionAriaLabel)}
-      className="dial-tiny-text relative w-full px-4 pb-4 pt-1 text-center text-secondary desktop:px-8"
+      className="dial-tiny-text relative w-full px-4 pt-1 pb-4 text-center text-secondary desktop:px-8"
     >
       {isMessageVisible && (
         <div
-          className="[&_a:hover]:opacity-75 [&_a]:text-primary [&_a]:underline"
+          className="[&_a]:text-primary [&_a]:underline [&_a:hover]:opacity-75"
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
@@ -57,7 +57,7 @@ const FooterMessage: FC = () => {
         <p
           className={mergeClasses(
             'pointer-events-none text-end',
-            isMessageVisible && 'absolute bottom-4 end-4 desktop:end-8',
+            isMessageVisible && 'absolute end-4 bottom-4 desktop:end-8',
           )}
         >
           <span className="sr-only">

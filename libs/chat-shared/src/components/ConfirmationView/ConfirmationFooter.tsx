@@ -91,7 +91,7 @@ export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex items-center justify-end gap-2 px-4 py-4 desktop:px-6 rtl:flex-row-reverse rtl:justify-start',
+        'flex items-center justify-end gap-2 px-4 py-4 rtl:flex-row-reverse rtl:justify-start desktop:px-6',
         styles.footer,
       )}
     >
