@@ -73,7 +73,7 @@ The original plan put the chat's Tailwind in `@layer theme, base, components, ut
 plus the interim file-manager `@source` (D3) and `@source not` for specs, tests and stories.
 
 - Tailwind's default theme is imported `reference inline` in the app too. On `:root`, v4's `--shadow-sm`/`-md`/`-lg` would shadow the DIAL theme's shadow-colour variables of the same names and feed a whole shadow into `var(--shadow-sm, #fallback)`.
-- `tools/tailwind/preflight-v3.css` carries the four v3 preflight rules the kit also keeps (placeholder colour, pointer cursor, `:disabled` cursor, centred `<dialog>`). It sits before the utilities, as v3 had them, so a utility still wins a specificity tie.
+- `tools/tailwind/preflight-v3.css` restores the two v3 preflight rules that v4's unlayered preflight would override over the kit's layered copies: the `#9ca3af` placeholder colour (v4 sets `::placeholder` to 50% `currentcolor`) and the centred `<dialog>` (v4's universal `margin: 0`). The kit's other two extras, the pointer cursor on buttons and the `:disabled` default cursor, need no copy: v4's preflight sets no `cursor`, so the kit's rules apply unchallenged.
 - `styles.scss` keeps `mcp-app-ui-vars` and the `html, body, #root` block, written out as plain declarations. No chat code puts a utility on those elements, so its position after the utilities is equivalent.
 
 ### D5. `@tailwindcss/vite` for apps, `@tailwindcss/postcss` nowhere else
