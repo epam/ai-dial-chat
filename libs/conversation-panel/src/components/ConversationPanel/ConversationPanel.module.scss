@@ -26,7 +26,6 @@
 }
 
 .dropZoneActive {
-  /* `ring-1 ring-inset` in the drop-zone colour. */
   box-shadow: inset 0 0 0 1px
     var(--cp-drop-zone-ring, var(--stroke-accent, #1d4ed8));
 }
