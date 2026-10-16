@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
       displayName: 'Model',
       inputAttachmentTypes: ['text/plain'],
       maxInputAttachments: 3,
+      isHidden: false,
     },
   ],
   notify: vi.fn(),
@@ -158,6 +159,7 @@ const defaults = {
 beforeEach(() => {
   mocks.items[0].inputAttachmentTypes = ['text/plain'];
   mocks.items[0].maxInputAttachments = 3;
+  mocks.items[0].isHidden = false;
   mocks.notify.mockClear();
   mocks.maxBytes = 10000;
   mocks.deploymentConfiguration = null;
@@ -542,5 +544,37 @@ describe('ConversationView read-only duplicate action', () => {
     expect(
       screen.getByText('conversationPanel.duplicateUnavailableModel'),
     ).toBeTruthy();
+  });
+});
+
+describe('ConversationView — hidden model', () => {
+  const typeDraft = async () => {
+    const textarea = await screen.findByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+  };
+  const sendButton = () =>
+    screen.getByRole('button', { name: 'chat.sendMessage' });
+
+  it('blocks sending and explains why while the selected model is hidden', async () => {
+    mocks.items[0].isHidden = true;
+    render(<ConversationView {...defaults} onSend={vi.fn()} />);
+    await typeDraft();
+
+    expect(sendButton().getAttribute('aria-disabled')).toBe('true');
+    expect(
+      screen
+        .getByText('conversation.modelUnavailableNotice')
+        .getAttribute('role'),
+    ).toBe('status');
+  });
+
+  it('allows sending on a visible model, with no notice', async () => {
+    render(<ConversationView {...defaults} onSend={vi.fn()} />);
+    await typeDraft();
+
+    expect(sendButton().getAttribute('aria-disabled')).not.toBe('true');
+    expect(
+      screen.queryByText('conversation.modelUnavailableNotice'),
+    ).toBeNull();
   });
 });

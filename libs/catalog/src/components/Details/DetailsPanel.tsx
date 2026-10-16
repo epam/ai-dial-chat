@@ -90,6 +90,14 @@ const resolveUnpublishFolder = (
   return folders.length === 1 ? folders[0] : undefined;
 };
 
+/*
+ * A catalog publication cannot overwrite an existing version: DIAL Core
+ * rejects an `ADD` whose target exists ("Target resource already exists"),
+ * rejects a `DELETE` + `ADD` pair on the same target as duplicate urls, and
+ * `ADD_IF_ABSENT` silently skips the copy. So an already-published version
+ * blocks submit instead of offering "Update version" (issue #9427).
+ */
+const CATALOG_PUBLISH_ALLOWS_REPLACE = false;
 const NO_OP_PUBLISH = async () => undefined;
 const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
 const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
@@ -540,6 +548,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         hasWriteAccess: publishFlow.hasWriteAccess,
         isSubmitting: publishFlow.isSubmitting,
         hasSubmitError: publishFlow.hasSubmitError,
+        allowReplace: CATALOG_PUBLISH_ALLOWS_REPLACE,
       }),
     [
       publishFlow.selectedFolderPath,
@@ -1172,6 +1181,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               hasWriteAccess={publishFlow.hasWriteAccess}
               isSubmitting={publishFlow.isSubmitting}
               hasSubmitError={publishFlow.hasSubmitError}
+              allowReplace={CATALOG_PUBLISH_ALLOWS_REPLACE}
               author={publishFlow.author}
               onAuthorChange={publishFlow.setAuthor}
               publishCredentials={publishFlow.publishCredentials}
@@ -1396,6 +1406,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           hasExistingPublicationInFolder={
             publishFlow.hasExistingPublicationInFolder
           }
+          allowReplace={CATALOG_PUBLISH_ALLOWS_REPLACE}
           isSubmitDisabled={publishDerived.isSubmitDisabled}
           isSubmitLoading={publishDerived.isSubmitLoading}
           onCancel={handleClosePublish}

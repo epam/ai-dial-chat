@@ -163,6 +163,13 @@ export const getPublicationSourceCredentials = (
 ): boolean =>
   findPublishingResource(publication, sourceUrl)?.publishCredentials === true;
 
+/** The published copy's path the publication sends `sourceUrl` to, or `undefined` when it does not publish it. */
+export const getPublicationSourceTargetUrl = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): string | undefined =>
+  findPublishingResource(publication, sourceUrl)?.targetUrl;
+
 /**
  * Whether `publication` publishes `sourceUrl`.
  *

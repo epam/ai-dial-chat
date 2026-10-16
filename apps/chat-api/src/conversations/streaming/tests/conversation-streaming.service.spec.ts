@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import type { FeatureFlagsService } from '../../../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../../../app-config/feature-flags/feature-key.enum';
@@ -21,6 +21,7 @@ import { generationRequestsTotal } from '../../generation/generation-metrics';
 import { GENERATION_PERSISTENCE_ERROR } from '../../generation/persistence-error';
 import { ResponsesAdapter } from '../../generation/responses.adapter';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../../utils/conversation-view-state.server';
 import { ConversationStreamingService } from '../conversation-streaming.service';
 
@@ -199,6 +200,7 @@ describe('ConversationStreamingService', () => {
         modelDetails: { features: { chatCompletion: true } },
       }),
       getDeploymentInterfaces: vi.fn().mockResolvedValue([]),
+      resolveDeploymentItem: vi.fn().mockResolvedValue(null),
     } as unknown as DeploymentsService;
     /*
      * Defaults to enabled so existing Responses-selection tests (which cover
@@ -434,6 +436,38 @@ describe('ConversationStreamingService', () => {
       );
       return { sendSpy, res };
     };
+
+    it('refuses with conversationModelHidden and sends nothing when the requested model is hidden', async () => {
+      vi.mocked(mockDeploymentsService.resolveDeploymentItem).mockResolvedValue(
+        { id: 'gpt-4o', isHidden: true } as never,
+      );
+
+      const error = await callStream(baseConversation, 'Hello', 'gpt-4o').catch(
+        (err: unknown) => err,
+      );
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect((error as ForbiddenException).getResponse()).toMatchObject({
+        code: ConversationErrorCode.ModelHidden,
+      });
+      expect(
+        mockDialClient.client.sendChatCompletionRequest,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('streams normally once the conversation is switched to a visible model', async () => {
+      vi.mocked(mockDeploymentsService.resolveDeploymentItem).mockResolvedValue(
+        { id: 'gpt-4o-mini', isHidden: false } as never,
+      );
+
+      const { sendSpy } = await callStream(
+        { ...baseConversation, messages: [] },
+        'Hello',
+        'gpt-4o-mini',
+      );
+
+      expect(sendSpy).toHaveBeenCalled();
+    });
 
     it('forwards the client channel id as X-DIAL-CLIENT-CHANNEL-ID when provided', async () => {
       const conversation = {

@@ -139,11 +139,18 @@ The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) whe
 - **THEN** the Header renders the Publish action
 
 ### Requirement: The submit button label never embeds the destination name
-`PublishFooter`'s submit button SHALL read a fixed label (`'Publish'`, or `'Update version {version}'` when replacing an existing version) regardless of which folder or the root is selected. The destination name SHALL NOT be interpolated into the button label, since folder/entity names of arbitrary length would overflow the button.
+`PublishFooter`'s submit button SHALL read a fixed label (`'Publish'`, or `'Update version {version}'` when replacing an existing version is allowed) regardless of which folder or the root is selected. The destination name SHALL NOT be interpolated into the button label, since folder/entity names of arbitrary length would overflow the button.
 
 #### Scenario: A long destination folder name is selected
 - **WHEN** the user selects a destination folder or the root with an arbitrarily long name
-- **THEN** the submit button still reads `'Publish'` (or the update-version label), unaffected by the destination name's length
+- **THEN** the submit button still reads `'Publish'`, unaffected by the destination name's length
+
+### Requirement: An already-published version cannot be republished to the same folder
+DIAL Core cannot overwrite a published catalog resource: an `ADD` whose target exists fails with "Target resource already exists", a `DELETE` + `ADD` pair on the same target is rejected as duplicate target urls, and `ADD_IF_ABSENT` silently skips the copy. The catalog `DetailsPanel` (`libs/catalog/src/components/Details/DetailsPanel.tsx`) SHALL therefore pass `allowReplace: false` to `derivePublishState`, `PublishPanel` and `PublishFooter`, exactly as the conversation publish flow does ([GitHub issue #9427](https://github.com/epam/ai-dial-chat/issues/9427)).
+
+#### Scenario: The selected folder already holds this version
+- **WHEN** the selected folder's publish history already contains the entity's current version
+- **THEN** the panel shows `PublishCalloutKind.ReplaceWarning` with the host-supplied text from the `catalog.publish.versionAlreadyPublishedWarning` translation key, the submit button is disabled, and it reads `'Publish'` rather than an `'Update version {version}'` label
 
 ### Requirement: Publish submission and history use real backend data
 `CatalogView` SHALL call the real `onPublish`, `getPublishHistory`, and `hasPublishWriteAccess` implementations backed by `apps/chat/src/server-api` wrappers instead of mock data (`MOCK_PUBLISH_FOLDERS`, `MOCK_PUBLISH_HISTORY`, and the mock `handlePublish`), which SHALL be deleted once parity is confirmed.

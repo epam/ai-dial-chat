@@ -3,6 +3,44 @@
 /**
  *
  * @export
+ * @interface AcceptInvitationErrorDto
+ */
+export interface AcceptInvitationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof AcceptInvitationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  message: string;
+  /**
+   * Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.
+   * @type {ShareInvitationErrorCode}
+   * @memberof AcceptInvitationErrorDto
+   */
+  code?: ShareInvitationErrorCode;
+  /**
+   * Title of the shared conversation, present with `shareInvitationAcceptedUsersLimitReached` when the invitation shares a conversation.
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  itemName?: string;
+}
+
+/**
+ *
+ * @export
  * @interface AcceptInvitationResponseDto
  */
 export interface AcceptInvitationResponseDto {
@@ -1290,11 +1328,12 @@ export interface ConversationDeletionResultDto {
 }
 
 /**
- * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+ * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
  * @export
  */
 export const ConversationErrorCode = {
   ConversationDuplicateModelHidden: 'conversationDuplicateModelHidden',
+  ConversationModelHidden: 'conversationModelHidden',
 } as const;
 export type ConversationErrorCode =
   (typeof ConversationErrorCode)[keyof typeof ConversationErrorCode];
@@ -1639,6 +1678,38 @@ export interface ConversationModelDto {
    */
   id: string;
 }
+/**
+ *
+ * @export
+ * @interface ConversationModelHiddenErrorDto
+ */
+export interface ConversationModelHiddenErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  message: string;
+  /**
+   * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
+   * @type {ConversationErrorCode}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  code?: ConversationErrorCode;
+}
+
 /**
  *
  * @export
@@ -4112,7 +4183,7 @@ export interface DuplicateConversationErrorDto {
    */
   message: string;
   /**
-   * Present when the duplicate was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`.
+   * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
    * @type {ConversationErrorCode}
    * @memberof DuplicateConversationErrorDto
    */
@@ -6515,6 +6586,18 @@ export const SendCompletionDtoModeEnum = {
 } as const;
 export type SendCompletionDtoModeEnum =
   (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
+
+/**
+ * Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.
+ * @export
+ */
+export const ShareInvitationErrorCode = {
+  ShareInvitationNotFound: 'shareInvitationNotFound',
+  ShareInvitationAcceptedUsersLimitReached:
+    'shareInvitationAcceptedUsersLimitReached',
+} as const;
+export type ShareInvitationErrorCode =
+  (typeof ShareInvitationErrorCode)[keyof typeof ShareInvitationErrorCode];
 
 /**
  *

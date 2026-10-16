@@ -652,6 +652,9 @@ const CatalogView: FC<Props> = ({
           }),
           credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
           credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
+          replaceWarning: t(
+            CatalogI18nKeys.PublishVersionAlreadyPublishedWarning,
+          ),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
           rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
