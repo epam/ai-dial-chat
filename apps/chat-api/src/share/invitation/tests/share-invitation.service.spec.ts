@@ -204,6 +204,38 @@ describe('ShareInvitationService', () => {
       );
     });
 
+    it('shares a conversation whose model id contains a colon with the canonical id unchanged', async () => {
+      const { service, dialClient } = makeService();
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(
+          okResponse({ invitationLink: '/v1/invitations/conv-abc' }),
+        );
+      const itemId =
+        'conversations/owner-bucket/anthropic.claude-haiku-4-5-20251001-v1:0__hi__ace3d220-6bf9-4774-afe7-9d641a3de401';
+
+      const result = await service.createShareLink('token-abc', 'my-bucket', {
+        itemId,
+        access: [ShareAccess.View],
+      });
+
+      expect(dialClient.client.getConversation).toHaveBeenCalledWith(
+        'owner-bucket',
+        'anthropic.claude-haiku-4-5-20251001-v1%3A0__hi__ace3d220-6bf9-4774-afe7-9d641a3de401',
+        { headers: { Authorization: 'Bearer token-abc' } },
+      );
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [{ url: itemId, permissions: ['READ'] }],
+        },
+      });
+      expect(result.url).toBe(
+        'https://example.com/conversations/shared/conv-abc',
+      );
+    });
+
     it('shares unique DIAL file attachments referenced by a conversation', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
