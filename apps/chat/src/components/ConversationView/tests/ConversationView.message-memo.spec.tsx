@@ -38,7 +38,12 @@ const mocks = vi.hoisted(() => {
     openCanvas: { openAttachmentCanvas: noop },
     scroll: { setMessageRef: noop, armAnchor: noop },
     empty: {},
-    skills: { message: '', messageRevision: 0, resetSkillMentions: noop },
+    skills: {
+      message: '',
+      messageRevision: 0,
+      resetSkillMentions: noop,
+      onDraftChange: noop,
+    },
   };
 });
 
@@ -62,7 +67,8 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => mocks.sidebar,
 }));
 vi.mock('../../../hooks/useUiFeature', () => ({
-  useUiFeature: () => false,
+  /* Drafts stay on, as by default, so the memo check covers the draft wiring. */
+  useUiFeature: (feature: string) => feature === 'conversation-drafts',
 }));
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,

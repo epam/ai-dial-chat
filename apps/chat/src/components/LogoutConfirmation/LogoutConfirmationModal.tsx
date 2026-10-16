@@ -7,6 +7,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
+import { useConversationDraftStore } from '../../hooks/conversation/useConversationDraftStore';
 import { logout } from '../../server-api/auth.api';
 import { ROUTES } from '../../types/routes';
 
@@ -19,8 +20,11 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const { reset } = useUser();
   const overlay = useOptionalOverlay();
+  const draftStore = useConversationDraftStore();
 
   const handleConfirm = async () => {
+    /* Drafts are per user; none may outlive the session that wrote them. */
+    draftStore?.clear();
     try {
       await logout();
     } catch (err) {

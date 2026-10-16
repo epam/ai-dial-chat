@@ -26,8 +26,12 @@ vi.mock('../../../server-api/auth.api', () => ({
   logout: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
+vi.mock('../../../hooks/useUiFeature', () => ({
+  useUiFeature: (feature: string) => feature === 'conversation-drafts',
+}));
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   ConfirmationPopup: ({
     open,
     confirmLabel,
@@ -92,6 +96,29 @@ describe('LogoutConfirmationModal', () => {
     await vi.waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/login'));
     expect(logout).toHaveBeenCalledOnce();
     expect(resetMock).not.toHaveBeenCalled();
+  });
+
+  it("removes the signed-in user's conversation drafts", async () => {
+    vi.mocked(useUser).mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'alice', providerId: 'idp', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: resetMock,
+    } as ReturnType<typeof useUser>);
+    window.sessionStorage.setItem('conversationDrafts:alice', '{}');
+    window.sessionStorage.setItem('conversationDrafts:bob', '{}');
+    render(<LogoutConfirmationModal isOpen onClose={vi.fn()} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.logOut' }),
+    );
+
+    await vi.waitFor(() => expect(replaceSpy).toHaveBeenCalledWith('/login'));
+    expect(
+      window.sessionStorage.getItem('conversationDrafts:alice'),
+    ).toBeNull();
+    expect(window.sessionStorage.getItem('conversationDrafts:bob')).toBe('{}');
+    window.sessionStorage.clear();
   });
 
   it('still loads the login page when the logout request fails', async () => {

@@ -472,11 +472,19 @@ export const Input = forwardRef<InputHandle, InputProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [message]);
 
+    const draftRef = useRef(message);
+    draftRef.current = message;
+
+    /* Reads the text through draftRef so the handler keeps its identity across keystrokes. */
     const handleExpandPastedText = useCallback(
       (text: string) => {
-        setMessage((prev) => (prev ? `${prev}\n${text}` : text));
+        const draft = draftRef.current;
+        const next = draft ? `${draft}\n${text}` : text;
+        draftRef.current = next;
+        setMessage(next);
+        onChange?.(next);
       },
-      [setMessage],
+      [setMessage, onChange],
     );
 
     const {
@@ -512,8 +520,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
     );
 
     const focusAfterTranscriptRef = useRef(false);
-    const draftRef = useRef(message);
-    draftRef.current = message;
     const [latestTranscript, setLatestTranscript] = useState({
       text: '',
       revision: 0,

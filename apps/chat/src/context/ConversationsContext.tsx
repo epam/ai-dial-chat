@@ -22,6 +22,7 @@ import {
 } from 'react';
 import { normalizeConversationId } from '../constants/routes';
 import { useConversationDiscovery } from '../hooks/conversation/useConversationDiscovery';
+import { useConversationDraftStore } from '../hooks/conversation/useConversationDraftStore';
 import {
   deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
@@ -145,6 +146,7 @@ export const ConversationsProvider = ({
 }) => {
   const { setPinnedConversation } = useUserConfig();
   const { user } = useUser();
+  const draftStore = useConversationDraftStore();
   const userSub = user?.sub;
   const [conversations, setConversations] = useState<ConversationListItemDto[]>(
     [],
@@ -461,31 +463,36 @@ export const ConversationsProvider = ({
       viewedWriteQueueRef.current = null;
   }, []);
 
-  const deleteConversation = useCallback(async (id: string) => {
-    let snapshot: ConversationListItemDto[] | undefined;
-    setConversations((prev) => {
-      snapshot = prev;
-      /*
-       * Matched the same way as removeConversationFromList: a caller passing a
-       * differently-encoded id would otherwise keep its stale row on a 404 —
-       * the exact staleness this path exists to clear.
-       */
-      return prev.filter((c) => !conversationIdsMatch(c.id, id));
-    });
-    const conversationPath = getConversationPath(normalizeConversationId(id));
-    try {
-      await apiDeleteConversation(conversationPath);
-    } catch (err) {
-      /*
-       * Already gone upstream: the row was stale, so removing it is the
-       * intended outcome. Restoring it would leave the user with an entry
-       * that neither opens nor deletes.
-       */
-      if (isConversationNotFoundError(err)) return;
-      if (snapshot) setConversations(snapshot);
-      throw err;
-    }
-  }, []);
+  const deleteConversation = useCallback(
+    async (id: string) => {
+      let snapshot: ConversationListItemDto[] | undefined;
+      setConversations((prev) => {
+        snapshot = prev;
+        /*
+         * Matched the same way as removeConversationFromList: a caller passing a
+         * differently-encoded id would otherwise keep its stale row on a 404 —
+         * the exact staleness this path exists to clear.
+         */
+        return prev.filter((c) => !conversationIdsMatch(c.id, id));
+      });
+      const conversationPath = getConversationPath(normalizeConversationId(id));
+      try {
+        await apiDeleteConversation(conversationPath);
+      } catch (err) {
+        /*
+         * Already gone upstream: the row was stale, so removing it is the
+         * intended outcome. Restoring it would leave the user with an entry
+         * that neither opens nor deletes.
+         */
+        if (!isConversationNotFoundError(err)) {
+          if (snapshot) setConversations(snapshot);
+          throw err;
+        }
+      }
+      draftStore?.remove(id);
+    },
+    [draftStore],
+  );
 
   /**
    * Removes a conversation from the local list without calling the delete
@@ -575,6 +582,15 @@ export const ConversationsProvider = ({
   const deleteAllConversations =
     useCallback(async (): Promise<ConversationDeletionResultDto> => {
       const result = await apiDeleteAllConversations();
+      /* Conversations that failed to delete are still there, and so are their drafts. */
+      if (draftStore) {
+        const survivingDrafts = result.failed.flatMap(({ id }) => {
+          const draft = draftStore.read(id);
+          return draft ? [{ id, draft }] : [];
+        });
+        draftStore.clear();
+        survivingDrafts.forEach(({ id, draft }) => draftStore.write(id, draft));
+      }
 
       if (
         result.deleted > 0 ||
@@ -585,7 +601,7 @@ export const ConversationsProvider = ({
       }
 
       return result;
-    }, [refreshConversations]);
+    }, [refreshConversations, draftStore]);
 
   const value = useMemo(
     () => ({

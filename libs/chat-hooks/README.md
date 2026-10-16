@@ -200,6 +200,12 @@ import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
 const newDeploymentId = getLastDeploymentId(conversation.messages);
 ```
 
+`./conversation` also carries the composer-draft API — `useConversationComposerDraft`,
+`createWebStorageConversationDraftStore`, `createMemoryConversationDraftStore` and the
+`ConversationDraft`, `ConversationDraftStore`, `WebStorageConversationDraftStoreOptions`,
+`MemoryConversationDraftStoreOptions`, `UseConversationComposerDraftParams` and
+`UseConversationComposerDraftResult` types (see [useConversationComposerDraft](#useconversationcomposerdraft)).
+
 ```tsx
 // ./conversation-transfer
 import { formatDateYMD } from '@epam/ai-dial-chat-hooks/conversation-transfer';
@@ -682,6 +688,130 @@ For a modal or locally themed surface, pass a same-document `portalContainer`
 inside that surface; pass `null` while its callback ref has not mounted. See
 [MessageSelectionReply](../conversation-messages/README.md#messageselectionreply)
 for appearance overrides and portal placement.
+
+### useConversationComposerDraft
+
+The hook, both store factories and their types are exported from both
+`@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/conversation`.
+
+Keeps an unsent composer draft per conversation, so text typed into one
+conversation survives a switch to another one, a "New Chat", an unmount while
+the next conversation loads, and a reload. The hook owns the whole state
+machine:
+
+- a debounced save, flushed on unmount, on a change of `conversationId` (under
+  the previous id) and on `pagehide`;
+- a single restore per `conversationId`, deferred while `isRestoreReady` is
+  `false` and skipped once the user has typed for that id;
+- replacing the draft with host-provided content (`handleExternalContent`);
+- discarding the draft when a send resolves, unless the user typed while
+  `send` was in flight, writing the sent text back when the send rejects, and
+  removing the draft when the input is emptied.
+
+State lives in refs, so the hook never re-renders the host, and its handlers
+keep their identity until `store` or `conversationId` changes. The host keeps
+everything host-specific: which storage, under which key and for which user,
+how ids are canonicalised, how a draft is seeded back into its composer and
+mention state, and when drafts are evicted (delete, logout).
+
+```tsx
+import {
+  createWebStorageConversationDraftStore,
+  useConversationComposerDraft,
+} from '@epam/ai-dial-chat-hooks/conversation';
+import {
+  ConversationInput,
+  useComposerSeed,
+} from '@epam/ai-dial-conversation-input';
+import '@epam/ai-dial-conversation-input/styles.css';
+import { useMemo } from 'react';
+
+interface DraftComposerProps {
+  userId: string;
+  conversationId: string;
+  send: (message: string) => Promise<void>;
+}
+
+export const DraftComposer = ({
+  userId,
+  conversationId,
+  send,
+}: DraftComposerProps) => {
+  const store = useMemo(
+    () =>
+      createWebStorageConversationDraftStore({
+        getStorage: () => window.sessionStorage,
+        storageKey: `my-app:drafts:${userId}`,
+      }),
+    [userId],
+  );
+  const { message, messageRevision, seedMessage } = useComposerSeed();
+  const draft = useConversationComposerDraft({
+    store,
+    conversationId,
+    restoreDraft: ({ text }) => seedMessage(text),
+  });
+
+  return (
+    <ConversationInput
+      key={conversationId}
+      message={message}
+      messageRevision={messageRevision}
+      onChange={draft.handleTextChange}
+      onSend={(text) => draft.sendWithDraft(text, () => send(text))}
+    />
+  );
+};
+```
+
+#### API
+
+`useConversationComposerDraft(params)`:
+
+| Param                | Type                                  | Description                                                                                                                                                                                                      |
+| -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `store`              | `ConversationDraftStore \| undefined` | Host-owned store. `undefined` (e.g. no signed-in user yet) makes every handler a no-op.                                                                                                                          |
+| `conversationId`     | `string`                              | The conversation whose draft is managed.                                                                                                                                                                         |
+| `restoreDraft`       | `(draft: ConversationDraft) => void`  | Seeds the host's composer (and mention state) from a stored draft. Receives an empty draft when the id changes to a conversation with nothing stored, so a host whose view stays mounted can reset a stale seed. |
+| `isRestoreReady?`    | `boolean`                             | Defers the restore while `false`. Defaults to `true`.                                                                                                                                                            |
+| `shouldSkipRestore?` | `boolean`                             | Skips the restore for this id, e.g. while external content is pending. Defaults to `false`.                                                                                                                      |
+| `debounceMs?`        | `number`                              | Save delay in milliseconds. Defaults to `300`.                                                                                                                                                                   |
+
+Returns `UseConversationComposerDraftResult`:
+
+| Field                   | Type                                                                       | Description                                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `handleTextChange`      | `(text: string) => void`                                                   | Wire to the composer's `onChange`.                                                                                                                     |
+| `handleSkillsChange`    | `(skills: RequestSkill[]) => void`                                         | Call when the composer's skill mentions change; ignored when unchanged.                                                                                |
+| `handleExternalContent` | `(text: string) => void`                                                   | Replaces the draft with host content and no skills.                                                                                                    |
+| `sendWithDraft`         | `(text: string, send: () => Promise<unknown> \| unknown) => Promise<void>` | Runs `send`; removes the draft when it resolves (a draft edited while `send` was in flight is kept), stores `text` again and rethrows when it rejects. |
+| `clearDraft`            | `() => void`                                                               | Discards the current conversation's draft.                                                                                                             |
+
+#### Draft stores
+
+`ConversationDraftStore` is a synchronous, never-throwing contract —
+`read(id)`, `write(id, draft)`, `remove(id)`, `clear()` — over
+`ConversationDraft` (`{ text, skills: RequestSkill[], updatedAt }`). Writing an
+empty draft (whitespace-only `text` and no `skills`) removes the entry. Two
+ready-made implementations ship:
+
+- `createWebStorageConversationDraftStore({ getStorage, storageKey, maxEntries?, normalizeId? })`
+  persists one `{ version: 1, drafts }` JSON blob under `storageKey` in the
+  `Storage` that `getStorage` returns. It keeps at most `maxEntries` drafts
+  (default `50`), evicting the oldest `updatedAt`; on a quota error it evicts
+  the oldest half and retries once. A malformed or unknown-version blob reads as
+  empty, and an absent or throwing storage behaves as an empty store that
+  ignores writes. `normalizeId` (default identity) canonicalises ids so two
+  forms of the same id share one entry.
+- `createMemoryConversationDraftStore({ maxEntries?, normalizeId? })` has the
+  same semantics over an in-memory map — for drafts kept only for the page
+  lifetime, and for tests.
+
+The contract is synchronous because the restore runs before the user can type
+and the unmount flush must finish synchronously. To persist drafts somewhere
+asynchronous (a backend, IndexedDB), implement `ConversationDraftStore` over a
+synchronous in-memory cache that you hydrate up front and write through to the
+async target in the background.
 
 ### useViewportWidth / usePanelMaxWidth
 
