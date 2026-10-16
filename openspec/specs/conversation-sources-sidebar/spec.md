@@ -952,7 +952,7 @@ Task-detail failure, run-history failure, and attachment/source-derivation issue
 
 Each context value SHALL be memoized with `useMemo` over its own fields only. Each hook SHALL throw a clear error when used outside `SourcesSidebarProvider`. A `setMessages` or `setConversationModelId` call SHALL NOT change the controls context value. `useSourcesSidebar()` no longer returns `messages` or `conversationModelId`. `ConversationSourcesPanel` is their only reader.
 
-The provider's name, props and mount point in `apps/chat/src/main.tsx` do not change. There is no user-visible string, RTL or a11y change, feature flag, cache or telemetry.
+The provider's name, props and mount point in `apps/chat/src/AppRoot.tsx` do not change. There is no user-visible string, RTL or a11y change, feature flag, cache or telemetry.
 
 #### Scenario: A controls-only consumer does not re-render on a messages update
 

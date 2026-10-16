@@ -108,6 +108,26 @@ When any field differs from the seeded values, Back and Cancel open a
 `labels.discardTitle`, `discardMessage`, `discardConfirmLabel` and
 `discardCancelLabel`.
 
+A host that guards leaving on its own — for example at the router, so the same
+dialog also covers its navigation — passes `onDirtyChange`. The editor then
+calls it with whether any field differs from the seeded values, on mount and
+whenever that changes, and turns its built-in guard off: no confirmation, no
+`beforeunload` warning, and Back and Cancel call `onBack` / `onCancel`
+directly. Without `onDirtyChange` the built-in guard behaves as described
+above.
+
+```tsx
+const [isDirty, setIsDirty] = useState(false);
+useHostLeaveGuard(isDirty); // the host's own guard
+
+<PromptEditor
+  initialValues={initialValues}
+  onSubmit={handleSubmit}
+  onCancel={goBack}
+  onDirtyChange={setIsDirty}
+/>;
+```
+
 Description stops accepting input at `descriptionMaxLength` and shows a
 `length/limit` counter under it once it has text. Name and Instructions take
 any length; to flag an over-limit value while the user types, pass

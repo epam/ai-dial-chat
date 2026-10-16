@@ -224,7 +224,7 @@ notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Downloaded, {
 
 Operation success notifications SHALL use the existing notification infrastructure unchanged: `NotificationVariant.Success` via `showSuccessNotification`, rendered by the app-level `NotificationContainer` portal, auto-dismissed after the existing 5s delay, and manually closable.
 
-Because `NotificationProvider` and `NotificationContainer` are mounted above `Routes` in `apps/chat/src/main.tsx`, an editor MAY notify and navigate in the same tick; the notification SHALL survive the route change. No call site SHALL delay navigation, close a panel later, or await a notification.
+Because `NotificationProvider` and `NotificationContainer` are mounted above `Routes` in `apps/chat/src/AppRoot.tsx`, an editor MAY notify and navigate in the same tick; the notification SHALL survive the route change. No call site SHALL delay navigation, close a panel later, or await a notification.
 
 #### Scenario: Notification outlives the editor that raised it
 

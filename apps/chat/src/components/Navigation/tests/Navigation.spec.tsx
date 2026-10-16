@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AriaAttributes, ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAVIGATION_CONFIG } from '../../../constants/navigation';
 import {
   BasicI18nKeys,
@@ -16,6 +16,7 @@ import {
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
+import { logout } from '../../../server-api/auth.api';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import Navigation from '../Navigation';
@@ -175,7 +176,17 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 vi.mock('../../LogoutConfirmation/LogoutConfirmationModal', () => ({
-  default: () => null,
+  default: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <p>Log out confirmation</p> : null,
+}));
+
+const useUnsavedChangesMock = vi.fn();
+vi.mock('../../../context/UnsavedChangesContext', () => ({
+  useUnsavedChanges: () => useUnsavedChangesMock(),
+}));
+
+vi.mock('../../../server-api/auth.api', () => ({
+  logout: vi.fn(),
 }));
 
 vi.mock('../../FooterMessage/FooterMessage', () => ({
@@ -217,6 +228,10 @@ const setDefaults = (
   });
   useFeatureFlagMock.mockReturnValue(false);
   useUserMock.mockReturnValue(authenticatedUser);
+  useUnsavedChangesMock.mockReturnValue({
+    hasUnsavedChanges: false,
+    requestDiscard: vi.fn(),
+  });
   /* Default posture: every route feature on, every `Hide*` opt-out off. */
   mockUseUiFeature.mockImplementation(
     (feature) =>
@@ -517,5 +532,96 @@ describe('Navigation mobile sheet', () => {
     expect(
       sheet.getByRole('button', { name: SettingsI18nKeys.ShortcutEnter }),
     ).toBeTruthy();
+  });
+});
+
+describe('Navigation log out', () => {
+  const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
+  const replaceSpy = vi.fn();
+  const requestDiscard = vi.fn();
+
+  beforeEach(() => {
+    setDefaults(mockUseUiFeature);
+    vi.mocked(logout).mockResolvedValue(undefined);
+    vi.stubGlobal('location', { ...window.location, replace: replaceSpy });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const markDirty = () =>
+    useUnsavedChangesMock.mockReturnValue({
+      hasUnsavedChanges: true,
+      requestDiscard,
+    });
+
+  const clickMenuLogOut = (user: ReturnType<typeof userEvent.setup>) =>
+    user.click(screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }));
+
+  it('opens the log out confirmation when no builder is dirty', async () => {
+    const user = userEvent.setup();
+    renderNavigation();
+
+    await clickMenuLogOut(user);
+
+    expect(screen.getByText('Log out confirmation')).toBeTruthy();
+    expect(requestDiscard).not.toHaveBeenCalled();
+  });
+
+  it('asks about unsaved changes instead of opening the log out confirmation while a builder is dirty', async () => {
+    markDirty();
+    const user = userEvent.setup();
+    renderNavigation();
+
+    await clickMenuLogOut(user);
+
+    expect(requestDiscard).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Log out confirmation')).toBeNull();
+  });
+
+  it('does not log out when the unsaved-changes dialog is kept', async () => {
+    markDirty();
+    const user = userEvent.setup();
+    renderNavigation();
+
+    await clickMenuLogOut(user);
+
+    /* Keep editing never runs the deferred callback. */
+    expect(logout).not.toHaveBeenCalled();
+  });
+
+  it('logs out once without the confirmation when changes are discarded', async () => {
+    markDirty();
+    const user = userEvent.setup();
+    renderNavigation();
+
+    await clickMenuLogOut(user);
+    const [onDiscard] = requestDiscard.mock.calls[0] as [() => Promise<void>];
+    await onDiscard();
+
+    expect(logout).toHaveBeenCalledOnce();
+    expect(replaceSpy).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Log out confirmation')).toBeNull();
+  });
+
+  it('routes the mobile sheet log out through the same branch', async () => {
+    markDirty();
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideUserMenu,
+    );
+    const user = userEvent.setup();
+    renderNavigation({ isOpen: true });
+    const sheet = within(screen.getByRole('dialog'));
+
+    await user.click(
+      sheet.getByRole('button', { name: NavigationI18nKeys.Profile }),
+    );
+    await user.click(
+      sheet.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+    );
+
+    expect(requestDiscard).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Log out confirmation')).toBeNull();
   });
 });

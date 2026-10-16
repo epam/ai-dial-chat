@@ -125,6 +125,8 @@ export interface ToolsetEditorProps {
   onSaveComplete: () => void;
   /** Called for the Cancel button and the header back action. */
   onBack: () => void;
+  /** Called with whether the form differs from the values it was seeded with or last persisted, on mount and whenever that changes; `false` right after a Log In draft persist. */
+  onDirtyChange?: (isDirty: boolean) => void;
   /**
    * Builds the MCP endpoint URL shown in the Connect section for a toolset
    * id. Omit when the host has no external core URL configured — the

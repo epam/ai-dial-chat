@@ -3,6 +3,7 @@ import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { prepareScheduledTaskCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import {
+  hasScheduledTaskFormChanges,
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
@@ -24,6 +25,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
+import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
@@ -91,6 +93,12 @@ const ScheduledTaskCreatePage: FC = () => {
 
   const returnUrl = ROUTES.ScheduledTasks;
 
+  /* The page owns the unsaved-changes guard, so the form gets no
+   * `initialValues` and shows no dialog of its own. */
+  const { allowNextNavigation } = useBuilderLeaveGuard({
+    isDirty: hasScheduledTaskFormChanges(values, DEFAULT_VALUES),
+  });
+
   const labels = useScheduledTaskFormLabels('create');
 
   const handleFieldChange = useCallback(
@@ -143,6 +151,7 @@ const ScheduledTaskCreatePage: FC = () => {
       showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
       });
+      allowNextNavigation();
       navigate(returnUrl, { state: { refresh: true } });
     } catch (error) {
       const details = await getApiErrorDetails(error);
@@ -163,6 +172,7 @@ const ScheduledTaskCreatePage: FC = () => {
       setIsSubmitting(false);
     }
   }, [
+    allowNextNavigation,
     values,
     isSkillsSupported,
     showSuccessNotification,
@@ -183,12 +193,10 @@ const ScheduledTaskCreatePage: FC = () => {
   return (
     <ScheduledTaskCreateForm
       key={draftKey}
-
       onRefineDescription={onRefineDescription}
       onRefineInstructions={onRefineInstructions}
       labels={labels}
       values={values}
-      initialValues={DEFAULT_VALUES}
       errors={effectiveErrors}
       skillSelector={
         <ScheduledTaskSkillField

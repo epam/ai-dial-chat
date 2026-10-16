@@ -59,6 +59,7 @@ const QuickAppSetup: FC<Props> = ({
   isSubmitting,
   onReadyChange,
   ref,
+  onDirtyChange,
 }) => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -285,6 +286,7 @@ const QuickAppSetup: FC<Props> = ({
             onSaveError={handleSaveError}
             onReadyChange={setIsEditorReady}
             onValidityChange={setIsEditorValid}
+            onDirtyChange={onDirtyChange}
             onLoggedOutChange={setIsLoggedOut}
             onUnresponsiveChange={setIsUnresponsive}
           />
