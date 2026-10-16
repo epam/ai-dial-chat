@@ -14,6 +14,7 @@ import {
   DialFileManagerTabs,
   DialFileNodeType,
 } from '@epam/ai-dial-react-file-manager';
+import { safeDecodeURI } from '../shared/string-utils';
 import {
   buildSharedItemVirtualPath,
   dialCorePathToRelative,
@@ -280,10 +281,48 @@ export const fetchForSearch = async (
   return { items };
 };
 
+/**
+ * Where search results sit in the virtual tree. Shared items are listed flat
+ * (a file nested in the owner's bucket is still a root row), so their virtual
+ * path cannot be derived from the location inside the owner's bucket.
+ */
+export interface SearchPathScope {
+  /** Virtual path of the folder the search runs in, e.g. `/Shared with me`. */
+  virtualRoot: string;
+  /** Bucket-relative path of that folder; omitted when results are flat children of `virtualRoot`. */
+  apiRoot?: string;
+}
+
+/**
+ * Builds the scope for a search on the Shared tab so result rows get the same
+ * `path` as the rows `buildFromCache` produces for the same items.
+ */
+export const buildSharedSearchScope = (
+  rootLabel: string,
+  folderPath: string,
+  sharedRootMeta: Map<string, SharedRootMeta>,
+): SearchPathScope | undefined => {
+  if (folderPath === '') return { virtualRoot: `/${rootLabel}` };
+  const firstSlash = folderPath.indexOf('/');
+  const sharedRootName =
+    firstSlash === -1 ? folderPath : folderPath.slice(0, firstSlash);
+  const meta = sharedRootMeta.get(sharedRootName);
+  if (!meta) return undefined;
+  const subPath = firstSlash === -1 ? '' : folderPath.slice(firstSlash + 1);
+  return {
+    virtualRoot: `/${rootLabel}/${folderPath.replace(/\/$/, '')}`,
+    apiRoot: dialCorePathToRelative(meta.dialCorePath, meta.bucket) + subPath,
+  };
+};
+
+const toDecodedSegments = (path: string): string[] =>
+  path.split('/').filter(Boolean).map(safeDecodeURI);
+
 export const mapSearchItem = (
   item: ListFilesItemDto,
   fallbackBucket: string,
   rootLabel: string,
+  scope?: SearchPathScope,
 ): DialFile => {
   const isFolder = item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder;
   // `name` arrives decoded from DIAL Core — see the note in `buildFromCache`.
@@ -300,11 +339,21 @@ export const mapSearchItem = (
    * segments have to be decoded to land in the same virtual-path space as the
    * rows `buildFromCache` produces.
    */
-  const virtualParentPath = buildSharedItemVirtualPath(
-    parentRelative,
-    rootLabel,
-    false,
-  );
+  let virtualParentPath: string;
+  if (scope) {
+    const parentSegments = scope.apiRoot
+      ? toDecodedSegments(parentRelative).slice(
+          toDecodedSegments(scope.apiRoot).length,
+        )
+      : [];
+    virtualParentPath = [scope.virtualRoot, ...parentSegments].join('/');
+  } else {
+    virtualParentPath = buildSharedItemVirtualPath(
+      parentRelative,
+      rootLabel,
+      false,
+    );
+  }
   const virtualPath = isFolder
     ? `${virtualParentPath}/${name}/`
     : `${virtualParentPath}/${name}`;

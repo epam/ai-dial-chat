@@ -15,6 +15,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
@@ -33,6 +34,10 @@ import type { ConversationMessageDto } from './dto/conversation-message.dto';
 import { PublishConversationResultDto } from './dto/publish-conversation-result.dto';
 import { UnpublishConversationResultDto } from './dto/unpublish-conversation-result.dto';
 import { findPendingBackgroundMessage } from './generation/background-message';
+import {
+  assertModelNotHidden,
+  getConversationModelId,
+} from './utils/hidden-model';
 
 const CONVERSATION_RESOURCE_PREFIX = 'conversations';
 
@@ -70,11 +75,12 @@ export class ConversationPublishService {
   constructor(
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly deploymentsService: DeploymentsService,
   ) {}
 
   /**
    * @throws {NotFoundException} When the conversation or target folder is unknown
-   * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
+   * @throws {ForbiddenException} When the caller lacks write access to `folderPath`, or (`code: conversationModelHidden`) the conversation's model is hidden
    * @throws {BadGatewayException} When Core returns an unexpected error
    * @throws {ServiceUnavailableException} When Core is unreachable or times out
    */
@@ -98,7 +104,12 @@ export class ConversationPublishService {
     } = (await this.dialClient.client.getConversation(bucket, encodedPath, {
       headers: getBearerAuthHeaders(accessToken),
     })) as {
-      data?: { name: string; messages?: ConversationMessageDto[] };
+      data?: {
+        name: string;
+        messages?: ConversationMessageDto[];
+        assistantModelId?: string;
+        model?: { id?: string };
+      };
       error?: unknown;
       response: globalThis.Response;
     };
@@ -118,6 +129,16 @@ export class ConversationPublishService {
     if (findPendingBackgroundMessage(conversation)) {
       throw new ConflictException(PUBLISH_WHILE_GENERATING_MESSAGE);
     }
+
+    /* A published copy would put a hidden model back in front of everyone (#9183). */
+    await assertModelNotHidden(
+      this.deploymentsService,
+      getConversationModelId(conversation),
+      accessToken,
+      bucket,
+      this.logger,
+      `publish "${sourceUrl}"`,
+    );
 
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const targetUrl = getPublishedTargetUrl(

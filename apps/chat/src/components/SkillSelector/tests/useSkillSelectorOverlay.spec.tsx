@@ -36,29 +36,27 @@ describe('useSkillSelectorOverlay', () => {
     state.isMobile = false;
   });
 
-  it('keeps hover-triggered history chips on desktop', () => {
+  it.each([false, true])(
+    'opens history and composer chip details on click (isMobile: %s)',
+    (isMobile) => {
+      state.isMobile = isMobile;
+
+      renderHook(() => useSkillSelectorOverlay({ isSkillsSupported: true }));
+
+      expect(state.useHostOverlay).toHaveBeenCalledWith(
+        expect.objectContaining({
+          historyDetailsTrigger: 'click',
+          activeMentionDetailsTrigger: 'click',
+        }),
+      );
+    },
+  );
+
+  it('hides the favorites-panel row tooltips', () => {
     renderHook(() => useSkillSelectorOverlay({ isSkillsSupported: true }));
 
     expect(state.useHostOverlay).toHaveBeenCalledWith(
-      expect.objectContaining({ historyDetailsTrigger: undefined }),
-    );
-  });
-
-  it('opens history chip tooltips on tap on mobile', () => {
-    state.isMobile = true;
-
-    renderHook(() => useSkillSelectorOverlay({ isSkillsSupported: true }));
-
-    expect(state.useHostOverlay).toHaveBeenCalledWith(
-      expect.objectContaining({ historyDetailsTrigger: 'click' }),
-    );
-  });
-
-  it('keeps hover-triggered details for active conversation mentions', () => {
-    renderHook(() => useSkillSelectorOverlay({ isSkillsSupported: true }));
-
-    expect(state.useHostOverlay).toHaveBeenCalledWith(
-      expect.not.objectContaining({ activeMentionDetailsTrigger: 'click' }),
+      expect.objectContaining({ isRowTooltipHidden: true }),
     );
   });
 

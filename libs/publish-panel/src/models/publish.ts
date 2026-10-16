@@ -106,9 +106,9 @@ export interface PublishDerivationInput {
   hasSubmitError: boolean;
   /**
    * Whether resubmitting when `hasExistingPublicationInFolder` is true is
-   * allowed (catalog: republishing replaces the existing version) or
-   * blocked entirely (conversations have no update/replace semantics —
-   * publishing again to the same folder is not supported). Default `true`.
+   * allowed (the host's backend overwrites the existing publication) or
+   * blocked entirely (it cannot — neither catalog entities nor conversations
+   * can be republished over an existing DIAL Core publication). Default `true`.
    */
   allowReplace?: boolean;
 }

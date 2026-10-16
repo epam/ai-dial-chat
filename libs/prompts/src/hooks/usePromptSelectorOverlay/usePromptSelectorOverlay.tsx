@@ -23,6 +23,7 @@ export const usePromptSelectorOverlay = ({
   favoriteIds,
   onToggleFavorite,
   onInsertText,
+  isRowTooltipHidden = false,
   labels,
   renderCatalog,
 }: UsePromptSelectorOverlayOptions): UsePromptSelectorOverlayResult => {
@@ -66,10 +67,17 @@ export const usePromptSelectorOverlay = ({
           onClose();
           setIsCatalogOpen(true);
         }}
+        isRowTooltipHidden={isRowTooltipHidden}
         labels={panelLabels}
       />
     ),
-    [favoritePromptItems, handlePromptPicked, onToggleFavorite, panelLabels],
+    [
+      favoritePromptItems,
+      handlePromptPicked,
+      onToggleFavorite,
+      isRowTooltipHidden,
+      panelLabels,
+    ],
   );
 
   const promptCatalogModal = renderCatalog({

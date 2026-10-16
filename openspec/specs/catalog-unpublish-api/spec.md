@@ -36,7 +36,7 @@ Core call:
 }
 ```
 
-`sourceUrl`, `targetFolder`, and `targetUrl` SHALL be derived server-side with the same helpers the publish endpoint uses (`encodeDialResourcePath(entityId)` for `sourceUrl`, `getPublicTargetFolder`, and the shared `getPublishedTargetUrl` required by `conversation-publish-api`), never taken from the request body. `name` and `displayAuthor` are built exactly as publish builds them, so a DELETE request is legible in Core's admin queue next to the ADD request it reverses.
+`sourceUrl`, `targetFolder`, and `targetUrl` SHALL be derived server-side, never taken from the request body. `sourceUrl` and `targetFolder` use the same helpers the publish endpoint uses (`encodeDialResourcePath(entityId)`, `getPublicTargetFolder`). `targetUrl` SHALL be the target of the entity's newest live publication in that folder — preferring one whose target carries the requested `version` when the folder holds several — read from the caller's publications; only when none can be read does it fall back to `getPublishedTargetUrl` with `getVersionedTargetResourceName`, the derivation publish uses. A folder can hold a copy whose version differs from the entity's current one, since a new version is published under its own name (see `catalog-publish-api`). `name` and `displayAuthor` are built exactly as publish builds them, so a DELETE request is legible in Core's admin queue next to the ADD request it reverses.
 
 `rules` SHALL NOT be sent. Access rules govern who may see a published resource; a removal request grants nobody anything, and forwarding a rules array would imply otherwise.
 

@@ -1,6 +1,10 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
+import {
+  getConversationTitleFromName,
+  isApplicationDeploymentPath,
+} from '../../conversations/utils/conversation.utils';
 import { isPromptResourceUrl } from '../../prompts/utils/prompt-mapper.util';
 
 type ResourceKind = components['schemas']['ResourceTypes'];
@@ -109,6 +113,40 @@ export const getInvitationRoutePath = (itemId: string): string =>
 export const isAlreadyOwnedError = (errorBody: unknown): boolean =>
   typeof errorBody === 'string' &&
   errorBody.toLowerCase().includes('already belong');
+
+/*
+ * DIAL Core rejects `?accept=true` with 400 and a body like
+ * `"Limit is exceeded on the number of accepted users for the invitation: <id>"`
+ * (or `... for the resource: <url>`) once the share's `maxAcceptedUsers` is
+ * reached. Like `isAlreadyOwnedError`, this case has no dedicated status code
+ * or machine-readable field upstream, so it is detected by substring match.
+ */
+export const isAcceptedUsersLimitError = (errorBody: unknown): boolean =>
+  typeof errorBody === 'string' &&
+  errorBody.toLowerCase().includes('number of accepted users');
+
+/**
+ * Title of a shared conversation, derived from its DIAL Core resource url
+ * (`conversations/{bucket}/{...folders}/{filename}`). Returns undefined for
+ * any other resource kind or when the url carries no filename.
+ */
+export const getSharedConversationTitle = (
+  resourceUrl: string,
+): string | undefined => {
+  if (!resourceUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)) return undefined;
+  const segments = resourceUrl.split('/');
+  if (segments.length < 3) return undefined;
+  const filename = safeDecodeURIComponent(segments.at(-1) ?? '');
+  const folderPath = segments
+    .slice(2, -1)
+    .map(safeDecodeURIComponent)
+    .join('/');
+  const title = getConversationTitleFromName(
+    filename,
+    isApplicationDeploymentPath(folderPath),
+  ).trim();
+  return title || undefined;
+};
 
 interface AnnotationWithAttachment {
   body?: {

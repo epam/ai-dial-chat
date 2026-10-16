@@ -320,7 +320,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasRulesLoadError,
       publishCredentials,
       onPublishCredentialsChange,
+      allowReplace,
     }: {
+      allowReplace?: boolean;
       onSelectedFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
       author: string;
@@ -335,6 +337,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div>
         <span>Publish panel</span>
+        <span>panelAllowReplace:{String(allowReplace)}</span>
         <span>author:{author}</span>
         <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
         <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
@@ -375,11 +378,14 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     PublishFooter: ({
       onCancel,
       onSubmit,
+      allowReplace,
     }: {
       onCancel: () => void;
       onSubmit: () => void;
+      allowReplace?: boolean;
     }) => (
       <div>
+        <span>footerAllowReplace:{String(allowReplace)}</span>
         <button onClick={onCancel}>Cancel</button>
         <button onClick={onSubmit}>Submit</button>
       </div>
@@ -433,6 +439,16 @@ const openPublish = async () =>
 
 const credentialsToggle = () =>
   screen.queryByRole('button', { name: /^Toggle credentials:/ });
+
+describe('DetailsPanel — republishing an existing version', () => {
+  it('tells the publish panel and footer that an existing version cannot be replaced', async () => {
+    renderPanel({ item: makeItem({ type: CatalogEntityType.Toolset }) });
+    await openPublish();
+
+    expect(screen.getByText('panelAllowReplace:false')).toBeTruthy();
+    expect(screen.getByText('footerAllowReplace:false')).toBeTruthy();
+  });
+});
 
 describe('DetailsPanel — publish credentials opt-in', () => {
   it('offers the option for an OAuth toolset whose publisher is signed in globally', async () => {

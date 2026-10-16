@@ -68,6 +68,7 @@ export const useSkillSelectorOverlay = ({
   activeMentionLabelClassName = 'text-accent',
   activeMentionDetailsTrigger,
   historyDetailsTrigger,
+  isRowTooltipHidden = false,
   renderCatalogContent,
   detailsPanelComponent: DetailsPanelComponent,
 }: UseSkillSelectorOverlayOptions): UseSkillSelectorOverlayResult => {
@@ -458,6 +459,7 @@ export const useSkillSelectorOverlay = ({
           onClose();
           setDetailsSkillId(item.id);
         }}
+        isRowTooltipHidden={isRowTooltipHidden}
         labels={panelLabels}
       />
     ),
@@ -467,6 +469,7 @@ export const useSkillSelectorOverlay = ({
       consumeQueryAtCaret,
       peekQueryAtCaret,
       onToggleFavorite,
+      isRowTooltipHidden,
       panelLabels,
     ],
   );
@@ -546,6 +549,7 @@ export const useSkillSelectorOverlay = ({
                   close({ consumeQuery: true });
                   setDetailsSkillId(item.id);
                 }}
+                isRowTooltipHidden={isRowTooltipHidden}
                 labels={panelLabels}
               />
             ),
@@ -559,6 +563,7 @@ export const useSkillSelectorOverlay = ({
       insertAndPush,
       mentions.anchors,
       onToggleFavorite,
+      isRowTooltipHidden,
       panelLabels,
       recognizeMentionsInInsertion,
     ],

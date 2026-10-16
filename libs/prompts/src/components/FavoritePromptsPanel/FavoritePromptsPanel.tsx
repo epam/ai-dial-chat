@@ -33,6 +33,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
   onSelect,
   onToggleFavorite,
   onBrowse,
+  isRowTooltipHidden = false,
   labels = {},
   colors,
   nameClassName = 'dial-small-text',
@@ -141,7 +142,10 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
       />
     );
 
-    const hasDescription = item.description != null && item.description !== '';
+    const hasTooltip =
+      !isRowTooltipHidden &&
+      item.description != null &&
+      item.description !== '';
 
     return (
       <li
@@ -151,14 +155,14 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
           leavingIds.has(item.id) ? styles.rowLeaving : styles.rowEnter
         }
       >
-        {hasDescription ? (
+        {hasTooltip ? (
           /*
            * The row stays the focus/click target (`asChild`); the tooltip is
            * uncontrolled — the kit opens it on hover or keyboard focus and
            * keeps it open while the pointer travels between the row and the
            * panel — and renders nothing on touch-only devices, where tapping
-           * the row still inserts the prompt. Rows without a description are
-           * not wrapped at all.
+           * the row still inserts the prompt. Rows without a description, or
+           * with `isRowTooltipHidden` set, are not wrapped at all.
            */
           <InteractiveTooltip
             asChild

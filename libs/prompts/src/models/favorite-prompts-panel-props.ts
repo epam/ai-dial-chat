@@ -34,6 +34,8 @@ export interface FavoritePromptsPanelProps {
   onToggleFavorite: (id: string) => void;
   /** Called when the "Browse" button is clicked. */
   onBrowse: () => void;
+  /** Whether rows render without the hover/focus description tooltip. Defaults to `false`. */
+  isRowTooltipHidden?: boolean;
   /** Localizable string overrides. */
   labels?: FavoritePromptsPanelLabels;
   /** Color overrides applied as CSS custom properties. */

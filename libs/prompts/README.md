@@ -66,7 +66,8 @@ The tooltip is uncontrolled: the kit opens it on hover or keyboard focus and
 keeps it open while the pointer is on the row or the panel — including while
 it travels between them; on a touch-only device it renders nothing and the
 row still inserts the prompt on tap. Rows without a description are not
-wrapped at all — no tooltip appears for them.
+wrapped at all — no tooltip appears for them. Pass `isRowTooltipHidden` to
+render every row without the tooltip, described or not.
 
 Clicking a row's star plays a short exit animation first, so
 `onToggleFavorite` fires ~180 ms after the click rather than synchronously.
@@ -167,7 +168,7 @@ host already resolved from its own sources), favorites state, an `isEnabled` pol
 structural prompt so this hook never fetches or imports a generated DTO. `renderOverlay` is
 `undefined` while disabled, and `openParametersPopup` is then a no-op — a host wires
 `openParametersPopup` to a route-level "Use in chat" action to open the popup directly, with no
-Back action offered.
+Back action offered. `isRowTooltipHidden` is forwarded to the rendered `FavoritePromptsPanel`.
 
 `parametersPopup` renders `PromptParametersPopup` behind a `React.lazy()`/`Suspense` boundary
 internally, so a host that only calls this hook never pulls the popup's `@epam/ai-dial-catalog`

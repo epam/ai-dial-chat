@@ -4,6 +4,8 @@ import {
   collectConversationResourceUrls,
   deriveExpiresInDays,
   getInvitationRoutePath,
+  getSharedConversationTitle,
+  isAcceptedUsersLimitError,
   isAlreadyOwnedError,
   resolveResourceKind,
   toShareResourceUrl,
@@ -87,6 +89,51 @@ describe('isAlreadyOwnedError', () => {
 
   it('returns false for a non-string error body', () => {
     expect(isAlreadyOwnedError({ message: 'already belong' })).toBe(false);
+  });
+});
+
+describe('isAcceptedUsersLimitError', () => {
+  it.each([
+    'Limit is exceeded on the number of accepted users for the invitation: abc123',
+    'Limit is exceeded on the number of accepted users for the resource: gpt-4o',
+  ])('detects the DIAL Core limit error body %s', (body) => {
+    expect(isAcceptedUsersLimitError(body)).toBe(true);
+  });
+
+  it('returns false for an unrelated error body', () => {
+    expect(
+      isAcceptedUsersLimitError('Resource gpt-4o already belong to you'),
+    ).toBe(false);
+  });
+
+  it('returns false for a non-string error body', () => {
+    expect(
+      isAcceptedUsersLimitError({ message: 'number of accepted users' }),
+    ).toBe(false);
+  });
+});
+
+describe('getSharedConversationTitle', () => {
+  it('returns the decoded title of a conversation resource url', () => {
+    expect(
+      getSharedConversationTitle(
+        'conversations/owner-bucket/folder/gpt-4o__Quarterly%20plan',
+      ),
+    ).toBe('Quarterly plan');
+  });
+
+  it('strips the version of an application deployment conversation', () => {
+    expect(
+      getSharedConversationTitle(
+        'conversations/owner-bucket/applications/app-bucket/my-app__1.0.0__Ideas',
+      ),
+    ).toBe('Ideas');
+  });
+
+  it('returns undefined for a non-conversation resource url', () => {
+    expect(getSharedConversationTitle('prompts/owner-bucket/My prompt')).toBe(
+      undefined,
+    );
   });
 });
 

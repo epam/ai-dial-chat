@@ -357,6 +357,67 @@ describe('PublishService', () => {
       expect(call.body.resources[0]).not.toHaveProperty('publishCredentials');
     });
 
+    it('publishes a new version of an edited toolset under a new {name}__{version} target, not the path it was created with', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({ createdAt: 1_700_000_000_000 }),
+      );
+
+      await service.publish(
+        'token',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/my-tool__1.0.0',
+        'Team',
+        '1.0.1',
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            name: 'my-tool 1.0.1',
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+                targetUrl: 'toolsets/public/Team/my-tool__1.0.1',
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('keeps the source name in targetUrl when the supplied version is not valid SemVer', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({ createdAt: 1_700_000_000_000 }),
+      );
+
+      await service.publish(
+        'token',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/my-tool__1.0.0',
+        'Team',
+        '../evil',
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              expect.objectContaining({
+                targetUrl: 'toolsets/public/Team/my-tool__1.0.0',
+              }),
+            ],
+          }),
+        }),
+      );
+    });
+
     it('builds targetUrl as resourceTypePrefix + targetFolder + resourceName, matching the DIAL Core OpenAPI spec example', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
@@ -722,6 +783,36 @@ describe('PublishService', () => {
           publishedBy: 'user@example.com',
           publishCredentials: false,
         },
+      ]);
+    });
+
+    it('reports the version a publication put in the folder, read off its targetUrl', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            targetFolder: 'public/Team/',
+            createdAt: 1_700_000_000_000,
+            resources: [
+              {
+                sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+                targetUrl: 'toolsets/public/Team/my-tool__1.0.1',
+              },
+            ],
+          },
+        ]),
+      );
+
+      const result = await service.getPublishHistory(
+        'token',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/my-tool__1.0.0',
+      );
+
+      expect(result).toEqual([
+        expect.objectContaining({ folderPath: 'Team', version: '1.0.1' }),
       ]);
     });
 
