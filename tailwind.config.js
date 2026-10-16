@@ -132,7 +132,6 @@ module.exports = {
   blocklist: ['[-:=]'],
   content: [
     './apps/chat/src/**/*.{html,js,ts,tsx,yaml}',
-    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
     './node_modules/@epam/ai-dial-react-file-manager/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {

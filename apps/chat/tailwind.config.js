@@ -10,7 +10,6 @@ module.exports = {
       '{src,pages,components,app}/**/*!(*.stories|*.spec).{ts,tsx,html}',
     ),
     ...createGlobPatternsForDependencies(__dirname),
-    join(__dirname, '../../node_modules/@epam/ai-dial-ui-kit/**/*.{js,jsx}'),
     join(
       __dirname,
       '../../node_modules/@epam/ai-dial-react-file-manager/**/*.{js,jsx}',
