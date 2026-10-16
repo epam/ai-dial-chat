@@ -704,7 +704,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 48 flags.
+The new chat supports 52 flags.
 
 Enabled by default:
 
@@ -734,6 +734,7 @@ custom-apps
 prompts
 skills
 voice-input
+conversation-drafts
 ```
 
 `chat-settings` and `empty-chat-settings` are not independent. `chat-settings`
@@ -752,6 +753,16 @@ toggle: no ×, no "Tools" entry — and where tools are the only thing that menu
 would hold, the "+" button disappears with it. The tools themselves are still
 derived from the deployment's configuration schema either way; the key governs
 only whether the user can add and remove their chips.
+
+`conversation-drafts` keeps what the user typed into an existing conversation's
+input, including skill mentions, for the browser tab session. Switching to
+another conversation, opening "New Chat" or reloading the tab no longer loses
+it: the text comes back when the conversation is opened again. Drafts are
+removed on a successful send, when the conversation is deleted, and on logout.
+Because `enabledFeatures` replaces the default set, a host that passes its own
+list must include `conversation-drafts` to keep drafts. Leave it out to disable
+them; drafts stored while the key was on are then discarded. The New Chat
+screen never keeps a draft.
 
 Disabled by default and enabled explicitly:
 
@@ -983,8 +994,8 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline of 26 default-on flags
-out of the 48 supported is used. Entries the server does not recognize — including
+the variable is absent or empty, the built-in baseline of 27 default-on flags
+out of the 52 supported is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.

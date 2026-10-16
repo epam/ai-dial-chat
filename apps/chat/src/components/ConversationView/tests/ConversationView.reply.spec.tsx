@@ -64,7 +64,9 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 vi.mock('../../../hooks/useUiFeature', async () => {
   const { OverlayFeature } = await import('@epam/ai-dial-chat-overlay');
   return {
-    useUiFeature: (feature: string) => feature === OverlayFeature.InputFiles,
+    useUiFeature: (feature: string) =>
+      feature === OverlayFeature.InputFiles ||
+      feature === OverlayFeature.ConversationDrafts,
   };
 });
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
@@ -104,6 +106,7 @@ vi.mock('../../SkillSelector/useSkillSelectorOverlay', () => ({
     message: '',
     messageRevision: 0,
     resetSkillMentions: vi.fn(),
+    onDraftChange: vi.fn(),
   }),
 }));
 vi.mock('../../FooterMessage/FooterMessage', () => ({ default: () => null }));

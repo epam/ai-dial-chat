@@ -3,7 +3,7 @@ import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import type { Conversation, ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactElement } from 'react';
+import { type ReactElement, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
@@ -55,15 +55,28 @@ vi.mock('react-router', () => ({
   }),
 }));
 
-/* Renders the tool chips so the toggle state is observable by role. */
-vi.mock('../../../components/ConversationView/ConversationView', () => ({
-  default: ({
-    toolsMenuItems = [],
-    onToolToggle,
-  }: {
-    toolsMenuItems?: ToolMenuItem[];
-    onToolToggle?: (id: string) => void;
-  }) => (
+/*
+ * The overlay bridge is captured so a test can push host content, and the
+ * view records the content revision each instance mounted with.
+ */
+const overlayContentMocks = vi.hoisted(() => ({
+  setOverlayInputContent: undefined as undefined | ((content: string) => void),
+  mountedRevisions: [] as number[],
+}));
+
+const MockConversationView = ({
+  toolsMenuItems = [],
+  onToolToggle,
+  inputContentRevision,
+}: {
+  toolsMenuItems?: ToolMenuItem[];
+  onToolToggle?: (id: string) => void;
+  inputContentRevision?: number;
+}) => {
+  useState(() =>
+    overlayContentMocks.mountedRevisions.push(inputContentRevision ?? 0),
+  );
+  return (
     <div>
       conversation-view
       {toolsMenuItems.map((item) => (
@@ -77,6 +90,13 @@ vi.mock('../../../components/ConversationView/ConversationView', () => ({
         </button>
       ))}
     </div>
+  );
+};
+
+/* Renders the tool chips so the toggle state is observable by role. */
+vi.mock('../../../components/ConversationView/ConversationView', () => ({
+  default: (props: Parameters<typeof MockConversationView>[0]) => (
+    <MockConversationView {...props} />
   ),
 }));
 /* Exposes the viewer's conversation callbacks as buttons so tests can fire them. */
@@ -164,7 +184,11 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 }));
 
 vi.mock('../../../hooks/conversation/useActiveConversationBridge', () => ({
-  useActiveConversationBridge: () => undefined,
+  useActiveConversationBridge: (params: {
+    setOverlayInputContent: (content: string) => void;
+  }) => {
+    overlayContentMocks.setOverlayInputContent = params.setOverlayInputContent;
+  },
 }));
 vi.mock('../../../hooks/conversation/useVisualizerMessageSendHandler', () => ({
   useVisualizerMessageSendHandler: () => undefined,
@@ -250,6 +274,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   routerMocks.conversationId = CONVERSATION_ID;
   handlersMocks.lastParams = undefined;
+  overlayContentMocks.setOverlayInputContent = undefined;
+  overlayContentMocks.mountedRevisions = [];
 
   mockUseClientChannel.mockReturnValue({
     channelId: 'channel-1',
@@ -856,5 +882,49 @@ describe('ConversationPage — Custom Viewer', () => {
     render(<ConversationPage />);
 
     expect(await screen.findByText('conversation-view')).toBeTruthy();
+  });
+});
+
+describe('ConversationPage — overlay input content', () => {
+  const OTHER_ID = 'conversations/bucket/claude__Small';
+
+  it('does not hand spent content to the view remounted for another conversation', async () => {
+    mockGetConversation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .mockResolvedValueOnce(makeConversation() as any)
+      .mockResolvedValueOnce({
+        ...makeConversation(),
+        id: OTHER_ID,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+    const { rerender } = render(<ConversationPage />);
+    await screen.findByText('conversation-view');
+    act(() => overlayContentMocks.setOverlayInputContent?.('from host'));
+
+    routerMocks.conversationId = OTHER_ID;
+    rerender(<ConversationPage />);
+
+    await waitFor(() =>
+      expect(overlayContentMocks.mountedRevisions).toHaveLength(2),
+    );
+    expect(overlayContentMocks.mountedRevisions[1]).toBe(0);
+  });
+
+  it('hands content set while the conversation loads to the view it mounts', async () => {
+    let resolveLoad: (value: unknown) => void = () => undefined;
+    mockGetConversation.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveLoad = resolve;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any,
+    );
+
+    render(<ConversationPage />);
+    act(() => overlayContentMocks.setOverlayInputContent?.('from host'));
+    await act(async () => resolveLoad(makeConversation()));
+
+    await screen.findByText('conversation-view');
+    expect(overlayContentMocks.mountedRevisions).toEqual([1]);
   });
 });

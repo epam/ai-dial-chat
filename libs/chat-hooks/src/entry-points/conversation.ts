@@ -1,4 +1,6 @@
 export * from '../conversation/announcement-message';
+export * from '../conversation/conversation-draft/conversation-draft';
+export * from '../conversation/conversation-draft/conversation-draft-store';
 export * from '../conversation/create-chat-stream-api';
 export * from '../conversation/display-name-watch';
 export * from '../conversation/footer-message';
@@ -13,6 +15,7 @@ export * from '../conversation/starter-option';
 export * from '../conversation/deriveConversationRowActionState/deriveConversationRowActionState';
 export * from '../conversation/useActiveConversationSync/useActiveConversationSync';
 export * from '../conversation/useAsyncConfirmDialog/useAsyncConfirmDialog';
+export * from '../conversation/useConversationComposerDraft/useConversationComposerDraft';
 export * from '../conversation/useConversationLookupMaps/useConversationLookupMaps';
 export * from '../conversation/useConversationPanelItems/useConversationPanelItems';
 export * from '../conversation/useImportFilePicker/useImportFilePicker';

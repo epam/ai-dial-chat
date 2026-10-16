@@ -220,6 +220,13 @@ export enum OverlayFeature {
    * the mobile header row carrying only the logo.
    */
   ShowHeaderLogo = 'show-header-logo',
+  /**
+   * Keeps the unsent text and skill mentions of each existing conversation's
+   * input for the tab session, restoring them when the conversation is opened
+   * again. Disabling it stops saving and restoring, and discards the drafts
+   * already stored. The New Chat screen never keeps a draft.
+   */
+  ConversationDrafts = 'conversation-drafts',
 }
 
 /**

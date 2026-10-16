@@ -1026,6 +1026,25 @@ describe('Input — pasted attachment expand', () => {
     });
   });
 
+  it('reports the expanded text through onChange', async () => {
+    const onChange = vi.fn();
+    render(
+      <Input
+        pasteTextThreshold={5}
+        message="intro"
+        expandLabel="Expand details"
+        onChange={onChange}
+      />,
+    );
+    pasteText(screen.getByRole('textbox'), 'details');
+    onChange.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand details' }));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledOnce());
+    expect(onChange).toHaveBeenCalledWith('intro\ndetails');
+  });
+
   it('names a pasted card by the host-supplied expandLabel', () => {
     render(<Input pasteTextThreshold={5} expandLabel="Развернуть текст" />);
 

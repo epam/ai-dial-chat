@@ -10,4 +10,5 @@ export enum StorageKey {
   CatalogActiveTab = 'catalogActiveTab',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
   PublishDestinationFolders = 'publishDestinationFolders',
+  ConversationDrafts = 'conversationDrafts',
 }
