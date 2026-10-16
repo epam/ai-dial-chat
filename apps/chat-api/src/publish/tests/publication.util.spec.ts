@@ -72,6 +72,7 @@ interface ListedPublication {
   resources?: {
     action?: string;
     sourceUrl?: string;
+    targetUrl?: string;
     publishCredentials?: boolean;
   }[];
 }
@@ -700,4 +701,216 @@ describe('resolvePublicationsForSource, approved removals', () => {
     expect(fetchPublication).toHaveBeenCalledTimes(2);
     expect(matched).toEqual([]);
   });
+});
+
+/*
+ * [#9172](https://github.com/epam/ai-dial-chat/issues/9172). Catalog Unpublish
+ * runs on the published copy, so its `DELETE` names the public path as both
+ * `sourceUrl` and `targetUrl` — never the author's own resource url, which is
+ * what history is requested for and what the original `ADD` carries as its
+ * `sourceUrl`. The two are paired by the published copy they share.
+ */
+describe('resolvePublicationsForSource, removals filed from the public copy', () => {
+  const PERSONAL_URL = 'prompts/bucket-123/hhm-text-formatter';
+  const PUBLIC_URL = 'prompts/public/hhm/hhm-text-formatter';
+  const HHM_FOLDER = 'public/hhm/';
+
+  const add = (
+    url: string,
+    createdAt: number | undefined,
+    {
+      sourceUrl = PERSONAL_URL,
+      targetUrl = PUBLIC_URL,
+      targetFolder = HHM_FOLDER,
+    } = {},
+  ): ListedPublication => ({
+    url,
+    status: PublicationStatus.Approved,
+    targetFolder,
+    createdAt,
+    resources: [
+      { action: PublicationResourceAction.Add, sourceUrl, targetUrl },
+    ],
+  });
+
+  const removal = (
+    url: string,
+    createdAt: number | undefined,
+    {
+      targetUrl = PUBLIC_URL as string | null,
+      targetFolder = HHM_FOLDER,
+      status = PublicationStatus.Approved as string,
+    } = {},
+  ): ListedPublication => ({
+    url,
+    status,
+    targetFolder,
+    createdAt,
+    resources: [
+      {
+        action: PublicationResourceAction.Delete,
+        sourceUrl: PUBLIC_URL,
+        ...(targetUrl ? { targetUrl } : {}),
+      },
+    ],
+  });
+
+  const resolve = (
+    publications: ListedPublication[],
+    sourceUrl = PERSONAL_URL,
+  ) =>
+    resolvePublicationsForSource(
+      publications,
+      sourceUrl,
+      async () => null,
+      undefined,
+      'ctx',
+    );
+
+  it('drops the ADD once the approved removal of its published copy exists', async () => {
+    expect(
+      await resolve([
+        add('publications/b/2a2e3c79', 1792058406051),
+        removal('publications/b/58c54670', 1792059866179),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('keeps the ADD while the removal of its published copy is PENDING', async () => {
+    const original = add('publications/b/1', 1000);
+
+    expect(
+      await resolve([
+        original,
+        removal('publications/b/2', 2000, {
+          status: PublicationStatus.Pending,
+        }),
+      ]),
+    ).toEqual([original]);
+  });
+
+  it('keeps the ADD when the removal of its published copy was REJECTED', async () => {
+    const original = add('publications/b/1', 1000);
+
+    expect(
+      await resolve([
+        original,
+        removal('publications/b/2', 2000, {
+          status: PublicationStatus.Rejected,
+        }),
+      ]),
+    ).toEqual([original]);
+  });
+
+  it('keeps an ADD created after the removal of the same published copy', async () => {
+    const republished = add('publications/b/3', 3000);
+
+    expect(
+      await resolve([
+        add('publications/b/1', 1000),
+        removal('publications/b/2', 2000),
+        republished,
+      ]),
+    ).toEqual([republished]);
+  });
+
+  it('keeps the ADD when the removal targets another resource name in the same folder', async () => {
+    const original = add('publications/b/1', 1000);
+
+    expect(
+      await resolve([
+        original,
+        removal('publications/b/2', 2000, {
+          targetUrl: 'prompts/public/hhm/other-prompt',
+        }),
+      ]),
+    ).toEqual([original]);
+  });
+
+  it('keeps the ADD when the removal targets the same resource name in another folder', async () => {
+    const original = add('publications/b/1', 1000);
+
+    expect(
+      await resolve([
+        original,
+        removal('publications/b/2', 2000, {
+          targetUrl: 'prompts/public/reports/hhm-text-formatter',
+          targetFolder: 'public/reports/',
+        }),
+      ]),
+    ).toEqual([original]);
+  });
+
+  it('keeps the ADD when the removal carries no targetUrl', async () => {
+    const original = add('publications/b/1', 1000);
+
+    expect(
+      await resolve([
+        original,
+        removal('publications/b/2', 2000, { targetUrl: null }),
+      ]),
+    ).toEqual([original]);
+  });
+
+  it('pairs a percent-encoded ADD target with a plain-text removal target', async () => {
+    expect(
+      await resolve(
+        [
+          add('publications/b/1', 1000, {
+            targetUrl: 'prompts/public/New%20Folder/my%20prompt',
+            targetFolder: 'public/New%20Folder/',
+          }),
+          removal('publications/b/2', 2000, {
+            targetUrl: 'prompts/public/New Folder/my prompt',
+            targetFolder: 'public/New Folder/',
+          }),
+        ],
+        'prompts/bucket-123/my prompt',
+      ),
+    ).toEqual([]);
+  });
+
+  it('pairs a plain-text ADD target with a percent-encoded removal target', async () => {
+    expect(
+      await resolve(
+        [
+          add('publications/b/1', 1000, {
+            targetUrl: 'prompts/public/New Folder/my prompt',
+            targetFolder: 'public/New Folder/',
+          }),
+          removal('publications/b/2', 2000, {
+            targetUrl: 'prompts/public/New%20Folder/my%20prompt',
+            targetFolder: 'public/New%20Folder/',
+          }),
+        ],
+        'prompts/bucket-123/my prompt',
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: 'application',
+      sourceUrl: 'applications/bucket-123/my-app__1.0.0',
+      targetUrl: 'applications/public/hhm/my-app__1.0.0',
+    },
+    {
+      name: 'toolset',
+      sourceUrl: 'toolsets/bucket-123/my-toolset__1.0.0',
+      targetUrl: 'toolsets/public/hhm/my-toolset',
+    },
+  ])(
+    'pairs the removal with the ADD for a $name published copy',
+    async ({ sourceUrl, targetUrl }) => {
+      expect(
+        await resolve(
+          [
+            add('publications/b/1', 1000, { sourceUrl, targetUrl }),
+            removal('publications/b/2', 2000, { targetUrl }),
+          ],
+          sourceUrl,
+        ),
+      ).toEqual([]);
+    },
+  );
 });

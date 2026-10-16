@@ -277,6 +277,7 @@ const renderShell = (
     variant?: DialFileManagerVariant;
     actionProfile?: DialFileManagerActionProfile;
     labels?: DialFileManagerShellLabels;
+    treeContainerClassName?: string;
   } = {},
 ) =>
   render(
@@ -290,6 +291,7 @@ const renderShell = (
       onSelectedPathsChange={vi.fn()}
       variant={options.variant ?? DialFileManagerVariant.Standalone}
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
+      treeContainerClassName={options.treeContainerClassName}
     />,
   );
 
@@ -467,6 +469,37 @@ describe('DialFileManagerShell', () => {
     expect(
       capturedDialFileManagerProps.current?.treeOptions?.loadingPaths,
     ).toBe(folderPopupLoadingPaths);
+  });
+
+  it('leaves the tree container classes to the file manager for the standalone variant', () => {
+    renderShell();
+
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.containerClassName,
+    ).toBeUndefined();
+  });
+
+  it('keeps the attach tree container classes by default', () => {
+    renderShell(undefined, new Set(), {
+      variant: DialFileManagerVariant.Attach,
+    });
+
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.containerClassName,
+    ).toContain('w-[360px]');
+  });
+
+  it('lets the host replace the tree container classes in any variant', () => {
+    const treeContainerClassName = 'min-h-0 w-[300px] shrink-0 h-full';
+
+    renderShell(undefined, new Set(), {
+      variant: DialFileManagerVariant.Attach,
+      treeContainerClassName,
+    });
+
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.containerClassName,
+    ).toBe(treeContainerClassName);
   });
 
   it('does not set onGridApiChange on destinationFolderPopupOptions', () => {
