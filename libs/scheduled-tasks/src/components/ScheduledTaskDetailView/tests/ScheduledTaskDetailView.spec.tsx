@@ -60,6 +60,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     />
   ),
   Spinner: () => <div role="progressbar" />,
+  /* Mirrors the surface the view exercises: the span that carries the title
+   * text, truncation, and the overflow tooltip in the real kit. */
+  EllipsisTooltip: ({
+    text,
+    className,
+  }: {
+    text: ReactNode;
+    className?: string;
+  }) => <span className={className}>{text}</span>,
   Skeleton: (props: Record<string, unknown>) => (
     <div data-skeleton {...props} />
   ),
@@ -276,6 +285,56 @@ describe('ScheduledTaskDetailView', () => {
       screen.getAllByRole('heading', { name: 'Daily summary' }),
     ).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+  });
+
+  it('routes a long title through EllipsisTooltip so it ellipsizes and tooltips instead of stretching the header', () => {
+    const longTitle =
+      'A very long task title that would otherwise run from the back button to the action buttons';
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName={longTitle}
+        runs={[]}
+      />,
+    );
+
+    /* Both title copies (desktop header, mobile/tablet row) wrap their text
+     * in the kit's EllipsisTooltip — the same truncation + tooltip-on-clip
+     * mechanism as the card title — and carry the same width contract:
+     * min-w-0 to let the title shrink below its nowrap min-content width,
+     * and the 600px cap so a long line never sprawls (the desktop header
+     * copy keeps the action buttons in place, the tablet copy stops a
+     * single line from running the full row width). */
+    const titles = screen.getAllByRole('heading', { level: 1 });
+    expect(titles).toHaveLength(2);
+    for (const title of titles) {
+      expect(title.firstElementChild?.textContent).toBe(longTitle);
+      expect(title.className).toContain('min-w-0');
+      expect(title.className).toContain('max-w-[600px]');
+    }
+  });
+
+  it('sets the --stdv-description-text CSS variable from the descriptionText color override', () => {
+    const { container } = render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="Task"
+        description="Summarize the news"
+        runs={[]}
+        styles={{ colors: { descriptionText: '#ff0000' } }}
+      />,
+    );
+
+    /* CSS custom property on the view root, which carries no accessible
+     * role of its own; the Details section's stylesheet reads it as the
+     * description ink (default #1b212d). */
+    // eslint-disable-next-line testing-library/no-node-access -- asserting a CSS custom property on the root element
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--stdv-description-text')).toBe(
+      '#ff0000',
+    );
   });
 
   it('calls onBack when the back control is activated', async () => {
@@ -512,6 +571,24 @@ describe('ScheduledTaskDetailView', () => {
     expect(screen.getByText('Summarizes unread inbox items')).toBeTruthy();
     expect(screen.getByText('GPT-4.1 mini')).toBeTruthy();
     expect(screen.getByText('Every Monday 12:00')).toBeTruthy();
+  });
+
+  it('lets the desktop details column shrink below its content width', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="Daily summary"
+        description="Summarizes unread inbox items"
+        runs={[]}
+      />,
+    );
+
+    /* A long unbreakable field value must wrap inside the column, not push
+     * the three-column row past the viewport. */
+    expect(screen.getByRole('group', { name: 'Details' }).className).toContain(
+      'min-w-0',
+    );
   });
 
   it('renders the activity-window field when provided', () => {

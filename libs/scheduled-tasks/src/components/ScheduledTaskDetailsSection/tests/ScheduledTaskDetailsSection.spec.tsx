@@ -41,4 +41,44 @@ describe('ScheduledTaskDetailsSection', () => {
     expect(screen.queryByText('Repeats')).toBeNull();
     expect(screen.queryByText('Active')).toBeNull();
   });
+
+  it('preserves the description line breaks and wraps long unbroken values', () => {
+    renderSection({ description: 'a'.repeat(600) });
+
+    const value = screen.getByText('a'.repeat(600));
+    expect(value.className).toContain('whitespace-pre-wrap');
+    expect(value.className).toContain('[overflow-wrap:anywhere]');
+    expect(value.className).not.toContain('break-all');
+  });
+
+  it('renders the description at the same field step as the other values', () => {
+    renderSection({
+      description: 'Summarize the news',
+      modelLabel: 'GPT-4o',
+      fieldValueClassName: 'dial-body-text',
+    });
+
+    expect(screen.getByText('Summarize the news').className).toContain(
+      'dial-body-text',
+    );
+    expect(screen.getByText('GPT-4o').className).toContain('dial-body-text');
+  });
+
+  it('lets every field group shrink below its content width', () => {
+    renderSection({
+      description: 'Summarize the news',
+      modelLabel: 'GPT-4o',
+      repeatsLabel: 'Every Monday 12:00',
+      activeWindowLabel: 'Aug 1, 2026 – Dec 31, 2026',
+      completedLabel: 'Completed',
+    });
+
+    const groups = screen
+      .getAllByText(/Description|Model or Agent|Repeats|Active|Status/)
+      // eslint-disable-next-line testing-library/no-node-access -- verifying the group's CSS classes (flex shrink), which carry no accessible role of their own
+      .map((label) => label.parentElement);
+    for (const group of groups) {
+      expect(group?.className).toContain('min-w-0');
+    }
+  });
 });

@@ -21,7 +21,9 @@ import styles from './ScheduledTaskCard.module.scss';
  * shell the Catalog browse card uses. From the desktop breakpoint up the card
  * has a fixed height and a one-line title; below it the card sizes to its
  * content with a two-line title. A long description is clamped with an
- * ellipsis (four lines on desktop, two below), and the status pill (plus the
+ * ellipsis (three lines on desktop, two below) — values too long to break at
+ * a space (a long URL and the like) wrap inside the card instead of
+ * stretching it past its grid track — and the status pill (plus the
  * location breadcrumb, when present) is pinned to the bottom regardless of
  * description length.
  */
@@ -43,9 +45,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   const { colors, typography } = cardStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
   const descriptionClassName =
-    typography?.descriptionClassName ?? 'dial-small-text';
-  const descriptionSizeClassName =
-    typography?.descriptionSizeClassName ?? 'dial-tiny-text';
+    typography?.descriptionClassName ?? 'dial-small-paragraph-text';
   const scheduleLabelClassName =
     typography?.scheduleLabelClassName ?? 'dial-tiny-text';
   const pausedBadgeClassName =
@@ -127,7 +127,10 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       aria-label={item.displayName}
       style={cssVars}
       className={mergeClasses(
-        'h-[var(--st-card-height,232px)]',
+        /* min-w-0 lets the card shrink below its content's min-content width
+         * inside its grid track, so an unbreakable description value wraps
+         * instead of stretching the card past the grid. */
+        'h-[var(--st-card-height,232px)] min-w-0',
         styles.card,
         onCardClick && 'cursor-pointer',
         className,
@@ -156,10 +159,19 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       </div>
 
       {item.descriptionPreview && (
+        /* min-w-0 + anywhere-wrapping so the clamp truncates with an
+         * ellipsis instead of overflowing the card when the preview
+         * contains a token too long to break at a space (a URL or the
+         * like). Whitespace collapses (the default, no pre-wrap) — the
+         * preview is the raw textarea description, and preserved blank
+         * lines would spend the whole clamp budget before any text. The
+         * 72px max-height is 3 × the default step's 24px line-height —
+         * the -webkit-box clamp alone leaves the box as tall as its
+         * content in some engines, so the height cap is what actually
+         * hides the lines past the ellipsis. */
         <p
           className={mergeClasses(
-            'line-clamp-4 min-h-0 flex-1 overflow-hidden',
-            descriptionSizeClassName,
+            'line-clamp-3 max-h-[72px] min-h-0 min-w-0 flex-1 overflow-hidden [overflow-wrap:anywhere]',
             descriptionClassName,
             styles.description,
           )}
