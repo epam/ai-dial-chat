@@ -1,4 +1,4 @@
-import { generateUUID } from '@epam/ai-dial-chat-shared';
+import { encodeJsonToBase64, generateUUID } from '@epam/ai-dial-chat-shared';
 import {
   buildToolsetAuthorizeUrl,
   getToolsetRedirectUri,
@@ -14,6 +14,25 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
 } from './types';
+
+/**
+ * Writes the redirect state into the given context's own `sessionStorage`
+ * under the shared key, base64-wrapped through `encodeJsonToBase64` — the
+ * single owner of the stored format, so every writer and reader can never
+ * drift apart. The state carries only flow-correlation ids and paths, never
+ * tokens or codes; the wrap's Unicode safety keeps any user-named resource
+ * id storable (`btoa` alone throws on characters above `U+00FF`, which would
+ * strand the already-open popup).
+ */
+const writeRedirectState = (
+  storage: Pick<Storage, 'setItem'>,
+  redirectState: ToolsetRedirectState,
+): void => {
+  storage.setItem(
+    TOOLSET_REDIRECT_STATE_KEY,
+    encodeJsonToBase64(redirectState),
+  );
+};
 
 /**
  * Writes the redirect state into the given popup's own `sessionStorage`
@@ -42,10 +61,7 @@ const writeRedirectStateAndNavigate = (
     resourceKind,
     offlineUsageConsent,
   };
-  popup.sessionStorage.setItem(
-    TOOLSET_REDIRECT_STATE_KEY,
-    JSON.stringify(redirectState),
-  );
+  writeRedirectState(popup.sessionStorage, redirectState);
 
   /*
    * The provider URL is external input. Sever the relationship while the

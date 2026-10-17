@@ -145,6 +145,7 @@ whether you need to `npm install` it.
 | `./skills-state`          | —                                                                                                                                                   | —                                                         |
 | `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                         |
 | `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
+| `./offline-credentials`   | —                                                                                                                                                   | —                                                         |
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                         |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                         |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
@@ -304,6 +305,23 @@ const isPublic = isPublicToolsetId(toolset.id);
 import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 
 const createBody = mapFormValuesToCreateBody(formValues);
+```
+
+```tsx
+// ./scheduled-tasks — the 403 disambiguation check
+import { checkScheduledTaskAuthSessionError } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const { isAuthSessionError, connect } =
+  await checkScheduledTaskAuthSessionError(error, getOfflineCredentials);
+```
+
+```tsx
+// ./offline-credentials — no peer beyond react
+import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';
+
+const { status, connect, connected, refetch } = useOfflineCredentialsGate({
+  offlineCredentialsClient,
+});
 ```
 
 ```tsx
@@ -4748,6 +4766,130 @@ The hook owns no client configuration, localization, UI or login flow. The host
 maps returned service DTOs into its view models and calls `refresh` after a
 successful credential mutation. Errors, including offline-status failures, set
 `hasError`; `refresh` retries them.
+
+### useOfflineCredentialsGate
+
+Offline-credentials status check behind a host's offline-credentials surfaces
+(a login banner, a settings tab): fires once on mount, aborts the in-flight
+request on unmount, and re-runs any time via `refetch`. A failed check never
+collapses into `connected: false` — a failed check must not trigger a
+login-required surface.
+
+```tsx
+import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks';
+
+const { status, connect, connected, refetch } = useOfflineCredentialsGate({
+  offlineCredentialsClient,
+});
+```
+
+`UseOfflineCredentialsGateOptions` is exported. The host-configured client is
+required (only `getOfflineCredentials`); the hook owns no client configuration.
+`status` is the `OfflineCredentialsGateStatus` enum (`Checking`/`Hidden`/
+`Available`/`Unavailable`/`Error`); `connect` carries usable OAuth client
+settings only while `status` is `Available`.
+
+### useOfflineCredentialsLogin
+
+Offline-credentials counterpart of `useToolsetLogin`: the same OAuth
+popup/`BroadcastChannel` handshake, driving the `offline-credentials` BFF
+domain, with a fresh status refetch authoritative for reporting success.
+Callers that fetch settings after the click can pass a popup they already
+opened synchronously (`preparedPopup`).
+
+```tsx
+import { useOfflineCredentialsLogin } from '@epam/ai-dial-chat-hooks';
+
+const { login } = useOfflineCredentialsLogin({ callbackPath: '/toolset-signin' });
+const outcome = await login(connect, refetch, preparedPopup?);
+```
+
+`callbackPath` is the host route the OAuth popup posts its result back to.
+`login` resolves an `OfflineCredentialsLoginOutcome` whose `type` is the
+`OfflineCredentialsLoginOutcomeType` enum (`Success`/`Failure`/`PopupBlocked`/
+`Cancelled`/`TimedOut`); `refetch` re-runs the status check and resolves
+`{ available, connected }` — the same authoritative call a gate owns.
+
+### useOfflineCredentialsAuth
+
+Shared login/logout orchestration for the external scheduler service's
+offline credentials: tracks the in-flight flags and the terminal login
+outcome, and treats a fresh gate refetch as authoritative for the logout
+outcome. Outcome-based — presentation and announcement stay with the
+caller, which maps `loginOutcome` and `logOut`'s resolved
+`OfflineCredentialsLogoutOutcomeType` (`Disconnected`/`NotDisconnected`/
+`Failed`) onto its own states and text.
+
+```tsx
+import { useOfflineCredentialsAuth } from '@epam/ai-dial-chat-hooks';
+
+const { isLoggingIn, loginOutcome, isLoggingOut, logIn, logOut } =
+  useOfflineCredentialsAuth({
+    connect,
+    refetch,
+    offlineCredentialsClient,
+    callbackPath: '/toolset-signin',
+  });
+```
+
+`UseOfflineCredentialsAuthOptions` extends the exported
+`OfflineCredentialsAuthGate` (`connect` + `refetch`) with the
+host-configured client (only `signOutOfflineCredentials`) and the callback
+path. `logIn` no-ops while `connect` is absent; `logOut` resolves
+`Disconnected` only when a fresh refetch confirms `connected: false`.
+
+### mapOfflineCredentialsResponse / normalizeOfflineCredentialsConnectSettings
+
+The single DTO→status-result mapping every offline-credentials consumer
+shares — the gate's check, the 403 disambiguation check, and the login
+refetch — so their normalization rules cannot drift apart.
+
+```ts
+import {
+  mapOfflineCredentialsResponse,
+  normalizeOfflineCredentialsConnectSettings,
+} from '@epam/ai-dial-chat-hooks';
+
+const { available, connected, connect } =
+  mapOfflineCredentialsResponse(response);
+const connectSettings = normalizeOfflineCredentialsConnectSettings(
+  response.connect,
+);
+```
+
+`mapOfflineCredentialsResponse` null-coalesces the `available`/`connected`
+flags and includes login-usable connect settings only while available and
+disconnected. `normalizeOfflineCredentialsConnectSettings` normalizes the
+connect object alone — present when `clientId` and `authorizationEndpoint`
+are both set, `scopes` defaulting to an empty list — without gating on the
+connection state, which is what the 403 check's one-check contract needs.
+
+### checkScheduledTaskAuthSessionError
+
+Checks whether a failed scheduled-task submit should be attributed to the
+logged-out external Scheduler auth service, from one fresh status check
+passed in by the host: exactly when the failure is a `403` and the check
+reports an available OAuth client with no stored grant. Every other outcome
+returns `isAuthSessionError: false` so the caller keeps its generic error
+handling; at most one status request is issued, only on the `403` path. The
+connect settings come back from the same check regardless of the connection
+state, so the caller decides from one check.
+
+```ts
+import { checkScheduledTaskAuthSessionError } from '@epam/ai-dial-chat-hooks';
+
+const { isAuthSessionError, connect } =
+  await checkScheduledTaskAuthSessionError(
+    error,
+    getOfflineCredentials, // host's already-configured status operation
+  );
+```
+
+`ScheduledTaskAuthSessionCheckResult` is exported. The disambiguation rule
+depends only on the DIAL Core response's own shape (the `403` status, the
+`available`/`connected` flags, the `connect` object's completeness), per
+the fourth library-isolation exception; toasts, wording, and the
+login-and-retry orchestration stay with the host.
 
 ## Building
 

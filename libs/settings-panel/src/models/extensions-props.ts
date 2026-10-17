@@ -1,0 +1,73 @@
+import type { ReactNode } from 'react';
+
+/** One extension service rendered as one row of the Extensions table. */
+export interface ExtensionServiceItem {
+  /** Stable identifier for the row. */
+  id: string;
+  /** Service display name shown beside the avatar and used for its initials. */
+  displayName: string;
+  /** Localized service description shown in the Description cell. */
+  description: string;
+  /** Whether the disconnected-state warning badge renders on the avatar's corner. */
+  isWarningVisible: boolean;
+  /** Accessible name and tooltip text of the warning badge. */
+  authorizeLabel: string;
+  /** The row's trailing action (e.g. a Log in / Log out button), owned by the host. */
+  action: ReactNode;
+}
+
+/** Localized strings shared by the Extensions table shell. */
+export interface ExtensionsLabels {
+  /** Accessible name of the table. */
+  tableAriaLabel: string;
+  /** Column header text for the Name column. */
+  nameColumnLabel: string;
+  /** Column header text for the Description column. */
+  descriptionColumnLabel: string;
+  /** Screen-reader-only column header text for the visually empty Actions column. */
+  actionsColumnLabel: string;
+}
+
+/** Color overrides for `ExtensionsSection`, applied as CSS custom properties. */
+export interface ExtensionsColors {
+  /** Table container background. Fallback: `--bg-layer-raised`. */
+  containerBackground?: string;
+  /** Column header text color. Fallback: `--text-secondary`. */
+  columnHeaderColor?: string;
+  /** Row divider color. Fallback: `--stroke-tertiary`. */
+  rowDividerColor?: string;
+  /** Service name text color. Fallback: `--text-primary`. */
+  nameColor?: string;
+  /** Service description text color. Fallback: `--text-secondary`. */
+  descriptionColor?: string;
+  /** Warning badge color. Fallback: `--text-warning-icon`. */
+  warningBadgeColor?: string;
+}
+
+/** Typography class overrides for `ExtensionsSection`. */
+export interface ExtensionsTypography {
+  /** CSS class for the column headers. Defaults to `'dial-caption-lead-semi-text'`. */
+  columnHeaderClassName?: string;
+  /** CSS class for the service name. Defaults to `'dial-small-semi-text'`. */
+  nameClassName?: string;
+  /** CSS class for the service description. Defaults to `'dial-small-text'`. */
+  descriptionClassName?: string;
+}
+
+/** Style overrides accepted by `ExtensionsSection`. */
+export interface ExtensionsStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ExtensionsColors;
+  /** Typography class overrides. */
+  typography?: ExtensionsTypography;
+}
+
+/** Props for `ExtensionsSection`. */
+export interface ExtensionsSectionProps {
+  /** Services to render, in display order. Each renders as one table row. */
+  rows: ExtensionServiceItem[];
+  /** Localized strings shared by the table shell. */
+  labels: ExtensionsLabels;
+  /** Style overrides applied as CSS custom properties and typography class overrides. */
+  styles?: ExtensionsStyles;
+}

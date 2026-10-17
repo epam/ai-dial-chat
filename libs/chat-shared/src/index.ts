@@ -22,6 +22,7 @@ export * from './types/mime-type';
 export * from './types/code-editor';
 export * from './types/file-manager-node';
 export * from './utils/annotation';
+export * from './utils/base64-json';
 export * from './utils/string-utils';
 export * from './utils/entity-field-limits';
 export * from './utils/merge-class';

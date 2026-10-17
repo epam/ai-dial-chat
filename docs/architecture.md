@@ -241,7 +241,11 @@ Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedI
 
 `SettingsPage` renders a vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list
 declared in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum member plus
-one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
+one entry there. Three tabs ship, in rail order: `PreferencesTab`, `UsageTab`, then `ExtensionsTab`
+(`pages/SettingsPage/ExtensionsTab/` — the offline-credentials gate/auth wiring and the logout
+confirmation popup, rendering the service table itself through `ExtensionsSection` from
+`@epam/ai-dial-settings-panel`), whose entry is withheld unless `scheduledTasksEnabled` is on, since
+the BFF domain behind it 403s otherwise.
 
 Each tab is a location. `ROUTES.SettingsTab` (`/settings/:tab`) is a single dynamic pattern rather
 than one route per tab, so adding a tab stays a config change; `app/settings-routes.tsx` registers

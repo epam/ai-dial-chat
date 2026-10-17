@@ -69,6 +69,21 @@ async function makeTokenWithoutSub(
     .sign(privateKey);
 }
 
+/*
+ * RSA keygen is the expensive part of this suite — hundreds of milliseconds
+ * per pair, regenerated for every test (plus a second pair for the
+ * invalid-signature case), which under a fully parallel suite run pushes
+ * individual tests past the 5s default timeout. The pairs are structural
+ * fixtures, not per-test data: every test still signs and verifies with the
+ * real crypto, but each pair is generated once per file and reused.
+ */
+let jwksRsaKeyPair: Awaited<ReturnType<typeof generateKeyPair>> | undefined;
+let otherRsaKeyPair: Awaited<ReturnType<typeof generateKeyPair>> | undefined;
+const getJwksRsaKeyPair = async () =>
+  (jwksRsaKeyPair ??= await generateKeyPair('RS256'));
+const getOtherRsaKeyPair = async () =>
+  (otherRsaKeyPair ??= await generateKeyPair('RS256'));
+
 describe('HeaderTokenStrategy', () => {
   let strategy: HeaderTokenStrategy;
   let registry: {
@@ -86,7 +101,7 @@ describe('HeaderTokenStrategy', () => {
   beforeEach(async () => {
     jwksRegistry.clear();
 
-    const { publicKey, privateKey: pk } = await generateKeyPair('RS256');
+    const { publicKey, privateKey: pk } = await getJwksRsaKeyPair();
     privateKey = pk;
     kid = 'test-key-1';
     const jwk = await exportJWK(publicKey);
@@ -229,7 +244,7 @@ describe('HeaderTokenStrategy', () => {
     });
 
     it('rejects a token with an invalid signature', async () => {
-      const { privateKey: otherKey } = await generateKeyPair('RS256');
+      const { privateKey: otherKey } = await getOtherRsaKeyPair();
       const token = await makeToken(otherKey, kid); // signed with a key not in the JWKS
       const req = makeReq({ authorization: `Bearer ${token}` });
 
