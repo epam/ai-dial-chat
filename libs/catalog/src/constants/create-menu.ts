@@ -21,3 +21,11 @@ export const CREATE_MENU_MAX_HEIGHT_PX =
 
 /** Fixed width of the searchable Create menu panel, so filtering never resizes it. */
 export const CREATE_MENU_LIST_CLASS_NAME = 'w-[320px]';
+
+// Mirror the kit `Dropdown`'s own divider and plain-text rows, so the mobile sheet matches the desktop menu.
+/** Classes of a divider row in the mobile Create sheet. */
+export const CREATE_MENU_DIVIDER_CLASS_NAME = 'my-1 border-t border-tertiary';
+
+/** Classes of a plain-text row, such as a section header, in the mobile Create sheet. */
+export const CREATE_MENU_PLAIN_TEXT_CLASS_NAME =
+  'px-3 py-2 text-secondary dial-caption-text';

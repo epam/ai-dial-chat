@@ -290,7 +290,8 @@
       "prompt": "Prompt",
       "skill": "Skill",
       "skillWriteInstructions": "Write instructions",
-      "skillUpload": "Upload"
+      "skillUpload": "Upload",
+      "runners": "Runners"
     },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",

@@ -1,3 +1,4 @@
+import { DropdownItem, DropdownItemType } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -32,6 +33,17 @@ const SearchableCreateButton = ({
     />
   );
 };
+
+const SECTIONED_OPTIONS: DropdownItem[] = [
+  { key: 'prompt', label: 'Prompt' },
+  { key: 'create-sections-divider', type: DropdownItemType.Divider },
+  {
+    key: 'runners-header',
+    type: DropdownItemType.PlainText,
+    label: 'Runners',
+  },
+  { key: 'runner:ocr', label: 'OCR' },
+];
 
 describe('CreateButton', () => {
   it('renders a search field above the options and reports each edit', async () => {
@@ -74,5 +86,40 @@ describe('CreateButton', () => {
     await userEvent.keyboard('{Escape}');
 
     expect(onChange).toHaveBeenLastCalledWith('');
+  });
+
+  it('renders a section divider and a header that is not an option in the searchable menu', async () => {
+    render(
+      <CreateButton
+        label="Create"
+        options={SECTIONED_OPTIONS}
+        search={{ value: 'r', onChange: vi.fn() }}
+        searchPlaceholder="Find a runner"
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(await screen.findByRole('separator')).toBeTruthy();
+    expect(screen.getByText('Runners')).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Runners' })).toBeNull();
+    expect(
+      screen.getAllByRole('menuitem').map((item) => item.textContent),
+    ).toEqual(['Prompt', 'OCR']);
+    // Only "Prompt" and "OCR" are highlighted — the header is not.
+    expect(screen.getAllByText(/^r$/i, { selector: 'mark' })).toHaveLength(2);
+  });
+
+  it('renders a section divider and header in the menu without search', async () => {
+    render(<CreateButton label="Create" options={SECTIONED_OPTIONS} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(await screen.findByRole('separator')).toBeTruthy();
+    expect(screen.getByText('Runners')).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Runners' })).toBeNull();
+    expect(
+      screen.getAllByRole('menuitem').map((item) => item.textContent),
+    ).toEqual(['Prompt', 'OCR']);
   });
 });

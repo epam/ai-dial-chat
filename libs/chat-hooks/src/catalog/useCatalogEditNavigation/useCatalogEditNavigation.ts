@@ -8,7 +8,7 @@ import type {
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { DropdownItem, DropdownItemType } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo, useState } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
 import {
@@ -19,7 +19,7 @@ import {
 import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
 
-// Every label this hook builds is a string, so runners and the static options sort together.
+// Every label this hook builds is a string, so options within a section sort by it.
 const sortByLabel = (options: DropdownItem[]): DropdownItem[] =>
   [...options].sort((a, b) =>
     String(a.label ?? '').localeCompare(String(b.label ?? ''), undefined, {
@@ -41,6 +41,8 @@ export interface CatalogEditNavigationLabels {
   createSkillWriteInstructions: string;
   createSkillUpload: string;
   createPrompt: string;
+  /** Header of the Create menu's runner section (Custom App and the runner schemas). */
+  createRunners: string;
   deleteError: string;
 }
 
@@ -112,7 +114,12 @@ export interface UseCatalogEditNavigationParams {
 export interface UseCatalogEditNavigationResult {
   handleEdit: (item: CatalogItem) => void;
   handleDelete: (item: CatalogItem) => Promise<void>;
-  /** The Create dropdown's items: runners and static options sorted together by label, all filtered by `createSearch.value`. */
+  /**
+   * The Create dropdown's items, all filtered by `createSearch.value`: Toolset,
+   * Skill and Prompt sorted by label, then a divider and a runner-section header,
+   * then Custom App and the runners sorted by label. The divider and header are
+   * present only while both sections hold an option.
+   */
   createOptions: DropdownItem[];
   /** The Create menu's search field state, or `undefined` when no runner option is offered. */
   createSearch: CatalogCreateSearch | undefined;
@@ -335,19 +342,39 @@ export const useCatalogEditNavigation = ({
       visibleSkillChildren,
       promptOption,
     } = createMenuParts;
-    const options: DropdownItem[] = [...runnerOptions];
-    if (toolsetOption) options.push(toolsetOption);
-    if (customAppOption) options.push(customAppOption);
+    const entityOptions: DropdownItem[] = [];
+    if (toolsetOption) entityOptions.push(toolsetOption);
     if (visibleSkillChildren.length > 0) {
-      options.push({
+      entityOptions.push({
         key: 'skill',
         label: labels.createSkill,
         children: visibleSkillChildren,
       });
     }
-    if (promptOption) options.push(promptOption);
-    return sortByLabel(options);
-  }, [createMenuParts, labels.createSkill]);
+    if (promptOption) entityOptions.push(promptOption);
+    const runnerSectionOptions = sortByLabel(
+      customAppOption ? [customAppOption, ...runnerOptions] : runnerOptions,
+    );
+    const entitySectionOptions = sortByLabel(entityOptions);
+
+    // A header over an emptied section would be noise, so the sections merge into one list then.
+    if (
+      entitySectionOptions.length === 0 ||
+      runnerSectionOptions.length === 0
+    ) {
+      return [...entitySectionOptions, ...runnerSectionOptions];
+    }
+    return [
+      ...entitySectionOptions,
+      { key: 'create-sections-divider', type: DropdownItemType.Divider },
+      {
+        key: 'runners-header',
+        type: DropdownItemType.PlainText,
+        label: labels.createRunners,
+      },
+      ...runnerSectionOptions,
+    ];
+  }, [createMenuParts, labels.createSkill, labels.createRunners]);
 
   const createSearch = useMemo<CatalogCreateSearch | undefined>(
     () =>

@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   BottomSheet,
   DIAL_ICON_SIZE,
@@ -11,6 +12,10 @@ import {
 import { IconChevronRight } from '@tabler/icons-react';
 import type { FC, MouseEvent } from 'react';
 import { useState } from 'react';
+import {
+  CREATE_MENU_DIVIDER_CLASS_NAME,
+  CREATE_MENU_PLAIN_TEXT_CLASS_NAME,
+} from '../../constants/create-menu';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
 import { highlightDropdownLabels } from '../../utils/create-menu';
 
@@ -101,9 +106,34 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
       )}
       {items.length ? (
         <div role="menu" aria-label={parent ? undefined : title}>
-          {items
-            .filter((item) => item.type !== DropdownItemType.PlainText)
-            .map((item) => (
+          {items.map((item) => {
+            if (item.type === DropdownItemType.Divider) {
+              return (
+                <div
+                  key={item.key}
+                  role="separator"
+                  className={mergeClasses(
+                    CREATE_MENU_DIVIDER_CLASS_NAME,
+                    item.className,
+                  )}
+                />
+              );
+            }
+            if (item.type === DropdownItemType.PlainText) {
+              return (
+                <div
+                  key={item.key}
+                  role="presentation"
+                  className={mergeClasses(
+                    CREATE_MENU_PLAIN_TEXT_CLASS_NAME,
+                    item.className,
+                  )}
+                >
+                  {item.label}
+                </div>
+              );
+            }
+            return (
               <MenuItem
                 key={item.key}
                 role="menuitem"
@@ -124,7 +154,8 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
                 }
                 onClick={(event) => handleSelect(item, event)}
               />
-            ))}
+            );
+          })}
         </div>
       ) : (
         <p role="status" className="px-3 py-2">

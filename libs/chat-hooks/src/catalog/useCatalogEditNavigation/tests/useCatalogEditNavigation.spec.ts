@@ -33,6 +33,7 @@ const labels: CatalogEditNavigationLabels = {
   createSkillWriteInstructions: 'Write instructions',
   createSkillUpload: 'Upload',
   createPrompt: 'Create prompt',
+  createRunners: 'Runners',
   deleteError: 'delete-error',
 };
 
@@ -467,7 +468,7 @@ describe('useCatalogEditNavigation', () => {
       );
     });
 
-    it('offers one create option per runner schema, labelled with its display name and sorted with the static options', () => {
+    it('offers one create option per runner schema, labelled with its display name and listed after the entity options under a Runners header', () => {
       const { result, onNavigate } = renderEditNavigation({
         isCustomAppsEnabled: true,
         schemas: [
@@ -506,14 +507,16 @@ describe('useCatalogEditNavigation', () => {
           option.label,
         ]),
       ).toEqual([
-        ['custom-app', 'Create custom app'],
         ['prompt', 'Create prompt'],
         ['toolset', 'Create toolset'],
+        ['skill', 'Skill'],
+        ['create-sections-divider', undefined],
+        ['runners-header', 'Runners'],
+        ['custom-app', 'Create custom app'],
         ['runner:editorless-runner', 'No editor'],
         ['runner:ocr-schema', 'OCR'],
         ['runner:foo-quickapps', 'Quick app'],
         ['runner:foo-quickapps2', 'Quick app 2.0'],
-        ['skill', 'Skill'],
       ]);
 
       result.current.createOptions
@@ -626,6 +629,44 @@ describe('useCatalogEditNavigation', () => {
       expect(
         result.current.createOptions[0].children?.map((child) => child.key),
       ).toEqual(['skill-upload']);
+    });
+
+    it('shows no section divider or header when hide-custom-app-creation leaves no runner section', () => {
+      const { result } = renderEditNavigation({
+        isCustomAppsEnabled: true,
+        isHideCustomAppCreationEnabled: true,
+        schemas: [quickAppSchema],
+      });
+
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'prompt',
+        'toolset',
+        'skill',
+      ]);
+    });
+
+    it('shows only the runner section, without a header, when no entity option is offered', () => {
+      const { result } = renderEditNavigation({
+        isCustomAppsEnabled: true,
+        isToolsetsEnabled: false,
+        isPromptsEnabled: false,
+        schemas: [quickAppSchema],
+      });
+
+      act(() => result.current.createSearch?.onChange('app'));
+
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'custom-app',
+        'runner:foo-quickapps2',
+      ]);
+    });
+
+    it('leaves no options when the search matches nothing', () => {
+      const { result } = renderEditNavigation({ schemas: [quickAppSchema] });
+
+      act(() => result.current.createSearch?.onChange('zzz'));
+
+      expect(result.current.createOptions).toEqual([]);
     });
 
     it('offers no search field when no runner option is available', () => {

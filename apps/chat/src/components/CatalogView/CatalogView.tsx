@@ -493,6 +493,7 @@ const CatalogView: FC<Props> = ({
       ),
       createSkillUpload: t(CatalogI18nKeys.CreateSkillUpload),
       createPrompt: t(CatalogI18nKeys.CreatePrompt),
+      createRunners: t(CatalogI18nKeys.CreateRunners),
       deleteError: t(CatalogI18nKeys.DetailsDeleteError),
     }),
     [t],
