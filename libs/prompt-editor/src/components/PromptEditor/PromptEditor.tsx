@@ -435,7 +435,6 @@ export const PromptEditor: FC<PromptEditorProps> = ({
               fields={METADATA_FIELDS}
               renderDescription={renderRefinableDescription}
               labels={metadataLabels}
-              descriptionMaxLength={descriptionMaxLength}
               descriptionCaption={
                 values.description
                   ? `${values.description.length}/${descriptionMaxLength}`
