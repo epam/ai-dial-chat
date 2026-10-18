@@ -895,9 +895,9 @@ publication to the caller's own session name).
 
 The fifth argument is the credentials opt-in. The panel renders that checkbox
 only for a `Toolset` whose `credentials.authenticationType` is set and is not
-`ToolsetAuthenticationType.None`, and whose `credentials.userStatus` or
-`credentials.globalStatus` is `CredentialStatus.SignedIn` — access the
-publisher does not hold cannot be passed on. No host prop controls this; the
+`ToolsetAuthenticationType.None`, and whose `credentials.globalStatus` is
+`CredentialStatus.SignedIn` — DIAL Core copies only the global credential to
+the published copy, so a user-level sign-in alone has nothing to pass on. No host prop controls this; the
 decision is derived from the item the panel already has, and there is no role
 gate. For every other item the argument is always `false`. It is cleared on
 every open, including immediately after a publication that carried it.
