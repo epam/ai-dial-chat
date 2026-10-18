@@ -5,6 +5,7 @@ import type {
   SkillMetadataItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { SKILL_MANIFEST_MAX_BYTES } from '@epam/ai-dial-chat-hooks';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import type { TFunction } from 'i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -336,6 +337,58 @@ describe('useCatalogItems', () => {
           (item) => item.type === 'SKILL',
         ),
       ).toBe(false);
+    });
+  });
+
+  describe('conversation interfaces in selector mode', () => {
+    const deployments = [
+      {
+        id: 'chat-app',
+        displayName: 'Chat app',
+        type: 'application',
+        interfaces: ['chat'],
+      },
+      {
+        id: 'viewer-app',
+        displayName: 'Viewer app',
+        type: 'application',
+        interfaces: ['custom_ui'],
+      },
+      {
+        id: 'mcp-app',
+        displayName: 'MCP app',
+        type: 'application',
+        interfaces: ['mcp'],
+      },
+      { id: 'legacy-app', displayName: 'Legacy app', type: 'application' },
+    ] as DeploymentItemDto[];
+
+    it('hides deployments without a chat or custom-UI interface from the picker', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(
+          makeParams({
+            deployments,
+            isSelectorMode: true,
+            visibleTypes: new Set([CatalogEntityType.Agent]),
+          }),
+        ),
+      );
+
+      expect(result.current.visibleCatalogItems.map((item) => item.id)).toEqual(
+        ['chat-app', 'viewer-app', 'legacy-app'],
+      );
+    });
+
+    it('keeps MCP-only deployments in the catalog outside selector mode', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(makeParams({ deployments })),
+      );
+
+      expect(
+        result.current.visibleCatalogItems.some(
+          (item) => item.id === 'mcp-app',
+        ),
+      ).toBe(true);
     });
   });
 

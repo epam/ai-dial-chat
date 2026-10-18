@@ -1,7 +1,8 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
-import type {
-  DeploymentItemDto,
-  DialToolsetDto,
+import {
+  type DeploymentItemDto,
+  type DialToolsetDto,
+  ListDeploymentsInterfaceTypeEnum,
 } from '@epam/ai-dial-chat-api-client';
 import type {
   DeploymentFolderLabels,
@@ -86,3 +87,15 @@ export const mapToolsetToCatalogItem = (
   };
   return mapToolsetToCatalogItemLib(toolset, options);
 };
+
+const CONVERSATION_INTERFACES: readonly string[] = [
+  ListDeploymentsInterfaceTypeEnum.Chat,
+  ListDeploymentsInterfaceTypeEnum.CustomUi,
+];
+
+/** Whether a conversation can be started with `deployment`: it exposes a chat or custom-UI interface, or reports no interfaces at all. */
+export const canStartConversation = (deployment: DeploymentItemDto): boolean =>
+  deployment.interfaces == null ||
+  deployment.interfaces.some((iface) =>
+    CONVERSATION_INTERFACES.includes(iface),
+  );
