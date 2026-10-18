@@ -59,10 +59,10 @@ When gating or the search query empties one section, the remaining options rende
 
 - `highlightDropdownLabels` returns `Divider` / `PlainText` items unchanged. The header text never matches the user's query visually, and the no-results row is built by `CreateButton` after highlighting, so it is unaffected.
 - `CreateMenuSheet` renders:
-  - `Divider` as `<div role="separator">` using the kit's separator styling (border token, logical margins);
-  - `PlainText` as a non-interactive caption (`text-secondary dial-caption-text`, `px-3 py-2`), mirroring the kit dropdown.
-  
-  Only `Item` rows become `MenuItem role="menuitem"`. Tests rely on the `role="separator"` and on the absence of a header `menuitem`; no `data-testid` is used.
+  - `Divider` as `<div role="separator">`;
+  - `PlainText` as a non-interactive caption.
+
+  Their colors come from `CreateMenuSheet.module.scss` through CSS custom properties with theme-token fallbacks: `--cat-create-menu-divider` → `--stroke-tertiary`, and `--cat-create-menu-section-header-text` → `--text-secondary`. Hosts override them via `CatalogColors.createMenu` (`CreateMenuColors`), which `Catalog` threads through `CreateButton` to the sheet's `buildCssVars` call. The vars are set on the sheet's own menu element, because `BottomSheet` renders in a portal outside the catalog root's vars. The header's typography is `CatalogTypography.createMenuSectionHeaderClassName` (default `'dial-caption-text'`). Only `Item` rows become `MenuItem role="menuitem"`. Tests rely on the `role="separator"` and on the absence of a header `menuitem`; no `data-testid` is used.
 
 ### D6. Lib isolation
 

@@ -278,6 +278,29 @@ const browseSettings: Partial<BrowseSettingsSheetLabels> = {
 <Catalog items={items} titles={{ browseSettings }} />;
 ```
 
+#### Create menu sections
+
+`createOptions` may contain `DropdownItemType.Divider` and
+`DropdownItemType.PlainText` items to split the Create menu into sections, for
+example a divider plus a section header. Search highlighting leaves them alone.
+The desktop dropdown renders them with the kit's own styles. Below the desktop
+breakpoint, the bottom sheet renders the divider as `role="separator"` and the
+header as a non-interactive caption, neither of them a `menuitem`. Restyle them
+through `styles.colors.createMenu` (`CreateMenuColors`) and
+`styles.typography.createMenuSectionHeaderClassName` (defaults to
+`'dial-caption-text'`).
+
+```tsx
+import type { CreateMenuColors } from '@epam/ai-dial-catalog';
+
+const createMenu: CreateMenuColors = {
+  divider: 'var(--stroke-secondary)',
+  sectionHeaderText: 'var(--text-primary)',
+};
+
+<Catalog items={items} styles={{ colors: { createMenu } }} />;
+```
+
 #### Custom empty state
 
 By default, the Browse section renders a `PanelEmptyState` (an icon plus

@@ -20,6 +20,7 @@ import {
   CREATE_MENU_MAX_HEIGHT_PX,
 } from '../../constants/create-menu';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
+import type { CreateMenuColors } from '../../models/catalog-styles';
 import { highlightDropdownLabels } from '../../utils/create-menu';
 import { CreateMenuSheet } from './CreateMenuSheet';
 
@@ -48,6 +49,10 @@ export interface CreateButtonProps {
   closeLabel?: string;
   /** Colour variant of the button. Defaults to `ButtonVariant.Primary`. */
   variant?: ButtonVariant;
+  /** Colors of the mobile menu sheet's divider and section-header rows. */
+  colors?: CreateMenuColors;
+  /** Typography class of a section header in the mobile menu sheet. Defaults to `'dial-caption-text'`. */
+  sectionHeaderClassName?: string;
 }
 
 /** Renders a plain primary button, a split-chevron dropdown, a searchable dropdown, or — on mobile — a menu sheet. */
@@ -62,6 +67,8 @@ export const CreateButton: FC<CreateButtonProps> = ({
   backLabel = 'Back',
   closeLabel = 'Close',
   variant = ButtonVariant.Primary,
+  colors,
+  sectionHeaderClassName,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -105,6 +112,8 @@ export const CreateButton: FC<CreateButtonProps> = ({
           noResultsLabel={noResultsLabel}
           backLabel={backLabel}
           closeLabel={closeLabel}
+          colors={colors}
+          sectionHeaderClassName={sectionHeaderClassName}
         />
       </>
     );
