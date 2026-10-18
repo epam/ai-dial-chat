@@ -332,16 +332,21 @@ describe('PromptEditor', () => {
     expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
   });
 
-  it('stops the description at its limit and shows a live counter', async () => {
+  it('shows a live description counter without capping the input', async () => {
     renderEditor({ descriptionMaxLength: 5 });
 
     const description = screen.getByRole('textbox', { name: /Description/ });
-    expect(description.getAttribute('maxlength')).toBe('5');
+    expect(description.getAttribute('maxlength')).toBeNull();
     expect(screen.queryByText(/\/5$/)).toBeNull();
 
     await user.type(description, 'abc');
 
     expect(screen.getByText('3/5')).toBeTruthy();
+
+    await user.type(description, 'def');
+
+    expect((description as HTMLTextAreaElement).value).toBe('abcdef');
+    expect(screen.getByText('6/5')).toBeTruthy();
   });
 
   it('reports each edited field through onFieldChange', async () => {

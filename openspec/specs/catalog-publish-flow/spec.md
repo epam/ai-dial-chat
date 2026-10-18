@@ -311,11 +311,11 @@ The catalog publish sub-view SHALL show the shared publish panel's credentials c
 
 - `item.type` is `CatalogEntityType.Toolset`;
 - `item.credentials?.authenticationType` is set and is not `ToolsetAuthenticationType.None`;
-- `item.credentials.userStatus` is `CredentialStatus.SignedIn` **or** `item.credentials.globalStatus` is `CredentialStatus.SignedIn`.
+- `item.credentials.globalStatus` is `CredentialStatus.SignedIn`.
 
 Both authentication types qualify — OAuth and API key. A shared team API key is the most common internal case, and nothing about the flag is OAuth-specific.
 
-Either credential level qualifies because publishing always acts on the publisher's own source item (`isPublishVisible` already requires `item.isMyApp`): on a personal item `globalStatus` is the owner's own credential, and `userStatus` covers a personal credential configured on top of it. Access the publisher does not hold cannot be passed on, so a toolset the publisher is signed out of SHALL offer no control.
+Only the global level qualifies, matching the legacy chat. Publishing always acts on the publisher's own source item (`isPublishVisible` already requires `item.isMyApp`), where `globalStatus` is the owner's own credential, and DIAL Core copies that global credential to the published copy on approval. A `userStatus` sign-in alone gives Core nothing to copy, so the copy would stay signed out and members would still be asked to authorise. Access the publisher does not hold at the global level cannot be passed on, so a toolset whose `globalStatus` is not `SignedIn` SHALL offer no control.
 
 The eligibility decision SHALL be made inside `libs/catalog` from `item.credentials`, which `DetailsPanel` already receives and already branches on for its credentials action (see `catalog-toolset-credentials`). No new fetch, no new loading state, and no new host prop are introduced for it, and `libs/publish-panel` SHALL remain unaware of toolsets and credential levels (see `publish-panel-library`).
 
@@ -343,9 +343,15 @@ The eligibility decision SHALL be made inside `libs/catalog` from `item.credenti
 
 #### Scenario: An API-key toolset the publisher is signed in to offers the option
 
-- **GIVEN** the publisher's own toolset has `authenticationType: ApiKey` and `userStatus: SignedIn`
+- **GIVEN** the publisher's own toolset has `authenticationType: ApiKey` and `globalStatus: SignedIn`
 - **WHEN** the publisher opens the publish sub-view
 - **THEN** the credentials checkbox is shown, cleared
+
+#### Scenario: A toolset signed in at the user level only offers no option
+
+- **GIVEN** the publisher's own toolset has `authenticationType: ApiKey`, `userStatus: SignedIn` and `globalStatus` not `SignedIn`
+- **WHEN** the publisher opens the publish sub-view
+- **THEN** no credentials checkbox is rendered, because DIAL Core copies only the global credential to the published copy
 
 #### Scenario: A toolset that needs no login offers no option
 
@@ -355,7 +361,7 @@ The eligibility decision SHALL be made inside `libs/catalog` from `item.credenti
 
 #### Scenario: A toolset the publisher is signed out of offers no option
 
-- **GIVEN** the item is a toolset with `authenticationType: OAuth` whose `userStatus` and `globalStatus` are both absent or not `SignedIn`
+- **GIVEN** the item is a toolset with `authenticationType: OAuth` whose `globalStatus` is absent or not `SignedIn`
 - **WHEN** the publisher opens the publish sub-view
 - **THEN** no credentials checkbox is rendered, because access the publisher does not hold cannot be passed on
 

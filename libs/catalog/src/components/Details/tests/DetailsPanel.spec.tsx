@@ -464,16 +464,30 @@ describe('DetailsPanel — publish credentials opt-in', () => {
   });
 
   /* A shared team API key is the common internal case. */
-  it('offers the option for an API-key toolset whose publisher is signed in personally', async () => {
+  it('offers the option for an API-key toolset signed in at the global level', async () => {
     renderPanel({
       item: toolsetWithCredentials({
         authenticationType: ToolsetAuthenticationType.ApiKey,
-        userStatus: CredentialStatus.SignedIn,
+        globalStatus: CredentialStatus.SignedIn,
       }),
     });
     await openPublish();
 
     expect(credentialsToggle()).toBeTruthy();
+  });
+
+  /* Core copies only the global credential, so a personal one has nothing to pass on. */
+  it('offers no option for a toolset signed in at the user level only', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.ApiKey,
+        userStatus: CredentialStatus.SignedIn,
+        globalStatus: CredentialStatus.SignedOut,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeNull();
   });
 
   it('offers no option for a toolset that needs no login', async () => {
