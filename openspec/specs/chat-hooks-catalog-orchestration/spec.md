@@ -108,7 +108,9 @@ and limits failure SHALL not discard successful model details.
 The package SHALL export immutable pure functions for selector visible-type
 filtering, hide-owned filtering, favorite derivation, available-tab derivation,
 and topic reconciliation. They SHALL use current predicates and order:
-favorites are items whose `isUserFavorite` is true and `isHidden` is not, tab ids follow supplied tab
+selector filtering keeps items whose type is visible and whose `supportsChat` is
+not `false`, so the conversation picker omits deployments without a chat
+interface; favorites are items whose `isUserFavorite` is true and `isHidden` is not, tab ids follow supplied tab
 order and include only types present in visible items, and topics are the
 intersection of persisted topics with topics present in those items.
 
@@ -119,6 +121,12 @@ hooks.
 The exported names SHALL be `filterCatalogItemsBySelector`,
 `filterHiddenOwnedItems`, `deriveFavoriteItems`, `deriveAvailableTabIds`, and
 `reconcileFilterTopics`.
+
+#### Scenario: Selector omits deployments without a chat interface
+
+- **WHEN** selector filtering receives a visible-type agent with
+  `supportsChat: false`, one with `supportsChat: true`, and a visible-type prompt
+- **THEN** it returns the chat-capable agent and the prompt, in order
 
 #### Scenario: Stale topic is removed without mutation
 

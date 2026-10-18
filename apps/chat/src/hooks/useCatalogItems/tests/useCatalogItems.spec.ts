@@ -363,7 +363,7 @@ describe('useCatalogItems', () => {
       { id: 'legacy-app', displayName: 'Legacy app', type: 'application' },
     ] as DeploymentItemDto[];
 
-    it('hides deployments without a chat or custom-UI interface from the picker', () => {
+    it('hides deployments without a chat interface from the picker', () => {
       const { result } = renderHook(() =>
         useCatalogItems(
           makeParams({
@@ -375,7 +375,7 @@ describe('useCatalogItems', () => {
       );
 
       expect(result.current.visibleCatalogItems.map((item) => item.id)).toEqual(
-        ['chat-app', 'viewer-app', 'legacy-app'],
+        ['chat-app', 'legacy-app'],
       );
     });
 

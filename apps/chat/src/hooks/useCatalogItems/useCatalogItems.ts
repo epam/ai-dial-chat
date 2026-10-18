@@ -43,7 +43,6 @@ import { CATALOG_TAB_ORDER } from '../../types/catalog';
 import { buildSkillOverviewLabels } from '../../utils/catalog';
 import {
   buildDeploymentFolderLabels,
-  canStartConversation,
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
@@ -310,29 +309,12 @@ export const useCatalogItems = ({
     publicSkills,
   ]);
 
-  /* MCP-only applications are listed in the catalog but cannot hold a conversation. */
-  const nonConversationalIds = useMemo(
-    () =>
-      new Set(
-        deployments.filter((d) => !canStartConversation(d)).map((d) => d.id),
-      ),
-    [deployments],
-  );
-
   const visibleCatalogItems = useMemo(() => {
     const selectorFiltered = isSelectorMode
-      ? filterCatalogItemsBySelector(catalogItems, visibleTypes).filter(
-          (item) => !nonConversationalIds.has(item.id),
-        )
+      ? filterCatalogItemsBySelector(catalogItems, visibleTypes)
       : catalogItems;
     return filterHiddenOwnedItems(selectorFiltered, isCatalogHideMyAppsEnabled);
-  }, [
-    catalogItems,
-    isSelectorMode,
-    isCatalogHideMyAppsEnabled,
-    visibleTypes,
-    nonConversationalIds,
-  ]);
+  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled, visibleTypes]);
 
   const reconciledFilterTopics = useMemo(
     () => reconcileFilterTopics(persistedFilterTopics, visibleCatalogItems),
