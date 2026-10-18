@@ -30,6 +30,7 @@ const TEST_USER = {
 const createdLink: ShareLinkResponseDto = {
   url: 'https://example.com/marketplace/share/gpt-4o',
   expiresInDays: 3,
+  expiresInHours: 72,
   access: [ShareAccess.View],
 };
 
@@ -124,8 +125,12 @@ describe('ShareController (integration)', () => {
       );
     });
 
-    it('returns 201 without expiresInDays when the service could not determine the expiry', async () => {
-      const { expiresInDays: _omitted, ...linkWithoutExpiry } = createdLink;
+    it('returns 201 without the expiry when the service could not determine the expiry', async () => {
+      const {
+        expiresInDays: _omittedDays,
+        expiresInHours: _omittedHours,
+        ...linkWithoutExpiry
+      } = createdLink;
       service.createShareLink.mockResolvedValueOnce(linkWithoutExpiry);
 
       const res = await request(app.getHttpServer())
@@ -135,6 +140,7 @@ describe('ShareController (integration)', () => {
 
       expect(res.body).toEqual(linkWithoutExpiry);
       expect(res.body).not.toHaveProperty('expiresInDays');
+      expect(res.body).not.toHaveProperty('expiresInHours');
     });
 
     it('accepts a full prompts/{bucket}/{path} itemId', async () => {

@@ -6618,6 +6618,12 @@ export interface ShareLinkResponseDto {
    */
   expiresInDays?: number;
   /**
+   * Hours until the DIAL Core invitation expires, rounded up. Lets a client describe a TTL shorter than a day, which `expiresInDays` rounds up to 1. Omitted together with `expiresInDays`.
+   * @type {number}
+   * @memberof ShareLinkResponseDto
+   */
+  expiresInHours?: number;
+  /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}
    * @memberof ShareLinkResponseDto

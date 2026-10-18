@@ -1324,6 +1324,7 @@ export enum ShareI18nKeys {
   CopiedButtonLabel = 'share.copiedButtonLabel',
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
+  ExpiryNoteHours = 'share.expiryNoteHours',
   QrCodeAriaLabel = 'share.qrCodeAriaLabel',
   QrDownloadFileName = 'share.qrDownloadFileName',
   LoadingLabel = 'share.loadingLabel',

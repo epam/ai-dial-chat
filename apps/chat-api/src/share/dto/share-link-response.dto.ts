@@ -18,6 +18,14 @@ export class ShareLinkResponseDto {
   expiresInDays?: number;
 
   @ApiProperty({
+    required: false,
+    description:
+      'Hours until the DIAL Core invitation expires, rounded up. Lets a client describe a TTL shorter than a day, which `expiresInDays` rounds up to 1. Omitted together with `expiresInDays`.',
+    example: 72,
+  })
+  expiresInHours?: number;
+
+  @ApiProperty({
     description:
       'Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.',
     enum: ShareAccess,

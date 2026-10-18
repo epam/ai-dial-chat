@@ -75,6 +75,7 @@ export const useShareLink = (
           setData({
             url: withOrigin(response.url, origin),
             expiresInDays: response.expiresInDays,
+            expiresInHours: response.expiresInHours,
             access: toShareLinkAccess(response.access),
           });
         }
