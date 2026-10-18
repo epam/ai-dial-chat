@@ -48,6 +48,19 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     label: string;
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
+  NeutralButton: ({
+    label,
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    label: string;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => (
+    <button aria-label={ariaLabel} onClick={onClick}>
+      {label}
+    </button>
+  ),
   FolderPath: ({ segments }: { segments: string[] }) => (
     <>{segments.join(' / ')}</>
   ),
@@ -102,6 +115,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconDotsVertical: () => <svg />,
   IconEdit: () => <svg />,
   IconFolder: () => <svg />,
+  IconLogout: () => <svg />,
   IconPlayerPlay: () => <svg />,
   IconPlus: () => <svg />,
   IconTrash: () => <svg />,
@@ -116,27 +130,29 @@ const buildItem = (
   ...overrides,
 });
 
+const baseLabels: ScheduledTasksProps['labels'] = {
+  title: 'Scheduled tasks',
+  subtitle: 'Automate recurring tasks with scheduled runs.',
+  createButtonLabel: 'New task',
+  searchPlaceholder: 'Search scheduled tasks...',
+  searchAriaLabel: 'Search scheduled tasks by name',
+  clearSearchLabel: 'Clear scheduled tasks search',
+  sortLabel: 'Sort',
+  sortOptions: [
+    { value: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
+    { value: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
+  ],
+  emptyStateLabel: 'No scheduled tasks yet',
+  noResultsLabel: 'No results',
+  errorLabel: 'Something went wrong',
+  retryLabel: 'Retry',
+  loadingMoreLabel: 'Loading more scheduled tasks…',
+};
+
 const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
   render(
     <ScheduledTasks
-      labels={{
-        title: 'Scheduled tasks',
-        subtitle: 'Automate recurring tasks with scheduled runs.',
-        createButtonLabel: 'New task',
-        searchPlaceholder: 'Search scheduled tasks...',
-        searchAriaLabel: 'Search scheduled tasks by name',
-        clearSearchLabel: 'Clear scheduled tasks search',
-        sortLabel: 'Sort',
-        sortOptions: [
-          { value: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
-          { value: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
-        ],
-        emptyStateLabel: 'No scheduled tasks yet',
-        noResultsLabel: 'No results',
-        errorLabel: 'Something went wrong',
-        retryLabel: 'Retry',
-        loadingMoreLabel: 'Loading more scheduled tasks…',
-      }}
+      labels={baseLabels}
       onCreateClick={vi.fn()}
       searchQuery=""
       onSearchQueryChange={vi.fn()}
@@ -300,6 +316,19 @@ describe('ScheduledTasks', () => {
     await userEvent.click(screen.getByRole('button', { name: 'New task' }));
 
     expect(onCreateClick).toHaveBeenCalledOnce();
+  });
+
+  it('renders exactly one header action button — the create action, with no disconnect/logout affordance', () => {
+    renderScheduledTasks();
+
+    /* The disconnect/logout surface moved to the Settings Extensions section;
+       the header carries only the create action. */
+    expect(screen.queryByRole('button', { name: 'Disconnect' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Log out' })).toBeNull();
+    const headerButtons = screen
+      .getAllByRole('button')
+      .filter((button) => button.textContent === 'New task');
+    expect(headerButtons).toHaveLength(1);
   });
 
   it('calls onSearchQueryChange when typing in the search input', async () => {

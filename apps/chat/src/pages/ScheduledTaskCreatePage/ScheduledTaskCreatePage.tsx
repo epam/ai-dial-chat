@@ -1,5 +1,4 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
-import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { prepareScheduledTaskCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import {
@@ -8,7 +7,13 @@ import {
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
-import { EditorThemes } from '@epam/ai-dial-ui-kit';
+import {
+  Button,
+  ButtonAppearance,
+  ButtonVariant,
+  EditorThemes,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
@@ -24,16 +29,15 @@ import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
+import { useScheduledTaskSubmit } from '../../hooks/scheduled-tasks/useScheduledTaskSubmit';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
 import {
   getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
-  mapScheduledTaskApiError,
 } from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -61,7 +65,7 @@ const ScheduledTaskCreatePage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { key: draftKey } = useLocation();
-  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { showSuccessNotification } = useNotification();
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
 
@@ -71,7 +75,6 @@ const ScheduledTaskCreatePage: FC = () => {
   const [values, setValues] =
     useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
   /* A capability change invalidates a prior server rejection. Local validation
    * below continues to block a selected skill until support is confirmed. */
@@ -127,50 +130,54 @@ const ScheduledTaskCreatePage: FC = () => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
-  const handleSubmit = useCallback(async () => {
+  /*
+   * The whole submit orchestration (in-flight state, failure branches,
+   * login-required toast, login-and-retry handshake) is the shared
+   * `useScheduledTaskSubmit` flow — the handlers below supply this page's
+   * own pieces.
+   */
+
+  /** Prepares the create body from the current values; `null` when validation fails (field errors already applied). */
+  const prepareCreateBody = useCallback(() => {
     const prepared = prepareScheduledTaskCreateBody(values, {
       now: new Date(),
       isSkillsSupported,
     });
     if (!prepared.ok) {
       setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
-      return;
+      return null;
     }
+    return prepared.body;
+  }, [values, isSkillsSupported, t]);
 
-    setIsSubmitting(true);
-    try {
-      await createScheduledTask(prepared.body);
-      showSuccessNotification({
-        message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
-      });
-      navigate(returnUrl, { state: { refresh: true } });
-    } catch (error) {
-      const details = await getApiErrorDetails(error);
-      const fieldErrors = mapScheduledTaskApiError(details.code, t);
-      if (fieldErrors) {
-        setErrors(fieldErrors);
-        setIsSubmitting(false);
-        return;
-      }
-      showErrorNotification({
-        message: resolveScheduledTaskErrorMessage(
-          details,
-          ScheduledTasksI18nKeys.CreateErrorNotification,
-          t,
-        ),
-        requestId: details.traceId,
-      });
-      setIsSubmitting(false);
-    }
-  }, [
-    values,
-    isSkillsSupported,
-    showSuccessNotification,
-    showErrorNotification,
-    t,
-    navigate,
-    returnUrl,
-  ]);
+  /** Runs the normal create success path (success toast + navigation back to the task list). */
+  const handleCreateSuccess = useCallback(() => {
+    showSuccessNotification({
+      message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
+    });
+    navigate(returnUrl, { state: { refresh: true } });
+  }, [showSuccessNotification, t, navigate, returnUrl]);
+
+  const { isSubmitting, handleSubmit } = useScheduledTaskSubmit({
+    prepare: prepareCreateBody,
+    save: createScheduledTask,
+    onSuccess: handleCreateSuccess,
+    onFieldErrors: setErrors,
+    errorKey: ScheduledTasksI18nKeys.CreateErrorNotification,
+    /*
+     * The page owns the login-and-retry action's presentation (the kit's own
+     * retry-action doc example shape); the hook owns its behavior.
+     */
+    renderLoginAndRetryAction: (onAction) => (
+      <Button
+        variant={ButtonVariant.Neutral}
+        appearance={ButtonAppearance.Outlined}
+        size={ElementSize.Small}
+        label={t(ScheduledTasksI18nKeys.LoginAndRetryAction)}
+        onClick={onAction}
+      />
+    ),
+  });
 
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;

@@ -109,7 +109,7 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
                 name={row.name}
                 size={avatarSize}
                 className="!rounded-xl"
-                textClassName="!text-lg"
+                textClassName="text-lg"
               />
             }
             styles={{ badgeClassName: '!rounded-xl' }}

@@ -1,0 +1,32 @@
+.container {
+  background: var(--ext-container-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.columnHeader {
+  color: var(--ext-column-header, var(--text-secondary, #57647a));
+}
+
+.headerRow {
+  /* Dividers inside the table sit on the thin stroke (0.5px), one step below
+     the 1px main stroke controls and standalone dividers use (the same rule
+     as ModelLimitsSection). */
+  border-block-end: 0.5px solid
+    var(--ext-row-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+.row {
+  border-block-start: 0.5px solid
+    var(--ext-row-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+.name {
+  color: var(--ext-name, var(--text-primary, #161b2d));
+}
+
+.description {
+  color: var(--ext-description, var(--text-secondary, #57647a));
+}
+
+.warningBadge {
+  color: var(--ext-warning-badge, var(--text-warning-icon, #eec840));
+}

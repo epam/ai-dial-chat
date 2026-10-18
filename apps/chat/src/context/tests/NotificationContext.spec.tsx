@@ -29,6 +29,23 @@ describe('NotificationContext', () => {
     expect(result.current.notifications[0].id).toBeTruthy();
   });
 
+  it('showNotification honors a caller-supplied id and resolves it back', () => {
+    const { result } = renderNotification();
+    let callerId = '';
+    act(() => {
+      callerId = result.current.showNotification({
+        id: 'caller-supplied-id',
+        variant: NotificationVariant.Error,
+        message: 'actionable',
+      });
+    });
+
+    expect(callerId).toBe('caller-supplied-id');
+    expect(result.current.notifications[0].id).toBe('caller-supplied-id');
+    act(() => result.current.dismissNotification(callerId));
+    expect(result.current.notifications).toEqual([]);
+  });
+
   it('dismissNotification removes the item by id', () => {
     const { result } = renderNotification();
     act(() =>

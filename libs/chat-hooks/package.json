@@ -94,6 +94,12 @@
       "import": "./dist/oauth.js",
       "default": "./dist/oauth.js"
     },
+    "./offline-credentials": {
+      "@epam/source": "./src/entry-points/offline-credentials.ts",
+      "types": "./dist/offline-credentials.d.ts",
+      "import": "./dist/offline-credentials.js",
+      "default": "./dist/offline-credentials.js"
+    },
     "./scheduled-tasks": {
       "@epam/source": "./src/entry-points/scheduled-tasks.ts",
       "types": "./dist/scheduled-tasks.d.ts",

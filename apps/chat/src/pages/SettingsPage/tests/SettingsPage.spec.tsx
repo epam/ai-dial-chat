@@ -141,15 +141,17 @@ describe('SettingsPage', () => {
     );
   });
 
-  it('renders two tabs, Preferences then Usage, with Preferences selected by default', () => {
+  it('renders three tabs, Preferences then Usage then Extensions, with Preferences selected by default', () => {
     renderPreferences();
 
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(2);
+    expect(tabs).toHaveLength(3);
     expect(tabs[0].textContent).toContain(SettingsI18nKeys.Preferences);
     expect(tabs[1].textContent).toContain(BasicI18nKeys.Usage);
+    expect(tabs[2].textContent).toContain(SettingsI18nKeys.Extensions);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(tabs[1].getAttribute('aria-selected')).toBe('false');
+    expect(tabs[2].getAttribute('aria-selected')).toBe('false');
   });
 
   it('renders the Preferences pane on mount', () => {
@@ -259,7 +261,43 @@ describe('SettingsPage', () => {
       expect(currentPath()).toBe(
         `${ROUTES.Settings}/${SettingsTabs.Preferences}`,
       );
-      expect(screen.getAllByRole('tab')).toHaveLength(2);
+      expect(screen.getAllByRole('tab')).toHaveLength(3);
+    });
+  });
+
+  /*
+   * The Extensions entry is withheld unless `scheduledTasksEnabled` is on: the
+   * BFF endpoints behind its whole domain 403 without that feature, so an
+   * always-rendered tab would show a permanently dead section.
+   */
+  describe('the Extensions tab is gated on scheduledTasksEnabled', () => {
+    it('renders the Extensions tab and pane on its URL when the flag is on', () => {
+      renderAt(`${ROUTES.Settings}/${SettingsTabs.Extensions}`);
+
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs).toHaveLength(3);
+      expect(tabs[2].textContent).toContain(SettingsI18nKeys.Extensions);
+      expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+      expect(screen.getByRole('heading', { level: 2 }).textContent).toContain(
+        SettingsI18nKeys.Extensions,
+      );
+    });
+
+    it('withholds the Extensions tab when the flag is off and redirects its URL', () => {
+      mockUseFeatureFlag.mockImplementation(
+        (key?: string) => key !== 'scheduledTasksEnabled',
+      );
+
+      renderAt(`${ROUTES.Settings}/${SettingsTabs.Extensions}`);
+
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs).toHaveLength(2);
+      expect(tabs.map((tab) => tab.textContent)).not.toContain(
+        SettingsI18nKeys.Extensions,
+      );
+      expect(currentPath()).toBe(
+        `${ROUTES.Settings}/${SettingsTabs.Preferences}`,
+      );
     });
   });
 

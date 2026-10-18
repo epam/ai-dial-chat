@@ -5,6 +5,8 @@ import {
 import {
   getApiErrorDetails,
   getApiErrorStatus,
+  OfflineCredentialsGateStatus,
+  OfflineCredentialsLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTaskDetailView,
@@ -42,14 +44,8 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import {
-  OfflineCredentialsGateStatus,
-  useOfflineCredentialsGate,
-} from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
-import {
-  OfflineCredentialsLoginOutcomeType,
-  useOfflineCredentialsLogin,
-} from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { useOfflineCredentialsGate } from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
+import { useOfflineCredentialsLogin } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { useScheduledTaskSkillDisplayNames } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
 import {

@@ -39,6 +39,20 @@ describe('ScheduledTasksLoginBanner', () => {
     expect(screen.getByText("You're logged in.")).toBeTruthy();
   });
 
+  it('announces a pending liveAnnouncement while the banner is shown, without visible content', () => {
+    render(
+      <ScheduledTasksLoginBanner
+        {...BASE_PROPS}
+        state={ScheduledTasksLoginBannerState.Shown}
+        liveAnnouncement="You're signed out."
+      />,
+    );
+
+    const announcement = screen.getByText("You're signed out.");
+    expect(announcement).toBeTruthy();
+    expect(announcement.className).toContain('sr-only');
+  });
+
   it('shows the title, body, and Log in button in the Shown state', () => {
     render(
       <ScheduledTasksLoginBanner
