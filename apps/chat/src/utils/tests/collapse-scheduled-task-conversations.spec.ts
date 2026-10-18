@@ -75,10 +75,38 @@ describe('collapseScheduledTaskConversations', () => {
     const newerUpdate = run('a', { updatedAt: 200 });
     expect(collapse([olderUpdate, newerUpdate])).toEqual([newerUpdate]);
 
+    const undatedA = run('a');
+    const undatedB = run('b');
+    expect(collapse([undatedA, undatedB])).toEqual([undatedB]);
+    expect(collapse([undatedB, undatedA])).toEqual([undatedB]);
+  });
+
+  it('keeps every run of a task that was shared with the user', () => {
     const sharedA = run('a', { bucket: 'owner', sharedWithMe: true });
     const sharedB = run('b', { bucket: 'owner', sharedWithMe: true });
-    expect(collapse([sharedA, sharedB])).toEqual([sharedB]);
-    expect(collapse([sharedB, sharedA])).toEqual([sharedB]);
+
+    expect(collapse([sharedA, sharedB])).toEqual([sharedA, sharedB]);
+  });
+
+  it('keeps every published run of a task', () => {
+    const publishedA = run('a', { bucket: 'public', publishedWithMe: true });
+    const publishedB = run('b', { bucket: 'public', publishedWithMe: true });
+
+    expect(collapse([publishedA, publishedB])).toEqual([
+      publishedA,
+      publishedB,
+    ]);
+  });
+
+  it('does not let a shared run displace or hide the own runs of the same schedule id', () => {
+    const olderOwn = run('a', { createdAt: 100 });
+    const newestOwn = run('b', { createdAt: 200 });
+    const shared = run('c', { bucket: 'owner', sharedWithMe: true });
+
+    expect(collapse([olderOwn, shared, newestOwn])).toEqual([
+      shared,
+      newestOwn,
+    ]);
   });
 
   it('does not collapse two different tasks into each other', () => {
@@ -199,6 +227,17 @@ describe('groupScheduledTaskConversations + applyActiveScheduledTaskRun', () => 
 
     expect(result).toBe(base);
     expect(result).toEqual([newest]);
+  });
+
+  it('keeps the collapsed list reference when a shared run is active', () => {
+    const shared = run('s', { bucket: 'other', sharedWithMe: true });
+    const grouping = group([older, shared, newest]);
+    const base = applyActiveScheduledTaskRun(grouping, undefined);
+
+    const result = applyActiveScheduledTaskRun(grouping, shared.id);
+
+    expect(result).toBe(base);
+    expect(ids(result)).toEqual(ids([shared, newest]));
   });
 
   it('returns a new list showing an active older run', () => {
