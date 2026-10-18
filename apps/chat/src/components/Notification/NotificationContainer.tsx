@@ -93,14 +93,15 @@ interface NotificationEntryProps {
 const NotificationEntry: FC<NotificationEntryProps> = memo(
   ({ item, onDismiss }) => {
     /*
-     * Trace-bearing error notifications (`item.requestId` set) require manual dismissal, so
-     * their Request ID stays readable/copyable instead of vanishing after the fixed delay.
+     * Trace-bearing (`item.requestId` set) and actionable (`item.action` set) notifications
+     * require manual dismissal, so their Request ID stays readable/copyable and their action
+     * stays reachable instead of vanishing after the fixed delay.
      */
     useEffect(() => {
-      if (item.requestId) return;
+      if (item.requestId || item.action) return;
       const timer = setTimeout(() => onDismiss(item.id), DISMISS_DELAY_MS);
       return () => clearTimeout(timer);
-    }, [item.id, item.requestId, onDismiss]);
+    }, [item.id, item.requestId, item.action, onDismiss]);
 
     /*
      * The kit caps a toast's width at 600px but lets it grow to any height, so
@@ -128,6 +129,7 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
         variant={item.variant}
         title={item.title}
         message={composedMessage}
+        action={item.action}
         closable
         onClose={() => onDismiss(item.id)}
       />

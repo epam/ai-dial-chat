@@ -2,11 +2,14 @@ import {
   TextRefinementPurpose,
   ScheduledTaskErrorCode,
 } from '@epam/ai-dial-chat-api-client';
-import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ScheduledTaskDto,
+  UpdateScheduledTaskBodyDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
-  getApiErrorDetails,
   getApiErrorStatus,
   mapScheduledTaskDtoToFormValues,
+  type ApiErrorDetails,
 } from '@epam/ai-dial-chat-hooks';
 import { prepareScheduledTaskUpdateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
@@ -15,7 +18,14 @@ import {
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
 } from '@epam/ai-dial-scheduled-tasks';
-import { EditorThemes, GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  Button,
+  ButtonAppearance,
+  ButtonVariant,
+  EditorThemes,
+  ElementSize,
+  GhostButton,
+} from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -40,6 +50,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
+import { useScheduledTaskSubmit } from '../../hooks/scheduled-tasks/useScheduledTaskSubmit';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import {
   getScheduledTask,
@@ -47,11 +58,9 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
 import {
   getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
-  mapScheduledTaskApiError,
 } from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -68,7 +77,7 @@ const ScheduledTaskEditPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
-  const { showSuccessNotification, showErrorNotification } = useNotification();
+  const { showSuccessNotification } = useNotification();
   const { currentTheme } = useTheme();
   const modelLabelId = useId();
 
@@ -97,7 +106,6 @@ const ScheduledTaskEditPage: FC = () => {
     endDate?: string;
   }>({});
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
   /* A capability change invalidates a prior server rejection. Local validation
    * below continues to block a selected skill until support is confirmed. */
@@ -217,9 +225,16 @@ const ScheduledTaskEditPage: FC = () => {
     setTaskFetchToken((token) => token + 1);
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    if (!values) return;
+  /*
+   * The whole submit orchestration (in-flight state, failure branches,
+   * login-required toast, login-and-retry handshake) is the shared
+   * `useScheduledTaskSubmit` flow — the handlers below supply this page's
+   * own pieces, plus its not-found branch.
+   */
 
+  /** Prepares the update body from the current values; `null` while the form is not loaded yet or validation fails (field errors already applied). */
+  const prepareUpdateBody = useCallback(() => {
+    if (!values) return null;
     const prepared = prepareScheduledTaskUpdateBody(values, {
       now: new Date(),
       isSkillsSupported,
@@ -228,55 +243,66 @@ const ScheduledTaskEditPage: FC = () => {
     });
     if (!prepared.ok) {
       setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
-      return;
+      return null;
     }
+    return prepared.body;
+  }, [values, originalWindowDates, isSkillsSupported, t]);
 
-    setIsSubmitting(true);
-    try {
-      await updateScheduledTask(scheduleId, prepared.body);
-      showSuccessNotification({
-        message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
-      });
-      navigate(returnUrl);
-    } catch (error) {
-      const details = await getApiErrorDetails(error);
-      const { code } = details;
-      const fieldErrors = mapScheduledTaskApiError(code, t);
-      if (fieldErrors) {
-        setErrors(fieldErrors);
-        setIsSubmitting(false);
-        return;
-      }
+  /** Performs the update request for this task. */
+  const saveTaskUpdate = useCallback(
+    (body: UpdateScheduledTaskBodyDto) => updateScheduledTask(scheduleId, body),
+    [scheduleId],
+  );
+
+  /** Runs the normal update success path (success toast + navigation back to the task detail). */
+  const handleUpdateSuccess = useCallback(() => {
+    showSuccessNotification({
+      message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
+    });
+    navigate(returnUrl);
+  }, [showSuccessNotification, t, navigate, returnUrl]);
+
+  /**
+   * Marks a bare 404 as the task's not-found state and reports it fully
+   * handled; a mapped deployment-unavailable code still takes the shared
+   * branches.
+   */
+  const handleTaskNotFoundError = useCallback(
+    (error: unknown, details: ApiErrorDetails) => {
       if (
         getApiErrorStatus(error) === 404 &&
-        code !== ScheduledTaskErrorCode.ScheduledTaskDeploymentUnavailable
+        details.code !==
+          ScheduledTaskErrorCode.ScheduledTaskDeploymentUnavailable
       ) {
         setIsNotFound(true);
-        setIsSubmitting(false);
-        return;
+        return true;
       }
+      return false;
+    },
+    [],
+  );
 
-      showErrorNotification({
-        message: resolveScheduledTaskErrorMessage(
-          details,
-          ScheduledTasksI18nKeys.EditErrorNotification,
-          t,
-        ),
-        requestId: details.traceId,
-      });
-      setIsSubmitting(false);
-    }
-  }, [
-    values,
-    originalWindowDates,
-    isSkillsSupported,
-    showSuccessNotification,
-    showErrorNotification,
-    t,
-    navigate,
-    returnUrl,
-    scheduleId,
-  ]);
+  const { isSubmitting, handleSubmit } = useScheduledTaskSubmit({
+    prepare: prepareUpdateBody,
+    save: saveTaskUpdate,
+    onSuccess: handleUpdateSuccess,
+    onFieldErrors: setErrors,
+    errorKey: ScheduledTasksI18nKeys.EditErrorNotification,
+    handleExtraError: handleTaskNotFoundError,
+    /*
+     * The page owns the login-and-retry action's presentation (the kit's own
+     * retry-action doc example shape); the hook owns its behavior.
+     */
+    renderLoginAndRetryAction: (onAction) => (
+      <Button
+        variant={ButtonVariant.Neutral}
+        appearance={ButtonAppearance.Outlined}
+        size={ElementSize.Small}
+        label={t(ScheduledTasksI18nKeys.LoginAndRetryAction)}
+        onClick={onAction}
+      />
+    ),
+  });
 
   const handleSubmitVoid = useCallback(
     () => void handleSubmit(),

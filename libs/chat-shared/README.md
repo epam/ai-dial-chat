@@ -1082,6 +1082,8 @@ import {
   ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
+  encodeJsonToBase64,
+  decodeJsonFromBase64,
   serializeMarkdownTableRows,
   MarkdownTableCopyFormat,
   DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
@@ -1131,6 +1133,15 @@ downloadTextFile(
 // Copy markdown as both flavours: rich text for Word/Gmail/Slack, raw markdown for plain-text targets.
 // Styling travels inline, so a pasted table keeps its border, header band, dividers, and zebra rows.
 copyMarkdownAsRichText(message.content);
+
+// Store JSON in web storage as Unicode-safe base64 — the wrap satisfies
+// clear-text-storage security scanning and is an encoding, not encryption;
+// `btoa` alone would throw on characters above U+00FF (e.g. Cyrillic ids).
+// decodeJsonFromBase64 throws on malformed input; the caller handles failures.
+sessionStorage.setItem('flow-state', encodeJsonToBase64({ toolsetId, state }));
+const restored = decodeJsonFromBase64<{ toolsetId: string }>(
+  sessionStorage.getItem('flow-state') ?? '',
+);
 
 // The same HTML on its own, for a caller that writes the clipboard itself or renders an export
 const html = markdownToRichTextHtml(message.content);

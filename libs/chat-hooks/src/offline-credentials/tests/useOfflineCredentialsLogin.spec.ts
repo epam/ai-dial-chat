@@ -1,29 +1,31 @@
-import {
-  navigateToolsetOAuthPopup,
-  OAuthResourceKind,
-  openToolsetOAuthPopup,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-  waitForToolsetOAuthResult,
-} from '@epam/ai-dial-chat-hooks';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ROUTES } from '../../../types/routes';
+import { waitForToolsetOAuthResult } from '../../oauth/handshake';
+import {
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
+} from '../../oauth/popup';
+import {
+  OAuthResourceKind,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
+} from '../../oauth/types';
 import {
   OfflineCredentialsLoginOutcomeType,
   useOfflineCredentialsLogin,
-} from '../useOfflineCredentialsLogin';
+} from '../useOfflineCredentialsLogin/useOfflineCredentialsLogin';
 
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return {
-    ...actual,
-    navigateToolsetOAuthPopup: vi.fn(),
-    openToolsetOAuthPopup: vi.fn(),
-    waitForToolsetOAuthResult: vi.fn(),
-  };
-});
+vi.mock('../../oauth/popup', () => ({
+  navigateToolsetOAuthPopup: vi.fn(),
+  openToolsetOAuthPopup: vi.fn(),
+}));
+
+vi.mock('../../oauth/handshake', () => ({
+  waitForToolsetOAuthResult: vi.fn(),
+}));
+
+const CALLBACK_PATH = '/toolset-signin';
 
 const CONNECT = {
   clientId: 'dial-chat',
@@ -39,7 +41,9 @@ describe('useOfflineCredentialsLogin', () => {
   it('returns PopupBlocked without navigating or refetching when the popup is blocked', async () => {
     vi.mocked(openToolsetOAuthPopup).mockReturnValue(null);
     const refetch = vi.fn();
-    const { result } = renderHook(() => useOfflineCredentialsLogin());
+    const { result } = renderHook(() =>
+      useOfflineCredentialsLogin({ callbackPath: CALLBACK_PATH }),
+    );
 
     const outcome = await result.current.login(CONNECT, refetch);
 
@@ -50,7 +54,7 @@ describe('useOfflineCredentialsLogin', () => {
     expect(refetch).not.toHaveBeenCalled();
   });
 
-  it('opens the popup synchronously and navigates it with the OfflineCredentials resource kind', async () => {
+  it('opens the popup synchronously and navigates it with the OfflineCredentials resource kind and the supplied callback path', async () => {
     const fakePopup = {} as Window;
     vi.mocked(openToolsetOAuthPopup).mockReturnValue(fakePopup);
     vi.mocked(navigateToolsetOAuthPopup).mockReturnValue({
@@ -66,7 +70,9 @@ describe('useOfflineCredentialsLogin', () => {
     const refetch = vi
       .fn()
       .mockResolvedValue({ available: true, connected: true });
-    const { result } = renderHook(() => useOfflineCredentialsLogin());
+    const { result } = renderHook(() =>
+      useOfflineCredentialsLogin({ callbackPath: CALLBACK_PATH }),
+    );
 
     await result.current.login(CONNECT, refetch);
 
@@ -75,8 +81,8 @@ describe('useOfflineCredentialsLogin', () => {
       fakePopup,
       expect.any(Object),
       'offline-credentials',
-      ROUTES.ToolsetSignIn,
-      'USER',
+      CALLBACK_PATH,
+      ToolsetCredentialsLevel.User,
       OAuthResourceKind.OfflineCredentials,
     );
   });
@@ -97,7 +103,9 @@ describe('useOfflineCredentialsLogin', () => {
     const refetch = vi
       .fn()
       .mockResolvedValue({ available: true, connected: true });
-    const { result } = renderHook(() => useOfflineCredentialsLogin());
+    const { result } = renderHook(() =>
+      useOfflineCredentialsLogin({ callbackPath: CALLBACK_PATH }),
+    );
 
     const outcome = await result.current.login(CONNECT, refetch);
 
@@ -123,7 +131,9 @@ describe('useOfflineCredentialsLogin', () => {
     const refetch = vi
       .fn()
       .mockResolvedValue({ available: true, connected: false });
-    const { result } = renderHook(() => useOfflineCredentialsLogin());
+    const { result } = renderHook(() =>
+      useOfflineCredentialsLogin({ callbackPath: CALLBACK_PATH }),
+    );
 
     const outcome = await result.current.login(CONNECT, refetch);
 
@@ -147,7 +157,9 @@ describe('useOfflineCredentialsLogin', () => {
     const refetch = vi
       .fn()
       .mockResolvedValue({ available: true, connected: false });
-    const { result } = renderHook(() => useOfflineCredentialsLogin());
+    const { result } = renderHook(() =>
+      useOfflineCredentialsLogin({ callbackPath: CALLBACK_PATH }),
+    );
 
     const outcome = await result.current.login(CONNECT, refetch);
 
@@ -171,7 +183,9 @@ describe('useOfflineCredentialsLogin', () => {
     const refetch = vi
       .fn()
       .mockResolvedValue({ available: true, connected: false });
-    const { result } = renderHook(() => useOfflineCredentialsLogin());
+    const { result } = renderHook(() =>
+      useOfflineCredentialsLogin({ callbackPath: CALLBACK_PATH }),
+    );
 
     const outcome = await result.current.login(CONNECT, refetch);
 
@@ -187,7 +201,9 @@ describe('useOfflineCredentialsLogin', () => {
       type: ToolsetOAuthInitiationResultType.InvalidConfig,
     });
     const refetch = vi.fn();
-    const { result } = renderHook(() => useOfflineCredentialsLogin());
+    const { result } = renderHook(() =>
+      useOfflineCredentialsLogin({ callbackPath: CALLBACK_PATH }),
+    );
 
     const outcome = await result.current.login(CONNECT, refetch);
 

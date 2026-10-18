@@ -13,9 +13,9 @@ export interface CollapseScheduledTaskConversationsOptions {
 
 /*
  * Group key of a scheduled-task run: `{bucket}/{scheduleId}`. `scheduleId` is
- * only unique per owner, so a run shared from another user's bucket must not
- * collapse into the user's own task with the same id. Returns `undefined` for
- * anything that is not a groupable run.
+ * only unique per owner, so keying on the bucket keeps runs of different
+ * owners apart. Returns `undefined` for anything that is not a groupable run.
+ * Callers pass only collapsible runs (see `isCollapsible`).
  */
 const getGroupKey = (item: ConversationListItemDto): string | undefined => {
   if (!item.isScheduledTask || !item.scheduleId) return undefined;
@@ -27,9 +27,18 @@ const getGroupKey = (item: ConversationListItemDto): string | undefined => {
 };
 
 /*
+ * Runs shared with or published to the user are never collapsed: the task
+ * belongs to someone else, so the user cannot open its History and a hidden
+ * run would be unreachable. Pinned runs are exempt because a pin is an
+ * explicit choice to keep that run visible.
+ */
+const isCollapsible = (item: ConversationListItemDto): boolean =>
+  !item.isPinned && !item.sharedWithMe && !item.publishedWithMe;
+
+/*
  * Newest-first comparison: `createdAt` (runs without it sort last), then
- * `updatedAt`, then `id` descending so the pick is deterministic even for
- * shared runs, which carry no dates at all.
+ * `updatedAt`, then `id` descending so the pick is deterministic when dates
+ * are missing or equal.
  */
 const compareNewestFirst = (
   left: ConversationListItemDto,
@@ -51,7 +60,7 @@ export interface GroupScheduledTaskConversationsOptions {
   conversationIdsMatch: (left: string, right: string) => boolean;
 }
 
-/** An unpinned scheduled-task run and the group it belongs to. */
+/** An unpinned, own scheduled-task run and the group it belongs to. */
 interface ScheduledTaskRun {
   item: ConversationListItemDto;
   groupKey: string;
@@ -67,7 +76,7 @@ interface ScheduledTaskRun {
 export interface ScheduledTaskGrouping {
   /** The collapsed list with no active run applied. */
   collapsed: ConversationListItemDto[];
-  /** Every unpinned grouped run, in input order. */
+  /** Every grouped run (unpinned, not shared or published), in input order. */
   runs: ScheduledTaskRun[];
   /** The source list, needed only when an older run must be swapped in. */
   items: readonly ConversationListItemDto[];
@@ -80,7 +89,7 @@ const keepRepresentatives = (
   representativeByGroup: ReadonlyMap<string, ConversationListItemDto>,
 ): ConversationListItemDto[] =>
   items.filter((item) => {
-    if (item.isPinned) return true;
+    if (!isCollapsible(item)) return true;
     const groupKey = getGroupKey(item);
     return (
       groupKey === undefined || representativeByGroup.get(groupKey) === item
@@ -89,7 +98,8 @@ const keepRepresentatives = (
 
 /**
  * Groups a task's unpinned runs and picks each group's newest run
- * (`createdAt`, then `updatedAt`, then `id`). Pinned runs are never grouped.
+ * (`createdAt`, then `updatedAt`, then `id`). Pinned, shared and published
+ * runs are never grouped.
  * Depends only on the list, so a navigation does not recompute it.
  */
 export const groupScheduledTaskConversations = (
@@ -101,7 +111,7 @@ export const groupScheduledTaskConversations = (
     [];
 
   for (const item of items) {
-    if (item.isPinned) continue;
+    if (!isCollapsible(item)) continue;
     const groupKey = getGroupKey(item);
     if (groupKey === undefined) continue;
 
@@ -159,10 +169,10 @@ export const applyActiveScheduledTaskRun = (
  * mark-as-viewed, read-only detection and the overlay bridge all look older
  * runs up in it, and they break if those runs are filtered out upstream.
  *
- * Rules: pinned runs are never collapsed; among a task's unpinned runs the
- * active route conversation wins, otherwise the newest by `createdAt` (then
- * `updatedAt`, then `id`). Kept items preserve their input order and the input
- * array is not mutated.
+ * Rules: pinned, shared and published runs are never collapsed; among a
+ * task's own unpinned runs the active route conversation wins, otherwise the
+ * newest by `createdAt` (then `updatedAt`, then `id`). Kept items preserve
+ * their input order and the input array is not mutated.
  *
  * Equivalent to `groupScheduledTaskConversations` followed by
  * `applyActiveScheduledTaskRun`; a host that re-evaluates on every navigation

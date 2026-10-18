@@ -137,4 +137,43 @@ export class OfflineCredentialsApi extends runtime.BaseAPI {
     );
     return await response.value();
   }
+
+  /**
+   * Revokes the session user\'s stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.
+   * Sign out offline credentials
+   */
+  async signOutOfflineCredentialsRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<OfflineCredentialsAuthResultDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/offline-credentials/signout`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<OfflineCredentialsAuthResultDto>(
+      response,
+    );
+  }
+
+  /**
+   * Revokes the session user\'s stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.
+   * Sign out offline credentials
+   */
+  async signOutOfflineCredentials(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<OfflineCredentialsAuthResultDto> {
+    const response = await this.signOutOfflineCredentialsRaw(initOverrides);
+    return await response.value();
+  }
 }

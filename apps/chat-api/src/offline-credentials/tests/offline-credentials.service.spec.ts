@@ -14,6 +14,7 @@ function makeService() {
     client: {
       getOfflineCredentials: vi.fn(),
       offlineCredentialsSignIn: vi.fn(),
+      offlineCredentialsSignOut: vi.fn(),
     },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
@@ -209,6 +210,68 @@ describe('OfflineCredentialsService', () => {
       );
       const loggedText = debugSpy.mock.calls.map((call) => call[0]).join('\n');
       expect(loggedText).not.toContain('super-secret-authorization-code');
+    });
+  });
+
+  describe('signOut', () => {
+    it('signs out successfully when Core resolves true', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
+        okResponse(true),
+      );
+
+      await service.signOut('token');
+
+      expect(dialClient.client.offlineCredentialsSignOut).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token' },
+      });
+    });
+
+    it('treats a 404 from Core as idempotent success', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
+        errResponse(404),
+      );
+
+      await expect(service.signOut('token')).resolves.toBeUndefined();
+    });
+
+    it('maps a falsy Core response to a 502, never a success', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
+        okResponse(false),
+      );
+
+      await expect(service.signOut('token')).rejects.toBeInstanceOf(
+        BadGatewayException,
+      );
+    });
+
+    it('propagates a mapped exception for a non-OK Core response other than 404', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
+        errResponse(400, { error: { message: 'Invalid request' } }),
+      );
+
+      await expect(service.signOut('token')).rejects.toThrow('Invalid request');
+    });
+
+    it('never includes the bearer token in debug logs', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
+        okResponse(true),
+      );
+      const debugSpy = vi.spyOn(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (service as any).logger,
+        'debug',
+      );
+
+      const accessToken = 'super-secret-bearer-token';
+      await service.signOut(accessToken);
+
+      const loggedText = debugSpy.mock.calls.map((call) => call[0]).join('\n');
+      expect(loggedText).not.toContain(accessToken);
     });
   });
 });

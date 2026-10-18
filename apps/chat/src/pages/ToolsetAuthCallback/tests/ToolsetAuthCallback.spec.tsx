@@ -10,6 +10,7 @@ import {
   ToolsetOAuthResultType,
   type ToolsetRedirectState,
 } from '@epam/ai-dial-chat-hooks';
+import { encodeJsonToBase64 } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,7 +24,7 @@ import * as toolsetsApi from '../../../server-api/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 
 const setRedirectState = (state: ToolsetRedirectState) =>
-  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
+  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, encodeJsonToBase64(state));
 
 /** Consumes the first result and acknowledges it so the callback can close. */
 const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
@@ -54,6 +55,10 @@ vi.mock('../../../server-api/external-services', () => ({
 
 vi.mock('../../../server-api/offline-credentials', () => ({
   signInOfflineCredentials: vi.fn(),
+}));
+
+vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
+  default: () => <div>Loading</div>,
 }));
 
 const renderCallback = (
