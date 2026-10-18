@@ -11,7 +11,9 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const DeploymentSelectorOverlay = lazy(
@@ -39,6 +41,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
   const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
   const { language } = useLanguage();
+  const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
 
   const favoriteCatalogItems = useMemo(
     () =>
@@ -49,9 +52,10 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
             favoriteIds,
             t,
             activeLocale: language,
+            isToolsetTabEnabled: isToolsetsEnabled,
           }),
         ),
-    [items, favoriteIds, t, language],
+    [items, favoriteIds, t, language, isToolsetsEnabled],
   );
 
   const selectedDeployment = useMemo(
@@ -66,9 +70,10 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
             favoriteIds,
             t,
             activeLocale: language,
+            isToolsetTabEnabled: isToolsetsEnabled,
           })
         : undefined,
-    [selectedDeployment, favoriteIds, t, language],
+    [selectedDeployment, favoriteIds, t, language, isToolsetsEnabled],
   );
 
   const pinnedCatalogItem = useMemo(() => {
@@ -82,6 +87,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
           favoriteIds,
           t,
           activeLocale: language,
+          isToolsetTabEnabled: isToolsetsEnabled,
         })
       : undefined;
   }, [
@@ -91,6 +97,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
     favoriteIds,
     t,
     language,
+    isToolsetsEnabled,
   ]);
 
   const renderOverlay = useCallback(

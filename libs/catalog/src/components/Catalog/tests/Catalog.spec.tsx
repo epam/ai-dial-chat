@@ -1207,6 +1207,62 @@ describe('Catalog', () => {
     ).toContain('1 items');
   });
 
+  describe('tab membership', () => {
+    const membershipItems = [
+      makeItem('model', 'GPT', { type: CatalogEntityType.Model }),
+      makeItem('dual', 'Dual app', {
+        type: CatalogEntityType.Agent,
+        catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+      }),
+      makeItem('mcp', 'MCP app', {
+        type: CatalogEntityType.Agent,
+        catalogTabs: [CatalogEntityType.Toolset],
+      }),
+    ];
+
+    it('lists a membership-only Toolsets item outside the Agents tab', () => {
+      render(
+        <Catalog
+          items={membershipItems}
+          favorites={[]}
+          activeTab={CatalogEntityType.Agent}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Dual app' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'MCP app' })).toBeNull();
+      expect(screen.getByRole('tab', { name: /Toolsets/i })).toBeTruthy();
+    });
+
+    it('shows Toolsets members, including applications, under the Toolsets tab', () => {
+      render(
+        <Catalog
+          items={membershipItems}
+          favorites={[]}
+          activeTab={CatalogEntityType.Toolset}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Dual app' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'MCP app' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'GPT' })).toBeNull();
+    });
+
+    it('opens the same item details from the Toolsets tab', async () => {
+      render(
+        <Catalog
+          items={membershipItems}
+          favorites={[]}
+          activeTab={CatalogEntityType.Toolset}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Dual app' }));
+
+      expect(screen.getByText('Dual app', { selector: 'span' })).toBeTruthy();
+    });
+  });
+
   it('renders the controlled topicOptions prop instead of options derived from items', () => {
     const wideTopicOptions = getTopicOptions([
       makeItem('1', 'Claude', { topics: ['Free'] }),

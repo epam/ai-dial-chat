@@ -25,6 +25,7 @@ import {
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import {
   buildCatalogTabs,
+  getCatalogItemTabs,
   scrollSelectedTabIntoView,
 } from '../../utils/catalog-tabs';
 import { getTabCreateButtonConfig } from '../../utils/create-menu';
@@ -474,7 +475,9 @@ export const Catalog: FC<CatalogProps> = ({
   const tabFiltered = useMemo(
     () =>
       activeTab
-        ? myAppsFiltered.filter((item) => item.type === activeTab)
+        ? myAppsFiltered.filter((item) =>
+            getCatalogItemTabs(item).includes(activeTab as CatalogEntityType),
+          )
         : myAppsFiltered,
     [myAppsFiltered, activeTab],
   );
@@ -719,8 +722,11 @@ export const Catalog: FC<CatalogProps> = ({
                 id: tab.id,
                 label:
                   typeof tab.label === 'string' ? tab.label : String(tab.label),
-                count: myAppsFiltered.filter((item) => item.type === tab.id)
-                  .length,
+                count: myAppsFiltered.filter((item) =>
+                  getCatalogItemTabs(item).includes(
+                    tab.id as CatalogEntityType,
+                  ),
+                ).length,
               }))}
               activeTabId={activeTab}
               onTabChange={handleActiveTabChange}

@@ -121,6 +121,30 @@ describe('DeploymentSelectorPanel', () => {
     },
   );
 
+  it('excludes a favorited application listed only under Toolsets', () => {
+    renderPanel([
+      {
+        ...makeItem('mcp-app', CatalogEntityType.Agent),
+        catalogTabs: [CatalogEntityType.Toolset],
+      },
+    ]);
+
+    expect(screen.queryByRole('menuitemradio', { name: /mcp-app/ })).toBeNull();
+  });
+
+  it('shows a favorited application listed under both Agents and Toolsets', () => {
+    renderPanel([
+      {
+        ...makeItem('dual-app', CatalogEntityType.Agent),
+        catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+      },
+    ]);
+
+    expect(
+      screen.getByRole('menuitemradio', { name: /dual-app/ }),
+    ).toBeTruthy();
+  });
+
   it('shows Models and Applications together', () => {
     renderPanel([
       makeItem('model-1', CatalogEntityType.Model),

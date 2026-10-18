@@ -25,7 +25,7 @@ export type { CatalogItemCredentials } from '../models/catalog-item-credentials'
 // Utils
 export { filterCatalogItems, getTopicOptions } from '../utils/catalog-filter';
 export { sortCatalogItems } from '../utils/catalog-sort';
-export { buildCatalogTabs } from '../utils/catalog-tabs';
+export { buildCatalogTabs, getCatalogItemTabs } from '../utils/catalog-tabs';
 export { getCatalogDetailsTabs } from '../utils/details-tabs';
 export type { CatalogDetailsTabsOptions } from '../utils/details-tabs';
 export {
