@@ -455,7 +455,9 @@
     },
     "attachMenuDialFileSystem": "DIAL file system",
     "addMenuTitle": "Add",
-    "messageTooLong": "Max allowed message length is {{max}}"
+    "messageTooLong": "Max allowed message length is {{max}}",
+    "startedToday": "Today {{time}}",
+    "startedYesterday": "Yesterday {{time}}"
   },
   "conversationPanel": {
     "title": "Chats",

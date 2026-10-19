@@ -1,4 +1,5 @@
 import { MessageRating, MessageRole } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 
 /** Tooltip overrides for each action button. Omitted fields fall back to built-in defaults. */
 export interface MessageActionTooltips {
@@ -96,6 +97,10 @@ export interface MessageActionsProps {
   onDislike?: () => void;
   /** Active rating; highlights the matching Like/Dislike button when set. */
   activeRating?: MessageRating;
+  /** Host content rendered at the start of the toolbar row, before the action buttons (e.g. a send time). */
+  leadingContent?: ReactNode;
+  /** Host content rendered at the end of the toolbar row, after the action buttons (e.g. a send time). */
+  trailingContent?: ReactNode;
   /** Color overrides. */
   colors?: MessageActionColors;
 }

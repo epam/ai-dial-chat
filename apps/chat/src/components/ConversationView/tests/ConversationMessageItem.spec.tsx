@@ -13,7 +13,7 @@ import {
   type MessageActionsProps,
 } from '@epam/ai-dial-conversation-messages';
 import type { AnnotationGroup } from '@epam/ai-dial-quotations';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1366,6 +1366,49 @@ describe('ConversationMessageItem — message action gates', () => {
     );
     expect(capturedActions?.onLike).toBeUndefined();
     expect(capturedActions?.onDislike).toBeUndefined();
+  });
+});
+
+describe('ConversationMessageItem — send time in the action row', () => {
+  it('shows a user message send time in the action toolbar when hasTimestamp is set', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...USER_MESSAGE, custom_content: undefined }}
+        hasTimestamp
+      />,
+    );
+
+    const time = within(screen.getByRole('toolbar')).getByRole('time');
+    expect(time.getAttribute('datetime')).toBe(USER_MESSAGE.timestamp);
+  });
+
+  it('shows an assistant response send time after its action buttons', () => {
+    const assistantMessage: Message = {
+      role: MessageRole.Assistant,
+      content: 'Hello there',
+      timestamp: '2024-01-01T00:00:03Z',
+    };
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={assistantMessage}
+        index={1}
+        onRegenerateMessage={vi.fn()}
+        hasTimestamp
+      />,
+    );
+
+    const toolbar = screen.getByRole('toolbar');
+    const time = within(toolbar).getByRole('time');
+    expect(time.getAttribute('datetime')).toBe(assistantMessage.timestamp);
+    expect(toolbar.textContent?.endsWith(time.textContent ?? '')).toBe(true);
+  });
+
+  it('shows no send time by default', () => {
+    render(<ConversationMessageItem {...defaultProps} msg={USER_MESSAGE} />);
+
+    expect(screen.queryByRole('time')).toBeNull();
   });
 });
 

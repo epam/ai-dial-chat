@@ -15,6 +15,7 @@ import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInline
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { copySelectionWithoutStyles } from '../../utils/clipboard';
 import { MessageActions } from '../MessageActions/MessageActions';
+import { MessageTimestamp } from '../MessageTimestamp/MessageTimestamp';
 import styles from './MessageBubble.module.scss';
 
 /*
@@ -32,6 +33,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
+  timestamp,
+  locale,
   isStreaming,
   attachments,
   beforeContent,
@@ -53,7 +56,16 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   labels,
   selectedAttachmentId,
 }) => {
-  const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
+  const { colors, typography, className, bubbleClassName, timestampClassName } =
+    bubbleStyles ?? {};
+  const timestampNode =
+    timestamp != null ? (
+      <MessageTimestamp
+        timestamp={timestamp}
+        locale={locale}
+        className={timestampClassName}
+      />
+    ) : undefined;
   const {
     attachmentClickLabel,
     attachmentDownloadLabel,
@@ -116,7 +128,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
       aria-label={assistantMessageAriaLabel}
       style={cssVars}
       onCopy={copySelectionWithoutStyles}
-      className={mergeClasses('flex w-full items-start gap-3', className)}
+      className={mergeClasses(
+        'group/message flex w-full items-start gap-3',
+        className,
+      )}
     >
       {hasDeploymentIcon && (
         <DeploymentIcon
@@ -233,6 +248,16 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           <MessageActions
             {...actions}
             isAlwaysVisible={hasAlwaysVisibleActions}
+            trailingContent={
+              timestampNode != null ? (
+                <>
+                  {actions?.trailingContent}
+                  {timestampNode}
+                </>
+              ) : (
+                actions?.trailingContent
+              )
+            }
             role={MessageRole.Assistant}
           />
         </div>

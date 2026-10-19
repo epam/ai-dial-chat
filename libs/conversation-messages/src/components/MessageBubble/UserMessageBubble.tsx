@@ -18,6 +18,7 @@ import type { UserMessageBubbleProps } from '../../models/message-bubble';
 import { BubblePosition } from '../../types/bubble-position';
 import { copySelectionWithoutStyles } from '../../utils/clipboard';
 import { MessageActions } from '../MessageActions/MessageActions';
+import { MessageTimestamp } from '../MessageTimestamp/MessageTimestamp';
 import styles from './MessageBubble.module.scss';
 
 const DEFAULT_COLLAPSED_LINE_COUNT = 10;
@@ -41,6 +42,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
+  timestamp,
+  locale,
   attachments,
   collapsedLineCount = DEFAULT_COLLAPSED_LINE_COUNT,
   labels,
@@ -54,7 +57,16 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   codeBlockTheme,
   tableOnOpenInCanvas,
 }) => {
-  const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
+  const { colors, typography, className, bubbleClassName, timestampClassName } =
+    bubbleStyles ?? {};
+  const timestampNode =
+    timestamp != null ? (
+      <MessageTimestamp
+        timestamp={timestamp}
+        locale={locale}
+        className={timestampClassName}
+      />
+    ) : undefined;
   const {
     showMoreLabel = 'Show more',
     showLessLabel = 'Show less',
@@ -153,7 +165,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       aria-label={userMessageAriaLabel}
       style={cssVars}
       onCopy={copySelectionWithoutStyles}
-      className={mergeClasses('flex w-full', className)}
+      className={mergeClasses('group/message flex w-full', className)}
     >
       <div className="ms-auto flex w-fit max-w-full min-w-0 flex-col items-end gap-4">
         <AttachmentGroup
@@ -256,6 +268,16 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
         <MessageActions
           {...actions}
           isAlwaysVisible={hasAlwaysVisibleActions}
+          leadingContent={
+            timestampNode != null ? (
+              <>
+                {timestampNode}
+                {actions?.leadingContent}
+              </>
+            ) : (
+              actions?.leadingContent
+            )
+          }
           role={MessageRole.User}
         />
       </div>

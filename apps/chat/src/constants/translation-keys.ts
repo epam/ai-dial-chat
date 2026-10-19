@@ -554,6 +554,8 @@ export enum ConversationI18nKeys {
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
   AddMenuTitle = 'conversation.addMenuTitle',
   MessageTooLong = 'conversation.messageTooLong',
+  StartedToday = 'conversation.startedToday',
+  StartedYesterday = 'conversation.startedYesterday',
 }
 
 export enum DialFileManagerI18nKeys {

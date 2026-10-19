@@ -176,7 +176,16 @@ export const buildConversationHistory = (
     );
     // Truncate up to (but not including) messageIndex, then append new user message + assistant placeholder
     const truncated = messages.slice(0, messageIndex);
-    const userMessage = makeUserMessage(message ?? '', customContent);
+    /*
+     * The edit keeps the replaced message's original send time: the first
+     * message's timestamp is the conversation's start time shown in the chat,
+     * which must not move when the user rewrites the opening question.
+     */
+    const newUserMessage = makeUserMessage(message ?? '', customContent);
+    const userMessage = {
+      ...newUserMessage,
+      timestamp: messages[messageIndex].timestamp ?? newUserMessage.timestamp,
+    };
     const assistantPlaceholder = makeAssistantPlaceholder(model);
     truncated.push(userMessage, assistantPlaceholder);
     return {
