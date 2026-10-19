@@ -725,6 +725,7 @@ const CatalogView: FC<Props> = ({
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
           tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
+          emptyTabLabel: t(BasicI18nKeys.Empty),
           contentFileSelectorAriaLabel: t(
             CatalogI18nKeys.DetailsContentFileSelectorAriaLabel,
           ),

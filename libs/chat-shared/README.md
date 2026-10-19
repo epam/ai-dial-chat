@@ -519,6 +519,8 @@ Blocks exceeding 50,000 UTF-16 code units overall or 2,000 on any line also
 bypass the engine and display complete plain text. Copy and download retain
 the original content, and the language label is preserved. This size guard
 reduces expensive highlighting; it is not an execution timeout.
+`hasContentTopPadding={false}` drops the code's own top padding so it starts
+right under the header, for compact blocks such as an endpoint URL.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';

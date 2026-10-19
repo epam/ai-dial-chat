@@ -65,7 +65,7 @@ const Autoplay: FC<{ sceneId?: string }> = ({ sceneId }) => {
   return (
     <button
       type="button"
-      className="bg-layer-2 fixed start-3 bottom-3 z-[80] rounded border px-3 py-1.5"
+      className="bg-layer-2 fixed inset-s-3 bottom-3 z-80 rounded border px-3 py-1.5"
       onClick={() => celebrate(sceneId)}
     >
       Replay
@@ -119,7 +119,7 @@ export const ScenePlayer: FC<ScenePlayerProps> = ({
         aria-live="polite"
         className={
           notification
-            ? 'bg-layer-2 fixed end-3 top-3 z-[80] max-w-xs rounded border p-3'
+            ? 'bg-layer-2 fixed inset-e-3 top-3 z-80 max-w-xs rounded border p-3'
             : 'sr-only'
         }
       >

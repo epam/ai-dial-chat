@@ -4,6 +4,7 @@ import {
   ConfirmationFooter,
   ConfirmationView,
   mergeClasses,
+  PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
 import type {
   PublishFolderNode,
@@ -864,6 +865,16 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     return labels;
   }, [texts]);
 
+  const emptyTabLabel = texts?.emptyTabLabel ?? 'No data';
+  const isAboutEmpty =
+    !item.description?.trim() && (item.topics?.length ?? 0) === 0;
+  const isOverviewEmpty = !item.details?.overview?.sections?.length;
+  const emptyTabState = (
+    <div className="flex size-full items-center justify-center py-6">
+      <PanelEmptyState label={emptyTabLabel} />
+    </div>
+  );
+
   const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
   const overviewNoLabel = texts?.overviewNoLabel ?? 'No';
 
@@ -1303,7 +1314,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 activeTab !== CatalogDetailsTab.Overview && 'px-6',
               )}
             >
-              {activeTab === CatalogDetailsTab.About && (
+              {activeTab === CatalogDetailsTab.About && isAboutEmpty
+                ? emptyTabState
+                : null}
+              {activeTab === CatalogDetailsTab.About && !isAboutEmpty && (
                 <AboutTab
                   content={item.description}
                   topics={item.topics}
@@ -1336,7 +1350,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   markdownLabels={markdownLabels}
                 />
               )}
-              {activeTab === CatalogDetailsTab.Overview && (
+              {activeTab === CatalogDetailsTab.Overview && isOverviewEmpty
+                ? emptyTabState
+                : null}
+              {activeTab === CatalogDetailsTab.Overview && !isOverviewEmpty && (
                 <Overview
                   sections={item.details?.overview?.sections}
                   sectionClassName={overviewSectionClassName}

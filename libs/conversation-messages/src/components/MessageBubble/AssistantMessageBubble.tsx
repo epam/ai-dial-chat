@@ -176,7 +176,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               )}
             >
               {beforeContent != null && hasText && (
-                <div ref={slotRef} className="absolute start-0 top-0">
+                <div ref={slotRef} className="absolute inset-s-0 top-0">
                   {beforeContent}
                 </div>
               )}

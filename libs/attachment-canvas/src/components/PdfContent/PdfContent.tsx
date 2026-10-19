@@ -630,7 +630,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   return (
     <div className="relative flex h-full overflow-hidden">
       {totalPages > 0 && (
-        <div className="absolute start-3 top-3 z-10">
+        <div className="absolute inset-s-3 top-3 z-10">
           <Dropdown
             open={isThumbnailsOpen}
             onOpenChange={setIsThumbnailsOpen}
@@ -658,7 +658,7 @@ export const PdfContent: FC<PdfContentProps> = ({
                   role="region"
                   aria-label={thumbnailsLabel}
                   onScroll={handlePanelScroll}
-                  className="max-h-[70vh] min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto p-1"
+                  className="max-h-[70vh] min-h-0 scrollbar-gutter-stable overflow-x-hidden overflow-y-auto p-1"
                 >
                   <div style={{ height: topSpacerHeight }} />
                   {thumbnailItems}

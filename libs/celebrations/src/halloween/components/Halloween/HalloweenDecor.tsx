@@ -59,7 +59,7 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
       <div
         ref={pumpkinRef}
         data-halloween-pumpkin-anchor="true"
-        className="absolute end-2 bottom-2 origin-bottom desktop:end-4 desktop:bottom-4"
+        className="absolute inset-e-2 bottom-2 origin-bottom desktop:inset-e-4 desktop:bottom-4"
       >
         <IconButton
           appearance={ButtonAppearance.Link}
@@ -85,10 +85,10 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
             instead, which follow the corner the same way the mirror does.
             The faintness lives on the web too — the spider is the part
             worth seeing. */}
-        <div className="absolute end-0 top-0">
+        <div className="absolute inset-e-0 top-0">
           <Cobweb className="scale-x-[-1] rtl:scale-x-100" />
           <HalloweenCornerSpider
-            className="end-[26%] top-[48%]"
+            className="inset-e-[26%] top-[48%]"
             pumpkinRef={pumpkinRef}
             silkRef={silkRef}
           />

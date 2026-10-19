@@ -365,7 +365,11 @@ describe('Card — description rendering', () => {
   it('keeps the description wrapper with line-clamp-2 and min-h-[2lh] classes for truncation', () => {
     const longDescription =
       'Line 1\nLine 2\nLine 3\nLine 4 which should be hidden due to clamping';
-    render(<Card item={makeItem({ description: longDescription })} />);
+    render(
+      <Card
+        item={makeItem({ description: longDescription, topics: ['Reasoning'] })}
+      />,
+    );
 
     const card = screen.getByRole('article', { hidden: true });
     // eslint-disable-next-line testing-library/no-node-access

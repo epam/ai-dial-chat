@@ -49,6 +49,8 @@ export interface ItemDetailsTexts {
   tabPricingLabel?: string;
   /** "Limits" tab label. Default: `'Limits'`. */
   tabLimitsLabel?: string;
+  /** Empty-state text for an About tab with no description or topics, and an Overview tab with no sections. Default: `'No data'`. */
+  emptyTabLabel?: string;
   /** Accessible label for the details panel `role="dialog"`. Default: `'Item details'`. */
   ariaLabel?: string;
   /** Accessible label for the close button. Default: `'Close'`. */

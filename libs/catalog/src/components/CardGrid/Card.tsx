@@ -170,7 +170,7 @@ export const Card: FC<CardProps> = ({
       )}
     >
       {isFeaturedVisible && (
-        <div className="absolute end-[22px] top-0 -translate-y-1/2">
+        <div className="absolute inset-e-[22px] top-0 -translate-y-1/2">
           <FeaturedChip
             label={featuredLabel}
             type={item.type}

@@ -170,7 +170,7 @@ const HalloweenFootprints: FC = () => {
       data-ended={ended || changed}
       data-stationary={stationary}
     >
-      <div ref={copiesRef} className="absolute inset-0 z-[1]" />
+      <div ref={copiesRef} className="absolute inset-0 z-1" />
       {stationary ? (
         <div
           className="absolute inset-x-0 top-1/3 flex items-center justify-center gap-3"
@@ -193,13 +193,13 @@ const HalloweenFootprints: FC = () => {
         </div>
       ) : (
         <>
-          <div className="absolute inset-0 z-[2]">
+          <div className="absolute inset-0 z-2">
             {printArt(FootprintSurface.Page)}
           </div>
           {prop && !ended && !changed && (
             <div
               ref={surfaceRef}
-              className="absolute z-[2] opacity-0"
+              className="absolute z-2 opacity-0"
               data-footprint-surface
               style={{
                 left: prop.rect.left,
@@ -227,7 +227,7 @@ const HalloweenFootprints: FC = () => {
           )}
           <div
             ref={faceRef}
-            className="absolute top-0 z-[3] size-0 opacity-0"
+            className="absolute top-0 z-3 size-0 opacity-0"
             data-footprint-face
             style={{ left: 0, right: 'auto', transformOrigin: '0 0' }}
           >

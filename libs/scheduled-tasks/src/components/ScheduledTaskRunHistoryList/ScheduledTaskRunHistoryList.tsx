@@ -203,7 +203,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <li
         key={`history-skeleton-${index}`}
         aria-hidden="true"
-        className="flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 px-3"
+        className="flex min-h-(--strhl-row-min-height,32px) max-w-[328px] items-center justify-between gap-2 px-3"
       >
         <Skeleton
           variant={SkeletonVariant.Rectangular}

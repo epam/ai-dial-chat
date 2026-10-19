@@ -1769,6 +1769,7 @@ describe('DetailsPanel', () => {
     render(
       <DetailsPanel
         item={makeItem({
+          description: 'A capable model',
           details: { overview: { sections: [] } },
         })}
         isOpen
@@ -2866,5 +2867,30 @@ describe('DetailsPanel — tab list', () => {
       .getAllByRole('button')
       .map((tab) => tab.textContent);
     expect(tabNames).toEqual(['About', 'Overview', 'Pricing', 'Limits']);
+  });
+});
+
+describe('DetailsPanel — empty tabs', () => {
+  it('shows the empty state on an About tab with no description or topics', () => {
+    renderPanel({ item: makeItem({ description: '', topics: [] }) });
+
+    expect(screen.getByText('No data')).toBeTruthy();
+  });
+
+  it('uses the host emptyTabLabel', () => {
+    renderPanel({
+      item: makeItem({ description: '', topics: [] }),
+      texts: { emptyTabLabel: 'Nothing here' },
+    });
+
+    expect(screen.getByText('Nothing here')).toBeTruthy();
+  });
+
+  it('renders the description instead of the empty state when there is one', () => {
+    renderPanel({ item: makeItem({ description: 'A capable model' }) });
+
+    // AboutTab is mocked in this file as 'about content'.
+    expect(screen.getByText('about content')).toBeTruthy();
+    expect(screen.queryByText('No data')).toBeNull();
   });
 });

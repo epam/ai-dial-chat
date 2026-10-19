@@ -74,9 +74,7 @@ describe('TextRefinementField', () => {
     });
     renderField(refinement);
 
-    expect(screen.getByRole('status').textContent).toBe(
-      'Text refined',
-    );
+    expect(screen.getByRole('status').textContent).toBe('Text refined');
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(refinement.undo).toHaveBeenCalledOnce();
     /* Focus has no semantic query. */
@@ -110,9 +108,7 @@ describe('TextRefinementField', () => {
     );
 
     expect(screen.getByText('0/500')).toBeTruthy();
-    expect(screen.getByRole('status').textContent).toBe(
-      'Text refined',
-    );
+    expect(screen.getByRole('status').textContent).toBe('Text refined');
   });
 
   it('renders the caption when the host disables refinement', () => {
