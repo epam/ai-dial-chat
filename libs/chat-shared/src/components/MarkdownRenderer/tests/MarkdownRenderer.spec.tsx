@@ -670,6 +670,24 @@ describe('MarkdownRenderer', () => {
     expect(link.getAttribute('href')).toBe(longUrl);
   });
 
+  it('lets long unbreakable text wrap in elements that carry no class of their own', () => {
+    const longToken =
+      'docs.example.com/very/long/path/segment/that/never/breaks/document-name.pdf';
+    const { container } = render(
+      <MarkdownRenderer
+        content={`# ${longToken}\n\n- ${longToken}\n- **${longToken}**`}
+        containerClassName="host-class"
+      />,
+    );
+
+    // The root container has no accessible role of its own.
+    // eslint-disable-next-line testing-library/no-node-access
+    const root = container.firstElementChild;
+
+    expect(root?.className).toContain('[overflow-wrap:anywhere]');
+    expect(root?.className).toContain('host-class');
+  });
+
   it('does not treat a currency amount as LaTeX', () => {
     render(<MarkdownRenderer content="Price is $50 and $100" />);
 
