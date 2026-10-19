@@ -1488,10 +1488,6 @@
     "reloadConfirmMessage": "Reloading will discard your unsaved changes. This cannot be undone.",
     "reloadConfirmLabel": "Reload",
     "reloadCancelLabel": "Cancel",
-    "unsavedChangesTitle": "Discard unsaved changes?",
-    "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
-    "unsavedChangesConfirmLabel": "Discard",
-    "unsavedChangesCancelLabel": "Keep editing",
     "uploadDialogTitle": "Upload files from device",
     "uploadDropZoneLabel": "Drag and drop it or click here to upload",
     "uploadDropZoneMobileLabel": "Click here to upload",
@@ -1757,5 +1753,11 @@
     "frameTitle": "{{viewerTitle}} viewer",
     "loading": "Loading viewer…",
     "invalidUrl": "This application's viewer URL is not valid."
+  },
+  "unsavedChanges": {
+    "title": "Discard unsaved changes?",
+    "message": "You have unsaved changes. Leaving now will discard them.",
+    "confirmLabel": "Discard changes",
+    "cancelLabel": "Keep editing"
   }
 }

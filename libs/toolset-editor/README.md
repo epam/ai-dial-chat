@@ -74,6 +74,8 @@ import type {
 const ToolsetEditorPage = () => {
   // Loaded before the editor renders; a new object identity re-seeds the editor.
   const [initialForm, setInitialForm] = useState<ToolsetFormData | undefined>();
+  // Fed by `onDirtyChange`; the host's own leave guard reads it.
+  const [isDirty, setIsDirty] = useState(false);
 
   const authActions: ToolsetAuthActions = {
     login: (toolsetId, body) => api.loginToolset(toolsetId, body),
@@ -103,6 +105,7 @@ const ToolsetEditorPage = () => {
       onSaveSuccess={(form) => toast(`${form.name} saved`)}
       onSaveComplete={() => navigate(returnUrl)}
       onBack={() => navigate(returnUrl)}
+      onDirtyChange={setIsDirty}
       buildMcpUrl={
         externalCoreUrl &&
         ((toolsetId) => `${externalCoreUrl}/mcp/${toolsetId}`)
@@ -139,6 +142,13 @@ and does not navigate. The Log In flow persists unsaved changes first
 (`buildMcpUrl`'s and every subsequent call in that attempt use the id the
 persist resolved) and skips the request entirely when the form is unchanged
 since the last persist.
+
+The optional `onDirtyChange(isDirty)` reports whether the form — Metadata and
+Setup alike — differs from the values it was seeded with or last persisted. It
+is called on mount and whenever that changes, so a host can guard leaving the
+page with unsaved edits; the editor shows no unsaved-changes dialog of its own.
+A successful Log In draft persist reports `false` straight away, before the
+login continues, as does a successful save.
 
 The Connect toolset section renders only when `buildMcpUrl` is supplied and a
 persisted id exists; omit `buildMcpUrl` (e.g. no external core URL

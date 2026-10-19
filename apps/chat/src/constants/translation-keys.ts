@@ -1135,10 +1135,6 @@ export enum SkillEditorI18nKeys {
   ReloadConfirmMessage = 'skillEditor.reloadConfirmMessage',
   ReloadConfirmLabel = 'skillEditor.reloadConfirmLabel',
   ReloadCancelLabel = 'skillEditor.reloadCancelLabel',
-  UnsavedChangesTitle = 'skillEditor.unsavedChangesTitle',
-  UnsavedChangesMessage = 'skillEditor.unsavedChangesMessage',
-  UnsavedChangesConfirmLabel = 'skillEditor.unsavedChangesConfirmLabel',
-  UnsavedChangesCancelLabel = 'skillEditor.unsavedChangesCancelLabel',
   UploadDialogTitle = 'skillEditor.uploadDialogTitle',
   UploadDropZoneLabel = 'skillEditor.uploadDropZoneLabel',
   UploadDropZoneMobileLabel = 'skillEditor.uploadDropZoneMobileLabel',
@@ -1616,4 +1612,11 @@ export enum CustomViewerI18nKeys {
   FrameTitle = 'customViewer.frameTitle',
   Loading = 'customViewer.loading',
   InvalidUrl = 'customViewer.invalidUrl',
+}
+
+export enum UnsavedChangesI18nKeys {
+  Title = 'unsavedChanges.title',
+  Message = 'unsavedChanges.message',
+  ConfirmLabel = 'unsavedChanges.confirmLabel',
+  CancelLabel = 'unsavedChanges.cancelLabel',
 }

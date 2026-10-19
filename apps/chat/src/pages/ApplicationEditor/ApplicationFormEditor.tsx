@@ -1,4 +1,5 @@
 import {
+  type DeploymentCreationFormValues,
   EntityEditor,
   MetadataField,
   MetadataForm,
@@ -41,6 +42,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../hooks/application-editor/useApplicationAvatarPicker';
 import { useEditedApplication } from '../../hooks/application-editor/useEditedApplication';
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
+import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -54,7 +56,10 @@ import type {
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { deploymentToMetadata } from '../../utils/application-editor';
+import {
+  areSetupValuesEqual,
+  deploymentToMetadata,
+} from '../../utils/application-editor';
 import { translateDeploymentCreationErrors } from '../../utils/entity-field-validation';
 import { buildAdditionalLocaleOptions } from '../../utils/locale';
 
@@ -117,6 +122,14 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const [setup, setSetup] = useState<ApplicationSetupValues>(
     definition.defaultSetup,
   );
+  /*
+   * The Setup values the editor was opened with — defaults, the loaded setup,
+   * or what the Setup applied while initialising itself — against which
+   * unsaved changes are measured.
+   */
+  const [setupBaseline, setSetupBaseline] = useState<ApplicationSetupValues>(
+    definition.defaultSetup,
+  );
   // Latest setup values, so a blur in the same event cycle as a change validates the new value.
   const latestSetupRef = useRef(setup);
   const [setupErrors, setSetupErrors] = useState<SetupErrors>({});
@@ -151,6 +164,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
         if (!cancelled) {
           latestSetupRef.current = loaded;
           setSetup(loaded);
+          setSetupBaseline(loaded);
         }
       } catch {
         if (!cancelled) {
@@ -257,6 +271,24 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     [],
   );
 
+  const handleSetupInitialize = useCallback(
+    (patch: Partial<ApplicationSetupValues>) => {
+      handleSetupChange(patch);
+      setSetupBaseline((prev) => ({ ...prev, ...patch }));
+    },
+    [handleSetupChange],
+  );
+
+  /* Unsaved edits a Setup tracks outside `setup`: the Quick App iframe's. */
+  const [isSetupEditorDirty, setIsSetupEditorDirty] = useState(false);
+  const isSetupDirty = useMemo(
+    () => !areSetupValuesEqual(setup, setupBaseline),
+    [setup, setupBaseline],
+  );
+  const { allowNextNavigation } = useBuilderLeaveGuard({
+    isDirty: metadata.isDirty || isSetupDirty || isSetupEditorDirty,
+  });
+
   const handleSetupFieldBlur = useCallback(
     (field: string) => {
       const fieldError = (
@@ -276,9 +308,15 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
+  const { reset: resetMetadata } = metadata;
   const switchToCreatedApp = useCallback(
-    (newAppId: string) => {
+    (newAppId: string, createdMetadata: DeploymentCreationFormValues) => {
       setWasCreatedThisSession(true);
+      /* What was just created is the new baseline: the session goes on in
+       * edit mode, so leaving without further edits must not ask. */
+      resetMetadata(createdMetadata);
+      setSetupBaseline(latestSetupRef.current);
+      allowNextNavigation();
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -290,7 +328,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       // Best-effort: brings the new deployment into the list for the preview and the catalog.
       void refetchDeployments().catch(() => undefined);
     },
-    [definition.idQueryParam, refetchDeployments, setSearchParams],
+    [
+      allowNextNavigation,
+      definition.idQueryParam,
+      refetchDeployments,
+      resetMetadata,
+      setSearchParams,
+    ],
   );
 
   const persist = useCallback(async () => {
@@ -305,7 +349,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
             name: metadata.values.name,
             type: notificationType,
           });
-          switchToCreatedApp(newAppId);
+          switchToCreatedApp(newAppId, metadata.values);
           return;
         }
       } else if (definition.update) {
@@ -324,6 +368,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
         isEditMode ? EntityOperation.Edited : EntityOperation.Created,
         { name: metadata.values.name, type: notificationType },
       );
+      allowNextNavigation();
       navigate(returnUrl);
     } catch (error) {
       const { message, status, traceId } = await getApiErrorDetails(error);
@@ -354,6 +399,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       setIsSaving(false);
     }
   }, [
+    allowNextNavigation,
     appId,
     context,
     definition,
@@ -541,6 +587,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
               value={setup}
               errors={setupErrors}
               onChange={handleSetupChange}
+              onInitialize={handleSetupInitialize}
+              onDirtyChange={setIsSetupEditorDirty}
               onFieldBlur={handleSetupFieldBlur}
               isEditMode={isEditMode}
               appId={appId || undefined}

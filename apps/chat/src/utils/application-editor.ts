@@ -23,6 +23,20 @@ import type { TriggerSaveGeneralPayload } from '../types/apps-editor';
 import { NotifiableEntity } from '../types/entity-notification';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 
+/* Serialises plain data with object keys sorted, so key order never affects equality. */
+const toStableJson = (value: unknown): string =>
+  JSON.stringify(value, (_key, nested: unknown) =>
+    nested && typeof nested === 'object' && !Array.isArray(nested)
+      ? Object.fromEntries(
+          Object.entries(nested).sort(([a], [b]) => a.localeCompare(b)),
+        )
+      : nested,
+  );
+
+/** Structural equality for Setup values, which are plain JSON-like objects. */
+export const areSetupValuesEqual = (a: unknown, b: unknown): boolean =>
+  toStableJson(a) === toStableJson(b);
+
 /** Erases a kind's setup type so it can sit in the shared registry. */
 export const defineApplicationEditor = <TSetup extends ApplicationSetupValues>(
   definition: ApplicationEditorFormDefinition<TSetup>,

@@ -139,15 +139,15 @@ The system SHALL export `useFeatureFlag(key: string): boolean` from `AppConfigCo
 
 ---
 
-### Requirement: AppConfigProvider is mounted before RequireAuth in main.tsx
+### Requirement: AppConfigProvider is mounted before RequireAuth in AppRoot.tsx
 
-`AppConfigProvider` SHALL be moved to wrap the router before `RequireAuth` in `apps/chat/src/main.tsx`. It SHALL appear inside `UserProvider` (whose status gates the load) and after `ThemeProvider`, but before `RequireAuth`, so config is available on the login page and in auth error boundaries.
+`AppConfigProvider` SHALL be moved to wrap `<Routes>` before `RequireAuth` in `apps/chat/src/AppRoot.tsx`. It SHALL appear inside `UserProvider` (whose status gates the load) and after `ThemeProvider`, but before `RequireAuth`, so config is available on the login page and in auth error boundaries.
 
 **RTL impact:** None. **i18n impact:** None.
 
 #### Scenario: Config loads before RequireAuth renders
 
-- **WHEN** `main.tsx` renders
+- **WHEN** `AppRoot.tsx` renders
 - **THEN** `AppConfigProvider` is a descendant of `UserProvider` and an ancestor of `RequireAuth` in the component tree
 - **AND** `useFeatureFlag` is callable from within the login page components without throwing
 

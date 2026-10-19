@@ -119,7 +119,7 @@ The Skill Editor's inline preview exposes no Download or Close control of its ow
 
 ### Requirement: The attachment canvas context is reachable from the Skill Editor route
 
-The Skill Editor page SHALL be able to open, update, and close attachment-canvas preview state without requiring any new route-level provider — `AttachmentCanvasProvider` is already mounted globally above the router in `apps/chat/src/main.tsx`. This capability SHALL NOT depend on `OverlayFeature.AttachmentsManager` or on the global `AttachmentCanvasContainer`/sidebar being mounted on the Skill Editor route.
+The Skill Editor page SHALL be able to open, update, and close attachment-canvas preview state without requiring any new route-level provider — `AttachmentCanvasProvider` is already mounted globally above `<Routes>` in `apps/chat/src/AppRoot.tsx`. This capability SHALL NOT depend on `OverlayFeature.AttachmentsManager` or on the global `AttachmentCanvasContainer`/sidebar being mounted on the Skill Editor route.
 
 #### Scenario: Preview works regardless of the AttachmentsManager feature flag
 - **WHEN** `OverlayFeature.AttachmentsManager` is disabled for the current user
