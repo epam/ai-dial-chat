@@ -58,6 +58,9 @@
       "path": "./libs/chat-overlay"
     },
     {
+      "path": "./libs/visualizer-connector"
+    },
+    {
       "path": "./apps/chat-overlay-sandbox"
     },
     {

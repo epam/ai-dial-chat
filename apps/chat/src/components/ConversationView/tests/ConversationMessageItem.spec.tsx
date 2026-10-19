@@ -104,7 +104,10 @@ vi.mock('../../../hooks/attachment/useApplicationVisualizers', () => ({
  * loading state. Only the surface around it is under test here. */
 const visualizerSubscriptions = new Map<string, (payload: unknown) => void>();
 
-vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+vi.mock('@epam/ai-dial-visualizer-connector', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@epam/ai-dial-visualizer-connector')
+  >()),
   VisualizerConnector: vi.fn().mockImplementation(function (root: HTMLElement) {
     root.appendChild(document.createElement('iframe'));
     return {
