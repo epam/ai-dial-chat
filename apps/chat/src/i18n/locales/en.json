@@ -125,6 +125,7 @@
       "nameAZ": "Name A-Z"
     },
     "featuredLabel": "Featured",
+    "noFolderLabel": "No folder",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
     "viewToggleLabel": "View mode",

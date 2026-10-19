@@ -561,10 +561,16 @@ export const Catalog: FC<CatalogProps> = ({
     () => ({
       noResultsTitle: emptyTitle,
       featuredLabel,
+      noFolderLabel: titles?.noFolderLabel,
       credentialsBadgeLoggedOutLabel:
         detailsTexts?.credentialsBadgeLoggedOutLabel,
     }),
-    [emptyTitle, featuredLabel, detailsTexts?.credentialsBadgeLoggedOutLabel],
+    [
+      emptyTitle,
+      featuredLabel,
+      titles?.noFolderLabel,
+      detailsTexts?.credentialsBadgeLoggedOutLabel,
+    ],
   );
 
   /*

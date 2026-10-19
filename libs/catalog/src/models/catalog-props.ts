@@ -72,6 +72,8 @@ export interface CatalogTitles {
   sortNameAZLabel?: string;
   /** Label for the "Featured" tag on cards. Default: 'Featured'. */
   featuredLabel?: string;
+  /** Text shown in a card's footer when the item is in no folder. Default: 'No folder'. */
+  noFolderLabel?: string;
   /** Accessible label for switching to grid view. Default: 'Grid view'. */
   gridViewLabel?: string;
   /** Accessible label for switching to list view. Default: 'List view'. */

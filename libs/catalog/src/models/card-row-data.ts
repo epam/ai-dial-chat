@@ -26,6 +26,8 @@ export interface CardRowData {
   selectedItemId?: string;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. */
   credentialsBadgeLoggedOutLabel: string;
+  /** Text shown in a card's footer when the item is in no folder. */
+  noFolderLabel: string;
   /** Renders every card read-only: no favorite star, no footer divider, and no "Featured" tag. */
   isReadonly?: boolean;
   /** Featured chip style override, merged over its default per-entity-type colors for every card, e.g. `{ backgroundColor, color, border }`. */

@@ -39,6 +39,7 @@ export const CardGrid: FC<CardGridProps> = memo(
     const credentialsBadgeLoggedOutLabel =
       titles?.credentialsBadgeLoggedOutLabel ??
       'Authorize to use this toolset.';
+    const noFolderLabel = titles?.noFolderLabel ?? 'No folder';
 
     const { containerRef, startRow, endRow, columnCount, totalHeight } =
       useScrollVirtualizer(items.length, { isFullWidth });
@@ -56,6 +57,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         removeFromFavoritesAriaLabel,
         selectedItemId,
         credentialsBadgeLoggedOutLabel,
+        noFolderLabel,
         isReadonly,
         featuredChipStyle,
         markdownLabels,
@@ -72,6 +74,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         removeFromFavoritesAriaLabel,
         selectedItemId,
         credentialsBadgeLoggedOutLabel,
+        noFolderLabel,
         isReadonly,
         featuredChipStyle,
         markdownLabels,

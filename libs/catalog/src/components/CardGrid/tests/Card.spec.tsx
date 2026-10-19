@@ -260,6 +260,26 @@ describe('Card — read-only state', () => {
   });
 });
 
+describe('Card — no folder', () => {
+  it('shows the default "No folder" label when the item is in no folder', () => {
+    render(<Card item={makeItem({ folder: [] })} />);
+
+    expect(screen.getByText('No folder')).toBeTruthy();
+  });
+
+  it('uses a custom noFolderLabel', () => {
+    render(<Card item={makeItem({ folder: [] })} noFolderLabel="Без папки" />);
+
+    expect(screen.getByText('Без папки')).toBeTruthy();
+  });
+
+  it('drops the footer, label included, on a read-only card with no folder', () => {
+    render(<Card item={makeItem({ folder: [] })} isReadonly />);
+
+    expect(screen.queryByText('No folder')).toBeNull();
+  });
+});
+
 describe('Card — description rendering', () => {
   it('renders a Markdown-formatted description as formatted text, not literal characters', () => {
     render(<Card item={makeItem({ description: '**bold** text' })} />);
@@ -279,6 +299,23 @@ describe('Card — description rendering', () => {
     // Verify the style attribute was stripped by checking the span has no style
     const span = screen.getByText('text');
     expect(span.parentElement?.getAttribute('style')).toBeNull();
+  });
+
+  /* The clamp is CSS-only: no semantic query exposes the line count. */
+  const getClampClassName = () =>
+    // eslint-disable-next-line testing-library/no-node-access
+    screen.getByText('desc').closest('[class*="line-clamp"]')?.className;
+
+  it('clamps the description to 2 lines when the item has topic tags', () => {
+    render(<Card item={makeItem({ topics: ['Reasoning'] })} />);
+
+    expect(getClampClassName()).toContain('line-clamp-2');
+  });
+
+  it('gives the description a 3rd line when the item has no topic tags', () => {
+    render(<Card item={makeItem({ topics: [] })} />);
+
+    expect(getClampClassName()).toContain('line-clamp-3');
   });
 
   it('renders a plain-text description unchanged', () => {
