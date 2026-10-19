@@ -4,6 +4,7 @@ import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
   GenerationConflictError,
   GenerationPersistenceError,
+  StopCompletionError,
   StreamInterruptedError,
   StreamUpstreamError,
 } from '../create-chat-stream-api';
@@ -47,6 +48,19 @@ describe('createChatStreamApi', () => {
         path: 'gpt-4o__Hello__uuid',
       }),
     ).rejects.toThrow('stopCompletion failed: 500');
+  });
+
+  it('exposes the HTTP status on the error a rejected stop throws', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
+    const { stopCompletion } = makeApi();
+
+    const error = await stopCompletion({
+      generationId: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
+      path: 'gpt-4o__Hello__uuid',
+    }).catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(StopCompletionError);
+    expect((error as StopCompletionError).status).toBe(404);
   });
 
   it('sends the stop request body to the completion stop endpoint', async () => {

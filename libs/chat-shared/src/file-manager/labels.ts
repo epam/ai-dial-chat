@@ -89,6 +89,8 @@ export interface DialFileManagerShellLabels {
   getMoveHeader: (count: number, name?: string) => string;
   /** Tooltip shown on the disabled source folder in the destination picker. */
   moveSourceDisabledTooltip: string;
+  /** Tooltip shown when the move destination is a moved folder or lies inside one. */
+  movedIntoItselfTooltip: string;
   /** Tooltip shown when a destination folder is still loading. */
   folderPickerLoadingTooltip: string;
   /** Empty-state title in the destination-folder picker. */

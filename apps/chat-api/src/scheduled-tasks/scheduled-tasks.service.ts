@@ -51,6 +51,10 @@ import { ScheduleAction } from './types/schedule-action.enum';
 import { ScheduledTaskErrorCode } from './types/scheduled-task-error-code.enum';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
+/* Upper bound on per-run detail reads a single run-list call may fan out to. */
+const RUN_ERROR_DETAIL_MAX_READS = 10;
+/* A terminal run's error text is immutable; the TTL only bounds cache growth. */
+const RUN_ERROR_TEXT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const UPSTREAM_MESSAGE_MAX_LENGTH = 1000;
 const UPSTREAM_CODE_PATTERN = /^[A-Za-z0-9_.:-]{1,128}$/;
 
@@ -635,13 +639,99 @@ export class ScheduledTasksService {
     );
     const runs = result.results ?? [];
     return {
-      items: runs.map(fromUpstreamRun),
+      items: await this.withRunErrorDetails(
+        accessToken,
+        scheduleId,
+        runs.map(fromUpstreamRun),
+      ),
       count: result.count,
       limit: result.limit,
       offset: result.offset,
       next: result.next,
       previous: result.previous,
     };
+  }
+
+  /*
+   * Keyed by schedule + run only: a cached value is served solely for a run
+   * the caller's own upstream list call just returned, so the owner check
+   * has already happened for this caller.
+   */
+  private runErrorTextCacheKey(scheduleId: string, runId: string): string {
+    return `scheduled-tasks:run-error-text:${scheduleId}:${runId}`;
+  }
+
+  /*
+   * DIAL Scheduler's run list (`RunListItem`) omits `result`, so a failed
+   * run's `error_text` is only available from the per-run detail route. To
+   * keep that fan-out bounded:
+   * - a terminal run's error text never changes, so each resolved value
+   *   (including "none", stored as '') is cached and History's background
+   *   refreshes do not re-read the same runs;
+   * - at most RUN_ERROR_DETAIL_MAX_READS uncached runs are re-read per list
+   *   call (newest first, matching the list order); the rest stay without
+   *   `errorText` until a later call picks them up.
+   * A failed detail read is logged, not cached, and leaves that run without
+   * `errorText` rather than failing the whole list.
+   */
+  private async withRunErrorDetails(
+    accessToken: string,
+    scheduleId: string,
+    runs: ScheduledTaskRunDto[],
+  ): Promise<ScheduledTaskRunDto[]> {
+    const resolved = new Map<string, string>();
+    const uncachedIds: string[] = [];
+    await Promise.all(
+      runs
+        .filter(
+          (run) =>
+            run.status === ScheduledTaskRunStatus.Error &&
+            run.errorText == null,
+        )
+        .map(async (run) => {
+          const cached = await this.cacheManager.get<string>(
+            this.runErrorTextCacheKey(scheduleId, run.id),
+          );
+          if (cached == null) {
+            uncachedIds.push(run.id);
+          } else {
+            resolved.set(run.id, cached);
+          }
+        }),
+    );
+
+    const runOrder = new Map(runs.map((run, index) => [run.id, index]));
+    const idsToRead = uncachedIds
+      .sort((a, b) => (runOrder.get(a) ?? 0) - (runOrder.get(b) ?? 0))
+      .slice(0, RUN_ERROR_DETAIL_MAX_READS);
+    await Promise.all(
+      idsToRead.map(async (runId) => {
+        try {
+          const detail = await this.getScheduledTaskRun(
+            accessToken,
+            scheduleId,
+            runId,
+          );
+          const errorText = detail.errorText ?? '';
+          resolved.set(runId, errorText);
+          await this.cacheManager.set(
+            this.runErrorTextCacheKey(scheduleId, runId),
+            errorText,
+            RUN_ERROR_TEXT_CACHE_TTL_MS,
+          );
+        } catch (err) {
+          this.logger.warn(
+            `Failed to read error details for scheduled task run "${runId}" of "${scheduleId}"`,
+            err instanceof Error ? err.stack : undefined,
+          );
+        }
+      }),
+    );
+
+    return runs.map((run) => {
+      const errorText = resolved.get(run.id);
+      return errorText ? { ...run, errorText } : run;
+    });
   }
 
   /** Reads one run through the caller-scoped Scheduler route without caching it. */

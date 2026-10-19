@@ -78,6 +78,18 @@ export class StreamInterruptedError extends Error {
   }
 }
 
+/** Thrown when the Stop endpoint answers with a non-OK status. */
+export class StopCompletionError extends Error {
+  /** HTTP status of the rejected Stop request. */
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`stopCompletion failed: ${status}`);
+    this.name = 'StopCompletionError';
+    this.status = status;
+  }
+}
+
 /*
  * Three backend keepalive intervals (15 s each): one lost or late keepalive
  * plus jitter never trips it, while a dead socket is still caught promptly.
@@ -277,7 +289,7 @@ export const createChatStreamApi = (
     if (rotatedCsrf) deps.setCsrfToken(rotatedCsrf);
 
     if (!response.ok) {
-      throw new Error(`stopCompletion failed: ${response.status}`);
+      throw new StopCompletionError(response.status);
     }
   };
 

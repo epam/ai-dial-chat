@@ -669,6 +669,7 @@ export enum DialFileManagerI18nKeys {
   MoveHeaderSingle = 'dialFileManager.moveHeaderSingle',
   MoveHeaderMultiple = 'dialFileManager.moveHeaderMultiple',
   MoveSourceDisabledTooltip = 'dialFileManager.moveSourceDisabledTooltip',
+  MovedIntoItselfTooltip = 'dialFileManager.movedIntoItselfTooltip',
   FolderPickerLoadingTooltip = 'dialFileManager.folderPickerLoadingTooltip',
   FolderPickerEmptyStateTitle = 'dialFileManager.folderPickerEmptyStateTitle',
   FolderPickerEmptyStateDescription = 'dialFileManager.folderPickerEmptyStateDescription',

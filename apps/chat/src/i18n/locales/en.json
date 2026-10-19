@@ -1021,6 +1021,7 @@
     "moveHeaderSingle": "Move \"{{name}}\"",
     "moveHeaderMultiple": "Move {{count}} items",
     "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
+    "movedIntoItselfTooltip": "A folder can't be moved into itself or its subfolders",
     "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
     "folderPickerEmptyStateTitle": "This folder is empty",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",

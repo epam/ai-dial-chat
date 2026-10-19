@@ -638,6 +638,11 @@ export const PdfContent: FC<PdfContentProps> = ({
              * button; the list below caps itself to the room that is left. */
             allowedPlacements={['bottom-start']}
             matchReferenceWidth={false}
+            // Opening by click must not focus the page input: the overlay is
+            // still unpositioned at that moment, and focusing it scrolls the
+            // page to the overlay's initial spot (and raises the mobile
+            // keyboard).
+            initialFocus={-1}
             renderOverlay={() => (
               <div className="flex w-36 flex-col">
                 {/* An 80px field plus the 4px padding on each side. */}

@@ -85,6 +85,8 @@ Confirming a destination in the popup SHALL invoke the same `onCopyFiles(items, 
 
 Copying an item into its own folder is therefore not offered by the picker; the dedicated duplicate action covers that case. DIAL Core's `moveResource`/copy rejection remains the fallback for any other invalid destination.
 
+The shell SHALL also pass `destinationFolderPopupOptions.movedIntoItselfTooltip` as `labels.movedIntoItselfTooltip`. In move mode `DialFileManager` disables Move whenever the destination is a moved folder or lies inside one, and shows that tooltip on the disabled button; the BFF rejects the same move as a fallback (see `file-manager-copy-move`).
+
 #### Scenario: Move disables the single common source folder
 
 - **WHEN** the user selects items that all live in `/My files/reports/` and triggers Move
@@ -94,6 +96,11 @@ Copying an item into its own folder is therefore not offered by the picker; the 
 
 - **WHEN** the user selects items that all live in `/My files/reports/` and triggers Copy
 - **THEN** `/My files/reports/` is disabled as a destination in the popup, exactly as in move mode
+
+#### Scenario: Move disables the moved folder and its subfolders
+
+- **WHEN** the user moves the folder `/My files/reports/` and opens `/My files/reports/` or any folder inside it in the popup
+- **THEN** Move is disabled, with the translated `movedIntoItselfTooltip` shown on hover/focus
 
 #### Scenario: Mixed source folders fall back to the current folder
 
@@ -191,6 +198,7 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 | `dialFileManager.moveHeaderSingle` | `Move "{{name}}"` |
 | `dialFileManager.moveHeaderMultiple` | `Move {{count}} items` |
 | `dialFileManager.moveSourceDisabledTooltip` | `Unavailable for the original location. Please select another folder` |
+| `dialFileManager.movedIntoItselfTooltip` | `A folder can't be moved into itself or its subfolders` |
 | `dialFileManager.folderPickerLoadingTooltip` | `Loading folder contents. Please wait` |
 | `dialFileManager.folderPickerEmptyStateTitle` | `This folder is empty` |
 | `dialFileManager.folderPickerEmptyStateDescription` | `Create a folder or choose another location` |

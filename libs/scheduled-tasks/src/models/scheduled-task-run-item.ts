@@ -18,4 +18,6 @@ export interface ScheduledTaskRunItem {
   conversationId?: string;
   /** Whether this run's conversation is unread. When `true`, the row renders the unread-dot indicator. Defaults to `false`. */
   isUnread?: boolean;
+  /** Pre-formatted failure details for an `Error` run. When set on an `Error` row, the status icon reveals it in a tooltip on hover/focus and it is appended to the row's accessible name. Ignored for every other status. */
+  errorText?: string;
 }
