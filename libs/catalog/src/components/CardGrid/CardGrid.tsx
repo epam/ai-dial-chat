@@ -93,7 +93,7 @@ export const CardGrid: FC<CardGridProps> = memo(
             <div
               key={i}
               className={mergeClasses(
-                'rounded-md border p-4',
+                'rounded-md border p-3',
                 styles.skeletonCard,
               )}
               style={{ height: CARD_HEIGHT }}

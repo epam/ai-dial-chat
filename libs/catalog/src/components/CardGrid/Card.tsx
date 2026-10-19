@@ -160,7 +160,7 @@ export const Card: FC<CardProps> = ({
       aria-label={item.name}
       style={cssVars}
       className={mergeClasses(
-        'box-border cursor-pointer gap-3',
+        'box-border cursor-pointer gap-3 p-3',
         styles.card,
         isFeaturedVisible ? styles.featuredCard : undefined,
         isSelected ? styles.selectedCard : undefined,
