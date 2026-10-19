@@ -25,7 +25,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCircleCheck: (props: Record<string, unknown>) => (
+  IconCheck: (props: Record<string, unknown>) => (
     <svg data-icon="success" {...props} />
   ),
   IconCircleX: (props: Record<string, unknown>) => (
@@ -79,6 +79,28 @@ describe('ScheduledTaskRunHistoryList', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(screen.getByText('today at 9:01 AM (99s)')).toBeTruthy();
     expect(screen.getByText('Jul 10 at 9:46 AM (154s)')).toBeTruthy();
+  });
+
+  it('renders the duration as a separate secondary-colored label and includes it in the accessible name', () => {
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[
+          buildRun({
+            timestampLabel: 'today at 9:01 AM',
+            durationLabel: '(3s)',
+          }),
+        ]}
+        labels={labels}
+      />,
+    );
+
+    expect(screen.getByText('today at 9:01 AM')).toBeTruthy();
+    expect(screen.getByText('(3s)').className).toContain('subtitleText');
+    expect(
+      screen.getByRole('listitem', {
+        name: 'Succeeded today at 9:01 AM (3s)',
+      }),
+    ).toBeTruthy();
   });
 
   it('shows skeleton rows during initial loading', () => {

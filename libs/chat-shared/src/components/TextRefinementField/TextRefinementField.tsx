@@ -79,7 +79,7 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
     [TextRefinementState.Pending]:
       labels?.refinePendingAriaLabel ?? 'Refining text',
     [TextRefinementState.Success]:
-      labels?.refineSuccessAriaLabel ?? 'Text refined. Undo is available.',
+      labels?.refineSuccessAriaLabel ?? 'Text refined',
     [TextRefinementState.Restored]:
       labels?.refineUndoAriaLabel ?? 'Original text restored.',
     [TextRefinementState.Unchanged]:

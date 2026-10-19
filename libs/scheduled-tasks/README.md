@@ -198,7 +198,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
       isUnread: true,
     },
@@ -319,7 +320,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
     },
   ]}
@@ -592,7 +594,7 @@ Optional label overrides (English defaults):
 | `refineUndoLabel`          | Undo                                          |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
-| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 

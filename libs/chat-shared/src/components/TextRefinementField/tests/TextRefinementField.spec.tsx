@@ -75,7 +75,7 @@ describe('TextRefinementField', () => {
     renderField(refinement);
 
     expect(screen.getByRole('status').textContent).toBe(
-      'Text refined. Undo is available.',
+      'Text refined',
     );
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(refinement.undo).toHaveBeenCalledOnce();
@@ -111,7 +111,7 @@ describe('TextRefinementField', () => {
 
     expect(screen.getByText('0/500')).toBeTruthy();
     expect(screen.getByRole('status').textContent).toBe(
-      'Text refined. Undo is available.',
+      'Text refined',
     );
   });
 

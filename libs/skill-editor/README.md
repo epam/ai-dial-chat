@@ -313,7 +313,7 @@ Optional label overrides (English defaults):
 | `refineUndoLabel`          | Undo                                          |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
-| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 

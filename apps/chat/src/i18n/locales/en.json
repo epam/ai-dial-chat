@@ -1748,7 +1748,7 @@
     "undo": "Undo",
     "error": "Could not refine this text. Please try again.",
     "pending": "Refining text",
-    "success": "Text refined. Undo is available.",
+    "success": "Text refined",
     "restored": "Original text restored.",
     "unchanged": "No changes were needed."
   },

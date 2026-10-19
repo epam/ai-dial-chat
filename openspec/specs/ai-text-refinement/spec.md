@@ -223,7 +223,7 @@ Both form labels interfaces SHALL add the optional properties below with English
 | `refineUndoLabel` | Undo | `textRefinement.undo` |
 | `refineErrorLabel` | Could not refine this text. Please try again. | `textRefinement.error` |
 | `refinePendingAriaLabel` | Refining text | `textRefinement.pending` |
-| `refineSuccessAriaLabel` | Text refined. Undo is available. | `textRefinement.success` |
+| `refineSuccessAriaLabel` | Text refined | `textRefinement.success` |
 | `refineUndoAriaLabel` | Original text restored. | `textRefinement.restored` |
 | `refineUnchangedAriaLabel` | No changes were needed. | `textRefinement.unchanged` |
 

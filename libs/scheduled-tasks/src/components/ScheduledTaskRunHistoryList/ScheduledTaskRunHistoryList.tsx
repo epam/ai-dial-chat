@@ -9,7 +9,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
-  IconCircleCheck,
+  IconCheck,
   IconCircleX,
   IconClipboardX,
 } from '@tabler/icons-react';
@@ -23,7 +23,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
   switch (status) {
     case ScheduledTaskRunStatus.Success:
       return (
-        <IconCircleCheck
+        <IconCheck
           size={DIAL_ICON_SIZE.MD}
           className={styles.successIcon}
           aria-hidden
@@ -114,7 +114,9 @@ export const ScheduledTaskRunHistoryList: FC<
       isCurrent ? labels.currentRunLabel : undefined,
     ].filter((suffix): suffix is string => Boolean(suffix));
     const accessibleName = [
-      `${statusLabel} ${run.timestampLabel}`,
+      [statusLabel, run.timestampLabel, run.durationLabel]
+        .filter(Boolean)
+        .join(' '),
       ...accessibleNameSuffixes,
     ].join(' — ');
     /*
@@ -152,15 +154,28 @@ export const ScheduledTaskRunHistoryList: FC<
       >
         <span className="flex min-w-0 items-center gap-2">
           <RunStatusIcon status={run.status} />
-          <span
-            className={mergeClasses(
-              run.isUnread
-                ? runTimestampUnreadClassName
-                : runTimestampClassName,
-              'truncate',
+          <span className="flex min-w-0 items-center gap-1">
+            <span
+              className={mergeClasses(
+                run.isUnread
+                  ? runTimestampUnreadClassName
+                  : runTimestampClassName,
+                'truncate',
+              )}
+            >
+              {run.timestampLabel}
+            </span>
+            {run.durationLabel && (
+              <span
+                className={mergeClasses(
+                  runTimestampClassName,
+                  styles.subtitleText,
+                  'shrink-0',
+                )}
+              >
+                {run.durationLabel}
+              </span>
             )}
-          >
-            {run.timestampLabel}
           </span>
         </span>
         {/*
