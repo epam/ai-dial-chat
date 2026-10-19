@@ -159,12 +159,14 @@ The query SHALL be trimmed and matched case-insensitively as a substring of each
 
 `CatalogView` SHALL pass `createSearch` to `Catalog`, whose `createSearch` prop forwards it to `CreateButton`, together with translated `titles.createSearchPlaceholder` (`basic.searchPlaceholder`), `titles.createSearchClearLabel` (`basic.clearSearch`) and `titles.createNoResultsLabel` (`basic.noResults`). The lib defaults are `'Search'`, `'Clear search'` and `'No results found'`. No new translation key is introduced.
 
-`CreateButton` SHALL render, when `search` is provided:
+`CreateButton` SHALL, when `search` is provided, render the kit `Dropdown` with `searchable`, `searchValue={search.value}` and `onSearchChange={search.onChange}`, passing `searchPlaceholder`, `searchClearLabel` and `noResultsLabel` through. The kit then owns the search UI:
 
-- the kit `Search` (small) in the dropdown's `menuHeader`, named by the placeholder (`aria-label`), on an opaque `bg-layer-raised` row that sticks at `-top-1`, so it also covers the panel's 4px inset and no scrolled option shows above or behind it;
-- every string option label, nested labels included, through the kit `Highlight` for the current query with `maxLines={1}` — one line, ellipsis, tooltip on overflow;
-- a single `DropdownItemType.PlainText` row wrapping the no-results label in `role="status"` when the filtered list is empty;
-- a reset of the query to `''` whenever the menu closes.
+- its search field sits above the item list, named by the placeholder, and stays in view while the list scrolls;
+- every string option label, nested labels included, is highlighted for the current query in one line, with an ellipsis and a tooltip on overflow;
+- the no-results label is shown and announced through a `role="status"` region when the filtered list is empty;
+- the query is reset to `''` (`onSearchChange('')`) whenever the menu closes.
+
+The options arrive already filtered by `useCatalogEditNavigation`, which the mobile menu sheet shares; the kit's own filter applies the same substring rule, so it narrows them no further.
 
 #### Scenario: The query narrows every kind of option
 
@@ -202,9 +204,9 @@ When `CreateButton` renders the searchable menu, the kit `Dropdown` SHALL receiv
 
 - `listClassName` set to `CREATE_MENU_LIST_CLASS_NAME` (`'w-[320px]'`) and `matchReferenceWidth={false}`, so the panel's width does not change as the query changes the longest visible label; the kit still caps it at the viewport's available width;
 - `placement="bottom-end"`, anchoring the panel to the button's end edge (logical, so it mirrors under `dir="rtl"`);
-- `maxDropdownHeight` set to `CREATE_MENU_MAX_HEIGHT_PX` — the 44px search row, 8px of insets and seven 40px rows 2px apart (344px) — so up to seven options are visible and the panel scrolls beyond that while the sticky search row stays in view.
+- `maxVisibleItems` set to `CREATE_MENU_VISIBLE_ROWS` (7), so up to seven options are visible and the item list scrolls beyond that under the search field. The kit derives the height from its own row geometry.
 
-Both constants live in `libs/catalog/src/constants/create-menu.ts` and mirror the kit's overlay row geometry.
+Both constants live in `libs/catalog/src/constants/create-menu.ts`.
 
 #### Scenario: Filtering does not resize the panel
 
@@ -214,7 +216,7 @@ Both constants live in `libs/catalog/src/constants/create-menu.ts` and mirror th
 #### Scenario: Long lists scroll with the search in view
 
 - **WHEN** the menu holds more than seven options
-- **THEN** the panel is 344px tall, scrolls, and the search row stays at its top
+- **THEN** the item list shows seven rows and scrolls, and the search row stays above it
 
 #### Scenario: A long runner name stays on one line
 
