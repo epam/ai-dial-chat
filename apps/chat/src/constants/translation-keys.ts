@@ -255,6 +255,7 @@ export enum CatalogI18nKeys {
   CreateSkill = 'catalog.create.skill',
   CreateSkillWriteInstructions = 'catalog.create.skillWriteInstructions',
   CreateSkillUpload = 'catalog.create.skillUpload',
+  CreateRunners = 'catalog.create.runners',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   FolderShared = 'catalog.folder.shared',

@@ -601,6 +601,8 @@ export const Catalog: FC<CatalogProps> = ({
     noResultsLabel: titles?.createNoResultsLabel,
     backLabel: titles?.createMenuBackLabel,
     closeLabel: titles?.createMenuCloseLabel,
+    colors: catalogStyles?.colors?.createMenu,
+    sectionHeaderClassName: typography?.createMenuSectionHeaderClassName,
   };
   /* The empty state creates only the active tab's type; without a per-tab
      menu it falls back to the header's full menu. */

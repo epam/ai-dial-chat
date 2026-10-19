@@ -34,6 +34,7 @@ export type {
   CatalogColors,
   CatalogStyles,
   CatalogTypography,
+  CreateMenuColors,
 } from './models/catalog-styles';
 export type { EndpointOption } from './models/item-details-data';
 export type {

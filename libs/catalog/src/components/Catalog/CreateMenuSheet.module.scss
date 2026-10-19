@@ -1,0 +1,11 @@
+.divider {
+  border-top: 1px solid
+    var(--cat-create-menu-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+.sectionHeader {
+  color: var(
+    --cat-create-menu-section-header-text,
+    var(--text-secondary, #57647a)
+  );
+}
