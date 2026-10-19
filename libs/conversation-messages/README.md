@@ -316,6 +316,7 @@ CONVERSATION_MESSAGES_CLASS.userBubble; // 'dial-cm-user-bubble'
 | Class                       | Element                                         |
 | --------------------------- | ----------------------------------------------- |
 | `dial-cm-user-bubble`       | The user message's bubble                       |
+| `dial-cm-user-content`      | The user message's text content region          |
 | `dial-cm-assistant-content` | The assistant message's streamed content region |
 
 `dial-cm-user-bubble` is emitted only when the bubble renders — a message with

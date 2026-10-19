@@ -47,7 +47,7 @@ export const ScheduledTaskDetailsSection: FC<
         <p
           className={mergeClasses(
             fieldValueClassName,
-            'whitespace-pre-wrap [overflow-wrap:anywhere]',
+            '[overflow-wrap:anywhere] whitespace-pre-wrap',
             styles.description,
           )}
         >

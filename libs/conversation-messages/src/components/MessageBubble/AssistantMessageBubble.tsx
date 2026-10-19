@@ -198,10 +198,13 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               {/*
                * The plain marker class (not a CSS-module hash) keeps the
                * indent selector above a static string Tailwind can generate.
+               * `overflow-wrap` inherits, so one class here breaks an
+               * unbreakable token in every markdown element — including ones
+               * whose per-element class (or a host override) carries none.
                */}
               <div
                 ref={contentRef}
-                className="cm-bubble-markdown max-w-full min-w-0"
+                className="cm-bubble-markdown max-w-full min-w-0 [overflow-wrap:anywhere]"
               >
                 <MDMessageViewer
                   content={text ?? ''}
