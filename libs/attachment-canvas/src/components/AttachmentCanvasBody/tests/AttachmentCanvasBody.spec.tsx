@@ -169,6 +169,18 @@ describe('AttachmentCanvasBody', () => {
     expect(container.querySelector('.overflow-hidden')).toBeNull();
   });
 
+  it('keeps padding off the Markdown scroller so a code block header pins to its very top', () => {
+    const { container } = renderBody({
+      type: AttachmentContentType.Markdown,
+      text: '# Title',
+    });
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the unlabeled scroller; padding on it would offset sticky headers
+    const scroller = container.querySelector('.overflow-auto');
+    expect(scroller?.className).not.toMatch(/\bp-4\b/);
+    expect(scroller?.firstElementChild?.className).toContain('p-4');
+  });
+
   it.each([
     AttachmentContentType.Markdown,
     AttachmentContentType.MarkdownTable,
