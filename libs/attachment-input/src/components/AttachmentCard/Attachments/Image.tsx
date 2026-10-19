@@ -152,7 +152,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
       style={cssVars}
     >
       <div className="relative h-full w-full overflow-hidden">
-        <div className="absolute end-1 top-1 z-10 flex">
+        <div className="absolute inset-e-1 top-1 z-10 flex">
           {onRemove && (
             <RemoveAction
               ariaLabel={removeLabel}

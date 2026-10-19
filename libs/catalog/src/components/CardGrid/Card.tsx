@@ -80,6 +80,7 @@ export const Card: FC<CardProps> = ({
   className,
   styles: cardStyles,
   credentialsBadgeLoggedOutLabel,
+  noFolderLabel = 'No folder',
   isReadonly = false,
   markdownLabels,
 }) => {
@@ -160,7 +161,7 @@ export const Card: FC<CardProps> = ({
       aria-label={item.name}
       style={cssVars}
       className={mergeClasses(
-        'box-border cursor-pointer gap-3',
+        'box-border cursor-pointer gap-3 p-3',
         styles.card,
         isFeaturedVisible ? styles.featuredCard : undefined,
         isSelected ? styles.selectedCard : undefined,
@@ -169,7 +170,7 @@ export const Card: FC<CardProps> = ({
       )}
     >
       {isFeaturedVisible && (
-        <div className="absolute end-[22px] top-0 -translate-y-1/2">
+        <div className="absolute inset-e-[22px] top-0 -translate-y-1/2">
           <FeaturedChip
             label={featuredLabel}
             type={item.type}
@@ -236,8 +237,12 @@ export const Card: FC<CardProps> = ({
              * limits the text to 2 lines but `overflow: hidden` clips at the box
              * height, so any box taller than 2 lines paints the clamped-away
              * lines. `2lh` tracks whichever typography class is applied.
+             * Without topic tags their row is free, so the text takes a 3rd line.
              */
-            'line-clamp-2 min-h-[2lh] break-words',
+            item.topics.length > 0
+              ? 'line-clamp-2 min-h-[2lh]'
+              : 'line-clamp-3 min-h-[3lh]',
+            'break-words',
             styles.description,
           )}
         >
@@ -279,12 +284,21 @@ export const Card: FC<CardProps> = ({
         >
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
-              {item.folder.length > 0 && (
+              {item.folder.length > 0 ? (
                 <FolderPath
                   segments={item.folder}
                   labelClassName={folderLabelClassName}
                   leafClassName={folderLeafClassName}
                 />
+              ) : (
+                <span
+                  className={mergeClasses(
+                    folderLabelClassName,
+                    styles.description,
+                  )}
+                >
+                  {noFolderLabel}
+                </span>
               )}
             </div>
             {isStarVisible && (
@@ -297,10 +311,7 @@ export const Card: FC<CardProps> = ({
                     ? removeFromFavoritesAriaLabel
                     : addToFavoritesAriaLabel
                 }
-                className={mergeClasses(
-                  styles.starBtn,
-                  !isStarred && styles.emptyStarHidden,
-                )}
+                className={mergeClasses(!isStarred && styles.emptyStarHidden)}
               />
             )}
           </div>

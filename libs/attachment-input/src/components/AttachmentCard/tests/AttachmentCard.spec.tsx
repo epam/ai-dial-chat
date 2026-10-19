@@ -311,8 +311,10 @@ describe('AttachmentCard — focus ring', () => {
     );
 
     const tile = screen.getByRole('button', { name: 'Download attachment' });
-    expect(tile.className).toContain('focus-visible:outline');
+    expect(tile.className).toContain('focus-visible:outline-1');
     expect(tile.className).toContain('outline-offset-1');
+    // Tailwind v4's bare `outline-1` also sets a solid style, ringing every tile.
+    expect(tile.className.split(' ')).not.toContain('outline-1');
     expect(tile.className).not.toMatch(PROXY_RING);
   });
 

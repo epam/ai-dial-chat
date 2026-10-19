@@ -93,15 +93,15 @@ The prior auth-expired toast (`scheduledTasks.authSessionExpiredNotification`) i
 - **WHEN** the login popup opened from the action's click is blocked by the browser
 - **THEN** the login-failed toast is shown, the form retains the user's unsaved values, the page does not navigate, and the Save action is operable again
 
-#### Scenario: Timed-out or failed login shows the login-failed toast
-
-- **WHEN** the login flow times out or fails
-- **THEN** the login-failed toast is shown, the form retains its values, and Save is operable again
-
 #### Scenario: Cancelled login stays silent with the form intact
 
 - **WHEN** the user closes the OAuth popup opened by the toast action
 - **THEN** no additional toast is shown — the user dismissed the login deliberately — the form retains its values, and Save is operable again
+
+#### Scenario: Timed-out or failed login shows the login-failed toast
+
+- **WHEN** the login flow times out or fails
+- **THEN** the login-failed toast is shown, the form retains its values, and Save is operable again
 
 #### Scenario: Saving again re-runs the full path
 
@@ -121,3 +121,19 @@ The 403-triggered check-and-decide logic SHALL live in one shared app-level help
 
 - **WHEN** either page's submit flow handles a `403` failure
 - **THEN** the check-and-decide step is the same shared implementation, and the submit orchestration (including the login-required toast and the retry) is the same shared hook, covered by unit tests for the outcome paths (disconnected, connected, failed check, missing connect, non-403)
+
+---
+
+### Requirement: The check helper is host-agnostic in libs/chat-hooks
+
+`checkScheduledTaskAuthSessionError` SHALL live in `libs/chat-hooks` (the `scheduled-task` domain, beside the other scheduled-task helpers), with the one status call arriving as a passed-in `getOfflineCredentials` operation — the host passes its already-configured thin wrapper, and the helper imports no client construction, no app server-api module, and no i18n. The disambiguation rule depends only on the DIAL Core response's own shape (the `403` status, the `available`/`connected` flags, the `connect` object's completeness), per the fourth library-isolation exception; the normalized response mapping SHALL be shared with the offline-credentials gate through one exported `mapOfflineCredentialsResponse` (with `normalizeOfflineCredentialsConnectSettings` for the connect object), so the gate's check, this helper, and the login refetch cannot drift apart. The check's documented contract — the connect settings are returned from the same single check regardless of the connection state, so the caller decides from one check — SHALL be preserved by the relocation.
+
+#### Scenario: The check calls the passed-in operation exactly once on the 403 path
+
+- **WHEN** the helper is invoked with a `403` failure and a host-configured `getOfflineCredentials`
+- **THEN** it issues exactly one status request through that operation and never constructs or configures a client itself
+
+#### Scenario: The relocation preserves the check's contract
+
+- **WHEN** the helper's existing test suite (relocated with it) runs
+- **THEN** every outcome path — attributed with connect settings, attributed without, connected, failed check, non-403 — behaves identically to the app-level original

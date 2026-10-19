@@ -28,7 +28,7 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
           {names.length === 1 ? (
             <>
               {labels.deleteConfirmSingleText}{' '}
-              <span className="break-words text-primary">
+              <span className="wrap-break-word text-primary">
                 &quot;{names[0].split('/').pop()}&quot;?
               </span>
             </>

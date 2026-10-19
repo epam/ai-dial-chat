@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.16.0-dev.13 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.16 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -198,7 +198,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
       isUnread: true,
     },
@@ -321,7 +322,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
     },
   ]}
@@ -594,7 +596,7 @@ Optional label overrides (English defaults):
 | `refineUndoLabel`          | Undo                                          |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
-| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 

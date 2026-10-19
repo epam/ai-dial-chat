@@ -168,7 +168,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5 break-words">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5 wrap-break-word">
             <span className={labelClassName}>{label}</span>
             <span
               className={mergeClasses(

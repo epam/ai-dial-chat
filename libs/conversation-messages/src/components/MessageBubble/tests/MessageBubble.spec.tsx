@@ -908,7 +908,7 @@ describe('AssistantMessageBubble — inline-start slot', () => {
     // eslint-disable-next-line testing-library/no-node-access -- see getTextContainer comment
     const slotWrapper = textContainer.firstElementChild as HTMLElement;
     expect(slotWrapper.className).toContain('absolute');
-    expect(slotWrapper.className).toContain('start-0');
+    expect(slotWrapper.className).toContain('inset-s-0');
     expect(slotWrapper.className).toContain('top-0');
 
     // eslint-disable-next-line testing-library/no-node-access -- see getTextContainer comment

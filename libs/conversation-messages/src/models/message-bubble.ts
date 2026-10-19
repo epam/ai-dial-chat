@@ -42,6 +42,8 @@ export interface MessageBubbleStyles {
   className?: string;
   /** Extra class(es) on the bubble element. */
   bubbleClassName?: string;
+  /** Typography and color classes on the send time shown when `timestamp` is set. Defaults to `'dial-small-text text-secondary'`. */
+  timestampClassName?: string;
 }
 
 /** Localised labels for message bubble components. */
@@ -123,6 +125,10 @@ interface BaseMessageBubbleProps {
   actions?: MessageActionsProps;
   /** Shows the actions bar permanently instead of on group hover only. */
   hasAlwaysVisibleActions?: boolean;
+  /** ISO-8601 send time. When set, a relative time ("3 hours ago") with a full-date tooltip is shown on the outer edge of the actions row, revealed on hover or focus (always on devices without hover). */
+  timestamp?: string;
+  /** BCP 47 locale for the send time. Defaults to the runtime's default locale. */
+  locale?: string;
   /** When `true`, assistant markdown text reveals newly appended content smoothly. */
   isStreaming?: boolean;
   /** Attachments shown above (user) or below (assistant) the message text. */

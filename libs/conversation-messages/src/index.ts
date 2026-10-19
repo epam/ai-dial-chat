@@ -5,6 +5,7 @@ export { AssistantMessageBubble } from './components/MessageBubble/AssistantMess
 export { StatusMessageBubble } from './components/MessageBubble/StatusMessageBubble';
 export { MessageActions } from './components/MessageActions/MessageActions';
 export { MessageSelectionReply } from './components/MessageSelectionReply/MessageSelectionReply';
+export { ConversationStartTimestamp } from './components/ConversationStartTimestamp/ConversationStartTimestamp';
 export { BubblePosition } from './types/bubble-position';
 export type {
   MessageBubbleProps,
@@ -43,3 +44,7 @@ export type {
   MessageSourceColors,
   MessageSourceTypography,
 } from './models/message-source';
+export type {
+  ConversationStartTimestampLabels,
+  ConversationStartTimestampProps,
+} from './models/conversation-start';

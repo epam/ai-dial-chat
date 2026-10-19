@@ -187,6 +187,7 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sorts.newest',
   SortNameAZ = 'catalog.sorts.nameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  NoFolderLabel = 'catalog.noFolderLabel',
   GridViewLabel = 'catalog.gridViewLabel',
   ListViewLabel = 'catalog.listViewLabel',
   ViewToggleLabel = 'catalog.viewToggleLabel',
@@ -553,6 +554,8 @@ export enum ConversationI18nKeys {
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
   AddMenuTitle = 'conversation.addMenuTitle',
   MessageTooLong = 'conversation.messageTooLong',
+  StartedToday = 'conversation.startedToday',
+  StartedYesterday = 'conversation.startedYesterday',
 }
 
 export enum DialFileManagerI18nKeys {

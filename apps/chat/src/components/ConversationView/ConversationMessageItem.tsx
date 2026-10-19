@@ -104,6 +104,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useApplicationVisualizers } from '../../hooks/attachment/useApplicationVisualizers';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import {
@@ -165,6 +166,8 @@ interface Props {
   index: number;
   totalCount: number;
   isAssistantTyping: boolean;
+  /** Shows the message's relative send time at the start of its action row. */
+  hasTimestamp?: boolean;
   editingMessageIndexes?: Set<number>;
   onSelectStarter?: (
     starter: StarterOption,
@@ -337,6 +340,7 @@ const ConversationMessageItem: FC<Props> = ({
   index,
   totalCount,
   isAssistantTyping,
+  hasTimestamp = false,
   editingMessageIndexes,
   onSelectStarter,
   onVisualizerSendMessage,
@@ -402,6 +406,7 @@ const ConversationMessageItem: FC<Props> = ({
   fallbackCitationGroups = EMPTY_FALLBACK_CITATION_GROUPS,
 }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { currentTheme } = useTheme();
   const applicationVisualizers = useApplicationVisualizers();
   const isMobile = useIsMobile();
@@ -969,6 +974,8 @@ const ConversationMessageItem: FC<Props> = ({
              user toolbars stay enabled. */
           isDisabled: isAssistantTyping && msg.role !== MessageRole.User,
         }}
+        timestamp={hasTimestamp ? msg.timestamp : undefined}
+        locale={language}
         afterContent={
           referenceGroups.length > 0 ||
           hasStages ||

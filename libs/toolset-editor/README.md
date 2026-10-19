@@ -52,7 +52,7 @@ import '@epam/ai-dial-toolset-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.13`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.16`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 

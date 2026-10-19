@@ -74,6 +74,8 @@ export interface CardProps {
   isSelected?: boolean;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
+  /** Text shown in the footer when the item is in no folder. Default: `'No folder'`. */
+  noFolderLabel?: string;
   /**
    * Renders the card as a read-only browsing surface: no favorite star, no
    * footer divider, and no "Featured" tag. The footer row is dropped entirely

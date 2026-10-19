@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.13`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.16`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.13
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.16
 - `@epam/ai-dial-react-file-manager` ^0.4.0-dev.9 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -519,6 +519,8 @@ Blocks exceeding 50,000 UTF-16 code units overall or 2,000 on any line also
 bypass the engine and display complete plain text. Copy and download retain
 the original content, and the language label is preserved. This size guard
 reduces expensive highlighting; it is not an execution timeout.
+`hasContentTopPadding={false}` drops the code's own top padding so it starts
+right under the header, for compact blocks such as an endpoint URL.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
@@ -960,8 +962,11 @@ status region and an error alert, around one field driven by
 [`useTextRefinement`](#text-refinement-lifecycle). The group is named by the
 label and described by the error while one is shown; Undo returns focus to the
 Refine action. With `isEnabled={false}` it renders `children` alone, so the
-host keeps its own label. Copy comes from `labels` (`TextRefinementLabels`),
-each key with an English default.
+host keeps its own label. An optional `caption` (e.g. a `12/500` character
+counter) sits at the end of the row below the control, beside the status, so
+neither shifts the layout when the other appears; it is rendered in both modes.
+Copy comes from `labels` (`TextRefinementLabels`), each key with an English
+default.
 
 ```tsx
 import { useState } from 'react';

@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import {
   findMatchingConversation,
+  formatRunTimestamp,
   mapScheduledTaskRunDtoToItem,
   mapScheduledTaskRunDtosToItems,
 } from '../map-scheduled-task-run-dto';
@@ -100,26 +101,33 @@ describe('mapScheduledTaskRunDtoToItem', () => {
     );
   });
 
-  it('appends a duration suffix when durationSeconds is present', () => {
+  it('maps durationSeconds to a separate durationLabel, keeping it out of timestampLabel', () => {
     const result = mapScheduledTaskRunDtoToItem(
       buildRunDto({ durationSeconds: 99 }),
       fakeT,
       [],
     );
 
-    expect(result.timestampLabel).toContain(
+    expect(result.durationLabel).toBe(
       `${ScheduledTasksI18nKeys.DetailHistoryDurationSuffix}:${JSON.stringify({ seconds: 99 })}`,
+    );
+    expect(result.timestampLabel).not.toContain(
+      ScheduledTasksI18nKeys.DetailHistoryDurationSuffix,
     );
   });
 
-  it('omits the duration suffix when durationSeconds is absent (e.g. an in-progress run)', () => {
+  it('leaves durationLabel undefined when durationSeconds is absent (e.g. an in-progress run)', () => {
     const result = mapScheduledTaskRunDtoToItem(
       buildRunDto({ status: 'InProgress', durationSeconds: undefined }),
       fakeT,
       [],
     );
 
-    expect(result.timestampLabel).not.toContain(
+    expect(result.durationLabel).toBeUndefined();
+  });
+
+  it('appends the duration to formatRunTimestamp output when durationSeconds is present', () => {
+    expect(formatRunTimestamp('2026-07-17T09:01:00.000Z', 99, fakeT)).toContain(
       ScheduledTasksI18nKeys.DetailHistoryDurationSuffix,
     );
   });

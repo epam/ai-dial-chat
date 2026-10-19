@@ -258,7 +258,7 @@ Below the desktop breakpoint (mobile and tablet, where the body renders as tabs)
 
 ### Requirement: History rows show skeleton loading, status icon, timestamp, and duration
 
-While the initial runs page is loading (`isLoading === true`, no items yet), the History panel SHALL render exactly 6 skeleton run rows. While a subsequent page is loading (`isLoadingMore === true`), the History panel SHALL render exactly 6 skeleton run rows appended below the already-loaded rows. Each loaded run row SHALL show: a human-readable relative/absolute timestamp derived from `startTime` (e.g. "today at 9:01 AM", "Jul 17 at 9:01 AM"); a duration suffix (e.g. `(99s)`) when `durationSeconds` is present or derivable from `startTime`/`endTime`; and a status icon reflecting the run's status — a spinner for `InProgress`, a green check for `Success`, a red X for `Error`, and a visually distinct treatment for `Missed`. Status icons SHALL be marked `aria-hidden`, and each row's accessible name SHALL include both the status and the timestamp so the status is conveyed to assistive technology without relying on icon color/shape alone.
+While the initial runs page is loading (`isLoading === true`, no items yet), the History panel SHALL render exactly 6 skeleton run rows. While a subsequent page is loading (`isLoadingMore === true`), the History panel SHALL render exactly 6 skeleton run rows appended below the already-loaded rows. Each loaded run row SHALL show: a human-readable relative/absolute timestamp derived from `startTime` (e.g. "today at 9:01 AM", "Jul 17 at 9:01 AM"); a duration (e.g. `(99s)`) rendered after the timestamp in the secondary text color when `durationSeconds` is present or derivable from `startTime`/`endTime`; and a status icon reflecting the run's status — a spinner for `InProgress`, a grey check for `Success`, a red X for `Error`, and a visually distinct treatment for `Missed`. Status icons SHALL be marked `aria-hidden`, and each row's accessible name SHALL include both the status and the timestamp so the status is conveyed to assistive technology without relying on icon color/shape alone.
 
 A row whose run has a non-empty `conversationId` and for which the page supplies `onRunClick` SHALL render as interactive (`role="button"`, `tabIndex={0}`, activatable via click, Enter, or Space, `cursor-pointer`) and, on activation, invoke `onRunClick` with that run. A row whose run has no `conversationId` — regardless of whether `onRunClick` is supplied — SHALL render exactly as a non-interactive row: no button role, no `tabIndex`, no pointer cursor, and activating it (click or keyboard) SHALL have no effect and SHALL NOT invoke `onRunClick`. When a row is interactive, activating it SHALL NOT navigate directly from within `libs/scheduled-tasks` — only the host-supplied `onRunClick` callback fires.
 
@@ -277,12 +277,12 @@ When `item.isUnread` is `true`, the row SHALL additionally render the shared unr
 #### Scenario: Status icon and accessible name reflect each status value
 
 - **WHEN** rows with `status` values `Success`, `Error`, `InProgress`, and `Missed` render
-- **THEN** each shows its distinct status icon (green check, red X, spinner, and a distinct `Missed` treatment respectively), each icon is `aria-hidden`, and each row's accessible name includes the status and the row's timestamp
+- **THEN** each shows its distinct status icon (grey check, red X, spinner, and a distinct `Missed` treatment respectively), each icon is `aria-hidden`, and each row's accessible name includes the status and the row's timestamp
 
 #### Scenario: Duration renders when available
 
 - **WHEN** a run has `durationSeconds: 99` (or derivable `startTime`/`endTime` values yielding the same duration)
-- **THEN** the row's timestamp text includes a `(99s)` duration suffix
+- **THEN** the row shows a `(99s)` duration after its timestamp, in the secondary text color
 
 #### Scenario: Row with a conversation id and onRunClick is interactive and invokes the callback
 
@@ -676,7 +676,7 @@ ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout an
 #### Scenario: History interactions and empty label are configurable
 
 - **WHEN** a history row is hovered or keyboard-focused, or there are no runs
-- **THEN** the configured interaction background/focus treatment is visible, falling back to `--bg-control-accent-alpha` when the host configures none; an empty panel renders the host label, including 'No tasks runs yet' when supplied.
+- **THEN** the configured interaction background/focus treatment is visible, falling back to `--bg-control-accent-alpha-hover-subtle` when the host configures none; an empty panel renders the host label, including 'No tasks runs yet' when supplied.
 
 ### Requirement: Details show independent metadata and load states
 

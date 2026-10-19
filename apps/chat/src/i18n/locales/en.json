@@ -125,6 +125,7 @@
       "nameAZ": "Name A-Z"
     },
     "featuredLabel": "Featured",
+    "noFolderLabel": "No folder",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
     "viewToggleLabel": "View mode",
@@ -454,7 +455,9 @@
     },
     "attachMenuDialFileSystem": "DIAL file system",
     "addMenuTitle": "Add",
-    "messageTooLong": "Max allowed message length is {{max}}"
+    "messageTooLong": "Max allowed message length is {{max}}",
+    "startedToday": "Today {{time}}",
+    "startedYesterday": "Yesterday {{time}}"
   },
   "conversationPanel": {
     "title": "Chats",
@@ -1748,7 +1751,7 @@
     "undo": "Undo",
     "error": "Could not refine this text. Please try again.",
     "pending": "Refining text",
-    "success": "Text refined. Undo is available.",
+    "success": "Text refined",
     "restored": "Original text restored.",
     "unchanged": "No changes were needed."
   },

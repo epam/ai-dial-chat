@@ -327,6 +327,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               labels={labels}
               refinement={descriptionRefinement}
               disabled={isSubmitting || isRefining}
+              caption={`${(values.description ?? '').length}/${DESCRIPTION_MAX_LENGTH}`}
               {...refinementStyles}
             >
               <Textarea
@@ -344,11 +345,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 maxLength={DESCRIPTION_MAX_LENGTH}
                 invalid={Boolean(errors.description)}
                 error={errors.description}
-                caption={
-                  values.description
-                    ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
-                    : undefined
-                }
               />
             </TextRefinementField>
 

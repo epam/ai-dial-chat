@@ -40,6 +40,8 @@ export const MessageActions: FC<MessageActionsProps> = ({
   onDislike,
   activeRating,
   isAlwaysVisible,
+  leadingContent,
+  trailingContent,
   isDisabled = false,
   className,
   labels,
@@ -56,7 +58,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
     onCopy != null ||
     onCopyMarkdown != null ||
     onLike != null ||
-    onDislike != null;
+    onDislike != null ||
+    leadingContent != null ||
+    trailingContent != null;
 
   const cssVars = buildCssVars({
     '--ma-active-rating-text': colors?.activeRatingText,
@@ -83,8 +87,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
   }, [onCopyMarkdown, ariaLabels?.copiedMarkdownStatus]);
 
   /*
-   * No handler means a read-only message: an empty toolbar with a live region
-   * nothing ever populates is dead DOM, so render nothing at all.
+   * No handler and no leading or trailing content means a read-only message:
+   * an empty toolbar with a live region nothing ever populates is dead DOM,
+   * so render nothing at all.
    */
   if (!hasAnyAction) {
     return null;
@@ -96,11 +101,12 @@ export const MessageActions: FC<MessageActionsProps> = ({
       aria-label={ariaLabels?.actionsGroup ?? 'Message actions'}
       style={cssVars}
       className={mergeClasses(
-        'flex gap-1',
+        'flex items-center gap-1',
         !isAlwaysVisible && 'opacity-0 group-hover:opacity-100',
         className,
       )}
     >
+      {leadingContent}
       <span role="status" aria-live="polite" className="sr-only">
         {copyStatus}
       </span>
@@ -257,6 +263,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
           )}
         </>
       )}
+      {trailingContent}
     </div>
   );
 };

@@ -219,7 +219,7 @@ export const TitleRow: FC<TitleRowProps> = ({
             value={query}
             onChange={handleChange}
             size={ElementSize.Large}
-            wrapperClassName="dial-kit-input-large"
+            wrapperClassName={styles.searchField}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />

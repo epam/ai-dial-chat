@@ -696,11 +696,11 @@ describe('DialFileManagerModal', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog.classList.contains('!h-[min(900px,100dvh)]')).toBe(true);
-    expect(dialog.classList.contains('!bg-layer-base')).toBe(true);
-    expect(dialog.classList.contains('!max-w-[1600px]')).toBe(true);
-    expect(dialog.classList.contains('mobile:!h-full')).toBe(true);
-    expect(dialog.classList.contains('mobile:!max-w-full')).toBe(true);
+    expect(dialog.classList.contains('h-[min(900px,100dvh)]!')).toBe(true);
+    expect(dialog.classList.contains('bg-layer-base!')).toBe(true);
+    expect(dialog.classList.contains('max-w-[1600px]!')).toBe(true);
+    expect(dialog.classList.contains('mobile:h-full!')).toBe(true);
+    expect(dialog.classList.contains('mobile:max-w-full!')).toBe(true);
     expect(dialog.classList.contains('mobile:rounded-none')).toBe(true);
     // eslint-disable-next-line testing-library/no-node-access
     expect(dialog.closest('.mobile\\:p-0')).toBeTruthy();

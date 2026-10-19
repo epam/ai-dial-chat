@@ -25,7 +25,7 @@ file it is its preview.
 
 ## Installation
 
-Requires UI Kit ^0.16.0-dev.13 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.16 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -46,7 +46,7 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.13`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.16`
 - `@epam/ai-dial-react-file-manager` `^0.4.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
 
@@ -314,7 +314,7 @@ Optional label overrides (English defaults):
 | `refineUndoLabel`          | Undo                                          |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
-| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 
