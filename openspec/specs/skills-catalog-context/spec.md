@@ -86,7 +86,7 @@ When `OverlayFeature.Skills` is disabled, `SkillsProvider` SHALL issue no `listC
 
 ### Requirement: The provider mounts once near the app root
 
-`SkillsProvider` SHALL be mounted in `apps/chat/src/main.tsx` alongside the other catalog-facing providers (nested inside `DeploymentsProvider` and `PromptsProvider`, wrapping `ConversationsProvider` and `<App />`), inside the `RequireAuth` tree, and SHALL NOT be mounted per-route or per-component.
+`SkillsProvider` SHALL be mounted in `apps/chat/src/AppRoot.tsx` alongside the other catalog-facing providers (nested inside `DeploymentsProvider` and `PromptsProvider`, wrapping `ConversationsProvider` and `<App />`), inside the `RequireAuth` tree, and SHALL NOT be mounted per-route or per-component.
 
 #### Scenario: One provider instance
 

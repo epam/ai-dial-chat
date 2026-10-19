@@ -14,6 +14,7 @@ import {
 import { prepareScheduledTaskUpdateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import {
+  hasScheduledTaskFormChanges,
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
@@ -51,6 +52,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
 import { useScheduledTaskSubmit } from '../../hooks/scheduled-tasks/useScheduledTaskSubmit';
+import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import {
   getScheduledTask,
@@ -94,8 +96,8 @@ const ScheduledTaskEditPage: FC = () => {
   const [values, setValues] = useState<ScheduledTaskCreateFormValues | null>(
     null,
   );
-  /* Values the form was hydrated with; the form compares against them to
-   * decide whether Back/Cancel needs a discard confirmation. */
+  /* Values the form was hydrated with; unsaved changes are measured against
+   * them, and none exist before the task has loaded. */
   const [initialValues, setInitialValues] =
     useState<ScheduledTaskCreateFormValues | null>(null);
   /* Activity-window boundaries the form was hydrated with. The past-date rule
@@ -187,6 +189,15 @@ const ScheduledTaskEditPage: FC = () => {
 
   const labels = useScheduledTaskFormLabels('edit');
 
+  /* The page owns the unsaved-changes guard, so the form gets no
+   * `initialValues` and shows no dialog of its own. */
+  const { allowNextNavigation } = useBuilderLeaveGuard({
+    isDirty:
+      values != null &&
+      initialValues != null &&
+      hasScheduledTaskFormChanges(values, initialValues),
+  });
+
   const handleFieldChange = useCallback(
     <K extends keyof ScheduledTaskCreateFormValues>(
       field: K,
@@ -259,8 +270,9 @@ const ScheduledTaskEditPage: FC = () => {
     showSuccessNotification({
       message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
     });
+    allowNextNavigation();
     navigate(returnUrl);
-  }, [showSuccessNotification, t, navigate, returnUrl]);
+  }, [showSuccessNotification, t, allowNextNavigation, navigate, returnUrl]);
 
   /**
    * Marks a bare 404 as the task's not-found state and reports it fully
@@ -362,7 +374,6 @@ const ScheduledTaskEditPage: FC = () => {
       onRefineInstructions={onRefineInstructions}
       labels={labels}
       values={values}
-      initialValues={initialValues ?? undefined}
       errors={effectiveErrors}
       skillSelector={
         <ScheduledTaskSkillField

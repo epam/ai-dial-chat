@@ -140,7 +140,7 @@ The `UserContext` provider MUST register a single listener that, before resettin
 
 ### Requirement: Routing gates protected UI behind a resolved session
 
-The SPA SHALL declare three top-level routes in `apps/chat/src/main.tsx`: `/login` (the provider picker), `/overlay-close` (`<OverlayClose />`, outside the auth gate), and `*` (everything else, wrapped in `<OverlayModeGate>` and a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`. While `status === 'loading'` it renders a centred ui-kit `<Spinner />` outside overlay mode and `null` in overlay mode (see `chat-overlay-app-mode` for the overlay-mode loading presentation). When `status === 'unauthenticated'`:
+The SPA SHALL declare three top-level routes in `apps/chat/src/AppRoot.tsx`: `/login` (the provider picker), `/overlay-close` (`<OverlayClose />`, outside the auth gate), and `*` (everything else, wrapped in `<OverlayModeGate>` and a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`. While `status === 'loading'` it renders a centred ui-kit `<Spinner />` outside overlay mode and `null` in overlay mode (see `chat-overlay-app-mode` for the overlay-mode loading presentation). When `status === 'unauthenticated'`:
 
 - outside overlay mode (`useOptionalOverlay()` returns `undefined`): call `useAuthRedirect()` with no disabling options, triggering the existing automatic redirect policy;
 - inside overlay mode (`useOptionalOverlay()` returns a defined value): call `useAuthRedirect({ disabled: true })`, so no automatic redirect is attempted, and render the overlay login gate defined in `overlay-external-login` instead of `null`.

@@ -28,7 +28,7 @@ interface PromptsContextType {
 }
 ```
 
-The provider SHALL be mounted in `apps/chat/src/main.tsx` inside the authenticated route tree (between `FavoriteApplicationsProvider` and `SkillsProvider`), above every consumer (`CatalogView`, the `PromptEditor` route, `SharedInvitation`, and `usePromptSelectorOverlay`), alongside the existing app-level providers.
+The provider SHALL be mounted in `apps/chat/src/AppRoot.tsx` inside the authenticated route tree (between `FavoriteApplicationsProvider` and `SkillsProvider`), above every consumer (`CatalogView`, the `PromptEditor` route, `SharedInvitation`, and `usePromptSelectorOverlay`), alongside the existing app-level providers.
 
 #### Scenario: Provider loads every prompt namespace on mount
 

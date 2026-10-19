@@ -53,6 +53,23 @@ describe('filterCatalogItemsBySelector', () => {
       2,
     );
   });
+
+  it('drops items that cannot hold a conversation', () => {
+    const chatApp = makeItem('chat', CatalogEntityType.Agent, {
+      supportsChat: true,
+    });
+    const mcpApp = makeItem('mcp', CatalogEntityType.Agent, {
+      supportsChat: false,
+    });
+    const prompt = makeItem('p', CatalogEntityType.Prompt);
+    const visible = new Set([
+      CatalogEntityType.Agent,
+      CatalogEntityType.Prompt,
+    ]);
+    expect(
+      filterCatalogItemsBySelector([chatApp, mcpApp, prompt], visible),
+    ).toEqual([chatApp, prompt]);
+  });
 });
 
 describe('filterHiddenOwnedItems', () => {

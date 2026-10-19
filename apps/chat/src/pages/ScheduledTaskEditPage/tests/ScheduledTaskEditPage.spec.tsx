@@ -1,15 +1,25 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement, type ReactNode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import {
+  NotFoundI18nKeys,
+  UnsavedChangesI18nKeys,
+} from '../../../constants/translation-keys';
 import {
   useAppConfig as useAppConfigMock,
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import ScheduledTaskEditPage from '../ScheduledTaskEditPage';
 
 vi.mock(
@@ -158,7 +168,10 @@ interface FormProps {
   isSubmitting?: boolean;
 }
 
-vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
+vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
+  hasScheduledTaskFormChanges: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).hasScheduledTaskFormChanges,
   ScheduledTaskRepeat: {
     OneTime: 'oneTime',
     Hourly: 'hourly',
@@ -253,9 +266,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
 
 const DetailTargetStub = () => <div>scheduled task detail page</div>;
 
+/* A factory, so `rerenderRoutes` re-renders the page after a mock changes. */
 const renderEditPage = (scheduleId = 'sched_123') =>
-  render(
-    <MemoryRouter initialEntries={[`/scheduled-tasks/${scheduleId}/edit`]}>
+  renderWithLeaveGuard(
+    () => (
       <Routes>
         <Route
           path="/scheduled-tasks/:scheduleId/edit"
@@ -265,8 +279,10 @@ const renderEditPage = (scheduleId = 'sched_123') =>
           path="/scheduled-tasks/:scheduleId"
           element={<DetailTargetStub />}
         />
+        <Route path="/catalog" element={<div>catalog page</div>} />
       </Routes>
-    </MemoryRouter>,
+    ),
+    [`/scheduled-tasks/${scheduleId}/edit`],
   );
 
 const baseTask = {
@@ -334,21 +350,7 @@ describe('ScheduledTaskEditPage', () => {
     getApiErrorDetailsMock.mockResolvedValue({
       code: 'scheduledTaskSkillUnsupported',
     });
-    const page = () => (
-      <MemoryRouter initialEntries={['/scheduled-tasks/sched_123/edit']}>
-        <Routes>
-          <Route
-            path="/scheduled-tasks/:scheduleId/edit"
-            element={<ScheduledTaskEditPage />}
-          />
-          <Route
-            path="/scheduled-tasks/:scheduleId"
-            element={<DetailTargetStub />}
-          />
-        </Routes>
-      </MemoryRouter>
-    );
-    const view = render(page());
+    const view = renderEditPage();
     fireEvent.change(await screen.findByLabelText('displayName'), {
       target: { value: 'Retained draft' },
     });
@@ -356,18 +358,18 @@ describe('ScheduledTaskEditPage', () => {
     await userEvent.click(submit);
     await screen.findByText('skillSelector.unsupportedTooltipLabel');
     expect((submit as HTMLButtonElement).disabled).toBe(true);
-    view.rerender(page());
+    view.rerenderRoutes();
     expect((submit as HTMLButtonElement).disabled).toBe(true);
 
     useDeploymentsMock.mockReturnValue({
       items: [{ id: 'gpt-4o', features: { skillsSupported: false } }],
     });
-    view.rerender(page());
+    view.rerenderRoutes();
     expect((submit as HTMLButtonElement).disabled).toBe(true);
     useDeploymentsMock.mockReturnValue({
       items: [{ id: 'gpt-4o', features: { skillsSupported: true } }],
     });
-    view.rerender(page());
+    view.rerenderRoutes();
     expect(
       screen.queryByText('skillSelector.unsupportedTooltipLabel'),
     ).toBeNull();
@@ -848,6 +850,77 @@ describe('ScheduledTaskEditPage', () => {
       ),
     );
   });
+
+  describe('leave guard', () => {
+    it('opens the shared dialog when the loaded task was edited and Cancel is activated', async () => {
+      getScheduledTaskMock.mockResolvedValue(baseTask);
+      renderEditPage();
+      fireEvent.change(await screen.findByLabelText('displayName'), {
+        target: { value: 'Renamed' },
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.cancel' }),
+      );
+
+      expect(
+        screen.getAllByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toHaveLength(1);
+      expect(screen.queryByText('scheduled task detail page')).toBeNull();
+    });
+
+    it('lands on the chosen route when changes are discarded', async () => {
+      getScheduledTaskMock.mockResolvedValue(baseTask);
+      const { router } = renderEditPage();
+      fireEvent.change(await screen.findByLabelText('displayName'), {
+        target: { value: 'Renamed' },
+      });
+      await act(() => router.navigate('/catalog'));
+
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.ConfirmLabel,
+        }),
+      );
+
+      expect(await screen.findByText('catalog page')).toBeTruthy();
+      expect(updateScheduledTaskMock).not.toHaveBeenCalled();
+    });
+
+    it('leaves immediately once an edit was reverted to the loaded value', async () => {
+      getScheduledTaskMock.mockResolvedValue(baseTask);
+      renderEditPage();
+      const name = await screen.findByLabelText('displayName');
+      const loadedName = (name as HTMLInputElement).value;
+      fireEvent.change(name, { target: { value: 'Renamed' } });
+      fireEvent.change(name, { target: { value: loadedName } });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.cancel' }),
+      );
+
+      expect(screen.getByText('scheduled task detail page')).toBeTruthy();
+    });
+
+    it('exits after a successful update without the dialog', async () => {
+      getScheduledTaskMock.mockResolvedValue(baseTask);
+      updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
+      renderEditPage();
+      fireEvent.change(await screen.findByLabelText('displayName'), {
+        target: { value: 'Renamed' },
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.save' }),
+      );
+
+      expect(
+        await screen.findByText('scheduled task detail page'),
+      ).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
   /*
    * The login-required toast itself is not rendered by this harness (the
    * notification context is mocked), so its action element mounts on its own

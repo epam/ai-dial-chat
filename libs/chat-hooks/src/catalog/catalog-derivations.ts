@@ -2,13 +2,16 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 /**
- * Filters catalog items to those whose type is in `visibleTypes`.
+ * Filters catalog items to those whose type is in `visibleTypes` and whose `supportsChat` is not `false`.
  * Call only when selector mode is active; otherwise pass through the original array.
  */
 export const filterCatalogItemsBySelector = (
   items: readonly CatalogItem[],
   visibleTypes: ReadonlySet<CatalogEntityType>,
-): CatalogItem[] => items.filter((item) => visibleTypes.has(item.type));
+): CatalogItem[] =>
+  items.filter(
+    (item) => visibleTypes.has(item.type) && item.supportsChat !== false,
+  );
 
 /**
  * Filters out items owned by the current user when `hideOwned` is true.
