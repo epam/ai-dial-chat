@@ -79,6 +79,7 @@ export const mapScheduledTaskRunDtoToItem = (
   isUnread:
     findMatchingConversation(run.conversationId, conversations)?.isUnread ===
     true,
+  errorText: run.errorText,
 });
 
 /** Maps a list of `ScheduledTaskRunDto` to lib-facing run items, preserving order. */
