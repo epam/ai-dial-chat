@@ -1397,7 +1397,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onChange={handleImportFileChange}
       />
 
-      <div className="fixed end-4 bottom-4 z-[70] flex flex-col-reverse gap-2">
+      {/*
+       * Above page content (sidebars sit at z-50) but below the kit's portalled
+       * overlays — popup 52, dropdown 53, tooltip 55 — so a row's error tooltip
+       * and the close confirmation open over the queue, not under it.
+       */}
+      <div className="fixed inset-e-4 bottom-4 z-51 flex flex-col-reverse gap-2">
         <TransferQueue
           title={importQueueTitle}
           items={importQueueItems}

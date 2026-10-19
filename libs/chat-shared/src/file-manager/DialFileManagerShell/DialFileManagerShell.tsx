@@ -640,7 +640,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         </div>
       )}
 
-      <div className="fixed inset-e-4 bottom-4 z-70">
+      {/*
+       * Above page content (sidebars sit at z-50) but below the kit's portalled
+       * overlays — popup 52, dropdown 53, tooltip 55 — so a row's error tooltip
+       * and the close confirmation open over the queue, not under it.
+       */}
+      <div className="fixed inset-e-4 bottom-4 z-51">
         <TransferQueue
           title={labels.getUploadQueueTitle(uploadQueueItems.length)}
           items={uploadQueueItems}
