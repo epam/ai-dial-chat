@@ -11,6 +11,7 @@ import type {
   McpDeploymentKind,
 } from '@epam/ai-dial-mcp-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { normalizeToolsetId } from '../oauth/toolset-id';
 import { safeDecodeURIComponent } from '../shared/string-utils';
 
 /** A single MCP tool that declares an MCP Apps UI resource. */
@@ -53,7 +54,7 @@ export const createMcpAppsApiClient = (
   fetchResourceHtml: async (toolsetId, resourceUri) => {
     try {
       const { raw } = await toolsetsApi.getToolsetMcpAppResourceRaw({
-        toolsetName: safeDecodeURIComponent(toolsetId),
+        toolsetName: normalizeToolsetId(toolsetId),
         resourceUri,
       });
       return await raw.text();
@@ -66,7 +67,7 @@ export const createMcpAppsApiClient = (
   },
   callTool: async (toolsetId, toolName, args, kind) => {
     const { result } = await toolsetsApi.callToolsetMcpAppTool({
-      toolsetName: safeDecodeURIComponent(toolsetId),
+      toolsetName: normalizeToolsetId(toolsetId),
       mcpAppToolCallRequestDto: {
         toolName,
         arguments: args as object,
