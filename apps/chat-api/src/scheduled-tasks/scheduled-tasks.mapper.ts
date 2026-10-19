@@ -260,8 +260,13 @@ export interface UpstreamScheduleRun {
   start_time: string;
   end_time?: string | null;
   conversation_id?: string | null;
-  result?: ({ stage?: unknown } & Record<string, unknown>) | null;
+  result?:
+    | ({ stage?: unknown; error_text?: unknown } & Record<string, unknown>)
+    | null;
 }
+
+/* Scheduler's error_text is a raw exception string; cap what reaches the client. */
+const RUN_ERROR_TEXT_MAX_LENGTH = 1000;
 
 const UPSTREAM_RUN_STATUS_MAP: Record<string, ScheduledTaskRunStatus> = {
   success: ScheduledTaskRunStatus.Success,
@@ -285,6 +290,11 @@ export const fromUpstreamRun = (
   upstream: UpstreamScheduleRun,
 ): ScheduledTaskRunDto => {
   const resultStage = upstream.result?.stage;
+  const rawErrorText = upstream.result?.error_text;
+  const errorText =
+    typeof rawErrorText === 'string'
+      ? rawErrorText.trim().slice(0, RUN_ERROR_TEXT_MAX_LENGTH)
+      : undefined;
 
   return {
     id: upstream.id,
@@ -298,5 +308,6 @@ export const fromUpstreamRun = (
     ),
     conversationId: upstream.conversation_id ?? undefined,
     ...(typeof resultStage === 'string' ? { resultStage } : {}),
+    ...(errorText ? { errorText } : {}),
   };
 };

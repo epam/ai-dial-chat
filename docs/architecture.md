@@ -543,7 +543,12 @@ exhausted automatic trigger. The client observes that run through
 `GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId`, retaining ordinary
 History pagination and using the existing offline-credentials sign-in flow only
 when an Error row projects `resultStage: "credentials"`. Start requests are
-never retried automatically.
+never retried automatically. An Error run also projects Scheduler's
+`result.error_text` as `errorText`; because Scheduler's run list omits
+`result`, the BFF re-reads failed runs on a History page to fill it in (cached
+per run, at most 10 uncached reads per list call), and
+both History panels (the detail page and a task conversation's sources panel)
+show it in a tooltip on the row's error icon.
 
 `ConversationsContext` owns unread metadata and bounded discovery retries for
 chats observed by Start now or History. Discovery survives navigation and run

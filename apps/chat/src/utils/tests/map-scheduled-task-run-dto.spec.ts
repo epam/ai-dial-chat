@@ -134,6 +134,16 @@ describe('mapScheduledTaskRunDtoToItem', () => {
     expect(result.conversationId).toBe('conversations/bucket/c1');
   });
 
+  it('copies errorText through from the dto', () => {
+    const result = mapScheduledTaskRunDtoToItem(
+      buildRunDto({ errorText: 'target request failed with status 502' }),
+      fakeT,
+      [],
+    );
+
+    expect(result.errorText).toBe('target request failed with status 502');
+  });
+
   it('leaves conversationId undefined when the dto omits it', () => {
     const result = mapScheduledTaskRunDtoToItem(buildRunDto(), fakeT, []);
 

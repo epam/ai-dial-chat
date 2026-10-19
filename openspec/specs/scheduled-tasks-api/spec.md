@@ -1156,7 +1156,7 @@ New endpoints SHALL use `Cache-Control: private, no-store`; cache TTL SHALL be z
 
 The BFF SHALL expose `GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` with operationId/generated method `getScheduledTaskRun`, returning HTTP 200 and `ScheduledTaskRunDto`. A new `GetScheduledTaskRunDto` SHALL validate both path ids against `^[A-Za-z0-9_-]{1,128}$`. It SHALL proxy the matching Scheduler GET through the existing routed deployment and caller access token. Session/feature authorization, no-store behavior, error mapping, logging and normal generated-method consumption SHALL match the start operation; Swagger SHALL document 200, 400, 401, 403, 404, 429, 502 and 503. A run SHALL be read only within the given owned schedule; an unknown run or foreign schedule SHALL return 404.
 
-`ScheduledTaskRunDto` SHALL add optional `resultStage?: string`, preserving only the string `result.stage` when supplied. List/start/single-run mapping SHALL use the same `fromUpstreamRun` normalization; arbitrary result objects SHALL NOT be forwarded. Missing/null/non-string stage SHALL omit `resultStage`, preserving compatibility. Existing enum mapping, time/duration derivation and nullable conversation normalization SHALL remain unchanged.
+`ScheduledTaskRunDto` SHALL add optional `resultStage?: string`, preserving only the string `result.stage` when supplied. List/start/single-run mapping SHALL use the same `fromUpstreamRun` normalization; arbitrary result objects SHALL NOT be forwarded. Missing/null/non-string stage SHALL omit `resultStage`, preserving compatibility. The DTO SHALL likewise add optional `errorText?: string`, preserving only a non-blank string `result.error_text`, trimmed and capped at 1000 characters; because the Scheduler run list omits `result`, the list operation SHALL re-read Error runs through the single-run route to fill it in. That fan-out SHALL be bounded: a resolved value (including the absence of error text) SHALL be cached per run so repeated list calls do not re-read it, at most 10 uncached runs SHALL be re-read per list call (newest first), and a failed re-read SHALL NOT be cached. Existing enum mapping, time/duration derivation and nullable conversation normalization SHALL remain unchanged.
 
 For a rate-limited manual start or single-run read, BFF SHALL preserve a valid Scheduler `Retry-After` response header (delay seconds or an HTTP date), without changing the existing mapped error body or trace handling. Invalid header values SHALL be omitted.
 
@@ -1189,6 +1189,21 @@ Example HTTP 200 response for a credential-stage failure:
 
 - **WHEN** a listed or individually retrieved run omits result or has a null/non-string stage
 - **THEN** mapping succeeds without `resultStage` and all established run fields remain available
+
+#### Scenario: A failed run exposes its error text
+
+- **WHEN** Scheduler returns an error run whose `result.error_text` is a non-blank string
+- **THEN** the DTO includes it as `errorText` and still excludes the rest of the result (e.g. `credentials_response`)
+
+#### Scenario: Run history fills in error text for failed runs
+
+- **WHEN** the Scheduler run list (which omits `result`) contains Error runs
+- **THEN** the BFF re-reads up to 10 uncached ones through the single-run route and returns their `errorText` in the list items, and a failed re-read leaves that item without `errorText` instead of failing the list
+
+#### Scenario: Background refreshes do not repeat error-detail reads
+
+- **WHEN** the same History page is listed again after its failed runs were resolved
+- **THEN** their `errorText` (or its absence) is served from cache without another single-run read
 
 #### Scenario: Invalid or inaccessible run cannot be read
 
