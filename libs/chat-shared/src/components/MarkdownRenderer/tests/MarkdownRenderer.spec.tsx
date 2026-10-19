@@ -539,10 +539,13 @@ describe('MarkdownRenderer', () => {
      * test to trigger the cold KaTeX import, so it can exceed the default
      * 1s `waitFor` timeout on a loaded machine.
      */
-    await waitFor(() => {
-      // eslint-disable-next-line testing-library/no-node-access
-      expect(document.querySelector('math')).toBeTruthy();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        // eslint-disable-next-line testing-library/no-node-access
+        expect(document.querySelector('math')).toBeTruthy();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it('wraps block LaTeX in a horizontally scrollable container so a wide formula stays reachable', async () => {
