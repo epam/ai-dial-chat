@@ -132,7 +132,7 @@
   },
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.4.0-dev.7",
-    "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.3",
+    "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.6",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-ui-kit": "^0.16.0-dev.11",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
@@ -200,10 +200,7 @@
     "shell-quote": "1.11.0",
     "axios": "1.20.0",
     "basic-ftp": "6.2.1",
-    "dompurify": "3.4.16",
-    "@epam/ai-dial-react-pdf-highlighter": {
-      "@epam/ai-dial-ui-kit": "$@epam/ai-dial-ui-kit"
-    }
+    "dompurify": "3.4.16"
   },
   "workspaces": [
     "packages/*",
