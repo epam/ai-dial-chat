@@ -960,8 +960,11 @@ status region and an error alert, around one field driven by
 [`useTextRefinement`](#text-refinement-lifecycle). The group is named by the
 label and described by the error while one is shown; Undo returns focus to the
 Refine action. With `isEnabled={false}` it renders `children` alone, so the
-host keeps its own label. Copy comes from `labels` (`TextRefinementLabels`),
-each key with an English default.
+host keeps its own label. An optional `caption` (e.g. a `12/500` character
+counter) sits at the end of the row below the control, beside the status, so
+neither shifts the layout when the other appears; it is rendered in both modes.
+Copy comes from `labels` (`TextRefinementLabels`), each key with an English
+default.
 
 ```tsx
 import { useState } from 'react';

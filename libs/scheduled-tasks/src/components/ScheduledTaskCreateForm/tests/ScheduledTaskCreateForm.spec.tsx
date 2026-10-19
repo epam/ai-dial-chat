@@ -11,6 +11,7 @@ import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  CaptionText: ({ text }: { text?: string }) => (text ? <p>{text}</p> : null),
   Input: ({
     labelProps,
     value,
@@ -548,6 +549,18 @@ describe('ScheduledTaskCreateForm', () => {
     expect(
       (screen.getByLabelText('Description') as HTMLTextAreaElement).maxLength,
     ).toBe(500);
+  });
+
+  it('shows the description counter even when the description is empty', async () => {
+    await renderForm({ values: { ...baseValues, description: '' } });
+
+    expect(screen.getByText('0/500')).toBeTruthy();
+  });
+
+  it('counts the description characters', async () => {
+    await renderForm({ values: { ...baseValues, description: 'abc' } });
+
+    expect(screen.getByText('3/500')).toBeTruthy();
   });
 
   it('calls onFieldChange when the description changes', async () => {
