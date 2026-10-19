@@ -21,6 +21,7 @@ export type {
   EditorLayoutProps,
   EditorLayoutLabels,
   EditorLayoutStyles,
+  ResizableLeftColumn,
 } from './models/editor-layout-props';
 export type {
   AddAvatarProps,

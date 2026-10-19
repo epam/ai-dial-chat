@@ -4,6 +4,24 @@ import type { ReactNode } from 'react';
 export interface EditorLayoutLabels {
   /** SR-only text announced while `isSaving` is `true`. Defaults to `'Saving'`. */
   savingStatusLabel?: string;
+  /** Accessible name of the resize handle between the columns. Defaults to `'Resize columns'`. */
+  resizeHandleLabel?: string;
+  /** Tooltip of the resize handle. Defaults to `'Drag to resize'`. */
+  resizeHandleTooltip?: string;
+}
+
+/** Host-controlled resizing of the left column on desktop. */
+export interface ResizableLeftColumn {
+  /** Current width of the left column in px. */
+  width: number;
+  /** Called with the clamped width while the user drags, presses a key or double-clicks the handle. */
+  onWidthChange: (width: number) => void;
+  /** Width restored by a double-click on the handle. Defaults to `400`. */
+  defaultWidth?: number;
+  /** Smallest width in px. Defaults to `280`. */
+  minWidth?: number;
+  /** Largest width in px. Defaults to `640`. */
+  maxWidth?: number;
 }
 
 /** CSS custom property overrides for `EditorLayout`. */
@@ -42,6 +60,8 @@ export interface EditorLayoutProps {
    * `centerContent`).
    */
   rightContent?: ReactNode;
+  /** Makes the left column resizable on desktop. Needs `centerContent`; omit for the fixed 400 px column. */
+  resizableLeftColumn?: ResizableLeftColumn;
   /** When `true`, the SR-only saving status region announces `labels.savingStatusLabel`. */
   isSaving?: boolean;
   /** Text labels with English defaults. */

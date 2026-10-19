@@ -116,21 +116,48 @@ import { GhostButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 
 **Props**
 
-| Prop            | Type                 | Required | Default  | Description                                                                                                                                      |
-| --------------- | -------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `title`         | `string`             | ✓        | —        | Heading text rendered as `<h1>` in the header row.                                                                                               |
-| `onBack`        | `() => void`         | ✓        | —        | Called when the back-arrow button is clicked.                                                                                                    |
-| `backAriaLabel` | `string`             |          | `'Back'` | Accessible label for the back-arrow button.                                                                                                      |
-| `actions`       | `ReactNode`          |          | —        | Cancel + Save buttons. Rendered inline-end in the header on desktop, or in a pinned bottom bar on mobile/tablet.                                 |
-| `leftContent`   | `ReactNode`          |          | —        | Left column (Metadata).                                                                                                                          |
-| `centerContent` | `ReactNode`          |          | —        | Center column (Setup). When absent, left content fills full width.                                                                               |
-| `rightContent`  | `ReactNode`          |          | —        | Host-rendered side panel in an extra column at the inline end, below the header (stacked after the content on mobile/tablet). Rendered verbatim. |
-| `isSaving`      | `boolean`            |          | `false`  | When `true`, announces `savingStatusLabel` via `aria-live`.                                                                                      |
-| `labels`        | `EditorLayoutLabels` |          | —        | Text overrides with English defaults.                                                                                                            |
-| `styles`        | `EditorLayoutStyles` |          | —        | CSS custom property overrides.                                                                                                                   |
-| `dir`           | `'ltr' \| 'rtl'`     |          | —        | Explicit direction override forwarded to the root element.                                                                                       |
+| Prop                  | Type                  | Required | Default  | Description                                                                                                                                      |
+| --------------------- | --------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `title`               | `string`              | ✓        | —        | Heading text rendered as `<h1>` in the header row.                                                                                               |
+| `onBack`              | `() => void`          | ✓        | —        | Called when the back-arrow button is clicked.                                                                                                    |
+| `backAriaLabel`       | `string`              |          | `'Back'` | Accessible label for the back-arrow button.                                                                                                      |
+| `actions`             | `ReactNode`           |          | —        | Cancel + Save buttons. Rendered inline-end in the header on desktop, or in a pinned bottom bar on mobile/tablet.                                 |
+| `leftContent`         | `ReactNode`           |          | —        | Left column (Metadata).                                                                                                                          |
+| `centerContent`       | `ReactNode`           |          | —        | Center column (Setup). When absent, left content fills full width.                                                                               |
+| `rightContent`        | `ReactNode`           |          | —        | Host-rendered side panel in an extra column at the inline end, below the header (stacked after the content on mobile/tablet). Rendered verbatim. |
+| `resizableLeftColumn` | `ResizableLeftColumn` |          | —        | Makes the left column resizable on desktop (needs `centerContent`); see below.                                                                   |
+| `isSaving`            | `boolean`             |          | `false`  | When `true`, announces `savingStatusLabel` via `aria-live`.                                                                                      |
+| `labels`              | `EditorLayoutLabels`  |          | —        | Text overrides with English defaults.                                                                                                            |
+| `styles`              | `EditorLayoutStyles`  |          | —        | CSS custom property overrides.                                                                                                                   |
+| `dir`                 | `'ltr' \| 'rtl'`      |          | —        | Explicit direction override forwarded to the root element.                                                                                       |
 
 When `centerContent` is omitted, `leftContent` expands to full width at all viewport sizes.
+
+#### Resizable left column
+
+Pass `resizableLeftColumn` to put a draggable `role="separator"` handle between the left and center columns on desktop (it is not rendered below the `desktop` breakpoint, where the columns stack). The host owns the width and any persistence; the lib only reports changes.
+
+| Field           | Type                      | Required | Default | Description                                                       |
+| --------------- | ------------------------- | -------- | ------- | ----------------------------------------------------------------- |
+| `width`         | `number`                  | ✓        | —       | Current left column width in px.                                  |
+| `onWidthChange` | `(width: number) => void` | ✓        | —       | Called with the clamped width on drag, key press or double-click. |
+| `defaultWidth`  | `number`                  |          | `400`   | Width restored by a double-click.                                 |
+| `minWidth`      | `number`                  |          | `280`   | Smallest width in px.                                             |
+| `maxWidth`      | `number`                  |          | `640`   | Largest width in px; the center column also keeps at least 360px. |
+
+The handle is keyboard operable (arrow keys change the width by 16px, mirrored in RTL; Home and End jump to the limits) and takes its accessible name and tooltip from `labels.resizeHandleLabel` (`'Resize columns'`) and `labels.resizeHandleTooltip` (`'Drag to resize'`).
+
+```tsx
+const [width, setWidth] = useState(400);
+
+<EditorLayout
+  title="Edit app"
+  onBack={handleBack}
+  leftContent={<Metadata />}
+  centerContent={<Setup />}
+  resizableLeftColumn={{ width, onWidthChange: setWidth }}
+/>;
+```
 
 ### EditorSection
 
@@ -248,6 +275,7 @@ The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` tit
 - `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading; `null` renders the section without one, for Setup content that carries its own heading (e.g. an embedded editor).
 - `alert` renders in a `role="alert"` region above the Setup section (above Metadata when there is no Setup).
 - `asideData` fills an Aside section in an extra, third column at the inline end, below the header (a fixed 400px wide on desktop, stacked after the content on mobile/tablet). `asideTitle` adds a heading (none by default, for content that carries its own), `asideSectionClassName` is merged onto the section root. Omit it for the default two-column layout.
+- `resizableLeftColumn` makes the Metadata column resizable on desktop (see [Resizable left column](#resizable-left-column)); `labels.resizeHandleLabel` and `labels.resizeHandleTooltip` name the handle.
 
 ```tsx
 import { EntityEditor, MetadataForm } from '@epam/ai-dial-builder-form';
@@ -556,6 +584,7 @@ import type {
   EditorLayoutLabels,
   EditorLayoutStyles,
   EditorLayoutColors,
+  ResizableLeftColumn,
   EditorSectionProps,
   EditorSectionStyles,
   EditorSectionColors,

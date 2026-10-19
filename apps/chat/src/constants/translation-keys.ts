@@ -1030,6 +1030,8 @@ export enum EditorI18nKeys {
   SavingStatus = 'editor.savingStatus',
   MetadataSectionTitle = 'editor.metadataSectionTitle',
   SetupSectionTitle = 'editor.setupSectionTitle',
+  ResizeHandleAriaLabel = 'editor.resizeHandleAriaLabel',
+  ResizeHandleTooltip = 'editor.resizeHandleTooltip',
   NameLabel = 'editor.nameLabel',
   NameRequired = 'editor.nameRequired',
   FieldTooLong = 'editor.fieldTooLong',
