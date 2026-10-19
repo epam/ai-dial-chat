@@ -13,7 +13,7 @@ The system SHALL render fenced code blocks (produced by react-markdown from ` ``
 - A compact sticky header with the language label (start) and action icon buttons (end). The header MUST share the same background as the code body. There MUST be no divider between the header and the code body.
 - Two header action buttons (when not streaming): a download `GhostIconButton` (`IconDownload`, `aria-label` = `downloadLabel`, default `'Download code'`, saving `code.{ext}` via `downloadTextFile` with the extension from `getFileExtensionForLanguage`, hidden when `hideDownload` is `true`) followed by the copy button.
 - Syntax highlighting through a lazily loaded `react-syntax-highlighter` `Prism` renderer (`restrainedSyntaxTheme`) when `language` is non-empty and `isSyntaxHighlightingAllowed(value)` is `true`; otherwise (and as the `Suspense` fallback) the code renders as plain `<pre><code class="whitespace-pre">`.
-- A scrollable body with `max-h-[60vh] overflow-auto`.
+- A scrollable body with `max-h-[60vh] overflow-auto`. The code keeps its own top padding below the header unless `hasContentTopPadding` is `false`, which starts it directly under the header (used by the catalog Connect tab).
 - `dir="ltr"` on the scrollable body to preserve code direction on RTL pages.
 
 The `pre` override in `MarkdownRenderer` MUST be a fragment passthrough so `MarkdownCodeBlock` controls the entire container.
