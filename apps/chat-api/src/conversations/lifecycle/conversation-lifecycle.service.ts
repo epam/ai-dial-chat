@@ -15,6 +15,7 @@ import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { UserConfigService } from '../../user-config/user-config.service';
+import { SCHEDULER_SEGMENT } from '../constants/conversation.constants';
 import {
   ConditionalUpdateStatus,
   type ConditionalUpdateResult,
@@ -338,20 +339,29 @@ export class ConversationLifecycleService {
       isApplicationDeployment,
     );
     const decodedRenamedFilename = `${deploymentKey}__${uniqueTitle}`;
+    /*
+     * A UUID-suffixed copy left under `.scheduler/{scheduleId}` would be read
+     * as a scheduled run, so the reserved prefix is not carried over.
+     */
+    const destinationFolderSegments =
+      decodedFolderSegments[0] === SCHEDULER_SEGMENT &&
+      decodedFolderSegments.length > 1
+        ? decodedFolderSegments.slice(2)
+        : decodedFolderSegments;
     const pathExists = await this.conversationPathExists(
       token,
       sessionBucket,
-      [...decodedFolderSegments, decodedRenamedFilename].join('/'),
+      [...destinationFolderSegments, decodedRenamedFilename].join('/'),
     );
     const decodedFinalFilename = pathExists
       ? `${decodedRenamedFilename}__${generateUUID()}`
       : decodedRenamedFilename;
     const decodedDestinationSubPath = [
-      ...decodedFolderSegments,
+      ...destinationFolderSegments,
       decodedFinalFilename,
     ].join('/');
     const encodedDestinationSubPath = [
-      ...decodedFolderSegments.map(encodeURIComponent),
+      ...destinationFolderSegments.map(encodeURIComponent),
       encodeURIComponent(decodedFinalFilename),
     ].join('/');
 
@@ -360,8 +370,8 @@ export class ConversationLifecycleService {
       encodedDestinationSubPath,
     );
 
-    const folderId = decodedFolderSegments.length
-      ? `${sessionBucket}/${decodedFolderSegments.join('/')}`
+    const folderId = destinationFolderSegments.length
+      ? `${sessionBucket}/${destinationFolderSegments.join('/')}`
       : sessionBucket;
 
     const { error: saveError, response: saveResponse } =

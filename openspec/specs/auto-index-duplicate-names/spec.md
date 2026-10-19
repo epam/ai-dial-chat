@@ -47,7 +47,7 @@ When `duplicateConversation` creates a copy, the new conversation's `name` SHALL
 
 Path uniqueness SHALL be handled by a single targeted collision check rather than by a bucket scan: the duplicate is written to `{deploymentId}__{name}`, and only when a resource already exists at that path is a freshly generated `__{uuid}` appended. `conversation.name` remains the unsuffixed base name either way, and a trailing UUID from the source path is never carried over.
 
-The duplicate SHALL stay in the source conversation's folder — the source path's folder segments are preserved and only the filename is rebuilt.
+The duplicate SHALL stay in the source conversation's folder — the source path's folder segments are preserved and only the filename is rebuilt — with one exception: the reserved scheduler prefix (a leading `.scheduler` segment and the schedule id segment that follows it) is not preserved, so a copy of a scheduled-task run is an ordinary conversation. The `duplicate-conversation` capability defines that exception.
 
 `duplicateConversation` SHALL NOT call `fetchAllUserTitles`.
 `duplicateConversation` SHALL NOT call `resolveUniqueConversationName`.
@@ -80,6 +80,11 @@ The duplicate SHALL stay in the source conversation's folder — the source path
 
 - **WHEN** `duplicateConversation` is called
 - **THEN** `ConversationNamingService` is NOT invoked and `llmNamingDone` is NOT read or written
+
+#### Scenario: Duplicate of a scheduled-task run drops the reserved scheduler prefix
+
+- **WHEN** the source conversation lives at `.scheduler/sched_abc/gpt-4o__Morning briefing__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5`
+- **THEN** the duplicate is written at the root of the caller's bucket as `gpt-4o__Morning briefing`, not under `.scheduler/`
 
 ---
 
