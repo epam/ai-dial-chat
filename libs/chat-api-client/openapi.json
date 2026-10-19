@@ -14320,6 +14320,11 @@
             "description": "Days until the DIAL Core invitation expires, rounded up. Omitted when DIAL Core does not report a usable expiry.",
             "example": 3
           },
+          "expiresInHours": {
+            "type": "number",
+            "description": "Hours until the DIAL Core invitation expires, rounded up. Lets a client describe a TTL shorter than a day, which `expiresInDays` rounds up to 1. Omitted together with `expiresInDays`.",
+            "example": 72
+          },
           "access": {
             "type": "array",
             "description": "Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.",

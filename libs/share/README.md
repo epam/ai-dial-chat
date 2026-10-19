@@ -130,11 +130,13 @@ import type {
 } from '@epam/ai-dial-share';
 ```
 
-`ShareLinkData` — `{ url: string; expiresInDays?: number; access: ShareLinkAccess[] }` —
+`ShareLinkData` — `{ url: string; expiresInDays?: number; expiresInHours?: number; access: ShareLinkAccess[] }` —
 is the shape the host's share-link seam returns; the popover takes its fields as
-individual props rather than the object. `expiresInDays` is absent when the host
-cannot determine the link's expiry — leave `expiryNote` `undefined` in that case
-and the popover renders no note.
+individual props rather than the object. Both expiry values are rounded up, so a
+link that lives less than a day has `expiresInDays: 1` — use `expiresInHours`
+to word that case in hours. Both are absent when the host cannot determine the
+link's expiry — leave `expiryNote` `undefined` in that case and the popover
+renders no note.
 
 ## Public class names
 

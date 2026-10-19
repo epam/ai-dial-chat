@@ -138,7 +138,33 @@ describe('SharePopoverContainer', () => {
       />,
     );
 
-    expect(mockT).toHaveBeenCalledWith(ShareI18nKeys.ExpiryNote, { days: 7 });
+    expect(mockT).toHaveBeenCalledWith(ShareI18nKeys.ExpiryNote, { count: 7 });
+  });
+
+  it('builds the expiry note in hours when the link expires in under a day', () => {
+    mockUseShareLink({
+      data: {
+        url: 'https://example.com/marketplace/share/item-1',
+        expiresInDays: 1,
+        expiresInHours: 1,
+        access: [ShareLinkAccess.View],
+      },
+    });
+
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Agent)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockT).toHaveBeenCalledWith(ShareI18nKeys.ExpiryNoteHours, {
+      count: 1,
+    });
+    expect(mockT).not.toHaveBeenCalledWith(
+      ShareI18nKeys.ExpiryNote,
+      expect.anything(),
+    );
   });
 
   it('passes canEditAccess true for an Application item', () => {

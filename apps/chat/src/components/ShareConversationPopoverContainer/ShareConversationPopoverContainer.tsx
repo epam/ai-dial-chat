@@ -9,6 +9,7 @@ import {
   ShareI18nKeys,
 } from '../../constants/translation-keys';
 import { shareApi } from '../../server-api/api-client';
+import { formatShareExpiryNote } from '../../utils/share';
 
 /** Props for `ShareConversationPopoverContainer`. */
 interface Props {
@@ -49,10 +50,7 @@ const ShareConversationPopoverContainer: FC<Props> = ({
     copyButtonLabel: t(ButtonsI18nKeys.Copy),
     copiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),
     linkAriaLabel: t(ShareI18nKeys.LinkAriaLabel),
-    expiryNote:
-      data?.expiresInDays != null
-        ? t(ShareI18nKeys.ExpiryNote, { days: data.expiresInDays })
-        : undefined,
+    expiryNote: formatShareExpiryNote(data, t),
     qrCodeAriaLabel: t(ShareI18nKeys.QrCodeAriaLabel),
     qrCopyButtonLabel: t(ButtonsI18nKeys.Copy),
     qrCopiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),

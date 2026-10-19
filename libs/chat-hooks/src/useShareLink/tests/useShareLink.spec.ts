@@ -60,10 +60,11 @@ describe('useShareLink', () => {
     expect(result.current.data?.expiresInDays).toBeUndefined();
   });
 
-  it('passes through the expiresInDays reported by the API', async () => {
+  it('passes through the expiresInDays and expiresInHours reported by the API', async () => {
     createShareLink.mockResolvedValue({
       url: '/marketplace/share/gpt-4o',
       expiresInDays: 7,
+      expiresInHours: 168,
       access: [ShareLinkResponseDtoAccessEnum.View],
     });
 
@@ -74,6 +75,7 @@ describe('useShareLink', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data?.expiresInDays).toBe(7);
+    expect(result.current.data?.expiresInHours).toBe(168);
   });
 
   it('sets an error when the share link could not be created', async () => {
