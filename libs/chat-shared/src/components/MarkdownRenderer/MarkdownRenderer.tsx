@@ -748,8 +748,13 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       return <ThinkingShimmer label={thinkingLabel} colors={colors} />;
     }
 
+    /* Inherited by every element, so long unbreakable tokens (e.g. URLs) wrap
+     * instead of widening the message and causing a horizontal scrollbar. */
     return (
-      <div style={cssVars} className={containerClassName}>
+      <div
+        style={cssVars}
+        className={mergeClasses('[overflow-wrap:anywhere]', containerClassName)}
+      >
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
           rehypePlugins={effectiveRehypePlugins}
