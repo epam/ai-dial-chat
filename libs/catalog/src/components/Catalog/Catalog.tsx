@@ -138,7 +138,7 @@ export const Catalog: FC<CatalogProps> = ({
   onActiveTabChange,
   renderEmptyState,
 }) => {
-  const { typography } = catalogStyles ?? {};
+  const { typography, headingRowClassName = 'h-[64px]' } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
 
   const pageTitle = titles?.pageTitle ?? 'Catalog';
@@ -634,7 +634,12 @@ export const Catalog: FC<CatalogProps> = ({
     >
       {(!hidePageTitle || isCreateButtonVisible) && (
         <div className={mergeClasses('shrink-0', styles.heading)}>
-          <div className="flex h-[64px] w-full items-center justify-between px-4 desktop:px-8">
+          <div
+            className={mergeClasses(
+              'flex w-full items-center justify-between px-4 desktop:px-8',
+              headingRowClassName,
+            )}
+          >
             {!hidePageTitle && (
               <h1
                 className={mergeClasses(

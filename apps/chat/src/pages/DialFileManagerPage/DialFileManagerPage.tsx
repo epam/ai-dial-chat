@@ -9,6 +9,7 @@ import {
   DialFileManagerVariant,
   formatFileSize,
   type DialFileManagerShellLabels,
+  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
@@ -26,6 +27,7 @@ import { useDialFileManagerHostOptions } from '../../components/DialFileManagerS
 import { getFileDeleteConfirmTitle } from '../../components/FileDeleteConfirmContent/file-delete-confirm-title';
 import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
 import { useFileUnshareConfirmation } from '../../components/FileUnshareConfirmation/useFileUnshareConfirmation';
+import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -296,22 +298,44 @@ const DialFileManagerPage: FC = () => {
     ],
   );
 
+  const shell = (
+    <DialFileManagerShell
+      hookResult={controller}
+      labels={labels}
+      activeTab={activeTab}
+      tabs={tabs}
+      onTabChange={handleTabChangeWithReset}
+      selectedPaths={selectedPaths}
+      onSelectedPathsChange={setSelectedPaths}
+      variant={DialFileManagerVariant.Standalone}
+      actionProfile={DialFileManagerActionProfile.Full}
+      autoSelectUploadedItems={false}
+      maxSelectableFileSize={maxAttachmentFileSizeBytes}
+      oversizedUploadMessage={oversizedUploadMessage}
+      surfaceClassName="bg-layer-base desktop:bg-transparent"
+    />
+  );
+
+  /* From the desktop band up the page is framed: a title, 32px side margins and
+     a raised card with 20px of inner padding, so the manager is not pressed
+     against the navigation. A phone keeps the full-bleed manager. */
   return (
     <div className="flex size-full min-h-0 flex-col">
-      <DialFileManagerShell
-        hookResult={controller}
-        labels={labels}
-        activeTab={activeTab}
-        tabs={tabs}
-        onTabChange={handleTabChangeWithReset}
-        selectedPaths={selectedPaths}
-        onSelectedPathsChange={setSelectedPaths}
-        variant={DialFileManagerVariant.Standalone}
-        actionProfile={DialFileManagerActionProfile.Full}
-        autoSelectUploadedItems={false}
-        maxSelectableFileSize={maxAttachmentFileSizeBytes}
-        oversizedUploadMessage={oversizedUploadMessage}
-      />
+      <header
+        className={mergeClasses(
+          'hidden items-center px-8 desktop:flex',
+          PAGE_HEADER_ROW_CLASS,
+        )}
+      >
+        <h1 className="dial-h1-text m-0 text-primary">
+          {t(DialFileManagerI18nKeys.PageTitle)}
+        </h1>
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col desktop:px-8 desktop:pb-4">
+        <div className="flex min-h-0 flex-1 flex-col desktop:rounded-xl desktop:bg-layer-raised desktop:p-5 desktop:shadow-sm">
+          {shell}
+        </div>
+      </div>
       {unshareConfirmation}
     </div>
   );

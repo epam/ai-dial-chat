@@ -22,6 +22,13 @@
   }
 }
 
+.triggerOpen {
+  background: var(
+    --np-trigger-open-bg,
+    var(--bg-control-accent-alpha-active-subtle, #2764d914)
+  );
+}
+
 .identityText {
   color: var(--np-menu-text, var(--text-primary, #161b2d));
 }

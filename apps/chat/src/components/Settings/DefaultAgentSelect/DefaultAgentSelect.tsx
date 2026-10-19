@@ -26,7 +26,14 @@ import { DefaultAgentMode } from '../../../types/default-agent';
  * "Last used agent" there would name a mode the new chat does not follow —
  * the confusion behind [#8889](https://github.com/epam/ai-dial-chat/issues/8889).
  */
-const DefaultAgentSelect: FC = () => {
+interface Props {
+  /** The agent shown instead of the stored preference, for a draft that is applied later. */
+  value?: string;
+  /** Receives the chosen agent instead of writing it to the stored preference. */
+  onChange?: (agent: string) => void;
+}
+
+const DefaultAgentSelect: FC<Props> = ({ value, onChange }) => {
   const { t } = useTranslation();
   const { storedPreference, setPreference } = useDefaultAgentPreference();
   const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
@@ -35,7 +42,7 @@ const DefaultAgentSelect: FC = () => {
   const effectiveMode = isDefaultDeploymentPinned
     ? DefaultAgentMode.DefaultAgent
     : DefaultAgentMode.LastUsedAgent;
-  const selectedId = storedPreference ?? effectiveMode;
+  const selectedId = value ?? storedPreference ?? effectiveMode;
 
   const modeOptions = useMemo<DeploymentSelectorExtraOption[]>(
     () => [
@@ -56,7 +63,7 @@ const DefaultAgentSelect: FC = () => {
       <Label id={labelId} label={t(SettingsI18nKeys.DefaultAgent)} />
       <DeploymentSelectorFieldTrigger
         selectedId={selectedId}
-        onSelect={setPreference}
+        onSelect={onChange ?? setPreference}
         placeholder={t(DeploymentSelectorI18nKeys.AriaLabel)}
         labelledById={labelId}
         extraOptions={modeOptions}

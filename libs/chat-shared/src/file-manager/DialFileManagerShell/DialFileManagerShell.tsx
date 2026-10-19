@@ -125,6 +125,8 @@ export interface DialFileManagerShellProps {
    * Omit to keep the variant's default.
    */
   treeContainerClassName?: string;
+  /** Background class of the shell's surface. Defaults to `'bg-layer-base'`. */
+  surfaceClassName?: string;
 }
 
 /**
@@ -150,6 +152,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
   treeContainerClassName,
+  surfaceClassName = 'bg-layer-base',
 }) => {
   const {
     items,
@@ -521,10 +524,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     },
     labels,
   );
-
-  /* Standalone and attach hosts share the base layer; the attach tree panel
-     stays raised on top of it. */
-  const surfaceClassName = 'bg-layer-base';
 
   /* Search-mode copy goes through `searchEmptyStateTitle`: in search mode
      `DialFileManager` ignores `emptyStateTitle` and falls back to "No data". */

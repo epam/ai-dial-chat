@@ -1,8 +1,8 @@
 import {
+  IconCirclePlusFilled,
   IconClockHour3,
   IconFolderOpen,
   IconLayoutGrid,
-  IconMessageCircle,
 } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { ROUTES } from '../types/routes';
@@ -10,17 +10,20 @@ import {
   IconClockHour3CustomFilled,
   IconFolderOpenCustomFilled,
   IconLayoutGridCustomFilled,
-  IconMessageCircleCustomFilled,
+  IconPlusCircle,
 } from './icons/filled-icons';
-import { NavigationI18nKeys } from './translation-keys';
+import { ButtonsI18nKeys, NavigationI18nKeys } from './translation-keys';
 
 export interface NavigationItem {
   path: string;
+  /** Extra path prefixes (besides `path`) on which the item counts as active. */
   matchPaths?: string[];
+  /** When `true` the item is active only on its exact `path`, ignoring `matchPaths`. */
+  isExactMatch?: boolean;
   icon: FC<{ size?: number; stroke?: number }>;
-  /** Filled variant shown in the rail while the item is active. */
+  /** Filled variant shown while the item is active. */
   activeIcon?: FC<{ size?: number; stroke?: number }>;
-  labelKey: NavigationI18nKeys;
+  labelKey: NavigationI18nKeys | ButtonsI18nKeys;
   /** Short `useFeatureFlag` key gating this item's visibility. Omit to always render. */
   featureFlag?: string;
 }
@@ -28,10 +31,10 @@ export interface NavigationItem {
 export const NAVIGATION_CONFIG: NavigationItem[] = [
   {
     path: ROUTES.Root,
-    matchPaths: [ROUTES.Conversations],
-    icon: IconMessageCircle,
-    activeIcon: IconMessageCircleCustomFilled,
-    labelKey: NavigationI18nKeys.Home,
+    isExactMatch: true,
+    icon: IconPlusCircle,
+    activeIcon: IconCirclePlusFilled,
+    labelKey: ButtonsI18nKeys.NewChat,
   },
   {
     path: ROUTES.ScheduledTasks,

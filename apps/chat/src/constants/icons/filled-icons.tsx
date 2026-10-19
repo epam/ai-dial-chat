@@ -3,6 +3,7 @@ import ClockHour3FilledSvg from './clock-hour-3-filled.svg?react';
 import FolderOpenFilledSvg from './folder-open-filled.svg?react';
 import LayoutGridFilledSvg from './layout-grid-filled.svg?react';
 import MessageCircleFilledSvg from './message-circle-filled.svg?react';
+import PlusCircleSvg from './plus-circle.svg?react';
 
 interface FilledIconProps {
   size?: number;
@@ -29,3 +30,6 @@ export const IconLayoutGridCustomFilled = createFilledIcon(LayoutGridFilledSvg);
 export const IconMessageCircleCustomFilled = createFilledIcon(
   MessageCircleFilledSvg,
 );
+
+/* Not a filled glyph: the New chat plus on a soft circle, drawn that way in the design even while the page is not selected. */
+export const IconPlusCircle = createFilledIcon(PlusCircleSvg);

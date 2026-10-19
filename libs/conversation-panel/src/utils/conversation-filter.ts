@@ -1,5 +1,5 @@
 import { FilterTab } from '@epam/ai-dial-chat-shared';
-import { ConversationItem } from '../../models/panel-props';
+import type { ConversationItem } from '../models/panel-props';
 
 /** Returns whether a conversation item matches the currently selected filter tab. */
 export const matchesTab = (item: ConversationItem, tab: FilterTab): boolean => {

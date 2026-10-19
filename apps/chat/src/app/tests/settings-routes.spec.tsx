@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { getSettingsTabRoute } from '../../constants/routes';
 import { ROUTES } from '../../types/routes';
 import { SettingsTabs } from '../../types/settings-tabs';
-import { renderSettingsRoutes } from '../settings-routes';
+import { renderSettingsRoutes, renderUsageRoute } from '../settings-routes';
 
 const SETTINGS_MARKER = 'settings-page';
 const ROOT_MARKER = 'root-page';
@@ -18,6 +18,12 @@ const LOCATION_LABEL = 'location';
  */
 vi.mock('../../pages/SettingsPage/SettingsPage', () => ({
   default: () => <span>{SETTINGS_MARKER}</span>,
+}));
+
+const USAGE_MARKER = 'usage-page';
+
+vi.mock('../../pages/SettingsPage/UsageTab/UsageTab', () => ({
+  default: () => <span>{USAGE_MARKER}</span>,
 }));
 
 const LocationProbe: FC = () => (
@@ -74,5 +80,32 @@ describe('renderSettingsRoutes', () => {
 
       expect(screen.queryByText(SETTINGS_MARKER)).toBeNull();
     });
+  });
+});
+
+describe('renderUsageRoute', () => {
+  const renderUsageAt = (isSettingsPageHidden: boolean) =>
+    render(
+      <MemoryRouter initialEntries={[ROUTES.Usage]}>
+        <LocationProbe />
+        <Routes>
+          <Route path={ROUTES.Root} element={<span>{ROOT_MARKER}</span>} />
+          {renderUsageRoute(isSettingsPageHidden)}
+        </Routes>
+      </MemoryRouter>,
+    );
+
+  it('mounts the Usage page', async () => {
+    renderUsageAt(false);
+
+    expect(await screen.findByText(USAGE_MARKER)).toBeTruthy();
+    expect(currentPath()).toBe(ROUTES.Usage);
+  });
+
+  it('redirects to the root when the settings page is hidden', () => {
+    renderUsageAt(true);
+
+    expect(screen.getByText(ROOT_MARKER)).toBeTruthy();
+    expect(currentPath()).toBe(ROUTES.Root);
   });
 });

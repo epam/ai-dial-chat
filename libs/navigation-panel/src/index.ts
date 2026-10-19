@@ -1,4 +1,5 @@
 export { NavigationPanel } from './components/NavigationPanel/NavigationPanel';
+export { NavigationSidebar } from './components/NavigationSidebar/NavigationSidebar';
 export { UserMenu } from './components/UserMenu/UserMenu';
 export { NavigationSheet } from './components/NavigationSheet/NavigationSheet';
 export { NavigableBottomSheet } from './components/NavigationSheet/NavigableBottomSheet';
@@ -29,6 +30,14 @@ export type {
   NavigationPanelTypography,
 } from './models/navigation-panel-props';
 export type {
+  NavigationSidebarColors,
+  NavigationSidebarLabels,
+  NavigationSidebarLogo,
+  NavigationSidebarProps,
+  NavigationSidebarStyles,
+  NavigationSidebarTypography,
+} from './models/navigation-sidebar-props';
+export type {
   NavigationSheetColors,
   NavigationSheetLabels,
   NavigationSheetProps,
@@ -51,4 +60,6 @@ export type { NavigationMenuPageProps } from './components/NavigationSheet/Navig
 export type { OptionListPageProps } from './components/NavigationSheet/OptionListPage';
 export type { ProfilePageProps } from './components/NavigationSheet/ProfilePage';
 export type { SheetRowProps } from './components/NavigationSheet/SheetRow';
+export { NavigationSidebarVariant } from './types/navigation-sidebar-variant';
+export { UserMenuTriggerVariant } from './types/user-menu-trigger-variant';
 export { NAVIGATION_PANEL_CLASS } from './constants/public-class-names';

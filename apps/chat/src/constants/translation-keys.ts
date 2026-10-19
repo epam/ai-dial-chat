@@ -147,14 +147,13 @@ export enum ButtonsI18nKeys {
 
 export enum NavigationI18nKeys {
   AriaLabel = 'navigation.ariaLabel',
-  Home = 'navigation.home',
   Catalog = 'navigation.catalog',
   FileManager = 'dialFileManager.page.navLabel',
   ScheduledTasks = 'scheduledTasks.page.navLabel',
   OpenMenu = 'navigation.openMenu',
-  Menu = 'navigation.menu',
-  Profile = 'navigation.profile',
   Back = 'navigation.back',
+  CollapseSidebar = 'navigation.collapseSidebar',
+  ExpandSidebar = 'navigation.expandSidebar',
 }
 
 export enum FavoritesI18nKeys {
@@ -556,6 +555,7 @@ export enum ConversationI18nKeys {
 }
 
 export enum DialFileManagerI18nKeys {
+  PageTitle = 'dialFileManager.page.title',
   Attach = 'dialFileManager.attach',
   Empty = 'dialFileManager.empty',
   Error = 'dialFileManager.error',
@@ -739,6 +739,7 @@ export enum SettingsI18nKeys {
   DefaultAgent = 'settings.defaultAgent',
   DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
   DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
+  General = 'settings.general',
 }
 
 export enum ExtensionsI18nKeys {
@@ -752,8 +753,9 @@ export enum ExtensionsI18nKeys {
 }
 
 export enum ConversationPanelI18nKeys {
-  Title = 'conversationPanel.title',
-  ToggleAriaLabel = 'conversationPanel.toggleAriaLabel',
+  ChatsAndTasks = 'conversationPanel.chatsAndTasks',
+  SearchOpen = 'conversationPanel.search.open',
+  SearchClose = 'conversationPanel.search.close',
   Empty = 'conversationPanel.empty',
   FilterAll = 'conversationPanel.filter.all',
   FilterGroupAriaLabel = 'conversationPanel.filter.groupAriaLabel',

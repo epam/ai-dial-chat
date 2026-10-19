@@ -1,9 +1,19 @@
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { RowComponentProps } from 'react-window';
 import type { RowRendererData } from '../../models/virtual-row';
+import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
 import { ConversationGroupHeader } from '../ConversationGroupHeader/ConversationGroupHeader';
 import { ConversationRow } from '../ConversationRow/ConversationRow';
+
+/** Returns the top padding class that separates a group header from the row above it. */
+const getHeaderPaddingClassName = (
+  index: number,
+  isIndicator: boolean,
+): string => {
+  if (isIndicator) return index === 0 ? 'pt-2' : 'pt-4';
+  return index === 0 ? 'pt-0' : 'pt-8';
+};
 
 /** Renders a single virtual row — either a collapsible group header or a conversation item. */
 export const RowRenderer = ({
@@ -21,6 +31,7 @@ export const RowRenderer = ({
   actionsLabel,
   unreadIndicatorLabel,
   styles,
+  rowVariant = ConversationRowVariant.Avatar,
   draggingId,
   dragOverId,
   allowedDropGroups,
@@ -31,6 +42,7 @@ export const RowRenderer = ({
   onDrop,
 }: RowComponentProps<RowRendererData>) => {
   const row = rows[index];
+  const isIndicator = rowVariant === ConversationRowVariant.Indicator;
 
   if (row.kind === VirtualRowKind.Header) {
     const isPinnedHeader = row.groupKey === FilterTab.Pinned;
@@ -38,9 +50,10 @@ export const RowRenderer = ({
       <div
         role="presentation"
         style={style}
-        className={index === 0 ? 'pt-0' : 'pt-8'}
+        className={getHeaderPaddingClassName(index, isIndicator)}
       >
         <ConversationGroupHeader
+          variant={rowVariant}
           label={row.label}
           isExpanded={expandedGroups.has(row.groupKey)}
           onToggle={() => onToggleGroup(row.groupKey)}
@@ -57,8 +70,13 @@ export const RowRenderer = ({
   }
 
   return (
-    <div role="presentation" style={style} className="pt-1">
+    <div
+      role="presentation"
+      style={style}
+      className={isIndicator ? 'pt-0.5' : 'pt-1'}
+    >
       <ConversationRow
+        variant={rowVariant}
         item={row.item}
         isActive={row.item.id === activeConversationId}
         searchQuery={searchQuery}

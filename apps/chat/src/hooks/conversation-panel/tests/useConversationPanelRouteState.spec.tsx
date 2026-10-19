@@ -10,15 +10,23 @@ interface HookProps {
   isMobile: boolean;
   isCanvasOpen: boolean;
   isOpenByDefault: boolean;
+  isToggleEnabled?: boolean;
 }
 
 const wrapper: FC<{ children: ReactNode }> = ({ children }) => (
   <ConversationPanelProvider>{children}</ConversationPanelProvider>
 );
 
+const DEFAULT_PROPS: HookProps = {
+  pathname: ROUTES.Root,
+  isMobile: false,
+  isCanvasOpen: false,
+  isOpenByDefault: true,
+};
+
 /* The callbacks are created once per render helper, not per render, so a test
    can assert on them across re-renders. */
-const renderPanelState = (props?: Partial<HookProps>) => {
+const renderSidebarState = (props?: Partial<HookProps>) => {
   const onCloseCanvas = vi.fn();
   const onCloseSourcesPanel = vi.fn();
 
@@ -29,197 +37,157 @@ const renderPanelState = (props?: Partial<HookProps>) => {
         onCloseCanvas,
         onCloseSourcesPanel,
       }),
-    {
-      wrapper,
-      initialProps: {
-        pathname: ROUTES.Root,
-        isMobile: false,
-        isCanvasOpen: false,
-        isOpenByDefault: true,
-        ...props,
-      },
-    },
+    { wrapper, initialProps: { ...DEFAULT_PROPS, ...props } },
   );
 
   return { ...view, onCloseCanvas, onCloseSourcesPanel };
 };
 
 describe('useConversationPanelRouteState', () => {
-  it('opens the panel on a conversation route when the default is on', () => {
-    const { result } = renderPanelState();
+  it('starts expanded when the default is on', () => {
+    const { result } = renderSidebarState();
 
     expect(result.current.isPanelOpen).toBe(true);
   });
 
-  it('closes the panel on a conversation route when the default is off', () => {
-    const { result } = renderPanelState({ isOpenByDefault: false });
+  it('starts collapsed when the default is off', () => {
+    const { result } = renderSidebarState({ isOpenByDefault: false });
 
     expect(result.current.isPanelOpen).toBe(false);
   });
 
-  it('keeps the panel open across chat switches once the user opened it', () => {
-    const { result, rerender } = renderPanelState({ isOpenByDefault: false });
+  it('stays expanded on every page, whatever the route', () => {
+    const { result, rerender } = renderSidebarState();
+
+    rerender({ ...DEFAULT_PROPS, pathname: ROUTES.Catalog });
+    expect(result.current.isPanelOpen).toBe(true);
+
+    rerender({ ...DEFAULT_PROPS, pathname: ROUTES.FileManager });
+    expect(result.current.isPanelOpen).toBe(true);
+  });
+
+  it('keeps the user collapse across navigation and back', () => {
+    const { result, rerender } = renderSidebarState();
+
+    act(() => result.current.togglePanel());
+    expect(result.current.isPanelOpen).toBe(false);
+
+    rerender({ ...DEFAULT_PROPS, pathname: ROUTES.FileManager });
+    rerender({ ...DEFAULT_PROPS, pathname: ROUTES.Root });
+
+    expect(result.current.isPanelOpen).toBe(false);
+  });
+
+  it('keeps the sidebar expanded across chat switches once the user expanded it', () => {
+    const { result, rerender } = renderSidebarState({ isOpenByDefault: false });
 
     act(() => result.current.togglePanel());
     expect(result.current.isPanelOpen).toBe(true);
 
     rerender({
-      pathname: `${ROUTES.Conversations}/first`,
-      isMobile: false,
-      isCanvasOpen: false,
+      ...DEFAULT_PROPS,
       isOpenByDefault: false,
+      pathname: `${ROUTES.Conversations}/first`,
     });
-    expect(result.current.isPanelOpen).toBe(true);
-
     rerender({
+      ...DEFAULT_PROPS,
+      isOpenByDefault: false,
       pathname: `${ROUTES.Conversations}/second`,
-      isMobile: false,
-      isCanvasOpen: false,
-      isOpenByDefault: false,
-    });
-    expect(result.current.isPanelOpen).toBe(true);
-  });
-
-  it('keeps the panel open when a new chat navigates back to the root route', () => {
-    const { result, rerender } = renderPanelState({
-      pathname: `${ROUTES.Conversations}/first`,
-      isOpenByDefault: false,
-    });
-
-    act(() => result.current.togglePanel());
-
-    rerender({
-      pathname: ROUTES.Root,
-      isMobile: false,
-      isCanvasOpen: false,
-      isOpenByDefault: false,
     });
 
     expect(result.current.isPanelOpen).toBe(true);
   });
 
-  it('keeps the panel closed across navigation once the user closed it', () => {
-    const { result, rerender } = renderPanelState({ isOpenByDefault: true });
+  it('collapses and drops the preference on mobile, then applies the default again on desktop', () => {
+    const { result, rerender } = renderSidebarState();
 
     act(() => result.current.togglePanel());
     expect(result.current.isPanelOpen).toBe(false);
 
-    rerender({
-      pathname: `${ROUTES.Conversations}/first`,
-      isMobile: false,
-      isCanvasOpen: false,
-      isOpenByDefault: true,
-    });
-
-    expect(result.current.isPanelOpen).toBe(false);
-  });
-
-  it('closes the panel outside the conversation section and restores the choice on return', () => {
-    const { result, rerender } = renderPanelState({ isOpenByDefault: false });
-
-    act(() => result.current.togglePanel());
-
-    rerender({
-      pathname: ROUTES.Catalog,
-      isMobile: false,
-      isCanvasOpen: false,
-      isOpenByDefault: false,
-    });
+    rerender({ ...DEFAULT_PROPS, isMobile: true });
     expect(result.current.isPanelOpen).toBe(false);
 
-    rerender({
-      pathname: `${ROUTES.Conversations}/first`,
-      isMobile: false,
-      isCanvasOpen: false,
-      isOpenByDefault: false,
-    });
+    rerender({ ...DEFAULT_PROPS, isMobile: false });
     expect(result.current.isPanelOpen).toBe(true);
   });
 
-  it('closes the panel and drops the preference on mobile', () => {
-    const { result, rerender } = renderPanelState({ isOpenByDefault: true });
-
-    act(() => result.current.togglePanel());
-    expect(result.current.isPanelOpen).toBe(false);
+  it('does not reopen a sidebar collapsed by the canvas when navigating', () => {
+    const { result, rerender } = renderSidebarState();
 
     rerender({
-      pathname: ROUTES.Root,
-      isMobile: true,
-      isCanvasOpen: false,
-      isOpenByDefault: true,
-    });
-    expect(result.current.isPanelOpen).toBe(false);
-
-    rerender({
-      pathname: `${ROUTES.Conversations}/first`,
-      isMobile: false,
-      isCanvasOpen: false,
-      isOpenByDefault: true,
-    });
-    expect(result.current.isPanelOpen).toBe(true);
-  });
-
-  it('leaves the panel closed while the attachment canvas is open', () => {
-    const { result, rerender } = renderPanelState({ isOpenByDefault: true });
-
-    rerender({
-      pathname: ROUTES.Root,
-      isMobile: false,
+      ...DEFAULT_PROPS,
       isCanvasOpen: true,
-      isOpenByDefault: true,
+      pathname: `${ROUTES.Conversations}/first`,
     });
     expect(result.current.isPanelOpen).toBe(false);
 
     rerender({
-      pathname: `${ROUTES.Conversations}/first`,
-      isMobile: false,
+      ...DEFAULT_PROPS,
       isCanvasOpen: true,
-      isOpenByDefault: true,
+      pathname: `${ROUTES.Conversations}/second`,
     });
     expect(result.current.isPanelOpen).toBe(false);
   });
 
-  it('leaves the panel closed when the canvas is already open on the first render', () => {
-    const { result } = renderPanelState({
-      isCanvasOpen: true,
-      isOpenByDefault: true,
-    });
+  it('starts collapsed when the canvas is already open on the first render', () => {
+    const { result } = renderSidebarState({ isCanvasOpen: true });
 
     expect(result.current.isPanelOpen).toBe(false);
   });
 
-  it('closes the panel and the sources panel when the canvas opens', () => {
+  it('collapses and closes the sources panel when the canvas opens, without closing the canvas', () => {
     const { result, rerender, onCloseCanvas, onCloseSourcesPanel } =
-      renderPanelState({ isOpenByDefault: true });
-
+      renderSidebarState();
     expect(result.current.isPanelOpen).toBe(true);
     onCloseCanvas.mockClear();
 
-    rerender({
-      pathname: ROUTES.Root,
-      isMobile: false,
-      isCanvasOpen: true,
-      isOpenByDefault: true,
-    });
+    rerender({ ...DEFAULT_PROPS, isCanvasOpen: true });
 
     expect(result.current.isPanelOpen).toBe(false);
     expect(onCloseSourcesPanel).toHaveBeenCalledOnce();
-    /* The safety net reacts to the canvas opening, so it must not close it. */
     expect(onCloseCanvas).not.toHaveBeenCalled();
   });
 
-  it('closes the canvas on every navigation', () => {
-    const { rerender, onCloseCanvas } = renderPanelState();
+  it('closes the canvas when the user expands the sidebar', () => {
+    const { result, rerender, onCloseCanvas } = renderSidebarState();
+    rerender({ ...DEFAULT_PROPS, isCanvasOpen: true });
 
+    onCloseCanvas.mockClear();
+    act(() => result.current.togglePanel());
+
+    expect(result.current.isPanelOpen).toBe(true);
+    expect(onCloseCanvas).toHaveBeenCalled();
+  });
+
+  it('closes the canvas on every navigation', () => {
+    const { rerender, onCloseCanvas } = renderSidebarState();
     expect(onCloseCanvas).toHaveBeenCalledOnce();
 
     rerender({
+      ...DEFAULT_PROPS,
       pathname: `${ROUTES.Conversations}/first`,
-      isMobile: false,
-      isCanvasOpen: false,
-      isOpenByDefault: true,
     });
 
     expect(onCloseCanvas).toHaveBeenCalledTimes(2);
+  });
+
+  it('restores the default when the canvas closes and there is no toggle', () => {
+    const props = { isToggleEnabled: false };
+    const { result, rerender } = renderSidebarState(props);
+
+    rerender({ ...DEFAULT_PROPS, ...props, isCanvasOpen: true });
+    expect(result.current.isPanelOpen).toBe(false);
+
+    rerender({ ...DEFAULT_PROPS, ...props, isCanvasOpen: false });
+    expect(result.current.isPanelOpen).toBe(true);
+  });
+
+  it('keeps a canvas collapse after the canvas closes while the toggle is available', () => {
+    const { result, rerender } = renderSidebarState();
+
+    rerender({ ...DEFAULT_PROPS, isCanvasOpen: true });
+    rerender({ ...DEFAULT_PROPS, isCanvasOpen: false });
+
+    expect(result.current.isPanelOpen).toBe(false);
   });
 });

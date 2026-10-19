@@ -5,6 +5,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { getSettingsTabRoute } from '../../constants/routes';
 import { BasicI18nKeys } from '../../constants/translation-keys';
 import { useSettingsTabConfig } from '../../hooks/useSettingsTabConfig';
+import { ROUTES } from '../../types/routes';
 import { SettingsTabs } from '../../types/settings-tabs';
 
 const SettingsPage: FC = () => {
@@ -32,6 +33,11 @@ const SettingsPage: FC = () => {
   }
 
   if (activeItem == null) {
+    /* Usage moved out of Settings; an old link lands on the page it became. */
+    if (tab === SettingsTabs.Usage) {
+      return <Navigate to={ROUTES.Usage} replace />;
+    }
+
     return (
       <Navigate
         to={getSettingsTabRoute(defaultItem.id as SettingsTabs)}

@@ -86,6 +86,139 @@ the group and defaults to `"Filter chats"`;
 `styles.typography.tabClassName` sets the label typography and defaults to
 `'dial-tiny-semi-text'`.
 
+### ConversationList
+
+The grouped, collapsible, virtualized list on its own — no `SidebarPanel`, no
+New chat button, no search field, no filter chips. `ConversationPanel` is built
+from it, so the grouping, `hiddenSources`, drag-and-drop pinning, per-row
+actions and the active-row scroll behave identically. Search text and the
+filter arrive as controlled props, so the host decides where those controls
+live.
+
+```tsx
+import {
+  ConversationList,
+  ConversationRowVariant,
+} from '@epam/ai-dial-conversation-panel';
+import { FilterTab } from '@epam/ai-dial-chat-shared';
+
+<ConversationList
+  conversations={historyItems}
+  onSelectConversation={handleSelectConversation}
+  activeConversationId={activeConversationId}
+  searchQuery={searchQuery}
+  activeFilter={FilterTab.All}
+  rowVariant={ConversationRowVariant.Indicator}
+  getActions={buildRowActions}
+  onMoveConversation={handleMove}
+  labels={{
+    emptyLabel: 'No conversations yet',
+    noResultsLabel: 'No results found',
+  }}
+/>;
+```
+
+`ConversationRowVariant.Avatar` (the default) draws the deployment avatar or
+`leadingIcon` with a trailing unread dot, as the panel does.
+`ConversationRowVariant.Indicator` draws a leading status dot instead — hollow
+when read, filled with a semi-bold title when unread — and renders neither the
+avatar nor `leadingIcon`; the visually hidden `unreadIndicatorLabel` is still
+announced. The hollow dot's border is `colors.indicatorDot`
+(`--cp-indicator-dot`). Row and group-header heights follow the variant. `ConversationPanel`
+always renders `Avatar` rows.
+
+### ConversationListHeader
+
+The "Chats and tasks" row for a host that lays the list out itself: a title
+that collapses the list (`aria-expanded`, plain text when `onToggleExpanded` is
+omitted), a search toggle, a filter menu, and an `actions` slot.
+
+```tsx
+import { ConversationListHeader } from '@epam/ai-dial-conversation-panel';
+
+<ConversationListHeader
+  labels={{
+    title: 'Chats and tasks',
+    searchOpenLabel: 'Search chats',
+    searchCloseLabel: 'Close search',
+    searchPlaceholder: 'Search...',
+    searchClearLabel: 'Clear search',
+    filterLabels: {
+      all: 'All',
+      myChats: 'My chats',
+      shared: 'Shared',
+      organization: 'Organization',
+      groupAriaLabel: 'Filter chats',
+    },
+  }}
+  isExpanded={isListExpanded}
+  onToggleExpanded={toggleList}
+  searchQuery={searchQuery}
+  isSearchOpen={isSearchOpen}
+  onSearchChange={setSearchQuery}
+  onSearchOpenChange={setIsSearchOpen}
+  activeFilter={activeFilter}
+  onFilterChange={setActiveFilter}
+  actions={<OverflowMenu />}
+/>;
+```
+
+Each control renders only when its props are present: the search control needs
+both `onSearchChange` and `onSearchOpenChange`, the filter needs
+`onFilterChange`. While the search is open it replaces the row, with a separate
+Close search button. Closing — by that button or Escape — calls
+`onSearchChange('')` and returns focus to the search toggle. The filter menu is
+single-select with a check on `activeFilter`, and omits `hiddenSources`.
+The filter trigger is named by `labels.filterLabels.groupAriaLabel` (default
+`'Filter chats'`). `styles.typography.titleClassName` and
+`styles.typography.searchTextClassName` set the title and search text
+typography; `styles.colors.title` and `styles.colors.titleFocus` recolor the
+title at rest and under keyboard focus (`--cp-list-header-title`,
+`--cp-list-header-title-focus`).
+
+### ConversationListSection
+
+`ConversationListHeader` and an indicator-row `ConversationList` wired together
+for a host that lays the list out itself: the section owns the search text,
+whether the search is open, whether the list is collapsed and the active filter.
+It renders a `section` named by `labels.title`.
+
+```tsx
+import { ConversationListSection } from '@epam/ai-dial-conversation-panel';
+
+<ConversationListSection
+  conversations={conversations}
+  activeConversationId={activeId}
+  onSelectConversation={openConversation}
+  labels={{
+    title: 'Chats and tasks',
+    searchOpenLabel: 'Search chats',
+    searchCloseLabel: 'Close search',
+    searchPlaceholder: 'Search...',
+    searchClearLabel: 'Clear search',
+    filterLabels: {
+      all: 'All',
+      myChats: 'My chats',
+      shared: 'Shared',
+      organization: 'Organization',
+      groupAriaLabel: 'Filter chats',
+    },
+    emptyLabel: 'No chats yet',
+    noResultsLabel: 'No results',
+  }}
+  headerActions={<OverflowMenu />}
+/>;
+```
+
+`requestedFilter` makes the section adopt a filter whenever it changes (the user
+can still pick another afterwards), `onFilterChange` reports the user's choice,
+`isFilterHidden` drops the filter trigger and `hiddenSources` removes sources
+from the list altogether. Row actions, `onActionMenuOpen` and
+`onMoveConversation` go to the list unchanged, `headerActions` to the header,
+and `styles.header` / `styles.list` to the matching component. `listClassName`
+is merged onto the list root, for a host anchor. The section fills the height
+its parent gives it, with the list scrolling inside.
+
 ### Corner radii
 
 The panel's controls take their corner radius from CSS custom properties, so a
@@ -162,6 +295,9 @@ CONVERSATION_PANEL_CLASS.search; // 'dial-cp-search'
 | ------------------------- | --------------------------------------------------- |
 | `dial-cp-new-chat-button` | The new-chat button                                 |
 | `dial-cp-search`          | The `role="search"` wrapper around the search field |
+| `dial-cp-list`            | The root of the list rendered by `ConversationList` |
+| `dial-cp-list-header`     | The row rendered by `ConversationListHeader`        |
+| `dial-cp-list-section`    | The root of `ConversationListSection`               |
 
 The panel renders inside `SidebarPanel`, so `dial-sb-aside` and
 `dial-sb-header` from `@epam/ai-dial-sidebar` are available on the surrounding
@@ -212,6 +348,15 @@ FilterTab.Shared; // 'shared'
 FilterTab.Organization; // 'organization'
 ```
 
+`ConversationRowVariant` is owned by this package:
+
+```tsx
+import { ConversationRowVariant } from '@epam/ai-dial-conversation-panel';
+
+ConversationRowVariant.Avatar; // 'avatar' — avatar or leadingIcon, trailing unread dot
+ConversationRowVariant.Indicator; // 'indicator' — leading status dot, no avatar
+```
+
 ## Types
 
 ```tsx
@@ -224,6 +369,19 @@ import type {
   NewChatButtonColors,
   ConversationItem,
   ConversationMove,
+  ConversationListProps,
+  ConversationListLabels,
+  ConversationListStyles,
+  ConversationListColors,
+  ConversationListTypography,
+  ConversationListHeaderProps,
+  ConversationListHeaderLabels,
+  ConversationListHeaderColors,
+  ConversationListHeaderStyles,
+  ConversationListHeaderTypography,
+  ConversationListSectionProps,
+  ConversationListSectionLabels,
+  ConversationListSectionStyles,
   FilterLabels,
 } from '@epam/ai-dial-conversation-panel';
 ```
@@ -251,11 +409,12 @@ interface ConversationItem {
 - `leadingIcon` replaces the deployment avatar (`iconUrl`, `iconTooltip` and
   `isIconLoading` are then ignored). The panel gives it no meaning of its own:
   pass a decorative, `aria-hidden` node that fits the 24px avatar slot.
-- `isUnread` sets the title in `dial-small-semi-text` and renders a dot at the
-  row's trailing edge, with a visually hidden `unreadIndicatorLabel`. While the
+- `isUnread` sets the title in `dial-small-semi-text` and, for `Avatar` rows,
+  renders a dot at the row's trailing edge, with a visually hidden `unreadIndicatorLabel`. While the
   row's actions trigger is visible (hover, focus, open menu) the dot is hidden
   and the trigger takes its place; the label keeps announcing the state. The
-  dot color is `colors.unreadDot`.
+  dot color is `colors.unreadDot`. `Indicator` rows show the unread state in
+  their leading dot instead.
 
 ```tsx
 import type { ConversationItem } from '@epam/ai-dial-conversation-panel';

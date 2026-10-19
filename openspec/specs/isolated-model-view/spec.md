@@ -46,22 +46,6 @@ On mount, the provider SHALL read the `isolated-model-id` query parameter once f
 - **WHEN** isolated view is active and the id does not resolve to any deployment (`isNotFound: true`)
 - **THEN** the forced feature set is still applied — the not-found screen also renders without navigation or the conversations panel
 
-### Requirement: Isolated view hides the entire navigation component, not just the mobile sheet
-
-`TODO: remove in next release.` The `ui-feature-toggles` `hide-navigation-menu` key only ever governs the mobile hamburger button and `NavigationSheet` — its own requirement states it "SHALL NOT affect the desktop navigation rail." Since isolated view's old behavior hid navigation unconditionally on every viewport, `apps/chat/src/app/app.tsx` SHALL NOT render `<Navigation />` at all (desktop rail and mobile sheet both) whenever `useIsolatedModelView().isActive` is `true`, regardless of whether the id has resolved yet. This is a direct conditional render at the `<Navigation />` call site, not a new `OverlayFeature` key, since adding a permanent wire-protocol value for a temporary shim is out of proportion to the need.
-
-#### Scenario: Desktop rail is absent
-- **WHEN** isolated view is active and the viewport is desktop-width
-- **THEN** `Navigation` (including its logo, nav items, and user-menu footer) does not render at all
-
-#### Scenario: Mobile sheet and its trigger are absent
-- **WHEN** isolated view is active and the viewport is mobile-width
-- **THEN** no hamburger button or `NavigationSheet` renders (subsumes what `hide-navigation-menu` alone would have covered)
-
-#### Scenario: Navigation is hidden even before the deployment resolves
-- **WHEN** isolated view is active (`isActive: true`) but the deployment has not resolved yet
-- **THEN** `Navigation` still does not render — hiding it does not wait for resolution
-
 ### Requirement: Root route preselects the pinned deployment and shows a not-found state when unresolved
 
 `TODO: remove in next release.` `ConversationRoute`'s existing deployment-selection effect (which currently reads a `deploymentId` from router state, or defers to `overlay?.pendingModelId`, before falling back to `restoreDefaultSelection()`) SHALL gain a third source: when `useIsolatedModelView()` returns `isActive: true` and a non-null `resolvedDeploymentId`, it SHALL call `restoreSelectedItemId(resolvedDeploymentId)` exactly once (guarded the same way the existing router-state branch is) and SHALL NOT call `restoreDefaultSelection()` while isolated view is active.
@@ -99,3 +83,19 @@ While `isActive` is `true` and `isNotFound` is `true`, `ConversationRoute` SHALL
 #### Scenario: Non-isolated conversation creation is unaffected
 - **WHEN** isolated view is not active
 - **THEN** `handleCreateConversation`/`handleStarterSelect` behave exactly as before this change — no rename call is made
+
+### Requirement: Isolated view hides the entire navigation
+
+`TODO: remove in next release.` `apps/chat/src/app/app.tsx` SHALL NOT render `<SidebarNavigation />` at all (the desktop column and the mobile drawer both) whenever `useIsolatedModelView().isActive` is `true`, regardless of whether the id has resolved yet. This is a direct conditional render at the `<SidebarNavigation />` call site, not a new `OverlayFeature` key, since adding a permanent wire-protocol value for a temporary shim is out of proportion to the need.
+
+#### Scenario: Desktop sidebar is absent
+- **WHEN** isolated view is active and the viewport is desktop-width
+- **THEN** `SidebarNavigation` (including its logo, nav items, chats and user-menu footer) does not render at all
+
+#### Scenario: Mobile drawer is absent
+- **WHEN** isolated view is active and the viewport is mobile-width
+- **THEN** no drawer renders (subsumes what `hide-navigation-menu` alone would have covered)
+
+#### Scenario: Navigation is hidden even before the deployment resolves
+- **WHEN** isolated view is active (`isActive: true`) but the deployment has not resolved yet
+- **THEN** `SidebarNavigation` still does not render — hiding it does not wait for resolution

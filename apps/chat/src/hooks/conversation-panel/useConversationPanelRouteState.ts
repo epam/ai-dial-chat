@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
-import { ROUTES } from '../../types/routes';
 
 interface UseConversationPanelRouteStateParams {
-  /** Current router pathname; every change re-evaluates the panel state. */
+  /** Current router pathname; every change closes the attachment canvas. */
   pathname: string;
   isMobile: boolean;
   isCanvasOpen: boolean;
   /** `showConversationsSectionByDefault` — the initial state, not a lock. */
   isOpenByDefault: boolean;
+  /** Whether the user can expand and collapse the sidebar (`conversations-panel-toggle`). Defaults to `true`. */
+  isToggleEnabled?: boolean;
   onCloseCanvas: () => void;
   onCloseSourcesPanel: () => void;
 }
@@ -19,31 +20,26 @@ interface ConversationPanelRouteState {
   togglePanel: () => void;
 }
 
-const isConversationSectionRoute = (pathname: string): boolean =>
-  pathname === ROUTES.Root ||
-  pathname === ROUTES.Conversations ||
-  pathname.startsWith(ROUTES.Conversations);
-
 /**
- * Owns when the conversation panel opens and closes as the route changes.
+ * Owns the desktop sidebar's expanded state.
  *
- * `showConversationsSectionByDefault` is an initial-state modifier: it decides
- * the panel state until the user touches the toggle, and from then on their own
- * choice survives every navigation inside the conversation section. Re-applying
- * the default on each navigation is what collapsed a just-opened panel when the
- * user switched chats or started a new one — the regression overlay hosts
- * running the chat full-screen reported.
+ * `isPanelOpen` means "expanded". `showConversationsSectionByDefault` is an
+ * initial-state modifier: it decides the state until the user touches the
+ * toggle, and from then on their own choice survives. The page route has no say
+ * in it, because the sidebar carries the conversation list on every page.
+ * Opening the attachment canvas collapses the sidebar and expanding it closes
+ * the canvas. Without a toggle the user could never re-expand it, so it then
+ * returns to its initial state when the canvas closes.
  *
- * Routes outside the section still force the panel shut, because it would
- * otherwise overlap the catalog, settings and file-manager pages; the
- * preference is kept, so returning to a conversation restores the user's last
- * choice rather than the default.
+ * On a mobile viewport the sidebar is a drawer owned by the app shell, so this
+ * state is reset and ignored there.
  */
 export const useConversationPanelRouteState = ({
   pathname,
   isMobile,
   isCanvasOpen,
   isOpenByDefault,
+  isToggleEnabled = true,
   onCloseCanvas,
   onCloseSourcesPanel,
 }: UseConversationPanelRouteStateParams): ConversationPanelRouteState => {
@@ -75,10 +71,11 @@ export const useConversationPanelRouteState = ({
 
   useEffect(() => {
     onCloseCanvas();
-    if (!isConversationSectionRoute(pathname)) {
-      closePanel();
-      return;
-    }
+  }, [pathname, isOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Applies the default once the desktop layout is in use, and again if the
+     default itself changes — never on navigation. */
+  useEffect(() => {
     if (isMobile || isCanvasOpen) return;
 
     const shouldPanelBeOpen = userPanelPreferenceRef.current ?? isOpenByDefault;
@@ -87,7 +84,18 @@ export const useConversationPanelRouteState = ({
     } else {
       closePanel();
     }
-  }, [pathname, isOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isMobile, isOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Without a toggle nothing can re-expand a sidebar the canvas collapsed, so
+     it returns to its initial state once the canvas closes. */
+  useEffect(() => {
+    if (isToggleEnabled || isMobile || isCanvasOpen) return;
+    if (isOpenByDefault) {
+      openPanel();
+    } else {
+      closePanel();
+    }
+  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Safety net for openCanvas call sites that bypass useOpenAttachmentCanvas
      (e.g. citation preview, collapsed stage attachments). */

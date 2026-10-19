@@ -289,13 +289,6 @@ describe('DialFileManagerPage', () => {
     );
   });
 
-  it('renders the file manager on the base layer background', () => {
-    render(<DialFileManagerPage />);
-    const manager = screen.getByRole('region', { name: 'file manager' });
-    expect(manager.classList.contains('bg-layer-base')).toBe(true);
-    expect(manager.classList.contains('bg-layer-sunken')).toBe(false);
-  });
-
   it('does not render an Attach button or attach footer', () => {
     render(<DialFileManagerPage />);
     expect(screen.queryByRole('button', { name: /attach/i })).toBeNull();
@@ -498,5 +491,26 @@ describe('DialFileManagerPage — All tab', () => {
     act(() => setSectionTab(DialFileManagerTabs.Shared));
 
     expect(screen.getByText('0 selected')).toBeTruthy();
+  });
+});
+
+describe('DialFileManagerPage — page frame', () => {
+  it('renders the page title as the top-level heading', () => {
+    render(<DialFileManagerPage />);
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'dialFileManager.page.title',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('paints the base layer on a phone and goes transparent inside the desktop card', () => {
+    render(<DialFileManagerPage />);
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.classList.contains('bg-layer-base')).toBe(true);
+    expect(manager.classList.contains('desktop:bg-transparent')).toBe(true);
   });
 });

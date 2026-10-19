@@ -1,5 +1,6 @@
 import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import type { ConversationRowVariant } from '../types/conversation-row-variant';
 import { VirtualRowKind } from '../types/virtual-row';
 import type { ConversationItem } from './panel-props';
 
@@ -65,6 +66,8 @@ export interface RowRendererData {
   unreadIndicatorLabel?: string;
   /** Typography/class overrides applied to virtual row elements. */
   styles?: RowStyles;
+  /** Presentation of conversation rows and group headers. Defaults to `ConversationRowVariant.Avatar`. */
+  rowVariant?: ConversationRowVariant;
   /** Id of the conversation currently being dragged. `null` when no drag is in progress. */
   draggingId: string | null;
   /** Id of the row (item or group header sentinel) currently under the drag cursor. */

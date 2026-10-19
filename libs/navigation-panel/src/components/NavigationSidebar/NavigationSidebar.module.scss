@@ -1,0 +1,68 @@
+.sidebar {
+  background: var(--np-sidebar-bg, var(--bg-layer-raised, #fcfcfc));
+  font-family: var(--np-sidebar-font-family, inherit);
+}
+
+/* Only the persistent column animates its width; the drawer slides instead. */
+.sidebarColumn {
+  transition: width 200ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.item {
+  color: var(--np-sidebar-item-text, var(--text-primary, #161b2d));
+
+  /* Keyboard focus gets the hover background too, not only an outline. */
+  &:not(.itemActive):hover,
+  a:focus-visible > &:not(.itemActive) {
+    background: var(
+      --np-sidebar-item-hover-bg,
+      var(--bg-control-accent-alpha-hover-subtle, #2764d90a)
+    );
+  }
+
+  /* The link wrapper is `display: contents` and draws no outline, so the
+     focus ring moves onto the button it wraps. */
+  a:focus-visible > & {
+    outline: 1px solid
+      var(--np-sidebar-focus-outline, var(--stroke-focus, #161b2d));
+    outline-offset: 2px;
+  }
+}
+
+.item.itemActive {
+  background: var(
+    --np-sidebar-item-selected-bg,
+    var(--bg-control-accent-alpha-active-subtle, #2764d914)
+  );
+
+  svg {
+    stroke: var(--np-sidebar-item-active-icon, currentColor);
+  }
+}
+
+/* A filled `activeIcon` is painted by `fill`; the stroke stays off so the
+   solid glyph is not outlined. */
+.item.itemFilled svg {
+  fill: var(--np-sidebar-item-active-icon, currentColor);
+  stroke: none;
+}
+
+/* Without an `activeIcon` the outline glyph is filled in place; the stroke
+   stays so open paths (lines, clock hands) do not vanish. */
+.item.itemFilledOutline svg {
+  fill: var(--np-sidebar-item-active-icon, currentColor);
+}
+
+.itemIcon {
+  /* Set on the glyph's own box so it holds in both states: the kit's icon
+     button paints its icon `--text-secondary`, and accent on hover. */
+  color: var(--np-sidebar-item-text, var(--text-primary, #161b2d));
+}
+
+.footer {
+  background: var(--np-sidebar-bg, var(--bg-layer-raised, #fcfcfc));
+}

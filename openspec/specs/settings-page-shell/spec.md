@@ -2,9 +2,10 @@
 
 ## Purpose
 
-Defines the Settings page shell: the entry point in the `UserMenu` dropdown, the `/settings` route
-and its lazy loading, the extensible tab container that hosts settings sub-pages, and the RTL/i18n
-contract for the shell.
+Defines the Settings surface: the entry point in the `UserMenu` dropdown, which opens the Settings
+dialog, the `/settings` page and its lazy loading, the extensible tab container that hosts settings
+sub-pages, and the RTL/i18n contract for the shell. Usage is not a Settings tab; it is the standalone
+`/usage` page, and `/settings/usage` redirects there.
 
 ## Requirements
 
@@ -12,28 +13,30 @@ contract for the shell.
 The system SHALL provide a "Settings" item, marked with the `IconSettings` icon from
 `@tabler/icons-react`, inside the existing `UserMenu` dropdown
 (`libs/navigation-panel/src/components/UserMenu/UserMenu.tsx`, driven by the host's `onSettings`
-and `labels.settings` props from `apps/chat/src/components/Navigation/Navigation.tsx`). Selecting
-it SHALL navigate to `ROUTES.Settings` (`/settings`) via `useNavigate()`. The item's accessible
+and `labels.settings` props from `apps/chat/src/components/Navigation/SidebarNavigation.tsx`). Selecting
+it SHALL open the Settings dialog (`SettingsModal`, lazily loaded) over the current page without
+changing the route. The item's accessible
 name SHALL come from an i18n key (not a hardcoded string): `BasicI18nKeys.Settings` (`basic.settings`).
 
 The item SHALL be included for every authenticated user unless the overlay host hides the Settings
 page. The `SettingsPageEnabled` feature flag that previously gated it is **removed** — there is no
 flag, no `SETTINGS_PAGE_ENABLED` environment variable, and no `features.settingsPageEnabled`
-config-registry entry. `Navigation` SHALL always pass `labels.settings`, and SHALL pass `onSettings`
+config-registry entry. `SidebarNavigation` SHALL always pass `labels.settings`, and SHALL pass `onSettings`
 unless `OverlayFeature.HideSettingsPage` resolves to `true`; in that case it passes `undefined`, and
 `UserMenu`'s existing "omit the item when the host passes no `onSettings`" behaviour removes the item.
 
 `UserMenu` remains suppressed as a whole by `OverlayFeature.HideUserMenu` and for unauthenticated
-users; those are unrelated to the removed flag.
+users; those are unrelated to the removed flag. The `/settings` page stays registered and reachable
+by URL, but the app offers no link to it.
 
 #### Scenario: Opening Settings from the user menu
 - **WHEN** a signed-in user opens the `UserMenu` dropdown and clicks/activates the "Settings" item
-- **THEN** the application navigates to `/settings` and renders the Settings page shell
+- **THEN** the Settings dialog opens over the current page and the route is unchanged
 
 #### Scenario: Keyboard activation
 - **WHEN** a keyboard-only user tabs to the "Settings" item inside the open `UserMenu` and presses
   Enter or Space
-- **THEN** the application navigates to `/settings`, identically to a mouse click
+- **THEN** the Settings dialog opens, identically to a mouse click
 
 #### Scenario: Gear icon is present for an authenticated user unless the host hides Settings
 - **WHEN** a signed-in user opens the `UserMenu` dropdown in any deployment and
@@ -42,7 +45,7 @@ users; those are unrelated to the removed flag.
 
 #### Scenario: The host hides the Settings entry
 - **WHEN** `OverlayFeature.HideSettingsPage` resolves to `true`
-- **THEN** `Navigation` passes no `onSettings` and the `UserMenu` dropdown has no "Settings" item
+- **THEN** `SidebarNavigation` passes no `onSettings` and the `UserMenu` dropdown has no "Settings" item
 
 ---
 
@@ -84,10 +87,16 @@ ever mounts through any settings path while the host hides the page.
 
 #### Scenario: Direct navigation to a tab path
 
-- **WHEN** a signed-in user navigates directly to `/settings/usage` (e.g. via URL bar or bookmark)
+- **WHEN** a signed-in user navigates directly to `/settings/preferences` (e.g. via URL bar or bookmark)
   and the host does not hide the Settings page
 - **THEN** the `SettingsPage` component loads (showing `RouteFallback` while its chunk downloads) and
-  renders with the Usage tab active
+  renders with the Preferences tab active
+
+#### Scenario: The former Usage tab path redirects
+
+- **WHEN** a signed-in user navigates directly to `/settings/usage` and the host does not hide the
+  Settings page
+- **THEN** the application redirects, replacing history, to `/usage`
 
 #### Scenario: Direct navigation to /settings
 
@@ -98,20 +107,20 @@ ever mounts through any settings path while the host hides the page.
 #### Scenario: No environment configuration redirects the routes away
 
 - **WHEN** any combination of environment configuration is applied and a signed-in user opens
-  `/settings` or `/settings/usage`
+  `/settings` or `/settings/preferences`
 - **THEN** the page renders — no redirect to `ROUTES.Root` occurs on that account
 
 #### Scenario: The host hides the Settings page
 
 - **WHEN** `OverlayFeature.HideSettingsPage` resolves to `true` and a signed-in user navigates
-  directly to `/settings` or to `/settings/usage`
+  directly to `/settings` or to `/settings/preferences`
 - **THEN** the application redirects (replacing history) to `ROUTES.Root` and `SettingsPage` is not
   rendered
 
 #### Scenario: Reload keeps the tab
 
-- **WHEN** a user on `/settings/usage` reloads the page
-- **THEN** Settings reopens with the Usage tab active
+- **WHEN** a user on `/settings/preferences` reloads the page
+- **THEN** Settings reopens with the Preferences tab active
 ---
 
 ### Requirement: Extensible tab container
@@ -142,8 +151,8 @@ current tab entry uses it.
 
 #### Scenario: The route decides which tab renders
 
-- **WHEN** `SettingsPage` renders at `/settings/usage`
-- **THEN** the Usage row is selected and the Usage component is rendered
+- **WHEN** `SettingsPage` renders at `/settings/preferences`
+- **THEN** the Preferences row is selected and the Preferences component is rendered
 
 #### Scenario: Selecting a tab changes the URL
 
@@ -179,8 +188,7 @@ utilities (e.g. `ps-*`, `pe-*`, `border-e`, `text-start`) instead of physical-di
 user-visible strings SHALL go through `react-i18next` via keys declared in
 `apps/chat/src/constants/translation-keys.ts`. There is no dedicated `settingsPage` namespace: the
 shell reuses `BasicI18nKeys.Settings` (`basic.settings`) for its heading and `SettingsPanel`
-section label, and the tab labels are `SettingsI18nKeys.Preferences` (`settings.preferences`) and
-`BasicI18nKeys.Usage` (`basic.usage`).
+section label, and the tab label is `SettingsI18nKeys.Preferences` (`settings.preferences`).
 
 #### Scenario: Rendering under an RTL locale
 - **WHEN** the active language is Arabic (`dir="rtl"` on `<html>`)
