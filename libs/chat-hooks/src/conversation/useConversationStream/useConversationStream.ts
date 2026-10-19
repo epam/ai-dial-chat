@@ -22,6 +22,7 @@ import {
   DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   GenerationConflictError,
   GenerationPersistenceError,
+  StopCompletionError,
   StreamInterruptedError,
   StreamUpstreamError,
 } from '../create-chat-stream-api';
@@ -50,6 +51,14 @@ const CHANNEL_WAIT_TIMEOUT_MS = 20000;
 
 /* Status of a terminal save that DIAL Core rejected for its credentials. */
 const UNAUTHORIZED_STATUS = 401;
+/* Status of a Stop that found no active generation to stop. */
+const NOT_FOUND_STATUS = 404;
+/*
+ * A Stop that finds nothing to stop is expected when it lands just as the
+ * generation ends; the stream's own end is seen within this window.
+ */
+const STOP_NOT_FOUND_GRACE_MS = 2000;
+const STOP_NOT_FOUND_POLL_MS = 100;
 
 /** Options accepted by {@link ConversationStreamTransport.streamCompletion}. */
 export interface StreamCompletionOptions {
@@ -303,6 +312,8 @@ export const useConversationStream = ({
   const [streamingPaths, setStreamingPaths] = useState<Set<string>>(
     () => new Set(),
   );
+  const streamingPathsRef = useRef(streamingPaths);
+  streamingPathsRef.current = streamingPaths;
   /*
    * Paths whose locally started generation Stop can reach, and that
    * generation's id per path. Both are keyed by path so a generation started
@@ -320,6 +331,8 @@ export const useConversationStream = ({
   /* Generation ids stopped by the user — onComplete emits notifyStopGenerating's
    * counterpart (nothing) instead of notifyGenerationEnd for these. */
   const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
+  /* Generation ids whose Stop request is outstanding or was accepted: a repeat click sends nothing. */
+  const stopRequestedIdsRef = useRef<Set<string>>(new Set());
   /*
    * Newest generation id started for each path — see `isSuperseded` in
    * `startStream`. Chunk staleness is checked against this per-path entry, so
@@ -1111,25 +1124,56 @@ export const useConversationStream = ({
      */
     const genId =
       localGenId ?? findResumedBackgroundGenerationId(conversationRef.current);
-    if (!genId) return;
+    if (!genId || stopRequestedIdsRef.current.has(genId)) return;
 
+    stopRequestedIdsRef.current.add(genId);
     stoppedGenerationIdsRef.current.add(genId);
     frameScheduler.flush(conversationPath);
     overlay?.notifyStopGenerating?.();
     const content =
       bufferedGenerationsRef.current.get(conversationPath)?.message.content;
 
+    const isGenerationLive = () =>
+      activeGenerationIdsRef.current.get(conversationPath) === genId ||
+      (localGenId == null && streamingPathsRef.current.has(conversationPath));
+
+    /* Resolves true once the generation has ended locally, false if it is still live after the grace window. */
+    const hasGenerationEnded = async (): Promise<boolean> => {
+      const attempts = STOP_NOT_FOUND_GRACE_MS / STOP_NOT_FOUND_POLL_MS;
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        if (!isGenerationLive() || !mountedRef.current) return true;
+        await new Promise((resolve) =>
+          setTimeout(resolve, STOP_NOT_FOUND_POLL_MS),
+        );
+      }
+      return !isGenerationLive();
+    };
+
     /*
      * Only signal the backend; it aborts upstream, saves the partial, and closes
      * the stream. Keeping our fetch open lets onComplete reload the saved partial
-     * race-free (do not reload here — it would race the backend save).
+     * race-free (do not reload here — it would race the backend save). A 404 means
+     * nothing was left to stop: benign when the generation ends here too, a real
+     * failure (e.g. another instance runs it) when it keeps going.
      */
-    void transport
-      .stopCompletion({ generationId: genId, path: conversationPath, content })
-      .catch((err: unknown) => {
+    const sendStop = async () => {
+      try {
+        await transport.stopCompletion({
+          generationId: genId,
+          path: conversationPath,
+          content,
+        });
+      } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
+        const isNotFound =
+          error instanceof StopCompletionError &&
+          error.status === NOT_FOUND_STATUS;
+        if (isNotFound && (await hasGenerationEnded())) return;
+        stopRequestedIdsRef.current.delete(genId);
         onStopError?.(error);
-      });
+      }
+    };
+    void sendStop();
   }, [
     conversationId,
     conversationRef,
