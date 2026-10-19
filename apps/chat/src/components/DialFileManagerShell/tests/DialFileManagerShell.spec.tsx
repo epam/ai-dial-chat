@@ -65,6 +65,7 @@ const capturedDialFileManagerProps: {
       destinationFolderPath?: string;
       setDestinationFolderPath?: (path?: string) => void;
       disabledPathTooltip?: string;
+      movedIntoItselfTooltip?: string;
       filesLoading?: boolean;
     };
   } | null;
@@ -86,6 +87,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         destinationFolderPath?: string;
         setDestinationFolderPath?: (path?: string) => void;
         disabledPathTooltip?: string;
+        movedIntoItselfTooltip?: string;
         filesLoading?: boolean;
       };
       onCreateFolder?: unknown;
@@ -209,6 +211,7 @@ const baseLabels: DialFileManagerShellLabels = {
   getMoveHeader: (count, name) =>
     count === 1 ? `Move "${name}"` : `Move ${count} items`,
   moveSourceDisabledTooltip: 'Unavailable for the original location',
+  movedIntoItselfTooltip: 'Not into itself',
   folderPickerLoadingTooltip: 'Loading folder contents. Please wait',
   folderPickerEmptyStateTitle: 'No folders here',
   folderPickerEmptyStateDescription: 'Create a folder or choose another',
@@ -439,6 +442,15 @@ describe('DialFileManagerShell', () => {
     expect(options?.disabledPathTooltip).toBe(
       baseLabels.folderPickerLoadingTooltip,
     );
+  });
+
+  it('passes the moved-into-itself tooltip to the destination-folder popup', () => {
+    renderShell();
+
+    expect(
+      capturedDialFileManagerProps.current?.destinationFolderPopupOptions
+        ?.movedIntoItselfTooltip,
+    ).toBe(baseLabels.movedIntoItselfTooltip);
   });
 
   it('passes the hook result onCreateFolder straight through to DialFileManager without wrapping it, so the destination-folder popup targets its own browsed path via the same fallback', () => {

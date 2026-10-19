@@ -448,6 +448,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       disabledPathTooltip: isDestinationFolderLoading
         ? labels.folderPickerLoadingTooltip
         : labels.moveSourceDisabledTooltip,
+      movedIntoItselfTooltip: labels.movedIntoItselfTooltip,
       emptyStateTitle: labels.folderPickerEmptyStateTitle,
       emptyStateDescription: labels.folderPickerEmptyStateDescription,
       sourceFolder: disabledDestinationPath,
@@ -464,6 +465,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       labels.getMoveHeader,
       labels.folderPickerLoadingTooltip,
       labels.moveSourceDisabledTooltip,
+      labels.movedIntoItselfTooltip,
       labels.folderPickerEmptyStateTitle,
       labels.folderPickerEmptyStateDescription,
       isDestinationFolderLoading,
