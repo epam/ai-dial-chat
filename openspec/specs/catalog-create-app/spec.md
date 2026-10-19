@@ -20,7 +20,14 @@ The menu SHALL contain:
 | `skill` | `CatalogI18nKeys.CreateSkill` | always | submenu, see below |
 | `prompt` | `CatalogI18nKeys.CreatePrompt` | `OverlayFeature.Prompts` on | `ROUTES.PromptEditor` |
 
-All entries SHALL be sorted together by label with `localeCompare(…, { sensitivity: 'base' })`, so runners and static options interleave alphabetically and case does not affect the order. There is no fixed order and no cap on the number of runner options.
+The entries SHALL be grouped into two sections, in this order:
+
+1. the **entity section** — `toolset`, `skill` and `prompt`;
+2. the **runner section** — `custom-app` and every `runner:*` entry.
+
+Within each section the entries SHALL be sorted by label with `localeCompare(…, { sensitivity: 'base' })`, so case does not affect the order. There is no cap on the number of runner options.
+
+When both sections hold at least one entry after gating and search filtering, the hook SHALL insert between them, in this order, a `DropdownItemType.Divider` item keyed `create-sections-divider` and a `DropdownItemType.PlainText` item keyed `runners-header` whose label is `CatalogEditNavigationLabels.createRunners`. When either section is empty, neither item SHALL be present and the remaining entries form a single list.
 
 Only runner options route into `/apps-editor`. Toolsets, custom apps, skills, and prompts each have their own editor route and are **not** schema-driven.
 
@@ -28,15 +35,15 @@ The `skill` entry SHALL be a submenu rather than a direct action, with two child
 
 Every navigating option other than the runners SHALL navigate to its bare editor route with no query parameters; the editors return to their own fixed route on cancel or save.
 
-**Feature flags**: `OverlayFeature.SchemaApps`, `HideCustomAppCreation`, `Toolsets`, `CustomApps` and `Prompts` gate this menu. `HideCustomAppCreation` is an inverted gate: when on, it removes every runner option and the custom-app option.
+**Feature flags**: `OverlayFeature.SchemaApps`, `HideCustomAppCreation`, `Toolsets`, `CustomApps` and `Prompts` gate this menu. `HideCustomAppCreation` is an inverted gate: when on, it removes every runner option and the custom-app option, and with them the runner section.
 
-**i18n impact**: runner labels come from the schema data, not translation keys. `catalog.create.quickApp` (`CatalogI18nKeys.CreateQuickApp`) and `CatalogEditNavigationLabels.createQuickApp` are removed. The other labels use existing `CatalogI18nKeys` members.
+**i18n impact**: runner labels come from the schema data, not translation keys. The runner-section header uses `catalog.create.runners` (`CatalogI18nKeys.CreateRunners`, "Runners"), passed to the hook as `CatalogEditNavigationLabels.createRunners`. The other labels use existing `CatalogI18nKeys` members.
 
-**RTL / UI impact**: none beyond `CreateButton` (see the searchable-menu requirement).
+**RTL / UI impact**: none beyond `CreateButton` and `CreateMenuSheet`. The divider and header are direction-agnostic and use logical spacing.
 
 **Memoisation**: `createOptions` SHALL be wrapped in `useMemo` over the search query, the resolved runner schemas, the navigate function, the URL builders, the labels, the archive-picker trigger and every gating flag it reads. The runner schemas SHALL be memoised on `schemas`.
 
-**Accessibility**: `CreateButton` from `@epam/ai-dial-catalog` handles its own ARIA. No additional attributes are required in `CatalogView`.
+**Accessibility**: `CreateButton` from `@epam/ai-dial-catalog` handles its own ARIA. The divider SHALL render with `role="separator"`, and the header SHALL be neither a `menuitem` nor focusable, so arrow-key navigation moves only between options. No additional attributes are required in `CatalogView`.
 
 #### Scenario: A disabled feature removes only its own option
 
@@ -46,7 +53,7 @@ Every navigating option other than the runners SHALL navigate to its bare editor
 #### Scenario: HideCustomAppCreation removes the runners and the custom-app option
 
 - **WHEN** `OverlayFeature.HideCustomAppCreation` is on
-- **THEN** no `runner:*` entry and no `custom-app` entry is present, regardless of the `SchemaApps` and `CustomApps` flags
+- **THEN** no `runner:*` entry, no `custom-app` entry, no `create-sections-divider` and no `runners-header` is present, regardless of the `SchemaApps` and `CustomApps` flags
 
 #### Scenario: The skill option is always offered
 
@@ -63,10 +70,16 @@ Every navigating option other than the runners SHALL navigate to its bare editor
 - **WHEN** the user activates the `toolset`, `custom-app`, `skill-write-instructions`, or `prompt` entry
 - **THEN** the router navigates to that entry's own editor route with no query string
 
-#### Scenario: Runners and static options interleave alphabetically
+#### Scenario: Entity options come first, then the runner section under a header
 
-- **WHEN** the runners are "Mind Map", "Quick app" and "Quick app 2.0", and Toolset, Custom App, Skill and Prompt are enabled with labels "Create toolset", "Create custom app", "Skill", "Create prompt"
-- **THEN** the options are ordered "Create custom app", "Create prompt", "Create toolset", "Mind Map", "Quick app", "Quick app 2.0", "Skill"
+- **WHEN** the runners are "Quick app 2.0", "DIAL Loop" and "External app", and Toolset, Custom App, Skill and Prompt are enabled with labels "Toolset", "Custom App", "Skill", "Prompt"
+- **THEN** the `createOptions` keys are, in order, `prompt`, `skill`, `toolset`, `create-sections-divider`, `runners-header`, `custom-app`, `runner:<DIAL Loop>`, `runner:<External app>`, `runner:<Quick app 2.0>`
+- **AND** `runners-header` has the label passed as `labels.createRunners`
+
+#### Scenario: Only one non-empty section renders without a header
+
+- **WHEN** runner creation is enabled but Toolsets and Prompts are off and the search query is "loop", matching only the "DIAL Loop" runner
+- **THEN** `createOptions` holds only `runner:<DIAL Loop>`, with no `create-sections-divider` and no `runners-header`
 
 ---
 
@@ -155,18 +168,17 @@ Alongside `createOptions`, `useCatalogEditNavigation` SHALL return `createMenuBy
 The query SHALL be trimmed and matched case-insensitively as a substring of each option's label:
 
 - runner, toolset, custom-app and prompt options are kept only when their label matches;
-- the `skill` group is kept with both children when "Skill" matches, otherwise with only its matching children, and is dropped when neither the group nor a child matches.
+- the `skill` group is kept with both children when "Skill" matches, otherwise with only its matching children, and is dropped when neither the group nor a child matches;
+- the `runners-header` label is never matched against the query; the header and the divider are kept only while both sections still hold an option (see the create-menu requirement).
 
-`CatalogView` SHALL pass `createSearch` to `Catalog`, whose `createSearch` prop forwards it to `CreateButton`, together with translated `titles.createSearchPlaceholder` (`basic.searchPlaceholder`), `titles.createSearchClearLabel` (`basic.clearSearch`) and `titles.createNoResultsLabel` (`basic.noResults`). The lib defaults are `'Search'`, `'Clear search'` and `'No results found'`. No new translation key is introduced.
+`CatalogView` SHALL pass `createSearch` to `Catalog`, whose `createSearch` prop forwards it to `CreateButton`, together with translated `titles.createSearchPlaceholder` (`basic.searchPlaceholder`), `titles.createSearchClearLabel` (`basic.clearSearch`) and `titles.createNoResultsLabel` (`basic.noResults`). The lib defaults are `'Search'`, `'Clear search'` and `'No results found'`.
 
-`CreateButton` SHALL, when `search` is provided, render the kit `Dropdown` with `searchable`, `searchValue={search.value}` and `onSearchChange={search.onChange}`, passing `searchPlaceholder`, `searchClearLabel` and `noResultsLabel` through. The kit then owns the search UI:
+`CreateButton` SHALL render, when `search` is provided:
 
-- its search field sits above the item list, named by the placeholder, and stays in view while the list scrolls;
-- every string option label, nested labels included, is highlighted for the current query in one line, with an ellipsis and a tooltip on overflow;
-- the no-results label is shown and announced through a `role="status"` region when the filtered list is empty;
-- the query is reset to `''` (`onSearchChange('')`) whenever the menu closes.
-
-The options arrive already filtered by `useCatalogEditNavigation`, which the mobile menu sheet shares; the kit's own filter applies the same substring rule, so it narrows them no further.
+- the kit `Search` (small) in the dropdown's `menuHeader`, named by the placeholder (`aria-label`), on an opaque `bg-layer-raised` row that sticks at `-top-1`, so it also covers the panel's 4px inset and no scrolled option shows above or behind it;
+- every string label of a `DropdownItemType.Item` option, nested labels included, through the kit `Highlight` for the current query with `maxLines={1}` — one line, ellipsis, tooltip on overflow. `highlightDropdownLabels` (`libs/catalog/src/utils/create-menu.tsx`) SHALL return `Divider` and `PlainText` items unchanged;
+- a single `DropdownItemType.PlainText` row wrapping the no-results label in `role="status"` when the filtered list is empty;
+- a reset of the query to `''` whenever the menu closes.
 
 #### Scenario: The query narrows every kind of option
 
@@ -176,17 +188,22 @@ The options arrive already filtered by `useCatalogEditNavigation`, which the mob
 #### Scenario: A query can reach a skill child
 
 - **WHEN** the user types "upload"
-- **THEN** the menu shows only the `skill` group, containing only `skill-upload`
+- **THEN** the menu shows only the `skill` group, containing only `skill-upload`, with no divider and no header
 
 #### Scenario: Matches are highlighted
 
 - **WHEN** the user types "oc" and "OCR" is an option
 - **THEN** the "OC" part of its label is wrapped in a `mark` element
 
+#### Scenario: The section header is not highlighted
+
+- **WHEN** Prompt is enabled, "OCR" is a runner, and the user types "r", so both "Prompt" and "OCR" still match
+- **THEN** the "Runners" header is shown and its text contains no `mark` element, while "Prompt" and "OCR" each have their "r" wrapped in `mark`
+
 #### Scenario: An empty result is announced
 
 - **WHEN** the query matches no option
-- **THEN** the menu shows the no-results label inside a `role="status"` element
+- **THEN** the menu shows the no-results label inside a `role="status"` element, and no divider or header
 
 #### Scenario: Closing the menu clears the query
 

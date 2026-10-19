@@ -1,4 +1,9 @@
-## ADDED Requirements
+# conversation-start-timestamp Specification
+
+## Purpose
+Specifies the label above a conversation's first message that shows when the conversation started ("Today 11:51 AM", "Yesterday 3:24 PM" or a full date): where its time comes from, when it is hidden for a conversation just created in the current page instance, its contextual format and i18n keys, its markup, and the backend rule that keeps the first message's timestamp stable across edits. The label component itself is `ConversationStartTimestamp` in `@epam/ai-dial-conversation-messages`; per-message send times are specified by `message-hover-timestamp`.
+
+## Requirements
 
 ### Requirement: Conversation start time source
 The conversation page SHALL derive the conversation start time from the `timestamp` of the first message, `conversation.messages[0].timestamp`, which is an ISO-8601 string. It SHALL NOT use `updatedAt`, `lastActivityDate`, or the list item's `createdAt`. The start time is derived per render from the loaded `Conversation` held by `ConversationPage` in `apps/chat/src/pages/Conversation/Conversation.tsx`. No new context, hook state, or cache is introduced for it.
@@ -46,7 +51,7 @@ The label SHALL be rendered exactly once, through the `topContent` slot of `Conv
 - **THEN** the banner is rendered first and the start label follows it
 
 ### Requirement: Contextual start label format
-The label SHALL be rendered by `ConversationStartTimestamp` from `@epam/ai-dial-conversation-messages`, with the active language as `locale` and the translated templates as `labels`. Its text SHALL be computed by a pure function `formatConversationStart` in `libs/conversation-messages/src/utils/date-time.ts`. The function takes the start date, the current date, and the locale. It returns a `ConversationStartKind` (`Today`, `Yesterday`, or `Absolute`) together with the localized text. `ConversationStartTimestamp` then applies the `labels.today` / `labels.yesterday` templates, which default to English. Calendar days SHALL be compared in the browser's local time zone. The time and date parts SHALL be produced with `Intl.DateTimeFormat` using the active UI language from `useLanguage()`, without a hard-coded `timeZone`, so the user's local zone and the locale's 12- or 24-hour convention apply. Results:
+The label SHALL be rendered by `ConversationStartTimestamp` from `@epam/ai-dial-conversation-messages`, with the active language as `locale` and the translated templates as `labels`. Its text SHALL be computed by a pure function `formatConversationStart` in `libs/conversation-messages/src/utils/date-time.ts`. The function takes the start date, the current date, and the locale. It returns a `ConversationStartKind` (`Today`, `Yesterday`, or `Absolute`) together with the localized text. `ConversationStartTimestamp` then applies the `labels.today` / `labels.yesterday` templates, which default to English. Calendar days SHALL be compared in the browser's local time zone. The time and date parts SHALL be produced with `Intl.DateTimeFormat` in the `locale` prop, which `Conversation.tsx` sets to the active UI language from `useLanguage()`, without a hard-coded `timeZone`, so the user's local zone and the locale's 12- or 24-hour convention apply. Results:
 - start date on the current local calendar day: the `conversation.startedToday` template with `{{time}}` set to the localized hour and minute
 - start date on the previous local calendar day: the `conversation.startedYesterday` template, filled the same way
 - otherwise: a localized absolute date with abbreviated month, day, year, hour and minute (for example `Sep 20, 2026, 10:15 AM` in `en`)

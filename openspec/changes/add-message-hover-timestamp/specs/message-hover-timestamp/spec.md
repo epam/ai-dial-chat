@@ -12,7 +12,7 @@
 - **THEN** no message send times are rendered
 
 ### Requirement: Send time in the message action row
-When `hasTimestamp` is set, `ConversationMessageItem` SHALL pass `timestamp={msg.timestamp}` and `locale` (the active language) to `MessageBubble`, whose bubbles SHALL render a `MessageTimestamp` element (`libs/conversation-messages/src/components/MessageTimestamp/MessageTimestamp.tsx`) , placed on the outer edge of the action toolbar. For a user message, `UserMessageBubble` passes it to `MessageActions` as `leadingContent`, before the buttons of the end-aligned toolbar. For an assistant response, `AssistantMessageBubble` passes it as `trailingContent`, after the buttons of the start-aligned toolbar. Host `actions.leadingContent` and `actions.trailingContent` stay beside it. A message whose `timestamp` is missing or does not parse to a valid date SHALL render no send time.
+When `hasTimestamp` is set, `ConversationMessageItem` SHALL pass `timestamp={msg.timestamp}` and `locale` (the active language) to `MessageBubble`, whose bubbles SHALL render a `MessageTimestamp` element (`libs/conversation-messages/src/components/MessageTimestamp/MessageTimestamp.tsx`), placed on the outer edge of the action toolbar. For a user message, `UserMessageBubble` passes it to `MessageActions` as `leadingContent`, before the buttons of the end-aligned toolbar. For an assistant response, `AssistantMessageBubble` passes it as `trailingContent`, after the buttons of the start-aligned toolbar. Host `actions.leadingContent` and `actions.trailingContent` stay beside it. A message whose `timestamp` is missing or does not parse to a valid date SHALL render no send time.
 
 #### Scenario: User message placement
 - **WHEN** a user message with a valid timestamp is rendered with `hasTimestamp`
@@ -49,7 +49,7 @@ No new i18n keys are introduced: `Intl` localizes the wording.
 - **THEN** the label reads `yesterday`
 
 ### Requirement: Hover, focus and touch visibility
-On devices with hover capability, the send time SHALL be visually hidden (opacity 0) by default. It SHALL become visible while the pointer hovers the per-message bubble root in `UserMessageBubble` or `AssistantMessageBubble`, which carries the named group class `group/message`, or while keyboard focus is inside that wrapper. On devices matching `@media (hover: none)`, it SHALL always be visible.
+On devices with hover capability, the send time SHALL be visually hidden (opacity 0) by default. It SHALL become visible while the pointer hovers the per-message bubble root in `UserMessageBubble` or `AssistantMessageBubble`, which carries the named group class `group/message`, or while keyboard focus is inside that root. On devices matching `@media (hover: none)`, it SHALL always be visible.
 
 The `<time>` element SHALL be keyboard-focusable (`tabIndex={0}`) so its tooltip is reachable without a pointer. It SHALL stay in the accessibility tree: visibility changes use opacity only.
 
