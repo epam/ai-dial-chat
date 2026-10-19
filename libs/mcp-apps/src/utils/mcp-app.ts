@@ -67,6 +67,30 @@ const resolveToolCalls = (
   return calls;
 };
 
+const INVALID_TOOL_NAME_CHARS = /[^a-zA-Z0-9_-]+/g;
+const MAX_TOOL_NAME_LENGTH = 64;
+
+/**
+ * Reproduces the tool-name sanitization QuickApps applies to
+ * `${toolsetName}_${toolName}` before sending a tool to the LLM
+ * (`sanitize_toolname` in `epam/ai-dial-quickapps-backend`,
+ * `src/quickapp/common/utils.py`): every run of characters outside
+ * `[a-zA-Z0-9_-]` becomes a single `_`, a name not starting with a letter or `_`
+ * gets a leading `_`, and the result is cut to 64 characters.
+ *
+ * Temporary heuristic: the host has no toolset id on a tool call, so it can only
+ * correlate a call with a toolset by guessing this name. Replace it once MCP Apps
+ * are fully supported and the orchestrator reports the toolset a call belongs to.
+ * @param input - raw `${toolsetName}_${toolName}` (or `${toolsetName}_` prefix)
+ */
+export const sanitizeToolName = (input: string): string => {
+  let sanitized = input.replace(INVALID_TOOL_NAME_CHARS, '_');
+  if (sanitized !== '' && !/^[a-zA-Z_]/.test(sanitized)) {
+    sanitized = `_${sanitized}`;
+  }
+  return sanitized.slice(0, MAX_TOOL_NAME_LENGTH);
+};
+
 /**
  * Collects every real tool-call name seen across `messages`' `custom_content.state`
  * (in whichever known orchestrator shape is present). Used to discover an MCP-capable
