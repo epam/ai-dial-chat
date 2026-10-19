@@ -44,7 +44,11 @@ export const getTabCreateButtonConfig = (
     menu.search == null &&
     !onlyOption.children?.length
   ) {
+    /* `options`/`search` are set explicitly so they override the header's
+       full menu when this config is spread over the header's button props. */
     return {
+      options: undefined,
+      search: undefined,
       onClick: (event) =>
         onlyOption.onClick?.({ key: onlyOption.key, domEvent: event }),
     };
