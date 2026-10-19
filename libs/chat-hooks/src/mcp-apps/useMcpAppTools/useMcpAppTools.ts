@@ -5,6 +5,7 @@ import type {
 import type { Message } from '@epam/ai-dial-chat-shared';
 import {
   collectToolCallNames,
+  sanitizeToolName,
   type McpAppToolRef,
   type McpDeploymentKind,
 } from '@epam/ai-dial-mcp-apps';
@@ -82,7 +83,7 @@ export const useMcpAppTools = (
 
     const candidateToolsets = toolsets.filter((toolset) => {
       if (fetchedToolsetIdsRef.current.has(toolset.id)) return false;
-      const prefix = `${toolset.displayName ?? toolset.id}_`;
+      const prefix = sanitizeToolName(`${toolset.displayName ?? toolset.id}_`);
       return [...toolCallNames].some((name) => name.startsWith(prefix));
     });
     if (candidateToolsets.length === 0) return;
@@ -99,7 +100,9 @@ export const useMcpAppTools = (
             return tools.map(({ resourceUri, toolName }) => ({
               toolsetId: toolset.id,
               resourceUri,
-              toolName: `${toolset.displayName ?? toolset.id}_${toolName}`,
+              toolName: sanitizeToolName(
+                `${toolset.displayName ?? toolset.id}_${toolName}`,
+              ),
               mcpToolName: toolName,
               kind: 'toolset' as McpDeploymentKind,
               discovery: 'indirect' as const,
