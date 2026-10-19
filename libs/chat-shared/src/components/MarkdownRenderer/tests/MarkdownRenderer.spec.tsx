@@ -535,12 +535,14 @@ describe('MarkdownRenderer', () => {
      * the <math> element only appears after that async load resolves.
      * MathML's `<math>` element also crashes `getByRole` under jsdom (jsdom
      * cannot compute styles for MathML elements), so a plain selector is
-     * the only reliable way to assert its presence here.
+     * the only reliable way to assert its presence here. This is the first
+     * test to trigger the cold KaTeX import, so it can exceed the default
+     * 1s `waitFor` timeout on a loaded machine.
      */
     await waitFor(() => {
       // eslint-disable-next-line testing-library/no-node-access
       expect(document.querySelector('math')).toBeTruthy();
-    });
+    }, { timeout: 5000 });
   });
 
   it('wraps block LaTeX in a horizontally scrollable container so a wide formula stays reachable', async () => {
