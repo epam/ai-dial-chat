@@ -47,6 +47,8 @@ export interface ConfirmationViewProps {
   variant?: ConfirmationPopupVariant;
   /** Typography class applied to the message and the bullet list. Defaults to `'dial-small-text'`. */
   messageClassName?: string;
+  /** CSS class applied to the view root, e.g. a `pt-0` override of the default top padding. */
+  className?: string;
   /** Style overrides. */
   styles?: ConfirmationViewStyles;
   /**
@@ -69,6 +71,7 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
   consequences,
   variant = ConfirmationPopupVariant.Info,
   messageClassName = 'dial-small-text',
+  className,
   styles: stylesProp,
   children,
 }) => {
@@ -79,7 +82,13 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
   });
 
   return (
-    <div style={cssVars} className="flex flex-col gap-4 px-4 py-4 desktop:px-6">
+    <div
+      style={cssVars}
+      className={mergeClasses(
+        'flex flex-col gap-4 px-4 py-4 desktop:px-6',
+        className,
+      )}
+    >
       {identity ??
         (item != null && (
           <ConfirmationIdentityCard

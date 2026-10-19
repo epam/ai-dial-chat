@@ -27,12 +27,17 @@ export const calendarValueToRunAt = (value: CalendarValue): string => {
  * as UTC midnight per the ECMA-262 date-time string format — which would
  * shift the displayed calendar day by one in any timezone behind UTC.
  */
-/** Converts a `YYYY-MM-DD` date-only string (`values.startDate`/`endDate`) to a `Date` for `Calendar`'s controlled value, or `null` when empty. */
+/** Converts a window-boundary value — date-only `YYYY-MM-DD` or hourly `YYYY-MM-DDTHH:mm` — to a `Date` for `Calendar`'s controlled value, or `null` when empty. */
 export const dateValueToCalendarValue = (
   dateValue: string | undefined,
 ): Date | null => {
   if (!dateValue) {
     return null;
+  }
+  /* A datetime-local string parses as local wall-clock; only the bare
+   * date-only form needs component-wise construction. */
+  if (dateValue.includes('T')) {
+    return new Date(dateValue);
   }
   const [year, month, day] = dateValue.split('-').map(Number);
   return new Date(year, month - 1, day);

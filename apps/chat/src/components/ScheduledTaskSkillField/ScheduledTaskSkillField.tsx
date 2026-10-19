@@ -38,7 +38,6 @@ const ScheduledTaskSkillField: FC<
       fieldLabel,
       placeholder: t(ScheduledTasksI18nKeys.CreateSkillPlaceholder),
       unsupportedTooltipLabel: t(SkillSelectorI18nKeys.UnsupportedTooltipLabel),
-      unavailableTooltipLabel: t(SkillSelectorI18nKeys.UnavailableTooltipLabel),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       emptyLabel: t(SkillSelectorI18nKeys.NoSkillsLabel),
       noMatchingSkillsLabel: t(SkillSelectorI18nKeys.NoMatchingSkillsLabel),

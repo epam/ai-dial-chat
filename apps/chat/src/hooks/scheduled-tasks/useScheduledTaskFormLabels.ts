@@ -28,13 +28,11 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
       configurationSectionTitle: t(
         ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
       ),
-      configurationSectionSubtitle: t(
-        ScheduledTasksI18nKeys.CreateConfigurationSectionSubtitle,
-      ),
       skillLabel: t(ScheduledTasksI18nKeys.CreateSkillLabel),
       displayNameLabel: t(EditorI18nKeys.NameLabel),
       displayNameRequired: t(EditorI18nKeys.NameRequired),
       runAtLabel: t(ScheduledTasksI18nKeys.CreateRunAtLabel),
+      runAtPlaceholder: t(ScheduledTasksI18nKeys.CreateRunAtPlaceholder),
       timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
       timeInvalidLabel: t(ScheduledTasksI18nKeys.CreateTimeInvalid),
       repeatLabel: t(ScheduledTasksI18nKeys.CreateRepeatLabel),
@@ -65,10 +63,14 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
       minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),
       startDateLabel: t(ScheduledTasksI18nKeys.CreateStartDateLabel),
+      startDateAndTimeLabel: t(
+        ScheduledTasksI18nKeys.CreateStartDateAndTimeLabel,
+      ),
       startDatePlaceholder: t(
         ScheduledTasksI18nKeys.CreateStartDatePlaceholder,
       ),
       endDateLabel: t(ScheduledTasksI18nKeys.CreateEndDateLabel),
+      endDateAndTimeLabel: t(ScheduledTasksI18nKeys.CreateEndDateAndTimeLabel),
       endDatePlaceholder: t(ScheduledTasksI18nKeys.CreateEndDatePlaceholder),
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),

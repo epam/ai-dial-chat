@@ -209,4 +209,99 @@ describe('validateScheduledTaskFormValues', () => {
       ),
     ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInPast });
   });
+
+  it('accepts hourly datetime-local window boundaries', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-22T08:00',
+          endDate: '2026-09-23T18:30',
+        },
+        { now: localNow },
+      ),
+    ).toEqual({});
+  });
+
+  it('rejects a malformed hourly datetime boundary', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-22T99:99',
+          endDate: '2026-09-23T18:30',
+        },
+        { now: localNow },
+      ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInvalid });
+  });
+
+  it('rejects an hourly window whose end precedes its start on the same day', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-22T18:00',
+          endDate: '2026-09-22T08:00',
+        },
+        { now: localNow },
+      ),
+    ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInvalid });
+  });
+
+  it('rejects an hourly boundary on an earlier day and accepts one on the clock day', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-21T23:00',
+        },
+        { now: localNow },
+      ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInPast });
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-22T08:00',
+        },
+        { now: localNow },
+      ),
+    ).toEqual({});
+  });
+
+  it('accepts a mixed-shape window left over from a repeat switch', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-22',
+          endDate: '2026-09-23T18:30',
+        },
+        { now: localNow },
+      ),
+    ).toEqual({});
+  });
 });

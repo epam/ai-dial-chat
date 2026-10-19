@@ -14,10 +14,14 @@ import styles from './ScheduledTaskRunAtField.module.scss';
 export interface ScheduledTaskRunAtFieldProps {
   /** Label rendered above the picker by the kit Calendar. */
   label: string;
+  /** Placeholder shown in the picker when unset. */
+  placeholder: string;
   /** Current `datetime-local`-style value (`YYYY-MM-DDTHH:mm`), empty when unset. */
   value: string;
   /** Called with the next `datetime-local`-style value. */
   onChange: (value: string) => void;
+  /** Disables the picker, e.g. while the form is submitting. */
+  disabled?: boolean;
   /** Submit-time validation error rendered under the picker. */
   error?: string;
   /** CSS class applied to the error text. Defaults to `'dial-small-text'`. */
@@ -27,8 +31,10 @@ export interface ScheduledTaskRunAtFieldProps {
 /** One-shot "run at" date-time picker for the create/edit form: the kit's masked `Calendar` whose earliest selectable moment is pinned at mount, and the submit-time error below it. */
 export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
   label,
+  placeholder,
   value,
   onChange,
+  disabled,
   error,
   errorClassName = 'dial-small-text',
 }) => {
@@ -49,7 +55,9 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
         onChange={handleCalendarChange}
         minDate={minDate}
         labelProps={{ label, required: true }}
+        placeholder={placeholder}
         invalid={Boolean(error)}
+        disabled={disabled}
       />
       {error && (
         <p className={mergeClasses(errorClassName, styles.error)}>{error}</p>

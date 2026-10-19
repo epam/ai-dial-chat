@@ -114,14 +114,15 @@ describe('SkillSelectorField', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('explains why an empty unsupported field is disabled', async () => {
+  it('disables an empty unsupported field without a tooltip or caption', async () => {
     const user = userEvent.setup();
     render(field({ isSkillsSupported: false }));
     const trigger = screen.getByRole('combobox', { name: 'Skills' });
     expect((trigger as HTMLInputElement).disabled).toBe(true);
-    expect(trigger.getAttribute('aria-describedby')).toBeTruthy();
+    expect(trigger.getAttribute('aria-describedby')).toBeNull();
     await user.hover(trigger);
-    expect(await screen.findByRole('tooltip')).toBeTruthy();
+    /* No selection, so no reason text exists to show. */
+    expect(screen.queryByRole('tooltip')).toBeNull();
   });
 
   it('associates a host validation error with the combobox', () => {

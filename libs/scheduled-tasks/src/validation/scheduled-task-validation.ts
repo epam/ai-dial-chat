@@ -94,6 +94,9 @@ const MINUTE_PATTERN = /^(?:[0-9]|[1-5][0-9])$/;
 const WEEKDAY_PATTERN = /^[0-6]$/;
 const MONTH_DAY_PATTERN = /^(?:[1-9]|[12][0-9]|3[01])$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/* Hourly repeats write `YYYY-MM-DDTHH:mm` window boundaries; day-based
+ * repeats (and a boundary left over from a repeat switch) write date-only. */
+const DATETIME_LOCAL_PATTERN = /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):([0-5]\d)$/;
 
 const isValidDateOnly = (value: string): boolean => {
   if (!DATE_PATTERN.test(value)) return false;
@@ -104,6 +107,16 @@ const isValidDateOnly = (value: string): boolean => {
     date.getFullYear() === year &&
     date.getMonth() === month - 1 &&
     date.getDate() === day
+  );
+};
+
+/** Accepts a window boundary in either shape: date-only `YYYY-MM-DD` or hourly `YYYY-MM-DDTHH:mm`. */
+const isValidWindowBoundary = (value: string): boolean => {
+  if (!isValidDateOnly(value.slice(0, 10))) return false;
+  return (
+    value.length === 10 ||
+    (DATETIME_LOCAL_PATTERN.test(value) &&
+      Number.isFinite(new Date(value).getTime()))
   );
 };
 
@@ -199,17 +212,20 @@ export const validateScheduledTaskFormValues = (
     errors.dayOfMonth = ScheduledTaskValidationErrorCode.DayOfMonthInvalid;
   }
 
-  if (values.startDate && !isValidDateOnly(values.startDate)) {
+  if (values.startDate && !isValidWindowBoundary(values.startDate)) {
     errors.startDate = ScheduledTaskValidationErrorCode.StartDateInvalid;
   }
-  if (values.endDate && !isValidDateOnly(values.endDate)) {
+  if (values.endDate && !isValidWindowBoundary(values.endDate)) {
     errors.endDate = ScheduledTaskValidationErrorCode.EndDateInvalid;
   }
+  /* Raw string comparison is chronological in both shapes: same-shape values
+   * compare field by field, and a date-only value sorts before a same-day
+   * datetime value (it is its prefix). */
   if (
     values.startDate &&
     values.endDate &&
-    isValidDateOnly(values.startDate) &&
-    isValidDateOnly(values.endDate) &&
+    isValidWindowBoundary(values.startDate) &&
+    isValidWindowBoundary(values.endDate) &&
     values.endDate < values.startDate
   ) {
     errors.endDate = ScheduledTaskValidationErrorCode.EndDateInvalid;
@@ -228,7 +244,7 @@ export const validateScheduledTaskFormValues = (
   if (
     values.startDate &&
     values.startDate !== originalStartDate &&
-    isValidDateOnly(values.startDate) &&
+    isValidWindowBoundary(values.startDate) &&
     values.startDate < today
   ) {
     errors.startDate = ScheduledTaskValidationErrorCode.StartDateInPast;
@@ -236,7 +252,7 @@ export const validateScheduledTaskFormValues = (
   if (
     values.endDate &&
     values.endDate !== originalEndDate &&
-    isValidDateOnly(values.endDate) &&
+    isValidWindowBoundary(values.endDate) &&
     values.endDate < today
   ) {
     errors.endDate = ScheduledTaskValidationErrorCode.EndDateInPast;

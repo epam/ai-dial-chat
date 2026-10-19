@@ -4,7 +4,10 @@ import {
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { ConfirmationFooter } from '../ConfirmationView/ConfirmationFooter';
+import {
+  ConfirmationFooter,
+  type ConfirmationFooterStyles,
+} from '../ConfirmationView/ConfirmationFooter';
 import {
   ConfirmationView,
   type ConfirmationViewProps,
@@ -36,6 +39,10 @@ export interface ConfirmationDialogProps extends ConfirmationViewProps {
   popupClassName?: string;
   /** CSS class applied to the dialog title. */
   titleClassName?: string;
+  /** CSS class applied to the content view root, e.g. a `pt-0` override of its default top padding. */
+  viewClassName?: string;
+  /** Style overrides forwarded to the action row, e.g. a transparent top border. */
+  footerStyles?: ConfirmationFooterStyles;
   /** Called when the user confirms. */
   onConfirm: () => void;
   /** Called when the dialog is dismissed — Cancel, the header close control, Escape, or an outside click. */
@@ -58,6 +65,8 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
   size = PopupSize.Sm,
   popupClassName,
   titleClassName,
+  viewClassName,
+  footerStyles,
   variant = ConfirmationPopupVariant.Info,
   onConfirm,
   onClose,
@@ -88,12 +97,17 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
           isLoading={isLoading}
           isConfirmDisabled={isConfirmDisabled}
           loadingStatusLabel={loadingStatusLabel}
+          styles={footerStyles}
           onConfirm={onConfirm}
           onCancel={handleClose}
         />
       }
     >
-      <ConfirmationView variant={variant} {...viewProps} />
+      <ConfirmationView
+        variant={variant}
+        className={viewClassName}
+        {...viewProps}
+      />
     </Popup>
   );
 };

@@ -100,12 +100,9 @@ function SkillFieldExample() {
 }
 ```
 
-When `isSkillsSupported` is false, adding is disabled and hovering the field
-shows a tooltip with the reason: `labels.unsupportedTooltipLabel` while a skill
-is selected, otherwise `labels.unavailableTooltipLabel` (defaults to
-`'Selected model does not support skills. Select a different model to use a skill.'`).
-With no selection the same text is supplied as the Select caption so it is
-associated with the combobox through `aria-describedby`.
+When `isSkillsSupported` is false, adding is disabled and, while a skill is
+selected, hovering the field shows `labels.unsupportedTooltipLabel` as the
+reason. With no selection the field is disabled without a tooltip or caption.
 
 Public types: `SkillSelectorFieldProps`, `SkillSelectorFieldLabels`,
 `SkillSelectorFieldStyles`, and `SkillSelectorOption`. `styles` supports colors (`text`, `background`,

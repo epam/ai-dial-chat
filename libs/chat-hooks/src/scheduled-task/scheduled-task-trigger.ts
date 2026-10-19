@@ -102,18 +102,23 @@ const buildCronFields = (
 };
 
 /*
- * Converts a `YYYY-MM-DD` local calendar date (`values.startDate`/`endDate`)
- * to the UTC ISO instant at the start or end of that local day, using the
- * same reference-`Date`-plus-getters technique as `buildCronFields` above:
- * the browser's own timezone/DST handling does the conversion, rather than
- * manual offset arithmetic. `end` resolves to `23:59:59.999` local, not
- * midnight of the next day, so the last local day the user picked stays
- * fully inside the window.
+ * Converts a window-boundary value to the UTC ISO instant the cron trigger
+ * stores. An hourly `YYYY-MM-DDTHH:mm` value is the picked instant itself;
+ * a date-only `YYYY-MM-DD` value (day-based repeats, or a boundary left over
+ * from a repeat switch) resolves to the start or end of that local day,
+ * using the same reference-`Date`-plus-getters technique as `buildCronFields`
+ * above: the browser's own timezone/DST handling does the conversion, rather
+ * than manual offset arithmetic. A day-based `end` resolves to `23:59:59.999`
+ * local, not midnight of the next day, so the last local day the user picked
+ * stays fully inside the window.
  */
 const buildCronWindowBoundary = (
   dateValue: string,
   edge: CronWindowEdge,
 ): string => {
+  if (dateValue.includes('T')) {
+    return new Date(dateValue).toISOString();
+  }
   const [year, month, day] = dateValue.split('-').map(Number);
   const reference = new Date(year, month - 1, day);
   if (edge === CronWindowEdge.Start) {
@@ -374,10 +379,12 @@ export const mapScheduledTaskDtoToFormValues = (
         repeat: ScheduledTaskRepeat.Hourly,
         time: DEFAULT_TIME_PLACEHOLDER,
         minute: parsed.minute,
+        /* Hourly boundaries hydrate as datetime-local values, since the
+         * hourly editor picks exact moments, unlike the day-based pair. */
         ...(cron.startDate
-          ? { startDate: isoToLocalDateOnly(cron.startDate) }
+          ? { startDate: isoToLocalDateTime(cron.startDate) }
           : {}),
-        ...(cron.endDate ? { endDate: isoToLocalDateOnly(cron.endDate) } : {}),
+        ...(cron.endDate ? { endDate: isoToLocalDateTime(cron.endDate) } : {}),
       },
     };
   }

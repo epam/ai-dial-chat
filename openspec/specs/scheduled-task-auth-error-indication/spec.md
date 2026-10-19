@@ -122,8 +122,6 @@ The 403-triggered check-and-decide logic SHALL live in one shared app-level help
 - **WHEN** either page's submit flow handles a `403` failure
 - **THEN** the check-and-decide step is the same shared implementation, and the submit orchestration (including the login-required toast and the retry) is the same shared hook, covered by unit tests for the outcome paths (disconnected, connected, failed check, missing connect, non-403)
 
----
-
 ### Requirement: The check helper is host-agnostic in libs/chat-hooks
 
 `checkScheduledTaskAuthSessionError` SHALL live in `libs/chat-hooks` (the `scheduled-task` domain, beside the other scheduled-task helpers), with the one status call arriving as a passed-in `getOfflineCredentials` operation — the host passes its already-configured thin wrapper, and the helper imports no client construction, no app server-api module, and no i18n. The disambiguation rule depends only on the DIAL Core response's own shape (the `403` status, the `available`/`connected` flags, the `connect` object's completeness), per the fourth library-isolation exception; the normalized response mapping SHALL be shared with the offline-credentials gate through one exported `mapOfflineCredentialsResponse` (with `normalizeOfflineCredentialsConnectSettings` for the connect object), so the gate's check, this helper, and the login refetch cannot drift apart. The check's documented contract — the connect settings are returned from the same single check regardless of the connection state, so the caller decides from one check — SHALL be preserved by the relocation.
