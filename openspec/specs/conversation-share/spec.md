@@ -73,7 +73,9 @@ Before calling DIAL Core's `shareResource`, `ShareInvitationService.createShareL
 
 The service SHALL collect unique DIAL prompt resource URLs from `application_properties.skills[]` entries whose `type` is exactly `'dial-prompt'`. Only entries whose `url` is a DIAL Core prompt resource url (`prompts/{bucket}/{path}`, per `isPromptResourceUrl`) are shareable. The `orchestrator.system_prompt` (`type: 'custom'`, inline content), `contexts[]` (file resources), `tool_sets[]`, and every other skill kind carry no separate DIAL resource and SHALL NOT be added to the sharing request. Deduplication is by exact url string, in first-seen order.
 
-The application resource SHALL remain the first item in `shareResource.resources`, followed by each unique related prompt resource. Every related prompt SHALL receive the same resolved permissions as the application (`READ` for view access, `READ` and `WRITE` for edit access).
+The service SHALL also collect the application's uploaded icon via `collectApplicationIconResourceUrl` (`apps/chat-api/src/share/utils/share-resource.util.ts`): the top-level `iconUrl` (falling back to `icon_url`) when it is a DIAL file resource (`files/{bucket}/{path}`), with any query string or `#`-fragment stripped and any `..` traversal segment rejected. Absolute URLs and theme icon names carry no DIAL resource and SHALL NOT be added. Without this grant the recipient cannot download an icon stored in the author's private bucket and sees no icon ([#9317](https://github.com/epam/ai-dial-chat/issues/9317)).
+
+The application resource SHALL remain the first item in `shareResource.resources`, followed by each unique related prompt resource and then the icon file. Every related prompt and the icon SHALL receive the same resolved permissions as the application (`READ` for view access, `READ` and `WRITE` for edit access).
 
 A referenced prompt whose bucket (`getResourceBucket`, segment `[1]` of a `prompts/{bucket}/...` url) is not the application's own bucket SHALL be silently omitted rather than failing the share. This covers two distinct cases: a prompt in another user's private bucket — DIAL Core rejects a single share request mixing more than one owning bucket, and the caller cannot grant access to a resource it doesn't own — and a prompt in the public/organization bucket (`PUBLIC_BUCKET`, `apps/chat-api/src/conversations/constants/conversation.constants.ts`), which is dropped for a different reason: `public` is DIAL Core's globally-readable bucket, already accessible to every authenticated user without a grant, and is not an owned resource `shareResource` can create an ACL entry for. Including a public-bucket resource in the request makes DIAL Core reject the whole batch with `"Incorrect resource link provided prompts/public/..."`.
 
@@ -102,6 +104,18 @@ The application pre-read is best-effort: it MUST NOT block sharing the applicati
 - **GIVEN** a quick app references `prompts/public/shared` via a `dial-prompt` skill
 - **WHEN** a share link is created for `applications/owner-bucket/my-app__1.0`
 - **THEN** `prompts/public/shared` is omitted from `shareResource.resources` and the share still succeeds
+
+#### Scenario: Uploaded icon is shared alongside the application
+
+- **GIVEN** an owned quick app has `iconUrl: 'files/owner-bucket/icons/app%20icon.png'`
+- **WHEN** a view share link is created for `applications/owner-bucket/my-app__1.0`
+- **THEN** `shareResource.resources` contains the icon file after the application and its prompts, with `permissions: ['READ']`
+
+#### Scenario: Icon outside the app bucket or not a DIAL file is excluded
+
+- **GIVEN** a quick app's icon is `files/public/...`, `files/other-bucket/...`, an absolute URL, or a theme icon name
+- **WHEN** a share link is created for `applications/owner-bucket/my-app__1.0`
+- **THEN** no icon resource is added to `shareResource.resources` and the share still succeeds
 
 #### Scenario: Application pre-read failure degrades to app-only sharing without blocking
 

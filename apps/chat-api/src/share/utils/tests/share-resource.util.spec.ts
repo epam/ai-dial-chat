@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  collectApplicationIconResourceUrl,
   collectApplicationPromptResourceUrls,
   collectConversationResourceUrls,
   deriveInvitationExpiry,
@@ -374,6 +375,48 @@ describe('collectApplicationPromptResourceUrls', () => {
     expect(collectApplicationPromptResourceUrls(null)).toEqual([]);
     expect(collectApplicationPromptResourceUrls(undefined)).toEqual([]);
     expect(collectApplicationPromptResourceUrls('string')).toEqual([]);
+  });
+});
+
+describe('collectApplicationIconResourceUrl', () => {
+  it('returns an uploaded iconUrl file resource', () => {
+    expect(
+      collectApplicationIconResourceUrl({
+        iconUrl: 'files/owner-bucket/icons/app.png',
+      }),
+    ).toBe('files/owner-bucket/icons/app.png');
+  });
+
+  it('falls back to icon_url', () => {
+    expect(
+      collectApplicationIconResourceUrl({
+        icon_url: 'files/owner-bucket/icons/app.png',
+      }),
+    ).toBe('files/owner-bucket/icons/app.png');
+  });
+
+  it('strips query strings and fragments', () => {
+    expect(
+      collectApplicationIconResourceUrl({
+        iconUrl: 'files/owner-bucket/icons/app.png?v=2#view',
+      }),
+    ).toBe('files/owner-bucket/icons/app.png');
+  });
+
+  it.each([
+    'https://example.com/app.png',
+    'app-theme-icon.svg',
+    'files/owner-bucket/../other/app.png',
+    'files/owner-bucket/..%2Fother%2Fapp.png',
+    '',
+  ])('returns undefined for %s', (iconUrl) => {
+    expect(collectApplicationIconResourceUrl({ iconUrl })).toBeUndefined();
+  });
+
+  it('returns undefined when the icon is absent or not a string', () => {
+    expect(collectApplicationIconResourceUrl({})).toBeUndefined();
+    expect(collectApplicationIconResourceUrl({ iconUrl: 42 })).toBeUndefined();
+    expect(collectApplicationIconResourceUrl(null)).toBeUndefined();
   });
 });
 

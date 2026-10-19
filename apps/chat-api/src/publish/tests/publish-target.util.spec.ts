@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   getPublicTargetFolder,
+  getPublishableIconUrl,
+  getPublishedIconTargetUrl,
   getPublishedTargetUrl,
   getResourceName,
   getResourceTypePrefix,
@@ -102,5 +104,72 @@ describe('getVersionedTargetResourceName', () => {
     ['toolsets', 'my-tool__1.0.0', '../evil'],
   ])('keeps %s "%s" unchanged for version %s', (prefix, name, version) => {
     expect(getVersionedTargetResourceName(prefix, name, version)).toBe(name);
+  });
+});
+
+describe('getPublishableIconUrl', () => {
+  it('returns an uploaded icon in the app bucket, without query or fragment', () => {
+    expect(
+      getPublishableIconUrl(
+        { iconUrl: 'files/bucket-123/icons/app.png?v=2#x' },
+        'bucket-123',
+      ),
+    ).toBe('files/bucket-123/icons/app.png');
+  });
+
+  it('falls back to icon_url', () => {
+    expect(
+      getPublishableIconUrl(
+        { icon_url: 'files/bucket-123/app.png' },
+        'bucket-123',
+      ),
+    ).toBe('files/bucket-123/app.png');
+  });
+
+  it('matches a percent-encoded bucket segment', () => {
+    expect(
+      getPublishableIconUrl(
+        { iconUrl: 'files/My%20Bucket/app.png' },
+        'My Bucket',
+      ),
+    ).toBe('files/My%20Bucket/app.png');
+  });
+
+  it.each([
+    'files/public/icons/app.png',
+    'files/other-bucket/app.png',
+    'files/bucket-123/../other/app.png',
+    'files/bucket-123/..%2Fother%2Fapp.png',
+    'https://example.com/app.png',
+    'app-theme-icon.svg',
+    '',
+  ])('returns undefined for %s', (iconUrl) => {
+    expect(getPublishableIconUrl({ iconUrl }, 'bucket-123')).toBeUndefined();
+  });
+
+  it('returns undefined when the icon is absent or the application is not an object', () => {
+    expect(getPublishableIconUrl({}, 'bucket-123')).toBeUndefined();
+    expect(
+      getPublishableIconUrl({ iconUrl: 42 }, 'bucket-123'),
+    ).toBeUndefined();
+    expect(getPublishableIconUrl(null, 'bucket-123')).toBeUndefined();
+  });
+});
+
+describe('getPublishedIconTargetUrl', () => {
+  it('nests the icon under the app versioned target name in the public folder', () => {
+    expect(
+      getPublishedIconTargetUrl(
+        'Team A',
+        'My%20App__1.0.1',
+        'files/bucket-123/icons/app%20icon.png',
+      ),
+    ).toBe('files/public/Team%20A/My%20App__1.0.1/app%20icon.png');
+  });
+
+  it('targets the public root when folderPath is empty', () => {
+    expect(
+      getPublishedIconTargetUrl('', 'my-app__1.0.0', 'files/b/app.png'),
+    ).toBe('files/public/my-app__1.0.0/app.png');
   });
 });

@@ -107,6 +107,58 @@ export const getPublishedTargetUrl = (
 ): string =>
   `${resourceTypePrefix}/${getPublicTargetFolder(folderPath)}${resourceName}`;
 
+const FILE_RESOURCE_PREFIX = 'files/';
+
+/*
+ * An application's icon is a top-level `iconUrl` (or `icon_url`) field, not a
+ * schema-declared file inside `application_properties`, so DIAL Core does not
+ * relocate it on publish the way it relocates knowledge files — the published
+ * copy kept pointing at the author's private bucket, where nobody else can
+ * download it (#9446). Returns the icon as a DIAL file resource url when it
+ * is an uploaded file in `appBucket`, or `undefined` for a theme icon name, an
+ * absolute URL, a file already outside the author's bucket (e.g. `public`),
+ * or a url carrying a `..` traversal segment. Query strings and `#`-fragments
+ * are stripped.
+ */
+export const getPublishableIconUrl = (
+  application: unknown,
+  appBucket: string,
+): string | undefined => {
+  if (typeof application !== 'object' || application == null) return undefined;
+  const { iconUrl, icon_url } = application as Record<string, unknown>;
+  const rawIconUrl = iconUrl ?? icon_url;
+  if (typeof rawIconUrl !== 'string') return undefined;
+
+  const resourceUrl = rawIconUrl.split(/[?#]/, 1)[0];
+  if (!resourceUrl.startsWith(FILE_RESOURCE_PREFIX)) return undefined;
+  if (safeDecodeURIComponent(resourceUrl).split('/').includes('..'))
+    return undefined;
+  if (
+    safeDecodeURIComponent(getResourceBucket(resourceUrl)) !==
+    safeDecodeURIComponent(appBucket)
+  )
+    return undefined;
+
+  return resourceUrl;
+};
+
+/**
+ * The published icon's path: `files/public/{folderPath}/{targetResourceName}/{iconName}`.
+ * Nesting it under the app's own versioned target name keeps two apps (or two
+ * versions of one app) whose icons share a file name, e.g. `icon.png`, from
+ * colliding in the same Organization folder.
+ */
+export const getPublishedIconTargetUrl = (
+  folderPath: string,
+  targetResourceName: string,
+  iconUrl: string,
+): string =>
+  getPublishedTargetUrl(
+    'files',
+    folderPath,
+    `${targetResourceName}/${getResourceName(iconUrl)}`,
+  );
+
 /*
  * DIAL Core stores applications and toolsets as `{name}__{version}`, but
  * editing an existing one's version only rewrites the version field inside the

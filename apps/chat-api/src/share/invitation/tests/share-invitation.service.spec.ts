@@ -934,6 +934,82 @@ describe('ShareInvitationService', () => {
       });
     });
 
+    it('shares the uploaded icon of a quick app alongside the app and its prompts', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          iconUrl: 'files/owner-bucket/icons/app%20icon.png',
+          application_properties: {
+            skills: [{ type: 'dial-prompt', url: 'prompts/owner-bucket/mine' }],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+            {
+              url: 'prompts/owner-bucket/mine',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/owner-bucket/icons/app%20icon.png',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('excludes an icon that is not in the app bucket or is not a DIAL file', async () => {
+      const { service, dialClient } = makeService();
+      const getApp = vi.spyOn(dialClient.client, 'getCustomApplication');
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      for (const iconUrl of [
+        'files/public/icons/app.png',
+        'files/other-bucket/icons/app.png',
+        'https://example.com/app.png',
+        'app-theme-icon.svg',
+      ]) {
+        getApp.mockResolvedValueOnce(okResponse({ iconUrl }));
+
+        await service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'applications/owner-bucket/my-app__1.0',
+          access: [ShareAccess.View],
+        });
+
+        expect(shareSpy).toHaveBeenLastCalledWith({
+          headers: { Authorization: 'Bearer token-abc' },
+          body: {
+            invitationType: 'LINK',
+            resources: [
+              {
+                url: 'applications/owner-bucket/my-app__1.0',
+                permissions: ['READ'],
+              },
+            ],
+          },
+        });
+      }
+    });
+
     it('keeps a referenced prompt whose bucket segment is percent-encoded', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
