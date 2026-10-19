@@ -58,6 +58,9 @@
       "path": "../../libs/toolset-editor/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/builder-form/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
     },
     {
@@ -71,6 +74,9 @@
     },
     {
       "path": "../../libs/celebrations/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/visualizer-connector/tsconfig.lib.json"
     },
     {
       "path": "../../libs/attachment-input/tsconfig.lib.json"
@@ -88,10 +94,10 @@
       "path": "../../libs/conversation-input/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/scheduled-tasks/tsconfig.lib.json"
+      "path": "../../libs/source-panel/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/source-panel/tsconfig.lib.json"
+      "path": "../../libs/scheduled-tasks/tsconfig.lib.json"
     },
     {
       "path": "../../libs/quotations/tsconfig.lib.json"
@@ -110,9 +116,6 @@
     },
     {
       "path": "../../libs/skills/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/builder-form/tsconfig.lib.json"
     },
     {
       "path": "../../libs/catalog/tsconfig.lib.json"
