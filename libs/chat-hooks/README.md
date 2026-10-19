@@ -1232,7 +1232,7 @@ const ChatPage = ({
 | `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                                                                            |
 | `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                                                                     |
 | `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                                                                     |
-| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                                                                                                                                                                    |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects, except for a `StopCompletionError` with `status` `404` once the generation has ended locally (see [Stop and the end of a generation](#stop-and-the-end-of-a-generation)).                                                                                                                                                          |
 | `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                                                                          |
 | `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
 | `batchChunksPerFrame`       | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
@@ -2533,6 +2533,24 @@ const chatStreamApi = createChatStreamApi({
 });
 
 options.onError(new StreamInterruptedError(new TypeError('Failed to fetch')));
+```
+
+### Stop and the end of a generation
+
+`handleStop` sends one stop request per generation: repeated clicks while the request is outstanding or after it was accepted send nothing further, and a failure other than `404` re-enables Stop. When the transport rejects with a `StopCompletionError` whose `status` is `404` — the backend had no active generation to stop because it had just ended, was already being stopped, or was never sent — the hook stays silent if the generation has ended locally or ends within 2 seconds, and calls `onStopError` only if the generation keeps running past that window. `createChatStreamApi` throws `StopCompletionError` for every non-OK stop response, so a custom `ConversationStreamTransport` should do the same to get this behaviour:
+
+```ts
+import { StopCompletionError } from '@epam/ai-dial-chat-hooks';
+
+const stopCompletion: ConversationStreamTransport['stopCompletion'] = async (
+  params,
+) => {
+  const response = await fetch('/api/v1/conversations/completions/stop', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) throw new StopCompletionError(response.status);
+};
 ```
 
 ### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError

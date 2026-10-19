@@ -189,6 +189,31 @@ that entry still holds its id.
   it is accumulated in that path's live-message buffer and streaming continues
   to be tracked for the path
 
+### Requirement: Stop is sent once per generation and a 404 is reported only when the generation keeps running
+`handleStop` SHALL send at most one stop request per generation id while that request is outstanding or has been accepted, so repeated clicks while the backend is still saving the partial answer send nothing further. When the request fails with anything other than a `404`, the hook SHALL report the error through `onStopError` and SHALL allow Stop to be sent again for the same generation, because a stopped-state write that failed leaves the generation running and retryable.
+
+A `404` from the stop request (`StopCompletionError` with `status` `404`) means the backend had no active generation to stop — typically because it ended, or was already being stopped, as the click arrived, or because the stream was never sent. The hook SHALL NOT report it through `onStopError` when the generation has ended locally — the path's active generation id no longer holds this id and, for a resumed generation without a local id, the path is no longer streaming — or does so within 2 seconds of the response, checked every 100 ms. When the generation is still live after that window (for example, another backend instance runs it), the hook SHALL report the `404` through `onStopError` and allow Stop to be sent again.
+
+#### Scenario: Repeated Stop clicks send one request
+- **WHEN** `handleStop` is called twice for the same generation, then again after the first request resolved
+- **THEN** `transport.stopCompletion` is called once
+
+#### Scenario: Stop is retryable after a failure that is not a 404
+- **WHEN** the first stop request fails with `StopCompletionError` status `503` and `handleStop` is called again
+- **THEN** `onStopError` is called once, for the first failure, and `transport.stopCompletion` is called twice
+
+#### Scenario: A 404 after the generation completed is silent
+- **WHEN** the stop request fails with `StopCompletionError` status `404` and the generation has already completed locally
+- **THEN** `onStopError` is not called
+
+#### Scenario: A 404 that lands before the stream end is seen is silent when the stream then ends
+- **WHEN** the stop request fails with `404` while the generation is still tracked as live, and the stream completes within 2 seconds
+- **THEN** `onStopError` is not called
+
+#### Scenario: A 404 for a generation that keeps running is reported
+- **WHEN** the stop request fails with `404` and the generation is still live after 2 seconds
+- **THEN** `onStopError` is called with that error
+
 ### Requirement: Buffered live message can be restored after navigation
 The hook SHALL accumulate accepted chunks into a per-path assistant-message
 snapshot, including merged `custom_content.stages`, regardless of whether the
