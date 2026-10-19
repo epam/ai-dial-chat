@@ -747,6 +747,20 @@ export class FilesBatchOperationsService {
       ? destFolderPath
       : `${destFolderPath}/`;
 
+    /* Moving a folder into itself or one of its subfolders would nest every
+       child one level deeper and break links to their old paths. */
+    if (destPrefix.startsWith(srcPrefix)) {
+      this.logger.warn(
+        `moveFolderItem rejected: destination inside source, bucket=${bucket}, sourcePath=${sourceFolderPath}, destPath=${destFolderPath}`,
+      );
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Cannot move a folder into itself or its subfolders',
+      };
+    }
+
     const outcome = await this.runFolderFanOut(
       bucket,
       srcPrefix,
