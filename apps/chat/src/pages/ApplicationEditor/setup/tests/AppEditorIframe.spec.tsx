@@ -1412,3 +1412,91 @@ describe('application credential requests from Quick apps', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
+
+describe('AppEditorIframe — dirty state', () => {
+  const postDirty = (
+    data: Record<string, unknown>,
+    source: MessageEventSource | null = getEditorWindow(),
+  ) =>
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.DirtyState, ...data },
+        origin: 'https://editor.example.com',
+        source,
+      }),
+    );
+
+  it('reports clean until the editor says otherwise', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('reports unsaved edits posted by the editor window', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    postDirty({ isDirty: true });
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+    postDirty({ payload: { isDirty: false } });
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('ignores a dirty-state message from another window', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    postDirty({ isDirty: true }, null);
+
+    expect(onDirtyChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('ignores a non-boolean dirty state', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    postDirty({ isDirty: 'yes' });
+    postDirty({ payload: { isDirty: 1 } });
+
+    expect(onDirtyChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('clears the dirty state on save success', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+    postDirty({ isDirty: true });
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.SaveSuccess },
+        origin: 'https://editor.example.com',
+        source: getEditorWindow(),
+      }),
+    );
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('resets the dirty state when the iframe reloads for a different app', () => {
+    const onDirtyChange = vi.fn();
+    const { rerender } = render(
+      <AppEditorIframe {...DEFAULT_PROPS} onDirtyChange={onDirtyChange} />,
+    );
+    postDirty({ isDirty: true });
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+    rerender(
+      <AppEditorIframe
+        {...DEFAULT_PROPS}
+        appId="different-app"
+        onDirtyChange={onDirtyChange}
+      />,
+    );
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+});

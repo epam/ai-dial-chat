@@ -7,7 +7,7 @@ import {
   type NavigationPanelItem,
 } from '@epam/ai-dial-navigation-panel';
 import type { FC } from 'react';
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -19,6 +19,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useUnsavedChanges } from '../../context/UnsavedChangesContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useNavigationItems } from '../../hooks/navigation/useNavigationItems';
@@ -38,7 +39,8 @@ interface Props {
 
 /**
  * Application shell for primary navigation: the desktop rail on wide viewports,
- * the bottom sheet on narrow ones, and the shared log-out confirmation. Feature
+ * the bottom sheet on narrow ones, and the shared log-out confirmation (or,
+ * while a builder is dirty, the unsaved-changes dialog). Feature
  * gating, routing, and translation all resolve here so the navigation lib stays
  * presentational.
  */
@@ -48,7 +50,8 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { status, user } = useUser();
-  const { isLogoutOpen, openLogout, closeLogout } = useLogout();
+  const { isLogoutOpen, openLogout, closeLogout, performLogout } = useLogout();
+  const { hasUnsavedChanges, requestDiscard } = useUnsavedChanges();
   const { currentThemeFavicon } = useTheme();
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
   const isNavigationMenuHidden = useUiFeature(
@@ -61,6 +64,19 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
 
   const isAuthenticated = status === AuthStatus.Authenticated && !!user;
   const isUserMenuShown = isAuthenticated && !isUserMenuHidden;
+
+  /*
+   * While a builder is dirty, Log out asks about the unsaved edits instead of
+   * the "Log out?" confirmation, and Discard changes signs out directly —
+   * one dialog for one click.
+   */
+  const handleLogout = useCallback(() => {
+    if (hasUnsavedChanges) {
+      requestDiscard(performLogout);
+      return;
+    }
+    openLogout();
+  }, [hasUnsavedChanges, requestDiscard, performLogout, openLogout]);
 
   const handleSelectItem = (item: NavigationPanelItem) => navigate(item.id);
   const handleOpenSettings = isSettingsPageHidden
@@ -97,7 +113,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
                   logOut: t(ButtonsI18nKeys.LogOut),
                   settings: t(BasicI18nKeys.Settings),
                 }}
-                onLogout={openLogout}
+                onLogout={handleLogout}
                 onSettings={handleOpenSettings}
               />
             )
@@ -115,7 +131,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           onSelectItem={handleSelectItem}
           profile={profile}
           groups={keyboardGroup ? [keyboardGroup] : undefined}
-          onLogout={openLogout}
+          onLogout={handleLogout}
           onSettings={handleOpenSettings}
           footer={<FooterMessage />}
           labels={{

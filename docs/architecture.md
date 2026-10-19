@@ -221,7 +221,8 @@ React SPA. Entry: `apps/chat/src/main.tsx`.
 
 ```
 apps/chat/src/
-├── main.tsx               # BrowserRouter + the provider stack
+├── main.tsx               # createBrowserRouter + RouterProvider (single splat route)
+├── AppRoot.tsx            # The provider stack + top-level <Routes>, the splat route's element
 ├── app/app.tsx            # Root routing component, lazy-loads all routes
 ├── components/            # ~39 PascalCase folders, each with a tests/ subfolder
 ├── context/               # React Context providers + consumer hooks
@@ -317,7 +318,7 @@ consumers. See the
 
 > ❓ Open — decision pending. Currently implemented with React Context; may be replaced or augmented.
 
-Current implementation uses **React Context** with no external state library. The provider stack is assembled in `main.tsx`; a few providers are mounted deeper so their lifetime matches a subtree.
+Current implementation uses **React Context** with no external state library. The provider stack is assembled in `AppRoot.tsx`, which `main.tsx` mounts as the single splat route of a data router (`createBrowserRouter` + `RouterProvider`, needed for `useBlocker`); a few providers are mounted deeper so their lifetime matches a subtree.
 
 | Context                       | State owned                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -342,6 +343,7 @@ Current implementation uses **React Context** with no external state library. Th
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `CelebrationHost`             | Adapts the app to `@epam/ai-dial-celebrations`: passes `config.activeEventId` (`UI_EVENT`) only on `/` once the user config is ready, the navigation key as the reset key, labels translated from the `halloween.*` / `newYear.*` keys, the success toast, `useIsMobile` and the composer/starter/history anchors. The library owns playback, random scene selection, secret-phrase interception and cleanup; its `useCelebration` hook is inert outside the provider.                                                                                                                                               |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
+| `UnsavedChangesContext`       | Dirty state of the mounted builder and the single "Discard unsaved changes?" dialog. Builder pages feed it through `useBuilderLeaveGuard`, which blocks in-app navigation (`useBlocker`) and warns on unload while dirty; `Navigation` reads it to guard Log out — mounted inside `RequireAuth` around `<App />`                                                                                                                                                                                                                                                                                                     |
 
 Context pattern (reference: `ThemeContext.tsx`):
 

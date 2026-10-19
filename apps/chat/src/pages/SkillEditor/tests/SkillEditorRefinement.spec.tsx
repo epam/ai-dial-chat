@@ -29,6 +29,9 @@ vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
   useSearchParams: () => [search],
 }));
+vi.mock('../../../hooks/unsaved-changes/useBuilderLeaveGuard', () => ({
+  useBuilderLeaveGuard: () => ({ allowNextNavigation: vi.fn() }),
+}));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
