@@ -306,6 +306,11 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 - **WHEN** one file move within a folder returns 403 from DIAL Core
 - **THEN** remaining files are still attempted, and the folder result is `success: false` with `error: "Partial move"`
 
+#### Scenario: Folder move into itself or a subfolder is rejected
+
+- **WHEN** `POST /api/v1/files/move` is called with `nodeType: "folder"` and a `destinationPath` that equals `sourcePath` or lies under it (trailing slashes ignored), e.g. `sourcePath: "drafts/"`, `destinationPath: "drafts/drafts/"`
+- **THEN** the folder is neither listed nor moved — no DIAL Core call is made — and the folder result is `success: false` with `error: "Cannot move a folder into itself or its subfolders"`; a sibling that only shares the name prefix (`drafts-old/drafts/`) is still moved
+
 ---
 
 ### Requirement: Copy/move observability
