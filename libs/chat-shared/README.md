@@ -661,7 +661,9 @@ import { IconClockHour3 } from '@tabler/icons-react';
 Item title row with an optional postfix (version, count) and a trailing slot.
 The title is highlighted when a search `query` is supplied and truncates with a
 tooltip on overflow. Pass `shouldTruncateTitle={false}` for static section
-headings that must always render in full.
+headings that must always render in full. A numeric `postfix` (a count) always
+renders in full; a string `postfix` (a version) is capped at 30% of the row and
+truncates with a tooltip.
 
 ```tsx
 import { ItemHeader } from '@epam/ai-dial-chat-shared';
