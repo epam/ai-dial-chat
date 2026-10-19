@@ -133,7 +133,7 @@
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.4.0-dev.7",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.6",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.15",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.16",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
     "@monaco-editor/react": "^4.7.0",
