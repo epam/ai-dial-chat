@@ -6,6 +6,7 @@ import {
   Skeleton,
   SkeletonVariant,
   Spinner,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
@@ -107,7 +108,12 @@ export const ScheduledTaskRunHistoryList: FC<
      * rather than left as a nested sr-only span the label would otherwise
      * swallow — the same reason currentRunLabel is appended this way.
      */
+    const errorText =
+      run.status === ScheduledTaskRunStatus.Error && run.errorText
+        ? run.errorText
+        : undefined;
     const accessibleNameSuffixes = [
+      errorText,
       run.isUnread ? unreadIndicatorLabel : undefined,
       isCurrent ? labels.currentRunLabel : undefined,
     ].filter((suffix): suffix is string => Boolean(suffix));
@@ -171,7 +177,22 @@ export const ScheduledTaskRunHistoryList: FC<
           </span>
         </span>
         <span className="flex min-h-[var(--strhl-row-min-height,32px)] w-14 shrink-0 items-center justify-end">
-          <RunStatusIcon status={run.status} />
+          {errorText ? (
+            <Tooltip
+              tooltip={errorText}
+              asChild
+              contentClassName="max-w-[320px] whitespace-pre-wrap break-words"
+            >
+              <span
+                className="flex shrink-0"
+                tabIndex={isClickable ? undefined : 0}
+              >
+                <RunStatusIcon status={run.status} />
+              </span>
+            </Tooltip>
+          ) : (
+            <RunStatusIcon status={run.status} />
+          )}
         </span>
       </li>
     );

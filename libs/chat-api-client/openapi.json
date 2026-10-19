@@ -573,7 +573,7 @@
             "name": "refresh",
             "required": false,
             "in": "query",
-            "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core",
+            "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core.",
             "schema": {
               "type": "boolean"
             }
@@ -15080,6 +15080,11 @@
             "type": "string",
             "description": "Failure stage reported by DIAL Scheduler. Only a string result.stage is exposed.",
             "example": "credentials"
+          },
+          "errorText": {
+            "type": "string",
+            "description": "Failure details reported by DIAL Scheduler (result.error_text) for a failed run. Only a non-blank string is exposed; the rest of the upstream result is not.",
+            "example": "target request failed with status 502"
           }
         },
         "required": ["id", "status", "startTime"]

@@ -6372,6 +6372,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   resultStage?: string;
+  /**
+   * Failure details reported by DIAL Scheduler (result.error_text) for a failed run. Only a non-blank string is exposed; the rest of the upstream result is not.
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  errorText?: string;
 }
 
 /**

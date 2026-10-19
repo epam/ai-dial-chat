@@ -10,8 +10,16 @@ does not prohibit this manual execution; only a deleted task is rejected with 40
 
 `GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` returns the same DTO for
 the caller-owned run. The DTO's optional `resultStage` is a narrow string
-projection of Scheduler's `result.stage`; arbitrary Scheduler result data is
-not exposed. Start and get-one responses use the same camelCase DTO fields as
+projection of Scheduler's `result.stage`, and the optional `errorText` is a
+non-blank, trimmed `result.error_text` capped at 1000 characters; arbitrary
+Scheduler result data (e.g. `credentials_response`) is not exposed. Scheduler's
+run list omits `result`, so `GET /api/v1/scheduled-tasks/:scheduleId/runs`
+re-reads `Error` runs through the single-run route to fill in `errorText`. The
+fan-out is bounded: each resolved value (including "no error text") is cached
+per run for 24 hours, so History's background refreshes do not repeat the
+reads, and at most 10 uncached runs are re-read per list call (newest first).
+A failed re-read is logged, not cached, and leaves that run without
+`errorText`. Start and get-one responses use the same camelCase DTO fields as
 run-history responses, including `conversationId` when available. A terminal
 credentials stage is recorded as a run error for the client to recover through
 the offline-credentials flow; it is not a failed start request and does not
