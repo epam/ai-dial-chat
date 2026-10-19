@@ -770,6 +770,48 @@ describe('fromUpstreamRun', () => {
     expect(result).not.toHaveProperty('result');
   });
 
+  it('maps result.error_text to errorText without exposing the rest of result', () => {
+    const result = fromUpstreamRun({
+      ...baseUpstreamRun,
+      status: 'error',
+      result: {
+        stage: 'credentials',
+        error_text: 'schedule lookup failed: timeout',
+        credentials_response: { status: 403, body: 'secret' },
+      },
+    });
+
+    expect(result).toMatchObject({
+      resultStage: 'credentials',
+      errorText: 'schedule lookup failed: timeout',
+    });
+    expect(result).not.toHaveProperty('credentials_response');
+  });
+
+  it('trims error_text and caps it at 1000 characters', () => {
+    const result = fromUpstreamRun({
+      ...baseUpstreamRun,
+      status: 'error',
+      result: { error_text: `  ${'x'.repeat(1500)}  ` },
+    });
+
+    expect(result.errorText).toBe('x'.repeat(1000));
+  });
+
+  it.each([
+    undefined,
+    null,
+    {},
+    { error_text: null },
+    { error_text: 42 },
+    { error_text: '' },
+    { error_text: '   ' },
+  ])('omits a missing, non-string or blank error_text %#', (result) => {
+    expect(
+      fromUpstreamRun({ ...baseUpstreamRun, status: 'error', result }),
+    ).not.toHaveProperty('errorText');
+  });
+
   it.each([undefined, null, {}, { stage: null }, { stage: 42 }])(
     'omits a non-string result stage %#',
     (result) => {

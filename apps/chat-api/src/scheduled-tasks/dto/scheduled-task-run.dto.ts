@@ -56,4 +56,13 @@ export class ScheduledTaskRunDto {
   @IsOptional()
   @IsString()
   resultStage?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Failure details reported by DIAL Scheduler (result.error_text) for a failed run. Only a non-blank string is exposed; the rest of the upstream result is not.',
+    example: 'target request failed with status 502',
+  })
+  @IsOptional()
+  @IsString()
+  errorText?: string;
 }

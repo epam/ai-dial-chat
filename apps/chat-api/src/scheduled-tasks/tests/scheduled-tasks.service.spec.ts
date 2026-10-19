@@ -936,6 +936,235 @@ describe('ScheduledTasksService', () => {
       expect(result.items).toEqual([]);
     });
 
+    it('reads the detail route of each failed run to fill in errorText', async () => {
+      const listUrl =
+        'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/sched_123/runs?limit=20&offset=0&order_by=created_at&order_dir=desc';
+      fetchMock.mockImplementation((url: string) => {
+        if (url === listUrl) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                results: [
+                  {
+                    id: 'run_ok',
+                    status: 'success',
+                    start_time: '2026-07-24T09:00:00.000Z',
+                  },
+                  {
+                    id: 'run_failed',
+                    status: 'error',
+                    start_time: '2026-07-24T09:00:00.000Z',
+                  },
+                ],
+              }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: 'run_failed',
+              status: 'error',
+              start_time: '2026-07-24T09:00:00.000Z',
+              result: { error_text: 'target request failed with 502' },
+            }),
+        });
+      });
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
+        makeExternalServices() as never,
+      );
+
+      const result = await service.listScheduledTaskRuns('token', 'sched_123');
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/schedules/sched_123/runs/run_failed'),
+        expect.objectContaining({ method: 'GET' }),
+      );
+      expect(result.items[0]).not.toHaveProperty('errorText');
+      expect(result.items[1].errorText).toBe('target request failed with 502');
+    });
+
+    it('keeps a failed run without errorText when its detail read fails', async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              results: [
+                {
+                  id: 'run_failed',
+                  status: 'error',
+                  start_time: '2026-07-24T09:00:00.000Z',
+                },
+              ],
+            }),
+        })
+        .mockRejectedValueOnce(new Error('network down'));
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
+        makeExternalServices() as never,
+      );
+
+      const result = await service.listScheduledTaskRuns('token', 'sched_123');
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].status).toBe('Error');
+      expect(result.items[0]).not.toHaveProperty('errorText');
+    });
+
+    describe('failed-run error details fan-out', () => {
+      const makeService = () =>
+        new ScheduledTasksService(
+          makeDialClient(),
+          makeConfigService('scheduler-app') as never,
+          makeCacheManager() as never,
+          { resolveDeploymentItem: vi.fn() } as never,
+          makeExternalServices() as never,
+        );
+
+      /* Routes the list URL to `listRuns` and every per-run URL to a detail
+         carrying `error_text` (or `detailBody` when supplied). */
+      const mockScheduler = (
+        listRuns: { id: string; status: string }[],
+        detailBody?: (runId: string) => unknown,
+      ) => {
+        fetchMock.mockImplementation((url: string) => {
+          const runMatch = /\/runs\/([^/?]+)$/.exec(url);
+          if (runMatch) {
+            const runId = decodeURIComponent(runMatch[1]);
+            return Promise.resolve({
+              ok: true,
+              json: () =>
+                Promise.resolve(
+                  detailBody?.(runId) ?? {
+                    id: runId,
+                    status: 'error',
+                    start_time: '2026-07-24T09:00:00.000Z',
+                    result: { error_text: `failed: ${runId}` },
+                  },
+                ),
+            });
+          }
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                results: listRuns.map((run) => ({
+                  ...run,
+                  start_time: '2026-07-24T09:00:00.000Z',
+                })),
+              }),
+          });
+        });
+      };
+
+      const detailCalls = () =>
+        fetchMock.mock.calls.filter(([url]) => /\/runs\/[^/?]+$/.test(url))
+          .length;
+
+      it('serves a repeated list call from cache without re-reading run details', async () => {
+        mockScheduler([{ id: 'run_failed', status: 'error' }]);
+        const service = makeService();
+
+        await service.listScheduledTaskRuns('token', 'sched_123');
+        const second = await service.listScheduledTaskRuns(
+          'token',
+          'sched_123',
+        );
+
+        expect(detailCalls()).toBe(1);
+        expect(second.items[0].errorText).toBe('failed: run_failed');
+      });
+
+      it('caches a failed run that has no error_text so it is not re-read', async () => {
+        mockScheduler([{ id: 'run_failed', status: 'error' }], (runId) => ({
+          id: runId,
+          status: 'error',
+          start_time: '2026-07-24T09:00:00.000Z',
+          result: null,
+        }));
+        const service = makeService();
+
+        await service.listScheduledTaskRuns('token', 'sched_123');
+        const second = await service.listScheduledTaskRuns(
+          'token',
+          'sched_123',
+        );
+
+        expect(detailCalls()).toBe(1);
+        expect(second.items[0]).not.toHaveProperty('errorText');
+      });
+
+      it('re-reads a run whose previous detail read failed', async () => {
+        let attempt = 0;
+        mockScheduler([{ id: 'run_failed', status: 'error' }], (runId) => {
+          attempt += 1;
+          if (attempt === 1) {
+            throw new Error('network down');
+          }
+          return {
+            id: runId,
+            status: 'error',
+            start_time: '2026-07-24T09:00:00.000Z',
+            result: { error_text: 'recovered' },
+          };
+        });
+        const service = makeService();
+
+        await service.listScheduledTaskRuns('token', 'sched_123');
+        const second = await service.listScheduledTaskRuns(
+          'token',
+          'sched_123',
+        );
+
+        expect(detailCalls()).toBe(2);
+        expect(second.items[0].errorText).toBe('recovered');
+      });
+
+      it('reads at most 10 run details per list call, newest first', async () => {
+        const runs = Array.from({ length: 15 }, (_, index) => ({
+          id: `run_${index}`,
+          status: 'error',
+        }));
+        mockScheduler(runs);
+        const service = makeService();
+
+        const result = await service.listScheduledTaskRuns(
+          'token',
+          'sched_123',
+          {
+            limit: 15,
+          },
+        );
+
+        expect(detailCalls()).toBe(10);
+        expect(result.items[9].errorText).toBe('failed: run_9');
+        expect(result.items[10]).not.toHaveProperty('errorText');
+      });
+
+      it('does not read details for runs that did not fail', async () => {
+        mockScheduler([
+          { id: 'run_ok', status: 'success' },
+          { id: 'run_running', status: 'in_progress' },
+          { id: 'run_missed', status: 'missed' },
+        ]);
+        const service = makeService();
+
+        await service.listScheduledTaskRuns('token', 'sched_123');
+
+        expect(detailCalls()).toBe(0);
+      });
+    });
+
     it('is not cached — repeated calls always hit fetch again', async () => {
       fetchMock.mockResolvedValue({
         ok: true,

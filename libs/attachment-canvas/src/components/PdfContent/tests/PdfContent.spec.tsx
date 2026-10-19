@@ -34,6 +34,7 @@ interface DropdownMockProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   renderOverlay?: () => ReactNode;
+  initialFocus?: 0 | -1;
 }
 
 interface InputMockProps {
@@ -52,7 +53,10 @@ interface ButtonMockProps {
 }
 
 const documentPreviewState = vi.hoisted(() => {
-  return { props: undefined as DocumentPreviewMockProps | undefined };
+  return {
+    props: undefined as DocumentPreviewMockProps | undefined,
+    dropdownInitialFocus: undefined as 0 | -1 | undefined,
+  };
 });
 
 vi.mock('@epam/ai-dial-react-pdf-highlighter', () => ({
@@ -102,21 +106,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     open,
     onOpenChange,
     renderOverlay,
-  }: DropdownMockProps) => (
-    <div>
-      <span
-        role="button"
-        tabIndex={0}
-        onClick={() => onOpenChange?.(!open)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') onOpenChange?.(!open);
-        }}
-      >
-        {children}
-      </span>
-      {open && renderOverlay?.()}
-    </div>
-  ),
+    initialFocus,
+  }: DropdownMockProps) => {
+    documentPreviewState.dropdownInitialFocus = initialFocus;
+    return (
+      <div>
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={() => onOpenChange?.(!open)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') onOpenChange?.(!open);
+          }}
+        >
+          {children}
+        </span>
+        {open && renderOverlay?.()}
+      </div>
+    );
+  },
   Input: ({
     value,
     onChange,
@@ -168,6 +176,7 @@ const getThumbnailPageNumbers = (): number[] => {
 describe('PdfContent', () => {
   beforeEach(() => {
     documentPreviewState.props = undefined;
+    documentPreviewState.dropdownInitialFocus = undefined;
     vi.useFakeTimers();
     // Run rAF callbacks synchronously so a scroll's setScrollTop lands
     // before the test's next assertion, without depending on whether this
@@ -399,6 +408,13 @@ describe('PdfContent', () => {
   });
 
   describe('page navigator input', () => {
+    it('does not focus the page input when the thumbnails panel opens', () => {
+      render(<PdfContent url="doc.pdf" highlights={[]} />);
+      setTotalPages(50);
+
+      expect(documentPreviewState.dropdownInitialFocus).toBe(-1);
+    });
+
     it('navigates to a valid committed page number on Enter', () => {
       render(<PdfContent url="doc.pdf" highlights={[]} />);
       setTotalPages(50);
