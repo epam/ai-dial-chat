@@ -13,7 +13,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
 import {
   getRunnerSchemas,
-  isMindMapSchema,
   isQuickAppSchema,
 } from '../../shared/application-schema';
 import { parseSkillResourceUrl } from '../../skill/skill-types';
@@ -157,11 +156,6 @@ export const useCatalogEditNavigation = ({
   onSkillUploadClick,
 }: UseCatalogEditNavigationParams): UseCatalogEditNavigationResult => {
   const runnerSchemas = useMemo(() => getRunnerSchemas(schemas), [schemas]);
-  // Mind Map apps are not created from the catalog, but existing ones stay editable.
-  const creatableRunnerSchemas = useMemo(
-    () => runnerSchemas.filter((schema) => !isMindMapSchema(schema)),
-    [runnerSchemas],
-  );
   const [createSearchQuery, setCreateSearchQuery] = useState('');
   const isRunnerCreationEnabled =
     isSchemaAppsEnabled && !isHideCustomAppCreationEnabled;
@@ -254,7 +248,7 @@ export const useCatalogEditNavigation = ({
     const isMatch = (label: string) =>
       !query || label.toLocaleLowerCase().includes(query);
     const runnerOptions: DropdownItem[] = isRunnerCreationEnabled
-      ? creatableRunnerSchemas
+      ? runnerSchemas
           .map((schema) => ({
             id: schema.id,
             label: schema.displayName || schema.id,
@@ -323,7 +317,7 @@ export const useCatalogEditNavigation = ({
   }, [
     createSearchQuery,
     isRunnerCreationEnabled,
-    creatableRunnerSchemas,
+    runnerSchemas,
     onNavigate,
     urls,
     isPromptsEnabled,
@@ -378,10 +372,10 @@ export const useCatalogEditNavigation = ({
 
   const createSearch = useMemo<CatalogCreateSearch | undefined>(
     () =>
-      isRunnerCreationEnabled && creatableRunnerSchemas.length > 0
+      isRunnerCreationEnabled && runnerSchemas.length > 0
         ? { value: createSearchQuery, onChange: setCreateSearchQuery }
         : undefined,
-    [isRunnerCreationEnabled, creatableRunnerSchemas.length, createSearchQuery],
+    [isRunnerCreationEnabled, runnerSchemas.length, createSearchQuery],
   );
 
   const createMenuByType = useMemo<

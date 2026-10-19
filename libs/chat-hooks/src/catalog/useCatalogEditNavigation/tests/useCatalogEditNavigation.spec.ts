@@ -474,13 +474,13 @@ describe('useCatalogEditNavigation', () => {
         schemas: [
           quickAppSchema,
           {
-            id: 'ocr-schema',
-            displayName: 'OCR',
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
             schemaEndpoint: SCHEMA_ENDPOINT,
           },
           {
-            id: 'ocr-schema',
-            displayName: 'OCR',
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
             schemaEndpoint: SCHEMA_ENDPOINT,
           },
           {
@@ -513,19 +513,21 @@ describe('useCatalogEditNavigation', () => {
         ['create-sections-divider', undefined],
         ['runners-header', 'Runners'],
         ['custom-app', 'Create custom app'],
+        ['runner:mind-map-schema', 'Mind Map'],
         ['runner:editorless-runner', 'No editor'],
-        ['runner:ocr-schema', 'OCR'],
         ['runner:foo-quickapps', 'Quick app'],
         ['runner:foo-quickapps2', 'Quick app 2.0'],
       ]);
 
       result.current.createOptions
-        .find((option) => option.key === 'runner:ocr-schema')
+        .find((option) => option.key === 'runner:mind-map-schema')
         ?.onClick?.({
-          key: 'runner:ocr-schema',
+          key: 'runner:mind-map-schema',
           domEvent: {} as never,
         });
-      expect(onNavigate).toHaveBeenCalledWith('create:quick-app:ocr-schema');
+      expect(onNavigate).toHaveBeenCalledWith(
+        'create:quick-app:mind-map-schema',
+      );
     });
 
     it('lists every runner option, sorted alphabetically', () => {
@@ -564,45 +566,11 @@ describe('useCatalogEditNavigation', () => {
         'Iota',
         'Kappa',
         'Lambda',
+        'Mind map',
         'OCR',
         'Theta',
         'Zeta',
       ]);
-    });
-
-    it('omits Mind Map runners from the Create menu', () => {
-      const { result } = renderEditNavigation({
-        schemas: [
-          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
-          {
-            id: 'https://runner.example/schemas/mindmap',
-            displayName: 'Brainstorm',
-            editorUrl: EDITOR_URL,
-          },
-          { id: 'ocr', displayName: 'OCR', schemaEndpoint: SCHEMA_ENDPOINT },
-        ],
-      });
-
-      const runnerKeys = result.current.createOptions
-        .filter((option) => option.key.startsWith('runner:'))
-        .map((option) => option.key);
-
-      expect(runnerKeys).toEqual(['runner:ocr']);
-      expect(
-        result.current.createMenuByType[CatalogEntityType.Agent]?.options.map(
-          (option) => option.key,
-        ),
-      ).not.toContain('runner:mind-map');
-    });
-
-    it('offers no search field when Mind Map is the only runner', () => {
-      const { result } = renderEditNavigation({
-        schemas: [
-          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
-        ],
-      });
-
-      expect(result.current.createSearch).toBeUndefined();
     });
 
     it('filters runner and static options by the search query, case-insensitively', () => {
@@ -614,11 +582,11 @@ describe('useCatalogEditNavigation', () => {
         ],
       });
 
-      act(() => result.current.createSearch?.onChange('oCr'));
+      act(() => result.current.createSearch?.onChange('MAP'));
 
-      expect(result.current.createSearch?.value).toBe('oCr');
+      expect(result.current.createSearch?.value).toBe('MAP');
       expect(result.current.createOptions.map((option) => option.key)).toEqual([
-        'runner:ocr',
+        'runner:mind-map',
       ]);
 
       act(() => result.current.createSearch?.onChange('upload'));

@@ -2637,19 +2637,9 @@ import { isCustomAppSchema } from '@epam/ai-dial-chat-hooks';
 isCustomAppSchema({ id: 'custom_app' }); // true
 ```
 
-### isMindMapSchema
-
-Returns `true` when a schema's `id` or `displayName` contains "mind map", ignoring case and separators (`Mind Map`, `mind-map`, `MINDMAP`). `useCatalogEditNavigation` leaves these runners out of the Create menu; existing Mind Map apps stay editable.
-
-```ts
-import { isMindMapSchema } from '@epam/ai-dial-chat-hooks';
-
-isMindMapSchema({ id: 'mind-map', displayName: 'Mind Map' }); // true
-```
-
 ### getRunnerSchemas
 
-Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema, except Mind Map schemas.
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
