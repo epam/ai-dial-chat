@@ -36,6 +36,7 @@ Core principle: the chat application is assembled from a set of **independently 
 | **TypeScript 6.0** | Strict mode, `noUnusedLocals`, `noUnusedParameters`                                                   |
 | **Vite 8**         | Frontend bundler                                                                                      |
 | **Vitest 4**       | Test runner (frontend + backend unit tests)                                                           |
+| **Tailwind CSS 4** | Utility CSS; one CSS-first theme in `tools/tailwind/theme.css` (see Styling)                          |
 | **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                                                        |
 | **Storybook 10**   | Lib-local component catalogue (`libs/celebrations/.storybook`, React/Vite); built in CI, not deployed |
 
@@ -241,7 +242,11 @@ Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedI
 
 `SettingsPage` renders a vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list
 declared in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum member plus
-one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
+one entry there. Three tabs ship, in rail order: `PreferencesTab`, `UsageTab`, then `ExtensionsTab`
+(`pages/SettingsPage/ExtensionsTab/` — the offline-credentials gate/auth wiring and the logout
+confirmation popup, rendering the service table itself through `ExtensionsSection` from
+`@epam/ai-dial-settings-panel`), whose entry is withheld unless `scheduledTasksEnabled` is on, since
+the BFF domain behind it 403s otherwise.
 
 Each tab is a location. `ROUTES.SettingsTab` (`/settings/:tab`) is a single dynamic pattern rather
 than one route per tab, so adding a tab stays a config change; `app/settings-routes.tsx` registers
@@ -789,9 +794,19 @@ The complete rules — naming grammar and guard-test requirements — are in [`o
 
 ### Apps — Tailwind CSS first
 
-`apps/chat` uses Tailwind utility classes, referencing theme tokens through the semantic names in `tailwind.config.js` (`bg-layer-base`, `text-primary`, `bg-control-accent`, …). A handful of components additionally use an SCSS module where a value cannot be expressed as a utility — currently `Header`, `DeploymentSelectorPanel`, `MobileNavBottomSheet`, `UsageLimitsControl`, and `NotFound`. Prefer Tailwind; reach for a module only when there is no class for the value.
+`apps/chat` uses Tailwind utility classes, referencing theme tokens through the semantic names in `tools/tailwind/theme.css` (`bg-layer-base`, `text-primary`, `bg-control-accent`, …). A handful of components additionally use an SCSS module where a value cannot be expressed as a utility — currently `Header`, `DeploymentSelectorPanel`, `MobileNavBottomSheet`, `UsageLimitsControl`, and `NotFound`. Prefer Tailwind; reach for a module only when there is no class for the value.
 
 Both apps and libs use logical direction utilities (`ms-*`, `pe-*`, `text-start`, `border-s-*`) so RTL locales flip automatically.
+
+### Tailwind build
+
+Every Tailwind build in the workspace compiles against one Tailwind v4 theme, `tools/tailwind/theme.css`: an `@theme inline reference` block of the design tokens (each `var(--token, #light-fallback)`), the `mobile` / `desktop` custom variants, and `fill-*` / `stroke-*` / `outline-*` utilities over the background and border tokens. Nothing in it is declared on `:root`. There is no `tailwind.config.js` and no PostCSS config.
+
+- **`apps/chat`** builds through `@tailwindcss/vite` from `apps/chat/src/tailwind.css`, which scans `apps/chat/src` and `libs/*/src`. Its preflight and utilities are **unlayered** and load after `@epam/ai-dial-ui-kit/styles.css` (which keeps its own Tailwind in `@layer ui`), so a utility the app passes to a kit component wins over the kit's `dial-*` class on source order. The kit's classes are not recompiled. The file manager's dist is still scanned while its published stylesheet is built with Tailwind v3.
+- **Publishable libs** append the utilities their own `src` uses to `dist/index.css` through `tools/vite-lib-tailwind-utilities.mjs`: unlayered, no preflight, nothing on `:root`.
+- **The overlay sandbox** and **the celebrations Storybook** use the Vite plugin over the same theme.
+
+Tailwind v4's output targets Safari 16.4+, Chrome 111+ and Firefox 128+, the same baseline `@epam/ai-dial-ui-kit` 0.16 sets.
 
 ### Third-party stylesheets — named cascade layer
 
@@ -832,7 +847,7 @@ config.json (themes host)
 ThemeProvider (apps/chat)
     │  sets --<token> on document.documentElement
     ▼
-    ├──▶ tailwind.config.js → bg-layer-base, text-primary, bg-control-accent, …
+    ├──▶ tools/tailwind/theme.css → bg-layer-base, text-primary, bg-control-accent, …
     └──▶ SCSS modules in libs → var(--ci-x, var(--text-primary, #161B2D))
 ```
 

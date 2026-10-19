@@ -80,7 +80,7 @@ export const PlainTextRenderer: FC<PlainTextRendererProps> = memo(
         <p
           className={mergeClasses(
             classNames.p,
-            'whitespace-pre-wrap break-words [overflow-wrap:anywhere]',
+            '[overflow-wrap:anywhere] break-words whitespace-pre-wrap',
           )}
         >
           {displayedContent}

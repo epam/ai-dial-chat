@@ -18,7 +18,7 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 
 ## Installation
 
-Requires UI Kit ^0.15.4 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.11 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -39,7 +39,7 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.4`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.11`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,
@@ -128,9 +128,9 @@ useHostLeaveGuard(isDirty); // the host's own guard
 />;
 ```
 
-Description stops accepting input at `descriptionMaxLength` and shows a
-`length/limit` counter under it once it has text. Name and Instructions take
-any length; to flag an over-limit value while the user types, pass
+Description shows a `length/limit` counter (against `descriptionMaxLength`)
+under it once it has text. No field caps its input — Name, Description and
+Instructions all keep an over-limit value; to flag it while the user types, pass
 `onFieldChange(field, value)`, validate there, and feed the resulting messages
 back through `errors`. An Instructions error also gives the editor an error
 border.

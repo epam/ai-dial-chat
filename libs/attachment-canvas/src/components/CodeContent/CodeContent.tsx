@@ -72,7 +72,7 @@ export const CodeContent: FC<CodeContentProps> = memo(
     }, []);
 
     const plainTextFallback = (
-      <pre className="whitespace-pre-wrap break-words p-4">{text}</pre>
+      <pre className="p-4 break-words whitespace-pre-wrap">{text}</pre>
     );
 
     return (

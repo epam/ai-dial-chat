@@ -89,7 +89,7 @@
   --border-radius-xl: 12px;
   --border-radius-full: 9999px;
 
-  /* Border width — matches `tailwind.config.js`'s `outlineWidth.DEFAULT` */
+  /* Border width — matches the bare `outline` utility (1px in Tailwind v4) */
   --border-width-regular: 1px;
 
   /* Shadows — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D18 for why colors are inlined here. */

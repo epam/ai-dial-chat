@@ -1,3 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/theme.css' theme(reference inline);
+@import '../../../tools/tailwind/theme.css';
+@import 'tailwindcss/preflight.css';
+@import '../../../tools/tailwind/preflight-v3.css';
+@import 'tailwindcss/utilities.css' source(none);
+
+@source '../index.html';
+@source './**/*.{ts,tsx}';

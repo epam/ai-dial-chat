@@ -76,6 +76,9 @@ describe('UiFeaturesContext', () => {
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSharing),
       ).toBe(true);
+      expect(result.current.isEnabled(OverlayFeature.ConversationDrafts)).toBe(
+        true,
+      );
     });
 
     it('leaves every non-default (modifier) feature disabled', () => {

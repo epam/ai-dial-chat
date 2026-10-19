@@ -17,7 +17,7 @@
 //     U+FFFD from invalid UTF-8 — that corrupt parsing or silently alter text
 //   - floating MCP package versions (`@latest`) that break reproducibility
 //   - `npx nx` instead of `npm exec nx` in project-owned instructions
-//   - Tailwind breakpoints in source match tailwind.config.js (full scan only)
+//   - Tailwind breakpoints in source match tools/tailwind/theme.css (full scan only)
 //   - committed secrets (known token shapes) in any config file, and
 //     approval-gate-disabling permissions in .claude/settings.json. These are
 //     OBJECTIVE security facts (a leaked key, a `*` grant), not quality opinions.
@@ -296,13 +296,13 @@ const checkSettingsSecurity = (config, src, file) => {
 };
 
 const readTailwindBreakpoints = () => {
-  const configPath = 'tailwind.config.js';
-  if (!existsSync(configPath)) return new Set();
+  const themePath = 'tools/tailwind/theme.css';
+  if (!existsSync(themePath)) return new Set();
 
-  const src = readFileSync(configPath, 'utf8');
-  const screensBlock = /screens:\s*\{([\s\S]*?)\n\s*\},/.exec(src)?.[1] ?? '';
+  /* The named bands are `@custom-variant` declarations in the shared theme. */
+  const src = readFileSync(themePath, 'utf8');
   return new Set(
-    [...screensBlock.matchAll(/^\s*([A-Za-z][\w-]*):/gm)].map(
+    [...src.matchAll(/^@custom-variant\s+([A-Za-z][\w-]*)\s/gm)].map(
       (match) => match[1],
     ),
   );

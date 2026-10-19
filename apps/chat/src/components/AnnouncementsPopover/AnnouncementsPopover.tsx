@@ -75,7 +75,7 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
       className="max-w-[420px]"
       tabIndex={0}
     >
-      {/* `divide-y` puts the rule on every item but the first, so no separator
+      {/* `divide-y` puts the rule on every item but the last, so no separator
           hangs at the top or bottom of the list. Vertical borders need no
           logical-property treatment — they do not flip under rtl. */}
       <ul className="flex flex-col divide-y divide-tertiary">

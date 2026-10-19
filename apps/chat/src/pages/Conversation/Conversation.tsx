@@ -180,6 +180,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const [pendingInputContent, setPendingInputContent] = useState({
     revision: 0,
     value: '',
+    isPending: false,
   });
   const [pendingInputInsertion, setPendingInputInsertion] = useState({
     revision: 0,
@@ -749,8 +750,23 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setPendingInputContent((prev) => ({
       revision: prev.revision + 1,
       value: content,
+      isPending: true,
     }));
   }, []);
+
+  /*
+   * The overlay content is a one-shot hand-off, spent once ConversationView has
+   * rendered with it. This page is not remounted between conversations, so
+   * without this a later view remount (opening an uncached conversation shows
+   * the spinner) would seed the stale text again and save it as that
+   * conversation's draft.
+   */
+  const isConversationViewShown =
+    !isFetching && !!conversation && !isCustomViewerResolving && !customViewer;
+  useEffect(() => {
+    if (!isConversationViewShown || !pendingInputContent.isPending) return;
+    setPendingInputContent((prev) => ({ ...prev, isPending: false }));
+  }, [isConversationViewShown, pendingInputContent.isPending]);
 
   const handleInsertText = useCallback((text: string) => {
     setPendingInputInsertion((prev) => ({
@@ -930,8 +946,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onTranscribeAudio={handleTranscribeAudio}
           conversation={conversation}
           onConversationChange={handleConversationChange}
-          inputContent={pendingInputContent.value}
-          inputContentRevision={pendingInputContent.revision}
+          inputContent={
+            pendingInputContent.isPending ? pendingInputContent.value : ''
+          }
+          inputContentRevision={
+            pendingInputContent.isPending ? pendingInputContent.revision : 0
+          }
           inputInsertion={pendingInputInsertion}
           onInsertText={handleInsertText}
           toolsMenuItems={toolsMenuItems}

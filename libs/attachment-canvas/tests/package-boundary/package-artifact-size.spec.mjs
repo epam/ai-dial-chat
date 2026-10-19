@@ -63,8 +63,13 @@ describe('publish-ready package artifact size', () => {
      * Raised from 234_000: visualizer SEND_MESSAGE support added ~2 KB, mostly the
      * README's `onVisualizerSendMessage` section (+1.2 KB); measured at 235,399.
      * Raised from 236_000: translated code-block, formula and table labels threaded to
-     * both markdown renderers plus their README rows added ~2.4 KB; measured at 237,788. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(238_500);
+     * both markdown renderers plus their README rows added ~2.4 KB; measured at 237,788.
+     * Raised from 238_500: the Tailwind v4 utilities appended to dist/index.css carry
+     * `@property` registrations, the `@layer properties` fallback and Tailwind's license
+     * banner (+1 KB over the v3 output); measured at 239,292.
+     * Raised from 240_000: `@epam/ai-dial-react-pdf-highlighter` 0.3.0-dev.3 ships a larger
+     * stylesheet, inlined into dist/PdfContent.css via pdf-vendor.css; measured at 241,076. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(242_000);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

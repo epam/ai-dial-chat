@@ -13,8 +13,8 @@ import {
  * them in the same change as any `OverlayFeature` addition, removal, or rename.
  */
 describe('KNOWN_UI_FEATURES', () => {
-  it('has exactly 51 members, one per OverlayFeature key', () => {
-    expect(KNOWN_UI_FEATURES.size).toBe(51);
+  it('has exactly 52 members, one per OverlayFeature key', () => {
+    expect(KNOWN_UI_FEATURES.size).toBe(52);
   });
 
   it('includes representative transferable keys', () => {
@@ -26,6 +26,7 @@ describe('KNOWN_UI_FEATURES', () => {
   it('includes the chat-input keys', () => {
     expect(KNOWN_UI_FEATURES.has('chat-settings')).toBe(true);
     expect(KNOWN_UI_FEATURES.has('removable-tools')).toBe(true);
+    expect(KNOWN_UI_FEATURES.has('conversation-drafts')).toBe(true);
   });
 
   it('includes the catalog keys under their current names', () => {

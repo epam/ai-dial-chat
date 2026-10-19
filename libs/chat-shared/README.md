@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.4`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.11`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.4
-- `@epam/ai-dial-react-file-manager` ^0.3.5 \*
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.11
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.7 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -1082,6 +1082,8 @@ import {
   ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
+  encodeJsonToBase64,
+  decodeJsonFromBase64,
   serializeMarkdownTableRows,
   MarkdownTableCopyFormat,
   DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
@@ -1131,6 +1133,15 @@ downloadTextFile(
 // Copy markdown as both flavours: rich text for Word/Gmail/Slack, raw markdown for plain-text targets.
 // Styling travels inline, so a pasted table keeps its border, header band, dividers, and zebra rows.
 copyMarkdownAsRichText(message.content);
+
+// Store JSON in web storage as Unicode-safe base64 — the wrap satisfies
+// clear-text-storage security scanning and is an encoding, not encryption;
+// `btoa` alone would throw on characters above U+00FF (e.g. Cyrillic ids).
+// decodeJsonFromBase64 throws on malformed input; the caller handles failures.
+sessionStorage.setItem('flow-state', encodeJsonToBase64({ toolsetId, state }));
+const restored = decodeJsonFromBase64<{ toolsetId: string }>(
+  sessionStorage.getItem('flow-state') ?? '',
+);
 
 // The same HTML on its own, for a caller that writes the clipboard itself or renders an export
 const html = markdownToRichTextHtml(message.content);

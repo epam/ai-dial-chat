@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-settings-panel",
-  "description": "Presentational vertical settings navigation panel with icon-labeled rows and active-row highlighting",
+  "description": "Presentational settings surfaces: a vertical settings navigation panel and the Extensions services table",
   "version": "0.0.1",
   "license": "Apache-2.0",
   "private": true,
@@ -18,9 +18,12 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@tabler/icons-react": "^3.44.0"
+  },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.15.4",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.11",
     "react": "^19.2.8"
   },
   "nx": {

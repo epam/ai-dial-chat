@@ -1,3 +1,4 @@
+import { encodeJsonToBase64 } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import type { FC } from 'react';
 import { StrictMode } from 'react';
@@ -25,7 +26,7 @@ const CALLBACK_PATH = '/toolset-editor/callback';
 const TOOLSET_ID = 'toolsets/b/my__1.0.0';
 
 const setRedirectState = (state: ToolsetRedirectState) =>
-  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
+  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, encodeJsonToBase64(state));
 
 /** Consumes the first result and acknowledges it so the callback can close. */
 const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
@@ -182,6 +183,26 @@ describe('useOAuthCallbackCompletion', () => {
       });
       const reported = listenForResult('flow-6');
       renderCompletion('?code=test-code&state=flow-6');
+
+      await expect(reported).resolves.toEqual({
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
+    });
+
+    it('still completes a raw-JSON state written before the base64 wrap shipped', async () => {
+      /*
+       * A flow in flight across the deploy that introduced the wrap stored
+       * plain JSON; the reader attempts each parser, so both formats are
+       * accepted without sniffing either one.
+       */
+      sessionStorage.setItem(
+        TOOLSET_REDIRECT_STATE_KEY,
+        JSON.stringify({ toolsetId: TOOLSET_ID, state: 'flow-raw-1' }),
+      );
+      const reported = listenForResult('flow-raw-1');
+      renderCompletion('?code=test-code&state=flow-raw-1');
 
       await expect(reported).resolves.toEqual({
         type: ToolsetOAuthResultType.Success,

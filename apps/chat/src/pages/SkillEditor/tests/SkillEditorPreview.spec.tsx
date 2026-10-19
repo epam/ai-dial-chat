@@ -23,6 +23,16 @@ import {
 } from '../../../server-api/skills.api';
 import SkillEditor from '../SkillEditor';
 
+/*
+ * Every test in this file drives the full upload pipeline (dialog, file
+ * input, upload, zip re-pack of the skill bundle) before asserting. Under a
+ * fully parallel suite run the worker can be loaded enough that the 5s
+ * default test timeout is exceeded on otherwise-green tests (observed on
+ * the unsupported-binary-extension case, which passes standalone 3/3) —
+ * double the budget for this file only.
+ */
+vi.setConfig({ testTimeout: 10_000 });
+
 vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => ({ status: 'ready', config: {} }),
 }));

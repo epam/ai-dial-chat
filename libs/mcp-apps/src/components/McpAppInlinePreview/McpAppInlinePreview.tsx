@@ -147,7 +147,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                 </span>
                 <span
                   aria-hidden
-                  className="border-current mx-1.5 inline-block h-3 w-0 border-s align-middle"
+                  className="mx-1.5 inline-block h-3 w-0 border-s border-current align-middle"
                 />
                 <span className="dial-tiny-lead-semi-text">{appInfo.name}</span>
                 {appInfo.version && (

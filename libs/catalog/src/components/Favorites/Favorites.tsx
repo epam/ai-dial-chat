@@ -398,7 +398,7 @@ export const Favorites: FC<FavoritesProps> = ({
       <section
         ref={sectionRef}
         className={mergeClasses(
-          'flex flex-shrink-0 flex-col gap-4 pb-2 pt-2',
+          'flex flex-shrink-0 flex-col gap-4 pt-2 pb-2',
           styles.section,
           isLeaving && styles.sectionLeaving,
         )}
@@ -437,7 +437,7 @@ export const Favorites: FC<FavoritesProps> = ({
                 />
                 <span
                   className={mergeClasses(
-                    'min-w-[32px] select-none px-1 text-center',
+                    'min-w-[32px] px-1 text-center select-none',
                     countClassName,
                     styles.countText,
                   )}

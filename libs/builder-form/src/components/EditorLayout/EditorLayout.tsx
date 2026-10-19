@@ -61,7 +61,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
       {/* Header row */}
       <div
         className={mergeClasses(
-          'flex items-center justify-between gap-2 border-b px-4 py-2 desktop:px-8 desktop:pb-3 desktop:pt-3',
+          'flex items-center justify-between gap-2 border-b px-4 py-2 desktop:px-8 desktop:pt-3 desktop:pb-3',
           styles.headerBorder,
         )}
       >

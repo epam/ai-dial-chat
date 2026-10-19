@@ -78,12 +78,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.5
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.7
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.4
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.11
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -145,6 +145,7 @@ whether you need to `npm install` it.
 | `./skills-state`          | —                                                                                                                                                   | —                                                         |
 | `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                         |
 | `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
+| `./offline-credentials`   | —                                                                                                                                                   | —                                                         |
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                         |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                         |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
@@ -199,6 +200,12 @@ import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
    conversation records neither. */
 const newDeploymentId = getLastDeploymentId(conversation.messages);
 ```
+
+`./conversation` also carries the composer-draft API — `useConversationComposerDraft`,
+`createWebStorageConversationDraftStore`, `createMemoryConversationDraftStore` and the
+`ConversationDraft`, `ConversationDraftStore`, `WebStorageConversationDraftStoreOptions`,
+`MemoryConversationDraftStoreOptions`, `UseConversationComposerDraftParams` and
+`UseConversationComposerDraftResult` types (see [useConversationComposerDraft](#useconversationcomposerdraft)).
 
 ```tsx
 // ./conversation-transfer
@@ -298,6 +305,23 @@ const isPublic = isPublicToolsetId(toolset.id);
 import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 
 const createBody = mapFormValuesToCreateBody(formValues);
+```
+
+```tsx
+// ./scheduled-tasks — the 403 disambiguation check
+import { checkScheduledTaskAuthSessionError } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const { isAuthSessionError, connect } =
+  await checkScheduledTaskAuthSessionError(error, getOfflineCredentials);
+```
+
+```tsx
+// ./offline-credentials — no peer beyond react
+import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';
+
+const { status, connect, connected, refetch } = useOfflineCredentialsGate({
+  offlineCredentialsClient,
+});
 ```
 
 ```tsx
@@ -682,6 +706,130 @@ For a modal or locally themed surface, pass a same-document `portalContainer`
 inside that surface; pass `null` while its callback ref has not mounted. See
 [MessageSelectionReply](../conversation-messages/README.md#messageselectionreply)
 for appearance overrides and portal placement.
+
+### useConversationComposerDraft
+
+The hook, both store factories and their types are exported from both
+`@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/conversation`.
+
+Keeps an unsent composer draft per conversation, so text typed into one
+conversation survives a switch to another one, a "New Chat", an unmount while
+the next conversation loads, and a reload. The hook owns the whole state
+machine:
+
+- a debounced save, flushed on unmount, on a change of `conversationId` (under
+  the previous id) and on `pagehide`;
+- a single restore per `conversationId`, deferred while `isRestoreReady` is
+  `false` and skipped once the user has typed for that id;
+- replacing the draft with host-provided content (`handleExternalContent`);
+- discarding the draft when a send resolves, unless the user typed while
+  `send` was in flight, writing the sent text back when the send rejects, and
+  removing the draft when the input is emptied.
+
+State lives in refs, so the hook never re-renders the host, and its handlers
+keep their identity until `store` or `conversationId` changes. The host keeps
+everything host-specific: which storage, under which key and for which user,
+how ids are canonicalised, how a draft is seeded back into its composer and
+mention state, and when drafts are evicted (delete, logout).
+
+```tsx
+import {
+  createWebStorageConversationDraftStore,
+  useConversationComposerDraft,
+} from '@epam/ai-dial-chat-hooks/conversation';
+import {
+  ConversationInput,
+  useComposerSeed,
+} from '@epam/ai-dial-conversation-input';
+import '@epam/ai-dial-conversation-input/styles.css';
+import { useMemo } from 'react';
+
+interface DraftComposerProps {
+  userId: string;
+  conversationId: string;
+  send: (message: string) => Promise<void>;
+}
+
+export const DraftComposer = ({
+  userId,
+  conversationId,
+  send,
+}: DraftComposerProps) => {
+  const store = useMemo(
+    () =>
+      createWebStorageConversationDraftStore({
+        getStorage: () => window.sessionStorage,
+        storageKey: `my-app:drafts:${userId}`,
+      }),
+    [userId],
+  );
+  const { message, messageRevision, seedMessage } = useComposerSeed();
+  const draft = useConversationComposerDraft({
+    store,
+    conversationId,
+    restoreDraft: ({ text }) => seedMessage(text),
+  });
+
+  return (
+    <ConversationInput
+      key={conversationId}
+      message={message}
+      messageRevision={messageRevision}
+      onChange={draft.handleTextChange}
+      onSend={(text) => draft.sendWithDraft(text, () => send(text))}
+    />
+  );
+};
+```
+
+#### API
+
+`useConversationComposerDraft(params)`:
+
+| Param                | Type                                  | Description                                                                                                                                                                                                      |
+| -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `store`              | `ConversationDraftStore \| undefined` | Host-owned store. `undefined` (e.g. no signed-in user yet) makes every handler a no-op.                                                                                                                          |
+| `conversationId`     | `string`                              | The conversation whose draft is managed.                                                                                                                                                                         |
+| `restoreDraft`       | `(draft: ConversationDraft) => void`  | Seeds the host's composer (and mention state) from a stored draft. Receives an empty draft when the id changes to a conversation with nothing stored, so a host whose view stays mounted can reset a stale seed. |
+| `isRestoreReady?`    | `boolean`                             | Defers the restore while `false`. Defaults to `true`.                                                                                                                                                            |
+| `shouldSkipRestore?` | `boolean`                             | Skips the restore for this id, e.g. while external content is pending. Defaults to `false`.                                                                                                                      |
+| `debounceMs?`        | `number`                              | Save delay in milliseconds. Defaults to `300`.                                                                                                                                                                   |
+
+Returns `UseConversationComposerDraftResult`:
+
+| Field                   | Type                                                                       | Description                                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `handleTextChange`      | `(text: string) => void`                                                   | Wire to the composer's `onChange`.                                                                                                                     |
+| `handleSkillsChange`    | `(skills: RequestSkill[]) => void`                                         | Call when the composer's skill mentions change; ignored when unchanged.                                                                                |
+| `handleExternalContent` | `(text: string) => void`                                                   | Replaces the draft with host content and no skills.                                                                                                    |
+| `sendWithDraft`         | `(text: string, send: () => Promise<unknown> \| unknown) => Promise<void>` | Runs `send`; removes the draft when it resolves (a draft edited while `send` was in flight is kept), stores `text` again and rethrows when it rejects. |
+| `clearDraft`            | `() => void`                                                               | Discards the current conversation's draft.                                                                                                             |
+
+#### Draft stores
+
+`ConversationDraftStore` is a synchronous, never-throwing contract —
+`read(id)`, `write(id, draft)`, `remove(id)`, `clear()` — over
+`ConversationDraft` (`{ text, skills: RequestSkill[], updatedAt }`). Writing an
+empty draft (whitespace-only `text` and no `skills`) removes the entry. Two
+ready-made implementations ship:
+
+- `createWebStorageConversationDraftStore({ getStorage, storageKey, maxEntries?, normalizeId? })`
+  persists one `{ version: 1, drafts }` JSON blob under `storageKey` in the
+  `Storage` that `getStorage` returns. It keeps at most `maxEntries` drafts
+  (default `50`), evicting the oldest `updatedAt`; on a quota error it evicts
+  the oldest half and retries once. A malformed or unknown-version blob reads as
+  empty, and an absent or throwing storage behaves as an empty store that
+  ignores writes. `normalizeId` (default identity) canonicalises ids so two
+  forms of the same id share one entry.
+- `createMemoryConversationDraftStore({ maxEntries?, normalizeId? })` has the
+  same semantics over an in-memory map — for drafts kept only for the page
+  lifetime, and for tests.
+
+The contract is synchronous because the restore runs before the user can type
+and the unmount flush must finish synchronously. To persist drafts somewhere
+asynchronous (a backend, IndexedDB), implement `ConversationDraftStore` over a
+synchronous in-memory cache that you hydrate up front and write through to the
+async target in the background.
 
 ### useViewportWidth / usePanelMaxWidth
 
@@ -4618,6 +4766,130 @@ The hook owns no client configuration, localization, UI or login flow. The host
 maps returned service DTOs into its view models and calls `refresh` after a
 successful credential mutation. Errors, including offline-status failures, set
 `hasError`; `refresh` retries them.
+
+### useOfflineCredentialsGate
+
+Offline-credentials status check behind a host's offline-credentials surfaces
+(a login banner, a settings tab): fires once on mount, aborts the in-flight
+request on unmount, and re-runs any time via `refetch`. A failed check never
+collapses into `connected: false` — a failed check must not trigger a
+login-required surface.
+
+```tsx
+import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks';
+
+const { status, connect, connected, refetch } = useOfflineCredentialsGate({
+  offlineCredentialsClient,
+});
+```
+
+`UseOfflineCredentialsGateOptions` is exported. The host-configured client is
+required (only `getOfflineCredentials`); the hook owns no client configuration.
+`status` is the `OfflineCredentialsGateStatus` enum (`Checking`/`Hidden`/
+`Available`/`Unavailable`/`Error`); `connect` carries usable OAuth client
+settings only while `status` is `Available`.
+
+### useOfflineCredentialsLogin
+
+Offline-credentials counterpart of `useToolsetLogin`: the same OAuth
+popup/`BroadcastChannel` handshake, driving the `offline-credentials` BFF
+domain, with a fresh status refetch authoritative for reporting success.
+Callers that fetch settings after the click can pass a popup they already
+opened synchronously (`preparedPopup`).
+
+```tsx
+import { useOfflineCredentialsLogin } from '@epam/ai-dial-chat-hooks';
+
+const { login } = useOfflineCredentialsLogin({ callbackPath: '/toolset-signin' });
+const outcome = await login(connect, refetch, preparedPopup?);
+```
+
+`callbackPath` is the host route the OAuth popup posts its result back to.
+`login` resolves an `OfflineCredentialsLoginOutcome` whose `type` is the
+`OfflineCredentialsLoginOutcomeType` enum (`Success`/`Failure`/`PopupBlocked`/
+`Cancelled`/`TimedOut`); `refetch` re-runs the status check and resolves
+`{ available, connected }` — the same authoritative call a gate owns.
+
+### useOfflineCredentialsAuth
+
+Shared login/logout orchestration for the external scheduler service's
+offline credentials: tracks the in-flight flags and the terminal login
+outcome, and treats a fresh gate refetch as authoritative for the logout
+outcome. Outcome-based — presentation and announcement stay with the
+caller, which maps `loginOutcome` and `logOut`'s resolved
+`OfflineCredentialsLogoutOutcomeType` (`Disconnected`/`NotDisconnected`/
+`Failed`) onto its own states and text.
+
+```tsx
+import { useOfflineCredentialsAuth } from '@epam/ai-dial-chat-hooks';
+
+const { isLoggingIn, loginOutcome, isLoggingOut, logIn, logOut } =
+  useOfflineCredentialsAuth({
+    connect,
+    refetch,
+    offlineCredentialsClient,
+    callbackPath: '/toolset-signin',
+  });
+```
+
+`UseOfflineCredentialsAuthOptions` extends the exported
+`OfflineCredentialsAuthGate` (`connect` + `refetch`) with the
+host-configured client (only `signOutOfflineCredentials`) and the callback
+path. `logIn` no-ops while `connect` is absent; `logOut` resolves
+`Disconnected` only when a fresh refetch confirms `connected: false`.
+
+### mapOfflineCredentialsResponse / normalizeOfflineCredentialsConnectSettings
+
+The single DTO→status-result mapping every offline-credentials consumer
+shares — the gate's check, the 403 disambiguation check, and the login
+refetch — so their normalization rules cannot drift apart.
+
+```ts
+import {
+  mapOfflineCredentialsResponse,
+  normalizeOfflineCredentialsConnectSettings,
+} from '@epam/ai-dial-chat-hooks';
+
+const { available, connected, connect } =
+  mapOfflineCredentialsResponse(response);
+const connectSettings = normalizeOfflineCredentialsConnectSettings(
+  response.connect,
+);
+```
+
+`mapOfflineCredentialsResponse` null-coalesces the `available`/`connected`
+flags and includes login-usable connect settings only while available and
+disconnected. `normalizeOfflineCredentialsConnectSettings` normalizes the
+connect object alone — present when `clientId` and `authorizationEndpoint`
+are both set, `scopes` defaulting to an empty list — without gating on the
+connection state, which is what the 403 check's one-check contract needs.
+
+### checkScheduledTaskAuthSessionError
+
+Checks whether a failed scheduled-task submit should be attributed to the
+logged-out external Scheduler auth service, from one fresh status check
+passed in by the host: exactly when the failure is a `403` and the check
+reports an available OAuth client with no stored grant. Every other outcome
+returns `isAuthSessionError: false` so the caller keeps its generic error
+handling; at most one status request is issued, only on the `403` path. The
+connect settings come back from the same check regardless of the connection
+state, so the caller decides from one check.
+
+```ts
+import { checkScheduledTaskAuthSessionError } from '@epam/ai-dial-chat-hooks';
+
+const { isAuthSessionError, connect } =
+  await checkScheduledTaskAuthSessionError(
+    error,
+    getOfflineCredentials, // host's already-configured status operation
+  );
+```
+
+`ScheduledTaskAuthSessionCheckResult` is exported. The disambiguation rule
+depends only on the DIAL Core response's own shape (the `403` status, the
+`available`/`connected` flags, the `connect` object's completeness), per
+the fourth library-isolation exception; toasts, wording, and the
+login-and-retry orchestration stay with the host.
 
 ## Building
 

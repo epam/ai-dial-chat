@@ -494,12 +494,14 @@ import '@epam/ai-dial-conversation-input/styles.css';
 
 ### The published stylesheet carries the layout too
 
-Each lib has its own `tailwind.config.js` scanning its `src/**`, so its Vite
-build emits the utility classes that lib actually uses into `dist/index.css` —
-which is what `./styles.css` points at. A host that imports the stylesheet gets
-the layout, not only the colors. Measured on `attachment-input`:
-`.size-\[84px\]`, `.p-1\.5`, `.end-1`, `.top-1` and
-`.group-hover\/attachment-tile\:opacity-100` are all in the published file.
+Each lib's Vite build runs `tools/vite-lib-tailwind-utilities.mjs`, which
+compiles the utility classes that lib's own `src/**` uses against the shared
+`tools/tailwind/theme.css` and appends them to `dist/index.css` — which is what
+`./styles.css` points at. A host that imports the stylesheet gets the layout,
+not only the colors. The utilities are unlayered and carry no preflight.
+Measured on `attachment-input`: `.size-\[100px\]`, `.p-0\.5`, `.end-1`,
+`.top-1` and `.group-hover\/attachment-tile\:opacity-100` are all in the
+published file.
 
 This is worth stating because the opposite was believed and written down —
 issue [#8707](https://github.com/epam/ai-dial-chat/issues/8707) reports a host

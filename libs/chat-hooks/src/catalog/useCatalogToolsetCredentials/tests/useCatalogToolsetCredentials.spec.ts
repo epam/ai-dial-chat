@@ -4,14 +4,20 @@ import {
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  decodeJsonFromBase64,
+  encodeJsonToBase64,
+} from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getToolsetOAuthChannelName } from '../../../oauth/handshake';
+import type { ToolsetRedirectState } from '../../../oauth/models';
 import {
   ToolsetOAuthCallbackQuery,
   ToolsetOAuthResultType,
+  TOOLSET_REDIRECT_STATE_KEY,
 } from '../../../oauth/types';
 import {
   ToolsetLoginOutcomeType,
@@ -356,9 +362,13 @@ describe('useCatalogToolsetCredentials', () => {
       });
 
       await waitFor(() => expect(capturedPopup).toBeDefined());
-      const flowId = JSON.parse(
-        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
-      ).state;
+      const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+          encodeJsonToBase64({}),
+      );
+      if (flowId == null) {
+        throw new Error('expected a stored flow id');
+      }
 
       postOAuthResult(flowId, {
         type: ToolsetOAuthResultType.Success,
@@ -415,9 +425,13 @@ describe('useCatalogToolsetCredentials', () => {
       });
 
       await waitFor(() => expect(capturedPopup).toBeDefined());
-      const flowId = JSON.parse(
-        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
-      ).state;
+      const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+          encodeJsonToBase64({}),
+      );
+      if (flowId == null) {
+        throw new Error('expected a stored flow id');
+      }
 
       postOAuthResult(flowId, {
         type: 'failure',

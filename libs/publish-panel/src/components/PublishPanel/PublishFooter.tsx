@@ -85,7 +85,7 @@ export const PublishFooter: FC<PublishFooterProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex items-center justify-end gap-2 border-t px-4 py-4 desktop:px-3.5 rtl:flex-row-reverse rtl:justify-start',
+        'flex items-center justify-end gap-2 border-t px-4 py-4 rtl:flex-row-reverse rtl:justify-start desktop:px-3.5',
         styles.footer,
       )}
     >

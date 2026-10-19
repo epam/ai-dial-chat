@@ -7,6 +7,7 @@ import { RouterProvider } from 'react-router/dom';
 import AppRoot from './AppRoot';
 import { RootErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import './i18n/config';
+import './tailwind.css';
 import './styles.scss';
 import { registerChunkLoadRecovery } from './utils/chunk-load-recovery';
 

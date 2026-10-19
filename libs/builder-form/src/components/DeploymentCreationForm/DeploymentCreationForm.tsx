@@ -41,7 +41,6 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   isNameReadOnly = false,
   nameCaption,
   isDescriptionRequired = false,
-  descriptionMaxLength,
   descriptionCaption,
   renderDescription,
   focusRequestKey,
@@ -117,7 +116,6 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
             }
       }
       placeholder={labels.description.placeholder}
-      maxLength={descriptionMaxLength}
       caption={descriptionCaption}
       error={errors.description || undefined}
       invalid={!!errors.description}

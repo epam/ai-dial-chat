@@ -1,0 +1,15 @@
+/*
+ * Two Tailwind v3 preflight rules that v4's preflight overrides. The kit's
+ * stylesheet keeps both in `@layer ui.base`, but an application's preflight is
+ * unlayered, so its `::placeholder` colour and universal `margin: 0` would win
+ * over the kit's copies. Imported right after preflight to restore them.
+ */
+input::placeholder,
+textarea::placeholder {
+  opacity: 1;
+  color: #9ca3af;
+}
+
+dialog {
+  margin: auto;
+}

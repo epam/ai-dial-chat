@@ -65,7 +65,9 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 vi.mock('../../../hooks/useUiFeature', async () => {
   const { OverlayFeature } = await import('@epam/ai-dial-chat-overlay');
   return {
-    useUiFeature: (feature: string) => feature === OverlayFeature.InputFiles,
+    useUiFeature: (feature: string) =>
+      feature === OverlayFeature.InputFiles ||
+      feature === OverlayFeature.ConversationDrafts,
   };
 });
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
@@ -105,6 +107,7 @@ vi.mock('../../SkillSelector/useSkillSelectorOverlay', () => ({
     message: '',
     messageRevision: 0,
     resetSkillMentions: vi.fn(),
+    onDraftChange: vi.fn(),
   }),
 }));
 vi.mock('../../FooterMessage/FooterMessage', () => ({ default: () => null }));
@@ -426,7 +429,11 @@ describe('ConversationView Reply attachment flow', () => {
     fireEvent.change(textarea, { target: { value: 'My draft' } });
     fireEvent.click(await selectPassage());
     await waitFor(() => expect(upload).toHaveBeenCalledOnce());
-    expect(await upload.mock.calls[0][0].file!.text()).toBe('Selected passage');
+    const uploadedFile = upload.mock.calls[0]?.[0]?.file;
+    if (uploadedFile == null) {
+      throw new Error('expected an uploaded file');
+    }
+    expect(await uploadedFile.text()).toBe('Selected passage');
     expect((textarea as HTMLTextAreaElement).value).toBe('My draft');
     expect(document.activeElement).toBe(textarea);
     await waitFor(() =>

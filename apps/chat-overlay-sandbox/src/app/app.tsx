@@ -95,7 +95,7 @@ const App: FC = () => {
         <span className="dial-tiny-lead-semi-text dial-tiny-lead-semi-text inline-flex min-h-[30px] items-center rounded-full border border-accent-alpha bg-info px-[11px] py-1 text-info">
           Developer playground
         </span>
-        <h1 className="mb-3 mt-[18px] text-[clamp(2rem,7vw,3.5rem)] leading-[1.05] tracking-[-0.04em]">
+        <h1 className="mt-[18px] mb-3 text-[clamp(2rem,7vw,3.5rem)] leading-[1.05] tracking-[-0.04em]">
           Chat Overlay Sandbox
         </h1>
         <p className="m-0 max-w-[620px] text-[clamp(1rem,3vw,1.125rem)] leading-[1.65] text-secondary">
@@ -121,7 +121,7 @@ const App: FC = () => {
             return (
               <li key={id}>
                 <NeutralButton
-                  className="focus-visible:outline-offset-3 h-auto min-h-[180px] w-full items-stretch rounded-2xl border border-secondary bg-layer-raised px-5 py-5 text-start text-primary shadow-sm transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-info hover:shadow-md focus-visible:outline focus-visible:outline-2"
+                  className="h-auto min-h-[180px] w-full items-stretch rounded-2xl border border-secondary bg-layer-raised px-5 py-5 text-start text-primary shadow-sm transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-info hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-3"
                   textClassName="w-full"
                   type="button"
                   aria-labelledby={titleId}
@@ -136,12 +136,12 @@ const App: FC = () => {
                       </span>
                       <span className="flex min-w-0 flex-col">
                         <span
-                          className="text-[1.05rem] font-bold leading-[1.35]"
+                          className="text-[1.05rem] leading-[1.35] font-bold"
                           id={titleId}
                         >
                           {title}
                         </span>
-                        <span className="mt-2 whitespace-normal leading-[1.55] text-secondary">
+                        <span className="mt-2 leading-[1.55] whitespace-normal text-secondary">
                           {description}
                         </span>
                         <span

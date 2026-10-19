@@ -9,7 +9,7 @@ import {
 } from '@epam/ai-dial-chat-overlay';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as userConfigApi from '../../server-api/user-config.api';
 import { AuthStatus } from '../../types/auth-status';
@@ -606,6 +606,102 @@ describe('ConversationsContext — deleteConversation', () => {
     ).rejects.toBeDefined();
 
     expect(result.current.conversations).toHaveLength(3);
+  });
+});
+
+describe('ConversationsContext — draft eviction', () => {
+  const DRAFTS_KEY = 'conversationDrafts:user-1';
+  const seedDrafts = (...ids: string[]) =>
+    window.sessionStorage.setItem(
+      DRAFTS_KEY,
+      JSON.stringify({
+        version: 1,
+        drafts: Object.fromEntries(
+          ids.map((id) => [id, { text: id, skills: [], updatedAt: 1 }]),
+        ),
+      }),
+    );
+  const storedDraftIds = () =>
+    Object.keys(
+      JSON.parse(window.sessionStorage.getItem(DRAFTS_KEY) ?? '{"drafts":{}}')
+        .drafts,
+    );
+
+  beforeEach(() => window.sessionStorage.clear());
+  afterEach(() => window.sessionStorage.clear());
+
+  it('removes the stored draft of a deleted conversation', async () => {
+    seedDrafts('conv1', 'conv2');
+    mockDeleteConversation.mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.deleteConversation('conv1');
+    });
+
+    expect(storedDraftIds()).toEqual(['conv2']);
+  });
+
+  it('keeps the stored draft when the delete fails', async () => {
+    seedDrafts('conv1');
+    mockDeleteConversation.mockRejectedValueOnce({
+      response: { status: 502, json: vi.fn() },
+    });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await expect(
+      act(async () => {
+        await result.current.deleteConversation('conv1');
+      }),
+    ).rejects.toBeDefined();
+
+    expect(storedDraftIds()).toEqual(['conv1']);
+  });
+
+  it("removes the user's draft key when every conversation is deleted", async () => {
+    seedDrafts('conv1', 'conv2');
+    mockDeleteAllConversations.mockResolvedValueOnce({
+      requested: 3,
+      deleted: 3,
+      alreadyAbsent: 0,
+      failed: [],
+    });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.deleteAllConversations();
+    });
+
+    expect(window.sessionStorage.getItem(DRAFTS_KEY)).toBeNull();
+  });
+
+  it('keeps the drafts of conversations that failed to delete', async () => {
+    seedDrafts('conv1', 'conv2', 'conv3');
+    mockDeleteAllConversations.mockResolvedValueOnce({
+      requested: 3,
+      deleted: 2,
+      alreadyAbsent: 0,
+      failed: [{ id: 'conv2', code: 'UPSTREAM_ERROR' }],
+    });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.deleteAllConversations();
+    });
+
+    expect(storedDraftIds()).toEqual(['conv2']);
   });
 });
 

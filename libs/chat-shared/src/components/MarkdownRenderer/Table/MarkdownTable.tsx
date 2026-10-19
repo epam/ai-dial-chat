@@ -175,7 +175,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
-          'group/table relative w-full min-w-0 max-w-full rounded-xl border [overflow:clip]',
+          'group/table relative w-full max-w-full min-w-0 [overflow:clip] rounded-xl border',
           styles.tableContainer,
           classNames.tableWrapper,
           CHAT_SHARED_CLASS.table,
@@ -183,7 +183,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       >
         {showActions && (
           <div className="sticky top-0 z-10 h-0">
-            <div className="absolute end-2 top-2 flex items-center gap-1 rounded-lg border border-tertiary bg-layer-raised px-2 py-1 opacity-0 shadow-xs transition-opacity focus-within:opacity-100 group-hover/table:opacity-100">
+            <div className="absolute end-2 top-2 flex items-center gap-1 rounded-lg border border-tertiary bg-layer-raised px-2 py-1 opacity-0 shadow-xs transition-opacity group-hover/table:opacity-100 focus-within:opacity-100">
               {tableActions.map((action) => (
                 <GhostIconButton
                   key={action.label}
@@ -200,7 +200,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
         <div
           ref={scrollContainerRef}
           className={mergeClasses(
-            'w-full min-w-0 max-w-full overflow-x-auto',
+            'w-full max-w-full min-w-0 overflow-x-auto',
             styles.scrollContainer,
             classNames.tableScrollContainer,
             {

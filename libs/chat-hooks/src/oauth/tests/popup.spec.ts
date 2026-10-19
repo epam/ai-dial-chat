@@ -1,3 +1,4 @@
+import { decodeJsonFromBase64 } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   initiateOAuthLogin,
@@ -45,7 +46,7 @@ const readRedirectState = (popup: FakePopup) => {
     string,
   ];
   expect(key).toBe(TOOLSET_REDIRECT_STATE_KEY);
-  return JSON.parse(value) as Record<string, unknown>;
+  return decodeJsonFromBase64<Record<string, unknown>>(value);
 };
 
 afterEach(() => {
@@ -96,6 +97,22 @@ describe('initiateOAuthLogin', () => {
     expect(navigated.searchParams.get('redirect_uri')).toBe(
       `${window.location.origin}${CALLBACK_PATH}`,
     );
+  });
+
+  it('writes redirect state for a non-Latin1 toolsetId without throwing', () => {
+    /*
+     * A plain `btoa` wrap throws on characters above U+00FF — after the
+     * popup has already opened, which would strand it on a blank window;
+     * the UTF-8-safe wrap must store any user-named resource id.
+     */
+    const popup = createFakePopup();
+    vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
+
+    const cyrillicToolsetId = 'инструменты/публичные/задача';
+    expect(() =>
+      initiateOAuthLogin(validOAuthConfig, cyrillicToolsetId, CALLBACK_PATH),
+    ).not.toThrow();
+    expect(readRedirectState(popup).toolsetId).toBe(cyrillicToolsetId);
   });
 
   it('resolves the redirect URI against the caller-supplied callback path', () => {

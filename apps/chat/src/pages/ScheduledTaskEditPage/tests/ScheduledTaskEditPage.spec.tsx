@@ -1,7 +1,13 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
+import { type ReactElement, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -51,8 +57,12 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 }));
 
 const showNotificationMock = vi.fn();
+const dismissNotificationMock = vi.fn();
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => createNotificationContextValue(showNotificationMock),
+  useNotification: () =>
+    createNotificationContextValue(showNotificationMock, {
+      dismissNotification: dismissNotificationMock,
+    }),
 }));
 
 const useThemeMock = vi.fn();
@@ -69,6 +79,7 @@ vi.mock('../../../server-api/scheduled-tasks.api', () => ({
 
 const getApiErrorStatusMock = vi.fn();
 const getApiErrorDetailsMock = vi.fn();
+const checkScheduledTaskAuthSessionErrorMock = vi.fn();
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
@@ -76,8 +87,23 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
     ...actual,
     getApiErrorStatus: (error: unknown) => getApiErrorStatusMock(error),
     getApiErrorDetails: (error: unknown) => getApiErrorDetailsMock(error),
+    checkScheduledTaskAuthSessionError: (...args: unknown[]) =>
+      checkScheduledTaskAuthSessionErrorMock(...args),
   };
 });
+
+const autoLoginMock = vi.fn();
+vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskAuthAutoLogin', () => ({
+  useScheduledTaskAuthAutoLogin: () => ({
+    autoLogin: (...args: unknown[]) => autoLoginMock(...args),
+  }),
+}));
+
+const CONNECT = {
+  clientId: 'dial-apps',
+  authorizationEndpoint: 'https://identity.example.com/authorize',
+  scopes: ['openid', 'offline_access'],
+};
 
 vi.mock(
   '../../../components/DeploymentSelector/DeploymentSelectorFieldTrigger',
@@ -452,6 +478,12 @@ describe('ScheduledTaskEditPage', () => {
     useAppConfigMock.mockReturnValue({ status: 'ready', config: {} });
     getApiErrorStatusMock.mockReturnValue(undefined);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: undefined });
+    /* Matches the real check's non-throwing contract — it never resolves
+       undefined, so an unconfigured mock must not model that impossible
+       state (the handler dereferences the result unguarded). */
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: false,
+    });
   });
   /* Always restores real timers, even when a fake-timer test times out
    and skips its own cleanup. */
@@ -887,5 +919,243 @@ describe('ScheduledTaskEditPage', () => {
       ).toBeTruthy();
       expect(screen.queryByRole('dialog')).toBeNull();
     });
+  });
+
+  /*
+   * The login-required toast itself is not rendered by this harness (the
+   * notification context is mocked), so its action element mounts on its own
+   * for the click — the latest shown notification carries the live one.
+   */
+  const clickLoginAndRetryAction = async () => {
+    const lastCall = showNotificationMock.mock.calls.at(-1);
+    if (lastCall == null) {
+      throw new Error('no notification shown yet');
+    }
+    const { action } = lastCall[0] as { action: ReactElement };
+    const { unmount } = render(action);
+    try {
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: 'scheduledTasks.loginAndRetryAction',
+        }),
+      );
+    } finally {
+      unmount();
+    }
+  };
+
+  it('shows the login-required toast with a Log in and retry action when a 403 is attributed to the logged-out scheduler service', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    const payload = showNotificationMock.mock.calls[0][0];
+    expect(payload.message).toBe('scheduledTasks.loginRequiredNotification');
+    expect(payload.requestId).toBe('trace-403');
+    expect(payload.action).toBeTruthy();
+    /* The login waits for the user's consent — nothing is invoked automatically. */
+    expect(autoLoginMock).not.toHaveBeenCalled();
+    /* One submit attempt only — the retry happens after the login. */
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+  });
+
+  it('logs in through the toast action, retries the save, and navigates to the detail route', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock
+      .mockRejectedValueOnce(new Error('forbidden'))
+      .mockResolvedValueOnce({ id: 'sched_123' });
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    autoLoginMock.mockResolvedValue({ type: 'success' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    await clickLoginAndRetryAction();
+
+    /* The login runs on the action's fresh user activation — the page never unloads. */
+    expect(autoLoginMock).toHaveBeenCalledOnce();
+    expect(autoLoginMock).toHaveBeenCalledWith(CONNECT);
+    /* The actionable toast is dismissed once its action runs. */
+    expect(dismissNotificationMock).toHaveBeenCalledOnce();
+    /* The submit is retried once after the successful login. */
+    await waitFor(() =>
+      expect(updateScheduledTaskMock).toHaveBeenCalledTimes(2),
+    );
+    expect(await screen.findByText('scheduled task detail page')).toBeTruthy();
+    /* The login-required toast plus the normal success toast. */
+    expect(showNotificationMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the login-failed toast and keeps the form when the login from the toast action fails', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    autoLoginMock.mockResolvedValue({ type: 'failure' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'displayName' }),
+      ' edited',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    await clickLoginAndRetryAction();
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledTimes(2));
+    expect(showNotificationMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.autoLoginFailedNotification',
+        requestId: 'trace-403',
+      }),
+    );
+    /* One submit attempt only — a failed login never triggers the retry. */
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+    /* The form and its unsaved edit stay intact — no navigation, no reset. */
+    expect(
+      (
+        screen.getByRole('textbox', {
+          name: 'displayName',
+        }) as HTMLInputElement
+      ).value,
+    ).toBe('Daily summary edited');
+    expect(screen.queryByText('scheduled task detail page')).not.toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: 'buttons.save' })
+        .hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('stays silent and keeps the form when the user cancels the login from the toast action', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    autoLoginMock.mockResolvedValue({ type: 'cancelled' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    await clickLoginAndRetryAction();
+
+    await waitFor(() => expect(autoLoginMock).toHaveBeenCalledOnce());
+    /* A user-cancelled login is not a failure — no login-failed toast, no retry. */
+    expect(showNotificationMock).toHaveBeenCalledOnce();
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+  });
+
+  it('re-runs the full login path when Save is activated again after a failed login', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: CONNECT,
+    });
+    autoLoginMock.mockResolvedValue({ type: 'failure' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    const save = screen.getByRole('button', { name: 'buttons.save' });
+    await userEvent.click(save);
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    await clickLoginAndRetryAction();
+    await waitFor(() => {
+      expect(autoLoginMock).toHaveBeenCalledOnce();
+    });
+
+    /* A fresh Save activation gets a fresh login-required toast. */
+    await userEvent.click(save);
+    await waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledTimes(3);
+    });
+    await clickLoginAndRetryAction();
+
+    await waitFor(() => {
+      expect(autoLoginMock).toHaveBeenCalledTimes(2);
+    });
+    expect(updateScheduledTaskMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the generic error toast when a 403 is attributed but no usable client settings exist', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: true,
+      connect: undefined,
+    });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    expect(showNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.edit.errorNotification',
+        requestId: 'trace-403',
+      }),
+    );
+    expect(autoLoginMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the generic error toast when a 403 is not attributed to the auth session', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockRejectedValue(new Error('forbidden'));
+    getApiErrorStatusMock.mockReturnValue(403);
+    getApiErrorDetailsMock.mockResolvedValue({ traceId: 'trace-403' });
+    checkScheduledTaskAuthSessionErrorMock.mockResolvedValue({
+      isAuthSessionError: false,
+    });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalledOnce());
+    expect(showNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.edit.errorNotification',
+        requestId: 'trace-403',
+      }),
+    );
+    expect(showNotificationMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'scheduledTasks.autoLoginFailedNotification',
+      }),
+    );
   });
 });

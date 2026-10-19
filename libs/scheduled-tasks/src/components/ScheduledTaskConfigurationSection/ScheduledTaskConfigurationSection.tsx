@@ -30,7 +30,7 @@ export const ScheduledTaskConfigurationSection: FC<
         >
           {skillLabel}
         </span>
-        <p className="whitespace-normal break-all">
+        <p className="break-all whitespace-normal">
           {skillDisplayNames?.map((name, index) => (
             <span className="block" key={`${index}:${name}`}>
               {name}

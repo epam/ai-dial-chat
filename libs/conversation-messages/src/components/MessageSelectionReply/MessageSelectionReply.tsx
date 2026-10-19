@@ -125,7 +125,7 @@ export const MessageSelectionReply: FC<MessageSelectionReplyProps> = ({
         <div
           ref={actionRef}
           className={mergeClasses(
-            'fixed left-0 top-0 z-50 max-w-[calc(100vw-16px)]',
+            'fixed top-0 left-0 z-50 max-w-[calc(100vw-16px)]',
             className,
           )}
           style={{

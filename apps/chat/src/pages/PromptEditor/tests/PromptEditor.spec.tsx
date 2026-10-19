@@ -309,6 +309,35 @@ describe('PromptEditor', () => {
     expect(screen.queryByText('promptEditor.error.nameTooLong')).toBeNull();
   });
 
+  it('keeps an over-long pasted description, flags it while typing and blocks create', async () => {
+    render(<PromptEditor />);
+
+    await user.type(
+      screen.getByRole('textbox', { name: /promptEditor.nameLabel/ }),
+      'summarize',
+    );
+    const descriptionField = screen.getByRole('textbox', {
+      name: /promptEditor.descriptionLabel/,
+    });
+    await user.click(descriptionField);
+    await user.paste(`${'a'.repeat(1996)}12345`);
+
+    expect((descriptionField as HTMLTextAreaElement).value).toHaveLength(2001);
+    expect(
+      screen.getByText('promptEditor.error.descriptionTooLong'),
+    ).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+
+    expect(createPrompt).not.toHaveBeenCalled();
+
+    await user.type(descriptionField, '{Backspace}');
+
+    expect(
+      screen.queryByText('promptEditor.error.descriptionTooLong'),
+    ).toBeNull();
+  });
+
   it('shows an over-long instructions error while typing', async () => {
     render(<PromptEditor />);
 

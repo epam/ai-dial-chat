@@ -3,10 +3,12 @@ import { useUser } from '../../context/auth/UserContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { logout } from '../../server-api/auth.api';
 import { ROUTES } from '../../types/routes';
+import { useConversationDraftStore } from '../conversation/useConversationDraftStore';
 
 export const useLogout = () => {
   const { reset } = useUser();
   const overlay = useOptionalOverlay();
+  const draftStore = useConversationDraftStore();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const openLogout = useCallback(() => setIsLogoutOpen(true), []);
   const closeLogout = useCallback(() => setIsLogoutOpen(false), []);
@@ -16,6 +18,8 @@ export const useLogout = () => {
    * unsaved-changes dialog's Discard changes, which logs out directly.
    */
   const performLogout = useCallback(async () => {
+    /* Drafts are per user; none may outlive the session that wrote them. */
+    draftStore?.clear();
     try {
       await logout();
     } catch (err) {
@@ -37,7 +41,7 @@ export const useLogout = () => {
      * this navigation and signs the user straight back in.
      */
     window.location.replace(ROUTES.Login);
-  }, [overlay, reset]);
+  }, [draftStore, overlay, reset]);
 
   return { isLogoutOpen, openLogout, closeLogout, performLogout };
 };

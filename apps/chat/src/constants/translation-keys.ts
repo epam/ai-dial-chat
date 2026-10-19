@@ -527,6 +527,14 @@ export enum ScheduledTasksI18nKeys {
   OfflineCredentialsBannerFailedMessage = 'scheduledTasks.offlineCredentialsBanner.failedMessage',
   OfflineCredentialsBannerSuccessAnnouncement = 'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
   OfflineCredentialsBannerLoggingInLabel = 'scheduledTasks.offlineCredentialsBanner.loggingInLabel',
+  DisconnectConfirmTitle = 'scheduledTasks.disconnect.confirmTitle',
+  DisconnectConfirmDescription = 'scheduledTasks.disconnect.confirmDescription',
+  DisconnectConfirmDescriptionSecondary = 'scheduledTasks.disconnect.confirmDescriptionSecondary',
+  DisconnectFailedMessage = 'scheduledTasks.disconnect.failedMessage',
+  DisconnectSuccessAnnouncement = 'scheduledTasks.disconnect.successAnnouncement',
+  AutoLoginFailedNotification = 'scheduledTasks.autoLoginFailedNotification',
+  LoginRequiredNotification = 'scheduledTasks.loginRequiredNotification',
+  LoginAndRetryAction = 'scheduledTasks.loginAndRetryAction',
 }
 
 export enum ConversationI18nKeys {
@@ -725,9 +733,20 @@ export enum SettingsI18nKeys {
   ShortcutMetaEnter = 'settings.shortcutMetaEnter',
   Preferences = 'settings.preferences',
   PreferencesDescription = 'settings.preferencesDescription',
+  Extensions = 'settings.extensions',
   DefaultAgent = 'settings.defaultAgent',
   DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
   DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
+}
+
+export enum ExtensionsI18nKeys {
+  Description = 'extensions.description',
+  NameColumnLabel = 'extensions.nameColumnLabel',
+  DescriptionColumnLabel = 'extensions.descriptionColumnLabel',
+  ActionsColumnLabel = 'extensions.actionsColumnLabel',
+  ServiceDefaultName = 'extensions.service.defaultName',
+  ServiceDescription = 'extensions.service.description',
+  ServiceAuthorizeTooltip = 'extensions.service.authorizeTooltip',
 }
 
 export enum ConversationPanelI18nKeys {

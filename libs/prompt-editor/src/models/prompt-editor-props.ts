@@ -155,7 +155,7 @@ export interface PromptEditorProps {
   isSaving?: boolean;
   /** Inline validation messages to render under the fields. */
   errors?: PromptEditorErrors;
-  /** Hard limit on the description, shown as a `length/limit` counter under it and used for the characters-remaining announcement. Defaults to `2000`. */
+  /** Description length limit, shown as a `length/limit` counter under it and used for the characters-remaining announcement; input is not capped. Defaults to `2000`. */
   descriptionMaxLength?: number;
   /** Maximum content length used for the characters-remaining announcement. Defaults to `50000`. */
   contentMaxLength?: number;

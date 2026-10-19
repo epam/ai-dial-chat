@@ -301,7 +301,7 @@ export const Filter: FC<FilterProps> = ({
               />
               <div
                 className={mergeClasses(
-                  'px-[10px] pb-1 pt-[10px]',
+                  'px-[10px] pt-[10px] pb-1',
                   typography?.filterSectionLabelClassName ??
                     'dial-tiny-lead-semi-text',
                   styles.sectionLabel,
@@ -400,7 +400,7 @@ export const Filter: FC<FilterProps> = ({
           />
         }
         className={mergeClasses(
-          'h-12 shrink-0 gap-[7px] whitespace-nowrap !rounded-lg px-[18px]',
+          'h-12 shrink-0 gap-[7px] !rounded-lg px-[18px] whitespace-nowrap',
           styles.filterBtn,
           isActive && styles.filterBtnActive,
           isOpen && styles.filterBtnOpen,

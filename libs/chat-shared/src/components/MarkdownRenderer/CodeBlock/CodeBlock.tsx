@@ -134,7 +134,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
-          'my-4 max-w-full rounded-xl border [overflow:clip]',
+          'my-4 max-w-full [overflow:clip] rounded-xl border',
           styles.container,
           isLightTheme && styles.containerLight,
           containerClassName,

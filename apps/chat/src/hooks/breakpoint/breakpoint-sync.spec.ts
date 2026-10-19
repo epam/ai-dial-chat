@@ -9,9 +9,9 @@ import { describe, expect, it } from 'vitest';
 /*
  * The responsive boundary is single-sourced in chat-shared's breakpoint
  * constants. The sites that can import them (useBreakpoint, useIsMobile, the
- * catalog virtualizer) cannot drift; the sites that cannot — the root
- * tailwind config (plain CJS run by tooling), SCSS stylesheets, and the
- * dependency-less chat-overlay package — repeat the literal. This spec pins
+ * catalog virtualizer) cannot drift; the sites that cannot — the Tailwind
+ * theme stylesheet, SCSS stylesheets, and the dependency-less chat-overlay
+ * package — repeat the literal. This spec pins
  * every repeat to the constant so a boundary move can never leave a site
  * behind silently.
  */
@@ -23,11 +23,15 @@ const readRepoFile = (relativePath: string): string =>
   readFileSync(join(REPO_ROOT, relativePath), 'utf-8');
 
 describe('breakpoint-sync', () => {
-  it('the root tailwind screens match the breakpoint constants', () => {
-    const config = readRepoFile('tailwind.config.js');
+  it('the Tailwind theme variants match the breakpoint constants', () => {
+    const theme = readRepoFile('tools/tailwind/theme.css');
 
-    expect(config).toContain(`mobile: { max: '${MOBILE_MAX_WIDTH_PX}px' }`);
-    expect(config).toContain(`desktop: { min: '${DESKTOP_BREAKPOINT_PX}px' }`);
+    expect(theme).toContain(
+      `@custom-variant mobile (@media (max-width: ${MOBILE_MAX_WIDTH_PX}px));`,
+    );
+    expect(theme).toContain(
+      `@custom-variant desktop (@media (min-width: ${DESKTOP_BREAKPOINT_PX}px));`,
+    );
   });
 
   it('the chat-overlay mobile breakpoint matches the breakpoint constants', () => {

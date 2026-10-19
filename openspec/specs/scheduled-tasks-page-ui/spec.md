@@ -61,14 +61,16 @@ All directional layout in the Scheduled Tasks header, toolbar, and empty state M
 
 ### Requirement: ScheduledTasks lib component renders header, toolbar, and data-driven content states
 
-`libs/scheduled-tasks` SHALL export a presentational `ScheduledTasks` root component accepting `labels`, `onCreateClick`, `searchQuery`/`onSearchQueryChange`, `sortKey`/`onSortChange`, `items: ScheduledTaskItem[]`, `isLoading` (default `false`), `hasMore: boolean` (default `false`), `isLoadingMore?: boolean` (default `false`), `skeletonCount?: number` (default `6`), `onLoadMore?: () => void`, optional `error`/`onRetry`, optional `loadMoreError`/`onRetryLoadMore`, `onCardClick`, `banner`, and the styling props `styles`, `sortIcon`, `className`, `gridLayout` and `cardStyles`. It SHALL render, in order: a header (title, subtitle, primary "create" action button), a toolbar (search input, sort control with options), and a content region whose rendering depends on state:
+`libs/scheduled-tasks` SHALL export a presentational `ScheduledTasks` root component accepting `labels`, `onCreateClick`, `searchQuery`/`onSearchQueryChange`, `sortKey`/`onSortChange`, `items: ScheduledTaskItem[]`, `isLoading` (default `false`), `hasMore: boolean` (default `false`), `isLoadingMore?: boolean` (default `false`), `skeletonCount?: number` (default `6`), `onLoadMore?: () => void`, optional `error`/`onRetry`, and an optional `banner?: ReactNode` slot. It SHALL render, in order: a header (title, subtitle, and a right-side action group containing the primary "create" button as its single header action), a toolbar (search input, sort control with options), and a content region whose rendering depends on state:
 
 - `isLoading` is `true` (initial load) → the content region renders a `Spinner` and no other content-region markup.
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
 - `isLoading` is `false`, `error` is unset, and `items` is empty because the source list itself is empty (no `searchQuery` in effect) → the content region renders the shared `PanelEmptyState` component (from `@epam/ai-dial-chat-shared`) with `labels.emptyStateLabel`.
 - `isLoading` is `false`, `error` is unset, `items` is empty, and a non-empty `searchQuery` is in effect → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `labels.noResultsLabel`. Because search is server-driven, this state reflects the server returning zero matches, not a client-side filter reducing a non-empty array to zero.
-- `isLoading` is `false`, `error` is unset, and `items` is non-empty → the content region renders a single flat `ScheduledTaskCardGrid` of `ScheduledTaskCard`s, **in the order they were received** (no client-side reordering by `sortKey` — sort order is now applied server-side, see the "Server-driven search and sort over the full remote dataset" requirement). There is no grouping/sectioning of any kind — no section heading, no count badge — regardless of task ownership. When `isLoadingMore` is `true`, exactly `skeletonCount` `ScheduledTaskCardSkeleton` elements render as **trailing children inside that same `ScheduledTaskCardGrid`** (via its `trailingSkeletonCount` prop) — not in a separate grid container — so they continue filling the current CSS grid row instead of unconditionally starting a new row and leaving a gap in a partially-filled last row. When `loadMoreError` is set, a `role="alert"` row with `labels.loadMoreErrorLabel` (falling back to `labels.errorLabel`) and a retry `GhostButton` calling `onRetryLoadMore` renders below the grid, without removing the loaded cards.
-- A scroll sentinel is rendered at the end of the content region's scrollable area; when it becomes visible and `hasMore && !isLoadingMore && !isLoading && !loadMoreError`, `onLoadMore` is invoked (if provided).
+- `isLoading` is `false`, `error` is unset, and `items` is non-empty → the content region renders a single flat `ScheduledTaskCardGrid` of `ScheduledTaskCard`s, **in the order they were received** (no client-side reordering by `sortKey` — sort order is now applied server-side, see the "Server-driven search and sort over the full remote dataset" requirement). There is no grouping/sectioning of any kind — no section heading, no count badge — regardless of task ownership. When `isLoadingMore` is `true`, exactly `skeletonCount` `ScheduledTaskCardSkeleton` elements render as **trailing children inside that same `ScheduledTaskCardGrid`** (via its `trailingSkeletonCount` prop) — not in a separate grid container — so they continue filling the current CSS grid row (via `grid-auto-flow`) instead of unconditionally starting a new row and leaving a gap in a partially-filled last row.
+- A scroll sentinel is rendered at the end of the content region's scrollable area; when it becomes visible and `hasMore && !isLoadingMore && !isLoading`, `onLoadMore` is invoked (if provided).
+
+The create button SHALL collapse to an icon-only 40px circle below 1280px (the `desktop:` breakpoint mirroring `MOBILE_MAX_WIDTH_PX`), via the module's `.createButton`/`.createButtonLabel` class pair (label-span hide + circle pill).
 
 The component MUST NOT import from `apps/chat`, `server-api`, any generated API client, routing, feature-flag context, auth, env, or analytics — all such knowledge is passed in via props. Fetching, pagination-state management, sort-state management, and DTO mapping happen in the app; the lib performs no sorting of `items` itself — `sortKey`/`onSortChange` are used only to drive the toolbar control's UI state (selected option, `aria-selected`), not to reorder rendered cards.
 
@@ -121,6 +123,16 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 - **WHEN** the user activates the create button
 - **THEN** `onCreateClick` is called exactly once, with no navigation or network call performed by the lib itself
+
+#### Scenario: The header renders exactly one action button
+
+- **WHEN** `ScheduledTasks` renders
+- **THEN** the header's action group contains exactly one action button (the create action); no disconnect/logout action or its markup renders, and no disconnect props exist on the component's public API
+
+#### Scenario: The header button collapses on narrow viewports
+
+- **WHEN** the viewport is narrower than 1280px
+- **THEN** the create button renders as an icon-only 40px circle via the collapse class, and the header row does not overflow
 
 #### Scenario: Lib has no host or integration imports
 

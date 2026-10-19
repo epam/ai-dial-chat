@@ -144,13 +144,23 @@ that takes the DTO and the threshold. It SHALL NOT go through
 
 ### Requirement: Banner rendering and wording
 
-The banner SHALL render the kit `Notification` with
-`type={NotificationType.SectionMessage}` and `closable`:
-- `variant={NotificationVariant.Warning}` for Warning;
-- `variant={NotificationVariant.Error}` for Reached.
+The banner SHALL render the presentational `UsageLimitBannerView` from
+`@epam/ai-dial-conversation-input`. The banner's own component file stays
+`apps/chat/src/components/UsageLimitBanner/UsageLimitBanner.tsx` (see capability
+`conversation-input-usage-banner-view`). It SHALL NOT render the kit
+`Notification` itself. It passes:
+- `severity`: `UsageLimitBannerSeverity.Warning` for Warning, `UsageLimitBannerSeverity.Reached` for Reached. The view maps these to `NotificationVariant.Warning` and `NotificationVariant.Error`, as a `SectionMessage`;
+- `limitText`: the translated period sentence below;
+- `reset`: the result of `formatUsageResetShort` (`libs/chat-hooks/src/usage/usage-reset-time.ts`) when it is defined, otherwise nothing;
+- `onClose`: the handler that records the dismissal, so the banner is always closable.
 
-Its `message` SHALL be the period sentence in semibold, followed by the reset
-sentence in regular weight, on one line where width allows.
+The period sentence renders in semibold, followed by the reset sentence in
+regular weight, on one line where width allows.
+
+`UsageLimitBannerSeverity` from `@epam/ai-dial-conversation-input` is the single
+severity enum. `selectUsageBannerSource` (`libs/chat-hooks/src/usage/usage-banner-source.ts`)
+SHALL return it, and the app SHALL NOT declare its own severity enum. Its values
+(`'warning'`, `'reached'`) keep the dismissal keys unchanged.
 
 Period sentences, as i18n keys in `ConversationInputUsageBannerI18nKeys` in
 `apps/chat/src/constants/translation-keys.ts` and in `apps/chat/src/i18n/locales/en.json`.
@@ -183,6 +193,10 @@ locale and timezone:
 - **WHEN** the source row has no `resetsAt`
 - **THEN** only the period sentence renders
 
+#### Scenario: Composes the lib view
+
+- **WHEN** the banner renders a Warning
+- **THEN** it renders `UsageLimitBannerView` with `severity={UsageLimitBannerSeverity.Warning}`, the translated `limitText`, and an `onClose`
 ---
 
 ### Requirement: Dismissal until the situation worsens
@@ -253,7 +267,7 @@ components call, so their behaviour cannot drift. `ConversationView` SHALL pass
 
 ### Requirement: Banner accessibility, direction, and memoisation
 
-- **Live region:** the banner SHALL pass `role="status"` to `Notification`, overriding the kit's assertive `role="alert"` for both severities. The banner appears on page load and after streaming, not in response to a user action, so it SHALL NOT interrupt the screen reader.
+- **Live region:** the banner's root SHALL have `role="status"`, overriding the kit's assertive `role="alert"` for both severities. `UsageLimitBannerView` sets the role, and the app does not override it. The banner appears on page load and after streaming, not in response to a user action, so it SHALL NOT interrupt the screen reader.
 - **Close button:** it is the kit's own and reachable by Tab. Its accessible name is owned by `@epam/ai-dial-ui-kit`. The kit exposes no label prop, so translating it is out of scope here and is recorded as a kit gap in `design.md`.
 - **Contrast and icons:** text contrast comes from the kit's Notification tokens. The warning and error icons are symmetric, so nothing is mirrored for RTL. Layout uses only logical properties.
 - **Memoisation:** the component SHALL be exported as `memo(UsageLimitBanner)`. Source-row selection and the formatted strings SHALL be computed with `useMemo` keyed on the DTO, threshold, locale, and `t`. The close handler SHALL be a `useCallback`.

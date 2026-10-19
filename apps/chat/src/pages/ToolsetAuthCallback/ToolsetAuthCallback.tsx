@@ -51,15 +51,14 @@ import { ROUTES } from '../../types/routes';
 import { getToolsetOAuthFailureMessageKey } from '../../utils/toolsets';
 
 /**
- * This route only ever runs inside the popup window the login flow opened —
- * it never navigates, since the editor/Catalog tab that opened it never
- * navigated away either.
+ * Runs inside the popup window the popup login flow opened — it never
+ * navigates, since the tab that opened it never navigated away either.
  */
 const ToolsetAuthCallback: FC = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
-  const exchange = useCallback(
+  const onExchange = useCallback(
     async ({
       code,
       redirectUri,
@@ -129,7 +128,7 @@ const ToolsetAuthCallback: FC = () => {
      * `redirect_uri`.
      */
     callbackPath: ROUTES.ToolsetEditorCallback,
-    exchange,
+    exchange: onExchange,
   });
 
   const handleClose = useCallback(() => {

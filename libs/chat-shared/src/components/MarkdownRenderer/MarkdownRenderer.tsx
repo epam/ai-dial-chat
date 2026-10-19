@@ -526,7 +526,7 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'decoration-current/60 break-words underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
+        'break-words underline decoration-current/60 underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
         styles.link,
         cn.link,
       )}
@@ -594,7 +594,7 @@ const buildMarkdownComponents = (
     <th
       scope="col"
       className={mergeClasses(
-        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words px-3 py-2.5 text-start',
+        'sticky top-0 z-[2] max-w-96 px-3 py-2.5 text-start break-words whitespace-normal',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
@@ -609,7 +609,7 @@ const buildMarkdownComponents = (
   td: ({ children, node }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal px-3 py-[7px] align-top [overflow-wrap:anywhere]',
+        'max-w-96 px-3 py-[7px] align-top [overflow-wrap:anywhere] whitespace-normal',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,

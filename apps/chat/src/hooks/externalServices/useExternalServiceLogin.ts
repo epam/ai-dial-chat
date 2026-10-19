@@ -9,6 +9,7 @@ import {
   ToolsetOAuthResultType,
   waitForToolsetOAuthResult,
   WithLogin,
+  OfflineCredentialsLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
 import {
@@ -20,10 +21,7 @@ import {
 } from '../../server-api/external-services';
 import { getOfflineCredentials } from '../../server-api/offline-credentials';
 import { ROUTES } from '../../types/routes';
-import {
-  OfflineCredentialsLoginOutcomeType,
-  useOfflineCredentialsLogin,
-} from '../offlineCredentials/useOfflineCredentialsLogin';
+import { useOfflineCredentialsLogin } from '../offlineCredentials/useOfflineCredentialsLogin';
 
 /** OAuth client settings needed to build the authorize URL — a subset of an external service's `auth_settings`. */
 export interface ExternalServiceOAuthSettings {
