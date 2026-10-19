@@ -45,7 +45,6 @@ import {
   IconDatabase,
   IconFileZip,
   IconFolderPlus,
-  IconPlus,
   IconTrashX,
   IconUpload,
   type TablerIcon,
@@ -576,34 +575,24 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         kind: SkillFileNodeKind.Folder,
       };
       /* A folder lists its add entries directly, so uploading into it takes
-         one click instead of an extra "Add child" submenu (issue #9301). */
+         one click instead of an extra "Add child" submenu. There is no "Add
+         sibling": the parent folder's own menu and the header Add already
+         cover it (issue #9301). */
       const items = buildAddMenuItems(
         resolveAddTarget(SkillAddSource.Child, node),
         pane,
       );
-      items.push(
-        {
-          key: 'add-sibling',
-          icon: renderIcon(IconPlus),
-          label: t.addSiblingLabel ?? 'Add sibling',
-          children: buildAddMenuItems(
-            resolveAddTarget(SkillAddSource.Sibling, node),
-            pane,
-          ),
-        },
-        {
-          key: 'delete',
-          label: t.deleteLabel ?? 'Delete',
-          danger: true,
-          icon: renderIcon(IconTrashX, removeIconClassName),
-          onClick: () => handleRemoveNode(item.path),
-        },
-      );
+      items.push({
+        key: 'delete',
+        label: t.deleteLabel ?? 'Delete',
+        danger: true,
+        icon: renderIcon(IconTrashX, removeIconClassName),
+        onClick: () => handleRemoveNode(item.path),
+      });
       return items;
     },
     [
       draftPath,
-      t.addSiblingLabel,
       t.deleteLabel,
       removeIconClassName,
       buildAddMenuItems,

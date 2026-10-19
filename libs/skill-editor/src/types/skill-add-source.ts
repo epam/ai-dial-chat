@@ -4,6 +4,4 @@ export enum SkillAddSource {
   Header = 'header',
   /** The add entries listed directly in a folder's context menu: that folder. */
   Child = 'child',
-  /** A node's "Add sibling" submenu: the node's parent folder. */
-  Sibling = 'sibling',
 }

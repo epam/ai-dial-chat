@@ -1507,7 +1507,6 @@
     "createFolder": "Create folder",
     "uploadArchive": "Upload archive from device",
     "openFileSystem": "Open DIAL file system",
-    "addSibling": "Add sibling",
     "newFolderDefaultName": "New folder",
     "folderNameRequired": "Enter a folder name",
     "folderNameInvalid": "Folder name can't contain / or \\, or be . or ..",

@@ -151,10 +151,11 @@ the `files` prop and never exposes a rename/move/delete affordance.
 
 The Files pane header renders an **Add** dropdown (ui-kit `ButtonDropdown`), and
 every folder has a context menu. A folder lists the Add dropdown's entries
-directly (adding into that folder), then **Add sibling** and **Delete**. A file
-has no menu, only an inline **Delete** button shown on row hover; `SKILL.md` has
-neither. Add sibling is a submenu holding the same entries as the Add dropdown. An entry appears only
-when its host capability is supplied:
+directly (adding into that folder), then **Delete**. There is no Add sibling
+submenu: adding next to a folder goes through its parent folder's menu, or the
+header Add for the root. A file has no menu, only an inline **Delete** button
+shown on row hover; `SKILL.md` has neither. An entry appears only when its host
+capability is supplied:
 
 | Entry                      | Requires                         | Behaviour                                                                                                             |
 | -------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -165,7 +166,7 @@ when its host capability is supplied:
 
 Every add action targets a folder: from the header, the selected folder (or
 the root when a file or `SKILL.md` is selected); from a folder's own menu
-entries, that folder; from Add sibling, the node's parent. Staged paths are prefixed with it. Files
+entries, that folder. Staged paths are prefixed with it. Files
 from every source go through `fileActions.validateBatch` and
 `fileActions.commitBatch`, so per-file errors look the same whatever the source.
 
@@ -244,7 +245,7 @@ with `path` relative to the folder being added to. `SkillFileUploadMode`
 
 `labels` (`SkillEditorLabels`) gives every string an English default. The
 file-tree entries are `addLabel`, `createFolderLabel`, `uploadFilesLabel`,
-`uploadArchiveLabel`, `openFileSystemLabel`, `addSiblingLabel`, `deleteLabel`, `newFolderDefaultName`,
+`uploadArchiveLabel`, `openFileSystemLabel`, `deleteLabel`, `newFolderDefaultName`,
 `folderNameRequiredError`, `folderNameInvalidError`,
 `folderNameDuplicateError`, and the archive dialog's
 `uploadArchiveDialogTitle`, `uploadArchiveDropZoneLabel`,

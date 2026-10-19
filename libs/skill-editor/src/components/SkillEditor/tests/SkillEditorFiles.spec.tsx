@@ -456,7 +456,6 @@ describe('SkillEditor — files pane', () => {
     // One Delete per rendered pane (mobile + desktop) for notes.md; none for SKILL.md.
     expect(screen.getAllByRole('button', { name: 'Delete' })).toHaveLength(2);
     expect(screen.queryAllByRole('menuitem')).toHaveLength(0);
-    expect(screen.queryByRole('list', { name: 'Add sibling' })).toBeNull();
   });
 
   it('commits a staged file when the batch validates and the user confirms', async () => {
@@ -916,7 +915,7 @@ describe('SkillEditor — Add dropdown', () => {
 });
 
 describe('SkillEditor — node menu', () => {
-  it('lists the add entries directly, then Add sibling and Delete, on a folder', () => {
+  it('lists the add entries directly, then Delete, on a folder — with no Add child or Add sibling submenu', () => {
     renderEditor({ files: [docsFolder] }, fullFileActions());
 
     for (const name of [
@@ -928,9 +927,8 @@ describe('SkillEditor — node menu', () => {
       expect(queryDirectMenuItems(name)).toHaveLength(2);
     }
     expect(screen.queryByRole('list', { name: 'Add child' })).toBeNull();
-    expect(screen.getAllByRole('list', { name: 'Add sibling' })).toHaveLength(
-      2,
-    );
+    expect(screen.queryByRole('list', { name: 'Add sibling' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Add sibling' })).toBeNull();
     expect(screen.getAllByRole('menuitem', { name: 'Delete' })).toHaveLength(2);
   });
 
@@ -945,7 +943,6 @@ describe('SkillEditor — node menu', () => {
     );
 
     expect(screen.queryAllByRole('menuitem')).toHaveLength(0);
-    expect(screen.queryByRole('list', { name: 'Add sibling' })).toBeNull();
     expect(screen.getAllByRole('button', { name: 'Delete' })).toHaveLength(2);
   });
 
@@ -954,39 +951,6 @@ describe('SkillEditor — node menu', () => {
     renderEditor({ files: [docsFolder] }, fullFileActions());
 
     await user.click(queryDirectMenuItems('Upload files from device')[0]);
-    stageFile(new File(['x'], 'c.md'));
-
-    expect(await screen.findByText('docs/c.md')).toBeTruthy();
-  });
-
-  it('stages an Add sibling upload next to a nested folder', async () => {
-    const user = userEvent.setup({ delay: null });
-    renderEditor(
-      {
-        files: [
-          docsFolder,
-          { path: 'docs/sub', name: 'sub', kind: SkillFileNodeKind.Folder },
-        ],
-      },
-      fullFileActions(),
-    );
-
-    // Scope to sub's own row; the parent docs folder has an Add sibling of its own.
-    const [folderRow] = screen
-      .getAllByRole('listitem')
-      .filter(
-        (row) =>
-          within(row).queryByRole('button', { name: 'sub' }) &&
-          within(row).queryAllByRole('listitem').length === 0,
-      );
-    const sibling = within(folderRow).getByRole('list', {
-      name: 'Add sibling',
-    });
-    await user.click(
-      within(sibling).getByRole('menuitem', {
-        name: 'Upload files from device',
-      }),
-    );
     stageFile(new File(['x'], 'c.md'));
 
     expect(await screen.findByText('docs/c.md')).toBeTruthy();
