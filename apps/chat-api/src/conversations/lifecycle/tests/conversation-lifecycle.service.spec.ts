@@ -451,6 +451,142 @@ describe('ConversationLifecycleService', () => {
       );
     });
 
+    describe('scheduled-task runs', () => {
+      const RUN_UUID = 'c7aeee4c-c01f-41f2-b0db-b8a1a39943f5';
+      const runPath = `.scheduler/sched_abc/gpt-4o__Morning%20briefing__${RUN_UUID}`;
+      const runConversation = {
+        ...TEST_CONVERSATION,
+        name: 'Morning briefing',
+      };
+
+      const duplicate = async (sourcePath: string) => {
+        const getSpy = vi
+          .spyOn(mockDialClient.client, 'getConversation')
+          .mockResolvedValue({ data: { ...runConversation } } as never);
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({ data: {} } as never);
+        const result = await service.duplicateConversation(
+          sourcePath,
+          'test-token',
+          'test-bucket',
+        );
+        return { getSpy, saveSpy, result };
+      };
+
+      it('stores the copy of an own run at the bucket root', async () => {
+        const { getSpy, saveSpy, result } = await duplicate(
+          `test-bucket/${runPath}`,
+        );
+
+        expect(getSpy).toHaveBeenCalledWith(
+          'test-bucket',
+          runPath,
+          expect.any(Object),
+        );
+        expect(saveSpy).toHaveBeenCalledWith(
+          'test-bucket',
+          'gpt-4o__Morning%20briefing',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              id: 'test-bucket/gpt-4o__Morning briefing',
+              folderId: 'test-bucket',
+              name: 'Morning briefing',
+            }),
+          }),
+        );
+        expect(result.newPath).toBe(
+          'conversations/test-bucket/gpt-4o__Morning%20briefing',
+        );
+      });
+
+      it('stores the copy of a run shared from another bucket in the session bucket', async () => {
+        const { saveSpy } = await duplicate(`owner-bucket/${runPath}`);
+
+        expect(saveSpy).toHaveBeenCalledWith(
+          'test-bucket',
+          'gpt-4o__Morning%20briefing',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              id: 'test-bucket/gpt-4o__Morning briefing',
+              folderId: 'test-bucket',
+            }),
+          }),
+        );
+      });
+
+      it('checks the stripped path for a collision and keeps a collision UUID outside .scheduler', async () => {
+        const metadataSpy = vi
+          .spyOn(mockDialClient.client, 'getConversationMetadata')
+          .mockResolvedValue({
+            data: { name: 'gpt-4o__Morning briefing' },
+          } as never);
+
+        const { saveSpy } = await duplicate(`test-bucket/${runPath}`);
+
+        expect(metadataSpy).toHaveBeenCalledWith(
+          'test-bucket',
+          'gpt-4o__Morning%20briefing',
+          expect.any(Object),
+        );
+        expect(saveSpy).toHaveBeenCalledWith(
+          'test-bucket',
+          expect.stringMatching(/^gpt-4o__Morning%20briefing__[0-9a-f-]{36}$/),
+          expect.objectContaining({
+            body: expect.objectContaining({
+              id: expect.not.stringContaining('.scheduler'),
+              folderId: 'test-bucket',
+            }),
+          }),
+        );
+      });
+
+      it('keeps the application folder of an application run', async () => {
+        const { saveSpy } = await duplicate(
+          `test-bucket/.scheduler/sched_abc/applications/catalog/Team%2FApp%20One__0.0.1__Morning%20briefing__${RUN_UUID}`,
+        );
+
+        expect(saveSpy).toHaveBeenCalledWith(
+          'test-bucket',
+          'applications/catalog/Team%2FApp%20One__0.0.1__Morning%20briefing',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              id: 'test-bucket/applications/catalog/Team/App One__0.0.1__Morning briefing',
+              folderId: 'test-bucket/applications/catalog',
+            }),
+          }),
+        );
+      });
+
+      it('leaves ordinary folders and a bare .scheduler folder unchanged', async () => {
+        const ordinary = await duplicate(
+          'test-bucket/folder/sub/gpt-4o__Morning%20briefing',
+        );
+        expect(ordinary.saveSpy).toHaveBeenCalledWith(
+          'test-bucket',
+          'folder/sub/gpt-4o__Morning%20briefing',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              folderId: 'test-bucket/folder/sub',
+            }),
+          }),
+        );
+
+        const bare = await duplicate(
+          'test-bucket/.scheduler/gpt-4o__Morning%20briefing',
+        );
+        expect(bare.saveSpy).toHaveBeenLastCalledWith(
+          'test-bucket',
+          '.scheduler/gpt-4o__Morning%20briefing',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              folderId: 'test-bucket/.scheduler',
+            }),
+          }),
+        );
+      });
+    });
+
     it('appends a UUID segment when the destination path already exists', async () => {
       vi.spyOn(
         mockDialClient.client,
