@@ -5,7 +5,13 @@ import en from './locales/en.json';
 
 const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
 
-const applyDocumentDirection = (lang: string) => {
+/*
+ * `i18n.language` is the detected language (e.g. the browser's `uk`) even when
+ * no resources exist for it and the UI falls back to English. `<html lang/dir>`
+ * must describe the text actually rendered, so use the resolved language.
+ */
+const applyDocumentDirection = () => {
+  const lang = i18n.resolvedLanguage ?? 'en';
   const base = lang.split('-')[0];
   document.documentElement.lang = lang;
   document.documentElement.dir = RTL_LANGUAGES.has(base) ? 'rtl' : 'ltr';
@@ -29,4 +35,4 @@ i18n
   });
 
 i18n.on('languageChanged', applyDocumentDirection);
-applyDocumentDirection(i18n.language ?? 'en');
+applyDocumentDirection();

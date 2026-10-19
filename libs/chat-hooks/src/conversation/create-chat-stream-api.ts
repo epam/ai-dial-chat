@@ -17,9 +17,17 @@ export const DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE =
 export class GenerationPersistenceError extends Error {
   static readonly type = 'conversation_save_failed';
 
-  constructor() {
+  /** HTTP status of the rejected terminal write, when the backend reported one. */
+  readonly status?: number;
+
+  /**
+   * Creates the error with the default persistence message.
+   * @param status - HTTP status of the rejected terminal write, if known
+   */
+  constructor(status?: number) {
     super(DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE);
     this.name = 'GenerationPersistenceError';
+    this.status = status;
   }
 }
 
@@ -171,6 +179,17 @@ const isAbortError = (err: unknown): boolean =>
   err != null &&
   (err as { name?: unknown }).name === 'AbortError';
 
+/**
+ * Returns the numeric `status` the backend adds to a persistence error chunk,
+ * or `undefined` when it is absent or not a number. `StreamChunk.error`
+ * describes DIAL Core's in-band errors, which carry no such field.
+ * @param error - the chunk's `error` object
+ */
+const readErrorStatus = (error: object): number | undefined => {
+  const { status } = error as { status?: unknown };
+  return typeof status === 'number' ? status : undefined;
+};
+
 const parseSSELine = (
   line: string,
   onChunk: (chunk: StreamChunk) => void,
@@ -188,7 +207,7 @@ const parseSSELine = (
     if (parsed.error) {
       onError(
         parsed.error.type === GenerationPersistenceError.type
-          ? new GenerationPersistenceError()
+          ? new GenerationPersistenceError(readErrorStatus(parsed.error))
           : new StreamUpstreamError(parsed.error.message),
       );
       return;

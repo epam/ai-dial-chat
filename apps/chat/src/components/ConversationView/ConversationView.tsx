@@ -19,7 +19,11 @@ import {
   useAttachmentValidation,
   useChatSettingsFormConfig,
 } from '@epam/ai-dial-chat-hooks';
-import { useMessageSelectionReply } from '@epam/ai-dial-chat-hooks/conversation';
+import {
+  type ConversationDraft,
+  useConversationComposerDraft,
+  useMessageSelectionReply,
+} from '@epam/ai-dial-chat-hooks/conversation';
 import {
   useMcpAppTools,
   useOpenMcpAppCanvas,
@@ -70,6 +74,7 @@ import {
   type ReactNode,
   Suspense,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -89,7 +94,7 @@ import {
   PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -100,6 +105,7 @@ import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapte
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useConversationAnnotationPool } from '../../hooks/conversation/useConversationAnnotationPool';
+import { useConversationDraftStore } from '../../hooks/conversation/useConversationDraftStore';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -114,6 +120,7 @@ import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConf
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
+import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 import { ConversationReloadNotification } from './ConversationReloadNotification';
@@ -169,6 +176,8 @@ interface Props {
   stoppedGeneratingText: string;
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
+  /** The conversation's model is hidden, so a read-only chat explains why it can't be duplicated instead of offering the button. */
+  isDuplicateUnavailable?: boolean;
   duplicateError?: string;
   isAudioMessageSupported?: boolean;
   isVoiceRecordingSupported?: boolean;
@@ -181,7 +190,12 @@ interface Props {
    * user's own typing after that is not overridden until this changes again.
    */
   inputContent?: string;
-  /** Token that forces `inputContent` to re-apply even if its string is unchanged. */
+  /**
+   * Token that forces `inputContent` to re-apply even if its string is
+   * unchanged. `0` (or omitted) means no content is pending: a revision > 0 at
+   * mount is treated as fresh content for the conversation, so the host resets
+   * it to `0` once the content has been shown.
+   */
   inputContentRevision?: number;
   /**
    * Text inserted at the composer's caret whenever its `revision` changes. This
@@ -245,6 +259,7 @@ const ConversationView: FC<Props> = ({
   stoppedGeneratingText,
   isReadOnly = false,
   onDuplicateConversation,
+  isDuplicateUnavailable = false,
   duplicateError,
   isAudioMessageSupported = false,
   isVoiceRecordingSupported = false,
@@ -264,34 +279,7 @@ const ConversationView: FC<Props> = ({
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
-  const {
-    renderOverlay: renderPromptsOverlay,
-    promptCatalogModal,
-    parametersPopup: promptParametersPopup,
-  } = usePromptSelectorOverlay({
-    onInsertText: onInsertText ?? (() => undefined),
-  });
   const { t } = useTranslation();
-  const promptsMenuOverlays = useMemo(
-    () =>
-      onInsertText && renderPromptsOverlay
-        ? [
-            {
-              key: 'prompts',
-              title: t(PromptSelectorI18nKeys.AddMenuLabel),
-              icon: (
-                <IconPrompt
-                  size={BASE_ICON_SIZE}
-                  aria-hidden
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              ),
-              renderOverlay: renderPromptsOverlay,
-            },
-          ]
-        : undefined,
-    [onInsertText, renderPromptsOverlay, t],
-  );
   const { language } = useLanguage();
   const {
     items,
@@ -314,6 +302,16 @@ const ConversationView: FC<Props> = ({
         }
       : undefined;
   }, [items, activeDeploymentId, language]);
+  /*
+   * A model hidden through HIDDEN_ENTITY_TAGS can no longer be used, even in a
+   * conversation that already ran on it (issue #9183). The picker stays
+   * enabled: switching to a visible model is how the conversation continues.
+   */
+  const isSelectedModelHidden = !!selectedDeployment?.isHidden;
+  /* Exactly one usage surface is composed: the dial when the flag is on,
+     otherwise the banner above the input. */
+  const usageDeploymentId =
+    selectedDeployment?.id ?? activeDeploymentId ?? undefined;
 
   const {
     skillMenuOverlay,
@@ -329,11 +327,47 @@ const ConversationView: FC<Props> = ({
     selectedSkills,
     isSkillUnsupported,
     resetSkillMentions,
+    recognizeMentionsInInsertion,
     renderHistorySkillSegments,
     renderHistorySkills,
+    seedSkillMentions: seedComposerSkillMentions,
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
+
+  /* A `/skill-name` written in a prompt's text becomes a real mention once inserted ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). */
+  const handlePromptInsertText = useCallback(
+    (text: string) => {
+      recognizeMentionsInInsertion(text);
+      onInsertText?.(text);
+    },
+    [recognizeMentionsInInsertion, onInsertText],
+  );
+  const {
+    renderOverlay: renderPromptsOverlay,
+    promptCatalogModal,
+    parametersPopup: promptParametersPopup,
+  } = usePromptSelectorOverlay({ onInsertText: handlePromptInsertText });
+  const promptsMenuOverlays = useMemo(
+    () =>
+      onInsertText && renderPromptsOverlay
+        ? [
+            {
+              key: 'prompts',
+              title: t(PromptSelectorI18nKeys.AddMenuLabel),
+              icon: (
+                <IconPrompt
+                  size={BASE_ICON_SIZE}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              renderOverlay: renderPromptsOverlay,
+            },
+          ]
+        : undefined,
+    [onInsertText, renderPromptsOverlay, t],
+  );
   /*
    * A second, independent hook instance drives the edit surface's mention
    * tracking. Sharing the composer's instance would make starting an edit
@@ -383,9 +417,97 @@ const ConversationView: FC<Props> = ({
     text: inputContent,
     revision: inputContentRevision ?? 0,
   });
-  useComposerSeedSource(inputContentRevision, () =>
-    seedComposerSeed(inputContent ?? ''),
+
+  /*
+   * Per-conversation composer draft. The lib owns the save/restore/clear state
+   * machine; this view only decides how a draft is seeded back: skill drafts
+   * through the composer's mention instance (so chips come back active),
+   * everything else as plain text. A skill draft waits for the deployments to
+   * load so its skills support is known — a deployment that is gone once they
+   * have loaded gets the text only — and overlay content present at mount wins
+   * over whatever was stored.
+   */
+  const draftStore = useConversationDraftStore();
+  const isSkillsSupported =
+    selectedDeployment?.features?.skillsSupported === true;
+  const hasStoredDraftSkills = useMemo(
+    () => (draftStore?.read(conversation.id)?.skills.length ?? 0) > 0,
+    [draftStore, conversation.id],
   );
+  const [hasInputContentAtMount] = useState(
+    () => (inputContentRevision ?? 0) > 0,
+  );
+  /*
+   * The mount-time overlay content belongs to the conversation open at mount
+   * only. Dropped during render rather than in an effect, so the id change
+   * costs no extra commit.
+   */
+  const [skipRestoreConversationId, setSkipRestoreConversationId] = useState(
+    () => (hasInputContentAtMount ? conversation.id : undefined),
+  );
+  if (
+    skipRestoreConversationId != null &&
+    conversation.id !== skipRestoreConversationId
+  ) {
+    setSkipRestoreConversationId(undefined);
+  }
+  const restoreDraft = useCallback(
+    ({ text, skills }: ConversationDraft) => {
+      if (skills.length > 0 && isSkillsSupported) {
+        seedComposerSkillMentions(text, skills);
+        return;
+      }
+      seedComposerSeed(text);
+    },
+    [isSkillsSupported, seedComposerSkillMentions, seedComposerSeed],
+  );
+  const {
+    handleTextChange: handleDraftTextChange,
+    handleSkillsChange: handleDraftSkillsChange,
+    handleExternalContent: handleDraftExternalContent,
+    sendWithDraft,
+  } = useConversationComposerDraft({
+    store: draftStore,
+    conversationId: conversation.id,
+    restoreDraft,
+    isRestoreReady: !(
+      hasStoredDraftSkills &&
+      selectedDeployment == null &&
+      isLoading
+    ),
+    shouldSkipRestore: skipRestoreConversationId === conversation.id,
+  });
+  const handleDraftChange = useCallback(
+    (text: string) => {
+      onDraftChange(text);
+      handleDraftTextChange(text);
+    },
+    [onDraftChange, handleDraftTextChange],
+  );
+  /*
+   * Fires on a selection change only, not when the handler's identity moves
+   * with the conversation id — the outgoing selection belongs to the previous
+   * conversation and must not land in the next one's draft.
+   */
+  const lastDraftSkillsRef = useRef(selectedSkills);
+  useEffect(() => {
+    if (lastDraftSkillsRef.current === selectedSkills) return;
+    lastDraftSkillsRef.current = selectedSkills;
+    handleDraftSkillsChange(selectedSkills ?? []);
+  }, [selectedSkills, handleDraftSkillsChange]);
+  /* Overlay content already present at mount is the initial seed; persist it as the draft. */
+  useEffect(() => {
+    if (hasInputContentAtMount) handleDraftExternalContent(inputContent ?? '');
+    // Mount-only: later overlay content arrives through the seed source below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useComposerSeedSource(inputContentRevision, () => {
+    /* A drop back to 0 is the host marking the content spent, not new content. */
+    if (!inputContentRevision) return;
+    seedComposerSeed(inputContent ?? '');
+    handleDraftExternalContent(inputContent ?? '');
+  });
   useComposerSeedSource(skillMessageRevision, () =>
     seedComposerSeed(skillMessage),
   );
@@ -408,6 +530,7 @@ const ConversationView: FC<Props> = ({
   const {
     config: { maxAttachmentFileSizeBytes },
   } = useAppConfig();
+  const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
@@ -648,6 +771,7 @@ const ConversationView: FC<Props> = ({
       !isInputDisabled &&
       !isDisabledSendEnabled &&
       !isSkillUnsupported &&
+      !isSelectedModelHidden &&
       isInputFilesEnabled &&
       isAttachmentsAllowed &&
       isTextAttachmentsAllowed &&
@@ -762,8 +886,11 @@ const ConversationView: FC<Props> = ({
     async (message: string, attachments: Attachment[]) => {
       armAnchor(messages.length);
       /* ConversationInput awaits this to know whether to restore the draft
-       * on failure — forward onSend's result rather than discarding it. */
-      await onSend(message, attachments, selectedSkills);
+       * on failure — forward onSend's rejection rather than discarding it.
+       * `sendWithDraft` discards the stored draft only once onSend resolves. */
+      await sendWithDraft(message, () =>
+        onSend(message, attachments, selectedSkills),
+      );
       /*
        * Clear only after a successful send: a rejected onSend restores the
        * draft, and the mentions should survive with it for the retry.
@@ -771,7 +898,14 @@ const ConversationView: FC<Props> = ({
        */
       resetSkillMentions();
     },
-    [onSend, messages.length, armAnchor, selectedSkills, resetSkillMentions],
+    [
+      onSend,
+      messages.length,
+      armAnchor,
+      selectedSkills,
+      resetSkillMentions,
+      sendWithDraft,
+    ],
   );
 
   /*
@@ -1003,11 +1137,18 @@ const ConversationView: FC<Props> = ({
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          /*
+           * `relative` makes the scroller the containing block for absolutely
+           * positioned descendants (e.g. `sr-only` live regions in message
+           * actions). Without it they overflow the `overflow-hidden` wrapper
+           * above, which keyboard selection (Shift+ArrowUp) can then scroll,
+           * pushing the whole message list out of view (#9137).
+           */
+          className="relative flex w-full flex-1 flex-col overflow-x-hidden overflow-y-auto"
         >
           <div
             ref={contentRef}
-            className="mx-auto flex w-full min-w-0 max-w-[760px] shrink-0 flex-col gap-[26px] px-6 pt-7"
+            className="mx-auto flex w-full max-w-[760px] min-w-0 shrink-0 flex-col gap-[26px] px-6 pt-7"
           >
             {topContent}
             {messages.map((msg, index) => {
@@ -1175,26 +1316,42 @@ const ConversationView: FC<Props> = ({
             {duplicateError && (
               <ErrorMessageNotification message={duplicateError} />
             )}
-            <NeutralButton
-              label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
-              iconBefore={
-                <IconCopy
-                  size={DIAL_ICON_SIZE.MD}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              }
-              onClick={onDuplicateConversation}
-            />
+            {isDuplicateUnavailable ? (
+              <p className="dial-small-text text-center text-secondary">
+                {t(ConversationPanelI18nKeys.DuplicateUnavailableModel)}
+              </p>
+            ) : (
+              <NeutralButton
+                label={t(
+                  ConversationPanelI18nKeys.DuplicateReadOnlyDescription,
+                )}
+                iconBefore={
+                  <IconCopy
+                    size={DIAL_ICON_SIZE.MD}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
+                onClick={onDuplicateConversation}
+              />
+            )}
           </div>
         ) : (
           <>
+            {isSelectedModelHidden && (
+              <p
+                role="status"
+                className="dial-small-text pb-2 text-center text-secondary"
+              >
+                {t(ConversationI18nKeys.ModelUnavailableNotice)}
+              </p>
+            )}
             <Suspense fallback={null}>
               <ConversationInput
                 key={conversation.id}
                 focusRequestId={reply.focusRequestId}
                 message={composerSeedText}
                 messageRevision={composerSeedRevision}
-                onChange={onDraftChange}
+                onChange={handleDraftChange}
                 textInsertion={inputInsertion}
                 onSend={handleSendWithAnchor}
                 onUploadAttachment={onUploadAttachment}
@@ -1215,7 +1372,11 @@ const ConversationView: FC<Props> = ({
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
                 isModelSelectorDisabled={isModelFixed}
-                isSendDisabled={isDisabledSendEnabled || isSkillUnsupported}
+                isSendDisabled={
+                  isDisabledSendEnabled ||
+                  isSkillUnsupported ||
+                  isSelectedModelHidden
+                }
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -1290,12 +1451,20 @@ const ConversationView: FC<Props> = ({
                 commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
-                  <UsageLimitsControl
-                    deploymentId={
-                      selectedDeployment?.id ?? activeDeploymentId ?? undefined
-                    }
-                    isGenerationInProgress={isAssistantTyping}
-                  />
+                  isUsageLimitsControlEnabled ? (
+                    <UsageLimitsControl
+                      deploymentId={usageDeploymentId}
+                      isGenerationInProgress={isAssistantTyping}
+                    />
+                  ) : undefined
+                }
+                aboveInputSlot={
+                  isUsageLimitsControlEnabled ? undefined : (
+                    <UsageLimitBanner
+                      deploymentId={usageDeploymentId}
+                      isGenerationInProgress={isAssistantTyping}
+                    />
+                  )
                 }
               />
             </Suspense>

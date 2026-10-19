@@ -3,18 +3,20 @@ import {
   type DeploymentDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   CustomAppI18nKeys,
   EditorI18nKeys,
   TextRefinementI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import {
   createApplication,
   updateApplication,
@@ -73,18 +75,18 @@ const mockNotifyOperationSuccess = vi.fn();
 const APP_ID = 'applications/bucket/my-app__1.0.0';
 
 const renderPage = (initialEntry: string = ROUTES.CustomAppEditor) =>
-  render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route
-          path={ROUTES.CustomAppEditor}
-          element={
-            <ApplicationEditorPage kind={ApplicationEditorKind.CustomApp} />
-          }
-        />
-        <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithLeaveGuard(
+    <Routes>
+      <Route
+        path={ROUTES.CustomAppEditor}
+        element={
+          <ApplicationEditorPage kind={ApplicationEditorKind.CustomApp} />
+        }
+      />
+      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+      <Route path={ROUTES.ScheduledTasks} element={<div>Scheduler</div>} />
+    </Routes>,
+    [initialEntry],
   );
 
 /* The layout renders its actions in the header and again in the mobile bar; take the header copy. */
@@ -172,6 +174,19 @@ describe('ApplicationEditorPage — custom app', () => {
     expect(
       screen.queryByRole('button', { name: 'editor.nextButton' }),
     ).toBeNull();
+  });
+
+  it('opens the create form with version 1.0.0 and an empty name', () => {
+    renderPage();
+
+    expect(
+      (
+        screen.getByLabelText(EditorI18nKeys.VersionLabel, {
+          exact: false,
+        }) as HTMLInputElement
+      ).value,
+    ).toBe('1.0.0');
+    expect((getNameInput() as HTMLInputElement).value).toBe('');
   });
 
   it('shows the name-required error on blur', async () => {
@@ -352,6 +367,94 @@ describe('ApplicationEditorPage — custom app', () => {
           message: CustomAppI18nKeys.ErrorLoadFailed,
         }),
       );
+    });
+  });
+
+  describe('leave guard', () => {
+    const navigateAway = (router: ReturnType<typeof renderPage>['router']) =>
+      act(() => router.navigate(ROUTES.ScheduledTasks));
+    const editEntry = `${ROUTES.CustomAppEditor}?id=${encodeURIComponent(APP_ID)}`;
+
+    it('leaves a pristine create form without the dialog', async () => {
+      const { router } = renderPage();
+
+      await navigateAway(router);
+
+      expect(await screen.findByText('Scheduler')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('asks before leaving once a Setup field was edited', async () => {
+      const { router } = renderPage();
+      await user.type(getCompletionUrlInput(), 'https://x');
+
+      await navigateAway(router);
+
+      expect(
+        screen.getByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toBeTruthy();
+      expect(router.state.location.pathname).toBe(ROUTES.CustomAppEditor);
+    });
+
+    it('lands on the chosen route without a request when changes are discarded', async () => {
+      const { router } = renderPage();
+      await fillValidForm();
+      await navigateAway(router);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.ConfirmLabel,
+        }),
+      );
+
+      expect(await screen.findByText('Scheduler')).toBeTruthy();
+      expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    it('keeps the edits when Keep editing is chosen', async () => {
+      const { router } = renderPage();
+      await user.type(getNameInput(), 'My app');
+      await navigateAway(router);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.CancelLabel,
+        }),
+      );
+
+      expect(router.state.location.pathname).toBe(ROUTES.CustomAppEditor);
+      expect((getNameInput() as HTMLInputElement).value).toBe('My app');
+    });
+
+    it('routes Cancel through the same dialog', async () => {
+      renderPage();
+      await user.type(getNameInput(), 'My app');
+
+      await user.click(getAction(ButtonsI18nKeys.Cancel));
+
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(screen.queryByText('Catalog')).toBeNull();
+    });
+
+    it('treats a freshly loaded edited app as clean', async () => {
+      vi.mocked(getDeploymentDetails).mockResolvedValue({
+        id: APP_ID,
+        type: 'application',
+        applicationDetails: {
+          customAppFeatures: { rate: true },
+          endpoint: 'https://api.example.com/chat',
+        },
+      } as DeploymentDetailsDto);
+      const { router } = renderPage(editEntry);
+      await waitFor(() =>
+        expect((getCompletionUrlInput() as HTMLInputElement).value).toBe(
+          'https://api.example.com/chat',
+        ),
+      );
+
+      await navigateAway(router);
+
+      expect(await screen.findByText('Scheduler')).toBeTruthy();
     });
   });
 });

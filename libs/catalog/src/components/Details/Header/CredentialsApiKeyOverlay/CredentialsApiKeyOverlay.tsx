@@ -23,7 +23,7 @@ import styles from './CredentialsApiKeyOverlay.module.scss';
 const SPINNER_SIZE = 16;
 
 /** Props for {@link CredentialsApiKeyOverlay}. */
-interface CredentialsApiKeyOverlayProps {
+export interface CredentialsApiKeyOverlayProps {
   /** Item the popover manages the API key for. */
   item: CatalogItem;
   /** Credentials slot this popover manages. Always `User` — this is the personal, non-admin API-key popover. */

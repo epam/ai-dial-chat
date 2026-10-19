@@ -107,7 +107,7 @@ class CreateFolderResponseDto {
 
 ## Folder persistence strategy: zero-byte marker
 
-The DIAL TypeScript SDK (`0.1.0-dev.24`) provides no dedicated `createFolder` method. DIAL Core has no folder metadata endpoint. A folder path becomes visible in `getFileMetadata` only when at least one object exists under that prefix.
+The DIAL TypeScript SDK (`0.2.0-dev.11`) provides no dedicated `createFolder` method. DIAL Core has no folder metadata endpoint. A folder path becomes visible in `getFileMetadata` only when at least one object exists under that prefix.
 
 **Selected strategy**: upload a zero-byte marker file named `.dial_folder` at the path `{parentPath}{name}/.dial_folder`.
 

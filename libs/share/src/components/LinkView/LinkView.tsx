@@ -46,7 +46,7 @@ export const LinkView: FC<LinkViewProps> = ({
         value={url}
         aria-label={linkAriaLabel}
         containerClassName="min-w-0 flex-1"
-        wrapperClassName="border-0 bg-transparent px-0 outline-none"
+        wrapperClassName="border-0 bg-transparent px-0 outline-hidden"
       />
       <GhostIconButton
         icon={

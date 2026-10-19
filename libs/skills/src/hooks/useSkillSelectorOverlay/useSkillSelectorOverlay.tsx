@@ -1,4 +1,4 @@
-import type { RequestSkill } from '@epam/ai-dial-chat-shared';
+import type { RequestSkill, TextSegment } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   HighlightedTextRange,
@@ -27,7 +27,10 @@ import type {
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
 import { SkillUnresolvedReason } from '../../types/skill-unresolved-reason';
-import { matchSkillMentions } from '../../utils/skill-mention-matching';
+import {
+  findSkillMentionsInText,
+  matchSkillMentions,
+} from '../../utils/skill-mention-matching';
 import { findSlashQueryAtCaret } from '../../utils/skill-mention-tracking';
 import { getSkillFallbackName, getSkillUrlBucket } from '../../utils/skill-url';
 import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
@@ -62,8 +65,10 @@ export const useSkillSelectorOverlay = ({
   onToggleFavorite,
   labels,
   historyChipLabelClassName,
+  activeMentionLabelClassName = 'text-accent',
   activeMentionDetailsTrigger,
   historyDetailsTrigger,
+  isRowTooltipHidden = false,
   renderCatalogContent,
   detailsPanelComponent: DetailsPanelComponent,
 }: UseSkillSelectorOverlayOptions): UseSkillSelectorOverlayResult => {
@@ -151,6 +156,11 @@ export const useSkillSelectorOverlay = ({
    * `renderHistorySkills` below), via `HighlightedTextRange.render` — not a
    * bespoke highlight span — so hover tooltip, "View details", and the
    * hover-only background all behave identically while typing and once sent.
+   *
+   * Unlike history chips, the label carries no type-scale class of its own:
+   * it overlays the textarea's invisible text, so it must inherit the input's
+   * font. A different size makes the chip narrower or wider than the text
+   * under it, and the native caret drifts away from the visible text (#9243).
    */
   const activeMentions = useMemo<HighlightedTextRange[]>(
     () =>
@@ -162,7 +172,7 @@ export const useSkillSelectorOverlay = ({
           <ChatSkill
             name={anchor.name}
             path={anchor.url}
-            labelClassName={historyChipLabelClassName}
+            labelClassName={activeMentionLabelClassName}
             description={skillByUrl.get(anchor.url)?.description}
             isUnsupported={!isSkillsSupported}
             detailsTrigger={activeMentionDetailsTrigger}
@@ -178,7 +188,7 @@ export const useSkillSelectorOverlay = ({
       mentions.anchors,
       isSkillsSupported,
       skillByUrl,
-      historyChipLabelClassName,
+      activeMentionLabelClassName,
       activeMentionDetailsTrigger,
       panelLabels,
       unsupportedTooltipLabel,
@@ -272,6 +282,22 @@ export const useSkillSelectorOverlay = ({
     setCaretPositionOverride(undefined);
   }, [mentions]);
 
+  /*
+   * Skipped on a deployment without skills support: a recognized mention
+   * there would only flag the message as unsupported and block sending a
+   * prompt the user picked as plain text.
+   */
+  const { expectInsertion } = mentions;
+  const recognizeMentionsInInsertion = useCallback(
+    (text: string) => {
+      expectInsertion(
+        text,
+        isSkillsSupported ? findSkillMentionsInText(text, allSkills) : [],
+      );
+    },
+    [expectInsertion, isSkillsSupported, allSkills],
+  );
+
   const seedSkillMentions = useCallback(
     (content: string, entries: RequestSkill[] | undefined) => {
       mentions.seedFromMessage(content, entries, resolveName);
@@ -292,7 +318,7 @@ export const useSkillSelectorOverlay = ({
     (
       content: string,
       entries: RequestSkill[] | undefined,
-    ): ReactNode[] | null => {
+    ): TextSegment[] | null => {
       if (entries == null || entries.length === 0) {
         return null;
       }
@@ -302,7 +328,7 @@ export const useSkillSelectorOverlay = ({
         entries,
         resolveName,
       );
-      const segments: ReactNode[] = [];
+      const segments: TextSegment[] = [];
       let cursor = 0;
 
       resolvedMentions.forEach((mention) => {
@@ -318,23 +344,26 @@ export const useSkillSelectorOverlay = ({
             ? resolveUnresolvedReason(skillEntry.url, viewerBucket)
             : undefined;
 
-        segments.push(
-          <ChatSkill
-            key={`${skillEntry.url}-${mention.start}`}
-            name={name}
-            path={skillEntry.url}
-            labelClassName={historyChipLabelClassName}
-            description={skill?.description}
-            unresolvedReason={unresolvedReason}
-            detailsTrigger={historyDetailsTrigger}
-            onViewDetails={setDetailsSkillId}
-            labels={{
-              viewDetailsLabel: panelLabels?.viewDetailsLabel,
-              deletedTooltipLabel,
-              notSharedTooltipLabel,
-            }}
-          />,
-        );
+        segments.push({
+          text: content.slice(mention.start, mention.start + mention.length),
+          node: (
+            <ChatSkill
+              key={`${skillEntry.url}-${mention.start}`}
+              name={name}
+              path={skillEntry.url}
+              labelClassName={historyChipLabelClassName}
+              description={skill?.description}
+              unresolvedReason={unresolvedReason}
+              detailsTrigger={historyDetailsTrigger}
+              onViewDetails={setDetailsSkillId}
+              labels={{
+                viewDetailsLabel: panelLabels?.viewDetailsLabel,
+                deletedTooltipLabel,
+                notSharedTooltipLabel,
+              }}
+            />
+          ),
+        });
         cursor = mention.start + mention.length;
       });
 
@@ -430,6 +459,7 @@ export const useSkillSelectorOverlay = ({
           onClose();
           setDetailsSkillId(item.id);
         }}
+        isRowTooltipHidden={isRowTooltipHidden}
         labels={panelLabels}
       />
     ),
@@ -439,6 +469,7 @@ export const useSkillSelectorOverlay = ({
       consumeQueryAtCaret,
       peekQueryAtCaret,
       onToggleFavorite,
+      isRowTooltipHidden,
       panelLabels,
     ],
   );
@@ -479,6 +510,8 @@ export const useSkillSelectorOverlay = ({
             triggerPrefix: SKILL_TRIGGER_PREFIX,
             menuLabel: addMenuLabel,
             emptyQueryHint: emptyQueryHintLabel,
+            /* A pasted `/{name}` that names a listed skill becomes a mention, exactly like an inserted prompt's (#9354). */
+            onTextPaste: recognizeMentionsInInsertion,
             renderMenu: ({
               query,
               caretPosition,
@@ -516,6 +549,7 @@ export const useSkillSelectorOverlay = ({
                   close({ consumeQuery: true });
                   setDetailsSkillId(item.id);
                 }}
+                isRowTooltipHidden={isRowTooltipHidden}
                 labels={panelLabels}
               />
             ),
@@ -529,7 +563,9 @@ export const useSkillSelectorOverlay = ({
       insertAndPush,
       mentions.anchors,
       onToggleFavorite,
+      isRowTooltipHidden,
       panelLabels,
+      recognizeMentionsInInsertion,
     ],
   );
 
@@ -598,6 +634,7 @@ export const useSkillSelectorOverlay = ({
     selectedSkills: mentions.orderedSkills,
     resetSkillMentions,
     seedSkillMentions,
+    recognizeMentionsInInsertion,
     renderHistorySkillSegments,
     renderHistorySkills,
   };

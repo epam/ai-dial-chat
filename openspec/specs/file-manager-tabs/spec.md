@@ -60,25 +60,26 @@ RTL: tab rendering and label alignment are handled by the ui-kit; no physical di
 | Tab | `visibleColumns` |
 |-----|-----------------|
 | `my_files` | `[Name, UpdatedAt, Size, Actions]` |
-| `shared` | `[Name, UpdatedAt, Size, Author, Actions]` |
-| `organization` | `[Name, UpdatedAt, Size, Actions]` |
+| `shared` | `[Name, Author, Actions]` |
+| `organization` | `[Name, UpdatedAt, Size, Author, Actions]` |
 
-`Author` column SHALL appear only on the Shared tab. All tabs SHALL include `UpdatedAt`. Column keys are from `FileManagerColumnKey` enum.
+`Author` column SHALL appear on the Shared and Organization tabs only. `UpdatedAt` and `Size` SHALL appear on the My files and Organization tabs only: items shared with the user carry no meaningful size or modification date, so the Shared tab omits them. Column keys are from `FileManagerColumnKey` enum; the per-tab lists are `COLUMNS_MY_FILES`, `COLUMNS_SHARED` and `COLUMNS_ORGANIZATION` in `libs/chat-hooks/src/files/dial-file-manager.model.ts`.
 
 #### Scenario: My files tab shows no Author column
 
 - **WHEN** the active tab is `my_files`
 - **THEN** `gridOptions.visibleColumns` does not include `FileManagerColumnKey.Author`
 
-#### Scenario: Shared tab shows Author column
+#### Scenario: Shared tab shows Author without Size and Modified Date
 
 - **WHEN** the active tab is `shared`
-- **THEN** `gridOptions.visibleColumns` includes `FileManagerColumnKey.Author` between `Size` and `Actions`
+- **THEN** `gridOptions.visibleColumns` is `[Name, Author, Actions]`
+- **AND** it does not include `FileManagerColumnKey.Size` or `FileManagerColumnKey.UpdatedAt`
 
-#### Scenario: Organization tab shows no Author column
+#### Scenario: Organization tab shows Author with Size and Modified Date
 
 - **WHEN** the active tab is `organization`
-- **THEN** `gridOptions.visibleColumns` does not include `FileManagerColumnKey.Author`
+- **THEN** `gridOptions.visibleColumns` is `[Name, UpdatedAt, Size, Author, Actions]`
 
 ---
 
@@ -321,12 +322,24 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 
 ### Requirement: sharedWithMeIds wired on Shared tab
 
-When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWithMeIds` prop to `DialFileManager` containing the root-level shared items returned by `GET /api/v1/files/shared`, converted to ui-kit's virtual `DialFile.path` format (e.g. `/Shared with me/reports/q1.pdf`) via `buildSharedItemVirtualPath` — not the DIAL Core resource path the BFF returns (see `file-manager-sharing` design D9). On all other tabs, `sharedWithMeIds` SHALL be `undefined`.
+When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWithMeIds` prop to `DialFileManager` containing the root-level shared items returned by `GET /api/v1/files/shared`, converted to ui-kit's virtual `DialFile.path` format — `/<rootLabel>/<name>` (`/Shared with me/{name}`, with a trailing slash for folders) — not the DIAL Core resource path the BFF returns (see `file-manager-sharing` design D9). Each entry SHALL equal the `path` of the row `buildFromCache` produces for that item, which is built from the item's `name`; it SHALL NOT include the item's location inside the owner's bucket, because DIAL Core lists shared items flat and the grid compares `sharedWithMeIds` against the row path by exact match. On all other tabs, `sharedWithMeIds` SHALL be `undefined`.
 
 #### Scenario: sharedWithMeIds populated on Shared tab
 
 - **WHEN** the active tab is `shared` and the listing returns items
 - **THEN** `sharedWithMeIds` is an array of the root shared items' virtual UI paths
+
+#### Scenario: sharedWithMeIds matches the row path of a file nested in the owner's bucket
+
+- **WHEN** the active tab is `shared` and the listing returns an item named `{name}` whose DIAL Core path is `files/{ownerBucket}/{folder}/{name}`
+- **THEN** `sharedWithMeIds` contains `/Shared with me/{name}`, equal to that row's `path`
+- **AND** the Unshare action is enabled for that row
+
+#### Scenario: Search results on the Shared tab carry the same row path as the listing
+
+- **WHEN** the user searches on the `shared` tab and a result is a file nested in the owner's bucket
+- **THEN** its `path` is `/Shared with me/{name}` at the Shared root, or relative to the opened shared folder inside it, never the location in the owner's bucket
+- **AND** the Unshare action is enabled for it exactly as for the same row selected from the list
 
 #### Scenario: sharedWithMeIds absent on My files tab
 

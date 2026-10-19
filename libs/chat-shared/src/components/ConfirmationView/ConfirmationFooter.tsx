@@ -91,17 +91,21 @@ export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex items-center justify-end gap-2 px-6 py-4 rtl:flex-row-reverse rtl:justify-start',
+        'flex items-center justify-end gap-2 px-4 py-4 rtl:flex-row-reverse rtl:justify-start desktop:px-6',
         styles.footer,
       )}
     >
+      {/* Below the desktop breakpoint Cancel and the confirm action split the row
+          in half, as the mobile design puts it. */}
       <GhostButton
         label={cancelLabel}
+        className="mobile:flex-1"
         disabled={isLoading}
         onClick={onCancel}
       />
       <ConfirmButton
         label={confirmLabel}
+        className="mobile:flex-1"
         disabled={isLoading || isConfirmDisabled}
         iconBefore={iconBefore}
         onClick={onConfirm}

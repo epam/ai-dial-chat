@@ -234,6 +234,40 @@ describe('Input — attachment tray style forwarding', () => {
     ).toContain('host-tray');
   });
 
+  const makeAttachments = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      ...attachment,
+      id: `report-${index}`,
+      name: `report-${index}.pdf`,
+    }));
+
+  it('keeps the wrapper padding and bleeds only the tray when 7+ files are attached', () => {
+    render(
+      <Input
+        initialAttachments={makeAttachments(7)}
+        attachmentTray={{ className: 'host-tray' }}
+      />,
+    );
+
+    const tray = screen.getByRole('list', { name: 'Attached files' });
+    const wrapper = closestWithClass(
+      screen.getByRole('textbox'),
+      CONVERSATION_INPUT_CLASS.wrapper,
+    );
+
+    expect(wrapper?.classList).toContain('p-4');
+    expect(tray.classList).toContain('-me-4');
+    expect(tray.classList).toContain('host-tray');
+  });
+
+  it('keeps the tray inside the wrapper padding with 6 or fewer files', () => {
+    render(<Input initialAttachments={makeAttachments(6)} />);
+
+    expect(
+      screen.getByRole('list', { name: 'Attached files' }).classList,
+    ).not.toContain('-me-4');
+  });
+
   it('forwards the nested card styles onto every tile in the tray', () => {
     render(
       <Input

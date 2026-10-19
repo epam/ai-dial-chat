@@ -80,7 +80,7 @@ as trailing, rolling, or "last N days" windows.
 ### Requirement: Reset-time normalization at the application edge
 
 All interpretation of `resetsAt` SHALL happen in `apps/chat`, never in a hand-authored library.
-`apps/chat/src/utils/usage-reset-time.ts` SHALL expose a formatter with this contract:
+`libs/chat-hooks/src/usage/usage-reset-time.ts` SHALL expose a formatter with this contract:
 
 ```ts
 export interface ResetTimeDisplay {
@@ -165,7 +165,7 @@ unaffected by which non-presentational location they live in now.
 
 - **WHEN** `libs/chat-hooks/src/usage/`'s source is inspected
 - **THEN** it declares its own `ResetTimeDisplay`-shaped type rather than importing
-  `apps/chat/src/utils/usage-reset-time.ts`'s `ResetTimeDisplay`, and `UsageTab`'s
+  `libs/chat-hooks/src/usage/usage-reset-time.ts`'s `ResetTimeDisplay`, and `UsageTab`'s
   `formatUsageResetTime` return value is accepted with no cast at the call site
 
 > The library's pre-existing `Intl.NumberFormat` instances for Tokens formatting are unaffected —
@@ -410,7 +410,7 @@ SHALL NOT parse, format, or timezone-shift a `resetsAt` value, construct a `Date
 carry only the preformatted `resetLabel` / `resetIsoValue` / `resetAriaLabel` strings.
 
 All interpretation SHALL remain at the application edge in
-`apps/chat/src/utils/usage-reset-time.ts`, supplied to the mapper as a `formatResetTime` callback
+`libs/chat-hooks/src/usage/usage-reset-time.ts`, supplied to the mapper as a `formatResetTime` callback
 typed against the structural `FormatResetTime` / `ResetTimeDisplay` declared in
 `libs/chat-hooks/src/usage/`. `libs/chat-hooks` SHALL NOT import the app's own `ResetTimeDisplay`
 type, and the two shapes SHALL stay field-for-field identical so the app's

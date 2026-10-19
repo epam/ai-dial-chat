@@ -5,6 +5,8 @@ import {
 import {
   getApiErrorDetails,
   getApiErrorStatus,
+  OfflineCredentialsGateStatus,
+  OfflineCredentialsLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTaskDetailView,
@@ -42,14 +44,8 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import {
-  OfflineCredentialsGateStatus,
-  useOfflineCredentialsGate,
-} from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
-import {
-  OfflineCredentialsLoginOutcomeType,
-  useOfflineCredentialsLogin,
-} from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { useOfflineCredentialsGate } from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
+import { useOfflineCredentialsLogin } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { useScheduledTaskSkillDisplayNames } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
 import {
@@ -70,6 +66,7 @@ import { resolveLocalizedText } from '../../utils/locale';
 import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
+  getNextCronOccurrence,
   resolveScheduledTaskErrorMessage,
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
@@ -151,6 +148,11 @@ const ScheduledTaskDetailPage: FC = () => {
     startFeedbackPending.current = false;
   }, [scheduleId, isEnabled]);
 
+  /* Set from the manually started run below; the history hook is created
+     first because the start hook consumes its loaded runs. */
+  const [hasAcceptedInProgressRun, setHasAcceptedInProgressRun] =
+    useState(false);
+
   const {
     items: runDtos,
     isLoading: runsIsLoading,
@@ -165,6 +167,7 @@ const ScheduledTaskDetailPage: FC = () => {
     scheduleId,
     isEnabled && Boolean(scheduleId),
     task?.nextRunTime,
+    hasAcceptedInProgressRun,
   );
 
   const isTaskDeleted = task?.isDeleted === true;
@@ -246,6 +249,14 @@ const ScheduledTaskDetailPage: FC = () => {
       cancelled.value = true;
     };
   }, [isEnabled, scheduleId, taskFetchToken]);
+
+  useEffect(() => {
+    setHasAcceptedInProgressRun(
+      mergeScheduledTaskRuns(acceptedRuns, runDtos).some(
+        (run) => run.status === ScheduledTaskRunDtoStatusEnum.InProgress,
+      ),
+    );
+  }, [acceptedRuns, runDtos]);
 
   const mergedRunDtos = useMemo(
     () => mergeScheduledTaskRuns(acceptedRuns, runDtos),
@@ -368,18 +379,29 @@ const ScheduledTaskDetailPage: FC = () => {
   );
 
   const cronWindow = task?.trigger.cron;
+  const taskNextRunTime = task?.nextRunTime;
   const activeWindowLabel = useMemo(() => {
-    if (!cronWindow?.startDate || !cronWindow?.endDate) return undefined;
+    if (!cronWindow?.endDate) return undefined;
+    /*
+     * Without an explicit start date the window begins at the next scheduled
+     * occurrence: the server's `nextRunTime`, or one computed from the cron
+     * fields when the server has none (e.g. an inactive task).
+     */
+    const effectiveStartDate =
+      cronWindow.startDate ??
+      taskNextRunTime ??
+      getNextCronOccurrence(cronWindow)?.toISOString();
+    if (!effectiveStartDate) return undefined;
     const dateFormatter = new Intl.DateTimeFormat(undefined, {
       dateStyle: 'medium',
+      timeStyle: 'short',
     });
     return t(ScheduledTasksI18nKeys.DetailActiveWindowValue, {
-      startDate: dateFormatter.format(new Date(cronWindow.startDate)),
+      startDate: dateFormatter.format(new Date(effectiveStartDate)),
       endDate: dateFormatter.format(new Date(cronWindow.endDate)),
     });
-  }, [cronWindow, t]);
+  }, [cronWindow, taskNextRunTime, t]);
 
-  const taskNextRunTime = task?.nextRunTime;
   const nextRunLabel = useMemo(() => {
     if (!taskNextRunTime) return undefined;
     let formatted = taskNextRunTime;

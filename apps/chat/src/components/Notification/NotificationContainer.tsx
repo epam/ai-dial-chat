@@ -93,25 +93,30 @@ interface NotificationEntryProps {
 const NotificationEntry: FC<NotificationEntryProps> = memo(
   ({ item, onDismiss }) => {
     /*
-     * Trace-bearing error notifications (`item.requestId` set) require manual dismissal, so
-     * their Request ID stays readable/copyable instead of vanishing after the fixed delay.
+     * Trace-bearing (`item.requestId` set) and actionable (`item.action` set) notifications
+     * require manual dismissal, so their Request ID stays readable/copyable and their action
+     * stays reachable instead of vanishing after the fixed delay.
      */
     useEffect(() => {
-      if (item.requestId) return;
+      if (item.requestId || item.action) return;
       const timer = setTimeout(() => onDismiss(item.id), DISMISS_DELAY_MS);
       return () => clearTimeout(timer);
-    }, [item.id, item.requestId, onDismiss]);
+    }, [item.id, item.requestId, item.action, onDismiss]);
 
     /*
      * The kit caps a toast's width at 600px but lets it grow to any height, so
      * a message listing many names used to cover the chat behind it. Scroll the
      * message instead of letting the toast grow; the Request ID row stays
-     * outside so it cannot be scrolled out of reach.
+     * outside so it cannot be scrolled out of reach. `overflow-wrap: anywhere`
+     * lets a long unbroken token (an app name, a version) wrap instead of
+     * forcing the toast wider than a phone screen.
      */
     const composedMessage = useMemo(
       () => (
         <>
-          <div className="max-h-[30vh] overflow-y-auto">{item.message}</div>
+          <div className="max-h-[30vh] overflow-y-auto [overflow-wrap:anywhere]">
+            {item.message}
+          </div>
           {item.requestId && <RequestIdRow requestId={item.requestId} />}
         </>
       ),
@@ -120,9 +125,11 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
 
     return (
       <Notification
+        className="pointer-events-auto max-w-[min(600px,100%)]"
         variant={item.variant}
         title={item.title}
         message={composedMessage}
+        action={item.action}
         closable
         onClose={() => onDismiss(item.id)}
       />
@@ -136,12 +143,14 @@ const NotificationContainer: FC = () => {
   if (!notifications.length) return null;
 
   /*
-   * `left-1/2 -translate-x-1/2` centers the stack and is direction-agnostic.
-   * The stack scrolls once enough toasts pile up to reach the bottom of the
-   * viewport, so the last one is never pushed off-screen.
+   * The stack spans the viewport minus a side gutter and centers each toast,
+   * so a toast can never be wider than the screen (the kit only caps it at
+   * 600px, which clipped both edges on phones). The empty band between toasts
+   * stays click-through. The stack scrolls once enough toasts pile up to reach
+   * the bottom of the viewport, so the last one is never pushed off-screen.
    */
   return createPortal(
-    <div className="fixed left-1/2 top-6 z-[70] flex max-h-[calc(100dvh-3rem)] -translate-x-1/2 flex-col gap-2 overflow-y-auto">
+    <div className="pointer-events-none fixed inset-x-0 top-6 z-[70] flex max-h-[calc(100dvh-3rem)] flex-col items-center gap-2 overflow-y-auto px-4">
       {notifications.map((item) => (
         <NotificationEntry
           key={item.id}

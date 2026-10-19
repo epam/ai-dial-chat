@@ -53,9 +53,9 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.39`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.11`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.25` — `SkillDetailsSidePanel`
+- `@epam/ai-dial-react-file-manager` `^0.4.0-dev.7` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
 
 ## Components
@@ -138,7 +138,7 @@ import { ChatSkill } from '@epam/ai-dial-skills';
 
 Renders one used skill: a ui-kit `GhostButton` whose visible (and accessible)
 label is `/` followed by `name`, wrapped in the ui-kit `InteractiveTooltip`
-(`asChild`, uncontrolled, 550px max panel width, top placement flipping with
+(`asChild`, uncontrolled, 420px max panel width scrolling past 280px, top placement flipping with
 direction). The tooltip's content is the shared `SkillInfoTooltipContent` —
 the description paragraph (omitted when empty) above the "View details" link
 button — so the panel matches the favorite rows exactly. Activating the
@@ -201,6 +201,9 @@ not a description renders. The panel content itself is rendered by the shared
 the exact same panel.
 
 `onViewDetails` fires when the tooltip's "View details" button is clicked.
+Rows render without the tooltip when `onViewDetails` is omitted or
+`isRowTooltipHidden` is set; `useSkillSelectorOverlay` forwards its own
+`isRowTooltipHidden` option to both the Add-menu and slash-menu panels.
 
 Passing `listboxId` switches the panel to listbox mode — the shape a text
 field's list autocomplete drives, as the conversation input's `commandMenu`
@@ -240,8 +243,9 @@ The inner content of a skill's interactive tooltip, shared by
 `FavoriteSkillsPanel`'s rows and `ChatSkill`: the skill's `description`
 paragraph (the listing's value, omitted entirely when empty) above a
 link-style "View details" button (`IconEye` on its inline-start, label from
-`viewDetailsLabel`). The "View details" button is reachable whether or not a
-description renders.
+`viewDetailsLabel`, kit `ElementSize.Small`). The "View details" button is
+reachable whether or not a description renders. The paragraphs take
+`textClassName` (defaults to `'dial-tiny-text'`).
 
 While `unsupportedMessage` is set, the content is that message alone — no
 description paragraph and no "View details" button. That state is why
@@ -400,6 +404,7 @@ const {
   selectedSkills,
   resetSkillMentions,
   seedSkillMentions,
+  recognizeMentionsInInsertion,
   renderHistorySkillSegments,
   renderHistorySkills,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
@@ -494,11 +499,24 @@ mention and the draft alongside it — call after a successful send.
 `seedSkillMentions(content, skills)` seeds the draft and its tracked mentions
 from a persisted message — call once when entering edit mode on a message
 that carries `custom_content.skills`.
+`recognizeMentionsInInsertion(text)` marks text the host is about to insert
+into the composer (a picked prompt): once that insertion reaches
+`onDraftChange`, every `/{name}` run in it that names a listed skill becomes a
+tracked mention. A run must start the text or follow whitespace; the longest
+listed name wins, and a name shared by several skills resolves to the first
+of `skills`, then `sharedWithMe`, then `publicSkills`. Call it right before
+handing the text to the composer's insertion channel. It does nothing while
+`isSkillsSupported` is `false`. Text pasted into the input is recognized the
+same way with no host wiring: the returned `commandMenu` passes this function
+as its `onTextPaste`.
 
 `renderHistorySkillSegments(content, skills)` renders a **user** message's
-`content` and `custom_content.skills` as an ordered array interleaving
-plain-text runs and `ChatSkill` elements at each mention's actual text
-position — for `UserMessageBubble`'s `textSegments` prop. `renderHistorySkills(skills)`
+`content` and `custom_content.skills` as an ordered `TextSegment[]` (from
+`@epam/ai-dial-chat-shared`) interleaving markdown string runs and
+`{ text, node }` segments, where `node` is the `ChatSkill` element and `text`
+is the matched `/{name}`, at each mention's actual text position — for
+`UserMessageBubble`'s `textSegments` prop, which renders the chip inside the
+markdown output, or the literal `/{name}` inside code and link text. `renderHistorySkills(skills)`
 renders every entry as a flat list of `ChatSkill` elements, ignoring text
 position — for `AssistantMessageBubble`'s `beforeContent` slot, since
 assistant text is model-generated markdown and never authors positioned
@@ -518,6 +536,10 @@ a tap opens it instead.
 A live-composing mention also renders as a real `ChatSkill` chip — with
 `isUnsupported` error styling applied when the skill is not supported — via
 `HighlightedTextRange.render`, consistent with how history segments render.
+Its label takes `activeMentionLabelClassName` (default `'text-accent'`) rather
+than `historyChipLabelClassName`: it overlays the textarea's invisible text, so
+it must inherit the input's font to stay exactly as wide as that text and keep
+the native caret on the visible text. Pass color classes only.
 
 Row and chip descriptions come from the listing entries the host injects —
 no per-skill fetch happens anywhere in the flow, and opening a tooltip

@@ -750,6 +750,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
   CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
 
   @IsOptional()
@@ -979,6 +983,28 @@ export class EnvironmentVariables {
   })
   @IsBoolean()
   ALLOW_VISUALIZER_SEND_MESSAGES?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  USAGE_LIMITS_CONTROL_ENABLED?: boolean = false;
+
+  /*
+   * Percentage of a capped day/week/month usage limit at which the composer's
+   * usage banner appears. Banner only — the usage dial keeps its fixed 75%.
+   */
+  @IsOptional()
+  // Preserve fractional or malformed values so validation rejects them.
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  USAGE_LIMITS_WARNING_THRESHOLD_PERCENT?: number = 75;
 
   @IsOptional()
   @IsString()

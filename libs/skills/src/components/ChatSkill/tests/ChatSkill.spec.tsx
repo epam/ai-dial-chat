@@ -1,10 +1,70 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
 import { ChatSkill } from '../ChatSkill';
 
+const DESKTOP_WIDTH = 1024;
+
+const setViewportWidth = (width: number) => {
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    writable: true,
+    value: width,
+  });
+};
+
 describe('ChatSkill', () => {
+  afterEach(() => setViewportWidth(DESKTOP_WIDTH));
+
+  it('opens the not-shared message on tap and closes it on a press outside on a mobile screen', async () => {
+    setViewportWidth(375);
+    const user = userEvent.setup();
+
+    render(
+      <>
+        <ChatSkill
+          name="summarize"
+          path="skills/bucket/summarize"
+          unresolvedReason={SkillUnresolvedReason.NotShared}
+          detailsTrigger="click"
+          onViewDetails={vi.fn()}
+        />
+        <button>Outside</button>
+      </>,
+    );
+
+    await user.click(screen.getByLabelText('/summarize'));
+
+    const message =
+      "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.";
+
+    expect(await screen.findByText(message)).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+
+    expect(screen.queryByText(message)).toBeNull();
+  });
+
+  it('opens its description card on hover in the default hover mode', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ChatSkill
+        name="summarize"
+        path="skills/bucket/summarize"
+        description="Summarizes the supplied text."
+        onViewDetails={vi.fn()}
+      />,
+    );
+
+    await user.hover(screen.getByLabelText('/summarize'));
+
+    expect(
+      await screen.findByText('Summarizes the supplied text.'),
+    ).toBeTruthy();
+  });
+
   it('opens its description card only after click in click mode', async () => {
     const user = userEvent.setup();
     const onViewDetails = vi.fn();
@@ -162,5 +222,85 @@ describe('ChatSkill', () => {
       .className.split(' ');
     expect(chipClasses).toContain('inline');
     expect(chipClasses).not.toContain('inline-block');
+  });
+});
+
+describe('ChatSkill — slash width', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('re-measures the slash when its inherited font changes size', () => {
+    let notifyResize: () => void = () => undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          notifyResize = callback;
+        }
+        observe = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue({ width: 5 } as DOMRect);
+
+    render(
+      <ChatSkill
+        name="summarize"
+        path="skills/bucket/summarize"
+        onViewDetails={vi.fn()}
+      />,
+    );
+    const name = screen.getByText('summarize');
+    expect(name.style.paddingInlineStart).toBe('5px');
+
+    rectSpy.mockReturnValue({ width: 6 } as DOMRect);
+    act(() => notifyResize());
+
+    expect(name.style.paddingInlineStart).toBe('6px');
+  });
+
+  it('keeps the slash width after View details remounts the chip', async () => {
+    // Only the chip's own slash observers — Floating UI observes too.
+    const notifyResizes: Array<() => void> = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(private readonly callback: () => void) {}
+        observe = (target: Element) => {
+          if (target.textContent === '/') notifyResizes.push(this.callback);
+        };
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        return { width: this.isConnected ? 5 : 0 } as DOMRect;
+      },
+    );
+    const user = userEvent.setup();
+
+    render(
+      <ChatSkill
+        name="summarize"
+        path="skills/bucket/summarize"
+        description="Summarizes the supplied text."
+        detailsTrigger="click"
+        onViewDetails={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByLabelText('/summarize'));
+    await user.click(
+      await screen.findByRole('button', { name: 'View details' }),
+    );
+    // A detached node's observer reports its 0px size after removal.
+    act(() => notifyResizes.forEach((notify) => notify()));
+
+    expect(screen.getByText('summarize').style.paddingInlineStart).toBe('5px');
   });
 });

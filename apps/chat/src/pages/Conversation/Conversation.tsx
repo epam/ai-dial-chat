@@ -1,5 +1,9 @@
-import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  ConversationErrorCode,
+  type ConversationResponseDto,
+} from '@epam/ai-dial-chat-api-client';
+import {
+  findDeploymentByIdOrReference,
   getApiErrorDetails,
   getConversationPath,
   getFormSchemaToolSyncKey,
@@ -32,8 +36,12 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import CustomViewerFrame from '../../components/CustomViewer/CustomViewerFrame';
 import ScheduledTaskConversationBanner from '../../components/ScheduledTaskConversationBanner/ScheduledTaskConversationBanner';
-import { getConversationRoute } from '../../constants/routes';
+import {
+  getConversationRoute,
+  normalizeConversationId,
+} from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -56,6 +64,7 @@ import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useVisualizerMessageSendHandler } from '../../hooks/conversation/useVisualizerMessageSendHandler';
+import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   conversationsApi as configuredConversationsApi,
@@ -74,6 +83,7 @@ import {
   conversationStreamTransport,
   logConversationStreamError,
 } from '../../utils/conversation-stream-transport';
+import { resolveCustomViewer } from '../../utils/custom-viewer';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -100,11 +110,18 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
+    items: deployments,
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
     selectedDeploymentConfiguration,
     isLoading: isDeploymentsLoading,
+    schemas,
   } = useDeployments();
+  /* Read by `loadConversation` without making it depend on the catalog. */
+  const viewerLookupRef = useRef({ deployments, schemas });
+  useEffect(() => {
+    viewerLookupRef.current = { deployments, schemas };
+  }, [deployments, schemas]);
   const {
     toolsMenuItems,
     onToolToggle,
@@ -150,6 +167,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     bumpConversationActivity,
     watchForDisplayNameUpdate,
     removeConversationFromList,
+    refreshConversations,
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
@@ -162,6 +180,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const [pendingInputContent, setPendingInputContent] = useState({
     revision: 0,
     value: '',
+    isPending: false,
   });
   const [pendingInputInsertion, setPendingInputInsertion] = useState({
     revision: 0,
@@ -222,18 +241,41 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [conversationId],
   );
 
+  /* A copy would hand the operator-hidden model a fresh conversation, so a chat
+     whose model was hidden via HIDDEN_ENTITY_TAGS can't be duplicated
+     ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
+  const conversationModelId =
+    conversation?.assistantModelId || conversation?.model.id;
+  const { viewer: customViewer, isResolving: isCustomViewerResolving } =
+    useCustomViewer(conversationModelId);
+  const isConversationModelHidden = useMemo(
+    () =>
+      !!conversationModelId &&
+      !!findDeploymentByIdOrReference(deployments, conversationModelId)
+        ?.isHidden,
+    [deployments, conversationModelId],
+  );
+
   const handleDuplicateConversation = useCallback(async () => {
-    if (!conversationId) return;
+    if (!conversationId || isConversationModelHidden) return;
     setDuplicateError(null);
     try {
       const newPath = await duplicateConversation(conversationId);
       if (isReadOnly) onDuplicateReadonly?.();
       navigate(getConversationRoute(newPath));
-    } catch {
-      setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
+    } catch (error) {
+      const { code } = await getApiErrorDetails(error);
+      setDuplicateError(
+        t(
+          code === ConversationErrorCode.ConversationDuplicateModelHidden
+            ? ConversationPanelI18nKeys.DuplicateUnavailableModel
+            : ConversationPanelI18nKeys.DuplicateError,
+        ),
+      );
     }
   }, [
     conversationId,
+    isConversationModelHidden,
     isReadOnly,
     onDuplicateReadonly,
     duplicateConversation,
@@ -448,13 +490,24 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   ]);
 
   const loadConversation = useCallback(
-    async (id: string, initialData?: Conversation | null) => {
+    async (
+      id: string,
+      initialData: Conversation | null | undefined,
+      signal: AbortSignal,
+    ) => {
       if (!initialData) {
         setIsFetching(true);
       }
       try {
         const loadedConversation: Conversation =
-          initialData ?? ((await apiGetConversation(id)) as Conversation);
+          initialData ??
+          ((await apiGetConversation(id, signal)) as Conversation);
+        /*
+         * The user opened another conversation while this one was loading.
+         * Applying it now would show it under the other conversation's route,
+         * and the follow-up model/status writes would save it over that one.
+         */
+        if (signal.aborted) return;
         const result = restoreBufferedGeneration(id, loadedConversation);
         if (result.name) {
           updateConversationTitle(id, result.name);
@@ -470,6 +523,26 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (modelToSelect) {
           restoreSelectedItemId(modelToSelect);
         }
+        /*
+         * A Custom Viewer drives its own conversation, so the chat must never
+         * auto-start or resume a generation for it — the viewer app may not
+         * even expose a completion endpoint.
+         */
+        const { deployments: knownDeployments, schemas: knownSchemas } =
+          viewerLookupRef.current;
+        const isViewerConversation = !!resolveCustomViewer(
+          findDeploymentByIdOrReference(
+            knownDeployments,
+            result.assistantModelId || result.model.id,
+          ),
+          knownSchemas,
+        );
+        if (isViewerConversation) {
+          setConversation(result);
+          conversationRef.current = result;
+          return;
+        }
+
         if (restoredToolConfigIdRef.current !== id) {
           restoredToolConfigIdRef.current = id;
           restoreToolConfiguration(getLatestToolConfiguration(result.messages));
@@ -540,9 +613,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         }
       } catch (error) {
+        if (signal.aborted) return;
         if (notificationShownForRef.current !== id) {
           notificationShownForRef.current = id;
           const { traceId } = await getApiErrorDetails(error);
+          if (signal.aborted) return;
           showErrorNotification({
             message: t(ChatI18nKeys.ConversationNotFound),
             requestId: traceId,
@@ -556,7 +631,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         }
         navigate(ROUTES.Root);
       } finally {
-        setIsFetching(false);
+        // A superseded load must not clear the loading state of its successor.
+        if (!signal.aborted) {
+          setIsFetching(false);
+        }
       }
     },
     [
@@ -591,7 +669,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       setIsFetching(false);
       return;
     }
-    void loadConversationRef.current(conversationId, prefetchedConversation);
+    const controller = new AbortController();
+    void loadConversationRef.current(
+      conversationId,
+      prefetchedConversation,
+      controller.signal,
+    );
+    return () => controller.abort();
     /*
      * prefetchedConversation intentionally omitted: it is router state captured at mount,
      * re-running when it changes would re-initialize an already-loaded conversation.
@@ -666,8 +750,23 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setPendingInputContent((prev) => ({
       revision: prev.revision + 1,
       value: content,
+      isPending: true,
     }));
   }, []);
+
+  /*
+   * The overlay content is a one-shot hand-off, spent once ConversationView has
+   * rendered with it. This page is not remounted between conversations, so
+   * without this a later view remount (opening an uncached conversation shows
+   * the spinner) would seed the stale text again and save it as that
+   * conversation's draft.
+   */
+  const isConversationViewShown =
+    !isFetching && !!conversation && !isCustomViewerResolving && !customViewer;
+  useEffect(() => {
+    if (!isConversationViewShown || !pendingInputContent.isPending) return;
+    setPendingInputContent((prev) => ({ ...prev, isPending: false }));
+  }, [isConversationViewShown, pendingInputContent.isPending]);
 
   const handleInsertText = useCallback((text: string) => {
     setPendingInputInsertion((prev) => ({
@@ -752,7 +851,41 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [activeScheduledTaskStatus],
   );
 
-  if (isFetching)
+  const handleCustomViewerConversationCreated = useCallback(
+    (createdId: string) => {
+      void refreshConversations([createdId]);
+      const route = getConversationRoute(createdId);
+      if (route !== ROUTES.Root) navigate(route);
+    },
+    [refreshConversations, navigate],
+  );
+
+  const handleCustomViewerConversationUpdated = useCallback(
+    async (updatedId: string) => {
+      void refreshConversations();
+      const isOpenConversation =
+        !!conversationId &&
+        (updatedId === conversationRef.current?.id ||
+          normalizeConversationId(updatedId) === conversationId);
+      if (!isOpenConversation) return;
+      try {
+        /* Reloaded in place: going through loadConversation would show the
+         * page spinner and remount the viewer iframe. */
+        const reloaded = (await apiGetConversation(
+          conversationId,
+        )) as Conversation;
+        setConversation(reloaded);
+        conversationRef.current = reloaded;
+      } catch {
+        console.warn(
+          'Custom viewer: failed to reload the updated conversation',
+        );
+      }
+    },
+    [conversationId, refreshConversations],
+  );
+
+  if (isFetching || (conversation && isCustomViewerResolving))
     return (
       <div className="flex size-full items-center justify-center">
         <Spinner />
@@ -761,6 +894,19 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   if (!conversation) {
     return null;
+  }
+
+  if (customViewer) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden">
+        <CustomViewerFrame
+          viewer={customViewer}
+          conversationId={conversation.id}
+          onConversationCreated={handleCustomViewerConversationCreated}
+          onConversationUpdated={handleCustomViewerConversationUpdated}
+        />
+      </div>
+    );
   }
 
   return (
@@ -793,14 +939,19 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
+          isDuplicateUnavailable={isConversationModelHidden}
           duplicateError={duplicateError ?? undefined}
           isAudioMessageSupported={isAudioMessageSupported}
           isVoiceRecordingSupported={isVoiceRecordingSupported}
           onTranscribeAudio={handleTranscribeAudio}
           conversation={conversation}
           onConversationChange={handleConversationChange}
-          inputContent={pendingInputContent.value}
-          inputContentRevision={pendingInputContent.revision}
+          inputContent={
+            pendingInputContent.isPending ? pendingInputContent.value : ''
+          }
+          inputContentRevision={
+            pendingInputContent.isPending ? pendingInputContent.revision : 0
+          }
           inputInsertion={pendingInputInsertion}
           onInsertText={handleInsertText}
           toolsMenuItems={toolsMenuItems}

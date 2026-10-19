@@ -17,4 +17,6 @@ export const BUILDER_FORM_CLASS = {
   metadataSection: 'dial-builder-form-metadata-section',
   /** The Setup section `EntityEditor` renders in the right column. */
   setupSection: 'dial-builder-form-setup-section',
+  /** The aside section `EntityEditor` renders in the third column, when `asideData` is set. */
+  asideSection: 'dial-builder-form-aside-section',
 } as const;

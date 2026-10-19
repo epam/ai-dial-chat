@@ -1,7 +1,7 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
@@ -10,6 +10,7 @@ import {
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import type {
   ApplicationEditorDefinition,
   ApplicationSetupProps,
@@ -127,16 +128,15 @@ vi.mock(
 );
 
 const renderFakeKind = () =>
-  render(
-    <MemoryRouter initialEntries={['/fake-editor']}>
-      <Routes>
-        <Route
-          path="/fake-editor"
-          element={<ApplicationEditorPage kind={FAKE_KIND} />}
-        />
-        <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithLeaveGuard(
+    <Routes>
+      <Route
+        path="/fake-editor"
+        element={<ApplicationEditorPage kind={FAKE_KIND} />}
+      />
+      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+    </Routes>,
+    ['/fake-editor'],
   );
 
 /* The layout renders its actions in the header and again in the mobile bar; take the header copy. */
@@ -262,5 +262,28 @@ describe('APPLICATION_EDITOR_DEFINITIONS', () => {
       false,
     );
     expect(quickApp && isApplicationEditorPageDefinition(quickApp)).toBe(false);
+  });
+
+  it('opens every form-based kind with an empty name and version 1.0.0', async () => {
+    const { APPLICATION_EDITOR_DEFINITIONS } =
+      await vi.importActual<typeof import('../definitions')>('../definitions');
+    const definitions = APPLICATION_EDITOR_DEFINITIONS as Partial<
+      Record<ApplicationEditorKind, ApplicationEditorDefinition>
+    >;
+
+    for (const kind of [
+      ApplicationEditorKind.CustomApp,
+      ApplicationEditorKind.QuickApp,
+      ApplicationEditorKind.SchemaApp,
+    ]) {
+      const definition = definitions[kind];
+      if (!definition || isApplicationEditorPageDefinition(definition)) {
+        throw new Error(`${kind} is not a form-based definition`);
+      }
+      expect(definition.defaultMetadata).toMatchObject({
+        name: '',
+        version: '1.0.0',
+      });
+    }
   });
 });

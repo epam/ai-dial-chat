@@ -1,15 +1,24 @@
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
 import express from 'express';
 import { chromium } from 'playwright';
 import { build } from 'vite';
-import tailwindcss from 'tailwindcss';
+import tailwindcss from '@tailwindcss/vite';
 
 const workspace = resolve(import.meta.dirname, '../../..');
-const require = createRequire(import.meta.url);
+
+/* The libraries the fixture page renders, scanned for the classes they use. */
+const FIXTURE_LIBS = [
+  'skill-editor',
+  'scheduled-tasks',
+  'builder-form',
+  'chat-shared',
+];
+
+/* Tailwind resolves CSS import and `@source` paths with "/" separators only. */
+const toCssPath = (path) => path.replaceAll('\\', '/');
 
 test('standalone refinement text fallbacks meet 7:1 contrast', async () => {
   const luminance = (hex) => {
@@ -53,7 +62,18 @@ test(
     );
     await writeFile(
       resolve(fixture, 'main.css'),
-      '@tailwind base; @tailwind components; @tailwind utilities; body{margin:0;background:#fff;color:#161b2d} #root{min-height:100vh;display:flex;flex-direction:column}',
+      [
+        `@import 'tailwindcss/theme.css' theme(reference inline);`,
+        `@import '${toCssPath(resolve(workspace, 'tools/tailwind/theme.css'))}';`,
+        `@import 'tailwindcss/preflight.css';`,
+        `@import '${toCssPath(resolve(workspace, 'tools/tailwind/preflight-v3.css'))}';`,
+        `@import 'tailwindcss/utilities.css' source(none);`,
+        ...FIXTURE_LIBS.map(
+          (lib) =>
+            `@source '${toCssPath(resolve(workspace, `libs/${lib}/src`))}/**/*.{ts,tsx}';`,
+        ),
+        'body{margin:0;background:#fff;color:#161b2d} #root{min-height:100vh;display:flex;flex-direction:column}',
+      ].join('\n'),
     );
     await writeFile(
       resolve(fixture, 'main.tsx'),
@@ -89,26 +109,7 @@ createRoot(document.getElementById('root')).render(<App/>);
           'development|production',
         ],
       },
-      css: {
-        postcss: {
-          plugins: [
-            tailwindcss({
-              presets: [require(resolve(workspace, 'tailwind.config.js'))],
-              content: [
-                'skill-editor',
-                'scheduled-tasks',
-                'builder-form',
-                'chat-shared',
-              ].map((lib) =>
-                resolve(workspace, `libs/${lib}/src/**/*.{ts,tsx}`).replaceAll(
-                  '\\',
-                  '/',
-                ),
-              ),
-            }),
-          ],
-        },
-      },
+      plugins: [tailwindcss()],
       build: { outDir: resolve(fixture, 'dist'), minify: false },
     });
     const app = express();

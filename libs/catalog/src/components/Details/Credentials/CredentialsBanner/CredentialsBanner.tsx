@@ -13,7 +13,7 @@ import {
 import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
 
 /** Props for {@link CredentialsBanner}. */
-interface CredentialsBannerProps {
+export interface CredentialsBannerProps {
   /** Which banner copy to show. */
   state: CredentialsBannerState;
   /** Authentication mechanism the banner's wording should refer to. */

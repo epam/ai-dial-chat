@@ -197,6 +197,19 @@ describe('DeploymentsContext', () => {
     });
   });
 
+  it('requests chat, MCP and custom-viewer deployments so viewer-only applications are listed', async () => {
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(mockGetDeployments).toHaveBeenCalledWith([
+      'chat',
+      'mcp',
+      'custom_ui',
+    ]);
+  });
+
   it('sets selectedItemId to first item on successful load', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,
@@ -243,9 +256,9 @@ describe('DeploymentsContext', () => {
         displayName: 'Z Agent',
         type: 'model' as const,
       };
-      const pgAgent = {
-        id: 'pg-agent',
-        displayName: 'PG Agent',
+      const mAgent = {
+        id: 'm-agent',
+        displayName: 'M Agent',
         type: 'model' as const,
       };
       const aAgent = {
@@ -254,9 +267,9 @@ describe('DeploymentsContext', () => {
         type: 'model' as const,
       };
       mockGetDeployments.mockResolvedValueOnce({
-        deployments: [zAgent, pgAgent, aAgent],
+        deployments: [zAgent, mAgent, aAgent],
       });
-      contextMocks.defaultDeploymentId = 'pg-agent';
+      contextMocks.defaultDeploymentId = 'm-agent';
 
       const { result } = renderHook(() => useDeployments(), {
         wrapper: DeploymentsProvider,
@@ -264,7 +277,7 @@ describe('DeploymentsContext', () => {
 
       await waitFor(() =>
         expect(result.current.items.map((item) => item.id)).toEqual([
-          'pg-agent',
+          'm-agent',
           'a-agent',
           'z-agent',
         ]),

@@ -230,10 +230,10 @@ ai-dial-chat/
 │   │   │   ├── pages/           # Route-level pages
 │   │   │   ├── server-api/      # Backend adapters (the only REST-aware layer)
 │   │   │   ├── main.tsx         # Entry point
+│   │   │   ├── tailwind.css     # Tailwind entry
 │   │   │   └── styles.scss      # Global styles
 │   │   ├── public/              # Static assets
 │   │   ├── vite.config.mts      # Vite configuration
-│   │   ├── tailwind.config.js   # Tailwind config
 │   │   └── README.md            # Frontend docs
 │   │
 │   ├── chat-api/                # NestJS backend application
@@ -265,7 +265,7 @@ ai-dial-chat/
 ├── package.json                 # Root dependencies
 ├── tsconfig.base.json           # Base TypeScript config
 ├── eslint.config.mjs            # ESLint configuration
-└── tailwind.config.js           # Root Tailwind config
+└── tools/tailwind/theme.css     # Shared Tailwind theme (tokens, breakpoints)
 ```
 
 ## Development
@@ -277,10 +277,10 @@ ai-dial-chat/
 - React 19.2
 - TypeScript 6.0
 - Vite 8.0
-- Tailwind CSS 3.4
+- Tailwind CSS 4.3
 - React Router 8.3
 - i18next 26.2 / react-i18next 17
-- EPAM AI DIAL UI Kit 0.13
+- EPAM AI DIAL UI Kit 0.16 (dev prerelease)
 
 **Backend**
 

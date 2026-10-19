@@ -177,6 +177,9 @@ export class ScheduledTasksService {
     if (query.search) {
       searchParams.set('name', query.search);
     }
+    if (query.model) {
+      searchParams.set('model', query.model);
+    }
     const { orderBy, orderDir } =
       SORT_ORDER_MAP[query.sort ?? ScheduledTasksSortKey.FirstToRun];
     searchParams.set('order_by', orderBy);
@@ -344,7 +347,13 @@ export class ScheduledTasksService {
     const offset = query.offset ?? 0;
     const search = encodeURIComponent(query.search ?? '');
     const sort = query.sort ?? ScheduledTasksSortKey.FirstToRun;
-    return `${limit}:${offset}:${search}:${sort}`;
+    /*
+     * Appended only when a model filter is present so the keys of unfiltered
+     * lists stay exactly as before. Percent-encoded for the same reason as
+     * `search`: a model id never carries a raw `:` into the key.
+     */
+    const model = query.model ? `:${encodeURIComponent(query.model)}` : '';
+    return `${limit}:${offset}:${search}:${sort}${model}`;
   }
 
   private async buildListCacheKey(

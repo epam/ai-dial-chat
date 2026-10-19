@@ -13,6 +13,7 @@ import type { CatalogItem } from '../../../models/catalog-item';
 import type {
   CatalogContentFilePreview,
   CatalogContentTreeNode,
+  ToolsLabels,
 } from '../../../models/item-details-data';
 import {
   CatalogContentNodeType,
@@ -285,7 +286,15 @@ vi.mock('../TabsContent/Limits/Limits', () => ({
   LimitsTab: () => <div>Limits content</div>,
 }));
 vi.mock('../TabsContent/Tools/Tools', () => ({
-  Tools: () => <div>Tools</div>,
+  Tools: ({ labels }: { labels?: Partial<ToolsLabels> }) => (
+    <div
+      data-testid="tools-tab"
+      data-search-placeholder={labels?.searchPlaceholder}
+      data-tool-count={labels?.toolCount?.(1)}
+    >
+      Tools
+    </div>
+  ),
 }));
 vi.mock('../ApiDetails', () => ({
   ApiDetails: ({ endpointSectionLabel }: { endpointSectionLabel?: string }) => (
@@ -311,7 +320,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasRulesLoadError,
       publishCredentials,
       onPublishCredentialsChange,
+      allowReplace,
     }: {
+      allowReplace?: boolean;
       onSelectedFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
       author: string;
@@ -326,6 +337,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div>
         <span>Publish panel</span>
+        <span>panelAllowReplace:{String(allowReplace)}</span>
         <span>author:{author}</span>
         <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
         <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
@@ -366,11 +378,14 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     PublishFooter: ({
       onCancel,
       onSubmit,
+      allowReplace,
     }: {
       onCancel: () => void;
       onSubmit: () => void;
+      allowReplace?: boolean;
     }) => (
       <div>
+        <span>footerAllowReplace:{String(allowReplace)}</span>
         <button onClick={onCancel}>Cancel</button>
         <button onClick={onSubmit}>Submit</button>
       </div>
@@ -425,6 +440,16 @@ const openPublish = async () =>
 const credentialsToggle = () =>
   screen.queryByRole('button', { name: /^Toggle credentials:/ });
 
+describe('DetailsPanel — republishing an existing version', () => {
+  it('tells the publish panel and footer that an existing version cannot be replaced', async () => {
+    renderPanel({ item: makeItem({ type: CatalogEntityType.Toolset }) });
+    await openPublish();
+
+    expect(screen.getByText('panelAllowReplace:false')).toBeTruthy();
+    expect(screen.getByText('footerAllowReplace:false')).toBeTruthy();
+  });
+});
+
 describe('DetailsPanel — publish credentials opt-in', () => {
   it('offers the option for an OAuth toolset whose publisher is signed in globally', async () => {
     renderPanel({
@@ -439,16 +464,30 @@ describe('DetailsPanel — publish credentials opt-in', () => {
   });
 
   /* A shared team API key is the common internal case. */
-  it('offers the option for an API-key toolset whose publisher is signed in personally', async () => {
+  it('offers the option for an API-key toolset signed in at the global level', async () => {
     renderPanel({
       item: toolsetWithCredentials({
         authenticationType: ToolsetAuthenticationType.ApiKey,
-        userStatus: CredentialStatus.SignedIn,
+        globalStatus: CredentialStatus.SignedIn,
       }),
     });
     await openPublish();
 
     expect(credentialsToggle()).toBeTruthy();
+  });
+
+  /* Core copies only the global credential, so a personal one has nothing to pass on. */
+  it('offers no option for a toolset signed in at the user level only', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.ApiKey,
+        userStatus: CredentialStatus.SignedIn,
+        globalStatus: CredentialStatus.SignedOut,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeNull();
   });
 
   it('offers no option for a toolset that needs no login', async () => {
@@ -1780,6 +1819,32 @@ describe('DetailsPanel', () => {
     expect(tablist.textContent).toBe('AboutToolsConnect');
   });
 
+  it('passes the host-supplied Tools search and count texts to the Tools tab', async () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: { tools: { tools: [{ name: 'notion-fetch' }] } },
+        })}
+        texts={{
+          toolsSearchPlaceholder: 'Rechercher',
+          toolsCountLabel: (count) => `${count} outil`,
+        }}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(
+      within(screen.getByRole('tablist')).getByRole('button', {
+        name: 'Tools',
+      }),
+    );
+
+    const toolsTab = screen.getByTestId('tools-tab');
+    expect(toolsTab.dataset.searchPlaceholder).toBe('Rechercher');
+    expect(toolsTab.dataset.toolCount).toBe('1 outil');
+  });
+
   it('places Connect last among every other available tab', () => {
     render(
       <DetailsPanel
@@ -2782,5 +2847,24 @@ describe('DetailsPanel — markdown table label', () => {
     expect(
       screen.getByRole('region', { name: 'Scrollbare Tabelle' }),
     ).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — tab list', () => {
+  it('renders the tabs getCatalogDetailsTabs lists for the item, in order', () => {
+    const modelWithDetails = makeItem({
+      details: {
+        overview: { sections: [] },
+        pricing: { prices: [] },
+        limits: { groups: [] },
+      },
+    });
+
+    renderPanel({ item: modelWithDetails });
+
+    const tabNames = within(screen.getByRole('tablist'))
+      .getAllByRole('button')
+      .map((tab) => tab.textContent);
+    expect(tabNames).toEqual(['About', 'Overview', 'Pricing', 'Limits']);
   });
 });

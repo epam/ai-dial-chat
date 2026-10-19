@@ -32,6 +32,15 @@
     transparent;
 }
 
+/* The tab row still scrolls sideways by touch or trackpad; only the bar is hidden. */
+.tabsScroll {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .publishTitle.publishTitle {
   color: var(--cat-details-publish-title-text, var(--text-primary, #161b2d));
 }

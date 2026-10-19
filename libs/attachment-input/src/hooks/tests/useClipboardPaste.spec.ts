@@ -130,27 +130,40 @@ describe('useClipboardPaste', () => {
     vi.useRealTimers();
   });
 
-  it('long text creates a Pasted attachment with preview name', () => {
+  it('long text creates a Pasted attachment named with a timestamp and .txt extension', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 14, 9, 5, 3));
     const onAttachments = vi.fn();
     const { result } = renderHook(() => useClipboardPaste(onAttachments, 10));
-    const text = 'This text is longer than ten characters';
-    const event = makeTextEvent(text);
+    const event = makeTextEvent('This text is longer than ten characters');
     result.current.handlePaste(event);
     expect(event.preventDefault).toHaveBeenCalled();
-    expect(onAttachments).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ type: AttachmentType.Pasted, name: text }),
-      ]),
-    );
+    const [attachment] = onAttachments.mock.calls[0][0];
+    expect(attachment.type).toBe(AttachmentType.Pasted);
+    expect(attachment.name).toBe('Pasted text 2026-09-14 09-05-03.txt');
+    expect(attachment.file.name).toBe(attachment.name);
+    vi.useRealTimers();
   });
 
-  it('preview name is truncated to 80 chars with ellipsis when text is very long', () => {
+  it('does not derive the file name from pasted JSON content', () => {
     const onAttachments = vi.fn();
     const { result } = renderHook(() => useClipboardPaste(onAttachments, 5));
-    result.current.handlePaste(makeTextEvent('a'.repeat(100)));
+    result.current.handlePaste(
+      makeTextEvent('{"id": 1, "path": "a/b\\c", "q": "x?y*z"}'),
+    );
     const attachment = onAttachments.mock.calls[0][0][0];
-    expect(attachment.name.endsWith('…')).toBe(true);
-    expect([...attachment.name].length).toBe(81); // 80 chars + ellipsis character
+    expect(attachment.name).toMatch(/^Pasted text [\d -]+\.txt$/);
+  });
+
+  it('uses the localised pastedTextName as the file name prefix', () => {
+    const onAttachments = vi.fn();
+    const { result } = renderHook(() =>
+      useClipboardPaste(onAttachments, 5, { pastedTextName: 'Вставленный' }),
+    );
+    result.current.handlePaste(makeTextEvent('a'.repeat(100)));
+    expect(onAttachments.mock.calls[0][0][0].name).toMatch(
+      /^Вставленный [\d -]+\.txt$/,
+    );
   });
 
   it('ignores the image and pastes text when clipboard contains both image and text', () => {

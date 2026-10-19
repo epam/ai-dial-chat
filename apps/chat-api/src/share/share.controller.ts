@@ -12,6 +12,8 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import { ConversationModelHiddenErrorDto } from '../conversations/dto/conversation-model-hidden-error.dto';
+import { AcceptInvitationErrorDto } from './dto/accept-invitation-error.dto';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto } from './dto/create-share-link.dto';
 import {
@@ -63,6 +65,12 @@ export class ShareController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({
+    status: 403,
+    description:
+      "No permission to share the resource, or (`code: conversationModelHidden`) the shared conversation's model is hidden through HIDDEN_ENTITY_TAGS",
+    type: ConversationModelHiddenErrorDto,
+  })
+  @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
   })
@@ -95,7 +103,9 @@ export class ShareController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Validation error — invalid invitationId',
+    description:
+      'Validation error — invalid invitationId — or (`code: shareInvitationAcceptedUsersLimitReached`) the shared resource has already been accepted by its maximum number of users',
+    type: AcceptInvitationErrorDto,
   })
   @ApiResponse({
     status: 401,
@@ -103,7 +113,9 @@ export class ShareController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Invitation not found, expired, or already revoked',
+    description:
+      'Invitation not found, expired, or already revoked (`code: shareInvitationNotFound`)',
+    type: AcceptInvitationErrorDto,
   })
   @ApiResponse({
     status: 502,
@@ -251,7 +263,7 @@ export class ShareController {
     @Req() req: Request,
     @Body() body: RevokeSharedAccessDto,
   ): Promise<RevokeSharedAccessResponseDto> {
-    const { at, sub } = req.user as SessionUser;
-    return this.shareService.revokeShared(body.itemId, at, sub);
+    const { at, sub, bucket } = req.user as SessionUser;
+    return this.shareService.revokeShared(body.itemId, at, sub, bucket);
   }
 }

@@ -83,6 +83,9 @@ vi.mock('../../../context/IsolatedModelViewContext', () => ({
     resolvedDeploymentId: null,
   }),
 }));
+vi.mock('../../../context/ConversationsContext', () => ({
+  useConversations: () => ({ refreshConversations: vi.fn() }),
+}));
 vi.mock('../../../context/auth/UserContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../context/overlay/OverlayContext', () => ({

@@ -9,7 +9,7 @@ Specifies the `@epam/ai-dial-attachment-input` library extracted from `libs/conv
 ## Requirements
 
 ### Requirement: Library package exists at libs/attachment-input
-The `@epam/ai-dial-attachment-input` package SHALL exist as a standalone library under `libs/attachment-input/` with its own `package.json` (name `@epam/ai-dial-attachment-input`), `tsconfig.json`, `tsconfig.lib.json`, `tsconfig.spec.json`, `vite.config.mts`, `postcss.config.js`, and `tailwind.config.js`. The library SHALL be of type `type:ui` in the Nx workspace and MUST NOT import from `apps/*`, `server-api`, generated API clients, app contexts, auth/session, or routing.
+The `@epam/ai-dial-attachment-input` package SHALL exist as a standalone library under `libs/attachment-input/` with its own `package.json` (name `@epam/ai-dial-attachment-input`), `tsconfig.json`, `tsconfig.lib.json`, `tsconfig.spec.json`, and `vite.config.mts`. Its Tailwind utilities SHALL be built from the shared workspace theme by `tools/vite-lib-tailwind-utilities.mjs`; the library SHALL NOT carry its own `tailwind.config.js` or `postcss.config.js`. The library SHALL be of type `type:ui` in the Nx workspace and MUST NOT import from `apps/*`, `server-api`, generated API clients, app contexts, auth/session, or routing.
 
 #### Scenario: Library can be built independently
 - **WHEN** `npm exec nx build attachment-input` is executed
@@ -152,11 +152,15 @@ All `apps/chat` files that previously imported from `apps/chat/src/utils/attachm
 
 ---
 
-### Requirement: Attachment tile action buttons are hidden until the tile is hovered or focused
+### Requirement: Attachment tile action buttons are hidden until the tile is hovered or keyboard-focused
 
-Both attachment tile variants — `FileAttachment` and `ImageAttachment`, the only two the library renders — SHALL apply the Tailwind named group `group/attachment-tile` to their root element. The shared `ActionButton` in `libs/attachment-input/src/components/AttachmentCard/Attachments/Actions.tsx` (used by `DownloadAction`, `RemoveAction`, `ReloadAction`, `OpenLinkAction`) SHALL render with `opacity-0` by default, becoming fully opaque via `group-hover/attachment-tile:opacity-100`, `group-focus-within/attachment-tile:opacity-100`, and `focus-visible:opacity-100` — the last so a keyboard user tabbing directly to the button also reveals it, per the keyboard-parity rule for hover-only affordances.
+Both attachment tile variants — `FileAttachment` and `ImageAttachment`, the only two the library renders — SHALL apply the Tailwind named group `group/attachment-tile` to their root element. The shared `ActionButton` in `libs/attachment-input/src/components/AttachmentCard/Attachments/Actions.tsx` (used by `DownloadAction`, `RemoveAction`, `ReloadAction`, `OpenLinkAction`) SHALL render with `opacity-0` by default, becoming fully opaque via `group-hover/attachment-tile:opacity-100`, `group-focus-visible/attachment-tile:opacity-100`, and `group-has-[:focus-visible]/attachment-tile:opacity-100` — the last so a keyboard user tabbing directly to the button also reveals it, per the keyboard-parity rule for hover-only affordances. A mouse click alone does not reveal them. `RemoveAction` is additionally visible below the desktop breakpoint (`mobile:opacity-100`), and while the attachment uploads (`isAlwaysVisible`).
 
-`ImageAttachment`'s `DownloadAction`/`RemoveAction` additionally receive `styles.imageActionButton`, which renders a persistent background/icon-color chip (backed by `--ai-tile-hover-icon-bg`/`--ai-tile-hover-icon-color`) so the button stays legible against arbitrary image content once revealed, without depending on the cursor being directly over the small button itself. `FileAttachment` does not apply this chip.
+The buttons sit over the tile name rather than in a reserved gutter, so each is painted opaque in the tile's current background (default, hover, selected layered over the base, or error). Every such rule is scoped under the tile class, because a single-class rule ties with the kit's transparent `StaticIconButton` background and loses on stylesheet order.
+
+The tile draws a 1px focus ring (`outline-1 outline-offset-1 focus-visible:outline`, from `ATTACHMENT_TILE_FOCUS_RING_CLASS`) on its own keyboard focus. A non-interactive tile with exactly one action also draws it while that action has keyboard focus and drops the kit's ring around the button, so one ring marks one focus target; any other tile leaves each action its own ring. Only an interactive tile (one with `onClick` or an applicable `onExpand`) shifts its background on hover. While an image attachment uploads, `ImageAttachment` renders the same indeterminate `role="progressbar"` overlay as `FileAttachment` and suppresses its download action.
+
+`ImageAttachment`'s `DownloadAction`/`RemoveAction` additionally receive `styles.imageActionButton`, which renders a persistent light background/icon-color chip (backed by `--ai-tile-hover-icon-bg`/`--ai-tile-hover-icon-color`), including on a selected tile, so the button stays legible against arbitrary image content once revealed. On `FileAttachment`, `--ai-tile-hover-icon-bg` overrides the tile-matching background in every state except error.
 
 #### Scenario: Action buttons are invisible on an unhovered, unfocused tile
 

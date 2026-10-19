@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FavoriteSkillItem } from '../../../models/favorite-skill-item';
 import type { FavoriteSkillsPanelProps } from '../../../models/favorite-skills-panel-props';
 import { FavoriteSkillsPanel } from '../FavoriteSkillsPanel';
@@ -106,5 +106,43 @@ describe('FavoriteSkillsPanel — plain mode', () => {
     screen
       .getAllByRole('button', { name: 'Remove from favorites' })
       .forEach((star) => expect(star.getAttribute('tabindex')).toBeNull());
+  });
+});
+
+describe('FavoriteSkillsPanel — row tooltip', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const DESCRIBED: FavoriteSkillItem[] = [
+    { id: 'skills/bucket/alpha', name: 'Alpha', description: 'Alpha skill' },
+  ];
+
+  /*
+   * The kit's hover listener is a native `mouseenter` on the wrapper `asChild`
+   * creates; `mouseenter` does not bubble, so dispatch it on the row directly.
+   */
+  it('renders the description in the row tooltip when a row is hovered', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderPanel({ favorites: DESCRIBED, onViewDetails: vi.fn() });
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Alpha' }));
+
+    expect(await screen.findByText('Alpha skill')).toBeTruthy();
+  });
+
+  it('renders no row tooltip when isRowTooltipHidden is set', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderPanel({
+      favorites: DESCRIBED,
+      onViewDetails: vi.fn(),
+      isRowTooltipHidden: true,
+    });
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Alpha' }));
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(screen.queryByText('Alpha skill')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'View details' })).toBeNull();
   });
 });

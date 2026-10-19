@@ -137,9 +137,8 @@ For `authenticationType: OAUTH` toolsets, the system SHALL present, in the heade
 to the level of the header action (`USER`) or of the row (`USER` or `GLOBAL`) by opening a same-origin popup window synchronously (so a blocked
 popup can be reliably detected), then navigating that popup to the provider's authorization page,
 leaving the Catalog tab or Toolset Editor tab on its current page. The authorize URL SHALL
-use HTTPS, or plain HTTP only for a loopback host; the system SHALL reject any other scheme, and
-plain HTTP to a non-loopback host, before opening a popup (`buildToolsetAuthorizeUrl` in
-`libs/chat-hooks/src/oauth/authorize-url.ts` returns `null`). The
+use the `http:` or `https:` scheme; the system SHALL reject any other scheme before opening a
+popup (`buildToolsetAuthorizeUrl` in `libs/chat-hooks/src/oauth/authorize-url.ts` returns `null`). The
 system SHALL sever the popup's `window.opener` relationship before navigating away from the
 same-origin placeholder. The authorize URL SHALL
 include `code_challenge`/`code_challenge_method` when the toolset's stored OAuth configuration
@@ -170,7 +169,7 @@ result to the tab that initiated the flow, and close the popup.
 
 #### Scenario: Unsafe authorization endpoint
 - **WHEN** a toolset OAuth configuration contains an authorization endpoint such as a
-  `javascript:` or `data:` URL, or a plain `http:` URL on a non-loopback host
+  `javascript:` or `data:` URL
 - **THEN** the system rejects the configuration and does not open or navigate a popup
 
 ### Requirement: FAILED credential state is cleared before a new login attempt

@@ -358,6 +358,33 @@ This prevents two erroneous banners: the "Attachments not supported" notificatio
 
 ---
 
+### Requirement: Pasted-text attachments get a content-independent `.txt` file name
+
+When `useClipboardPaste` (`libs/attachment-input/src/hooks/useClipboardPaste.ts`) converts long pasted plain text into an `AttachmentType.Pasted` attachment, it SHALL name both the `Attachment` and its backing `File` `<pastedTextName> <YYYY-MM-DD HH-mm-ss>.txt`, where `pastedTextName` comes from `UseClipboardPasteLabels.pastedTextName` (default `'Pasted text'`). The name SHALL NOT be derived from the pasted content, so JSON, code, or any text containing characters a DIAL Core file path forbids cannot corrupt it, and the `.txt` extension lets the attachment canvas select a text previewer. The attachment card SHALL show the name without its extension.
+
+#### Scenario: Pasted JSON produces a readable name
+
+- **WHEN** the user pastes JSON longer than `pasteTextThreshold` characters
+- **THEN** the attachment name matches `Pasted text <timestamp>.txt` and contains no characters from the pasted content
+- **AND** the `File` carries the same name and the type `text/plain`
+
+#### Scenario: Pasted-text attachment opens in the canvas preview
+
+- **WHEN** a pasted-text attachment has been uploaded and the user opens it from the sent message
+- **THEN** the attachment canvas renders its text instead of "Preview is not supported for this file"
+
+#### Scenario: Pasted-text card omits the extension
+
+- **WHEN** a pasted-text attachment is shown in the composer tray
+- **THEN** the card label is `Pasted text <timestamp>` without `.txt`
+
+#### Scenario: Localised prefix
+
+- **WHEN** `labels.pastedTextName` is `'Вставленный'`
+- **THEN** the attachment name is `Вставленный <timestamp>.txt`
+
+---
+
 ### Requirement: Message length validation
 
 The `Input` component SHALL refuse to send a message whose text length is ≥
@@ -580,19 +607,20 @@ This closes the gap where a file attached while compatible with the selected mod
 
 ---
 
-### Requirement: Input wrapper removes inline-end padding when the tray is full
+### Requirement: Full attachment tray bleeds to the inline-end edge without moving the controls
 
-When the total attachment count (prefix + new) reaches 7 or more, the `Input` wrapper SHALL drop its inline-end padding to `0`. For fewer than 7 attachments the default `p-4` (16 px on all sides) applies.
+The `Input` wrapper SHALL keep `p-4` (16 px on all sides) whatever the attachment count, so the action row — model selector, microphone and Send button — stays in place as attachments are added. When 7 or more new attachments are present, the `AttachmentTray` alone SHALL extend into the wrapper's inline-end padding (`-me-4`; the tray has no explicit width, so it stretches into the margin) so its cards scroll to the edge.
 
-#### Scenario: No end padding with 7 or more attachments
+#### Scenario: Controls stay in place with 7 or more attachments
 
-- **WHEN** the combined attachment count is 7 or more
-- **THEN** the input wrapper uses `py-4 ps-4` (no inline-end padding)
+- **WHEN** 7 or more new attachments are present
+- **THEN** the input wrapper still uses `p-4`
+- **AND** the attachment tray carries `-me-4` and spans the wrapper's inline-end padding
 
-#### Scenario: Default padding with fewer than 7 attachments
+#### Scenario: Tray stays inside the padding with fewer than 7 attachments
 
-- **WHEN** the combined attachment count is 6 or fewer
-- **THEN** the input wrapper uses `p-4` (16 px on all sides)
+- **WHEN** 6 or fewer new attachments are present
+- **THEN** the attachment tray does not extend into the wrapper's padding
 
 ---
 

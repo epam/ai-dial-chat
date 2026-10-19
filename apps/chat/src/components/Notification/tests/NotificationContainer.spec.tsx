@@ -28,12 +28,14 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     variant,
     title,
     message,
+    action,
     closable,
     onClose,
   }: {
     variant: string;
     title?: string;
     message: ReactNode;
+    action?: ReactNode;
     closable?: boolean;
     onClose?: () => void;
   }) => (
@@ -44,6 +46,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     >
       {title && <div>{title}</div>}
       <div>{message}</div>
+      {action}
       {closable && <button aria-label="Close notification" onClick={onClose} />}
     </div>
   ),
@@ -144,6 +147,61 @@ describe('NotificationContainer', () => {
     render(<NotificationContainer />);
     expect(screen.getByText('Saved')).toBeTruthy();
     expect(screen.getByText('Changes saved.')).toBeTruthy();
+  });
+});
+
+describe('NotificationContainer — action button', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    notifications = [];
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('renders the action inside the notification', () => {
+    notifications = [
+      makeItem({
+        message: 'Save failed',
+        action: <button type="button">Log in and retry</button>,
+      }),
+    ];
+    render(<NotificationContainer />);
+    expect(
+      screen.getByRole('button', { name: 'Log in and retry' }),
+    ).toBeTruthy();
+  });
+
+  it('does not auto-dismiss an actionable notification', () => {
+    notifications = [
+      makeItem({
+        id: 'action-1',
+        action: <button type="button">Log in and retry</button>,
+      }),
+    ];
+    render(<NotificationContainer />);
+
+    vi.advanceTimersByTime(10000);
+
+    expect(dismissNotification).not.toHaveBeenCalled();
+  });
+
+  it('keeps auto-dismiss for plain notifications alongside an actionable one', () => {
+    notifications = [
+      makeItem({ id: 'plain-1' }),
+      makeItem({
+        id: 'action-1',
+        action: <button type="button">Log in and retry</button>,
+      }),
+    ];
+    render(<NotificationContainer />);
+
+    vi.advanceTimersByTime(5000);
+
+    expect(dismissNotification).toHaveBeenCalledWith('plain-1');
+    expect(dismissNotification).not.toHaveBeenCalledWith('action-1');
   });
 });
 

@@ -41,21 +41,23 @@ export interface AttachmentCardColors {
   backgroundSelected?: string;
   /** Tile border color in the selected state. */
   borderSelected?: string;
-  /** Tile focus outline color. */
+  /** Tile focus ring color. Defaults to `--stroke-focus`. */
   focusOutline?: string;
   /** Tile background color in the error state. */
   backgroundError?: string;
   /** Tile border color in the error state. */
   borderError?: string;
-  /** File name/type text color in the error state. */
+  /** Corner action icon color in the error state. Defaults to `--text-error`. */
   errorText?: string;
   /** File name text color. */
   nameText?: string;
   /** Type/meta text color. */
   typeText?: string;
-  /** Hover download icon background color. */
+  /** Image placeholder icon color while the preview loads. Defaults to `--text-secondary`. */
+  placeholderIcon?: string;
+  /** Corner action button background, overriding the default of matching the tile's current background (not applied in the error state). */
   hoverIconBackground?: string;
-  /** Hover download icon color. */
+  /** Corner action icon color on image tiles and during upload. Defaults to `--text-secondary`. */
   hoverIconColor?: string;
   /** Upload progress track background color. */
   trackBackground?: string;
@@ -65,7 +67,7 @@ export interface AttachmentCardColors {
 export interface AttachmentCardTypography {
   /** Utility class applied to the file name text. Defaults to `'dial-tiny-text'`. */
   fontClassName?: string;
-  /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
+  /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-tiny-text'`. */
   metaClassName?: string;
 }
 

@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   ButtonAppearance,
@@ -14,13 +14,14 @@ import {
   Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
-import { FC, useRef, useState } from 'react';
+import { FC, MouseEvent, useRef, useState } from 'react';
 import {
   CREATE_MENU_LIST_CLASS_NAME,
   CREATE_MENU_MAX_HEIGHT_PX,
 } from '../../constants/create-menu';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
 import { highlightDropdownLabels } from '../../utils/create-menu';
+import { CreateMenuSheet } from './CreateMenuSheet';
 
 /** Props for the catalog Create button. */
 export interface CreateButtonProps {
@@ -32,7 +33,7 @@ export interface CreateButtonProps {
    */
   options?: DropdownItem[];
   /** Called when the button is clicked and no `options` are present. */
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   /** When provided, the dropdown shows a search field above `options`; the host filters `options` by its value. */
   search?: CatalogCreateSearch;
   /** Placeholder and accessible name of the search field. Defaults to `'Search'`. */
@@ -41,9 +42,15 @@ export interface CreateButtonProps {
   searchClearLabel?: string;
   /** Text shown when a search leaves no options. Defaults to `'No results found'`. */
   noResultsLabel?: string;
+  /** Accessible name of the mobile menu sheet's back button. Defaults to `'Back'`. */
+  backLabel?: string;
+  /** Accessible name of the mobile menu sheet's close button. Defaults to `'Close'`. */
+  closeLabel?: string;
+  /** Colour variant of the button. Defaults to `ButtonVariant.Primary`. */
+  variant?: ButtonVariant;
 }
 
-/** Renders a plain primary button, a split-chevron dropdown, or a searchable dropdown. */
+/** Renders a plain primary button, a split-chevron dropdown, a searchable dropdown, or — on mobile — a menu sheet. */
 export const CreateButton: FC<CreateButtonProps> = ({
   label,
   options,
@@ -52,9 +59,56 @@ export const CreateButton: FC<CreateButtonProps> = ({
   searchPlaceholder = 'Search',
   searchClearLabel = 'Clear search',
   noResultsLabel = 'No results found',
+  backLabel = 'Back',
+  closeLabel = 'Close',
+  variant = ButtonVariant.Primary,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const chevron = (
+    <IconChevronDown
+      size={DIAL_ICON_SIZE.SM}
+      stroke={DIAL_KIT_ICON_STROKE}
+      aria-hidden
+      className={mergeClasses('transition-transform', isOpen && 'rotate-180')}
+    />
+  );
+
+  // A floating menu's side flyouts fall off a phone screen, so below the desktop breakpoint the menu is a sheet.
+  if (isMobile && (search || options?.length)) {
+    const handleSheetClose = () => {
+      setIsOpen(false);
+      search?.onChange('');
+    };
+
+    return (
+      <>
+        <Button
+          label={label}
+          variant={variant}
+          appearance={ButtonAppearance.Solid}
+          iconAfter={chevron}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(true)}
+        />
+        <CreateMenuSheet
+          open={isOpen}
+          onClose={handleSheetClose}
+          title={label}
+          options={options ?? []}
+          search={search}
+          searchPlaceholder={searchPlaceholder}
+          searchClearLabel={searchClearLabel}
+          noResultsLabel={noResultsLabel}
+          backLabel={backLabel}
+          closeLabel={closeLabel}
+        />
+      </>
+    );
+  }
 
   if (search) {
     const searchItems: DropdownItem[] = options?.length
@@ -80,7 +134,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
           matchReferenceWidth={false}
           listClassName={CREATE_MENU_LIST_CLASS_NAME}
           menuHeader={
-            <div className="sticky -top-1 z-10 bg-layer-raised px-2 pb-1 pt-2">
+            <div className="sticky -top-1 z-10 bg-layer-raised px-2 pt-2 pb-1">
               <Search
                 value={search.value}
                 placeholder={searchPlaceholder}
@@ -95,19 +149,9 @@ export const CreateButton: FC<CreateButtonProps> = ({
         >
           <Button
             label={label}
-            variant={ButtonVariant.Primary}
+            variant={variant}
             appearance={ButtonAppearance.Solid}
-            iconAfter={
-              <IconChevronDown
-                size={DIAL_ICON_SIZE.SM}
-                stroke={DIAL_KIT_ICON_STROKE}
-                aria-hidden
-                className={mergeClasses(
-                  'transition-transform',
-                  isOpen && 'rotate-180',
-                )}
-              />
-            }
+            iconAfter={chevron}
             aria-haspopup="menu"
             aria-expanded={isOpen}
           />
@@ -117,12 +161,17 @@ export const CreateButton: FC<CreateButtonProps> = ({
   }
 
   if (!options?.length) {
-    return (
-      <PrimaryButton
+    const plusIcon = (
+      <IconPlus size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
+    );
+    return variant === ButtonVariant.Primary ? (
+      <PrimaryButton label={label} iconBefore={plusIcon} onClick={onClick} />
+    ) : (
+      <Button
         label={label}
-        iconBefore={
-          <IconPlus size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
-        }
+        variant={variant}
+        appearance={ButtonAppearance.Solid}
+        iconBefore={plusIcon}
         onClick={onClick}
       />
     );
@@ -133,7 +182,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
       <ButtonDropdown
         appearance={ButtonAppearance.Solid}
         label={label}
-        variant={ButtonVariant.Primary}
+        variant={variant}
         items={options}
       />
     </div>

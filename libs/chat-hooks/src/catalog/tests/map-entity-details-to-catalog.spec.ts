@@ -1,4 +1,4 @@
-import { CredentialStatus } from '@epam/ai-dial-catalog';
+import { CatalogPricingUnit, CredentialStatus } from '@epam/ai-dial-catalog';
 import { describe, expect, it } from 'vitest';
 import {
   AuthenticationType,
@@ -6,6 +6,7 @@ import {
   type ToolsetEntityDetails,
 } from '../entity-details';
 import {
+  DEFAULT_ENTITY_DETAILS_LABELS,
   mapDeploymentDetailsDtoToEntityDetails,
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
@@ -211,7 +212,7 @@ describe('mapEntityDetailsToCatalogDetails', () => {
   });
 
   describe('MODEL pricing', () => {
-    const mapPricingRows = (pricing: {
+    const mapPricing = (pricing: {
       unit?: string;
       prompt?: string;
       completion?: string;
@@ -226,8 +227,11 @@ describe('mapEntityDetailsToCatalogDetails', () => {
 
       return mapEntityDetailsToCatalogDetails(
         mapDeploymentDetailsDtoToEntityDetails(dto),
-      ).pricing?.prices;
+      ).pricing;
     };
+
+    const mapPricingRows = (pricing: Parameters<typeof mapPricing>[0]) =>
+      mapPricing(pricing)?.prices;
 
     it('quotes token prices per 1M tokens', () => {
       expect(
@@ -254,18 +258,32 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       ]);
     });
 
-    it('names non-token units instead of re-quoting them per 1M tokens', () => {
+    it('quotes character prices per 1M characters under character labels', () => {
       expect(
-        mapPricingRows({
+        mapPricing({
           unit: 'char_without_whitespace',
-          prompt: '0.000002',
+          prompt: '0.00000015',
+          completion: '0.0000035',
         }),
-      ).toEqual([
-        {
-          label: 'Input tokens',
-          price: '$0.000002/char without whitespace',
-        },
-      ]);
+      ).toEqual({
+        prices: [
+          {
+            label: 'Input characters',
+            price: '$0.15/M chars without whitespace',
+          },
+          {
+            label: 'Output characters',
+            price: '$3.5/M chars without whitespace',
+          },
+        ],
+        unit: CatalogPricingUnit.Character,
+      });
+    });
+
+    it('leaves the unit unset for token pricing', () => {
+      expect(
+        mapPricing({ unit: 'token', prompt: '0.000003' })?.unit,
+      ).toBeUndefined();
     });
 
     it('passes a non-numeric price through unchanged', () => {
@@ -426,5 +444,67 @@ describe('mapToolsetCredentials', () => {
       isPublic: true,
       isManageableByAdmin: true,
     });
+  });
+});
+
+describe('mapEntityDetailsToCatalogDetails — host-supplied labels', () => {
+  const modelDto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+    {
+      id: 'gpt-4o',
+      type: 'model',
+      modelDetails: {
+        owner: 'OpenAI',
+        catalogProperties: { provider: 'OpenAI' },
+      },
+    };
+  const toolsetDto: Parameters<
+    typeof mapDeploymentDetailsDtoToEntityDetails
+  >[0] = {
+    id: 'toolsets/public/search',
+    type: 'toolset',
+    toolsetDetails: {
+      owner: 'Search Inc.',
+      catalogProperties: { provider: 'Search Inc.' },
+    },
+  };
+
+  it('keeps the former English labels by default', () => {
+    expect(DEFAULT_ENTITY_DETAILS_LABELS).toMatchObject({
+      capabilitiesTitle: 'Capabilities',
+      specificationTitle: 'Specification',
+      configurationTitle: 'Configuration',
+      provider: 'Provider',
+      hostedBy: 'Hosted by',
+      knowledgeCutoffDate: 'Knowledge cutoff date',
+      oauthScopes: 'OAuth scopes',
+    });
+    expect(Object.keys(DEFAULT_ENTITY_DETAILS_LABELS)).toHaveLength(24);
+  });
+
+  it.each([
+    ['model', modelDto],
+    ['toolset', toolsetDto],
+  ])('renames only the overridden strings for a %s', (_, dto) => {
+    const details = mapDeploymentDetailsDtoToEntityDetails(dto);
+    const english = mapEntityDetailsToCatalogDetails(details);
+    const french = mapEntityDetailsToCatalogDetails(details, {
+      specificationTitle: 'Spécification',
+      hostedBy: 'Hébergé par',
+    });
+
+    const specification = french.overview?.sections.find(
+      (s) => s.title === 'Spécification',
+    );
+    expect(specification).toBeDefined();
+    expect(specification?.specs.map((spec) => spec.label)).toEqual(
+      english.overview?.sections
+        .find((s) => s.title === 'Specification')
+        ?.specs.map((spec) =>
+          spec.label === 'Hosted by' ? 'Hébergé par' : spec.label,
+        ),
+    );
+    expect(specification?.specs.map((spec) => spec.label)).toContain(
+      'Provider',
+    );
   });
 });

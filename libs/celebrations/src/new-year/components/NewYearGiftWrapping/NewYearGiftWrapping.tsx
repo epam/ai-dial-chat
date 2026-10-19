@@ -73,7 +73,7 @@ const NewYearGiftWrapping: FC = () => {
     return (
       <div
         key="stationary"
-        className="pointer-events-none absolute bottom-8 start-1/2 h-32 w-52 -translate-x-1/2 rtl:translate-x-1/2"
+        className="pointer-events-none absolute start-1/2 bottom-8 h-32 w-52 -translate-x-1/2 rtl:translate-x-1/2"
         inert
         aria-hidden="true"
       >
@@ -92,7 +92,7 @@ const NewYearGiftWrapping: FC = () => {
     <div
       key="animation"
       ref={hostRef}
-      className="pointer-events-none absolute inset-0 select-none overflow-clip"
+      className="pointer-events-none absolute inset-0 overflow-clip select-none"
       inert
       aria-hidden="true"
       data-new-year-scene="gift-wrapping"

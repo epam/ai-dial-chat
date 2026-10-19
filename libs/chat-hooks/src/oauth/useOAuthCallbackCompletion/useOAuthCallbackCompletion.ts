@@ -1,3 +1,4 @@
+import { decodeJsonFromBase64 } from '@epam/ai-dial-chat-shared';
 import { useEffect, useRef, useState } from 'react';
 import { getToolsetOAuthChannelName } from '../handshake';
 import type {
@@ -71,10 +72,20 @@ const isResultAcknowledgement = (
 const readRedirectState = (): ToolsetRedirectState | null => {
   const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
   if (!raw) return null;
+  /*
+   * The wrap shipped mid-stream, so both formats can be in storage: a flow
+   * started before the deploy stored raw JSON, one after stores the wrap.
+   * Attempt each parser in turn rather than sniffing either format — a
+   * value that fits neither (malformed) resolves null.
+   */
   try {
-    return JSON.parse(raw) as ToolsetRedirectState;
+    return decodeJsonFromBase64<ToolsetRedirectState>(raw);
   } catch {
-    return null;
+    try {
+      return JSON.parse(raw) as ToolsetRedirectState;
+    } catch {
+      return null;
+    }
   }
 };
 
@@ -164,23 +175,25 @@ export const useOAuthCallbackCompletion = ({
     if (hasRun.current) return;
     hasRun.current = true;
 
-    const settle = (
-      flowId: string | undefined,
-      message: ToolsetOAuthChannelMessage,
-    ) => {
-      reportResult(flowId, message);
-      setIsInProgress(false);
-      setFailureReason(
-        message.type === ToolsetOAuthResultType.Failure ? message.reason : null,
-      );
-    };
-
     const complete = async () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const redirectState = readRedirectState();
       sessionStorage.removeItem(TOOLSET_REDIRECT_STATE_KEY);
       const flowId = redirectState?.state ?? state ?? undefined;
+
+      const settle = (
+        flowId: string | undefined,
+        message: ToolsetOAuthChannelMessage,
+      ) => {
+        reportResult(flowId, message);
+        setIsInProgress(false);
+        setFailureReason(
+          message.type === ToolsetOAuthResultType.Failure
+            ? message.reason
+            : null,
+        );
+      };
 
       /*
        * Remove the one-time authorization code from the address bar/history

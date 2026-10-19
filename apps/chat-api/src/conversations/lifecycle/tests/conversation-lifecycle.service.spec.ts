@@ -10,6 +10,7 @@ import type { DialClientService } from '../../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../../openapi/openapi-response.dto';
 import { BackgroundGenerationStatus } from '../../dto/background-generation.dto';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { ConversationLifecycleService } from '../conversation-lifecycle.service';
 
 vi.mock('../../../common/dial/dial-error.mapper', () => ({
@@ -44,6 +45,9 @@ describe('ConversationLifecycleService', () => {
     maybeRenameAfterFirstReply: ReturnType<typeof vi.fn>;
   };
   let persistenceService: ConversationPersistenceService;
+  let mockDeploymentsService: {
+    resolveDeploymentItem: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockDialClient = {
@@ -71,10 +75,14 @@ describe('ConversationLifecycleService', () => {
       mockDialClient,
       mockConversationNamingService as never,
     );
+    mockDeploymentsService = {
+      resolveDeploymentItem: vi.fn().mockResolvedValue(null),
+    };
     service = new ConversationLifecycleService(
       mockDialClient,
       mockUserConfigService as never,
       persistenceService,
+      mockDeploymentsService as never,
     );
     vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
@@ -594,9 +602,112 @@ describe('ConversationLifecycleService', () => {
       expect(savedBody.temperature).toBe(0.7);
       expect(savedBody.responseFormat).toBe('plain_text');
     });
+
+    describe('hidden model (Issue #9183)', () => {
+      it('refuses with conversationDuplicateModelHidden when the current model is hidden', async () => {
+        mockGetConversation();
+        mockDeploymentsService.resolveDeploymentItem.mockResolvedValue({
+          id: 'gpt-4o',
+          isHidden: true,
+        });
+        const saveSpy = vi.spyOn(mockDialClient.client, 'saveConversation');
+
+        const result = service.duplicateConversation(
+          'shared-bucket/gpt-4o__New%20chat',
+          'test-token',
+          'test-bucket',
+        );
+
+        await expect(result).rejects.toBeInstanceOf(ForbiddenException);
+        await expect(result).rejects.toMatchObject({
+          response: { code: ConversationErrorCode.DuplicateModelHidden },
+        });
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+
+      it('checks the model the conversation uses now, not the one in its path', async () => {
+        mockGetConversation({
+          ...SHARED_CONVERSATION,
+          model: { id: 'nova-lite' },
+          assistantModelId: 'nova-lite',
+        });
+        mockDeploymentsService.resolveDeploymentItem.mockImplementation(
+          async (id: string) => ({ id, isHidden: id === 'nova-lite' }),
+        );
+
+        await expect(
+          service.duplicateConversation(
+            'shared-bucket/gpt-4o__New%20chat',
+            'test-token',
+            'test-bucket',
+          ),
+        ).rejects.toBeInstanceOf(ForbiddenException);
+        expect(
+          mockDeploymentsService.resolveDeploymentItem,
+        ).toHaveBeenCalledWith('nova-lite', 'test-token', 'test-bucket');
+      });
+
+      it('falls back to model.id when assistantModelId is empty', async () => {
+        mockGetConversation({
+          ...SHARED_CONVERSATION,
+          model: { id: 'nova-lite' },
+          assistantModelId: '',
+        });
+
+        await service.duplicateConversation(
+          'shared-bucket/gpt-4o__New%20chat',
+          'test-token',
+          'test-bucket',
+        );
+
+        expect(
+          mockDeploymentsService.resolveDeploymentItem,
+        ).toHaveBeenCalledWith('nova-lite', 'test-token', 'test-bucket');
+      });
+
+      it('duplicates when the current model is visible', async () => {
+        mockGetConversation();
+        mockDeploymentsService.resolveDeploymentItem.mockResolvedValue({
+          id: 'gpt-4o',
+          isHidden: false,
+        });
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({ data: {} } as never);
+
+        await service.duplicateConversation(
+          'shared-bucket/gpt-4o__New%20chat',
+          'test-token',
+          'test-bucket',
+        );
+
+        expect(saveSpy).toHaveBeenCalledOnce();
+      });
+
+      it('duplicates when the model no longer resolves to a deployment', async () => {
+        mockGetConversation();
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({ data: {} } as never);
+
+        await service.duplicateConversation(
+          'shared-bucket/gpt-4o__New%20chat',
+          'test-token',
+          'test-bucket',
+        );
+
+        expect(saveSpy).toHaveBeenCalledOnce();
+      });
+    });
   });
   describe('deleteConversations', () => {
     let deleteConversationSpy: ReturnType<typeof vi.spyOn>;
+
+    /* Real SDK shape: the error body has no status; the status is on response. */
+    const coreError = (status: number) => ({
+      error: { message: 'DIAL Core error' },
+      response: new Response(null, { status }),
+    });
 
     beforeEach(() => {
       deleteConversationSpy = vi
@@ -640,9 +751,7 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('counts DIAL Core 404 as alreadyAbsent: 1', async () => {
-      deleteConversationSpy.mockResolvedValueOnce({
-        error: { status: 404 },
-      } as never);
+      deleteConversationSpy.mockResolvedValueOnce(coreError(404) as never);
       const id = 'conversations/test-bucket/chat';
       const result = await service.deleteConversations(
         [id],
@@ -654,10 +763,34 @@ describe('ConversationLifecycleService', () => {
       expect(result.failed).toHaveLength(0);
     });
 
-    it('counts DIAL Core 500 as UPSTREAM_ERROR in failed', async () => {
+    it('counts DIAL Core 403 as FORBIDDEN in failed', async () => {
+      deleteConversationSpy.mockResolvedValueOnce(coreError(403) as never);
+      const id = 'conversations/test-bucket/chat';
+      const result = await service.deleteConversations(
+        [id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.failed).toEqual([{ id, code: 'FORBIDDEN' }]);
+    });
+
+    it('treats an empty-body DIAL Core 404 (error undefined) as alreadyAbsent', async () => {
       deleteConversationSpy.mockResolvedValueOnce({
-        error: { status: 500 },
+        error: undefined,
+        response: new Response(null, { status: 404 }),
       } as never);
+      const id = 'conversations/test-bucket/chat';
+      const result = await service.deleteConversations(
+        [id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.alreadyAbsent).toBe(1);
+      expect(result.deleted).toBe(0);
+    });
+
+    it('counts DIAL Core 500 as UPSTREAM_ERROR in failed', async () => {
+      deleteConversationSpy.mockResolvedValueOnce(coreError(500) as never);
       const id = 'conversations/test-bucket/chat';
       const result = await service.deleteConversations(
         [id],
@@ -676,8 +809,8 @@ describe('ConversationLifecycleService', () => {
       ];
       deleteConversationSpy
         .mockResolvedValueOnce({ data: {}, error: null } as never)
-        .mockResolvedValueOnce({ error: { status: 404 } } as never)
-        .mockResolvedValueOnce({ error: { status: 500 } } as never);
+        .mockResolvedValueOnce(coreError(404) as never)
+        .mockResolvedValueOnce(coreError(500) as never);
 
       const result = await service.deleteConversations(
         ids,
@@ -704,7 +837,7 @@ describe('ConversationLifecycleService', () => {
       const absent = 'conversations/test-bucket/absent';
       deleteConversationSpy
         .mockResolvedValueOnce({ data: {}, error: null } as never)
-        .mockResolvedValueOnce({ error: { status: 404 } } as never);
+        .mockResolvedValueOnce(coreError(404) as never);
 
       await service.deleteConversations(
         [deleted, absent],

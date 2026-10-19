@@ -138,7 +138,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         {liveName && (
           <span
             className={mergeClasses(
-              'min-w-0 max-w-[22rem] truncate',
+              'max-w-[22rem] min-w-0 truncate',
               summaryTypography.fontClassName,
               styles.liveName,
             )}

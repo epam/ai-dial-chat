@@ -160,6 +160,7 @@ In edit mode, the **Save** button and the **Preview** action SHALL be disabled u
 - **Readiness signals.** `ReadyToSave` is distinct from `AppsEditorEvent.ReadyToInteract`. `ReadyToInteract` only indicates that the iframe's UI has rendered, and it continues to control the loading-spinner overlay independently. `ReadyToSave` SHALL indicate that the embedded editor has finished loading and validating its own application model, so a save is safe.
 - **Save timeout.** A save or preview that receives no `SaveSuccess`/`SaveError` within a bounded timeout SHALL time out, reset the loading state and surface an error.
 - **Readiness timeout.** If `ReadyToSave` never arrives within a bounded readiness timeout after the Setup editor mounts, the system SHALL surface an inline error explaining that the editor did not report readiness.
+- **Form validity.** The embedded editor posts `VALIDITY_STATE` with `{ isValid }` (separate from its `DIRTY_STATE`) whenever its form's validity changes, including `{ isValid: false }` on mount when the form starts invalid (e.g. blank Instructions). While `isValid` is `false`, Save and Preview SHALL be disabled, as before `ReadyToSave`. The host SHALL accept the message only from the embedded editor's window, SHALL treat the form as valid until told otherwise, and SHALL reset to valid when the iframe reloads for a different app or schema.
 - **Logged out.** The embedded editor MAY instead post `LoggedOut`. In that case the host SHALL NOT surface the readiness-timeout error, while or after `LoggedOut` is received, and SHALL clear an instance of it already shown. Save and Preview SHALL remain disabled.
 
 In create mode, before the app exists, the Create button is not gated by readiness, and Preview is disabled.
@@ -175,6 +176,10 @@ In create mode, before the app exists, the Create button is not gated by readine
 #### Scenario: Save is disabled before the Setup editor is ready to save
 - **WHEN** in edit mode the iframe has not yet sent `ReadyToSave`
 - **THEN** the Save button is disabled and cannot trigger a save
+
+#### Scenario: An invalid form disables Save and Preview
+- **WHEN** the iframe has sent `ReadyToSave` and then `VALIDITY_STATE` with `isValid: false`
+- **THEN** Save and Preview are disabled, and re-enable once the iframe sends `VALIDITY_STATE` with `isValid: true`
 
 #### Scenario: Preview is disabled before the Setup editor is ready to save
 - **WHEN** the iframe has not yet sent `ReadyToSave`

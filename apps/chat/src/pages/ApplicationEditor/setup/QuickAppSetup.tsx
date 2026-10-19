@@ -1,5 +1,5 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
-import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
   memo,
@@ -59,6 +59,7 @@ const QuickAppSetup: FC<Props> = ({
   isSubmitting,
   onReadyChange,
   ref,
+  onDirtyChange,
 }) => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -74,10 +75,13 @@ const QuickAppSetup: FC<Props> = ({
   const pendingSaveRef = useRef<PendingSave | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [isEditorValid, setIsEditorValid] = useState(true);
+  const [isUnresponsive, setIsUnresponsive] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   // Without an app there is nothing to save yet, so the page's Create stays available.
-  const isReady = appId ? hasEditor && isEditorReady : true;
+  // An invalid form (e.g. blank Instructions) gates Save/Preview like a not-ready editor.
+  const isReady = appId ? hasEditor && isEditorReady && isEditorValid : true;
   useEffect(() => {
     onReadyChange(isReady);
   }, [isReady, onReadyChange]);
@@ -94,27 +98,33 @@ const QuickAppSetup: FC<Props> = ({
     if (readyKeyRef.current === key) return;
     readyKeyRef.current = key;
     setIsEditorReady(false);
+    setIsEditorValid(true);
     setIsLoggedOut(false);
+    setIsUnresponsive(false);
   }, [schema, appId]);
 
-  // Read by the readiness timeout so a LoggedOut signal arriving at any point before it fires is honored.
-  const isLoggedOutRef = useRef(isLoggedOut);
+  /*
+   * A logged-out or unresponsive editor never becomes ready, and both already
+   * explain why, so the generic "not ready" error would mislead. Read through
+   * a ref by the readiness timeout so a signal arriving before it fires is honored.
+   */
+  const isNotReadyExplained = isLoggedOut || isUnresponsive;
+  const isNotReadyExplainedRef = useRef(isNotReadyExplained);
   useEffect(() => {
-    isLoggedOutRef.current = isLoggedOut;
-  }, [isLoggedOut]);
+    isNotReadyExplainedRef.current = isNotReadyExplained;
+  }, [isNotReadyExplained]);
 
-  // A logged-out editor never becomes ready, so the generic "not ready" error would mislead.
   useEffect(() => {
-    if (!isLoggedOut) return;
+    if (!isNotReadyExplained) return;
     setSaveError((prev) =>
       prev === t(AppsEditorI18nKeys.ErrorSettingsNotReady) ? '' : prev,
     );
-  }, [isLoggedOut, t]);
+  }, [isNotReadyExplained, t]);
 
   useEffect(() => {
     if (!hasEditor || isEditorReady) return;
     const timeoutId = setTimeout(() => {
-      if (isLoggedOutRef.current) return;
+      if (isNotReadyExplainedRef.current) return;
       setSaveError(t(AppsEditorI18nKeys.ErrorSettingsNotReady));
     }, SETUP_READY_TIMEOUT_MS);
     return () => clearTimeout(timeoutId);
@@ -244,7 +254,7 @@ const QuickAppSetup: FC<Props> = ({
         <p className="dial-small-text text-secondary">
           {t(ApplicationEditorI18nKeys.SetupPendingCreate)}
         </p>
-        <PrimaryButton
+        <NeutralButton
           label={t(ButtonsI18nKeys.Create)}
           disabled={isSubmitting}
           onClick={onSubmit}
@@ -275,7 +285,10 @@ const QuickAppSetup: FC<Props> = ({
             onSaveSuccess={handleSaveSuccess}
             onSaveError={handleSaveError}
             onReadyChange={setIsEditorReady}
+            onValidityChange={setIsEditorValid}
+            onDirtyChange={onDirtyChange}
             onLoggedOutChange={setIsLoggedOut}
+            onUnresponsiveChange={setIsUnresponsive}
           />
         </div>
       </div>

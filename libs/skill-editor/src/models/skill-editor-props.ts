@@ -169,8 +169,6 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   uploadArchiveLabel?: string;
   /** Add-menu entry that opens the host's file-system picker. Defaults to `'Open DIAL file system'`. */
   openFileSystemLabel?: string;
-  /** Folder context-menu submenu that adds inside the folder. Defaults to `'Add child'`. */
-  addChildLabel?: string;
   /** Node context-menu submenu that adds next to the node. Defaults to `'Add sibling'`. */
   addSiblingLabel?: string;
   /** Node context-menu action that removes the node. Defaults to `'Delete'`. */
@@ -387,6 +385,14 @@ export interface SkillEditorProps {
    * `labels.supportingFileNote` when omitted.
    */
   supportingFileContent?: ReactNode;
+  /**
+   * Host-rendered content of an Aside section in an extra column at the
+   * inline end, below the header, on desktop; stacked after the form on
+   * mobile/tablet. The library renders it verbatim with no knowledge of what
+   * it contains. Not rendered while the skill is loading or failed to load.
+   * Omit for the default layout.
+   */
+  asideData?: ReactNode;
   /** Called with the current values when the form is submitted. */
   onSubmit: (values: SkillEditorValues) => void;
   /** Called when the form is dismissed without saving. */

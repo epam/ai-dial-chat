@@ -30,11 +30,11 @@ import {
   ButtonVariant,
   CaptionText,
   DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ElementSize,
   ErrorText,
   GhostButton,
+  GhostIconButton,
   Label,
   PrimaryButton,
   Spinner,
@@ -113,6 +113,7 @@ type MarkdownEditorComponent = ComponentType<{
   theme?: EditorThemes;
   id?: string;
   ariaLabel?: string;
+  showDragbar?: boolean;
 }>;
 
 const METADATA_FIELDS = [MetadataField.Name, MetadataField.Description];
@@ -122,8 +123,9 @@ const INSTRUCTIONS_EDITOR_BOTTOM_GAP = 24;
 /* Filling never shrinks the editor below a usable height. */
 const INSTRUCTIONS_EDITOR_MIN_HEIGHT = 300;
 
-/* Paddings of the Files column and the selected-file column, as before the shared editor. */
+/* Paddings of the Files column, the selected-file column and the host aside column, as before the shared editor. */
 const FILES_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
+const ASIDE_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
 const SETUP_SECTION_CLASS_NAME =
   'gap-4 px-4 py-6 desktop:gap-5 desktop:px-8 desktop:py-6';
 
@@ -154,6 +156,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   onRefineInstructions,
   fileActions,
   supportingFileContent,
+  asideData,
   onSubmit,
   onCancel,
   onBack,
@@ -560,29 +563,24 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const buildContextMenuItems = useCallback(
     (item: DialFile, pane: SkillFilesPane): DropdownItem[] => {
-      if (item.path === SKILL_MANIFEST_PATH || item.path === draftPath) {
+      /* A file has no menu: its only action is the inline delete button. */
+      if (
+        item.path === draftPath ||
+        item.nodeType !== DialFileNodeType.FOLDER
+      ) {
         return [];
       }
       const node: SkillFileTreeNode = {
         path: item.path,
         name: item.name,
-        kind:
-          item.nodeType === DialFileNodeType.FOLDER
-            ? SkillFileNodeKind.Folder
-            : SkillFileNodeKind.File,
+        kind: SkillFileNodeKind.Folder,
       };
-      const items: DropdownItem[] = [];
-      if (node.kind === SkillFileNodeKind.Folder) {
-        items.push({
-          key: 'add-child',
-          icon: renderIcon(IconPlus),
-          label: t.addChildLabel ?? 'Add child',
-          children: buildAddMenuItems(
-            resolveAddTarget(SkillAddSource.Child, node),
-            pane,
-          ),
-        });
-      }
+      /* A folder lists its add entries directly, so uploading into it takes
+         one click instead of an extra "Add child" submenu (issue #9301). */
+      const items = buildAddMenuItems(
+        resolveAddTarget(SkillAddSource.Child, node),
+        pane,
+      );
       items.push(
         {
           key: 'add-sibling',
@@ -605,7 +603,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     },
     [
       draftPath,
-      t.addChildLabel,
       t.addSiblingLabel,
       t.deleteLabel,
       removeIconClassName,
@@ -623,6 +620,26 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [buildContextMenuItems],
   );
 
+  const renderItemActions = useCallback(
+    (item: DialFile) => {
+      if (
+        item.nodeType === DialFileNodeType.FOLDER ||
+        item.path === SKILL_MANIFEST_PATH
+      ) {
+        return null;
+      }
+      return (
+        <GhostIconButton
+          size={ElementSize.Small}
+          icon={renderIcon(IconTrashX, removeIconClassName, DIAL_ICON_SIZE.SM)}
+          aria-label={t.deleteLabel ?? 'Delete'}
+          onClick={() => handleRemoveNode(item.path)}
+        />
+      );
+    },
+    [t.deleteLabel, removeIconClassName, handleRemoveNode],
+  );
+
   const renderFilesPane = (pane: SkillFilesPane) => (
     <div className="flex flex-col gap-2 desktop:gap-5">
       <div className="flex items-center justify-between">
@@ -634,13 +651,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           variant={ButtonVariant.Neutral}
           appearance={ButtonAppearance.Solid}
           size={ElementSize.Small}
-          iconBefore={
-            <IconPlus
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
           items={headerAddItems[pane]}
         />
       </div>
@@ -653,6 +663,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           onExpandedPathsChange={handleExpandedPathsChange}
           onItemClick={handleTreeItemClick}
           getContextMenuItems={getContextMenuItems[pane]}
+          renderItemActions={renderItemActions}
           renamedPath={draftPane === pane ? draftPath : undefined}
           onRenameSave={draftFolder.handleSave}
           onRenameCancel={draftFolder.handleCancel}
@@ -867,6 +878,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 updateValues({ instructions: value });
               }}
               theme={instructionsEditorTheme}
+              showDragbar={false}
               placeholder={
                 t.instructionsPlaceholder ??
                 'Write the skill instructions in Markdown'
@@ -898,6 +910,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
       <EntityEditor
         {...editorProps}
+        asideData={asideData}
+        asideSectionClassName={ASIDE_SECTION_CLASS_NAME}
         isSubmitting={isSubmitting}
         metadataSectionClassName={FILES_SECTION_CLASS_NAME}
         metadata={

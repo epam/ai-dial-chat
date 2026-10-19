@@ -12,6 +12,7 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
 } from '../../../models/toolset-form';
+import { getDefaultToolsetForm } from '../../../utils/toolsets';
 import { ToolsetEditor } from '../ToolsetEditor';
 
 vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
@@ -89,6 +90,9 @@ vi.mock('../../GeneralForm/GeneralForm', () => ({
       </button>
       <button type="button" onClick={() => onChange({ name: 'Renamed' })}>
         rename
+      </button>
+      <button type="button" onClick={() => onChange({ name: 'My toolset' })}>
+        restore-name
       </button>
       <button type="button" onClick={() => onChange({ version: 'v 1' })}>
         type-invalid-version
@@ -388,6 +392,29 @@ describe('ToolsetEditor', () => {
 
     await waitFor(() => expect(saveButton.disabled).toBe(false));
     expect(onPersist).not.toHaveBeenCalled();
+  });
+
+  it('keeps Create disabled on a default form until a name is entered, then persists it with version 1.0.0', async () => {
+    renderEditor({ initialForm: getDefaultToolsetForm() });
+
+    await user.click(
+      screen.getByRole('button', { name: 'fill-api-key-toolset' }),
+    );
+    const createButton = screen.getByRole('button', {
+      name: 'Create',
+    }) as HTMLButtonElement;
+    expect(createButton.disabled).toBe(true);
+
+    await user.click(screen.getByRole('button', { name: 'rename' }));
+    await waitFor(() => expect(createButton.disabled).toBe(false));
+    await user.click(createButton);
+
+    await waitFor(() =>
+      expect(onPersist).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Renamed', version: '1.0.0' }),
+        '',
+      ),
+    );
   });
 
   it('shows validation errors after an invalid field becomes dirty', async () => {
@@ -768,6 +795,83 @@ describe('ToolsetEditor — shared editor shell', () => {
 
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
     expect(screen.getByText('metadata-name-My toolset')).toBeTruthy();
+  });
+});
+
+describe('ToolsetEditor — dirty state', () => {
+  const user = userEvent.setup({ delay: null });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    onPersist.mockResolvedValue(NEW_TOOLSET_ID);
+    onPostSaveLogin.mockResolvedValue(undefined);
+    onToolsetsChanged.mockResolvedValue(undefined);
+  });
+
+  it('reports clean on mount', () => {
+    const onDirtyChange = vi.fn();
+    renderEditor({ onDirtyChange });
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('reports dirty after a Metadata edit and clean once it is reverted', async () => {
+    const onDirtyChange = vi.fn();
+    renderEditor({ onDirtyChange });
+
+    await user.click(screen.getByRole('button', { name: 'rename' }));
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+    await user.click(screen.getByRole('button', { name: 'restore-name' }));
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('reports dirty after a Setup edit', async () => {
+    const onDirtyChange = vi.fn();
+    renderEditor({ onDirtyChange });
+
+    await user.click(
+      screen.getByRole('button', { name: 'fill-api-key-toolset' }),
+    );
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('reports clean once the Log In draft persist succeeds, before the login continues', async () => {
+    const onDirtyChange = vi.fn();
+    renderEditor({ onDirtyChange });
+    await user.click(
+      screen.getByRole('button', { name: 'fill-api-key-toolset' }),
+    );
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+    let dirtyAtToolsetRefresh: boolean | undefined;
+    onToolsetsChanged.mockImplementation(async () => {
+      dirtyAtToolsetRefresh = onDirtyChange.mock.lastCall?.[0];
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'invoke-ensure-saved' }),
+    );
+    await screen.findByText(`ensure-saved-result-${NEW_TOOLSET_ID}`);
+
+    expect(dirtyAtToolsetRefresh).toBe(false);
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('stays dirty when the Log In draft persist fails', async () => {
+    const onDirtyChange = vi.fn();
+    onPersist.mockResolvedValue(null);
+    renderEditor({ onDirtyChange });
+    await user.click(
+      screen.getByRole('button', { name: 'fill-api-key-toolset' }),
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'invoke-ensure-saved' }),
+    );
+
+    await waitFor(() => expect(onPersist).toHaveBeenCalledOnce());
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
   });
 });
 

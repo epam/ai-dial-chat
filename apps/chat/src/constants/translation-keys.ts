@@ -125,6 +125,8 @@ export enum ButtonsI18nKeys {
   Save = 'buttons.save',
   Saving = 'buttons.saving',
   Close = 'buttons.close',
+  Apply = 'buttons.apply',
+  Clear = 'buttons.clear',
   Send = 'buttons.send',
   UseInChat = 'buttons.useInChat',
   NewChat = 'buttons.newChat',
@@ -178,6 +180,9 @@ export enum CatalogI18nKeys {
   SearchEntityPrompts = 'catalog.searchEntity.prompts',
   SearchEntitySkills = 'catalog.searchEntity.skills',
   NoResultsTitle = 'catalog.noResultsTitle',
+  MyAppsEmptyTitle = 'catalog.myAppsEmpty.title',
+  MyAppsEmptyTitleGeneric = 'catalog.myAppsEmpty.titleGeneric',
+  MyAppsEmptyDescription = 'catalog.myAppsEmpty.description',
   SortRecentlyUpdated = 'catalog.sorts.recentlyUpdated',
   SortNewest = 'catalog.sorts.newest',
   SortNameAZ = 'catalog.sorts.nameAZ',
@@ -185,6 +190,16 @@ export enum CatalogI18nKeys {
   GridViewLabel = 'catalog.gridViewLabel',
   ListViewLabel = 'catalog.listViewLabel',
   ViewToggleLabel = 'catalog.viewToggleLabel',
+  // Mobile browse settings sheet
+  BrowseSettingsTitle = 'catalog.browseSettings.title',
+  BrowseSettingsView = 'catalog.browseSettings.view',
+  BrowseSettingsSorting = 'catalog.browseSettings.sorting',
+  BrowseSettingsFiltering = 'catalog.browseSettings.filtering',
+  BrowseSettingsCards = 'catalog.browseSettings.cards',
+  BrowseSettingsList = 'catalog.browseSettings.list',
+  BrowseSettingsMy = 'catalog.browseSettings.my',
+  BrowseSettingsTopics = 'catalog.browseSettings.topics',
+  BrowseSettingsFilterCount = 'catalog.browseSettings.filterCount',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
@@ -206,6 +221,7 @@ export enum CatalogI18nKeys {
   DetailsContentFileLoading = 'catalog.details.contentFileLoading',
   DetailsContentFileError = 'catalog.details.contentFileError',
   DetailsContentFileUnsupported = 'catalog.details.contentFileUnsupported',
+  DetailsToolCount = 'catalog.details.toolCount',
   DetailsSkillDownloadError = 'catalog.details.skillDownloadError',
   DetailsDownloadingStatus = 'catalog.details.downloadingStatus',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
@@ -214,6 +230,7 @@ export enum CatalogI18nKeys {
   DetailsApiRequestExample = 'catalog.details.api.requestExample',
   DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
+  DetailsPricingCharacterPricesSection = 'catalog.details.pricing.characterPricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
   DetailsTabLimits = 'catalog.details.tabLimits',
   DetailsLimitsTokenGroupLabel = 'catalog.details.limits.tokenGroup',
@@ -227,6 +244,7 @@ export enum CatalogI18nKeys {
   PublishFolderEmptyState = 'catalog.publishFolderEmptyState',
   PublishCredentialsLabel = 'catalog.publish.credentialsLabel',
   PublishCredentialsHint = 'catalog.publish.credentialsHint',
+  PublishVersionAlreadyPublishedWarning = 'catalog.publish.versionAlreadyPublishedWarning',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
@@ -329,6 +347,7 @@ export enum DeploymentSelectorI18nKeys {
   SearchPlaceholder = 'deploymentSelector.searchPlaceholder',
   EmptyHint = 'deploymentSelector.emptyHint',
   CurrentlySelectedLabel = 'deploymentSelector.currentlySelectedLabel',
+  UnavailableLabel = 'deploymentSelector.unavailableLabel',
   AriaLabel = 'deploymentSelector.ariaLabel',
   Loading = 'deploymentSelector.loading',
   Error = 'deploymentSelector.error',
@@ -508,9 +527,18 @@ export enum ScheduledTasksI18nKeys {
   OfflineCredentialsBannerFailedMessage = 'scheduledTasks.offlineCredentialsBanner.failedMessage',
   OfflineCredentialsBannerSuccessAnnouncement = 'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
   OfflineCredentialsBannerLoggingInLabel = 'scheduledTasks.offlineCredentialsBanner.loggingInLabel',
+  DisconnectConfirmTitle = 'scheduledTasks.disconnect.confirmTitle',
+  DisconnectConfirmDescription = 'scheduledTasks.disconnect.confirmDescription',
+  DisconnectConfirmDescriptionSecondary = 'scheduledTasks.disconnect.confirmDescriptionSecondary',
+  DisconnectFailedMessage = 'scheduledTasks.disconnect.failedMessage',
+  DisconnectSuccessAnnouncement = 'scheduledTasks.disconnect.successAnnouncement',
+  AutoLoginFailedNotification = 'scheduledTasks.autoLoginFailedNotification',
+  LoginRequiredNotification = 'scheduledTasks.loginRequiredNotification',
+  LoginAndRetryAction = 'scheduledTasks.loginAndRetryAction',
 }
 
 export enum ConversationI18nKeys {
+  ModelUnavailableNotice = 'conversation.modelUnavailableNotice',
   StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
   StagesExecuted = 'conversation.stages.executed',
@@ -648,7 +676,15 @@ export enum DialFileManagerI18nKeys {
   SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
-  UnshareAction = 'dialFileManager.unshareAction',
+  UnshareConfirmTitleFile = 'dialFileManager.unshareConfirmTitleFile',
+  UnshareConfirmTitleFolder = 'dialFileManager.unshareConfirmTitleFolder',
+  UnshareConfirmTitleMultiple = 'dialFileManager.unshareConfirmTitleMultiple',
+  UnshareConfirmMoreItems = 'dialFileManager.unshareConfirmMoreItems',
+  UnshareConfirmMessageSingle = 'dialFileManager.unshareConfirmMessageSingle',
+  UnshareConfirmMessageMultiple = 'dialFileManager.unshareConfirmMessageMultiple',
+  UnshareSuccessTitle = 'dialFileManager.unshareSuccessTitle',
+  UnshareSuccessMessageSingle = 'dialFileManager.unshareSuccessMessageSingle',
+  UnshareSuccessMessageMultiple = 'dialFileManager.unshareSuccessMessageMultiple',
   UnsharingLabel = 'dialFileManager.unsharingLabel',
   RemoveAccessAction = 'dialFileManager.removeAccessAction',
   RemovingAccessLabel = 'dialFileManager.removingAccessLabel',
@@ -697,9 +733,20 @@ export enum SettingsI18nKeys {
   ShortcutMetaEnter = 'settings.shortcutMetaEnter',
   Preferences = 'settings.preferences',
   PreferencesDescription = 'settings.preferencesDescription',
+  Extensions = 'settings.extensions',
   DefaultAgent = 'settings.defaultAgent',
   DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
   DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
+}
+
+export enum ExtensionsI18nKeys {
+  Description = 'extensions.description',
+  NameColumnLabel = 'extensions.nameColumnLabel',
+  DescriptionColumnLabel = 'extensions.descriptionColumnLabel',
+  ActionsColumnLabel = 'extensions.actionsColumnLabel',
+  ServiceDefaultName = 'extensions.service.defaultName',
+  ServiceDescription = 'extensions.service.description',
+  ServiceAuthorizeTooltip = 'extensions.service.authorizeTooltip',
 }
 
 export enum ConversationPanelI18nKeys {
@@ -714,7 +761,6 @@ export enum ConversationPanelI18nKeys {
   ActionsLabel = 'conversationPanel.actions.actionsLabel',
   PinLabel = 'conversationPanel.actions.pinLabel',
   UnpinLabel = 'conversationPanel.actions.unpinLabel',
-  TypeLabel = 'conversationPanel.typeLabel',
   DeleteConfirmTitle = 'conversationPanel.delete.deleteConfirmTitle',
   DeleteConfirmMessage = 'conversationPanel.delete.confirmMessage',
   DeleteError = 'conversationPanel.delete.deleteError',
@@ -726,6 +772,7 @@ export enum ConversationPanelI18nKeys {
   RenameWithAiError = 'conversationPanel.rename.renameWithAiError',
   DuplicateReadOnlyDescription = 'conversationPanel.duplicateReadOnlyDescription',
   DuplicateError = 'conversationPanel.duplicateError',
+  DuplicateUnavailableModel = 'conversationPanel.duplicateUnavailableModel',
   PanelActionsLabel = 'conversationPanel.panelActionsLabel',
   DeleteAllChatsLabel = 'conversationPanel.deleteAll.deleteAllChatsLabel',
   DeleteAllConfirmTitle = 'conversationPanel.deleteAll.deleteAllConfirmTitle',
@@ -1088,10 +1135,6 @@ export enum SkillEditorI18nKeys {
   ReloadConfirmMessage = 'skillEditor.reloadConfirmMessage',
   ReloadConfirmLabel = 'skillEditor.reloadConfirmLabel',
   ReloadCancelLabel = 'skillEditor.reloadCancelLabel',
-  UnsavedChangesTitle = 'skillEditor.unsavedChangesTitle',
-  UnsavedChangesMessage = 'skillEditor.unsavedChangesMessage',
-  UnsavedChangesConfirmLabel = 'skillEditor.unsavedChangesConfirmLabel',
-  UnsavedChangesCancelLabel = 'skillEditor.unsavedChangesCancelLabel',
   UploadDialogTitle = 'skillEditor.uploadDialogTitle',
   UploadDropZoneLabel = 'skillEditor.uploadDropZoneLabel',
   UploadDropZoneMobileLabel = 'skillEditor.uploadDropZoneMobileLabel',
@@ -1114,7 +1157,6 @@ export enum SkillEditorI18nKeys {
   CreateFolder = 'skillEditor.createFolder',
   UploadArchive = 'skillEditor.uploadArchive',
   OpenFileSystem = 'skillEditor.openFileSystem',
-  AddChild = 'skillEditor.addChild',
   AddSibling = 'skillEditor.addSibling',
   NewFolderDefaultName = 'skillEditor.newFolderDefaultName',
   FolderNameRequired = 'skillEditor.folderNameRequired',
@@ -1154,6 +1196,8 @@ export enum AppsEditorI18nKeys {
   GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  SettingsStepUnresponsiveTitle = 'appsEditor.settingsStep.unresponsiveTitle',
+  SettingsStepUnresponsiveMessage = 'appsEditor.settingsStep.unresponsiveMessage',
   SavingOverlayLabel = 'appsEditor.savingOverlay',
   PreviewChatPlaceholder = 'appsEditor.previewChat.placeholder',
   PreviewChatAriaLabel = 'appsEditor.previewChat.ariaLabel',
@@ -1163,11 +1207,13 @@ export enum AppsEditorI18nKeys {
   PreviewGreeting = 'appsEditor.previewChat.greeting',
   PreviewGreetingAriaLabel = 'appsEditor.previewChat.greetingAriaLabel',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
+  ErrorNameConflict = 'appsEditor.error.nameConflict',
   ErrorSaveFailed = 'appsEditor.error.saveFailed',
   ErrorSaveTimeout = 'appsEditor.error.saveTimeout',
   ErrorSettingsNotReady = 'appsEditor.error.settingsNotReady',
   SchemaFormLoadFailed = 'appsEditor.schemaForm.loadFailed',
   SchemaFormRequiredMissing = 'appsEditor.schemaForm.requiredMissing',
+  SchemaFormEmpty = 'appsEditor.schemaForm.empty',
 }
 
 export enum ToolsetEditorI18nKeys {
@@ -1279,6 +1325,9 @@ export enum ShareI18nKeys {
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',
+  InvitationNotFound = 'share.invitationNotFound',
+  InvitationUsersLimitReached = 'share.invitationUsersLimitReached',
+  InvitationUsersLimitReachedUnnamed = 'share.invitationUsersLimitReachedUnnamed',
 }
 
 export enum VoiceRecordingI18nKeys {
@@ -1312,6 +1361,18 @@ export enum ConversationInputI18nKeys {
   Value = 'conversationInput.usageLimits.value',
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
   FullUsageLink = 'conversationInput.usageLimits.fullUsageLink',
+}
+
+export enum ConversationInputUsageBannerI18nKeys {
+  WarningDay = 'conversationInput.usageBanner.warningDay',
+  WarningWeek = 'conversationInput.usageBanner.warningWeek',
+  WarningMonth = 'conversationInput.usageBanner.warningMonth',
+  ReachedDay = 'conversationInput.usageBanner.reachedDay',
+  ReachedWeek = 'conversationInput.usageBanner.reachedWeek',
+  ReachedMonth = 'conversationInput.usageBanner.reachedMonth',
+  ResetsAtTime = 'conversationInput.usageBanner.resetsAtTime',
+  ResetsOnDate = 'conversationInput.usageBanner.resetsOnDate',
+  CloseLabel = 'conversationInput.usageBanner.closeLabel',
 }
 
 export enum NotificationI18nKeys {
@@ -1544,4 +1605,18 @@ export enum ApplicationCredentialsI18nKeys {
   SignedOut = 'applicationCredentials.signedOut',
   SharedCredentials = 'applicationCredentials.sharedCredentials',
   ConfirmLogout = 'applicationCredentials.confirmLogout',
+}
+
+export enum CustomViewerI18nKeys {
+  StartWorking = 'customViewer.startWorking',
+  FrameTitle = 'customViewer.frameTitle',
+  Loading = 'customViewer.loading',
+  InvalidUrl = 'customViewer.invalidUrl',
+}
+
+export enum UnsavedChangesI18nKeys {
+  Title = 'unsavedChanges.title',
+  Message = 'unsavedChanges.message',
+  ConfirmLabel = 'unsavedChanges.confirmLabel',
+  CancelLabel = 'unsavedChanges.cancelLabel',
 }

@@ -165,10 +165,10 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 51 unique members', () => {
+  it('has exactly 52 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(51);
-    expect(new Set(values).size).toBe(51);
+    expect(values).toHaveLength(52);
+    expect(new Set(values).size).toBe(52);
   });
 
   it('includes the hide-keyboard-shortcuts feature key', () => {
@@ -233,6 +233,10 @@ describe('OverlayFeature', () => {
 
   it('includes the show-header-logo feature key', () => {
     expect(Object.values(OverlayFeature)).toContain('show-header-logo');
+  });
+
+  it('includes the conversation-drafts feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('conversation-drafts');
   });
 
   it('includes the removable-tools feature key', () => {

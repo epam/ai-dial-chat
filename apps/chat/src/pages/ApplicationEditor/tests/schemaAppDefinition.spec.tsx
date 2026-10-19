@@ -1,15 +1,17 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import { getApplicationSchema } from '../../../server-api/application-schemas';
 import {
   createApplication,
@@ -73,30 +75,34 @@ const APP_ID = 'applications/bucket/classifier';
 const LABELS_REQUIRED = '"Labels" is required';
 
 const renderPage = (search: string) =>
-  render(
-    <MemoryRouter initialEntries={[`${ROUTES.AppsEditor}?${search}`]}>
-      <Routes>
-        <Route
-          path={ROUTES.AppsEditor}
-          element={
-            <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
-          }
-        />
-        <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithLeaveGuard(
+    <Routes>
+      <Route
+        path={ROUTES.AppsEditor}
+        element={
+          <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
+        }
+      />
+      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+      <Route path={ROUTES.FileManager} element={<div>Files</div>} />
+    </Routes>,
+    [`${ROUTES.AppsEditor}?${search}`],
   );
 
 /* The layout renders its actions in the header and again in the mobile bar; take the header copy. */
 const getAction = (name: string) =>
   screen.getAllByRole('button', { name })[0] as HTMLButtonElement;
-/* The kit's schema renderer names the field's group, not its input, so the input is found inside the group. */
+/* The kit's schema renderer labels each field's input, so the input is found by that name. */
 const findLabelsInput = async () =>
-  within(await screen.findByRole('group', { name: /^Labels/ })).getByRole(
-    'textbox',
-  ) as HTMLInputElement;
+  (await screen.findByRole('textbox', {
+    name: /^Labels/,
+  })) as HTMLInputElement;
 const getNameInput = () =>
   screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false });
+const getVersionInput = () =>
+  screen.getByLabelText(EditorI18nKeys.VersionLabel, {
+    exact: false,
+  }) as HTMLInputElement;
 
 const createSearch = `schema=${SCHEMA_ID}`;
 const editSearch = `${createSearch}&appId=${encodeURIComponent(APP_ID)}`;
@@ -202,6 +208,42 @@ describe('ApplicationEditorPage — schema app', () => {
     );
   });
 
+  it('opens the create form with version 1.0.0 and an empty name', async () => {
+    renderPage(createSearch);
+
+    await findLabelsInput();
+    expect(getVersionInput().value).toBe('1.0.0');
+    expect((getNameInput() as HTMLInputElement).value).toBe('');
+  });
+
+  it('sends the default version when the Version field is left untouched', async () => {
+    renderPage(createSearch);
+
+    await user.type(getNameInput(), 'Classifier');
+    await user.type(await findLabelsInput(), 'spam,ham');
+    await user.click(getAction(ButtonsI18nKeys.Create));
+
+    await waitFor(() =>
+      expect(createApplication).toHaveBeenCalledWith(
+        expect.objectContaining({ version: '1.0.0' }),
+      ),
+    );
+  });
+
+  it('omits the version when the user clears the Version field', async () => {
+    renderPage(createSearch);
+
+    await user.type(getNameInput(), 'Classifier');
+    await user.clear(getVersionInput());
+    await user.type(await findLabelsInput(), 'spam,ham');
+    await user.click(getAction(ButtonsI18nKeys.Create));
+
+    await waitFor(() => expect(createApplication).toHaveBeenCalled());
+    expect(
+      vi.mocked(createApplication).mock.calls[0][0].version,
+    ).toBeUndefined();
+  });
+
   describe('editing', () => {
     beforeEach(() => {
       vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
@@ -278,6 +320,20 @@ describe('ApplicationEditorPage — schema app', () => {
     });
   });
 
+  it('shows an empty state for a schema without settings', async () => {
+    vi.mocked(getApplicationSchema).mockResolvedValue({
+      ...FULL_SCHEMA,
+      properties: {},
+      required: undefined,
+    });
+    renderPage(createSearch);
+
+    expect(
+      await screen.findByText(AppsEditorI18nKeys.SchemaFormEmpty),
+    ).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: /^Labels/ })).toBeNull();
+  });
+
   it('shows the load error when the schema cannot be fetched', async () => {
     vi.mocked(getApplicationSchema).mockRejectedValue(new Error('502'));
     renderPage(createSearch);
@@ -285,5 +341,96 @@ describe('ApplicationEditorPage — schema app', () => {
     expect(
       await screen.findByText(AppsEditorI18nKeys.SchemaFormLoadFailed),
     ).toBeTruthy();
+  });
+
+  describe('leave guard', () => {
+    const navigateAway = (router: ReturnType<typeof renderPage>['router']) =>
+      act(() => router.navigate(ROUTES.FileManager));
+
+    it('treats a freshly mounted schema app, schema defaults included, as clean', async () => {
+      vi.mocked(getApplicationSchema).mockResolvedValue({
+        ...FULL_SCHEMA,
+        properties: {
+          ...FULL_SCHEMA.properties,
+          mode: { type: 'string', title: 'Mode', default: 'strict' },
+        },
+      });
+      const { router } = renderPage(createSearch);
+      await waitFor(() =>
+        expect(getAction(ButtonsI18nKeys.Create).disabled).toBe(false),
+      );
+
+      await navigateAway(router);
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('asks before leaving once the Name was edited', async () => {
+      const { router } = renderPage(createSearch);
+      await findLabelsInput();
+      await user.type(getNameInput(), 'Classifier');
+
+      await navigateAway(router);
+
+      expect(
+        screen.getByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toBeTruthy();
+      expect(router.state.location.pathname).toBe(ROUTES.AppsEditor);
+    });
+
+    it('lands on the chosen route without a request when changes are discarded', async () => {
+      const { router } = renderPage(createSearch);
+      await user.type(await findLabelsInput(), 'spam');
+      await navigateAway(router);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.ConfirmLabel,
+        }),
+      );
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+      expect(createApplication).not.toHaveBeenCalled();
+      expect(updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('keeps the edited values when Keep editing is chosen', async () => {
+      const { router } = renderPage(createSearch);
+      await findLabelsInput();
+      await user.type(getNameInput(), 'Classifier');
+      await navigateAway(router);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.CancelLabel,
+        }),
+      );
+
+      expect(router.state.location.pathname).toBe(ROUTES.AppsEditor);
+      expect((getNameInput() as HTMLInputElement).value).toBe('Classifier');
+    });
+
+    it('treats a reverted edit as clean', async () => {
+      const { router } = renderPage(createSearch);
+      await findLabelsInput();
+      await user.type(getNameInput(), 'X');
+      await user.clear(getNameInput());
+
+      await navigateAway(router);
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+    });
+
+    it('exits after a successful create without the dialog', async () => {
+      renderPage(createSearch);
+      await user.type(getNameInput(), 'Classifier');
+      await user.type(await findLabelsInput(), 'spam,ham');
+
+      await user.click(getAction(ButtonsI18nKeys.Create));
+
+      expect(await screen.findByText('Catalog')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
   });
 });

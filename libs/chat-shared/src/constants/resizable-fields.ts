@@ -39,10 +39,10 @@ export const MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME =
  * Makes `MarkdownEditor` fill the space `useAvailableHeightCap` measures below
  * it, instead of sitting at its fixed `height` prop — for editors that carry
  * the bulk of a form. `@uiw/react-md-editor` writes that height inline on
- * `.w-md-editor`, which only `!important` outranks. The drag bar is hidden,
- * since it would fight the forced height; fullscreen keeps the package's own
- * viewport sizing. Combine it with `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME` on
- * the element carrying the hook's ref.
+ * `.w-md-editor`, which only `!important` outranks. Pass `showDragbar={false}`
+ * to the editor as well, since its drag bar would fight the forced height;
+ * fullscreen keeps the package's own viewport sizing. Combine it with
+ * `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME` on the element carrying the hook's ref.
  */
 export const MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME =
-  '[&_.w-md-editor:not(.w-md-editor-fullscreen)]:!h-[var(--resizable-field-max-height,70vh)] [&_.w-md-editor-bar]:hidden';
+  '[&_.w-md-editor:not(.w-md-editor-fullscreen)]:!h-[var(--resizable-field-max-height,70vh)]';

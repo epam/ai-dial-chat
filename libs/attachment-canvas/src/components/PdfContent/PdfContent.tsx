@@ -183,6 +183,8 @@ export interface PdfContentProps {
   hideHeader?: boolean;
   /** User-visible strings for the thumbnails section. All fields have English defaults. */
   labels?: PdfContentLabels;
+  /** Called with the document URL when fetching the PDF blob rejects. */
+  onLoadError?: (url: string) => void;
 }
 
 /** Renders a PDF with highlight annotations, a floating collapsible thumbnails panel, and page navigation. */
@@ -194,6 +196,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   loadPdf,
   configurePdfWorker,
   hideHeader = false,
+  onLoadError,
   labels: {
     thumbnailsLabel = 'Thumbnails',
     showThumbnailsLabel = 'Show thumbnails',
@@ -210,6 +213,20 @@ export const PdfContent: FC<PdfContentProps> = ({
       : PdfWorkerPreparationState.Ready,
   );
   const [preparationRetryKey, setPreparationRetryKey] = useState(0);
+
+  /* Must stay referentially stable per loader: `DocumentPreview` re-fetches
+   * the document whenever its `loadFileCb` changes. */
+  const loadPdfFile = useCallback(
+    async (fileUrl: string) => {
+      try {
+        return await (loadPdf ?? fetchBlobFromUrl)(fileUrl);
+      } catch (error) {
+        onLoadError?.(fileUrl);
+        throw error;
+      }
+    },
+    [loadPdf, onLoadError],
+  );
 
   /*
    * `DocumentPreview` below only mounts once this resolves — see the
@@ -641,7 +658,7 @@ export const PdfContent: FC<PdfContentProps> = ({
                   role="region"
                   aria-label={thumbnailsLabel}
                   onScroll={handlePanelScroll}
-                  className="max-h-[70vh] min-h-0 overflow-y-auto overflow-x-hidden p-1 [scrollbar-gutter:stable]"
+                  className="max-h-[70vh] min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto p-1"
                 >
                   <div style={{ height: topSpacerHeight }} />
                   {thumbnailItems}
@@ -684,7 +701,7 @@ export const PdfContent: FC<PdfContentProps> = ({
       >
         <DocumentPreview
           fileUrl={url}
-          loadFileCb={loadPdf ?? fetchBlobFromUrl}
+          loadFileCb={loadPdfFile}
           highlights={highlights}
           selectedHighlightId={selectedHighlightId}
           selectedPageNumber={selectedPageNumber}

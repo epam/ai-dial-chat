@@ -302,6 +302,44 @@ describe('ConversationMessageItem — reference-only attachments', () => {
     expect(screen.queryByLabelText(AttachmentsI18nKeys.Download)).toBeNull();
   });
 
+  it('keeps the citation card for a PDF-page reference chip', async () => {
+    const onPreviewReference = vi.fn();
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Dinosaurs first appeared in the Triassic.',
+      timestamp: '2024-01-01T00:00:02Z',
+      custom_content: {
+        attachments: [
+          {
+            title: 'report.pdf',
+            type: 'application/pdf',
+            reference_url: 'files/bucket/report.pdf#page=2',
+            reference_type: 'application/pdf',
+          },
+        ],
+      },
+    };
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        onPreviewReference={onPreviewReference}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    ).toBeTruthy();
+    expect(onPreviewReference).not.toHaveBeenCalled();
+    expect(mockOpenCanvas).not.toHaveBeenCalled();
+  });
+
   it('renders a chip for the reference group', () => {
     render(
       <ConversationMessageItem
@@ -325,7 +363,7 @@ describe('ConversationMessageItem — inline citations', () => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'https://example.com/report.docx',
     ],
-  ])('keeps Preview for a supported citation: %s %s', async (type, url) => {
+  ])('opens a supported citation: %s %s', async (type, url) => {
     const message: Message = {
       role: MessageRole.Assistant,
       content: 'Source<cit data-id="123"></cit>',
@@ -353,15 +391,18 @@ describe('ConversationMessageItem — inline citations', () => {
     await userEvent.click(
       screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
     if (type === 'text/html') {
+      /* A web link keeps the card; its Preview action opens the canvas. */
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
       expect(onAttachmentClick).toHaveBeenCalledWith(
         expect.objectContaining({ url, contentType: type }),
         1,
       );
     } else {
+      /* A single file citation opens the canvas straight from its marker. */
+      expect(screen.queryByRole('dialog')).toBeNull();
       expect(mockOpenCanvas).toHaveBeenCalledWith(
         expect.objectContaining({ url }),
         expect.any(String),
@@ -477,10 +518,10 @@ describe('ConversationMessageItem — inline citations', () => {
         screen.getAllByRole('button', {
           name: CitationsI18nKeys.MarkerAriaLabel,
         });
+      /* The single-citation marker previews directly; the grouped one keeps
+         the card so its second citation stays reachable through Next. */
       await userEvent.click(markers()[0]);
-      await userEvent.click(
-        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-      );
+      expect(screen.queryByRole('dialog')).toBeNull();
       expect(mockOpenCanvas).toHaveBeenLastCalledWith(
         expect.objectContaining({
           url: 'https://example.com/report.pdf',
@@ -608,9 +649,6 @@ describe('ConversationMessageItem — inline citations', () => {
         name: CitationsI18nKeys.MarkerAriaLabel,
       }),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
 
     expect(onAttachmentClick).not.toHaveBeenCalled();
     expect(mockOpenCanvas).toHaveBeenCalledWith(
@@ -665,9 +703,6 @@ describe('ConversationMessageItem — inline citations', () => {
     );
     await userEvent.click(
       screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
 
     /* The single annotation carries no `index`, so its highlight id is
@@ -816,9 +851,6 @@ describe('ConversationMessageItem — inline citations', () => {
     await userEvent.click(
       screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
 
     expect(onAttachmentClick).not.toHaveBeenCalled();
     expect(mockOpenCanvas).toHaveBeenCalledWith(
@@ -864,9 +896,6 @@ describe('ConversationMessageItem — inline citations', () => {
     await userEvent.click(
       screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
 
     expect(mockOpenCanvas).not.toHaveBeenCalled();
     expect(onAttachmentClick).toHaveBeenCalledWith(
@@ -875,7 +904,7 @@ describe('ConversationMessageItem — inline citations', () => {
     );
   });
 
-  it('activating one occurrence of a repeated cit id opens one card and previews it exactly once with the group-identical annotation', async () => {
+  it('activating one occurrence of a repeated cit id previews it exactly once with the group-identical annotation and opens no card', async () => {
     const message: Message = {
       role: MessageRole.Assistant,
       content:
@@ -918,11 +947,7 @@ describe('ConversationMessageItem — inline citations', () => {
     expect(markers).toHaveLength(2);
 
     await userEvent.click(markers[0]);
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
-
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
+    expect(screen.queryByRole('dialog')).toBeNull();
 
     expect(mockOpenCanvas).toHaveBeenCalledOnce();
     /* `annotationToPdfCanvasContent` resolves the group via
@@ -938,7 +963,7 @@ describe('ConversationMessageItem — inline citations', () => {
     );
   });
 
-  it('keeps two distinct cit ids independently openable when their annotations share quote text and source URL', async () => {
+  it('keeps two distinct cit ids independently previewable when their annotations share quote text and source URL', async () => {
     const sharedQuote = 'Dinosaurs first appeared in the Triassic';
     const sharedUrl = 'https://example.com/report.pdf';
     const message: Message = {
@@ -984,13 +1009,14 @@ describe('ConversationMessageItem — inline citations', () => {
     expect(markers).toHaveLength(2);
 
     await userEvent.click(markers[0]);
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
 
     await userEvent.click(markers[1]);
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('activating repeated markers across two paragraphs opens one card each time', async () => {
+  it('activating repeated markers across two paragraphs previews the canvas each time', async () => {
     const message: Message = {
       role: MessageRole.Assistant,
       content:
@@ -1025,10 +1051,11 @@ describe('ConversationMessageItem — inline citations', () => {
     expect(markers).toHaveLength(2);
 
     await userEvent.click(markers[0]);
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
 
     await userEvent.click(markers[1]);
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('previews the annotation the card is showing after navigating with Next from a repeated marker', async () => {
@@ -1127,7 +1154,7 @@ describe('ConversationMessageItem — inline citations', () => {
    * `annotationsToPdfHighlights` never gathers more than one entry.
    */
   it.each([0, 1, 2, 3])(
-    'reproduces issue #8822: repeated PDF citation %i supports preview and download',
+    'reproduces issue #8822: repeated PDF citation %i previews in the canvas',
     async (markerIndex) => {
       const message: Message = {
         role: MessageRole.Assistant,
@@ -1195,10 +1222,6 @@ describe('ConversationMessageItem — inline citations', () => {
         },
       };
 
-      const clickSpy = vi
-        .spyOn(HTMLAnchorElement.prototype, 'click')
-        .mockImplementation(() => undefined);
-
       render(
         <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
       );
@@ -1209,23 +1232,14 @@ describe('ConversationMessageItem — inline citations', () => {
       expect(markers).toHaveLength(4);
 
       const marker = markers[markerIndex];
+      /* A single-citation file marker opens the canvas directly; the file is
+         downloaded from the canvas, so the card's Download is not offered. */
       await userEvent.click(marker);
-      expect(screen.getAllByRole('dialog')).toHaveLength(1);
-
-      await userEvent.click(
-        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-      );
       expect(mockOpenCanvas).toHaveBeenCalledOnce();
-      expect(screen.queryAllByRole('dialog')).toHaveLength(0);
+      expect(screen.queryByRole('dialog')).toBeNull();
       mockOpenCanvas.mockClear();
       await userEvent.click(marker);
-      await userEvent.click(
-        screen.getByRole('button', { name: ButtonsI18nKeys.Download }),
-      );
-      expect(clickSpy).toHaveBeenCalledOnce();
-      clickSpy.mockClear();
-
-      clickSpy.mockRestore();
+      expect(mockOpenCanvas).toHaveBeenCalledOnce();
     },
   );
 });
@@ -1575,7 +1589,7 @@ describe('ConversationMessageItem — markdown file URLs', () => {
         msg={{
           role: MessageRole.Assistant,
           content:
-            '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/pg/chart.png)',
+            '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/demo/chart.png)',
           timestamp: '2024-01-01T00:00:02Z',
         }}
         index={1}
@@ -1587,8 +1601,61 @@ describe('ConversationMessageItem — markdown file URLs', () => {
         .getByRole('img', { name: 'Silver Lake chart' })
         .getAttribute('src'),
     ).toBe(
-      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
+      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png',
     );
+  });
+});
+
+describe('ConversationMessageItem — user message markdown', () => {
+  const writeText = vi.fn(() => Promise.resolve());
+
+  beforeEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+  });
+
+  it('renders a fenced code block in a user message', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...USER_MESSAGE, content: '```ts\nconst x = 1;\n```' }}
+      />,
+    );
+
+    expect(screen.getByText('ts')).toBeTruthy();
+    expect(screen.queryByText(/```/)).toBeNull();
+  });
+
+  it('copies the raw markdown source of a rendered user message', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...USER_MESSAGE, content: '**bold**' }}
+      />,
+    );
+
+    expect(screen.getByText('bold').tagName).toBe('STRONG');
+    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+
+    expect(writeText).toHaveBeenCalledWith('**bold**');
+  });
+
+  it('rewrites DIAL file ids in user markdown links to download URLs', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          ...USER_MESSAGE,
+          content: '[the chart](files/9gRuhxHb/uploads/chart.png)',
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('link', { name: 'the chart' }).getAttribute('href'),
+    ).toBe('/api/v1/files/download?bucket=9gRuhxHb&path=uploads%2Fchart.png');
   });
 });
 
@@ -1904,7 +1971,7 @@ describe('ConversationMessageItem — conversation-level annotation pool', () =>
     ).toBeTruthy();
   });
 
-  it("invokes the canvas with the pooled annotation's attachment on Preview", async () => {
+  it("invokes the canvas with the pooled annotation's attachment from its marker", async () => {
     render(
       <ConversationMessageItem
         {...defaultProps}
@@ -1916,9 +1983,6 @@ describe('ConversationMessageItem — conversation-level annotation pool', () =>
 
     await userEvent.click(
       screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
 
     expect(mockOpenCanvas).toHaveBeenCalledWith(
@@ -1985,6 +2049,17 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
     expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
     expect(alert.textContent).toContain('Rate limit exceeded');
     expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
+  });
+
+  it('lets a long unbroken error text wrap instead of overflowing the banner', () => {
+    const longPath =
+      'Access denied to the skill skills/5Cky3SaEsMKzmtxBLUw5gTUHRyoqLL3J13vRDkn3x4QtubPvqJ6gSSLknbMRBB8vcn/english-wording-check';
+    renderFailed(longPath);
+
+    const { className } = screen.getByText(longPath);
+
+    expect(className).toContain('min-w-0');
+    expect(className).toContain('[overflow-wrap:anywhere]');
   });
 
   it.each([

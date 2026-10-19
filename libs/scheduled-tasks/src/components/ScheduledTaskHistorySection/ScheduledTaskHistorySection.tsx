@@ -29,6 +29,7 @@ export const ScheduledTaskHistorySection: FC<
   onLoadMore,
   onRunClick,
   runTimestampClassName = 'dial-small-text',
+  runTimestampUnreadClassName = 'dial-small-semi-text',
   sectionTitleClassName = 'dial-body-semi-text',
   colors,
   styles: historyStyles,
@@ -100,7 +101,7 @@ export const ScheduledTaskHistorySection: FC<
       }}
       footer={footer}
       styles={{
-        typography: { runTimestampClassName },
+        typography: { runTimestampClassName, runTimestampUnreadClassName },
         colors: historyStyles?.colors ?? colors,
         rowMinHeight: historyStyles?.rowMinHeight,
         rowHoverBackground: historyStyles?.rowHoverBackground,
@@ -126,7 +127,7 @@ export const ScheduledTaskHistorySection: FC<
       >
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 flex flex-col gap-4 rounded-t-xl px-6 pb-2 pt-5',
+            'sticky top-0 z-10 flex flex-col gap-4 rounded-t-xl px-6 pt-5 pb-2',
             styles.historyCard,
           )}
         >

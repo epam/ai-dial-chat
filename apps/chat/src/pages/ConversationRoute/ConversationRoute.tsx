@@ -38,6 +38,8 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
+import CustomViewerFrame from '../../components/CustomViewer/CustomViewerFrame';
+import CustomViewerStartGate from '../../components/CustomViewer/CustomViewerStartGate';
 import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelector/useDeploymentSelectorOverlay';
 import NewConversationComposer, {
   type NewConversationChatSettings,
@@ -55,6 +57,7 @@ import {
   PromptSelectorI18nKeys,
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
+import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
   sanitizeIsolatedModelId,
@@ -62,12 +65,14 @@ import {
 } from '../../context/IsolatedModelViewContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
+import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   createConversation as apiCreateConversation,
   renameConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { ROUTES } from '../../types/routes';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 
@@ -79,7 +84,7 @@ const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const { pathname, state } = useLocation();
+  const { pathname, state, key: locationKey } = useLocation();
   const routeDeploymentId = (state as { deploymentId?: string } | null)
     ?.deploymentId;
   const routePromptContent = (state as { promptContent?: string } | null)
@@ -115,11 +120,81 @@ const ConversationRoute: FC = () => {
     setInputInsertion((prev) => ({ revision: prev.revision + 1, text }));
   }, []);
   const {
+    items,
+    selectedItemId,
+    setSelectedItemId,
+    restoreSelectedItemId,
+    restoreDefaultSelection,
+    selectedDeploymentConfiguration,
+    isLoading,
+    error,
+  } = useDeployments();
+
+  const selectedDeployment = useMemo(
+    () => findDeploymentByIdOrReference(items, selectedItemId),
+    [items, selectedItemId],
+  );
+
+  const { refreshConversations } = useConversations();
+  const { viewer: customViewer } = useCustomViewer(selectedItemId);
+  /*
+   * Keyed by the deployment and the navigation the user started it in, so
+   * selecting another deployment — or pressing New chat again on this same
+   * route — drops back to the gate or composer without an effect.
+   */
+  const customViewerStartKey = `${locationKey}:${selectedItemId}`;
+  const [startedViewerKey, setStartedViewerKey] = useState<string | null>(null);
+  const isCustomViewerStarted =
+    !!customViewer && startedViewerKey === customViewerStartKey;
+
+  const handleStartCustomViewer = useCallback(() => {
+    setStartedViewerKey(customViewerStartKey);
+  }, [customViewerStartKey]);
+
+  const handleCustomViewerConversationCreated = useCallback(
+    (createdId: string) => {
+      void refreshConversations([createdId]);
+      const route = getConversationRoute(createdId);
+      if (route !== ROUTES.Root) navigate(route);
+    },
+    [refreshConversations, navigate],
+  );
+
+  const {
+    skillMenuOverlay,
+    commandMenu,
+    skillCatalogModal,
+    skillDetailsPanel,
+    message: skillMessage,
+    messageRevision: skillMessageRevision,
+    activeMentions,
+    onDraftChange,
+    onBackspaceAtCaret,
+    caretPositionOverride,
+    selectedSkills,
+    isSkillUnsupported,
+    selectSkillByUrl,
+    resetSkillMentions,
+    seedSkillMentions,
+    recognizeMentionsInInsertion,
+  } = useSkillSelectorOverlay({
+    isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
+  });
+
+  /* A `/skill-name` written in a prompt's text becomes a real mention once inserted ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). */
+  const handlePromptInsertText = useCallback(
+    (text: string) => {
+      recognizeMentionsInInsertion(text);
+      handleInsertText(text);
+    },
+    [recognizeMentionsInInsertion, handleInsertText],
+  );
+  const {
     renderOverlay: renderPromptsOverlay,
     promptCatalogModal,
     parametersPopup: promptParametersPopup,
     openParametersPopup,
-  } = usePromptSelectorOverlay({ onInsertText: handleInsertText });
+  } = usePromptSelectorOverlay({ onInsertText: handlePromptInsertText });
   const promptsMenuOverlays = useMemo(
     () =>
       renderPromptsOverlay
@@ -140,41 +215,6 @@ const ConversationRoute: FC = () => {
         : undefined,
     [renderPromptsOverlay, t],
   );
-  const {
-    items,
-    selectedItemId,
-    setSelectedItemId,
-    restoreSelectedItemId,
-    restoreDefaultSelection,
-    selectedDeploymentConfiguration,
-    isLoading,
-    error,
-  } = useDeployments();
-
-  const selectedDeployment = useMemo(
-    () => findDeploymentByIdOrReference(items, selectedItemId),
-    [items, selectedItemId],
-  );
-
-  const {
-    skillMenuOverlay,
-    commandMenu,
-    skillCatalogModal,
-    skillDetailsPanel,
-    message: skillMessage,
-    messageRevision: skillMessageRevision,
-    activeMentions,
-    onDraftChange,
-    onBackspaceAtCaret,
-    caretPositionOverride,
-    selectedSkills,
-    isSkillUnsupported,
-    selectSkillByUrl,
-    resetSkillMentions,
-    seedSkillMentions,
-  } = useSkillSelectorOverlay({
-    isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
-  });
 
   useComposerSeedSource(skillMessageRevision, () =>
     seedComposerText(skillMessage),
@@ -386,10 +426,13 @@ const ConversationRoute: FC = () => {
 
   const isInputDisabled = useMemo(
     () =>
-      usingQuickAppStarters
+      /* A Custom Viewer owns conversation creation, so the chat input stays off. */
+      !!customViewer ||
+      (usingQuickAppStarters
         ? quickAppStarters.isChatMessageInputDisabled
-        : !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
+        : !!selectedDeploymentConfiguration?.isChatMessageInputDisabled),
     [
+      customViewer,
       usingQuickAppStarters,
       selectedDeploymentConfiguration,
       quickAppStarters.isChatMessageInputDisabled,
@@ -402,7 +445,9 @@ const ConversationRoute: FC = () => {
       attachments: Attachment[],
       chatSettingsValues: NewConversationChatSettings,
     ) => {
-      if (!selectedItemId) return;
+      /* A disabled input still sends an already-populated message; a Custom
+       * Viewer creates its own conversations, so the chat never does. */
+      if (!selectedItemId || customViewer) return;
       const attachmentDtos = attachmentsToDtos(attachments || []);
       const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
       const skillsForSend = selectedSkills;
@@ -466,6 +511,7 @@ const ConversationRoute: FC = () => {
     [
       navigate,
       selectedItemId,
+      customViewer,
       toolConfigurationValue,
       isIsolatedView,
       isolatedModelId,
@@ -552,6 +598,18 @@ const ConversationRoute: FC = () => {
     );
   }
 
+  if (customViewer && isCustomViewerStarted) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden">
+        <CustomViewerFrame
+          viewer={customViewer}
+          shouldAutoFocus
+          onConversationCreated={handleCustomViewerConversationCreated}
+        />
+      </div>
+    );
+  }
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <NewConversationComposer
@@ -585,10 +643,17 @@ const ConversationRoute: FC = () => {
           stateOffLabel: t(ToolsI18nKeys.StateOff),
         }}
       >
-        <StarterButtons
-          starters={activeStarters}
-          onSelect={handleStarterSelect}
-        />
+        {customViewer ? (
+          <CustomViewerStartGate
+            viewerTitle={customViewer.title}
+            onStart={handleStartCustomViewer}
+          />
+        ) : (
+          <StarterButtons
+            starters={activeStarters}
+            onSelect={handleStarterSelect}
+          />
+        )}
       </NewConversationComposer>
       {catalogModal}
       {promptCatalogModal}

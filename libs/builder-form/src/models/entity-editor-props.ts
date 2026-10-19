@@ -66,6 +66,17 @@ export interface EntityEditorProps {
   metadataSectionClassName?: string;
   /** Class added to the Setup section root, e.g. an embedding editor's own public class. */
   setupSectionClassName?: string;
+  /**
+   * Host-rendered content of an extra Aside section in a third column at the
+   * inline end, below the header, on desktop (the Metadata and Setup sections
+   * are the first two); stacked after the other content on mobile/tablet.
+   * Omit for the default two-column layout.
+   */
+  asideData?: ReactNode;
+  /** Heading of the Aside section. Renders no heading when omitted, for content that carries its own. */
+  asideTitle?: string;
+  /** Class added to the Aside section root, e.g. to drop its padding for edge-to-edge content. */
+  asideSectionClassName?: string;
   /** Text labels with English defaults. */
   labels?: EntityEditorLabels;
   /** Style overrides. */

@@ -13,11 +13,11 @@ The system SHALL expose `POST /api/v1/share/revoke` on the existing `ShareContro
 The endpoint SHALL:
 
 - Require a valid session; respond `401 Unauthorized` when no session is present.
-- Accept `RevokeSharedAccessDto { itemId: string }` validated via the global NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform). `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and the shared `IsCatalogResourcePath` validator (`apps/chat-api/src/share/dto/catalog-resource-path.validator.ts`), whose `CATALOG_RESOURCE_PATH_PATTERN` allowlist is restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, `skills/{bucket}/{path}`, **or `prompts/{bucket}/{path}`** — the same validator `DiscardSharedCatalogItemDto` uses (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`; that DTO additionally rejects `skills/.../files/...` paths with an `@Matches`, which `RevokeSharedAccessDto` does not). Other DIAL resource types and incomplete paths SHALL be rejected before any DIAL Core call. `RevokeSharedAccessDto` carries no `resourceKind` field — every `itemId`, prompts included, is a self-sufficient full resource path.
+- Accept `RevokeSharedAccessDto { itemId: string }` validated via the global NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform). `itemId` SHALL be a non-empty string, max length 2048, validated with the `IsDialResourceId` validator (see the `dial-resource-id-validation` capability) and the shared `IsCatalogResourcePath` validator (`apps/chat-api/src/share/dto/catalog-resource-path.validator.ts`), whose `CATALOG_RESOURCE_PATH_PATTERN` allowlist is restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, `conversations/{bucket}/{path}`, `skills/{bucket}/{path}`, **or `prompts/{bucket}/{path}`** — the same validator `DiscardSharedCatalogItemDto` uses (`apps/chat-api/src/share/dto/discard-shared-catalog-item.dto.ts`; that DTO additionally rejects `skills/.../files/...` paths with an `@Matches`, which `RevokeSharedAccessDto` does not). Other DIAL resource types and incomplete paths SHALL be rejected before any DIAL Core call. `RevokeSharedAccessDto` carries no `resourceKind` field — every `itemId`, prompts included, is a self-sufficient full resource path.
 - Use the session `accessToken` as the Bearer credential, via `getBearerAuthHeaders`.
 - Call SDK `revokeSharedResources({ headers, body: { resources: [{ url: toShareResourceUrl(itemId) }] } })` with no bucket/path reconstruction. `toShareResourceUrl` (`apps/chat-api/src/share/utils/share-resource.util.ts`) passes every `itemId` through unchanged except a `prompts/` id, which is re-encoded with `encodeDialResourcePath` because prompt list ids are the decoded, human-readable path.
 - NOT perform any pre-flight `getSharedResources` check. Unlike `discardShared`, a resource with no current recipients is a legitimate no-op success for the owner, not a condition to surface as an error.
-- Rely on DIAL Core to enforce ownership; a caller who does not own the resource SHALL surface as `403 Forbidden` via `mapDialHttpStatus`.
+- Check ownership before calling DIAL Core: every allowlisted `itemId` is `{type}/{bucket}/{path}`, and when `{bucket}` is not the caller's session bucket the endpoint SHALL respond `403 Forbidden` (`'Only the resource owner can revoke shared access'`) without calling DIAL Core. DIAL Core answers a non-owner with a generic `400`, which the mapping below would otherwise turn into `404`. This bucket comparison is not a `getSharedResources` pre-flight.
 - On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, unconditionally regardless of `itemId` type, mirroring `ShareManagementService.discardShared`. Conversations, skills, and prompts have no equivalent server-side list cache, so for those `itemId` types this is a harmless no-op.
 - Respond `200 OK` with `RevokeSharedAccessResponseDto { success: true }`. DIAL Core returns an empty 200 body for this operation, so the response is synthesized by the BFF.
 - Map upstream failures via the fetch-shaped `mapDialHttpStatus` / `handleDialFetchError` pair (the 400 case is handled inline in `ShareManagementService.revokeShared` before `mapDialHttpStatus` is reached): DIAL Core 400 → 404 (`'Resource does not exist'`, since the DTO already rejects malformed itemIds so a Core 400 can only mean an unresolvable resource — same reasoning as `discardShared`), 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
@@ -43,7 +43,7 @@ Content-Type: application/json
 
 **Generated-client impact**: no new operation — `revokeSharedAccess` already exists; only the accepted `itemId` shape widens. Request DTO `RevokeSharedAccessDto { itemId: string }`, response DTO `RevokeSharedAccessResponseDto { success: boolean }` are unchanged in shape. Regenerating via `npm run openapi` updates only the Swagger-derived `@ApiProperty.example`/description text if changed, not the DTO's field list.
 
-Authorization: any authenticated session user may call the endpoint; DIAL Core authorizes the specific resource, rejecting non-owners with 403. The endpoint is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — `apps/chat-api` reads no feature-flag environment variables, and neither the share-create nor the discard endpoint is gated.
+Authorization: any authenticated session user may call the endpoint; the BFF rejects an `itemId` outside the caller's bucket with 403, and DIAL Core still authorizes the specific resource. The endpoint is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — `apps/chat-api` reads no feature-flag environment variables, and neither the share-create nor the discard endpoint is gated.
 
 Observability: no new metrics. The endpoint is covered by the existing global `MetricsInterceptor` and the structured log lines above.
 
@@ -59,8 +59,8 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 
 #### Scenario: Non-owner is rejected
 
-- **WHEN** a caller who does not own the resource calls the endpoint for it
-- **THEN** DIAL Core's forbidden response is mapped to `403 Forbidden` and neither cache is invalidated
+- **WHEN** a caller whose session bucket is `my-bucket` calls the endpoint with `{ itemId: "applications/other-bucket/my-app" }`
+- **THEN** the endpoint responds `403 Forbidden` without calling DIAL Core, and neither cache is invalidated
 
 #### Scenario: Invalid itemId shape rejected
 
@@ -102,11 +102,16 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 - **WHEN** the request body's `itemId` is `skills/owner-bucket` (missing the item path segment) or `skills//team-a/docs-helper` (empty bucket segment)
 - **THEN** the endpoint responds `400 Bad Request` before any DIAL Core call is made, identically to a malformed `applications/...` or `toolsets/...` itemId
 
+#### Scenario: itemId containing characters DIAL Core allows is accepted
+
+- **WHEN** the request body's `itemId` is `conversations/owner-bucket/anthropic.claude-haiku-4-5-20251001-v1:0__hi__{uuid}` (a literal `:` in the model id)
+- **THEN** `itemId` validation passes and the endpoint proceeds to the ownership check and the DIAL Core call
+
 ### Requirement: `GET /api/v1/share/recipients` reports how many users hold shared access
 
 `ShareController` SHALL expose `GET /api/v1/share/recipients?itemId=...`, answering `ShareRecipientsResponseDto { itemId, recipientsCount }`.
 
-`GetShareRecipientsDto` (`apps/chat-api/src/share/dto/share-recipients.dto.ts`) SHALL validate `itemId` with the same validators as `RevokeSharedAccessDto` (`IsCatalogResourcePath` with the `applications|toolsets|conversations|skills|prompts` prefix, `IsValidFilePath`, `@MaxLength(2048)`) and carries no `resourceKind` field: a resource revoke cannot act on has no count worth answering, and every accepted resource type — prompts included — is now identified by one self-sufficient `itemId`.
+`GetShareRecipientsDto` (`apps/chat-api/src/share/dto/share-recipients.dto.ts`) SHALL validate `itemId` with the same validators as `RevokeSharedAccessDto` (`IsCatalogResourcePath` with the `applications|toolsets|conversations|skills|prompts` prefix, `IsDialResourceId`, `@MaxLength(2048)`) and carries no `resourceKind` field: a resource revoke cannot act on has no count worth answering, and every accepted resource type — prompts included — is now identified by one self-sufficient `itemId`.
 
 `ShareManagementService.getRecipientsCount` SHALL convert `itemId` with `toShareResourceUrl`, call `getSharedResources({ resourceTypes: [resolveResourceKind(url)], with: 'others', includeUserInfo: true })` and pick the one resource out of that set with `countRecipientsByUrl` + `resolveRecipientsCount(counts, url, safeDecodeURIComponent(url))` — both encodings are tried because list ids and DIAL Core share urls differ in percent-encoding for some resource types. DIAL Core has no single-resource variant of this query. `resolveResourceKind` SHALL resolve `skills/`-prefixed ids to `SKILL` and `prompts/`-prefixed ids to `PROMPT` via the existing `RESOURCE_KIND_BY_PREFIX` map, unchanged by this capability.
 
@@ -334,7 +339,7 @@ The entry's icon SHALL carry `aria-hidden` (the entry's own label names it). The
 
 ### Requirement: Tests — backend and catalog revoke flow
 
-`apps/chat-api/src/share/management/tests/share-management.service.spec.ts`, `apps/chat-api/src/share/tests/share.controller.spec.ts`, and `apps/chat-api/src/share/tests/revoke-shared-access.dto.spec.ts` (with `share.service.spec.ts` covering only facade delegation) SHALL together cover: a successful revoke (correct Core body, both caches invalidated, `{ success: true }`); no `getSharedResources` call being made; each mapped status (400→404, 401, 403, 404, 429, 5xx→502, network→503); DTO rejection of a malformed, empty, over-length, traversal-containing, and wrong-resource-type `itemId`; the unauthenticated case; and, newly, a successful revoke for a `skills/{bucket}/{path}` `itemId` alongside a malformed `skills/...` `itemId` rejection.
+`apps/chat-api/src/share/management/tests/share-management.service.spec.ts`, `apps/chat-api/src/share/tests/share.controller.spec.ts`, and `apps/chat-api/src/share/tests/revoke-shared-access.dto.spec.ts` (with `share.service.spec.ts` covering only facade delegation) SHALL together cover: a successful revoke (correct Core body, both caches invalidated, `{ success: true }`); no `getSharedResources` call being made; each mapped status (400→404, 401, 403, 404, 429, 5xx→502, network→503); a 403 for an `itemId` outside the caller's bucket with no DIAL Core call; DTO rejection of a malformed, empty, over-length, traversal-containing, and wrong-resource-type `itemId`; the unauthenticated case; and, newly, a successful revoke for a `skills/{bucket}/{path}` `itemId` alongside a malformed `skills/...` `itemId` rejection.
 
 `libs/catalog/src/components/Details/Header/tests/Header.spec.tsx` and `libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx` SHALL cover: entry visibility for owned vs shared-with-me vs callback-absent items; clicking opens the confirmation without invoking the callback; confirming calls `onRevokeShare` exactly once with the panel staying open on success; a rejection returns to the details content with the panel still open; and a second rapid confirm click not double-invoking the callback. These cases are entity-type-agnostic and SHALL be exercised with a `Skill` fixture alongside the existing `Application`/`Toolset` fixtures.
 

@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.36 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.11 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -44,6 +44,8 @@ Page shell: header with title/subtitle/create action, a search + sort toolbar, a
 The sort control's trigger shows the active option's label, falling back to `labels.sortLabel` when `sortKey` matches no option. Inside the menu each option is a `menuitemcheckbox` whose `aria-checked` marks the sort currently in effect, with a check icon carrying the same meaning visually; picking one reports through `onSortChange` and closes the menu. The lib never sorts `items` — it renders them in the order it receives them.
 
 `banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated). It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
+
+The create button collapses to an icon-only 40px circle below 1280px.
 
 ```tsx
 import {
@@ -165,8 +167,10 @@ disabled and, when `labels.startNowBusyLabel` is supplied, exposes that reason
 as its tooltip and accessible description (the button stays focusable via
 `aria-disabled` so the tooltip can open). The host owns
 execution, eligibility, errors, translations, and live announcements. Below
-1280px header actions wrap while retaining their text and 44px targets. The
-back arrow mirrors in RTL, while the Start now play icon does not.
+1280px Delete, Edit and Start now collapse to icon-only 44px targets (their
+labels stay as accessible names), and the back arrow stays on the first row if
+the actions wrap. The back arrow mirrors in RTL, while the Start now play icon
+does not.
 
 Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
 
@@ -205,15 +209,19 @@ import {
 ```
 
 When the host omits `renderInstructions`, `instructionsMarkdown` is rendered by
-the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared`. Name its
-controls through the optional `labels.codeBlockCopyLabel`,
-`labels.codeBlockCopiedLabel`, `labels.codeBlockDownloadLabel`,
-`labels.tableScrollRegionAriaLabel` and `labels.mathScrollRegionAriaLabel`
-(the `ScheduledTaskInstructionsMarkdownLabels` fields); each falls back to the
-renderer's English default (`'Copy code'`, `'Copied!'`, `'Download code'`,
-`'Scrollable table'`, `'Scrollable formula'`). `ScheduledTaskDetailsSummary`
-takes the same fields as its `markdownLabels` prop. A host-supplied
-`renderInstructions` owns its own labels, and these are ignored.
+the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared` at the
+summary's small 14/20 scale (paragraphs and lists at `dial-small-text`,
+headings at `dial-small-semi-text`) — pass `instructionsClassNames` (a
+`MarkdownRendererClassNames` map, replacing the default wholesale) to change
+it. Name the viewer's controls through the optional
+`labels.codeBlockCopyLabel`, `labels.codeBlockCopiedLabel`,
+`labels.codeBlockDownloadLabel`, `labels.tableScrollRegionAriaLabel` and
+`labels.mathScrollRegionAriaLabel` (the `ScheduledTaskInstructionsMarkdownLabels`
+fields); each falls back to the renderer's English default (`'Copy code'`,
+`'Copied!'`, `'Download code'`, `'Scrollable table'`, `'Scrollable formula'`).
+`ScheduledTaskDetailsSummary` takes the same fields as its `markdownLabels`
+prop. A host-supplied `renderInstructions` owns its own labels and classNames,
+and these are ignored.
 
 ```tsx
 import {
@@ -242,11 +250,12 @@ const markdownLabels: ScheduledTaskInstructionsMarkdownLabels = {
 
 Controlled deletion presentation that leaves mutations, routing, notifications,
 and translated copy to the host. The dialog frame is the kit's `Popup`; the
-identity card, the warning sentence, the consequence bullets, and the action row
-are [`ConfirmationIdentityCard`, `ConfirmationView` and
+identity row, the warning sentence, the consequence bullets, and the action row
+are [`ResourceSummary`, `ConfirmationView` and
 `ConfirmationFooter`](../chat-shared/README.md#confirmationview) from
-`@epam/ai-dial-chat-shared`, so a delete confirmation reads the same here as in
-the catalog's details panel.
+`@epam/ai-dial-chat-shared`. The identity row sits on the plain neutral
+`ResourceSummary` surface rather than the catalog's red-tinted card: a task is
+not a catalog resource.
 
 `title` is a string rather than a node so the kit names the dialog with it.
 `body` is a node, which is how the host emphasises the task name inside its own
@@ -286,6 +295,106 @@ import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
 `icon` and `typeLabel` are optional; the card falls back to the task name alone
 when neither is given. Pass `typeLabel` in sentence case — the label uppercases
 itself.
+
+### ScheduledTaskConversationHistorySection
+
+History accordion of a task conversation's sources panel: the schedule's
+paginated runs with the current run highlighted and a "Show more" footer. It is
+the accordion-wrapped counterpart of `ScheduledTaskRunHistoryList` — expanded by
+default, resetting to expanded whenever `scheduleId` changes — while the list
+itself stays bare for hosts that need their own chrome. Runs, loading/error
+state, pagination callbacks, and labels are all supplied by the host; a run row
+renders as clickable only when its item carries a `conversationId` and
+`onRunClick` is supplied.
+
+```tsx
+import {
+  ScheduledTaskConversationHistorySection,
+  ScheduledTaskRunStatus,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskConversationHistorySection
+  scheduleId={schedule.id}
+  items={[
+    {
+      id: 'run_1',
+      status: ScheduledTaskRunStatus.Success,
+      timestampLabel: 'today at 9:01 AM (99s)',
+      conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
+    },
+  ]}
+  isLoading={false}
+  isLoadingMore={false}
+  error={null}
+  onRetry={refetchRuns}
+  hasMore={true}
+  onLoadMore={loadMoreRuns}
+  currentRunId="run_1"
+  onRunClick={(run) => navigateToConversation(run.conversationId)}
+  labels={{
+    title: 'History',
+    emptyLabel: 'No runs yet',
+    errorLabel: 'Failed to load history',
+    retryLabel: 'Retry',
+    showMoreLabel: 'Show more',
+    runStatusLabels: {
+      [ScheduledTaskRunStatus.Success]: 'Succeeded',
+      [ScheduledTaskRunStatus.Error]: 'Failed',
+      [ScheduledTaskRunStatus.InProgress]: 'Running',
+      [ScheduledTaskRunStatus.Missed]: 'Missed',
+    },
+    currentRunLabel: 'Current run',
+    unreadIndicatorLabel: 'Unread',
+  }}
+/>;
+```
+
+### ScheduledTaskConversationDetailsSection
+
+Details accordion of a task conversation's sources panel: the run's own
+Model/Skill/Instructions summary via `ScheduledTaskDetailsSummary`, or the
+scoped unavailable message while the task's details cannot load — `state:
+'error'` additionally renders a retry action wired to `onRetry`, `state:
+'unavailable'` does not. Collapsed by default; resets to collapsed whenever
+`scheduleId` changes. All field values and labels are supplied by the host.
+When `renderInstructions` is omitted, the summary's built-in
+`MDMessageViewer` renders the instructions at the summary's small 14/20 scale —
+name its controls through `markdownLabels`
+(`ScheduledTaskInstructionsMarkdownLabels`, the same prop
+`ScheduledTaskDetailsSummary` takes) and rescale it through
+`instructionsClassNames` (the same prop `ScheduledTaskDetailsSummary` takes);
+both are ignored when `renderInstructions` is supplied.
+
+```tsx
+import {
+  ScheduledTaskConversationDetailsSection,
+  ScheduledTaskConversationDetailsState,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskConversationDetailsSection
+  scheduleId={schedule.id}
+  state={ScheduledTaskConversationDetailsState.Ready}
+  onRetry={refetchTask}
+  modelDisplayName="GPT-4.1 mini"
+  skillDisplayNames={['Daily digest skill', 'Report skill']}
+  instructionsMarkdown={task.prompt}
+  markdownLabels={{
+    codeBlockCopyLabel: 'Copy code',
+    codeBlockCopiedLabel: 'Copied!',
+    codeBlockDownloadLabel: 'Download code',
+    tableScrollRegionAriaLabel: 'Scrollable table',
+    mathScrollRegionAriaLabel: 'Scrollable formula',
+  }}
+  labels={{
+    title: 'Details',
+    modelLabel: 'Model',
+    instructionsLabel: 'Instructions',
+    skillLabel: 'Skill',
+    unavailableLabel: 'Task details are unavailable',
+    retryLabel: 'Retry',
+  }}
+/>;
+```
 
 ## Validation entry point
 
@@ -435,7 +544,9 @@ the class names used by the published JavaScript.
 - `gridLayout` (or CardGrid's `layout`) supports `maxColumns` (3),
   `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
   `cardHeight` (232px). Columns respond to the available container width;
-  skeletons inherit the same height.
+  skeletons inherit the same height. `cardHeight` applies from the desktop
+  breakpoint (1280px) up; below it cards and skeletons size to their content,
+  the title wraps to two lines and the description clamps to two lines.
 - CardGrid accepts every card badge label.
 - Form `styles.layout.detailsWidth` and `columnGap` configure the shared
   builder layout. The scheduler uses two wrapping columns without an empty

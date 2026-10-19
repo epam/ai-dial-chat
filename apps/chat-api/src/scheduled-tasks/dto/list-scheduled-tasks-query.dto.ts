@@ -70,4 +70,20 @@ export class ListScheduledTasksQueryDto {
   @IsOptional()
   @IsEnum(ScheduledTasksSortKey)
   sort?: ScheduledTasksSortKey;
+
+  @ApiPropertyOptional({
+    description:
+      'Only return scheduled tasks that run against this model, application or ' +
+      'agent. Matched exactly against the task `model` as it is stored (for ' +
+      'example `applications/<bucket-id>/<deployment-id>`), so pass the deployment ' +
+      'id unchanged. Trimmed before use; an empty or whitespace-only value is ' +
+      'treated as omitted.',
+    example: 'applications/example-bucket-id/example-deployment-id',
+    maxLength: 1024,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1024)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  model?: string;
 }

@@ -276,6 +276,28 @@ describe('DeploymentSelectorPanel', () => {
       ).toBeTruthy();
     });
 
+    it('shows a hidden currently-selected model as unavailable: disabled and without a favorite toggle', async () => {
+      const onSelect = vi.fn();
+      renderPanel([], {
+        selectedId: 'hidden-model',
+        selectedItem: {
+          ...makeItem('hidden-model', CatalogEntityType.Model),
+          isHidden: true,
+        },
+        onSelect,
+      });
+
+      const row = screen.getByRole('menuitemradio', { name: /hidden-model/ });
+      expect(row).toHaveProperty('disabled', true);
+      expect(row.textContent).toContain('Unavailable');
+      expect(
+        screen.queryByRole('button', { name: 'Add to favorites' }),
+      ).toBeNull();
+
+      await userEvent.click(row);
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
     it('does not render the pinned default twice when it is already a favorite', () => {
       const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
 

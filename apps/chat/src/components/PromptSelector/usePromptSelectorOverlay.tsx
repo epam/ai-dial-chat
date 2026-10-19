@@ -98,6 +98,7 @@ export const usePromptSelectorOverlay = ({
     favoriteIds,
     onToggleFavorite: handleToggleFavorite,
     onInsertText,
+    isRowTooltipHidden: true,
     labels,
     renderCatalog,
   });

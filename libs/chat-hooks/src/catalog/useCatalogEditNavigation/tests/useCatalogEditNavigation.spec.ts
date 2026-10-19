@@ -473,13 +473,13 @@ describe('useCatalogEditNavigation', () => {
         schemas: [
           quickAppSchema,
           {
-            id: 'mind-map-schema',
-            displayName: 'Mind Map',
+            id: 'ocr-schema',
+            displayName: 'OCR',
             schemaEndpoint: SCHEMA_ENDPOINT,
           },
           {
-            id: 'mind-map-schema',
-            displayName: 'Mind Map',
+            id: 'ocr-schema',
+            displayName: 'OCR',
             schemaEndpoint: SCHEMA_ENDPOINT,
           },
           {
@@ -509,22 +509,20 @@ describe('useCatalogEditNavigation', () => {
         ['custom-app', 'Create custom app'],
         ['prompt', 'Create prompt'],
         ['toolset', 'Create toolset'],
-        ['runner:mind-map-schema', 'Mind Map'],
         ['runner:editorless-runner', 'No editor'],
+        ['runner:ocr-schema', 'OCR'],
         ['runner:foo-quickapps', 'Quick app'],
         ['runner:foo-quickapps2', 'Quick app 2.0'],
         ['skill', 'Skill'],
       ]);
 
       result.current.createOptions
-        .find((option) => option.key === 'runner:mind-map-schema')
+        .find((option) => option.key === 'runner:ocr-schema')
         ?.onClick?.({
-          key: 'runner:mind-map-schema',
+          key: 'runner:ocr-schema',
           domEvent: {} as never,
         });
-      expect(onNavigate).toHaveBeenCalledWith(
-        'create:quick-app:mind-map-schema',
-      );
+      expect(onNavigate).toHaveBeenCalledWith('create:quick-app:ocr-schema');
     });
 
     it('lists every runner option, sorted alphabetically', () => {
@@ -563,11 +561,45 @@ describe('useCatalogEditNavigation', () => {
         'Iota',
         'Kappa',
         'Lambda',
-        'Mind map',
         'OCR',
         'Theta',
         'Zeta',
       ]);
+    });
+
+    it('omits Mind Map runners from the Create menu', () => {
+      const { result } = renderEditNavigation({
+        schemas: [
+          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
+          {
+            id: 'https://runner.example/schemas/mindmap',
+            displayName: 'Brainstorm',
+            editorUrl: EDITOR_URL,
+          },
+          { id: 'ocr', displayName: 'OCR', schemaEndpoint: SCHEMA_ENDPOINT },
+        ],
+      });
+
+      const runnerKeys = result.current.createOptions
+        .filter((option) => option.key.startsWith('runner:'))
+        .map((option) => option.key);
+
+      expect(runnerKeys).toEqual(['runner:ocr']);
+      expect(
+        result.current.createMenuByType[CatalogEntityType.Agent]?.options.map(
+          (option) => option.key,
+        ),
+      ).not.toContain('runner:mind-map');
+    });
+
+    it('offers no search field when Mind Map is the only runner', () => {
+      const { result } = renderEditNavigation({
+        schemas: [
+          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
+        ],
+      });
+
+      expect(result.current.createSearch).toBeUndefined();
     });
 
     it('filters runner and static options by the search query, case-insensitively', () => {
@@ -579,11 +611,11 @@ describe('useCatalogEditNavigation', () => {
         ],
       });
 
-      act(() => result.current.createSearch?.onChange('MAP'));
+      act(() => result.current.createSearch?.onChange('oCr'));
 
-      expect(result.current.createSearch?.value).toBe('MAP');
+      expect(result.current.createSearch?.value).toBe('oCr');
       expect(result.current.createOptions.map((option) => option.key)).toEqual([
-        'runner:mind-map',
+        'runner:ocr',
       ]);
 
       act(() => result.current.createSearch?.onChange('upload'));
@@ -695,6 +727,52 @@ describe('useCatalogEditNavigation', () => {
       );
       uploadOption?.onClick?.({ key: 'skill-upload', domEvent: {} as never });
       expect(onSkillUploadClick).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('createMenuByType', () => {
+    const keysOf = (
+      menu: { options: { key: string }[] } | undefined,
+    ): string[] | undefined => menu?.options.map((option) => option.key);
+
+    it('splits the Create menu by entity type and gives models no entry', () => {
+      const { result } = renderEditNavigation({
+        isCustomAppsEnabled: true,
+        schemas: [quickAppSchema],
+      });
+      const menu = result.current.createMenuByType;
+
+      expect(menu[CatalogEntityType.Model]).toBeUndefined();
+      expect(keysOf(menu[CatalogEntityType.Agent])).toEqual([
+        'custom-app',
+        'runner:foo-quickapps2',
+      ]);
+      expect(keysOf(menu[CatalogEntityType.Toolset])).toEqual(['toolset']);
+      expect(keysOf(menu[CatalogEntityType.Skill])).toEqual([
+        'skill-write-instructions',
+        'skill-upload',
+      ]);
+      expect(keysOf(menu[CatalogEntityType.Prompt])).toEqual(['prompt']);
+    });
+
+    it('gives the agent menu the runner search field', () => {
+      const { result } = renderEditNavigation({ schemas: [quickAppSchema] });
+
+      expect(
+        result.current.createMenuByType[CatalogEntityType.Agent]?.search,
+      ).toBe(result.current.createSearch);
+    });
+
+    it('leaves a disabled type with no options', () => {
+      const { result } = renderEditNavigation({
+        isToolsetsEnabled: false,
+        isPromptsEnabled: false,
+      });
+      const menu = result.current.createMenuByType;
+
+      expect(keysOf(menu[CatalogEntityType.Toolset])).toEqual([]);
+      expect(keysOf(menu[CatalogEntityType.Prompt])).toEqual([]);
+      expect(keysOf(menu[CatalogEntityType.Agent])).toEqual([]);
     });
   });
 });

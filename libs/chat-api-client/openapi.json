@@ -379,7 +379,7 @@
         "tags": ["applications"]
       },
       "post": {
-        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list and deployments list caches on success.",
+        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. With createOnly, never overwrites an existing application and creates at the next free path instead (409 when none is free). With preserveApplicationProperties, stores schema settings verbatim. Invalidates the applications list and deployments list caches on success.",
         "operationId": "createApplication",
         "parameters": [],
         "requestBody": {
@@ -3248,7 +3248,14 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "Insufficient permissions on conversation"
+            "description": "Insufficient permissions on conversation, or (`code: conversationModelHidden`) the requested model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Conversation not found"
@@ -3490,7 +3497,14 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "DIAL Core denied access to the resource"
+            "description": "The caller cannot read the source conversation, or (`code: conversationDuplicateModelHidden`) the conversation's current model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateConversationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Source conversation not found"
@@ -3703,7 +3717,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks write access to the target folder"
+            "description": "Caller lacks write access to the target folder, or (`code: conversationModelHidden`) the conversation's model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Conversation not found"
@@ -5848,7 +5869,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "DIAL Core denied access to the resource"
+            "description": "No permission to share the resource, or (`code: conversationModelHidden`) the shared conversation's model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "DIAL Core resource not found"
@@ -5905,7 +5933,14 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid invitationId"
+            "description": "Validation error — invalid invitationId — or (`code: shareInvitationAcceptedUsersLimitReached`) the shared resource has already been accepted by its maximum number of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInvitationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -5914,7 +5949,14 @@
             "description": "DIAL Core denied access to the resource"
           },
           "404": {
-            "description": "Invitation not found, expired, or already revoked"
+            "description": "Invitation not found, expired, or already revoked (`code: shareInvitationNotFound`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInvitationErrorDto"
+                }
+              }
+            }
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -7644,6 +7686,17 @@
               "type": "string",
               "enum": ["firstToRun", "lastToRun", "newest", "nameAZ"]
             }
+          },
+          {
+            "name": "model",
+            "required": false,
+            "in": "query",
+            "description": "Only return scheduled tasks that run against this model, application or agent. Matched exactly against the task `model` as it is stored (for example `applications/<bucket-id>/<deployment-id>`), so pass the deployment id unchanged. Trimmed before use; an empty or whitespace-only value is treated as omitted.",
+            "schema": {
+              "maxLength": 1024,
+              "example": "applications/example-bucket-id/example-deployment-id",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -8873,6 +8926,39 @@
         "tags": ["offline-credentials"]
       }
     },
+    "/api/v1/offline-credentials/signout": {
+      "post": {
+        "description": "Revokes the session user's stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.",
+        "operationId": "signOutOfflineCredentials",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Signed out successfully (including idempotent Core 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineCredentialsAuthResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response or reported failure"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Sign out offline credentials",
+        "tags": ["offline-credentials"]
+      }
+    },
     "/api/v1/text-refinement": {
       "post": {
         "description": "Rewrite one field using a server-owned prompt and the caller credentials. Does not save or cache drafts. Scheduled-task purposes require scheduled-task access.",
@@ -9442,6 +9528,11 @@
             "type": "number",
             "description": "Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.",
             "example": 536870912
+          },
+          "usageLimitsWarningThresholdPercent": {
+            "type": "number",
+            "description": "Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.",
+            "example": 75
           }
         },
         "required": [
@@ -9459,7 +9550,8 @@
           "applicationVisualizers",
           "customVariables",
           "publicationFilterSources",
-          "maxAttachmentFileSizeBytes"
+          "maxAttachmentFileSizeBytes",
+          "usageLimitsWarningThresholdPercent"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -9670,6 +9762,27 @@
               "tool_sets": []
             }
           },
+          "createOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "Never overwrite an existing application: when the name/version path is taken, create at the next free path (name-2, name-3, ...), checked atomically by DIAL Core; 409 only when every candidate is taken."
+          },
+          "preserveApplicationProperties": {
+            "type": "boolean",
+            "default": false,
+            "description": "Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities."
+          },
+          "inputAttachmentTypes": {
+            "example": ["image/png"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "example": 5
+          },
           "locales": {
             "type": "array",
             "items": {
@@ -9727,7 +9840,7 @@
           "iconUrl": {
             "type": "string",
             "example": "files/6FEup.../uploads/2026-06/icon.png",
-            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager."
+            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager. An empty string removes the stored icon; omit the field (or send null) to keep it."
           },
           "topics": {
             "example": ["nlp", "assistant"],
@@ -9964,6 +10077,11 @@
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "Application type schema id from DIAL Core (present only for application deployments)"
+          },
+          "viewerUrl": {
+            "type": "string",
+            "description": "Custom Viewer URL from DIAL Core viewer_url (present only for application deployments that configure one)",
+            "example": "https://viewer.example.com/"
           },
           "inputAttachmentTypes": {
             "description": "Accepted MIME types for input attachments from DIAL Core (e.g. [\"audio/*\", \"image/*\"])",
@@ -12835,6 +12953,37 @@
         },
         "required": ["generationId", "path", "model", "mode"]
       },
+      "ConversationErrorCode": {
+        "type": "string",
+        "enum": ["conversationDuplicateModelHidden", "conversationModelHidden"],
+        "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`."
+      },
+      "ConversationModelHiddenErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation model is no longer available"
+          },
+          "code": {
+            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "error", "message"]
+      },
       "StopCompletionDto": {
         "type": "object",
         "properties": {
@@ -12922,6 +13071,32 @@
           }
         },
         "required": ["newPath"]
+      },
+      "DuplicateConversationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation's model is not available for new conversations"
+          },
+          "code": {
+            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "error", "message"]
       },
       "DeleteConversationsBodyDto": {
         "type": "object",
@@ -14261,6 +14436,45 @@
         },
         "required": ["itemId"]
       },
+      "ShareInvitationErrorCode": {
+        "type": "string",
+        "enum": [
+          "shareInvitationNotFound",
+          "shareInvitationAcceptedUsersLimitReached"
+        ],
+        "description": "Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users."
+      },
+      "AcceptInvitationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 404
+          },
+          "error": {
+            "type": "string",
+            "example": "Not Found"
+          },
+          "message": {
+            "type": "string",
+            "example": "The share link has expired or does not exist"
+          },
+          "code": {
+            "description": "Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShareInvitationErrorCode"
+              }
+            ]
+          },
+          "itemName": {
+            "type": "string",
+            "description": "Title of the shared conversation, present with `shareInvitationAcceptedUsersLimitReached` when the invitation shares a conversation.",
+            "example": "Quarterly planning"
+          }
+        },
+        "required": ["statusCode", "error", "message"]
+      },
       "DiscardSharedCatalogItemDto": {
         "type": "object",
         "properties": {
@@ -15233,7 +15447,8 @@
           "scheduled-task-instructions",
           "application-description",
           "toolset-description",
-          "prompt-description"
+          "prompt-description",
+          "prompt-instructions"
         ],
         "description": "Server-owned rewriting purpose"
       },
@@ -15253,7 +15468,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 32000,
-            "description": "Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, either Instructions 32000.",
+            "description": "Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.",
             "example": "Use this skill to explain project documentation."
           }
         },

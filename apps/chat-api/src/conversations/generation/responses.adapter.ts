@@ -160,7 +160,13 @@ export class ResponsesAdapter {
       (attachment) => Boolean(attachment.data || attachment.url),
     );
 
-    if (!validAttachments.length) {
+    /*
+     * Core rejects `input_text`/`input_image` parts on an assistant item
+     * ("Supported values are: 'output_text' and 'refusal'"), so an assistant
+     * turn is always replayed as plain text — its attachments (e.g. web-search
+     * results) are outputs, not inputs, and are not re-sent.
+     */
+    if (message.role === 'assistant' || !validAttachments.length) {
       return { role: message.role as string, content: message.content };
     }
 

@@ -2,6 +2,7 @@ import type { components } from '@epam/ai-dial-typescript-sdk';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
+  ConflictException,
   Inject,
   Injectable,
   Logger,
@@ -38,6 +39,22 @@ import type {
 import { hoistApplicationFields } from './utils/application-body-mapping';
 
 type DialApplication = components['schemas']['Application'];
+
+/*
+ * How many storage paths a create-only request tries before giving up with
+ * 409: the original `name__version`, then `name-2__version` up to this count.
+ */
+const MAX_CREATE_PATH_ATTEMPTS = 20;
+
+/** Storage path of the `attempt`-th (1-based) create-only candidate. */
+const buildApplicationPath = (
+  name: string,
+  version: string,
+  attempt: number,
+): string => {
+  const baseName = attempt === 1 ? name : `${name}-${attempt}`;
+  return `${baseName}__${version}`;
+};
 
 @Injectable()
 export class ApplicationsService {
@@ -137,8 +154,6 @@ export class ApplicationsService {
       }
 
       const version = body.version ?? '1.0.0';
-      const appPath = `${body.name}__${version}`;
-      const encodedPath = encodeURIComponent(appPath);
 
       const {
         endpoint,
@@ -146,7 +161,9 @@ export class ApplicationsService {
         inputAttachmentTypes,
         maxInputAttachments,
         remainingProperties,
-      } = hoistApplicationFields(body.applicationProperties);
+      } = body.preserveApplicationProperties
+        ? { remainingProperties: body.applicationProperties ?? {} }
+        : hoistApplicationFields(body.applicationProperties);
 
       const { displayName, description } = composeLocalizedFields(
         body.name,
@@ -178,28 +195,55 @@ export class ApplicationsService {
        * Quick App — a deliberate coupling of generic application-write logic
        * to Quick-App-specific business rules, accepted as the least-bad of
        * those three options.
+       *
+       * `system_prompt_supported` is also written as `false` on creation only:
+       * DIAL Core treats an unset flag as supported, so without it the chat
+       * shows the system prompt field for a Quick App whose prompt is owned by
+       * its orchestrator config. Updates leave it untouched.
        */
       if (isQuickAppSchema(body.type)) {
         dialBody.features = {
+          system_prompt_supported: false,
           ...dialBody.features,
           skills_supported: true,
         } as (typeof dialBody)['features'];
       }
-      if (inputAttachmentTypes != null)
-        dialBody.inputAttachmentTypes = inputAttachmentTypes;
-      if (maxInputAttachments != null)
-        dialBody.maxInputAttachments = maxInputAttachments;
+      const attachmentTypes = body.inputAttachmentTypes ?? inputAttachmentTypes;
+      const attachmentLimit = body.maxInputAttachments ?? maxInputAttachments;
+      if (attachmentTypes != null)
+        dialBody.inputAttachmentTypes = attachmentTypes;
+      if (attachmentLimit != null)
+        dialBody.maxInputAttachments = attachmentLimit;
 
-      const response = await this.dialClient.client.saveCustomApplication(
-        bucket,
-        encodedPath,
-        {
-          headers: authHeaders,
-          body: dialBody,
-        },
-      );
-
-      if (response.error) {
+      /*
+       * The storage path is derived from the name at creation and never
+       * follows a later rename, so a path can be held by an app the user now
+       * sees under another name. Instead of rejecting a name nothing visible
+       * owns, a create-only request moves on to the next free path; each try
+       * is still atomic via `If-None-Match`, so no existing app is overwritten.
+       */
+      const maxAttempts = body.createOnly ? MAX_CREATE_PATH_ATTEMPTS : 1;
+      let appPath = '';
+      let encodedPath = '';
+      for (let attempt = 1; ; attempt++) {
+        appPath = buildApplicationPath(body.name, version, attempt);
+        encodedPath = encodeURIComponent(appPath);
+        const response = await this.dialClient.client.saveCustomApplication(
+          bucket,
+          encodedPath,
+          {
+            headers: {
+              ...authHeaders,
+              ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
+            },
+            body: dialBody,
+          },
+        );
+        if (!response.error) break;
+        if (body.createOnly && response.response.status === 412) {
+          if (attempt < maxAttempts) continue;
+          throw new ConflictException('Application name already taken');
+        }
         return mapDialHttpStatus(
           response.response.status,
           'create application',
@@ -288,7 +332,13 @@ export class ApplicationsService {
       };
       if (description != null)
         mergedBody.description = description as unknown as string;
-      if (body.iconUrl != null) mergedBody.iconUrl = body.iconUrl;
+      /*
+       * An empty `iconUrl` is an explicit clear: the key is dropped from the
+       * merged body so the fully replaced resource no longer carries an icon.
+       * Omitted or `null` keeps the stored icon, like every other field here.
+       */
+      if (body.iconUrl === '') delete mergedBody.iconUrl;
+      else if (body.iconUrl != null) mergedBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0) {
         mergedBody.descriptionKeywords = body.topics;
       }

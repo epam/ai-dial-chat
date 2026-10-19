@@ -57,7 +57,7 @@ export enum FileManagerNotificationReason {
   RemoveAccessFailed = 'removeAccessFailed',
   /** `useDialFileUploadBatch`'s plain-file batch had zero successful uploads. */
   UploadFailed = 'uploadFailed',
-  /** `useDialFileUploadBatch`'s plain-file batch completed (fully or partially successful). */
+  /** `useDialFileUploadBatch`'s plain-file batch completed (fully or partially successful), or `onUploadArchive` extracted every entry successfully. */
   UploadCompleted = 'uploadCompleted',
   /** `onUploadArchive` extracted zero entries successfully; `names`/`restCount` list the failures. */
   UploadArchiveFailed = 'uploadArchiveFailed',
@@ -144,6 +144,8 @@ export enum FileOperationKind {
   /** A copy whose every item landed in its own source folder (Duplicate). */
   FileDuplicated = 'fileDuplicated',
   FilesDuplicated = 'filesDuplicated',
+  /** One or more shared-with-me items were removed from the Shared tab. */
+  FilesUnshared = 'filesUnshared',
 }
 
 /**

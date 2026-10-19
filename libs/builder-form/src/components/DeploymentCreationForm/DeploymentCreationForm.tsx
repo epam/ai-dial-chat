@@ -41,6 +41,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   isNameReadOnly = false,
   nameCaption,
   isDescriptionRequired = false,
+  descriptionCaption,
   renderDescription,
   focusRequestKey,
 }) => {
@@ -115,6 +116,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
             }
       }
       placeholder={labels.description.placeholder}
+      caption={descriptionCaption}
       error={errors.description || undefined}
       invalid={!!errors.description}
       containerClassName={renderDescription ? undefined : styles?.field}

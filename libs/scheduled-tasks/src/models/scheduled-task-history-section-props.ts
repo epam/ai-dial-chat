@@ -82,6 +82,8 @@ export interface ScheduledTaskHistorySectionProps {
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** CSS class applied to the "Next run" label. Defaults to `'dial-small-text'`. */
   runTimestampClassName?: string;
+  /** CSS class applied to each not-yet-viewed run row's timestamp, one step up from `runTimestampClassName`'s weight on the same 14/20 scale. Defaults to `'dial-small-semi-text'`. */
+  runTimestampUnreadClassName?: string;
   /** CSS class applied to the section title in the card variant. Defaults to `'dial-body-semi-text'`. */
   sectionTitleClassName?: string;
   /** Status-icon and unread-dot color overrides forwarded to the run list. */

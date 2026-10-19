@@ -36,6 +36,7 @@ import {
   type ResponseFormat,
   type RequestSkill,
   type StarterOption,
+  type TextSegment,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
 import type {
@@ -64,6 +65,7 @@ import {
   getReferenceAttachmentGroups,
   groupAnnotations,
   isReferenceOnlyAttachment,
+  replaceCitTagsWithSourceNames,
   useAnnotations,
   useCitationCard,
   useCitationMarkdownComponents,
@@ -309,7 +311,7 @@ interface Props {
   renderHistorySkillSegments?: (
     content: string,
     skills: RequestSkill[] | undefined,
-  ) => ReactNode[] | null;
+  ) => TextSegment[] | null;
   /**
    * Renders a message's `custom_content.skills` entries as a flat list of
    * `ChatSkill` history elements for the bubble's `beforeContent` slot (the
@@ -595,6 +597,7 @@ const ConversationMessageItem: FC<Props> = ({
       isPreviewable: isCitationPreviewable,
       onOpenInBrowser: handleCitationOpenInBrowser,
       isPreviewOpen: isCanvasOpen,
+      previewFilesOnMarkerClick: true,
       buildLabels: buildCitationLabels,
     }),
     [
@@ -613,6 +616,18 @@ const ConversationMessageItem: FC<Props> = ({
       isCompactTypography,
       fallbackCitationGroups,
     );
+  /* The Copy actions serialize markdown outside the renderer, so a `<cit>`
+     element has to be swapped for the source name its marker shows — a
+     references-table title cell is otherwise copied empty (issue #9245). */
+  const copyContent = useMemo(
+    () =>
+      replaceCitTagsWithSourceNames(
+        msg.content,
+        citationGroups,
+        fallbackCitationGroups,
+      ),
+    [msg.content, citationGroups, fallbackCitationGroups],
+  );
   const referenceGroups = useMemo(
     () => getReferenceAttachmentGroups(msg.custom_content?.attachments),
     [msg.custom_content?.attachments],
@@ -916,9 +931,7 @@ const ConversationMessageItem: FC<Props> = ({
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
-        markdownUrlTransform={
-          msg.role === MessageRole.Assistant ? resolveMarkdownUrl : undefined
-        }
+        markdownUrlTransform={resolveMarkdownUrl}
         markdownClassNames={markdownClassNames}
         attachments={bubbleAttachments}
         isStreaming={isStreaming}
@@ -947,6 +960,7 @@ const ConversationMessageItem: FC<Props> = ({
             },
             tooltips,
             ariaLabels,
+            copyContent,
           ),
           /* Regenerate/copy/like/dislike stay mounted while a response streams,
              so they have to be disabled — otherwise a second generation or a
@@ -1104,7 +1118,7 @@ const ConversationMessageItem: FC<Props> = ({
                     title={t(ChatI18nKeys.StreamErrorTitle)}
                     message={
                       <span className="flex flex-wrap items-center justify-between gap-2 text-start">
-                        <span>
+                        <span className="min-w-0 [overflow-wrap:anywhere]">
                           {msg.streamErrorMessage ||
                             t(ChatI18nKeys.StreamError)}
                         </span>

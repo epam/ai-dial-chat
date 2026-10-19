@@ -177,6 +177,8 @@ Both surfaces that render a conversation input — `ConversationView` and `NewCo
 
 `DeploymentSelectorPanel.tsx` (`apps/chat/src/components/DeploymentSelector/`) SHALL build the selector's list from the user's favorited catalog items, filtered to conversational entity types only: `CatalogEntityType.Model` and `CatalogEntityType.Agent`. Non-conversational types (`Toolset`, `Skill`, and any other `CatalogEntityType`) SHALL be excluded — they are not things a user can talk to. Items with `isHidden` set (operator `HIDDEN_ENTITY_TAGS`) are excluded as well. An optional `pinnedItem` is placed first, ahead of the favorites, and goes through the same filter; the currently selected item is shown in its own section and is removed from the favorites list.
 
+The currently selected item is not dropped when it is `isHidden` — an existing conversation can still point at a model the operator hid afterwards (Issue #9183). Its row SHALL instead render disabled (it cannot be re-picked), carry the `deploymentSelector.unavailableLabel` translation key as its description, and offer no favorite toggle.
+
 This filter SHALL be memoised on the favorites list and `pinnedItem`, and the search query SHALL be applied on top of the already-filtered list rather than over the raw favorites.
 
 #### Scenario: Favorited application appears in the selector
@@ -194,6 +196,11 @@ This filter SHALL be memoised on the favorites list and `pinnedItem`, and the se
 - **WHEN** the user has favorited an item mapped to `CatalogEntityType.Toolset` or `CatalogEntityType.Skill`
 - **THEN** it does not appear in the selector
 
+#### Scenario: Hidden currently-selected model is shown as unavailable
+
+- **WHEN** `selectedItem` has `isHidden: true`
+- **THEN** the "Currently selected" row is disabled, shows "Unavailable", has no add-to-favorites button, and clicking it does not call `onSelect`
+
 #### Scenario: Search applies to the conversational subset
 
 - **WHEN** the user types a query that would also match a favorited toolset
@@ -207,7 +214,7 @@ A selector row renders the entity name followed by its version label. Because fa
 
 `DeploymentSelectorPanel.tsx` SHALL lay the pair out in a wrapping flex line: the name keeps its natural width and truncates with its overflow tooltip when it alone exceeds the row, and the version takes the width the name leaves. When the pair no longer fits on one line, the version SHALL move onto a line of its own at full width rather than truncate — the row grows, and nothing is hidden behind a hover.
 
-The version SHALL therefore carry no `max-w-*` cap and no `truncate`. This is a deliberate departure from the fixed-height rules used for cards and headers: `ItemHeader` caps the version at 30% of the row, and `AppIdentity` (catalog cards) caps the name at 66% (`max-w-[66%] shrink-0`) and lets the version fill the rest, right-aligned and truncated (`min-w-0 flex-1 text-end`), with the name taking the whole row when there is no version. A selector row is `h-auto` and can spend a second line instead.
+The version SHALL therefore carry no `max-w-*` cap and no `truncate`. This is a deliberate departure from the fixed-height rules used for cards and headers: `ItemHeader` caps the version at 30% of the row, and `AppIdentity` (catalog and Favorites cards) lays name and version out as a flex row whose items grow from 0 in a 66:34 ratio (`flex-[66_1_0%]` / `flex-[34_1_0%]`), each capped at its own content width (`max-w-max`), so a short side keeps only its own width and the other gets the rest, and the name stops at 66% of the row only when both overflow; the version truncates (`min-w-0`) while the name wraps onto at most two lines (`line-clamp-2`, via the lib's `ClampedName`) and shows the full name in a tooltip only once it is clipped, and the name takes the whole row when there is no version. Favorites cards (`AppIdentity` size `lg`) are narrower still, so there the version leaves the name row for the meta row below it, alongside the last-used time and the favorite star, and the name always takes the whole row ([#9325](https://github.com/epam/ai-dial-chat/issues/9325)). The catalog list's Name cell (`NameCellRenderer`) wraps a long name the same way within its 60px row instead of truncating it to one line ([#9121](https://github.com/epam/ai-dial-chat/issues/9121)). A selector row is `h-auto` and can spend a second line instead.
 
 #### Scenario: A version that fits is shown in full
 

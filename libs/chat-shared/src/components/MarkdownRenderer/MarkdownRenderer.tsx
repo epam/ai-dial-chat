@@ -21,8 +21,10 @@ import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownConte
 import { CodeBlockTheme } from '../../types/code-editor';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { preprocessLaTeX } from '../../utils/latex';
+import { rehypeRawAsText } from '../../utils/markdown-html';
 import { mergeClasses } from '../../utils/merge-class';
 import { MarkdownCodeBlock } from './CodeBlock/CodeBlock';
+import { rehypePreserveSpaces } from './markdown-whitespace';
 import styles from './MarkdownRenderer.module.scss';
 import { MarkdownMathBlock } from './Math/MarkdownMathBlock';
 import {
@@ -114,6 +116,8 @@ export interface MarkdownRendererProps {
   urlTransform?: (url: string) => string;
   /** Extra rehype plugins, applied after the built-in KaTeX pass. Defaults to none. */
   rehypePlugins?: NonNullable<Options['rehypePlugins']>;
+  /** When `false`, raw HTML in `content` renders as literal text instead of being parsed into elements. Defaults to `true`. */
+  isRawHtmlEnabled?: boolean;
   /**
    * Label shown with a shimmer animation while `isStreaming` is true and no content has arrived yet.
    * Defaults to `'Thinking'`. Pass a translated string from the consuming app.
@@ -247,6 +251,14 @@ const mathMLAttributes: Record<string, string[]> = {
  */
 const preKatexRehypePlugins: NonNullable<Options['rehypePlugins']> = [
   rehypeRaw,
+];
+
+/*
+ * Replaces `rehypeRaw` when raw HTML is disabled: `rehypeSanitize` drops
+ * `raw` nodes outright, so they are turned into text before it runs.
+ */
+const rawAsTextRehypePlugins: NonNullable<Options['rehypePlugins']> = [
+  rehypeRawAsText,
 ];
 
 /**
@@ -514,7 +526,7 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'decoration-current/60 break-words underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
+        'break-words underline decoration-current/60 underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
         styles.link,
         cn.link,
       )}
@@ -582,7 +594,7 @@ const buildMarkdownComponents = (
     <th
       scope="col"
       className={mergeClasses(
-        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words px-3 py-2.5 text-start',
+        'sticky top-0 z-[2] max-w-96 px-3 py-2.5 text-start break-words whitespace-normal',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
@@ -597,7 +609,7 @@ const buildMarkdownComponents = (
   td: ({ children, node }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal px-3 py-[7px] align-top [overflow-wrap:anywhere]',
+        'max-w-96 px-3 py-[7px] align-top [overflow-wrap:anywhere] whitespace-normal',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,
@@ -620,6 +632,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     components,
     urlTransform,
     rehypePlugins = EMPTY_REHYPE_PLUGINS,
+    isRawHtmlEnabled = true,
     thinkingLabel = 'Thinking',
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
@@ -681,17 +694,20 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
 
     /*
      * Pipeline order matters: raw HTML is re-parsed first, KaTeX (once loaded)
-     * turns math spans into MathML, and sanitization runs last over everything
-     * both passes produced.
+     * turns math spans into MathML, sanitization runs over everything both
+     * passes produced, and space runs are then preserved on the sanitized tree.
+     * With raw HTML disabled, raw nodes become literal text instead of being
+     * re-parsed.
      */
     const effectiveRehypePlugins = useMemo(
       () => [
-        ...preKatexRehypePlugins,
+        ...(isRawHtmlEnabled ? preKatexRehypePlugins : rawAsTextRehypePlugins),
         ...(katexPlugin ? [katexPlugin] : []),
         sanitizeRehypePlugin,
+        rehypePreserveSpaces,
         ...rehypePlugins,
       ],
-      [katexPlugin, rehypePlugins],
+      [isRawHtmlEnabled, katexPlugin, rehypePlugins],
     );
 
     const cssVars = buildCssVars({

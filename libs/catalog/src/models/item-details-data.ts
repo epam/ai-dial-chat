@@ -3,6 +3,7 @@ import type {
   CatalogContentPreviewType,
 } from '../types/catalog-content-type';
 import type { CodeLanguage } from '../types/code-language';
+import type { CatalogPricingUnit } from '../types/pricing-unit';
 import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemOverview } from './item-overview';
 
@@ -125,8 +126,10 @@ export interface CatalogItemLimits {
 
 /** Complete data for the Pricing tab. */
 export interface CatalogItemPricing {
-  /** Token price rows (input, output, cached, batch). */
+  /** Price rows (input, output, cached, batch). */
   prices?: PricingRow[];
+  /** Billing unit the price rows are quoted in; picks the section heading. Defaults to `CatalogPricingUnit.Token`. */
+  unit?: CatalogPricingUnit;
   /** Usage limit rows (daily, weekly, monthly). */
   limits?: UsageLimitRow[];
 }
@@ -159,6 +162,28 @@ export interface ToolDefinition {
   inputParams?: ToolInputParam[];
   /** Tool annotations. */
   annotations?: ToolAnnotation[];
+}
+
+/** Visible strings of the Tools tab; every field has an English default. */
+export interface ToolsLabels {
+  /** Input-parameters grid, name column. Default: `'Name'`. */
+  inputName: string;
+  /** Input-parameters grid, type column. Default: `'Type'`. */
+  inputType: string;
+  /** Input-parameters grid, required column. Default: `'Required'`. */
+  inputRequired: string;
+  /** Annotations grid, key column. Default: `'Key'`. */
+  annotationKey: string;
+  /** Annotations grid, value column. Default: `'Value'`. */
+  annotationValue: string;
+  /** Placeholder and accessible name of the tools search field. Default: `'Search...'`. */
+  searchPlaceholder: string;
+  /** Accessible name of the search field's clear button. Default: `'Clear search'`. */
+  searchClearLabel: string;
+  /** Returns the count text above the list, given the number of tools shown. Default: ``(count) => `${count} tools` ``. */
+  toolCount: (count: number) => string;
+  /** Text shown when the search matches no tool. Default: `'No results found'`. */
+  noResults: string;
 }
 
 /** Complete data for the Tools tab (Toolset entities only). */

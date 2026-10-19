@@ -146,13 +146,24 @@ describe('canPublishCredentials', () => {
     ).toBe(true);
   });
 
-  it('is true for an API-key toolset signed in at the user level', () => {
+  it('is true for an API-key toolset signed in at the global level', () => {
+    expect(
+      canPublishCredentials({
+        authenticationType: ToolsetAuthenticationType.ApiKey,
+        globalStatus: CredentialStatus.SignedIn,
+      }),
+    ).toBe(true);
+  });
+
+  /* Core copies only the global credential, so a user-level one has nothing to pass on. */
+  it('is false when signed in at the user level only', () => {
     expect(
       canPublishCredentials({
         authenticationType: ToolsetAuthenticationType.ApiKey,
         userStatus: CredentialStatus.SignedIn,
+        globalStatus: CredentialStatus.SignedOut,
       }),
-    ).toBe(true);
+    ).toBe(false);
   });
 });
 

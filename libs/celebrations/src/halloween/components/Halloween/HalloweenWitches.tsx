@@ -135,7 +135,7 @@ const HalloweenWitches: FC = () => {
       ref={hostRef}
       className={mergeClasses(
         styles.scene,
-        'pointer-events-none absolute inset-0 select-none overflow-clip',
+        'pointer-events-none absolute inset-0 overflow-clip select-none',
       )}
       aria-hidden="true"
       inert

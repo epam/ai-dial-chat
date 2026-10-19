@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { IsValidFilePath } from '../../files/dto/file-path.validator';
+import { IsDialResourceId } from '../../common/validators/dial-resource-id.validator';
 import { IsCatalogResourcePath } from './catalog-resource-path.validator';
 
 /** Request body for `POST /api/v1/share/revoke`. */
@@ -12,7 +12,7 @@ export class RevokeSharedAccessDto {
   })
   @IsString()
   @IsNotEmpty()
-  @IsValidFilePath()
+  @IsDialResourceId()
   @IsCatalogResourcePath()
   @MaxLength(2048)
   itemId!: string;

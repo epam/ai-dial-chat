@@ -1,10 +1,13 @@
 import {
+  ConversationErrorCode,
   ResponseError,
   type ConversationListItemDto,
   type DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
   deriveConversationRowActionState,
+  findDeploymentByIdOrReference,
+  findDeploymentForConversationId,
   getApiErrorDetails,
   getConversationPath,
   safeDecodeURIComponent,
@@ -26,10 +29,8 @@ import {
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  ConfirmationDialog,
-  ConfirmationIdentityCard,
-  ConfirmationIdentityRow,
   ConversationTransferErrorCode,
+  DeleteConfirmationDialog,
   FilterTab,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
@@ -46,6 +47,7 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ErrorMessageNotification,
   Popup,
   PopupSize,
   RadioGroup,
@@ -103,6 +105,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';
+import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTransferQueueLabels } from '../../hooks/useTransferQueueLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -201,6 +204,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
+  const deleteConfirmationLabels = useDeleteConfirmationLabels();
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -377,8 +381,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     onError: handleImportError,
   });
 
-  const { items: deployments, isLoading: isDeploymentsLoading } =
-    useDeployments();
+  const {
+    items: deployments,
+    isLoading: isDeploymentsLoading,
+    selectedItemId,
+  } = useDeployments();
 
   const panelActiveConversationId = useActiveConversationSync({
     activeConversationId,
@@ -728,6 +735,24 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       );
       const history = getPublishHistory(conversationPath);
       const recipients = getRecipientsCount(contextId);
+      /*
+       * A duplicate, share link or published copy would put a model hidden
+       * via HIDDEN_ENTITY_TAGS back to work, so a row on one offers none of
+       * them ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)).
+       * The path only records the model a conversation was created with; for
+       * the open one the picker's selection is the model it uses now, so a
+       * conversation switched onto (or off) a hidden model is judged by that.
+       * Other rows fall back to the path, and the backend refuses the rest.
+       */
+      const activeIdAtRender = panelActiveConversationIdRef.current;
+      const isActiveRow =
+        activeIdAtRender != null &&
+        conversationIdsMatch(panelItem.id, activeIdAtRender);
+      const rowDeployment =
+        isActiveRow && selectedItemId
+          ? findDeploymentByIdOrReference(deployments, selectedItemId)
+          : findDeploymentForConversationId(deployments, contextId);
+      const isModelHidden = !!rowDeployment?.isHidden;
 
       const {
         isReadonly: isReadonlyItem,
@@ -793,9 +818,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             );
             navigate(getConversationRoute(newPath));
           } catch (error) {
-            const { traceId } = await getApiErrorDetails(error);
+            const { traceId, code } = await getApiErrorDetails(error);
+            /* The row only knows the model from the path, which keeps the
+               model the chat was created with; the server checks the model
+               it uses now and refuses a hidden one (#9183). */
             showErrorNotification({
-              message: t(ConversationPanelI18nKeys.DuplicateError),
+              message: t(
+                code === ConversationErrorCode.ConversationDuplicateModelHidden
+                  ? ConversationPanelI18nKeys.DuplicateUnavailableModel
+                  : ConversationPanelI18nKeys.DuplicateError,
+              ),
               requestId: traceId,
             });
           }
@@ -832,9 +864,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       };
 
       const exportActions = isConversationExportHidden ? [] : [exportAction];
+      const duplicateActions = isModelHidden ? [] : [duplicateAction];
 
       if (isReadonlyItem) {
-        const readonlyActions = [pinAction, duplicateAction, ...exportActions];
+        const readonlyActions = [
+          pinAction,
+          ...duplicateActions,
+          ...exportActions,
+        ];
         if (rawItem?.sharedWithMe) {
           readonlyActions.push({
             key: 'unshare',
@@ -870,9 +907,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               rowActionsTriggerRef.current,
             ),
         },
-        duplicateAction,
+        ...duplicateActions,
         ...exportActions,
-        ...(isConversationsSharingEnabled
+        ...(isConversationsSharingEnabled && !isModelHidden
           ? [
               {
                 key: 'share',
@@ -896,7 +933,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
          * place. Republishing an already-published conversation therefore means
          * unpublishing it first — the trade the single-state menu buys.
          */
-        ...(isConversationsPublishingEnabled && publishedFolders.length === 0
+        ...(isConversationsPublishingEnabled &&
+        publishedFolders.length === 0 &&
+        !isModelHidden
           ? [
               {
                 key: 'publish',
@@ -1011,6 +1050,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [
       toContextId,
       getRawItem,
+      deployments,
+      selectedItemId,
       t,
       pinConversation,
       duplicateConversation,
@@ -1356,7 +1397,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onChange={handleImportFileChange}
       />
 
-      <div className="fixed bottom-4 end-4 z-[70] flex flex-col-reverse gap-2">
+      <div className="fixed end-4 bottom-4 z-[70] flex flex-col-reverse gap-2">
         <TransferQueue
           title={importQueueTitle}
           items={importQueueItems}
@@ -1373,24 +1414,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         />
       </div>
 
-      <ConfirmationDialog
+      <DeleteConfirmationDialog
         open={isDeletePending}
         title={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
-        variant={ConfirmationPopupVariant.Danger}
-        identity={
-          <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
-            <ConfirmationIdentityRow
-              icon={
-                <IconMessageCircle
-                  size={DIAL_ICON_SIZE.MD}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  aria-hidden
-                />
-              }
-              typeLabel={t(ConversationPanelI18nKeys.TypeLabel)}
-              name={pendingDeleteTitle}
-            />
-          </ConfirmationIdentityCard>
+        names={[pendingDeleteTitle]}
+        icon={
+          <IconMessageCircle
+            size={DIAL_ICON_SIZE.MD}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+          />
         }
         message={
           <Trans
@@ -1399,16 +1432,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             components={CONFIRMATION_BOLD_COMPONENTS}
           />
         }
-        consequences={[t(BasicI18nKeys.ConsequenceCannotBeUndone)]}
-        confirmLabel={t(ButtonsI18nKeys.Delete)}
-        cancelLabel={t(ButtonsI18nKeys.Cancel)}
+        labels={deleteConfirmationLabels}
         isLoading={isDeleting}
-        loadingStatusLabel={t(BasicI18nKeys.DeletingStatus)}
         onConfirm={handleConfirmDelete}
         onClose={handleCloseDeleteDialog}
       >
-        {deleteError && <span className="block text-error">{deleteError}</span>}
-      </ConfirmationDialog>
+        {deleteError && <ErrorMessageNotification message={deleteError} />}
+      </DeleteConfirmationDialog>
 
       <ConfirmationPopup
         open={isUnpublishPending}
@@ -1478,9 +1508,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               })}
             </span>
             {unshareError && (
-              <span role="alert" className="mt-1 block text-error">
-                {unshareError}
-              </span>
+              <ErrorMessageNotification
+                className="mt-3"
+                message={unshareError}
+              />
             )}
           </>
         }
@@ -1504,9 +1535,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
               })}
             </span>
             {revokeError && (
-              <span role="alert" className="mt-1 block text-error">
-                {revokeError}
-              </span>
+              <ErrorMessageNotification
+                className="mt-3"
+                message={revokeError}
+              />
             )}
           </>
         }

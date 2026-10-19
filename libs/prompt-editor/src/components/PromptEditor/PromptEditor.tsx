@@ -8,6 +8,7 @@ import {
 } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  ConfirmationDialog,
   MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
@@ -15,8 +16,15 @@ import {
   TextRefinementField,
   useAvailableHeightCap,
   useTextRefinement,
+  useUnsavedChangesGuard,
 } from '@epam/ai-dial-chat-shared';
-import { Label, NeutralButton, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  ConfirmationPopupVariant,
+  ErrorText,
+  Label,
+  NeutralButton,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
@@ -97,10 +105,13 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   contentMaxLength = DEFAULT_CONTENT_MAX_LENGTH,
   counterAnnounceThreshold = DEFAULT_ANNOUNCE_THRESHOLD,
   onSubmit,
+  onFieldChange,
   onCancel,
   onBack = onCancel,
+  onDirtyChange,
   onRetry,
   onRefineDescription,
+  onRefineInstructions,
   labels,
   markdownEditorTheme,
   styles: editorStyles,
@@ -111,10 +122,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   const helperTextClassName =
     typography?.helperTextClassName ?? 'dial-small-text';
 
-  const [values, setValues] = useState<PromptEditorValues>({
-    ...EMPTY_VALUES,
-    ...initialValues,
-  });
+  /* The values the form was last seeded with; unsaved edits are measured against them. */
+  const seededValues = useMemo<PromptEditorValues>(
+    () => ({ ...EMPTY_VALUES, ...initialValues }),
+    [initialValues],
+  );
+  const [values, setValues] = useState<PromptEditorValues>(seededValues);
   const contentLabelId = useId();
   const contentEditorId = useId();
   const contentEditorCapRef = useAvailableHeightCap<HTMLDivElement>({
@@ -124,8 +137,8 @@ export const PromptEditor: FC<PromptEditorProps> = ({
 
   /* Hosts that load asynchronously re-seed the form through `initialValues`. */
   useEffect(() => {
-    setValues({ ...EMPTY_VALUES, ...initialValues });
-  }, [initialValues]);
+    setValues(seededValues);
+  }, [seededValues]);
 
   const setField = useCallback(
     <K extends keyof PromptEditorValues>(
@@ -133,8 +146,9 @@ export const PromptEditor: FC<PromptEditorProps> = ({
       value: PromptEditorValues[K],
     ) => {
       setValues((previous) => ({ ...previous, [field]: value }));
+      onFieldChange?.(field, value);
     },
-    [],
+    [onFieldChange],
   );
 
   /* MetadataForm edits the shared deployment shape; the prompt keeps only Name and Description. */
@@ -159,8 +173,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           description: patch.description,
         }),
       }));
+      if (patch.name !== undefined) onFieldChange?.('name', patch.name);
+      if (patch.description !== undefined) {
+        onFieldChange?.('description', patch.description);
+      }
     },
-    [],
+    [onFieldChange],
   );
 
   const metadataErrors = useMemo(
@@ -200,6 +218,16 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     disabled: isSaving,
     resetKey: initialValues,
   });
+  const contentRefinement = useTextRefinement({
+    value: values.content,
+    onChange: (content) => setField('content', content),
+    onRefine: onRefineInstructions,
+    disabled: isSaving,
+    resetKey: initialValues,
+  });
+  /* One refinement per form: while either field refines, both actions and Save are disabled. */
+  const isRefining =
+    descriptionRefinement.isPending || contentRefinement.isPending;
   const renderRefinableDescription = onRefineDescription
     ? (textarea: ReactNode, fieldId: string) => (
         <TextRefinementField
@@ -208,17 +236,46 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           label={labels?.descriptionLabel ?? 'Description'}
           labels={labels}
           refinement={descriptionRefinement}
-          disabled={descriptionRefinement.isPending || isSaving}
+          disabled={isRefining || isSaving}
         >
           {textarea}
         </TextRefinementField>
       )
     : undefined;
 
+  const isDirty =
+    values.name !== seededValues.name ||
+    values.description !== seededValues.description ||
+    values.content !== seededValues.content;
+  /* A host that tracks dirtiness owns the guard, so the built-in one stays inert. */
+  const leaveGuard = useUnsavedChangesGuard(isDirty && !onDirtyChange);
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+  const { guard: guardLeave } = leaveGuard;
+  const { reset: resetDescriptionRefinement } = descriptionRefinement;
+  const { reset: resetContentRefinement } = contentRefinement;
+  const resetRefinement = useCallback(() => {
+    resetDescriptionRefinement();
+    resetContentRefinement();
+  }, [resetDescriptionRefinement, resetContentRefinement]);
+  const handleBack = useCallback(() => {
+    guardLeave(() => {
+      resetRefinement();
+      onBack();
+    });
+  }, [guardLeave, resetRefinement, onBack]);
+  const handleCancel = useCallback(() => {
+    guardLeave(() => {
+      resetRefinement();
+      onCancel();
+    });
+  }, [guardLeave, resetRefinement, onCancel]);
+
   const handleSubmit = useCallback(() => {
-    if (isSaving || descriptionRefinement.isPending) return;
+    if (isSaving || isRefining) return;
     onSubmit(values);
-  }, [isSaving, descriptionRefinement.isPending, onSubmit, values]);
+  }, [isSaving, isRefining, onSubmit, values]);
 
   /* MetadataForm moves focus to an invalid Name or Description itself; this
    * covers the case where only Instructions is invalid. Focus moves only when
@@ -255,6 +312,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
 
   const cssVars = buildCssVars({
     '--pe-content-error': colors?.contentErrorText,
+    '--pe-content-invalid-border': colors?.contentInvalidBorder,
   });
 
   const editorProps = {
@@ -320,90 +378,138 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   const buildCounterMessage = (count: number) =>
     labels?.charactersRemaining?.(count) ?? `${count} characters remaining`;
 
-  return (
-    <EntityEditor
-      {...editorProps}
-      isSubmitting={isSaving}
-      isSubmitDisabled={descriptionRefinement.isPending}
-      metadataSectionClassName={mergeClasses(
-        FORM_CLASS_NAME,
-        PROMPT_EDITOR_CLASS.form,
+  const contentLabel = labels?.contentLabel ?? 'Instructions';
+  const contentEditor = (
+    <div
+      ref={contentEditorCapRef}
+      className={mergeClasses(
+        MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+        MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
+        MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+        errors?.content != null && styles.contentInvalid,
       )}
-      metadata={
-        <>
-          <MetadataForm
-            values={metadataValues}
-            errors={metadataErrors}
-            onChange={handleMetadataChange}
-            fields={METADATA_FIELDS}
-            renderDescription={renderRefinableDescription}
-            labels={metadataLabels}
+    >
+      <Suspense
+        fallback={
+          <Spinner
+            ariaLabel={
+              labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
+            }
           />
-          <div
-            role="group"
-            aria-labelledby={contentLabelId}
-            className="flex flex-1 flex-col gap-2"
-            style={cssVars}
-          >
-            {/*
-             * htmlFor is what names the editor's textarea; without it the
-             * label is only visible text sitting above an unnamed control.
-             */}
-            <Label
-              id={contentLabelId}
-              htmlFor={contentEditorId}
-              label={labels?.contentLabel ?? 'Instructions'}
-              required
-              className={contentLabelClassName}
-            />
-            <div
-              ref={contentEditorCapRef}
-              className={mergeClasses(
-                MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-                MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
-                MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
-              )}
-            >
-              <Suspense
-                fallback={
-                  <Spinner
-                    ariaLabel={
-                      labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
-                    }
-                  />
-                }
-              >
-                <MarkdownEditor
-                  id={contentEditorId}
-                  value={values.content}
-                  onChange={(value) => setField('content', value)}
-                  height={480}
-                  placeholder={
-                    labels?.contentPlaceholder ??
-                    'Write the prompt instructions'
-                  }
-                  theme={markdownEditorTheme}
-                />
-              </Suspense>
-            </div>
-            {errors?.content != null && (
-              <p
-                className={mergeClasses(
-                  helperTextClassName,
-                  styles.contentError,
-                )}
-              >
-                {errors.content}
-              </p>
-            )}
-          </div>
-          <span role="status" aria-live="polite" className="sr-only">
-            {descriptionRemaining != null &&
-              buildCounterMessage(descriptionRemaining)}
-            {contentRemaining != null && buildCounterMessage(contentRemaining)}
-          </span>
-        </>
-      }
+        }
+      >
+        <MarkdownEditor
+          id={contentEditorId}
+          value={values.content}
+          onChange={(value) => setField('content', value)}
+          height={480}
+          placeholder={
+            labels?.contentPlaceholder ?? 'Write the prompt instructions'
+          }
+          theme={markdownEditorTheme}
+          showDragbar={false}
+        />
+      </Suspense>
+    </div>
+  );
+  const contentError = (
+    <ErrorText
+      text={errors?.content}
+      className={mergeClasses(helperTextClassName, styles.contentError)}
     />
+  );
+
+  return (
+    <>
+      <EntityEditor
+        {...editorProps}
+        onBack={handleBack}
+        onCancel={handleCancel}
+        isSubmitting={isSaving}
+        isSubmitDisabled={isRefining}
+        metadataSectionClassName={mergeClasses(
+          FORM_CLASS_NAME,
+          PROMPT_EDITOR_CLASS.form,
+        )}
+        metadata={
+          <>
+            <MetadataForm
+              values={metadataValues}
+              errors={metadataErrors}
+              onChange={handleMetadataChange}
+              fields={METADATA_FIELDS}
+              renderDescription={renderRefinableDescription}
+              labels={metadataLabels}
+              descriptionCaption={
+                values.description
+                  ? `${values.description.length}/${descriptionMaxLength}`
+                  : undefined
+              }
+            />
+            {onRefineInstructions ? (
+              <div className="flex flex-1 flex-col" style={cssVars}>
+                <TextRefinementField
+                  isEnabled
+                  fieldId={contentEditorId}
+                  label={contentLabel}
+                  labelClassName={contentLabelClassName}
+                  required
+                  labels={labels}
+                  refinement={contentRefinement}
+                  disabled={isRefining || isSaving}
+                >
+                  <div className="flex flex-col gap-2">
+                    {contentEditor}
+                    {contentError}
+                  </div>
+                </TextRefinementField>
+              </div>
+            ) : (
+              <div
+                role="group"
+                aria-labelledby={contentLabelId}
+                className="flex flex-1 flex-col gap-2"
+                style={cssVars}
+              >
+                {/*
+                 * htmlFor is what names the editor's textarea; without it the
+                 * label is only visible text sitting above an unnamed control.
+                 */}
+                <Label
+                  id={contentLabelId}
+                  htmlFor={contentEditorId}
+                  label={contentLabel}
+                  required
+                  className={contentLabelClassName}
+                />
+                {contentEditor}
+                {contentError}
+              </div>
+            )}
+            <span role="status" aria-live="polite" className="sr-only">
+              {descriptionRemaining != null &&
+                buildCounterMessage(descriptionRemaining)}
+              {contentRemaining != null &&
+                buildCounterMessage(contentRemaining)}
+            </span>
+          </>
+        }
+      />
+      {leaveGuard.isConfirmOpen && (
+        <ConfirmationDialog
+          open
+          title={labels?.discardTitle ?? 'Discard unsaved changes?'}
+          message={
+            labels?.discardMessage ??
+            'You have unsaved changes. Leaving now will discard them.'
+          }
+          confirmLabel={labels?.discardConfirmLabel ?? 'Discard'}
+          cancelLabel={labels?.discardCancelLabel ?? 'Keep editing'}
+          variant={ConfirmationPopupVariant.Danger}
+          onConfirm={leaveGuard.confirm}
+          onClose={leaveGuard.dismiss}
+        />
+      )}
+    </>
   );
 };

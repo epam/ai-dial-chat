@@ -1,4 +1,4 @@
-import type { RequestSkill } from '@epam/ai-dial-chat-shared';
+import type { RequestSkill, TextSegment } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   HighlightedTextRange,
@@ -101,6 +101,13 @@ export interface UseSkillSelectorOverlayOptions {
    */
   historyChipLabelClassName?: string;
   /**
+   * Class applied to the label of each mention rendered in an active composer.
+   * Pass color classes only: the label inherits the input's own font, which
+   * keeps it exactly as wide as the invisible text under it. Defaults to
+   * `'text-accent'`.
+   */
+  activeMentionLabelClassName?: string;
+  /**
    * Trigger used by mentions rendered in an active composer. Unset retains
    * `ChatSkill`'s hover-and-focus default; history chips are unaffected.
    */
@@ -111,6 +118,8 @@ export interface UseSkillSelectorOverlayOptions {
    * layouts, where hover never fires.
    */
   historyDetailsTrigger?: ChatSkillDetailsTrigger;
+  /** Forwarded to the Add-menu and slash-menu favorites panels' `isRowTooltipHidden`. Defaults to `false`. */
+  isRowTooltipHidden?: boolean;
   /**
    * Renders the browse modal's picker content (e.g. a host catalog view);
    * receives the selection and close callbacks to wire into it, and is
@@ -234,8 +243,17 @@ export interface UseSkillSelectorOverlayResult {
     skills: RequestSkill[] | undefined,
   ) => void;
   /**
+   * Marks `text` as about to be inserted into the composer (e.g. a picked
+   * prompt): once the insertion reaches `onDraftChange`, every `/{name}` run
+   * in it that names a listed skill becomes a tracked mention. Call right
+   * before handing `text` to the composer's insertion channel. A no-op on a
+   * deployment without skills support. A paste into the input goes through
+   * the same recognition via `commandMenu.onTextPaste`.
+   */
+  recognizeMentionsInInsertion: (text: string) => void;
+  /**
    * Renders a user message's `content` and `custom_content.skills` as an
-   * ordered array interleaving plain-text runs and `ChatSkill` elements at
+   * ordered array interleaving markdown string runs and `ChatSkill` segments (each with its matched `/{name}` text) at
    * each mention's actual text position — for `UserMessageBubble`'s
    * `textSegments` prop. Resolves each entry's name from the listing pools
    * matched on its url, falling back to the url's last non-empty segment;
@@ -251,7 +269,7 @@ export interface UseSkillSelectorOverlayResult {
   renderHistorySkillSegments: (
     content: string,
     skills: RequestSkill[] | undefined,
-  ) => ReactNode[] | null;
+  ) => TextSegment[] | null;
   /**
    * Renders every entry of `skills` as a flat list of `ChatSkill` elements,
    * ignoring text position — for `AssistantMessageBubble`'s `beforeContent`

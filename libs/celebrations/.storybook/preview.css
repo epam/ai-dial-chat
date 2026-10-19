@@ -1,2 +1,6 @@
 /* Utilities the scenes use in TSX; the published build adds them to index.css. */
-@tailwind utilities;
+@import 'tailwindcss/theme.css' theme(reference inline);
+@import '../../../tools/tailwind/theme.css';
+@import 'tailwindcss/utilities.css' source(none);
+
+@source '../src/**/*.{ts,tsx}';

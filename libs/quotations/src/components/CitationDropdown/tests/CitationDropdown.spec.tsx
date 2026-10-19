@@ -56,6 +56,7 @@ const Wrapper = (props: {
   isPreviewable?: (annotation: Annotation) => boolean;
   onOpenInBrowser: (annotation: Annotation) => void;
   isPreviewOpen?: boolean;
+  previewFilesOnMarkerClick?: boolean;
 }) => {
   const citationCard = useCitationCard();
   return (
@@ -167,6 +168,126 @@ describe('CitationDropdown', () => {
     await userEvent.click(screen.getByRole('button'));
     expect(onPreview).toHaveBeenCalledExactlyOnceWith(group.primaryAnnotation);
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  describe('with previewFilesOnMarkerClick', () => {
+    const makeSourceGroup = (type: string): AnnotationGroup => {
+      const group = makeGroup();
+      const annotation: Annotation = {
+        body: {
+          ...group.primaryAnnotation.body,
+          title: 'report.pdf',
+          source: {
+            type: 'attachment',
+            attachment: { type, url: 'files/bucket/report' },
+          },
+        },
+      };
+      return {
+        ...group,
+        annotations: [annotation],
+        primaryAnnotation: annotation,
+      };
+    };
+
+    it('previews a file source directly without showing the card', async () => {
+      const group = makeSourceGroup('application/pdf');
+      const onPreview = vi.fn();
+      render(
+        <Wrapper
+          group={group}
+          onPreview={onPreview}
+          onOpenInBrowser={vi.fn()}
+          previewFilesOnMarkerClick
+        />,
+      );
+      await userEvent.click(screen.getByRole('button'));
+      expect(onPreview).toHaveBeenCalledExactlyOnceWith(
+        group.primaryAnnotation,
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('previews a file source when the marker is activated from the keyboard', async () => {
+      const group = makeSourceGroup('application/pdf');
+      const onPreview = vi.fn();
+      render(
+        <Wrapper
+          group={group}
+          onPreview={onPreview}
+          onOpenInBrowser={vi.fn()}
+          previewFilesOnMarkerClick
+        />,
+      );
+      screen.getByRole('button').focus();
+      await userEvent.keyboard('{Enter}');
+      expect(onPreview).toHaveBeenCalledExactlyOnceWith(
+        group.primaryAnnotation,
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('still opens the card for a web-link source', async () => {
+      const onPreview = vi.fn();
+      render(
+        <Wrapper
+          group={makeSourceGroup('text/html')}
+          onPreview={onPreview}
+          onOpenInBrowser={vi.fn()}
+          previewFilesOnMarkerClick
+        />,
+      );
+      await userEvent.click(screen.getByRole('button'));
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(onPreview).not.toHaveBeenCalled();
+    });
+
+    it('still opens the card when the file source is not previewable', async () => {
+      render(
+        <Wrapper
+          group={makeSourceGroup('application/pdf')}
+          onPreview={vi.fn()}
+          isPreviewable={() => false}
+          onOpenInBrowser={vi.fn()}
+          previewFilesOnMarkerClick
+        />,
+      );
+      await userEvent.click(screen.getByRole('button'));
+      expect(screen.getByRole('dialog')).toBeTruthy();
+    });
+
+    it('still opens the card for a file group with several citations', async () => {
+      const single = makeSourceGroup('application/pdf');
+      const second: Annotation = {
+        body: { ...single.primaryAnnotation.body, quote: 'Second quote' },
+      };
+      const onPreview = vi.fn();
+      render(
+        <Wrapper
+          group={{ ...single, annotations: [single.primaryAnnotation, second] }}
+          onPreview={onPreview}
+          onOpenInBrowser={vi.fn()}
+          previewFilesOnMarkerClick
+        />,
+      );
+      await userEvent.click(screen.getByRole('button'));
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(onPreview).not.toHaveBeenCalled();
+    });
+
+    it('opens the card for a file source when the flag is omitted', async () => {
+      const onPreview = vi.fn();
+      render(
+        <Wrapper
+          group={makeSourceGroup('application/pdf')}
+          onPreview={onPreview}
+          onOpenInBrowser={vi.fn()}
+        />,
+      );
+      await userEvent.click(screen.getByRole('button'));
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(onPreview).not.toHaveBeenCalled();
+    });
   });
 
   it('still opens the card when the preview panel is open but the annotation is not previewable', async () => {

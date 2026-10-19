@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.39 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.11 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -251,11 +251,58 @@ navigation (a category tree, etc.).
 />
 ```
 
+#### Mobile browse settings
+
+Below the desktop breakpoint (`useIsMobile` from `@epam/ai-dial-chat-shared`)
+the Browse toolbar drops the view toggle, the sort dropdown and the filter
+dropdown. In their place, next to the search field, it shows one settings
+button that opens a bottom sheet with View, Sorting and Filtering pages.
+
+- View and sort apply as soon as they are picked.
+- Filters stay buffered until Apply, as on desktop.
+- The button shows a dot while a topic or the "My" filter is applied.
+
+Each sheet string is an optional entry of `titles.browseSettings`
+(`BrowseSettingsSheetLabels`). `myApps` and `topics` fall back to
+`titles.filterMyAppsLabel` and `titles.filterTopicsLabel`. On desktop, `clear`
+and `apply` also label the filter dropdown's footer.
+
+```tsx
+import type { BrowseSettingsSheetLabels } from '@epam/ai-dial-catalog';
+
+const browseSettings: Partial<BrowseSettingsSheetLabels> = {
+  title: 'Browse settings',
+  formatFilterCount: (selected, total) => `${selected} of ${total}`,
+};
+
+<Catalog items={items} titles={{ browseSettings }} />;
+```
+
 #### Custom empty state
 
 By default, the Browse section renders a `PanelEmptyState` (an icon plus
 `titles.noResultsTitle`) when the current search/filter/tab combination
-matches nothing. Pass `renderEmptyState` to replace it with any node — e.g. a
+matches nothing. While the "My Apps" filter is on with no search query and no
+topic filter, it instead renders a personal empty state: the heading from
+`titles.myAppsEmptyTitle(activeTab)`, the `titles.myAppsEmptyDescription` line
+and — unless the catalog is read-only or `hideCreateButton` is set — the same
+Create button as the page header, in its secondary variant. Pass
+`createMenuByTab` to narrow that button to the active tab's type: a single
+option runs directly, several open a menu, and a tab with no entry (e.g. models,
+which are never personal) keeps the default empty state instead:
+
+```tsx
+<Catalog
+  items={catalogItems}
+  favorites={favoriteItems}
+  titles={{
+    myAppsEmptyTitle: (activeTab) => `No personal ${activeTab}s yet`,
+    myAppsEmptyDescription: "Create your first one, it'll show up right here.",
+  }}
+/>
+```
+
+Pass `renderEmptyState` to replace either default with any node — e.g. a
 richer illustration, description, and a scoped "Create" call to action:
 
 ```tsx
@@ -342,7 +389,7 @@ import { Card } from '@epam/ai-dial-catalog';
 />;
 ```
 
-The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details.
+The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details. When the clamp actually hides text, hovering the description opens an interactive panel (the kit `InteractiveTooltip`) with the full Markdown; it stays open while the pointer moves into it, its links are clickable, and clicks inside it never open the card. The panel is capped at the viewport height and scrolls, so a description longer than the screen stays readable to the end ([#9363](https://github.com/epam/ai-dial-chat/issues/9363)); a description that fits gets no panel.
 
 The "Featured" chip's colors follow the item's entity type by default. Override
 it for every entity type with `styles.colors.featuredChipStyle` (merged over
@@ -390,6 +437,40 @@ and in the accessible name — a breadcrumb of the whole path collapses into
 unreadable per-segment stubs at this width. `styles.typography.folderClassName`
 styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
 `styles.colors.folderIcon` the leading folder icon.
+
+#### Multiple selection
+
+`selectionMode={CatalogSelectionMode.Multiple}` adds a leading checkbox column
+with a select-all checkbox in its header. The selection is controlled: pass the
+selected ids and update them from `onSelectionChange`.
+
+```tsx
+import { CatalogSelectionMode, ListView } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+<ListView
+  type={CatalogEntityType.Skill}
+  items={filteredItems}
+  selectionMode={CatalogSelectionMode.Multiple}
+  selectedItemIds={selectedIds}
+  onSelectionChange={setSelectedIds}
+  selectRowAriaLabel={(item) => t('catalog.selectItem', { name: item.name })}
+  selectAllAriaLabel={t('catalog.selectAll')}
+/>;
+```
+
+- A row toggles from its checkbox, a click on any other cell except the
+  Favorite star, or Space on one of its cells. `onItemClick` still fires on a
+  row click.
+- `onSelectionChange` receives a new `Set` with newly selected ids appended, so
+  its iteration order is the order the user selected items in.
+- Select-all covers every entry of `items` — not only the rows windowed into
+  the grid — and keeps selected ids that are not in `items` (e.g. filtered out
+  by the host). Its checkbox is mixed while only some listed items are selected.
+- `selectedItemId`'s single-row highlight is not drawn in this mode.
+- The label props default to `Select <item name>` and `'Select all'`.
 
 ### Favorites
 
@@ -577,6 +658,138 @@ and `footerClassName` each default to a `dial-*-text` scale class, and
 `colors` (`LimitsTabColors`) maps to the CSS custom properties the stylesheet
 reads. See `LimitsTabProps` in the Types section.
 
+### Embedding the other details tabs
+
+`AboutTab`, `OverviewTab`, `PricingTab` and `ToolsTab` are the components
+`DetailsPanel` renders on its About, Overview, Pricing and Tools tabs. Together
+with `ContentTab` and `LimitsTab` they let a host show a catalog item's details
+inside its own surface (a popup, a side sheet) without the panel. They are
+presentation-only: they render the `CatalogItem` fields and `details` they are
+given, and every visible string comes from their props, with English defaults
+where one exists. `OverviewTab` also takes an optional
+`sectionContainerClassName` for the wrapper around each section's table
+(default `'px-6'`), so a host surface with its own padding can pass `''`.
+
+`getCatalogDetailsTabs` (also on `@epam/ai-dial-catalog/mapping`) returns the
+tabs the panel would show for an item, in order: About unless the item is
+content-first, Content, then Overview, Pricing, Limits and Tools when their data
+is present, and Connect last when the item has a connectable endpoint. Pass
+`{ isConnectHidden: true }` to leave Connect out.
+
+```tsx
+import {
+  AboutTab,
+  CatalogDetailsTab,
+  OverviewTab,
+  ToolsTab,
+  type CatalogItem,
+} from '@epam/ai-dial-catalog';
+import { getCatalogDetailsTabs } from '@epam/ai-dial-catalog/mapping';
+
+const renderPanel = (item: CatalogItem, tab: CatalogDetailsTab) => {
+  switch (tab) {
+    case CatalogDetailsTab.About:
+      return <AboutTab content={item.description} topics={item.topics} />;
+    case CatalogDetailsTab.Overview:
+      return (
+        <OverviewTab
+          sections={item.details?.overview?.sections}
+          sectionClassName="dial-caption-text"
+          labelClassName="dial-small-text"
+          valueClassName="dial-small-text"
+          valueTrueClassName="dial-small-semi-text"
+          yesLabel="Yes"
+          noLabel="No"
+        />
+      );
+    case CatalogDetailsTab.Tools:
+      return (
+        <ToolsTab tools={item.details?.tools} labels={{ inputName: 'Name' }} />
+      );
+    default:
+      return null;
+  }
+};
+
+const tabs = getCatalogDetailsTabs(item, { isConnectHidden: true });
+```
+
+`ToolsTab` opens with a search field that narrows the list by tool name or
+description (case-insensitive), and a count of the tools shown. Its `labels`
+(`ToolsLabels`) sets the grid column headings (`inputName`, `inputType`,
+`inputRequired`, `annotationKey` and `annotationValue`), defaulting to
+`'Name'`, `'Type'`, `'Required'`, `'Key'` and `'Value'`, plus
+`searchPlaceholder` (`'Search...'`), `searchClearLabel` (`'Clear search'`),
+`toolCount` (``(count) => `${count} tools` ``) and `noResults`
+(`'No results found'`). In `DetailsPanel` the same strings come from
+`ItemDetailsTexts`' `toolsSearchPlaceholder`, `toolsSearchClearLabel`,
+`toolsCountLabel` and `toolsNoResultsLabel`.
+
+`PricingTab` takes `pricing` plus the optional `pricesSectionLabel` and
+`limitsSectionLabel`.
+
+### Embedding the header, Connect tab and credentials
+
+The rest of the details view is public for the same hosts:
+
+- `DetailsHeader` is the panel's identity block and action row (`DetailsHeaderProps`). Every action is opt-in and hidden when its prop is absent; with `onLogin` / `onLogout` it renders the toolset credentials action exactly as the panel does, including the personal API-key popover.
+- `ApiTab` is the Connect tab (`ApiTabProps`), rendering `details.api`.
+- `CredentialsBanner` is the note under the header about which credentials are active. `getCredentialsBannerState` (also on `@epam/ai-dial-catalog/mapping`) returns its `CredentialsBannerState`, or `undefined` when no banner applies.
+- `CredentialsApiKeyOverlay` is the personal API-key popover on its own, and `CredentialsManagementPanel` the admin view of personal and organization credentials.
+
+`texts.entityTypeLabels` (shared with `DetailsPanel`) sets the visible type in the
+header per entity type, e.g. translated names; a type without an entry keeps the raw
+value (`TOOLSET`, …).
+
+The host owns the confirmation steps: `DetailsHeader` calls `onRequestLogout` and `CredentialsManagementPanel` calls `onRequestLogout` / `onRequestDeleteApiKey` instead of signing out directly.
+
+```tsx
+import {
+  ApiTab,
+  CredentialsBanner,
+  CredentialsLevel,
+  DetailsHeader,
+  type CatalogItem,
+} from '@epam/ai-dial-catalog';
+import { getCredentialsBannerState } from '@epam/ai-dial-catalog/mapping';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+const ToolsetDetails = ({ item }: { item: CatalogItem }) => {
+  const bannerState =
+    item.credentials != null
+      ? getCredentialsBannerState(item.credentials)
+      : undefined;
+
+  return (
+    <>
+      <DetailsHeader
+        item={item}
+        onLogin={(_, { level, apiKey }) => signIn(item.id, level, apiKey)}
+        onLogout={(_, { level }) => signOut(item.id, level)}
+        texts={{
+          hasPrimaryAction: false,
+          entityTypeLabels: { [CatalogEntityType.Toolset]: 'Toolset' },
+        }}
+      />
+      {item.credentials != null && bannerState != null && (
+        <CredentialsBanner
+          state={bannerState}
+          authenticationType={item.credentials.authenticationType}
+        />
+      )}
+      {item.details?.api != null && <ApiTab api={item.details.api} />}
+    </>
+  );
+};
+
+declare const signIn: (
+  id: string,
+  level: CredentialsLevel,
+  apiKey?: string,
+) => Promise<void>;
+declare const signOut: (id: string, level: CredentialsLevel) => Promise<void>;
+```
+
 ## Enums
 
 ```tsx
@@ -592,6 +805,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   LimitRowLayout,
+  CatalogPricingUnit,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
@@ -619,6 +833,14 @@ DetailsConfirmationKind.Unshare; // 'unshare'
 DetailsConfirmationKind.RevokeAccess; // 'revokeAccess'
 DetailsConfirmationKind.DeleteApiKey; // 'deleteApiKey'
 DetailsConfirmationKind.Unpublish; // 'unpublish'
+
+/*
+ * `CatalogItemPricing.unit` picks the Pricing tab's price heading:
+ * `ItemDetailsTexts.pricingPricesSectionLabel` for tokens (the default),
+ * `pricingCharacterPricesSectionLabel` for characters.
+ */
+CatalogPricingUnit.Token; // 'token'
+CatalogPricingUnit.Character; // 'character'
 ```
 
 ### Details-panel confirmations
@@ -673,9 +895,9 @@ publication to the caller's own session name).
 
 The fifth argument is the credentials opt-in. The panel renders that checkbox
 only for a `Toolset` whose `credentials.authenticationType` is set and is not
-`ToolsetAuthenticationType.None`, and whose `credentials.userStatus` or
-`credentials.globalStatus` is `CredentialStatus.SignedIn` — access the
-publisher does not hold cannot be passed on. No host prop controls this; the
+`ToolsetAuthenticationType.None`, and whose `credentials.globalStatus` is
+`CredentialStatus.SignedIn` — DIAL Core copies only the global credential to
+the published copy, so a user-level sign-in alone has nothing to pass on. No host prop controls this; the
 decision is derived from the item the panel already has, and there is no role
 gate. For every other item the argument is always `false`. It is cleared on
 every open, including immediately after a publication that carried it.

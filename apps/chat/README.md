@@ -288,6 +288,7 @@ apps/chat/
 │   ├── types/                   # Enums and shared types (incl. ROUTES)
 │   ├── utils/                   # App-level utilities
 │   ├── main.tsx                 # Entry point
+│   ├── tailwind.css             # Tailwind entry
 │   └── styles.scss              # Global styles
 └── README.md                    # This file
 ```
@@ -377,7 +378,11 @@ Values that most visibly change this app:
 1. **Tailwind utilities** for layout and spacing — the default.
 2. **SCSS modules** (`*.module.scss`) when a component needs CSS custom
    properties, pseudo-element styling, or state selectors Tailwind cannot reach.
-3. **Global styles** in `src/styles.scss`, which imports Tailwind's layers.
+3. **Global styles**: `src/tailwind.css` is the Tailwind entry (shared theme,
+   preflight, utilities, all unlayered so they load after and win over the
+   kit's stylesheet on source order). It imports the `html`/`body`/`#root`
+   defaults from `src/styles/base.css`; `src/styles.scss` holds the MCP app CSS
+   variables.
 
 The styling contract shared with `libs/*` — CSS variable naming, what belongs in
 a module versus a utility class, and the `styles={{ colors, typography }}` prop
@@ -386,9 +391,9 @@ shape — is in
 
 ### Breakpoints
 
-`tailwind.config.js` defines exactly two named screens:
+`tools/tailwind/theme.css` defines exactly two named variants:
 
-| Screen    | Query               |
+| Variant   | Query               |
 | --------- | ------------------- |
 | `mobile`  | `max-width: 1279px` |
 | `desktop` | `min-width: 1280px` |
@@ -560,6 +565,6 @@ from that iframe opens the same host dialog; no credentials are sent through
 
 ## AI text refinement
 
-Skill and scheduled-task forms opt into Description and Instructions refinement only when the backend returns `config.aiTextRefinementAvailable: true`. The host selects one of four purposes and passes a stable callback, cancellation signal, and translated labels to the libraries. Fields remain editable during requests; editing the active field cancels it. Save waits for refinement, and Undo is local to the current draft.
+Skill, scheduled-task, and prompt forms opt into Description and Instructions refinement, and the application and toolset editors into Description refinement, only when the backend returns `config.aiTextRefinementAvailable: true`. The host selects one of eight `TextRefinementPurpose` values and passes a stable callback, cancellation signal, and translated labels to the libraries. Fields remain editable during requests; editing the active field cancels it. Save waits for refinement, and Undo is local to the current draft.
 
 Run `npm exec -- nx run @epam/chat:test-refinement-browser` for Chromium checks of both forms at 360/900/1280/1920px, in LTR and Arabic RTL, using deterministic callbacks without a live model. Geometry evidence is written to `tmp/text-refinement-browser/geometry.json`.

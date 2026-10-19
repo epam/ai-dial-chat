@@ -143,7 +143,7 @@ const AuthUiModeCase: FC = () => {
 
       <fieldset className="my-4 max-w-[720px] rounded-lg border border-secondary px-3 py-3">
         <legend className="px-1 font-semibold">auth.providerUiModes</legend>
-        <p className="mb-3 mt-1 text-secondary" aria-live="polite">
+        <p className="mt-1 mb-3 text-secondary" aria-live="polite">
           {providerModes.length}{' '}
           {providerModes.length === 1 ? 'provider' : 'providers'} configured
         </p>

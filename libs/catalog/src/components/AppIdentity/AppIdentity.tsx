@@ -5,10 +5,11 @@ import {
   EntityTypeLabel,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { EllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
+import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import { AppIdentityStyles } from '../../models/app-identity-styles';
 import { DeploymentSize } from '../../types/deployment-icon-size';
+import { ClampedName } from '../ClampedName/ClampedName';
 import styles from './AppIdentity.module.scss';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
@@ -17,16 +18,13 @@ export interface AppIdentityProps {
   icon?: string | null;
   /** Entity type — rendered via the shared EntityTypeLabel (plain uppercase text, no pill). */
   type: CatalogEntityType;
-  /** Display name. Truncates when the available width is exceeded. */
+  /** Display name. Wraps onto at most two lines and shows the full name in a tooltip once it is clipped. */
   name: string;
-  /** Version string shown flush-right of the name, aligned to the top of the name. */
+  /** Version string. In size 'sm' it is shown flush-end of the name, which takes up to 66% of the row while the version takes the remaining 34%, a shorter side handing the rest to the other; in size 'lg' it opens the meta row below the name, leaving the name the full row width. */
   version?: string;
-  /**
-   * Relative time string for the last-used row (size 'lg' only).
-   * When undefined, the row is hidden even in size 'lg'.
-   */
+  /** Relative time string shown on the meta row (size 'lg' only). */
   lastUsed?: string;
-  /** Size of the block, which controls the logo size and whether the last-used row is shown. */
+  /** Size of the block, which controls the logo size and whether the meta row (version, last-used, trailing element) is shown below the name. */
   size: DeploymentSize;
   /** Search query used to highlight matching text in the name. */
   query?: string;
@@ -34,7 +32,7 @@ export interface AppIdentityProps {
   className?: string;
   /** Grouped color and typography overrides. */
   styles?: AppIdentityStyles;
-  /** Element rendered at the end of the last-used row (size 'lg' only). */
+  /** Element rendered flush-end of the meta row (size 'lg' only). */
   lastUsedTrailing?: ReactNode;
   /** Additional CSS class applied to the icon wrapper div (e.g. for hover-scale animations). */
   iconClassName?: string;
@@ -42,7 +40,7 @@ export interface AppIdentityProps {
   iconOverlay?: ReactNode;
 }
 
-/** Shared identity block: logo + type + name + version + optional last-used row. */
+/** Shared identity block: logo + type + name + version, with an optional meta row in size 'lg'. */
 export const AppIdentity: FC<AppIdentityProps> = ({
   icon,
   type,
@@ -65,6 +63,13 @@ export const AppIdentity: FC<AppIdentityProps> = ({
     ? 'size-[52px] rounded-[14px]'
     : 'size-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
+  const isVersionInline = !isLg && !!version;
+  const isMetaRowVisible =
+    isLg && (!!version || lastUsed != null || lastUsedTrailing != null);
+  const versionClassName = mergeClasses(
+    typography?.versionClassName ?? 'dial-tiny-text',
+    styles.version,
+  );
   const cssVars = buildCssVars({
     '--ai-name-text': colors?.nameColor,
     '--ai-last-used-text': colors?.lastUsedColor,
@@ -102,39 +107,60 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         <EntityTypeLabel type={type} className={typography?.typeClassName} />
 
         <div className="flex min-w-0 flex-col">
+          {/* With an inline version (size 'sm'), name and version grow from 0 in a 66:34 ratio,
+              each capped at its own content width (`max-w-max`): a short
+              side keeps only its width and the other gets the rest, and only
+              when both are long does the name stop at 66% of the row. A name
+              wider than its share wraps onto a second line before clipping. */}
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
-            <EllipsisTooltip
-              text={query ? <Highlight text={name} query={query} /> : name}
+            <ClampedName
+              name={name}
+              query={query}
               className={mergeClasses(
-                version ? 'min-w-0 max-w-[66%] shrink-0' : 'min-w-0 flex-1',
+                isVersionInline ? 'max-w-max flex-[66_1_0%]' : 'flex-1',
                 typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
             />
-            {version && (
+            {isVersionInline && (
               <EllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'min-w-0 flex-1 text-end tabular-nums',
-                  typography?.versionClassName ?? 'dial-tiny-text',
-                  styles.version,
+                  'max-w-max min-w-0 flex-[34_1_0%] tabular-nums',
+                  versionClassName,
                 )}
               />
             )}
           </div>
 
-          {isLg && lastUsed != null && (
-            <div className="flex items-center gap-2">
-              <span
-                className={mergeClasses(
-                  'tabular-nums',
-                  typography?.lastUsedClassName ?? 'dial-tiny-text',
-                  styles.lastUsed,
-                )}
-              >
-                {lastUsed}
-              </span>
-              {lastUsedTrailing}
+          {/* Size 'lg' (Favorites cards) moves the version and the trailing
+              element onto the meta row below the name, so the name gets the
+              full width of the narrow card instead of 66% of it (#9325). */}
+          {isMetaRowVisible && (
+            <div className="flex min-w-0 items-center gap-2">
+              {version && (
+                <EllipsisTooltip
+                  text={version}
+                  className={mergeClasses(
+                    'min-w-0 tabular-nums',
+                    versionClassName,
+                  )}
+                />
+              )}
+              {lastUsed != null && (
+                <span
+                  className={mergeClasses(
+                    'shrink-0 tabular-nums',
+                    typography?.lastUsedClassName ?? 'dial-tiny-text',
+                    styles.lastUsed,
+                  )}
+                >
+                  {lastUsed}
+                </span>
+              )}
+              {lastUsedTrailing != null && (
+                <div className="ms-auto flex shrink-0">{lastUsedTrailing}</div>
+              )}
             </div>
           )}
         </div>

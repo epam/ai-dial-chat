@@ -2,14 +2,19 @@ import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildMessageActions } from '../utils/build-message-actions';
 
-const { copyToClipboardMock } = vi.hoisted(() => ({
+const { copyToClipboardMock, copyMarkdownAsRichTextMock } = vi.hoisted(() => ({
   copyToClipboardMock: vi.fn(() => Promise.resolve(true)),
+  copyMarkdownAsRichTextMock: vi.fn(() => Promise.resolve(true)),
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
-  return { ...actual, copyToClipboard: copyToClipboardMock };
+  return {
+    ...actual,
+    copyToClipboard: copyToClipboardMock,
+    copyMarkdownAsRichText: copyMarkdownAsRichTextMock,
+  };
 });
 
 const userMessage = (content: string): Message => ({
@@ -62,5 +67,36 @@ describe('buildMessageActions — status message', () => {
         {},
       ),
     ).toEqual({});
+  });
+});
+
+describe('buildMessageActions — assistant message', () => {
+  const assistantMessage = (content: string): Message => ({
+    role: MessageRole.Assistant,
+    content,
+    timestamp: '',
+  });
+
+  it('copies the message content when no resolved copy content is given', () => {
+    const actions = buildMessageActions(assistantMessage('**Hi**'), 1, {});
+    actions.onCopy?.();
+    actions.onCopyMarkdown?.();
+    expect(copyMarkdownAsRichTextMock).toHaveBeenCalledWith('**Hi**');
+    expect(copyToClipboardMock).toHaveBeenCalledWith('**Hi**');
+  });
+
+  it('copies the resolved content so citation titles are not lost', () => {
+    const actions = buildMessageActions(
+      assistantMessage('| <cit data-id="d1"></cit> |'),
+      1,
+      {},
+      undefined,
+      undefined,
+      '| Outlook 2025 |',
+    );
+    actions.onCopy?.();
+    actions.onCopyMarkdown?.();
+    expect(copyMarkdownAsRichTextMock).toHaveBeenCalledWith('| Outlook 2025 |');
+    expect(copyToClipboardMock).toHaveBeenCalledWith('| Outlook 2025 |');
   });
 });

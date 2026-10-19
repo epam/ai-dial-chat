@@ -108,7 +108,7 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
       {sectionLabel != null && (
         <p
           className={mergeClasses(
-            'mb-3 mt-0',
+            'mt-0 mb-3',
             sectionClassName,
             styles.sectionHeading,
           )}
@@ -220,7 +220,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
         <section>
           <p
             className={mergeClasses(
-              'mb-3 mt-0',
+              'mt-0 mb-3',
               sectionClassName,
               styles.sectionHeading,
             )}
@@ -285,7 +285,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
         <section>
           <p
             className={mergeClasses(
-              'mb-3 mt-0',
+              'mt-0 mb-3',
               sectionClassName,
               styles.sectionHeading,
             )}
@@ -307,7 +307,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
         <section>
           <p
             className={mergeClasses(
-              'mb-3 mt-0',
+              'mt-0 mb-3',
               sectionClassName,
               styles.sectionHeading,
             )}

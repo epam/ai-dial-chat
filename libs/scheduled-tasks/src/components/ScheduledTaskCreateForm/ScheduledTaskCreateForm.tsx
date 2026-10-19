@@ -289,7 +289,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             role="group"
             aria-label={labels.detailsSectionTitle}
             className={mergeClasses(
-              'flex flex-1 flex-col gap-5 border-e py-6',
+              /* The column divider only makes sense side by side; below the
+               * desktop breakpoint the columns stack and it would draw a
+               * stray vertical line down the Details section. */
+              'flex flex-1 flex-col gap-5 py-6 desktop:border-e',
               styles.detailsColumn,
               styles.formColumn,
             )}
@@ -577,7 +580,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           </div>
 
           {skillSelector != null ? (
-            <div className="w-full min-w-0 max-w-[996px]">{skillSelector}</div>
+            <div className="w-full max-w-[996px] min-w-0">{skillSelector}</div>
           ) : (
             errors.skillUrls && (
               <div aria-live="polite">
@@ -597,7 +600,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
            * end of the label row, so an uncapped row lets it drift past the editor
            * whenever the column is wider than the cap (e.g. at browser zoom-out).
            */}
-          <div className="flex w-full min-w-0 max-w-[996px] flex-col">
+          <div className="flex w-full max-w-[996px] min-w-0 flex-col">
             <TextRefinementField
               isEnabled={Boolean(onRefineInstructions)}
               fieldId={instructionsEditorId}

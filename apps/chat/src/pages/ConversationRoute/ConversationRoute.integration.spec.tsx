@@ -115,6 +115,9 @@ vi.mock('../../context/IsolatedModelViewContext', () => ({
     resolvedDeploymentId: null,
   }),
 }));
+vi.mock('../../context/ConversationsContext', () => ({
+  useConversations: () => ({ refreshConversations: vi.fn() }),
+}));
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
 /* Non-overlay tests render without a provider, so the context stays undefined. */

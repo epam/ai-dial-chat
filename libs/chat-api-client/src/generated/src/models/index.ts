@@ -3,6 +3,44 @@
 /**
  *
  * @export
+ * @interface AcceptInvitationErrorDto
+ */
+export interface AcceptInvitationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof AcceptInvitationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  message: string;
+  /**
+   * Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.
+   * @type {ShareInvitationErrorCode}
+   * @memberof AcceptInvitationErrorDto
+   */
+  code?: ShareInvitationErrorCode;
+  /**
+   * Title of the shared conversation, present with `shareInvitationAcceptedUsersLimitReached` when the invitation shares a conversation.
+   * @type {string}
+   * @memberof AcceptInvitationErrorDto
+   */
+  itemName?: string;
+}
+
+/**
+ *
+ * @export
  * @interface AcceptInvitationResponseDto
  */
 export interface AcceptInvitationResponseDto {
@@ -1157,6 +1195,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   maxAttachmentFileSizeBytes: number;
+  /**
+   * Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  usageLimitsWarningThresholdPercent: number;
 }
 
 /**
@@ -1282,6 +1326,18 @@ export interface ConversationDeletionResultDto {
    */
   failed: Array<ConversationDeletionFailureDto>;
 }
+
+/**
+ * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
+ * @export
+ */
+export const ConversationErrorCode = {
+  ConversationDuplicateModelHidden: 'conversationDuplicateModelHidden',
+  ConversationModelHidden: 'conversationModelHidden',
+} as const;
+export type ConversationErrorCode =
+  (typeof ConversationErrorCode)[keyof typeof ConversationErrorCode];
+
 /**
  *
  * @export
@@ -1625,6 +1681,38 @@ export interface ConversationModelDto {
 /**
  *
  * @export
+ * @interface ConversationModelHiddenErrorDto
+ */
+export interface ConversationModelHiddenErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  message: string;
+  /**
+   * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
+   * @type {ConversationErrorCode}
+   * @memberof ConversationModelHiddenErrorDto
+   */
+  code?: ConversationErrorCode;
+}
+
+/**
+ *
+ * @export
  * @interface ConversationResponseDto
  */
 export interface ConversationResponseDto {
@@ -1952,6 +2040,30 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   applicationProperties?: object;
+  /**
+   * Never overwrite an existing application: when the name/version path is taken, create at the next free path (name-2, name-3, ...), checked atomically by DIAL Core; 409 only when every candidate is taken.
+   * @type {boolean}
+   * @memberof CreateApplicationBodyDto
+   */
+  createOnly?: boolean;
+  /**
+   * Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities.
+   * @type {boolean}
+   * @memberof CreateApplicationBodyDto
+   */
+  preserveApplicationProperties?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateApplicationBodyDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateApplicationBodyDto
+   */
+  maxInputAttachments?: number;
   /**
    *
    * @type {Array<LocaleTextEntryDto>}
@@ -2908,6 +3020,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   applicationTypeSchemaId?: string;
+  /**
+   * Custom Viewer URL from DIAL Core viewer_url (present only for application deployments that configure one)
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  viewerUrl?: string;
   /**
    * Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])
    * @type {Array<string>}
@@ -4040,6 +4158,38 @@ export interface DownloadArchiveDto {
    */
   items: Array<ArchiveItemDto>;
 }
+/**
+ *
+ * @export
+ * @interface DuplicateConversationErrorDto
+ */
+export interface DuplicateConversationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof DuplicateConversationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DuplicateConversationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DuplicateConversationErrorDto
+   */
+  message: string;
+  /**
+   * Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.
+   * @type {ConversationErrorCode}
+   * @memberof DuplicateConversationErrorDto
+   */
+  code?: ConversationErrorCode;
+}
+
 /**
  *
  * @export
@@ -5788,7 +5938,7 @@ export interface RefineTextRequestDto {
    */
   purpose: TextRefinementPurpose;
   /**
-   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, either Instructions 32000.
+   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.
    * @type {string}
    * @memberof RefineTextRequestDto
    */
@@ -6438,6 +6588,18 @@ export type SendCompletionDtoModeEnum =
   (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
 
 /**
+ * Why DIAL Core refused the invitation. `shareInvitationNotFound`: the link expired, was revoked, or never existed. `shareInvitationAcceptedUsersLimitReached`: the shared resource has already been accepted by its maximum number of users.
+ * @export
+ */
+export const ShareInvitationErrorCode = {
+  ShareInvitationNotFound: 'shareInvitationNotFound',
+  ShareInvitationAcceptedUsersLimitReached:
+    'shareInvitationAcceptedUsersLimitReached',
+} as const;
+export type ShareInvitationErrorCode =
+  (typeof ShareInvitationErrorCode)[keyof typeof ShareInvitationErrorCode];
+
+/**
  *
  * @export
  * @interface ShareLinkResponseDto
@@ -6919,6 +7081,7 @@ export const TextRefinementPurpose = {
   ApplicationDescription: 'application-description',
   ToolsetDescription: 'toolset-description',
   PromptDescription: 'prompt-description',
+  PromptInstructions: 'prompt-instructions',
 } as const;
 export type TextRefinementPurpose =
   (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];
@@ -7690,7 +7853,7 @@ export interface UpdateApplicationBodyDto {
    */
   description?: string;
   /**
-   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager. An empty string removes the stored icon; omit the field (or send null) to keep it.
    * @type {string}
    * @memberof UpdateApplicationBodyDto
    */

@@ -35,6 +35,19 @@ export const getCatalogSearchPlaceholder = (
 };
 
 /**
+ * Returns the Catalog's "My" empty-state heading naming the active tab's
+ * entity ("No personal agents yet"), or a generic one for an unknown tab.
+ */
+export const getCatalogMyAppsEmptyTitle = (
+  activeTab: string,
+  t: TFunction,
+): string => {
+  const entityKey = SEARCH_ENTITY_KEYS[activeTab as CatalogEntityType];
+  if (entityKey == null) return t(CatalogI18nKeys.MyAppsEmptyTitleGeneric);
+  return t(CatalogI18nKeys.MyAppsEmptyTitle, { entities: t(entityKey) });
+};
+
+/**
  * Returns the skill Overview tab's translated section labels, shared by the
  * Catalog page's details pipeline and the chat route's skill details side panel.
  */

@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.39`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.11`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.39
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.25 \*
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.11
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.7 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -393,6 +393,10 @@ must explicitly override `components.cit` to turn it into interactive UI.
 Pass `urlTransform` to rewrite `href`/`src` values (for example mapping DIAL
 `files/{bucket}/{path}` ids to host download URLs) before they are rendered;
 the result still goes through react-markdown's protocol allowlist.
+Raw HTML in `content` is parsed into elements (then sanitized) by default; set
+`isRawHtmlEnabled={false}` to show it as the literal characters instead, for
+text a person typed, such as a question about `<div>`. `rehypePlugins` adds
+plugins that run after sanitization.
 
 ```tsx
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
@@ -414,7 +418,8 @@ than an inline object. It forwards the code-block labels (`codeBlockCopyLabel`,
 `codeBlockCopiedLabel`, `codeBlockDownloadLabel`), the table action labels and
 the `tableScrollRegionAriaLabel`/`mathScrollRegionAriaLabel` region labels to
 `MarkdownRenderer`. Pass `urlTransform` to rewrite markdown `href`/`src` values
-the same way as `MarkdownRenderer`. Pass `isPlainText` to render the body
+the same way as `MarkdownRenderer`; `rehypePlugins` and `isRawHtmlEnabled` are
+forwarded to it too. Pass `isPlainText` to render the body
 through `PlainTextRenderer` instead — the conversation's `plain_text` response
 format — in which case the markdown-only props are ignored.
 
@@ -431,6 +436,44 @@ import {
   urlTransform={resolveMarkdownUrl}
 />;
 ```
+
+### Inline segments in markdown
+
+Render React elements (for example skill-mention chips) at their position
+inside markdown text. Describe the text as a `TextSegment[]`: string entries
+are markdown source, and each `InlineTextSegment` (`{ text, node }`) is an
+element plus the literal source text it stands for.
+`buildInlineSegmentSource` swaps every inline segment for an opaque token the
+markdown parser leaves alone; `createRehypeInlineSegments` turns each token
+back into an element, or into the segment's literal `text` inside code, link
+text and `href`/`src` values; `createInlineSegmentComponents` renders those
+elements as each segment's `node`. If a string entry already contains a token
+character, the source falls back to plain text with no inline segments.
+
+```tsx
+import {
+  buildInlineSegmentSource,
+  createInlineSegmentComponents,
+  createRehypeInlineSegments,
+  MDMessageViewer,
+  type TextSegment,
+} from '@epam/ai-dial-chat-shared';
+
+const segments: TextSegment[] = [
+  { text: '/review', node: <SkillChip key="review" name="review" /> },
+  ' this **diff**',
+];
+const { source, inlineSegments } = buildInlineSegmentSource(segments);
+
+<MDMessageViewer
+  content={source}
+  rehypePlugins={[createRehypeInlineSegments(inlineSegments)]}
+  components={createInlineSegmentComponents(inlineSegments)}
+/>;
+```
+
+Memoise the three values on `segments`: `MDMessageViewer` is memoised, so new
+plugin and component references re-parse the markdown.
 
 ### PlainTextRenderer
 
@@ -635,12 +678,15 @@ import { ItemHeader } from '@epam/ai-dial-chat-shared';
 
 ### EntityTypeLabel
 
-Entity type rendered as plain uppercase text, colored per type.
+Entity type rendered as plain uppercase text, colored per type. It shows the raw
+type value (`MODEL`, `TOOLSET`, …) unless `label` supplies the visible text, e.g. a
+translated type name; the color still follows `type`.
 
 ```tsx
 import { CatalogEntityType, EntityTypeLabel } from '@epam/ai-dial-chat-shared';
 
 <EntityTypeLabel type={CatalogEntityType.Model} />;
+<EntityTypeLabel type={CatalogEntityType.Toolset} label="Toolset" />;
 ```
 
 ### FeaturedChip
@@ -671,7 +717,8 @@ Entity identity block: deployment icon, type label, name, version, and an
 optional featured chip. `item` needs only the `EntityHeaderItem` fields, so any
 richer catalog model can be passed directly. `statusBadge` renders an
 arbitrary badge in the same corner, ahead of the featured chip. `featuredChipStyle`
-forwards to the featured chip's own `style` override (see `FeaturedChip` above).
+forwards to the featured chip's own `style` override (see `FeaturedChip` above). `typeLabel`
+forwards to `EntityTypeLabel`'s `label`.
 
 ```tsx
 import { EntityHeader } from '@epam/ai-dial-chat-shared';
@@ -681,6 +728,7 @@ import { EntityHeader } from '@epam/ai-dial-chat-shared';
   iconSize={48}
   query={searchQuery}
   featuredLabel="Featured"
+  typeLabel="Model"
   footer={<span>{item.lastUsed}</span>}
 />;
 ```
@@ -754,7 +802,8 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 ```
 
 Pass `identity` to replace the default card for a resource that has no
-`EntityHeaderItem`, and `children` for a step that needs an input before it can
+`EntityHeaderItem`, `details` for content between the message and the bullets
+(such as the names a bulk action affects), and `children` for a step that needs an input before it can
 be confirmed — the caller owns that input's state and disables confirming
 until it is satisfied. With neither `item` nor `identity` the card is omitted,
 which suits a confirmation that is not about a particular resource.
@@ -843,6 +892,63 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
   onConfirm={handleDelete}
   onClose={closeDelete}
 />;
+```
+
+### DeleteConfirmationView
+
+The delete confirmation body every delete surface shows, built on
+[`ConfirmationView`](#confirmationview). Pass `names`: one name goes in a
+neutral `ResourceSummary` card, with the optional `icon` and `typeLabel`;
+several are counted in the card (`labels.itemCount`) and listed under the
+message, up to `maxListedNames` (10), with the rest summed up by
+`labels.moreItems`. `consequences` are listed before the final
+`labels.cannotBeUndone` bullet. Use it bare where a host owns the dialog frame,
+such as the file manager's `deleteConfirmBody`.
+
+```tsx
+import { DeleteConfirmationView } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationView
+  names={['report.pdf', 'notes.txt']}
+  message={
+    <>
+      Are you sure you want to delete <strong>2 items</strong>? This action is
+      permanent and cannot be undone.
+    </>
+  }
+/>;
+```
+
+### DeleteConfirmationDialog
+
+[`DeleteConfirmationView`](#deleteconfirmationview) in the kit's `Popup` with a
+danger [`ConfirmationFooter`](#confirmationfooter), for one resource or a
+selection. Like [`ConfirmationDialog`](#confirmationdialog), it blocks every
+dismissal route while `isLoading` is set. All strings have English defaults and
+can be overridden through `labels` (`confirm`, `cancel`, `deleting`,
+`cannotBeUndone`, `itemCount`, `moreItems`). `children` render after the
+consequences, for an inline error.
+
+```tsx
+import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationDialog
+  open={isDeleteOpen}
+  title="Delete chat"
+  names={[conversation.title]}
+  icon={<IconMessageCircle aria-hidden />}
+  message={
+    <>
+      Are you sure you want to delete <strong>{conversation.title}</strong>?
+      This action is permanent and cannot be undone.
+    </>
+  }
+  isLoading={isDeleting}
+  onConfirm={handleDelete}
+  onClose={closeDelete}
+>
+  {error && <ErrorMessageNotification message={error} />}
+</DeleteConfirmationDialog>;
 ```
 
 ### TextRefinementField
@@ -976,6 +1082,8 @@ import {
   ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
+  encodeJsonToBase64,
+  decodeJsonFromBase64,
   serializeMarkdownTableRows,
   MarkdownTableCopyFormat,
   DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME,
@@ -1026,17 +1134,28 @@ downloadTextFile(
 // Styling travels inline, so a pasted table keeps its border, header band, dividers, and zebra rows.
 copyMarkdownAsRichText(message.content);
 
+// Store JSON in web storage as Unicode-safe base64 — the wrap satisfies
+// clear-text-storage security scanning and is an encoding, not encryption;
+// `btoa` alone would throw on characters above U+00FF (e.g. Cyrillic ids).
+// decodeJsonFromBase64 throws on malformed input; the caller handles failures.
+sessionStorage.setItem('flow-state', encodeJsonToBase64({ toolsetId, state }));
+const restored = decodeJsonFromBase64<{ toolsetId: string }>(
+  sessionStorage.getItem('flow-state') ?? '',
+);
+
 // The same HTML on its own, for a caller that writes the clipboard itself or renders an export
 const html = markdownToRichTextHtml(message.content);
 
-// Format a USD amount, keeping decimals for sub-dollar values
+// Format a USD amount, keeping significant digits for sub-dollar values
 formatPrice(0.3); // '$0.3'
+formatPrice(0.00000015); // '$0.00000015'
 
 // Format accumulated USD usage to cents
 formatCost(0.788438); // '$0.79'
 
-// Re-quote a DIAL Core per-unit price for display
+// Re-quote a DIAL Core per-unit price per 1M tokens or characters for display
 formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
+formatUnitPrice('0.00000015', 'char_without_whitespace'); // '$0.15/M chars without whitespace'
 
 // Derive an avatar's initials and its deterministic color from a name
 const initials = extractInitials(user.displayName);
@@ -1099,24 +1218,24 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                                   |
-| -------------------------------------------- | ------------------------------------------------------------------------- |
-| `MIME_TYPE_ALIASES`                          | Non-canonical MIME spelling → canonical type, read by `normalizeMimeType` |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names            |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists          |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types           |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders             |
-| `PUBLIC_BUCKET`                              | `public`, the DIAL Core bucket holding organization-wide resources        |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step         |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                       |
-| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field      |
-| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`     |
-| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to        |
-| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap      |
-| `MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME`     | `className` stretching `MarkdownEditor` to that measured cap, bar hidden  |
-| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview        |
-| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap        |
-| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                   |
+| Constant                                     | Purpose                                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `MIME_TYPE_ALIASES`                          | Non-canonical MIME spelling → canonical type, read by `normalizeMimeType`            |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names                       |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists                     |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types                      |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders                        |
+| `PUBLIC_BUCKET`                              | `public`, the DIAL Core bucket holding organization-wide resources                   |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step                    |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                                  |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field                 |
+| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`                |
+| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to                   |
+| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap                 |
+| `MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME`     | `className` stretching `MarkdownEditor` to that cap; pair with `showDragbar={false}` |
+| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview                   |
+| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap                   |
+| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                              |
 
 ## Stylesheet
 

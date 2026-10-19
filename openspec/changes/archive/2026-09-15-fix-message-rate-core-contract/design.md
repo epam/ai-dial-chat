@@ -26,7 +26,7 @@ So today's BFF→Core body has never matched what Core accepts: `modelId`/`conve
 
 - Send DIAL Core a `RateRequest`-conforming body for every rating call (Like, Dislike, and clear) — not just the clear case, since the clear fix cannot be correct while the body shape it reuses is wrong.
 - Make clearing a Like (the required scenario) send a compensating request to Core, so Core's aggregate no longer silently diverges from `message.rating`.
-- Keep the fix symmetric: clearing an active Dislike also sends a request (matching the consumer spec in `ai-dial-chat-pg`'s `message-actions/spec.md`, which already requires this "even when clearing an active Dislike"), rather than adding a special-cased branch only for Like.
+- Keep the fix symmetric: clearing an active Dislike also sends a request (matching the downstream consumer spec, which already requires this "even when clearing an active Dislike"), rather than adding a special-cased branch only for Like.
 - Keep the browser-facing contract (`POST /api/v1/rate`, `RateMessageDto`, generated `RateApi.rateMessage`) as close to unchanged as the fix allows: only widen `rate` to admit `null` for "clear". No new endpoint, no new required field, no change to auth/rate-limit/cache/error-mapping behavior.
 
 **Non-Goals:**
@@ -57,7 +57,7 @@ Today `RateService` builds the outbound body directly from `dto` fields whose na
 
 `handleRateMessage`'s `if (rating != null) { ...call API... } else { ...just persist... }` branch collapses to a single path: call `rateApi.rateMessage({ ..., rate: rating })` for every change including `rating === null`, then persist on success, revert on failure — identical control flow to the existing non-null path, just with `rate` now allowed to be `null`.
 
-- Alternative considered — only call the API when the previous rating was `MessageRating.Like` (since clearing a Dislike is a no-op from Core's perspective: it was already `false`): rejected. It adds a branch that has to inspect `previousRating` to decide whether to skip, contradicts the `ai-dial-chat-pg` consumer spec's explicit requirement to send a rating-clear request "even when clearing an active Dislike," and the redundant call when clearing a Dislike is harmless (idempotent `rate: false`).
+- Alternative considered — only call the API when the previous rating was `MessageRating.Like` (since clearing a Dislike is a no-op from Core's perspective: it was already `false`): rejected. It adds a branch that has to inspect `previousRating` to decide whether to skip, contradicts the downstream consumer spec's explicit requirement to send a rating-clear request "even when clearing an active Dislike," and the redundant call when clearing a Dislike is harmless (idempotent `rate: false`).
 
 ### 4. Regenerate the OpenAPI artifacts; never hand-edit them
 
@@ -67,7 +67,7 @@ Today `RateService` builds the outbound body directly from `dto` fields whose na
 
 - **Core cannot distinguish "actively disliked" from "cleared"** → not mitigated, and not mitigable from this side: it's Core's own boolean model. Documented in the spec delta so a future reader doesn't mistake it for a bug in this change. If DIAL Core itself later adds a ternary rating, this mapping (`Like → true`, everything else → `false`) is the seam to revisit.
 - **The BFF→Core body shape change is silently breaking if Core was in fact tolerating the old shape via lenient/ignore-unknown-fields JSON parsing** → mitigated by keeping the change scoped to what Core's own spec documents (`responseId`, `rate: boolean`); the old fields (`modelId`, `conversationId`, numeric `rate`) were either ignored by Core already (extra properties) or actively rejected (wrong `rate` type) — either way, sending the documented shape can only make the call more correct, never less.
-- **Downstream `ai-dial-chat-pg` depends on `@epam/ai-dial-chat-hooks` at a pinned dev version** → no action required in this repo; the consumer's own spec already anticipates this exact fix, and picks it up on its next version bump. Not a compatibility break: `rate: null` was previously rejected by validation (`@IsIn([1, -1])`), so no existing caller could have been relying on omitting the API call.
+- **Downstream consumers depend on `@epam/ai-dial-chat-hooks` at a pinned dev version** → no action required in this repo; the consumer's own spec already anticipates this exact fix, and picks it up on its next version bump. Not a compatibility break: `rate: null` was previously rejected by validation (`@IsIn([1, -1])`), so no existing caller could have been relying on omitting the API call.
 
 ## Migration Plan
 

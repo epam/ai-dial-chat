@@ -39,6 +39,15 @@ export interface BottomSheetShellProps {
   className?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: BottomSheetShellColors;
+  /**
+   * Id of the element to portal the sheet into, instead of the end of
+   * `<body>` — keeps it inside a host panel's stacking context.
+   */
+  portalId?: string;
+  /** Extra classes appended to the backdrop. */
+  overlayClassName?: string;
+  /** Inline style for the backdrop, applied after the `colors` custom properties. */
+  overlayStyle?: CSSProperties;
   /** Sheet body rendered below the header divider. */
   children: ReactNode;
 }
@@ -56,6 +65,9 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   titleClassName = 'dial-body-semi-text',
   className,
   colors,
+  portalId,
+  overlayClassName,
+  overlayStyle,
   children,
 }) => {
   const cssVars = buildCssVars({
@@ -67,8 +79,8 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
 
   /*
    * The sheet renders in a portal, so the colour variables travel on the
-   * panel and the backdrop themselves; a caller's \`style\` lands on the panel
-   * after them, as it always did.
+   * panel and the backdrop themselves; a caller's \`style\` and \`overlayStyle\`
+   * land after them on the panel and the backdrop respectively.
    */
   return (
     <BottomSheet
@@ -80,9 +92,10 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
       backAriaLabel={backLabel}
       closeAriaLabel={closeLabel}
       style={{ ...cssVars, ...style }}
-      overlayStyle={cssVars}
+      overlayStyle={{ ...cssVars, ...overlayStyle }}
       className={mergeClasses(styles.sheet, className)}
-      overlayClassName={styles.backdrop}
+      overlayClassName={mergeClasses(styles.backdrop, overlayClassName)}
+      portalId={portalId}
       headerClassName={styles.divider}
       titleClassName={mergeClasses(styles.title, titleClassName)}
     >

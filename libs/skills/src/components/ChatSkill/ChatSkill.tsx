@@ -1,13 +1,12 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { InteractiveTooltip, TooltipPlacement } from '@epam/ai-dial-ui-kit';
 import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type FC,
-  type KeyboardEvent,
-} from 'react';
+  InteractiveTooltip,
+  InteractiveTooltipTrigger,
+  TooltipPlacement,
+} from '@epam/ai-dial-ui-kit';
+import { useLayoutEffect, useState, type FC } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
+import { SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME } from '../../constants/skill-info-tooltip';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
 
@@ -37,27 +36,17 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   } = labels;
 
   /*
-   * Hover mode leaves the tooltip uncontrolled. Click mode supplies its open
-   * state, disabling the kit's hover/focus triggers while retaining dismissal.
-   * A "View details" click remounts the card in its closed state.
+   * Hover mode opens the kit's tooltip on hover or focus; click mode opens it
+   * on a click, tap or Enter/Space and keeps it open until dismissed — the only
+   * way to reach it on a touch screen. A "View details" click remounts the
+   * card in its closed state.
    */
   const [tooltipGeneration, setTooltipGeneration] = useState(0);
-  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const isClickTriggered = detailsTrigger === 'click';
 
   const handleViewDetails = () => {
-    setIsTooltipOpen(false);
     setTooltipGeneration((generation) => generation + 1);
     onViewDetails(path);
-  };
-
-  const openTooltipOnKeyboardActivation = (event: KeyboardEvent) => {
-    if (!isClickTriggered || (event.key !== 'Enter' && event.key !== ' ')) {
-      return;
-    }
-
-    event.preventDefault();
-    setIsTooltipOpen(true);
   };
 
   /*
@@ -66,12 +55,31 @@ export const ChatSkill: FC<ChatSkillProps> = ({
    * total width equal to the invisible `/{name}` text it overlays. See
    * `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a (multi-skill-message-mentions).
    */
-  const slashRef = useRef<HTMLSpanElement | null>(null);
+  /*
+   * Held in state, not a ref: "View details" remounts the chip, and the
+   * measurement must follow the new `/` node. A ref left the observer on the
+   * detached node, whose 0px resize collapsed the padding so the name slid
+   * under the slash ([#9422](https://github.com/epam/ai-dial-chat/issues/9422)).
+   */
+  const [slash, setSlash] = useState<HTMLSpanElement | null>(null);
   const [slashWidth, setSlashWidth] = useState<number | null>(null);
 
   useLayoutEffect(() => {
-    setSlashWidth(slashRef.current?.getBoundingClientRect().width ?? null);
-  }, [labelClassName]);
+    if (!slash) return;
+    const measure = () => {
+      // A node leaving the DOM reports 0px — keep the last real width.
+      if (!slash.isConnected) return;
+      setSlashWidth(slash.getBoundingClientRect().width);
+    };
+    measure();
+
+    /* A label that inherits its font (the composer's) changes size with no
+     * `labelClassName` change, e.g. when the input switches breakpoint. */
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(slash);
+    return () => resizeObserver.disconnect();
+  }, [slash, labelClassName]);
 
   /*
    * Branch order matches `openspec/changes/archive/2026-09-29-add-unresolved-skill-indicator/design.md` Decision 1: an unresolved url takes
@@ -109,9 +117,12 @@ export const ChatSkill: FC<ChatSkillProps> = ({
       key={tooltipGeneration}
       asChild
       placement={TooltipPlacement.Top}
-      open={isClickTriggered ? isTooltipOpen : undefined}
-      onOpenChange={isClickTriggered ? setIsTooltipOpen : undefined}
-      contentClassName="max-w-[550px]"
+      trigger={
+        isClickTriggered
+          ? InteractiveTooltipTrigger.Click
+          : InteractiveTooltipTrigger.Hover
+      }
+      contentClassName={SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME}
       content={renderTooltipContent()}
     >
       {/*
@@ -123,11 +134,10 @@ export const ChatSkill: FC<ChatSkillProps> = ({
        * cannot, so the mirror would wrap onto an extra line the textarea
        * never grows to show ([#9243](https://github.com/epam/ai-dial-chat/issues/9243)).
        */}
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click/keydown only act in click-triggered mode; hover mode's tooltip is reachable via focus alone */}
       <span
         tabIndex={0}
         className={mergeClasses(
-          'relative -me-1 -ms-1 inline cursor-pointer select-text rounded-full pe-1 ps-1',
+          'relative -ms-1 -me-1 inline cursor-pointer rounded-full ps-1 pe-1 select-text',
           isUnsupported
             ? unsupportedClassName
             : 'hover:bg-info focus-visible:bg-info active:bg-info',
@@ -137,13 +147,12 @@ export const ChatSkill: FC<ChatSkillProps> = ({
           SKILLS_CLASS.chip,
         )}
         aria-label={`/${name}`}
-        onClick={isClickTriggered ? () => setIsTooltipOpen(true) : undefined}
-        onKeyDown={openTooltipOnKeyboardActivation}
       >
         <span
-          ref={slashRef}
+          ref={setSlash}
           aria-hidden
-          className="inset-inline-start-0 pointer-events-none absolute top-0 select-none"
+          // No `top-0`: the static position keeps the slash on the name's baseline.
+          className="inset-inline-start-0 pointer-events-none absolute select-none"
         >
           /
         </span>

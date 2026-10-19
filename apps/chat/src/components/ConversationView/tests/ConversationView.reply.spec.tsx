@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
       displayName: 'Model',
       inputAttachmentTypes: ['text/plain'],
       maxInputAttachments: 3,
+      isHidden: false,
     },
   ],
   notify: vi.fn(),
@@ -64,7 +65,9 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 vi.mock('../../../hooks/useUiFeature', async () => {
   const { OverlayFeature } = await import('@epam/ai-dial-chat-overlay');
   return {
-    useUiFeature: (feature: string) => feature === OverlayFeature.InputFiles,
+    useUiFeature: (feature: string) =>
+      feature === OverlayFeature.InputFiles ||
+      feature === OverlayFeature.ConversationDrafts,
   };
 });
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
@@ -104,10 +107,14 @@ vi.mock('../../SkillSelector/useSkillSelectorOverlay', () => ({
     message: '',
     messageRevision: 0,
     resetSkillMentions: vi.fn(),
+    onDraftChange: vi.fn(),
   }),
 }));
 vi.mock('../../FooterMessage/FooterMessage', () => ({ default: () => null }));
 vi.mock('../../UsageLimitsControl/UsageLimitsControl', () => ({
+  default: () => null,
+}));
+vi.mock('../../UsageLimitBanner/UsageLimitBanner', () => ({
   default: () => null,
 }));
 vi.mock('../ConversationMessageItem', () => ({
@@ -155,6 +162,7 @@ const defaults = {
 beforeEach(() => {
   mocks.items[0].inputAttachmentTypes = ['text/plain'];
   mocks.items[0].maxInputAttachments = 3;
+  mocks.items[0].isHidden = false;
   mocks.notify.mockClear();
   mocks.maxBytes = 10000;
   mocks.deploymentConfiguration = null;
@@ -421,7 +429,11 @@ describe('ConversationView Reply attachment flow', () => {
     fireEvent.change(textarea, { target: { value: 'My draft' } });
     fireEvent.click(await selectPassage());
     await waitFor(() => expect(upload).toHaveBeenCalledOnce());
-    expect(await upload.mock.calls[0][0].file!.text()).toBe('Selected passage');
+    const uploadedFile = upload.mock.calls[0]?.[0]?.file;
+    if (uploadedFile == null) {
+      throw new Error('expected an uploaded file');
+    }
+    expect(await uploadedFile.text()).toBe('Selected passage');
     expect((textarea as HTMLTextAreaElement).value).toBe('My draft');
     expect(document.activeElement).toBe(textarea);
     await waitFor(() =>
@@ -497,5 +509,79 @@ describe('ConversationView Reply attachment flow', () => {
       await new Promise((resolve) => setTimeout(resolve, 30));
     });
     expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
+  });
+});
+
+describe('ConversationView read-only duplicate action', () => {
+  it('offers the duplicate button on a read-only conversation', () => {
+    const onDuplicateConversation = vi.fn();
+    render(
+      <ConversationView
+        {...defaults}
+        isReadOnly
+        onSend={vi.fn()}
+        onDuplicateConversation={onDuplicateConversation}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'conversationPanel.duplicateReadOnlyDescription',
+      }),
+    );
+    expect(onDuplicateConversation).toHaveBeenCalledOnce();
+  });
+
+  it('explains instead of offering the button when the model is hidden', () => {
+    render(
+      <ConversationView
+        {...defaults}
+        isReadOnly
+        isDuplicateUnavailable
+        onSend={vi.fn()}
+        onDuplicateConversation={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'conversationPanel.duplicateReadOnlyDescription',
+      }),
+    ).toBeNull();
+    expect(
+      screen.getByText('conversationPanel.duplicateUnavailableModel'),
+    ).toBeTruthy();
+  });
+});
+
+describe('ConversationView — hidden model', () => {
+  const typeDraft = async () => {
+    const textarea = await screen.findByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+  };
+  const sendButton = () =>
+    screen.getByRole('button', { name: 'chat.sendMessage' });
+
+  it('blocks sending and explains why while the selected model is hidden', async () => {
+    mocks.items[0].isHidden = true;
+    render(<ConversationView {...defaults} onSend={vi.fn()} />);
+    await typeDraft();
+
+    expect(sendButton().getAttribute('aria-disabled')).toBe('true');
+    expect(
+      screen
+        .getByText('conversation.modelUnavailableNotice')
+        .getAttribute('role'),
+    ).toBe('status');
+  });
+
+  it('allows sending on a visible model, with no notice', async () => {
+    render(<ConversationView {...defaults} onSend={vi.fn()} />);
+    await typeDraft();
+
+    expect(sendButton().getAttribute('aria-disabled')).not.toBe('true');
+    expect(
+      screen.queryByText('conversation.modelUnavailableNotice'),
+    ).toBeNull();
   });
 });

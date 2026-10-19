@@ -197,7 +197,7 @@ const SharePopover: FC<SharePopoverProps> = ({
       tabIndex={-1}
       style={cssVars}
       className={mergeClasses(
-        'flex w-96 flex-col gap-3 rounded-xl bg-layer-raised px-6 pb-6 pt-4 shadow-lg outline-none',
+        'flex w-96 flex-col gap-3 rounded-xl bg-layer-raised px-6 pt-4 pb-6 shadow-lg outline-hidden',
         className,
         SHARE_CLASS.popover,
       )}

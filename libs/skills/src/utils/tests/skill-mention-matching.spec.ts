@@ -1,6 +1,9 @@
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { matchSkillMentions } from '../skill-mention-matching';
+import {
+  findSkillMentionsInText,
+  matchSkillMentions,
+} from '../skill-mention-matching';
 
 const skill = (url: string): RequestSkill => ({ url });
 
@@ -78,5 +81,49 @@ describe('matchSkillMentions', () => {
       { skillIndex: 0, start: 0, length: 4 },
       { skillIndex: 1, start: 4, length: 4 },
     ]);
+  });
+});
+
+describe('findSkillMentionsInText', () => {
+  const report = { url: 'skills/bucket/report', name: 'report' };
+  const weekly = { url: 'skills/bucket/weekly', name: 'Weekly' };
+  const weeklyReport = { url: 'skills/bucket/wr', name: 'Weekly report' };
+
+  it('returns an anchor for every run that names a listed skill', () => {
+    expect(
+      findSkillMentionsInText('Run /report, then /report again', [report]),
+    ).toEqual([{ url: report.url, name: 'report', start: 18, length: 7 }]);
+    expect(findSkillMentionsInText('/report\n/report', [report])).toEqual([
+      { url: report.url, name: 'report', start: 0, length: 7 },
+      { url: report.url, name: 'report', start: 8, length: 7 },
+    ]);
+  });
+
+  it('ignores a slash that does not start a run or a name that runs on', () => {
+    expect(
+      findSkillMentionsInText('see https://x/report and /reports or a/report', [
+        report,
+      ]),
+    ).toEqual([]);
+  });
+
+  it('prefers the longest name when one name prefixes another', () => {
+    expect(
+      findSkillMentionsInText('/Weekly report now', [weekly, weeklyReport]),
+    ).toEqual([
+      { url: weeklyReport.url, name: 'Weekly report', start: 0, length: 14 },
+    ]);
+  });
+
+  it('resolves a shared name to the first listed skill', () => {
+    const publicReport = { url: 'skills/public/report', name: 'report' };
+
+    expect(findSkillMentionsInText('/report', [report, publicReport])).toEqual([
+      { url: report.url, name: 'report', start: 0, length: 7 },
+    ]);
+  });
+
+  it('returns nothing for unknown names', () => {
+    expect(findSkillMentionsInText('/unknown text', [report])).toEqual([]);
   });
 });

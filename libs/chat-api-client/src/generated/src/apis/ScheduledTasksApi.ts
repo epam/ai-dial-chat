@@ -53,6 +53,7 @@ export interface ListScheduledTasksRequest {
   offset?: number;
   search?: string;
   sort?: ListScheduledTasksSortEnum;
+  model?: string;
 }
 
 export interface PauseScheduledTaskRequest {
@@ -426,6 +427,10 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
 
     if (requestParameters['sort'] != null) {
       queryParameters['sort'] = requestParameters['sort'];
+    }
+
+    if (requestParameters['model'] != null) {
+      queryParameters['model'] = requestParameters['model'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};

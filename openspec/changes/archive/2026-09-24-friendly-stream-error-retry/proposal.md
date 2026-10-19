@@ -1,6 +1,6 @@
 ## Why
 
-Issue [#8979](https://github.com/epam/ai-dial-chat/issues/8979) (P2 – High, PG chat priority within a month): when a generation dies mid-stream — typically a long PG Agent run with several tool calls — the chat shows a bare red banner reading `terminated`. That string is the `message` of undici's `TypeError` thrown by Node's `fetch` inside chat-api while reading the DIAL Core stream. It is persisted verbatim and rendered verbatim. The user gets a technical token, no explanation, and no retry control next to the error.
+Issue [#8979](https://github.com/epam/ai-dial-chat/issues/8979) (P2 – High): when a generation dies mid-stream — typically a long agent run with several tool calls — the chat shows a bare red banner reading `terminated`. That string is the `message` of undici's `TypeError` thrown by Node's `fetch` inside chat-api while reading the DIAL Core stream. It is persisted verbatim and rendered verbatim. The user gets a technical token, no explanation, and no retry control next to the error.
 
 ## Problem
 
@@ -46,7 +46,7 @@ Alternatives considered:
 - Automatic retries, backoff, or resuming the dead generation. "Try again" is today's Regenerate.
 - Migrating conversations that already have a raw `streamErrorMessage` stored.
 - Changing toasts elsewhere, such as `handleStopError`.
-- A PG-specific variant. Both chat products use the same banner.
+- A host-specific variant. All hosts use the same banner.
 
 ## Capabilities
 

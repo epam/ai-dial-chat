@@ -49,12 +49,16 @@ import {
 import { ConversationService } from './conversation.service';
 import { AttachGenerationDto } from './dto/attach-generation.dto';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
+import { ConversationModelHiddenErrorDto } from './dto/conversation-model-hidden-error.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DeleteAllConversationsBodyDto } from './dto/delete-all-conversations-body.dto';
 import { DeleteConversationsBodyDto } from './dto/delete-conversations-body.dto';
 import { ConversationDeletionResultDto } from './dto/delete-conversations.dto';
-import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
+import {
+  DuplicateConversationErrorDto,
+  DuplicateConversationResponseDto,
+} from './dto/duplicate-conversation.dto';
 import { GenerateTitleResponseDto } from './dto/generate-title.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
 import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
@@ -274,7 +278,9 @@ export class ConversationController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
-    description: 'Insufficient permissions on conversation',
+    description:
+      'Insufficient permissions on conversation, or (`code: conversationModelHidden`) the requested model is hidden through HIDDEN_ENTITY_TAGS',
+    type: ConversationModelHiddenErrorDto,
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({
@@ -893,6 +899,12 @@ export class ConversationController {
   })
   @ApiResponse({ status: 400, description: 'Missing or invalid path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description:
+      "The caller cannot read the source conversation, or (`code: conversationDuplicateModelHidden`) the conversation's current model is hidden through HIDDEN_ENTITY_TAGS",
+    type: DuplicateConversationErrorDto,
+  })
   @ApiResponse({ status: 404, description: 'Source conversation not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })

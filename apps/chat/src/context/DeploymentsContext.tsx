@@ -369,6 +369,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           getDeployments([
             ListDeploymentsInterfaceTypeEnum.Chat,
             ListDeploymentsInterfaceTypeEnum.Mcp,
+            ListDeploymentsInterfaceTypeEnum.CustomUi,
           ]),
           getApplicationSchemas(),
           listToolsets(),
@@ -499,6 +500,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           [
             ListDeploymentsInterfaceTypeEnum.Chat,
             ListDeploymentsInterfaceTypeEnum.Mcp,
+            ListDeploymentsInterfaceTypeEnum.CustomUi,
           ],
           refresh,
         );
@@ -640,7 +642,15 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
   const restoreSelectedItemId = useCallback((id: string) => {
     selectionExplicitlySetRef.current = true;
-    setSelectedItemIdState(id);
+    /*
+     * A stored conversation/message may address a deployment by `reference`
+     * (a scheduler run stores an application's UUID reference). The selection
+     * is what the next completion sends as `model`, and the backend resolves
+     * deployment details by `id` only, so normalise to the catalog `id`.
+     */
+    setSelectedItemIdState(
+      findDeploymentByIdOrReference(itemsRef.current, id)?.id ?? id,
+    );
   }, []);
 
   const restoreDefaultSelection = useCallback(() => {

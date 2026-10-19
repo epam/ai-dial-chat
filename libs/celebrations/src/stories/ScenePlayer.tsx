@@ -65,7 +65,7 @@ const Autoplay: FC<{ sceneId?: string }> = ({ sceneId }) => {
   return (
     <button
       type="button"
-      className="bg-layer-2 fixed bottom-3 start-3 z-[80] rounded border px-3 py-1.5"
+      className="bg-layer-2 fixed start-3 bottom-3 z-[80] rounded border px-3 py-1.5"
       onClick={() => celebrate(sceneId)}
     >
       Replay

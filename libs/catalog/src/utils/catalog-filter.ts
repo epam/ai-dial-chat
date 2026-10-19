@@ -54,3 +54,17 @@ export const filterCatalogItems = (
 
   return items.filter((item) => item.name.toLowerCase().includes(queryLower));
 };
+
+/** Returns a copy of `checked` with `topic` added, or removed when it was already selected. */
+export const toggleTopic = (
+  topic: string,
+  checked: Set<string>,
+): Set<string> => {
+  const next = new Set(checked);
+  if (next.has(topic)) {
+    next.delete(topic);
+  } else {
+    next.add(topic);
+  }
+  return next;
+};

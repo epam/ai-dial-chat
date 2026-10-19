@@ -91,8 +91,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
     : (attachments ?? []);
+  /*
+   * Whitespace-only content (e.g. `\n\n` streamed before the stages) renders
+   * nothing, but an empty text container would still take a column gap and
+   * push the content below it out of line with the deployment icon.
+   */
+  const hasText = !!text?.trim();
   const { slotRef, firstLineIndent } = useInlineStartIndent(
-    beforeContent != null && !!text,
+    beforeContent != null && hasText,
   );
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
@@ -122,10 +128,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           }}
         />
       )}
-      <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">
+      <div className="flex w-full max-w-full min-w-0 flex-col items-start gap-5">
         <div
           className={mergeClasses(
-            'flex w-full min-w-0 max-w-full flex-col items-start gap-4',
+            'flex w-full max-w-full min-w-0 flex-col items-start gap-4',
             bubbleClassName,
           )}
         >
@@ -142,16 +148,16 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
            * is empty, or above the streaming placeholder while the first
            * token has not arrived yet.
            */}
-          {beforeContent != null && !text && (
+          {beforeContent != null && !hasText && (
             <div className="min-w-0">{beforeContent}</div>
           )}
-          {(text || (isStreaming && hasThinkingPlaceholder)) && (
+          {(hasText || (isStreaming && hasThinkingPlaceholder)) && (
             <div
               aria-live="polite"
               aria-atomic="false"
               className={mergeClasses(
                 textClass,
-                'relative min-w-0 max-w-full text-start',
+                'relative max-w-full min-w-0 text-start',
                 /*
                  * `text-indent` inherits, so the indent targets the markdown
                  * container's first block child (a leading list indents its
@@ -163,11 +169,13 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                  * host-supplied slot content of any element type must never
                  * receive the indent.
                  */
-                beforeContent != null && text && FIRST_LINE_INDENT_CLASS_NAME,
+                beforeContent != null &&
+                  hasText &&
+                  FIRST_LINE_INDENT_CLASS_NAME,
                 CONVERSATION_MESSAGES_CLASS.assistantContent,
               )}
             >
-              {beforeContent != null && text && (
+              {beforeContent != null && hasText && (
                 <div ref={slotRef} className="absolute start-0 top-0">
                   {beforeContent}
                 </div>
@@ -178,7 +186,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                */}
               <div
                 ref={contentRef}
-                className="cm-bubble-markdown min-w-0 max-w-full"
+                className="cm-bubble-markdown max-w-full min-w-0"
               >
                 <MDMessageViewer
                   content={text ?? ''}

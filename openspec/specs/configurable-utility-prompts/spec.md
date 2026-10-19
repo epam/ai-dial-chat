@@ -27,11 +27,11 @@ The backend SHALL support optional string configuration for six built-in instruc
 
 ### Requirement: Default fallback and exact prompt preservation
 
-For each setting the backend SHALL retain its current built-in prompt when the setting is absent, empty, or whitespace-only. A nonblank value SHALL completely replace the default and preserve its text, whitespace, Unicode, and line breaks. Quoted multiline `.env` values SHALL work through the existing environment loader. Changes take effect after backend restart.
+For each setting the backend SHALL retain its current built-in prompt when the setting is absent, empty, or whitespace-only. `TRANSCRIPTION_PROMPT` has no built-in prompt: when it is absent, empty, or whitespace-only the transcription request SHALL send empty message content alongside the audio attachment, because dedicated transcription models reject text input. A nonblank value SHALL completely replace the default and preserve its text, whitespace, Unicode, and line breaks. Quoted multiline `.env` values SHALL work through the existing environment loader. Changes take effect after backend restart.
 
 #### Scenario: Missing or blank override
 - **WHEN** any override is absent, empty, or contains only spaces, tabs, and line breaks
-- **THEN** the corresponding existing default is sent to the model
+- **THEN** the corresponding existing default is sent to the model, or no instruction text for `TRANSCRIPTION_PROMPT`
 
 #### Scenario: Multiline override
 - **WHEN** an operator supplies a nonblank quoted multiline value in `.env` and restarts the backend

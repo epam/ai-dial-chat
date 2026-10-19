@@ -67,9 +67,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick?: () => void;
   }) => <button onClick={onClick}>{label}</button>,
+  Button: ({ label, onClick }: { label: string; onClick?: () => void }) => (
+    <button onClick={onClick}>{label}</button>
+  ),
+  ButtonVariant: { Primary: 'primary', Secondary: 'secondary' },
+  ButtonAppearance: { Solid: 'solid' },
+  NoDataContent: ({
+    title,
+    description,
+  }: {
+    title: React.ReactNode;
+    description?: React.ReactNode;
+  }) => (
+    <div>
+      <span>{title}</span>
+      <span>{description}</span>
+    </div>
+  ),
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
+  IconChevronDown: () => <svg />,
 }));
 vi.mock('../../Toolbar/Toolbar', () => ({
   Toolbar: ({
@@ -1282,6 +1300,119 @@ describe('Catalog', () => {
     expect(screen.getByText('Nothing here yet')).toBeTruthy();
     expect(screen.queryByLabelText('catalog grid')).toBeNull();
     expect(screen.queryByText('No items')).toBeNull();
+  });
+
+  it('renders the personal empty state with a Create button when My Apps has nothing to show', () => {
+    const onCreateClick = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { type: CatalogEntityType.Agent })]}
+        favorites={[]}
+        isMyAppsActive
+        hidePageTitle
+        onCreateClick={onCreateClick}
+        titles={{
+          myAppsEmptyTitle: (tab) => `No personal ${tab} yet`,
+          myAppsEmptyDescription: 'Create your first one.',
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(`No personal ${CatalogEntityType.Agent} yet`),
+    ).toBeTruthy();
+    expect(screen.getByText('Create your first one.')).toBeTruthy();
+    expect(screen.queryByLabelText('catalog grid')).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Create' })).toHaveLength(2);
+  });
+
+  it('omits the Create button from the personal empty state in a read-only catalog', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        isMyAppsActive
+        isReadonly
+      />,
+    );
+
+    expect(screen.getByText('No personal items yet')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
+  });
+
+  it("runs the active tab's lone create option from the personal empty state", async () => {
+    const onCreateToolset = vi.fn();
+    const onCreateClick = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Tools', { type: CatalogEntityType.Toolset })]}
+        favorites={[]}
+        isMyAppsActive
+        hidePageTitle
+        onCreateClick={onCreateClick}
+        createMenuByTab={{
+          [CatalogEntityType.Toolset]: {
+            options: [
+              {
+                key: 'toolset',
+                label: 'Create toolset',
+                onClick: onCreateToolset,
+              },
+            ],
+          },
+        }}
+      />,
+    );
+
+    const [, emptyStateCreate] = screen.getAllByRole('button', {
+      name: 'Create',
+    });
+    await userEvent.click(emptyStateCreate);
+
+    expect(onCreateToolset).toHaveBeenCalledOnce();
+    expect(onCreateClick).not.toHaveBeenCalled();
+  });
+
+  it('keeps the default empty state on a tab without a create menu', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { type: CatalogEntityType.Model })]}
+        favorites={[]}
+        isMyAppsActive
+        hidePageTitle
+        onCreateClick={vi.fn()}
+        createMenuByTab={{
+          [CatalogEntityType.Toolset]: {
+            options: [{ key: 'toolset', label: 'Create toolset' }],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('No personal items yet')).toBeNull();
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Create' })).toHaveLength(1);
+  });
+
+  it('keeps the default empty state when My Apps is off', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+
+    expect(screen.queryByText('No personal items yet')).toBeNull();
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+  });
+
+  it('prefers renderEmptyState over the personal empty state', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        isMyAppsActive
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+    expect(screen.queryByText('No personal items yet')).toBeNull();
   });
 
   it('does not invoke renderEmptyState when the result set is non-empty', () => {

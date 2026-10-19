@@ -11,6 +11,7 @@ interface DocumentPreviewMockProps {
   onThumbnailsLoaded: (map: Map<number, string>) => void;
   onViewerReady: (api: { navigateToPage: (page: number) => void }) => void;
   selectedPageNumber?: number;
+  loadFileCb: (url: string) => Promise<Blob>;
 }
 
 interface PageThumbnailMockProps {
@@ -606,6 +607,61 @@ describe('PdfContent', () => {
       });
       expect(documentPreviewState.props).toBeDefined();
       expect(configurePdfWorker).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('document loading', () => {
+    it('reports the URL through onLoadError when loadPdf rejects', async () => {
+      const failure = new Error('network');
+      const loadPdf = vi.fn().mockRejectedValue(failure);
+      const onLoadError = vi.fn();
+      render(
+        <PdfContent
+          url="doc.pdf"
+          highlights={[]}
+          loadPdf={loadPdf}
+          onLoadError={onLoadError}
+        />,
+      );
+      await expect(
+        documentPreviewState.props?.loadFileCb('doc.pdf'),
+      ).rejects.toBe(failure);
+      expect(loadPdf).toHaveBeenCalledWith('doc.pdf');
+      expect(onLoadError).toHaveBeenCalledWith('doc.pdf');
+    });
+
+    it('does not call onLoadError when loadPdf resolves', async () => {
+      const blob = new Blob(['%PDF']);
+      const onLoadError = vi.fn();
+      render(
+        <PdfContent
+          url="doc.pdf"
+          highlights={[]}
+          loadPdf={vi.fn().mockResolvedValue(blob)}
+          onLoadError={onLoadError}
+        />,
+      );
+      await expect(
+        documentPreviewState.props?.loadFileCb('doc.pdf'),
+      ).resolves.toBe(blob);
+      expect(onLoadError).not.toHaveBeenCalled();
+    });
+
+    it('keeps loadFileCb stable across re-renders so the viewer does not re-fetch', () => {
+      const loadPdf = vi.fn();
+      const { rerender } = render(
+        <PdfContent url="doc.pdf" highlights={[]} loadPdf={loadPdf} />,
+      );
+      const firstLoader = documentPreviewState.props?.loadFileCb;
+      rerender(
+        <PdfContent
+          url="doc.pdf"
+          highlights={[]}
+          loadPdf={loadPdf}
+          selectedPageNumber={3}
+        />,
+      );
+      expect(documentPreviewState.props?.loadFileCb).toBe(firstLoader);
     });
   });
 });

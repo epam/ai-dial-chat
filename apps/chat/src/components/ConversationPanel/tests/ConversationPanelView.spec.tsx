@@ -1,5 +1,6 @@
 import {
   ConversationDeletionFailureDtoCodeEnum,
+  ConversationErrorCode,
   type ConversationDeletionResultDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
@@ -24,7 +25,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneElement, ReactElement, ReactNode, useState } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -299,6 +300,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconFileZip: () => null,
   IconJson: () => null,
   IconChevronDown: () => null,
+  IconChevronRight: () => null,
   IconChevronUp: () => null,
   IconCircleCheckFilled: () => null,
   IconRefresh: () => null,
@@ -407,7 +409,10 @@ vi.mock('../../../server-api/api-client', () => ({
   filesApi: {},
 }));
 /* A stable value, like the provider's state-backed `items`. */
-const deploymentsValue = vi.hoisted(() => ({ items: [] }));
+const deploymentsValue = vi.hoisted(() => ({
+  items: [] as { id: string; isHidden?: boolean }[],
+  selectedItemId: null as string | null,
+}));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => deploymentsValue,
 }));
@@ -684,6 +689,146 @@ describe('ConversationPanelView — navigation keeps panel inputs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
 
     await waitFor(() => expect(onDuplicateReadonly).toHaveBeenCalledOnce());
+  });
+
+  it.each([
+    ['an owned', false, 'conversations/bucket/hidden-model__Chat'],
+    ['a shared', true, 'conversations/bucket/hidden-model__Chat'],
+    [
+      'an owned in-folder',
+      false,
+      'conversations/bucket/qa-run/hidden-model__Chat__uuid',
+    ],
+    [
+      'a shared in-folder',
+      true,
+      'conversations/bucket/qa-run/nested/hidden-model__Chat',
+    ],
+  ])(
+    'offers no Duplicate on %s conversation whose model is hidden',
+    (_, sharedWithMe, conversationId) => {
+      deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
+      try {
+        vi.mocked(useConversations).mockReturnValue({
+          ...baseContextValue,
+          conversations: [
+            {
+              ...ordinary(conversationId),
+              sharedWithMe,
+            },
+          ],
+        } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+        render(<ConversationPanelView {...defaultProps} />);
+
+        expect(
+          screen.queryByRole('button', { name: 'buttons.duplicate' }),
+        ).toBeNull();
+      } finally {
+        deploymentsValue.items = [];
+      }
+    },
+  );
+
+  describe('with a hidden model', () => {
+    const renderRow = (
+      conversationId: string,
+      activeConversationId?: string,
+    ) => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [ordinary(conversationId)],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={activeConversationId}
+        />,
+      );
+    };
+
+    afterEach(() => {
+      deploymentsValue.items = [];
+      deploymentsValue.selectedItemId = null;
+    });
+
+    it('offers no Share or Publish on a row whose model is hidden', () => {
+      deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
+      renderRow('conversations/bucket/hidden-model__Chat');
+
+      expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
+      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+    });
+
+    it('judges the open conversation by the model selected in it now, not the one in its path', () => {
+      deploymentsValue.items = [
+        { id: 'visible-model' },
+        { id: 'hidden-model', isHidden: true },
+      ];
+      deploymentsValue.selectedItemId = 'hidden-model';
+      const id = 'conversations/bucket/visible-model__Chat';
+      renderRow(id, id);
+
+      expect(
+        screen.queryByRole('button', { name: 'buttons.duplicate' }),
+      ).toBeNull();
+      expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
+      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+    });
+
+    it('offers Duplicate, Share and Publish again once the open conversation is switched to a visible model', () => {
+      deploymentsValue.items = [
+        { id: 'visible-model' },
+        { id: 'hidden-model', isHidden: true },
+      ];
+      deploymentsValue.selectedItemId = 'visible-model';
+      const id = 'conversations/bucket/hidden-model__Chat';
+      renderRow(id, id);
+
+      expect(
+        screen.getByRole('button', { name: 'buttons.duplicate' }),
+      ).toBeTruthy();
+      expect(screen.getByRole('button', { name: SHARE_LABEL })).toBeTruthy();
+      expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+    });
+  });
+
+  it.each([
+    [
+      'the unavailable-model text when the server refuses a hidden current model',
+      ConversationErrorCode.ConversationDuplicateModelHidden,
+      'conversationPanel.duplicateUnavailableModel',
+    ],
+    [
+      'the generic error for any other failure',
+      undefined,
+      'conversationPanel.duplicateError',
+    ],
+  ])('shows %s', async (_, code, expectedMessage) => {
+    /* The path names a visible model; the model the chat was switched to is
+       hidden, which only the server can see (#9183). */
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [ordinary('conversations/bucket/visible-model__Chat')],
+      duplicateConversation: vi.fn().mockRejectedValue({
+        response: new Response(JSON.stringify({ statusCode: 403, code }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      }),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: 'error',
+          message: expectedMessage,
+        }),
+      ),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });
 

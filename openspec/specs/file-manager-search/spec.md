@@ -63,7 +63,7 @@ No new BFF endpoint — reuses existing `listFiles` / `listPublicFiles` with `re
 
 When `isSearching` is `true`, `DialFileManager` displays its own loading state in the file grid area via `searchInProgress`.
 
-When a completed search is shown (`searchResults != null && !isSearching`), the shell SHALL use the host-supplied `labels.searchEmptyStateTitle` as the empty-state title. The app hosts (`DialFileManagerModal`, `DialFileManagerPage`) supply `t(BasicI18nKeys.NoResults)` — key `basic.noResults`, "No results found".
+The shell SHALL pass the host-supplied `labels.searchEmptyStateTitle` to `DialFileManager` as `searchEmptyStateTitle`. In search mode (a non-empty query) `DialFileManager` renders that prop and ignores `emptyStateTitle`, so a search with no matches shows it; left unset, the component falls back to its own "No data". The app hosts (`DialFileManagerModal`, `DialFileManagerPage`) supply `t(BasicI18nKeys.NoResults)` — key `basic.noResults`, "No results found".
 
 RTL: none — `DialFileManager` handles search input direction internally.
 i18n keys: `basic.noResults` (host-supplied through `labels.searchEmptyStateTitle`; the lib does not import i18n).

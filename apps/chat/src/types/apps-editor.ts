@@ -7,6 +7,15 @@ export enum AppsEditorQuery {
   AppId = 'appId',
 }
 
+/** Query params the host sends to the embedded QuickApps iframe URL. */
+export enum AppsEditorIframeQuery {
+  AuthProvider = 'authProvider',
+  Id = 'id',
+  Theme = 'theme',
+  ApplicationCredentials = 'applicationCredentials',
+  ApplicationName = 'applicationName',
+}
+
 export enum AppsEditorEvent {
   /** Sent once the embedded QuickApps iframe's UI has rendered. Controls only the loading-spinner overlay — it does NOT indicate the iframe's data model is loaded/safe to save; see `ReadyToSave`. */
   ReadyToInteract = 'readyToInteract',
@@ -31,6 +40,22 @@ export enum AppsEditorEvent {
   TriggerSave = 'TRIGGER_SAVE',
   SaveSuccess = 'SAVE_SUCCESS',
   SaveError = 'SAVE_ERROR',
+  /**
+   * Sent by the embedded QuickApps iframe, carrying `{ isValid: boolean }`,
+   * whenever its form's validity changes (it posts `{ isValid: false }` on
+   * mount when the form starts invalid, e.g. blank Instructions). The host
+   * disables Save/Preview while it is `false`. Independent of
+   * `ReadyToSave`, and of `DirtyState`.
+   */
+  ValidityState = 'VALIDITY_STATE',
+  /**
+   * Sent by the embedded QuickApps iframe whenever its form gains or loses
+   * unsaved edits, carrying a boolean `isDirty` (read from `payload.isDirty`
+   * like `ValidityState`, or from the message itself). Feeds the builder
+   * leave guard. The payload shape is unconfirmed with the QuickApps team, so
+   * anything but a boolean is ignored — a wrong guess fails open (no dialog).
+   */
+  DirtyState = 'DIRTY_STATE',
   /** Sent by the embedded QuickApps iframe to request a toolset OAuth login, carrying `{ toolsetId: string }`. */
   RequestToolsetLogin = 'REQUEST_TOOLSET_LOGIN',
   /** Sent back to the iframe with the outcome of a `RequestToolsetLogin`. */

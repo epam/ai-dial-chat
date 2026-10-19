@@ -2,6 +2,7 @@ import type {
   CatalogItemLimits,
   UsageLimitProgressRow,
 } from '@epam/ai-dial-catalog';
+import { isCappedStat } from '@epam/ai-dial-chat-hooks';
 
 /** The capped row closest to its limit, with its consumed percentage. */
 export interface WorstCappedRow {
@@ -11,12 +12,8 @@ export interface WorstCappedRow {
   usedPercent: number;
 }
 
-/*
- * An unlimited row has no ratio to compare — its `total` is the upstream
- * sentinel, not a cap — so it never competes for "worst".
- */
 const isCapped = (row: UsageLimitProgressRow): boolean =>
-  row.isUnlimited !== true && Number.isFinite(row.total) && row.total > 0;
+  row.isUnlimited !== true && isCappedStat(row.total);
 
 /**
  * Returns the capped row with the highest used/total ratio across every group,

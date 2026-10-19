@@ -16,7 +16,7 @@ The prompt keeps its single-column arrangement on that shell. `EntityEditor` SHA
 - `labels.backAriaLabel`: forwarded from `PromptEditorProps.labels.backButtonAriaLabel` (English default `'Back to prompts'`).
 - `title`: the resolved create/edit title string.
 - `metadataTitle={null}`, so the column has no section heading.
-- `metadata`: one centred column (max 1180 px) holding the shared `MetadataForm` with `fields={[MetadataField.Name, MetadataField.Description]}`, then the Instructions `MarkdownEditor` with its label, lazy `Suspense` fallback, character-counter announcements and error. The Instructions editor fills the height left below the fields.
+- `metadata`: one centred column (max 1180 px) holding the shared `MetadataForm` with `fields={[MetadataField.Name, MetadataField.Description]}`, then the Instructions `MarkdownEditor` with its label, lazy `Suspense` fallback, character-counter announcements and error. When the host supplies `onRefineDescription` / `onRefineInstructions`, the Description / Instructions label row carries the shared Refine with AI action and Undo (see `ai-text-refinement`); the app supplies both with purposes `prompt-description` / `prompt-instructions` only when `config.aiTextRefinementAvailable` is true. The Instructions editor fills the height left below the fields.
 - No `setup`, so the column takes the full width.
 - `onCancel`, `onSubmit` and `isSubmitting` (forwarded from `isSaving`).
 - `submitLabel`: `labels.createLabel` in create mode and `labels.saveLabel` in edit mode. The host resolves both through i18n (`buttons.create` / `buttons.save`).
@@ -210,3 +210,33 @@ The content and description fields SHALL show a character counter. Per the a11y 
 
 - **WHEN** submission is blocked by a validation error
 - **THEN** focus moves to the first invalid field and its error text is associated with the input via `aria-describedby`
+
+### Requirement: Host-owned unsaved-changes handling for `PromptEditor`
+
+`PromptEditor` from `@epam/ai-dial-prompt-editor` SHALL accept a new optional prop `onDirtyChange?: (isDirty: boolean) => void`. The lib SHALL call it with its existing `isDirty` value on mount and whenever that value changes.
+
+When `onDirtyChange` is provided:
+
+- the lib SHALL NOT render its built-in unsaved-changes `ConfirmationDialog`;
+- the lib SHALL NOT register its own `beforeunload` listener;
+- Back and Cancel SHALL call `onBack` / `onCancel` directly, so that the host owns the guard.
+
+When `onDirtyChange` is omitted, the existing built-in guard and its `discard*` labels SHALL behave exactly as before, so other hosts keep their behaviour. The lib stays free of routing, i18n and app contexts.
+
+The app page (`apps/chat/src/pages/PromptEditor/PromptEditor.tsx`) SHALL:
+
+- pass `onDirtyChange` and feed the reported value to `useBuilderLeaveGuard`;
+- stop passing the `discard*` labels;
+- call `allowNextNavigation()` before its post-save `navigate(returnUrl)`.
+
+#### Scenario: Host opt-in disables the built-in guard
+- **WHEN** the host passes `onDirtyChange`, the user edits the name, and activates Cancel
+- **THEN** `onCancel` is called immediately, the lib renders no confirmation, and `onDirtyChange` was last called with `true`
+
+#### Scenario: Reverting reports clean
+- **WHEN** the host passes `onDirtyChange` and the user edits the name and then restores it
+- **THEN** `onDirtyChange` is called with `true` and then with `false`
+
+#### Scenario: Default behaviour unchanged
+- **WHEN** the host omits `onDirtyChange` and the user activates Cancel after editing
+- **THEN** the lib's built-in "Discard unsaved changes?" confirmation opens as before

@@ -55,7 +55,7 @@ describe('ensureDownloadFilename', () => {
     expect(
       ensureDownloadFilename(
         'Blackstone vs. KKR Comparative Intelligence Briefing (Word Document)',
-        'files/bucket/appdata/applications/public/pg/pg-agent__1.0.0/Blackstone_KKR_Detailed_Report.docx',
+        'files/bucket/appdata/applications/public/demo/demo-agent__1.0.0/Blackstone_KKR_Detailed_Report.docx',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       ),
     ).toBe(

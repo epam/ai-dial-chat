@@ -257,7 +257,14 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * `focus` event that precedes it can fire before the browser has placed
      * the caret — reading `selectionStart` there is unreliable across
      * browsers — so `onFocus` defers one frame, by when it always has.
+     *
+     * The deferred call goes through a ref to the latest handler: an edit
+     * landing inside that frame (a paste right after focusing) re-renders
+     * with a new message, and the focus-time handler would evaluate the
+     * caret against the stale one and close a menu the edit just opened.
      */
+    const latestCommandMenuCaretMoveRef = useRef(handleCommandMenuCaretMove);
+    latestCommandMenuCaretMoveRef.current = handleCommandMenuCaretMove;
     const handleTextareaClick = () => {
       handleCommandMenuCaretMove(
         textareaRef.current?.selectionStart ?? message.length,
@@ -265,8 +272,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
     };
     const handleTextareaFocus = () => {
       requestAnimationFrame(() => {
-        handleCommandMenuCaretMove(
-          textareaRef.current?.selectionStart ?? message.length,
+        const textarea = textareaRef.current;
+        latestCommandMenuCaretMoveRef.current(
+          textarea?.selectionStart ?? textarea?.value.length ?? 0,
         );
       });
     };
@@ -375,10 +383,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
       });
     }, []);
 
-    useLayoutEffect(() => {
-      measureCaretAnchor();
-    }, [measureCaretAnchor, markerOffset, message]);
-
     /*
      * Auto-resizing the textarea's own width (e.g. a container resize) can
      * reflow where the marker's line wraps without changing `message` or
@@ -468,11 +472,19 @@ export const Input = forwardRef<InputHandle, InputProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [message]);
 
+    const draftRef = useRef(message);
+    draftRef.current = message;
+
+    /* Reads the text through draftRef so the handler keeps its identity across keystrokes. */
     const handleExpandPastedText = useCallback(
       (text: string) => {
-        setMessage((prev) => (prev ? `${prev}\n${text}` : text));
+        const draft = draftRef.current;
+        const next = draft ? `${draft}\n${text}` : text;
+        draftRef.current = next;
+        setMessage(next);
+        onChange?.(next);
       },
-      [setMessage],
+      [setMessage, onChange],
     );
 
     const {
@@ -508,8 +520,6 @@ export const Input = forwardRef<InputHandle, InputProps>(
     );
 
     const focusAfterTranscriptRef = useRef(false);
-    const draftRef = useRef(message);
-    draftRef.current = message;
     const [latestTranscript, setLatestTranscript] = useState({
       text: '',
       revision: 0,
@@ -596,12 +606,20 @@ export const Input = forwardRef<InputHandle, InputProps>(
           }
         }
         handleClipboardPaste(e);
+        if (e.defaultPrevented) return;
+
+        /* A textarea stores `\r\n` as `\n`, so the reported text must match what lands in `onChange`. */
+        const pastedText = e.clipboardData
+          .getData('text/plain')
+          .replace(/\r\n?/g, '\n');
+        if (pastedText !== '') commandMenu?.onTextPaste?.(pastedText);
       },
       [
         isPasteAsAttachmentEnabled,
         maxMessageLength,
         onMessageTooLong,
         handleClipboardPaste,
+        commandMenu,
       ],
     );
 
@@ -855,8 +873,27 @@ export const Input = forwardRef<InputHandle, InputProps>(
      */
     const isMirrorActive = hasActiveMentions || mirrorInsertions.length > 0;
 
-    const { mirrorRef, selectionRects, updateSelectionRects } =
-      useMentionSelectionMirror({ textareaRef, message, isMirrorActive });
+    const {
+      mirrorRef,
+      selectionRects,
+      updateSelectionRects,
+      syncMirrorToTextarea,
+    } = useMentionSelectionMirror({ textareaRef, message, isMirrorActive });
+
+    /*
+     * Declared after `useMentionSelectionMirror` so its layout effect has
+     * already scrolled the mirror into sync: the caret marker lives inside
+     * the mirror, and measuring it first would anchor the command menu to
+     * the unscrolled position.
+     */
+    useLayoutEffect(() => {
+      measureCaretAnchor();
+    }, [measureCaretAnchor, markerOffset, message]);
+
+    const handleTextareaScroll = () => {
+      syncMirrorToTextarea();
+      if (markerOffset != null) measureCaretAnchor();
+    };
 
     const textarea = (
       <textarea
@@ -864,7 +901,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           styles.textarea,
           isMirrorActive && styles.textareaMentionMode,
           typography?.fontClassName || 'dial-body-paragraph-text',
-          'relative z-0 max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent pe-1 ps-1 outline-none [field-sizing:content]',
+          'relative z-0 [field-sizing:content] max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent ps-1 pe-1 outline-hidden',
           'disabled:cursor-not-allowed',
         )}
         ref={textareaRef}
@@ -884,6 +921,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           onChange?.(e.target.value);
         }}
         onSelect={updateSelectionRects}
+        onScroll={handleTextareaScroll}
         onFocus={handleTextareaFocus}
         onClick={handleTextareaClick}
         onKeyDown={handleKeyDown}
@@ -921,12 +959,16 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * `matchReferenceWidth={false}` drops the kit's default min-width equal
      * to the (now zero-size) reference, so the overlay sizes to its content.
      */
-    const commandMenuArea =
-      commandMenu == null ? (
-        textarea
-      ) : (
-        <>
-          {textarea}
+    /*
+     * Always the same Fragment with the textarea as its first child, so toggling
+     * `commandMenu` (e.g. switching to a skills-capable model) never changes the
+     * textarea's parent type and never remounts it (focus, caret and IME state
+     * survive).
+     */
+    const commandMenuArea = (
+      <>
+        {textarea}
+        {commandMenu != null && (
           <div
             aria-hidden
             className={mergeClasses(
@@ -983,14 +1025,15 @@ export const Input = forwardRef<InputHandle, InputProps>(
               <span aria-hidden className="inline-block h-[1lh] w-0" />
             </Dropdown>
           </div>
-        </>
-      );
+        )}
+      </>
+    );
 
     const textareaArea = (
       <div
         ref={textareaAreaRef}
         // Bleeds 4px past each edge, canceling the ps-1/pe-1 below.
-        className="relative -me-1 -ms-1 w-[calc(100%+8px)]"
+        className="relative -ms-1 -me-1 w-[calc(100%+8px)]"
       >
         {isMirrorActive && (
           <div
@@ -999,7 +1042,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
               styles.textarea,
               typography?.fontClassName || 'dial-body-paragraph-text',
               // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
-              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden whitespace-pre-wrap pe-1 ps-1 [overflow-wrap:anywhere]',
+              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden ps-1 pe-1 [overflow-wrap:anywhere] whitespace-pre-wrap',
             )}
           >
             {renderHighlightedText(
@@ -1123,8 +1166,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           isInputDisabled && styles.wrapperDisabled,
           isInputDisabled && 'cursor-not-allowed',
           'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
-          'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
-          attachments.length > 6 ? 'py-4 ps-4' : 'p-4',
+          'p-4 focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
           className,
           CONVERSATION_INPUT_CLASS.wrapper,
         )}
@@ -1148,7 +1190,18 @@ export const Input = forwardRef<InputHandle, InputProps>(
               expandLabel,
               clickLabel,
             }}
-            styles={attachmentTray}
+            styles={{
+              ...attachmentTray,
+              /*
+               * A full tray bleeds into the wrapper's inline-end padding so the
+               * cards scroll to the edge; the wrapper itself keeps `p-4`, so
+               * the action row and its controls never shift.
+               */
+              className: mergeClasses(
+                attachments.length > 6 && '-me-4',
+                attachmentTray?.className,
+              ),
+            }}
             onAttachmentClick={
               onAttachmentClick != null
                 ? (id) => {
@@ -1174,7 +1227,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           />
         )}
         {voiceError && (
-          <ErrorText text={voiceError} className="min-w-0 break-words px-1" />
+          <ErrorText text={voiceError} className="min-w-0 px-1 break-words" />
         )}
         {isVoiceActive && (
           <VoiceBar

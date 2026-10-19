@@ -130,6 +130,37 @@ describe('createChatStreamApi', () => {
     expect(error.message).not.toContain('private upstream detail');
   });
 
+  it.each([
+    ['a numeric status', '"status":401', 401],
+    ['no status', '', undefined],
+    ['a non-numeric status', '"status":"401"', undefined],
+  ])(
+    'exposes the rejected write status of a persistence failure carrying %s',
+    async (_label, statusField, expectedStatus) => {
+      const encoder = new TextEncoder();
+      const extra = statusField ? `,${statusField}` : '';
+      fetchMock.mockResolvedValue(
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(
+                encoder.encode(
+                  `data: {"error":{"type":"conversation_save_failed","message":"saved failed"${extra}}}\n\n`,
+                ),
+              );
+              controller.close();
+            },
+          }),
+        ),
+      );
+
+      const error = await failStreamRequest();
+
+      expect(error).toBeInstanceOf(GenerationPersistenceError);
+      expect((error as GenerationPersistenceError).status).toBe(expectedStatus);
+    },
+  );
+
   it('reports any other non-OK completion response as a plain transport error', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 502 }));
 

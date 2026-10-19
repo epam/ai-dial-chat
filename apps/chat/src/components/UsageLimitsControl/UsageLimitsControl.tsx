@@ -3,7 +3,12 @@ import {
   LimitRowLayout,
   LimitsTab,
 } from '@epam/ai-dial-catalog';
-import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
+import {
+  formatUsageResetTime,
+  mapDeploymentLimitsToInput,
+  useDeploymentUsageLimits,
+  useRefreshUsageAfterGeneration,
+} from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconChevronRight } from '@tabler/icons-react';
@@ -25,7 +30,7 @@ import { getSettingsTabRoute } from '../../constants/routes';
 import { ConversationInputI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { useDeploymentUsageLimits } from '../../hooks/useDeploymentUsageLimits';
+import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { SettingsTabs } from '../../types/settings-tabs';
 import { resolveLocalizedText } from '../../utils/locale';
 import {
@@ -33,7 +38,6 @@ import {
   getGaugeNeedleAngle,
   getViewportClampShift,
 } from '../../utils/usage-limits';
-import { formatUsageResetTime } from '../../utils/usage-reset-time';
 import styles from './UsageLimitsControl.module.scss';
 
 interface Props {
@@ -54,16 +58,16 @@ const UsageLimitsControl: FC<Props> = ({
   };
   const { language: activeLocale } = useLanguage();
   const { items: deployments } = useDeployments();
-  const { limitsDto, isLoading, hasError, refresh } =
-    useDeploymentUsageLimits(deploymentId);
+  const { limitsDto, isLoading, hasError, refresh } = useDeploymentUsageLimits(
+    deploymentId,
+    getDeploymentLimits,
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [popoverShiftPx, setPopoverShiftPx] = useState(0);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const wasGenerationInProgressRef = useRef(isGenerationInProgress);
-  const hasPendingGenerationRefreshRef = useRef(false);
 
   const labels = useMemo(
     () => ({
@@ -114,17 +118,11 @@ const UsageLimitsControl: FC<Props> = ({
     );
   }, [deployments, deploymentId, activeLocale]);
 
-  useEffect(() => {
-    if (wasGenerationInProgressRef.current && !isGenerationInProgress) {
-      hasPendingGenerationRefreshRef.current = true;
-    }
-    wasGenerationInProgressRef.current = isGenerationInProgress;
-
-    if (hasPendingGenerationRefreshRef.current && !isLoading) {
-      hasPendingGenerationRefreshRef.current = false;
-      refresh();
-    }
-  }, [isGenerationInProgress, isLoading, refresh]);
+  useRefreshUsageAfterGeneration({
+    isGenerationInProgress,
+    isLoading,
+    refresh,
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -291,7 +289,7 @@ const UsageLimitsControl: FC<Props> = ({
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute bottom-full end-0 z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
+          className="absolute end-0 bottom-full z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-hidden"
           /* Measured in physical viewport pixels, so the shift is physical too
              and stays correct under RTL. */
           style={

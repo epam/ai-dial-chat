@@ -27,6 +27,7 @@ import {
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -50,6 +51,15 @@ interface FormErrors {
   content?: PromptFieldError;
 }
 
+const FIELD_VALIDATORS: Record<
+  keyof PromptEditorValues,
+  (value: string) => PromptFieldError | null
+> = {
+  name: validatePromptName,
+  description: validatePromptDescription,
+  content: validatePromptContent,
+};
+
 const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -70,6 +80,9 @@ const PromptEditorPage: FC = () => {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  /* Reported by the form; passing `onDirtyChange` also turns its own guard off. */
+  const [isDirty, setIsDirty] = useState(false);
+  const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
 
   useEffect(() => {
     if (!isPromptsEnabled) {
@@ -151,6 +164,26 @@ const PromptEditorPage: FC = () => {
     };
   }, [errors, resolveNameError, t]);
 
+  /*
+   * Length and name-pattern errors show while the user types; a Required error
+   * keeps its submit timing, so it only persists (never appears) here.
+   */
+  const handleFieldChange = useCallback(
+    (field: keyof PromptEditorValues, value: string) => {
+      setErrors((previous) => {
+        const error = FIELD_VALIDATORS[field](value) ?? undefined;
+        const nextError =
+          error === PromptFieldError.Required &&
+          previous[field] !== PromptFieldError.Required
+            ? undefined
+            : error;
+        if (nextError === previous[field]) return previous;
+        return { ...previous, [field]: nextError };
+      });
+    },
+    [],
+  );
+
   const handleCancel = useCallback(() => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
@@ -206,6 +239,7 @@ const PromptEditorPage: FC = () => {
           isEditMode ? EntityOperation.Edited : EntityOperation.Created,
           { name: trimmedName },
         );
+        allowNextNavigation();
         navigate(returnUrl);
       } catch (err) {
         const { status, traceId } = await getApiErrorDetails(err);
@@ -222,6 +256,7 @@ const PromptEditorPage: FC = () => {
       }
     },
     [
+      allowNextNavigation,
       isSaving,
       isEditMode,
       promptId,
@@ -236,6 +271,9 @@ const PromptEditorPage: FC = () => {
 
   const onRefineDescription = useTextRefinementCallback(
     TextRefinementPurpose.PromptDescription,
+  );
+  const onRefineInstructions = useTextRefinementCallback(
+    TextRefinementPurpose.PromptInstructions,
   );
   const refinementLabels = useTextRefinementLabels();
   const labels = useMemo<PromptEditorLabels>(
@@ -281,10 +319,13 @@ const PromptEditorPage: FC = () => {
         currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
       }
       onSubmit={handleSubmit}
+      onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}
+      onDirtyChange={setIsDirty}
       onRetry={handleRetry}
       onRefineDescription={onRefineDescription}
+      onRefineInstructions={onRefineInstructions}
     />
   );
 };

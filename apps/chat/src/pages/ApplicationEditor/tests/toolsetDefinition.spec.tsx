@@ -7,16 +7,18 @@ import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ApplicationEditorKind } from '../../../types/application-editor';
@@ -75,7 +77,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     await import('@epam/ai-dial-chat-hooks');
 
   interface StubProps {
-    initialForm: { name: string };
+    initialForm: { name: string; version: string };
     toolsetId: string;
     onOAuthLogin: unknown;
     labels?: { layout?: { createLabel?: string } };
@@ -93,11 +95,18 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     onSaveSuccess: (form: { name: string }) => void;
     onSaveComplete: () => void;
     onBack: () => void;
+    onDirtyChange?: (isDirty: boolean) => void;
     authActions: {
       login: (toolsetId: string, body: unknown) => Promise<unknown>;
       logout: (toolsetId: string, body: unknown) => Promise<unknown>;
     };
   }
+
+  /* Stands in for the name the user types in the real editor: create mode opens with an empty one. */
+  const submittedForm = <T extends { name: string }>(form: T): T => ({
+    ...form,
+    name: form.name || 'Typed toolset',
+  });
 
   const apiKeyLoginAuth = {
     authenticationType: ToolsetAuthTypes.ApiKey,
@@ -111,6 +120,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     return (
       <div>
         <span>{props.initialForm.name}</span>
+        <span>{`seeded-version-${props.initialForm.version}`}</span>
         <span>{props.toolsetId}</span>
         <span>{props.onOAuthLogin ? 'oauth-handler' : 'no-oauth-handler'}</span>
         <span>{props.labels?.layout?.createLabel}</span>
@@ -139,7 +149,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
           type="button"
           onClick={async () => {
             const id = await props.onPersist(
-              props.initialForm,
+              submittedForm(props.initialForm),
               props.toolsetId,
             );
             setPersistResult(id ?? 'null');
@@ -169,12 +179,15 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         </button>
         <button
           type="button"
-          onClick={() => props.onSaveSuccess(props.initialForm)}
+          onClick={() => props.onSaveSuccess(submittedForm(props.initialForm))}
         >
           adapter-save-success
         </button>
         <button type="button" onClick={props.onSaveComplete}>
           adapter-save-complete
+        </button>
+        <button type="button" onClick={() => props.onDirtyChange?.(true)}>
+          adapter-mark-dirty
         </button>
         <button type="button" onClick={props.onBack}>
           adapter-back
@@ -239,18 +252,16 @@ const editDto = (): DialToolsetDto => ({
 });
 
 const renderPage = (initialEntry: string = ROUTES.ToolsetEditor) =>
-  render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route
-          path={ROUTES.ToolsetEditor}
-          element={
-            <ApplicationEditorPage kind={ApplicationEditorKind.Toolset} />
-          }
-        />
-        <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithLeaveGuard(
+    <Routes>
+      <Route
+        path={ROUTES.ToolsetEditor}
+        element={<ApplicationEditorPage kind={ApplicationEditorKind.Toolset} />}
+      />
+      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+      <Route path={ROUTES.FileManager} element={<div>Files</div>} />
+    </Routes>,
+    [initialEntry],
   );
 
 describe('ApplicationEditorPage — toolset', () => {
@@ -259,7 +270,6 @@ describe('ApplicationEditorPage — toolset', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    vi.mocked(toolsetsApi.listToolsets).mockResolvedValue({ data: [] });
     vi.mocked(toolsetsApi.createToolset).mockResolvedValue({
       id: NEW_TOOLSET_ID,
     });
@@ -299,21 +309,13 @@ describe('ApplicationEditorPage — toolset', () => {
     );
   });
 
-  it('seeds create mode with a collision-free default name derived from existing toolsets', async () => {
-    vi.mocked(toolsetsApi.listToolsets).mockResolvedValue({
-      data: [{ ...editDto(), displayName: 'New toolset' }],
-    });
+  it('seeds create mode with an empty name and version 1.0.0 without listing toolsets', async () => {
     renderPage();
 
-    expect(await screen.findByText('New toolset 1')).toBeTruthy();
+    expect(await screen.findByText('seeded-version-1.0.0')).toBeTruthy();
+    expect(screen.queryByText('New toolset')).toBeNull();
+    expect(toolsetsApi.listToolsets).not.toHaveBeenCalled();
     expect(toolsetsApi.getToolset).not.toHaveBeenCalled();
-  });
-
-  it('falls back to the plain default form when listing toolsets fails', async () => {
-    vi.mocked(toolsetsApi.listToolsets).mockRejectedValue(new Error('fail'));
-    renderPage();
-
-    expect(await screen.findByText('New toolset')).toBeTruthy();
   });
 
   it('shows the route fallback while the edit target is still loading', () => {
@@ -371,7 +373,7 @@ describe('ApplicationEditorPage — toolset', () => {
       await screen.findByText(`persist-result-${NEW_TOOLSET_ID}`),
     ).toBeTruthy();
     expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'New toolset' }),
+      expect.objectContaining({ name: 'Typed toolset', version: '1.0.0' }),
     );
   });
 
@@ -531,7 +533,7 @@ describe('ApplicationEditorPage — toolset', () => {
     expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
       NotifiableEntity.Toolset,
       EntityOperation.Created,
-      { name: 'New toolset' },
+      { name: 'Typed toolset' },
     );
   });
 
@@ -590,5 +592,46 @@ describe('ApplicationEditorPage — toolset', () => {
       EDIT_TOOLSET_ID,
       'toolset',
     );
+  });
+
+  describe('leave guard', () => {
+    const markDirty = async () =>
+      user.click(
+        await screen.findByRole('button', { name: 'adapter-mark-dirty' }),
+      );
+
+    it('asks before leaving through navigation while the editor reports edits', async () => {
+      const { router } = renderPage();
+      await markDirty();
+
+      await act(() => router.navigate(ROUTES.FileManager));
+
+      expect(
+        screen.getByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toBeTruthy();
+      expect(router.state.location.pathname).toBe(ROUTES.ToolsetEditor);
+    });
+
+    it('routes a dirty Back through the same dialog', async () => {
+      renderPage();
+      await markDirty();
+
+      await user.click(screen.getByRole('button', { name: 'adapter-back' }));
+
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(screen.queryByText('Catalog')).toBeNull();
+    });
+
+    it('exits after a successful save without the dialog', async () => {
+      renderPage();
+      await markDirty();
+
+      await user.click(
+        screen.getByRole('button', { name: 'adapter-save-complete' }),
+      );
+
+      expect(await screen.findByText('Catalog')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
   });
 });

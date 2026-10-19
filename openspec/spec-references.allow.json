@@ -43,7 +43,7 @@
     {
       "reference": "chat.sendDisabledTooltip",
       "spec": "conversation-input-send-tooltip",
-      "reason": "Translation key owned by the pg-chat host, cited as an example of a host-supplied string; not an apps/chat key."
+      "reason": "Translation key owned by a downstream host app, cited as an example of a host-supplied string; not an apps/chat key."
     }
   ]
 }

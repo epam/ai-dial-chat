@@ -8,6 +8,7 @@ import {
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
 import {
+  ButtonVariant,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   PrimaryButton,
   Spinner,
@@ -118,6 +119,12 @@ export interface DialFileManagerShellProps {
   getDisabledTooltip?: (row: FileManagerGridRow) => string | undefined;
   /** Tooltip shown on files with an unsupported type. */
   unsupportedFileTypeTooltip?: string;
+  /**
+   * Classes for the folders-tree panel. Replaces the panel's default classes
+   * (including its width), so include `shrink-0` and an explicit width.
+   * Omit to keep the variant's default.
+   */
+  treeContainerClassName?: string;
 }
 
 /**
@@ -142,6 +149,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   isRowSelectable,
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
+  treeContainerClassName,
 }) => {
   const {
     items,
@@ -276,9 +284,13 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     return withoutRemoveAccess;
   }, [actionLabels, allSelectedItemsSharedByMe]);
 
+  const isAttachVariant = variant === DialFileManagerVariant.Attach;
+
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
+      /* Attach is a picker: column filters are redundant next to the search bar. */
+      ...(isAttachVariant ? { filterable: false } : {}),
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -292,6 +304,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       actionLabels: gridActionLabels,
     }),
     [
+      isAttachVariant,
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -307,9 +320,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           ? null
           : labels.treeHeaderByTab[activeTab],
       containerClassName:
-        variant === DialFileManagerVariant.Attach
+        treeContainerClassName ??
+        (variant === DialFileManagerVariant.Attach
           ? 'min-h-0 h-full w-[360px] shrink-0 rounded-xl bg-layer-raised shadow-sm'
-          : undefined,
+          : undefined),
       tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,
       activeTab,
@@ -322,6 +336,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     }),
     [
       labels.treeHeaderByTab,
+      treeContainerClassName,
       variant,
       tabs,
       activeTab,
@@ -343,6 +358,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   const toolbarOptions = useMemo(
     () => ({
       showHiddenFilesToggle: true,
+      /* The attach footer owns the primary action, so the "Add" button is neutral. */
+      ...(isAttachVariant ? { newButtonVariant: ButtonVariant.Neutral } : {}),
       hiddenFilesSwitcherLabel: labels.hiddenFilesLabel,
       showHiddenFilesLabel: labels.showHiddenFilesLabel,
       hideHiddenFilesLabel: labels.hideHiddenFilesLabel,
@@ -357,6 +374,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       },
     }),
     [
+      isAttachVariant,
       labels.hiddenFilesLabel,
       labels.showHiddenFilesLabel,
       labels.hideHiddenFilesLabel,
@@ -369,12 +387,16 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     ],
   );
 
+  /* Attach is a file picker: bulk Download/Delete would act on files the user only meant to pick. */
   const bulkActionsToolbarOptions = useMemo(
-    () => ({
-      getSelectionLabel: labels.getSelectionLabel,
-      actionLabels: bulkActionLabels,
-    }),
-    [labels.getSelectionLabel, bulkActionLabels],
+    () =>
+      isAttachVariant
+        ? undefined
+        : {
+            getSelectionLabel: labels.getSelectionLabel,
+            actionLabels: bulkActionLabels,
+          },
+    [isAttachVariant, labels.getSelectionLabel, bulkActionLabels],
   );
 
   const deleteConfirmationOptions = useMemo(
@@ -498,31 +520,19 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     labels,
   );
 
-  /* The standalone File storage page sits on the base layer; the attach
-     modal keeps the sunken surface behind its raised tree panel. */
-  const surfaceClassName =
-    variant === DialFileManagerVariant.Standalone
-      ? 'bg-layer-base'
-      : 'bg-layer-sunken';
+  /* Standalone and attach hosts share the base layer; the attach tree panel
+     stays raised on top of it. */
+  const surfaceClassName = 'bg-layer-base';
 
+  /* Search-mode copy goes through `searchEmptyStateTitle`: in search mode
+     `DialFileManager` ignores `emptyStateTitle` and falls back to "No data". */
   const emptyStateCopy = useMemo((): EmptyStateCopy => {
-    if (searchResults != null && !isSearching) {
-      return { title: labels.searchEmptyStateTitle, description: '' };
-    }
     const isInSubfolder = path.split('/').filter(Boolean).length > 1;
     if (isInSubfolder) {
       return { title: labels.folderEmptyStateTitle, description: '' };
     }
     return labels.emptyStateByTab[gateTab];
-  }, [
-    searchResults,
-    isSearching,
-    path,
-    labels.searchEmptyStateTitle,
-    labels.folderEmptyStateTitle,
-    labels.emptyStateByTab,
-    gateTab,
-  ]);
+  }, [path, labels.folderEmptyStateTitle, labels.emptyStateByTab, gateTab]);
 
   return (
     <>
@@ -539,7 +549,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           )}
         >
           <DialFileManager
-            className={mergeClasses('min-h-0 w-full grow', surfaceClassName)}
+            /* Cancels the file manager's own compact-view root padding, which doubles attach's grid inset. */
+            className={mergeClasses(
+              'min-h-0 w-full grow',
+              surfaceClassName,
+              isAttachVariant && 'p-0',
+            )}
             contentClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'px-0 pb-0'
@@ -582,6 +597,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             autoSelectUploadedItems={autoSelectUploadedItems}
             emptyStateTitle={emptyStateCopy.title}
             emptyStateDescription={emptyStateCopy.description}
+            searchEmptyStateTitle={labels.searchEmptyStateTitle}
             uploadEnabled={uploadEnabled}
             sharedWithMeIds={sharedWithMeIds}
             sharedByMePaths={sharedByMePaths}
@@ -622,7 +638,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         </div>
       )}
 
-      <div className="fixed bottom-4 end-4 z-[70]">
+      <div className="fixed end-4 bottom-4 z-[70]">
         <TransferQueue
           title={labels.getUploadQueueTitle(uploadQueueItems.length)}
           items={uploadQueueItems}

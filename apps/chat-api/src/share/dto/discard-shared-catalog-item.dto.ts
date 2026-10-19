@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
-import { IsValidFilePath } from '../../files/dto/file-path.validator';
+import { IsDialResourceId } from '../../common/validators/dial-resource-id.validator';
 import { IsCatalogResourcePath } from './catalog-resource-path.validator';
 
 /*
@@ -22,7 +22,7 @@ export class DiscardSharedCatalogItemDto {
   })
   @IsString()
   @IsNotEmpty()
-  @IsValidFilePath()
+  @IsDialResourceId()
   @IsCatalogResourcePath()
   @Matches(NOT_A_SKILL_FILE_PATTERN, {
     message: 'itemId must identify a whole skill, not an individual skill file',

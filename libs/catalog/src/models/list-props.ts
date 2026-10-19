@@ -1,5 +1,6 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { ListViewColumnVisibility } from '../components/ListView/columns';
+import type { CatalogSelectionMode } from '../types/selection-mode';
 import { CatalogItem } from './catalog-item';
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
@@ -72,8 +73,18 @@ export interface ListViewProps {
    * sits flush below it while the page scrolls.
    */
   stickyHeaderTop?: number;
-  /** ID of an item to visually mark as selected (border, tint, and checkmark). */
+  /** ID of an item to visually mark as selected (border, tint, and checkmark). Ignored in `CatalogSelectionMode.Multiple`. */
   selectedItemId?: string;
+  /** Row selection mode; `Multiple` adds a checkbox column with a select-all header. Default: `CatalogSelectionMode.Single`. */
+  selectionMode?: CatalogSelectionMode;
+  /** Ids of the selected items in `CatalogSelectionMode.Multiple`; may include ids that are not in `items`. */
+  selectedItemIds?: ReadonlySet<string>;
+  /** Called with the next selection in `CatalogSelectionMode.Multiple`; newly selected ids are appended, so iteration order is selection order. */
+  onSelectionChange?: (ids: Set<string>) => void;
+  /** Accessible name of a row's checkbox in `CatalogSelectionMode.Multiple`. Default: `Select <item name>`. */
+  selectRowAriaLabel?: (item: CatalogItem) => string;
+  /** Accessible name of the select-all checkbox in `CatalogSelectionMode.Multiple`. Default: `'Select all'`. */
+  selectAllAriaLabel?: string;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
   /** Renders the list read-only: the "Favorite" column is dropped entirely. Default: false. */

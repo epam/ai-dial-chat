@@ -1,3 +1,4 @@
+import { ShareInvitationErrorCode } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,7 +8,10 @@ import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import { acceptInvitation } from '../../../server-api/share.api';
+import {
+  acceptInvitation,
+  getAcceptInvitationErrorItemName,
+} from '../../../server-api/share.api';
 import { ROUTES } from '../../../types/routes';
 import SharedInvitationPage from '../SharedInvitation';
 
@@ -41,7 +45,15 @@ vi.mock('../../../context/PromptsContext', () => ({
 
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
+  getAcceptInvitationErrorItemName: vi.fn(),
 }));
+
+const makeCodedError = (status: number, code: string) => ({
+  response: new Response(JSON.stringify({ statusCode: status, code }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  }),
+});
 
 describe('SharedInvitationPage', () => {
   const showNotification = vi.fn();
@@ -146,6 +158,64 @@ describe('SharedInvitationPage', () => {
       variant: NotificationVariant.Error,
       message: ShareI18nKeys.InvitationAcceptError,
     });
+  });
+
+  it('shows the expired-link message when the invitation no longer exists', async () => {
+    vi.mocked(acceptInvitation).mockRejectedValue(
+      makeCodedError(404, ShareInvitationErrorCode.ShareInvitationNotFound),
+    );
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(showNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: ShareI18nKeys.InvitationNotFound,
+      }),
+    );
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Catalog, {
+      replace: true,
+    });
+  });
+
+  it('shows the named users-limit message when the backend sends the shared item name', async () => {
+    vi.mocked(acceptInvitation).mockRejectedValue(
+      makeCodedError(
+        400,
+        ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached,
+      ),
+    );
+    vi.mocked(getAcceptInvitationErrorItemName).mockResolvedValue(
+      'Quarterly plan',
+    );
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(showNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: ShareI18nKeys.InvitationUsersLimitReached,
+      }),
+    );
+  });
+
+  it('shows the unnamed users-limit message when the backend sends no item name', async () => {
+    vi.mocked(acceptInvitation).mockRejectedValue(
+      makeCodedError(
+        400,
+        ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached,
+      ),
+    );
+    vi.mocked(getAcceptInvitationErrorItemName).mockResolvedValue(undefined);
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(showNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: ShareI18nKeys.InvitationUsersLimitReachedUnnamed,
+      }),
+    );
   });
 
   it('does not call acceptInvitation when invitationId is missing', () => {

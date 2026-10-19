@@ -128,8 +128,8 @@ export interface PublishPanelProps {
   hasSubmitError?: boolean;
   /**
    * Whether resubmitting when `hasExistingPublicationInFolder` is true is
-   * allowed (catalog default) or blocked (conversations — see
-   * `PublishDerivationInput.allowReplace`). Default `true`.
+   * allowed or blocked — see `PublishDerivationInput.allowReplace`.
+   * Default `true`.
    */
   allowReplace?: boolean;
   /**

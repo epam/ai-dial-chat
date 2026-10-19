@@ -23,6 +23,7 @@ const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_FILE_MANAGER_TABS = ['all', 'my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
+const DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75;
 
 export interface AppConfigState {
   status: UserConfigStatus;
@@ -54,6 +55,8 @@ export interface AppConfigState {
     applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
     maxAttachmentFileSizeBytes: number;
+    /** Percentage of a capped usage limit at which the composer banner appears. */
+    usageLimitsWarningThresholdPercent: number;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -88,6 +91,8 @@ const INITIAL_STATE: AppConfigState = {
     applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
     maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
+    usageLimitsWarningThresholdPercent:
+      DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
   },
 };
 
@@ -149,6 +154,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             maxAttachmentFileSizeBytes:
               response.config?.maxAttachmentFileSizeBytes ??
               DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
+            usageLimitsWarningThresholdPercent:
+              response.config?.usageLimitsWarningThresholdPercent ??
+              DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
           },
           metadata: response.metadata,
         });

@@ -8,6 +8,8 @@ export interface EntityTypeLabelProps {
   type: CatalogEntityType;
   /** CSS class for the label text. Default: 'dial-caption-lead-semi-text'. */
   className?: string;
+  /** Visible text, e.g. a translated type name. Default: the raw `type` value (`'MODEL'`, `'TOOLSET'`, …). */
+  label?: string;
 }
 
 /**
@@ -18,8 +20,9 @@ export interface EntityTypeLabelProps {
 export const EntityTypeLabel: FC<EntityTypeLabelProps> = ({
   type,
   className = 'dial-caption-lead-semi-text',
+  label,
 }) => (
   <span className={className} style={{ color: ENTITY_TYPE_COLOR[type] }}>
-    {type}
+    {label ?? type}
   </span>
 );

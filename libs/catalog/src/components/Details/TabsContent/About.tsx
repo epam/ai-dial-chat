@@ -9,7 +9,7 @@ import type {
 } from '../../../models/item-details-props';
 import { TopicTag } from '../../TopicTag/TopicTag';
 
-interface AboutTabProps {
+export interface AboutTabProps {
   topics?: string[];
   /** Markdown text to render, typically `item.description`. */
   content: string;

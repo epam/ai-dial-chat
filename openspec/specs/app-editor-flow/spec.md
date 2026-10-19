@@ -127,12 +127,14 @@ navigation, no entering preview — and the page clears `isSaving` and stays ope
 
 `apps/chat/src/pages/ApplicationEditor/setup/AppEditorIframe.tsx` SHALL:
 
-- Build the iframe URL with encoded `authProvider`, `id`, `theme`, and `applicationCredentials` query parameters.
+- Build the iframe URL with encoded `authProvider`, `id`, `theme`, `applicationCredentials`, and `applicationName` query parameters.
+  - `applicationName` SHALL be `schema.displayName`, URL-encoded (e.g. `Quick app 2.0` becomes `Quick+app+2.0`), and SHALL be omitted entirely when `schema.displayName` is missing or empty. It is the same value used as the `${displayName}/` prefix when matching incoming postMessage types, so the embedded editor can name its own messages with it instead of being configured separately.
   - `providerId` from `useUser().user?.providerId`
   - `theme` from `useTheme().currentTheme`
   - `applicationCredentials` SHALL be `true` only when both `useFeatureFlag('liveChatInteraction')` and `useUiFeature(OverlayFeature.LiveChatInteraction)` are enabled, otherwise `false`
 - Render a full-height `<iframe>` (`className="size-full border-none"`) with `allow="local-network-access=*"` so the embedded app — and any window it opens via `window.open` (e.g. an identity-provider login popup) — can request and receive the Local Network Access permission when the embedded app's or its identity provider's origin resolves to a private/internal IP address.
 - Show a `<Spinner />` overlay until the iframe dispatches `load` or fires a `readyToInteract` postMessage event; after either, hide the spinner.
+- Report the embedded editor as not responding when no postMessage from its origin arrives within `EDITOR_RESPONSE_TIMEOUT_MS` (15 seconds) of the iframe (re)loading. A `load` event does not count, because the browser fires it for its own error page when the editor host is unreachable. While not responding, hide the spinner and render a `WarningMessageNotification` above the iframe titled `appsEditor.settingsStep.unresponsiveTitle`, with the message `appsEditor.settingsStep.unresponsiveMessage` naming the editor origin and a `buttons.reload` action that remounts the iframe with the same URL and restarts the wait. The iframe stays visible and interactive. Any later message from the editor origin clears the state. Report every change through the optional `onUnresponsiveChange` prop.
 - Add a `window.addEventListener('message', handleMessage)` listener on mount and remove it on unmount (`useEffect` cleanup).
 - In `handleMessage`, after verifying `event.origin` matches `schema.editorUrl`'s origin:
   - `event.data.type === \`${displayName}/${AppsEditorEvent.ReadyToInteract}\`` → set loading=false
@@ -158,14 +160,32 @@ interface Props {
   onSaveError?: (error: string) => void;
   onReadyChange?: (isReady: boolean) => void;
   onLoggedOutChange?: (isLoggedOut: boolean) => void;
+  onUnresponsiveChange?: (isUnresponsive: boolean) => void;
 }
 ```
+
+`QuickAppSetup` SHALL treat a not-responding editor like a logged-out one: it does not surface the generic `appsEditor.error.settingsNotReady` error and clears one already shown.
 
 **Memoisation**: `handleMessage` SHALL be wrapped in `useCallback`. The `iframeUrl` string SHALL be wrapped in `useMemo`. `triggerSave` (inside `useImperativeHandle`) is memoised on `[schema.editorUrl]`.
 
 **Accessibility**: The `<iframe>` SHALL have `title={schema.displayName}`. The loading overlay SHALL expose exactly one status region: the kit `Spinner` (itself `role="status"`, wrapping a `role="img"`) SHALL receive `ariaLabel` from `appsEditor.settingsStep.loadingLabel`. The overlay container SHALL NOT carry its own `aria-label`/`aria-live` — a name on a role-less `div` is not exposed, and adding `role="status"` there would nest a second live region around the Spinner's.
 
 **RTL / UI impact**: The embedded editor handles its own directionality. The host-owned credentials dialog SHALL inherit the host direction and use the shared forms' logical spacing and wrapping, as specified in `catalog-application-credentials`.
+
+#### Scenario: Iframe src includes applicationName
+
+- **WHEN** `AppEditorIframe` renders with `schema.displayName = "Quick app 2.0"`
+- **THEN** the iframe URL carries `applicationName=Quick+app+2.0`, which decodes to `Quick app 2.0` via `URLSearchParams`
+
+#### Scenario: applicationName omitted when displayName is empty
+
+- **WHEN** `AppEditorIframe` renders with `schema.displayName` empty or undefined
+- **THEN** the iframe URL contains no `applicationName` parameter
+
+#### Scenario: Iframe reloads when the schema display name changes
+
+- **WHEN** `schema.displayName` changes while `AppEditorIframe` stays mounted
+- **THEN** the iframe URL changes, the iframe reloads, and readiness (`ReadyToSave`) re-gates to false as for any other URL change
 
 #### Scenario: Iframe src includes auth params
 
@@ -192,6 +212,21 @@ interface Props {
 
 - **WHEN** a `message` event arrives with `data.type = "<displayName>/readyToInteract"`
 - **THEN** the `Spinner` is no longer rendered
+
+#### Scenario: Unreachable editor is reported as not responding
+
+- **WHEN** no message arrives from the editor origin within 15 seconds of the iframe loading, even if the iframe fired `load`
+- **THEN** the spinner is hidden, a warning naming the editor origin with a Reload button is shown above the iframe, and `onUnresponsiveChange(true)` is called
+
+#### Scenario: Late editor message clears the not-responding warning
+
+- **WHEN** the warning is shown and a message then arrives from the editor origin
+- **THEN** the warning is removed and `onUnresponsiveChange(false)` is called
+
+#### Scenario: Reload remounts the editor
+
+- **WHEN** the user activates Reload in the not-responding warning
+- **THEN** the iframe is remounted with the same URL, the spinner is shown again, and the 15-second wait restarts
 
 #### Scenario: onUpdated called on updatedApplicationSuccess
 
@@ -411,7 +446,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 It SHALL render the following:
 
-- Without `appId` (create mode): the `applicationEditor.setupPendingCreate` placeholder, with a `PrimaryButton` Create that calls `onSubmit` (disabled while `isSubmitting`).
+- Without `appId` (create mode): the `applicationEditor.setupPendingCreate` placeholder, with a `NeutralButton` Create that calls `onSubmit` (neutral, so the header's `PrimaryButton` stays the one primary action) (disabled while `isSubmitting`).
 - With `appId` and `schema.editorUrl`: `AppEditorIframe` only. `QuickAppSetup` SHALL NOT render `AppPreviewChat`. The preview chat is rendered at page level by `QuickAppPreview` (see `app-preview-chat` "Preview is a full-page mode"), and the iframe stays mounted while preview is shown because the whole `EntityEditor` is only hidden.
 - With `appId` but no `schema.editorUrl`: the `appsEditor.settingsStep.noEditorPlaceholder` placeholder.
 
@@ -450,3 +485,33 @@ The Setup section SHALL give the iframe container a minimum height of 640 px (`m
 #### Scenario: Unit test — empty name shows error
 - **WHEN** Create is clicked with an empty name field
 - **THEN** the validation error message is visible in the DOM and `createApplication` is not called
+
+### Requirement: App editor iframe reports dirty state
+
+`AppsEditorEvent` (`apps/chat/src/types/apps-editor.ts`) SHALL gain the member `DirtyState = 'DIRTY_STATE'`.
+
+`AppEditorIframe` (`apps/chat/src/pages/ApplicationEditor/setup/AppEditorIframe.tsx`) SHALL handle `DIRTY_STATE` messages whose payload carries a boolean `isDirty`. It SHALL accept such a message only from the embedded editor's own window, under the same origin and source checks as `VALIDITY_STATE`, and SHALL report the value to its parent through a new optional `onDirtyChange?: (isDirty: boolean) => void` prop. The Setup section forwards that value to `ApplicationFormEditor`. Messages with a non-boolean `isDirty` SHALL be ignored.
+
+The iframe's dirty state SHALL be treated as `false`:
+
+- until the first `DIRTY_STATE` message arrives;
+- after `SAVE_SUCCESS`;
+- when the iframe reloads for a different app or schema.
+
+`ApplicationFormEditor` OR's this value into its `isDirty` for `useBuilderLeaveGuard` (see `builder-unsaved-changes-guard`).
+
+#### Scenario: Iframe reports unsaved edits
+- **WHEN** the embedded editor posts `{ type: 'DIRTY_STATE', isDirty: true }` from its own window
+- **THEN** `onDirtyChange(true)` is called
+
+#### Scenario: Message from another window is ignored
+- **WHEN** a `DIRTY_STATE` message arrives from a window other than the embedded editor
+- **THEN** `onDirtyChange` is not called
+
+#### Scenario: Save success clears dirtiness
+- **WHEN** the iframe was dirty and `SAVE_SUCCESS` arrives
+- **THEN** `onDirtyChange(false)` is called
+
+#### Scenario: Reload for another app resets dirtiness
+- **WHEN** the iframe reloads for a different app id or schema
+- **THEN** the reported dirty state is `false` until the new editor posts `DIRTY_STATE`

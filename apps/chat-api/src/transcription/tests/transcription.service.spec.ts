@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { TranscribeAudioDto } from '../dto/transcribe-audio.dto';
-import { TRANSCRIPTION_PROMPT } from '../prompts/transcription.prompt';
 import { TranscriptionUnavailableException } from '../transcription-unavailable.exception';
 import { TranscriptionService } from '../transcription.service';
 
@@ -51,7 +50,7 @@ describe('TranscriptionService', () => {
     ' \t\n ',
     '  Transcribe only speech.\nPreserve العربية.\n',
   ])(
-    'uses the configured prompt or default without changing the audio request (%j)',
+    'sends the configured prompt, or no text when unset, without changing the audio request (%j)',
     async (prompt) => {
       service = makeService(sendChatCompletionRequest, prompt);
       sendChatCompletionRequest.mockResolvedValue({
@@ -66,7 +65,7 @@ describe('TranscriptionService', () => {
             messages: [
               {
                 role: 'user',
-                content: prompt?.trim() ? prompt : TRANSCRIPTION_PROMPT,
+                content: prompt?.trim() ? prompt : '',
                 custom_content: {
                   attachments: [
                     {

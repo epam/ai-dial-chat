@@ -233,6 +233,11 @@ jobs:
       - name: Publish package.json transformation unit tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run publish:lib:test
+      # Unit tests for the Tailwind utilities every publishable lib appends to
+      # its dist/index.css; like the step above, they need no build.
+      - name: Lib Tailwind utilities unit tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run lib:tailwind-utilities:test
       # The four libraries the coherent-release test installs together;
       # chat-hooks is one of them, so its checks below reuse this build.
       - name: Build the packed libraries and their workspace dependencies

@@ -35,3 +35,23 @@ export const buildCatalogTabs = (
     label: labels[type] ?? type,
   }));
 };
+
+/** Scrolls a horizontally scrolling tab row just enough to bring its selected tab fully into view. */
+export const scrollSelectedTabIntoView = (row: HTMLElement): void => {
+  const tab = row.querySelector<HTMLElement>(
+    '[role="tab"][aria-selected="true"]',
+  );
+  if (tab == null) return;
+  /* Rect deltas rather than `scrollIntoView`, which would also scroll the
+     page vertically; deltas hold in RTL too, whatever sign `scrollLeft` has. */
+  const rowRect = row.getBoundingClientRect();
+  const tabRect = tab.getBoundingClientRect();
+  const style = getComputedStyle(row);
+  const startGap = parseFloat(style.paddingInlineStart) || 0;
+  const endGap = parseFloat(style.paddingInlineEnd) || 0;
+  if (tabRect.left < rowRect.left + startGap) {
+    row.scrollLeft -= rowRect.left + startGap - tabRect.left;
+  } else if (tabRect.right > rowRect.right - endGap) {
+    row.scrollLeft += tabRect.right - (rowRect.right - endGap);
+  }
+};

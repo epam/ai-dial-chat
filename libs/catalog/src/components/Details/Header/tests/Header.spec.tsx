@@ -175,11 +175,14 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   EntityHeader: ({
     item,
     statusBadge,
+    typeLabel,
   }: {
     item: CatalogItem;
     statusBadge?: ReactNode;
+    typeLabel?: string;
   }) => (
     <div>
+      <span>{typeLabel ?? item.type}</span>
       {item.name}
       {statusBadge}
     </div>
@@ -225,6 +228,24 @@ const openManageIfPresent = async () => {
 };
 
 describe('Header', () => {
+  it('shows the host-supplied type label for the item type', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        texts={{ entityTypeLabels: { [CatalogEntityType.Toolset]: 'Toolset' } }}
+      />,
+    );
+
+    expect(screen.getByText('Toolset')).toBeTruthy();
+    expect(screen.queryByText(CatalogEntityType.Toolset)).toBeNull();
+  });
+
+  it('keeps the raw type without a label for it', () => {
+    render(<Header item={makeItem(CatalogEntityType.Model)} />);
+
+    expect(screen.getByText(CatalogEntityType.Model)).toBeTruthy();
+  });
+
   it('renders Use in chat for a Model item', () => {
     render(<Header item={makeItem(CatalogEntityType.Model)} />);
     expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();

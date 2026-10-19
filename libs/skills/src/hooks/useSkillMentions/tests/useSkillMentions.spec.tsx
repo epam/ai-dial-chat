@@ -139,4 +139,67 @@ describe('useSkillMentions', () => {
     expect(result.current.anchors).toEqual([]);
     expect(result.current.orderedSkills).toBeUndefined();
   });
+
+  describe('expectInsertion', () => {
+    const reportMention = {
+      url: 'skills/bucket/report',
+      name: 'report',
+      start: 4,
+      length: 7,
+    };
+
+    it('tracks the mentions of expected text once it lands in the draft', () => {
+      const { result } = renderHook(() => useSkillMentions());
+      act(() => {
+        result.current.onDraftChange('hi ');
+      });
+
+      act(() => {
+        result.current.expectInsertion('Use /report now', [reportMention]);
+      });
+      act(() => {
+        result.current.onDraftChange('hi Use /report now');
+      });
+
+      expect(result.current.anchors).toEqual([{ ...reportMention, start: 7 }]);
+      expect(result.current.orderedSkills).toEqual([
+        { url: 'skills/bucket/report' },
+      ]);
+    });
+
+    it('keeps existing anchors and orders them with the inserted ones', () => {
+      const { result } = renderHook(() => useSkillMentions());
+      act(() => {
+        result.current.insertMention('skills/bucket/abc', 'abc', 0);
+      });
+
+      act(() => {
+        result.current.expectInsertion('Use /report now', [reportMention]);
+      });
+      act(() => {
+        result.current.onDraftChange('/abc Use /report now');
+      });
+
+      expect(result.current.anchors).toEqual([
+        { url: 'skills/bucket/abc', name: 'abc', start: 0, length: 4 },
+        { ...reportMention, start: 9 },
+      ]);
+    });
+
+    it('discards the expectation when a different edit comes next', () => {
+      const { result } = renderHook(() => useSkillMentions());
+
+      act(() => {
+        result.current.expectInsertion('Use /report now', [reportMention]);
+      });
+      act(() => {
+        result.current.onDraftChange('x');
+      });
+      act(() => {
+        result.current.onDraftChange('xUse /report now');
+      });
+
+      expect(result.current.anchors).toEqual([]);
+    });
+  });
 });

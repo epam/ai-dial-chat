@@ -61,7 +61,8 @@ export interface StandalonePublishPanelProps {
   hasSubmitError?: boolean;
   /**
    * Whether resubmitting when `hasExistingPublicationInFolder` is true is
-   * allowed (catalog default) or blocked (conversations). Default `true`.
+   * allowed or blocked — see `PublishDerivationInput.allowReplace`.
+   * Default `true`.
    */
   allowReplace?: boolean;
   /**
@@ -306,6 +307,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
       <PublishFooter
         version={resource?.version}
         hasExistingPublicationInFolder={hasExistingPublicationInFolder}
+        allowReplace={allowReplace}
         isSubmitDisabled={derived.isSubmitDisabled}
         isSubmitLoading={derived.isSubmitLoading}
         onCancel={onClose}

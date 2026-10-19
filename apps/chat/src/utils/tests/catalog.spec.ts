@@ -2,7 +2,10 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import en from '../../i18n/locales/en.json';
-import { getCatalogSearchPlaceholder } from '../catalog';
+import {
+  getCatalogMyAppsEmptyTitle,
+  getCatalogSearchPlaceholder,
+} from '../catalog';
 
 /*
  * Resolves against the real locale file rather than echoing keys back, so a
@@ -52,5 +55,17 @@ describe('getCatalogSearchPlaceholder', () => {
      entity rather than advertising types the user cannot reach. */
   it('falls back to the generic placeholder when no type is available', () => {
     expect(getCatalogSearchPlaceholder([], t)).toBe('Search...');
+  });
+});
+
+describe('getCatalogMyAppsEmptyTitle', () => {
+  it('names the active tab entity', () => {
+    expect(getCatalogMyAppsEmptyTitle(CatalogEntityType.Agent, t)).toBe(
+      'No personal agents yet',
+    );
+  });
+
+  it('falls back to a generic title for an unknown tab', () => {
+    expect(getCatalogMyAppsEmptyTitle('', t)).toBe('No personal items yet');
   });
 });

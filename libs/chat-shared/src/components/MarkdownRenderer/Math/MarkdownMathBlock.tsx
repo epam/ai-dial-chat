@@ -38,7 +38,7 @@ export const MarkdownMathBlock: FC<MarkdownMathBlockProps> = memo(
            spurious vertical scrollbar once the horizontal one claims height; tall
            formulas grow the container instead, so pinning it clips nothing. */
         className={mergeClasses(
-          'w-full min-w-0 max-w-full overflow-x-auto overflow-y-hidden',
+          'w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden',
           styles.scrollContainer,
           className,
           CHAT_SHARED_CLASS.mathBlock,

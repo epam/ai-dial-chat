@@ -57,7 +57,7 @@ The `useVoiceRecorder` hook SHALL choose a supported MediaRecorder format in thi
 
 ### Requirement: Host-owned file-to-text callback
 
-`Input` and `ConversationInput` SHALL accept optional `onTranscribeAudio?: (file: File, signal: AbortSignal) => Promise<string>`. The library SHALL invoke it once with the complete recording in dictation mode after Stop. `libs/conversation-input` SHALL contain no API routes, generated clients, auth, environment, deployment selection or upload storage conventions. Size validation, upload, provider routing and retries SHALL live in `useTranscribeAudio` in `libs/chat-hooks`, which receives already-configured `filesApi` and `transcriptionApi` client instances, the user's bucket, `asrModelId`, the selected deployment, `maxSizeBytes` and a host-supplied `transcribeWithDeployment` call, and rejects with a translation-free `AudioTranscriptionError`. The app-edge hook `useAudioTranscription` SHALL supply those inputs from app contexts and `apps/chat/src/server-api`, gate the feature, and translate `AudioTranscriptionErrorReason` into i18n messages. Record voice SHALL bypass this callback even when supplied.
+`Input` and `ConversationInput` SHALL accept optional `onTranscribeAudio?: (file: File, signal: AbortSignal) => Promise<string>`. The library SHALL invoke it once with the complete recording in dictation mode after Stop. `libs/conversation-input` SHALL contain no API routes, generated clients, auth, environment, deployment selection or upload storage conventions. Size validation, upload, provider routing and retries SHALL live in `useTranscribeAudio` in `libs/chat-hooks`, which receives already-configured `filesApi` and `transcriptionApi` client instances, the user's bucket, `asrModelId`, the selected deployment, `maxSizeBytes` and a host-supplied `transcribeWithDeployment` call, sends the uploaded file's MIME type without parameters (`audio/webm;codecs=opus` → `audio/webm`, via `normalizeMimeType`) on both recognition paths because DIAL Core rejects a parameterized attachment type against a deployment's `audio/*` filter, and rejects with a translation-free `AudioTranscriptionError`. The app-edge hook `useAudioTranscription` SHALL supply those inputs from app contexts and `apps/chat/src/server-api`, gate the feature, and translate `AudioTranscriptionErrorReason` into i18n messages. Record voice SHALL bypass this callback even when supplied.
 
 #### Scenario: Upload fails
 
@@ -114,7 +114,7 @@ When the limit is exceeded, the app-edge hook `useAudioTranscription` SHALL tran
 Example request:
 
 ```json
-{"audioUrl":"files/example-bucket/uploads/2026-09/voice-example.webm","mimeType":"audio/webm;codecs=opus"}
+{"audioUrl":"files/example-bucket/uploads/2026-09/voice-example.webm","mimeType":"audio/webm"}
 ```
 
 Example success body:

@@ -36,6 +36,7 @@ Core principle: the chat application is assembled from a set of **independently 
 | **TypeScript 6.0** | Strict mode, `noUnusedLocals`, `noUnusedParameters`                                                   |
 | **Vite 8**         | Frontend bundler                                                                                      |
 | **Vitest 4**       | Test runner (frontend + backend unit tests)                                                           |
+| **Tailwind CSS 4** | Utility CSS; one CSS-first theme in `tools/tailwind/theme.css` (see Styling)                          |
 | **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                                                        |
 | **Storybook 10**   | Lib-local component catalogue (`libs/celebrations/.storybook`, React/Vite); built in CI, not deployed |
 
@@ -183,6 +184,16 @@ locale resolution, and reset-time formatting still come from host-supplied callb
 or parameters. An additional adapter needs its own equivalent justification in its
 change's design; this is not permission to move arbitrary product rules into a library.
 
+The usage-limit banner follows the same boundary: `useUsageLimitBanner` and its parts
+(`useDeploymentUsageLimits`, `useRefreshUsageAfterGeneration`, `useUsageLimitBannerDismissal`,
+`selectUsageBannerSource`, `formatUsageResetTime`, `formatUsageResetShort`) live in
+`libs/chat-hooks/src/usage/` and are exported from the root and `./usage-limits`. The
+fetch function, translate function, locale and warning threshold are parameters, so the
+hooks hold no client, i18n instance or config. The reset-time formatters are the one place
+in this directory that calls `Intl`; they are driven only by the `locale` and `t`
+arguments, and `usage-dashboard` still receives preformatted strings. The `./usage-limits`
+entry needs the optional `conversation-input` peer for `UsageLimitBannerSeverity`.
+
 These adapters are exported from both the `chat-hooks` root and its dedicated `./usage`
 entry point. They use `usage-dashboard` display enums at runtime, so consumers of
 either entry point need its optional peer installed. The dependency is one-way:
@@ -211,7 +222,8 @@ React SPA. Entry: `apps/chat/src/main.tsx`.
 
 ```
 apps/chat/src/
-├── main.tsx               # BrowserRouter + the provider stack
+├── main.tsx               # createBrowserRouter + RouterProvider (single splat route)
+├── AppRoot.tsx            # The provider stack + top-level <Routes>, the splat route's element
 ├── app/app.tsx            # Root routing component, lazy-loads all routes
 ├── components/            # ~39 PascalCase folders, each with a tests/ subfolder
 ├── context/               # React Context providers + consumer hooks
@@ -231,7 +243,11 @@ Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedI
 
 `SettingsPage` renders a vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list
 declared in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum member plus
-one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
+one entry there. Three tabs ship, in rail order: `PreferencesTab`, `UsageTab`, then `ExtensionsTab`
+(`pages/SettingsPage/ExtensionsTab/` — the offline-credentials gate/auth wiring and the logout
+confirmation popup, rendering the service table itself through `ExtensionsSection` from
+`@epam/ai-dial-settings-panel`), whose entry is withheld unless `scheduledTasksEnabled` is on, since
+the BFF domain behind it 403s otherwise.
 
 Each tab is a location. `ROUTES.SettingsTab` (`/settings/:tab`) is a single dynamic pattern rather
 than one route per tab, so adding a tab stays a config change; `app/settings-routes.tsx` registers
@@ -303,7 +319,7 @@ consumers. See the
 
 > ❓ Open — decision pending. Currently implemented with React Context; may be replaced or augmented.
 
-Current implementation uses **React Context** with no external state library. The provider stack is assembled in `main.tsx`; a few providers are mounted deeper so their lifetime matches a subtree.
+Current implementation uses **React Context** with no external state library. The provider stack is assembled in `AppRoot.tsx`, which `main.tsx` mounts as the single splat route of a data router (`createBrowserRouter` + `RouterProvider`, needed for `useBlocker`); a few providers are mounted deeper so their lifetime matches a subtree.
 
 | Context                       | State owned                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -328,6 +344,7 @@ Current implementation uses **React Context** with no external state library. Th
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `CelebrationHost`             | Adapts the app to `@epam/ai-dial-celebrations`: passes `config.activeEventId` (`UI_EVENT`) only on `/` once the user config is ready, the navigation key as the reset key, labels translated from the `halloween.*` / `newYear.*` keys, the success toast, `useIsMobile` and the composer/starter/history anchors. The library owns playback, random scene selection, secret-phrase interception and cleanup; its `useCelebration` hook is inert outside the provider.                                                                                                                                               |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
+| `UnsavedChangesContext`       | Dirty state of the mounted builder and the single "Discard unsaved changes?" dialog. Builder pages feed it through `useBuilderLeaveGuard`, which blocks in-app navigation (`useBlocker`) and warns on unload while dirty; `Navigation` reads it to guard Log out — mounted inside `RequireAuth` around `<App />`                                                                                                                                                                                                                                                                                                     |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
@@ -584,7 +601,7 @@ the upstream payload. Encoding preserves path separators while escaping path
 segments; this mapping does not mutate the stored conversation. The Responses
 adapter receives its own request inputs and is a separate mapping boundary.
 
-**The backend, not the frontend, owns conversation persistence** across a completion's full lifecycle. `ConversationGenerationService` keeps an in-memory registry keyed by **principal**+conversation path — an opaque owner key that `resolvePrincipalKey` (`apps/chat-api/src/auth/session/principal-key.ts`) derives from server-verified identity only: the session `sid` under cookie auth, the verified `providerId`+`sub` pair under header (bearer) auth, in disjoint `c:`/`h:` namespaces. All three completion endpoints work under either authentication mode: `streamCompletion` saves the start state (user message + empty assistant placeholder) before opening the upstream stream, assembles the assistant message chunk-by-chunk as it relays the response, and attempts to save the final/partial state on completion, stop, or error regardless of whether the originating HTTP request is still connected. Terminal-save failures are logged and signaled to the originating stream as `error.type: "conversation_save_failed"` and to attach subscribers as an `error` event with `errorType: "conversation_save_failed"`, including after user stop. Clients retain received output and show a host-localized unsaved-answer warning instead of replacing it with the stored placeholder; successful reloads still use server-enriched data. A failed terminal conversation GET retains the received payload and sets hook-local reload-error state separately from message `streamErrorMessage`. The conversation page and application preview offer a read-only retry; successful reconciliation clears the notification, and generation ownership guards reject stale retries. A read failure is not evidence that saving failed. Upstream `[DONE]` does not prove durable persistence. There is still only one terminal-write attempt, and retained browser state does not survive a page reload. `ConversationController.streamCompletion` tracks client disconnection for response cleanup while continuing to consume the generation, so closing the tab does not stop upstream work. `POST .../completions/stop` aborts an active generation.
+**The backend, not the frontend, owns conversation persistence** across a completion's full lifecycle. `ConversationGenerationService` keeps an in-memory registry keyed by **principal**+conversation path — an opaque owner key that `resolvePrincipalKey` (`apps/chat-api/src/auth/session/principal-key.ts`) derives from server-verified identity only: the session `sid` under cookie auth, the verified `providerId`+`sub` pair under header (bearer) auth, in disjoint `c:`/`h:` namespaces. All three completion endpoints work under either authentication mode: `streamCompletion` saves the start state (user message + empty assistant placeholder) before opening the upstream stream, assembles the assistant message chunk-by-chunk as it relays the response, and attempts to save the final/partial state on completion, stop, or error regardless of whether the originating HTTP request is still connected. Terminal-save failures are logged and signaled to the originating stream as `error.type: "conversation_save_failed"` (with `error.status`, the rejected write's HTTP status, for a completed answer only) and to attach subscribers as an `error` event with `errorType: "conversation_save_failed"`, including after user stop. Clients retain received output and show a host-localized unsaved-answer warning instead of replacing it with the stored placeholder; successful reloads still use server-enriched data. A failed terminal conversation GET retains the received payload and sets hook-local reload-error state separately from message `streamErrorMessage`. The conversation page and application preview offer a read-only retry; successful reconciliation clears the notification, and generation ownership guards reject stale retries. A read failure is not evidence that saving failed. Upstream `[DONE]` does not prove durable persistence. The backend still makes only one terminal-write attempt. When that write is refused with `status: 401` (credentials captured at stream start that expired during a long generation), the originating tab makes one recovery save through the ordinary client conversation save, which carries its current session, and shows the unsaved-answer warning only if that save fails; attach subscribers never save. Retained browser state does not survive a page reload. `ConversationController.streamCompletion` tracks client disconnection for response cleanup while continuing to consume the generation, so closing the tab does not stop upstream work. `POST .../completions/stop` aborts an active generation.
 
 Because generation survives a closed tab, reopening the conversation needs a way to see its progress: `POST /api/v1/conversations/watch` proxies DIAL Core's generic resource-update events (also used to detect LLM-title-rename completion) so the frontend can poll for the terminal save. `POST .../completions/attach` — resolved from the same registry, looked up by conversation path rather than `generationId` (a freshly-opened tab has no `generationId` to send) — opens an SSE stream that immediately snapshots the assistant message as assembled so far, then delivers every subsequent chunk live, then a terminal event (`done`/`error`/`stopped`) when registered before terminal notification, so a resumed conversation populates progressively instead of showing only a typing indicator until it finishes. It responds `404` when no active generation exists for that path under the caller's principal — including one that already finished, and including one another principal is running — in which case the frontend falls back to the `watch`-based terminal check.
 
@@ -652,6 +669,19 @@ The whole application can run inside a host page's iframe, controlled over a `po
 Overlay mode is enabled per deployment with `OVERLAY_ENABLED` plus an `ALLOWED_IFRAME_ORIGINS` allowlist of exact origins and/or single-leading-wildcard-label origin patterns (`https://*.example.com`); the same allowlist gates incoming messages, and after the handshake only the origin that established the session may issue requests. Protocol details, the handshake sequence, error codes, and the `OverlayFeature` flag set are documented in the [Chat Overlay Migration Guide](chat-overlay-migration-guide.md).
 
 Libraries know nothing about the overlay. The protocol lives in `libs/chat-overlay` as pure types plus a DOM host client; everything that touches app state is wired through `OverlayContext` bridges registered by the page components.
+
+## Custom Viewers — an application's own conversation UI
+
+The reverse direction: an application configured with a viewer URL (DIAL Core `viewer_url`, or `dial:applicationTypeViewerUrl` on its application type schema) has its message list and input replaced by its own page in an iframe.
+
+| Piece                              | Where                                   | Role                                                                                                        |
+| ---------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `DeploymentItemDto.viewerUrl`      | `apps/chat-api/src/deployments`         | Entity-level URL mapped from DIAL Core; the schema-level URL already rides on `/api/v1/application-schemas` |
+| `resolveCustomViewer`              | `apps/chat/src/utils/custom-viewer.ts`  | Picks the URL (direct first, then schema) and the title that namespaces every message                       |
+| `useCustomViewer`                  | `apps/chat/src/hooks/custom-viewer`     | Resolves it over `DeploymentsContext`'s deployments and schemas                                             |
+| `CustomViewerFrame` / `…StartGate` | `apps/chat/src/components/CustomViewer` | The iframe (through `@epam/ai-dial-visualizer-connector`) and the new-chat Start button                     |
+
+`ConversationPage` renders the frame instead of `ConversationView` and never streams for such a conversation; `ConversationRoute` shows the Start gate and lets the viewer create the conversation. The viewer origin must be in `ALLOWED_IFRAME_ORIGINS`. Protocol, payloads and limits are in [Custom Viewers](custom-viewers.md). No library is involved — all viewer code is app-level.
 
 ---
 
@@ -765,9 +795,19 @@ The complete rules — naming grammar and guard-test requirements — are in [`o
 
 ### Apps — Tailwind CSS first
 
-`apps/chat` uses Tailwind utility classes, referencing theme tokens through the semantic names in `tailwind.config.js` (`bg-layer-base`, `text-primary`, `bg-control-accent`, …). A handful of components additionally use an SCSS module where a value cannot be expressed as a utility — currently `Header`, `DeploymentSelectorPanel`, `MobileNavBottomSheet`, `UsageLimitsControl`, and `NotFound`. Prefer Tailwind; reach for a module only when there is no class for the value.
+`apps/chat` uses Tailwind utility classes, referencing theme tokens through the semantic names in `tools/tailwind/theme.css` (`bg-layer-base`, `text-primary`, `bg-control-accent`, …). A handful of components additionally use an SCSS module where a value cannot be expressed as a utility — currently `Header`, `DeploymentSelectorPanel`, `MobileNavBottomSheet`, `UsageLimitsControl`, and `NotFound`. Prefer Tailwind; reach for a module only when there is no class for the value.
 
 Both apps and libs use logical direction utilities (`ms-*`, `pe-*`, `text-start`, `border-s-*`) so RTL locales flip automatically.
+
+### Tailwind build
+
+Every Tailwind build in the workspace compiles against one Tailwind v4 theme, `tools/tailwind/theme.css`: an `@theme inline reference` block of the design tokens (each `var(--token, #light-fallback)`), the `mobile` / `desktop` custom variants, and `fill-*` / `stroke-*` / `outline-*` utilities over the background and border tokens. Nothing in it is declared on `:root`. There is no `tailwind.config.js` and no PostCSS config.
+
+- **`apps/chat`** builds through `@tailwindcss/vite` from `apps/chat/src/tailwind.css`, which scans `apps/chat/src` and `libs/*/src`. Its preflight and utilities are **unlayered** and load after `@epam/ai-dial-ui-kit/styles.css` (which keeps its own Tailwind in `@layer ui`), so a utility the app passes to a kit component wins over the kit's `dial-*` class on source order. The kit's classes are not recompiled. The file manager's dist is still scanned while its published stylesheet is built with Tailwind v3.
+- **Publishable libs** append the utilities their own `src` uses to `dist/index.css` through `tools/vite-lib-tailwind-utilities.mjs`: unlayered, no preflight, nothing on `:root`.
+- **The overlay sandbox** and **the celebrations Storybook** use the Vite plugin over the same theme.
+
+Tailwind v4's output targets Safari 16.4+, Chrome 111+ and Firefox 128+, the same baseline `@epam/ai-dial-ui-kit` 0.16 sets.
 
 ### Third-party stylesheets — named cascade layer
 
@@ -808,7 +848,7 @@ config.json (themes host)
 ThemeProvider (apps/chat)
     │  sets --<token> on document.documentElement
     ▼
-    ├──▶ tailwind.config.js → bg-layer-base, text-primary, bg-control-accent, …
+    ├──▶ tools/tailwind/theme.css → bg-layer-base, text-primary, bg-control-accent, …
     └──▶ SCSS modules in libs → var(--ci-x, var(--text-primary, #161B2D))
 ```
 
@@ -881,6 +921,7 @@ The intended direction, enforced in review:
 
 - [Legacy Chat Migration Guide](legacy-chat-migration-guide.md) — moving a deployment from the legacy DIAL Chat to 1.0
 - [Chat Overlay Migration Guide](chat-overlay-migration-guide.md) — embedding and migrating from the legacy overlay
+- [Custom Viewers](custom-viewers.md) — an application's own iframe UI in place of the conversation view
 - [Theme Customization](theme-customization.md) — theme configuration, tokens, and legacy theme migration
 - [Technical Requirements](technical-requirements.md)
 - [Responses API Integration](responses-api-integration.md)

@@ -156,6 +156,22 @@ describe('ShareController (integration)', () => {
       );
     });
 
+    it('accepts a conversation itemId whose model id contains a colon', async () => {
+      const itemId =
+        'conversations/owner-bucket/anthropic.claude-haiku-4-5-20251001-v1:0__hi__ace3d220-6bf9-4774-afe7-9d641a3de401';
+
+      await request(app.getHttpServer())
+        .post('/api/v1/share')
+        .send({ itemId, access: [ShareAccess.View] })
+        .expect(201);
+
+      expect(service.createShareLink).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        { itemId, access: [ShareAccess.View] },
+      );
+    });
+
     it('returns 400 for an unknown resourceKind field', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
@@ -477,6 +493,7 @@ describe('ShareController (integration)', () => {
         validBody.itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -491,6 +508,7 @@ describe('ShareController (integration)', () => {
         'prompts/owner-bucket/Work/AI/summarize',
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -565,6 +583,7 @@ describe('ShareController (integration)', () => {
         itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -580,6 +599,7 @@ describe('ShareController (integration)', () => {
         itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 
@@ -595,6 +615,7 @@ describe('ShareController (integration)', () => {
         itemId,
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
       );
     });
 

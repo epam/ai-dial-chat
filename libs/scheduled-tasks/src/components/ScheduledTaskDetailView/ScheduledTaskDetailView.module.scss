@@ -56,3 +56,35 @@
     display: none;
   }
 }
+
+/* Below the desktop breakpoint the header actions collapse to icon-only
+ * 44px targets so the Active switch, Delete and Edit share one row at
+ * 320px. The kit's `Button` takes its accessible name from `label`, so
+ * hiding the label span keeps every action named. The self-chained selectors
+ * beat the kit's unlayered padding utilities, injected after this module's
+ * CSS; 1279px mirrors MOBILE_MAX_WIDTH_PX from @epam/ai-dial-chat-shared. */
+.actionLabel.actionLabel {
+  display: none;
+
+  @media (min-width: 1280px) {
+    display: inline;
+  }
+}
+
+.actionButton.actionButton {
+  @media (max-width: 1279px) {
+    inline-size: 44px;
+    padding-inline: 0;
+  }
+}
+
+.roundActionButton.roundActionButton {
+  @media (max-width: 1279px) {
+    border-radius: 9999px;
+  }
+}
+
+/* Opaque so tab content scrolling underneath never shows through. */
+.stickyTabs {
+  background: var(--stdv-bg, var(--bg-layer-base, #f5f7fa));
+}

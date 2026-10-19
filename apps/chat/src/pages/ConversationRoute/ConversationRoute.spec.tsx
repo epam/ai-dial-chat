@@ -60,6 +60,7 @@ vi.mock(
   }),
 );
 const mockOpenParametersPopup = vi.fn();
+const mockRecognizeMentionsInInsertion = vi.fn();
 /* Captured so a test can play the role of the prompt picker and hand text back
    through the route's own `onInsertText`. */
 let capturedOnInsertText: ((text: string) => void) | undefined;
@@ -96,6 +97,7 @@ vi.mock('../../components/SkillSelector/useSkillSelectorOverlay', () => ({
     isSkillUnsupported: false,
     resetSkillMentions: vi.fn(),
     seedSkillMentions: vi.fn(),
+    recognizeMentionsInInsertion: mockRecognizeMentionsInInsertion,
     selectSkillByUrl: vi.fn(),
     renderHistorySkillSegments: () => null,
     renderHistorySkills: () => null,
@@ -113,6 +115,9 @@ vi.mock('../../context/IsolatedModelViewContext', async (importOriginal) => {
     >();
   return { ...actual, useIsolatedModelView: vi.fn() };
 });
+vi.mock('../../context/ConversationsContext', () => ({
+  useConversations: () => ({ refreshConversations: vi.fn() }),
+}));
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
 vi.mock('../../context/overlay/OverlayContext', async () => {
@@ -1221,6 +1226,16 @@ describe('ConversationRoute', () => {
       act(() => capturedOnInsertText?.('Prompt body'));
 
       expect(screen.getByLabelText('Input message').textContent).toBe('');
+    });
+
+    it('hands the prompt to skill-mention recognition before inserting it (#9354)', async () => {
+      await renderAndWaitForPicker();
+
+      act(() => capturedOnInsertText?.('Run /report'));
+
+      expect(mockRecognizeMentionsInInsertion).toHaveBeenCalledWith(
+        'Run /report',
+      );
     });
 
     it('re-inserts the same prompt when it is picked twice', async () => {

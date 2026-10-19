@@ -30,6 +30,10 @@ const hasTraversalSegment = (value: string): boolean =>
  * Returns `true` when `value` is a non-empty string matching
  * `DEPLOYMENT_ID_PATTERN` with no empty, `.`, or `..` path segment, raw or
  * percent-encoded.
+ *
+ * This is a strict character allowlist for deployment and toolset names. For
+ * full resource ids as DIAL Core emits them (which may contain spaces, `,`,
+ * `&`, ...), use `isDialResourceId` instead.
  */
 export const isSafeResourceId = (value: unknown): value is string => {
   if (typeof value !== 'string' || value.length === 0) return false;

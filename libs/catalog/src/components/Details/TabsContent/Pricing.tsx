@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import type { CatalogItemPricing } from '../../../models/item-details-data';
+import { CatalogPricingUnit } from '../../../types/pricing-unit';
 import { TableView } from '../../TableView/TableView';
 
 /** Props for `Pricing`. */
@@ -8,6 +9,8 @@ export interface PricingProps {
   pricing?: CatalogItemPricing;
   /** "Token pricing" section heading. Default: `'Token pricing'`. */
   pricesSectionLabel?: string;
+  /** Price section heading when `pricing.unit` is `CatalogPricingUnit.Character`. Default: `'Character pricing'`. */
+  characterPricesSectionLabel?: string;
   /** "Usage limits" section heading. Default: `'Usage limits'`. */
   limitsSectionLabel?: string;
   /** CSS class for row labels. Defaults to `'dial-small-semi-text'`. */
@@ -18,10 +21,11 @@ export interface PricingProps {
   sectionClassName?: string;
 }
 
-/** Renders the Pricing tab: token price rows and usage-limit rows. */
+/** Renders the Pricing tab: price rows and usage-limit rows. */
 export const Pricing: FC<PricingProps> = ({
   pricing,
   pricesSectionLabel = 'Token pricing',
+  characterPricesSectionLabel = 'Character pricing',
   limitsSectionLabel = 'Usage limits',
   labelClassName = 'dial-small-semi-text',
   valueClassName = 'dial-small-text',
@@ -42,7 +46,11 @@ export const Pricing: FC<PricingProps> = ({
   return (
     <div className="flex flex-col gap-4">
       <TableView
-        sectionLabel={pricesSectionLabel}
+        sectionLabel={
+          pricing.unit === CatalogPricingUnit.Character
+            ? characterPricesSectionLabel
+            : pricesSectionLabel
+        }
         values={convertedPrices ?? []}
         labelClassName={labelClassName}
         valueClassName={valueClassName}

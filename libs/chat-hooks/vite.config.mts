@@ -38,7 +38,13 @@ export default defineConfig(({ command }) => ({
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
-      rollupTypes: true,
+      insertTypesEntry: true,
+      /* resolve.alias points these packages at sibling sources for the JS
+       * build only; published declarations must keep the package names. */
+      aliasesExclude: [
+        '@epam/ai-dial-attachment-canvas',
+        '@epam/ai-dial-mcp-apps',
+      ],
     }),
   ],
   build: {
@@ -64,11 +70,13 @@ export default defineConfig(({ command }) => ({
         'skills-state': 'src/entry-points/skills-state.ts',
         'skill-editor': 'src/entry-points/skill-editor.ts',
         oauth: 'src/entry-points/oauth.ts',
+        'offline-credentials': 'src/entry-points/offline-credentials.ts',
         'scheduled-tasks': 'src/entry-points/scheduled-tasks.ts',
         sharing: 'src/entry-points/sharing.ts',
         attachments: 'src/entry-points/attachments.ts',
         utils: 'src/entry-points/utils.ts',
         usage: 'src/entry-points/usage.ts',
+        'usage-limits': 'src/entry-points/usage-limits.ts',
         'mcp-apps': 'src/entry-points/mcp-apps.ts',
       },
       name: '@epam/ai-dial-chat-hooks',
@@ -125,6 +133,10 @@ export default defineConfig(({ command }) => ({
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-conversation-input': path.resolve(
+        import.meta.dirname,
+        '../conversation-input/src/index.ts',
       ),
       '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,

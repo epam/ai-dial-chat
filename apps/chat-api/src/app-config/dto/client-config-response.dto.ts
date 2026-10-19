@@ -263,6 +263,13 @@ export class ClientConfigDto {
     example: 536870912,
   })
   maxAttachmentFileSizeBytes!: number;
+
+  @ApiProperty({
+    description:
+      'Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.',
+    example: 75,
+  })
+  usageLimitsWarningThresholdPercent!: number;
 }
 
 export class ClientConfigMetadataDto {

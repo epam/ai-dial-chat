@@ -1,9 +1,9 @@
 /*
  * These two are not layout — they stand in for Tailwind's preflight, which the
  * published styles.css does not carry. The utility layer itself does ship
- * (`size-[84px]`, `border` and the rest are emitted into dist/index.css by this
+ * (`size-[100px]`, `border` and the rest are emitted into dist/index.css by this
  * lib's own Tailwind pass), but both utilities assume the preflight reset: a
- * host that imports only our stylesheet got a 86px tile, because `size-[84px]`
+ * host that imports only our stylesheet got a 102px tile, because `size-[100px]`
  * sizes the content box without `border-box`, and no visible border at all,
  * because `border` sets only `border-width` while the initial `border-style` is
  * `none`.
@@ -30,9 +30,7 @@
     }
   }
 
-  &:focus-visible {
-    outline-color: var(--ai-tile-focus-outline, var(--stroke-focus, #161b2d));
-  }
+  outline-color: var(--ai-tile-focus-outline, var(--stroke-focus, #161b2d));
 }
 
 .selected {
@@ -56,7 +54,11 @@
 }
 
 .typeText {
-  color: var(--ai-tile-type-text, var(--text-secondary, #57647a));
+  color: var(--ai-tile-type-text, var(--text-primary, #161b2d));
+}
+
+.placeholderIcon {
+  color: var(--ai-tile-placeholder-icon, var(--text-secondary, #57647a));
 }
 
 .retryIcon {
@@ -67,16 +69,67 @@
   background: var(--ai-tile-progress-track, var(--bg-backdrop, #161b2d4d));
 }
 
-/* Corner action buttons are only revealed while the tile is hovered or focused,
- * so they render with the button hover background already applied. */
-.actionButton {
+/*
+ * Corner action buttons sit over the name instead of a reserved gutter, so
+ * each one is painted opaque in the tile's current background and the text
+ * beneath is hidden. Every rule is scoped under `.tile`: a single-class rule
+ * ties with the kit's `.dial-kit-static-solid-button { background: transparent }`
+ * and loses on stylesheet order, which left the buttons see-through.
+ */
+.tile .actionButton {
   background: var(
     --ai-tile-hover-icon-bg,
-    var(--bg-control-neutral-hover-muted, #e0e6f0)
+    var(--ai-tile-bg, var(--bg-layer-raised, #fcfcfc))
   );
 }
 
-.imageActionButton {
+.tile.hovered:hover .actionButton {
+  background: var(
+    --ai-tile-hover-icon-bg,
+    var(--ai-tile-bg-hover, var(--bg-control-neutral-hover-muted, #e0e6f0))
+  );
+}
+
+/* The selected background is translucent, so it is layered over the base
+ * background to keep the button opaque. */
+.tile.selected .actionButton {
+  background: var(
+    --ai-tile-hover-icon-bg,
+    linear-gradient(
+      var(--ai-tile-bg-selected, var(--bg-control-accent-alpha, #2764d90f)),
+      var(--ai-tile-bg-selected, var(--bg-control-accent-alpha, #2764d90f))
+    ),
+    var(--ai-tile-bg, var(--bg-layer-raised, #fcfcfc))
+  );
+}
+
+.tile.tileError .actionButton {
+  background: var(--ai-tile-bg-error, var(--bg-error, #f3d6d8));
+  color: var(--ai-tile-error-text, var(--text-error, #ae2f2f));
+}
+
+/* Over the upload backdrop and over image content the button keeps a light
+ * surface of its own — on a selected image tile too, hence the third selector. */
+.tile.loading .actionButton,
+.tile .imageActionButton,
+.tile.selected .imageActionButton {
   background: var(--ai-tile-hover-icon-bg, var(--bg-layer-base, #f5f7fa));
   color: var(--ai-tile-hover-icon-color, var(--text-secondary, #57647a));
+}
+
+/* A non-interactive tile with a single action: the tile's own ring marks that
+ * action's focus, and the kit's ring around the button is dropped so the two
+ * do not stack. Out-specifies `.dial-kit-static-solid-button:focus-visible`. */
+.tile.proxyFocus {
+  &:has(:focus-visible) {
+    outline-style: solid;
+  }
+
+  .actionButton:focus-visible {
+    outline: none;
+  }
+}
+
+.loading {
+  cursor: progress;
 }

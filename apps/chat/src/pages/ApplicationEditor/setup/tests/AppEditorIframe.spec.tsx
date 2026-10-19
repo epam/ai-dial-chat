@@ -4,8 +4,14 @@ import {
   getToolsetOAuthChannelName,
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetCredentialsLevel,
+  type ToolsetRedirectState,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  decodeJsonFromBase64,
+  encodeJsonToBase64,
+} from '@epam/ai-dial-chat-shared';
+import {
+  act,
   fireEvent,
   render,
   screen,
@@ -14,8 +20,11 @@ import {
 } from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys } from '../../../../constants/translation-keys';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../../../constants/translation-keys';
 import * as AppConfigContextModule from '../../../../context/AppConfigContext';
 import * as UserContextModule from '../../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../../context/ThemeContext';
@@ -24,7 +33,9 @@ import * as toolsetsApi from '../../../../server-api/toolsets';
 import { AppsEditorEvent } from '../../../../types/apps-editor';
 import { AuthStatus } from '../../../../types/auth-status';
 import type { AppEditorIframeHandle } from '../AppEditorIframe';
-import AppEditorIframe from '../AppEditorIframe';
+import AppEditorIframe, {
+  EDITOR_RESPONSE_TIMEOUT_MS,
+} from '../AppEditorIframe';
 
 vi.mock('../../../../context/AppConfigContext', () => ({
   useFeatureFlag: vi.fn(() => true),
@@ -61,6 +72,29 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <div role="dialog">
       {children}
       <button onClick={onClose}>Close credentials</button>
+    </div>
+  ),
+  NeutralButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  ElementSize: { Small: 'small' },
+  WarningMessageNotification: ({
+    title,
+    message,
+    action,
+  }: {
+    title: React.ReactNode;
+    message: React.ReactNode;
+    action: React.ReactNode;
+  }) => (
+    <div role="alert">
+      <p>{title}</p>
+      <p>{message}</p>
+      {action}
     </div>
   ),
   DIAL_KIT_ICON_STROKE: 1.5,
@@ -122,6 +156,71 @@ describe('AppEditorIframe', () => {
     expect(url.searchParams.get('authProvider')).toBe('local');
     expect(url.searchParams.get('id')).toBe('abc');
     expect(url.searchParams.get('theme')).toBe('dark');
+  });
+
+  it('includes applicationName in the iframe src', () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('applicationName')).toBe(
+      'QuickApp',
+    );
+  });
+
+  it('encodes applicationName with spaces and dots and round-trips it', () => {
+    renderIframe({ schema: { ...SCHEMA, displayName: 'Quick app 2.0' } });
+    const iframe = screen.getByTitle('Quick app 2.0') as HTMLIFrameElement;
+    expect(iframe.src).toContain('applicationName=Quick+app+2.0');
+    expect(new URL(iframe.src).searchParams.get('applicationName')).toBe(
+      'Quick app 2.0',
+    );
+  });
+
+  it.each([
+    ['empty', ''],
+    ['undefined', undefined],
+  ])('omits applicationName when displayName is %s', (_label, displayName) => {
+    const { container } = renderIframe({
+      schema: {
+        ...SCHEMA,
+        displayName,
+      } as unknown as ComponentProps<typeof AppEditorIframe>['schema'],
+    });
+    // An empty or missing displayName leaves the iframe without a title to query it by.
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const iframe = container.querySelector('iframe') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.has('applicationName')).toBe(false);
+  });
+
+  it('changes the iframe src and re-gates readiness when displayName changes', () => {
+    const onReadyChange = vi.fn();
+    const { rerender } = render(
+      <AppEditorIframe {...DEFAULT_PROPS} onReadyChange={onReadyChange} />,
+    );
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToSave}`,
+        },
+        origin: 'https://editor.example.com',
+      }),
+    );
+    expect(onReadyChange).toHaveBeenCalledWith(true);
+    onReadyChange.mockClear();
+
+    rerender(
+      <AppEditorIframe
+        {...DEFAULT_PROPS}
+        schema={{ ...SCHEMA, displayName: 'Other App' }}
+        onReadyChange={onReadyChange}
+      />,
+    );
+
+    const iframe = screen.getByTitle('Other App') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('applicationName')).toBe(
+      'Other App',
+    );
+    expect(onReadyChange).toHaveBeenCalledWith(false);
   });
 
   it('delegates local-network-access to the embedded iframe', () => {
@@ -248,6 +347,118 @@ describe('AppEditorIframe', () => {
   });
 });
 
+describe('AppEditorIframe — unresponsive editor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const postFromEditor = (type: string) =>
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type },
+        origin: 'https://editor.example.com',
+      }),
+    );
+
+  const expireResponseTimeout = () =>
+    act(() => {
+      vi.advanceTimersByTime(EDITOR_RESPONSE_TIMEOUT_MS);
+    });
+
+  it('warns instead of spinning when the editor sends no message in time, even after a load event', () => {
+    const onUnresponsiveChange = vi.fn();
+    renderIframe({ onUnresponsiveChange });
+    // An unreachable host still fires load for the browser's own error page.
+    fireEvent.load(screen.getByTitle('QuickApp'));
+
+    expireResponseTimeout();
+
+    const alert = screen.getByRole('alert');
+    expect(
+      within(alert).getByText(AppsEditorI18nKeys.SettingsStepUnresponsiveTitle),
+    ).toBeTruthy();
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(onUnresponsiveChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('keeps the spinner and no warning before the timeout', () => {
+    renderIframe();
+    act(() => {
+      vi.advanceTimersByTime(EDITOR_RESPONSE_TIMEOUT_MS - 1);
+    });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status')).toBeTruthy();
+  });
+
+  it('never warns once the editor has sent a message', () => {
+    renderIframe();
+    postFromEditor(`${SCHEMA.displayName}/${AppsEditorEvent.LoggedOut}`);
+    expireResponseTimeout();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('ignores messages from other origins when deciding the editor responded', () => {
+    renderIframe();
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToInteract}`,
+        },
+        origin: 'https://evil.example.com',
+      }),
+    );
+    expireResponseTimeout();
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('clears the warning when a late message arrives', () => {
+    const onUnresponsiveChange = vi.fn();
+    renderIframe({ onUnresponsiveChange });
+    expireResponseTimeout();
+
+    postFromEditor(`${SCHEMA.displayName}/${AppsEditorEvent.ReadyToInteract}`);
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(onUnresponsiveChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('remounts the iframe and restarts the wait on Reload', () => {
+    renderIframe();
+    const firstIframe = screen.getByTitle('QuickApp');
+    expireResponseTimeout();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Reload }),
+    );
+
+    expect(screen.getByTitle('QuickApp')).not.toBe(firstIframe);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status')).toBeTruthy();
+
+    expireResponseTimeout();
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+});
+
 describe('AppEditorIframe — ready-to-save readiness', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -344,6 +555,31 @@ describe('AppEditorIframe — ready-to-save readiness', () => {
     );
 
     expect(onReadyChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('reports form validity from the editor window and ignores other sources', () => {
+    const onValidityChange = vi.fn();
+    renderIframe({ onValidityChange });
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+
+    const post = (isValid: boolean, source: MessageEventSource | null) =>
+      fireEvent(
+        window,
+        new MessageEvent('message', {
+          data: { type: AppsEditorEvent.ValidityState, payload: { isValid } },
+          origin: 'https://editor.example.com',
+          source,
+        }),
+      );
+
+    post(false, null);
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+
+    post(false, getEditorWindow());
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+
+    post(true, getEditorWindow());
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
   });
 
   it('reports logged out once a loggedOut message arrives', () => {
@@ -657,9 +893,13 @@ describe('AppEditorIframe — toolset login request', () => {
     sendLoginRequest('toolsets/b/my__1.0.0');
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
-    const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
-    ).state;
+    const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        encodeJsonToBase64({}),
+    );
+    if (flowId == null) {
+      throw new Error('expected a stored flow id');
+    }
 
     postOAuthResult(flowId, {
       type: 'success',
@@ -702,9 +942,13 @@ describe('AppEditorIframe — toolset login request', () => {
     sendLoginRequest('toolsets/b/my__1.0.0');
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
-    const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
-    ).state;
+    const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        encodeJsonToBase64({}),
+    );
+    if (flowId == null) {
+      throw new Error('expected a stored flow id');
+    }
 
     postOAuthResult(flowId, {
       type: 'success',
@@ -745,9 +989,13 @@ describe('AppEditorIframe — toolset login request', () => {
     sendLoginRequest('toolsets/b/my__1.0.0');
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
-    const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
-    ).state;
+    const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+        encodeJsonToBase64({}),
+    );
+    if (flowId == null) {
+      throw new Error('expected a stored flow id');
+    }
 
     postOAuthResult(flowId, {
       type: 'failure',
@@ -1162,5 +1410,93 @@ describe('application credential requests from Quick apps', () => {
     ).toBeTruthy();
     fireEvent.click(screen.getByText('Close credentials'));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+describe('AppEditorIframe — dirty state', () => {
+  const postDirty = (
+    data: Record<string, unknown>,
+    source: MessageEventSource | null = getEditorWindow(),
+  ) =>
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.DirtyState, ...data },
+        origin: 'https://editor.example.com',
+        source,
+      }),
+    );
+
+  it('reports clean until the editor says otherwise', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('reports unsaved edits posted by the editor window', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    postDirty({ isDirty: true });
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+    postDirty({ payload: { isDirty: false } });
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('ignores a dirty-state message from another window', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    postDirty({ isDirty: true }, null);
+
+    expect(onDirtyChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('ignores a non-boolean dirty state', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+
+    postDirty({ isDirty: 'yes' });
+    postDirty({ payload: { isDirty: 1 } });
+
+    expect(onDirtyChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('clears the dirty state on save success', () => {
+    const onDirtyChange = vi.fn();
+    renderIframe({ onDirtyChange });
+    postDirty({ isDirty: true });
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.SaveSuccess },
+        origin: 'https://editor.example.com',
+        source: getEditorWindow(),
+      }),
+    );
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('resets the dirty state when the iframe reloads for a different app', () => {
+    const onDirtyChange = vi.fn();
+    const { rerender } = render(
+      <AppEditorIframe {...DEFAULT_PROPS} onDirtyChange={onDirtyChange} />,
+    );
+    postDirty({ isDirty: true });
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+    rerender(
+      <AppEditorIframe
+        {...DEFAULT_PROPS}
+        appId="different-app"
+        onDirtyChange={onDirtyChange}
+      />,
+    );
+
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
   });
 });

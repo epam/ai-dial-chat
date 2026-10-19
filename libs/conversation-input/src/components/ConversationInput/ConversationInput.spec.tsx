@@ -45,6 +45,31 @@ describe('ConversationInput', () => {
     ).toBeTruthy();
   });
 
+  it('renders the above-input slot before the textarea', () => {
+    render(<ConversationInput aboveInputSlot={<p>Notice</p>} />);
+    const notice = screen.getByText('Notice');
+    const textarea = screen.getByRole('textbox');
+    expect(
+      notice.compareDocumentPosition(textarea) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it.each([undefined, null])(
+    'adds no wrapper element when the above-input slot is %s',
+    (aboveInputSlot) => {
+      const { container: withoutSlot } = render(<ConversationInput />);
+      const { container: withSlot } = render(
+        <ConversationInput aboveInputSlot={aboveInputSlot} />,
+      );
+      // `useId` values differ between the two renders; the structure must not.
+      const stripIds = (html: string) => html.replace(/_r_\w+_/g, '');
+      expect(stripIds(withSlot.innerHTML)).toBe(
+        stripIds(withoutSlot.innerHTML),
+      );
+    },
+  );
+
   it('should keep welcome text visible when typing', () => {
     render(<ConversationInput welcomeText="How can I help you?" />);
     const textarea = screen.getByRole('textbox');
@@ -211,7 +236,10 @@ describe('ConversationInput — attachments', () => {
       },
     });
 
-    expect(screen.getByText(text)).toBeTruthy();
+    expect(
+      screen.getByText(/^Pasted text \d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}$/),
+    ).toBeTruthy();
+    expect(screen.queryByText(text)).toBeNull();
   });
 
   it('pasting short text does not create an attachment card', () => {

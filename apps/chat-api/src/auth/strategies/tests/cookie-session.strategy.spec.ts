@@ -188,6 +188,11 @@ describe('CookieSessionStrategy', () => {
   it.each(['session', 'refresh token'])(
     'renews before the %s deadline even when the access token is still fresh',
     async (deadline) => {
+      /* Fake timers pin the clock: the cookie maxAge is computed from
+         `session_exp - now`, and on the real clock a tick into the next
+         epoch second between this test's `now` and the strategy's own
+         clock read shortens maxAge by a full 1000ms (2591999000). */
+      vi.useFakeTimers();
       const now = Math.floor(Date.now() / 1000);
       const payload = makePayload({
         session_exp: now + (deadline === 'session' ? 30 : 86400),

@@ -17,6 +17,7 @@ export interface ScheduledTasksConfiguredClient {
       offset?: number;
       search?: string;
       sort?: ListScheduledTasksSortEnum;
+      model?: string;
     },
     options?: RequestInit,
   ) => Promise<ListScheduledTasksResponseDto>;
@@ -49,6 +50,8 @@ export interface ScheduledTasksListRequest {
   offset?: number;
   search?: string;
   sort?: ListScheduledTasksSortEnum;
+  /** Only tasks that run against this model/application id, exactly as stored. */
+  model?: string;
   signal?: AbortSignal;
 }
 

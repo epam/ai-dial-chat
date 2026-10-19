@@ -18,7 +18,7 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.39 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.11 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -39,7 +39,7 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.39`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.11`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,
@@ -101,13 +101,49 @@ const EditPromptPage = () => {
 host that loads asynchronously should memoise it and produce a new object only
 once the data has arrived.
 
-The optional `onRefineDescription` callback,
-`(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
-AI action (and Undo) beside the Description label; omit it to hide the action.
+When any field differs from the seeded values, Back and Cancel open a
+"Discard unsaved changes?" confirmation instead of calling `onBack` /
+`onCancel` straight away, and the browser warns before the page unloads.
+`onBack` / `onCancel` run only once the user confirms; the copy comes from
+`labels.discardTitle`, `discardMessage`, `discardConfirmLabel` and
+`discardCancelLabel`.
+
+A host that guards leaving on its own — for example at the router, so the same
+dialog also covers its navigation — passes `onDirtyChange`. The editor then
+calls it with whether any field differs from the seeded values, on mount and
+whenever that changes, and turns its built-in guard off: no confirmation, no
+`beforeunload` warning, and Back and Cancel call `onBack` / `onCancel`
+directly. Without `onDirtyChange` the built-in guard behaves as described
+above.
+
+```tsx
+const [isDirty, setIsDirty] = useState(false);
+useHostLeaveGuard(isDirty); // the host's own guard
+
+<PromptEditor
+  initialValues={initialValues}
+  onSubmit={handleSubmit}
+  onCancel={goBack}
+  onDirtyChange={setIsDirty}
+/>;
+```
+
+Description shows a `length/limit` counter (against `descriptionMaxLength`)
+under it once it has text. No field caps its input — Name, Description and
+Instructions all keep an over-limit value; to flag it while the user types, pass
+`onFieldChange(field, value)`, validate there, and feed the resulting messages
+back through `errors`. An Instructions error also gives the editor an error
+border.
+
+The optional `onRefineDescription` and `onRefineInstructions` callbacks,
+each `(value: string, signal: AbortSignal) => Promise<string>`, add a Refine
+with AI action (and Undo) beside the Description and Instructions labels
+respectively; omit a callback to hide its action. Only one field refines at a
+time — while either request is pending both actions and Save are disabled.
 `PromptEditorLabels` extends `TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`, so the refinement copy (`refineWithAiLabel`,
-`refineUndoLabel`, …) is passed through `labels`. Save is disabled while a
-request is pending, and a new `initialValues` identity resets Undo.
+`refineUndoLabel`, …) is passed through `labels`. A new `initialValues`
+identity resets Undo.
 
 ### `PromptFolderField`
 

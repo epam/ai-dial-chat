@@ -114,6 +114,11 @@
       "skills": "skills"
     },
     "noResultsTitle": "No results for \"{{query}}\"",
+    "myAppsEmpty": {
+      "title": "No personal {{entities}} yet",
+      "titleGeneric": "No personal items yet",
+      "description": "Create your first one, it'll show up right here."
+    },
     "sorts": {
       "recentlyUpdated": "Recently Updated",
       "newest": "Newest",
@@ -123,6 +128,17 @@
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
     "viewToggleLabel": "View mode",
+    "browseSettings": {
+      "title": "Browse settings",
+      "view": "View",
+      "sorting": "Sorting",
+      "filtering": "Filtering",
+      "cards": "Cards",
+      "list": "List",
+      "my": "My",
+      "topics": "Topics",
+      "filterCount": "{{selected}} of {{total}}"
+    },
     "details": {
       "tabTools": "Tools",
       "tabContent": "Details",
@@ -139,6 +155,7 @@
       },
       "pricing": {
         "pricesSection": "Token pricing",
+        "characterPricesSection": "Character pricing",
         "limitsSection": "Usage limits"
       },
       "limits": {
@@ -262,6 +279,8 @@
       "contentFileLoading": "Loading file",
       "contentFileError": "Failed to load this file.",
       "contentFileUnsupported": "Preview is not supported for this file",
+      "toolCount_one": "{{count}} tool",
+      "toolCount_other": "{{count}} tools",
       "downloadingStatus": "Downloading"
     },
     "create": {
@@ -277,7 +296,8 @@
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publish": {
       "credentialsLabel": "Publish with my credentials",
-      "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them."
+      "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them.",
+      "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again."
     },
     "skillsLoadError": "Failed to load skills",
     "tab": {
@@ -298,6 +318,7 @@
     "searchPlaceholder": "Search models, agents…",
     "emptyHint": "Star a model or agent to pin it here.",
     "currentlySelectedLabel": "Currently selected",
+    "unavailableLabel": "Unavailable",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",
@@ -355,6 +376,7 @@
     "sort": "Sort",
     "close": "Close",
     "apply": "Apply",
+    "clear": "Clear",
     "edit": "Edit",
     "connect": "Connect",
     "link": "Link",
@@ -413,6 +435,7 @@
     }
   },
   "conversation": {
+    "modelUnavailableNotice": "This model is no longer available. Choose another model to continue.",
     "statusMessage": {
       "modelChangedTitle": "Model switched.",
       "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
@@ -434,7 +457,6 @@
   },
   "conversationPanel": {
     "title": "Chats",
-    "typeLabel": "Chat",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
     "filter": {
@@ -464,6 +486,7 @@
     },
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
     "duplicateError": "Failed to duplicate the conversation. Please try again.",
+    "duplicateUnavailableModel": "This conversation can't be duplicated because its model is no longer available.",
     "panelActionsLabel": "Conversation panel actions",
     "deleteAll": {
       "deleteAllChatsLabel": "Delete all conversations",
@@ -631,9 +654,21 @@
     "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line",
     "preferences": "Preferences",
     "preferencesDescription": "Personalize how the chat looks and behaves.",
+    "extensions": "Extensions",
     "defaultAgent": "Default agent for new chats",
     "defaultAgentOptionDefault": "Default agent",
     "defaultAgentOptionLastUsed": "Last used agent"
+  },
+  "extensions": {
+    "description": "Access additional tools and capabilities through extensions.",
+    "nameColumnLabel": "Name",
+    "descriptionColumnLabel": "Description",
+    "actionsColumnLabel": "Actions",
+    "service": {
+      "defaultName": "Dial native",
+      "description": "Provides access to built-in apps within the platform.",
+      "authorizeTooltip": "Authorize to use this extension"
+    }
   },
   "attachments": {
     "downloadFile": "Download file",
@@ -851,7 +886,17 @@
       "failedMessage": "Login failed. Please try again.",
       "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
       "loggingInLabel": "Logging in…"
-    }
+    },
+    "disconnect": {
+      "confirmTitle": "Log out from Dial native",
+      "confirmDescription": "Are you sure you want to log out?",
+      "confirmDescriptionSecondary": "You'll lose access to built-in apps until you log back in.",
+      "failedMessage": "Log out failed. Please try again.",
+      "successAnnouncement": "You're signed out. Scheduled tasks will no longer run automatically."
+    },
+    "autoLoginFailedNotification": "Couldn't sign in to the external scheduler service. Try saving the task again.",
+    "loginRequiredNotification": "Couldn't save the task because you're signed out of the external scheduler service.",
+    "loginAndRetryAction": "Log in and retry"
   },
   "dialFileManager": {
     "attach": "Attach",
@@ -953,9 +998,9 @@
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "itemCopiedSuccessfully": "Item copied successfully",
-    "itemsCopiedSuccessfully": "Items copied successfully",
+    "itemsCopiedSuccessfully": "{{count}} items copied to folder successfully",
     "itemMovedSuccessfully": "Item moved successfully",
-    "itemsMovedSuccessfully": "Items moved successfully",
+    "itemsMovedSuccessfully": "{{count}} items moved to folder successfully",
     "itemCopiedToFolder": "“{{fileName}}” copied to {{folder}}",
     "itemsCopiedToFolder": "{{count}} items copied to {{folder}}",
     "itemMovedToFolder": "“{{fileName}}” moved to {{folder}}",
@@ -977,13 +1022,13 @@
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "crossSectionTransferUnsupported": "Copying and moving between My files, Shared, and Organization isn't supported yet.",
     "searchPlaceholder": {
-      "myFiles": "Search in My files",
-      "shared": "Search in Shared with me files",
-      "organization": "Search in Organization files"
+      "myFiles": "Search in My files...",
+      "shared": "Search in Shared files...",
+      "organization": "Search in Organization files..."
     },
     "tab": {
       "all": "All",
-      "myFiles": "My Files",
+      "myFiles": "My files",
       "shared": "Shared"
     },
     "myFiles": {
@@ -1003,8 +1048,17 @@
     "page": {
       "navLabel": "File Manager"
     },
-    "unshareAction": "Unshare",
-    "unsharingLabel": "Unsharing…",
+    "unshareConfirmTitleFile": "Remove file from My List?",
+    "unshareConfirmTitleFolder": "Remove folder from My List?",
+    "unshareConfirmTitleMultiple": "Remove items from My List?",
+    "unshareConfirmMoreItems_one": "… and {{count}} more",
+    "unshareConfirmMoreItems_other": "… and {{count}} more",
+    "unshareConfirmMessageSingle": "Remove <bold>{{name}}</bold> from your list? It will become unavailable to you, and in any conversation that references it, it will be shown as not supported.",
+    "unshareConfirmMessageMultiple": "Remove <bold>{{count}} items</bold> from your list? They will become unavailable to you, and in any conversation that references them, they will be shown as not supported.",
+    "unshareSuccessTitle": "Removed from My List",
+    "unshareSuccessMessageSingle": "“{{name}}” was removed from your list",
+    "unshareSuccessMessageMultiple": "{{count}} items were removed from your list",
+    "unsharingLabel": "Removing from My List…",
     "removeAccessAction": "Remove access",
     "removingAccessLabel": "Removing access…",
     "unshareError": "Failed to remove the shared item",
@@ -1109,7 +1163,10 @@
     "qrDownloadFileName": "share-qr-code.png",
     "loadingLabel": "Creating share link…",
     "errorTitle": "Couldn't create the share link. Please try again.",
-    "invitationAcceptError": "This share link is invalid or has expired."
+    "invitationAcceptError": "This share link is invalid or has expired.",
+    "invitationNotFound": "We are sorry, but the link you are trying to access has expired or does not exist.",
+    "invitationUsersLimitReached": "\"{{name}}\" has already been shared with the maximum specified number of users.",
+    "invitationUsersLimitReachedUnnamed": "This item has already been shared with the maximum specified number of users."
   },
   "editor": {
     "backAriaLabel": "Back to catalog",
@@ -1168,17 +1225,21 @@
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
-      "noEditorPlaceholder": "Editor not available for this application type yet."
+      "noEditorPlaceholder": "Editor not available for this application type yet.",
+      "unresponsiveTitle": "The editor is not responding",
+      "unresponsiveMessage": "{{host}} did not respond. It may be down or unreachable from your network."
     },
     "error": {
       "createFailed": "Failed to create application. Please try again.",
+      "nameConflict": "An application with this name and version already exists.",
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
     },
     "schemaForm": {
       "loadFailed": "Failed to load the application settings. Please try again.",
-      "requiredMissing": "Fill in all required settings."
+      "requiredMissing": "Fill in all required settings.",
+      "empty": "This application type has no settings to configure."
     }
   },
   "toolsetEditor": {
@@ -1298,6 +1359,17 @@
       "value": "{{used}} / {{total}}",
       "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
       "fullUsageLink": "See all usage"
+    },
+    "usageBanner": {
+      "warningDay": "Daily limit {{percent}}% used.",
+      "warningWeek": "Weekly limit {{percent}}% used.",
+      "warningMonth": "Monthly limit {{percent}}% used.",
+      "reachedDay": "Daily limit reached.",
+      "reachedWeek": "Weekly limit reached.",
+      "reachedMonth": "Monthly limit reached.",
+      "resetsAtTime": "Resets at {{time}}.",
+      "resetsOnDate": "Resets on {{date}}.",
+      "closeLabel": "Close usage notice"
     }
   },
   "customApp": {
@@ -1416,10 +1488,6 @@
     "reloadConfirmMessage": "Reloading will discard your unsaved changes. This cannot be undone.",
     "reloadConfirmLabel": "Reload",
     "reloadCancelLabel": "Cancel",
-    "unsavedChangesTitle": "Discard unsaved changes?",
-    "unsavedChangesMessage": "You have unsaved changes. Leaving now will discard them.",
-    "unsavedChangesConfirmLabel": "Discard changes",
-    "unsavedChangesCancelLabel": "Keep editing",
     "uploadDialogTitle": "Upload files from device",
     "uploadDropZoneLabel": "Drag and drop it or click here to upload",
     "uploadDropZoneMobileLabel": "Click here to upload",
@@ -1434,7 +1502,6 @@
     "createFolder": "Create folder",
     "uploadArchive": "Upload archive from device",
     "openFileSystem": "Open DIAL file system",
-    "addChild": "Add child",
     "addSibling": "Add sibling",
     "newFolderDefaultName": "New folder",
     "folderNameRequired": "Enter a folder name",
@@ -1680,5 +1747,17 @@
     "success": "Text refined. Undo is available.",
     "restored": "Original text restored.",
     "unchanged": "No changes were needed."
+  },
+  "customViewer": {
+    "startWorking": "Start working with the {{viewerTitle}}",
+    "frameTitle": "{{viewerTitle}} viewer",
+    "loading": "Loading viewer…",
+    "invalidUrl": "This application's viewer URL is not valid."
+  },
+  "unsavedChanges": {
+    "title": "Discard unsaved changes?",
+    "message": "You have unsaved changes. Leaving now will discard them.",
+    "confirmLabel": "Discard changes",
+    "cancelLabel": "Keep editing"
   }
 }

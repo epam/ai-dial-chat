@@ -374,6 +374,29 @@ describe('ResponsesAdapter', () => {
   });
 
   describe('buildInputItem — exercised via buildRequest', () => {
+    it('replays an assistant message with attachments as plain text, never input_text parts', () => {
+      const { adapter } = makeAdapter();
+      const request = adapter.buildRequest({
+        model: 'gpt-4o',
+        startConversation: { prompt: '' } as never,
+        messagesForCompletion: [
+          {
+            role: ConversationMessageRole.Assistant,
+            content: 'Rates found',
+            custom_content: {
+              attachments: [{ type: 'image/png', url: 'files/bucket/img.png' }],
+            },
+          } as never,
+        ],
+        temperatureSupported: false,
+      });
+
+      expect(request.input[0]).toEqual({
+        role: 'assistant',
+        content: 'Rates found',
+      });
+    });
+
     it('maps a URL-referenced image attachment to an input_image content part', () => {
       const { adapter } = makeAdapter();
       const request = adapter.buildRequest({

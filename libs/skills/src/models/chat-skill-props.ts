@@ -55,7 +55,7 @@ export interface ChatSkillProps {
    * unaffected — it keeps rendering with `labelClassName` alone.
    */
   unresolvedReason?: SkillUnresolvedReason;
-  /** CSS class applied to the `/name` label. Defaults to `'dial-body-paragraph-text'`. */
+  /** CSS class applied to the `/name` label. Defaults to `'dial-body-paragraph-text text-accent'`. */
   labelClassName?: string;
   /**
    * Color class applied to the `/{name}` label in addition to

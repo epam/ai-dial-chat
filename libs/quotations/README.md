@@ -118,6 +118,13 @@ then calls `onPreview` for the active annotation directly, without showing the
 card, so the user can switch the previewed citation from badge to badge. A
 non-previewable annotation still opens the card.
 
+Pass `previewFilesOnMarkerClick` (defaults to `false`) to make a marker that
+holds a single previewable file citation call `onPreview` directly even while
+the preview panel is closed, with no card. A web-link source (`text/html` or
+`application/xhtml+xml`) and a group with more than one annotation still open
+the card: the card is where a link's quote and "Open in browser" live, and its
+switcher is the only way to reach a grouped marker's other citations.
+
 ```tsx
 import {
   CitationDropdown,
@@ -160,8 +167,9 @@ While `isStreaming` is `true`, `processedContent` hides only complete supported 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
 
 Its callbacks also accept optional `isPreviewable(annotation)`, forwarded to
-`CitationDropdown`, and an optional `isPreviewOpen` boolean with the same
-meaning as the `CitationDropdown` prop. The host supplies its source classification policy: DIAL Chat
+`CitationDropdown`, and optional `isPreviewOpen` and
+`previewFilesOnMarkerClick` booleans with the same meaning as the
+`CitationDropdown` props. The host supplies its source classification policy: DIAL Chat
 keeps Preview for DIAL files and supported external file sources, and hides it
 for ordinary external web pages such as `https://data.imf.org/en/datasets/IMF.RES:WEO`.
 The library does not interpret DIAL file paths or decide which viewers the host supports.
@@ -221,6 +229,7 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
+- `replaceCitTagsWithSourceNames(content, groups, fallbackGroups?)` — replaces each supported `<cit data-id="…"></cit>` element that resolves to a group (message `groups` first, then `fallbackGroups`) with the group's Markdown-escaped `sourceName`, leaving unresolved tags untouched. Use it before serializing content outside the renderer (e.g. the message Copy action), where the `cit` override never runs and the element would otherwise copy as nothing
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups
 - `isReferenceOnlyAttachment(dto)` — returns true for RAG/grounding chunks without a direct URL
 - `parsePdfPageReference(url)` — parses a PDF URL with optional `#page=N` fragment

@@ -25,6 +25,11 @@ import {
 } from './dto/refine-text.dto';
 import { APPLICATION_DESCRIPTION_PROMPT } from './prompts/application-description.prompt';
 import { PROMPT_DESCRIPTION_PROMPT } from './prompts/prompt-description.prompt';
+import { PROMPT_INSTRUCTIONS_PROMPT } from './prompts/prompt-instructions.prompt';
+import {
+  unwrapRefinementDraft,
+  wrapRefinementDraft,
+} from './prompts/refinement-draft.prompt';
 import { SCHEDULED_TASK_DESCRIPTION_PROMPT } from './prompts/scheduled-task-description.prompt';
 import { SCHEDULED_TASK_INSTRUCTIONS_PROMPT } from './prompts/scheduled-task-instructions.prompt';
 import { SKILL_DESCRIPTION_PROMPT } from './prompts/skill-description.prompt';
@@ -88,6 +93,7 @@ export class TextRefinementService {
         APPLICATION_DESCRIPTION_PROMPT,
       [TextRefinementPurpose.ToolsetDescription]: TOOLSET_DESCRIPTION_PROMPT,
       [TextRefinementPurpose.PromptDescription]: PROMPT_DESCRIPTION_PROMPT,
+      [TextRefinementPurpose.PromptInstructions]: PROMPT_INSTRUCTIONS_PROMPT,
     }[dto.purpose];
     const promptKey = {
       [TextRefinementPurpose.SkillDescription]:
@@ -104,6 +110,8 @@ export class TextRefinementService {
         'TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT',
       [TextRefinementPurpose.PromptDescription]:
         'TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT',
+      [TextRefinementPurpose.PromptInstructions]:
+        'TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT',
     } as const;
     const prompt = resolvePrompt(
       this.config.get(promptKey[dto.purpose], { infer: true }),
@@ -135,7 +143,7 @@ export class TextRefinementService {
           body: {
             messages: [
               { role: 'system', content: prompt },
-              { role: 'user', content: dto.text },
+              { role: 'user', content: wrapRefinementDraft(dto.text) },
             ],
             stream: false,
           } as Parameters<
@@ -171,7 +179,9 @@ export class TextRefinementService {
             message?: { content?: unknown };
           }
         | undefined;
-      const text = choice?.message?.content;
+      const content = choice?.message?.content;
+      const text =
+        typeof content === 'string' ? unwrapRefinementDraft(content) : content;
       if (
         choice?.finish_reason !== 'stop' ||
         typeof text !== 'string' ||

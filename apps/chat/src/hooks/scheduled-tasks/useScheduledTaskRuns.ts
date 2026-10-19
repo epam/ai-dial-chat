@@ -8,6 +8,7 @@ export const useScheduledTaskRuns = (
   scheduleId: string,
   enabled = true,
   nextRunTime?: string | null,
+  pollWhileActive = false,
 ) => {
   const { refreshConversations } = useConversations();
   const client = useMemo<typeof schedulerClient>(
@@ -36,6 +37,7 @@ export const useScheduledTaskRuns = (
     scheduleId,
     enabled,
     nextRunTime,
+    pollWhileActive,
   });
   return { ...result, error: result.initialError };
 };

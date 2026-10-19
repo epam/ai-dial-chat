@@ -62,13 +62,12 @@ export const getCredentialsBadgeState = (
 };
 
 /**
- * Whether the publisher holds a credential for an authenticated toolset and
- * may therefore offer to publish it alongside the toolset.
+ * Whether the publisher holds a global-level credential for an authenticated
+ * toolset and may therefore offer to publish it alongside the toolset.
  *
- * Either level qualifies: publishing always acts on the publisher's own source
- * item, where `globalStatus` is the owner's own credential and `userStatus`
- * covers a personal credential configured on top of it. Access the publisher
- * does not hold cannot be passed on.
+ * Only `globalStatus` qualifies: DIAL Core copies the source item's global
+ * credential to the published copy, so a user-level sign-in alone leaves
+ * nothing to pass on.
  */
 export const canPublishCredentials = (
   credentials: CatalogItemCredentials | undefined,
@@ -79,9 +78,7 @@ export const canPublishCredentials = (
   ) {
     return false;
   }
-  return (
-    isSignedIn(credentials.userStatus) || isSignedIn(credentials.globalStatus)
-  );
+  return isSignedIn(credentials.globalStatus);
 };
 
 /** Resolves which level a direct (non-accordion) "Log out" action applies to. */

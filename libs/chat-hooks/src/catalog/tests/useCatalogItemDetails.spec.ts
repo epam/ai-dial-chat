@@ -546,6 +546,39 @@ describe('useCatalogItemDetails', () => {
       expect(details?.credentials).toBeDefined();
     });
 
+    it('renders the Overview with the labels the host supplies', async () => {
+      const api = makeApi({
+        getDeploymentDetails: vi.fn().mockResolvedValue({
+          ...TOOLSET_DTO,
+          toolsetDetails: {
+            ...TOOLSET_DTO.toolsetDetails,
+            owner: 'Search Inc.',
+          },
+        }),
+      });
+      const { result } = renderHook(() =>
+        useCatalogItemDetails(
+          makeOptions(api, {
+            entityDetailsLabels: {
+              specificationTitle: 'Spécification',
+              hostedBy: 'Hébergé par',
+            },
+          }),
+        ),
+      );
+
+      const details = await result.current.onFetchDetails(
+        makeItem(CatalogEntityType.Toolset, 'toolsets/public/search__1.0'),
+      );
+
+      expect(details?.overview?.sections).toEqual([
+        {
+          title: 'Spécification',
+          specs: [{ label: 'Hébergé par', value: 'Search Inc.' }],
+        },
+      ]);
+    });
+
     it('does not call getDeploymentLimits for a Toolset', async () => {
       const api = makeApi({
         getDeploymentDetails: vi.fn().mockResolvedValue(TOOLSET_DTO),

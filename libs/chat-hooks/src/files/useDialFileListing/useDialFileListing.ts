@@ -17,6 +17,7 @@ import {
   fetchByTab,
   fetchForSearch,
   mapCorePermissions,
+  buildSharedSearchScope,
   mapSearchItem,
   mergeCreatedFolderIntoCache,
 } from '../dial-file-manager-mapping.util';
@@ -96,6 +97,11 @@ export interface UseDialFileListingResult {
   ) => void;
   /** Forces the listing effect to re-fetch the currently browsed folder. */
   bumpRetry: () => void;
+  /**
+   * Drops the named root rows from the Shared tab's cached listing, so an
+   * unshared item disappears at once instead of waiting for the refetch.
+   */
+  removeSharedRootItems: (names: string[]) => void;
 }
 
 /**
@@ -241,20 +247,19 @@ export const useDialFileListing = ({
         setListingPermissionsCache((prev) =>
           new Map(prev).set(folderPath, permissions),
         );
-        // Capture root-level shared item paths for sharedWithMeIds and subfolder navigation
+        /*
+         * Capture root-level shared item paths for sharedWithMeIds. They have to match
+         * the row paths `buildFromCache` produces — `/<rootLabel>/<name>` — and not the
+         * item's location inside the owner's bucket: DIAL Core lists shared items flat,
+         * so a file nested under the owner's folders still shows up as a root row.
+         */
         if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
           setSharedRootIds(
-            flat.map((item) => {
-              const relative = dialCorePathToRelative(
-                item.path,
-                item.bucket ?? '',
-              );
-              return buildSharedItemVirtualPath(
-                relative,
-                rootLabel,
-                item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder,
-              );
-            }),
+            flat.map((item) =>
+              item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder
+                ? `/${rootLabel}/${item.name}/`
+                : `/${rootLabel}/${item.name}`,
+            ),
           );
           sharedRootMetaRef.current = new Map(
             flat.map((item) => [
@@ -497,6 +502,29 @@ export const useDialFileListing = ({
     [],
   );
 
+  const removeSharedRootItems = useCallback(
+    (names: string[]) => {
+      if (names.length === 0) return;
+      const removed = new Set(names);
+      setCache((prev) => {
+        const root = prev.get('');
+        if (root == null) return prev;
+        const next = new Map(prev);
+        next.set(
+          '',
+          root.filter((item) => !removed.has(item.name)),
+        );
+        return next;
+      });
+      setSharedRootIds((prev) =>
+        prev?.filter(
+          (id) => !names.some((name) => id === `/${rootLabel}/${name}`),
+        ),
+      );
+    },
+    [rootLabel],
+  );
+
   const onFolderPopupPathChange = useCallback(
     (nextPath?: string) => {
       if (!isActive) return;
@@ -693,9 +721,10 @@ export const useDialFileListing = ({
           searchCancelRef.current = null;
           setIsSearching(true);
           const rootItems = cache.get('') ?? [];
+          const scope = buildSharedSearchScope(rootLabel, '', new Map());
           setSearchResults(
             rootItems.map((item) =>
-              mapSearchItem(item, item.bucket ?? bucket, rootLabel),
+              mapSearchItem(item, item.bucket ?? bucket, rootLabel, scope),
             ),
           );
           setIsSearching(false);
@@ -717,9 +746,17 @@ export const useDialFileListing = ({
               sharedRootMetaRef.current,
             );
             if (cancelled) return;
+            const scope =
+              activeTab === DialFileManagerTabs.Shared
+                ? buildSharedSearchScope(
+                    rootLabel,
+                    folderPath,
+                    sharedRootMetaRef.current,
+                  )
+                : undefined;
             setSearchResults(
               searchItems.map((item) =>
-                mapSearchItem(item, item.bucket ?? bucket, rootLabel),
+                mapSearchItem(item, item.bucket ?? bucket, rootLabel, scope),
               ),
             );
           } catch {
@@ -778,5 +815,6 @@ export const useDialFileListing = ({
     invalidateFolders,
     mergeCreatedFolder,
     bumpRetry,
+    removeSharedRootItems,
   };
 };

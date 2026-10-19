@@ -672,6 +672,8 @@ describe('useConversationStream', () => {
       async (explicit) => {
         const initial = placeholder();
         vi.mocked(transport.getConversation).mockResolvedValue(initial);
+        /* Only the tab that started the generation makes a recovery save. */
+        transport.saveConversation = vi.fn();
         transport.attachToGeneration = vi.fn().mockResolvedValue(
           new ReadableStream({
             start(controller) {
@@ -724,6 +726,7 @@ describe('useConversationStream', () => {
         });
         expect(result.current.stream.isStreaming).toBe(false);
         if (explicit) expect(transport.getConversation).not.toHaveBeenCalled();
+        expect(transport.saveConversation).not.toHaveBeenCalled();
       },
     );
 
@@ -1139,6 +1142,300 @@ describe('useConversationStream', () => {
       });
       expect(result.current.conversation).toEqual(newAnswer);
       expect(result.current.stream.isStreaming).toBe(true);
+    });
+
+    describe('a terminal save rejected with 401', () => {
+      const deferred = <T>() => {
+        let resolve!: (value: T) => void;
+        let reject!: (reason: unknown) => void;
+        const promise = new Promise<T>((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+        return { promise, resolve, reject };
+      };
+      const savedConversation = () => {
+        const initial = placeholder();
+        return makeConversation({
+          messages: [
+            initial.messages[0],
+            {
+              ...initial.messages[1],
+              content: 'Visible answer',
+              custom_content: { state: { server: 'saved' } },
+            },
+          ],
+        });
+      };
+
+      const renderWithSave = (
+        saveConversation: ConversationStreamTransport['saveConversation'],
+        onStreamError?: (error: Error) => void,
+      ) => {
+        const initial = placeholder();
+        vi.mocked(transport.getConversation).mockResolvedValue(initial);
+        const withSave: ConversationStreamTransport = {
+          ...transport,
+          saveConversation,
+        };
+        const view = renderHook(
+          ({ conversationId }: { conversationId: string }) =>
+            useHookHarness({
+              transport: withSave,
+              conversationId,
+              initialConversation: initial,
+              generationPersistenceErrorMessage: warning,
+              onStreamError,
+            }),
+          { initialProps: { conversationId: 'bucket/conv' } },
+        );
+        return { ...view, initial };
+      };
+
+      const streamAnswerThenFail = async (
+        result: { current: ReturnType<typeof useHookHarness> },
+        error: Error = new GenerationPersistenceError(401),
+      ) => {
+        await act(async () => {
+          result.current.stream.startStream(
+            'bucket/conv',
+            'question',
+            1,
+            'gpt-4o',
+          );
+        });
+        act(() => capturedOptions?.onChunk(chunk));
+        await act(async () => {
+          capturedOptions?.onError(error);
+        });
+      };
+
+      it('saves the received answer once and never shows the warning', async () => {
+        const saved = savedConversation();
+        const saveConversation = vi.fn().mockResolvedValue(saved);
+        const { result, initial } = renderWithSave(saveConversation);
+
+        await streamAnswerThenFail(result);
+
+        await waitFor(() => expect(result.current.conversation).toEqual(saved));
+        expect(transport.getConversation).toHaveBeenCalledOnce();
+        expect(transport.getConversation).toHaveBeenCalledWith('bucket/conv');
+        expect(saveConversation).toHaveBeenCalledOnce();
+        const [path, body] = saveConversation.mock.calls[0];
+        expect(path).toBe('conv');
+        expect(body.messages[1]).toMatchObject({
+          content: 'Visible answer',
+          custom_content: { state: { result: 'preserve me' } },
+        });
+        expect(body.messages[1].streamErrorMessage).toBeUndefined();
+        expect(
+          result.current.conversation?.messages[1].streamErrorMessage,
+        ).toBe(undefined);
+        expect(
+          result.current.stream.restoreBufferedGeneration(
+            'bucket/conv',
+            initial,
+          ),
+        ).toEqual(initial);
+      });
+
+      it('shows the answer without the warning while the save is pending', async () => {
+        const pending = deferred<Conversation>();
+        const { result } = renderWithSave(vi.fn(() => pending.promise));
+
+        await streamAnswerThenFail(result);
+
+        expect(result.current.conversation?.messages[1].content).toBe(
+          'Visible answer',
+        );
+        expect(
+          result.current.conversation?.messages[1].streamErrorMessage,
+        ).toBeUndefined();
+        expect(result.current.stream.isStreaming).toBe(false);
+        expect(result.current.stream.canStopStreaming).toBe(false);
+      });
+
+      it.each(['read', 'save'])(
+        'shows the warning once and does not retry when the %s fails',
+        async (failing) => {
+          const saveConversation = vi
+            .fn()
+            .mockRejectedValue(new Error('save rejected'));
+          const { result, initial } = renderWithSave(saveConversation);
+          if (failing === 'read') {
+            vi.mocked(transport.getConversation).mockRejectedValue(
+              new Error('read rejected'),
+            );
+          }
+
+          await streamAnswerThenFail(result);
+
+          await waitFor(() =>
+            expect(
+              result.current.conversation?.messages[1].streamErrorMessage,
+            ).toBe(warning),
+          );
+          expect(result.current.conversation?.messages[1].content).toBe(
+            'Visible answer',
+          );
+          expect(saveConversation).toHaveBeenCalledTimes(
+            failing === 'read' ? 0 : 1,
+          );
+          expect(transport.getConversation).toHaveBeenCalledOnce();
+          expect(
+            result.current.stream.restoreBufferedGeneration(
+              'bucket/conv',
+              initial,
+            ).messages[1].content,
+          ).toBe('Visible answer');
+        },
+      );
+
+      it.each([
+        ['is too short to hold the answer', () => makeConversation()],
+        [
+          'already holds a different answer at that index',
+          () =>
+            makeConversation({
+              messages: [
+                placeholder().messages[0],
+                {
+                  role: MessageRole.Assistant,
+                  content: 'Older answer',
+                  timestamp: '2026-09-25T00:00:01Z',
+                },
+              ],
+            }),
+        ],
+      ])(
+        'shows the warning without saving when the stored copy %s',
+        async (_label, storedCopy) => {
+          const saveConversation = vi.fn();
+          const { result, initial } = renderWithSave(saveConversation);
+          vi.mocked(transport.getConversation).mockResolvedValue(storedCopy());
+
+          await streamAnswerThenFail(result);
+
+          await waitFor(() =>
+            expect(
+              result.current.conversation?.messages[1].streamErrorMessage,
+            ).toBe(warning),
+          );
+          expect(saveConversation).not.toHaveBeenCalled();
+          expect(
+            result.current.stream.restoreBufferedGeneration(
+              'bucket/conv',
+              initial,
+            ).messages[1].content,
+          ).toBe('Visible answer');
+        },
+      );
+
+      it.each([502, undefined])(
+        'shows the warning immediately without saving when the status is %s',
+        async (status) => {
+          const saveConversation = vi.fn();
+          const { result } = renderWithSave(saveConversation);
+
+          await streamAnswerThenFail(
+            result,
+            new GenerationPersistenceError(status),
+          );
+
+          expect(
+            result.current.conversation?.messages[1].streamErrorMessage,
+          ).toBe(warning);
+          expect(transport.getConversation).not.toHaveBeenCalled();
+          expect(saveConversation).not.toHaveBeenCalled();
+        },
+      );
+
+      it('shows the warning immediately when the transport cannot save', async () => {
+        const { result } = renderWithSave(undefined);
+
+        await streamAnswerThenFail(result);
+
+        expect(
+          result.current.conversation?.messages[1].streamErrorMessage,
+        ).toBe(warning);
+        expect(transport.getConversation).not.toHaveBeenCalled();
+      });
+
+      it('leaves a newer generation untouched when the save resolves after it started', async () => {
+        const pending = deferred<Conversation>();
+        const saveConversation = vi.fn(() => pending.promise);
+        const { result } = renderWithSave(saveConversation);
+
+        await streamAnswerThenFail(result);
+        await waitFor(() => expect(saveConversation).toHaveBeenCalledOnce());
+        await act(async () => {
+          result.current.stream.startStream('bucket/conv', 'next', 1, 'gpt-4o');
+        });
+        const newer = result.current.conversation;
+        await act(async () => {
+          pending.resolve(savedConversation());
+        });
+
+        expect(result.current.conversation).toEqual(newer);
+        expect(result.current.stream.isStreaming).toBe(true);
+      });
+
+      it('does not save over a newer generation started while the read is pending', async () => {
+        const read = deferred<Conversation>();
+        const saveConversation = vi.fn();
+        const { result, initial } = renderWithSave(saveConversation);
+        vi.mocked(transport.getConversation).mockImplementation(
+          () => read.promise,
+        );
+
+        await streamAnswerThenFail(result);
+        await act(async () => {
+          result.current.stream.startStream('bucket/conv', 'next', 1, 'gpt-4o');
+        });
+        await act(async () => {
+          read.resolve(initial);
+        });
+
+        expect(saveConversation).not.toHaveBeenCalled();
+      });
+
+      it('still saves after the user navigates away, without changing the displayed conversation', async () => {
+        const read = deferred<Conversation>();
+        const saveConversation = vi.fn().mockResolvedValue(savedConversation());
+        const { result, rerender, initial } = renderWithSave(saveConversation);
+        vi.mocked(transport.getConversation).mockImplementation(
+          () => read.promise,
+        );
+
+        await streamAnswerThenFail(result);
+        rerender({ conversationId: 'bucket/other' });
+        const displayed = result.current.conversation;
+        await act(async () => {
+          read.resolve(initial);
+        });
+
+        await waitFor(() => expect(saveConversation).toHaveBeenCalledOnce());
+        expect(result.current.conversation).toBe(displayed);
+      });
+
+      it('reports the original error to onStreamError once', async () => {
+        const onStreamError = vi.fn();
+        const error = new GenerationPersistenceError(401);
+        const { result } = renderWithSave(
+          vi.fn().mockResolvedValue(savedConversation()),
+          onStreamError,
+        );
+
+        await streamAnswerThenFail(result, error);
+
+        await waitFor(() =>
+          expect(result.current.conversation?.messages[1].content).toBe(
+            'Visible answer',
+          ),
+        );
+        expect(onStreamError).toHaveBeenCalledOnce();
+        expect(onStreamError).toHaveBeenCalledWith(error);
+      });
     });
   });
 

@@ -146,3 +146,24 @@ export const findSlashQueryAtCaret = (
 
   return { start, end };
 };
+
+/**
+ * Returns the offset in `next` at which `text` landed when `change` is the
+ * edit that inserted it, or `undefined` when `change` cannot have inserted it.
+ */
+export const findInsertedTextOffset = (
+  next: string,
+  change: TextChange,
+  text: string,
+): number | undefined => {
+  if (text === '' || change.insertedLength < text.length) return undefined;
+
+  /*
+   * `diffTextChange` grows the common prefix greedily, so when the inserted
+   * text's edges repeat the characters around the caret the reported region
+   * starts up to `text.length` characters after where `text` actually begins.
+   */
+  const offset = next.indexOf(text, Math.max(0, change.start - text.length));
+  const latestOffset = change.start + change.insertedLength - text.length;
+  return offset !== -1 && offset <= latestOffset ? offset : undefined;
+};

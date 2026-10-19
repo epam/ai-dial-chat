@@ -26,6 +26,9 @@ export const buildMessageActions = (
   handlers: MessageActionHandlers,
   tooltips?: MessageActionTooltips,
   ariaLabels?: MessageActionAriaLabels,
+  /* Assistant markdown with renderer-only markup (e.g. `<cit>` elements)
+     already resolved to the text shown on screen; defaults to `msg.content`. */
+  copyContent: string = msg.content,
 ): MessageActionsProps => {
   if (msg.role === MessageRole.Status) {
     return {};
@@ -49,8 +52,8 @@ export const buildMessageActions = (
     return { onRegenerate, labels: { tooltips, ariaLabels } };
   }
 
-  const handleCopy = () => void copyMarkdownAsRichText(msg.content);
-  const handleCopyMarkdown = () => void copyToClipboard(msg.content);
+  const handleCopy = () => void copyMarkdownAsRichText(copyContent);
+  const handleCopyMarkdown = () => void copyToClipboard(copyContent);
 
   return {
     onRegenerate,

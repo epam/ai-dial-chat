@@ -46,6 +46,7 @@ import { useNotification } from '../../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../../hooks/application-editor/useApplicationAvatarPicker';
 import { useMetadataLabels } from '../../../hooks/application-editor/useMetadataLabels';
 import { useToolsetEditorOAuthLogin } from '../../../hooks/toolsets/useToolsetEditorOAuthLogin';
+import { useBuilderLeaveGuard } from '../../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useOperationNotification } from '../../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../../hooks/useTextRefinementLabels';
@@ -53,7 +54,6 @@ import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import {
   createToolset,
   getToolset,
-  listToolsets,
   loginToolset,
   logoutToolset,
   updateToolset,
@@ -63,11 +63,7 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import {
-  buildAdditionalLocaleOptions,
-  PRIMARY_LOCALE,
-  resolveLocalizedText,
-} from '../../../utils/locale';
+import { buildAdditionalLocaleOptions } from '../../../utils/locale';
 import {
   extractToolsetApiErrorMessage,
   fetchToolsetAuthSettings,
@@ -131,20 +127,7 @@ const ToolsetApplicationEditor: FC = () => {
         return;
       }
 
-      try {
-        const { data } = await listToolsets();
-        if (!cancelled) {
-          setInitialForm(
-            getDefaultToolsetForm(
-              (data ?? []).map((item) =>
-                resolveLocalizedText(item.displayName, PRIMARY_LOCALE),
-              ),
-            ),
-          );
-        }
-      } catch {
-        if (!cancelled) setInitialForm(getDefaultToolsetForm());
-      }
+      setInitialForm(getDefaultToolsetForm());
     };
 
     void load();
@@ -245,9 +228,14 @@ const ToolsetApplicationEditor: FC = () => {
     [notifyOperationSuccess, isEditMode],
   );
 
+  /* Reported by the editor; feeds the router-level leave guard. */
+  const [isDirty, setIsDirty] = useState(false);
+  const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
+
   const handleSaveComplete = useCallback(() => {
+    allowNextNavigation();
     navigate(returnUrl);
-  }, [navigate, returnUrl]);
+  }, [allowNextNavigation, navigate, returnUrl]);
 
   const handleBack = useCallback(() => {
     navigate(returnUrl);
@@ -419,6 +407,7 @@ const ToolsetApplicationEditor: FC = () => {
       onSaveSuccess={handleSaveSuccess}
       onSaveComplete={handleSaveComplete}
       onBack={handleBack}
+      onDirtyChange={setIsDirty}
       buildMcpUrl={buildMcpUrl}
       listToolNames={listToolNames}
       authActions={authActions}

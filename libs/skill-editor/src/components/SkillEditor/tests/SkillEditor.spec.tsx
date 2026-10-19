@@ -1,3 +1,4 @@
+import { BUILDER_FORM_CLASS } from '@epam/ai-dial-builder-form';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -654,5 +655,40 @@ describe('SkillEditor — public class names', () => {
     );
     expect(root).toBeTruthy();
     expect(root?.getAttribute('dir')).toBe('rtl');
+  });
+});
+
+describe('SkillEditor — asideData', () => {
+  it('renders no side panel by default', () => {
+    renderEditor();
+
+    expect(screen.queryByText('quality check')).toBeNull();
+  });
+
+  it('renders the host panel next to the form', () => {
+    renderEditor({ asideData: <p>quality check</p> });
+
+    expect(screen.getByText('quality check')).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
+  });
+
+  it('pads the aside section like the Files and selected-file sections', () => {
+    renderEditor({ asideData: <p>quality check</p> });
+
+    const section = closestWithClass(
+      screen.getByText('quality check'),
+      BUILDER_FORM_CLASS.asideSection,
+    );
+    expect(section?.classList.contains('desktop:px-8')).toBe(true);
+    expect(section?.classList.contains('desktop:py-6')).toBe(true);
+  });
+
+  it.each([
+    ['loading', { isLoading: true }],
+    ['a load error', { hasLoadError: true }],
+  ])('does not render the panel while %s', (_name, props) => {
+    renderEditor({ ...props, asideData: <p>quality check</p> });
+
+    expect(screen.queryByText('quality check')).toBeNull();
   });
 });

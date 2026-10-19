@@ -170,7 +170,7 @@ import { StandalonePublishPanel } from '@epam/ai-dial-publish-panel';
 
 ### PublishFooter
 
-Pinned action row with Cancel and Publish/Update buttons.
+Pinned action row with Cancel and Publish/Update buttons. The submit button reads `Update version {version}` when `hasExistingPublicationInFolder` is true, unless `allowReplace` is `false` — pass the same `allowReplace` the panel gets when the backend cannot overwrite an existing publication.
 
 ```tsx
 import { PublishFooter } from '@epam/ai-dial-publish-panel';

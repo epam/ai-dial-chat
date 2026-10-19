@@ -90,7 +90,8 @@ export const parentSkillPath = (path: string): string =>
 /**
  * Resolves the folder an add action targets (`''` is the skill root). The
  * header adds into the selected folder, or the root when a file (or nothing)
- * is selected; "Add child" adds into the node; "Add sibling" adds next to it.
+ * is selected; a folder's own menu entries add into it; "Add sibling" adds
+ * next to the node.
  */
 export const resolveAddTarget = (
   source: SkillAddSource,

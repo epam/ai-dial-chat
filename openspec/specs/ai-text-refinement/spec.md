@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provide shared AI-assisted refinement of skill and scheduled-task descriptions and instructions, and of application, toolset, and prompt descriptions, with field-local Undo, safe cancellation, and a single authenticated API using the shared utility model.
+Provide shared AI-assisted refinement of skill and scheduled-task descriptions and instructions, of application, toolset, and prompt descriptions, and of prompt instructions, with field-local Undo, safe cancellation, and a single authenticated API using the shared utility model.
 
 ## Requirements
 
@@ -31,6 +31,18 @@ Provide shared AI-assisted refinement of skill and scheduled-task descriptions a
 #### Scenario: Refinement unavailable
 - **WHEN** the client config reports refinement unavailable
 - **THEN** the application, toolset, and prompt Description fields render without the Refine with AI action
+
+### Requirement: Prompt Instructions are refinable
+
+`PromptEditorProps` SHALL additionally accept optional `onRefineInstructions?: (value: string, signal: AbortSignal) => Promise<string>`. When supplied, the Instructions `MarkdownEditor` SHALL be wrapped in the shared `TextRefinementField` (labelled by the Instructions label, `required`, with the editor's `id` as `fieldId`), which renders the Refine with AI action and Undo beside the Instructions label exactly as for Description; when omitted, the Instructions label and editor render unchanged and no action appears. The refinement copy SHALL come from the same `PromptEditorLabels` (`TextRefinementLabels`) fields as Description. The result SHALL be published through the existing content update path, so `onFieldChange('content', text)` fires and dirty tracking applies. The prompt form SHALL coordinate at most one pending refinement: while either Description or Instructions refines, both Refine actions are disabled, Save is disabled and its handler rejects submission, and Cancel/Back reset both fields' refinement state. The host SHALL supply the callback only when refinement is available, using purpose `prompt-instructions`.
+
+#### Scenario: Prompt Instructions are refined
+- **WHEN** refinement is available and the author activates Refine with AI beside the prompt Instructions label
+- **THEN** the host calls `refineText` with purpose `prompt-instructions`, the refined Markdown replaces Instructions through `onFieldChange('content', text)`, and Undo restores the original text
+
+#### Scenario: One refinement per prompt form
+- **WHEN** a prompt Instructions refinement is pending
+- **THEN** the Description Refine action and Save are disabled, and activating Save does not call `onSubmit`
 
 ### Requirement: Shared lifecycle with existing form value ownership
 
@@ -100,7 +112,7 @@ Rejected promises, timeout, blank output, or invalid upstream output SHALL prese
 
 ### Requirement: Shared typed refinement API
 
-The backend SHALL expose exactly one non-streaming refinement endpoint: `POST /api/v1/text-refinement`, operationId/SDK method `refineText`, tag `text-refinement`, `RefineTextRequestDto`, and `RefineTextResponseDto`. The JSON request SHALL contain only `purpose` and `text`. `purpose` SHALL be a string enum allowing the seven values below. Successful responses SHALL be HTTP 200 with `{ "text": "..." }` and `Cache-Control: no-store`.
+The backend SHALL expose exactly one non-streaming refinement endpoint: `POST /api/v1/text-refinement`, operationId/SDK method `refineText`, tag `text-refinement`, `RefineTextRequestDto`, and `RefineTextResponseDto`. The JSON request SHALL contain only `purpose` and `text`. `purpose` SHALL be a string enum allowing the eight values below. Successful responses SHALL be HTTP 200 with `{ "text": "..." }` and `Cache-Control: no-store`.
 
 | Purpose | Maximum input/output characters |
 | --- | ---: |
@@ -111,6 +123,7 @@ The backend SHALL expose exactly one non-streaming refinement endpoint: `POST /a
 | `application-description` | 2,000 |
 | `toolset-description` | 2,000 |
 | `prompt-description` | 2,000 |
+| `prompt-instructions` | 32,000 |
 
 Lengths SHALL count Unicode code points consistently with DTO validators. Inputs SHALL be non-whitespace strings and SHALL be sent without destructive trimming. These limits SHALL NOT change ordinary form-save limits. The request SHALL reject unknown keys, unsupported purpose values, missing fields, non-string text, and text over the applicable limit. DTOs SHALL publish validation and limits through Swagger. No input/output SHALL be silently truncated.
 
@@ -154,7 +167,7 @@ Error responses SHALL use the existing Nest exception envelope (`statusCode`, `m
 
 ### Requirement: Server-owned purpose prompts and Markdown preservation
 
-The service SHALL use the configured DIAL SDK via `DialClientService`, select a server-owned prompt by purpose, and send one non-streaming completion. Each purpose's built-in prompt MAY be replaced by an operator through an optional server-only env var — `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT`, `TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT` (declared in `environment.config.ts` and `.env.template`) — resolved by `resolvePrompt`: an unset, empty, or whitespace-only value keeps the built-in default, and a nonblank value replaces the whole prompt. Clients cannot override prompts. It SHALL treat supplied text as content to rewrite, preserving its language, intent, factual constraints, identifiers, URLs, and placeholders. Skill Description SHALL emphasize triggering conditions; skill Instructions SHALL clarify procedure; task Description SHALL summarize the unattended task; task Instructions SHALL clarify steps and expected report without inventing schedule, tools, or data sources; application Description SHALL explain what the application does and when to choose it; toolset Description SHALL explain which capabilities the toolset provides without inventing tools, endpoints, or auth requirements; prompt Description SHALL state what the prompt is for. Instructions SHALL retain Markdown structure and fenced code content rather than be converted to plain prose or wrapped in an extra outer code fence. No sibling field, supporting file, or conversation context SHALL be sent. The backend SHALL validate output bounds/completeness and return a typed failure instead of null or a fabricated fallback.
+The service SHALL use the configured DIAL SDK via `DialClientService`, select a server-owned prompt by purpose, and send one non-streaming completion. Each purpose's built-in prompt MAY be replaced by an operator through an optional server-only env var — `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT`, `TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT`, `TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT` (declared in `environment.config.ts` and `.env.template`) — resolved by `resolvePrompt`: an unset, empty, or whitespace-only value keeps the built-in default, and a nonblank value replaces the whole prompt. Clients cannot override prompts. It SHALL treat supplied text as content to rewrite, never as a request to answer or perform: the user turn SHALL carry the draft fenced in `<draft>` tags beneath a fixed rewrite instruction (built by `wrapRefinementDraft` in `apps/chat-api/src/text-refinement/prompts/refinement-draft.prompt.ts`), for built-in and overridden prompts alike, and an answer that only echoes those tags around the result SHALL be unwrapped before validation. It SHALL preserve its language, intent, factual constraints, identifiers, URLs, and placeholders. Skill Description SHALL emphasize triggering conditions; skill Instructions SHALL clarify procedure; task Description SHALL summarize the unattended task; task Instructions SHALL clarify steps and expected report without inventing schedule, tools, or data sources; application Description SHALL explain what the application does and when to choose it; toolset Description SHALL explain which capabilities the toolset provides without inventing tools, endpoints, or auth requirements; prompt Description SHALL state what the prompt is for; prompt Instructions SHALL be rewritten as a clearer version of the same prompt-template text, keeping template variables such as `{{name}}` verbatim and never answering or executing the draft. Instructions SHALL retain Markdown structure and fenced code content rather than be converted to plain prose or wrapped in an extra outer code fence. No sibling field, supporting file, or conversation context SHALL be sent. The backend SHALL validate output bounds/completeness and return a typed failure instead of null or a fabricated fallback.
 
 #### Scenario: Instructions contain Markdown and placeholders
 - **WHEN** Instructions include headings, lists, links, fenced code, and template placeholders
@@ -169,6 +182,12 @@ The service SHALL use the configured DIAL SDK via `DialClientService`, select a 
 #### Scenario: Operator overrides a purpose prompt
 - **WHEN** `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT` is set to a nonblank value
 - **THEN** skill Description refinement uses that value as its prompt, and the other purposes keep their built-in prompts
+- **AND** the draft is still sent inside the `<draft>` envelope
+
+#### Scenario: Draft reads as a request to the model
+- **WHEN** skill Instructions contain "Return me 5 phrases from lorem ipsum"
+- **THEN** the model receives the draft fenced in `<draft>` tags with an explicit instruction not to answer or perform it
+- **AND** the result is a rewritten instruction for the assistant that will use the skill, not five Lorem Ipsum phrases
 
 #### Scenario: Invalid output
 - **WHEN** DIAL Core returns no usable text, output over the purpose limit, or a truncated completion

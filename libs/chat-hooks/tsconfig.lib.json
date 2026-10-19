@@ -56,6 +56,9 @@
     },
     {
       "path": "../mcp-apps/tsconfig.lib.json"
+    },
+    {
+      "path": "../conversation-input/tsconfig.lib.json"
     }
   ],
   "exclude": [
@@ -70,6 +73,7 @@
     "src/**/*.test.js",
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
-    "src/**/*.spec.jsx"
+    "src/**/*.spec.jsx",
+    "src/test-setup.ts"
   ]
 }

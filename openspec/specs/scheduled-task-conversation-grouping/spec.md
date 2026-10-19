@@ -7,11 +7,13 @@ Show one conversation-panel row per scheduled task instead of one per run, by co
 
 `apps/chat` SHALL export a pure function `collapseScheduledTaskConversations(items: readonly ConversationListItemDto[], options: CollapseScheduledTaskConversationsOptions): ConversationListItemDto[]` (options `{ activeConversationId?: string; conversationIdsMatch: (left: string, right: string) => boolean }`) from `apps/chat/src/utils/collapse-scheduled-task-conversations.ts`. It has no React, i18n, context, or network dependency.
 
-**Group key.** An item belongs to a group when `isScheduledTask === true` and `scheduleId` is a non-empty string. The group key is `${bucket}/${scheduleId}`, where `bucket` is the segment following the `conversations` resource-type segment of the item's decoded `id` (`conversations/{bucket}/.scheduler/{scheduleId}/...`). Items that are not scheduled-task conversations, or that lack `scheduleId`, are never grouped.
+**Group key.** An item belongs to a group when `isScheduledTask === true`, `scheduleId` is a non-empty string, and the item is the user's own run (neither `sharedWithMe` nor `publishedWithMe` is `true`). The group key is `${bucket}/${scheduleId}`, where `bucket` is the segment following the `conversations` resource-type segment of the item's decoded `id` (`conversations/{bucket}/.scheduler/{scheduleId}/...`). Items that are not scheduled-task conversations, or that lack `scheduleId`, are never grouped.
+
+**Shared and published runs are exempt.** An item with `sharedWithMe === true` or `publishedWithMe === true` is never collapsed: it is returned as-is and does not count as a group member when choosing the representative among the user's own runs. The recipient of such a run cannot open the task's run History (the task belongs to another user), so collapsing would leave the hidden runs unreachable; every such run therefore keeps its own row.
 
 **Pinned runs are exempt.** An item with `isPinned === true` is never collapsed: it is returned as-is and does not count as a group member when choosing the representative among unpinned runs.
 
-**Representative.** Among the unpinned members of a group, the function SHALL keep exactly one:
+**Representative.** Among the unpinned, owned members of a group, the function SHALL keep exactly one:
 
 1. the member matching `activeConversationId` (via `conversationIdsMatch`), when one exists; otherwise
 2. the member with the greatest `createdAt`; members without `createdAt` sort after members with it;
@@ -23,10 +25,10 @@ Show one conversation-panel row per scheduled task instead of one per run, by co
 
 **Two-phase evaluation.** The same module SHALL also export:
 
-- `groupScheduledTaskConversations(items, { conversationIdsMatch })`, which returns an exported `ScheduledTaskGrouping` (`{ collapsed, runs, items, conversationIdsMatch }`). `collapsed` is the list with no active id applied (every group represented by its newest unpinned run); `runs` are the grouped unpinned runs, in input order, each with its `groupKey` and `isRepresentative`; `items` is the source list, used only when an older run must be swapped in. `applyActiveScheduledTaskRun` finds the active run by scanning only those runs with `conversationIdsMatch`, not the whole list.
+- `groupScheduledTaskConversations(items, { conversationIdsMatch })`, which returns an exported `ScheduledTaskGrouping` (`{ collapsed, runs, items, conversationIdsMatch }`). `collapsed` is the list with no active id applied (every group represented by its newest unpinned, owned run); `runs` are the grouped unpinned, owned runs, in input order, each with its `groupKey` and `isRepresentative`; `items` is the source list, used only when an older run must be swapped in. `applyActiveScheduledTaskRun` finds the active run by scanning only those runs with `conversationIdsMatch`, not the whole list.
 - `applyActiveScheduledTaskRun(grouping, activeConversationId)`, which returns a collapsed list.
 
-`applyActiveScheduledTaskRun` SHALL return the grouping's own collapsed array (the same reference) when `activeConversationId` is absent, matches no grouped unpinned run, or matches a run that already is its group's newest representative. Only when the active id matches an older unpinned run SHALL it return a new array. That array is the grouping's collapsed list with that group's representative swapped for the active run, at the active run's original relative position. The result of the two-phase evaluation SHALL equal `collapseScheduledTaskConversations(items, { activeConversationId, conversationIdsMatch })` for every input. `collapseScheduledTaskConversations` stays exported and is implemented as the two phases composed.
+`applyActiveScheduledTaskRun` SHALL return the grouping's own collapsed array (the same reference) when `activeConversationId` is absent, matches no grouped run (pinned, shared and published runs are never grouped), or matches a run that already is its group's newest representative. Only when the active id matches an older unpinned, owned run SHALL it return a new array. That array is the grouping's collapsed list with that group's representative swapped for the active run, at the active run's original relative position. The result of the two-phase evaluation SHALL equal `collapseScheduledTaskConversations(items, { activeConversationId, conversationIdsMatch })` for every input. `collapseScheduledTaskConversations` stays exported and is implemented as the two phases composed.
 
 **Memoisation.** `ConversationPanelView` SHALL compute the grouping with `useMemo` keyed on the context list reference (`conversationIdsMatch` is a module-level import, so it is not a dependency). It SHALL compute the collapsed list with a second `useMemo` over the grouping and the active conversation id. Navigating between conversations whose ids do not change any representative therefore leaves the collapsed list, and `useConversationPanelItems`' memoised output, referentially unchanged.
 
@@ -50,9 +52,27 @@ Show one conversation-panel row per scheduled task instead of one per run, by co
 
 #### Scenario: Missing createdAt falls back to updatedAt, then id
 
-- **GIVEN** two shared runs of one task with no `createdAt` and `updatedAt: 0`, ids `conversations/u/.scheduler/s1/m__t__a` and `conversations/u/.scheduler/s1/m__t__b`
+- **GIVEN** two of the user's own runs of one task with no `createdAt` and `updatedAt: 0`, ids `conversations/u/.scheduler/s1/m__t__a` and `conversations/u/.scheduler/s1/m__t__b`
 - **WHEN** the function runs
 - **THEN** the item with id ending `__b` is the representative, on every invocation
+
+#### Scenario: Runs shared with the user keep their own rows
+
+- **GIVEN** two runs of the same task of another user's bucket, both `sharedWithMe: true`
+- **WHEN** the function runs
+- **THEN** both items are returned
+
+#### Scenario: Published runs keep their own rows
+
+- **GIVEN** two runs of the same task, both `publishedWithMe: true`
+- **WHEN** the function runs
+- **THEN** both items are returned
+
+#### Scenario: A shared run does not displace or hide the user's own run
+
+- **GIVEN** the user's own runs A (`createdAt: 100`) and B (`createdAt: 200`) of task `s1`, and a run C of the same `s1` shared from another bucket
+- **WHEN** the function runs
+- **THEN** B and C are returned and A is omitted
 
 #### Scenario: Two tasks do not collapse into each other
 

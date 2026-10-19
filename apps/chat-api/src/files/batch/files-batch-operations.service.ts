@@ -28,6 +28,15 @@ import { MARKER_NAME } from '../files.constants';
 import type { ExpandedFile } from '../listing/files-listing.service';
 import { FilesListingService } from '../listing/files-listing.service';
 
+/*
+ * openapi-fetch leaves `error` undefined for an error response with an empty
+ * body, so the HTTP status decides success alongside the parsed error.
+ */
+const isTransferSuccess = (
+  error: unknown,
+  response: { status: number },
+): boolean => error == null && response.status < 400;
+
 const getResourceOperationErrorMessage = (
   error: unknown,
   operationTag: string,
@@ -274,7 +283,7 @@ export class FilesBatchOperationsService {
         `deleteFileItem result: bucket=${bucket}, relPath=${relPath}, status=${response.status}, hasError=${error != null}`,
       );
 
-      if (response.status === 404 || error == null) {
+      if (response.status === 404 || isTransferSuccess(error, response)) {
         return { path: relPath, success: true };
       }
 
@@ -389,7 +398,7 @@ export class FilesBatchOperationsService {
         signal: AbortSignal.timeout(this.getTimeoutMs()),
       })) as { error?: unknown; response: { status: number } };
 
-      if (error == null) {
+      if (isTransferSuccess(error, response)) {
         return { sourcePath, destinationPath: destPath, success: true };
       }
 
@@ -537,7 +546,7 @@ export class FilesBatchOperationsService {
         signal: AbortSignal.timeout(this.getTimeoutMs()),
       })) as { error?: unknown; response: { status: number } };
 
-      if (error == null) {
+      if (isTransferSuccess(error, response)) {
         return { sourcePath, destinationPath: destPath, success: true };
       }
 
@@ -687,7 +696,7 @@ export class FilesBatchOperationsService {
         signal: AbortSignal.timeout(this.getTimeoutMs()),
       })) as { error?: unknown; response: { status: number } };
 
-      if (error == null) {
+      if (isTransferSuccess(error, response)) {
         return { sourcePath, destinationPath: destPath, success: true };
       }
 

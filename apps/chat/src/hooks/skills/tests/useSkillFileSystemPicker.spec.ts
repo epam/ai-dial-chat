@@ -53,9 +53,18 @@ describe('useSkillFileSystemPicker', () => {
   });
 
   it('resolves with the downloaded files from their own bucket', async () => {
-    mockDownloadFile.mockResolvedValue(
-      new Response('# Notes', { headers: { 'content-type': 'text/markdown' } }),
-    );
+    /*
+     * Not a real `Response`: Node's undici `Response#blob()` returns an
+     * undici-realm Blob, which the hook feeds to jsdom's `File` constructor —
+     * jsdom only accepts same-realm Blob parts, so the cross-realm part is
+     * coerced to the literal string "[object Blob]" and `file.text()` never
+     * yields the content. A `blob()` returning a test-realm Blob mirrors the
+     * real browser, where both are always the same realm.
+     */
+    mockDownloadFile.mockResolvedValue({
+      ok: true,
+      blob: async () => new Blob(['# Notes'], { type: 'text/markdown' }),
+    } as unknown as Response);
     const { result } = renderHook(() => useSkillFileSystemPicker('my-bucket'));
 
     let pick!: ReturnType<typeof result.current.pickFromFileSystem>;

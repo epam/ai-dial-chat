@@ -138,12 +138,7 @@ describe('buildToolsetAuthorizeUrl', () => {
     ).toBeNull();
   });
 
-  /*
-   * A remote plain-HTTP authorization endpoint leaks the code the provider
-   * returns in the redirect URL to any passive observer, so it is refused
-   * outright rather than downgraded.
-   */
-  describe('transport security', () => {
+  describe('endpoint scheme', () => {
     const build = (authorizationEndpoint: string) =>
       buildToolsetAuthorizeUrl(
         { clientId: 'client', authorizationEndpoint },
@@ -151,30 +146,20 @@ describe('buildToolsetAuthorizeUrl', () => {
         'state',
       );
 
-    it('accepts an https: authorization endpoint', () => {
-      expect(build('https://auth.example.com/authorize')).not.toBeNull();
-    });
-
-    it('returns null for a remote http: authorization endpoint', () => {
-      expect(build('http://auth.example.com/authorize')).toBeNull();
-    });
-
     it.each([
-      'http://localhost/authorize',
+      'https://auth.example.com/authorize',
+      'http://auth.example.com/authorize',
       'http://localhost:8080/authorize',
-      'http://127.0.0.1:8080/authorize',
-      'http://127.1.2.3/authorize',
-      'http://[::1]:8080/authorize',
-    ])('allows plain http: on the loopback interface (%s)', (endpoint) => {
-      expect(build(endpoint)).not.toBeNull();
+    ])('accepts an http(s) authorization endpoint (%s)', (endpoint) => {
+      const result = build(endpoint);
+      expect(result).toBeTruthy();
+      expect(new URL(result as string).origin).toBe(new URL(endpoint).origin);
     });
 
     it.each([
-      'http://localhost.evil.com/authorize',
-      'http://notlocalhost/authorize',
-      'http://127.0.0.1.evil.com/authorize',
-      'http://1270.0.0.1/authorize',
-    ])('does not mistake a public host for loopback (%s)', (endpoint) => {
+      'data:text/html,<script>alert(1)</script>',
+      'ftp://auth.example.com/authorize',
+    ])('returns null for a non-http(s) endpoint (%s)', (endpoint) => {
       expect(build(endpoint)).toBeNull();
     });
   });

@@ -1,6 +1,5 @@
 import {
   navigateToolsetOAuthPopup,
-  OAuthResourceKind,
   openToolsetOAuthPopup,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
@@ -57,6 +56,18 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
     waitForToolsetOAuthResult: vi.fn(),
   };
 });
+
+/*
+ * The app login wiring is the test seam for the DIAL-native path: the shared
+ * offline-credentials login is covered by the lib's own spec, so this spec
+ * drives its terminal outcomes directly.
+ */
+const loginOfflineCredentialsMock = vi.fn();
+vi.mock('../../offlineCredentials/useOfflineCredentialsLogin', () => ({
+  useOfflineCredentialsLogin: () => ({
+    login: loginOfflineCredentialsMock,
+  }),
+}));
 
 describe('useExternalServiceLogin', () => {
   beforeEach(() => {
@@ -154,22 +165,10 @@ describe('useExternalServiceLogin', () => {
         connected: false,
         connect,
       });
-      vi.mocked(navigateToolsetOAuthPopup).mockReturnValue({
-        type: ToolsetOAuthInitiationResultType.Started,
-        popup,
-        flowId: 'offline-flow',
-      });
-      vi.mocked(waitForToolsetOAuthResult).mockResolvedValue({
-        type: ToolsetOAuthResultType.Success,
-        toolsetId: 'offline-credentials',
-        credentialsLevel: 'USER' as never,
-      });
     });
 
-    it('opens offline OAuth synchronously and confirms connected status without per-service signin/signout', async () => {
-      vi.mocked(getOfflineCredentials)
-        .mockResolvedValueOnce({ available: true, connected: false, connect })
-        .mockResolvedValueOnce({ available: true, connected: true });
+    it('reserves the popup during the click and drives the shared offline login with the connect settings, the status check, and the reserved popup', async () => {
+      loginOfflineCredentialsMock.mockResolvedValue({ type: 'success' });
       const { result } = renderHook(() => useExternalServiceLogin());
 
       const pending = result.current.login(params);
@@ -180,15 +179,12 @@ describe('useExternalServiceLogin', () => {
       expect(await pending).toEqual({
         type: ExternalServiceLoginOutcomeType.Success,
       });
-      expect(navigateToolsetOAuthPopup).toHaveBeenCalledWith(
+      expect(loginOfflineCredentialsMock).toHaveBeenCalledWith(
+        connect,
+        getOfflineCredentials,
         popup,
-        expect.objectContaining({ clientId: connect.clientId }),
-        'offline-credentials',
-        ROUTES.ToolsetSignIn,
-        'USER',
-        OAuthResourceKind.OfflineCredentials,
       );
-      expect(getOfflineCredentials).toHaveBeenCalledTimes(2);
+      expect(getOfflineCredentials).toHaveBeenCalledOnce();
       expect(getExternalService).toHaveBeenCalledTimes(2);
       expect(signInExternalService).not.toHaveBeenCalled();
       expect(signOutExternalService).not.toHaveBeenCalled();
@@ -242,7 +238,8 @@ describe('useExternalServiceLogin', () => {
       expect(navigateToolsetOAuthPopup).not.toHaveBeenCalled();
     });
 
-    it('does not trust popup success when offline credentials remain disconnected', async () => {
+    it('does not trust the shared login outcome when it reports failure', async () => {
+      loginOfflineCredentialsMock.mockResolvedValue({ type: 'failure' });
       const { result } = renderHook(() => useExternalServiceLogin());
       expect((await result.current.login(params)).type).toBe(
         ExternalServiceLoginOutcomeType.Failure,
@@ -251,9 +248,7 @@ describe('useExternalServiceLogin', () => {
     });
 
     it('checks administrator consent again after offline login', async () => {
-      vi.mocked(getOfflineCredentials)
-        .mockResolvedValueOnce({ available: true, connected: false, connect })
-        .mockResolvedValueOnce({ available: true, connected: true });
+      loginOfflineCredentialsMock.mockResolvedValue({ type: 'success' });
       vi.mocked(getExternalService)
         .mockResolvedValueOnce({
           displayName: 'DIAL',

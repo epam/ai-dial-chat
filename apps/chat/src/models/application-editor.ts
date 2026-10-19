@@ -28,6 +28,18 @@ export interface ApplicationSetupProps<TSetup> {
   errors: ApplicationSetupErrors<TSetup>;
   /** Merges a patch into the setup values. */
   onChange: (patch: Partial<TSetup>) => void;
+  /**
+   * Merges a patch the Setup applies while initialising itself — schema
+   * defaults, a synced required list — into both the values and the
+   * unsaved-changes baseline, so it never counts as a user edit. Setups that
+   * initialise nothing ignore it.
+   */
+  onInitialize?: (patch: Partial<TSetup>) => void;
+  /**
+   * Reports unsaved edits the Setup tracks outside `value` — the Quick App's
+   * embedded editor. Setups whose state lives in `value` leave it unused.
+   */
+  onDirtyChange?: (isDirty: boolean) => void;
   /** Re-validates one setup field when it loses focus. */
   onFieldBlur: (field: Extract<keyof TSetup, string>) => void;
   /** Whether an existing application is being edited. */

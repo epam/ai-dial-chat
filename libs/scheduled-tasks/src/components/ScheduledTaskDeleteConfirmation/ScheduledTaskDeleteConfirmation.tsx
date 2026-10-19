@@ -1,7 +1,7 @@
 import {
   ConfirmationDialog,
-  ConfirmationIdentityCard,
   ConfirmationIdentityRow,
+  ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
@@ -89,14 +89,14 @@ export const ScheduledTaskDeleteConfirmation: FC<
     isLoading={isDeleting}
     loadingStatusLabel={pendingLabel}
     identity={
-      <ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+      <ResourceSummary>
         <ConfirmationIdentityRow
           icon={icon}
           typeLabel={typeLabel}
           name={taskName}
           styles={{ colors: stylesProp?.colors }}
         />
-      </ConfirmationIdentityCard>
+      </ResourceSummary>
     }
   />
 );

@@ -1,5 +1,11 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
-import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   handleDialFetchError,
@@ -15,6 +21,10 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { resolveConversationLocation } from '../../conversations/utils/conversation.utils';
+import {
+  assertModelNotHidden,
+  getConversationModelId,
+} from '../../conversations/utils/hidden-model';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { isPromptResourceUrl } from '../../prompts/utils/prompt-mapper.util';
@@ -24,6 +34,7 @@ import { ToolsetsService } from '../../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from '../dto/accept-invitation-response.dto';
 import { CreateShareLinkDto, ShareAccess } from '../dto/create-share-link.dto';
 import { ShareLinkResponseDto } from '../dto/share-link-response.dto';
+import { ShareInvitationErrorCode } from '../types/share-invitation-error-code.enum';
 import {
   CONVERSATION_RESOURCE_PREFIX,
   FILE_RESOURCE_PREFIX,
@@ -31,6 +42,8 @@ import {
   collectConversationResourceUrls,
   deriveExpiresInDays,
   getInvitationRoutePath,
+  getSharedConversationTitle,
+  isAcceptedUsersLimitError,
   isAlreadyOwnedError,
   toPublicItemId,
   toShareResourceUrl,
@@ -194,6 +207,16 @@ export class ShareInvitationService {
       );
       throw new BadGatewayException('DIAL Core returned an empty conversation');
     }
+
+    /* A share link would let every recipient keep using a hidden model (#9183). */
+    await assertModelNotHidden(
+      this.deploymentsService,
+      getConversationModelId(result.data),
+      accessToken,
+      sessionBucket,
+      this.logger,
+      `share "${resourceUrl}"`,
+    );
 
     /* See openspec/specs/conversation-share/spec.md — "Related file resources outside the conversation's own bucket are dropped". */
     return collectConversationResourceUrls(result.data).filter(
@@ -370,6 +393,8 @@ export class ShareInvitationService {
    * Accepts a share invitation via DIAL Core, granting the authenticated
    * user its access level, and returns the shared entity's identifier.
    *
+   * @throws {NotFoundException} `code: shareInvitationNotFound` when the invitation expired, was revoked, or never existed
+   * @throws {BadRequestException} `code: shareInvitationAcceptedUsersLimitReached` when the share's maximum number of users is reached
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
    */
@@ -400,6 +425,9 @@ export class ShareInvitationService {
     }
 
     if (peekResult.error) {
+      if (peekResult.response.status === 404) {
+        this.throwInvitationNotFound(invitationId, peekResult.error);
+      }
       return mapDialHttpStatus(
         peekResult.response.status,
         'peek invitation',
@@ -444,6 +472,30 @@ export class ShareInvitationService {
         isAlreadyOwnedError(acceptResult.error)
       )
     ) {
+      /*
+       * The invitation can expire between the peek and the accept, so a 404
+       * here means the same as one from the peek.
+       */
+      if (acceptResult.response.status === 404) {
+        this.throwInvitationNotFound(invitationId, acceptResult.error);
+      }
+      if (
+        acceptResult.response.status === 400 &&
+        isAcceptedUsersLimitError(acceptResult.error)
+      ) {
+        this.logger.warn(
+          `DIAL Core refused invitationId=${invitationId}: accepted users limit reached`,
+        );
+        const itemName = getSharedConversationTitle(itemId);
+        throw new BadRequestException({
+          statusCode: 400,
+          error: 'Bad Request',
+          code: ShareInvitationErrorCode.AcceptedUsersLimitReached,
+          message:
+            'The shared resource has already been shared with the maximum number of users',
+          ...(itemName != null && { itemName }),
+        });
+      }
       return mapDialHttpStatus(
         acceptResult.response.status,
         'accept invitation',
@@ -483,6 +535,26 @@ export class ShareInvitationService {
      * prompts are the decoded form — see `toPublicItemId`.
      */
     return { itemId: toPublicItemId(itemId), ...summary };
+  }
+
+  /**
+   * DIAL Core answers 404 for an invitation that expired (it purges it on
+   * read), was revoked, or never existed — it does not tell them apart, so
+   * neither can the client.
+   */
+  private throwInvitationNotFound(
+    invitationId: string,
+    errorBody: unknown,
+  ): never {
+    this.logger.warn(
+      `DIAL Core has no live invitation for invitationId=${invitationId}: ${JSON.stringify(errorBody)}`,
+    );
+    throw new NotFoundException({
+      statusCode: 404,
+      error: 'Not Found',
+      code: ShareInvitationErrorCode.NotFound,
+      message: 'The share link has expired or does not exist',
+    });
   }
 
   /**

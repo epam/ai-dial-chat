@@ -279,6 +279,168 @@ describe('PromptEditor', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
+  it('asks before discarding edits on Cancel, and keeps editing when dismissed', async () => {
+    const onCancel = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onCancel,
+    });
+
+    await user.type(await screen.findByDisplayValue('Summarize:'), ' the text');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByText('Discard unsaved changes?')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+    expect(screen.getByDisplayValue('Summarize: the text')).toBeTruthy();
+  });
+
+  it('leaves through Back once discarding edits is confirmed', async () => {
+    const onBack = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onBack,
+    });
+
+    await user.type(await screen.findByDisplayValue('Summarize:'), ' the text');
+    await user.click(screen.getByRole('button', { name: 'Back to prompts' }));
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('leaves without asking once edits are reverted', async () => {
+    const onCancel = vi.fn();
+    renderEditor({
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+      onCancel,
+    });
+
+    const name = screen.getByRole('textbox', { name: /Name/ });
+    await user.type(name, 'x');
+    await user.type(name, '{Backspace}');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+  });
+
+  describe('with a host-owned guard (onDirtyChange)', () => {
+    const editProps = {
+      isEditMode: true,
+      initialValues: { name: 'summarize', content: 'Summarize:' },
+    };
+
+    it('reports clean on mount', () => {
+      const onDirtyChange = vi.fn();
+      renderEditor({ ...editProps, onDirtyChange });
+
+      expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('cancels immediately with no confirmation after an edit', async () => {
+      const onCancel = vi.fn();
+      const onDirtyChange = vi.fn();
+      renderEditor({ ...editProps, onCancel, onDirtyChange });
+
+      await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onCancel).toHaveBeenCalledOnce();
+      expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+      expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+    });
+
+    it('calls onBack directly after an edit', async () => {
+      const onBack = vi.fn();
+      renderEditor({ ...editProps, onBack, onDirtyChange: vi.fn() });
+
+      await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
+      await user.click(screen.getByRole('button', { name: 'Back to prompts' }));
+
+      expect(onBack).toHaveBeenCalledOnce();
+      expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
+    });
+
+    it('reports dirty and then clean across an edit and its revert', async () => {
+      const onDirtyChange = vi.fn();
+      renderEditor({ ...editProps, onDirtyChange });
+
+      const name = screen.getByRole('textbox', { name: /Name/ });
+      await user.type(name, 'x');
+      expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+
+      await user.type(name, '{Backspace}');
+      expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('registers no unload warning while dirty', async () => {
+      const addSpy = vi.spyOn(window, 'addEventListener');
+      renderEditor({ ...editProps, onDirtyChange: vi.fn() });
+
+      await user.type(screen.getByRole('textbox', { name: /Name/ }), 'x');
+
+      expect(addSpy).not.toHaveBeenCalledWith(
+        'beforeunload',
+        expect.any(Function),
+      );
+      addSpy.mockRestore();
+    });
+  });
+
+  it('shows a live description counter without capping the input', async () => {
+    renderEditor({ descriptionMaxLength: 5 });
+
+    const description = screen.getByRole('textbox', { name: /Description/ });
+    expect(description.getAttribute('maxlength')).toBeNull();
+    expect(screen.queryByText(/\/5$/)).toBeNull();
+
+    await user.type(description, 'abc');
+
+    expect(screen.getByText('3/5')).toBeTruthy();
+
+    await user.type(description, 'def');
+
+    expect((description as HTMLTextAreaElement).value).toBe('abcdef');
+    expect(screen.getByText('6/5')).toBeTruthy();
+  });
+
+  it('reports each edited field through onFieldChange', async () => {
+    const onFieldChange = vi.fn();
+    renderEditor({ onFieldChange });
+
+    await user.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
+    await user.type(screen.getByRole('textbox', { name: /Description/ }), 'b');
+    await user.type(
+      await screen.findByPlaceholderText('Write the prompt instructions'),
+      'c',
+    );
+
+    expect(onFieldChange).toHaveBeenCalledWith('name', 'a');
+    expect(onFieldChange).toHaveBeenCalledWith('description', 'b');
+    expect(onFieldChange).toHaveBeenCalledWith('content', 'c');
+  });
+
+  it('marks the instructions editor invalid while it has an error', async () => {
+    renderEditor({ errors: { content: 'Use 50000 characters or fewer.' } });
+
+    await screen.findByPlaceholderText('Write the prompt instructions');
+
+    expect(screen.getByText('Use 50000 characters or fewer.')).toBeTruthy();
+    const instructions = screen.getByRole('group', { name: /Instructions/ });
+    expect(
+      // eslint-disable-next-line testing-library/no-node-access -- the invalid state is a CSS class on the unlabeled editor wrapper, which has no accessible role or text to query
+      instructions.querySelector('[class*="contentInvalid"]'),
+    ).toBeTruthy();
+  });
+
   it('announces the characters remaining only near the limit', async () => {
     renderEditor({ contentMaxLength: 12, counterAnnounceThreshold: 4 });
 
@@ -355,6 +517,68 @@ describe('PromptEditor', () => {
       await user.click(screen.getByRole('button', { name: 'Undo' }));
 
       expect(description.value).toBe('Draft');
+    });
+  });
+
+  describe('instructions refinement', () => {
+    const initialValues = {
+      name: 'summarize',
+      description: 'Draft',
+      content: 'Summarize:',
+    };
+
+    it('replaces the instructions with the refined text and offers Undo', async () => {
+      const refined = '## Summarize\n- Key points';
+      const onRefineInstructions = vi.fn().mockResolvedValue(refined);
+      const onFieldChange = vi.fn();
+      renderEditor({ initialValues, onRefineInstructions, onFieldChange });
+
+      await user.click(
+        await screen.findByRole('button', { name: 'Refine with AI' }),
+      );
+
+      expect(onRefineInstructions).toHaveBeenCalledWith(
+        'Summarize:',
+        expect.any(AbortSignal),
+      );
+      const content = await screen.findByRole<HTMLTextAreaElement>('textbox', {
+        name: /Instructions/,
+      });
+      await waitFor(() => expect(content.value).toBe(refined));
+      expect(onFieldChange).toHaveBeenCalledWith('content', refined);
+
+      await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+      expect(content.value).toBe('Summarize:');
+    });
+
+    it('blocks the other refinement and submission while instructions refine', async () => {
+      const onRefineInstructions = vi.fn(
+        () => new Promise<string>(() => undefined),
+      );
+      const onRefineDescription = vi.fn().mockResolvedValue('Refined');
+      const onSubmit = vi.fn();
+      renderEditor({
+        initialValues,
+        onRefineDescription,
+        onRefineInstructions,
+        onSubmit,
+      });
+
+      await screen.findByRole('textbox', { name: /Instructions/ });
+      const [descriptionAction, instructionsAction] = screen.getAllByRole(
+        'button',
+        { name: 'Refine with AI' },
+      );
+      await user.click(instructionsAction);
+
+      expect(onRefineInstructions).toHaveBeenCalledOnce();
+      await waitFor(() =>
+        expect(descriptionAction.hasAttribute('disabled')).toBe(true),
+      );
+      await user.click(screen.getByRole('button', { name: 'Create' }));
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(onRefineDescription).not.toHaveBeenCalled();
     });
   });
 });

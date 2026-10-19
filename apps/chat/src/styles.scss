@@ -1,14 +1,1 @@
-@use 'tailwindcss/base';
-@use 'tailwindcss/components';
-@use 'tailwindcss/utilities';
 @use './styles/mcp-app-ui-vars';
-
-@layer base {
-  html,
-  body,
-  #root {
-    @apply size-full overflow-hidden bg-layer-base text-primary;
-    font-family: 'Inter', sans-serif;
-    --theme-font: 'Inter', sans-serif;
-  }
-}

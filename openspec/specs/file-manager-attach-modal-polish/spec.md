@@ -82,15 +82,15 @@ i18n keys:
 
 All six keys SHALL be added to `apps/chat/src/i18n/locales/en.json` and to `DialFileManagerI18nKeys`.
 
-Two contexts SHALL override the tab-specific copy, in this precedence order:
+Two contexts SHALL override the tab-specific copy:
 
-1. a settled search with no matches → `labels.searchEmptyStateTitle`;
-2. an empty subfolder (a path more than one segment deep) → `labels.folderEmptyStateTitle`.
+1. a search with no matches → `labels.searchEmptyStateTitle`, passed as the separate `searchEmptyStateTitle` prop, which `DialFileManager` renders in search mode in place of `emptyStateTitle` (see the `file-manager-search` capability);
+2. an empty subfolder (a path more than one segment deep) → `labels.folderEmptyStateTitle`, passed as `emptyStateTitle` with an empty description.
 
-Both overrides render an empty description; the tab-specific copy is used only at a tab's root with no active search.
+The tab-specific copy is used only at a tab's root outside search mode.
 
 RTL: none — text direction is inherited from the `dir` attribute on `<html>`.
-Memoisation: empty state props in `useMemo` keyed on the browsed section tab (`sectionTab ?? activeTab`), the search state (`searchResults`, `isSearching`), and the current path.
+Memoisation: empty state props in `useMemo` keyed on the browsed section tab (`sectionTab ?? activeTab`) and the current path.
 
 #### Scenario: My Files empty state shown when My Files tab is empty
 
@@ -140,9 +140,9 @@ Feature flag: none.
 
 ### Requirement: Attach modal uses compact chrome around a raised folder panel
 
-`FileManagerAttachModal` SHALL retain its fixed responsive height of `min(800px, 100dvh)` and sunken background. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
+`FileManagerAttachModal` SHALL retain its fixed responsive height of `min(900px, 100dvh)` and the base-layer background, and SHALL let the popup grow to a maximum width of 1600px at the `desktop` breakpoint. At the `mobile` breakpoint it SHALL cover the whole viewport like `CatalogModal`: the overlay drops its padding (`overlayClassName="mobile:p-0"`) and the popup takes the full height and width with no rounded corners. It SHALL remove bottom padding from the popup header (`headerClassName="pb-0"`) and top padding from the footer (`footerClassName="pt-0"`) while retaining the popup's remaining spacing.
 
-In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's horizontal and bottom padding and apply grid spacing through `contentClassName="px-0 pb-0"` and `gridClassName="size-full gap-6 px-6 py-4"` (Standalone keeps `gridClassName="size-full"` and no `contentClassName`). Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
+In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, supply the translated active-tab text as `tabsAriaLabel`, and give the tree a full-height raised container with rounded corners, a subtle shadow, and a fixed non-shrinking 360px width (`w-[360px] shrink-0`, repeated because the container class replaces the package default) so long folder names never widen it. It SHALL remove the file-manager content's horizontal and bottom padding and apply grid spacing through `contentClassName="px-0 pb-0"` and `gridClassName="size-full gap-6 px-6 py-4"` (Standalone keeps `gridClassName="size-full"` and no `contentClassName`). In Attach mode it SHALL also pass `p-0` to the `DialFileManager` root, so the package's compact-view root padding does not stack on the grid padding and the grid content lines up with the popup header and footer. Standalone rendering SHALL retain its existing header and spacing. The layout SHALL inherit RTL direction and fit mobile and desktop widths without horizontal overflow.
 
 #### Scenario: Attach chrome and grid spacing
 
@@ -150,7 +150,33 @@ In Attach mode, `DialFileManagerShell` SHALL omit the visible tree header, suppl
 - **THEN** its header has no bottom padding, its footer has no top padding, the raised folder panel has no visible heading, and the grid has the specified internal padding
 - **AND** the tab strip retains an accessible name through `tabsAriaLabel`
 
+#### Scenario: Attach modal is full-screen at the mobile breakpoint
+
+- **WHEN** the file attachment modal renders on a viewport of 1279px or narrower
+- **THEN** it fills the viewport edge-to-edge with no overlay padding and no rounded corners
+- **AND** at 1280px and wider it stays a centered popup up to 1600px wide
+
 #### Scenario: Standalone shell retains its presentation
 
 - **WHEN** the shell renders in Standalone mode
 - **THEN** its visible tree heading and existing content/grid spacing remain unchanged
+
+### Requirement: Attach is a picker without bulk actions or column filters
+
+In Attach mode, `DialFileManagerShell` SHALL NOT supply `bulkActionsToolbarOptions`, so the bulk-actions toolbar (selection count, `Clear selection`, bulk Download and Delete) is not rendered: the footer's `Attach` button is the only action on the selection. It SHALL turn column filtering off in the grid (`gridOptions.filterable: false`), because the search bar replaces it, and SHALL render the toolbar's Add button with the neutral button variant (`toolbarOptions.newButtonVariant`), because the footer owns the primary action. Standalone mode SHALL keep column filters, the bulk-actions toolbar and the default Add button. The shell's surface SHALL be the base layer in both Standalone and Attach modes, with the tree panel raised on top of it.
+
+#### Scenario: Selecting files shows no bulk toolbar in Attach
+
+- **WHEN** a user selects a file in the attach modal
+- **THEN** the `Attach` button becomes enabled, no selection count or `Clear selection` control is rendered, and no bulk Download or Delete is offered
+
+#### Scenario: Attach picker configuration
+
+- **WHEN** the attach modal renders
+- **THEN** the grid has column filtering turned off and the Add button uses the neutral variant
+
+#### Scenario: Standalone keeps filters and bulk actions
+
+- **WHEN** the standalone File storage page renders
+- **THEN** column filters and the bulk-actions toolbar remain available
+

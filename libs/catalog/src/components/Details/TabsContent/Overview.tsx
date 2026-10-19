@@ -20,6 +20,8 @@ export interface OverviewProps {
   yesLabel: string;
   /** Label for boolean-false values. */
   noLabel: string;
+  /** Class applied to the wrapper around each section's table. Defaults to `'px-6'`. */
+  sectionContainerClassName?: string;
 }
 
 /** Renders the Overview tab content: full-bleed spec sections separated by dividers. */
@@ -31,6 +33,7 @@ export const Overview: FC<OverviewProps> = ({
   valueTrueClassName,
   yesLabel,
   noLabel,
+  sectionContainerClassName = 'px-6',
 }) => {
   if (!sections) {
     return null;
@@ -44,7 +47,7 @@ export const Overview: FC<OverviewProps> = ({
               className={mergeClasses('shrink-0 border-b', styles.divider)}
             />
           )}
-          <div className="px-6">
+          <div className={sectionContainerClassName}>
             <TableView
               sectionLabel={section.title}
               values={section.specs}

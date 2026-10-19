@@ -60,6 +60,7 @@ export type {
 
 export {
   injectCitationSentinels,
+  replaceCitTagsWithSourceNames,
   replaceSentinelsInChildren,
   stripCitTagsWhileStreaming,
 } from './utils/citation-injection';

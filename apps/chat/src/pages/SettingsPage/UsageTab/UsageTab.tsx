@@ -1,4 +1,4 @@
-import { useUsageData } from '@epam/ai-dial-chat-hooks';
+import { formatUsageResetTime, useUsageData } from '@epam/ai-dial-chat-hooks';
 import {
   mapOverallCostLimitsToPeriodStatuses,
   mapUsageDataToDashboard,
@@ -26,7 +26,6 @@ import { useLanguage } from '../../../hooks/language/useLanguage';
 import { getUserUsage } from '../../../server-api/user-limits';
 import { resolveCatalogIconUrl } from '../../../utils/icon-path';
 import { resolveLocalizedText } from '../../../utils/locale';
-import { formatUsageResetTime } from '../../../utils/usage-reset-time';
 
 /*
  * Small grace period so DIAL Core has rolled the window over before the

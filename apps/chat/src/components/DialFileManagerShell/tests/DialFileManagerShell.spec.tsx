@@ -33,6 +33,8 @@ interface CapturedTreeOptions extends CapturedActionLabels {
 
 const capturedDialFileManagerProps: {
   current: {
+    emptyStateTitle?: string;
+    searchEmptyStateTitle?: string;
     onCreateFolder?: unknown;
     onFolderPopupPathChange?: unknown;
     autoSelectUploadedItems?: boolean;
@@ -75,6 +77,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     ...actual,
     DialFileManager: (props: {
       emptyStateTitle?: string;
+      searchEmptyStateTitle?: string;
       destinationFolderPopupOptions?: {
         copyLabel?: string;
         moveLabel?: string;
@@ -274,6 +277,7 @@ const renderShell = (
     variant?: DialFileManagerVariant;
     actionProfile?: DialFileManagerActionProfile;
     labels?: DialFileManagerShellLabels;
+    treeContainerClassName?: string;
   } = {},
 ) =>
   render(
@@ -287,6 +291,7 @@ const renderShell = (
       onSelectedPathsChange={vi.fn()}
       variant={options.variant ?? DialFileManagerVariant.Standalone}
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
+      treeContainerClassName={options.treeContainerClassName}
     />,
   );
 
@@ -311,6 +316,20 @@ describe('DialFileManagerShell', () => {
   it('shows folderEmptyStateTitle when navigated into a subfolder', () => {
     renderShell({ path: '/My files/reports/' });
     expect(screen.getByText(baseLabels.folderEmptyStateTitle)).toBeTruthy();
+  });
+
+  it('passes searchEmptyStateTitle to DialFileManager for a search with no matches', () => {
+    renderShell({ searchResults: [], isSearching: false });
+    expect(capturedDialFileManagerProps.current?.searchEmptyStateTitle).toBe(
+      baseLabels.searchEmptyStateTitle,
+    );
+  });
+
+  it('keeps the tab empty-state title outside search mode even when stale search results remain', () => {
+    renderShell({ searchResults: [], isSearching: false });
+    expect(capturedDialFileManagerProps.current?.emptyStateTitle).toBe(
+      emptyStateCopy.title,
+    );
   });
 
   it('shows the error/retry panel and calls retry on click', async () => {
@@ -450,6 +469,37 @@ describe('DialFileManagerShell', () => {
     expect(
       capturedDialFileManagerProps.current?.treeOptions?.loadingPaths,
     ).toBe(folderPopupLoadingPaths);
+  });
+
+  it('leaves the tree container classes to the file manager for the standalone variant', () => {
+    renderShell();
+
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.containerClassName,
+    ).toBeUndefined();
+  });
+
+  it('keeps the attach tree container classes by default', () => {
+    renderShell(undefined, new Set(), {
+      variant: DialFileManagerVariant.Attach,
+    });
+
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.containerClassName,
+    ).toContain('w-[360px]');
+  });
+
+  it('lets the host replace the tree container classes in any variant', () => {
+    const treeContainerClassName = 'min-h-0 w-[300px] shrink-0 h-full';
+
+    renderShell(undefined, new Set(), {
+      variant: DialFileManagerVariant.Attach,
+      treeContainerClassName,
+    });
+
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.containerClassName,
+    ).toBe(treeContainerClassName);
   });
 
   it('does not set onGridApiChange on destinationFolderPopupOptions', () => {
@@ -898,9 +948,9 @@ describe('DialFileManagerShell', () => {
     const labels: DialFileManagerShellLabels = {
       ...baseLabels,
       searchPlaceholderByTab: {
-        [DialFileManagerTabs.MyFiles]: 'Search in My files',
-        [DialFileManagerTabs.Shared]: 'Search in Shared with me files',
-        [DialFileManagerTabs.Organization]: 'Search in Organization files',
+        [DialFileManagerTabs.MyFiles]: 'Search in My files...',
+        [DialFileManagerTabs.Shared]: 'Search in Shared files...',
+        [DialFileManagerTabs.Organization]: 'Search in Organization files...',
       },
     };
     const placeholder = (): string | undefined =>
@@ -911,7 +961,7 @@ describe('DialFileManagerShell', () => {
         activeTab: DialFileManagerTabs.Shared,
         labels,
       });
-      expect(placeholder()).toBe('Search in Shared with me files');
+      expect(placeholder()).toBe('Search in Shared files...');
     });
 
     it('names the browsed section on the All tab', () => {
@@ -919,7 +969,7 @@ describe('DialFileManagerShell', () => {
         activeTab: DialFileManagerTabs.All,
         labels,
       });
-      expect(placeholder()).toBe('Search in Organization files');
+      expect(placeholder()).toBe('Search in Organization files...');
     });
 
     it('leaves the default placeholder when the host passes none', () => {

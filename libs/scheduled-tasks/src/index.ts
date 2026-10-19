@@ -73,6 +73,17 @@ export type {
 } from './models/scheduled-task-run-history-list-props';
 export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
 export type { ScheduledTaskInstructionsMarkdownLabels } from './models/scheduled-task-instructions';
+export { ScheduledTaskConversationHistorySection } from './components/ScheduledTaskConversationHistorySection/ScheduledTaskConversationHistorySection';
+export type {
+  ScheduledTaskConversationHistorySectionProps,
+  ScheduledTaskConversationHistorySectionLabels,
+} from './components/ScheduledTaskConversationHistorySection/ScheduledTaskConversationHistorySection';
+export { ScheduledTaskConversationDetailsSection } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
+export type {
+  ScheduledTaskConversationDetailsSectionProps,
+  ScheduledTaskConversationDetailsSectionLabels,
+} from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
+export { ScheduledTaskConversationDetailsState } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
 export { ScheduledTaskDeleteConfirmation } from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';
 export type {
   ScheduledTaskDeleteConfirmationColors,

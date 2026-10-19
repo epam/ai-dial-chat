@@ -4,6 +4,7 @@ import {
   getPublishedTargetUrl,
   getResourceName,
   getResourceTypePrefix,
+  getVersionedTargetResourceName,
   stripPublicTargetFolder,
 } from '../publish-target.util';
 
@@ -76,5 +77,30 @@ describe('getPublishedTargetUrl', () => {
     ).toBe(
       `${getResourceTypePrefix(sourceUrl)}/${getPublicTargetFolder(folderPath)}${getResourceName(sourceUrl)}`,
     );
+  });
+});
+
+describe('getVersionedTargetResourceName', () => {
+  it.each([
+    ['toolsets', 'my-tool__1.0.0', '1.0.1', 'my-tool__1.0.1'],
+    ['applications', 'my-app__0.0.1', '2.0.0-beta.1', 'my-app__2.0.0-beta.1'],
+    ['toolsets', 'my-tool__1.0.0', '1.0.0+build.5', 'my-tool__1.0.0%2Bbuild.5'],
+  ])(
+    'replaces the version suffix of a %s resource name',
+    (prefix, name, version, expected) => {
+      expect(getVersionedTargetResourceName(prefix, name, version)).toBe(
+        expected,
+      );
+    },
+  );
+
+  it.each([
+    ['prompts', 'a__b', '1.0.1'],
+    ['skills', 'my-skill', '1.0.1'],
+    ['toolsets', 'no-suffix', '1.0.1'],
+    ['toolsets', 'my-tool__1.0.0', undefined],
+    ['toolsets', 'my-tool__1.0.0', '../evil'],
+  ])('keeps %s "%s" unchanged for version %s', (prefix, name, version) => {
+    expect(getVersionedTargetResourceName(prefix, name, version)).toBe(name);
   });
 });

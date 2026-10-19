@@ -73,6 +73,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   onSaveSuccess,
   onSaveComplete,
   onBack,
+  onDirtyChange,
   buildMcpUrl,
   listToolNames,
   authActions,
@@ -98,8 +99,15 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
    * the Setup state below resets.
    */
   const [seed, setSeed] = useState({ initialForm, key: 0 });
+  /*
+   * The values unsaved changes are measured against: the seeded form, then
+   * whatever was last persisted. Reset in the same render as the re-seed so a
+   * new load never reads as an edit.
+   */
+  const [baselineForm, setBaselineForm] = useState(initialForm);
   if (seed.initialForm !== initialForm) {
     setSeed({ initialForm, key: seed.key + 1 });
+    setBaselineForm(initialForm);
   }
 
   const metadataInitialValues = useMemo(
@@ -125,6 +133,15 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     () => ({ ...setupForm, ...metadataValues }),
     [setupForm, metadataValues],
   );
+
+  /* Covers Metadata and Setup alike: `form` carries both, seeded from the same object. */
+  const isDirty = useMemo(
+    () => JSON.stringify(form) !== JSON.stringify(baselineForm),
+    [form, baselineForm],
+  );
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<ToolsetFormErrors>({});
@@ -238,6 +255,9 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
         setDraftToolsetId(id);
       }
       lastPersistedFormRef.current = form;
+      /* The draft now holds every edit; reported at once, ahead of the login it precedes. */
+      setBaselineForm(form);
+      onDirtyChange?.(false);
       await onToolsetsChanged();
       return id;
     } catch {
@@ -246,7 +266,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [form, persistedToolsetId, onPersist, onToolsetsChanged]);
+  }, [form, persistedToolsetId, onPersist, onToolsetsChanged, onDirtyChange]);
 
   const handleEnsureSaved = useCallback(
     async () => (await persistFormIfChanged()) ?? false,
@@ -326,6 +346,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     try {
       const id = await onPersist(form, persistedToolsetId);
       if (!id) return;
+      setBaselineForm(form);
       await onToolsetsChanged();
       /*
        * Reported before the post-save auth attempt: the toolset is persisted at this

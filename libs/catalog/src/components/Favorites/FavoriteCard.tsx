@@ -126,43 +126,46 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-        <AppIdentity
-          icon={item.iconUrl}
-          type={item.type}
-          name={item.name}
-          version={item.version}
-          lastUsed={item.lastUsed}
-          size={DeploymentSize.LG}
-          query={query}
-          className="min-w-0 self-stretch"
-          styles={{
-            colors,
-            typography: {
-              nameClassName,
-              versionClassName,
-              lastUsedClassName,
-            },
-          }}
-          iconOverlay={
-            <CredentialsBadge
-              credentials={item.credentials}
-              loggedOutLabel={credentialsBadgeLoggedOutLabel}
+      {/* The star sits on AppIdentity's meta row rather than in a column of
+          its own, so the name gets the card's full text width (#9325). */}
+      <AppIdentity
+        icon={item.iconUrl}
+        type={item.type}
+        name={item.name}
+        version={item.version}
+        lastUsed={item.lastUsed}
+        size={DeploymentSize.LG}
+        query={query}
+        className="min-w-0 flex-1"
+        styles={{
+          colors,
+          typography: {
+            nameClassName,
+            versionClassName,
+            lastUsedClassName,
+          },
+        }}
+        iconOverlay={
+          <CredentialsBadge
+            credentials={item.credentials}
+            loggedOutLabel={credentialsBadgeLoggedOutLabel}
+          />
+        }
+        lastUsedTrailing={
+          isFavoriteVisible?.(item) !== false ? (
+            <StarToggleButton
+              isStarred={isStarred}
+              size={ElementSize.Small}
+              onClick={handleToggle}
+              ariaLabel={
+                isStarred
+                  ? removeFromFavoritesAriaLabel
+                  : addToFavoritesAriaLabel
+              }
             />
-          }
-        />
-      </div>
-      {isFavoriteVisible?.(item) !== false && (
-        <StarToggleButton
-          isStarred={isStarred}
-          size={ElementSize.Small}
-          onClick={handleToggle}
-          ariaLabel={
-            isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
-          }
-          className="self-end"
-        />
-      )}
+          ) : undefined
+        }
+      />
     </CardShell>
   );
 };

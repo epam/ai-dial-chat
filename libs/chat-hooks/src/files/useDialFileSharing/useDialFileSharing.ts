@@ -1,8 +1,14 @@
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useState } from 'react';
-import { FileManagerNotificationReason } from '../dial-file-manager.types';
-import type { FileManagerNotification } from '../dial-file-manager.types';
+import {
+  FileManagerNotificationReason,
+  FileOperationKind,
+} from '../dial-file-manager.types';
+import type {
+  FileManagerNotification,
+  FileOperationSuccessEvent,
+} from '../dial-file-manager.types';
 import type { DialFilesApi } from '../dial-files-api';
 import { resolveDialFileApiPath } from '../resolve-dial-file-api-path';
 
@@ -18,6 +24,10 @@ export interface UseDialFileSharingOptions {
   bumpRetry: () => void;
   /** Called when a sharing mutation fails and should surface a toast notification. */
   onNotification?: (notification: FileManagerNotification) => void;
+  /** Called with a structured event once an unshare succeeds, so the host can show its success toast. */
+  onOperationSuccess?: (event: FileOperationSuccessEvent) => void;
+  /** Removes the unshared root rows from the cached Shared listing ahead of the refetch. */
+  removeSharedRootItems?: (names: string[]) => void;
 }
 
 /** Values returned by `useDialFileSharing`. */
@@ -39,6 +49,8 @@ export const useDialFileSharing = ({
   rootLabel,
   bumpRetry,
   onNotification,
+  onOperationSuccess,
+  removeSharedRootItems,
 }: UseDialFileSharingOptions): UseDialFileSharingResult => {
   const [isUnsharing, setIsUnsharing] = useState(false);
   const [isRemovingAccess, setIsRemovingAccess] = useState(false);
@@ -59,6 +71,12 @@ export const useDialFileSharing = ({
 
         try {
           await filesApi.discardShared(dtos);
+          removeSharedRootItems?.(files.map((file) => file.name));
+          onOperationSuccess?.({
+            kind: FileOperationKind.FilesUnshared,
+            name: files[0].name,
+            count: files.length,
+          });
           bumpRetry();
         } catch {
           onNotification?.({
@@ -71,7 +89,15 @@ export const useDialFileSharing = ({
       };
       void run();
     },
-    [bucket, rootLabel, onNotification, filesApi, bumpRetry],
+    [
+      bucket,
+      rootLabel,
+      onNotification,
+      onOperationSuccess,
+      removeSharedRootItems,
+      filesApi,
+      bumpRetry,
+    ],
   );
 
   const onRemoveFilesAccess = useCallback(

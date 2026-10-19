@@ -35,6 +35,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     '--ai-tile-error-text': colors?.errorText,
     '--ai-tile-name-text': colors?.nameText,
     '--ai-tile-type-text': colors?.typeText,
+    '--ai-tile-placeholder-icon': colors?.placeholderIcon,
     '--ai-tile-hover-icon-bg': colors?.hoverIconBackground,
     '--ai-tile-hover-icon-color': colors?.hoverIconColor,
     '--ai-tile-progress-track': colors?.trackBackground,
@@ -70,7 +71,6 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       onRemove={onRemove}
       onDownload={onDownload}
       isLink={isLink}
-      isPasted={isPasted}
       styles={cardStyles}
       labels={labels}
       onExpand={onExpand}

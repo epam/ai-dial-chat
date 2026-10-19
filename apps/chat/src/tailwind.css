@@ -1,0 +1,32 @@
+/*
+ * The application's Tailwind build.
+ *
+ * Nothing here is in a cascade layer, as under Tailwind v3: the chat's
+ * utilities load after `@epam/ai-dial-ui-kit/styles.css`, which keeps its own
+ * Tailwind in `@layer ui`, so a utility the chat passes to a kit component
+ * still beats the kit's unlayered `dial-*` class on source order, and every
+ * kit utility.
+ *
+ * `reference inline` writes Tailwind's default theme values into the
+ * utilities instead of declaring them on `:root`. Several of those names are
+ * DIAL theme variables too (`--shadow-sm`, `--shadow-md`, `--shadow-lg` are
+ * shadow colours there), and a `:root` declaration would feed a whole shadow
+ * into a `var(--shadow-sm, #fallback)` colour slot.
+ */
+@import 'tailwindcss/theme.css' theme(reference inline);
+@import '../../../tools/tailwind/theme.css';
+@import 'tailwindcss/preflight.css';
+@import '../../../tools/tailwind/preflight-v3.css';
+@import './styles/base.css';
+@import 'tailwindcss/utilities.css' source(none);
+
+@source './**/*.{ts,tsx,html}';
+@source '../../../libs/*/src/**/*.{ts,tsx}';
+/*
+ * Interim: the file manager's published stylesheet is still built with
+ * Tailwind v3, so its classes are compiled here as they were before. Drop
+ * this once it ships a v4 stylesheet, as the kit does.
+ */
+@source '../../../node_modules/@epam/ai-dial-react-file-manager/dist/**/*.js';
+@source not '../../../{apps,libs}/**/*.{spec,test,stories}.{ts,tsx}';
+@source not '../../../{apps,libs}/**/{tests,stories}/**';

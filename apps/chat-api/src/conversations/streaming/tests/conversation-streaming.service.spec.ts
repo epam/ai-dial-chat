@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import type { FeatureFlagsService } from '../../../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../../../app-config/feature-flags/feature-key.enum';
@@ -18,8 +18,10 @@ import { CompletionMode } from '../../dto/send-completion.dto';
 import { BackgroundGenerationService } from '../../generation/background-generation.service';
 import { CoreResponsesClient } from '../../generation/core-responses.client';
 import { generationRequestsTotal } from '../../generation/generation-metrics';
+import { GENERATION_PERSISTENCE_ERROR } from '../../generation/persistence-error';
 import { ResponsesAdapter } from '../../generation/responses.adapter';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../../utils/conversation-view-state.server';
 import { ConversationStreamingService } from '../conversation-streaming.service';
 
@@ -198,6 +200,7 @@ describe('ConversationStreamingService', () => {
         modelDetails: { features: { chatCompletion: true } },
       }),
       getDeploymentInterfaces: vi.fn().mockResolvedValue([]),
+      resolveDeploymentItem: vi.fn().mockResolvedValue(null),
     } as unknown as DeploymentsService;
     /*
      * Defaults to enabled so existing Responses-selection tests (which cover
@@ -433,6 +436,38 @@ describe('ConversationStreamingService', () => {
       );
       return { sendSpy, res };
     };
+
+    it('refuses with conversationModelHidden and sends nothing when the requested model is hidden', async () => {
+      vi.mocked(mockDeploymentsService.resolveDeploymentItem).mockResolvedValue(
+        { id: 'gpt-4o', isHidden: true } as never,
+      );
+
+      const error = await callStream(baseConversation, 'Hello', 'gpt-4o').catch(
+        (err: unknown) => err,
+      );
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect((error as ForbiddenException).getResponse()).toMatchObject({
+        code: ConversationErrorCode.ModelHidden,
+      });
+      expect(
+        mockDialClient.client.sendChatCompletionRequest,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('streams normally once the conversation is switched to a visible model', async () => {
+      vi.mocked(mockDeploymentsService.resolveDeploymentItem).mockResolvedValue(
+        { id: 'gpt-4o-mini', isHidden: false } as never,
+      );
+
+      const { sendSpy } = await callStream(
+        { ...baseConversation, messages: [] },
+        'Hello',
+        'gpt-4o-mini',
+      );
+
+      expect(sendSpy).toHaveBeenCalled();
+    });
 
     it('forwards the client channel id as X-DIAL-CLIENT-CHANNEL-ID when provided', async () => {
       const conversation = {
@@ -2511,6 +2546,111 @@ describe('ConversationStreamingService', () => {
       expect(mockGenerationService.complete).not.toHaveBeenCalled();
       expect(mockGenerationService.error).not.toHaveBeenCalled();
       expect(res.getWritten()).toContain('conversation_save_failed');
+    });
+
+    it('reports the 401 status of a terminal write DIAL Core rejected for its credentials', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValueOnce({ data: {} } as never) // start-state write
+        .mockResolvedValueOnce({
+          error: 'Bad Authorization header',
+          response: { status: 401 },
+        } as never); // terminal write
+
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      const errorFrame = res
+        .getWritten()
+        .split('\n\n')
+        .find((frame) => frame.includes('conversation_save_failed'));
+      expect(JSON.parse((errorFrame ?? '').replace(/^data: /, ''))).toEqual({
+        error: {
+          type: 'conversation_save_failed',
+          message: GENERATION_PERSISTENCE_ERROR.message,
+          status: 401,
+        },
+      });
+      expect(res.getWritten()).not.toContain('Bad Authorization header');
+    });
+
+    it('omits the status when the 401 write belonged to an answer that did not complete', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValueOnce({ data: {} } as never) // start-state write
+        .mockResolvedValueOnce({
+          error: 'Bad Authorization header',
+          response: { status: 401 },
+        } as never); // terminal write of the failed answer
+
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"choices":[{"delta":{"content":"Partial"}}]}\n\n',
+            'data: {"error":{"message":"Model failed","type":"runtime_error"}}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      const errorFrame = res
+        .getWritten()
+        .split('\n\n')
+        .find((frame) => frame.includes('conversation_save_failed'));
+      expect(JSON.parse((errorFrame ?? '').replace(/^data: /, ''))).toEqual({
+        error: {
+          type: 'conversation_save_failed',
+          message: GENERATION_PERSISTENCE_ERROR.message,
+        },
+      });
     });
   });
 

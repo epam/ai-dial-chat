@@ -75,6 +75,8 @@ export class ApplicationsController {
     summary: 'Create a new application',
     description:
       'Creates a new application for the authenticated session user by proxying DIAL Core. ' +
+      'With createOnly, never overwrites an existing application and creates at the next free path instead (409 when none is free). ' +
+      'With preserveApplicationProperties, stores schema settings verbatim. ' +
       'Invalidates the applications list and deployments list caches on success.',
   })
   @ApiBody({ type: CreateApplicationBodyDto })

@@ -11,6 +11,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   FolderPath,
+  InteractiveTooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import {
@@ -22,6 +23,7 @@ import {
   useState,
 } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
+import { useIsVerticallyClamped } from '../../hooks/useIsVerticallyClamped/useIsVerticallyClamped';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
@@ -32,10 +34,36 @@ import styles from './CardGrid.module.scss';
 
 const DESCRIPTION_MARKDOWN_COMPONENTS = { img: () => null };
 
+const TOOLTIP_TEXT_CLASS_NAME = 'dial-small-text';
+
+const TOOLTIP_MARKDOWN_CLASS_NAMES = {
+  p: TOOLTIP_TEXT_CLASS_NAME,
+  ul: TOOLTIP_TEXT_CLASS_NAME,
+  ol: TOOLTIP_TEXT_CLASS_NAME,
+  h1: TOOLTIP_TEXT_CLASS_NAME,
+  h2: TOOLTIP_TEXT_CLASS_NAME,
+  h3: TOOLTIP_TEXT_CLASS_NAME,
+  h4: TOOLTIP_TEXT_CLASS_NAME,
+  h5: TOOLTIP_TEXT_CLASS_NAME,
+  h6: TOOLTIP_TEXT_CLASS_NAME,
+  strong: 'dial-small-semi-text',
+} satisfies MarkdownRendererClassNames;
+
 const isLinkEvent = (
   event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
 ): boolean =>
   event.target instanceof Element && event.target.closest('a') !== null;
+
+/*
+ * React bubbles events from a portal through its React ancestors, so a click
+ * or key press inside the description panel (portaled out of the card) would
+ * otherwise reach the card's own handlers and open the details.
+ */
+const isOutsideCardEvent = (
+  event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
+): boolean =>
+  !(event.target instanceof Node) ||
+  !event.currentTarget.contains(event.target);
 
 /** Browse grid card: AppIdentity header + description + topic chips + breadcrumbs + star. */
 export const Card: FC<CardProps> = ({
@@ -66,6 +94,9 @@ export const Card: FC<CardProps> = ({
     setIsStarred(initialIsStarred);
   }, [item.id, initialIsStarred]);
 
+  const { ref: descriptionRef, isClamped: isDescriptionClamped } =
+    useIsVerticallyClamped<HTMLDivElement>(item.description);
+
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ?? 'dial-small-paragraph-text';
 
@@ -91,13 +122,13 @@ export const Card: FC<CardProps> = ({
 
   const handleClick = onClick
     ? (e: MouseEvent<HTMLElement>) => {
-        if (!isLinkEvent(e)) onClick(item);
+        if (!isLinkEvent(e) && !isOutsideCardEvent(e)) onClick(item);
       }
     : undefined;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
-      if (!onClick || isLinkEvent(e)) return;
+      if (!onClick || isLinkEvent(e) || isOutsideCardEvent(e)) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         onClick(item);
@@ -176,39 +207,62 @@ export const Card: FC<CardProps> = ({
         }
       />
 
-      <div
-        className={mergeClasses(
-          /*
-           * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
-           * limits the text to 2 lines but `overflow: hidden` clips at the box
-           * height, so any box taller than 2 lines paints the clamped-away
-           * lines. `2lh` tracks whichever typography class is applied.
-           */
-          'line-clamp-2 min-h-[2lh] break-words',
-          styles.description,
-        )}
+      {/* Only while the clamp actually hides text — a description that fits
+       * gets no panel repeating what is already on screen (#9334).
+       * An interactive panel rather than a plain tooltip: it stays open while
+       * the pointer moves into it, so a description taller than the viewport
+       * can be scrolled — the panel is capped at the viewport height, and the
+       * kit's flip/shift keep a side-placed panel inside it (#9363). */}
+      <InteractiveTooltip
+        asChild
+        hideTooltip={!isDescriptionClamped}
+        contentClassName="max-h-[calc(100dvh-16px)] overflow-y-auto"
+        content={
+          item.description && (
+            <MarkdownRenderer
+              content={item.description}
+              classNames={TOOLTIP_MARKDOWN_CLASS_NAMES}
+              components={DESCRIPTION_MARKDOWN_COMPONENTS}
+              {...markdownLabels}
+            />
+          )
+        }
       >
-        {item.description && (
-          <MarkdownRenderer
-            content={item.description}
-            classNames={
-              {
-                p: descriptionClassName,
-                ul: descriptionClassName,
-                ol: descriptionClassName,
-                h1: descriptionClassName,
-                h2: descriptionClassName,
-                h3: descriptionClassName,
-                h4: descriptionClassName,
-                h5: descriptionClassName,
-                h6: descriptionClassName,
-              } satisfies MarkdownRendererClassNames
-            }
-            components={DESCRIPTION_MARKDOWN_COMPONENTS}
-            {...markdownLabels}
-          />
-        )}
-      </div>
+        <div
+          ref={descriptionRef}
+          className={mergeClasses(
+            /*
+             * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
+             * limits the text to 2 lines but `overflow: hidden` clips at the box
+             * height, so any box taller than 2 lines paints the clamped-away
+             * lines. `2lh` tracks whichever typography class is applied.
+             */
+            'line-clamp-2 min-h-[2lh] break-words',
+            styles.description,
+          )}
+        >
+          {item.description && (
+            <MarkdownRenderer
+              content={item.description}
+              classNames={
+                {
+                  p: descriptionClassName,
+                  ul: descriptionClassName,
+                  ol: descriptionClassName,
+                  h1: descriptionClassName,
+                  h2: descriptionClassName,
+                  h3: descriptionClassName,
+                  h4: descriptionClassName,
+                  h5: descriptionClassName,
+                  h6: descriptionClassName,
+                } satisfies MarkdownRendererClassNames
+              }
+              components={DESCRIPTION_MARKDOWN_COMPONENTS}
+              {...markdownLabels}
+            />
+          )}
+        </div>
+      </InteractiveTooltip>
 
       {/* `mt-auto` pins the topics row and footer to the card bottom — the job
        * `flex-1` on the description used to do before it broke the clamp. */}

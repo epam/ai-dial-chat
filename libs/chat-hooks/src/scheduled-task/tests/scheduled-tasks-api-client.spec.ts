@@ -64,6 +64,23 @@ describe('createScheduledTasksApiClient', () => {
     );
   });
 
+  it('forwards the model filter to the configured client', async () => {
+    configuredClient.listScheduledTasks.mockResolvedValue({
+      items: [],
+      next: null,
+    });
+
+    await createScheduledTasksApiClient(configuredClient).listScheduledTasks({
+      limit: 20,
+      model: 'applications/hash/Daily%20plan__0.0.1',
+    });
+
+    expect(configuredClient.listScheduledTasks).toHaveBeenCalledWith(
+      { limit: 20, model: 'applications/hash/Daily%20plan__0.0.1' },
+      undefined,
+    );
+  });
+
   it('does not convert a malformed successful response into an empty page', async () => {
     configuredClient.listScheduledTasks.mockResolvedValue({ next: null });
 

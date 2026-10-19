@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -56,7 +57,7 @@ import {
   generationTimeToFirstDelta,
 } from '../generation/generation-metrics';
 import type { GenerationRelayTiming } from '../generation/generation.types';
-import { GENERATION_PERSISTENCE_ERROR } from '../generation/persistence-error';
+import { buildGenerationPersistenceError } from '../generation/persistence-error';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import {
@@ -71,6 +72,7 @@ import {
   qualifySessionConversationPath,
   resolveConversationLocation,
 } from '../utils/conversation.utils';
+import { assertModelNotHidden } from '../utils/hidden-model';
 
 const SERVER_APP_CONFIG_CONTEXT: AppConfigEvalContext = { appId: 'chat-api' };
 
@@ -621,6 +623,18 @@ export class ConversationStreamingService {
     let temperatureSupported: boolean;
     let reasoningEfforts: string[] | undefined;
     try {
+      /*
+       * `model` is the one the user has selected now, so switching a
+       * conversation off a hidden model is what lets it continue.
+       */
+      await assertModelNotHidden(
+        this.deploymentsService,
+        model,
+        token,
+        bucket,
+        this.logger,
+        `stream a completion for "${conversationPath}"`,
+      );
       ({ generationApi, isBackground, temperatureSupported, reasoningEfforts } =
         await this.resolveGenerationApiForDeployment(sub, model, token));
       generationCapabilityResolutionTotal.add(1, {
@@ -791,6 +805,7 @@ export class ConversationStreamingService {
     };
 
     let persistenceFailed = false;
+    let persistenceFailureStatus: number | undefined;
     const finalize = async (
       status:
         | GenerationStatus.Done
@@ -836,6 +851,13 @@ export class ConversationStreamingService {
       } catch (err) {
         this.logger.warn(`Failed to save ${status} conversation`, err);
         persistenceFailed = true;
+        /* Only a completed answer is reported with its status: the client
+         * recovers that one alone, because a stopped or aborted answer carries
+         * terminal markers only this write would have stored. */
+        persistenceFailureStatus =
+          status === GenerationStatus.Done && err instanceof HttpException
+            ? err.getStatus()
+            : undefined;
         this.generationService.persistenceFailed(lease);
         return;
       }
@@ -959,7 +981,7 @@ export class ConversationStreamingService {
         }
       }
       if (persistenceFailed) {
-        yield `data: ${JSON.stringify({ error: GENERATION_PERSISTENCE_ERROR })}\n\n`;
+        yield `data: ${JSON.stringify({ error: buildGenerationPersistenceError(persistenceFailureStatus) })}\n\n`;
       }
     } finally {
       /*
