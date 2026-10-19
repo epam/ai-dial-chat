@@ -378,10 +378,7 @@ export class ShareInvitationService {
 
     this.logger.debug(`Created share link for itemId=${resourceUrl}`);
 
-    const expiry = await this.peekInvitationExpiry(
-      accessToken,
-      invitationId,
-    );
+    const expiry = await this.peekInvitationExpiry(accessToken, invitationId);
 
     return {
       url: this.buildInvitationUrl(invitationId, resourceUrl),
