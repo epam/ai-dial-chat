@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   setKeyboard: vi.fn(),
   setAgent: vi.fn(),
   setIsCelebrationEnabled: vi.fn(),
+  isCelebrationEnabled: false,
   storedAgent: null as string | null,
   hasExtensions: true,
 }));
@@ -119,7 +120,7 @@ vi.mock('../../../hooks/default-agent/useDefaultAgentPreference', () => ({
 
 vi.mock('../../../hooks/celebration/useCelebrationPreference', () => ({
   useCelebrationPreference: () => ({
-    isEnabled: false,
+    isEnabled: mocks.isCelebrationEnabled,
     setIsEnabled: mocks.setIsCelebrationEnabled,
   }),
 }));
@@ -165,6 +166,7 @@ describe('SettingsModal', () => {
     vi.clearAllMocks();
     mocks.storedAgent = null;
     mocks.hasExtensions = true;
+    mocks.isCelebrationEnabled = false;
   });
 
   it('opens as a dialog named Settings', () => {
@@ -222,6 +224,18 @@ describe('SettingsModal', () => {
     fireEvent.click(screen.getByRole('button', { name: ButtonsI18nKeys.Save }));
 
     expect(mocks.setIsCelebrationEnabled).toHaveBeenCalledWith(true);
+  });
+
+  it('saves nothing for celebrations when an operator-default draft is left unchanged', () => {
+    mocks.isCelebrationEnabled = true;
+    render(<SettingsModal onClose={vi.fn()} />);
+
+    expect(screen.getByLabelText('draft celebrations').textContent).toBe(
+      'true',
+    );
+    fireEvent.click(screen.getByRole('button', { name: ButtonsI18nKeys.Save }));
+
+    expect(mocks.setIsCelebrationEnabled).not.toHaveBeenCalled();
   });
 
   it('discards the celebrations opt-in on Cancel', () => {

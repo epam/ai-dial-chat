@@ -219,6 +219,39 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       },
     );
 
+    it('defaults celebrationsEnabledByDefault to true', () => {
+      expect(createDefaultClientConfig().celebrationsEnabledByDefault).toBe(
+        true,
+      );
+    });
+
+    it('turns celebrationsEnabledByDefault off only for a resolved false', () => {
+      const config = createDefaultClientConfig();
+
+      applyClientConfigValue(
+        config,
+        'ui.celebrationsEnabledByDefault',
+        makeInput({ resolved: false }),
+      );
+
+      expect(config.celebrationsEnabledByDefault).toBe(false);
+    });
+
+    it.each([true, undefined, null, 'false'])(
+      'keeps celebrationsEnabledByDefault on for a resolved %j',
+      (resolved) => {
+        const config = createDefaultClientConfig();
+
+        applyClientConfigValue(
+          config,
+          'ui.celebrationsEnabledByDefault',
+          makeInput({ resolved }),
+        );
+
+        expect(config.celebrationsEnabledByDefault).toBe(true);
+      },
+    );
+
     it('forwards the warn callback to the announcements normalizer', () => {
       const warn = vi.fn();
       const config = createDefaultClientConfig();

@@ -133,6 +133,23 @@ describe('CONFIG_DEFINITIONS', () => {
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
 
+  it('contains the client-visible ui.celebrationsEnabledByDefault config entry, on by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'ui.celebrationsEnabledByDefault',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'ui.celebrationsEnabledByDefault',
+      type: 'config',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: true,
+      critical: false,
+      envVar: 'UI_EVENT_ENABLED_BY_DEFAULT',
+    });
+    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
+  });
+
   it('contains the client-visible features.usageLimitsControl entry, off by default', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'features.usageLimitsControl',
