@@ -1163,6 +1163,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   usageLimitsWarningThresholdPercent: number;
+  /**
+   * Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  celebrationsEnabledByDefault: boolean;
 }
 
 /**

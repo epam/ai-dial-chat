@@ -57,6 +57,8 @@ export interface AppConfigState {
     maxAttachmentFileSizeBytes: number;
     /** Percentage of a capped usage limit at which the composer banner appears. */
     usageLimitsWarningThresholdPercent: number;
+    /** Operator default for the celebrations switch, used while the user has saved no choice. */
+    celebrationsEnabledByDefault: boolean;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -93,6 +95,7 @@ const INITIAL_STATE: AppConfigState = {
     maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
     usageLimitsWarningThresholdPercent:
       DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
+    celebrationsEnabledByDefault: true,
   },
 };
 
@@ -157,6 +160,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             usageLimitsWarningThresholdPercent:
               response.config?.usageLimitsWarningThresholdPercent ??
               DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
+            celebrationsEnabledByDefault:
+              response.config?.celebrationsEnabledByDefault ?? true,
           },
           metadata: response.metadata,
         });

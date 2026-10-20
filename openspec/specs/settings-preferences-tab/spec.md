@@ -3,9 +3,7 @@
 ## Purpose
 
 The Preferences tab of the Settings page: its registration through the shell extension point and the theme, language, keyboard-shortcut, and default-agent selectors it renders.
-
 ## Requirements
-
 ### Requirement: Preferences tab is registered through the shell's extension point
 
 The system SHALL add a `Preferences` member to the `SettingsTabs` enum
@@ -318,10 +316,14 @@ empty-state check.
 
 The state is owned by `useCelebrationPreference()`
 (`apps/chat/src/hooks/celebration/useCelebrationPreference.ts`), stored under
-`StorageKey.CelebrationsEnabled` (`'celebrationsEnabled'`) in `localStorage`. Only the stored string
-`'true'` reads as on; a missing or any other value reads as off, so the default is off. Every
-mounted `useCelebrationPreference()` reflects a write on the same render cycle through a window
-`CustomEvent`.
+`StorageKey.CelebrationsEnabled` (`'celebrationsEnabled'`) in `localStorage`. A stored `'true'`
+reads as on and a stored `'false'` reads as off. When nothing else is stored (missing or any other
+value), the hook SHALL fall back to the operator default `config.celebrationsEnabledByDefault` from
+`useAppConfig()` (`UI_EVENT_ENABLED_BY_DEFAULT`, `true` unless the operator sets it off). The
+fallback is read live, so a changed operator default reaches every user who never saved a choice,
+and the hook SHALL NOT write the default to storage. Only `setIsEnabled` writes, and it always
+writes an explicit `'true'` or `'false'`. Every mounted `useCelebrationPreference()` reflects a
+write on the same render cycle through a window `CustomEvent`.
 
 The row SHALL render **only when** the client config names an event (`config.activeEventId != null`)
 and `OverlayFeature.HideUserSettings` is off. Without a configured event the switch would control
@@ -336,11 +338,22 @@ directional spacing or icons.
 
 **Memoisation:** `setIsEnabled` is a stable `useCallback`; the row has no option array to memoise.
 
-#### Scenario: Celebrations are off by default
+#### Scenario: The operator default applies when nothing is stored
 
 - **GIVEN** nothing is stored under `StorageKey.CelebrationsEnabled`
-- **WHEN** the Preferences tab renders with `config.activeEventId = 'halloween'`
+- **WHEN** the Preferences tab renders with `config.activeEventId = 'halloween'` and
+  `config.celebrationsEnabledByDefault = true`
+- **THEN** the switch is on
+- **WHEN** `config.celebrationsEnabledByDefault` is `false` instead
 - **THEN** the switch is off
+
+#### Scenario: A stored choice overrides the operator default
+
+- **GIVEN** `'false'` is stored and `config.celebrationsEnabledByDefault` is `true`
+- **WHEN** the Preferences tab renders with an event configured
+- **THEN** the switch is off
+- **GIVEN** `'true'` is stored and `config.celebrationsEnabledByDefault` is `false`
+- **THEN** the switch is on
 
 #### Scenario: Turning the switch on persists it
 
@@ -348,13 +361,17 @@ directional spacing or icons.
 - **THEN** `localStorage` under `StorageKey.CelebrationsEnabled` holds `'true'`, and a mounted
   `CelebrationHost` passes the event on the same render cycle
 
+#### Scenario: Turning the switch off persists it against an on default
+
+- **GIVEN** `config.celebrationsEnabledByDefault` is `true` and nothing is stored
+- **WHEN** the user turns the switch off
+- **THEN** `'false'` is stored and a mounted `CelebrationHost` passes `null`
+
 #### Scenario: No configured event hides the row
 
 - **GIVEN** `config.activeEventId` is `null`
 - **WHEN** the Preferences tab renders
 - **THEN** no celebrations switch is present
-
----
 
 ### Requirement: Preferences tab layout, heading, empty state, and RTL contract
 
@@ -405,3 +422,4 @@ The default-agent row's search lives in the deployment-selector panel, not in `P
 - **THEN** each `Select` row exposes an accessible name from its `labelProps.label`, the
   default-agent trigger is named by its `Label` through `labelledById`, and every control is
   reachable and operable by keyboard alone
+

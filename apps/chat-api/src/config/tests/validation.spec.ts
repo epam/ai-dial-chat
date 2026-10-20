@@ -37,6 +37,26 @@ describe('validate', () => {
     );
   });
 
+  it('defaults UI_EVENT_ENABLED_BY_DEFAULT to true when unset', () => {
+    expect(validate({ ...baseConfig }).UI_EVENT_ENABLED_BY_DEFAULT).toBe(true);
+  });
+
+  it.each([
+    ['false', false],
+    ['0', false],
+    ['no', false],
+    ['FALSE', false],
+    [' false ', false],
+    ['true', true],
+    ['1', true],
+    ['yes', true],
+  ])('parses UI_EVENT_ENABLED_BY_DEFAULT=%j as %s', (rawValue, expected) => {
+    expect(
+      validate({ ...baseConfig, UI_EVENT_ENABLED_BY_DEFAULT: rawValue })
+        .UI_EVENT_ENABLED_BY_DEFAULT,
+    ).toBe(expected);
+  });
+
   it('defaults external connections to an empty allowlist', () => {
     expect(validate({ ...baseConfig }).ALLOWED_CONNECT_ORIGINS).toEqual([]);
     expect(
