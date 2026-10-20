@@ -208,39 +208,69 @@ try {
     }
 
     // -------------------------------------------------------------------
-    // Feature loading boundary: the main chunk must not eagerly bundle AG
-    // Grid (reachable only through usePromptSelectorOverlay's lazy-loaded
-    // PromptParametersPopup -> @epam/ai-dial-catalog's ListView), while a
-    // separate emitted chunk proves the split genuinely happened rather
-    // than AG Grid being absent for an unrelated reason.
+    // Feature loading boundary: PromptParametersPopup must live in a chunk
+    // the main chunk only reaches through a dynamic import(), and nothing
+    // the main chunk loads eagerly (itself plus its static-import closure,
+    // which includes shared chunks such as the one carrying
+    // @epam/ai-dial-catalog) may bundle AG Grid.
+    //
+    // The check deliberately does not require AG Grid to appear in the lazy
+    // chunk: the popup only uses AppIdentity/ContentTab/DeploymentSize from
+    // @epam/ai-dial-catalog, so a bundler that tree-shakes the unused
+    // ListView correctly (rolldown >= 1.2) emits no AG Grid anywhere.
     // -------------------------------------------------------------------
     const AG_GRID_MARKER = 'ag-grid-community';
-    const mainChunk = readFileSync(bundle.bundlePath, 'utf-8');
-    if (mainChunk.includes(AG_GRID_MARKER)) {
+    const readChunk = (file) => readFileSync(path.join(outDir, file), 'utf-8');
+    const relativeSpecifiers = (source, pattern) =>
+      [...source.matchAll(pattern)]
+        .map((match) => match[1])
+        .filter((specifier) => specifier.startsWith('./'))
+        .map((specifier) => specifier.slice(2));
+    const STATIC_IMPORT =
+      /^(?:import|export)\b[^;]*?["'](\.\/[^"']+\.js)["']/gm;
+    const DYNAMIC_IMPORT = /\bimport\(\s*["'](\.\/[^"']+\.js)["']\s*\)/g;
+
+    const eagerChunks = new Set();
+    const pending = [mainChunkName];
+    while (pending.length > 0) {
+      const file = pending.pop();
+      if (eagerChunks.has(file)) continue;
+      eagerChunks.add(file);
+      pending.push(...relativeSpecifiers(readChunk(file), STATIC_IMPORT));
+    }
+
+    const eagerAgGridChunks = [...eagerChunks].filter((file) =>
+      readChunk(file).includes(AG_GRID_MARKER),
+    );
+    if (eagerAgGridChunks.length > 0) {
       fail(
-        `The main chunk (${mainChunkName}) contains "${AG_GRID_MARKER}" — ` +
-          'usePromptSelectorOverlay is pulling AG Grid into its initial bundle instead of ' +
-          'lazy-loading the component that reaches it (see usePromptSelectorOverlay.tsx).',
+        `Eagerly loaded chunk(s) ${eagerAgGridChunks.join(', ')} contain "${AG_GRID_MARKER}" — ` +
+          'AG Grid is reachable from the initial bundle instead of only behind a lazy boundary ' +
+          '(see usePromptSelectorOverlay.tsx and LazyPromptParametersPopup.tsx).',
       );
     }
-    const otherJsFiles = outputFiles.filter(
-      (file) => file.endsWith('.js') && file !== mainChunkName,
+
+    const lazyPopupChunk = relativeSpecifiers(
+      readChunk(mainChunkName),
+      DYNAMIC_IMPORT,
+    ).find(
+      (file) =>
+        !eagerChunks.has(file) &&
+        /\bas PromptParametersPopup\b/.test(readChunk(file)),
     );
-    const lazyChunkHasMarker = otherJsFiles.some((file) =>
-      readFileSync(path.join(outDir, file), 'utf-8').includes(AG_GRID_MARKER),
-    );
-    if (!lazyChunkHasMarker) {
+    if (!lazyPopupChunk) {
       fail(
-        `No emitted chunk other than ${mainChunkName} contains "${AG_GRID_MARKER}" — ` +
-          'the lazy-loading split could not be verified (expected a separate chunk carrying ' +
-          'PromptParametersPopup/@epam/ai-dial-catalog).',
+        `${mainChunkName} has no dynamic import() of a chunk exporting PromptParametersPopup ` +
+          'outside its static-import closure — the lazy-loading split could not be verified ' +
+          '(see LazyPromptParametersPopup.tsx).',
       );
     }
 
     if (exitCode === 0) {
       console.info(
-        'OK: both packages bundle together, required CSS reaches the build, and AG Grid ' +
-          'stays out of the main chunk while a separate lazy chunk carries it.',
+        'OK: both packages bundle together, required CSS reaches the build, ' +
+          `PromptParametersPopup loads lazily from ${lazyPopupChunk}, and no eagerly ` +
+          'loaded chunk carries AG Grid.',
       );
     }
   }
