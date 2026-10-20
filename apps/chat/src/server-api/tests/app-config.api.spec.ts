@@ -35,6 +35,7 @@ describe('app-config API', () => {
         publicationFilterSources: ['title', 'role', 'dial_roles'],
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
+        celebrationsEnabledByDefault: true,
       },
     });
 

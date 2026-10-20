@@ -276,6 +276,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'UI_EVENT',
   },
   {
+    key: 'ui.celebrationsEnabledByDefault',
+    type: 'config',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: true,
+    critical: false,
+    description:
+      'Operator default for the seasonal-celebrations switch in Settings → Preferences, applied to users who have not saved a choice of their own; a saved choice overrides it. On by default; only false, 0 or no turns it off. Has no visible effect without ui.activeEventId.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT_ENABLED_BY_DEFAULT',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',

@@ -9606,6 +9606,11 @@
             "type": "number",
             "description": "Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.",
             "example": 75
+          },
+          "celebrationsEnabledByDefault": {
+            "type": "boolean",
+            "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
+            "example": true
           }
         },
         "required": [
@@ -9624,7 +9629,8 @@
           "customVariables",
           "publicationFilterSources",
           "maxAttachmentFileSizeBytes",
-          "usageLimitsWarningThresholdPercent"
+          "usageLimitsWarningThresholdPercent",
+          "celebrationsEnabledByDefault"
         ]
       },
       "ClientConfigMetadataDto": {
