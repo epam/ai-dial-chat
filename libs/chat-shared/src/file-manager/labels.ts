@@ -167,6 +167,8 @@ export interface DialFileManagerShellLabels {
   removingAccessLabel: string;
   /** Label for the Info action. */
   infoLabel: string;
+  /** Label for the Preview action. Omit to hide the action. */
+  previewLabel?: string;
   /** Header for the metadata popup. */
   metadataHeader: string;
   /** Label for the file name in the metadata popup. */

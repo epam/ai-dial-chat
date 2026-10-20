@@ -3,7 +3,10 @@ import {
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager-canvas';
-import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
+import {
+  usePanelMaxWidth,
+  useViewportWidth,
+} from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
 import {
@@ -61,6 +64,7 @@ import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
+import { resolveCanvasWidth } from '../utils/canvas-width';
 import { configurePdfWorker } from '../utils/pdf';
 import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
@@ -116,13 +120,16 @@ const App: FC = () => {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
   const loadPdf = usePdfPreviewLoader();
+  const isFileManagerRoute = !!useMatch(ROUTES.FileManager);
+  const viewportWidth = useViewportWidth();
   const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
-  const canvasDefaultWidth = isMobile
-    ? window.innerWidth
-    : Math.min(
-        canvasMaxWidth,
-        Math.round((canvasMaxWidth + MIN_CONTENT_AREA_WIDTH) * 0.5),
-      );
+  const { defaultWidth: canvasDefaultWidth, minWidth: canvasMinWidth } =
+    resolveCanvasWidth({
+      isFileManagerRoute,
+      isMobile,
+      viewportWidth,
+      maxWidth: canvasMaxWidth,
+    });
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -483,7 +490,8 @@ const App: FC = () => {
           </main>
           {isConversationRoute && <ConversationSourcesPanel />}
         </ActiveScheduledTaskProvider>
-        {isConversationRoute && isAttachmentsManagerEnabled && (
+        {(isFileManagerRoute ||
+          (isConversationRoute && isAttachmentsManagerEnabled)) && (
           <AttachmentCanvasContainer
             loadPdf={loadPdf}
             onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
@@ -558,6 +566,7 @@ const App: FC = () => {
             leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
+            minWidth={canvasMinWidth}
             maxWidth={canvasMaxWidth}
             codeBlockTheme={codeBlockTheme}
             configurePdfWorker={configurePdfWorker}

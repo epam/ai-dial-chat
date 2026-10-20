@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -27,10 +28,15 @@ const mocks = vi.hoisted(() => ({
   closePanel: () => undefined,
   togglePanel: () => undefined,
   canvas: { closeCanvas: () => undefined, isOpen: false },
+  enabledFeatures: new Set<string>(),
+  canvasProps: null as { minWidth?: number } | null,
 }));
 
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
-  AttachmentCanvasContainer: () => null,
+  AttachmentCanvasContainer: (props: { minWidth?: number }) => {
+    mocks.canvasProps = props;
+    return <aside aria-label="attachment canvas" />;
+  },
   useAttachmentCanvas: () => mocks.canvas,
 }));
 vi.mock('@epam/ai-dial-chat-hooks/file-manager-canvas', () => ({
@@ -38,6 +44,7 @@ vi.mock('@epam/ai-dial-chat-hooks/file-manager-canvas', () => ({
 }));
 vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', () => ({
   usePanelMaxWidth: () => 1200,
+  useViewportWidth: () => 1440,
 }));
 vi.mock('../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => {
@@ -81,7 +88,7 @@ vi.mock('../../hooks/useAppVersionCheck/useAppVersionCheck', () => ({
   useAppVersionCheck: () => ({ isNewVersionAvailable: false }),
 }));
 vi.mock('../../hooks/useUiFeature', () => ({
-  useUiFeature: () => false,
+  useUiFeature: (feature: string) => mocks.enabledFeatures.has(feature),
 }));
 vi.mock('../../utils/pdf', () => ({ configurePdfWorker: vi.fn() }));
 
@@ -126,6 +133,12 @@ vi.mock('../../pages/ConversationRoute/ConversationRoute', () => ({
 vi.mock('../../pages/Conversation/Conversation', () => ({
   ConversationPage: () => null,
 }));
+vi.mock('../../pages/DialFileManagerPage/DialFileManagerPage', () => ({
+  default: () => null,
+}));
+vi.mock('../../components/CatalogView/CatalogView', () => ({
+  default: () => null,
+}));
 
 const SidebarValueHost: FC = () => {
   const [value, setValue] = useState({ revision: 0 });
@@ -145,6 +158,8 @@ const SidebarValueHost: FC = () => {
 
 beforeEach(() => {
   mocks.panelCommits = 0;
+  mocks.enabledFeatures = new Set();
+  mocks.canvasProps = null;
 });
 
 describe('App — conversation panel memo boundary', () => {
@@ -155,5 +170,58 @@ describe('App — conversation panel memo boundary', () => {
     await userEvent.click(screen.getByRole('button', { name: BUMP_LABEL }));
 
     expect(mocks.panelCommits).toBe(commitsAfterMount);
+  });
+});
+
+describe('App — attachment canvas container mounting', () => {
+  const renderAt = async (
+    path: string,
+    features: OverlayFeature[] = [],
+  ): Promise<void> => {
+    mocks.enabledFeatures = new Set(features);
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await screen.findByRole('main');
+  };
+
+  const queryCanvas = () => screen.queryByLabelText('attachment canvas');
+
+  it('renders the canvas on the file manager page with AttachmentsManager disabled', async () => {
+    await renderAt('/files', [OverlayFeature.FileManager]);
+
+    expect(queryCanvas()).toBeTruthy();
+  });
+
+  it('gives the file manager page a 400 px minimum width', async () => {
+    await renderAt('/files', [OverlayFeature.FileManager]);
+
+    expect(mocks.canvasProps?.minWidth).toBe(400);
+  });
+
+  it('renders the canvas on a conversation route when AttachmentsManager is enabled', async () => {
+    await renderAt('/', [OverlayFeature.AttachmentsManager]);
+
+    expect(queryCanvas()).toBeTruthy();
+  });
+
+  it('keeps the canvas default minimum on a conversation route', async () => {
+    await renderAt('/', [OverlayFeature.AttachmentsManager]);
+
+    expect(mocks.canvasProps?.minWidth).toBeUndefined();
+  });
+
+  it('does not render the canvas on a conversation route when AttachmentsManager is disabled', async () => {
+    await renderAt('/');
+
+    expect(queryCanvas()).toBeNull();
+  });
+
+  it('does not render the canvas on other routes', async () => {
+    await renderAt('/catalog', [OverlayFeature.AttachmentsManager]);
+
+    expect(queryCanvas()).toBeNull();
   });
 });
