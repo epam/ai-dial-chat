@@ -1,7 +1,7 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
-import { NoDataContent, Select, Spinner } from '@epam/ai-dial-ui-kit';
-import { memo, useMemo, type FC } from 'react';
+import { NoDataContent, Select, Spinner, Switch } from '@epam/ai-dial-ui-kit';
+import { memo, useId, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import DefaultAgentSelect from '../../../components/Settings/DefaultAgentSelect/DefaultAgentSelect';
 import {
@@ -13,6 +13,7 @@ import {
   useFeatureFlag,
 } from '../../../context/AppConfigContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
+import { useCelebrationPreference } from '../../../hooks/celebration/useCelebrationPreference';
 import {
   metaKey,
   useKeyboardShortcutPreference,
@@ -39,7 +40,12 @@ const PreferencesTab: FC = () => {
     useDeployments();
   const { language, changeLanguage } = useLanguage();
   const { options: themeOptions, selectedTheme, setTheme } = useThemeOptions();
-  const { status: appConfigStatus } = useAppConfig();
+  const {
+    isEnabled: isCelebrationEnabled,
+    setIsEnabled: setIsCelebrationEnabled,
+  } = useCelebrationPreference();
+  const { status: appConfigStatus, config } = useAppConfig();
+  const celebrationSwitchId = useId();
   const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
 
   /*
@@ -75,6 +81,9 @@ const PreferencesTab: FC = () => {
    * row rather than a select the user can only reselect the current value in.
    */
   const isThemeRowShown = !isUserSettingsHidden && themeOptions.length > 1;
+  /* Without an operator-configured event the switch would control nothing. */
+  const isCelebrationRowShown =
+    !isUserSettingsHidden && config.activeEventId != null;
 
   /*
    * `i18n.language` can be a regional code (`en-US`) while the options are base
@@ -118,7 +127,8 @@ const PreferencesTab: FC = () => {
     isThemeRowShown ||
     isLanguageRowShown ||
     isKeyboardRowShown ||
-    isDefaultAgentRowShown;
+    isDefaultAgentRowShown ||
+    isCelebrationRowShown;
 
   return (
     <div className="flex size-full min-h-0 flex-col">
@@ -167,6 +177,15 @@ const PreferencesTab: FC = () => {
           />
         )}
         {!isResolvingRows && isDefaultAgentRowShown && <DefaultAgentSelect />}
+        {!isResolvingRows && isCelebrationRowShown && (
+          <Switch
+            id={celebrationSwitchId}
+            labelProps={{ label: t(SettingsI18nKeys.Celebrations) }}
+            caption={t(SettingsI18nKeys.CelebrationsDescription)}
+            isOn={isCelebrationEnabled}
+            onChange={setIsCelebrationEnabled}
+          />
+        )}
       </div>
     </div>
   );

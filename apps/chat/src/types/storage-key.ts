@@ -3,6 +3,7 @@ export enum StorageKey {
   ConversationSourcesWidth = 'conversationSourcesWidth',
   Theme = 'theme',
   KeyboardShortcut = 'keyboardShortcut',
+  CelebrationsEnabled = 'celebrationsEnabled',
   DefaultAgent = 'defaultAgent',
   CatalogSortKey = 'catalogSortKey',
   CatalogFilterTopics = 'catalogFilterTopics',

@@ -305,6 +305,57 @@ than rendering blank.
 
 ---
 
+### Requirement: Preferences tab renders a seasonal-celebrations switch
+
+`PreferencesTab` SHALL render a `Switch` from `@epam/ai-dial-ui-kit` labeled
+`t(SettingsI18nKeys.Celebrations)`
+(`settings.celebrations`, "Seasonal celebrations") with the caption
+`t(SettingsI18nKeys.CelebrationsDescription)` (`settings.celebrationsDescription`, "Show holiday
+decorations and animations on the start page."), after the default-agent row. It binds the switch
+to `useCelebrationPreference()` so a change applies at once. The row lives in
+`apps/chat/src/pages/SettingsPage/PreferencesTab/PreferencesTab.tsx` and counts towards the tab's
+empty-state check.
+
+The state is owned by `useCelebrationPreference()`
+(`apps/chat/src/hooks/celebration/useCelebrationPreference.ts`), stored under
+`StorageKey.CelebrationsEnabled` (`'celebrationsEnabled'`) in `localStorage`. Only the stored string
+`'true'` reads as on; a missing or any other value reads as off, so the default is off. Every
+mounted `useCelebrationPreference()` reflects a write on the same render cycle through a window
+`CustomEvent`.
+
+The row SHALL render **only when** the client config names an event (`config.activeEventId != null`)
+and `OverlayFeature.HideUserSettings` is off. Without a configured event the switch would control
+nothing. The row is not gated by `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
+
+**Accessibility:** the switch's accessible name comes from `labelProps.label`, the caption describes
+it, it exposes `role="switch"` with its checked state, and it is operable by keyboard. Its `id`
+comes from `useId()`.
+
+**RTL:** none beyond the kit `Switch`, which follows the inherited `dir`; the row adds no
+directional spacing or icons.
+
+**Memoisation:** `setIsEnabled` is a stable `useCallback`; the row has no option array to memoise.
+
+#### Scenario: Celebrations are off by default
+
+- **GIVEN** nothing is stored under `StorageKey.CelebrationsEnabled`
+- **WHEN** the Preferences tab renders with `config.activeEventId = 'halloween'`
+- **THEN** the switch is off
+
+#### Scenario: Turning the switch on persists it
+
+- **WHEN** the user turns the switch on in the Preferences tab
+- **THEN** `localStorage` under `StorageKey.CelebrationsEnabled` holds `'true'`, and a mounted
+  `CelebrationHost` passes the event on the same render cycle
+
+#### Scenario: No configured event hides the row
+
+- **GIVEN** `config.activeEventId` is `null`
+- **WHEN** the Preferences tab renders
+- **THEN** no celebrations switch is present
+
+---
+
 ### Requirement: Preferences tab layout, heading, empty state, and RTL contract
 
 `PreferencesTab` SHALL follow `UsageTab`'s structure: an `<h2 class="dial-h1-text">` carrying

@@ -81,7 +81,8 @@ value. This is the single most common way a theme "half applies".
 
 `UI_EVENT=halloween` or `UI_EVENT=new-year` selects a bundled celebration on the
 start page. `UI_EVENT=none` or an omitted value disables it. Unknown event IDs
-leave the normal interface intact. The former `HALLOWEEN_ENABLED` setting has
+leave the normal interface intact. Users still see the event only after turning
+on **Seasonal celebrations** in Settings → Preferences; it is off by default. The former `HALLOWEEN_ENABLED` setting has
 been removed; use `UI_EVENT=halloween` instead.
 
 The selected event replaces the existing favicon slot in desktop navigation
