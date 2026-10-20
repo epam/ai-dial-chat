@@ -30,6 +30,7 @@ import {
   ProviderInfoDto,
   UserProfileDto,
 } from '../openapi/openapi-response.dto';
+import { AdminRoleService } from './admin-role.service';
 import {
   AUTH_OUTCOME_ATTRIBUTE,
   AUTH_PROVIDER_ATTRIBUTE,
@@ -59,10 +60,7 @@ import { AuthCallbackQueryDto } from './dto/auth-callback.query.dto';
 import { LoginQueryDto } from './dto/login-query.dto';
 import { ProviderIdParamDto } from './dto/provider-id-param.dto';
 import { ProviderRegistryService } from './providers/provider-registry.service';
-import {
-  AuthProviderId,
-  type ProviderConfig,
-} from './providers/provider.types';
+import { AuthProviderId } from './providers/provider.types';
 import {
   getSessionCookieMaxAge,
   resolveRefreshTokenExpiry,
@@ -86,6 +84,7 @@ export class AuthController {
     private readonly session: SessionService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
     private readonly bucketService: BucketService,
+    private readonly adminRoleService: AdminRoleService,
   ) {}
 
   private isOriginAllowed(origin: string): boolean {
@@ -621,40 +620,8 @@ export class AuthController {
       providerId: user.providerId,
       claims: user.claims,
       bucket: user.bucket,
-      isAdmin: this.computeIsAdmin(user),
+      isAdmin: this.adminRoleService.isAdmin(user),
     };
-  }
-
-  /**
-   * Admin status is not persisted in the session — computed on each request
-   * from the provider's currently configured `adminRoles`, so a config
-   * change takes effect without requiring re-login.
-   */
-  private computeIsAdmin(user: SessionUser): boolean {
-    let config: ProviderConfig;
-    try {
-      ({ config } = this.registry.getProvider(user.providerId));
-    } catch {
-      return false;
-    }
-
-    if (!config.adminRoles?.length) {
-      return false;
-    }
-
-    const rolesClaim = config.rolesClaim ?? 'roles';
-    /* `user.claims` stores the resolved roles claim under the flat
-     * `rolesClaim` key (see callback()) — not as a nested path. */
-    const rolesValue = user.claims[rolesClaim];
-    const roles = Array.isArray(rolesValue)
-      ? rolesValue.map(String)
-      : typeof rolesValue === 'string'
-        ? [rolesValue]
-        : [];
-
-    const isAdmin = roles.some((role) => config.adminRoles?.includes(role));
-
-    return isAdmin;
   }
 }
 

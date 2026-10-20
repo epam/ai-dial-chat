@@ -19,6 +19,7 @@ import { CatalogEntityParamsDto } from './dto/catalog-entity-params.dto';
 import { PublishCatalogEntityDto } from './dto/publish-catalog-entity.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
+import { UnpublishAccessDto } from './dto/unpublish-access.dto';
 import { UnpublishCatalogEntityDto } from './dto/unpublish-catalog-entity.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
 import { PublishService } from './publish.service';
@@ -131,7 +132,8 @@ export class PublishController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Caller lacks write access to the target folder',
+    description:
+      'Caller is neither an administrator nor the publisher of this copy, or lacks write access to the target folder',
   })
   @ApiResponse({
     status: 404,
@@ -151,16 +153,63 @@ export class PublishController {
     @Param() { entityType, entityId }: CatalogEntityParamsDto,
     @Body() { folderPath, version }: UnpublishCatalogEntityDto,
   ): Promise<UnpublishResultDto> {
-    const { at, bucket, claims } = req.user as SessionUser;
+    const user = req.user as SessionUser;
     return this.publishService.unpublish(
-      at,
-      bucket,
+      user,
       entityType,
       entityId,
       folderPath,
       version,
-      getUserDisplayName(claims),
+      getUserDisplayName(user.claims),
     );
+  }
+
+  @Get(':entityType/:entityId/unpublish-access')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'getCatalogUnpublishAccess',
+    summary: 'Check whether the caller may request removal of a catalog entity',
+    description:
+      'Reports whether the session user may submit an unpublish request for this entity: true for an ' +
+      'administrator, for an entity in their own bucket, and for the publisher of a public copy (the bucket ' +
+      'holding the live publication that created it). It reveals only the caller’s own permission, never who ' +
+      'published the entity, and creates nothing. A negative answer is a 200 with `canUnpublish: false`.',
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Whether the caller may request removal of the entity',
+    type: UnpublishAccessDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — invalid entityType or entityId',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 502,
+    description:
+      'DIAL Core returned an error for the publication list, or was unreachable',
+  })
+  @ApiResponse({
+    status: 503,
+    description:
+      'The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)',
+  })
+  async getCatalogUnpublishAccess(
+    @Req() req: Request,
+    @Param() { entityType, entityId }: CatalogEntityParamsDto,
+  ): Promise<UnpublishAccessDto> {
+    return {
+      canUnpublish: await this.publishService.canUnpublish(
+        req.user as SessionUser,
+        entityType,
+        entityId,
+      ),
+    };
   }
 
   @Get(':entityType/:entityId/publish-history')

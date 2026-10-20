@@ -4,6 +4,7 @@ import type {
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRuleDto,
+  UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -47,6 +48,11 @@ export interface PublishApiClient {
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<PublishHistoryEntryDto[]>;
+  /** Reads whether the caller may request removal of one catalog entity. */
+  getCatalogUnpublishAccess: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+  ) => Promise<UnpublishAccessDto>;
   /** Reads a destination folder's already-configured access rules. */
   getPublishRules: (folderPath: string) => Promise<PublicationRule[]>;
 }
@@ -74,6 +80,8 @@ export const createPublishApiClient = (
     }),
   getCatalogPublishHistory: (entityType, entityId) =>
     publishApi.getCatalogPublishHistory({ entityType, entityId }),
+  getCatalogUnpublishAccess: (entityType, entityId) =>
+    publishApi.getCatalogUnpublishAccess({ entityType, entityId }),
   getPublishRules: async (folderPath) => {
     const response = await publishApi.getPublishRules({ folderPath });
     return response.rules.map(({ function: ruleFunction, ...rule }) => ({

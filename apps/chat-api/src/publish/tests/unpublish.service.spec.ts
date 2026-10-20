@@ -4,6 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AdminRoleService } from '../../auth/admin-role.service';
+import type { SessionUser } from '../../auth/session/session.types';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishService } from '../publish.service';
@@ -11,6 +13,13 @@ import { PublishService } from '../publish.service';
 /* The caller's session bucket, passed through to every publish call. */
 const TEST_BUCKET = 'bucket-123';
 const TOOLSET_ID = 'toolsets/bucket-123/tool-abc123__1.2.0';
+const TEST_USER = {
+  sub: 'user-123',
+  providerId: 'keycloak',
+  at: 'token-abc',
+  bucket: TEST_BUCKET,
+  claims: { name: 'Test User' },
+} as SessionUser;
 
 const okResponse = (data: unknown) =>
   ({ data, response: { ok: true, status: 200 } as Response }) as never;
@@ -37,8 +46,13 @@ const makeService = () => {
     client: { createPublication: vi.fn(), getPublications: vi.fn() },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
-  const service = new PublishService(dialClient, cacheManager as never);
-  return { service, dialClient, cacheManager };
+  const adminRoleService = { isAdmin: vi.fn().mockReturnValue(false) };
+  const service = new PublishService(
+    dialClient,
+    cacheManager as never,
+    adminRoleService as unknown as AdminRoleService,
+  );
+  return { service, dialClient, cacheManager, adminRoleService };
 };
 
 const createPublicationBody = (dialClient: DialClientService, call = 0) =>
@@ -72,8 +86,7 @@ describe('PublishService.unpublish', () => {
     );
 
     await service.unpublish(
-      'token',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       'toolsets/bucket-123/my-tool__1.0.0',
       'Team',
@@ -121,8 +134,7 @@ describe('PublishService.unpublish', () => {
     );
 
     await service.unpublish(
-      'token',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       'toolsets/bucket-123/my-tool__1.0.0',
       'Team',
@@ -147,8 +159,7 @@ describe('PublishService.unpublish', () => {
     );
 
     const result = await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       TOOLSET_ID,
       'Organization/Data Science',
@@ -192,8 +203,7 @@ describe('PublishService.unpublish', () => {
     );
 
     const result = await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       TOOLSET_ID,
       'Organization/Data Science',
@@ -217,8 +227,7 @@ describe('PublishService.unpublish', () => {
     );
 
     const result = await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       TOOLSET_ID,
       'Organization/Data Science',
@@ -250,8 +259,7 @@ describe('PublishService.unpublish', () => {
       'Test User',
     );
     await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       TOOLSET_ID,
       'test 14.04/Ünïcode',
@@ -277,8 +285,7 @@ describe('PublishService.unpublish', () => {
     );
 
     await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       TOOLSET_ID,
       '',
@@ -300,8 +307,7 @@ describe('PublishService.unpublish', () => {
     );
 
     await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       TOOLSET_ID,
       'Organization/Data Science',
@@ -319,8 +325,7 @@ describe('PublishService.unpublish', () => {
     );
 
     const result = await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Toolset,
       TOOLSET_ID,
       'Organization/Data Science',
@@ -339,8 +344,7 @@ describe('PublishService.unpublish', () => {
     );
 
     const result = await service.unpublish(
-      'token-abc',
-      TEST_BUCKET,
+      TEST_USER,
       CatalogEntityType.Prompt,
       'prompts/bucket-123/Work/AI/summarize',
       'Organization/Prompts',
@@ -381,8 +385,7 @@ describe('PublishService.unpublish', () => {
 
     await expect(
       service.unpublish(
-        'token-abc',
-        TEST_BUCKET,
+        TEST_USER,
         CatalogEntityType.Toolset,
         TOOLSET_ID,
         'Organization/Data Science',
@@ -401,8 +404,7 @@ describe('PublishService.unpublish', () => {
 
     await expect(
       service.unpublish(
-        'token-abc',
-        TEST_BUCKET,
+        TEST_USER,
         CatalogEntityType.Toolset,
         TOOLSET_ID,
         'Organization/Data Science',
@@ -421,8 +423,7 @@ describe('PublishService.unpublish', () => {
 
     await expect(
       service.unpublish(
-        'token-abc',
-        TEST_BUCKET,
+        TEST_USER,
         CatalogEntityType.Toolset,
         TOOLSET_ID,
         'Organization/Data Science',
@@ -684,5 +685,112 @@ describe('PublishService.getPublishHistory response shape', () => {
         TOOLSET_ID,
       ),
     ).resolves.toEqual([]);
+  });
+});
+
+describe('PublishService.unpublish — who may ask', () => {
+  const COPY_ID = 'toolsets/public/Team/my-tool__1.0.0';
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('refuses a caller who is neither an administrator nor the publisher, before reaching DIAL Core', async () => {
+    const { service, dialClient, cacheManager } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([]),
+    );
+    const createPublication = vi.spyOn(dialClient.client, 'createPublication');
+
+    await expect(
+      service.unpublish(
+        TEST_USER,
+        CatalogEntityType.Toolset,
+        COPY_ID,
+        'Team',
+        '1.0.0',
+        'Test User',
+      ),
+    ).rejects.toThrow(
+      new ForbiddenException('You can only unpublish resources you published'),
+    );
+    expect(createPublication).not.toHaveBeenCalled();
+    expect(cacheManager.del).not.toHaveBeenCalled();
+  });
+
+  it('submits the removal for the publisher of the public copy', async () => {
+    const { service, dialClient } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([
+        {
+          status: 'APPROVED',
+          targetFolder: 'public/Team/',
+          createdAt: 1_700_000_000_000,
+          resources: [
+            {
+              action: 'ADD',
+              sourceUrl: 'toolsets/bucket-123/my-tool__1.0.0',
+              targetUrl: COPY_ID,
+            },
+          ],
+        },
+      ]),
+    );
+    const createPublication = vi
+      .spyOn(dialClient.client, 'createPublication')
+      .mockResolvedValue(okResponse({ createdAt: 1_800_000_000_000 }));
+
+    await service.unpublish(
+      TEST_USER,
+      CatalogEntityType.Toolset,
+      COPY_ID,
+      'Team',
+      '1.0.0',
+      'Test User',
+    );
+
+    expect(createPublication).toHaveBeenCalledOnce();
+  });
+
+  it('submits the removal for an administrator who did not publish the copy', async () => {
+    const { service, dialClient, adminRoleService } = makeService();
+    adminRoleService.isAdmin.mockReturnValue(true);
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      okResponse([]),
+    );
+    const createPublication = vi
+      .spyOn(dialClient.client, 'createPublication')
+      .mockResolvedValue(okResponse({ createdAt: 1_800_000_000_000 }));
+
+    await service.unpublish(
+      TEST_USER,
+      CatalogEntityType.Toolset,
+      COPY_ID,
+      'Team',
+      '1.0.0',
+      'Test User',
+    );
+
+    expect(createPublication).toHaveBeenCalledOnce();
+  });
+
+  it('creates no publication when the access check cannot read the caller’s publications', async () => {
+    const { service, dialClient } = makeService();
+    vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+      errResponse(502),
+    );
+    const createPublication = vi.spyOn(dialClient.client, 'createPublication');
+
+    await expect(
+      service.unpublish(
+        TEST_USER,
+        CatalogEntityType.Toolset,
+        COPY_ID,
+        'Team',
+        '1.0.0',
+        'Test User',
+      ),
+    ).rejects.toBeInstanceOf(BadGatewayException);
+    expect(createPublication).not.toHaveBeenCalled();
   });
 });

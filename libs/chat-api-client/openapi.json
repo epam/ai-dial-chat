@@ -7470,7 +7470,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks write access to the target folder"
+            "description": "Caller is neither an administrator nor the publisher of this copy, or lacks write access to the target folder"
           },
           "404": {
             "description": "DIAL Core reports the entity or target folder as unknown"
@@ -7495,6 +7495,79 @@
           }
         },
         "summary": "Request removal of a published catalog entity from a folder",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/unpublish-access": {
+      "get": {
+        "description": "Reports whether the session user may submit an unpublish request for this entity: true for an administrator, for an entity in their own bucket, and for the publisher of a public copy (the bucket holding the live publication that created it). It reveals only the caller’s own permission, never who published the entity, and creates nothing. A negative answer is a 200 with `canUnpublish: false`.",
+        "operationId": "getCatalogUnpublishAccess",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": ["model", "toolset", "application", "prompt", "skill"]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether the caller may request removal of the entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnpublishAccessDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error for the publication list, or was unreachable"
+          },
+          "503": {
+            "description": "The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)"
+          }
+        },
+        "summary": "Check whether the caller may request removal of a catalog entity",
         "tags": ["publish"]
       }
     },
@@ -14820,6 +14893,17 @@
           "requestedAt",
           "requestedBy"
         ]
+      },
+      "UnpublishAccessDto": {
+        "type": "object",
+        "properties": {
+          "canUnpublish": {
+            "type": "boolean",
+            "description": "Whether the caller may request removal of this entity: true for an administrator or the publisher of the copy",
+            "example": true
+          }
+        },
+        "required": ["canUnpublish"]
       },
       "PublishHistoryEntryDto": {
         "type": "object",
