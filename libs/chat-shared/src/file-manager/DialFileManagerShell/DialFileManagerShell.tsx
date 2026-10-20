@@ -313,8 +313,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
-      /* Attach is a picker: column filters are redundant next to the search bar. */
-      ...(isAttachVariant ? { filterable: false } : {}),
+      /* Column filters are redundant next to the search bar. */
+      filterable: false,
+      /* The grid is a flat table in both variants: no vertical header borders,
+         and no card shadow or rounding of its own. */
+      withoutHeaderBorders: true,
+      containerClassName: 'rounded-none shadow-none',
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -328,7 +332,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       actionLabels: gridActionLabels,
     }),
     [
-      isAttachVariant,
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -339,14 +342,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const treeOptions = useMemo(
     () => ({
-      header:
-        variant === DialFileManagerVariant.Attach
-          ? null
-          : labels.treeHeaderByTab[activeTab],
+      /* No title above the tabs in either variant; the tabs keep their name. */
+      header: null,
       containerClassName:
         treeContainerClassName ??
         (variant === DialFileManagerVariant.Attach
-          ? 'min-h-0 h-full w-[360px] shrink-0 rounded-xl bg-layer-raised shadow-sm'
+          ? 'min-h-0 h-full w-[360px] shrink-0 border-e border-tertiary bg-layer-raised'
           : undefined),
       tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,

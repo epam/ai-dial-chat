@@ -26,7 +26,8 @@ interface CapturedActionLabels {
 
 interface CapturedTreeOptions extends CapturedActionLabels {
   activeTab?: DialFileManagerTabs;
-  header?: string;
+  header?: string | null;
+  tabsAriaLabel?: string;
   containerClassName?: string;
   loadedPaths?: Set<string>;
   loadingPaths?: Set<string>;
@@ -1081,14 +1082,17 @@ describe('DialFileManagerShell', () => {
       expect(screen.getByText('Nothing shared with you yet')).toBeTruthy();
     });
 
-    it('keeps All as the strip value and tree header key', () => {
+    it('keeps All as the strip value and as the tabs label key, with no visible tree header', () => {
       renderAll(DialFileManagerTabs.Shared);
       expect(capturedDialFileManagerProps.current?.treeOptions?.activeTab).toBe(
         DialFileManagerTabs.All,
       );
-      expect(capturedDialFileManagerProps.current?.treeOptions?.header).toBe(
-        'File storage',
-      );
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.header,
+      ).toBeNull();
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.tabsAriaLabel,
+      ).toBe('File storage');
     });
 
     it('gates on activeTab when the controller has no sectionTab', () => {
