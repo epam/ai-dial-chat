@@ -298,22 +298,25 @@ const DialFileManagerPage: FC = () => {
     ],
   );
 
+  /* The shell paints its surface with `--dfms-surface`; the card from the
+     desktop band up is the surface, so the shell goes transparent there. */
   const shell = (
-    <DialFileManagerShell
-      hookResult={controller}
-      labels={labels}
-      activeTab={activeTab}
-      tabs={tabs}
-      onTabChange={handleTabChangeWithReset}
-      selectedPaths={selectedPaths}
-      onSelectedPathsChange={setSelectedPaths}
-      variant={DialFileManagerVariant.Standalone}
-      actionProfile={DialFileManagerActionProfile.Full}
-      autoSelectUploadedItems={false}
-      maxSelectableFileSize={maxAttachmentFileSizeBytes}
-      oversizedUploadMessage={oversizedUploadMessage}
-      surfaceClassName="bg-layer-base desktop:bg-transparent"
-    />
+    <div className="contents [--dfms-surface:var(--bg-layer-base)] desktop:[--dfms-surface:transparent]">
+      <DialFileManagerShell
+        hookResult={controller}
+        labels={labels}
+        activeTab={activeTab}
+        tabs={tabs}
+        onTabChange={handleTabChangeWithReset}
+        selectedPaths={selectedPaths}
+        onSelectedPathsChange={setSelectedPaths}
+        variant={DialFileManagerVariant.Standalone}
+        actionProfile={DialFileManagerActionProfile.Full}
+        autoSelectUploadedItems={false}
+        maxSelectableFileSize={maxAttachmentFileSizeBytes}
+        oversizedUploadMessage={oversizedUploadMessage}
+      />
+    </div>
   );
 
   /* From the desktop band up the page is framed: a title, 32px side margins and

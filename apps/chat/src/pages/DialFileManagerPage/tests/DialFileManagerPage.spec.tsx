@@ -506,11 +506,20 @@ describe('DialFileManagerPage — page frame', () => {
     ).toBeTruthy();
   });
 
-  it('paints the base layer on a phone and goes transparent inside the desktop card', () => {
+  it('sets the shell surface to the base layer on a phone and transparent inside the desktop card', () => {
     render(<DialFileManagerPage />);
 
-    const manager = screen.getByRole('region', { name: 'file manager' });
-    expect(manager.classList.contains('bg-layer-base')).toBe(true);
-    expect(manager.classList.contains('desktop:bg-transparent')).toBe(true);
+    /* The surface is a CSS variable set on the wrapper around the shell; neither
+       has a role, so it is found two levels above the manager region. */
+    /* eslint-disable testing-library/no-node-access */
+    const wrapper = screen.getByRole('region', { name: 'file manager' })
+      .parentElement?.parentElement;
+    /* eslint-enable testing-library/no-node-access */
+    expect(
+      wrapper?.classList.contains('[--dfms-surface:var(--bg-layer-base)]'),
+    ).toBe(true);
+    expect(
+      wrapper?.classList.contains('desktop:[--dfms-surface:transparent]'),
+    ).toBe(true);
   });
 });

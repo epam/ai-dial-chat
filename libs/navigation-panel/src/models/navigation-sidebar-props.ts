@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { NavigationSidebarVariant } from '../types/navigation-sidebar-variant';
 import type {
-  NavigationLinkRenderer,
+  NavigationSidebarLinkRenderer,
   NavigationPanelItem,
 } from './navigation-item';
 import type { NavigationPanelLogo } from './navigation-panel-props';
@@ -16,9 +16,11 @@ export interface NavigationSidebarLogo extends NavigationPanelLogo {
 export interface NavigationSidebarLabels {
   /** Accessible name for the `<nav>` landmark. */
   ariaLabel: string;
-  /** Accessible name and tooltip of the toggle while the sidebar is expanded. Defaults to `'Collapse sidebar'`. */
+  /** Accessible name of the collapse toggle, the same in both states; `aria-expanded` reports the state. Defaults to `'Sidebar'`. */
+  toggle?: string;
+  /** Tooltip of the toggle while the sidebar is expanded. Defaults to `'Collapse sidebar'`. */
   collapse?: string;
-  /** Accessible name and tooltip of the toggle while the sidebar is collapsed. Defaults to `'Expand sidebar'`. */
+  /** Tooltip of the toggle while the sidebar is collapsed. Defaults to `'Expand sidebar'`. */
   expand?: string;
   /** Accessible name and tooltip of the drawer's close button. Defaults to `'Close'`. */
   close?: string;
@@ -34,8 +36,12 @@ export interface NavigationSidebarColors {
   itemHoverBackground?: string;
   /** Background of the active item. Defaults to `--bg-control-accent-alpha-active-subtle`. */
   itemSelectedBackground?: string;
-  /** Icon paint of the active item. Defaults to a built-in blue-to-violet gradient. */
+  /** Icon paint of the active item; replaces the built-in gradient. Defaults to a blue-to-violet gradient. */
   itemActiveIcon?: string;
+  /** First color of the built-in active-icon gradient. Defaults to `#1d4ed8`. */
+  itemActiveGradientStart?: string;
+  /** Last color of the built-in active-icon gradient. Defaults to `#885df2`. */
+  itemActiveGradientEnd?: string;
   /** Keyboard focus ring color of an item. Defaults to `--stroke-focus`. */
   focusOutline?: string;
 }
@@ -72,7 +78,7 @@ export interface NavigationSidebarProps {
   isCollapsed?: boolean;
   /** Called when the toggle is activated. When absent no toggle renders. Not used by the drawer. */
   onToggleCollapse?: () => void;
-  /** Whether the drawer is shown; while it is not, it is slid out of view, `inert` and `invisible`. Drawer only. Defaults to `true`. */
+  /** Whether the drawer is shown; while it is not, it is slid out of view, `inert` and `invisible`. Drawer only. Defaults to `false`. */
   isOpen?: boolean;
   /** Called when the drawer's close button is activated or Escape is pressed inside it. When absent the drawer renders no close button. Drawer only. */
   onClose?: () => void;
@@ -80,8 +86,8 @@ export interface NavigationSidebarProps {
   id?: string;
   /** Brand mark; omit to render no logo. */
   logo?: NavigationSidebarLogo;
-  /** Wraps each item in a host-owned link element. Defaults to a plain `<a href>`. */
-  renderLink?: NavigationLinkRenderer;
+  /** Renders each item as a host-owned link element, spreading the given link props onto it. Defaults to a plain `<a href>`. */
+  renderLink?: NavigationSidebarLinkRenderer;
   /** Content between the items and the footer — typically the conversation list. It stays mounted but inert and hidden while collapsed. */
   children?: ReactNode;
   /** Pinned to the footer's inline start while expanded and below the actions while collapsed — typically `UserMenu`. */

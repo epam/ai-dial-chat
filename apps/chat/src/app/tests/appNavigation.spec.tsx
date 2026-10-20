@@ -14,7 +14,6 @@ const SidebarValueContext = createContext<{ revision: number }>({
 });
 
 const mocks = vi.hoisted(() => ({
-  isIsolatedView: false,
   isMobile: false,
   isPanelOpen: true,
   routeStateArgs: [] as Record<string, unknown>[],
@@ -44,9 +43,6 @@ vi.mock('../../context/SourcesSidebarContext', () => ({
 }));
 vi.mock('../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'dark' }),
-}));
-vi.mock('../../context/IsolatedModelViewContext', () => ({
-  useIsolatedModelView: () => ({ isActive: mocks.isIsolatedView }),
 }));
 vi.mock('../../context/ActiveScheduledTaskContext', () => ({
   ActiveScheduledTaskProvider: ({ children }: { children: unknown }) =>
@@ -173,7 +169,6 @@ const renderApp = () =>
   );
 
 beforeEach(() => {
-  mocks.isIsolatedView = false;
   mocks.isMobile = false;
   mocks.isPanelOpen = true;
   mocks.routeStateArgs = [];
@@ -237,12 +232,5 @@ describe('App — navigation', () => {
     act(() => mocks.selectConversation?.('chat-1'));
 
     expect(getSidebar().getAttribute('data-open')).toBe('false');
-  });
-
-  it('renders no navigation in the isolated model view', () => {
-    mocks.isIsolatedView = true;
-    renderApp();
-
-    expect(screen.queryByRole('navigation')).toBeNull();
   });
 });

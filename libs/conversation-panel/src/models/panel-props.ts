@@ -56,7 +56,7 @@ export interface ConversationItem {
 
 /** Typography overrides for `ConversationPanel`; the list's own fields are inherited from `ConversationListTypography`. */
 export interface ConversationPanelTypography extends ConversationListTypography {
-  /** A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span. */
+  /** A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span; unlike `ConversationListTypography.fontClassName`, it does not reach the list. */
   fontClassName?: string;
   /** Typography class applied to the New chat button label. Defaults to `'dial-small-semi-text'`. */
   newChatLabelClassName?: string;

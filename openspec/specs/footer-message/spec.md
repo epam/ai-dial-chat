@@ -121,8 +121,8 @@ While `useAppConfig().status` is not `UserConfigStatus.Ready`, the component SHA
 
 `FooterMessage` SHALL render below the chat input area of `ConversationView` and
 `NewConversationComposer` at every breakpoint. Each placement mounts its own `FooterMessage`
-instance; no screen-size render guard selects between them. The navigation drawer carries no
-footer message.
+instance; no screen-size render guard selects between them. The mobile navigation drawer carries one
+too, below the conversation list on every route, as the sheet it replaced did.
 
 The footer region SHALL be a positioning context (`relative`) whose direct children are the
 sanitized-message element and the version label, rather than a single element hosting the

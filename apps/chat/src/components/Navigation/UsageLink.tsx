@@ -2,8 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  ElementSize,
-  GhostIconButton,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChartBar } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -15,10 +14,9 @@ import { ROUTES } from '../../types/routes';
 
 /**
  * Footer link of the navigation sidebar to the standalone Usage page. A router
- * link around an icon button, so middle-click and "open in new tab" keep
- * working. The link carries the accessible name and the focus; the button
- * inside only draws the icon and the tooltip, so it is hidden from assistive
- * tech and out of the tab order.
+ * link, so middle-click and "open in new tab" keep working, drawn as an icon
+ * button; no control is nested inside it. The tooltip is anchored to the link,
+ * so keyboard focus shows it too.
  */
 const UsageLink: FC = () => {
   const { t } = useTranslation();
@@ -27,37 +25,25 @@ const UsageLink: FC = () => {
   const label = t(BasicI18nKeys.Usage);
 
   return (
-    <Link
-      to={ROUTES.Usage}
-      aria-label={label}
-      aria-current={isActive ? 'page' : undefined}
-      className={mergeClasses(
-        'rounded-full outline-offset-2 focus-visible:outline focus-visible:outline-1',
-      )}
-    >
-      <GhostIconButton
-        icon={
-          /* The colour sits on the glyph's own box: the kit's icon button
-             paints its icon secondary, and accent on hover. */
-          <span className={isActive ? 'text-accent' : 'text-primary'}>
-            <IconChartBar
-              size={DIAL_ICON_SIZE.LG}
-              stroke={DIAL_KIT_ICON_STROKE}
-              aria-hidden
-            />
-          </span>
-        }
-        size={ElementSize.Large}
+    <Tooltip tooltip={label} asChild>
+      <Link
+        to={ROUTES.Usage}
         aria-label={label}
-        aria-hidden
-        tooltipProps={{ tooltip: label }}
-        tabIndex={-1}
+        aria-current={isActive ? 'page' : undefined}
         className={mergeClasses(
-          '!size-10 !min-h-0 !min-w-0 !rounded-full !p-2',
-          isActive && 'bg-control-accent-alpha-active',
+          'flex size-10 items-center justify-center rounded-full p-2 outline-offset-2 hover:bg-control-accent-alpha-hover focus-visible:bg-control-accent-alpha-hover focus-visible:outline-1',
+          isActive
+            ? 'bg-control-accent-alpha-active text-accent'
+            : 'text-primary',
         )}
-      />
-    </Link>
+      >
+        <IconChartBar
+          size={DIAL_ICON_SIZE.LG}
+          stroke={DIAL_KIT_ICON_STROKE}
+          aria-hidden
+        />
+      </Link>
+    </Tooltip>
   );
 };
 

@@ -84,18 +84,18 @@ While `isActive` is `true` and `isNotFound` is `true`, `ConversationRoute` SHALL
 - **WHEN** isolated view is not active
 - **THEN** `handleCreateConversation`/`handleStarterSelect` behave exactly as before this change — no rename call is made
 
-### Requirement: Isolated view hides the entire navigation
+### Requirement: Isolated view hides the navigation and keeps the chats
 
-`TODO: remove in next release.` `apps/chat/src/app/app.tsx` SHALL NOT render `<SidebarNavigation />` at all (the desktop column and the mobile drawer both) whenever `useIsolatedModelView().isActive` is `true`, regardless of whether the id has resolved yet. This is a direct conditional render at the `<SidebarNavigation />` call site, not a new `OverlayFeature` key, since adding a permanent wire-protocol value for a temporary shim is out of proportion to the need.
+`TODO: remove in next release.` `SidebarNavigation` SHALL render the conversation block alone, without navigation items, the user menu or the Usage link, whenever `useIsolatedModelView().isActive` is `true`, regardless of whether the id has resolved yet. On mobile that is what the forced `hide-navigation-menu` already produces; on desktop `SidebarNavigation` reads `useIsolatedModelView()` itself, not a new `OverlayFeature` key, since adding a permanent wire-protocol value for a temporary shim is out of proportion to the need.
 
-#### Scenario: Desktop sidebar is absent
+#### Scenario: Desktop sidebar keeps only the chats
 - **WHEN** isolated view is active and the viewport is desktop-width
-- **THEN** `SidebarNavigation` (including its logo, nav items, chats and user-menu footer) does not render at all
+- **THEN** `SidebarNavigation` renders its logo and the conversation block, with no nav items, user menu or Usage link
 
-#### Scenario: Mobile drawer is absent
+#### Scenario: Mobile drawer holds the chats alone
 - **WHEN** isolated view is active and the viewport is mobile-width
-- **THEN** no drawer renders (subsumes what `hide-navigation-menu` alone would have covered)
+- **THEN** the header toggle opens a drawer that holds the conversation block and nothing else
 
 #### Scenario: Navigation is hidden even before the deployment resolves
 - **WHEN** isolated view is active (`isActive: true`) but the deployment has not resolved yet
-- **THEN** `SidebarNavigation` still does not render — hiding it does not wait for resolution
+- **THEN** `SidebarNavigation` still shows the chats alone — dropping the navigation does not wait for resolution

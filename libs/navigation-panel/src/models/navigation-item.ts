@@ -30,3 +30,23 @@ export type NavigationLinkRenderer = (
   item: NavigationPanelItem,
   children: ReactNode,
 ) => ReactNode;
+
+/** What a host's link element must carry for `NavigationSidebar` to style it and mark the current page. */
+export interface NavigationSidebarLinkProps {
+  /** Class names that give the link the sidebar item's box, states and focus ring. */
+  className: string;
+  /** `'page'` while the item points at the page on screen. */
+  'aria-current'?: 'page';
+}
+
+/**
+ * Renders a `NavigationSidebar` item as the host's link element (e.g. a router
+ * `Link`), spreading `linkProps` onto it. The link itself is the item: it
+ * holds the icon and the label, so no control is nested inside it. Defaults to
+ * a plain `<a href>`.
+ */
+export type NavigationSidebarLinkRenderer = (
+  item: NavigationPanelItem,
+  children: ReactNode,
+  linkProps: NavigationSidebarLinkProps,
+) => ReactNode;

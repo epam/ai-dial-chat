@@ -190,6 +190,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       '--cp-skeleton-color': colors?.skeletonColor,
       '--cp-unread-dot': colors?.unreadDot,
       '--cp-indicator-dot': colors?.indicatorDot,
+      '--cp-list-font-family': typography?.fontFamily,
     });
 
     const filteredItems = useMemo(
@@ -415,6 +416,8 @@ export const ConversationList: FC<ConversationListProps> = memo(
         style={cssVars}
         className={mergeClasses(
           'flex-1 overflow-hidden px-3',
+          panelStyles.list,
+          typography?.fontClassName,
           /* Indicator rows sit flush against the footer; the panel keeps its
              vertical breathing room. */
           rowVariant !== ConversationRowVariant.Indicator && 'py-1',

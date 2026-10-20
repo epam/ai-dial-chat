@@ -15,7 +15,9 @@ The system SHALL provide a "Settings" item, marked with the `IconSettings` icon 
 (`libs/navigation-panel/src/components/UserMenu/UserMenu.tsx`, driven by the host's `onSettings`
 and `labels.settings` props from `apps/chat/src/components/Navigation/SidebarNavigation.tsx`). Selecting
 it SHALL open the Settings dialog (`SettingsModal`, lazily loaded) over the current page without
-changing the route. The item's accessible
+changing the route. The dialog lists the configured Settings tabs from `useSettingsTabConfig`,
+Preferences (edited as a draft, applied on Save) and, while `scheduledTasksEnabled` is on,
+Extensions (acting on its own, with a Close button). The item's accessible
 name SHALL come from an i18n key (not a hardcoded string): `BasicI18nKeys.Settings` (`basic.settings`).
 
 The item SHALL be included for every authenticated user unless the overlay host hides the Settings

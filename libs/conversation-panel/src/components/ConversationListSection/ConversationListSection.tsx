@@ -45,6 +45,18 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
       [onFilterChange],
     );
 
+    /* Searching a collapsed list would filter rows nobody can see, so a search
+       that opens or has text brings the list back. */
+    const handleSearchChange = useCallback((query: string) => {
+      setSearchQuery(query);
+      if (query !== '') setIsListExpanded(true);
+    }, []);
+
+    const handleSearchOpenChange = useCallback((isOpen: boolean) => {
+      setIsSearchOpen(isOpen);
+      if (isOpen) setIsListExpanded(true);
+    }, []);
+
     const handleToggleExpanded = useCallback(
       () => setIsListExpanded((isExpanded) => !isExpanded),
       [],
@@ -67,8 +79,8 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
             controlsId={listId}
             searchQuery={searchQuery}
             isSearchOpen={isSearchOpen}
-            onSearchChange={setSearchQuery}
-            onSearchOpenChange={setIsSearchOpen}
+            onSearchChange={handleSearchChange}
+            onSearchOpenChange={handleSearchOpenChange}
             activeFilter={activeFilter}
             onFilterChange={isFilterHidden ? undefined : handleFilterChange}
             hiddenSources={hiddenSources}
@@ -76,7 +88,13 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
             styles={styles?.header}
           />
         </div>
-        {isListExpanded && (
+        {/* Kept mounted while collapsed, so the list keeps its open groups and
+            its scroll position. */}
+        <div
+          hidden={!isListExpanded}
+          inert={!isListExpanded}
+          className={isListExpanded ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}
+        >
           <ConversationList
             id={listId}
             conversations={conversations}
@@ -94,7 +112,7 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
             styles={styles?.list}
             className={listClassName}
           />
-        )}
+        </div>
       </section>
     );
   },

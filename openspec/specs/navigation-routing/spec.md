@@ -65,7 +65,7 @@ Every user-visible navigation string MUST be looked up via `useTranslation().t()
 #### Scenario: Navigation keys are present in en.json
 
 - **WHEN** the locale file is inspected
-- **THEN** `en.json` contains `navigation.ariaLabel`, `navigation.catalog`, `navigation.openMenu`, `navigation.back`, `navigation.collapseSidebar`, and `navigation.expandSidebar`
+- **THEN** `en.json` contains `navigation.ariaLabel`, `navigation.catalog`, `navigation.menu`, `navigation.sidebar`, `navigation.back`, `navigation.collapseSidebar`, and `navigation.expandSidebar`
 
 #### Scenario: Components use the t function
 
@@ -178,7 +178,7 @@ All user-visible strings introduced by the 404 page MUST be resolved through `re
 
 ### Requirement: Sidebar items navigate client-side
 
-Each item MUST be wrapped by the `renderLink` callback `SidebarNavigation` passes to `NavigationSidebar`, which renders a React Router `<Link to={item.id}>` (the item's `path`), in the desktop column and in the mobile drawer alike. Navigation MUST be client-side (no full page reload).
+Each item MUST be wrapped by the `renderLink` callback `SidebarNavigation` passes to `NavigationSidebar`, which renders a React Router `<Link to={item.id}>` (the item's `path`) carrying the link props the sidebar hands it, in the desktop column and in the mobile drawer alike. Navigation MUST be client-side (no full page reload).
 
 #### Scenario: Clicking New chat navigates to /
 

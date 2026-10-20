@@ -25,12 +25,16 @@ export interface ConversationListColors {
   skeletonColor?: string;
   /** Fill color of the unread indicator dot. Defaults to `--text-accent`. */
   unreadDot?: string;
-  /** Border color of the read indicator dot of `Indicator` rows. Defaults to `--stroke-secondary`. */
+  /** Border color of the read indicator dot of `Indicator` rows; no effect on `Avatar` rows, so none in `ConversationPanel`. Defaults to `--stroke-secondary`. */
   indicatorDot?: string;
 }
 
 /** Typography overrides for the conversation list. */
 export interface ConversationListTypography {
+  /** Typography class applied to the list root, inherited by rows and group headers that set none of their own. */
+  fontClassName?: string;
+  /** `font-family` applied to the list root. */
+  fontFamily?: string;
   /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-lead-text'`. */
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */

@@ -83,21 +83,13 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       setSearchQuery(value ?? '');
     }, []);
 
+    /* Only what the panel's own chrome reads; the list sets the rest from the
+       `colors` forwarded to it. */
     const cssVars = buildCssVars({
-      '--cp-item-hover': colors?.itemHover,
-      '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
-      '--cp-text-secondary': colors?.textSecondary,
       '--cp-new-chat-bg': newChatButtonColors?.background,
       '--cp-new-chat-text': newChatButtonColors?.text,
       '--cp-new-chat-focus-outline': newChatButtonColors?.focusOutline,
-      '--cp-drop-zone-ring': colors?.dropZoneRing,
-      '--cp-trigger-bg': colors?.triggerBackground,
-      '--cp-trigger-icon': colors?.triggerIcon,
-      '--cp-trigger-icon-idle': colors?.triggerIconIdle,
-      '--cp-skeleton-color': colors?.skeletonColor,
-      '--cp-unread-dot': colors?.unreadDot,
-      '--cp-indicator-dot': colors?.indicatorDot,
     });
 
     /* Stable, so `memo(ConversationList)` is not defeated by a fresh object
@@ -123,13 +115,17 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
 
     const listStyles = useMemo<ConversationListStyles>(
       () => ({
+        colors,
         typography: {
+          fontFamily: typography?.fontFamily,
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
         },
         itemIconBadgeClassName: panelStyles?.itemIconBadgeClassName,
       }),
       [
+        colors,
+        typography?.fontFamily,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         panelStyles?.itemIconBadgeClassName,

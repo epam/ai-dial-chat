@@ -14,19 +14,18 @@
 
 .item {
   color: var(--np-sidebar-item-text, var(--text-primary, #161b2d));
+  cursor: pointer;
 
   /* Keyboard focus gets the hover background too, not only an outline. */
   &:not(.itemActive):hover,
-  a:focus-visible > &:not(.itemActive) {
+  &:not(.itemActive):focus-visible {
     background: var(
       --np-sidebar-item-hover-bg,
       var(--bg-control-accent-alpha-hover-subtle, #2764d90a)
     );
   }
 
-  /* The link wrapper is `display: contents` and draws no outline, so the
-     focus ring moves onto the button it wraps. */
-  a:focus-visible > & {
+  &:focus-visible {
     outline: 1px solid
       var(--np-sidebar-focus-outline, var(--stroke-focus, #161b2d));
     outline-offset: 2px;

@@ -3,8 +3,8 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
-  GhostButton,
   GhostIconButton,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutSidebar, IconX } from '@tabler/icons-react';
 import {
@@ -20,19 +20,20 @@ import {
 } from 'react';
 import { NAVIGATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type {
-  NavigationLinkRenderer,
   NavigationPanelItem,
+  NavigationSidebarLinkRenderer,
 } from '../../models/navigation-item';
 import type { NavigationSidebarProps } from '../../models/navigation-sidebar-props';
 import { NavigationSidebarVariant } from '../../types/navigation-sidebar-variant';
 import { ItemGradients } from '../common/ItemGradients';
 import styles from './NavigationSidebar.module.scss';
 
-const renderPlainLink: NavigationLinkRenderer = (
+const renderPlainLink: NavigationSidebarLinkRenderer = (
   item: NavigationPanelItem,
   children: ReactNode,
+  linkProps,
 ) => (
-  <a href={item.href} className="contents">
+  <a href={item.href} {...linkProps}>
     {children}
   </a>
 );
@@ -68,7 +69,7 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
     variant = NavigationSidebarVariant.Sidebar,
     isCollapsed: isCollapsedProp = false,
     onToggleCollapse,
-    isOpen = true,
+    isOpen = false,
     onClose,
     id,
     logo,
@@ -94,21 +95,25 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
        it once it closes; a drawer that is open on mount keeps the focus where
        it is. */
     useEffect(() => {
+      const wasOpen = wasOpenRef.current;
+      wasOpenRef.current = isOpen;
       if (!isDrawer) return;
-      if (isOpen && !wasOpenRef.current) {
+      if (isOpen && !wasOpen) {
         returnFocusRef.current =
           document.activeElement instanceof HTMLElement
             ? document.activeElement
             : null;
         rootRef.current?.focus();
-      } else if (!isOpen && wasOpenRef.current) {
+      } else if (!isOpen && wasOpen) {
         returnFocusRef.current?.focus();
         returnFocusRef.current = null;
       }
-      wasOpenRef.current = isOpen;
     }, [isDrawer, isOpen]);
 
     const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+      /* React bubbles events through portals, so an Escape from a dialog or
+         menu a child renders elsewhere in the DOM is not the drawer's. */
+      if (!event.currentTarget.contains(event.target as Node)) return;
       if (event.key === 'Escape') onClose?.();
     };
 
@@ -120,6 +125,8 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
           '--np-sidebar-item-hover-bg': colors?.itemHoverBackground,
           '--np-sidebar-item-selected-bg': colors?.itemSelectedBackground,
           '--np-sidebar-focus-outline': colors?.focusOutline,
+          '--np-sidebar-gradient-start': colors?.itemActiveGradientStart,
+          '--np-sidebar-gradient-end': colors?.itemActiveGradientEnd,
           '--np-sidebar-item-active-icon':
             colors?.itemActiveIcon ?? `url(#${activeGradientId})`,
           '--np-sidebar-font-family': typography?.fontFamily,
@@ -130,6 +137,7 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
     const toggleLabel = isCollapsed
       ? (labels.expand ?? 'Expand sidebar')
       : (labels.collapse ?? 'Collapse sidebar');
+    const toggleName = labels.toggle ?? 'Sidebar';
     const closeLabel = labels.close ?? 'Close';
 
     const renderMark = (url: string, markClassName: string) => (
@@ -168,7 +176,7 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
           </span>
         }
         size={ElementSize.Large}
-        aria-label={toggleLabel}
+        aria-label={toggleName}
         aria-expanded={!isCollapsed}
         aria-controls={sidebarId}
         tooltipProps={{ tooltip: toggleLabel }}
@@ -232,56 +240,49 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
          when the host supplies one, otherwise by filling the outline `icon`. */
       const hasActiveGlyph = !!item.isActive && !!item.activeIcon;
       const Icon = (hasActiveGlyph && item.activeIcon) || item.icon;
-      /* The kit button resizes its icon slot, so the glyph is pinned to 24px
-         in a box of its own. */
       const icon = (
         <span
           className={mergeClasses(
-            'flex size-6 shrink-0 items-center justify-center [&>svg]:!size-6',
+            'flex size-6 shrink-0 items-center justify-center',
             styles.itemIcon,
           )}
         >
           <Icon size={DIAL_ICON_SIZE.LG} stroke={DIAL_KIT_ICON_STROKE} />
         </span>
       );
-      const buttonClassName = mergeClasses(
-        '!rounded-full',
-        styles.item,
-        item.isActive && styles.itemActive,
-        hasActiveGlyph && styles.itemFilled,
-        item.isActive && !hasActiveGlyph && styles.itemFilledOutline,
-        NAVIGATION_PANEL_CLASS.sidebarItem,
+      /* The link is the item itself, so no control sits inside it. Collapsed,
+         the label stays in the link as screen-reader text and the tooltip
+         shows it to pointer and keyboard users. */
+      const link = renderLink(
+        item,
+        <>
+          {icon}
+          <span className={isCollapsed ? 'sr-only' : labelClassName}>
+            {item.label}
+          </span>
+        </>,
+        {
+          className: mergeClasses(
+            'flex items-center rounded-full p-2 no-underline',
+            isCollapsed ? 'size-10 justify-center' : 'h-10 w-full gap-2',
+            styles.item,
+            item.isActive && styles.itemActive,
+            hasActiveGlyph && styles.itemFilled,
+            item.isActive && !hasActiveGlyph && styles.itemFilledOutline,
+            NAVIGATION_PANEL_CLASS.sidebarItem,
+          ),
+          'aria-current': item.isActive ? 'page' : undefined,
+        },
       );
 
       return (
         <li key={item.id}>
-          {renderLink(
-            item,
-            isCollapsed ? (
-              <GhostIconButton
-                icon={icon}
-                size={ElementSize.Large}
-                aria-label={item.label}
-                aria-current={item.isActive ? 'page' : undefined}
-                tooltipProps={{ tooltip: item.label }}
-                tabIndex={-1}
-                className={mergeClasses(
-                  '!size-10 !min-h-0 !min-w-0 !p-2',
-                  buttonClassName,
-                )}
-              />
-            ) : (
-              <GhostButton
-                iconBefore={icon}
-                label={<span className={labelClassName}>{item.label}</span>}
-                aria-current={item.isActive ? 'page' : undefined}
-                tabIndex={-1}
-                className={mergeClasses(
-                  'h-10 w-full justify-start gap-2 !border-0 p-2',
-                  buttonClassName,
-                )}
-              />
-            ),
+          {isCollapsed ? (
+            <Tooltip tooltip={item.label} asChild>
+              {link}
+            </Tooltip>
+          ) : (
+            link
           )}
         </li>
       );
@@ -319,7 +320,9 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
           NAVIGATION_PANEL_CLASS.sidebar,
         )}
       >
-        <ItemGradients activeGradientId={activeGradientId} />
+        {!colors?.itemActiveIcon && (
+          <ItemGradients activeGradientId={activeGradientId} />
+        )}
 
         {isDrawer ? (
           <div className="flex shrink-0 flex-col">

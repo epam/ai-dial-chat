@@ -71,6 +71,7 @@ import { Link } from 'react-router';
   items={items}
   labels={{
     ariaLabel: t(NavigationI18nKeys.AriaLabel),
+    toggle: t(NavigationI18nKeys.Sidebar),
     collapse: t(NavigationI18nKeys.CollapseSidebar),
     expand: t(NavigationI18nKeys.ExpandSidebar),
   }}
@@ -81,8 +82,8 @@ import { Link } from 'react-router';
   }}
   isCollapsed={isCollapsed}
   onToggleCollapse={toggleCollapsed}
-  renderLink={(item, children) => (
-    <Link to={item.id} className="contents">
+  renderLink={(item, children, linkProps) => (
+    <Link to={item.id} {...linkProps}>
       {children}
     </Link>
   )}
@@ -99,7 +100,9 @@ carries `aria-current="page"` and is filled the way the rail's is (its
 `activeIcon`, or the outline `icon` filled in place).
 
 The toggle carries `aria-expanded` and `aria-controls` pointing at the
-sidebar, and is named `labels.collapse` or `labels.expand`. Without
+sidebar, and is named `labels.toggle` in both states: `aria-expanded` reports
+whether the sidebar is expanded, while `labels.collapse` and `labels.expand`
+are its tooltip. Without
 `onToggleCollapse` no toggle renders and the logo is a plain link. Collapsed, the
 header is the toggle itself: the favicon at rest, the sidebar glyph on hover and
 keyboard focus. The glyph is mirrored under `dir="rtl"`.
@@ -110,11 +113,14 @@ button (`onClose`, named by `labels.close`) instead of the collapse toggle,
 `isCollapsed` is ignored, and the items sit closer to the edge. The component
 owns the drawer behaviour: it is fixed to the start edge and slides in
 (mirrored under `dir="rtl"`) when `isOpen` turns `true`, is `inert` and hidden
-while `isOpen` is `false`, moves focus into itself on opening and back to the
-control that opened it on closing, and calls `onClose` on Escape. `id` names the
+while `isOpen` is `false` (its default), moves focus into itself on opening and back to the
+control that opened it on closing, and calls `onClose` on an Escape pressed
+inside it (one that comes from a dialog its children render elsewhere in the DOM is ignored). `id` names the
 `<nav>` element, so the host's toggle can point `aria-controls` at it. The host
 still owns the toggle that sets `isOpen`, the backdrop if it wants one, and
 closing on navigation.
+
+Each item is one link: `renderLink(item, children, linkProps)` receives the icon and the label as `children` and the `className` and `aria-current` the link must carry, so spread `linkProps` onto the element you render. No control is nested inside it. Collapsed, the label stays in the link as screen-reader text and a tooltip shows it on hover and keyboard focus. Without `renderLink` each item is a plain `<a href={item.href}>`.
 
 `children` stay mounted while collapsed, so a list keeps its scroll position,
 but they are `inert` and hidden. The footer's DOM order follows the visual
@@ -171,10 +177,10 @@ The mobile counterpart. `onSelectItem` fires after the sheet closes so the host 
   onSettings={() => navigate(ROUTES.Settings)}
   footer={<FooterMessage />}
   labels={{
-    title: t(NavigationI18nKeys.Menu),
+    title: t('Menu'),
     close: t(ButtonsI18nKeys.Close),
     back: t(NavigationI18nKeys.Back),
-    profile: t(NavigationI18nKeys.Profile),
+    profile: t('Profile'),
     logOut: t(ButtonsI18nKeys.LogOut),
     settings: t(BasicI18nKeys.Settings),
   }}
@@ -223,7 +229,7 @@ Throws when called outside a `NavigableBottomSheet`.
 
 ## Theming
 
-Colors come from CSS custom properties with DIAL token fallbacks, overridable through each component's `styles.colors`. The rail reads `--np-bg`, `--np-item-text`, `--np-item-active-text`, `--np-item-selected-bg`, `--np-item-hover-bg`, `--np-item-hover-icon` (the icon stroke on hover), `--np-item-active-icon` (the active icon paint), and `--np-item-active-bg`; both icon vars default to a built-in blue-to-violet gradient. The active item is always filled, in the rail and in the sheet: an item that sets `activeIcon` swaps to that filled glyph, painted by `fill` instead of `stroke`, and an item without one fills its outline `icon` in place (`fill` plus `stroke`); the sidebar reads `--np-sidebar-bg`, `--np-sidebar-item-text`, `--np-sidebar-item-hover-bg`, `--np-sidebar-item-selected-bg`, `--np-sidebar-item-active-icon` (a built-in blue-to-violet gradient by default), `--np-sidebar-focus-outline` and `--np-sidebar-font-family`; the menus and sheet read `--np-menu-text`, `--np-menu-active-icon`, `--np-avatar-bg`, `--np-avatar-text`, `--np-trigger-hover-bg` (hover and keyboard focus), `--np-trigger-open-bg` (the `Profile` and `Compact` triggers while the menu is open), `--np-sheet-text`, `--np-sheet-icon`, `--np-sheet-item-hover`, `--np-sheet-item-active`, and `--np-sheet-divider`.
+Colors come from CSS custom properties with DIAL token fallbacks, overridable through each component's `styles.colors`. The rail reads `--np-bg`, `--np-item-text`, `--np-item-active-text`, `--np-item-selected-bg`, `--np-item-hover-bg`, `--np-item-hover-icon` (the icon stroke on hover), `--np-item-active-icon` (the active icon paint), and `--np-item-active-bg`; both icon vars default to a built-in blue-to-violet gradient. The active item is always filled, in the rail and in the sheet: an item that sets `activeIcon` swaps to that filled glyph, painted by `fill` instead of `stroke`, and an item without one fills its outline `icon` in place (`fill` plus `stroke`); the sidebar reads `--np-sidebar-bg`, `--np-sidebar-item-text`, `--np-sidebar-item-hover-bg`, `--np-sidebar-item-selected-bg`, `--np-sidebar-item-active-icon` (a built-in blue-to-violet gradient by default, whose ends are `--np-sidebar-gradient-start` and `--np-sidebar-gradient-end`), `--np-sidebar-focus-outline` and `--np-sidebar-font-family`; the menus and sheet read `--np-menu-text`, `--np-menu-active-icon`, `--np-avatar-bg`, `--np-avatar-text`, `--np-trigger-hover-bg` (hover and keyboard focus), `--np-trigger-open-bg` (the `Profile` and `Compact` triggers while the menu is open), `--np-sheet-text`, `--np-sheet-icon`, `--np-sheet-item-hover`, `--np-sheet-item-active`, and `--np-sheet-divider`.
 
 ## Enums
 

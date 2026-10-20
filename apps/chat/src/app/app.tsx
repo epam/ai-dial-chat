@@ -47,7 +47,6 @@ import {
   ChatI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
-import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useCanvasVisualizerMessageHandler } from '../hooks/attachment/useCanvasVisualizerMessageHandler';
@@ -129,7 +128,6 @@ const App: FC = () => {
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const { isNewVersionAvailable } = useAppVersionCheck();
   // TODO: remove in next release
-  const { isActive: isIsolatedView } = useIsolatedModelView();
 
   /*
    * Registers the overlay's conversation-list bridge. Mounted here (below
@@ -221,12 +219,13 @@ const App: FC = () => {
     }
   }, []);
 
-  /* A drawer opened on a mobile viewport closes behind any chat the user picks,
-     including the one already open, which changes no route. */
+  /* The drawer has nothing to close once the viewport leaves the mobile band. */
   useEffect(() => {
     if (!isMobile) closeNav();
   }, [isMobile, closeNav]);
 
+  /* A drawer opened on a mobile viewport closes behind any chat the user picks,
+     including the one already open, which changes no route. */
   const handleSelectConversation = useCallback(
     (id: string) => {
       if (isMobile) {
@@ -269,18 +268,13 @@ const App: FC = () => {
         <Suspense fallback={null}>
           <SigninInterruptDialog />
         </Suspense>
-        {/* TODO: remove in next release. The isolated view hides the whole
-            navigation directly instead of adding a new permanent
-            OverlayFeature key for a temporary shim. */}
-        {!isIsolatedView && (
-          <SidebarNavigation
-            chats={conversationPanelView}
-            isCollapsed={!isPanelOpen}
-            onToggleCollapse={togglePanel}
-            isOpen={isNavOpen}
-            onClose={closeNav}
-          />
-        )}
+        <SidebarNavigation
+          chats={conversationPanelView}
+          isCollapsed={!isPanelOpen}
+          onToggleCollapse={togglePanel}
+          isOpen={isNavOpen}
+          onClose={closeNav}
+        />
 
         <ActiveScheduledTaskProvider>
           <main

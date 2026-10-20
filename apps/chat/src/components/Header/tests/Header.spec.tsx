@@ -8,6 +8,7 @@ import { MOBILE_SIDEBAR_ID } from '../../../constants/layout';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
+  ConversationPanelI18nKeys,
   NavigationI18nKeys,
   SidebarI18nKeys,
 } from '../../../constants/translation-keys';
@@ -87,7 +88,7 @@ describe('Header', () => {
     renderHeader();
 
     const toggle = screen.getByRole('button', {
-      name: NavigationI18nKeys.OpenMenu,
+      name: NavigationI18nKeys.Menu,
     });
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(toggle.getAttribute('aria-controls')).toBe(MOBILE_SIDEBAR_ID);
@@ -98,7 +99,7 @@ describe('Header', () => {
 
     expect(
       screen
-        .getByRole('button', { name: NavigationI18nKeys.OpenMenu })
+        .getByRole('button', { name: NavigationI18nKeys.Menu })
         .getAttribute('aria-expanded'),
     ).toBe('true');
   });
@@ -108,7 +109,7 @@ describe('Header', () => {
     renderHeader({ onMenuToggle });
 
     await userEvent.click(
-      screen.getByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+      screen.getByRole('button', { name: NavigationI18nKeys.Menu }),
     );
 
     expect(onMenuToggle).toHaveBeenCalledOnce();
@@ -123,7 +124,7 @@ describe('Header', () => {
     renderHeader();
 
     expect(
-      screen.queryByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+      screen.queryByRole('button', { name: NavigationI18nKeys.Menu }),
     ).toBeNull();
   });
 
@@ -136,7 +137,7 @@ describe('Header', () => {
     renderHeader();
 
     expect(
-      screen.queryByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+      screen.queryByRole('button', { name: NavigationI18nKeys.Menu }),
     ).toBeNull();
   });
 
@@ -147,8 +148,13 @@ describe('Header', () => {
     renderHeader();
 
     expect(
-      screen.getByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+      screen.getByRole('button', {
+        name: ConversationPanelI18nKeys.ChatsAndTasks,
+      }),
     ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: NavigationI18nKeys.Menu }),
+    ).toBeNull();
   });
 
   it('renders Header component', () => {

@@ -11,7 +11,7 @@ The application's navigation: one sidebar that merges primary navigation and the
 
 The page headers of Catalog, File manager, Usage and Scheduled tasks and the File manager frame (`file-manager-standalone-page`) are shared by both bands.
 
-The isolated model view SHALL render no sidebar and no header toggle target.
+The isolated model view SHALL keep the conversation list and drop the navigation: the mobile drawer carries the chats alone, because the view forces `hide-navigation-menu`, and the desktop sidebar renders no items, user menu or Usage link.
 
 **Feature flag:** none. The sidebar is not gated by a UI-feature key; the layout keys in "Existing layout keys in the sidebar" apply inside it. This repo has no `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` role gate.
 
@@ -30,10 +30,10 @@ The isolated model view SHALL render no sidebar and no header toggle target.
 - **WHEN** the viewport is resized from 1440px to 1024px with the drawer never opened
 - **THEN** the column is replaced by the closed drawer without a page reload, and the drawer is closed
 
-#### Scenario: The isolated view renders no navigation
+#### Scenario: The isolated view keeps the chats and drops the navigation
 
 - **WHEN** the isolated model view is active
-- **THEN** no sidebar renders
+- **THEN** the sidebar renders the conversation block alone, with no items, user menu or Usage link, and the header toggle on mobile opens a drawer that holds the chats
 
 ---
 
@@ -43,7 +43,7 @@ In the `mobile` band `SidebarNavigation` SHALL render the sidebar with `Navigati
 
 The drawer carries the same items, conversation block, Usage link and user menu as the column, with the logo and a close button in its header instead of the collapse toggle. It has no collapsed state. There is no backdrop, as the conversation drawer it replaces had none.
 
-While closed the drawer SHALL be `inert` and hidden from assistive technology, while staying mounted so the conversation list keeps its state. When it opens, focus SHALL move into it; when it closes, focus SHALL return to the control that had it; a drawer that is open on mount keeps the focus where it is. The lib SHALL call `onClose` on the close button and on Escape; the app SHALL also close it on any route change, when a conversation or New chat is chosen (even the one already open), and when the viewport leaves the `mobile` band.
+While closed the drawer SHALL be `inert` and hidden from assistive technology, while staying mounted so the conversation list keeps its state. When it opens, focus SHALL move into it; when it closes, focus SHALL return to the control that had it; a drawer that is open on mount keeps the focus where it is. The lib SHALL call `onClose` on the close button and on an Escape pressed inside the drawer, ignoring one that comes from a dialog or menu its children render elsewhere in the DOM; the app SHALL also close it on any route change, when a conversation or New chat is chosen (even the one already open), and when the viewport leaves the `mobile` band.
 
 The user menu in the drawer SHALL carry the keyboard-shortcut group in addition to the language group. `hide-navigation-menu` removes the drawer's items, user menu and Usage link, leaving the conversation block.
 
@@ -80,7 +80,7 @@ The user menu in the drawer SHALL carry the keyboard-shortcut group in addition 
 
 ### Requirement: Mobile header
 
-In the `mobile` band `Header` (hidden from the `desktop` band) SHALL render a 48px-high row with a 1px `border-b border-b-tertiary` divider and a transparent background, as a three-column grid: on the start side the sidebar toggle (a `GhostIconButton` with the sidebar glyph, mirrored under RTL, named `t('navigation.openMenu')`, with `aria-expanded` and `aria-controls`) followed by a New chat button (a plus glyph named `t('buttons.newChat')`); in the middle the logo; on the end side the sources toggle with the right-panel glyph, mirrored under RTL.
+In the `mobile` band `Header` (hidden from the `desktop` band) SHALL render a 48px-high row with a 1px `border-b border-b-tertiary` divider and a transparent background, as a three-column grid: on the start side the sidebar toggle (a `GhostIconButton` with the sidebar glyph, mirrored under RTL, named `t('navigation.menu')` ("Navigation menu") — or `t('conversationPanel.chatsAndTasks')` while `hide-navigation-menu` leaves the drawer with the chats alone — under the same name in both states, with `aria-expanded` and `aria-controls`) followed by a New chat button (a plus glyph named `t('buttons.newChat')`); in the middle the logo; on the end side the sources toggle with the right-panel glyph, mirrored under RTL.
 
 The toggle SHALL render when the header is enabled and the drawer is reachable: `hide-navigation-menu` is off, or the conversation section and its panel toggle are both on. The New chat button SHALL render on every route when the header is enabled, `hide-new-conversation` is off and a handler is given. The sources toggle keeps its existing rules. With `header` off and `show-header-logo` on, the row carries only the logo.
 
@@ -157,15 +157,15 @@ The width change SHALL animate, except under `prefers-reduced-motion: reduce`.
 
 **Toggle button:**
 - carries `aria-expanded` and `aria-controls` pointing at the sidebar;
-- is named `t('navigation.collapseSidebar')` ("Collapse sidebar") while expanded and `t('navigation.expandSidebar')` ("Expand sidebar") while collapsed;
-- uses the same string as its tooltip.
+- is named `t('navigation.sidebar')` ("Sidebar") in both states, so `aria-expanded` is the only thing that reports the state;
+- shows `t('navigation.collapseSidebar')` ("Collapse sidebar") as its tooltip while expanded and `t('navigation.expandSidebar')` ("Expand sidebar") while collapsed.
 
 **RTL:** the sidebar sits at the inline start. All spacing and positioning use logical properties. The sidebar-toggle glyph is mirrored with `rtl:scale-x-[-1]`. The other icons are not mirrored.
 
 #### Scenario: Collapsing hides the conversation block from keyboard and assistive tech
 
 - **WHEN** the user activates "Collapse sidebar"
-- **THEN** the sidebar renders at 72px, the toggle reports `aria-expanded="false"` and is named "Expand sidebar", and the conversation block is `inert`
+- **THEN** the sidebar renders at 72px, the toggle reports `aria-expanded="false"` under the same name, and the conversation block is `inert`
 
 #### Scenario: Expanding restores the block
 
@@ -233,7 +233,9 @@ The sidebar SHALL render the items from `useNavigationItems`, in `NAVIGATION_CON
 
 **Expanded:** each item is a link row with its icon and visible label.
 
-**Collapsed:** each item is an icon-only link named by its label, with the label as its tooltip.
+**Collapsed:** each item is an icon-only link whose label stays in the link as screen-reader text, with the label as its tooltip on pointer hover and keyboard focus.
+
+Each item is the link itself: the host's `renderLink` receives the item's content and the `className` and `aria-current` the link must carry, so no button or other control is nested inside a link.
 
 **Active item:** carries `aria-current="page"`, the selected tint and its filled `activeIcon`.
 
@@ -369,7 +371,7 @@ The new elements SHALL carry the new public classes:
 - `dial-navigation-panel-sidebar`, `dial-navigation-panel-sidebar-item` and `dial-navigation-panel-sidebar-footer`;
 - `dial-cp-list`, `dial-cp-list-header` and `dial-cp-list-section`.
 
-`NavigationSidebar` SHALL take `variant?: NavigationSidebarVariant` (`Sidebar` by default, `Drawer`), `isOpen` (`true` by default), an optional `onClose`, an optional `id` and an optional `labels.close`; the drawer variant is 320px wide, shows a close button instead of the collapse toggle, ignores `isCollapsed`, and owns its position, slide-in, `inert` state, focus handling and Escape dismissal, while the host owns the toggle that sets `isOpen`. `NavigationSidebarVariant` SHALL be exported from `@epam/ai-dial-navigation-panel`. The earlier `NavigationPanel`, `NavigationSheet` and `ConversationPanel` SHALL stay exported and unchanged, so a library host can use the earlier or the new surfaces.
+`NavigationSidebar` SHALL take `variant?: NavigationSidebarVariant` (`Sidebar` by default, `Drawer`), `isOpen` (`false` by default), an optional `onClose`, an optional `id` and an optional `labels.close`; the drawer variant is 320px wide, shows a close button instead of the collapse toggle, ignores `isCollapsed`, and owns its position, slide-in, `inert` state, focus handling and Escape dismissal, while the host owns the toggle that sets `isOpen`. `NavigationSidebarVariant` SHALL be exported from `@epam/ai-dial-navigation-panel`. The earlier `NavigationPanel`, `NavigationSheet` and `ConversationPanel` SHALL stay exported and unchanged, so a library host can use the earlier or the new surfaces.
 
 None of the existing public classes SHALL be applied to them. Every color override SHALL map one-to-one onto a CSS custom property its stylesheet reads.
 

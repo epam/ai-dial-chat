@@ -48,9 +48,6 @@ vi.mock('../../context/SourcesSidebarContext', () => ({
 vi.mock('../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'dark' }),
 }));
-vi.mock('../../context/IsolatedModelViewContext', () => ({
-  useIsolatedModelView: () => ({ isActive: false }),
-}));
 vi.mock('../../context/ActiveScheduledTaskContext', () => ({
   ActiveScheduledTaskProvider: ({ children }: { children: unknown }) =>
     children,

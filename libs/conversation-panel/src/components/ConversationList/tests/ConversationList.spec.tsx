@@ -86,30 +86,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
   SkeletonVariant: { Circular: 'circular' },
-  Search: ({
-    onChange,
-    placeholder,
-    value,
-    clearLabel,
-    wrapperClassName,
-  }: {
-    onChange?: (v?: string) => void;
-    placeholder?: string;
-    value?: string;
-    clearLabel?: string;
-    wrapperClassName?: string;
-  }) => (
-    <div data-testid="search-wrapper" className={wrapperClassName}>
-      <input
-        type="search"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-      />
-      <button aria-label={clearLabel} onClick={() => onChange?.(undefined)} />
-    </div>
-  ),
-
   Button: ({
     onClick,
     label,
@@ -268,6 +244,17 @@ const getRow = (name: string): HTMLElement => {
 };
 
 describe('ConversationList', () => {
+  it('keeps the list valid by making each group header a list item', () => {
+    render(<ConversationList {...BASE_PROPS} conversations={items} />);
+
+    for (const heading of ['Pinned', 'My chats', 'Shared', 'Organization']) {
+      const header = screen
+        .getAllByRole('listitem')
+        .find((item) => within(item).queryByText(heading) != null);
+      expect(header).toBeTruthy();
+    }
+  });
+
   it('renders every group', () => {
     render(<ConversationList {...BASE_PROPS} conversations={items} />);
 
@@ -286,6 +273,24 @@ describe('ConversationList', () => {
     /* eslint-enable testing-library/no-node-access */
 
     expect(root?.classList).toContain(CONVERSATION_PANEL_CLASS.list);
+  });
+
+  it('puts the typography class and font family on the list root', () => {
+    render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={items}
+        styles={{
+          typography: { fontClassName: 'dial-small-text', fontFamily: 'Inter' },
+        }}
+      />,
+    );
+
+    /* eslint-disable testing-library/no-node-access -- the root is found as in the public-class test above */
+    const root = screen.getByRole('status').parentElement;
+    /* eslint-enable testing-library/no-node-access */
+
+    expect(root?.classList).toContain('dial-small-text');
   });
 
   it('applies the controlled filter', () => {

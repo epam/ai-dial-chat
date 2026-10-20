@@ -22,7 +22,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-hidden'?: boolean;
   }) => (
     <div
-      data-testid="dial-skeleton"
+      role="progressbar"
+      aria-label="loading skeleton"
       data-variant={variant}
       data-width={width}
       data-height={height}
@@ -94,11 +95,7 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   mergeClasses: (...classes: (string | undefined | null | false)[]) =>
     classes.filter(Boolean).join(' '),
   DeploymentIcon: ({ src, tooltip }: { src?: string; tooltip?: string }) => (
-    <img
-      data-testid="deployment-icon"
-      src={src}
-      alt={tooltip ?? 'deployment-icon'}
-    />
+    <img src={src} alt={tooltip ?? 'deployment-icon'} />
   ),
 }));
 
@@ -136,6 +133,12 @@ describe('ConversationRow — Indicator variant', () => {
     renderIndicator({ isIconLoading: true } as never);
 
     expect(screen.queryByRole('img', { name: 'deployment-icon' })).toBeNull();
+    expect(
+      screen.queryByRole('progressbar', {
+        name: 'loading skeleton',
+        hidden: true,
+      }),
+    ).toBeNull();
   });
 
   it('ignores a host-supplied leading icon', () => {

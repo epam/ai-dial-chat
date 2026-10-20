@@ -30,6 +30,7 @@ vi.mock('../../ConversationListHeader/ConversationListHeader', () => ({
     isExpanded,
     onToggleExpanded,
     onSearchChange,
+    onSearchOpenChange,
     onFilterChange,
     searchQuery,
     activeFilter,
@@ -39,6 +40,7 @@ vi.mock('../../ConversationListHeader/ConversationListHeader', () => ({
     isExpanded?: boolean;
     onToggleExpanded?: () => void;
     onSearchChange?: (query: string) => void;
+    onSearchOpenChange?: (isOpen: boolean) => void;
     onFilterChange?: (tab: string) => void;
     searchQuery?: string;
     activeFilter?: string;
@@ -53,6 +55,11 @@ vi.mock('../../ConversationListHeader/ConversationListHeader', () => ({
       <button
         aria-label="type query"
         onClick={() => onSearchChange?.('plot')}
+      />
+      <button aria-label="clear query" onClick={() => onSearchChange?.('')} />
+      <button
+        aria-label="open search"
+        onClick={() => onSearchOpenChange?.(true)}
       />
       {onFilterChange && (
         <button
@@ -75,6 +82,7 @@ vi.mock('../../ConversationList/ConversationList', () => ({
         aria-label="conversation list"
         className={props.className as string | undefined}
       >
+        <input aria-label="list state" />
         {(props.conversations as { id: string }[]).map((item) => (
           <button
             key={item.id}
@@ -213,6 +221,54 @@ describe('ConversationListSection', () => {
         .getByRole('button', { name: 'toggle list' })
         .getAttribute('aria-expanded'),
     ).toBe('false');
+  });
+
+  it('keeps the list mounted while collapsed, so its own state survives', () => {
+    renderSection();
+    fireEvent.change(screen.getByRole('textbox', { name: 'list state' }), {
+      target: { value: 'kept' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'toggle list' }));
+    expect(screen.queryByRole('textbox', { name: 'list state' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'toggle list' }));
+
+    expect(
+      (screen.getByRole('textbox', { name: 'list state' }) as HTMLInputElement)
+        .value,
+    ).toBe('kept');
+  });
+
+  it('expands a collapsed list when the search opens', () => {
+    renderSection();
+    fireEvent.click(screen.getByRole('button', { name: 'toggle list' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'open search' }));
+
+    expect(
+      screen.getByRole('list', { name: 'conversation list' }),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: 'toggle list' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
+  });
+
+  it('expands a collapsed list when a search query is typed, but not when it is cleared', () => {
+    renderSection();
+    fireEvent.click(screen.getByRole('button', { name: 'toggle list' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'clear query' }));
+    expect(
+      screen.queryByRole('list', { name: 'conversation list' }),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'type query' }));
+    expect(
+      screen.getByRole('list', { name: 'conversation list' }),
+    ).toBeTruthy();
   });
 
   it('renders the header actions slot inside the header', () => {

@@ -77,3 +77,7 @@
     var(--bg-control-disable-primary, #dce0e8)
   );
 }
+
+.list {
+  font-family: var(--cp-list-font-family, inherit);
+}

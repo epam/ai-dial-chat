@@ -29,6 +29,7 @@ import {
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useIsolatedModelView } from '../../context/IsolatedModelViewContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useUnsavedChanges } from '../../context/UnsavedChangesContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -40,6 +41,7 @@ import { useNavigationUserProfile } from '../../hooks/navigation/useNavigationUs
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { AuthStatus } from '../../types/auth-status';
 import { getIconPath } from '../../utils/icon-path';
+import FooterMessage from '../FooterMessage/FooterMessage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import UsageLink from './UsageLink';
 
@@ -83,6 +85,10 @@ const SidebarNavigation: FC<Props> = ({
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
   const isToggleEnabled = useUiFeature(OverlayFeature.ConversationsPanelToggle);
   const { hasNavigation } = useMobileSidebarContent();
+  /* TODO: remove in next release, with the isolated view. It shows the chats
+     alone: `hide-navigation-menu` is forced on, which empties the mobile
+     drawer, and the desktop sidebar drops its navigation here. */
+  const { isActive: isIsolatedView } = useIsolatedModelView();
   const allItems = useNavigationItems();
   const profile = useNavigationUserProfile();
   const { languageGroup, keyboardGroup } = useNavigationMenuGroups();
@@ -110,13 +116,14 @@ const SidebarNavigation: FC<Props> = ({
     if (isMobile && isOpen) onClose?.();
   }, [pathname, isMobile, isOpen, onClose]);
 
+  const isNavigationShown = isMobile ? hasNavigation : !isIsolatedView;
   const isUserMenuShown =
     status === AuthStatus.Authenticated &&
     !!user &&
     !isUserMenuHidden &&
-    (!isMobile || hasNavigation);
-  const items = isMobile && !hasNavigation ? [] : allItems;
-  const isUsageShown = !isSettingsPageHidden && (!isMobile || hasNavigation);
+    isNavigationShown;
+  const items = isNavigationShown ? allItems : [];
+  const isUsageShown = !isSettingsPageHidden && isNavigationShown;
   const iconUrl = currentThemeFavicon
     ? (event?.iconUrl ?? getIconPath(currentThemeFavicon))
     : undefined;
@@ -143,6 +150,7 @@ const SidebarNavigation: FC<Props> = ({
       items={items}
       labels={{
         ariaLabel: t(NavigationI18nKeys.AriaLabel),
+        toggle: t(NavigationI18nKeys.Sidebar),
         collapse: t(NavigationI18nKeys.CollapseSidebar),
         expand: t(NavigationI18nKeys.ExpandSidebar),
         close: t(ButtonsI18nKeys.Close),
@@ -161,8 +169,8 @@ const SidebarNavigation: FC<Props> = ({
       onToggleCollapse={isToggleEnabled ? onToggleCollapse : undefined}
       isOpen={isOpen}
       onClose={onClose}
-      renderLink={(item, children) => (
-        <Link to={item.id} className="contents">
+      renderLink={(item, children, linkProps) => (
+        <Link to={item.id} {...linkProps}>
           {children}
         </Link>
       )}
@@ -186,6 +194,9 @@ const SidebarNavigation: FC<Props> = ({
       footerActions={isUsageShown ? <UsageLink /> : undefined}
     >
       {chats}
+      {/* The drawer repeats the operator footer on every route, as the sheet
+          it replaced did; on desktop it stays under the chat input. */}
+      {isMobile && <FooterMessage />}
     </NavigationSidebar>
   );
 

@@ -171,6 +171,11 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   };
 });
 
+const isolatedView = vi.hoisted(() => ({ isActive: false }));
+vi.mock('../../../context/IsolatedModelViewContext', () => ({
+  useIsolatedModelView: () => ({ isActive: isolatedView.isActive }),
+}));
+
 vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentThemeFavicon: undefined }),
 }));
@@ -193,6 +198,10 @@ vi.mock('../../SettingsModal/SettingsModal', () => ({
   ),
 }));
 
+vi.mock('../../FooterMessage/FooterMessage', () => ({
+  default: () => <div>Footer message</div>,
+}));
+
 vi.mock('../../LogoutConfirmation/LogoutConfirmationModal', () => ({
   default: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <p>Log out confirmation</p> : null,
@@ -205,10 +214,6 @@ vi.mock('../../../context/UnsavedChangesContext', () => ({
 
 vi.mock('../../../server-api/auth.api', () => ({
   logout: vi.fn(),
-}));
-
-vi.mock('../../FooterMessage/FooterMessage', () => ({
-  default: () => <div>Footer message</div>,
 }));
 
 const authenticatedUser = {
@@ -229,6 +234,7 @@ const setDefaults = (
   >,
 ) => {
   vi.clearAllMocks();
+  isolatedView.isActive = false;
   resetSupportedLanguages();
   useAppConfigMock.mockReturnValue({
     status: UserConfigStatus.Ready,
@@ -352,6 +358,16 @@ describe('SidebarNavigation', () => {
     enableSidebar(mockUseUiFeature);
   });
 
+  it('leaves the operator footer to the chat input on desktop', () => {
+    render(
+      <MemoryRouter>
+        <SidebarNavigation chats={<span>chat list</span>} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText('Footer message')).toBeNull();
+  });
+
   it('renders the sidebar instead of the rail', () => {
     render(
       <MemoryRouter>
@@ -362,7 +378,9 @@ describe('SidebarNavigation', () => {
     expect(
       screen.getByRole('navigation', { name: NavigationI18nKeys.AriaLabel }),
     ).toBeTruthy();
-    expect(screen.getByLabelText('chats slot').textContent).toBe('chat list');
+    expect(screen.getByLabelText('chats slot').textContent).toContain(
+      'chat list',
+    );
     expect(sidebarProps.current).toBeDefined();
   });
 
@@ -655,8 +673,16 @@ describe('SidebarNavigation — mobile drawer', () => {
     renderDrawer();
 
     expect(sidebarProps.current?.variant).toBe(NavigationSidebarVariant.Drawer);
-    expect(screen.getByLabelText('chats slot').textContent).toBe('chat list');
+    expect(screen.getByLabelText('chats slot').textContent).toContain(
+      'chat list',
+    );
     expect(screen.getByRole('button', { name: 'user menu' })).toBeTruthy();
+  });
+
+  it('carries the operator footer below the chats on every route', () => {
+    renderDrawer();
+
+    expect(screen.getByText('Footer message')).toBeTruthy();
   });
 
   it('closes through the close button', async () => {
@@ -731,7 +757,9 @@ describe('SidebarNavigation — mobile drawer', () => {
     it('keeps the chats but drops the items, the user menu and the Usage link', () => {
       renderDrawer({ isOpen: true });
 
-      expect(screen.getByLabelText('chats slot').textContent).toBe('chat list');
+      expect(screen.getByLabelText('chats slot').textContent).toContain(
+        'chat list',
+      );
       expect(sidebarProps.current?.items).toEqual([]);
       expect(screen.queryByRole('button', { name: 'user menu' })).toBeNull();
       expect(
@@ -809,5 +837,32 @@ describe('SidebarNavigation — log out', () => {
     expect(logout).toHaveBeenCalledOnce();
     expect(replaceSpy).toHaveBeenCalledOnce();
     expect(screen.queryByText('Log out confirmation')).toBeNull();
+  });
+});
+
+describe('SidebarNavigation — isolated model view', () => {
+  const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
+
+  beforeEach(() => {
+    viewport.isMobile = false;
+    userMenuProps.current = undefined;
+    sidebarProps.current = undefined;
+    setDefaults(mockUseUiFeature);
+    enableSidebar(mockUseUiFeature);
+    isolatedView.isActive = true;
+  });
+
+  it('keeps the chats and drops the items, the user menu and the Usage link on desktop', () => {
+    render(
+      <MemoryRouter>
+        <SidebarNavigation chats={<span>chat list</span>} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByLabelText('chats slot').textContent).toContain(
+      'chat list',
+    );
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
+    expect(screen.queryByRole('button', { name: 'user menu' })).toBeNull();
   });
 });

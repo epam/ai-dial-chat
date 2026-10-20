@@ -14,17 +14,59 @@ const mocks = vi.hoisted(() => ({
   setKeyboard: vi.fn(),
   setAgent: vi.fn(),
   storedAgent: null as string | null,
+  hasExtensions: true,
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+vi.mock('@epam/ai-dial-settings-panel', () => ({
+  SettingsPanel: ({
+    items,
+    activeId,
+    onSelect,
+  }: {
+    items: { id: string; label: string }[];
+    activeId: string;
+    onSelect: (id: string) => void;
+  }) => (
+    <div role="tablist">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          role="tab"
+          aria-selected={item.id === activeId}
+          onClick={() => onSelect(item.id)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
+}));
+
+vi.mock('../../../hooks/useSettingsTabConfig', () => ({
+  useSettingsTabConfig: () => ({
+    items: [
+      { id: 'preferences', label: 'Preferences' },
+      ...(mocks.hasExtensions
+        ? [{ id: 'extensions', label: 'Extensions' }]
+        : []),
+    ],
+    tabComponents: {
+      extensions: () => <p>extensions pane</p>,
+    },
+  }),
+}));
+
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  ButtonVariant: { Primary: 'primary' },
-  PopupSize: { Lg: 'lg' },
   DIAL_ICON_SIZE: { MD: 20 },
   DIAL_KIT_ICON_STROKE: 1.5,
+  mergeClasses: (...classes: (string | undefined | false)[]) =>
+    classes.filter(Boolean).join(' '),
+  ButtonVariant: { Primary: 'primary' },
+  PopupSize: { Lg: 'lg' },
   Popup: ({
     header,
     children,
@@ -104,6 +146,7 @@ describe('SettingsModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.storedAgent = null;
+    mocks.hasExtensions = true;
   });
 
   it('opens as a dialog named Settings', () => {
@@ -165,5 +208,51 @@ describe('SettingsModal', () => {
 
     expect(mocks.setTheme).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  describe('sections', () => {
+    it('lists the configured sections and starts on Preferences', () => {
+      render(<SettingsModal onClose={vi.fn()} />);
+
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.map((tab) => tab.textContent)).toEqual([
+        'Preferences',
+        'Extensions',
+      ]);
+      expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('shows the Extensions section with only a Close button', () => {
+      const onClose = vi.fn();
+      render(<SettingsModal onClose={onClose} />);
+
+      fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }));
+
+      expect(screen.getByText('extensions pane')).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Save }),
+      ).toBeNull();
+      fireEvent.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.Close }),
+      );
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the Preferences draft while another section is shown', () => {
+      render(<SettingsModal onClose={vi.fn()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'pick dark' }));
+
+      fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Preferences' }));
+
+      expect(screen.getByLabelText('draft theme').textContent).toBe('dark');
+    });
+
+    it('offers no Extensions section when the feature is off', () => {
+      mocks.hasExtensions = false;
+      render(<SettingsModal onClose={vi.fn()} />);
+
+      expect(screen.queryByRole('tab', { name: 'Extensions' })).toBeNull();
+    });
   });
 });

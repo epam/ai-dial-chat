@@ -842,4 +842,9 @@ It SHALL still announce the visually hidden `unreadIndicatorLabel` when unread. 
 #### Scenario: The list collapses through the header title
 
 - **WHEN** the user activates the header title
-- **THEN** the list is removed, and the title reports `aria-expanded="false"`
+- **THEN** the list is hidden and inert but stays mounted, so its open groups and scroll position survive, and the title reports `aria-expanded="false"`
+
+#### Scenario: Searching expands a collapsed list
+
+- **WHEN** the list is collapsed and the user opens the search or types a query
+- **THEN** the list expands, so the filtered rows and the no-results state are visible

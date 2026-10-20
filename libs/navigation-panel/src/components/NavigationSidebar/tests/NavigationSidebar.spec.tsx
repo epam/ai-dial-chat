@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { NAVIGATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import type { NavigationPanelItem } from '../../../models/navigation-item';
@@ -16,6 +17,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DIAL_KIT_ICON_STROKE: 1.5,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
+  Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   GhostButton: ({
     label,
     iconBefore,
@@ -82,6 +84,7 @@ const ITEMS: NavigationPanelItem[] = [
 
 const LABELS = {
   ariaLabel: 'Main navigation',
+  toggle: 'Sidebar',
   collapse: 'Collapse sidebar',
   expand: 'Expand sidebar',
 };
@@ -150,6 +153,16 @@ describe('NavigationSidebar', () => {
     ).toBe(false);
   });
 
+  it('renders each item as one link with no control nested inside it', () => {
+    renderSidebar();
+
+    for (const name of ['New chat', 'Catalog']) {
+      expect(
+        within(screen.getByRole('link', { name })).queryByRole('button'),
+      ).toBeNull();
+    }
+  });
+
   it('renders visible labels for every item when expanded', () => {
     renderSidebar();
 
@@ -160,9 +173,10 @@ describe('NavigationSidebar', () => {
   it('renders icon-only items named by their label when collapsed', () => {
     renderSidebar({ isCollapsed: true });
 
-    expect(screen.getByRole('button', { name: 'New chat' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Catalog' })).toBeTruthy();
-    expect(screen.queryByText('Catalog')).toBeNull();
+    expect(screen.getByRole('link', { name: 'New chat' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Catalog' })).toBeTruthy();
+    /* The label stays in the link as screen-reader text only. */
+    expect(screen.getByText('Catalog').className).toContain('sr-only');
   });
 
   it('marks only the active item as the current page', () => {
@@ -170,21 +184,21 @@ describe('NavigationSidebar', () => {
 
     expect(
       screen
-        .getByRole('button', { name: 'New chat' })
+        .getByRole('link', { name: 'New chat' })
         .getAttribute('aria-current'),
     ).toBe('page');
     expect(
       screen
-        .getByRole('button', { name: 'Catalog' })
+        .getByRole('link', { name: 'Catalog' })
         .hasAttribute('aria-current'),
     ).toBe(false);
   });
 
-  it('reports the toggle through aria-expanded and swaps its name', () => {
+  it('reports the toggle through aria-expanded under one stable name', () => {
     const onToggleCollapse = vi.fn();
     const { rerender } = renderSidebar({ onToggleCollapse });
 
-    const collapse = screen.getByRole('button', { name: 'Collapse sidebar' });
+    const collapse = screen.getByRole('button', { name: 'Sidebar' });
     expect(collapse.getAttribute('aria-expanded')).toBe('true');
     expect(collapse.getAttribute('aria-controls')).toBe(
       screen.getByRole('navigation').id,
@@ -204,7 +218,7 @@ describe('NavigationSidebar', () => {
     );
     expect(
       screen
-        .getByRole('button', { name: 'Expand sidebar' })
+        .getByRole('button', { name: 'Sidebar' })
         .getAttribute('aria-expanded'),
     ).toBe('false');
   });
@@ -212,7 +226,7 @@ describe('NavigationSidebar', () => {
   it('keeps keyboard focus on the toggle when the sidebar collapses', () => {
     const onToggleCollapse = vi.fn();
     const { rerender } = renderSidebar({ onToggleCollapse });
-    const toggle = screen.getByRole('button', { name: 'Collapse sidebar' });
+    const toggle = screen.getByRole('button', { name: 'Sidebar' });
     toggle.focus();
 
     rerender(
@@ -225,7 +239,7 @@ describe('NavigationSidebar', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toBe(toggle);
+    expect(screen.getByRole('button', { name: 'Sidebar' })).toBe(toggle);
     // eslint-disable-next-line testing-library/no-node-access -- focus is a property of the document, not of a queryable node
     expect(document.activeElement).toBe(toggle);
   });
@@ -233,9 +247,7 @@ describe('NavigationSidebar', () => {
   it('renders no toggle without a handler and keeps the logo link', () => {
     renderSidebar({ onToggleCollapse: undefined });
 
-    expect(
-      screen.queryByRole('button', { name: 'Collapse sidebar' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sidebar' })).toBeNull();
     expect(
       screen.getByRole('link', { name: 'Logo' }).getAttribute('href'),
     ).toBe('/');
@@ -337,6 +349,7 @@ describe('NavigationSidebar', () => {
     ) =>
       renderSidebar({
         variant: NavigationSidebarVariant.Drawer,
+        isOpen: true,
         onToggleCollapse: undefined,
         onClose: vi.fn(),
         ...props,
@@ -358,9 +371,7 @@ describe('NavigationSidebar', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
       expect(onClose).toHaveBeenCalledOnce();
-      expect(
-        screen.queryByRole('button', { name: 'Collapse sidebar' }),
-      ).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Sidebar' })).toBeNull();
     });
 
     it('names the close button from the label when one is given', () => {
@@ -376,7 +387,15 @@ describe('NavigationSidebar', () => {
       expect(screen.getByRole('link', { name: LOGO.ariaLabel })).toBeTruthy();
     });
 
-    it('is shown, reachable and not translated by default', () => {
+    it('is closed and inert unless the host opens it', () => {
+      renderSidebar({ variant: NavigationSidebarVariant.Drawer });
+
+      expect(
+        screen.getByRole('navigation', { hidden: true }).hasAttribute('inert'),
+      ).toBe(true);
+    });
+
+    it('is shown, reachable and not translated while open', () => {
       renderDrawer();
 
       const drawer = screen.getByRole('navigation');
@@ -412,6 +431,61 @@ describe('NavigationSidebar', () => {
       expect(onClose).toHaveBeenCalledOnce();
     });
 
+    it('ignores an Escape that comes from a dialog its children render elsewhere', () => {
+      const onClose = vi.fn();
+      const PortalledDialog = () =>
+        createPortal(<button>portalled dialog</button>, document.body);
+      render(
+        <NavigationSidebar
+          items={ITEMS}
+          labels={LABELS}
+          variant={NavigationSidebarVariant.Drawer}
+          isOpen
+          onClose={onClose}
+        >
+          <PortalledDialog />
+        </NavigationSidebar>,
+      );
+
+      fireEvent.keyDown(
+        screen.getByRole('button', { name: 'portalled dialog' }),
+        {
+          key: 'Escape',
+        },
+      );
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('does not return focus to a stale opener after a stint as a sidebar', () => {
+      const renderAs = (variant: NavigationSidebarVariant, isOpen: boolean) => (
+        <>
+          <button>opener</button>
+          <button>other</button>
+          <NavigationSidebar
+            items={ITEMS}
+            labels={LABELS}
+            variant={variant}
+            isOpen={isOpen}
+          />
+        </>
+      );
+      const { rerender } = render(
+        renderAs(NavigationSidebarVariant.Drawer, false),
+      );
+      screen.getByRole('button', { name: 'opener' }).focus();
+      rerender(renderAs(NavigationSidebarVariant.Drawer, true));
+
+      rerender(renderAs(NavigationSidebarVariant.Sidebar, true));
+      rerender(renderAs(NavigationSidebarVariant.Sidebar, false));
+      const other = screen.getByRole('button', { name: 'other' });
+      other.focus();
+      rerender(renderAs(NavigationSidebarVariant.Drawer, false));
+
+      /* eslint-disable-next-line testing-library/no-node-access -- focus is a property of the document, not of a queryable node */
+      expect(document.activeElement).toBe(other);
+    });
+
     it('moves focus in when it opens and back to the opener when it closes', () => {
       const renderWithOpener = (isOpen: boolean) => (
         <>
@@ -445,6 +519,7 @@ describe('NavigationSidebar', () => {
             items={ITEMS}
             labels={LABELS}
             variant={NavigationSidebarVariant.Drawer}
+            isOpen
           />
         </>,
       );
@@ -471,7 +546,7 @@ describe('NavigationSidebar — public class names', () => {
   it('stamps every item, expanded and collapsed', () => {
     const { rerender } = renderSidebar();
     for (const name of ['New chat', 'Catalog']) {
-      expect(screen.getByRole('button', { name }).classList).toContain(
+      expect(screen.getByRole('link', { name }).classList).toContain(
         NAVIGATION_PANEL_CLASS.sidebarItem,
       );
     }
@@ -486,7 +561,7 @@ describe('NavigationSidebar — public class names', () => {
     );
 
     for (const name of ['New chat', 'Catalog']) {
-      expect(screen.getByRole('button', { name }).classList).toContain(
+      expect(screen.getByRole('link', { name }).classList).toContain(
         NAVIGATION_PANEL_CLASS.sidebarItem,
       );
     }

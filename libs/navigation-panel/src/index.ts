@@ -15,6 +15,8 @@ export { useSheetNavigation } from './hooks/useSheetNavigation';
 export type {
   NavigationItemIcon,
   NavigationLinkRenderer,
+  NavigationSidebarLinkProps,
+  NavigationSidebarLinkRenderer,
   NavigationPanelItem,
 } from './models/navigation-item';
 export type {

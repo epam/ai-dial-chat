@@ -17,6 +17,7 @@ import { useMatch } from 'react-router';
 import { MOBILE_SIDEBAR_ID } from '../../constants/layout';
 import {
   ButtonsI18nKeys,
+  ConversationPanelI18nKeys,
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
 import { useMobileSidebarContent } from '../../hooks/navigation/useMobileSidebarContent';
@@ -45,7 +46,8 @@ const Header: FC<Props> = ({ onMenuToggle, isMenuOpen = false, onNewChat }) => {
   const isNewConversationHidden = useUiFeature(
     OverlayFeature.HideNewConversation,
   );
-  const { isReachable: isSidebarReachable } = useMobileSidebarContent();
+  const { hasNavigation, isReachable: isSidebarReachable } =
+    useMobileSidebarContent();
 
   /* `show-header-logo` keeps the brand visible on mobile even when the host
      turns the header off: the row then carries only the logo. */
@@ -71,7 +73,11 @@ const Header: FC<Props> = ({ onMenuToggle, isMenuOpen = false, onNewChat }) => {
                 aria-hidden
               />
             }
-            aria-label={t(NavigationI18nKeys.OpenMenu)}
+            aria-label={t(
+              hasNavigation
+                ? NavigationI18nKeys.Menu
+                : ConversationPanelI18nKeys.ChatsAndTasks,
+            )}
             aria-expanded={isMenuOpen}
             aria-controls={MOBILE_SIDEBAR_ID}
             onClick={onMenuToggle}

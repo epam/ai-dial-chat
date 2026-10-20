@@ -46,9 +46,11 @@ export const RowRenderer = ({
 
   if (row.kind === VirtualRowKind.Header) {
     const isPinnedHeader = row.groupKey === FilterTab.Pinned;
+    /* A list owns only list items: the header is one, and a conversation row
+       is the `li` the row itself renders. */
     return (
       <div
-        role="presentation"
+        role="listitem"
         style={style}
         className={getHeaderPaddingClassName(index, isIndicator)}
       >
