@@ -8,7 +8,7 @@ The mobile navigation bottom sheet: its shell primitive, the generic stack navig
 
 On mobile viewports the header hamburger opens a multi-page bottom sheet anchored to the bottom of the screen. The sheet lists the navigation destinations and a Profile entry point that leads to user identity, host-supplied settings groups (today only the keyboard-shortcut preference), an optional Settings link, and logout. Theme selection is not offered in the sheet; it lives only in the Settings page's Preferences tab.
 
-The sheet is a generic, prop-driven component in `libs/navigation-panel` (`@epam/ai-dial-navigation-panel`): `NavigationSheet`, `NavigableBottomSheet`, `NavigationMenuPage`, `ProfilePage`, `OptionListPage`, `SheetRow`, and `useSheetNavigation`. The lib does no i18n, routing, or feature gating. `apps/chat/src/components/Navigation/Navigation.tsx` resolves labels with `t()`, builds the items, profile, and settings groups, performs navigation, and owns the logout confirmation. On desktop the same app shell renders the lib's `NavigationPanel` rail, whose footer holds the lib's `UserMenu` (a 2.0 `Dropdown`).
+The sheet is a generic, prop-driven component in `libs/navigation-panel` (`@epam/ai-dial-navigation-panel`): `NavigationSheet`, `NavigableBottomSheet`, `NavigationMenuPage`, `ProfilePage`, `OptionListPage`, `SheetRow`, and `useSheetNavigation`. The lib does no i18n, routing, or feature gating. The app shell (formerly `apps/chat/src/components/Navigation/Navigation.tsx`) resolved labels with `t()`, built the items, profile, and settings groups, performed navigation, and owned the logout confirmation. `apps/chat` no longer mounts the sheet or the `NavigationPanel` rail: its navigation is the `SidebarNavigation` sidebar (a drawer on mobile), whose footer holds the lib's `UserMenu` (a 2.0 `Dropdown`). Both components stay exported for hosts.
 
 ---
 
@@ -116,26 +116,6 @@ Rendering rules:
 #### Scenario: Stack resets on sheet close
 - **WHEN** `isOpen` transitions to `false`
 - **THEN** the stack clears so the sheet opens at root next time
-
----
-
-### Requirement: Hamburger button opens the sheet on mobile
-
-On mobile the hamburger button in `apps/chat/src/components/Header/Header.tsx` (the `desktop:hidden` header) SHALL toggle `isNavOpen`, which stays in `app.tsx` and is passed to `Navigation` as `isOpen`/`onClose`. The hamburger's `aria-label` is `t(NavigationI18nKeys.OpenMenu)` (`navigation.openMenu`); it renders only when the header is enabled and `OverlayFeature.HideNavigationMenu` is not set.
-
-`Navigation.tsx` SHALL render the lib's `NavigationSheet` (unless `OverlayFeature.HideNavigationMenu` is set, in which case it is unmounted) with `items` (from `useNavigationItems`), `onSelectItem` (calls `navigate(item.id)`), `profile` (from `useNavigationUserProfile`), `groups` (the keyboard group only, see `OptionListPage`), `onLogout={openLogout}`, `onSettings` (navigates to `ROUTES.Settings`; omitted when `OverlayFeature.HideSettingsPage` is set), `footer={<FooterMessage />}`, and labels `{ title: navigation.menu, close: buttons.close, back: navigation.back, profile: navigation.profile, logOut: buttons.logOut, settings: basic.settings }`. `NavigationSheet` renders `NavigableBottomSheet` with `NavigationMenuPage` as its root child.
-
-#### Scenario: Sheet opens on hamburger tap
-- **WHEN** the user taps the hamburger on mobile
-- **THEN** `NavigationSheet` opens with `NavigationMenuPage` and the `navigation.menu` title, no back button
-
-#### Scenario: Sheet closes on backdrop or Escape
-- **WHEN** the user taps the backdrop or presses Escape
-- **THEN** the sheet closes
-
-#### Scenario: Hidden navigation menu removes the sheet and hamburger
-- **WHEN** `OverlayFeature.HideNavigationMenu` is set
-- **THEN** neither the hamburger button nor `NavigationSheet` is rendered
 
 ---
 

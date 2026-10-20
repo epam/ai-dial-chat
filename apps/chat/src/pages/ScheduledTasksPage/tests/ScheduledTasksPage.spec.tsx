@@ -84,7 +84,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onLoadMore,
     onCardClick,
     banner,
+    styles,
   }: {
+    styles?: { typography?: { subtitleClassName?: string } };
     labels: {
       title: string;
       createButtonLabel: string;
@@ -114,6 +116,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <span>items:{items.length}</span>
       <span>searchQuery:{searchQuery}</span>
       <span>sortKey:{sortKey}</span>
+      <span>
+        subtitleClass:{styles?.typography?.subtitleClassName ?? 'default'}
+      </span>
       <span>hasMore:{String(hasMore)}</span>
       <span>isLoadingMore:{String(isLoadingMore)}</span>
       {error && <button onClick={onRetry}>{labels.retryLabel}</button>}
@@ -609,6 +614,16 @@ describe('ScheduledTasksPage — completed state', () => {
       screen.getByText(
         'loadMoreErrorLabel:scheduledTasks.list.loadMoreErrorLabel',
       ),
+    ).toBeTruthy();
+  });
+});
+
+describe('ScheduledTasksPage — header typography', () => {
+  it('uses the small-text description', () => {
+    renderScheduledTasksPage();
+
+    expect(
+      screen.getByText('subtitleClass:dial-small-text !mt-0.5'),
     ).toBeTruthy();
   });
 });

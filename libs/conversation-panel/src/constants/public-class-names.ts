@@ -16,4 +16,10 @@ export const CONVERSATION_PANEL_CLASS = {
   newChatButton: 'dial-cp-new-chat-button',
   /** The `role="search"` wrapper around the conversation search field. */
   search: 'dial-cp-search',
+  /** The root of the conversation list rendered by `ConversationList`. */
+  list: 'dial-cp-list',
+  /** The header row rendered by `ConversationListHeader`. */
+  listHeader: 'dial-cp-list-header',
+  /** The root of `ConversationListSection`, which holds the header and the list. */
+  listSection: 'dial-cp-list-section',
 } as const;

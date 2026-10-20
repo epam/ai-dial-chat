@@ -647,7 +647,8 @@ describe('DialFileManagerModal', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
-    expect(fileManager.classList.contains('bg-layer-base')).toBe(true);
+    /* The surface is the shell's CSS-module class, painted from `--dfms-surface`. */
+    expect(fileManager.className).toMatch(/surface/);
     expect(fileManager.classList.contains('p-0')).toBe(true);
     expect(fileManager.getAttribute('data-content-class')).toBe('px-0 pb-0');
     expect(fileManager.getAttribute('data-grid-class')).toBe(

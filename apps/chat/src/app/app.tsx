@@ -36,7 +36,7 @@ import ConversationSourcesPanel from '../components/ConversationSourcesPanel/Con
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
-import Navigation from '../components/Navigation/Navigation';
+import SidebarNavigation from '../components/Navigation/SidebarNavigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
@@ -50,7 +50,6 @@ import {
   ChatI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
-import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useCanvasVisualizerMessageHandler } from '../hooks/attachment/useCanvasVisualizerMessageHandler';
@@ -67,7 +66,7 @@ import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 import { resolveCanvasWidth } from '../utils/canvas-width';
 import { configurePdfWorker } from '../utils/pdf';
-import { renderSettingsRoutes } from './settings-routes';
+import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
@@ -136,7 +135,6 @@ const App: FC = () => {
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const { isNewVersionAvailable } = useAppVersionCheck();
   // TODO: remove in next release
-  const { isActive: isIsolatedView } = useIsolatedModelView();
 
   /*
    * Registers the overlay's conversation-list bridge. Mounted here (below
@@ -159,21 +157,24 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
+  const isConversationsPanelToggleEnabled = useUiFeature(
+    OverlayFeature.ConversationsPanelToggle,
+  );
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const handleCanvasVisualizerSendMessage = useCanvasVisualizerMessageHandler();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
 
-  const { isPanelOpen, closePanel, togglePanel } =
-    useConversationPanelRouteState({
-      pathname,
-      isMobile,
-      isCanvasOpen,
-      isOpenByDefault: isConversationsSectionOpenByDefault,
-      onCloseCanvas: closeCanvas,
-      onCloseSourcesPanel: closeSourcesPanel,
-    });
+  const { isPanelOpen, togglePanel } = useConversationPanelRouteState({
+    pathname,
+    isMobile,
+    isCanvasOpen,
+    isOpenByDefault: isConversationsSectionOpenByDefault,
+    isToggleEnabled: isConversationsPanelToggleEnabled,
+    onCloseCanvas: closeCanvas,
+    onCloseSourcesPanel: closeSourcesPanel,
+  });
 
   useEffect(() => {
     clearAttachmentCache();
@@ -225,28 +226,47 @@ const App: FC = () => {
     }
   }, []);
 
+  /* The drawer has nothing to close once the viewport leaves the mobile band. */
+  useEffect(() => {
+    if (!isMobile) closeNav();
+  }, [isMobile, closeNav]);
+
+  /* A drawer opened on a mobile viewport closes behind any chat the user picks,
+     including the one already open, which changes no route. */
   const handleSelectConversation = useCallback(
     (id: string) => {
       if (isMobile) {
-        closePanel();
+        closeNav();
       }
 
       const conversationRoute = getConversationRoute(id);
       navigate(conversationRoute);
     },
-    [navigate, isMobile, closePanel],
+    [navigate, isMobile, closeNav],
   );
 
   const handleNewChat = useCallback(() => {
     if (isMobile) {
-      closePanel();
+      closeNav();
     }
     navigate(ROUTES.Root);
-  }, [navigate, isMobile, closePanel]);
+  }, [navigate, isMobile, closeNav]);
 
   if (isNewVersionAvailable) {
     return <NewVersionFallback />;
   }
+
+  /* The chats block of the navigation sidebar. */
+  const conversationPanelView = (
+    <ConversationPanelView
+      activeConversationId={activeConversationId}
+      onSelectConversation={handleSelectConversation}
+      requestedFilter={panelRequestedFilter}
+      onRequestedFilterChange={handlePanelRequestedFilterChange}
+      onActiveFilterChange={handlePanelActiveFilterChange}
+      onDuplicateReadonly={handleDuplicateReadonly}
+    />
+  );
 
   return (
     <div className="flex size-full flex-col">
@@ -255,50 +275,30 @@ const App: FC = () => {
         <Suspense fallback={null}>
           <SigninInterruptDialog />
         </Suspense>
-        {/* TODO: remove in next release. hide-navigation-menu only ever
-            covered the mobile hamburger/sheet, not this desktop rail — see
-            ui-feature-toggles' "The key SHALL NOT affect the desktop
-            navigation rail" — so isolated view hides the whole component
-            directly instead of adding a new permanent OverlayFeature key for
-            a temporary shim. */}
-        {!isIsolatedView && (
-          <Navigation isOpen={isNavOpen} onClose={closeNav} />
-        )}
-
-        <ConversationPanelView
-          isOpen={isPanelOpen}
-          activeConversationId={activeConversationId}
-          onClose={closePanel}
-          onSelectConversation={handleSelectConversation}
-          onNewChat={handleNewChat}
-          requestedFilter={panelRequestedFilter}
-          onRequestedFilterChange={handlePanelRequestedFilterChange}
-          onActiveFilterChange={handlePanelActiveFilterChange}
-          onDuplicateReadonly={handleDuplicateReadonly}
+        <SidebarNavigation
+          chats={conversationPanelView}
+          isCollapsed={!isPanelOpen}
+          onToggleCollapse={togglePanel}
+          isOpen={isNavOpen}
+          onClose={closeNav}
         />
 
         <ActiveScheduledTaskProvider>
+          {/* The open drawer has no backdrop, so the page behind it is inert:
+              Tab and screen readers stay inside the drawer. */}
           <main
             id="main-content"
             role="main"
+            inert={isMobile && isNavOpen}
             className="relative flex min-h-0 min-w-0 flex-1 flex-col"
           >
             <Header
               onMenuToggle={toggleNav}
-              isConversationPanelOpen={isPanelOpen}
-              onConversationPanelToggle={togglePanel}
+              isMenuOpen={isNavOpen}
               onNewChat={handleNewChat}
             />
             <Routes>
-              <Route
-                element={
-                  <ChatLayout
-                    isPanelOpen={isPanelOpen}
-                    onTogglePanel={togglePanel}
-                    onNewChat={handleNewChat}
-                  />
-                }
-              >
+              <Route element={<ChatLayout />}>
                 <Route path={ROUTES.Root} element={<ConversationRoute />} />
                 <Route
                   path="/conversations/*"
@@ -359,6 +359,7 @@ const App: FC = () => {
                   )
                 }
               />
+              {renderUsageRoute(isSettingsPageHidden)}
               <Route
                 path={ROUTES.ScheduledTasks}
                 element={

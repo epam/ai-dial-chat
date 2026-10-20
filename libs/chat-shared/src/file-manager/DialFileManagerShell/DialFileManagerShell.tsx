@@ -23,6 +23,7 @@ import {
   type FC,
 } from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
+import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import type { FileManagerController } from '../file-manager-controller';
 import {
@@ -36,6 +37,7 @@ import type {
 } from '../labels';
 import { OperationLoaderModal } from '../OperationLoaderModal/OperationLoaderModal';
 import { getParentFolderPath } from '../path';
+import type { DialFileManagerShellStyles } from '../shell-styles';
 import {
   buildTransferQueueLabels,
   parseTransferQueueRowId,
@@ -43,6 +45,7 @@ import {
   TransferQueueRowKind,
 } from '../upload-queue';
 import { useGridEditingScroll } from '../useGridEditingScroll/useGridEditingScroll';
+import styles from './DialFileManagerShell.module.scss';
 
 type DestinationFolderPopupOptions =
   DialFileManagerDestinationFolderPopupOptions & {
@@ -128,6 +131,8 @@ export interface DialFileManagerShellProps {
   onPreview?: (path?: string) => void;
   /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
   previewExtensions?: string[];
+  /** Color overrides, e.g. a different surface background. */
+  styles?: DialFileManagerShellStyles;
 }
 
 /**
@@ -155,6 +160,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   treeContainerClassName,
   onPreview,
   previewExtensions,
+  styles: shellStyles,
 }) => {
   const {
     items,
@@ -587,10 +593,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     labels,
   );
 
-  /* Standalone and attach hosts share the base layer; the attach tree panel
-     stays raised on top of it. */
-  const surfaceClassName = 'bg-layer-base';
-
   /* Search-mode copy goes through `searchEmptyStateTitle`: in search mode
      `DialFileManager` ignores `emptyStateTitle` and falls back to "No data". */
   const emptyStateCopy = useMemo((): EmptyStateCopy => {
@@ -601,6 +603,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     return labels.emptyStateByTab[gateTab];
   }, [path, labels.folderEmptyStateTitle, labels.emptyStateByTab, gateTab]);
 
+  const surfaceCssVars = buildCssVars({
+    '--dfms-surface': shellStyles?.colors?.surface,
+  });
+
   return (
     <>
       {error != null ? (
@@ -610,16 +616,17 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         </div>
       ) : (
         <div
+          style={surfaceCssVars}
           className={mergeClasses(
             'relative flex min-h-0 w-full grow overflow-auto',
-            surfaceClassName,
+            styles.surface,
           )}
         >
           <DialFileManager
             /* Cancels the file manager's own compact-view root padding, which doubles attach's grid inset. */
             className={mergeClasses(
               'min-h-0 w-full grow',
-              surfaceClassName,
+              styles.surface,
               isAttachVariant && 'p-0',
             )}
             contentClassName={

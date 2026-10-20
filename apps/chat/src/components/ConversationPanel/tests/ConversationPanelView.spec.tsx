@@ -53,15 +53,16 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
   const { memo } = await import('react');
   return {
     ...actual,
-    ConversationPanel: memo(
+    ConversationListSection: memo(
       ({
-        headerActions,
         conversations: panelConversations,
         getActions,
         onActionMenuOpen,
-        className,
+        listClassName: className,
+        headerActions,
       }: {
         headerActions?: ReactNode;
+        listClassName?: string;
         conversations?: Array<{
           id: string;
           isUnread?: boolean;
@@ -81,7 +82,6 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
           item: { id: string },
           trigger: HTMLButtonElement,
         ) => void;
-        className?: string;
       }) => {
         panelRenderCount.current += 1;
         panelPropsLog.push({ conversations: panelConversations, getActions });
@@ -571,11 +571,8 @@ const baseContextValue = {
 };
 
 const defaultProps = {
-  isOpen: true,
   activeConversationId: 'conv1',
-  onClose: vi.fn(),
   onSelectConversation: vi.fn(),
-  onNewChat: vi.fn(),
 };
 
 const openDropdown = () => {
@@ -618,17 +615,6 @@ beforeEach(() => {
 });
 
 describe('ConversationPanelView — memo boundary', () => {
-  it('does not re-render the lib panel when its inputs are unchanged', () => {
-    const { rerender } = render(<ConversationPanelView {...defaultProps} />);
-    const rendersAfterMount = panelRenderCount.current;
-
-    /* On desktop `onClose` is not forwarded to the lib panel (it becomes
-       `onToggle` only on mobile), so a new one re-renders just the view. */
-    rerender(<ConversationPanelView {...defaultProps} onClose={vi.fn()} />);
-
-    expect(panelRenderCount.current).toBe(rendersAfterMount);
-  });
-
   it('re-renders the lib panel when the active conversation changes', () => {
     const { rerender } = render(<ConversationPanelView {...defaultProps} />);
     const rendersAfterMount = panelRenderCount.current;
@@ -1118,27 +1104,20 @@ describe('ConversationPanelView — mark conversation viewed on open', () => {
     isUnread: true,
   };
 
-  it.each([true, false])(
-    'marks an active task conversation viewed with the panel open: %s',
-    (isOpen) => {
-      const mockMarkConversationViewed = vi.fn();
-      vi.mocked(useConversations).mockReturnValue({
-        ...baseContextValue,
-        conversations: [unreadTaskConversation],
-        markConversationViewed: mockMarkConversationViewed,
-      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  it('marks an active task conversation viewed', () => {
+    const mockMarkConversationViewed = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [unreadTaskConversation],
+      markConversationViewed: mockMarkConversationViewed,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-      render(
-        <ConversationPanelView
-          {...defaultProps}
-          isOpen={isOpen}
-          activeConversationId="task1"
-        />,
-      );
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="task1" />,
+    );
 
-      expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
-    },
-  );
+    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
+  });
 
   it('calls markConversationViewed again when activeConversationId changes to another unread task conversation (direct navigation)', () => {
     const secondUnreadTask = {
@@ -1308,7 +1287,7 @@ describe('ConversationPanelView — one row per scheduled task', () => {
     rerender(
       <ConversationPanelView
         {...defaultProps}
-        onClose={vi.fn()}
+        onRequestedFilterChange={vi.fn()}
         activeConversationId={undefined}
       />,
     );

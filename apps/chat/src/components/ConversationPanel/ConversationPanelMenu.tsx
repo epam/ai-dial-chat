@@ -1,5 +1,5 @@
 import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
-import { ConfirmationDialog } from '@epam/ai-dial-chat-shared';
+import { ConfirmationDialog, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -42,15 +42,18 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
     <Dropdown items={items} placement="bottom-end" onOpenChange={setIsOpen}>
       <GhostIconButton
         aria-label={label}
-        size={ElementSize.Standard}
+        size={ElementSize.Small}
         icon={
           <IconDotsVertical
-            size={DIAL_ICON_SIZE.LG}
+            size={DIAL_ICON_SIZE.SM}
             className={isOpen ? 'text-accent' : 'text-secondary'}
             stroke={DIAL_KIT_ICON_STROKE}
           />
         }
-        className={isOpen ? 'bg-control-accent-alpha-hover' : undefined}
+        className={mergeClasses(
+          '!size-6 !min-h-0 !min-w-0 !p-1',
+          isOpen && 'bg-control-accent-alpha-hover',
+        )}
       />
     </Dropdown>
   );
@@ -104,7 +107,7 @@ const ConversationPanelMenu: FC<Props> = ({
         label: t(ConversationImportI18nKeys.ImportLabel),
         icon: (
           <IconFileArrowLeft
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.MD}
             className="text-secondary"
             stroke={DIAL_KIT_ICON_STROKE}
           />
@@ -116,7 +119,7 @@ const ConversationPanelMenu: FC<Props> = ({
         label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),
         icon: (
           <IconTrashX
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.MD}
             className="text-error"
             stroke={DIAL_KIT_ICON_STROKE}
           />

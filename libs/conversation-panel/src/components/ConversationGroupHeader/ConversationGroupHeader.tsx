@@ -1,7 +1,17 @@
 import { FilterTab, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  EllipsisTooltip,
+} from '@epam/ai-dial-ui-kit';
+import {
+  IconCaretDownFilled,
+  IconCaretRightFilled,
+  IconChevronDown,
+  IconChevronRight,
+} from '@tabler/icons-react';
 import type { DragEvent, FC } from 'react';
+import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 /** Props for `ConversationGroupHeader`. */
@@ -16,6 +26,8 @@ export interface ConversationGroupHeaderProps {
   listId: string;
   /** Typography class applied to the header button. Defaults to `'dial-tiny-lead-text'`. */
   className?: string;
+  /** Presentation of the header. `Indicator` puts the hover chevron after the label. Defaults to `ConversationRowVariant.Avatar`. */
+  variant?: ConversationRowVariant;
   /** When provided the header acts as a drag-and-drop drop zone. */
   dropZoneGroupKey?: FilterTab;
   /** Whether the drag cursor is currently over this header. */
@@ -39,6 +51,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
   onToggle,
   listId,
   className = 'dial-tiny-lead-text',
+  variant = ConversationRowVariant.Avatar,
   dropZoneGroupKey,
   isDragOver,
   onDragOver,
@@ -46,6 +59,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
   onDrop,
 }) => {
   const isDropZone = dropZoneGroupKey != null;
+  const isIndicator = variant === ConversationRowVariant.Indicator;
 
   const handleDragOver = (e: DragEvent<HTMLButtonElement>) => {
     if (!isDropZone) return;
@@ -67,6 +81,38 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
     onDrop?.(dropZoneGroupKey, dropZoneGroupKey, null);
   };
 
+  const renderLeadingCaret = () =>
+    isExpanded ? (
+      <IconCaretDownFilled
+        size={12}
+        className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        aria-hidden
+      />
+    ) : (
+      <IconCaretRightFilled
+        size={12}
+        className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 rtl:scale-x-[-1]"
+        aria-hidden
+      />
+    );
+
+  const renderTrailingChevron = () =>
+    isExpanded ? (
+      <IconChevronDown
+        size={DIAL_ICON_SIZE.SM}
+        stroke={DIAL_KIT_ICON_STROKE}
+        className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        aria-hidden
+      />
+    ) : (
+      <IconChevronRight
+        size={DIAL_ICON_SIZE.SM}
+        stroke={DIAL_KIT_ICON_STROKE}
+        className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 rtl:scale-x-[-1]"
+        aria-hidden
+      />
+    );
+
   return (
     <button
       type="button"
@@ -77,26 +123,23 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
       onDragLeave={isDropZone ? handleDragLeave : undefined}
       onDrop={isDropZone ? handleDrop : undefined}
       className={mergeClasses(
-        'group flex h-6 w-full items-center gap-1 rounded py-1 pe-3 text-start',
+        'group flex h-6 w-full items-center gap-1 rounded text-start',
+        isIndicator ? 'px-2' : 'py-1 pe-3',
         className,
         styles.groupHeader,
         isDragOver && styles.dropZoneActive,
       )}
     >
-      {isExpanded ? (
-        <IconCaretDownFilled
-          size={12}
-          className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
-          aria-hidden
-        />
+      {!isIndicator && renderLeadingCaret()}
+      {isIndicator ? (
+        /* Sized to its text, so the chevron sits right after the label. */
+        <span className="max-w-full min-w-0">
+          <EllipsisTooltip text={label} />
+        </span>
       ) : (
-        <IconCaretRightFilled
-          size={12}
-          className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 rtl:scale-x-[-1]"
-          aria-hidden
-        />
+        <EllipsisTooltip text={label} />
       )}
-      <EllipsisTooltip text={label} />
+      {isIndicator && renderTrailingChevron()}
     </button>
   );
 };

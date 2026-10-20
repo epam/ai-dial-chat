@@ -297,13 +297,6 @@ describe('DialFileManagerPage', () => {
     );
   });
 
-  it('renders the file manager on the base layer background', () => {
-    render(<DialFileManagerPage />);
-    const manager = screen.getByRole('region', { name: 'file manager' });
-    expect(manager.classList.contains('bg-layer-base')).toBe(true);
-    expect(manager.classList.contains('bg-layer-sunken')).toBe(false);
-  });
-
   it('does not render an Attach button or attach footer', () => {
     render(<DialFileManagerPage />);
     expect(screen.queryByRole('button', { name: /attach/i })).toBeNull();
@@ -506,5 +499,35 @@ describe('DialFileManagerPage — All tab', () => {
     act(() => setSectionTab(DialFileManagerTabs.Shared));
 
     expect(screen.getByText('0 selected')).toBeTruthy();
+  });
+});
+
+describe('DialFileManagerPage — page frame', () => {
+  it('renders the page title as the top-level heading', () => {
+    render(<DialFileManagerPage />);
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'dialFileManager.page.title',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('sets the shell surface to the base layer on a phone and transparent inside the desktop card', () => {
+    render(<DialFileManagerPage />);
+
+    /* The surface is a CSS variable set on the wrapper around the shell; neither
+       has a role, so it is found two levels above the manager region. */
+    /* eslint-disable testing-library/no-node-access */
+    const wrapper = screen.getByRole('region', { name: 'file manager' })
+      .parentElement?.parentElement;
+    /* eslint-enable testing-library/no-node-access */
+    expect(
+      wrapper?.classList.contains('[--dfms-surface:var(--bg-layer-base)]'),
+    ).toBe(true);
+    expect(
+      wrapper?.classList.contains('desktop:[--dfms-surface:transparent]'),
+    ).toBe(true);
   });
 });

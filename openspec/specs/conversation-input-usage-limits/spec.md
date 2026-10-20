@@ -410,7 +410,7 @@ render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`
 
 ### Requirement: The popover links to the full Usage page
 
-The usage popover SHALL render a link to the Settings Usage tab beneath its groups, supplied through
+The usage popover SHALL render a link to the Usage page (`ROUTES.Usage`, `/usage`) beneath its groups, supplied through
 `LimitsTab`'s existing `footerNote` prop.
 
 The link exists because the popover deliberately shows only what needs attention: rows below the
@@ -418,8 +418,8 @@ running-low mark are omitted and the trigger disappears entirely while every lim
 The complete picture therefore has to be reachable from somewhere, and this is the only affordance
 that reaches it from the conversation.
 
-The link SHALL target the Usage tab's own path, so it lands on Usage in one step rather than on
-whichever tab a bare `/settings` happens to open. It SHALL close the popover when activated, so the
+The link SHALL target the Usage page's own path, so it lands on Usage in one step, without the
+`/settings/usage` redirect. It SHALL close the popover when activated, so the
 user does not arrive at the destination with a dialog still mounted over it.
 
 `libs/catalog` SHALL gain nothing for this: the link is an app-built `ReactNode` passed through the
@@ -427,10 +427,10 @@ existing prop, and the library SHALL NOT import a router, learn a route, or grow
 label SHALL come from app-owned i18n (`conversationInput.usageLimits.fullUsageLink`), followed by an
 `aria-hidden` `IconChevronRight` mirrored in RTL.
 
-#### Scenario: The link reaches the Usage tab in one step
+#### Scenario: The link reaches the Usage page in one step
 
 - **WHEN** the user activates the popover's footer link
-- **THEN** the application navigates to the Settings Usage tab, not to the Settings default tab
+- **THEN** the application navigates to `/usage`
 
 #### Scenario: The popover closes on navigation
 

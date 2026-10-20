@@ -1,7 +1,13 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createContext, useContext, useState, type FC } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  type FC,
+  type ReactNode,
+} from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../app';
@@ -48,9 +54,6 @@ vi.mock('../../context/SourcesSidebarContext', () => ({
 }));
 vi.mock('../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'dark' }),
-}));
-vi.mock('../../context/IsolatedModelViewContext', () => ({
-  useIsolatedModelView: () => ({ isActive: false }),
 }));
 vi.mock('../../context/ActiveScheduledTaskContext', () => ({
   ActiveScheduledTaskProvider: ({ children }: { children: unknown }) =>
@@ -115,8 +118,8 @@ vi.mock('../../components/Header/Header', () => ({ default: () => null }));
 vi.mock('../../components/Header/SourcesSidebarToggle', () => ({
   default: () => null,
 }));
-vi.mock('../../components/Navigation/Navigation', () => ({
-  default: () => null,
+vi.mock('../../components/Navigation/SidebarNavigation', () => ({
+  default: ({ chats }: { chats?: ReactNode }) => <nav>{chats}</nav>,
 }));
 vi.mock('../../components/NewVersionFallback/NewVersionFallback', () => ({
   default: () => null,

@@ -351,7 +351,7 @@ describe('UsageLimitsControl', () => {
       expect(screen.getAllByRole('progressbar')).toHaveLength(3);
     });
 
-    it('links to the Usage tab and dismisses itself on the way there', async () => {
+    it('links to the Usage page and dismisses itself on the way there', async () => {
       const user = userEvent.setup();
       renderControl();
 
@@ -359,7 +359,7 @@ describe('UsageLimitsControl', () => {
       const link = screen.getByRole('link', {
         name: 'conversationInput.usageLimits.fullUsageLink',
       });
-      expect(link.getAttribute('href')).toBe('/settings/usage');
+      expect(link.getAttribute('href')).toBe('/usage');
 
       await user.click(link);
 

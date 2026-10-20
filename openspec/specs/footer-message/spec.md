@@ -4,6 +4,7 @@
 Show users operator-supplied, sanitized HTML information (and the version label) in the chat footer.
 
 ## Requirements
+
 ### Requirement: Operator-supplied footer HTML is sanitized server-side before use
 
 The NestJS `app-config` module SHALL resolve the `footer.html` config-registry key (sourced from
@@ -116,13 +117,12 @@ While `useAppConfig().status` is not `UserConfigStatus.Ready`, the component SHA
 
 ---
 
-### Requirement: Footer message renders in both desktop and mobile layouts
+### Requirement: Footer message renders below the chat input at every breakpoint
 
 `FooterMessage` SHALL render below the chat input area of `ConversationView` and
-`NewConversationComposer` at every breakpoint, and additionally as the `footer` of the
-`NavigationSheet` (the mobile navigation sheet opened from the header hamburger) rendered by
-`apps/chat/src/components/Navigation/Navigation.tsx`. Each placement mounts its own
-`FooterMessage` instance; no screen-size render guard selects between them.
+`NewConversationComposer` at every breakpoint. Each placement mounts its own `FooterMessage`
+instance; no screen-size render guard selects between them. The mobile navigation drawer carries one
+too, below the conversation list on every route, as the sheet it replaced did.
 
 The footer region SHALL be a positioning context (`relative`) whose direct children are the
 sanitized-message element and the version label, rather than a single element hosting the
@@ -138,15 +138,10 @@ an out-of-flow label would paint outside it.
   directions — a `dir` attribute on that element would make the logical inset resolve against
   its own direction and defeat the flip
 
-#### Scenario: Desktop placement
+#### Scenario: Placement
 
 - **WHEN** a conversation or the new-conversation composer is shown at any breakpoint
 - **THEN** `FooterMessage` is visible below the chat input area
-
-#### Scenario: Mobile placement
-
-- **WHEN** the `NavigationSheet` is opened from the header hamburger on `mobile`
-- **THEN** `FooterMessage` is visible as the sheet's footer
 
 #### Scenario: Screen reader identifies footer region
 
@@ -160,4 +155,3 @@ an out-of-flow label would paint outside it.
 - **WHEN** both the sanitized footer message and the version label render
 - **THEN** the message element remains centred against the region's full width and is not offset
   by the label
-
