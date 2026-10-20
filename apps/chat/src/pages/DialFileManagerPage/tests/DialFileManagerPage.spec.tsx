@@ -97,6 +97,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       items?: { path: string }[];
       gridOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+        containerClassName?: string;
+        filterable?: boolean;
+        withoutHeaderBorders?: boolean;
       };
       bulkActionsToolbarOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
@@ -107,6 +110,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       treeOptions?: {
         tabs?: Array<{ value: string; label: string }>;
         activeTab?: string;
+        containerClassName?: string;
       };
       selectedPaths?: Set<string>;
       onSelectedPathsChange?: (paths: Set<string>) => void;
@@ -121,6 +125,10 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         aria-label="file manager"
         className={className}
         data-tab-count={treeOptions?.tabs?.length}
+        data-grid-container-class={gridOptions?.containerClassName}
+        data-grid-filterable={String(gridOptions?.filterable)}
+        data-grid-no-header-borders={String(gridOptions?.withoutHeaderBorders)}
+        data-tree-container-class={treeOptions?.containerClassName}
         data-max-selectable-file-size={maxSelectableFileSize}
         data-max-file-size={maxFileSize}
         data-oversized-files-message={uploadValidationMessages?.oversizedFiles}
@@ -525,5 +533,22 @@ describe('DialFileManagerPage — page frame', () => {
     expect(
       wrapper?.classList.contains('desktop:[--dfms-surface:transparent]'),
     ).toBe(true);
+  });
+
+  it('divides the folders panel from the grid with a line on its end edge and makes the grid a flat table without shadow, filters or header borders', () => {
+    render(<DialFileManagerPage />);
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    const treeClasses = (
+      manager.getAttribute('data-tree-container-class') ?? ''
+    ).split(' ');
+    expect(treeClasses).toContain('border-e');
+    expect(treeClasses).not.toContain('border-s');
+    expect(treeClasses).not.toContain('shadow-sm');
+    expect(
+      (manager.getAttribute('data-grid-container-class') ?? '').split(' '),
+    ).toEqual(expect.arrayContaining(['shadow-none', 'rounded-none']));
+    expect(manager.getAttribute('data-grid-filterable')).toBe('false');
+    expect(manager.getAttribute('data-grid-no-header-borders')).toBe('true');
   });
 });

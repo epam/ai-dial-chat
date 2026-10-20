@@ -39,12 +39,12 @@ import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholde
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
 /*
- * The folders panel sits next to the app's navigation rail, so it is divided
- * from it by a line on its start edge, like the chats panel, instead of the
- * file manager's default shadow. Width and height repeat that default.
+ * The folders panel sits in the page's card, so it is divided from the grid by
+ * a line on its end edge instead of the file manager's default shadow. Width
+ * and height repeat that default.
  */
 const TREE_PANEL_CLASS_NAME =
-  'h-full min-h-0 w-[360px] shrink-0 border-s border-tertiary bg-layer-raised';
+  'h-full min-h-0 w-[360px] shrink-0 border-e border-tertiary bg-layer-raised';
 
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();

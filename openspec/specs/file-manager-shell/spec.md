@@ -67,7 +67,7 @@ When `variant === 'standalone'`, `useDialFileManager` SHALL fetch the initial fo
 - the root empty state (`labels.emptyStateByTab[gateTab]`)
 - the grid-editing-scroll reset
 
-`activeTab` SHALL remain the value passed as `treeOptions.activeTab` and the key for `labels.treeHeaderByTab`. In Attach mode the visible tree header SHALL be null, while `treeOptions.tabsAriaLabel` SHALL receive that label; the standalone header remains visible. `DialFileManagerShellLabels.treeHeaderByTab` and `.emptyStateByTab` stay `Record<DialFileManagerTabs, …>`, so hosts supply an `all` entry.
+`activeTab` SHALL remain the value passed as `treeOptions.activeTab` and the key for `labels.treeHeaderByTab`. The visible tree header SHALL be null in every variant, while `treeOptions.tabsAriaLabel` SHALL receive that label. `DialFileManagerShellLabels.treeHeaderByTab` and `.emptyStateByTab` stay `Record<DialFileManagerTabs, …>`, so hosts supply an `all` entry.
 
 `treeContainerClassName`, when provided, SHALL be passed as `treeOptions.containerClassName` in every variant and replaces the panel's default classes, including its width, so the host includes `shrink-0` and an explicit width. When omitted, the Attach variant keeps its default panel classes (`w-[360px]`) and the standalone variant leaves `treeOptions.containerClassName` undefined, so the file manager applies its own.
 
@@ -97,7 +97,7 @@ When `variant === 'standalone'`, `useDialFileManager` SHALL fetch the initial fo
 #### Scenario: Strip still shows All pressed
 
 - **WHEN** `activeTab === All` and `controller.sectionTab === Shared`
-- **THEN** `treeOptions.activeTab` is `All`, and the standalone tree header is `labels.treeHeaderByTab[All]`; Attach uses the same text as `tabsAriaLabel` with no visible header
+- **THEN** `treeOptions.activeTab` is `All`, and `tabsAriaLabel` is `labels.treeHeaderByTab[All]`, with no visible tree header
 
 #### Scenario: Controllers without sectionTab behave as before
 
