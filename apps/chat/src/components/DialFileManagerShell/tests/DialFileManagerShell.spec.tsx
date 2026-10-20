@@ -285,7 +285,6 @@ const renderShell = (
     actionProfile?: DialFileManagerActionProfile;
     labels?: DialFileManagerShellLabels;
     treeContainerClassName?: string;
-    previewLabel?: string;
     onPreview?: (path?: string) => void;
     previewExtensions?: string[];
   } = {},
@@ -302,7 +301,6 @@ const renderShell = (
       variant={options.variant ?? DialFileManagerVariant.Standalone}
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
       treeContainerClassName={options.treeContainerClassName}
-      previewLabel={options.previewLabel}
       onPreview={options.onPreview}
       previewExtensions={options.previewExtensions}
     />,
@@ -643,8 +641,13 @@ describe('DialFileManagerShell', () => {
   });
 
   describe('Preview action', () => {
-    it('adds Preview to gridOptions action labels when a previewLabel is given', () => {
-      renderShell(undefined, new Set(), { previewLabel: 'Preview' });
+    const labelsWithPreview: DialFileManagerShellLabels = {
+      ...baseLabels,
+      previewLabel: 'Preview',
+    };
+
+    it('adds Preview to gridOptions action labels when labels.previewLabel is given', () => {
+      renderShell(undefined, new Set(), { labels: labelsWithPreview });
       expect(
         capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
           DialFileManagerActions.Preview
@@ -652,7 +655,7 @@ describe('DialFileManagerShell', () => {
       ).toBe('Preview');
     });
 
-    it('omits Preview from gridOptions action labels without a previewLabel', () => {
+    it('omits Preview from gridOptions action labels without labels.previewLabel', () => {
       renderShell();
       expect(
         capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
@@ -670,7 +673,7 @@ describe('DialFileManagerShell', () => {
           },
         },
         new Set(),
-        { previewLabel: 'Preview' },
+        { labels: labelsWithPreview },
       );
       const labels =
         capturedDialFileManagerProps.current?.gridOptions?.actionLabels;
@@ -679,7 +682,7 @@ describe('DialFileManagerShell', () => {
     });
 
     it('never includes Preview in treeOptions or bulkActionsToolbarOptions action labels', () => {
-      renderShell(undefined, new Set(), { previewLabel: 'Preview' });
+      renderShell(undefined, new Set(), { labels: labelsWithPreview });
       expect(
         capturedDialFileManagerProps.current?.treeOptions?.actionLabels?.[
           DialFileManagerActions.Preview

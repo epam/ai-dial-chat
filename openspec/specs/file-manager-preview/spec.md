@@ -7,7 +7,7 @@ Defines the Preview row action of the standalone file manager page: which files 
 
 ### Requirement: The standalone page offers Preview for files with a previewable extension
 
-`DialFileManagerPage` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx`) SHALL pass `previewLabel` (the translated `basic.preview` string), `onPreview` and `previewExtensions` to `DialFileManagerShell`, using the values returned by `useDialFilePreview` (`apps/chat/src/hooks/files/useDialFilePreview.ts`). The shell SHALL add `DialFileManagerActions.Preview` to the grid action labels only when `previewLabel` is provided, and SHALL NOT add it to the tree or bulk-actions labels. The installed `@epam/ai-dial-react-file-manager` then offers the row action only for file rows whose name ends in one of `previewExtensions`; folders never show it.
+`DialFileManagerPage` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx`) SHALL set `labels.previewLabel` (the translated `basic.preview` string) and pass `onPreview` and `previewExtensions` to `DialFileManagerShell`, using the values returned by `useDialFilePreview` (`apps/chat/src/hooks/files/useDialFilePreview.ts`). The shell SHALL add `DialFileManagerActions.Preview` to the grid action labels only when `labels.previewLabel` is provided, and SHALL NOT add it to the tree or bulk-actions labels. The installed `@epam/ai-dial-react-file-manager` then offers the row action only for file rows whose name ends in one of `previewExtensions`; folders never show it.
 
 `previewExtensions` SHALL be a fixed list of dotted extensions maintained in `apps/chat`, and every format in it SHALL be one the attachment canvas renders: text and data (`.txt`, `.md`, `.markdown`, `.json`, `.csv`, `.tsv`, `.xml`, `.yaml`, `.yml`, `.log`), HTML (`.html`, `.htm`), `.pdf`, Office (`.docx`, `.xlsx`, `.pptx`), and images (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`). The installed `@epam/ai-dial-react-file-manager` compares a file's extension with this list exactly as written, without changing case, so each format SHALL be listed in lower case, UPPER case and Capitalized case (for example `.jpg`, `.JPG`, `.Jpg`). The list is not derived from the canvas at runtime.
 
@@ -28,12 +28,12 @@ Defines the Preview row action of the standalone file manager page: which files 
 
 #### Scenario: The label is grid-only
 
-- **WHEN** the shell is rendered with a `previewLabel`
+- **WHEN** the shell is rendered with a `labels.previewLabel`
 - **THEN** the grid action labels include Preview, and the tree and bulk-actions labels do not
 
 #### Scenario: No label, no action
 
-- **WHEN** the shell is rendered without `previewLabel`
+- **WHEN** the shell is rendered without `labels.previewLabel`
 - **THEN** no Preview action is offered, whatever `onPreview` and `previewExtensions` hold
 
 ### Requirement: Choosing Preview opens the file in the attachment canvas
@@ -72,7 +72,7 @@ Preview SHALL be available wherever the `/files` page is available, which alread
 
 ### Requirement: Other file-manager hosts show no Preview
 
-The attach modal, the avatar picker, the skill file-system modal and the Copy/Move destination picker SHALL NOT receive `previewLabel` or `onPreview`, so none of them shows a Preview action. `@epam/ai-dial-react-file-manager` SHALL NOT be changed to support preview: the package keeps only its existing `onPreview` / `previewExtensions` hook, and the host decides what a preview looks like.
+The attach modal, the avatar picker, the skill file-system modal and the Copy/Move destination picker SHALL NOT set `labels.previewLabel` or receive `onPreview`, so none of them shows a Preview action. `@epam/ai-dial-react-file-manager` SHALL NOT be changed to support preview: the package keeps only its existing `onPreview` / `previewExtensions` hook, and the host decides what a preview looks like.
 
 #### Scenario: The attach modal has no Preview
 

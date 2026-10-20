@@ -125,8 +125,6 @@ export interface DialFileManagerShellProps {
    * Omit to keep the variant's default.
    */
   treeContainerClassName?: string;
-  /** Label of the Preview row action. Omit to hide the action. */
-  previewLabel?: string;
   /** Called with the virtual path of the file the user chose to preview. */
   onPreview?: (path?: string) => void;
   /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
@@ -156,7 +154,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
   treeContainerClassName,
-  previewLabel,
   onPreview,
   previewExtensions,
 }) => {
@@ -271,15 +268,18 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const gridActionLabels = useMemo(() => {
     const withPreview =
-      previewLabel != null
-        ? { ...actionLabels, [DialFileManagerActions.Preview]: previewLabel }
+      labels.previewLabel != null
+        ? {
+            ...actionLabels,
+            [DialFileManagerActions.Preview]: labels.previewLabel,
+          }
         : actionLabels;
     if (!(DialFileManagerActions.Info in tabActionLabels)) return withPreview;
     return {
       ...withPreview,
       [DialFileManagerActions.Info]: labels.infoLabel,
     };
-  }, [actionLabels, tabActionLabels, labels.infoLabel, previewLabel]);
+  }, [actionLabels, tabActionLabels, labels.infoLabel, labels.previewLabel]);
 
   const allSelectedItemsSharedByMe = useMemo(() => {
     if (selectedPaths.size === 0) return false;

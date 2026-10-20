@@ -282,6 +282,7 @@ const DialFileManagerPage: FC = () => {
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
       infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      previewLabel: t(BasicI18nKeys.Preview),
       metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
       metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
       metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
@@ -317,7 +318,6 @@ const DialFileManagerPage: FC = () => {
         autoSelectUploadedItems={false}
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
-        previewLabel={t(BasicI18nKeys.Preview)}
         onPreview={onPreview}
         previewExtensions={previewExtensions}
       />
