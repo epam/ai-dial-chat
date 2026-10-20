@@ -78,12 +78,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.9
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.16
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.20
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -2216,7 +2216,7 @@ const mutations = useDialFileMutations({
 
 **Parameters** (`UseDialFileMutationsOptions`, ~13 fields): most are the listing-cache seam threaded straight from `useDialFileListing`'s result (`folderPath`, `currentFolder`, `sharedRootMetaRef`, `listingPermissionsCache`, `invalidateFolders`, `bumpRetry`, `mergeCreatedFolder`, `setFolderPath`) plus `filesApi`, `bucket`, `rootLabel`, `activeTab`, `downloadDestination` (required), and the optional `onNotification`/`onOperationSuccess`/`forbiddenSymbolsRegExp`. See the exported `UseDialFileMutationsOptions` type for the complete shape.
 
-**Returns** (`UseDialFileMutationsResult`): `onCreateFolder`/`onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`/`onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`, and an `isXxx` in-flight flag for each (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`). `onCreateFolderValidate`/`onRenameValidate` return `FileNameValidationError | null` rather than a message string.
+**Returns** (`UseDialFileMutationsResult`): `onCreateFolder`/`onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`/`onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`, and an `isXxx` in-flight flag for each (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`). `onDownloadFiles` returns at once and runs each download as an entry of `downloadBatchState` (`FileDownloadBatchState`) with byte progress (`Content-Length` for a file, an estimate from the selected sizes for an archive, capped at 99% until done), cancel (`cancelDownloadFile(id)` / `cancelAllDownloads()`), a `failureReason` on failure, and `clearDownloadBatch()`. `isDownloading` is "a download is running" and does not feed `isAnyOperationInProgress`. `onCreateFolderValidate`/`onRenameValidate` return `FileNameValidationError | null` rather than a message string.
 
 ### useDialFileSharing
 
@@ -2289,8 +2289,8 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`.
 - **`FileOperationSuccessEvent`** — the structured success event `useDialFileMutations` emits through `onOperationSuccess`, carrying a `kind` (`FileOperationKind`) plus optional `name`/`count`/`destinationFolderName`/`isFolder`.
 - **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`, `FileDuplicated`, `FilesDuplicated` (a copy whose every item stays in its own source folder — the Duplicate action), `FilesUnshared` (shared-with-me items removed from the Shared tab).
-- **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
-- **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent? }`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
+- **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `triggerDownload` receives a response whose body is wrapped to count bytes; headers and status are unchanged. `DialFilesApi.downloadArchive(items, signal?)` takes an `AbortSignal`, like `downloadFile`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
+- **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent?, failureReason? }`, where `failureReason` (a `FileUploadFailureReason`, set by `useDialFileUploadBatch` when an upload fails) comes from the response status — 409 `Conflict`, 413 `TooLarge`, 403 `Forbidden`, 502/503 `Unavailable`, no response `Network`, anything else `Unknown`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
 - **`deriveActionProfile(variant)`** — maps a `DialFileManagerVariant` (`Attach | Standalone | FolderPicker`) to the `DialFileManagerActionProfile` it gates (`Attach | Browse | Full`). Both enums, and `FileUploadValidationResult`, are owned and exported by `@epam/ai-dial-chat-shared`; import them from there.
 
 ## Conversation & File Utilities

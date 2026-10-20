@@ -42,6 +42,7 @@ The endpoint SHALL:
   applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional
   createOnly?: boolean;  // optional; default false for legacy callers
   preserveApplicationProperties?: boolean; // optional; default false
+  features?: Record<string, unknown>; // optional top-level Core features, @IsObject, @IsOptional
   inputAttachmentTypes?: string[]; // optional MIME types; Core capability
   maxInputAttachments?: number; // optional nonnegative Core capability
   locales?: LocaleTextEntryDto[];  // optional additional-locale name/description entries,
@@ -65,7 +66,7 @@ The `name` and `version` allowlist patterns exist so the `{name}__{version}` res
   iconUrl: body.iconUrl,                        // only when supplied
   descriptionKeywords: body.topics,             // only when supplied and non-empty
   endpoint,                                     // hoisted, only when a string
-  features,                                     // hoisted, only when present
+  features,                                     // body.features, else hoisted; only when present
   inputAttachmentTypes,                         // hoisted, only when an array
   maxInputAttachments,                          // hoisted, only when a number
 }
@@ -184,6 +185,10 @@ verbatim, including keys named `features`, `endpoint`, `inputAttachmentTypes`, a
 `maxInputAttachments`. No schema settings SHALL be hoisted in this mode. Top-level
 `inputAttachmentTypes` and `maxInputAttachments` configure Core capabilities separately;
 they take precedence over legacy nested capability values when both are provided.
+Top-level `features` likewise configures Core features separately from schema features: it
+takes precedence over a hoisted `applicationProperties.features`, is stored as supplied, and
+disables the Quick App `system_prompt_supported: false` creation default, so a caller copying a
+template's features keeps a flag the template leaves unset absent.
 The Quick App Core `skills_supported` flag remains enabled independently of schema features.
 The `createApplication` operation and generated client SHALL expose these optional fields.
 
@@ -203,3 +208,8 @@ The `createApplication` operation and generated client SHALL expose these option
 - **WHEN** a caller sets `preserveApplicationProperties: true` and supplies schema features
 - **THEN** those features and unknown settings are retained under `application_properties`
 - **AND** top-level attachment capabilities do not replace same-named schema settings
+
+#### Scenario: Explicit top-level features are stored as supplied
+- **WHEN** a Quick App create supplies top-level `features: { tools_supported: true }` with `preserveApplicationProperties: true` and a nested `applicationProperties.features`
+- **THEN** the DIAL Core body's top-level `features` is `{ tools_supported: true, skills_supported: true }` without `system_prompt_supported`
+- **AND** the nested `features` stays under `application_properties`

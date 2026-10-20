@@ -184,8 +184,9 @@ export class ApplicationsService {
       if (body.topics != null && body.topics.length > 0)
         dialBody.descriptionKeywords = body.topics;
       if (endpoint != null) dialBody.endpoint = endpoint;
-      if (features != null)
-        dialBody.features = features as (typeof dialBody)['features'];
+      const effectiveFeatures = body.features ?? features;
+      if (effectiveFeatures != null)
+        dialBody.features = effectiveFeatures as (typeof dialBody)['features'];
       /*
        * Quick App creation has no `skills_supported` UI control in chat (unlike
        * the Admin app, which exposes one), so a chat-created Quick App would
@@ -199,11 +200,13 @@ export class ApplicationsService {
        * `system_prompt_supported` is also written as `false` on creation only:
        * DIAL Core treats an unset flag as supported, so without it the chat
        * shows the system prompt field for a Quick App whose prompt is owned by
-       * its orchestrator config. Updates leave it untouched.
+       * its orchestrator config. Updates leave it untouched. Explicit top-level
+       * `features` are stored as supplied (e.g. copied from a template that
+       * leaves the flag unset), so the default applies only without them.
        */
       if (isQuickAppSchema(body.type)) {
         dialBody.features = {
-          system_prompt_supported: false,
+          ...(body.features == null ? { system_prompt_supported: false } : {}),
           ...dialBody.features,
           skills_supported: true,
         } as (typeof dialBody)['features'];

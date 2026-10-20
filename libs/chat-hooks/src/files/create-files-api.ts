@@ -97,7 +97,10 @@ export interface FilesApiClient {
     items: MoveItemDto[],
     signal?: AbortSignal,
   ) => Promise<MoveFilesResponseDto>;
-  downloadArchive: (items: ArchiveItemDto[]) => Promise<Response>;
+  downloadArchive: (
+    items: ArchiveItemDto[],
+    signal?: AbortSignal,
+  ) => Promise<Response>;
   revokeAccess: (
     items: RevokeAccessItemDto[],
   ) => Promise<RevokeAccessResponseDto>;
@@ -186,10 +189,11 @@ export const createFilesApiClient = (
    * downloadArchiveRaw() is used instead of downloadArchive() for the same reason
    * as downloadFileRaw() above — binary response semantics require the raw fetch Response.
    */
-  downloadArchive: async (items) => {
-    const raw = await filesApi.downloadArchiveRaw({
-      downloadArchiveDto: { items },
-    });
+  downloadArchive: async (items, signal) => {
+    const raw = await filesApi.downloadArchiveRaw(
+      { downloadArchiveDto: { items } },
+      signal ? { signal } : undefined,
+    );
     return raw.raw;
   },
 

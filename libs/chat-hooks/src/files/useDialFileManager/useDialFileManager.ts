@@ -187,7 +187,6 @@ export const useDialFileManager = ({
   const isAnyOperationInProgress = useMemo(
     (): boolean =>
       mutations.isCreatingFolder ||
-      mutations.isDownloading ||
       mutations.isDeleting ||
       mutations.isRenaming ||
       mutations.isCopying ||
@@ -197,7 +196,6 @@ export const useDialFileManager = ({
       isUploadInProgress(upload.uploadBatchState),
     [
       mutations.isCreatingFolder,
-      mutations.isDownloading,
       mutations.isDeleting,
       mutations.isRenaming,
       mutations.isCopying,
@@ -252,6 +250,10 @@ export const useDialFileManager = ({
     isCreatingFolder: mutations.isCreatingFolder,
     onDownloadFiles: mutations.onDownloadFiles,
     isDownloading: mutations.isDownloading,
+    downloadBatchState: mutations.downloadBatchState,
+    cancelDownloadFile: mutations.cancelDownloadFile,
+    cancelAllDownloads: mutations.cancelAllDownloads,
+    clearDownloadBatch: mutations.clearDownloadBatch,
     onDeleteFiles: mutations.onDeleteFiles,
     isDeleting: mutations.isDeleting,
     onRenameValidate,

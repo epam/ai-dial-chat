@@ -515,6 +515,10 @@ const defaultHookResult: UseDialFileManagerResult = {
   isCreatingFolder: false,
   onDownloadFiles: vi.fn(),
   isDownloading: false,
+  downloadBatchState: null,
+  cancelDownloadFile: vi.fn(),
+  cancelAllDownloads: vi.fn(),
+  clearDownloadBatch: vi.fn(),
   onDeleteFiles: vi.fn(),
   isDeleting: false,
   onRenameValidate: vi.fn(),
@@ -918,22 +922,17 @@ describe('DialFileManagerModal', () => {
     expect(screen.queryByText('Attach files')).toBeNull();
   });
 
-  it('shows a loader while an archive is being prepared', () => {
+  it('shows no blocking loader while a download runs, since downloads are queue rows', () => {
     setControllerResult({
       ...defaultHookResult,
       isDownloading: true,
-      isAnyOperationInProgress: true,
     });
 
     render(<DialFileManagerModal {...defaultProps} />);
 
     expect(
-      screen.getByRole('img', { name: 'Preparing download…' }),
-    ).toBeTruthy();
-    expect(screen.queryByText('Preparing download…')).toBeNull();
-    expect(
-      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
-    ).toBe(true);
+      screen.queryByRole('img', { name: 'Preparing download…' }),
+    ).toBeNull();
   });
 
   it('disables Attach while any file operation is in progress', () => {

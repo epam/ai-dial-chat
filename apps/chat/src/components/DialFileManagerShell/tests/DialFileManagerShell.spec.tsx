@@ -7,6 +7,7 @@ import type {
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
+  FileDownloadStatus,
   FileUploadStatus,
 } from '@epam/ai-dial-chat-shared';
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
@@ -154,6 +155,10 @@ const baseHookResult: UseDialFileManagerResult = {
   isCreatingFolder: false,
   onDownloadFiles: vi.fn(),
   isDownloading: false,
+  downloadBatchState: null,
+  cancelDownloadFile: vi.fn(),
+  cancelAllDownloads: vi.fn(),
+  clearDownloadBatch: vi.fn(),
   onDeleteFiles: vi.fn(),
   isDeleting: false,
   onRenameValidate: vi.fn(),
@@ -401,6 +406,97 @@ describe('DialFileManagerShell', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
 
+    expect(cancelUpload).toHaveBeenCalledOnce();
+    expect(clearUploadBatch).toHaveBeenCalledOnce();
+  });
+
+  it('shows uploads and downloads in one queue, titled from both counts', () => {
+    renderShell(
+      {
+        uploadBatchState: {
+          isOpen: true,
+          files: [
+            { id: 'u1', name: 'a.pdf', status: FileUploadStatus.Uploading },
+          ],
+        },
+        downloadBatchState: {
+          isOpen: true,
+          files: [
+            {
+              id: 'd1',
+              name: 'files.zip',
+              status: FileDownloadStatus.Downloading,
+            },
+          ],
+        },
+      },
+      new Set(),
+      {
+        labels: {
+          ...baseLabels,
+          getTransferQueueTitle: ({ uploads, downloads }) =>
+            `${uploads} up, ${downloads} down`,
+        },
+      },
+    );
+
+    expect(screen.getByText('1 up, 1 down')).toBeTruthy();
+    expect(screen.getByText('a.pdf')).toBeTruthy();
+    expect(screen.getByText('files.zip')).toBeTruthy();
+  });
+
+  it('cancels a download from its queue row', async () => {
+    const cancelDownloadFile = vi.fn();
+    const cancelUploadFile = vi.fn();
+    renderShell({
+      cancelDownloadFile,
+      cancelUploadFile,
+      downloadBatchState: {
+        isOpen: true,
+        files: [
+          {
+            id: 'd1',
+            name: 'report.pdf',
+            status: FileDownloadStatus.Downloading,
+          },
+        ],
+      },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Cancel "report.pdf"' }),
+    );
+
+    expect(cancelDownloadFile).toHaveBeenCalledWith('d1');
+    expect(cancelUploadFile).not.toHaveBeenCalled();
+  });
+
+  it('stops and clears uploads and downloads alike when the queue is closed', async () => {
+    const cancelAllDownloads = vi.fn();
+    const clearDownloadBatch = vi.fn();
+    const cancelUpload = vi.fn();
+    const clearUploadBatch = vi.fn();
+    renderShell({
+      cancelAllDownloads,
+      clearDownloadBatch,
+      cancelUpload,
+      clearUploadBatch,
+      downloadBatchState: {
+        isOpen: true,
+        files: [
+          {
+            id: 'd1',
+            name: 'report.pdf',
+            status: FileDownloadStatus.Completed,
+          },
+        ],
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(cancelAllDownloads).toHaveBeenCalledOnce();
+    expect(clearDownloadBatch).toHaveBeenCalledOnce();
     expect(cancelUpload).toHaveBeenCalledOnce();
     expect(clearUploadBatch).toHaveBeenCalledOnce();
   });
@@ -656,7 +752,6 @@ describe('DialFileManagerShell', () => {
 
   describe('consolidated operation overlay', () => {
     const consolidatedOverlayLabels = [
-      baseLabels.downloadingLabel,
       baseLabels.deletingLabel,
       baseLabels.renamingLabel,
       baseLabels.unsharingLabel,
@@ -669,11 +764,11 @@ describe('DialFileManagerShell', () => {
       });
     };
 
-    it('shows the downloading label while isDownloading is true', () => {
+    it('shows no overlay while a download runs, since downloads are queue rows', () => {
       renderShell({ isDownloading: true });
-      expect(
-        screen.getByRole('img', { name: baseLabels.downloadingLabel }),
-      ).toBeTruthy();
+
+      expectNoConsolidatedOverlay();
+      expect(screen.queryByRole('img', { name: 'Downloading…' })).toBeNull();
     });
 
     it('shows the deleting label while isDeleting is true', () => {
@@ -738,14 +833,11 @@ describe('DialFileManagerShell', () => {
       expectNoConsolidatedOverlay();
     });
 
-    it('prioritizes the downloading label over the deleting label when both are unexpectedly true', () => {
+    it('shows the deleting label even while a download runs, since downloads have no overlay', () => {
       renderShell({ isDownloading: true, isDeleting: true });
       expect(
-        screen.getByRole('img', { name: baseLabels.downloadingLabel }),
+        screen.getByRole('img', { name: baseLabels.deletingLabel }),
       ).toBeTruthy();
-      expect(
-        screen.queryByRole('img', { name: baseLabels.deletingLabel }),
-      ).toBeNull();
     });
 
     it('prioritizes the deleting label over the renaming label when both are unexpectedly true', () => {

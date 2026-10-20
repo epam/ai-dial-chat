@@ -1,7 +1,9 @@
-import type {
-  FileMetadataResponseDto,
-  FilesApi,
-  ListFilesResponseDto,
+import {
+  type ArchiveItemDto,
+  ArchiveItemDtoNodeTypeEnum,
+  type FileMetadataResponseDto,
+  type FilesApi,
+  type ListFilesResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it, vi } from 'vitest';
 import { createFilesApiClient } from '../create-files-api';
@@ -184,6 +186,38 @@ describe('createFilesApiClient — downloadFile', () => {
       { bucket: 'my-bucket', path: 'reports/file.pdf' },
       { signal: controller.signal },
     );
+  });
+});
+
+describe('createFilesApiClient — downloadArchive', () => {
+  it('passes an AbortSignal through to downloadArchiveRaw when provided', async () => {
+    const filesApi = makeFilesApi();
+    const rawResponse = new Response('zip');
+    const downloadArchiveRawSpy = vi
+      .fn()
+      .mockResolvedValue({ raw: rawResponse });
+    filesApi.downloadArchiveRaw = downloadArchiveRawSpy;
+    const client = createFilesApiClient(
+      filesApi,
+      failingUploadFileWithProgress,
+    );
+    const controller = new AbortController();
+    const items: ArchiveItemDto[] = [
+      {
+        bucket: 'b',
+        path: 'docs/',
+        name: 'docs',
+        nodeType: ArchiveItemDtoNodeTypeEnum.Folder,
+      },
+    ];
+
+    const result = await client.downloadArchive(items, controller.signal);
+
+    expect(downloadArchiveRawSpy).toHaveBeenCalledWith(
+      { downloadArchiveDto: { items } },
+      { signal: controller.signal },
+    );
+    expect(result).toBe(rawResponse);
   });
 });
 

@@ -38,6 +38,14 @@ import { useUser } from '../../context/auth/UserContext';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
+/*
+ * The folders panel sits next to the app's navigation rail, so it is divided
+ * from it by a line on its start edge, like the chats panel, instead of the
+ * file manager's default shadow. Width and height repeat that default.
+ */
+const TREE_PANEL_CLASS_NAME =
+  'h-full min-h-0 w-[360px] shrink-0 border-s border-tertiary bg-layer-raised';
+
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
   const {
@@ -315,6 +323,7 @@ const DialFileManagerPage: FC = () => {
         autoSelectUploadedItems={false}
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
+        treeContainerClassName={TREE_PANEL_CLASS_NAME}
       />
     </div>
   );

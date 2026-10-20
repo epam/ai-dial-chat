@@ -615,6 +615,46 @@ describe('ApplicationsService', () => {
       });
     });
 
+    it('stores explicit top-level features without the system_prompt_supported default for a Quick App', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        preserveApplicationProperties: true,
+        applicationProperties: {
+          features: { file_loading: { size_limit: 1 } },
+        },
+        features: { tools_supported: true },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({
+        tools_supported: true,
+        skills_supported: true,
+      });
+      expect(sentBody.application_properties).toEqual({
+        features: { file_loading: { size_limit: 1 } },
+      });
+    });
+
+    it('prefers explicit top-level features over hoisted ones', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        applicationProperties: { features: { timestamp: true } },
+        features: { system_prompt_supported: true },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({
+        system_prompt_supported: true,
+        skills_supported: true,
+      });
+    });
+
     it('merges skills_supported alongside caller-supplied features for a Quick App', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
