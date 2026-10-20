@@ -5,6 +5,7 @@ import * as ReactDOM from 'react-dom/client';
 import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import AppRoot from './AppRoot';
+import { buildAppRoutes } from './app-routes';
 import { RootErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import './i18n/config';
 import './tailwind.css';
@@ -16,9 +17,10 @@ registerChunkLoadRecovery();
 /*
  * A data router is required for `useBlocker` (the builder leave guard). The
  * single splat route renders the unchanged provider stack and descendant
- * `<Routes>`, so no route declaration moves into a route-object tree.
+ * `<Routes>`, so no route declaration moves into a route-object tree. The
+ * outer `RootErrorBoundary` below only covers what renders outside the router.
  */
-const router = createBrowserRouter([{ path: '*', element: <AppRoot /> }]);
+const router = createBrowserRouter(buildAppRoutes(<AppRoot />));
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
