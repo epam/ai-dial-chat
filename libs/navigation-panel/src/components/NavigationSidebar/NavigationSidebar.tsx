@@ -181,7 +181,7 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
         aria-controls={sidebarId}
         tooltipProps={{ tooltip: toggleLabel }}
         onClick={onToggleCollapse}
-        className="group/toggle !size-10 !min-h-0 !min-w-0 shrink-0 !rounded-full !p-2"
+        className="group/toggle size-10! min-h-0! min-w-0! shrink-0 rounded-full! p-2!"
       />
     );
 
@@ -198,7 +198,7 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
         aria-label={closeLabel}
         tooltipProps={{ tooltip: closeLabel }}
         onClick={onClose}
-        className="!size-10 !min-h-0 !min-w-0 shrink-0 !rounded-full !p-2"
+        className="size-10! min-h-0! min-w-0! shrink-0 rounded-full! p-2!"
       />
     );
 

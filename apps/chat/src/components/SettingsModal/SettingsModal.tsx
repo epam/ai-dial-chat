@@ -97,7 +97,7 @@ const SettingsModal: FC<Props> = ({ onClose }) => {
       open
       header={t(BasicI18nKeys.Settings)}
       size={PopupSize.Lg}
-      className="!h-[840px] !max-h-full !w-[1200px] !max-w-full"
+      className="h-[840px]! max-h-full! w-[1200px]! max-w-full!"
       bodyClassName="flex min-h-0 min-w-0 flex-1"
       onClose={onClose}
       mainButtons={mainButtons}
