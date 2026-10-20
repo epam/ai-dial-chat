@@ -515,6 +515,10 @@ const defaultHookResult: UseDialFileManagerResult = {
   isCreatingFolder: false,
   onDownloadFiles: vi.fn(),
   isDownloading: false,
+  downloadBatchState: null,
+  cancelDownloadFile: vi.fn(),
+  cancelAllDownloads: vi.fn(),
+  clearDownloadBatch: vi.fn(),
   onDeleteFiles: vi.fn(),
   isDeleting: false,
   onRenameValidate: vi.fn(),
@@ -643,7 +647,8 @@ describe('DialFileManagerModal', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
-    expect(fileManager.classList.contains('bg-layer-base')).toBe(true);
+    /* The surface is the shell's CSS-module class, painted from `--dfms-surface`. */
+    expect(fileManager.className).toMatch(/surface/);
     expect(fileManager.classList.contains('p-0')).toBe(true);
     expect(fileManager.getAttribute('data-content-class')).toBe('px-0 pb-0');
     expect(fileManager.getAttribute('data-grid-class')).toBe(
@@ -696,11 +701,11 @@ describe('DialFileManagerModal', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog.classList.contains('!h-[min(900px,100dvh)]')).toBe(true);
-    expect(dialog.classList.contains('!bg-layer-base')).toBe(true);
-    expect(dialog.classList.contains('!max-w-[1600px]')).toBe(true);
-    expect(dialog.classList.contains('mobile:!h-full')).toBe(true);
-    expect(dialog.classList.contains('mobile:!max-w-full')).toBe(true);
+    expect(dialog.classList.contains('h-[min(900px,100dvh)]!')).toBe(true);
+    expect(dialog.classList.contains('bg-layer-base!')).toBe(true);
+    expect(dialog.classList.contains('max-w-[1600px]!')).toBe(true);
+    expect(dialog.classList.contains('mobile:h-full!')).toBe(true);
+    expect(dialog.classList.contains('mobile:max-w-full!')).toBe(true);
     expect(dialog.classList.contains('mobile:rounded-none')).toBe(true);
     // eslint-disable-next-line testing-library/no-node-access
     expect(dialog.closest('.mobile\\:p-0')).toBeTruthy();
@@ -917,22 +922,17 @@ describe('DialFileManagerModal', () => {
     expect(screen.queryByText('Attach files')).toBeNull();
   });
 
-  it('shows a loader while an archive is being prepared', () => {
+  it('shows no blocking loader while a download runs, since downloads are queue rows', () => {
     setControllerResult({
       ...defaultHookResult,
       isDownloading: true,
-      isAnyOperationInProgress: true,
     });
 
     render(<DialFileManagerModal {...defaultProps} />);
 
     expect(
-      screen.getByRole('img', { name: 'Preparing download…' }),
-    ).toBeTruthy();
-    expect(screen.queryByText('Preparing download…')).toBeNull();
-    expect(
-      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
-    ).toBe(true);
+      screen.queryByRole('img', { name: 'Preparing download…' }),
+    ).toBeNull();
   });
 
   it('disables Attach while any file operation is in progress', () => {

@@ -9,16 +9,22 @@ import {
   MenuItemMark,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconLogout, IconSettings } from '@tabler/icons-react';
-import { memo, useMemo, type FC } from 'react';
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconLogout,
+  IconSettings,
+} from '@tabler/icons-react';
+import { memo, useMemo, useState, type FC } from 'react';
 import type { UserMenuProps } from '../../models/user-menu-props';
+import { UserMenuTriggerVariant } from '../../types/user-menu-trigger-variant';
 import { AvatarInitials } from '../common/AvatarInitials';
 import { UserAvatar } from '../common/UserAvatar';
 import styles from './UserMenu.module.scss';
 
 /**
- * Avatar trigger pinned to the bottom of the nav rail, opening a dropdown with
- * the user's identity, single-select settings submenus, and a log-out entry.
+ * User trigger that opens a dropdown with the user's identity, single-select
+ * settings submenus, an optional Settings entry and a log-out entry.
  */
 export const UserMenu: FC<UserMenuProps> = memo(
   ({
@@ -27,10 +33,15 @@ export const UserMenu: FC<UserMenuProps> = memo(
     groups,
     onLogout,
     onSettings,
+    triggerVariant = UserMenuTriggerVariant.Avatar,
     isTooltipHidden,
     styles: menuStyles,
   }) => {
     const { colors, typography, className, cssVars } = menuStyles ?? {};
+    const [isOpen, setIsOpen] = useState(false);
+    const isProfileTrigger = triggerVariant === UserMenuTriggerVariant.Profile;
+    const isCompactTrigger = triggerVariant === UserMenuTriggerVariant.Compact;
+    const isStartPlacement = isProfileTrigger || isCompactTrigger;
     const labelClassName = typography?.fontClassName ?? 'dial-small-text';
 
     const menuCssVars = useMemo(
@@ -40,6 +51,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
           '--np-avatar-text': colors?.avatarText,
           '--np-menu-text': colors?.text,
           '--np-trigger-hover-bg': colors?.triggerHoverBackground,
+          '--np-trigger-open-bg': colors?.triggerOpenBackground,
           '--np-font-family': typography?.fontFamily,
         }),
       [colors, typography?.fontFamily],
@@ -132,31 +144,98 @@ export const UserMenu: FC<UserMenuProps> = memo(
       profile.shortName,
     ]);
 
-    return (
-      <div
-        style={{ ...cssVars, ...menuCssVars }}
-        className={mergeClasses(
-          styles.wrapper,
-          'flex size-[60px] items-center justify-center',
-          className,
-        )}
-      >
-        <Dropdown placement="top-end" matchReferenceWidth={false} items={items}>
-          {/* The email tooltip describes the button itself (the kit attaches
-              it with `asChild`), not a wrapper span around the avatar that no
-              screen reader associated with the control. */}
+    const renderTrigger = () => {
+      /* `Avatar` sits in the rail's 60px square; `Compact` is a 40px pill
+         that, like `Profile`, shows the open state. */
+      if (!isProfileTrigger) {
+        return (
           <Button
             aria-label={labels.trigger}
             tooltipProps={{
               tooltip: profile.email,
               hideTooltip: isTooltipHidden,
             }}
-            iconBefore={<UserAvatar profile={profile} alt={labels.avatarAlt} />}
+            iconBefore={
+              <UserAvatar
+                profile={profile}
+                alt={labels.avatarAlt}
+                size={isCompactTrigger ? 24 : undefined}
+              />
+            }
             className={mergeClasses(
-              'size-[44px] gap-0 !rounded-full p-0',
+              isCompactTrigger
+                ? '!size-10 !min-h-0 !min-w-0 gap-0 !rounded-full !border-0 !p-2'
+                : 'size-[44px] gap-0 !rounded-full p-0',
               styles.trigger,
+              isCompactTrigger && isOpen && styles.triggerOpen,
             )}
           />
+        );
+      }
+
+      const Chevron = isOpen ? IconChevronUp : IconChevronDown;
+
+      /* No `aria-label`: the accessible name starts with the visible name, so a
+         voice-control user can say what they see (WCAG 2.5.3). The trigger
+         label follows it as hidden text, and the avatar stays unnamed. */
+      return (
+        <Button
+          tooltipProps={{
+            tooltip: profile.email,
+            hideTooltip: isTooltipHidden,
+          }}
+          iconBefore={<UserAvatar profile={profile} alt="" size={24} />}
+          label={
+            <>
+              <EllipsisTooltip
+                text={profile.displayName}
+                className={mergeClasses(
+                  styles.identityText,
+                  labelClassName,
+                  'min-w-0 truncate',
+                )}
+              />
+              <span className="sr-only">{labels.trigger}</span>
+            </>
+          }
+          iconAfter={
+            <Chevron
+              size={DIAL_ICON_SIZE.SM}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+            />
+          }
+          textClassName="min-w-0"
+          className={mergeClasses(
+            '!h-10 !min-h-0 max-w-full !min-w-0 gap-2 !rounded-full !border-0 !p-2',
+            styles.trigger,
+            isOpen && styles.triggerOpen,
+          )}
+        />
+      );
+    };
+
+    return (
+      <div
+        style={{ ...cssVars, ...menuCssVars }}
+        className={mergeClasses(
+          styles.wrapper,
+          isStartPlacement
+            ? 'flex min-w-0 items-center'
+            : 'flex size-[60px] items-center justify-center',
+          className,
+        )}
+      >
+        <Dropdown
+          placement={isStartPlacement ? 'top-start' : 'top-end'}
+          matchReferenceWidth={false}
+          items={items}
+          onOpenChange={setIsOpen}
+        >
+          {/* The email tooltip describes the button itself (the kit attaches
+              it with `asChild`), not a wrapper span around the avatar that no
+              screen reader associated with the control. */}
+          {renderTrigger()}
         </Dropdown>
       </div>
     );

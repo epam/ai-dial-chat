@@ -108,6 +108,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   onFieldChange,
   onCancel,
   onBack = onCancel,
+  onDirtyChange,
   onRetry,
   onRefineDescription,
   onRefineInstructions,
@@ -246,7 +247,11 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     values.name !== seededValues.name ||
     values.description !== seededValues.description ||
     values.content !== seededValues.content;
-  const leaveGuard = useUnsavedChangesGuard(isDirty);
+  /* A host that tracks dirtiness owns the guard, so the built-in one stays inert. */
+  const leaveGuard = useUnsavedChangesGuard(isDirty && !onDirtyChange);
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
   const { guard: guardLeave } = leaveGuard;
   const { reset: resetDescriptionRefinement } = descriptionRefinement;
   const { reset: resetContentRefinement } = contentRefinement;
@@ -435,7 +440,6 @@ export const PromptEditor: FC<PromptEditorProps> = ({
               fields={METADATA_FIELDS}
               renderDescription={renderRefinableDescription}
               labels={metadataLabels}
-              descriptionMaxLength={descriptionMaxLength}
               descriptionCaption={
                 values.description
                   ? `${values.description.length}/${descriptionMaxLength}`

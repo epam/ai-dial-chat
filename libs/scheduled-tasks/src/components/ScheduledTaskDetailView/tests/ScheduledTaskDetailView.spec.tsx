@@ -166,7 +166,7 @@ vi.mock('@tabler/icons-react', () => ({
       aria-hidden={ariaHidden}
     />
   ),
-  IconCircleCheck: () => <svg data-icon="success" />,
+  IconCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
   IconClipboardX: () => <svg data-icon="empty" />,

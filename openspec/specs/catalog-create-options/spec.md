@@ -83,7 +83,7 @@ The system SHALL add a "Prompt" option to the `CatalogView` create button when `
 
 Clicking it SHALL navigate to `ROUTES.PromptEditor` in create mode with no query parameters — the Prompt Editor returns to `ROUTES.Catalog` on cancel or save. It carries no `id` param — an `id` is what distinguishes edit mode.
 
-The entry SHALL take its place in the alphabetical order the whole menu is sorted in (see `catalog-create-app`), not a fixed last position. No existing create option's visibility rule changes.
+The entry SHALL belong to the menu's entity section and take its place in that section's label order, ahead of the runner section (see `catalog-create-app`). It is not pinned to a fixed position. No existing create option's visibility rule changes.
 
 #### Scenario: Option visible when feature enabled
 
@@ -101,10 +101,10 @@ The entry SHALL take its place in the alphabetical order the whole menu is sorte
 - **THEN** the app navigates to `/prompt-editor` with no query string
 - **AND** the editor renders an empty create form
 
-#### Scenario: Prompt is placed alphabetically
+#### Scenario: Prompt sits in the entity section
 
-- **WHEN** `OverlayFeature.Prompts` is enabled alongside `CustomApps` and `Toolsets`
-- **THEN** the Prompt entry sits where its label sorts among the runner, Toolset, Custom App, and Skill entries, whose labels and navigation targets are unchanged
+- **WHEN** `OverlayFeature.Prompts` is enabled alongside `CustomApps`, `Toolsets` and `SchemaApps` with at least one runner schema
+- **THEN** the Prompt entry sits, by label, among the Toolset and Skill entries, before the "Runners" header, and no runner or Custom App entry precedes it
 
 #### Scenario: Create button is still hidden in selector mode
 
@@ -152,3 +152,28 @@ The Edit action's visibility is governed by the lib's existing `!!onEdit && !!it
 
 - **WHEN** the user activates Edit on a toolset, a runner app, or a schema-less custom app
 - **THEN** it navigates as `catalog-quickapp-edit-action` specifies
+
+---
+
+### Requirement: The mobile Create sheet renders section dividers and headers
+
+`CreateMenuSheet` (`libs/catalog/src/components/Catalog/CreateMenuSheet.tsx`) SHALL render the menu's sections as the desktop dropdown does:
+
+- a `DropdownItemType.Divider` item renders as a non-interactive element with `role="separator"`;
+- a `DropdownItemType.PlainText` item renders its label as a non-interactive caption that is neither a `menuitem` nor focusable;
+- only `DropdownItemType.Item` entries (including a missing `type`) render as `MenuItem` with `role="menuitem"`.
+
+Search highlighting SHALL leave the divider and the header untouched. A drilled-in page (such as Skill) shows only that group's children. The root page's sections are not repeated there.
+
+**RTL**: the divider and caption use logical spacing (`px-*`, `ms-*`/`me-*`) only and carry no directional icon.
+
+#### Scenario: Sheet shows both sections on a phone
+
+- **WHEN** a user taps Create at a 375px-wide viewport while Toolset and at least one runner are offered
+- **THEN** the sheet lists Toolset, then an element with `role="separator"`, then the "Runners" caption, then the runner options
+- **AND** the "Runners" caption is not exposed as a `menuitem` and tapping it neither runs an action nor closes the sheet
+
+#### Scenario: Sheet search hides an emptied section's header
+
+- **WHEN** the user types a query in the sheet that matches only runner options
+- **THEN** no `separator` and no "Runners" caption is shown

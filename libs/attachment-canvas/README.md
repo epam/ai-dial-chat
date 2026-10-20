@@ -25,8 +25,8 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 Everything else this package needs it installs itself, as a `dependency`: the
 PDF stack (`@epam/ai-dial-react-pdf-highlighter`, `@epam/pdf-highlighter-kit`,
 `pdfjs-dist`), the MCP stack (`@mcp-ui/client`, `@modelcontextprotocol/sdk`,
-`@modelcontextprotocol/ext-apps`), the visualizer stack
-(`@epam/ai-dial-shared`, `@epam/ai-dial-visualizer-connector`),
+`@modelcontextprotocol/ext-apps`), the visualizer connector
+(`@epam/ai-dial-visualizer-connector`, a sibling workspace package),
 `@tabler/icons-react`, `react-json-view-lite` and
 `react-syntax-highlighter`. A host rendering the
 canvas names none of them, and a host that never imports this package installs

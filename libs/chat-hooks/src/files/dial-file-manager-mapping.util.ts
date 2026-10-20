@@ -4,6 +4,7 @@ import type {
   ListFilesItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
+import { FileUploadFailureReason } from '@epam/ai-dial-chat-shared';
 import type {
   FileUploadBatchState,
   FileUploadEntry,
@@ -14,7 +15,9 @@ import {
   DialFileManagerTabs,
   DialFileNodeType,
 } from '@epam/ai-dial-react-file-manager';
+import { getApiErrorDetails } from '../api-error/api-error';
 import { safeDecodeURI } from '../shared/string-utils';
+import { UploadNetworkError } from './create-upload-file-with-progress';
 import {
   buildSharedItemVirtualPath,
   dialCorePathToRelative,
@@ -166,13 +169,48 @@ export const updateEntry = (
   prev: FileUploadBatchState | null,
   id: string,
   patch:
-    FileUploadStatus | Partial<Pick<FileUploadEntry, 'status' | 'percent'>>,
+    | FileUploadStatus
+    | Partial<Pick<FileUploadEntry, 'status' | 'percent' | 'failureReason'>>,
 ): FileUploadBatchState | null => {
   if (!prev) return prev;
   const changes = typeof patch === 'string' ? { status: patch } : patch;
   const files = prev.files.map((f) => (f.id === id ? { ...f, ...changes } : f));
   return { ...prev, files };
 };
+
+const FAILURE_REASON_BY_STATUS: Record<number, FileUploadFailureReason> = {
+  403: FileUploadFailureReason.Forbidden,
+  409: FileUploadFailureReason.Conflict,
+  413: FileUploadFailureReason.TooLarge,
+  502: FileUploadFailureReason.Unavailable,
+  503: FileUploadFailureReason.Unavailable,
+};
+
+/*
+ * A request that never got a response: the XHR upload's own error, the
+ * generated client's `FetchError` (it wraps a rejected `fetch`), or a bare
+ * `fetch` `TypeError`. `FetchError` is matched by name so this file does not
+ * import the generated runtime.
+ */
+const isNoResponseError = (error: unknown): boolean =>
+  error instanceof UploadNetworkError ||
+  error instanceof TypeError ||
+  (error instanceof Error && error.name === 'FetchError');
+
+/** Resolves why an upload or download request failed from its rejection: the HTTP status when there is a response, `Network` when there was none. */
+export const resolveTransferFailureReason = async (
+  error: unknown,
+): Promise<FileUploadFailureReason> => {
+  if (isNoResponseError(error)) return FileUploadFailureReason.Network;
+  const { status } = await getApiErrorDetails(error);
+  return (
+    (status != null ? FAILURE_REASON_BY_STATUS[status] : undefined) ??
+    FileUploadFailureReason.Unknown
+  );
+};
+
+/** Upload-named alias of {@link resolveTransferFailureReason}, kept for existing callers. */
+export const resolveUploadFailureReason = resolveTransferFailureReason;
 
 export const fetchByTab = (
   filesApi: DialFilesApi,

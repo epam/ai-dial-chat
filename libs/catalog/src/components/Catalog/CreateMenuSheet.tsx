@@ -1,3 +1,4 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   BottomSheet,
   DIAL_ICON_SIZE,
@@ -12,7 +13,9 @@ import { IconChevronRight } from '@tabler/icons-react';
 import type { FC, MouseEvent } from 'react';
 import { useState } from 'react';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
+import type { CreateMenuColors } from '../../models/catalog-styles';
 import { highlightDropdownLabels } from '../../utils/create-menu';
+import styles from './CreateMenuSheet.module.scss';
 
 /** Props for the mobile Create menu sheet. */
 export interface CreateMenuSheetProps {
@@ -36,6 +39,10 @@ export interface CreateMenuSheetProps {
   backLabel: string;
   /** Accessible name of the header's close button. */
   closeLabel: string;
+  /** Colors of the divider and section-header rows. */
+  colors?: CreateMenuColors;
+  /** Typography class of a section-header row. Defaults to `'dial-caption-text'`. */
+  sectionHeaderClassName?: string;
 }
 
 /**
@@ -54,6 +61,8 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
   noResultsLabel,
   backLabel,
   closeLabel,
+  colors,
+  sectionHeaderClassName = 'dial-caption-text',
 }) => {
   const [parentKey, setParentKey] = useState<string | null>(null);
   const parent = parentKey
@@ -63,6 +72,12 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
   const items = search
     ? highlightDropdownLabels(pageItems, search.value)
     : pageItems;
+
+  // The sheet renders in a portal, outside the catalog root's CSS vars, so it sets its own.
+  const cssVars = buildCssVars({
+    '--cat-create-menu-divider': colors?.divider,
+    '--cat-create-menu-section-header-text': colors?.sectionHeaderText,
+  });
 
   const handleClose = () => {
     setParentKey(null);
@@ -100,10 +115,42 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
         </div>
       )}
       {items.length ? (
-        <div role="menu" aria-label={parent ? undefined : title}>
-          {items
-            .filter((item) => item.type !== DropdownItemType.PlainText)
-            .map((item) => (
+        <div
+          role="menu"
+          aria-label={parent ? undefined : title}
+          style={cssVars}
+        >
+          {items.map((item) => {
+            if (item.type === DropdownItemType.Divider) {
+              return (
+                <div
+                  key={item.key}
+                  role="separator"
+                  className={mergeClasses(
+                    'my-1',
+                    styles.divider,
+                    item.className,
+                  )}
+                />
+              );
+            }
+            if (item.type === DropdownItemType.PlainText) {
+              return (
+                <div
+                  key={item.key}
+                  role="presentation"
+                  className={mergeClasses(
+                    'px-3 py-2',
+                    styles.sectionHeader,
+                    sectionHeaderClassName,
+                    item.className,
+                  )}
+                >
+                  {item.label}
+                </div>
+              );
+            }
+            return (
               <MenuItem
                 key={item.key}
                 role="menuitem"
@@ -124,7 +171,8 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
                 }
                 onClick={(event) => handleSelect(item, event)}
               />
-            ))}
+            );
+          })}
         </div>
       ) : (
         <p role="status" className="px-3 py-2">

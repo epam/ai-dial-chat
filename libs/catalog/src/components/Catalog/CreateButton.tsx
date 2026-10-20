@@ -8,19 +8,16 @@ import {
   DIAL_KIT_ICON_STROKE,
   Dropdown,
   DropdownItem,
-  DropdownItemType,
-  ElementSize,
   PrimaryButton,
-  Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, MouseEvent, useRef, useState } from 'react';
 import {
   CREATE_MENU_LIST_CLASS_NAME,
-  CREATE_MENU_MAX_HEIGHT_PX,
+  CREATE_MENU_VISIBLE_ROWS,
 } from '../../constants/create-menu';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
-import { highlightDropdownLabels } from '../../utils/create-menu';
+import type { CreateMenuColors } from '../../models/catalog-styles';
 import { CreateMenuSheet } from './CreateMenuSheet';
 
 /** Props for the catalog Create button. */
@@ -48,6 +45,10 @@ export interface CreateButtonProps {
   closeLabel?: string;
   /** Colour variant of the button. Defaults to `ButtonVariant.Primary`. */
   variant?: ButtonVariant;
+  /** Colors of the mobile menu sheet's divider and section-header rows. */
+  colors?: CreateMenuColors;
+  /** Typography class of a section header in the mobile menu sheet. Defaults to `'dial-caption-text'`. */
+  sectionHeaderClassName?: string;
 }
 
 /** Renders a plain primary button, a split-chevron dropdown, a searchable dropdown, or — on mobile — a menu sheet. */
@@ -62,6 +63,8 @@ export const CreateButton: FC<CreateButtonProps> = ({
   backLabel = 'Back',
   closeLabel = 'Close',
   variant = ButtonVariant.Primary,
+  colors,
+  sectionHeaderClassName,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -105,47 +108,29 @@ export const CreateButton: FC<CreateButtonProps> = ({
           noResultsLabel={noResultsLabel}
           backLabel={backLabel}
           closeLabel={closeLabel}
+          colors={colors}
+          sectionHeaderClassName={sectionHeaderClassName}
         />
       </>
     );
   }
 
   if (search) {
-    const searchItems: DropdownItem[] = options?.length
-      ? highlightDropdownLabels(options, search.value)
-      : [
-          {
-            key: 'no-results',
-            type: DropdownItemType.PlainText,
-            label: <span role="status">{noResultsLabel}</span>,
-          },
-        ];
-    const handleOpenChange = (open: boolean) => {
-      setIsOpen(open);
-      if (!open) search.onChange('');
-    };
-
     return (
       <div ref={containerRef}>
         <Dropdown
-          items={searchItems}
-          maxDropdownHeight={CREATE_MENU_MAX_HEIGHT_PX}
+          items={options ?? []}
+          searchable
+          searchValue={search.value}
+          onSearchChange={search.onChange}
+          searchPlaceholder={searchPlaceholder}
+          searchClearLabel={searchClearLabel}
+          noResultsLabel={noResultsLabel}
+          maxVisibleItems={CREATE_MENU_VISIBLE_ROWS}
           placement="bottom-end"
           matchReferenceWidth={false}
           listClassName={CREATE_MENU_LIST_CLASS_NAME}
-          menuHeader={
-            <div className="sticky -top-1 z-10 bg-layer-raised px-2 pt-2 pb-1">
-              <Search
-                value={search.value}
-                placeholder={searchPlaceholder}
-                aria-label={searchPlaceholder}
-                clearLabel={searchClearLabel}
-                size={ElementSize.Small}
-                onChange={(value) => search.onChange(value ?? '')}
-              />
-            </div>
-          }
-          onOpenChange={handleOpenChange}
+          onOpenChange={setIsOpen}
         >
           <Button
             label={label}

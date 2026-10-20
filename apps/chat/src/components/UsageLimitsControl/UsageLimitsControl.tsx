@@ -26,12 +26,11 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { getSettingsTabRoute } from '../../constants/routes';
 import { ConversationInputI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
-import { SettingsTabs } from '../../types/settings-tabs';
+import { ROUTES } from '../../types/routes';
 import { resolveLocalizedText } from '../../utils/locale';
 import {
   findWorstCappedRow,
@@ -316,7 +315,7 @@ const UsageLimitsControl: FC<Props> = ({
             footerClassName="dial-caption-text pt-3"
             footerNote={
               <Link
-                to={getSettingsTabRoute(SettingsTabs.Usage)}
+                to={ROUTES.Usage}
                 onClick={() => setIsOpen(false)}
                 /* The negative inline-start margin cancels the pill's own
                    padding so the label still lines up with the rows above. */

@@ -1,7 +1,7 @@
 # skill-file-tree-actions Specification
 
 ## Purpose
-Specifies how `libs/skill-editor`'s file tree adds and removes content: the Files pane's Add dropdown, the per-node add entries / Add sibling / Delete menu, the target-folder rule, inline folder creation, archive expansion, picking files from the host's file system, and the editor-only nature of empty folders — with every source staged through the upload dialog and every host detail supplied through `fileActions`.
+Specifies how `libs/skill-editor`'s file tree adds and removes content: the Files pane's Add dropdown, the per-node add entries / Delete menu, the target-folder rule, inline folder creation, archive expansion, picking files from the host's file system, and the editor-only nature of empty folders — with every source staged through the upload dialog and every host detail supplied through `fileActions`.
 
 ## Requirements
 
@@ -25,7 +25,7 @@ Labels (each with an English default): `addLabel` ("Add"), `createFolderLabel` (
 
 ### Requirement: Target folder of an add action
 
-Every add action SHALL resolve a **target folder** path (`''` for the skill root). From the header Add dropdown the target SHALL be the selected node when it is a folder, and the root otherwise (including when `SKILL.md` or a supporting file is selected). From the add entries listed directly in a folder's context menu the target SHALL be that folder; from **Add sibling** it SHALL be the node's parent folder (root for a top-level node). Files staged by any add action SHALL have their resolved relative path prefixed with `<target>/` when the target is not the root; a folder created by Create folder SHALL be created at `<target>/<name>`.
+Every add action SHALL resolve a **target folder** path (`''` for the skill root). From the header Add dropdown the target SHALL be the selected node when it is a folder, and the root otherwise (including when `SKILL.md` or a supporting file is selected). From the add entries listed directly in a folder's context menu the target SHALL be that folder. There SHALL be no **Add sibling** action: adding next to a node goes through its parent folder's menu, or the header Add dropdown for the root (issue #9301). Files staged by any add action SHALL have their resolved relative path prefixed with `<target>/` when the target is not the root; a folder created by Create folder SHALL be created at `<target>/<name>`.
 
 #### Scenario: Header upload with a folder selected
 - **WHEN** the folder `docs` is selected and the user uploads `a.md` from the header Add dropdown
@@ -35,25 +35,25 @@ Every add action SHALL resolve a **target folder** path (`''` for the skill root
 - **WHEN** the supporting file `docs/a.md` is selected and the user uploads `b.md` from the header Add dropdown
 - **THEN** the staged candidate path is `b.md`
 
-#### Scenario: Add sibling of a nested file
-- **WHEN** the user chooses Add sibling → Upload files from device on `docs/a.md` and stages `c.md`
+#### Scenario: Adding next to a nested node
+- **WHEN** the user chooses Upload files from device in the context menu of folder `docs` (the parent of `docs/sub`) and stages `c.md`
 - **THEN** the staged candidate path is `docs/c.md`
 
 ### Requirement: Per-node context menu
 
-For every node other than `SKILL.md`, `getContextMenuItems` SHALL return, in this order: for a folder, the same entries the header Add dropdown would show, listed directly (no intermediate submenu) and targeting that folder, so uploading into a specific folder takes one menu level; then **Add sibling**; then **Delete**. Add sibling SHALL be a submenu (`DropdownItem.children`) containing the same entries the header Add dropdown would show, targeting the node's parent folder. Delete SHALL behave as today's Remove: the node (and, for a folder, everything under it) is removed immediately with no confirmation and `fileActions.onRemoveNode(path)` is called; a removed selection falls back to `SKILL.md`. Delete SHALL render as a danger item (`DropdownItem.danger`), so its label and icon take the error color; `removeIconClassName` stays an optional icon-color override with no default. `SKILL.md` SHALL keep returning an empty menu. Labels: `addSiblingLabel` ("Add sibling"), `deleteLabel` ("Delete"). App key: `skillEditor.addSibling`; Delete reuses `ButtonsI18nKeys.Delete`.
+For every node other than `SKILL.md`, `getContextMenuItems` SHALL return, in this order: for a folder, the same entries the header Add dropdown would show, listed directly (no intermediate submenu) and targeting that folder, so uploading into a specific folder takes one menu level; then **Delete**. The menu SHALL have no Add child or Add sibling submenu. A supporting file SHALL have no menu (`getContextMenuItems` returns an empty list), only an inline Delete button shown on row hover. Delete SHALL behave as today's Remove: the node (and, for a folder, everything under it) is removed immediately with no confirmation and `fileActions.onRemoveNode(path)` is called; a removed selection falls back to `SKILL.md`. Delete SHALL render as a danger item (`DropdownItem.danger`), so its label and icon take the error color; `removeIconClassName` stays an optional icon-color override with no default. `SKILL.md` SHALL keep returning an empty menu. Label: `deleteLabel` ("Delete"), which reuses `ButtonsI18nKeys.Delete` in the app.
 
 #### Scenario: Folder menu
 - **WHEN** the user opens the context menu of a folder node
-- **THEN** it lists Create folder, Upload files from device, Upload archive from device and Open DIAL file system directly (each subject to its host capability), then Add sibling and Delete
+- **THEN** it lists Create folder, Upload files from device, Upload archive from device and Open DIAL file system directly (each subject to its host capability), then Delete, and no Add sibling
 
 #### Scenario: Uploading into a folder from its menu
 - **WHEN** the user chooses Upload files from device in the context menu of folder `docs` and stages `c.md`
 - **THEN** the staged candidate path is `docs/c.md`
 
-#### Scenario: File menu
-- **WHEN** the user opens the context menu of a supporting-file node
-- **THEN** it lists Add sibling and Delete, and no direct add entries
+#### Scenario: File row
+- **WHEN** a supporting-file node is rendered
+- **THEN** it has no context menu, only an inline Delete button shown on row hover
 
 #### Scenario: SKILL.md stays protected
 - **WHEN** the user opens the context menu of `SKILL.md`

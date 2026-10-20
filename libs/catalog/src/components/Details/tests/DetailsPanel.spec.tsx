@@ -464,16 +464,30 @@ describe('DetailsPanel — publish credentials opt-in', () => {
   });
 
   /* A shared team API key is the common internal case. */
-  it('offers the option for an API-key toolset whose publisher is signed in personally', async () => {
+  it('offers the option for an API-key toolset signed in at the global level', async () => {
     renderPanel({
       item: toolsetWithCredentials({
         authenticationType: ToolsetAuthenticationType.ApiKey,
-        userStatus: CredentialStatus.SignedIn,
+        globalStatus: CredentialStatus.SignedIn,
       }),
     });
     await openPublish();
 
     expect(credentialsToggle()).toBeTruthy();
+  });
+
+  /* Core copies only the global credential, so a personal one has nothing to pass on. */
+  it('offers no option for a toolset signed in at the user level only', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.ApiKey,
+        userStatus: CredentialStatus.SignedIn,
+        globalStatus: CredentialStatus.SignedOut,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeNull();
   });
 
   it('offers no option for a toolset that needs no login', async () => {
@@ -1755,6 +1769,7 @@ describe('DetailsPanel', () => {
     render(
       <DetailsPanel
         item={makeItem({
+          description: 'A capable model',
           details: { overview: { sections: [] } },
         })}
         isOpen
@@ -2852,5 +2867,30 @@ describe('DetailsPanel — tab list', () => {
       .getAllByRole('button')
       .map((tab) => tab.textContent);
     expect(tabNames).toEqual(['About', 'Overview', 'Pricing', 'Limits']);
+  });
+});
+
+describe('DetailsPanel — empty tabs', () => {
+  it('shows the empty state on an About tab with no description or topics', () => {
+    renderPanel({ item: makeItem({ description: '', topics: [] }) });
+
+    expect(screen.getByText('No data')).toBeTruthy();
+  });
+
+  it('uses the host emptyTabLabel', () => {
+    renderPanel({
+      item: makeItem({ description: '', topics: [] }),
+      texts: { emptyTabLabel: 'Nothing here' },
+    });
+
+    expect(screen.getByText('Nothing here')).toBeTruthy();
+  });
+
+  it('renders the description instead of the empty state when there is one', () => {
+    renderPanel({ item: makeItem({ description: 'A capable model' }) });
+
+    // AboutTab is mocked in this file as 'about content'.
+    expect(screen.getByText('about content')).toBeTruthy();
+    expect(screen.queryByText('No data')).toBeNull();
   });
 });

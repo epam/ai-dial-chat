@@ -5,6 +5,38 @@ import type {
 } from './create-files-api';
 
 /** Host capabilities {@link createUploadFileWithProgress} needs to perform an XHR upload. */
+/*
+ * A failed upload keeps its response, shaped like a fetch `Response`, so
+ * `getApiErrorDetails` reads its status and error body exactly as it does
+ * for a generated-client error.
+ */
+class UploadRequestError extends Error {
+  readonly response: {
+    status: number;
+    json: () => Promise<unknown>;
+    headers: { get: (name: string) => string | null };
+  };
+
+  constructor(xhr: XMLHttpRequest) {
+    super(`Upload failed with status ${xhr.status}`);
+    this.name = 'UploadRequestError';
+    const { status, responseText } = xhr;
+    this.response = {
+      status,
+      json: async () => JSON.parse(responseText) as unknown,
+      headers: { get: (name) => xhr.getResponseHeader(name) },
+    };
+  }
+}
+
+/** Rejection for an upload that got no response at all (the XHR `error` event). */
+export class UploadNetworkError extends Error {
+  constructor() {
+    super('Upload failed');
+    this.name = 'UploadNetworkError';
+  }
+}
+
 export interface CreateUploadFileWithProgressDeps {
   /** Returns the currently held CSRF token, or `null` when none is set. */
   getCsrfToken: () => string | null;
@@ -85,11 +117,11 @@ export const createUploadFileWithProgress = (
           return;
         }
 
-        reject(new Error(`Upload failed with status ${xhr.status}`));
+        reject(new UploadRequestError(xhr));
       });
 
       xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
+        reject(new UploadNetworkError());
       });
 
       xhr.addEventListener('abort', () => {

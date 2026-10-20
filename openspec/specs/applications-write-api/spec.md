@@ -300,7 +300,8 @@ completes.
 `features.system_prompt_supported` to `false`, because DIAL Core treats an unset flag as
 supported and chat would otherwise show a system prompt field for an app whose prompt lives in its
 orchestrator config. A caller-supplied `system_prompt_supported` wins, and `updateApplication`
-does not touch the flag.
+does not touch the flag. When the create body supplies top-level `features`, they are stored as
+supplied and this default is not applied, so a flag the caller leaves unset stays absent.
 
 #### Scenario: A Quick App create defaults system_prompt_supported to false
 - **WHEN** an authenticated user POSTs an application create body whose `type` matches

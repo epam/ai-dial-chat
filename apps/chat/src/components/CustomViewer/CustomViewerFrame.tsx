@@ -1,9 +1,9 @@
+import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
+  VisualizerConnector,
   VisualizerConnectorEvents,
   VisualizerConnectorRequests,
-} from '@epam/ai-dial-shared';
-import { Spinner } from '@epam/ai-dial-ui-kit';
-import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
+} from '@epam/ai-dial-visualizer-connector';
 import { type FC, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CustomViewerI18nKeys } from '../../constants/translation-keys';
@@ -103,7 +103,6 @@ const CustomViewerFrame: FC<Props> = ({
     setIsReady(false);
     const connector = new VisualizerConnector(hostElement, {
       domain: iframeUrl,
-      hostDomain: window.location.origin,
       visualizerName: title,
     });
     connectorRef.current = connector;
@@ -128,11 +127,11 @@ const CustomViewerFrame: FC<Props> = ({
       });
 
     const unsubscribeCreated = subscribeToConversationEvent(
-      VisualizerConnectorEvents.createdConversationSuccess,
+      VisualizerConnectorEvents.CreatedConversationSuccess,
       () => onCreatedRef.current,
     );
     const unsubscribeUpdated = subscribeToConversationEvent(
-      VisualizerConnectorEvents.updatedConversationSuccess,
+      VisualizerConnectorEvents.UpdatedConversationSuccess,
       () => onUpdatedRef.current,
     );
 
@@ -170,12 +169,12 @@ const CustomViewerFrame: FC<Props> = ({
     const sendData = async (): Promise<void> => {
       try {
         await connector.send(
-          VisualizerConnectorRequests.sendVisualizeData,
+          VisualizerConnectorRequests.SendVisualizeData,
           visualizeData,
         );
       } catch {
         console.warn(
-          `Custom viewer: ${VisualizerConnectorRequests.sendVisualizeData} failed`,
+          `Custom viewer: ${VisualizerConnectorRequests.SendVisualizeData} failed`,
         );
       }
     };

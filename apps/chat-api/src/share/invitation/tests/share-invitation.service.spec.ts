@@ -102,6 +102,7 @@ describe('ShareInvitationService', () => {
       expect(result).toEqual({
         url: 'https://example.com/catalog/shared/abc123',
         expiresInDays: 3,
+        expiresInHours: 72,
         access: [ShareAccess.View],
       });
     });
@@ -661,7 +662,7 @@ describe('ShareInvitationService', () => {
       return { ...ctx, warn, share };
     };
 
-    it("derives expiresInDays from the invitation's expireAt", async () => {
+    it("derives expiresInDays and expiresInHours from the invitation's expireAt", async () => {
       const { dialClient, share } = setup();
       vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
         okResponse({ createdAt: NOW, expireAt: NOW + 7 * DAY_MS }),
@@ -670,6 +671,7 @@ describe('ShareInvitationService', () => {
       await expect(share()).resolves.toEqual({
         url: 'https://example.com/catalog/shared/abc123',
         expiresInDays: 7,
+        expiresInHours: 168,
         access: [ShareAccess.View],
       });
     });
@@ -685,7 +687,7 @@ describe('ShareInvitationService', () => {
       });
     });
 
-    it('returns the link without expiresInDays when the peek rejects', async () => {
+    it('returns the link without an expiry when the peek rejects', async () => {
       const { dialClient, share, warn } = setup();
       vi.mocked(dialClient.client.getInvitation).mockRejectedValue(
         new TypeError('fetch failed'),
@@ -698,13 +700,14 @@ describe('ShareInvitationService', () => {
         access: [ShareAccess.View],
       });
       expect(result).not.toHaveProperty('expiresInDays');
+      expect(result).not.toHaveProperty('expiresInHours');
       expect(warn).toHaveBeenCalledWith(
         expect.stringContaining('invitationId=abc123'),
         expect.anything(),
       );
     });
 
-    it('returns the link without expiresInDays when the peek returns an upstream error', async () => {
+    it('returns the link without an expiry when the peek returns an upstream error', async () => {
       const { dialClient, share, warn } = setup();
       vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
         errResponse(404),
@@ -713,11 +716,12 @@ describe('ShareInvitationService', () => {
       const result = await share();
 
       expect(result).not.toHaveProperty('expiresInDays');
+      expect(result).not.toHaveProperty('expiresInHours');
       expect(result.url).toBe('https://example.com/catalog/shared/abc123');
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('status 404'));
     });
 
-    it('returns the link without expiresInDays when expireAt is missing', async () => {
+    it('returns the link without an expiry when expireAt is missing', async () => {
       const { dialClient, share, warn } = setup();
       vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
         okResponse({ id: 'abc123', createdAt: NOW }),
@@ -726,10 +730,11 @@ describe('ShareInvitationService', () => {
       const result = await share();
 
       expect(result).not.toHaveProperty('expiresInDays');
+      expect(result).not.toHaveProperty('expiresInHours');
       expect(warn).toHaveBeenCalledOnce();
     });
 
-    it('returns the link without expiresInDays when expireAt is already past', async () => {
+    it('returns the link without an expiry when expireAt is already past', async () => {
       const { dialClient, share } = setup();
       vi.mocked(dialClient.client.getInvitation).mockResolvedValue(
         okResponse({ createdAt: NOW - 4 * DAY_MS, expireAt: NOW - DAY_MS }),
@@ -927,6 +932,82 @@ describe('ShareInvitationService', () => {
           ],
         },
       });
+    });
+
+    it('shares the uploaded icon of a quick app alongside the app and its prompts', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
+        okResponse({
+          iconUrl: 'files/owner-bucket/icons/app%20icon.png',
+          application_properties: {
+            skills: [{ type: 'dial-prompt', url: 'prompts/owner-bucket/mine' }],
+          },
+        }),
+      );
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      await service.createShareLink('token-abc', 'session-bucket', {
+        itemId: 'applications/owner-bucket/my-app__1.0',
+        access: [ShareAccess.View],
+      });
+
+      expect(shareSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: {
+          invitationType: 'LINK',
+          resources: [
+            {
+              url: 'applications/owner-bucket/my-app__1.0',
+              permissions: ['READ'],
+            },
+            {
+              url: 'prompts/owner-bucket/mine',
+              permissions: ['READ'],
+            },
+            {
+              url: 'files/owner-bucket/icons/app%20icon.png',
+              permissions: ['READ'],
+            },
+          ],
+        },
+      });
+    });
+
+    it('excludes an icon that is not in the app bucket or is not a DIAL file', async () => {
+      const { service, dialClient } = makeService();
+      const getApp = vi.spyOn(dialClient.client, 'getCustomApplication');
+      const shareSpy = vi
+        .spyOn(dialClient.client, 'shareResource')
+        .mockResolvedValue(okResponse({ invitationLink: '/invite/app' }));
+
+      for (const iconUrl of [
+        'files/public/icons/app.png',
+        'files/other-bucket/icons/app.png',
+        'https://example.com/app.png',
+        'app-theme-icon.svg',
+      ]) {
+        getApp.mockResolvedValueOnce(okResponse({ iconUrl }));
+
+        await service.createShareLink('token-abc', 'session-bucket', {
+          itemId: 'applications/owner-bucket/my-app__1.0',
+          access: [ShareAccess.View],
+        });
+
+        expect(shareSpy).toHaveBeenLastCalledWith({
+          headers: { Authorization: 'Bearer token-abc' },
+          body: {
+            invitationType: 'LINK',
+            resources: [
+              {
+                url: 'applications/owner-bucket/my-app__1.0',
+                permissions: ['READ'],
+              },
+            ],
+          },
+        });
+      }
     });
 
     it('keeps a referenced prompt whose bucket segment is percent-encoded', async () => {

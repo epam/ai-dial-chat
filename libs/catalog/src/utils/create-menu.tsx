@@ -1,27 +1,43 @@
-import { DropdownItem, Highlight } from '@epam/ai-dial-ui-kit';
+import {
+  DropdownItem,
+  DropdownItemType,
+  Highlight,
+} from '@epam/ai-dial-ui-kit';
 import type { MouseEvent } from 'react';
 import type {
   CatalogCreateSearch,
   CatalogTabCreateMenu,
 } from '../models/catalog-props';
 
-/** Returns `items` with every string label, nested ones included, rendered through a single-line `Highlight` for `query`. */
+/** True for a divider or plain-text row, which is a structural part of the menu rather than an option. */
+const isNonOptionItem = (item: DropdownItem): boolean =>
+  item.type === DropdownItemType.Divider ||
+  item.type === DropdownItemType.PlainText;
+
+/**
+ * Returns `items` with every option's string label, nested ones included,
+ * rendered through a single-line `Highlight` for `query`. Divider and
+ * plain-text rows (such as a section header) are returned unchanged.
+ */
 export const highlightDropdownLabels = (
   items: DropdownItem[],
   query: string,
 ): DropdownItem[] =>
-  items.map((item) => ({
-    ...item,
-    label:
-      typeof item.label === 'string' ? (
-        <Highlight text={item.label} query={query} maxLines={1} />
-      ) : (
-        item.label
-      ),
-    children: item.children
-      ? highlightDropdownLabels(item.children, query)
-      : undefined,
-  }));
+  items.map((item) => {
+    if (isNonOptionItem(item)) return item;
+    return {
+      ...item,
+      label:
+        typeof item.label === 'string' ? (
+          <Highlight text={item.label} query={query} maxLines={1} />
+        ) : (
+          item.label
+        ),
+      children: item.children
+        ? highlightDropdownLabels(item.children, query)
+        : undefined,
+    };
+  });
 
 /** Create-button wiring derived from one tab's Create menu. */
 export interface TabCreateButtonConfig {
@@ -44,7 +60,11 @@ export const getTabCreateButtonConfig = (
     menu.search == null &&
     !onlyOption.children?.length
   ) {
+    /* `options`/`search` are set explicitly so they override the header's
+       full menu when this config is spread over the header's button props. */
     return {
+      options: undefined,
+      search: undefined,
       onClick: (event) =>
         onlyOption.onClick?.({ key: onlyOption.key, domEvent: event }),
     };

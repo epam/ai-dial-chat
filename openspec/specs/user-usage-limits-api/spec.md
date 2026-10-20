@@ -139,7 +139,7 @@ The endpoint's `@ApiOperation` description SHALL describe the restriction in cal
 
 `apps/chat/src/server-api/user-limits.ts` SHALL expose a thin wrapper `getUserUsage()` over the regenerated `@epam/ai-dial-chat-api-client` `getUserUsage` operation, following the existing `deployment-limits.ts` pattern (a one-line function returning the generated client's typed promise, no business logic in the wrapper).
 
-- The wrapper SHALL take no arguments and SHALL call the generated method **without** `deploymentTypes`, so the deployment kinds Settings → Usage reports are decided by the BFF's `USER_USAGE_DEPLOYMENT_TYPES` (see "Server-configured default deployment kinds"), not hardcoded in the frontend. The wrapper is therefore unchanged by this change
+- The wrapper SHALL take no arguments and SHALL call the generated method **without** `deploymentTypes`, so the deployment kinds Usage page reports are decided by the BFF's `USER_USAGE_DEPLOYMENT_TYPES` (see "Server-configured default deployment kinds"), not hardcoded in the frontend. The wrapper is therefore unchanged by this change
 - The wrapper SHALL be a module-level constant, so its identity is stable across renders — `useUsageData(getUserUsage, ...)` lists it in an effect dependency array, and an inline or per-render function would refetch on every render
 - MUST use the generated client exclusively — no raw `fetch` calls in `base.ts` or elsewhere for these endpoints
 
@@ -247,7 +247,7 @@ The BFF SHALL read an optional environment variable `USER_USAGE_DEPLOYMENT_TYPES
 #### Scenario: Operator narrows the default to models
 
 - **WHEN** `USER_USAGE_DEPLOYMENT_TYPES=model`
-- **THEN** a request without `deploymentTypes` reaches DIAL Core with `deploymentTypes=model`, and Settings → Usage shows model rows only
+- **THEN** a request without `deploymentTypes` reaches DIAL Core with `deploymentTypes=model`, and Usage page shows model rows only
 
 #### Scenario: Invalid value fails fast
 

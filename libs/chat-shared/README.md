@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.11`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.20`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.11
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.7 \*
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.20
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -519,6 +519,8 @@ Blocks exceeding 50,000 UTF-16 code units overall or 2,000 on any line also
 bypass the engine and display complete plain text. Copy and download retain
 the original content, and the language label is preserved. This size guard
 reduces expensive highlighting; it is not an execution timeout.
+`hasContentTopPadding={false}` drops the code's own top padding so it starts
+right under the header, for compact blocks such as an endpoint URL.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
@@ -661,7 +663,9 @@ import { IconClockHour3 } from '@tabler/icons-react';
 Item title row with an optional postfix (version, count) and a trailing slot.
 The title is highlighted when a search `query` is supplied and truncates with a
 tooltip on overflow. Pass `shouldTruncateTitle={false}` for static section
-headings that must always render in full.
+headings that must always render in full. A numeric `postfix` (a count) always
+renders in full; a string `postfix` (a version) is capped at 30% of the row and
+truncates with a tooltip.
 
 ```tsx
 import { ItemHeader } from '@epam/ai-dial-chat-shared';
@@ -958,8 +962,11 @@ status region and an error alert, around one field driven by
 [`useTextRefinement`](#text-refinement-lifecycle). The group is named by the
 label and described by the error while one is shown; Undo returns focus to the
 Refine action. With `isEnabled={false}` it renders `children` alone, so the
-host keeps its own label. Copy comes from `labels` (`TextRefinementLabels`),
-each key with an English default.
+host keeps its own label. An optional `caption` (e.g. a `12/500` character
+counter) sits at the end of the row below the control, beside the status, so
+neither shifts the layout when the other appears; it is rendered in both modes.
+Copy comes from `labels` (`TextRefinementLabels`), each key with an English
+default.
 
 ```tsx
 import { useState } from 'react';
@@ -1295,6 +1302,18 @@ Pre-translated strings the shell renders as-is. The shell never calls `useTransl
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 ```
 
+### DialFileManagerShellStyles
+
+Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied.
+
+```ts
+import type { DialFileManagerShellStyles } from '@epam/ai-dial-chat-shared';
+
+const styles: DialFileManagerShellStyles = {
+  colors: { surface: 'transparent' },
+};
+```
+
 ### AttachResult
 
 Result returned by the file-manager attach modal when the user confirms a selection.
@@ -1379,6 +1398,7 @@ DialFileManagerActionProfile.Browse; // full action set
 
 ```ts
 import {
+  FileUploadFailureReason,
   FileUploadStatus,
   type FileUploadEntry,
   type FileUploadBatchState,
@@ -1386,6 +1406,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 
 // FileUploadStatus values: Queued | Uploading | Completed | Failed | Cancelled
+// FileUploadEntry.failureReason (set when Failed): FileUploadFailureReason —
+// Conflict | TooLarge | Forbidden | Unavailable | Network | Unknown
 ```
 
 ### getParentFolderPath
@@ -1420,16 +1442,37 @@ Internal modal already rendered by `DialFileManagerShell`. Exported for hosts th
 import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';
 ```
 
-### Upload queue
+### Transfer queue (uploads and downloads)
 
-`DialFileManagerShell` shows uploads in the UI kit's `TransferQueue`, fixed to the bottom-end corner. Its heading comes from `labels.getUploadQueueTitle(count)` and its strings from `labels.uploadQueueLabels`. Closing it aborts whatever is still uploading. Two helpers are exported for hosts that render the queue themselves — `isUploadInProgress` from the root entry, and `toUploadQueueItems` from `./file-manager`, since it is a value import of the kit:
+`DialFileManagerShell` shows uploads and downloads in one UI kit `TransferQueue`, fixed to the bottom-end corner. Upload rows come first, then download rows. A download never blocks the page: there is no loader overlay for it, and several can run at once.
+
+- **Title.** From `labels.getTransferQueueTitle({ uploads, downloads })`, falling back to `labels.getUploadQueueTitle(total)`.
+- **Strings.** From `labels.uploadQueueLabels`. Download rows are worded through `labels.downloadQueueLabels` (cancel and progress names), and the aggregate bar is named by `labels.transferQueueProgressAriaLabel` while both kinds run.
+- **Failed rows.** A failed row's tooltip and accessible name come from `labels.uploadFailureMessages[entry.failureReason]`, for both kinds. A reason without a message, or none at all, shows `uploadQueueLabels.failedMessage`.
+- **Cancel and close.** Canceling a row calls `cancelUploadFile` or `cancelDownloadFile` with its entry id. Closing the queue cancels and clears both batches.
+
+Download entries are `FileDownloadEntry` (`{ id, name, status: FileDownloadStatus, percent?, failureReason? }`), where `FileDownloadStatus` is `Downloading | Completed | Failed | Cancelled`, kept in a `FileDownloadBatchState`.
+
+Helpers for hosts that render the queue themselves:
+
+- from the root entry: `isUploadInProgress` and `isDownloadInProgress`;
+- from `./file-manager`, since they import the kit: `toUploadQueueItems`, `toTransferQueueItems` (kind-prefixed row ids, read back with `parseTransferQueueRowId`), and `buildTransferQueueLabels`.
 
 ```ts
-import { isUploadInProgress } from '@epam/ai-dial-chat-shared';
-import { toUploadQueueItems } from '@epam/ai-dial-chat-shared/file-manager';
+import {
+  isDownloadInProgress,
+  isUploadInProgress,
+} from '@epam/ai-dial-chat-shared';
+import { toTransferQueueItems } from '@epam/ai-dial-chat-shared/file-manager';
 
-const items = toUploadQueueItems(uploadBatchState?.files ?? []);
-const isBusy = isUploadInProgress(uploadBatchState);
+const items = toTransferQueueItems(
+  uploadBatchState,
+  downloadBatchState,
+  labels.uploadFailureMessages,
+);
+const isBusy =
+  isUploadInProgress(uploadBatchState) ||
+  isDownloadInProgress(downloadBatchState);
 ```
 
 ## Building

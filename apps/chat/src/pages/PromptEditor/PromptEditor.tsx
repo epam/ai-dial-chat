@@ -23,11 +23,11 @@ import { useNavigate, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
   PromptEditorI18nKeys,
-  SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -80,6 +80,9 @@ const PromptEditorPage: FC = () => {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  /* Reported by the form; passing `onDirtyChange` also turns its own guard off. */
+  const [isDirty, setIsDirty] = useState(false);
+  const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
 
   useEffect(() => {
     if (!isPromptsEnabled) {
@@ -236,6 +239,7 @@ const PromptEditorPage: FC = () => {
           isEditMode ? EntityOperation.Edited : EntityOperation.Created,
           { name: trimmedName },
         );
+        allowNextNavigation();
         navigate(returnUrl);
       } catch (err) {
         const { status, traceId } = await getApiErrorDetails(err);
@@ -252,6 +256,7 @@ const PromptEditorPage: FC = () => {
       }
     },
     [
+      allowNextNavigation,
       isSaving,
       isEditMode,
       promptId,
@@ -293,10 +298,6 @@ const PromptEditorPage: FC = () => {
       contentLoadingAriaLabel: t(PromptEditorI18nKeys.ContentLoadingAriaLabel),
       charactersRemaining: (count) =>
         t(PromptEditorI18nKeys.CharactersRemaining, { count }),
-      discardTitle: t(SkillEditorI18nKeys.UnsavedChangesTitle),
-      discardMessage: t(SkillEditorI18nKeys.UnsavedChangesMessage),
-      discardConfirmLabel: t(SkillEditorI18nKeys.UnsavedChangesConfirmLabel),
-      discardCancelLabel: t(SkillEditorI18nKeys.UnsavedChangesCancelLabel),
     }),
     [t, refinementLabels],
   );
@@ -321,6 +322,7 @@ const PromptEditorPage: FC = () => {
       onFieldChange={handleFieldChange}
       onBack={handleBack}
       onCancel={handleCancel}
+      onDirtyChange={setIsDirty}
       onRetry={handleRetry}
       onRefineDescription={onRefineDescription}
       onRefineInstructions={onRefineInstructions}

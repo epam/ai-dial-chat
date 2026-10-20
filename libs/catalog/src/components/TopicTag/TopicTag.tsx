@@ -214,7 +214,7 @@ export const TopicsLine: FC<TopicsLineProps> = ({
       <div
         ref={badgeRef}
         aria-hidden
-        className="invisible absolute start-0 top-0"
+        className="invisible absolute inset-s-0 top-0"
       >
         <TopicTag label={`+${topics.length}`} />
       </div>

@@ -58,7 +58,7 @@ export const UsageLimitBannerView: FC<UsageLimitBannerViewProps> = ({
         >
           <Icon size={24} />
         </span>
-        <div className="flex min-w-0 flex-row flex-wrap items-baseline gap-x-1 break-words text-primary">
+        <div className="flex min-w-0 flex-row flex-wrap items-baseline gap-x-1 wrap-break-word text-primary">
           <span className={limitTextClassName}>{limitText}</span>
           {reset != null && (
             <>

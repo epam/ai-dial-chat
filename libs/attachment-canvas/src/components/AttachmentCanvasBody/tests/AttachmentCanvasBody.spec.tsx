@@ -30,7 +30,10 @@ vi.mock('react-json-view-lite', () => ({
 
 const visualizerSubscriptions = new Map<string, (payload: unknown) => void>();
 
-vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+vi.mock('@epam/ai-dial-visualizer-connector', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@epam/ai-dial-visualizer-connector')
+  >()),
   VisualizerConnector: vi.fn().mockImplementation(function () {
     return {
       ready: vi.fn().mockReturnValue(new Promise(() => undefined)),
@@ -164,6 +167,18 @@ describe('AttachmentCanvasBody', () => {
     expect(container.querySelector('.overflow-auto')).toBeTruthy();
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled wrapper; verifying the body itself is not clipped
     expect(container.querySelector('.overflow-hidden')).toBeNull();
+  });
+
+  it('keeps padding off the Markdown scroller so a code block header pins to its very top', () => {
+    const { container } = renderBody({
+      type: AttachmentContentType.Markdown,
+      text: '# Title',
+    });
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the unlabeled scroller; padding on it would offset sticky headers
+    const scroller = container.querySelector('.overflow-auto');
+    expect(scroller?.className).not.toMatch(/\bp-4\b/);
+    expect(scroller?.firstElementChild?.className).toContain('p-4');
   });
 
   it.each([

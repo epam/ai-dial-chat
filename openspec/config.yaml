@@ -16,7 +16,7 @@ context: |
   - API layer: generated `@epam/ai-dial-chat-api-client` wrappers in apps/chat/src/server-api/ for REST endpoints.
     `apps/chat/src/server-api/base.ts` is legacy/infrastructure support (CSRF, unauthorized handling,
     streaming, and temporary exceptions only), not the default path for new business endpoints.
-  - Routing: React Router v6 (BrowserRouter, lazy-loaded routes)
+  - Routing: React Router 8.3 as a data router (createBrowserRouter + RouterProvider, one splat route rendering descendant <Routes>; lazy-loaded routes)
   - Testing: Vitest 4 + @testing-library/react 16 (frontend), supertest 7 (backend)
   - Linting: ESLint 9 flat config (eslint.config.mjs) + Prettier 3
   - Commits: Conventional commits — feat/fix/chore/refactor/test/docs with optional scope
@@ -55,7 +55,7 @@ context: |
   ## Architecture
 
   ### Frontend (apps/chat)
-  - Entry: apps/chat/src/main.tsx — wraps app in BrowserRouter + ThemeProvider
+  - Entry: apps/chat/src/main.tsx — mounts a data router whose splat route renders AppRoot.tsx (provider stack incl. ThemeProvider + top-level <Routes>)
   - App: apps/chat/src/app/app.tsx — root component, lazy-loads routes with Suspense
   - Context: apps/chat/src/context/ — React Context providers and their consumer hooks
     - ThemeContext.tsx is the reference pattern: createContext<T | undefined>(undefined),

@@ -24,8 +24,7 @@ The endpoint:
 - SHALL cache the unfiltered DIAL Core response under key `deployments:list:<userSub>` for 30 000 ms and filtered DIAL Core responses under key `deployments:list:<userSub>:interface:<type[,type]>` for 30 000 ms.
 - SHALL, when a filtered cache entry is absent but the unfiltered cache entry is present, apply `interface_type` filtering in-process after cache retrieval without calling DIAL Core.
 - SHALL bypass server-side deployments cache entirely when `refresh=true`, call DIAL Core, and replace the relevant cache entry with the fresh mapped response.
-- SHALL set response header `Cache-Control: private, max-age=30` for normal requests.
-- SHALL set response header `Cache-Control: private, no-store` when `refresh=true`.
+- SHALL set response header `Cache-Control: private, no-store` on every response, with or without `refresh=true`. A browser `max-age` is keyed by URL only, so it would serve one user's `isMy` / `canEdit` / `sharedWithMe` flags to the next user signed in on the same browser; freshness is owned by the per-user server-side cache above, which still bounds DIAL Core load.
 - MUST NOT log the session access token.
 
 #### Scenario: Authenticated user receives all deployments without filter
@@ -100,6 +99,11 @@ The endpoint:
 
 - **WHEN** `deployments:list:<userSub>` is present in cache and `interface_type=chat` is requested
 - **THEN** the service returns cached deployments filtered in-process without calling DIAL Core
+
+#### Scenario: Response is never cached by the browser
+
+- **WHEN** `GET /api/v1/deployments` is requested without `refresh`
+- **THEN** the response header is `Cache-Control: private, no-store`, not a `max-age` directive, so a browser cannot serve the previous user's ownership flags after a user switch within any time window
 
 #### Scenario: Refresh bypasses deployments cache
 
@@ -326,7 +330,7 @@ The backend SHALL implement the deployments feature in `apps/chat-api/src/deploy
 #### Scenario: Controller delegates to service with parsed query
 
 - **WHEN** `listDeployments` is called with a validated `DeploymentsQueryDto`
-- **THEN** the controller extracts `sub`, `at`, `bucket`, and `claims` from `req.user`, sets the appropriate `Cache-Control` header, and calls `deploymentsService.listDeployments(sub, at, bucket, query.interface_type, query.refresh, getJobTitleClaim(claims))`
+- **THEN** the controller extracts `sub`, `at`, `bucket`, and `claims` from `req.user`, sets `Cache-Control: private, no-store`, and calls `deploymentsService.listDeployments(sub, at, bucket, query.interface_type, query.refresh, getJobTitleClaim(claims))`
 
 ---
 
@@ -426,3 +430,38 @@ After removal, `GET /api/v1/catalog` SHALL return 404.
 - **WHEN** the codebase is scanned for `CatalogModule`, `CatalogService`, `CatalogFilterService`, `CatalogController`, `CatalogItemDto`
 - **THEN** no references are found in `apps/chat-api/src/`
 
+---
+
+### Requirement: DeploymentItemDto exposes the application viewer URL
+
+`DeploymentItemDto` (`apps/chat-api/src/deployments/dto/deployment-item.dto.ts`) SHALL carry an optional `viewerUrl?: string` (`@ApiPropertyOptional`, example `https://viewer.example.com/`). `RawDeploymentDto` (`apps/chat-api/src/deployments/dto/raw-deployment.dto.ts`) SHALL declare DIAL Core's `viewer_url?: string`, and `mapToDeploymentItem` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`) SHALL set `viewerUrl` from it only when the item type is `application` and the value is a non-empty string; for models and toolsets the field SHALL be absent.
+
+The endpoint shape is otherwise unchanged: `GET /api/v1/deployments` (operationId `listDeployments`, generated method `deploymentsApi.listDeployments`, normal — not `Raw` — call) returns the same list, now with `viewerUrl` on applications that configure a viewer. Error codes are unchanged. No cache key or TTL changes: the field rides on the existing deployments listing cache.
+
+Example response item:
+
+```json
+{
+  "id": "applications/bucket/data-explorer",
+  "type": "application",
+  "displayName": "Data Explorer",
+  "viewerUrl": "https://viewer.example.com/"
+}
+```
+
+Generated-client impact: `libs/chat-api-client/openapi.json` and the generated `DeploymentItemDto` model gain `viewerUrl?: string`; regenerated with `npm run openapi`.
+
+#### Scenario: Application with viewer_url
+
+- **WHEN** DIAL Core returns an application with `viewer_url: "https://viewer.example.com/"`
+- **THEN** the mapped item has `viewerUrl: "https://viewer.example.com/"`
+
+#### Scenario: Model never carries viewerUrl
+
+- **WHEN** DIAL Core returns a model with a `viewer_url` field
+- **THEN** the mapped item has no `viewerUrl`
+
+#### Scenario: Missing or empty viewer_url
+
+- **WHEN** an application has no `viewer_url`, or it is an empty string
+- **THEN** the mapped item has no `viewerUrl`

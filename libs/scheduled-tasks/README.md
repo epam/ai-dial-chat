@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.16.0-dev.11 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.20 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -172,7 +172,7 @@ labels stay as accessible names), and the back arrow stays on the first row if
 the actions wrap. The back arrow mirrors in RTL, while the Start now play icon
 does not.
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. An `Error` row whose item carries `errorText` shows it in a tooltip on the status icon and appends it to the row's accessible name. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
 
 ```tsx
 import {
@@ -198,7 +198,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
       isUnread: true,
     },
@@ -305,7 +306,13 @@ default, resetting to expanded whenever `scheduleId` changes — while the list
 itself stays bare for hosts that need their own chrome. Runs, loading/error
 state, pagination callbacks, and labels are all supplied by the host; a run row
 renders as clickable only when its item carries a `conversationId` and
-`onRunClick` is supplied.
+`onRunClick` is supplied. An `Error` row whose item carries `errorText` reveals
+that text in a tooltip on its status icon (hover or focus) and appends it to the
+row's accessible name; `errorText` is ignored for every other status. Set
+`isUnavailable` when the history exists but cannot be shown to the viewer (for
+example a task shared by its owner): `labels.unavailableLabel` then replaces the
+runs, the error message, the retry action and the footer — mirroring
+`ScheduledTaskConversationDetailsSection`'s `state: 'unavailable'`.
 
 ```tsx
 import {
@@ -319,7 +326,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
     },
   ]}
@@ -327,6 +335,7 @@ import {
   isLoadingMore={false}
   error={null}
   onRetry={refetchRuns}
+  isUnavailable={false}
   hasMore={true}
   onLoadMore={loadMoreRuns}
   currentRunId="run_1"
@@ -336,6 +345,7 @@ import {
     emptyLabel: 'No runs yet',
     errorLabel: 'Failed to load history',
     retryLabel: 'Retry',
+    unavailableLabel: 'History is unavailable',
     showMoreLabel: 'Show more',
     runStatusLabels: {
       [ScheduledTaskRunStatus.Success]: 'Succeeded',
@@ -592,7 +602,7 @@ Optional label overrides (English defaults):
 | `refineUndoLabel`          | Undo                                          |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
-| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 

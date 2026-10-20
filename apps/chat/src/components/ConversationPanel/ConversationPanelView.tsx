@@ -32,14 +32,12 @@ import {
   ConversationTransferErrorCode,
   DeleteConfirmationDialog,
   FilterTab,
-  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ConversationPanel,
+  ConversationListSection,
   RenameConversationPopup,
   type ConversationItem,
   type ConversationMove,
-  type ConversationPanelStyles,
   type RenameConversationPopupLabels,
 } from '@epam/ai-dial-conversation-panel';
 import {
@@ -80,6 +78,7 @@ import {
   useState,
   type FC,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { CELEBRATION_HISTORY_CLASS } from '../../constants/celebration';
@@ -152,10 +151,6 @@ const PublishConversationPanelContainer = lazy(
     import('../PublishConversationPanelContainer/PublishConversationPanelContainer'),
 );
 
-const PANEL_STYLES: ConversationPanelStyles = {
-  itemIconBadgeClassName: 'rounded-lg',
-};
-
 /*
  * A scheduled-task conversation always shows the Scheduled tasks glyph in a
  * tinted tile instead of its deployment avatar. One shared element keeps the
@@ -181,11 +176,8 @@ const SCHEDULED_TASK_ICON = (
 const IMPORT_FILE_ACCEPT = '.json,.dial,.zip,application/json,application/zip';
 
 interface ConversationPanelViewProps {
-  isOpen: boolean;
   activeConversationId?: string;
-  onClose: () => void;
   onSelectConversation: (id: string) => void;
-  onNewChat: () => void;
   requestedFilter?: FilterTab;
   onRequestedFilterChange?: () => void;
   onActiveFilterChange?: (tab: FilterTab) => void;
@@ -193,11 +185,8 @@ interface ConversationPanelViewProps {
 }
 
 const ConversationPanelView: FC<ConversationPanelViewProps> = ({
-  isOpen,
   activeConversationId,
-  onClose,
   onSelectConversation,
-  onNewChat,
   requestedFilter,
   onRequestedFilterChange,
   onActiveFilterChange,
@@ -1320,33 +1309,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  /*
-   * On mobile the panel covers the conversation instead of sitting next to it,
-   * so it is lifted out of the layout row and animated as a drawer. The z-index
-   * is unconditional: dropping it while closing let the conversation paint over
-   * the panel for the length of the transition.
-   */
-  const panelClassName = isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined;
-
-  /* Stable `labels` and `headerActions` keep `memo(ConversationPanel)` from
-     re-rendering every mounted row on each render of this view. */
-  const panelLabels = useMemo(
-    () => ({
-      title: t(ConversationPanelI18nKeys.Title),
-      emptyLabel: t(ConversationPanelI18nKeys.Empty),
-      noResultsLabel: t(BasicI18nKeys.NoResults),
-      newChatLabel: t(ButtonsI18nKeys.NewChat),
-      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-      searchClearLabel: t(BasicI18nKeys.ClearSearch),
-      filterLabels,
-      groupLabels,
-      actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
-      unreadIndicatorLabel,
-      closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
-    }),
-    [t, filterLabels, groupLabels, unreadIndicatorLabel],
-  );
-
   const panelHeaderActions = useMemo(
     () => (
       <ConversationPanelMenu
@@ -1363,31 +1325,47 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     ],
   );
 
-  return (
-    <>
-      {isConversationsSectionEnabled && (
-        <ConversationPanel
-          conversations={conversations}
-          isLoading={isLoading}
-          isOpen={isOpen}
-          onSelectConversation={onSelectConversation}
-          activeConversationId={panelActiveConversationId}
-          activeFilter={requestedFilter}
-          onActiveFilterChange={handleActiveFilterChange}
-          isFilterTabsHidden={isConversationsFilterHidden}
-          labels={panelLabels}
-          onNewChat={onNewChat}
-          getActions={getActions}
-          onActionMenuOpen={handleActionMenuOpen}
-          onToggle={isMobile ? onClose : undefined}
-          className={mergeClasses(CELEBRATION_HISTORY_CLASS, panelClassName)}
-          isOverlay={isMobile}
-          styles={PANEL_STYLES}
-          onMoveConversation={handleMoveConversation}
-          headerActions={panelHeaderActions}
-        />
-      )}
+  /* Stable, so the memoised section is not re-rendered with every view render. */
+  const sectionLabels = useMemo(
+    () => ({
+      title: t(ConversationPanelI18nKeys.ChatsAndTasks),
+      searchOpenLabel: t(ConversationPanelI18nKeys.SearchOpen),
+      searchCloseLabel: t(ConversationPanelI18nKeys.SearchClose),
+      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+      searchClearLabel: t(BasicI18nKeys.ClearSearch),
+      filterLabels,
+      emptyLabel: t(ConversationPanelI18nKeys.Empty),
+      noResultsLabel: t(BasicI18nKeys.NoResults),
+      groupLabels,
+      actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+      unreadIndicatorLabel,
+    }),
+    [t, filterLabels, groupLabels, unreadIndicatorLabel],
+  );
 
+  const sidebarBlock = (
+    <ConversationListSection
+      conversations={conversations}
+      isLoading={isLoading}
+      activeConversationId={panelActiveConversationId}
+      requestedFilter={requestedFilter}
+      isFilterHidden={isConversationsFilterHidden}
+      labels={sectionLabels}
+      headerActions={panelHeaderActions}
+      onSelectConversation={onSelectConversation}
+      onFilterChange={handleActiveFilterChange}
+      getActions={getActions}
+      onActionMenuOpen={handleActionMenuOpen}
+      onMoveConversation={handleMoveConversation}
+      listClassName={CELEBRATION_HISTORY_CLASS}
+    />
+  );
+
+  /* Everything that is not the list: the import input, the transfer queues and
+     the dialogs. Rendered in place beside the panel, but portalled out of the
+     sidebar, whose content is hidden and inert while it is collapsed. */
+  const overlays = (
+    <>
       <input
         ref={importFileInputRef}
         type="file"
@@ -1397,7 +1375,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onChange={handleImportFileChange}
       />
 
-      <div className="fixed end-4 bottom-4 z-[70] flex flex-col-reverse gap-2">
+      {/*
+       * Above page content (sidebars sit at z-50) but below the kit's portalled
+       * overlays — popup 52, dropdown 53, tooltip 55 — so a row's error tooltip
+       * and the close confirmation open over the queue, not under it.
+       */}
+      <div className="fixed inset-e-4 bottom-4 z-51 flex flex-col-reverse gap-2">
         <TransferQueue
           title={importQueueTitle}
           items={importQueueItems}
@@ -1596,6 +1579,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             />
           </Suspense>
         )}
+    </>
+  );
+
+  return (
+    <>
+      {isConversationsSectionEnabled && sidebarBlock}
+      {createPortal(overlays, document.body)}
     </>
   );
 };

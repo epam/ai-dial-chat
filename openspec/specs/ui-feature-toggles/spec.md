@@ -8,7 +8,7 @@
 
 ### Requirement: UiFeaturesContext owns the effective UI-feature set
 
-`apps/chat/src/context/UiFeaturesContext.tsx` SHALL be the sole owner of the app's effective UI-feature set, computed from `DEFAULT_ENABLED_UI_FEATURES` (`apps/chat/src/constants/ui-features.ts`), `AppConfigContext.config.enabledUiFeatures`, an overlay-supplied replacement (see "Overlay replace semantics" below), and a temporary isolated-view override (see "Isolated-view override takes precedence over every other source", `// TODO: remove in next release`). It SHALL follow the `ThemeContext` pattern: `createContext<UiFeaturesContextType | undefined>(undefined)`, a `useMemo`-wrapped provided value, and a `useUiFeatures()` hook that throws a descriptive `Error` when called outside the provider. It SHALL expose `useUiFeature(feature: OverlayFeature): boolean` (`apps/chat/src/hooks/useUiFeature.ts`) as the primary consumption point for gating components. `UiFeaturesProvider` SHALL be mounted in `apps/chat/src/main.tsx` below `AppConfigProvider` and above `OverlayModeGate`.
+`apps/chat/src/context/UiFeaturesContext.tsx` SHALL be the sole owner of the app's effective UI-feature set, computed from `DEFAULT_ENABLED_UI_FEATURES` (`apps/chat/src/constants/ui-features.ts`), `AppConfigContext.config.enabledUiFeatures`, an overlay-supplied replacement (see "Overlay replace semantics" below), and a temporary isolated-view override (see "Isolated-view override takes precedence over every other source", `// TODO: remove in next release`). It SHALL follow the `ThemeContext` pattern: `createContext<UiFeaturesContextType | undefined>(undefined)`, a `useMemo`-wrapped provided value, and a `useUiFeatures()` hook that throws a descriptive `Error` when called outside the provider. It SHALL expose `useUiFeature(feature: OverlayFeature): boolean` (`apps/chat/src/hooks/useUiFeature.ts`) as the primary consumption point for gating components. `UiFeaturesProvider` SHALL be mounted in `apps/chat/src/AppRoot.tsx` below `AppConfigProvider` and above `OverlayModeGate`.
 
 **State ownership:** `UiFeaturesContext` (new). Reads `AppConfigContext.config.enabledUiFeatures` (existing context, extended). Written to by two callers: `OverlayContext`'s `SET_OVERLAY_OPTIONS` handler (via `applyOverlayOverride`), and — temporarily, `// TODO: remove in next release` — `IsolatedModelViewProvider` (`apps/chat/src/context/IsolatedModelViewContext.tsx`, via the new `applyIsolatedViewOverride`, see `isolated-model-view`). No other consumer may mutate the effective set.
 
@@ -183,65 +183,6 @@ The "Chat settings" entry in the conversation input's "+" menu — and the modal
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
 - **THEN** both keys are default-on and the "Chat settings" entry renders on the composer and in an active conversation
 
-### Requirement: hide-navigation-menu removes the hamburger and the sheet it opens
-
-`isEnabled('hide-navigation-menu')` SHALL remove the mobile navigation menu in full: `Header` SHALL render no hamburger button, and `Navigation` SHALL leave `NavigationSheet` unmounted rather than merely closed. Both are required — the sheet carries focusable rows (nav items, profile, keyboard shortcuts, log out), so leaving it mounted-but-closed would keep them in the tab order once any other caller flipped its `isOpen`, and the hamburger is its only trigger.
-
-The key SHALL NOT affect the desktop navigation rail or its user menu, which `hide-user-menu` owns. It exists for embeds whose host portal already handles sign-in and sign-out, making the sheet's log-out row dead weight.
-
-**RTL impact:** None — the removed control and surface are omitted, not repositioned.
-
-**Accessibility:** Both the button and the sheet are absent from the DOM, so neither leaves an accessibility-tree node nor a tab stop.
-
-**i18n impact:** None — existing translated labels are omitted along with their controls.
-
-#### Scenario: The hamburger is gone
-
-- **WHEN** `isEnabled('hide-navigation-menu')` is `true`
-- **THEN** the header renders no button labelled by `NavigationI18nKeys.OpenMenu`
-
-#### Scenario: The sheet is unmounted even when asked to open
-
-- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and `Navigation` receives `isOpen: true`
-- **THEN** no dialog is rendered and none of the sheet's rows are reachable
-
-#### Scenario: The desktop rail is untouched
-
-- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and `isEnabled('hide-user-menu')` is `false`
-- **THEN** the desktop navigation rail still renders its user menu
-
-#### Scenario: The menu renders by default
-
-- **WHEN** no `enabledUiFeatures` and no overlay override are present
-- **THEN** the key is default-off, so the hamburger renders and opens the sheet
-
-### Requirement: hide-keyboard-shortcuts removes the entry on both profile surfaces
-
-`isEnabled('hide-keyboard-shortcuts')` SHALL remove the Keyboard shortcuts entry from both surfaces that offer it: the Settings page's Preferences tab (`PreferencesTab`, the desktop entry point — the desktop `UserMenu` receives only the language group) and the mobile `NavigationSheet` profile page (`ProfilePage` in `@epam/ai-dial-navigation-panel`), whose `keyboardGroup` `useNavigationMenuGroups` omits. `isEnabled('hide-user-settings')` SHALL also remove it from both, so the two surfaces agree; `hide-keyboard-shortcuts` SHALL NOT affect the other settings entries `hide-user-settings` governs — with only `hide-keyboard-shortcuts` enabled the language entry SHALL still render wherever it is offered (it is offered only when `SUPPORTED_LANGUAGES` holds more than one locale, which no shipping build does today).
-
-Because Keyboard shortcuts is the mobile sheet's only settings entry, hiding it SHALL drop that entry's list and its trailing divider together, leaving no empty list or stray rule.
-
-Hiding the entry SHALL NOT change send behavior: the `SendOnEnter` preference is read from storage by `ConversationView` and `NewConversationComposer` independently of this key, and continues to resolve to its stored value, defaulting to `SendOnEnter.Enter`.
-
-**Accessibility:** The entry is not rendered, so it leaves neither an accessibility-tree node nor a tab stop.
-
-**i18n impact:** None — the existing translated label is shown or omitted; no new strings.
-
-#### Scenario: The entry disappears from both surfaces
-
-- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the user opens the Settings page's Preferences tab or the mobile profile page
-- **THEN** no Keyboard shortcuts entry is rendered, and the other Preferences rows (theme, language, default agent) keep their own visibility rules
-
-#### Scenario: hide-user-settings hides it too
-
-- **WHEN** `isEnabled('hide-user-settings')` is `true`
-- **THEN** the Keyboard shortcuts entry is absent from both the Settings page's Preferences tab and the mobile profile page
-
-#### Scenario: Send-on-Enter keeps working while the entry is hidden
-
-- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the stored preference is `SendOnEnter.MetaEnter`
-- **THEN** the conversation input still sends on `⌘`/`Ctrl`+Enter
-
 ### Requirement: hide-conversations-filter removes the panel's source filter row
 
 `isEnabled('hide-conversations-filter')` SHALL remove the conversations panel's `FilterTabs` row (All / My chats / Shared / Organization). `ConversationPanelView` SHALL express this by passing `isFilterTabsHidden` to `ConversationPanel`; the lib SHALL take that decision as a boolean prop and SHALL NOT read the feature set itself, per the library-isolation rule.
@@ -289,7 +230,7 @@ A pinned `fixedModel` SHALL keep rendering the disabled selector, because the ap
 
 ### Requirement: A key that gates a route hides both the entry point and the route
 
-A feature key whose owning surface is a whole route SHALL gate the navigation entry and the route element together, so that a direct URL cannot reach a section whose entry point is hidden. `file-manager` SHALL gate the File Manager navigation entry (the desktop `NavigationPanel` rail and the mobile `NavigationSheet`, both fed by `Navigation` through `useNavigationItems`, which wraps the shared `useVisibleNavItems` hook) and the `ROUTES.FileManager` route element, which SHALL redirect to `ROUTES.Root` with `replace` when the key is disabled.
+A feature key whose owning surface is a whole route SHALL gate the navigation entry and the route element together, so that a direct URL cannot reach a section whose entry point is hidden. `file-manager` SHALL gate the File Manager navigation entry (the sidebar's item list, in the desktop column and the mobile drawer, fed by `SidebarNavigation` through `useNavigationItems`, which wraps the shared `useVisibleNavItems` hook) and the `ROUTES.FileManager` route element, which SHALL redirect to `ROUTES.Root` with `replace` when the key is disabled.
 
 Route gating SHALL NOT be treated as an authorization boundary: the backend SHALL continue to enforce access to the underlying data and operations regardless of which keys are enabled.
 
@@ -300,7 +241,7 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 #### Scenario: file-manager hides the navigation entry on both layouts
 
 - **WHEN** `isEnabled('file-manager')` is `false`
-- **THEN** neither the desktop sidebar nor the mobile navigation sheet renders a File Manager entry, and every other navigation entry is unaffected
+- **THEN** neither the desktop sidebar nor the mobile drawer renders a File Manager entry, and every other navigation entry is unaffected
 
 #### Scenario: A direct /files URL does not bypass the hidden entry
 
@@ -360,24 +301,6 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 - **WHEN** `isEnabled('hide-conversation-export')` is `true`
 - **THEN** no conversation row menu renders an Export item, and the panel menu renders Import and Delete all but no Export all
-
-### Requirement: The Settings page is reachable on both layouts and hide-settings-page removes it
-
-`Navigation` SHALL offer the Settings page on both layouts: the desktop `UserMenu` Settings entry, and a Settings row on the mobile `NavigationSheet` profile page, above Log out, that closes the sheet and navigates to `/settings`. When `isEnabled('hide-settings-page')` is `true`, both entries SHALL be omitted and the `/settings` route SHALL redirect to `/` with `replace`. `SettingsPage` SHALL stack its section list above the active tab at full width on the mobile breakpoint and keep the 240px side column on desktop.
-
-**Accessibility:** The sheet row is a labeled button like its siblings; its icon is `aria-hidden`.
-
-**i18n impact:** None — the row reuses the existing `BasicI18nKeys.Settings` string.
-
-#### Scenario: Mobile users reach Settings from the profile page
-
-- **WHEN** the mobile navigation sheet is open and the user opens the profile page
-- **THEN** a Settings row is listed above Log out, and tapping it closes the sheet and navigates to `/settings`
-
-#### Scenario: hide-settings-page removes every entry point
-
-- **WHEN** `isEnabled('hide-settings-page')` is `true`
-- **THEN** neither the desktop user menu nor the mobile profile page renders a Settings entry, and a direct `/settings` URL redirects to `/`
 
 ### Requirement: show-header-logo renders the theme logo in the desktop top bar
 
@@ -474,3 +397,78 @@ The `conversation-drafts` key SHALL gate per-conversation composer drafts. The k
 
 - **WHEN** an overlay host's `enabledFeatures` omits `'conversation-drafts'`
 - **THEN** an existing conversation's input starts empty after the user switches away and back
+
+### Requirement: hide-navigation-menu removes the navigation part of the mobile drawer
+
+`isEnabled('hide-navigation-menu')` SHALL remove the navigation part of the mobile sidebar drawer: `SidebarNavigation` SHALL render the drawer with no navigation items, no user menu and no Usage link, and `Header` SHALL render the sidebar toggle only while the conversation list stays reachable through it, that is while `isEnabled('conversations-section')` and `isEnabled('conversations-panel-toggle')` are both `true`. The drawer then carries the conversation block alone, as the earlier conversation drawer did. Everything else is omitted rather than hidden, so no focusable row of the removed part stays in the tab order.
+
+The key SHALL NOT affect the desktop sidebar or its user menu. `hide-user-menu` governs the user menu on both surfaces: it removes the menu from the desktop sidebar and from the mobile drawer, where the earlier mobile sheet ignored it. It exists for embeds whose host portal already handles sign-in and sign-out, making the user menu's log-out row dead weight.
+
+**RTL impact:** None — the removed controls are omitted, not repositioned.
+
+**Accessibility:** The omitted items and toggle leave neither an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None — existing translated labels are omitted along with their controls.
+
+#### Scenario: The toggle stays while the chats are reachable
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true`, the conversations section is on and its panel toggle is on
+- **THEN** the header renders the sidebar toggle, and the drawer it opens holds the conversation block with no items, user menu or Usage link
+
+#### Scenario: The toggle is gone when nothing is reachable
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and the conversations section or its panel toggle is off
+- **THEN** the header renders no sidebar toggle
+
+#### Scenario: The desktop sidebar is untouched
+
+- **WHEN** `isEnabled('hide-navigation-menu')` is `true` and `isEnabled('hide-user-menu')` is `false`
+- **THEN** the desktop sidebar still renders its items and user menu
+
+#### Scenario: The drawer renders by default
+
+- **WHEN** no `enabledUiFeatures` and no overlay override are present
+- **THEN** the key is default-off, so the header toggle renders and opens the full drawer
+
+### Requirement: hide-keyboard-shortcuts removes the entry wherever it is offered
+
+`isEnabled('hide-keyboard-shortcuts')` SHALL remove the Keyboard shortcuts entry from every surface that offers it: the Preferences fields shared by the Settings dialog and the Settings page's Preferences tab (`PreferencesFields`), and the keyboard group of the mobile drawer's user menu, which `useNavigationMenuGroups` omits. `isEnabled('hide-user-settings')` SHALL also remove it everywhere, so the surfaces agree; `hide-keyboard-shortcuts` SHALL NOT affect the other settings entries `hide-user-settings` governs — with only `hide-keyboard-shortcuts` enabled the language entry SHALL still render wherever it is offered (it is offered only when `SUPPORTED_LANGUAGES` holds more than one locale, which no shipping build does today).
+
+Hiding the entry SHALL NOT change send behavior: the `SendOnEnter` preference is read from storage by `ConversationView` and `NewConversationComposer` independently of this key, and continues to resolve to its stored value, defaulting to `SendOnEnter.Enter`.
+
+**Accessibility:** The entry is not rendered, so it leaves neither an accessibility-tree node nor a tab stop.
+
+**i18n impact:** None — the existing translated label is shown or omitted; no new strings.
+
+#### Scenario: The entry disappears everywhere
+
+- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the user opens the Settings dialog or the mobile drawer's user menu
+- **THEN** no Keyboard shortcuts entry is rendered, and the other Preferences rows (theme, language, default agent) keep their own visibility rules
+
+#### Scenario: hide-user-settings hides it too
+
+- **WHEN** `isEnabled('hide-user-settings')` is `true`
+- **THEN** the Keyboard shortcuts entry is absent from the Settings dialog, the Preferences tab and the drawer's user menu
+
+#### Scenario: Send-on-Enter keeps working while the entry is hidden
+
+- **WHEN** `isEnabled('hide-keyboard-shortcuts')` is `true` and the stored preference is `SendOnEnter.MetaEnter`
+- **THEN** the conversation input still sends on `⌘`/`Ctrl`+Enter
+
+### Requirement: The Settings dialog is reachable from the user menu and hide-settings-page removes it
+
+`SidebarNavigation` SHALL offer Settings through the sidebar user menu's Settings entry, in the desktop column and in the mobile drawer, which opens the Settings dialog. The `/settings` page remains routable. When `isEnabled('hide-settings-page')` is `true`, the Settings entry and the Usage link SHALL be omitted, and the `/settings` and `/usage` routes SHALL redirect to `/` with `replace`. `SettingsPage` SHALL stack its section list above the active tab at full width on the mobile breakpoint and keep the 240px side column on desktop.
+
+**Accessibility:** The Settings entry is a labeled menu item; its icon is `aria-hidden`.
+
+**i18n impact:** None — the entry reuses the existing `BasicI18nKeys.Settings` string.
+
+#### Scenario: Users reach Settings from the user menu
+
+- **WHEN** the user opens the sidebar's user menu, at any width, and chooses Settings
+- **THEN** the Settings dialog opens and the route does not change
+
+#### Scenario: hide-settings-page removes every entry point
+
+- **WHEN** `isEnabled('hide-settings-page')` is `true`
+- **THEN** the user menu renders no Settings entry, the footer renders no Usage link, and a direct `/settings` or `/usage` URL redirects to `/`

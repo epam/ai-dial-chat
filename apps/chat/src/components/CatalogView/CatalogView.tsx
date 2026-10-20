@@ -21,6 +21,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
+import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
@@ -493,6 +494,7 @@ const CatalogView: FC<Props> = ({
       ),
       createSkillUpload: t(CatalogI18nKeys.CreateSkillUpload),
       createPrompt: t(CatalogI18nKeys.CreatePrompt),
+      createRunners: t(CatalogI18nKeys.CreateRunners),
       deleteError: t(CatalogI18nKeys.DetailsDeleteError),
     }),
     [t],
@@ -670,6 +672,7 @@ const CatalogView: FC<Props> = ({
         isShareVisible={isShareVisible}
         styles={{
           typography: { pageHeadingFontClassName: 'dial-h1-text' },
+          headingRowClassName: PAGE_HEADER_ROW_CLASS,
         }}
         titles={{
           pageTitle: t(NavigationI18nKeys.Catalog),
@@ -691,6 +694,7 @@ const CatalogView: FC<Props> = ({
           sortNewestLabel: t(CatalogI18nKeys.SortNewest),
           sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
           featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
+          noFolderLabel: t(CatalogI18nKeys.NoFolderLabel),
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
@@ -723,6 +727,7 @@ const CatalogView: FC<Props> = ({
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
           tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
+          emptyTabLabel: t(BasicI18nKeys.Empty),
           contentFileSelectorAriaLabel: t(
             CatalogI18nKeys.DetailsContentFileSelectorAriaLabel,
           ),

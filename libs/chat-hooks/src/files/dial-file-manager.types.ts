@@ -2,6 +2,7 @@ import type {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
   FileUploadValidationResult,
+  FileDownloadBatchState,
   FileUploadBatchState,
 } from '@epam/ai-dial-chat-shared';
 import type {
@@ -57,7 +58,7 @@ export enum FileManagerNotificationReason {
   RemoveAccessFailed = 'removeAccessFailed',
   /** `useDialFileUploadBatch`'s plain-file batch had zero successful uploads. */
   UploadFailed = 'uploadFailed',
-  /** `useDialFileUploadBatch`'s plain-file batch completed (fully or partially successful), or `onUploadArchive` extracted every entry successfully. */
+  /** `useDialFileUploadBatch`'s plain-file batch completed (fully or partially successful). */
   UploadCompleted = 'uploadCompleted',
   /** `onUploadArchive` extracted zero entries successfully; `names`/`restCount` list the failures. */
   UploadArchiveFailed = 'uploadArchiveFailed',
@@ -300,10 +301,18 @@ export interface UseDialFileManagerResult {
   /** True while a folder creation request is in flight. */
   isCreatingFolder: boolean;
 
-  /** Download: called when user triggers download on one or more items. */
+  /** Download: called when user triggers download on one or more items; returns without waiting for the transfer. */
   onDownloadFiles: (dialFiles: DialFile[]) => void;
-  /** True while a download is in progress. */
+  /** True while at least one download is in progress. Does not block other actions. */
   isDownloading: boolean;
+  /** Download: current batch state (null when idle). */
+  downloadBatchState: FileDownloadBatchState | null;
+  /** Download: abort one in-flight download by its entry id. */
+  cancelDownloadFile: (id: string) => void;
+  /** Download: abort every in-flight download. */
+  cancelAllDownloads: () => void;
+  /** Download: empty the download batch. */
+  clearDownloadBatch: () => void;
 
   /** Delete: called when user confirms deletion of one or more items. */
   onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;
@@ -371,7 +380,7 @@ export interface UseDialFileManagerResult {
 
   /**
    * True while any mutating file-manager operation is in flight: the OR of
-   * `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`,
+   * `isCreatingFolder`, `isDeleting`, `isRenaming`, `isCopying`,
    * `isMoving`, `isUnsharing`, `isRemovingAccess`, and any upload still queued or running.
    *
    * Deliberately excludes three flags, each already fully contained by its own

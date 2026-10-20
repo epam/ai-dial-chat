@@ -83,6 +83,18 @@ vi.mock('react-router', () => ({
   useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
+/* The router-level guard is covered by its own spec; here only its wiring is. */
+const mockAllowNextNavigation = vi.fn();
+const mockUseBuilderLeaveGuard = vi.fn((_options: { isDirty: boolean }) => ({
+  allowNextNavigation: mockAllowNextNavigation,
+}));
+vi.mock('../../../hooks/unsaved-changes/useBuilderLeaveGuard', () => ({
+  useBuilderLeaveGuard: (options: { isDirty: boolean }) =>
+    mockUseBuilderLeaveGuard(options),
+}));
+const getReportedDirty = () =>
+  mockUseBuilderLeaveGuard.mock.lastCall?.[0].isDirty;
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -297,6 +309,35 @@ describe('PromptEditor', () => {
     expect(screen.queryByText('promptEditor.error.nameTooLong')).toBeNull();
   });
 
+  it('keeps an over-long pasted description, flags it while typing and blocks create', async () => {
+    render(<PromptEditor />);
+
+    await user.type(
+      screen.getByRole('textbox', { name: /promptEditor.nameLabel/ }),
+      'summarize',
+    );
+    const descriptionField = screen.getByRole('textbox', {
+      name: /promptEditor.descriptionLabel/,
+    });
+    await user.click(descriptionField);
+    await user.paste(`${'a'.repeat(1996)}12345`);
+
+    expect((descriptionField as HTMLTextAreaElement).value).toHaveLength(2001);
+    expect(
+      screen.getByText('promptEditor.error.descriptionTooLong'),
+    ).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+
+    expect(createPrompt).not.toHaveBeenCalled();
+
+    await user.type(descriptionField, '{Backspace}');
+
+    expect(
+      screen.queryByText('promptEditor.error.descriptionTooLong'),
+    ).toBeNull();
+  });
+
   it('shows an over-long instructions error while typing', async () => {
     render(<PromptEditor />);
 
@@ -426,5 +467,41 @@ describe('PromptEditor', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
     expect(createPrompt).not.toHaveBeenCalled();
+  });
+
+  describe('leave guard wiring', () => {
+    it('reports the form dirty state to the leave guard', async () => {
+      render(<PromptEditor />);
+      expect(getReportedDirty()).toBe(false);
+
+      await fillRequiredFields('summarize', 'Summarize:');
+
+      expect(getReportedDirty()).toBe(true);
+    });
+
+    it('leaves through a plain navigation on a dirty Cancel, with no dialog of its own', async () => {
+      render(<PromptEditor />);
+      await fillRequiredFields('summarize', 'Summarize:');
+
+      await user.click(screen.getByRole('button', { name: 'buttons.cancel' }));
+
+      expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('allows the next navigation before the post-save exit', async () => {
+      render(<PromptEditor />);
+      await fillRequiredFields('summarize', 'Summarize:');
+
+      await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+
+      await waitFor(() =>
+        expect(mockNavigate).toHaveBeenCalledWith('/catalog'),
+      );
+      expect(mockAllowNextNavigation).toHaveBeenCalledOnce();
+      expect(mockAllowNextNavigation.mock.invocationCallOrder[0]).toBeLessThan(
+        mockNavigate.mock.invocationCallOrder[0],
+      );
+    });
   });
 });

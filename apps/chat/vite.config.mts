@@ -192,6 +192,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/source-panel/src/index.ts',
       ),
+      '@epam/ai-dial-visualizer-connector': path.resolve(
+        import.meta.dirname,
+        '../../libs/visualizer-connector/src/index.ts',
+      ),
       '@epam/ai-dial-attachment-canvas': path.resolve(
         import.meta.dirname,
         '../../libs/attachment-canvas/src/index.ts',

@@ -135,7 +135,17 @@ export const ScheduledTaskHistorySection: FC<
           {nextRun}
           {loadingMoreAnnouncement}
         </div>
-        <div className="flex flex-1 flex-col gap-4 px-6 pb-2">{runList}</div>
+        {/*
+         * Rows bleed 12px (their pill padding) into the card's 24px padding,
+         * so each status icon lines up with the "History" heading and the
+         * time starts 44px from the card edge (24 + 16px icon + 4px gap).
+         */}
+        <div
+          className="flex flex-1 flex-col gap-4 px-6 pb-2"
+          style={{ '--strhl-row-bleed': '12px' } as CSSProperties}
+        >
+          {runList}
+        </div>
       </div>
     );
   }

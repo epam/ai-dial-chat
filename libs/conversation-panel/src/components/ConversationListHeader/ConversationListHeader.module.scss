@@ -1,0 +1,12 @@
+/* The title reads secondary at rest and primary under keyboard focus. */
+.title {
+  color: var(--cp-list-header-title, var(--text-secondary, #57647a));
+
+  &:hover {
+    color: var(--cp-list-header-title, var(--text-secondary, #57647a));
+  }
+
+  &:focus-visible {
+    color: var(--cp-list-header-title-focus, var(--text-primary, #161b2d));
+  }
+}

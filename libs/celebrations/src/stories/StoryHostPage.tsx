@@ -109,7 +109,7 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
           <textarea
             aria-label="Message"
             rows={1}
-            className="order-first min-w-0 basis-full resize-none bg-transparent desktop:order-none desktop:flex-1 desktop:basis-auto"
+            className="order-first min-w-0 basis-full resize-none bg-transparent desktop:order-0 desktop:flex-1 desktop:basis-auto"
             value={composerValue}
             onChange={(event) => onComposerChange?.(event.target.value)}
           />

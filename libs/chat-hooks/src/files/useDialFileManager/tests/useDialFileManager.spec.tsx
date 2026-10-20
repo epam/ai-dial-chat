@@ -957,22 +957,25 @@ describe('useDialFileManager', () => {
       ]);
     });
 
-    await waitFor(() => expect(result.current.isDownloading).toBe(false));
+    await waitFor(() => expect(mockOnOperationSuccess).toHaveBeenCalled());
 
-    expect(mockDownloadArchive).toHaveBeenCalledWith([
-      {
-        bucket: BUCKET,
-        path: 'report-a.pdf',
-        name: 'report-a.pdf',
-        nodeType: 'item',
-      },
-      {
-        bucket: BUCKET,
-        path: 'report-b.pdf',
-        name: 'report-b.pdf',
-        nodeType: 'item',
-      },
-    ]);
+    expect(mockDownloadArchive).toHaveBeenCalledWith(
+      [
+        {
+          bucket: BUCKET,
+          path: 'report-a.pdf',
+          name: 'report-a.pdf',
+          nodeType: 'item',
+        },
+        {
+          bucket: BUCKET,
+          path: 'report-b.pdf',
+          name: 'report-b.pdf',
+          nodeType: 'item',
+        },
+      ],
+      expect.any(AbortSignal),
+    );
     expect(mockOnOperationSuccess).toHaveBeenCalledWith({
       kind: 'filesDownloaded',
       count: 2,
@@ -1874,7 +1877,8 @@ describe('useDialFileManager', () => {
       expect(result.current.isAnyOperationInProgress).toBe(true);
     });
 
-    it('is true while a download is in flight', async () => {
+    /* A download is a non-blocking queue row: it never gates other actions. */
+    it('stays false while a download is in flight', async () => {
       mockDownloadArchive.mockImplementation(
         () => new Promise(() => undefined),
       );
@@ -1908,7 +1912,7 @@ describe('useDialFileManager', () => {
       });
 
       await waitFor(() => expect(result.current.isDownloading).toBe(true));
-      expect(result.current.isAnyOperationInProgress).toBe(true);
+      expect(result.current.isAnyOperationInProgress).toBe(false);
     });
 
     it('is true while a delete request is in flight', async () => {

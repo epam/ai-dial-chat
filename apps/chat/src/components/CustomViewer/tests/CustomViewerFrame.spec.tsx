@@ -1,7 +1,7 @@
 import {
   VisualizerConnectorEvents,
   VisualizerConnectorRequests,
-} from '@epam/ai-dial-shared';
+} from '@epam/ai-dial-visualizer-connector';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CustomViewerI18nKeys } from '../../../constants/translation-keys';
@@ -20,7 +20,10 @@ const subscribeMock = vi.fn(
 );
 let lastOptions: Record<string, unknown> | undefined;
 
-vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+vi.mock('@epam/ai-dial-visualizer-connector', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@epam/ai-dial-visualizer-connector')
+  >()),
   VisualizerConnector: vi.fn().mockImplementation(function (
     root: HTMLElement,
     options: Record<string, unknown>,
@@ -56,8 +59,8 @@ const viewer: CustomViewer = {
   applicationId: 'applications/bucket/explorer',
 };
 
-const createdEvent = `Explorer/${VisualizerConnectorEvents.createdConversationSuccess}`;
-const updatedEvent = `Explorer/${VisualizerConnectorEvents.updatedConversationSuccess}`;
+const createdEvent = `Explorer/${VisualizerConnectorEvents.CreatedConversationSuccess}`;
+const updatedEvent = `Explorer/${VisualizerConnectorEvents.UpdatedConversationSuccess}`;
 
 describe('CustomViewerFrame', () => {
   beforeEach(() => {
@@ -105,7 +108,7 @@ describe('CustomViewerFrame', () => {
 
     await waitFor(() => expect(sendMock).toHaveBeenCalledOnce());
     expect(sendMock).toHaveBeenCalledWith(
-      VisualizerConnectorRequests.sendVisualizeData,
+      VisualizerConnectorRequests.SendVisualizeData,
       {
         mimeType: 'application/json',
         visualizerData: {
@@ -135,7 +138,7 @@ describe('CustomViewerFrame', () => {
 
     await waitFor(() =>
       expect(sendMock).toHaveBeenLastCalledWith(
-        VisualizerConnectorRequests.sendVisualizeData,
+        VisualizerConnectorRequests.SendVisualizeData,
         expect.objectContaining({
           visualizerData: expect.objectContaining({
             layout: expect.objectContaining({ themeId: 'dark' }),

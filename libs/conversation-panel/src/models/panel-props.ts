@@ -1,6 +1,11 @@
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
+import type {
+  ConversationListColors,
+  ConversationListLabels,
+  ConversationListTypography,
+} from './conversation-list';
 
 /** Labels for each filter tab. */
 export interface FilterLabels {
@@ -43,19 +48,16 @@ export interface ConversationItem {
   leadingIcon?: ReactNode;
   /**
    * When `true`, the title renders in a heavier weight and an unread dot with a
-   * visually hidden label is rendered at the row's trailing edge.
+   * visually hidden label is rendered: at the row's trailing edge for `Avatar`
+   * rows, as the leading dot for `Indicator` rows.
    */
   isUnread?: boolean;
 }
 
-/** Font overrides for the header title in `ConversationPanel`. */
-export interface ConversationPanelTypography {
-  /** A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span. */
+/** Typography overrides for `ConversationPanel`; the list's own fields are inherited from `ConversationListTypography`. */
+export interface ConversationPanelTypography extends ConversationListTypography {
+  /** A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span; unlike `ConversationListTypography.fontClassName`, it does not reach the list. */
   fontClassName?: string;
-  /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-lead-semi-text'`. */
-  groupHeaderClassName?: string;
-  /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */
-  itemTitleClassName?: string;
   /** Typography class applied to the New chat button label. Defaults to `'dial-small-semi-text'`. */
   newChatLabelClassName?: string;
   /** Class applied to each filter tab. Defaults to `'dial-tiny-semi-text'` (an additional `'flex-1'` class is always applied). */
@@ -73,31 +75,11 @@ export interface NewChatButtonColors {
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */
-export interface ConversationColors {
+export interface ConversationColors extends ConversationListColors {
   /** Panel background color. */
   background?: string;
   /** Inner-edge divider border color. */
   border?: string;
-  /** Hover background for a conversation row. */
-  itemHover?: string;
-  /** Active/selected background for a conversation row. */
-  itemActive?: string;
-  /** Primary text color. */
-  text?: string;
-  /** Secondary text color (dates, metadata). */
-  textSecondary?: string;
-  /** Ring color shown around a group header acting as a drag-and-drop target. */
-  dropZoneRing?: string;
-  /** Background color of the active row actions trigger button. */
-  triggerBackground?: string;
-  /** Icon color of the row actions trigger button while active. */
-  triggerIcon?: string;
-  /** Icon color of the row actions trigger button in its idle state. */
-  triggerIconIdle?: string;
-  /** Shimmer color of the loading skeleton avatar. */
-  skeletonColor?: string;
-  /** Fill color of the unread indicator dot. Defaults to `--text-accent`. */
-  unreadDot?: string;
 }
 
 /** Combined style overrides (colors and typography) for `ConversationPanel`. */
@@ -135,16 +117,10 @@ export interface ConversationPanelStyles {
   searchWrapperClassName?: string;
 }
 
-/** Localised labels and text content for `ConversationPanel`. */
-export interface ConversationPanelLabels {
+/** Localised labels and text content for `ConversationPanel`; the list's own labels are inherited from `ConversationListLabels`. */
+export interface ConversationPanelLabels extends ConversationListLabels {
   /** Panel heading text (e.g. `"Chats"`). */
   title: string;
-  /** Message shown when `conversations` is empty. */
-  emptyLabel: string;
-  /** Message shown when conversations exist but none match the active filter. */
-  noResultsLabel: string;
-  /** Status message announced to assistive tech while conversations are loading. Defaults to `'Loading conversations'`. */
-  loadingLabel?: string;
   /** Label for the New chat button (e.g. `"New chat"`). */
   newChatLabel: string;
   /** Placeholder text for the search input (e.g. `"Search chat…"`). */
@@ -153,21 +129,6 @@ export interface ConversationPanelLabels {
   searchClearLabel: string;
   /** Labels for the four filter tabs. */
   filterLabels: FilterLabels;
-  /** Labels for collapsible group section headings. */
-  groupLabels?: {
-    /** Heading for the Pinned section. Defaults to `"Pinned"`. */
-    pinned?: string;
-    /** Heading for the My chats section. Defaults to `"My chats"`. */
-    myChats?: string;
-    /** Heading for the Shared section. Defaults to `"Shared"`. */
-    shared?: string;
-    /** Heading for the Organization section. Defaults to `"Organization"`. */
-    organization?: string;
-  };
-  /** Accessible label for the row actions trigger button. Defaults to `"More actions"`. */
-  actionsLabel?: string;
-  /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
-  unreadIndicatorLabel?: string;
   /** Accessible label for the sidebar toggle icon button. Required when `onToggle` is provided. */
   closeAriaLabel?: string;
 }

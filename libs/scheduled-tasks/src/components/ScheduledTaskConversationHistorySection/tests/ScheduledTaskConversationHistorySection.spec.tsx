@@ -179,4 +179,31 @@ describe('ScheduledTaskConversationHistorySection', () => {
 
     expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
   });
+
+  it('replaces the runs, error and retry with the unavailable message while isUnavailable is set', () => {
+    render(
+      <ScheduledTaskConversationHistorySection
+        scheduleId="schedule-1"
+        items={runs}
+        error={new Error('Not found')}
+        onRetry={vi.fn()}
+        hasMore
+        onLoadMore={vi.fn()}
+        isUnavailable
+        labels={{ ...labels, unavailableLabel: 'History is unavailable' }}
+      />,
+    );
+
+    expect(screen.getByRole('alert').textContent).toBe(
+      'History is unavailable',
+    );
+    expect(screen.queryByText('today at 9:01 AM (99s)')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    expect(
+      screen
+        .getByRole('button', { name: 'History' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
+  });
 });

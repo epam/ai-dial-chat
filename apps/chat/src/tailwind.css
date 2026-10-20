@@ -23,6 +23,15 @@
 @source './**/*.{ts,tsx,html}';
 @source '../../../libs/*/src/**/*.{ts,tsx}';
 /*
+ * The kit's own utilities sit in `@layer ui`, so any utility the chat also
+ * generates unlayered beats them regardless of Tailwind's ordering — e.g. the
+ * chat's `border-secondary` overrode the kit Spinner's `border-t-accent`,
+ * leaving a uniform ring whose rotation is invisible. Scanning the kit's
+ * components puts its classes into this build too, where Tailwind sorts a
+ * side-specific utility after its shorthand again, as under v3.
+ */
+@source '../../../node_modules/@epam/ai-dial-ui-kit/dist/components/**/*.js';
+/*
  * Interim: the file manager's published stylesheet is still built with
  * Tailwind v3, so its classes are compiled here as they were before. Drop
  * this once it ships a v4 stylesheet, as the kit does.

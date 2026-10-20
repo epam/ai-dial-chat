@@ -1,8 +1,8 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { forwardRef, useImperativeHandle } from 'react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
+import { Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ApplicationEditorI18nKeys,
@@ -10,10 +10,12 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import {
   createApplication,
   updateApplication,
@@ -32,6 +34,7 @@ interface IframeStubProps {
   onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
   onReadyChange?: (isReady: boolean) => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 /* Records every render of the embedded-editor stub, so tests can play the iframe's messages. */
@@ -90,25 +93,25 @@ const LocationProbe = () => {
   return <output>{`location:${location.search}`}</output>;
 };
 
-/* Extracted so a test can `rerender` the identical tree after changing a mock's return value. */
-const buildTree = (search: string) => (
-  <MemoryRouter initialEntries={[`${ROUTES.AppsEditor}?${search}`]}>
-    <Routes>
-      <Route
-        path={ROUTES.AppsEditor}
-        element={
-          <>
-            <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
-            <LocationProbe />
-          </>
-        }
-      />
-      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-    </Routes>
-  </MemoryRouter>
+/* A factory, so a test can re-render the identical tree after changing a mock's return value. */
+const buildRoutes = () => (
+  <Routes>
+    <Route
+      path={ROUTES.AppsEditor}
+      element={
+        <>
+          <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
+          <LocationProbe />
+        </>
+      }
+    />
+    <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+    <Route path={ROUTES.FileManager} element={<div>Files</div>} />
+  </Routes>
 );
 
-const renderPage = (search: string) => render(buildTree(search));
+const renderPage = (search: string) =>
+  renderWithLeaveGuard(buildRoutes, [`${ROUTES.AppsEditor}?${search}`]);
 
 /* The layout renders its actions in the header and again in the mobile bar; take the header copy. */
 const getAction = (name: string) =>
@@ -197,7 +200,7 @@ describe('ApplicationEditorPage — quick app', () => {
     });
 
     it('creates the app with seeded properties, confirms it and switches to edit mode in place', async () => {
-      const { rerender } = renderPage(createSearch);
+      const { rerenderRoutes } = renderPage(createSearch);
 
       await user.type(getNameInput(), 'My App');
       await user.click(getAction(ButtonsI18nKeys.Create));
@@ -257,7 +260,7 @@ describe('ApplicationEditorPage — quick app', () => {
       } as unknown as ReturnType<
         typeof DeploymentsContextModule.useDeployments
       >);
-      rerender(buildTree(createSearch));
+      rerenderRoutes();
 
       expect((getNameInput() as HTMLInputElement).value).toBe('My App');
     });
@@ -325,7 +328,7 @@ describe('ApplicationEditorPage — quick app', () => {
        * above) must recover the persisted name once the deployments list
        * resolves — this is the one case where a reseed is desired.
        */
-      const { rerender } = renderPage(editSearch);
+      const { rerenderRoutes } = renderPage(editSearch);
 
       expect((getNameInput() as HTMLInputElement).value).toBe('');
 
@@ -337,7 +340,7 @@ describe('ApplicationEditorPage — quick app', () => {
       } as unknown as ReturnType<
         typeof DeploymentsContextModule.useDeployments
       >);
-      rerender(buildTree(editSearch));
+      rerenderRoutes();
 
       expect((getNameInput() as HTMLInputElement).value).toBe('My App');
     });
@@ -506,6 +509,42 @@ describe('ApplicationEditorPage — quick app', () => {
         }),
       ).toBeTruthy();
       expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBeTruthy();
+    });
+  });
+
+  describe('leave guard', () => {
+    it('asks before leaving while the embedded editor reports unsaved edits', async () => {
+      const user = userEvent.setup({ delay: null });
+      const { router } = renderPage(editSearch);
+      act(() => getIframeProps()?.onDirtyChange?.(true));
+
+      await act(() => router.navigate(ROUTES.FileManager));
+
+      expect(
+        screen.getByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toBeTruthy();
+      expect(router.state.location.pathname).toBe(ROUTES.AppsEditor);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.ConfirmLabel,
+        }),
+      );
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+      expect(updateApplication).not.toHaveBeenCalled();
+      expect(mockTriggerSave).not.toHaveBeenCalled();
+    });
+
+    it('leaves without the dialog once the embedded editor reports clean again', async () => {
+      const { router } = renderPage(editSearch);
+      act(() => getIframeProps()?.onDirtyChange?.(true));
+      act(() => getIframeProps()?.onDirtyChange?.(false));
+
+      await act(() => router.navigate(ROUTES.FileManager));
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 });

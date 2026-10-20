@@ -2053,6 +2053,12 @@ export interface CreateApplicationBodyDto {
    */
   preserveApplicationProperties?: boolean;
   /**
+   * Top-level DIAL Core application features, stored as supplied. Takes precedence over features hoisted from applicationProperties and turns off the Quick App system_prompt_supported default.
+   * @type {object}
+   * @memberof CreateApplicationBodyDto
+   */
+  features?: object;
+  /**
    *
    * @type {Array<string>}
    * @memberof CreateApplicationBodyDto
@@ -6449,6 +6455,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   resultStage?: string;
+  /**
+   * Failure details reported by DIAL Scheduler (result.error_text) for a failed run. Only a non-blank string is exposed; the rest of the upstream result is not.
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  errorText?: string;
 }
 
 /**
@@ -6617,6 +6629,12 @@ export interface ShareLinkResponseDto {
    * @memberof ShareLinkResponseDto
    */
   expiresInDays?: number;
+  /**
+   * Hours until the DIAL Core invitation expires, rounded up. Lets a client describe a TTL shorter than a day, which `expiresInDays` rounds up to 1. Omitted together with `expiresInDays`.
+   * @type {number}
+   * @memberof ShareLinkResponseDto
+   */
+  expiresInHours?: number;
   /**
    * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
    * @type {Array<string>}

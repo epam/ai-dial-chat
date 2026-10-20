@@ -8,7 +8,7 @@ export interface TextRefinementLabels {
   refineErrorLabel?: string;
   /** Refinement copy. Defaults to 'Refining text'. */
   refinePendingAriaLabel?: string;
-  /** Refinement copy. Defaults to 'Text refined. Undo is available.'. */
+  /** Refinement copy. Defaults to 'Text refined'. */
   refineSuccessAriaLabel?: string;
   /** Refinement copy. Defaults to 'Original text restored.'. */
   refineUndoAriaLabel?: string;

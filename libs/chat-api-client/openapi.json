@@ -573,7 +573,7 @@
             "name": "refresh",
             "required": false,
             "in": "query",
-            "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core",
+            "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core.",
             "schema": {
               "type": "boolean"
             }
@@ -9772,6 +9772,13 @@
             "default": false,
             "description": "Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities."
           },
+          "features": {
+            "type": "object",
+            "example": {
+              "tools_supported": true
+            },
+            "description": "Top-level DIAL Core application features, stored as supplied. Takes precedence over features hoisted from applicationProperties and turns off the Quick App system_prompt_supported default."
+          },
           "inputAttachmentTypes": {
             "example": ["image/png"],
             "type": "array",
@@ -14320,6 +14327,11 @@
             "description": "Days until the DIAL Core invitation expires, rounded up. Omitted when DIAL Core does not report a usable expiry.",
             "example": 3
           },
+          "expiresInHours": {
+            "type": "number",
+            "description": "Hours until the DIAL Core invitation expires, rounded up. Lets a client describe a TTL shorter than a day, which `expiresInDays` rounds up to 1. Omitted together with `expiresInDays`.",
+            "example": 72
+          },
           "access": {
             "type": "array",
             "description": "Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.",
@@ -15218,6 +15230,11 @@
             "type": "string",
             "description": "Failure stage reported by DIAL Scheduler. Only a string result.stage is exposed.",
             "example": "credentials"
+          },
+          "errorText": {
+            "type": "string",
+            "description": "Failure details reported by DIAL Scheduler (result.error_text) for a failed run. Only a non-blank string is exposed; the rest of the upstream result is not.",
+            "example": "target request failed with status 502"
           }
         },
         "required": ["id", "status", "startTime"]

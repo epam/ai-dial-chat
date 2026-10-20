@@ -298,7 +298,8 @@ const items: ConversationItem[] = [
 describe('ConversationPanel', () => {
   it('renders all conversation rows when open', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    expect(screen.getAllByRole('listitem')).toHaveLength(items.length);
+    /* Every conversation row, plus one list item per group header. */
+    expect(screen.getAllByRole('listitem')).toHaveLength(items.length + 4);
     expect(screen.getByText('First chat')).toBeTruthy();
     expect(screen.getByText('Second chat')).toBeTruthy();
   });

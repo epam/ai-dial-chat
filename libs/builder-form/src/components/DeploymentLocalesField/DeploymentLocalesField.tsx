@@ -173,7 +173,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
             stroke={DIAL_KIT_ICON_STROKE}
           />
         }
-        className="!px-0"
+        className="px-0!"
         onClick={handleOpen}
       />
 

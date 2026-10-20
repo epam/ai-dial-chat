@@ -108,7 +108,7 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
               <InitialsAvatar
                 name={row.name}
                 size={avatarSize}
-                className="!rounded-xl"
+                className="rounded-xl!"
                 textClassName="text-lg"
               />
             }

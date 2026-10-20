@@ -324,7 +324,7 @@ describe('MarkdownTable', () => {
     const actionsWrapper = screen.getByRole('button', {
       name: 'Copy',
     }).parentElement; // eslint-disable-line testing-library/no-node-access -- the actions wrapper has no semantic role; layout classes must be asserted directly
-    expect(actionsWrapper?.className).toContain('end-2');
+    expect(actionsWrapper?.className).toContain('inset-e-2');
     expect(actionsWrapper?.className).not.toContain('left-');
     expect(actionsWrapper?.className).not.toContain('right-');
 

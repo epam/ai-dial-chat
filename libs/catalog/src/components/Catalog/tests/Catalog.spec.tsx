@@ -70,6 +70,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Button: ({ label, onClick }: { label: string; onClick?: () => void }) => (
     <button onClick={onClick}>{label}</button>
   ),
+  ButtonDropdown: ({ label }: { label: string }) => (
+    <button aria-haspopup="menu">{label}</button>
+  ),
   ButtonVariant: { Primary: 'primary', Secondary: 'secondary' },
   ButtonAppearance: { Solid: 'solid' },
   NoDataContent: ({
@@ -1427,6 +1430,36 @@ describe('Catalog', () => {
 
     expect(onCreateToolset).toHaveBeenCalledOnce();
     expect(onCreateClick).not.toHaveBeenCalled();
+  });
+
+  it('runs the lone option directly even when the header has a full create menu', async () => {
+    const onCreatePrompt = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Prompt', { type: CatalogEntityType.Prompt })]}
+        favorites={[]}
+        isMyAppsActive
+        hidePageTitle
+        createOptions={[
+          { key: 'prompt', label: 'Prompt', onClick: vi.fn() },
+          { key: 'toolset', label: 'Toolset', onClick: vi.fn() },
+        ]}
+        createMenuByTab={{
+          [CatalogEntityType.Prompt]: {
+            options: [
+              { key: 'prompt', label: 'Prompt', onClick: onCreatePrompt },
+            ],
+          },
+        }}
+      />,
+    );
+
+    const [, emptyStateCreate] = screen.getAllByRole('button', {
+      name: 'Create',
+    });
+    await userEvent.click(emptyStateCreate);
+
+    expect(onCreatePrompt).toHaveBeenCalledOnce();
   });
 
   it('keeps the default empty state on a tab without a create menu', () => {

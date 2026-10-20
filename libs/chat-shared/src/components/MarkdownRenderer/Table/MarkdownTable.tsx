@@ -183,7 +183,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       >
         {showActions && (
           <div className="sticky top-0 z-10 h-0">
-            <div className="absolute end-2 top-2 flex items-center gap-1 rounded-lg border border-tertiary bg-layer-raised px-2 py-1 opacity-0 shadow-xs transition-opacity group-hover/table:opacity-100 focus-within:opacity-100">
+            <div className="absolute inset-e-2 top-2 flex items-center gap-1 rounded-lg border border-tertiary bg-layer-raised px-2 py-1 opacity-0 shadow-xs transition-opacity group-hover/table:opacity-100 focus-within:opacity-100">
               {tableActions.map((action) => (
                 <GhostIconButton
                   key={action.label}

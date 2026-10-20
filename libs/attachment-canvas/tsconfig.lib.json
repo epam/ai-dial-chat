@@ -40,6 +40,9 @@
       "path": "../sidebar/tsconfig.lib.json"
     },
     {
+      "path": "../visualizer-connector/tsconfig.lib.json"
+    },
+    {
       "path": "../chat-shared/tsconfig.lib.json"
     }
   ]

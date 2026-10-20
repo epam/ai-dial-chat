@@ -10,7 +10,7 @@ Reset and refetch semantics of `ConversationsContext` when the authenticated ide
 
 `apps/chat/src/context/ConversationsContext.tsx` SHALL treat the currently authenticated identity (`useUser().user?.sub`) as part of its conversation-list load effect's dependencies, in addition to the effect's existing mount-time trigger. When the resolved `sub` changes while `ConversationsProvider` remains mounted, the provider SHALL reset `conversations` to `[]` and `error` to `null`, set `isLoading` to `true`, and re-invoke `listConversations()` — exactly as it already does on initial mount. This SHALL NOT re-run merely because `user` is updated in place with an unchanged `sub`.
 
-`ConversationsProvider` is placed inside `RequireAuth`, wrapping the rest of the app, in `apps/chat/src/main.tsx`. It therefore also fully resets via the ordinary unmount/remount path on explicit logout or a `401`; the identity-keyed effect above additionally covers the case where the identity changes without an intervening unmount (an in-place identity adoption — see `spa-auth-session`'s identity revalidation requirement).
+`ConversationsProvider` is placed inside `RequireAuth`, wrapping the rest of the app, in `apps/chat/src/AppRoot.tsx`. It therefore also fully resets via the ordinary unmount/remount path on explicit logout or a `401`; the identity-keyed effect above additionally covers the case where the identity changes without an intervening unmount (an in-place identity adoption — see `spa-auth-session`'s identity revalidation requirement).
 
 #### Scenario: Identity changes while ConversationsProvider stays mounted
 

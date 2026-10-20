@@ -123,6 +123,7 @@
 .tile.proxyFocus {
   &:has(:focus-visible) {
     outline-style: solid;
+    outline-width: 1px;
   }
 
   .actionButton:focus-visible {

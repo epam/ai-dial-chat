@@ -10,7 +10,13 @@ import {
   MoveItemDtoNodeTypeEnum,
   RenameItemDtoNodeTypeEnum,
 } from '@epam/ai-dial-chat-api-client';
-import { getParentFolderPath } from '@epam/ai-dial-chat-shared';
+import {
+  type FileDownloadBatchState,
+  type FileDownloadEntry,
+  FileDownloadStatus,
+  getParentFolderPath,
+  isDownloadInProgress,
+} from '@epam/ai-dial-chat-shared';
 import type {
   DialCopiedItem,
   DialDeletedItem,
@@ -22,12 +28,15 @@ import {
   DialFileNodeType,
 } from '@epam/ai-dial-react-file-manager';
 import { NOT_ALLOWED_SYMBOLS, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   prepareCopyItems,
   prepareMoveRenameItems,
 } from '../dial-file-manager-copy-move.util';
-import { findFirstSuccessfulCopyMoveItem } from '../dial-file-manager-mapping.util';
+import {
+  findFirstSuccessfulCopyMoveItem,
+  resolveTransferFailureReason,
+} from '../dial-file-manager-mapping.util';
 import {
   formatOperationFolderName,
   getVirtualPathName,
@@ -52,6 +61,13 @@ import {
 import type { DialFilesApi } from '../dial-files-api';
 import { DownloadDestinationType } from '../download-destination';
 import type { DownloadDestinationHandlers } from '../download-destination';
+import {
+  createDownloadResponseError,
+  estimateArchiveSize,
+  getContentLength,
+  getDownloadPercent,
+  withDownloadProgress,
+} from '../download-progress';
 import { splitFileNameExtension } from '../file-name';
 import {
   resolveDialFileApiPath,
@@ -98,6 +114,14 @@ export interface UseDialFileMutationsOptions {
   forbiddenSymbolsRegExp?: RegExp;
 }
 
+let downloadEntryIdCounter = 0;
+
+/* Unique across batches, since new downloads are appended to rows still on screen. */
+const createDownloadEntryId = (): string => {
+  downloadEntryIdCounter += 1;
+  return `download-${Date.now()}-${downloadEntryIdCounter}`;
+};
+
 /** Values returned by `useDialFileMutations`. */
 export interface UseDialFileMutationsResult {
   isCreatingFolder: boolean;
@@ -116,6 +140,14 @@ export interface UseDialFileMutationsResult {
     parentFolder: DialFile,
   ) => FileNameValidationError | null;
   onDownloadFiles: (dialFiles: DialFile[]) => void;
+  /** Every download since the batch was last cleared; `null` when idle. */
+  downloadBatchState: FileDownloadBatchState | null;
+  /** Aborts one in-flight download by its entry id. */
+  cancelDownloadFile: (id: string) => void;
+  /** Aborts every in-flight download. */
+  cancelAllDownloads: () => void;
+  /** Empties the download batch. */
+  clearDownloadBatch: () => void;
   onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;
   onRenameValidate: (
     value: string,
@@ -157,7 +189,13 @@ export const useDialFileMutations = ({
   forbiddenSymbolsRegExp,
 }: UseDialFileMutationsOptions): UseDialFileMutationsResult => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadBatchState, setDownloadBatchState] =
+    useState<FileDownloadBatchState | null>(null);
+  const downloadControllersRef = useRef(new Map<string, AbortController>());
+  const pendingDownloadPercentRef = useRef(
+    new Map<string, number | undefined>(),
+  );
+  const downloadPercentFrameRef = useRef<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
@@ -294,30 +332,116 @@ export const useDialFileMutations = ({
     ],
   );
 
+  const patchDownload = useCallback(
+    (id: string, patch: Partial<FileDownloadEntry>) => {
+      pendingDownloadPercentRef.current.delete(id);
+      setDownloadBatchState((prev) =>
+        prev
+          ? {
+              ...prev,
+              files: prev.files.map((file) =>
+                file.id === id ? { ...file, ...patch } : file,
+              ),
+            }
+          : prev,
+      );
+    },
+    [],
+  );
+
+  /*
+   * A large download reports bytes many times a frame; coalesce the percent
+   * updates of every running download into one state update per frame.
+   */
+  const scheduleDownloadPercent = useCallback(
+    (id: string, percent: number | undefined) => {
+      pendingDownloadPercentRef.current.set(id, percent);
+      if (downloadPercentFrameRef.current != null) return;
+      downloadPercentFrameRef.current = requestAnimationFrame(() => {
+        downloadPercentFrameRef.current = null;
+        const pending = new Map(pendingDownloadPercentRef.current);
+        pendingDownloadPercentRef.current.clear();
+        setDownloadBatchState((prev) =>
+          prev
+            ? {
+                ...prev,
+                files: prev.files.map((file) =>
+                  pending.has(file.id) &&
+                  file.status === FileDownloadStatus.Downloading
+                    ? { ...file, percent: pending.get(file.id) }
+                    : file,
+                ),
+              }
+            : prev,
+        );
+      });
+    },
+    [],
+  );
+
+  useEffect(
+    () => () => {
+      if (downloadPercentFrameRef.current != null) {
+        cancelAnimationFrame(downloadPercentFrameRef.current);
+      }
+    },
+    [],
+  );
+
   const onDownloadFiles = useCallback(
     (dialFiles: DialFile[]) => {
       const run = async () => {
-        setIsDownloading(true);
+        const isSingleFile =
+          dialFiles.length === 1 &&
+          dialFiles[0].nodeType === DialFileNodeType.ITEM;
+        let filename = 'files.zip';
+        if (isSingleFile) {
+          filename = dialFiles[0].name;
+        } else if (dialFiles.length === 1) {
+          filename = `${dialFiles[0].name}.zip`;
+        }
+        const failedReason =
+          dialFiles.length === 1
+            ? FileManagerNotificationReason.DownloadFileFailed
+            : FileManagerNotificationReason.DownloadFilesFailed;
+
+        let destination;
         try {
-          const filename =
-            dialFiles.length === 1
-              ? dialFiles[0].nodeType === DialFileNodeType.ITEM
-                ? dialFiles[0].name
-                : `${dialFiles[0].name}.zip`
-              : 'files.zip';
-          const destination = await downloadDestination.resolveDestination(
+          destination = await downloadDestination.resolveDestination(
             filename,
-            dialFiles.length === 1 &&
-              dialFiles[0].nodeType === DialFileNodeType.ITEM
+            isSingleFile
               ? (dialFiles[0].contentType ?? 'application/octet-stream')
               : 'application/zip',
           );
-          if (destination.type === DownloadDestinationType.Cancelled) return;
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            reason: failedReason,
+          });
+          return;
+        }
+        if (destination.type === DownloadDestinationType.Cancelled) return;
 
-          if (
-            dialFiles.length === 1 &&
-            dialFiles[0].nodeType === DialFileNodeType.ITEM
-          ) {
+        /*
+         * The download is a row of the transfer queue from here on: the caller
+         * is never blocked, and several downloads can run side by side.
+         */
+        const id = createDownloadEntryId();
+        const controller = new AbortController();
+        downloadControllersRef.current.set(id, controller);
+        setDownloadBatchState((prev) => ({
+          isOpen: true,
+          files: [
+            ...(prev?.files ?? []),
+            { id, name: filename, status: FileDownloadStatus.Downloading },
+          ],
+        }));
+
+        try {
+          let response: Response;
+          let total: number | undefined;
+          let isEstimate = false;
+          if (isSingleFile) {
             const file = dialFiles[0];
             if (!file.bucket) {
               throw new Error('File is missing bucket');
@@ -327,20 +451,13 @@ export const useDialFileMutations = ({
               file.bucket,
               rootLabel,
             );
-            const response = await filesApi.downloadFile(file.bucket, filePath);
-            if (!response.ok) {
-              throw new Error(`Download failed with status ${response.status}`);
-            }
-            const savedName = await downloadDestination.triggerDownload(
-              response,
-              file.name,
-              destination,
+            response = await filesApi.downloadFile(
+              file.bucket,
+              filePath,
+              controller.signal,
             );
-            onOperationSuccess?.({
-              kind: FileOperationKind.FileDownloaded,
-              name: savedName,
-              count: 1,
-            });
+            if (!response.ok) throw createDownloadResponseError(response);
+            total = getContentLength(response);
           } else {
             const archiveItems: ArchiveItemDto[] = dialFiles.map((f) => ({
               bucket: f.bucket ?? bucket,
@@ -351,42 +468,75 @@ export const useDialFileMutations = ({
                   ? ArchiveItemDtoNodeTypeEnum.Folder
                   : ArchiveItemDtoNodeTypeEnum.Item,
             }));
-            const response = await filesApi.downloadArchive(archiveItems);
-            if (!response.ok) {
-              throw new Error(`Download failed with status ${response.status}`);
-            }
-            const savedName = await downloadDestination.triggerDownload(
-              response,
-              filename,
-              destination,
+            response = await filesApi.downloadArchive(
+              archiveItems,
+              controller.signal,
             );
-            /*
-             * A lone folder is reported as a name-only event; a multi-item
-             * selection is reported as a count only, since the archive
-             * itself is not an entity the user picked.
-             */
-            if (dialFiles.length === 1) {
-              onOperationSuccess?.({
-                kind: FileOperationKind.FileDownloaded,
-                name: savedName,
-              });
-            } else {
-              onOperationSuccess?.({
-                kind: FileOperationKind.FilesDownloaded,
-                count: dialFiles.length,
-              });
-            }
+            if (!response.ok) throw createDownloadResponseError(response);
+            /* The zip is streamed without Content-Length: estimate it. */
+            total = estimateArchiveSize(
+              dialFiles.map((f) => ({
+                isFolder: f.nodeType === DialFileNodeType.FOLDER,
+                contentLength: f.contentLength,
+              })),
+            );
+            isEstimate = true;
           }
-        } catch {
+
+          const tracked = withDownloadProgress(response, (received) =>
+            scheduleDownloadPercent(
+              id,
+              getDownloadPercent(received, total, isEstimate),
+            ),
+          );
+          const savedName = await downloadDestination.triggerDownload(
+            tracked,
+            filename,
+            destination,
+          );
+          patchDownload(id, {
+            status: FileDownloadStatus.Completed,
+            percent: 100,
+          });
+
+          /*
+           * A lone file or folder is reported by name; a multi-item selection
+           * by count only, since the archive itself is not an entity the user
+           * picked.
+           */
+          if (isSingleFile) {
+            onOperationSuccess?.({
+              kind: FileOperationKind.FileDownloaded,
+              name: savedName,
+              count: 1,
+            });
+          } else if (dialFiles.length === 1) {
+            onOperationSuccess?.({
+              kind: FileOperationKind.FileDownloaded,
+              name: savedName,
+            });
+          } else {
+            onOperationSuccess?.({
+              kind: FileOperationKind.FilesDownloaded,
+              count: dialFiles.length,
+            });
+          }
+        } catch (error) {
+          if (controller.signal.aborted) {
+            patchDownload(id, { status: FileDownloadStatus.Cancelled });
+            return;
+          }
+          const failureReason = await resolveTransferFailureReason(error);
+          patchDownload(id, {
+            status: FileDownloadStatus.Failed,
+            failureReason,
+          });
           onNotification?.({
             variant: NotificationVariant.Error,
-            reason:
-              dialFiles.length === 1
-                ? FileManagerNotificationReason.DownloadFileFailed
-                : FileManagerNotificationReason.DownloadFilesFailed,
+            reason: failedReason,
           });
         } finally {
-          setIsDownloading(false);
+          downloadControllersRef.current.delete(id);
         }
       };
       void run();
@@ -398,8 +548,27 @@ export const useDialFileMutations = ({
       onNotification,
       filesApi,
       downloadDestination,
+      patchDownload,
+      scheduleDownloadPercent,
     ],
   );
+
+  const cancelDownloadFile = useCallback((id: string) => {
+    downloadControllersRef.current.get(id)?.abort();
+  }, []);
+
+  const cancelAllDownloads = useCallback(() => {
+    for (const controller of downloadControllersRef.current.values()) {
+      controller.abort();
+    }
+  }, []);
+
+  const clearDownloadBatch = useCallback(() => {
+    pendingDownloadPercentRef.current.clear();
+    setDownloadBatchState(null);
+  }, []);
+
+  const isDownloading = isDownloadInProgress(downloadBatchState);
 
   const onDeleteFiles = useCallback(
     (deletedItems: DialDeletedItem[], sourceFolder: string) => {
@@ -897,6 +1066,10 @@ export const useDialFileMutations = ({
     onCreateFolder,
     onCreateFolderValidate,
     onDownloadFiles,
+    downloadBatchState,
+    cancelDownloadFile,
+    cancelAllDownloads,
+    clearDownloadBatch,
     onDeleteFiles,
     onRenameValidate,
     onMoveToFiles,

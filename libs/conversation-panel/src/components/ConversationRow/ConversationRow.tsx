@@ -27,6 +27,7 @@ import {
 } from 'react';
 import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
+import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
@@ -56,6 +57,8 @@ export interface ConversationRowProps {
   itemIconBadgeClassName?: string;
   /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
   unreadIndicatorLabel?: string;
+  /** Presentation of the row's leading slot and metrics. Defaults to `ConversationRowVariant.Avatar`. */
+  variant?: ConversationRowVariant;
   /** Group this row belongs to — required to enable drag-and-drop. */
   rowGroupKey?: FilterTab;
   /** The full virtual rows array — used to compute drop position. */
@@ -93,6 +96,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
   unreadIndicatorLabel = 'Unread',
+  variant = ConversationRowVariant.Avatar,
   rowGroupKey,
   rows,
   draggingId,
@@ -132,6 +136,8 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
     [itemIconBadgeClassName],
   );
 
+  const isIndicator = variant === ConversationRowVariant.Indicator;
+
   const avatar = item.leadingIcon ? (
     <span className="flex size-6 shrink-0 items-center justify-center">
       {item.leadingIcon}
@@ -161,22 +167,38 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
    * (hover, focus-within, open menu) the dot is hidden so the trigger takes that
    * spot; the visually hidden label keeps announcing the unread state.
    */
-  const unreadIndicator = item.isUnread ? (
+  const leadingIndicator = (
     <span className="flex size-6 shrink-0 items-center justify-center">
       <span
         className={mergeClasses(
-          'size-[7.11px] rounded-full',
-          styles.unreadDot,
-          hasActions &&
-            (isMenuOpen
-              ? 'opacity-0'
-              : 'group-focus-within/conversation:opacity-0 group-hover/conversation:opacity-0'),
+          'size-2 rounded-full',
+          item.isUnread
+            ? mergeClasses('size-[7.11px]', styles.unreadDot)
+            : styles.indicatorDot,
         )}
         aria-hidden
       />
-      <span className="sr-only">{unreadIndicatorLabel}</span>
+      {item.isUnread && <span className="sr-only">{unreadIndicatorLabel}</span>}
     </span>
-  ) : undefined;
+  );
+
+  const unreadIndicator =
+    item.isUnread && !isIndicator ? (
+      <span className="flex size-6 shrink-0 items-center justify-center">
+        <span
+          className={mergeClasses(
+            'size-[7.11px] rounded-full',
+            styles.unreadDot,
+            hasActions &&
+              (isMenuOpen
+                ? 'opacity-0'
+                : 'group-focus-within/conversation:opacity-0 group-hover/conversation:opacity-0'),
+          )}
+          aria-hidden
+        />
+        <span className="sr-only">{unreadIndicatorLabel}</span>
+      </span>
+    ) : undefined;
 
   const isDragEnabled = rowGroupKey != null;
 
@@ -240,7 +262,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
         }}
       >
         <Button
-          iconBefore={avatar}
+          iconBefore={isIndicator ? leadingIndicator : avatar}
           label={
             <Highlight
               text={item.title}
@@ -258,9 +280,11 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
             /* The row's corner radius comes from `styles.item` (--cp-row-radius). */
-            'h-8 w-full justify-start gap-2 py-2 ps-3 after:pointer-events-none',
+            'h-8 w-full justify-start py-2 after:pointer-events-none',
+            isIndicator ? 'gap-0.5 ps-0' : 'gap-2 ps-3',
             buttonPaddingEnd,
             styles.item,
+            isIndicator && styles.itemIndicator,
             isActive && styles.itemActive,
             isMenuOpen && styles.itemActive,
           )}
@@ -270,7 +294,8 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
       {hasActions && (
         <div
           className={mergeClasses(
-            'absolute inset-y-0 end-1 flex items-center',
+            'absolute inset-y-0 flex items-center',
+            isIndicator ? 'end-2' : 'end-1',
             isMenuOpen
               ? 'opacity-100'
               : 'opacity-0 group-focus-within/conversation:opacity-100 group-hover/conversation:opacity-100',
@@ -286,7 +311,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
               ref={actionTriggerRef}
               icon={
                 <IconDotsVertical
-                  size={DIAL_ICON_SIZE.MD}
+                  size={isIndicator ? DIAL_ICON_SIZE.SM : DIAL_ICON_SIZE.MD}
                   className={styles.triggerIcon}
                   aria-hidden
                   stroke={DIAL_KIT_ICON_STROKE}
@@ -294,7 +319,11 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
               }
               size={ElementSize.Small}
               aria-label={actionsLabel}
-              className={mergeClasses(isMenuOpen && styles.triggerActive)}
+              className={mergeClasses(
+                /* A 24px box around the 16px glyph (4px padding). */
+                isIndicator && '!size-6 !min-h-0 !min-w-0 !p-1',
+                isMenuOpen && styles.triggerActive,
+              )}
             />
           </Dropdown>
         </div>

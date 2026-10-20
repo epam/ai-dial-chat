@@ -5,11 +5,7 @@ import {
   AuthI18nKeys,
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
-import { useUser } from '../../context/auth/UserContext';
-import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
-import { useConversationDraftStore } from '../../hooks/conversation/useConversationDraftStore';
-import { logout } from '../../server-api/auth.api';
-import { ROUTES } from '../../types/routes';
+import { useLogout } from '../../hooks/logout/useLogout';
 
 interface Props {
   isOpen: boolean;
@@ -18,35 +14,7 @@ interface Props {
 
 const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  const { reset } = useUser();
-  const overlay = useOptionalOverlay();
-  const draftStore = useConversationDraftStore();
-
-  const handleConfirm = async () => {
-    /* Drafts are per user; none may outlive the session that wrote them. */
-    draftStore?.clear();
-    try {
-      await logout();
-    } catch (err) {
-      console.error('Logout request failed', err);
-    }
-    if (overlay) {
-      reset();
-      return;
-    }
-    /*
-     * Full document load, not a client-side navigate: the SPA route would
-     * lazy-import the Login chunk by the hash this long-lived tab was built
-     * with, which a redeploy since then has removed — the import fails and
-     * the root error boundary replaces the page ([#9254](https://github.com/epam/ai-dial-chat/issues/9254)). A fresh
-     * index.html always references the current chunks, and it also drops
-     * every piece of the signed-out user's in-memory state. `reset()` is
-     * skipped on purpose: an Unauthenticated status would let
-     * useAuthRedirect start a single-provider SSO redirect that races
-     * this navigation and signs the user straight back in.
-     */
-    window.location.replace(ROUTES.Login);
-  };
+  const { performLogout } = useLogout();
 
   return (
     <ConfirmationPopup
@@ -54,7 +22,7 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
       header={t(AuthI18nKeys.LogOutConfirmTitle)}
       description={t(AuthI18nKeys.LogOutConfirmDescription)}
       confirmLabel={t(ButtonsI18nKeys.LogOut)}
-      onConfirm={handleConfirm}
+      onConfirm={performLogout}
       onCancel={onClose}
       onClose={onClose}
     />

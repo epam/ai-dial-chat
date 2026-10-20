@@ -139,7 +139,7 @@ export const Catalog: FC<CatalogProps> = ({
   onActiveTabChange,
   renderEmptyState,
 }) => {
-  const { typography } = catalogStyles ?? {};
+  const { typography, headingRowClassName = 'h-[64px]' } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
 
   const pageTitle = titles?.pageTitle ?? 'Catalog';
@@ -564,10 +564,16 @@ export const Catalog: FC<CatalogProps> = ({
     () => ({
       noResultsTitle: emptyTitle,
       featuredLabel,
+      noFolderLabel: titles?.noFolderLabel,
       credentialsBadgeLoggedOutLabel:
         detailsTexts?.credentialsBadgeLoggedOutLabel,
     }),
-    [emptyTitle, featuredLabel, detailsTexts?.credentialsBadgeLoggedOutLabel],
+    [
+      emptyTitle,
+      featuredLabel,
+      titles?.noFolderLabel,
+      detailsTexts?.credentialsBadgeLoggedOutLabel,
+    ],
   );
 
   /*
@@ -604,6 +610,8 @@ export const Catalog: FC<CatalogProps> = ({
     noResultsLabel: titles?.createNoResultsLabel,
     backLabel: titles?.createMenuBackLabel,
     closeLabel: titles?.createMenuCloseLabel,
+    colors: catalogStyles?.colors?.createMenu,
+    sectionHeaderClassName: typography?.createMenuSectionHeaderClassName,
   };
   /* The empty state creates only the active tab's type; without a per-tab
      menu it falls back to the header's full menu. */
@@ -635,7 +643,12 @@ export const Catalog: FC<CatalogProps> = ({
     >
       {(!hidePageTitle || isCreateButtonVisible) && (
         <div className={mergeClasses('shrink-0', styles.heading)}>
-          <div className="flex h-[64px] w-full items-center justify-between px-4 desktop:px-8">
+          <div
+            className={mergeClasses(
+              'flex w-full items-center justify-between px-4 desktop:px-8',
+              headingRowClassName,
+            )}
+          >
             {!hidePageTitle && (
               <h1
                 className={mergeClasses(
@@ -713,7 +726,7 @@ export const Catalog: FC<CatalogProps> = ({
              whether or not it is scrolled. */
           <div
             ref={tabsRowRef}
-            className="mx-4 min-w-0 shrink-0 [scrollbar-width:none] overflow-x-auto desktop:mx-8"
+            className="mx-4 min-w-0 shrink-0 scrollbar-none overflow-x-auto desktop:mx-8"
           >
             <Tabs
               tabListClassName="w-max min-w-full"

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  collectApplicationIconResourceUrl,
   collectApplicationPromptResourceUrls,
   collectConversationResourceUrls,
-  deriveExpiresInDays,
+  deriveInvitationExpiry,
   getInvitationRoutePath,
   getSharedConversationTitle,
   isAcceptedUsersLimitError,
@@ -377,59 +378,126 @@ describe('collectApplicationPromptResourceUrls', () => {
   });
 });
 
-describe('deriveExpiresInDays', () => {
-  const DAY = 86_400_000;
+describe('collectApplicationIconResourceUrl', () => {
+  it('returns an uploaded iconUrl file resource', () => {
+    expect(
+      collectApplicationIconResourceUrl({
+        iconUrl: 'files/owner-bucket/icons/app.png',
+      }),
+    ).toBe('files/owner-bucket/icons/app.png');
+  });
+
+  it('falls back to icon_url', () => {
+    expect(
+      collectApplicationIconResourceUrl({
+        icon_url: 'files/owner-bucket/icons/app.png',
+      }),
+    ).toBe('files/owner-bucket/icons/app.png');
+  });
+
+  it('strips query strings and fragments', () => {
+    expect(
+      collectApplicationIconResourceUrl({
+        iconUrl: 'files/owner-bucket/icons/app.png?v=2#view',
+      }),
+    ).toBe('files/owner-bucket/icons/app.png');
+  });
+
+  it.each([
+    'https://example.com/app.png',
+    'app-theme-icon.svg',
+    'files/owner-bucket/../other/app.png',
+    'files/owner-bucket/..%2Fother%2Fapp.png',
+    '',
+  ])('returns undefined for %s', (iconUrl) => {
+    expect(collectApplicationIconResourceUrl({ iconUrl })).toBeUndefined();
+  });
+
+  it('returns undefined when the icon is absent or not a string', () => {
+    expect(collectApplicationIconResourceUrl({})).toBeUndefined();
+    expect(collectApplicationIconResourceUrl({ iconUrl: 42 })).toBeUndefined();
+    expect(collectApplicationIconResourceUrl(null)).toBeUndefined();
+  });
+});
+
+describe('deriveInvitationExpiry', () => {
+  const HOUR = 3_600_000;
+  const DAY = 24 * HOUR;
   const T = 1_790_000_000_000;
 
   it('returns the whole-day TTL of a freshly created invitation', () => {
     expect(
-      deriveExpiresInDays({ createdAt: T, expireAt: T + 7 * DAY }, T),
-    ).toBe(7);
+      deriveInvitationExpiry({ createdAt: T, expireAt: T + 7 * DAY }, T),
+    ).toEqual({ expiresInDays: 7, expiresInHours: 168 });
   });
 
-  it('rounds a partial day up', () => {
+  it('rounds a partial day up while keeping the exact hours', () => {
     expect(
-      deriveExpiresInDays({ createdAt: T, expireAt: T + 36 * 3_600_000 }, T),
-    ).toBe(2);
+      deriveInvitationExpiry({ createdAt: T, expireAt: T + 36 * HOUR }, T),
+    ).toEqual({ expiresInDays: 2, expiresInHours: 36 });
   });
 
-  it('does not add a day when the BFF clock runs behind DIAL Core', () => {
+  it('reports a TTL shorter than a day in hours', () => {
     expect(
-      deriveExpiresInDays({ createdAt: T, expireAt: T + 3 * DAY }, T - 5_000),
-    ).toBe(3);
+      deriveInvitationExpiry({ createdAt: T, expireAt: T + HOUR }, T + 50),
+    ).toEqual({ expiresInDays: 1, expiresInHours: 1 });
   });
 
-  it('reports remaining days when the BFF clock runs ahead of createdAt', () => {
+  it('rounds a partial hour up', () => {
     expect(
-      deriveExpiresInDays({ createdAt: T, expireAt: T + 3 * DAY }, T + 2 * DAY),
-    ).toBe(1);
+      deriveInvitationExpiry({ createdAt: T, expireAt: T + 90 * 60_000 }, T),
+    ).toEqual({ expiresInDays: 1, expiresInHours: 2 });
+  });
+
+  it('does not add a unit when the BFF clock runs behind DIAL Core', () => {
+    expect(
+      deriveInvitationExpiry(
+        { createdAt: T, expireAt: T + 3 * DAY },
+        T - 5_000,
+      ),
+    ).toEqual({ expiresInDays: 3, expiresInHours: 72 });
+  });
+
+  it('reports remaining time when the BFF clock runs ahead of createdAt', () => {
+    expect(
+      deriveInvitationExpiry(
+        { createdAt: T, expireAt: T + 3 * DAY },
+        T + 2 * DAY,
+      ),
+    ).toEqual({ expiresInDays: 1, expiresInHours: 24 });
   });
 
   it('falls back to the current time when createdAt is missing', () => {
-    expect(deriveExpiresInDays({ expireAt: T + 5 * DAY }, T)).toBe(5);
+    expect(deriveInvitationExpiry({ expireAt: T + 5 * DAY }, T)).toEqual({
+      expiresInDays: 5,
+      expiresInHours: 120,
+    });
   });
 
   it.each([undefined, Number.NaN, Number.POSITIVE_INFINITY])(
     'returns undefined when expireAt is %s',
     (expireAt) => {
       expect(
-        deriveExpiresInDays({ createdAt: T, expireAt }, T),
+        deriveInvitationExpiry({ createdAt: T, expireAt }, T),
       ).toBeUndefined();
     },
   );
 
   it('returns undefined when expireAt is not after the reference time', () => {
     expect(
-      deriveExpiresInDays({ createdAt: T, expireAt: T }, T),
+      deriveInvitationExpiry({ createdAt: T, expireAt: T }, T),
     ).toBeUndefined();
     expect(
-      deriveExpiresInDays({ createdAt: T, expireAt: T - DAY }, T),
+      deriveInvitationExpiry({ createdAt: T, expireAt: T - DAY }, T),
     ).toBeUndefined();
   });
 
   it('returns undefined when expireAt looks like epoch seconds', () => {
     expect(
-      deriveExpiresInDays({ expireAt: Math.floor(T / 1000) + 3 * 86_400 }, T),
+      deriveInvitationExpiry(
+        { expireAt: Math.floor(T / 1000) + 3 * 86_400 },
+        T,
+      ),
     ).toBeUndefined();
   });
 });

@@ -9,23 +9,27 @@ export interface UserAvatarProps {
   profile: NavigationUserProfile;
   /** Alternative text for the image. Pass `''` when a sibling already names the row. */
   alt: string;
+  /** Diameter in pixels. Defaults to `28`. */
+  size?: number;
 }
 
 /** Avatar image with an initials badge fallback for a missing or broken image. */
-export const UserAvatar: FC<UserAvatarProps> = memo(({ profile, alt }) => {
-  const isFallbackShown = profile.isFallbackShown || !profile.imageUrl;
+export const UserAvatar: FC<UserAvatarProps> = memo(
+  ({ profile, alt, size = 28 }) => {
+    const isFallbackShown = profile.isFallbackShown || !profile.imageUrl;
 
-  return (
-    <Avatar
-      name={profile.displayName}
-      initials={profile.shortName ?? ''}
-      src={isFallbackShown ? undefined : profile.imageUrl}
-      /* Only the image is named; the initials fallback stays decorative. */
-      alt={isFallbackShown ? '' : alt}
-      size={28}
-      textClassName="dial-tiny-text"
-      className={styles.avatar}
-      onImageError={profile.onImageError}
-    />
-  );
-});
+    return (
+      <Avatar
+        name={profile.displayName}
+        initials={profile.shortName ?? ''}
+        src={isFallbackShown ? undefined : profile.imageUrl}
+        /* Only the image is named; the initials fallback stays decorative. */
+        alt={isFallbackShown ? '' : alt}
+        size={size}
+        textClassName="dial-tiny-text"
+        className={styles.avatar}
+        onImageError={profile.onImageError}
+      />
+    );
+  },
+);

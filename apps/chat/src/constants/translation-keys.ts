@@ -147,14 +147,14 @@ export enum ButtonsI18nKeys {
 
 export enum NavigationI18nKeys {
   AriaLabel = 'navigation.ariaLabel',
-  Home = 'navigation.home',
   Catalog = 'navigation.catalog',
   FileManager = 'dialFileManager.page.navLabel',
   ScheduledTasks = 'scheduledTasks.page.navLabel',
-  OpenMenu = 'navigation.openMenu',
   Menu = 'navigation.menu',
-  Profile = 'navigation.profile',
   Back = 'navigation.back',
+  Sidebar = 'navigation.sidebar',
+  CollapseSidebar = 'navigation.collapseSidebar',
+  ExpandSidebar = 'navigation.expandSidebar',
 }
 
 export enum FavoritesI18nKeys {
@@ -187,6 +187,7 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sorts.newest',
   SortNameAZ = 'catalog.sorts.nameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  NoFolderLabel = 'catalog.noFolderLabel',
   GridViewLabel = 'catalog.gridViewLabel',
   ListViewLabel = 'catalog.listViewLabel',
   ViewToggleLabel = 'catalog.viewToggleLabel',
@@ -255,6 +256,7 @@ export enum CatalogI18nKeys {
   CreateSkill = 'catalog.create.skill',
   CreateSkillWriteInstructions = 'catalog.create.skillWriteInstructions',
   CreateSkillUpload = 'catalog.create.skillUpload',
+  CreateRunners = 'catalog.create.runners',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   FolderShared = 'catalog.folder.shared',
@@ -519,6 +521,7 @@ export enum ScheduledTasksI18nKeys {
   ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
   ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
   ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
+  ConversationPanelHistoryUnavailableLabel = 'scheduledTasks.conversationPanel.historyUnavailableLabel',
   OfflineCredentialsBannerTitle = 'scheduledTasks.offlineCredentialsBanner.title',
   OfflineCredentialsBannerBody = 'scheduledTasks.offlineCredentialsBanner.body',
   OfflineCredentialsBannerPopupBlockedMessage = 'scheduledTasks.offlineCredentialsBanner.popupBlockedMessage',
@@ -552,9 +555,12 @@ export enum ConversationI18nKeys {
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
   AddMenuTitle = 'conversation.addMenuTitle',
   MessageTooLong = 'conversation.messageTooLong',
+  StartedToday = 'conversation.startedToday',
+  StartedYesterday = 'conversation.startedYesterday',
 }
 
 export enum DialFileManagerI18nKeys {
+  PageTitle = 'dialFileManager.page.title',
   Attach = 'dialFileManager.attach',
   Empty = 'dialFileManager.empty',
   Error = 'dialFileManager.error',
@@ -570,6 +576,12 @@ export enum DialFileManagerI18nKeys {
   UploadQueueCancelFileAriaLabel = 'dialFileManager.uploadQueueCancelFileAriaLabel',
   UploadQueueFileProgressAriaLabel = 'dialFileManager.uploadQueueFileProgressAriaLabel',
   UploadQueueProgressAriaLabel = 'dialFileManager.uploadQueueProgressAriaLabel',
+  DownloadQueueTitle = 'dialFileManager.downloadQueueTitle',
+  TransferQueueTitle = 'dialFileManager.transferQueueTitle',
+  DownloadQueueCancelFileAriaLabel = 'dialFileManager.downloadQueueCancelFileAriaLabel',
+  DownloadQueueFileProgressAriaLabel = 'dialFileManager.downloadQueueFileProgressAriaLabel',
+  DownloadQueueProgressAriaLabel = 'dialFileManager.downloadQueueProgressAriaLabel',
+  TransferQueueProgressAriaLabel = 'dialFileManager.transferQueueProgressAriaLabel',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
   UploadFileTooLarge = 'dialFileManager.uploadFileTooLarge',
@@ -602,6 +614,9 @@ export enum DialFileManagerI18nKeys {
   CheckInternetConnection = 'dialFileManager.checkInternetConnection',
   UploadFailed = 'dialFileManager.uploadFailed',
   UploadSuccess = 'dialFileManager.uploadSuccess',
+  UploadConflict = 'dialFileManager.uploadConflict',
+  UploadFailedTooLarge = 'dialFileManager.uploadFailedTooLarge',
+  UploadFailedUnavailable = 'dialFileManager.uploadFailedUnavailable',
   DownloadFileError = 'dialFileManager.downloadFileError',
   DownloadFilesError = 'dialFileManager.downloadFilesError',
   FolderCreateError = 'dialFileManager.folderCreateError',
@@ -665,6 +680,7 @@ export enum DialFileManagerI18nKeys {
   MoveHeaderSingle = 'dialFileManager.moveHeaderSingle',
   MoveHeaderMultiple = 'dialFileManager.moveHeaderMultiple',
   MoveSourceDisabledTooltip = 'dialFileManager.moveSourceDisabledTooltip',
+  MovedIntoItselfTooltip = 'dialFileManager.movedIntoItselfTooltip',
   FolderPickerLoadingTooltip = 'dialFileManager.folderPickerLoadingTooltip',
   FolderPickerEmptyStateTitle = 'dialFileManager.folderPickerEmptyStateTitle',
   FolderPickerEmptyStateDescription = 'dialFileManager.folderPickerEmptyStateDescription',
@@ -737,6 +753,7 @@ export enum SettingsI18nKeys {
   DefaultAgent = 'settings.defaultAgent',
   DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
   DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
+  General = 'settings.general',
 }
 
 export enum ExtensionsI18nKeys {
@@ -750,8 +767,9 @@ export enum ExtensionsI18nKeys {
 }
 
 export enum ConversationPanelI18nKeys {
-  Title = 'conversationPanel.title',
-  ToggleAriaLabel = 'conversationPanel.toggleAriaLabel',
+  ChatsAndTasks = 'conversationPanel.chatsAndTasks',
+  SearchOpen = 'conversationPanel.search.open',
+  SearchClose = 'conversationPanel.search.close',
   Empty = 'conversationPanel.empty',
   FilterAll = 'conversationPanel.filter.all',
   FilterGroupAriaLabel = 'conversationPanel.filter.groupAriaLabel',
@@ -1135,10 +1153,6 @@ export enum SkillEditorI18nKeys {
   ReloadConfirmMessage = 'skillEditor.reloadConfirmMessage',
   ReloadConfirmLabel = 'skillEditor.reloadConfirmLabel',
   ReloadCancelLabel = 'skillEditor.reloadCancelLabel',
-  UnsavedChangesTitle = 'skillEditor.unsavedChangesTitle',
-  UnsavedChangesMessage = 'skillEditor.unsavedChangesMessage',
-  UnsavedChangesConfirmLabel = 'skillEditor.unsavedChangesConfirmLabel',
-  UnsavedChangesCancelLabel = 'skillEditor.unsavedChangesCancelLabel',
   UploadDialogTitle = 'skillEditor.uploadDialogTitle',
   UploadDropZoneLabel = 'skillEditor.uploadDropZoneLabel',
   UploadDropZoneMobileLabel = 'skillEditor.uploadDropZoneMobileLabel',
@@ -1161,7 +1175,6 @@ export enum SkillEditorI18nKeys {
   CreateFolder = 'skillEditor.createFolder',
   UploadArchive = 'skillEditor.uploadArchive',
   OpenFileSystem = 'skillEditor.openFileSystem',
-  AddSibling = 'skillEditor.addSibling',
   NewFolderDefaultName = 'skillEditor.newFolderDefaultName',
   FolderNameRequired = 'skillEditor.folderNameRequired',
   FolderNameInvalid = 'skillEditor.folderNameInvalid',
@@ -1324,6 +1337,7 @@ export enum ShareI18nKeys {
   CopiedButtonLabel = 'share.copiedButtonLabel',
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
+  ExpiryNoteHours = 'share.expiryNoteHours',
   QrCodeAriaLabel = 'share.qrCodeAriaLabel',
   QrDownloadFileName = 'share.qrDownloadFileName',
   LoadingLabel = 'share.loadingLabel',
@@ -1616,4 +1630,11 @@ export enum CustomViewerI18nKeys {
   FrameTitle = 'customViewer.frameTitle',
   Loading = 'customViewer.loading',
   InvalidUrl = 'customViewer.invalidUrl',
+}
+
+export enum UnsavedChangesI18nKeys {
+  Title = 'unsavedChanges.title',
+  Message = 'unsavedChanges.message',
+  ConfirmLabel = 'unsavedChanges.confirmLabel',
+  CancelLabel = 'unsavedChanges.cancelLabel',
 }

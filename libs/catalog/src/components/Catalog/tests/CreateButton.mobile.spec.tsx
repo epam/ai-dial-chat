@@ -1,3 +1,4 @@
+import { DropdownItemType } from '@epam/ai-dial-ui-kit';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -123,5 +124,65 @@ describe('CreateButton — mobile', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
 
     expect(onChange).toHaveBeenLastCalledWith('');
+  });
+
+  it('shows the section divider and a header that is not an option', async () => {
+    const onPrompt = vi.fn();
+    render(
+      <CreateButton
+        label="Create"
+        options={[
+          { key: 'prompt', label: 'Prompt', onClick: onPrompt },
+          { key: 'create-sections-divider', type: DropdownItemType.Divider },
+          {
+            key: 'runners-header',
+            type: DropdownItemType.PlainText,
+            label: 'Runners',
+          },
+          { key: 'runner:ocr', label: 'OCR', onClick: vi.fn() },
+        ]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    const sheet = await screen.findByRole('dialog', { name: 'Create' });
+    expect(within(sheet).getByRole('separator')).toBeTruthy();
+    expect(
+      within(sheet)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Prompt', 'OCR']);
+
+    await userEvent.click(within(sheet).getByText('Runners'));
+
+    expect(screen.getByRole('dialog', { name: 'Create' })).toBeTruthy();
+    expect(onPrompt).not.toHaveBeenCalled();
+  });
+
+  it('applies the section-row color overrides as CSS custom properties', async () => {
+    render(
+      <CreateButton
+        label="Create"
+        options={[
+          { key: 'prompt', label: 'Prompt', onClick: vi.fn() },
+          { key: 'create-sections-divider', type: DropdownItemType.Divider },
+          { key: 'runner:ocr', label: 'OCR', onClick: vi.fn() },
+        ]}
+        colors={{ divider: '#ff0000', sectionHeaderText: '#00ff00' }}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    const menu = within(
+      await screen.findByRole('dialog', { name: 'Create' }),
+    ).getByRole('menu');
+    expect(menu.style.getPropertyValue('--cat-create-menu-divider')).toBe(
+      '#ff0000',
+    );
+    expect(
+      menu.style.getPropertyValue('--cat-create-menu-section-header-text'),
+    ).toBe('#00ff00');
   });
 });

@@ -252,10 +252,13 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
        * A markdown document flows as tall as its content, so the body root is
        * the scroller. `MarkdownTable` is the opposite case — a single table
        * that fills the panel and scrolls inside its own wrapper — so it keeps
-       * the clipped flex column.
+       * the clipped flex column. The scroller carries no padding of its own:
+       * a code block's sticky header pins to the scroller's padding edge, so
+       * padding here would leave a strip above the pinned header where the
+       * scrolled code shows through. The inset sits on an inner wrapper.
        */
       case AttachmentContentType.Markdown:
-        return 'h-full overflow-auto p-4';
+        return 'h-full overflow-auto';
       case AttachmentContentType.MarkdownTable:
         return 'flex h-full min-h-0 flex-col overflow-hidden p-4';
       default:
@@ -302,17 +305,19 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         );
       case AttachmentContentType.Markdown:
         return (
-          <MarkdownRenderer
-            content={content.text}
-            isStreaming={false}
-            codeBlockTheme={codeBlockTheme}
-            codeBlockCopyLabel={codeBlockCopyLabel}
-            codeBlockCopiedLabel={codeBlockCopiedLabel}
-            codeBlockDownloadLabel={codeBlockDownloadLabel}
-            tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
-            mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
-            classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
-          />
+          <div className="p-4">
+            <MarkdownRenderer
+              content={content.text}
+              isStreaming={false}
+              codeBlockTheme={codeBlockTheme}
+              codeBlockCopyLabel={codeBlockCopyLabel}
+              codeBlockCopiedLabel={codeBlockCopiedLabel}
+              codeBlockDownloadLabel={codeBlockDownloadLabel}
+              tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+              mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
+              classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
+            />
+          </div>
         );
       case AttachmentContentType.MarkdownTable:
         return (

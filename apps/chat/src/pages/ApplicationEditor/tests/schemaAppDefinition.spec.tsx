@@ -1,15 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import { getApplicationSchema } from '../../../server-api/application-schemas';
 import {
   createApplication,
@@ -73,18 +75,18 @@ const APP_ID = 'applications/bucket/classifier';
 const LABELS_REQUIRED = '"Labels" is required';
 
 const renderPage = (search: string) =>
-  render(
-    <MemoryRouter initialEntries={[`${ROUTES.AppsEditor}?${search}`]}>
-      <Routes>
-        <Route
-          path={ROUTES.AppsEditor}
-          element={
-            <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
-          }
-        />
-        <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithLeaveGuard(
+    <Routes>
+      <Route
+        path={ROUTES.AppsEditor}
+        element={
+          <ApplicationEditorPage kind={ApplicationEditorKind.QuickApp} />
+        }
+      />
+      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+      <Route path={ROUTES.FileManager} element={<div>Files</div>} />
+    </Routes>,
+    [`${ROUTES.AppsEditor}?${search}`],
   );
 
 /* The layout renders its actions in the header and again in the mobile bar; take the header copy. */
@@ -339,5 +341,96 @@ describe('ApplicationEditorPage — schema app', () => {
     expect(
       await screen.findByText(AppsEditorI18nKeys.SchemaFormLoadFailed),
     ).toBeTruthy();
+  });
+
+  describe('leave guard', () => {
+    const navigateAway = (router: ReturnType<typeof renderPage>['router']) =>
+      act(() => router.navigate(ROUTES.FileManager));
+
+    it('treats a freshly mounted schema app, schema defaults included, as clean', async () => {
+      vi.mocked(getApplicationSchema).mockResolvedValue({
+        ...FULL_SCHEMA,
+        properties: {
+          ...FULL_SCHEMA.properties,
+          mode: { type: 'string', title: 'Mode', default: 'strict' },
+        },
+      });
+      const { router } = renderPage(createSearch);
+      await waitFor(() =>
+        expect(getAction(ButtonsI18nKeys.Create).disabled).toBe(false),
+      );
+
+      await navigateAway(router);
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('asks before leaving once the Name was edited', async () => {
+      const { router } = renderPage(createSearch);
+      await findLabelsInput();
+      await user.type(getNameInput(), 'Classifier');
+
+      await navigateAway(router);
+
+      expect(
+        screen.getByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toBeTruthy();
+      expect(router.state.location.pathname).toBe(ROUTES.AppsEditor);
+    });
+
+    it('lands on the chosen route without a request when changes are discarded', async () => {
+      const { router } = renderPage(createSearch);
+      await user.type(await findLabelsInput(), 'spam');
+      await navigateAway(router);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.ConfirmLabel,
+        }),
+      );
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+      expect(createApplication).not.toHaveBeenCalled();
+      expect(updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('keeps the edited values when Keep editing is chosen', async () => {
+      const { router } = renderPage(createSearch);
+      await findLabelsInput();
+      await user.type(getNameInput(), 'Classifier');
+      await navigateAway(router);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: UnsavedChangesI18nKeys.CancelLabel,
+        }),
+      );
+
+      expect(router.state.location.pathname).toBe(ROUTES.AppsEditor);
+      expect((getNameInput() as HTMLInputElement).value).toBe('Classifier');
+    });
+
+    it('treats a reverted edit as clean', async () => {
+      const { router } = renderPage(createSearch);
+      await findLabelsInput();
+      await user.type(getNameInput(), 'X');
+      await user.clear(getNameInput());
+
+      await navigateAway(router);
+
+      expect(await screen.findByText('Files')).toBeTruthy();
+    });
+
+    it('exits after a successful create without the dialog', async () => {
+      renderPage(createSearch);
+      await user.type(getNameInput(), 'Classifier');
+      await user.type(await findLabelsInput(), 'spam,ham');
+
+      await user.click(getAction(ButtonsI18nKeys.Create));
+
+      expect(await screen.findByText('Catalog')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
   });
 });

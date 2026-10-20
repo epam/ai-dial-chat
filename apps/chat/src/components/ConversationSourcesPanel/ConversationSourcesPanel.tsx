@@ -140,6 +140,10 @@ const ConversationSourcesPanelContainer: FC = () => {
         history={activeScheduledTask.history}
         currentRunId={activeScheduledTask.runId}
         scheduleId={activeScheduledTask.scheduleId}
+        isUnavailable={
+          activeScheduledTask.taskState ===
+          ActiveScheduledTaskDetailState.Unavailable
+        }
       />
       <TaskDetailsSection
         task={activeScheduledTask.task}

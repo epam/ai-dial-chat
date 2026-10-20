@@ -6,10 +6,11 @@ import {
   Skeleton,
   SkeletonVariant,
   Spinner,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
-  IconCircleCheck,
+  IconCheck,
   IconCircleX,
   IconClipboardX,
 } from '@tabler/icons-react';
@@ -23,8 +24,8 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
   switch (status) {
     case ScheduledTaskRunStatus.Success:
       return (
-        <IconCircleCheck
-          size={DIAL_ICON_SIZE.MD}
+        <IconCheck
+          size={DIAL_ICON_SIZE.SM}
           className={styles.successIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -33,7 +34,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.Error:
       return (
         <IconCircleX
-          size={DIAL_ICON_SIZE.MD}
+          size={DIAL_ICON_SIZE.SM}
           className={styles.errorIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -42,13 +43,13 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.InProgress:
       return (
         <span aria-hidden>
-          <Spinner size={DIAL_ICON_SIZE.MD} />
+          <Spinner size={DIAL_ICON_SIZE.SM} />
         </span>
       );
     case ScheduledTaskRunStatus.Missed:
       return (
         <IconAlertTriangle
-          size={DIAL_ICON_SIZE.MD}
+          size={DIAL_ICON_SIZE.SM}
           className={styles.missedIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -109,12 +110,19 @@ export const ScheduledTaskRunHistoryList: FC<
      * rather than left as a nested sr-only span the label would otherwise
      * swallow — the same reason currentRunLabel is appended this way.
      */
+    const errorText =
+      run.status === ScheduledTaskRunStatus.Error && run.errorText
+        ? run.errorText
+        : undefined;
     const accessibleNameSuffixes = [
+      errorText,
       run.isUnread ? unreadIndicatorLabel : undefined,
       isCurrent ? labels.currentRunLabel : undefined,
     ].filter((suffix): suffix is string => Boolean(suffix));
     const accessibleName = [
-      `${statusLabel} ${run.timestampLabel}`,
+      [statusLabel, run.timestampLabel, run.durationLabel]
+        .filter(Boolean)
+        .join(' '),
       ...accessibleNameSuffixes,
     ].join(' — ');
     /*
@@ -144,23 +152,56 @@ export const ScheduledTaskRunHistoryList: FC<
         aria-label={accessibleName}
         aria-current={isCurrent ? 'true' : undefined}
         className={mergeClasses(
-          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
+          /*
+           * `--strhl-row-bleed` (unset: 0) pulls the row's highlight pill out
+           * into the host's padding, so its icon lines up with the content
+           * edge instead of sitting one pill-padding further in.
+           */
+          '-mx-(--strhl-row-bleed,0px) flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
           isCurrent && styles.currentRun,
           isClickable && 'cursor-pointer',
           isClickable && styles.interactiveRow,
         )}
       >
-        <span className="flex min-w-0 items-center gap-2">
-          <RunStatusIcon status={run.status} />
-          <span
-            className={mergeClasses(
-              run.isUnread
-                ? runTimestampUnreadClassName
-                : runTimestampClassName,
-              'truncate',
+        <span className="flex min-w-0 items-center gap-1">
+          {errorText ? (
+            <Tooltip
+              tooltip={errorText}
+              asChild
+              contentClassName="max-w-[320px] whitespace-pre-wrap break-words"
+            >
+              <span
+                className="flex shrink-0"
+                tabIndex={isClickable ? undefined : 0}
+              >
+                <RunStatusIcon status={run.status} />
+              </span>
+            </Tooltip>
+          ) : (
+            <RunStatusIcon status={run.status} />
+          )}
+          <span className="flex min-w-0 items-center gap-1">
+            <span
+              className={mergeClasses(
+                run.isUnread
+                  ? runTimestampUnreadClassName
+                  : runTimestampClassName,
+                'truncate',
+              )}
+            >
+              {run.timestampLabel}
+            </span>
+            {run.durationLabel && (
+              <span
+                className={mergeClasses(
+                  runTimestampClassName,
+                  styles.subtitleText,
+                  'shrink-0',
+                )}
+              >
+                {run.durationLabel}
+              </span>
             )}
-          >
-            {run.timestampLabel}
           </span>
         </span>
         {/*
@@ -188,7 +229,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <li
         key={`history-skeleton-${index}`}
         aria-hidden="true"
-        className="flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 px-3"
+        className="-mx-(--strhl-row-bleed,0px) flex min-h-(--strhl-row-min-height,32px) max-w-[328px] items-center justify-between gap-2 px-3"
       >
         <Skeleton
           variant={SkeletonVariant.Rectangular}

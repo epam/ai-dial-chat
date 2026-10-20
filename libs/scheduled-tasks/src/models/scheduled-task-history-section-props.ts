@@ -26,7 +26,7 @@ export interface ScheduledTaskHistorySectionLabels {
 
 /** Status-icon and unread-dot color overrides forwarded to the run list. */
 export interface ScheduledTaskHistorySectionColors {
-  /** Success status icon color. Fallback: `--text-success`. */
+  /** Success status icon color. Fallback: `--text-secondary`. */
   successIconColor?: string;
   /** Error status icon color. Fallback: `--text-error`. */
   errorIconColor?: string;
@@ -42,7 +42,7 @@ export interface ScheduledTaskHistorySectionStyles {
   maxHeight?: string;
   /** Minimum row height. Fallback: `32px`. */
   rowMinHeight?: string;
-  /** Background of an interactive run row on hover. Defaults to `--bg-control-accent-alpha`. */
+  /** Background of an interactive run row on hover. Defaults to `--bg-control-accent-alpha-hover-subtle`. */
   rowHoverBackground?: string;
   /** Background of an interactive run row on keyboard focus. Defaults to `rowHoverBackground`. */
   rowFocusBackground?: string;

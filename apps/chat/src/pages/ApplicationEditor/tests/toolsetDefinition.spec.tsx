@@ -7,16 +7,18 @@ import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ApplicationEditorKind } from '../../../types/application-editor';
@@ -93,6 +95,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     onSaveSuccess: (form: { name: string }) => void;
     onSaveComplete: () => void;
     onBack: () => void;
+    onDirtyChange?: (isDirty: boolean) => void;
     authActions: {
       login: (toolsetId: string, body: unknown) => Promise<unknown>;
       logout: (toolsetId: string, body: unknown) => Promise<unknown>;
@@ -183,6 +186,9 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         <button type="button" onClick={props.onSaveComplete}>
           adapter-save-complete
         </button>
+        <button type="button" onClick={() => props.onDirtyChange?.(true)}>
+          adapter-mark-dirty
+        </button>
         <button type="button" onClick={props.onBack}>
           adapter-back
         </button>
@@ -246,18 +252,16 @@ const editDto = (): DialToolsetDto => ({
 });
 
 const renderPage = (initialEntry: string = ROUTES.ToolsetEditor) =>
-  render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route
-          path={ROUTES.ToolsetEditor}
-          element={
-            <ApplicationEditorPage kind={ApplicationEditorKind.Toolset} />
-          }
-        />
-        <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
-      </Routes>
-    </MemoryRouter>,
+  renderWithLeaveGuard(
+    <Routes>
+      <Route
+        path={ROUTES.ToolsetEditor}
+        element={<ApplicationEditorPage kind={ApplicationEditorKind.Toolset} />}
+      />
+      <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+      <Route path={ROUTES.FileManager} element={<div>Files</div>} />
+    </Routes>,
+    [initialEntry],
   );
 
 describe('ApplicationEditorPage — toolset', () => {
@@ -588,5 +592,46 @@ describe('ApplicationEditorPage — toolset', () => {
       EDIT_TOOLSET_ID,
       'toolset',
     );
+  });
+
+  describe('leave guard', () => {
+    const markDirty = async () =>
+      user.click(
+        await screen.findByRole('button', { name: 'adapter-mark-dirty' }),
+      );
+
+    it('asks before leaving through navigation while the editor reports edits', async () => {
+      const { router } = renderPage();
+      await markDirty();
+
+      await act(() => router.navigate(ROUTES.FileManager));
+
+      expect(
+        screen.getByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toBeTruthy();
+      expect(router.state.location.pathname).toBe(ROUTES.ToolsetEditor);
+    });
+
+    it('routes a dirty Back through the same dialog', async () => {
+      renderPage();
+      await markDirty();
+
+      await user.click(screen.getByRole('button', { name: 'adapter-back' }));
+
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(screen.queryByText('Catalog')).toBeNull();
+    });
+
+    it('exits after a successful save without the dialog', async () => {
+      renderPage();
+      await markDirty();
+
+      await user.click(
+        screen.getByRole('button', { name: 'adapter-save-complete' }),
+      );
+
+      expect(await screen.findByText('Catalog')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
   });
 });

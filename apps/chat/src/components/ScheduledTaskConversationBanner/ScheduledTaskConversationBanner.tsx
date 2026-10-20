@@ -15,10 +15,7 @@ import {
   ActiveScheduledTaskDetailState,
   ActiveScheduledTaskStatus,
 } from '../../types/active-scheduled-task';
-import {
-  formatRunTimestamp,
-  mapScheduledTaskRunDtoToItem,
-} from '../../utils/map-scheduled-task-run-dto';
+import { formatRunTimestamp } from '../../utils/map-scheduled-task-run-dto';
 
 const CARD_CLASS_NAME =
   'flex items-center justify-between gap-2 rounded-xl border border-secondary bg-layer-sunken py-3 ps-4 pe-2 desktop:ps-6';
@@ -44,7 +41,11 @@ const ScheduledTaskConversationBanner: FC = () => {
   const timestampLabel = useMemo(() => {
     const currentRun = history.items.find((run) => run.id === runId);
     if (currentRun) {
-      return mapScheduledTaskRunDtoToItem(currentRun, t, []).timestampLabel;
+      return formatRunTimestamp(
+        currentRun.startTime,
+        currentRun.durationSeconds,
+        t,
+      );
     }
     /*
      * The run that just created this conversation is often not yet present

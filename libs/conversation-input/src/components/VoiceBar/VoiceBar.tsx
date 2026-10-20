@@ -185,7 +185,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   }, [drawCanvas]);
 
   const controls = (
-    <div className="flex flex-shrink-0 items-center justify-end gap-1">
+    <div className="flex shrink-0 items-center justify-end gap-1">
       <NeutralIconButton
         icon={
           <IconX
@@ -214,7 +214,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
         />
       )}
       {isProcessing && (
-        <span className="flex size-[40px] flex-shrink-0 items-center justify-center mobile:min-h-11 mobile:min-w-11">
+        <span className="flex size-[40px] shrink-0 items-center justify-center mobile:min-h-11 mobile:min-w-11">
           <Spinner size={20} ariaLabel={processingLabel} />
         </span>
       )}

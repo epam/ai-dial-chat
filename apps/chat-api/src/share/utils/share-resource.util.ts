@@ -283,21 +283,54 @@ export const collectApplicationPromptResourceUrls = (
   return [...resourceUrls];
 };
 
-const MS_PER_DAY = 86_400_000;
+/*
+ * Returns the app's uploaded icon as a DIAL file resource url, or `undefined`
+ * when the icon is absent, a theme icon name, or an absolute URL. An uploaded
+ * icon is stored as `files/{bucket}/...` in the author's bucket, so a share
+ * recipient cannot download it unless it is granted alongside the app. Both
+ * `iconUrl` and `icon_url` are read because DIAL Core's application schemas
+ * carry either spelling. Query strings, `#`-fragments and `..` traversal
+ * segments are rejected the same way as prompt urls.
+ */
+export const collectApplicationIconResourceUrl = (
+  application: unknown,
+): string | undefined => {
+  if (!isRecord(application)) return undefined;
+  const iconUrl = application.iconUrl ?? application.icon_url;
+  if (typeof iconUrl !== 'string') return undefined;
+
+  const resourceUrl = iconUrl.split(/[?#]/, 1)[0];
+  if (!resourceUrl.startsWith(FILE_RESOURCE_PREFIX)) return undefined;
+  if (safeDecodeURIComponent(resourceUrl).split('/').includes('..'))
+    return undefined;
+
+  return resourceUrl;
+};
+
+const MS_PER_HOUR = 3_600_000;
+const MS_PER_DAY = 24 * MS_PER_HOUR;
+
+/** Remaining lifetime of a DIAL Core invitation, each unit rounded up. */
+export interface InvitationExpiry {
+  expiresInDays: number;
+  expiresInHours: number;
+}
 
 /**
- * Derives the share popover's whole-day expiry from a DIAL Core invitation.
+ * Derives the share popover's expiry from a DIAL Core invitation, in whole
+ * days and in whole hours, each rounded up. Hours let the popover describe a
+ * per-role TTL shorter than a day, which whole days would round up to `1`.
  *
  * The reference time is `max(createdAt, nowMs)`: DIAL Core's own `createdAt`
- * keeps a BFF clock running behind DIAL Core from rounding a whole-day TTL up
- * by an extra day, while `nowMs` still reports remaining time when the BFF
+ * keeps a BFF clock running behind DIAL Core from rounding a whole-unit TTL up
+ * by an extra unit, while `nowMs` still reports remaining time when the BFF
  * clock runs ahead. Returns `undefined` when `expireAt` is unusable or not in
  * the future, so the caller omits the value instead of guessing one.
  */
-export const deriveExpiresInDays = (
+export const deriveInvitationExpiry = (
   invitation: Pick<Invitation, 'createdAt' | 'expireAt'>,
   nowMs: number,
-): number | undefined => {
+): InvitationExpiry | undefined => {
   const { createdAt, expireAt } = invitation;
   if (typeof expireAt !== 'number' || !Number.isFinite(expireAt))
     return undefined;
@@ -309,5 +342,8 @@ export const deriveExpiresInDays = (
   const remainingMs = expireAt - reference;
   if (remainingMs <= 0) return undefined;
 
-  return Math.ceil(remainingMs / MS_PER_DAY);
+  return {
+    expiresInDays: Math.ceil(remainingMs / MS_PER_DAY),
+    expiresInHours: Math.ceil(remainingMs / MS_PER_HOUR),
+  };
 };

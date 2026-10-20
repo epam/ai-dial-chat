@@ -1,5 +1,13 @@
 import type { CSSProperties } from 'react';
 
+/** Color overrides for the Create menu's section rows, applied as CSS custom properties with app theme fallbacks. */
+export interface CreateMenuColors {
+  /** Line between the menu's sections in the mobile sheet. Fallback: `--stroke-tertiary`. */
+  divider?: string;
+  /** Text color of a section header in the mobile sheet. Fallback: `--text-secondary`. */
+  sectionHeaderText?: string;
+}
+
 /**
  * Color overrides for the Catalog component.
  * All values are applied as CSS custom properties with app theme fallbacks.
@@ -16,6 +24,8 @@ export interface CatalogColors {
    * colors, e.g. `{ backgroundColor, color, border }`.
    */
   featuredChipStyle?: CSSProperties;
+  /** Colors of the Create menu's section rows in the mobile sheet. */
+  createMenu?: CreateMenuColors;
 }
 
 /** Typography overrides for the Catalog component. */
@@ -24,6 +34,8 @@ export interface CatalogTypography {
   pageHeadingFontClassName?: string;
   /** Typography class applied to tab text. Defaults to `'dial-body-text'`. */
   tabClassName?: string;
+  /** Typography class of a Create menu section header in the mobile sheet. Defaults to `'dial-caption-text'`. */
+  createMenuSectionHeaderClassName?: string;
 }
 
 /** Combined style overrides (colors and typography) for the Catalog component. */
@@ -32,4 +44,6 @@ export interface CatalogStyles {
   colors?: CatalogColors;
   /** Typography customizations and class overrides. */
   typography?: CatalogTypography;
+  /** Height and vertical padding classes of the page heading row. Replaces the default `'h-[64px]'`. */
+  headingRowClassName?: string;
 }

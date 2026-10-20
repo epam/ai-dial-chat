@@ -63,8 +63,6 @@ export interface MetadataFormProps {
   nameCaption?: string;
   /** Marks the Description field as required. Defaults to `false`. */
   isDescriptionRequired?: boolean;
-  /** Hard limit on the Description length; see `DeploymentCreationFormProps.descriptionMaxLength`. */
-  descriptionMaxLength?: number;
   /** Helper text rendered under the Description field, e.g. a character counter. */
   descriptionCaption?: string;
   /** Wraps the Description textarea, which then renders without its own label; see `DeploymentCreationFormProps.renderDescription`. */

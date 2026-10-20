@@ -16,7 +16,11 @@ export interface ItemHeaderColors {
 export interface ItemHeaderProps {
   /** Title text rendered in the heading element. */
   title: string;
-  /** Secondary value rendered after the title, such as a version or an item count. */
+  /**
+   * Secondary value rendered after the title. A number (an item count) always
+   * renders in full; a string (a version) is capped at 30% of the row and
+   * truncates with a tooltip.
+   */
   postfix?: number | string;
   /** CSS class applied to the title. Defaults to `'dial-h3-text'`. */
   titleClassName?: string;
@@ -65,6 +69,40 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
     return <EllipsisTooltip text={title} />;
   };
 
+  const renderPostfix = () => {
+    if (postfix == null) {
+      return null;
+    }
+    if (typeof postfix === 'number') {
+      /* A count is short and must read in full. The 30% cap below resolves
+         against the row's own width, so in a content-sized header it would
+         cut off any count of three or more digits. */
+      return (
+        <span
+          className={mergeClasses(
+            'shrink-0 whitespace-nowrap',
+            postfixClassName,
+            styles.count,
+          )}
+        >
+          {postfix}
+        </span>
+      );
+    }
+    /* Capped at 30% of the row so a long version truncates instead of
+       squeezing the title out of the header. */
+    return (
+      <EllipsisTooltip
+        className={mergeClasses(
+          'max-w-[30%] shrink-0',
+          postfixClassName,
+          styles.count,
+        )}
+        text={postfix}
+      />
+    );
+  };
+
   return (
     <div
       className={mergeClasses('flex items-center gap-2', className)}
@@ -82,18 +120,7 @@ export const ItemHeader: FC<ItemHeaderProps> = ({
       >
         {renderTitle()}
       </h3>
-      {postfix != null && (
-        /* Capped at 30% of the row so a long version truncates instead of
-           squeezing the title out of the header. */
-        <EllipsisTooltip
-          className={mergeClasses(
-            'max-w-[30%] shrink-0',
-            postfixClassName,
-            styles.count,
-          )}
-          text={postfix}
-        />
-      )}
+      {renderPostfix()}
       {trailing != null && <div className="ms-auto">{trailing}</div>}
     </div>
   );

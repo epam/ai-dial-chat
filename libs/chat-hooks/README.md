@@ -78,12 +78,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.7
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.11
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.20
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -1232,7 +1232,7 @@ const ChatPage = ({
 | `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                                                                            |
 | `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                                                                     |
 | `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                                                                     |
-| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                                                                                                                                                                    |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects, except for a `StopCompletionError` with `status` `404` once the generation has ended locally (see [Stop and the end of a generation](#stop-and-the-end-of-a-generation)).                                                                                                                                                          |
 | `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                                                                          |
 | `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
 | `batchChunksPerFrame`       | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
@@ -2216,7 +2216,7 @@ const mutations = useDialFileMutations({
 
 **Parameters** (`UseDialFileMutationsOptions`, ~13 fields): most are the listing-cache seam threaded straight from `useDialFileListing`'s result (`folderPath`, `currentFolder`, `sharedRootMetaRef`, `listingPermissionsCache`, `invalidateFolders`, `bumpRetry`, `mergeCreatedFolder`, `setFolderPath`) plus `filesApi`, `bucket`, `rootLabel`, `activeTab`, `downloadDestination` (required), and the optional `onNotification`/`onOperationSuccess`/`forbiddenSymbolsRegExp`. See the exported `UseDialFileMutationsOptions` type for the complete shape.
 
-**Returns** (`UseDialFileMutationsResult`): `onCreateFolder`/`onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`/`onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`, and an `isXxx` in-flight flag for each (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`). `onCreateFolderValidate`/`onRenameValidate` return `FileNameValidationError | null` rather than a message string.
+**Returns** (`UseDialFileMutationsResult`): `onCreateFolder`/`onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`/`onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`, and an `isXxx` in-flight flag for each (`isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`). `onDownloadFiles` returns at once and runs each download as an entry of `downloadBatchState` (`FileDownloadBatchState`) with byte progress (`Content-Length` for a file, an estimate from the selected sizes for an archive, capped at 99% until done), cancel (`cancelDownloadFile(id)` / `cancelAllDownloads()`), a `failureReason` on failure, and `clearDownloadBatch()`. `isDownloading` is "a download is running" and does not feed `isAnyOperationInProgress`. `onCreateFolderValidate`/`onRenameValidate` return `FileNameValidationError | null` rather than a message string.
 
 ### useDialFileSharing
 
@@ -2289,8 +2289,8 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`.
 - **`FileOperationSuccessEvent`** — the structured success event `useDialFileMutations` emits through `onOperationSuccess`, carrying a `kind` (`FileOperationKind`) plus optional `name`/`count`/`destinationFolderName`/`isFolder`.
 - **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`, `FileDuplicated`, `FilesDuplicated` (a copy whose every item stays in its own source folder — the Duplicate action), `FilesUnshared` (shared-with-me items removed from the Shared tab).
-- **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
-- **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent? }`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
+- **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `triggerDownload` receives a response whose body is wrapped to count bytes; headers and status are unchanged. `DialFilesApi.downloadArchive(items, signal?)` takes an `AbortSignal`, like `downloadFile`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
+- **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent?, failureReason? }`, where `failureReason` (a `FileUploadFailureReason`, set by `useDialFileUploadBatch` when an upload fails) comes from the response status — 409 `Conflict`, 413 `TooLarge`, 403 `Forbidden`, 502/503 `Unavailable`, no response `Network`, anything else `Unknown`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
 - **`deriveActionProfile(variant)`** — maps a `DialFileManagerVariant` (`Attach | Standalone | FolderPicker`) to the `DialFileManagerActionProfile` it gates (`Attach | Browse | Full`). Both enums, and `FileUploadValidationResult`, are owned and exported by `@epam/ai-dial-chat-shared`; import them from there.
 
 ## Conversation & File Utilities
@@ -2535,6 +2535,24 @@ const chatStreamApi = createChatStreamApi({
 options.onError(new StreamInterruptedError(new TypeError('Failed to fetch')));
 ```
 
+### Stop and the end of a generation
+
+`handleStop` sends one stop request per generation: repeated clicks while the request is outstanding or after it was accepted send nothing further, and a failure other than `404` re-enables Stop. When the transport rejects with a `StopCompletionError` whose `status` is `404` — the backend had no active generation to stop because it had just ended, was already being stopped, or was never sent — the hook stays silent if the generation has ended locally or ends within 2 seconds, and calls `onStopError` only if the generation keeps running past that window. `createChatStreamApi` throws `StopCompletionError` for every non-OK stop response, so a custom `ConversationStreamTransport` should do the same to get this behaviour:
+
+```ts
+import { StopCompletionError } from '@epam/ai-dial-chat-hooks';
+
+const stopCompletion: ConversationStreamTransport['stopCompletion'] = async (
+  params,
+) => {
+  const response = await fetch('/api/v1/conversations/completions/stop', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) throw new StopCompletionError(response.status);
+};
+```
+
 ### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError
 
 Host-agnostic API error/trace-ID normalization. Works identically for a generated-client `ResponseError` or any host's own raw-fetch request-error shape.
@@ -2637,19 +2655,9 @@ import { isCustomAppSchema } from '@epam/ai-dial-chat-hooks';
 isCustomAppSchema({ id: 'custom_app' }); // true
 ```
 
-### isMindMapSchema
-
-Returns `true` when a schema's `id` or `displayName` contains "mind map", ignoring case and separators (`Mind Map`, `mind-map`, `MINDMAP`). `useCatalogEditNavigation` leaves these runners out of the Create menu; existing Mind Map apps stay editable.
-
-```ts
-import { isMindMapSchema } from '@epam/ai-dial-chat-hooks';
-
-isMindMapSchema({ id: 'mind-map', displayName: 'Mind Map' }); // true
-```
-
 ### getRunnerSchemas
 
-Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema, except Mind Map schemas.
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
@@ -3774,13 +3782,13 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name               | Type                                                       | Description                                                                                                                                                                                                        |
-| ------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `handleEdit`       | `(item: CatalogItem) => void`                              | Navigates to the right editor URL for the item's type.                                                                                                                                                             |
-| `handleDelete`     | `(item: CatalogItem) => Promise<void>`                     | Deletes the item and notifies the outcome.                                                                                                                                                                         |
-| `createOptions`    | `DropdownItem[]`                                           | The Create dropdown's items, gated by the enabled feature flags: runners and static options sorted together alphabetically, all filtered by the search query.                                                      |
-| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                                                                  |
-| `createMenuByType` | `Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>` | The same menu narrowed per entity type, for `Catalog`'s `createMenuByTab` prop: agents get the runners and custom app (with `createSearch`), toolsets, skills and prompts their own options; models have no entry. |
+| Name               | Type                                                       | Description                                                                                                                                                                                                                                                                                                              |
+| ------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `handleEdit`       | `(item: CatalogItem) => void`                              | Navigates to the right editor URL for the item's type.                                                                                                                                                                                                                                                                   |
+| `handleDelete`     | `(item: CatalogItem) => Promise<void>`                     | Deletes the item and notifies the outcome.                                                                                                                                                                                                                                                                               |
+| `createOptions`    | `DropdownItem[]`                                           | The Create dropdown's items, gated by the enabled feature flags and filtered by the search query: Toolset, Skill and Prompt sorted by label, then a divider and a `labels.createRunners` header, then Custom App and the runners sorted by label. The divider and header appear only while both sections hold an option. |
+| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                                                                                                                                                                        |
+| `createMenuByType` | `Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>` | The same menu narrowed per entity type, for `Catalog`'s `createMenuByTab` prop: agents get the runners and custom app (with `createSearch`), toolsets, skills and prompts their own options; models have no entry.                                                                                                       |
 
 ```tsx
 import {
@@ -3803,6 +3811,7 @@ const labels: CatalogEditNavigationLabels = {
   createSkillWriteInstructions: t('catalog.create.skillWriteInstructions'),
   createSkillUpload: t('catalog.create.skillUpload'),
   createPrompt: t('catalog.create.prompt'),
+  createRunners: t('catalog.create.runners'),
   deleteError: t('catalog.details.deleteError'),
 };
 

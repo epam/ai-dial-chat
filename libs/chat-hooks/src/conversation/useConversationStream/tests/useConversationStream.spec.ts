@@ -11,6 +11,7 @@ import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
   GenerationConflictError,
   GenerationPersistenceError,
+  StopCompletionError,
   StreamInterruptedError,
   StreamUpstreamError,
 } from '../../create-chat-stream-api';
@@ -241,6 +242,37 @@ describe('useConversationStream', () => {
         path: 'conv',
         content: initial.messages[1].content,
       });
+    });
+
+    it('reports a Stop 404 for a resumed generation that is still streaming after the grace window', async () => {
+      const onStopError = vi.fn();
+      const notFound = new StopCompletionError(404);
+      transport.stopCompletion = vi.fn().mockRejectedValue(notFound);
+      const initial = withPending();
+      vi.mocked(transport.attachToGeneration).mockResolvedValue(openStream());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+          onStopError,
+        }),
+      );
+      act(() =>
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          initial,
+        ),
+      );
+      await waitFor(() => expect(result.current.stream.isStreaming).toBe(true));
+      vi.useFakeTimers();
+
+      await act(async () => {
+        result.current.stream.handleStop();
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+
+      expect(onStopError).toHaveBeenCalledWith(notFound);
     });
 
     it('keeps Stop unavailable for a resumed message without a background marker', async () => {
@@ -2130,6 +2162,133 @@ describe('useConversationStream', () => {
     expect(onStopError).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'boom' }),
     );
+  });
+
+  describe('Stop racing the end of a generation', () => {
+    const NOT_FOUND = new StopCompletionError(404);
+    const startGen = async (
+      result: { current: ReturnType<typeof useHookHarness> },
+      genId = 'gen-1',
+    ) => {
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'hi',
+          0,
+          'gpt-4o',
+          undefined,
+          genId,
+        );
+      });
+      await waitFor(() => expect(capturedOptions).toBeDefined());
+    };
+
+    it('sends one stop request per generation while the first is outstanding or done', async () => {
+      const { result } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv' }),
+      );
+      await startGen(result);
+
+      await act(async () => {
+        result.current.stream.handleStop();
+        result.current.stream.handleStop();
+        await Promise.resolve();
+      });
+      act(() => result.current.stream.handleStop());
+
+      expect(transport.stopCompletion).toHaveBeenCalledOnce();
+    });
+
+    it('lets Stop be retried after a failure that is not a 404', async () => {
+      const onStopError = vi.fn();
+      transport.stopCompletion = vi
+        .fn()
+        .mockRejectedValueOnce(new StopCompletionError(503))
+        .mockResolvedValue(undefined);
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          onStopError,
+        }),
+      );
+      await startGen(result);
+
+      act(() => result.current.stream.handleStop());
+      await waitFor(() => expect(onStopError).toHaveBeenCalledOnce());
+      act(() => result.current.stream.handleStop());
+
+      expect(transport.stopCompletion).toHaveBeenCalledTimes(2);
+    });
+
+    it('stays silent on a 404 when the generation has already completed', async () => {
+      const onStopError = vi.fn();
+      transport.stopCompletion = vi.fn().mockRejectedValue(NOT_FOUND);
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          onStopError,
+        }),
+      );
+      await startGen(result);
+      await act(async () => {
+        await capturedOptions?.onComplete();
+      });
+
+      await act(async () => {
+        result.current.stream.handleStop();
+        await Promise.resolve();
+      });
+
+      expect(onStopError).not.toHaveBeenCalled();
+    });
+
+    it('stays silent on a 404 that lands before the stream end is seen, once the stream ends within the grace window', async () => {
+      const onStopError = vi.fn();
+      transport.stopCompletion = vi.fn().mockRejectedValue(NOT_FOUND);
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          onStopError,
+        }),
+      );
+      await startGen(result);
+      vi.useFakeTimers();
+
+      await act(async () => {
+        result.current.stream.handleStop();
+        await vi.advanceTimersByTimeAsync(300);
+      });
+      await act(async () => {
+        await capturedOptions?.onComplete();
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+
+      expect(onStopError).not.toHaveBeenCalled();
+    });
+
+    it('still reports a 404 when the generation keeps running past the grace window', async () => {
+      const onStopError = vi.fn();
+      transport.stopCompletion = vi.fn().mockRejectedValue(NOT_FOUND);
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          onStopError,
+        }),
+      );
+      await startGen(result);
+      vi.useFakeTimers();
+
+      await act(async () => {
+        result.current.stream.handleStop();
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+
+      expect(onStopError).toHaveBeenCalledWith(NOT_FOUND);
+    });
   });
 
   it('ignores a superseded generation completing on the same path', async () => {

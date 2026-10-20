@@ -77,6 +77,7 @@ export default [
       'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
       'tailwindcss/no-contradicting-classname': 'error',
+      'tailwindcss/enforces-canonical-classname': 'warn',
 
       // Import rules
       'import/order': [

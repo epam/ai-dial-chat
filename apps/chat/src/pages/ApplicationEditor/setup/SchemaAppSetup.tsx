@@ -29,6 +29,7 @@ const SchemaAppSetup: FC<Props> = ({
   value,
   errors,
   onChange,
+  onInitialize,
   isEditMode,
   onReadyChange,
 }) => {
@@ -70,11 +71,12 @@ const SchemaAppSetup: FC<Props> = ({
     schemaRequired !== undefined &&
     schemaRequired.length === value.requiredProperties.length &&
     schemaRequired.every((name) => value.requiredProperties.includes(name));
+  const handleInitialize = onInitialize ?? onChange;
   useEffect(() => {
     if (schemaRequired && !isRequiredSynced) {
-      onChange({ requiredProperties: schemaRequired });
+      handleInitialize({ requiredProperties: schemaRequired });
     }
-  }, [schemaRequired, isRequiredSynced, onChange]);
+  }, [schemaRequired, isRequiredSynced, handleInitialize]);
 
   /* The renderer reads `defaultValue` once on mount, so an edited app waits
      for its loaded properties before the form appears. */
@@ -103,6 +105,13 @@ const SchemaAppSetup: FC<Props> = ({
   const handlePropertiesChange = useCallback(
     (properties: Record<string, unknown>) => onChange({ properties }),
     [onChange],
+  );
+
+  /* The renderer reports the defaults it filled in once on mount; that is
+     initialisation, not an edit. */
+  const handleDefaultValues = useCallback(
+    (properties: Record<string, unknown>) => handleInitialize({ properties }),
+    [handleInitialize],
   );
 
   if (hasLoadError) {
@@ -139,7 +148,7 @@ const SchemaAppSetup: FC<Props> = ({
         // After a blocked save every missing required field is marked, not only the touched ones.
         skipUntouched={!errors.properties}
         onChange={handlePropertiesChange}
-        onDefaultValues={handlePropertiesChange}
+        onDefaultValues={handleDefaultValues}
       />
     </div>
   );

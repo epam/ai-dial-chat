@@ -25,6 +25,33 @@ describe('preprocessLaTeX', () => {
     expect(preprocessLaTeX(content)).toBe(content);
   });
 
+  it('turns escaped brackets around a citation list back into literal brackets', () => {
+    const content =
+      'Grew 20%. \\[Sources: [cvc.com](https://example.com/a-b), [ft.com](https://ft.com/x)\\]';
+    expect(preprocessLaTeX(content)).toBe(
+      'Grew 20%. &#91;Sources: [cvc.com](https://example.com/a-b), [ft.com](https://ft.com/x)&#93;',
+    );
+  });
+
+  it('turns escaped parentheses around a bare URL back into literal parentheses', () => {
+    const content = 'See \\(https://example.com/a-b\\) and \\(x^2\\)';
+    expect(preprocessLaTeX(content)).toBe(
+      'See &#40;https://example.com/a-b&#41; and \\(x^2\\)',
+    );
+  });
+
+  it('keeps escaped citation brackets literal alongside dollar math', () => {
+    const content = 'Cost $x^2$ \\[Source: [a.com](https://a.com)\\]';
+    expect(preprocessLaTeX(content)).toBe(
+      'Cost $$x^2$$ &#91;Source: [a.com](https://a.com)&#93;',
+    );
+  });
+
+  it('leaves escaped citation brackets inside code untouched', () => {
+    const content = '`\\[Source: [a.com](https://a.com)\\]`';
+    expect(preprocessLaTeX(content)).toBe(content);
+  });
+
   it('preserves valid double dollar delimiters', () => {
     const content = 'This is valid: $$x^2 + y^2 = z^2$$';
     expect(preprocessLaTeX(content)).toBe(content);

@@ -164,11 +164,11 @@ details. The labels object SHALL:
 
 - take `tokensPerDay` / `tokensPerWeek` / `tokensPerMonth` from the Usage page's existing
   `UsageI18nKeys.TodayTitle` / `ThisWeekTitle` / `ThisMonthTitle` (`usage.todayTitle`,
-  `usage.thisWeekTitle`, `usage.thisMonthTitle`), so the panel and Settings → Usage name the same
+  `usage.thisWeekTitle`, `usage.thisMonthTitle`), so the panel and Usage page name the same
   periods identically;
 - take `tokenGroup`, `followsCostLimit`, and the three formatter callbacks from `CatalogI18nKeys`;
 - set `formatResetTime` to `formatUsageResetTime` (`libs/chat-hooks/src/usage/usage-reset-time.ts`) bound to
-  the active language and `t`, the same formatter the Usage tab and the conversation-input popover
+  the active language and `t`, the same formatter the Usage page and the conversation-input popover
   use.
 
 No new i18n keys are introduced; `catalog.details.limits.spentLabel` and

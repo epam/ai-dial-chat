@@ -109,6 +109,7 @@ const colors: McpAppInlinePreviewColors = {
 - `resolveMcpAppToolResult(match, seed, callTool)` — resolves the tool result an app should be seeded with, live-re-calling `callTool` when the match is unambiguous.
 - `computeMcpAppSeedKey(toolCall)` — identifies which seed a cache entry was resolved from.
 - `collectToolCallNames(messages)` — collects every real tool-call name seen across a conversation's messages.
+- `sanitizeToolName(input)` — reproduces the orchestrator's tool-name sanitization (runs of characters outside `[a-zA-Z0-9_-]` become `_`, a leading `_` is added when the name does not start with a letter or `_`, capped at 64 characters), so a toolset display name such as `Entity MCP Server` can be matched against the tool-call name `Entity_MCP_Server_<tool>`. Temporary heuristic until MCP Apps are fully supported.
 - `mcpAppCanvasKey(messageIndex)` — stable per-message cache/canvas key.
 
 ## Types
