@@ -31,6 +31,11 @@ export interface StarterButtonsProps {
    * own row, and no overflow menu appears.
    */
   isCollapsible?: boolean;
+  /**
+   * When `true`, renders each starter pill as a label-only button, omitting
+   * the sparkles icon the UI kit's `StarterButton` renders by default.
+   */
+  isIconHidden?: boolean;
   /** Localized labels used within the component. */
   labels: StarterButtonsLabels;
   /** Optional style overrides. */

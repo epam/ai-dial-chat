@@ -227,6 +227,11 @@ export enum OverlayFeature {
    * already stored. The New Chat screen never keeps a draft.
    */
   ConversationDrafts = 'conversation-drafts',
+  /**
+   * Hides the sparkles icon the UI kit renders by default on every
+   * conversation-starter pill, leaving a label-only button.
+   */
+  HideStarterIcon = 'hide-starter-icon',
 }
 
 /**
