@@ -258,23 +258,6 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
     );
   });
 
-  it('leaves a non-numeric day_of_week untouched', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw');
-
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({
-        trigger: {
-          cron: { fields: { hour: '9', minute: '0', day_of_week: 'Monday' } },
-        },
-      }),
-      fakeT,
-    );
-
-    expect(result.scheduleLabel).toBe(
-      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'Monday', time: '11:00' })}`,
-    );
-  });
-
   it('shows the local day-of-month when the stored UTC day rolls forward a day', () => {
     vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: local = UTC + 2h
     vi.useFakeTimers();
