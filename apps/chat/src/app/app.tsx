@@ -36,7 +36,12 @@ import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
-import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
+import {
+  FILE_MANAGER_CANVAS_DEFAULT_MAX_WIDTH,
+  FILE_MANAGER_CANVAS_MIN_WIDTH,
+  FILE_MANAGER_CANVAS_WIDTH_RATIO,
+  MIN_CONTENT_AREA_WIDTH,
+} from '../constants/layout';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -117,13 +122,28 @@ const App: FC = () => {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
   const loadPdf = usePdfPreviewLoader();
+  const isFileManagerRoute = !!useMatch(ROUTES.FileManager);
   const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
+  const canvasMinWidth = isFileManagerRoute
+    ? FILE_MANAGER_CANVAS_MIN_WIDTH
+    : undefined;
   const canvasDefaultWidth = isMobile
     ? window.innerWidth
-    : Math.min(
-        canvasMaxWidth,
-        Math.round((canvasMaxWidth + MIN_CONTENT_AREA_WIDTH) * 0.5),
-      );
+    : isFileManagerRoute
+      ? Math.min(
+          canvasMaxWidth,
+          Math.max(
+            FILE_MANAGER_CANVAS_MIN_WIDTH,
+            Math.min(
+              FILE_MANAGER_CANVAS_DEFAULT_MAX_WIDTH,
+              Math.round(window.innerWidth * FILE_MANAGER_CANVAS_WIDTH_RATIO),
+            ),
+          ),
+        )
+      : Math.min(
+          canvasMaxWidth,
+          Math.round((canvasMaxWidth + MIN_CONTENT_AREA_WIDTH) * 0.5),
+        );
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -482,7 +502,8 @@ const App: FC = () => {
           </main>
           {isConversationRoute && <ConversationSourcesPanel />}
         </ActiveScheduledTaskProvider>
-        {isConversationRoute && isAttachmentsManagerEnabled && (
+        {(isFileManagerRoute ||
+          (isConversationRoute && isAttachmentsManagerEnabled)) && (
           <AttachmentCanvasContainer
             loadPdf={loadPdf}
             onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
@@ -557,6 +578,7 @@ const App: FC = () => {
             leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
+            minWidth={canvasMinWidth}
             maxWidth={canvasMaxWidth}
             codeBlockTheme={codeBlockTheme}
             configurePdfWorker={configurePdfWorker}

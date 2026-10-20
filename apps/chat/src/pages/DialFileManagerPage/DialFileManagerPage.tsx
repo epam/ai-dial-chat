@@ -33,6 +33,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useDialFilePreview } from '../../hooks/files/useDialFilePreview';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
@@ -197,6 +198,11 @@ const DialFileManagerPage: FC = () => {
     [t],
   );
 
+  const { onPreview, previewExtensions } = useDialFilePreview(
+    controller.items,
+    bucket,
+  );
+
   const uploadQueueLabels = useUploadQueueLabels();
   const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
@@ -311,6 +317,9 @@ const DialFileManagerPage: FC = () => {
         autoSelectUploadedItems={false}
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
+        previewLabel={t(BasicI18nKeys.Preview)}
+        onPreview={onPreview}
+        previewExtensions={previewExtensions}
       />
       {unshareConfirmation}
     </div>

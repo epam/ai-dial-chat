@@ -529,7 +529,7 @@ export interface AttachmentCanvasProps {
   isMobile?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `min(maxWidth, 2/3 of viewport width)`. */
   defaultWidth?: number;
-  /** Minimum panel width in pixels (when resizable). Defaults to `320`. */
+  /** Minimum panel width in pixels (when resizable). Defaults to `600`. */
   minWidth?: number;
   /** Maximum panel width in pixels (when resizable). Defaults to `1500`. */
   maxWidth?: number;

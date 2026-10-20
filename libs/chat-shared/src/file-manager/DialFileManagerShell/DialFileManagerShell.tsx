@@ -125,6 +125,12 @@ export interface DialFileManagerShellProps {
    * Omit to keep the variant's default.
    */
   treeContainerClassName?: string;
+  /** SPIKE: label that turns the Preview row action on; omit to hide it. */
+  previewLabel?: string;
+  /** SPIKE: called with the previewed file's virtual path. */
+  onPreview?: (path?: string) => void;
+  /** SPIKE: dotted extensions the Preview row action is offered for. */
+  previewExtensions?: string[];
 }
 
 /**
@@ -150,6 +156,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
   treeContainerClassName,
+  previewLabel,
+  onPreview,
+  previewExtensions,
 }) => {
   const {
     items,
@@ -261,9 +270,16 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   ]);
 
   const gridActionLabels = useMemo(() => {
-    if (!(DialFileManagerActions.Info in tabActionLabels)) return actionLabels;
-    return { ...actionLabels, [DialFileManagerActions.Info]: labels.infoLabel };
-  }, [actionLabels, tabActionLabels, labels.infoLabel]);
+    const withPreview =
+      previewLabel != null
+        ? { ...actionLabels, [DialFileManagerActions.Preview]: previewLabel }
+        : actionLabels;
+    if (!(DialFileManagerActions.Info in tabActionLabels)) return withPreview;
+    return {
+      ...withPreview,
+      [DialFileManagerActions.Info]: labels.infoLabel,
+    };
+  }, [actionLabels, tabActionLabels, labels.infoLabel, previewLabel]);
 
   const allSelectedItemsSharedByMe = useMemo(() => {
     if (selectedPaths.size === 0) return false;
@@ -607,6 +623,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             onRemoveFilesAccess={onRemoveFilesAccess}
             fileMetadataPopupOptions={fileMetadataPopupOptions}
             onGetInfo={onGetInfo}
+            onPreview={onPreview}
+            previewExtensions={previewExtensions}
             onUploadFiles={onUploadFiles}
             onUploadArchive={onUploadArchive}
             onValidateUpload={onValidateUpload}
