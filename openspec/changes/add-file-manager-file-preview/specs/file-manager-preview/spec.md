@@ -10,11 +10,16 @@ Defines the Preview row action of the standalone file manager page: which files 
 
 `DialFileManagerPage` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx`) SHALL pass `previewLabel` (the translated `basic.preview` string), `onPreview` and `previewExtensions` to `DialFileManagerShell`, using the values returned by `useDialFilePreview` (`apps/chat/src/hooks/files/useDialFilePreview.ts`). The shell SHALL add `DialFileManagerActions.Preview` to the grid action labels only when `previewLabel` is provided, and SHALL NOT add it to the tree or bulk-actions labels. The installed `@epam/ai-dial-react-file-manager` then offers the row action only for file rows whose name ends in one of `previewExtensions`; folders never show it.
 
-`previewExtensions` SHALL be a fixed list of dotted, lowercase extensions maintained in `apps/chat`, and every entry SHALL be a format the attachment canvas renders: text and data (`.txt`, `.md`, `.markdown`, `.json`, `.csv`, `.tsv`, `.xml`, `.yaml`, `.yml`, `.log`), HTML (`.html`, `.htm`), `.pdf`, Office (`.docx`, `.xlsx`, `.pptx`), and images (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`). The list is not derived from the canvas at runtime.
+`previewExtensions` SHALL be a fixed list of dotted extensions maintained in `apps/chat`, and every format in it SHALL be one the attachment canvas renders: text and data (`.txt`, `.md`, `.markdown`, `.json`, `.csv`, `.tsv`, `.xml`, `.yaml`, `.yml`, `.log`), HTML (`.html`, `.htm`), `.pdf`, Office (`.docx`, `.xlsx`, `.pptx`), and images (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`). The installed `@epam/ai-dial-react-file-manager` compares a file's extension with this list exactly as written, without changing case, so each format SHALL be listed in lower case, UPPER case and Capitalized case (for example `.jpg`, `.JPG`, `.Jpg`). The list is not derived from the canvas at runtime.
 
 #### Scenario: A Markdown file shows Preview
 
 - **WHEN** the user opens the row menu of `notes.md` on `/files`
+- **THEN** the menu contains a "Preview" item
+
+#### Scenario: Upper-case and capitalized extensions qualify
+
+- **WHEN** the user opens the row menu of `IMG_1234.JPG`, `Report.PDF` or `Notes.Md`
 - **THEN** the menu contains a "Preview" item
 
 #### Scenario: A folder or an unlisted extension does not
@@ -34,7 +39,7 @@ Defines the Preview row action of the standalone file manager page: which files 
 
 ### Requirement: Choosing Preview opens the file in the attachment canvas
 
-`useDialFilePreview` SHALL, given the virtual path of the chosen row, look the file up in the loaded folder tree (`controller.items`, nested folders included), convert it with `dialFileToAttachment` for the user's bucket, and open it through `useOpenAttachmentCanvas` with the app's `useAttachmentCanvasResolvers`. Content SHALL therefore resolve exactly as it does for a conversation attachment: the same renderers, the same unsupported, load-error and forbidden states, and the same DIAL URL resolution and credentials. The hook SHALL do nothing when the path is missing, is not in the loaded tree, or belongs to a folder.
+`useDialFilePreview` SHALL, given the virtual path of the chosen row, look the file up in the loaded folder tree (`controller.items`, nested folders included), convert it with `dialFileToAttachment` for the user's bucket, and open it through `useOpenAttachmentCanvas` with the app's `useAttachmentCanvasResolvers`. Content SHALL therefore resolve exactly as it does for a conversation attachment: the same renderers, the same unsupported, load-error and forbidden states, and the same DIAL URL resolution and credentials. The hook SHALL do nothing when the path is missing, is not in the loaded tree, or belongs to a folder. When the canvas reports that it could not open the file, or the file has no DIAL URL to open, the hook SHALL open the canvas in its unsupported state, with the file's name and, when the file has a URL, a download link, so choosing Preview never ends without a visible result.
 
 #### Scenario: A nested file opens in the canvas
 
@@ -46,10 +51,15 @@ Defines the Preview row action of the standalone file manager page: which files 
 - **WHEN** `onPreview` is called with `undefined`, with a path that is not in the loaded tree, or with a folder's path
 - **THEN** the canvas is not opened
 
-#### Scenario: A file the canvas cannot render shows the canvas's own state
+#### Scenario: A file the canvas cannot open shows the unsupported state
 
-- **WHEN** the user previews a listed file whose content the canvas rejects
-- **THEN** the panel shows the canvas's unsupported or error state, with its download button where the canvas offers one
+- **WHEN** the user previews a listed file and the canvas resolves without opening it
+- **THEN** the panel opens in its unsupported state, titled with the file's name, with a download button when the file has a URL
+
+#### Scenario: A file without a URL shows the unsupported state
+
+- **WHEN** the user previews a file that has neither a URL nor an id
+- **THEN** the panel opens in its unsupported state without a download button
 
 ### Requirement: Preview is not gated by the AttachmentsManager feature
 

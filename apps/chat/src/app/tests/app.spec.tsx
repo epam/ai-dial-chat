@@ -38,6 +38,7 @@ vi.mock('@epam/ai-dial-chat-hooks/file-manager-canvas', () => ({
 }));
 vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', () => ({
   usePanelMaxWidth: () => 1200,
+  useViewportWidth: () => 1440,
 }));
 vi.mock('../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => {

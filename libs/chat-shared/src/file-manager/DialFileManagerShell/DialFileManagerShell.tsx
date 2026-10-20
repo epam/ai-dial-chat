@@ -129,7 +129,7 @@ export interface DialFileManagerShellProps {
   previewLabel?: string;
   /** Called with the virtual path of the file the user chose to preview. */
   onPreview?: (path?: string) => void;
-  /** Dotted, lowercase extensions (e.g. `.md`) the Preview row action is offered for. */
+  /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
   previewExtensions?: string[];
 }
 

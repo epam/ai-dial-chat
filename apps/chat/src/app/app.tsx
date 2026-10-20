@@ -3,7 +3,10 @@ import {
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager-canvas';
-import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
+import {
+  usePanelMaxWidth,
+  useViewportWidth,
+} from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
 import {
@@ -119,12 +122,13 @@ const App: FC = () => {
   const isMobile = useIsMobile();
   const loadPdf = usePdfPreviewLoader();
   const isFileManagerRoute = !!useMatch(ROUTES.FileManager);
+  const viewportWidth = useViewportWidth();
   const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
   const { defaultWidth: canvasDefaultWidth, minWidth: canvasMinWidth } =
     resolveCanvasWidth({
       isFileManagerRoute,
       isMobile,
-      viewportWidth: window.innerWidth,
+      viewportWidth,
       maxWidth: canvasMaxWidth,
     });
   const { currentTheme } = useTheme();

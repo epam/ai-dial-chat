@@ -34,12 +34,17 @@ Chat's only File Manager renderer is `DialFileManagerShell` (`libs/chat-shared`)
 
 7. **Shell props are optional and host-agnostic.** `previewLabel`, `onPreview` and `previewExtensions` are passed through unchanged; the shell stays free of i18n and of any knowledge of the canvas. Preview is added to the grid labels only, as the Info action is.
 
-8. **Extension list.** A fixed, documented list of formats the canvas renders (decision recorded under Non-Goals). A listed file the canvas cannot render still lands in the canvas's own unsupported state with a download button, so a wrong entry degrades gracefully.
+8. **Extension list.** A fixed, documented list of formats the canvas renders (decision recorded under Non-Goals). The File Manager gates the row action with a case-sensitive `includes` on the raw suffix, so the host lists each format in lower, UPPER and Capitalized case. The canvas itself lowercases the extension, so only the gate needs the variants. A listed file the canvas cannot render still lands in the canvas's own unsupported state with a download button, so a wrong entry degrades gracefully.
+
+9. **A Preview that cannot open still shows something.** When `openAttachmentCanvas` resolves `false` (or the file has no URL), the hook opens the canvas with `createUnsupportedCanvasContent` (download link from `resolveDialUrl` when there is one). *Alternatives:* download the file automatically, as `ConversationSourcesPanel` does, rejected as a surprising side effect of choosing Preview; an error toast, rejected as a new dependency for a rare case.
+
+10. **No stale-request guard.** Click-driven openers in Chat (`ConversationView`, `NewConversationComposer`) do not pass `shouldCommit`, and neither does this hook; only the effect-driven skill preview needs it. A slow earlier file can in principle overwrite a later choice; the window is small for text and Markdown, so this is accepted.
 
 ## Risks / Trade-offs
 
 - [Phones and narrow windows on `/files` are untested] → the canvas already fills the viewport when `isMobile`; verify before widening the claim.
 - [An image whose listing has no `image/*` content type is not shown as an image] → the canvas falls back to its unsupported state with download; accepted.
 - [The list can drift from the canvas] → graceful degradation as in decision 8; revisit if it bites.
+- [Search hits inside folders that are not loaded have no row menu] → the File Manager builds a row's menu only for rows present in its `items`, so those rows show no actions at all, Preview included; this is the package's behavior and is left alone.
 - [Two surfaces will exist if modals later get preview] → the opening logic is one hook, so a second surface plugs into it.
 - [The `canvas` spec's prose sections still say conversation-only] → updated directly in the same change (see tasks), since archive syncs only requirements.
