@@ -1982,6 +1982,12 @@ export interface CreateApplicationBodyDto {
    */
   preserveApplicationProperties?: boolean;
   /**
+   * Top-level DIAL Core application features, stored as supplied. Takes precedence over features hoisted from applicationProperties and turns off the Quick App system_prompt_supported default.
+   * @type {object}
+   * @memberof CreateApplicationBodyDto
+   */
+  features?: object;
+  /**
    *
    * @type {Array<string>}
    * @memberof CreateApplicationBodyDto
