@@ -25,7 +25,7 @@ file it is its preview.
 
 ## Installation
 
-Requires UI Kit ^0.16.0-dev.16 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.20 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -46,8 +46,8 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.16`
-- `@epam/ai-dial-react-file-manager` `^0.4.0-dev.9`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.20`
+- `@epam/ai-dial-react-file-manager` `^0.4.0-dev.11`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components

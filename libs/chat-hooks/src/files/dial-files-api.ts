@@ -112,8 +112,11 @@ export interface DialFilesApi {
     path: string,
     signal?: AbortSignal,
   ): Promise<Response>;
-  /** Downloads a ZIP archive of the given items, returning the raw fetch `Response`. */
-  downloadArchive(items: ArchiveItemDto[]): Promise<Response>;
+  /** Downloads a ZIP archive of the given items, returning the raw fetch `Response`; `signal` aborts the request and its body. */
+  downloadArchive(
+    items: ArchiveItemDto[],
+    signal?: AbortSignal,
+  ): Promise<Response>;
   /** Revokes access previously granted on the given owned items. */
   revokeAccess(items: RevokeAccessItemDto[]): Promise<RevokeAccessResponseDto>;
   /** Discards items shared with the current user. */

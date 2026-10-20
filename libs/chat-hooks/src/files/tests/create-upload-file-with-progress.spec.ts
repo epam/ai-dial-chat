@@ -1,6 +1,8 @@
 import type { FileUploadResponseDto } from '@epam/ai-dial-chat-api-client';
+import { FileUploadFailureReason } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createUploadFileWithProgress } from '../create-upload-file-with-progress';
+import { resolveUploadFailureReason } from '../dial-file-manager-mapping.util';
 
 type XhrListener = (event?: ProgressEvent<EventTarget>) => void;
 
@@ -159,5 +161,44 @@ describe('createUploadFileWithProgress', () => {
       upload('bucket', 'report.pdf', new File(['data'], 'report.pdf'), {}),
     ).rejects.toBeInstanceOf(UnauthorizedTestError);
     expect(notifyUnauthorized).toHaveBeenCalledWith('/api/v1/files');
+  });
+
+  it('rejects a failed response with an error that keeps its status, so the reason resolves', async () => {
+    const mock = new MockXMLHttpRequest();
+    mock.status = 409;
+    mock.responseText = JSON.stringify({
+      statusCode: 409,
+      message: 'File already exists at this path',
+    });
+    const upload = makeUploader({}, () => mock as unknown as XMLHttpRequest);
+
+    const error = await upload(
+      'bucket',
+      'report.pdf',
+      new File(['data'], 'report.pdf'),
+      {},
+    ).catch((rejection: unknown) => rejection);
+
+    await expect(resolveUploadFailureReason(error)).resolves.toBe(
+      FileUploadFailureReason.Conflict,
+    );
+  });
+
+  it('resolves a request that got no response as a network failure', async () => {
+    const mock = new MockXMLHttpRequest();
+    const triggerable = mock as unknown as { trigger: (type: string) => void };
+    mock.send = vi.fn(() => triggerable.trigger('error'));
+    const upload = makeUploader({}, () => mock as unknown as XMLHttpRequest);
+
+    const error = await upload(
+      'bucket',
+      'report.pdf',
+      new File(['data'], 'report.pdf'),
+      {},
+    ).catch((rejection: unknown) => rejection);
+
+    await expect(resolveUploadFailureReason(error)).resolves.toBe(
+      FileUploadFailureReason.Network,
+    );
   });
 });

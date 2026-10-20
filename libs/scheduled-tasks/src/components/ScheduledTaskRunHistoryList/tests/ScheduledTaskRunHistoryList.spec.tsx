@@ -431,7 +431,7 @@ describe('ScheduledTaskRunHistoryList', () => {
     const icon = startGroup.querySelector('[data-icon="success"]');
     expect(icon).toBeTruthy();
     expect(icon?.getAttribute('stroke')).toBe(`${DIAL_KIT_ICON_STROKE}`);
-    expect(icon?.getAttribute('size')).toBe(`${DIAL_ICON_SIZE.MD}`);
+    expect(icon?.getAttribute('size')).toBe(`${DIAL_ICON_SIZE.SM}`);
     /* The pill carries the design's 12px horizontal padding on both sides. */
     expect(row.className).toContain('px-3');
     expect(row.className).not.toContain('pe-2');

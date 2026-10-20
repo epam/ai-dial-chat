@@ -351,6 +351,15 @@ export const useDialFileManagerSections = ({
     [browsedResult, ...enabledResults].find(
       (result) => result.uploadBatchState != null,
     ) ?? browsedResult;
+  /* Downloads run per section; the queue shows all of them, and ids are unique across sections. */
+  const downloadFiles = enabledResults.flatMap(
+    (result) => result.downloadBatchState?.files ?? [],
+  );
+  const downloadBatchState = enabledResults.some(
+    (result) => result.downloadBatchState?.isOpen,
+  )
+    ? { isOpen: true, files: downloadFiles }
+    : null;
   const isAnySection = (
     pick: (result: UseDialFileManagerResult) => boolean,
   ): boolean => enabledResults.some(pick);
@@ -394,6 +403,13 @@ export const useDialFileManagerSections = ({
     isCreatingFolder: isAnySection((result) => result.isCreatingFolder),
     onDownloadFiles,
     isDownloading: isAnySection((result) => result.isDownloading),
+    downloadBatchState,
+    cancelDownloadFile: (id: string) =>
+      enabledResults.forEach((result) => result.cancelDownloadFile(id)),
+    cancelAllDownloads: () =>
+      enabledResults.forEach((result) => result.cancelAllDownloads()),
+    clearDownloadBatch: () =>
+      enabledResults.forEach((result) => result.clearDownloadBatch()),
     onDeleteFiles,
     isDeleting: isAnySection((result) => result.isDeleting),
     onRenameValidate,

@@ -8,7 +8,10 @@ import type {
   FileManagerColumnKey,
 } from '@epam/ai-dial-react-file-manager';
 import type { FileUploadValidationResult } from './file-upload-validation';
-import type { FileUploadBatchState } from './upload-batch';
+import type {
+  FileDownloadBatchState,
+  FileUploadBatchState,
+} from './upload-batch';
 
 /**
  * Structural view contract consumed by `DialFileManagerShell`. Contains exactly
@@ -91,10 +94,18 @@ export interface FileManagerController {
     parentFolder: DialFile,
   ) => string | null;
 
-  /** Download: called when user triggers download on one or more items. */
+  /** Download: called when user triggers download on one or more items; returns without waiting for the transfer. */
   onDownloadFiles: (dialFiles: DialFile[]) => void;
-  /** True while a download is in progress. */
+  /** True while at least one download is in progress. Does not block other actions. */
   isDownloading: boolean;
+  /** Download: current batch state (null when idle). */
+  downloadBatchState: FileDownloadBatchState | null;
+  /** Download: abort one in-flight download by its entry id. */
+  cancelDownloadFile: (id: string) => void;
+  /** Download: abort every in-flight download. */
+  cancelAllDownloads: () => void;
+  /** Download: empty the download batch. */
+  clearDownloadBatch: () => void;
 
   /** Delete: called when user confirms deletion of one or more items. */
   onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;

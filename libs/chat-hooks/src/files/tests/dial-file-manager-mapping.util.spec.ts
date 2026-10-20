@@ -2,7 +2,10 @@ import {
   ListFilesItemDtoNodeTypeEnum,
   type ListFilesItemDto,
 } from '@epam/ai-dial-chat-api-client';
-import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+import {
+  FileUploadFailureReason,
+  FileUploadStatus,
+} from '@epam/ai-dial-chat-shared';
 import type { FileUploadBatchState } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
@@ -20,6 +23,8 @@ import {
   buildSharedSearchScope,
   mapSearchItem,
   mergeCreatedFolderIntoCache,
+  resolveTransferFailureReason,
+  resolveUploadFailureReason,
   updateEntry,
 } from '../dial-file-manager-mapping.util';
 import type {
@@ -572,5 +577,63 @@ describe('fetchForSearch', () => {
       new Map(),
     );
     expect(result).toEqual({ items: [] });
+  });
+});
+
+describe('resolveUploadFailureReason', () => {
+  /* The shape `getApiErrorDetails` reads: an error carrying a response. */
+  const httpError = (status: number) =>
+    Object.assign(new Error(`status ${status}`), {
+      response: { status, json: async () => ({}) },
+    });
+
+  it.each([
+    [403, FileUploadFailureReason.Forbidden],
+    [409, FileUploadFailureReason.Conflict],
+    [413, FileUploadFailureReason.TooLarge],
+    [502, FileUploadFailureReason.Unavailable],
+    [503, FileUploadFailureReason.Unavailable],
+    [400, FileUploadFailureReason.Unknown],
+    [500, FileUploadFailureReason.Unknown],
+  ])('maps HTTP %s to %s', async (status, expected) => {
+    await expect(resolveUploadFailureReason(httpError(status))).resolves.toBe(
+      expected,
+    );
+  });
+
+  it('treats an error without a response as unknown', async () => {
+    await expect(
+      resolveUploadFailureReason(
+        new Error('Upload response was not valid JSON'),
+      ),
+    ).resolves.toBe(FileUploadFailureReason.Unknown);
+  });
+});
+
+describe('resolveTransferFailureReason', () => {
+  it('treats a request that never got a response as a network failure', async () => {
+    const fetchError = Object.assign(new Error('The request failed'), {
+      name: 'FetchError',
+    });
+
+    await expect(resolveTransferFailureReason(fetchError)).resolves.toBe(
+      FileUploadFailureReason.Network,
+    );
+    await expect(
+      resolveTransferFailureReason(new TypeError('Failed to fetch')),
+    ).resolves.toBe(FileUploadFailureReason.Network);
+  });
+
+  it('maps a download response error by its status', async () => {
+    const responseError = Object.assign(
+      new Error('Response returned an error code'),
+      {
+        response: { status: 403, json: async () => ({}) },
+      },
+    );
+
+    await expect(resolveTransferFailureReason(responseError)).resolves.toBe(
+      FileUploadFailureReason.Forbidden,
+    );
   });
 });
