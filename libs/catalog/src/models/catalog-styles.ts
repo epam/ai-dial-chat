@@ -44,4 +44,6 @@ export interface CatalogStyles {
   colors?: CatalogColors;
   /** Typography customizations and class overrides. */
   typography?: CatalogTypography;
+  /** Height and vertical padding classes of the page heading row. Replaces the default `'h-[64px]'`. */
+  headingRowClassName?: string;
 }

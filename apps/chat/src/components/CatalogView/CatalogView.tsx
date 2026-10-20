@@ -21,6 +21,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
+import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
@@ -671,6 +672,7 @@ const CatalogView: FC<Props> = ({
         isShareVisible={isShareVisible}
         styles={{
           typography: { pageHeadingFontClassName: 'dial-h1-text' },
+          headingRowClassName: PAGE_HEADER_ROW_CLASS,
         }}
         titles={{
           pageTitle: t(NavigationI18nKeys.Catalog),

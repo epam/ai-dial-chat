@@ -14,4 +14,10 @@ export const NAVIGATION_PANEL_CLASS = {
   rail: 'dial-navigation-panel-rail',
   /** Every item in the rail, whether or not it is the active one. */
   item: 'dial-navigation-panel-item',
+  /** The `nav` of `NavigationSidebar`. */
+  sidebar: 'dial-navigation-panel-sidebar',
+  /** Every item in `NavigationSidebar`, whether or not it is the active one. */
+  sidebarItem: 'dial-navigation-panel-sidebar-item',
+  /** The footer of `NavigationSidebar`. */
+  sidebarFooter: 'dial-navigation-panel-sidebar-footer',
 } as const;

@@ -83,12 +83,12 @@
   },
   "navigation": {
     "ariaLabel": "Main navigation",
-    "home": "Chat",
     "catalog": "Catalog",
-    "openMenu": "Open navigation menu",
-    "menu": "Main menu",
-    "profile": "Profile",
-    "back": "Back"
+    "menu": "Navigation menu",
+    "back": "Back",
+    "sidebar": "Sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "favorites": {
     "title": "Your Favorites",
@@ -460,8 +460,11 @@
     "startedYesterday": "Yesterday {{time}}"
   },
   "conversationPanel": {
-    "title": "Chats",
-    "toggleAriaLabel": "Conversation panel",
+    "chatsAndTasks": "Chats and tasks",
+    "search": {
+      "open": "Search chats",
+      "close": "Close search"
+    },
     "empty": "No conversations yet",
     "filter": {
       "all": "All",
@@ -661,7 +664,8 @@
     "extensions": "Extensions",
     "defaultAgent": "Default agent for new chats",
     "defaultAgentOptionDefault": "Default agent",
-    "defaultAgentOptionLastUsed": "Last used agent"
+    "defaultAgentOptionLastUsed": "Last used agent",
+    "general": "General"
   },
   "extensions": {
     "description": "Access additional tools and capabilities through extensions.",
@@ -1062,6 +1066,7 @@
       "emptyStateDescription": "No files are available in the organization storage"
     },
     "page": {
+      "title": "File manager",
       "navLabel": "File Manager"
     },
     "unshareConfirmTitleFile": "Remove file from My List?",

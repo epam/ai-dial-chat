@@ -10,7 +10,7 @@ boundary-triggered re-fetch that keeps post-reset figures coming from DIAL Core 
 local arithmetic. All `Date`/`Intl` work lives in `apps/chat`; `libs/usage-dashboard` and
 `libs/catalog` receive preformatted strings only (see the `usage-dashboard-lib`,
 `usage-model-limits`, `usage-data-hook`, `user-usage-limits-api`, and
-`conversation-input-usage-limits` capabilities). Reset times are displayed in Settings → Usage,
+`conversation-input-usage-limits` capabilities). Reset times are displayed in Usage page,
 in the conversation-input usage popover, and in the catalog details panel's `Limits` tab.
 
 ## Requirements
@@ -177,7 +177,7 @@ unaffected by which non-presentational location they live in now.
 
 ### Requirement: Reset times are displayed for aggregate budgets and period headers
 
-Settings → Usage SHALL display the reset time for each of the three aggregate cost cards
+Usage page SHALL display the reset time for each of the three aggregate cost cards
 (`dayCostStats`, `weekCostStats`, `monthCostStats`) and for each of the three Model-limits period
 headers.
 
@@ -219,7 +219,7 @@ existing `progressAriaLabel` SHALL NOT be altered.
 - **THEN** the month period header shows the column label and, beneath it, the formatted reset time
 
 #### Scenario: Mobile layout does not overflow
-- **WHEN** the Usage tab renders at mobile width with a long formatted reset label
+- **WHEN** the Usage page renders at mobile width with a long formatted reset label
 - **THEN** the label wraps within its container and the page does not scroll horizontally
 
 ---
@@ -260,7 +260,7 @@ degradation path SHALL hide, blank, or alter `used`, `total`, a progress bar, a 
 
 ### Requirement: Usage refreshes from DIAL Core when a reset boundary passes
 
-The Usage tab SHALL request fresh data by re-invoking `getUserUsage()` when the earliest future
+The Usage page SHALL request fresh data by re-invoking `getUserUsage()` when the earliest future
 reset boundary among the displayed aggregate cards elapses while the tab is mounted.
 
 The system SHALL NOT locally zero a `used` value, restore a `total`, recompute a status, or
@@ -283,7 +283,7 @@ Scheduling rules:
   rendered figures remain on screen.
 
 #### Scenario: Boundary elapses and fresh data replaces the figures
-- **WHEN** the day card's `resetsAt` elapses while the Usage tab is open
+- **WHEN** the day card's `resetsAt` elapses while the Usage page is open
 - **THEN** `getUserUsage()` is called again and the rendered figures come from that new response
 
 #### Scenario: Usage is never locally reset
@@ -441,7 +441,7 @@ reset-time mapper of its own.
 
 ---
 
-### Requirement: Popover reset degradation matches the Usage tab's
+### Requirement: Popover reset degradation matches the Usage page's
 
 A reset time in the conversation-input popover SHALL be decoration on a usage figure and never a
 gate on it. No degradation path SHALL hide, blank, or alter a row's `used`, `total`, progress bar,
@@ -454,7 +454,7 @@ spent caption, or the group's status, and none SHALL prevent the popover from op
 | `resetsAt` already in the past on arrival | Rendered verbatim from Core. No boundary timer is armed. |
 | `Intl` unavailable or throwing | Identical to absent. |
 
-The popover SHALL NOT arm a boundary-triggered re-fetch. The Usage tab's boundary-timer requirement
+The popover SHALL NOT arm a boundary-triggered re-fetch. The Usage page's boundary-timer requirement
 is scoped to that tab; the popover already refreshes on open and once after an active generation
 ends, and it is a transient surface that is closed most of the time.
 

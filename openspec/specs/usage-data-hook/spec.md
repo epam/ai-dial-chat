@@ -11,17 +11,16 @@ keeps presentational card rendering in `libs/usage-dashboard` while DTO interpre
 
 ## Requirements
 
-### Requirement: Usage tab renders the aggregate limit cards
-The system SHALL provide a `Usage` tab/page component
-(`apps/chat/src/pages/SettingsPage/UsageTab/UsageTab.tsx`), registered as the `SettingsTabs.Usage`
-entry in `useSettingsTabConfig` (`apps/chat/src/hooks/useSettingsTabConfig.tsx`) after the default
-`SettingsTabs.Preferences` entry, that renders a page header (title and one-line description) followed by up
+### Requirement: Usage page renders the aggregate limit cards
+The system SHALL provide a `Usage` page component
+(`apps/chat/src/pages/SettingsPage/UsageTab/UsageTab.tsx`), rendered by the standalone `/usage` route
+(`ROUTES.Usage`, registered through `renderUsageRoute` in `apps/chat/src/app/settings-routes.tsx`) and
+not by a Settings tab, that renders a page header (title and one-line description) followed by up
 to three aggregate cost-limit cards — Today (`dayCostStats`), This week (`weekCostStats`), This
 month (`monthCostStats`) — via the `@epam/ai-dial-usage-dashboard` library's
 `UsageLimitCardGroup`'s `cards` prop, mapped from `useUsageData`'s result through the
 `@epam/ai-dial-chat-hooks` mapper `mapUsageDataToDashboard` in that fixed order. The header SHALL
-render unconditionally, independent of `isLoading`. Its title SHALL be an `<h2>` — `SettingsPage`
-(`apps/chat/src/pages/SettingsPage/SettingsPage.tsx`) already renders the page's sole `<h1>` — with
+render unconditionally, independent of `isLoading`. Its title SHALL be the page's `<h1>`, with
 both title and description text sourced from localized `UsageI18nKeys` entries, never hardcoded.
 Below the cards it renders `ModelLimitsSection`, fed by `mapUserUsageToModelLimits` and
 `mapOverallCostLimitsToPeriodStatuses`. The cards region SHALL render a loading state (a kit
@@ -34,23 +33,23 @@ no model rows), and is empty after a fetch failure, because the error notificati
 "Deduplicated error notification on fetch failure" below) already announces that. The kit `Spinner` is
 itself a status region, so its wrapper SHALL be `aria-hidden` to avoid announcing loading twice.
 
-#### Scenario: Usage tab announces state changes through one status region
-- **WHEN** the Usage tab moves from its loading state to resolved data
+#### Scenario: Usage page announces state changes through one status region
+- **WHEN** the Usage page moves from its loading state to resolved data
 - **THEN** the same single `role="status"` region changes from the loading text to the loaded text,
   and no other status region is exposed
 
-#### Scenario: Usage tab renders the page header
+#### Scenario: Usage page renders the page header
 - **WHEN** the Settings page is opened and the `Usage` tab is active, regardless of loading state
 - **THEN** the tab renders a localized `<h2>` title and a localized one-line description above the
   cards region
 
-#### Scenario: Usage tab renders all three cards
+#### Scenario: Usage page renders all three cards
 - **WHEN** the Settings page is opened, the `Usage` tab is active, and `getUserUsage()` resolves
   with usable `dayCostStats`/`weekCostStats`/`monthCostStats`
 - **THEN** the tab renders `UsageLimitCardGroup` with a `cards` array of three entries, in
   Today/This week/This month order
 
-#### Scenario: Usage tab shows a loading state before data arrives
+#### Scenario: Usage page shows a loading state before data arrives
 - **WHEN** the Settings page is opened and the `Usage` tab becomes active
 - **THEN** the page header renders immediately and the cards region renders a loading state until
   `useUsageData`'s `isLoading` becomes `false`
@@ -80,9 +79,10 @@ The hook SHALL accept an `enabled: boolean` second parameter, defaulting to `tru
 disabled hook would otherwise report). The parameter stays because it is part of a host-agnostic
 lib hook's contract, not because this app still needs it.
 
-The Usage tab SHALL NOT read a feature flag: the `SettingsPageEnabled` flag is removed, so
-`useFeatureFlag('settingsPageEnabled')` no longer exists and the tab cannot be reached while the
-page is disabled — mounting the tab is itself the signal that the data is wanted.
+The Usage page SHALL NOT read a feature flag: the `SettingsPageEnabled` flag is removed, so
+`useFeatureFlag('settingsPageEnabled')` no longer exists and the page cannot be reached while the
+host hides Settings (`/usage` redirects to `/`) — mounting the page is itself the signal that the
+data is wanted.
 `apps/chat/src/pages/SettingsPage/UsageTab/UsageTab.tsx` therefore imports no `useFeatureFlag` and
 passes a literal `true` for `enabled` (positionally required only because it also passes
 `refreshToken`, below).
@@ -143,17 +143,17 @@ promise's rejection, if any.
 - **WHEN** the hook's source is inspected
 - **THEN** it contains no `setTimeout`, `setInterval`, `Date.now()`, or `resetsAt` reference
 
-#### Scenario: Consumer triggers the hook only when the Usage tab is active
-- **WHEN** the Settings page renders with the `Usage` tab active
-- **THEN** `useUsageData` is invoked by the `Usage` tab component (not by `SettingsPage` itself),
-  so the endpoint is only called while a user is actually viewing the Usage tab
+#### Scenario: Consumer triggers the hook only when the Usage page is active
+- **WHEN** the `/usage` route renders
+- **THEN** `useUsageData` is invoked by the `Usage` page component, so the endpoint is only called
+  while a user is actually viewing the Usage page
 
 #### Scenario: Arriving at the Settings page does not fetch usage
 - **WHEN** a user opens `/settings`, where `Preferences` is the default tab
 - **THEN** `UsageTab` does not mount and `GET /api/v1/user/usage` is not requested
 
-#### Scenario: The Usage tab reads no feature flag
-- **WHEN** the user activates the `Usage` row and the tab renders
+#### Scenario: The Usage page reads no feature flag
+- **WHEN** the user opens `/usage` and the page renders
 - **THEN** it calls `useUsageData(getUserUsage, true, refreshToken)` without consulting any feature
   flag, and `GET /api/v1/user/usage` is requested
 
@@ -207,7 +207,7 @@ normalized cards, rows, and period statuses it is given (see the `usage-dashboar
   `DeploymentItemDto`
 
 #### Scenario: useUsageData behaviour is unaffected by the relocation
-- **WHEN** the Usage tab mounts, refetches on a `refreshToken` bump, and unmounts
+- **WHEN** the Usage page mounts, refetches on a `refreshToken` bump, and unmounts
 - **THEN** the hook's fetch lifecycle, stale-request handling, `isLoading`/`usageError` outputs, and
   subscription lifetimes are the same as before the adapters moved, with no fetch added or removed
 
@@ -226,7 +226,7 @@ distinction used is removed; only `UsageI18nKeys.FullLoadError` remains.
 
 #### Scenario: Fetch fails
 - **WHEN** `usageError` becomes defined
-- **THEN** exactly one localized failure notification is shown, and the Usage tab renders its empty
+- **THEN** exactly one localized failure notification is shown, and the Usage page renders its empty
   states (no stale/zeroed cards or model-limits table)
 
 #### Scenario: No notification on success
@@ -234,7 +234,7 @@ distinction used is removed; only `UsageI18nKeys.FullLoadError` remains.
 - **THEN** no error notification is shown
 
 #### Scenario: Notification does not repeat on unrelated re-renders
-- **WHEN** the Usage tab re-renders for a reason unrelated to `usageError` (e.g. a parent state
+- **WHEN** the Usage page re-renders for a reason unrelated to `usageError` (e.g. a parent state
   update) after a notification has already been shown for the current fetch cycle
 - **THEN** no additional notification is shown for the same error
 

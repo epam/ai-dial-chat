@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { AriaAttributes, ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MOBILE_SIDEBAR_ID } from '../../../constants/layout';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -29,16 +30,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostIconButton: ({
     'aria-label': ariaLabel,
     'aria-pressed': ariaPressed,
+    'aria-expanded': ariaExpanded,
+    'aria-controls': ariaControls,
     onClick,
   }: {
     'aria-label': string;
     'aria-pressed'?: AriaAttributes['aria-pressed'];
+    'aria-expanded'?: AriaAttributes['aria-expanded'];
+    'aria-controls'?: string;
     onClick: () => void;
   }) => (
     <button
       type="button"
       aria-label={ariaLabel}
       aria-pressed={ariaPressed}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
       onClick={onClick}
     />
   ),
@@ -77,23 +84,77 @@ describe('Header', () => {
     );
   });
 
-  it('hides the hamburger button when hide-navigation-menu is enabled', () => {
+  it('renders the sidebar toggle by default, closed and pointing at the drawer', () => {
+    renderHeader();
+
+    const toggle = screen.getByRole('button', {
+      name: NavigationI18nKeys.Menu,
+    });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-controls')).toBe(MOBILE_SIDEBAR_ID);
+  });
+
+  it('reports the drawer as expanded while it is open', () => {
+    renderHeader({ isMenuOpen: true });
+
+    expect(
+      screen
+        .getByRole('button', { name: NavigationI18nKeys.Menu })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
+  });
+
+  it('opens the drawer through the toggle', async () => {
+    const onMenuToggle = vi.fn();
+    renderHeader({ onMenuToggle });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: NavigationI18nKeys.Menu }),
+    );
+
+    expect(onMenuToggle).toHaveBeenCalledOnce();
+  });
+
+  it('hides the toggle under hide-navigation-menu when the chats toggle is off', () => {
     mockUseUiFeature.mockImplementation(
       (feature) =>
         feature !== OverlayFeature.HideNewConversation &&
         feature !== OverlayFeature.ConversationsPanelToggle,
     );
     renderHeader();
+
     expect(
-      screen.queryByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+      screen.queryByRole('button', { name: NavigationI18nKeys.Menu }),
     ).toBeNull();
   });
 
-  it('renders the hamburger button by default', () => {
+  it('hides the toggle when hide-navigation-menu is on and the conversations section is off', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) =>
+        feature !== OverlayFeature.HideNewConversation &&
+        feature !== OverlayFeature.ConversationsSection,
+    );
     renderHeader();
+
     expect(
-      screen.getByRole('button', { name: NavigationI18nKeys.OpenMenu }),
+      screen.queryByRole('button', { name: NavigationI18nKeys.Menu }),
+    ).toBeNull();
+  });
+
+  it('keeps the toggle under hide-navigation-menu while the chats stay reachable', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.HideNewConversation,
+    );
+    renderHeader();
+
+    expect(
+      screen.getByRole('button', {
+        name: ConversationPanelI18nKeys.ChatsAndTasks,
+      }),
     ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: NavigationI18nKeys.Menu }),
+    ).toBeNull();
   });
 
   it('renders Header component', () => {
@@ -113,6 +174,7 @@ describe('Header', () => {
     expect(header?.classList.contains('z-30')).toBe(true);
     expect(header?.classList.contains('min-h-[48px]')).toBe(true);
     expect(header?.classList.contains('w-full')).toBe(true);
+    expect(header?.classList.contains('border-b')).toBe(true);
   });
 
   it('renders the sidebar toggle button with open label when closed', () => {
@@ -166,27 +228,6 @@ describe('Header', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('hides the conversations-panel-toggle button when the feature is disabled', () => {
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.ConversationsPanelToggle,
-    );
-    renderHeader({ onConversationPanelToggle: vi.fn() });
-    expect(
-      screen.queryByRole('button', {
-        name: ConversationPanelI18nKeys.ToggleAriaLabel,
-      }),
-    ).toBeNull();
-  });
-
-  it('shows the conversations-panel-toggle button when the feature is enabled', () => {
-    renderHeader({ onConversationPanelToggle: vi.fn() });
-    expect(
-      screen.getByRole('button', {
-        name: ConversationPanelI18nKeys.ToggleAriaLabel,
-      }),
-    ).toBeTruthy();
-  });
-
   it('hides the new-conversation button when hide-new-conversation is enabled', () => {
     mockUseUiFeature.mockImplementation(
       (feature) =>
@@ -206,28 +247,22 @@ describe('Header', () => {
     ).toBeTruthy();
   });
 
-  it('hides the new-conversation button on the start page', () => {
-    /*
-     * Pin the flags locally rather than leaning on the shared mock: with
-     * hide-new-conversation explicitly off, the button's absence can only come
-     * from the route gate, and a later edit to `beforeEach` cannot silently
-     * turn this into a pass for the wrong reason.
-     */
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.HideNewConversation,
-    );
+  it('shows the new-conversation button on the start page too', () => {
     renderHeader({ onNewChat: vi.fn() }, ROUTES.Root);
+
     expect(
-      screen.queryByRole('button', { name: ButtonsI18nKeys.NewChat }),
-    ).toBeNull();
+      screen.getByRole('button', { name: ButtonsI18nKeys.NewChat }),
+    ).toBeTruthy();
   });
 
-  it('keeps the conversation-panel toggle on the start page', () => {
-    renderHeader({ onConversationPanelToggle: vi.fn() }, ROUTES.Root);
-    expect(
-      screen.getByRole('button', {
-        name: ConversationPanelI18nKeys.ToggleAriaLabel,
-      }),
-    ).toBeTruthy();
+  it('starts a new chat through the plus button', async () => {
+    const onNewChat = vi.fn();
+    renderHeader({ onNewChat });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.NewChat }),
+    );
+
+    expect(onNewChat).toHaveBeenCalledOnce();
   });
 });

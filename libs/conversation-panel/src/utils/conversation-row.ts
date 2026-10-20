@@ -1,9 +1,13 @@
 import {
   FIRST_GROUP_HEADER_ROW_HEIGHT,
   GROUP_HEADER_ROW_HEIGHT,
+  INDICATOR_FIRST_GROUP_HEADER_ROW_HEIGHT,
+  INDICATOR_GROUP_HEADER_ROW_HEIGHT,
+  INDICATOR_ITEM_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../constants/virtual-list';
 import type { RowRendererData } from '../models/virtual-row';
+import { ConversationRowVariant } from '../types/conversation-row-variant';
 import { VirtualRowKind } from '../types/virtual-row';
 
 /** Number of skeleton placeholder rows shown while conversations are loading. */
@@ -29,12 +33,18 @@ export const getButtonPaddingEnd = (
   return 'pe-2 group-focus-within/conversation:pe-9 group-hover/conversation:pe-9';
 };
 
-/** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header). */
+/** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header) in the active row variant. */
 export const getRowHeight = (
   index: number,
   rowProps: RowRendererData,
 ): number => {
   const row = rowProps.rows[index];
+  if (rowProps.rowVariant === ConversationRowVariant.Indicator) {
+    if (row.kind === VirtualRowKind.Item) return INDICATOR_ITEM_ROW_HEIGHT;
+    return index === 0
+      ? INDICATOR_FIRST_GROUP_HEADER_ROW_HEIGHT
+      : INDICATOR_GROUP_HEADER_ROW_HEIGHT;
+  }
   if (row.kind === VirtualRowKind.Item) return ITEM_ROW_HEIGHT;
   return index === 0 ? FIRST_GROUP_HEADER_ROW_HEIGHT : GROUP_HEADER_ROW_HEIGHT;
 };
