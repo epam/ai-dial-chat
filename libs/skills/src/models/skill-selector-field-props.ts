@@ -28,7 +28,7 @@ export interface SkillSelectorFieldStyles {
     background?: string;
     /** Field border. */
     border?: string;
-    /** Invalid-state text and border. */
+    /** Invalid-state and unavailable-tag text and border. */
     error?: string;
   };
   /** Label typography overrides. */
@@ -72,4 +72,6 @@ export interface SkillSelectorFieldProps {
   onChange: (value: string[]) => void;
   /** Host-resolved names keyed by reference; missing entries display the URL. */
   displayNames?: Record<string, string>;
+  /** Selected references the host could not resolve (deleted or unreadable); their tags render in the error color. */
+  unavailableValues?: string[];
 }

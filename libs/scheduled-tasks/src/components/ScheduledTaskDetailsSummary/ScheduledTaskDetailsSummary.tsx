@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
 import type { ScheduledTaskDetailsSummaryProps } from '../../models/scheduled-task-details-summary-props';
+import moduleStyles from './ScheduledTaskDetailsSummary.module.scss';
 
 /*
  * The Instructions value is short task prose inside the narrow summary, so
@@ -41,6 +42,7 @@ export const ScheduledTaskDetailsSummary: FC<
   modelLabel,
   skillLabel,
   skillDisplayNames,
+  unavailableSkillIndexes,
   instructionsLabel,
   modelDisplayName,
   instructionsMarkdown,
@@ -84,7 +86,14 @@ export const ScheduledTaskDetailsSummary: FC<
             )}
           >
             {skillDisplayNames?.map((name, index) => (
-              <span className="block" key={`${index}:${name}`}>
+              <span
+                className={mergeClasses(
+                  'block',
+                  unavailableSkillIndexes?.includes(index) &&
+                    moduleStyles.unavailableSkill,
+                )}
+                key={`${index}:${name}`}
+              >
                 {name}
               </span>
             ))}

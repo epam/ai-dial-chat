@@ -75,6 +75,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   nextRunLabel,
   instructionsMarkdown,
   skillDisplayNames,
+  unavailableSkillIndexes,
   renderInstructions,
   runs,
   runsIsLoading = false,
@@ -171,6 +172,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       instructionsLabel={labels.instructionsLabel}
       skillLabel={labels.skillLabel}
       skillDisplayNames={skillDisplayNames}
+      unavailableSkillIndexes={unavailableSkillIndexes}
       instructionsMarkdown={instructionsMarkdown}
       renderInstructions={renderInstructions}
       markdownLabels={{

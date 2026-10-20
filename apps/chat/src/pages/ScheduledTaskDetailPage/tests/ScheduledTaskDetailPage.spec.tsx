@@ -16,6 +16,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   NotFoundI18nKeys,
+  ScheduledTasksI18nKeys,
 } from '../../../constants/translation-keys';
 import {
   useAppConfig as useAppConfigMock,
@@ -28,6 +29,9 @@ vi.mock('../../../context/SkillsContext', () => ({
 }));
 vi.mock('../../../server-api/skills.api', () => ({
   getSkillMetadata: vi.fn().mockRejectedValue(new Error('Unavailable')),
+}));
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'own' } }),
 }));
 
 vi.mock(
@@ -463,7 +467,7 @@ const renderDetailPage = (scheduleId = 'sched_123') =>
   );
 
 describe('ScheduledTaskDetailPage', () => {
-  it('passes a deleted skill reference to the read-only detail without failing the page', async () => {
+  it('shows a deleted skill as unavailable instead of its raw path without failing the page', async () => {
     useFeatureFlagMock.mockReturnValue(true);
     getScheduledTaskMock.mockResolvedValue({
       id: 'sched_123',
@@ -473,7 +477,12 @@ describe('ScheduledTaskDetailPage', () => {
       trigger: { cron: { fields: { hour: '9', minute: '0' } } },
     });
     renderDetailPage();
-    expect(await screen.findByText('skill:skills/public/deleted')).toBeTruthy();
+    expect(
+      await screen.findByText(
+        `skill:${ScheduledTasksI18nKeys.CreateSkillUnavailableLabel}`,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/skills\/public\/deleted/)).toBeNull();
   });
   beforeEach(() => {
     vi.clearAllMocks();

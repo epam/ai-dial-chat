@@ -62,7 +62,10 @@ const TaskDetailsSection: FC<Props> = ({
   const { language } = useLanguage();
   const { conversationModelId } = useSourcesSidebarData();
   const { items: deploymentItems } = useDeployments();
-  const skillDisplayNames = useScheduledTaskSkillDisplayNames(task?.skillUrls);
+  const {
+    names: skillDisplayNames,
+    unavailableIndexes: unavailableSkillIndexes,
+  } = useScheduledTaskSkillDisplayNames(task?.skillUrls);
 
   /*
    * The section describes this run, so its Model field must show the
@@ -116,6 +119,7 @@ const TaskDetailsSection: FC<Props> = ({
       onRetry={onRetry}
       modelDisplayName={modelDisplayName}
       skillDisplayNames={skillDisplayNames}
+      unavailableSkillIndexes={unavailableSkillIndexes}
       instructionsMarkdown={task?.prompt}
       markdownLabels={markdownLabels}
       labels={labels}

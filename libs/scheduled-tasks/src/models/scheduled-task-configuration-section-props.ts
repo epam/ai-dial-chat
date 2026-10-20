@@ -7,6 +7,8 @@ export interface ScheduledTaskConfigurationSectionProps {
   skillLabel?: string;
   /** Resolved skill names or full saved references, in selection order; omit or pass [] to hide the field. */
   skillDisplayNames?: string[];
+  /** Positions in `skillDisplayNames` of skills the host could not resolve (deleted or unreadable); those names render in the error color. */
+  unavailableSkillIndexes?: number[];
   /** Label for the instructions field. */
   instructionsLabel: string;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via `MDMessageViewer` otherwise. Omit to hide the field entirely. */

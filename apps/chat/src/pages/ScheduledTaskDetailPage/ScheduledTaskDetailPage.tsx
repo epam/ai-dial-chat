@@ -117,7 +117,10 @@ const ScheduledTaskDetailPage: FC = () => {
   const { conversations, refreshConversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
-  const skillDisplayNames = useScheduledTaskSkillDisplayNames(task?.skillUrls);
+  const {
+    names: skillDisplayNames,
+    unavailableIndexes: unavailableSkillIndexes,
+  } = useScheduledTaskSkillDisplayNames(task?.skillUrls);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
@@ -765,6 +768,7 @@ const ScheduledTaskDetailPage: FC = () => {
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
         skillDisplayNames={skillDisplayNames}
+        unavailableSkillIndexes={unavailableSkillIndexes}
         runs={runItems}
         runsIsLoading={runsIsLoading && mergedRunDtos.length === 0}
         runsIsLoadingMore={runsIsLoadingMore}

@@ -17,6 +17,9 @@ import ConversationSourcesPanelContainer from '../ConversationSourcesPanel';
 vi.mock('../../../context/SkillsContext', () => ({
   useSkills: () => ({ skills: [], publicSkills: [], sharedWithMe: [] }),
 }));
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'own' } }),
+}));
 vi.mock('../../../server-api/skills.api', () => ({
   getSkillMetadata: vi.fn().mockRejectedValue(new Error('Unavailable')),
 }));
@@ -340,7 +343,7 @@ describe('ConversationSourcesPanelContainer — download all', () => {
 });
 
 describe('ConversationSourcesPanelContainer — scheduled-task sections', () => {
-  it('shows a saved skill fallback in task Details', async () => {
+  it('shows an unreadable saved skill as unavailable in task Details', async () => {
     activeScheduledTaskMock.status = 'task-conversation';
     activeScheduledTaskMock.scheduleId = 'schedule-1';
     activeScheduledTaskMock.taskState = 'success';
@@ -356,7 +359,10 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
         name: 'scheduledTasks.create.detailsSectionTitle',
       }),
     );
-    expect(screen.getByText('skills/public/deleted')).toBeTruthy();
+    expect(
+      await screen.findByText('scheduledTasks.create.skillUnavailableLabel'),
+    ).toBeTruthy();
+    expect(screen.queryByText('skills/public/deleted')).toBeNull();
   });
 
   it('shows the deployment used for the run in Details, not the schedule current model', async () => {

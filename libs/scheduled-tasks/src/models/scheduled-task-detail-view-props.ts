@@ -179,6 +179,8 @@ export interface ScheduledTaskDetailViewProps {
   instructionsMarkdown?: string;
   /** Resolved skill names or full saved references, in selection order; omit or pass [] to hide the field. */
   skillDisplayNames?: string[];
+  /** Positions in `skillDisplayNames` of skills the host could not resolve (deleted or unreadable); those names render in the error color. */
+  unavailableSkillIndexes?: number[];
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
   /** Pre-formatted "Next run" label shown under the History title, e.g. "Next run: Jul 31 at 9:00 AM". Omit to hide (e.g. when the schedule is paused or inactive). */

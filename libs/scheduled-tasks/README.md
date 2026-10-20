@@ -422,9 +422,13 @@ remains exported for compatibility. Revalidate on model or selection changes
 and use checked request preparation before submission.
 
 `ScheduledTaskConfigurationSection` and `ScheduledTaskDetailsSummary` accept
-optional `skillLabel` / `skillDisplayNames`. `ScheduledTaskDetailView` accepts
-`skillDisplayNames` and `labels.skillLabel`. Supply `skillDisplayNames: string[]`, using the full reference as fallback
-for each unresolved name. Skill appears before Instructions as plain text; absent
+optional `skillLabel` / `skillDisplayNames` / `unavailableSkillIndexes`.
+`ScheduledTaskDetailView` and `ScheduledTaskConversationDetailsSection` accept
+`skillDisplayNames` and `unavailableSkillIndexes` alongside their skill label.
+Supply `skillDisplayNames: string[]` with a host-chosen fallback for each
+unresolved name, and list in `unavailableSkillIndexes: number[]` the positions
+of skills the host could not resolve (deleted or unreadable); those names render
+in the error color (`--text-error`). Skill appears before Instructions as plain text; absent
 skills and empty instructions render no field. Libraries perform no lookup.
 
 Use the pure validation entry before an app submits a task. It returns typed

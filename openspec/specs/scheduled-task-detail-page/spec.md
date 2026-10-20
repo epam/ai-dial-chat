@@ -134,12 +134,12 @@ The detail page SHALL render a Details section showing the task's description, a
 - **WHEN** the task's `model` id has no matching entry in the deployments context
 - **THEN** the Details section displays the raw model id string as the "Model or Agent" value, without throwing
 
-The Configuration section SHALL render an optional Skill field above Instructions using a host-resolved display name or full raw reference. It SHALL hide Skill only when no reference is saved, and hide empty Instructions for a skill-only task. The existing Model location and schedule formatting remain unchanged.
+The Configuration section SHALL render an optional Skill field above Instructions using a host-resolved display name; a reference that cannot be resolved SHALL display its last path segment marked unavailable (`scheduledTasks.create.skillUnavailableLabel`), never the raw resource path. It SHALL hide Skill only when no reference is saved, and hide empty Instructions for a skill-only task. The existing Model location and schedule formatting remain unchanged.
 
 #### Scenario: Read-only skill is independent of metadata availability
 
 - **WHEN** a saved skill cannot be resolved
-- **THEN** Configuration displays the raw reference and retains the rest of the task without a broken link or error screen
+- **THEN** Configuration displays the skill's last path segment marked unavailable instead of the raw reference, and retains the rest of the task without a broken link or error screen
 
 ### Requirement: History panel paginates runs via a "Show more" button inside its own scroll container
 
@@ -737,7 +737,7 @@ When the loaded task has `isCompleted: true` (a finished one-time schedule, or a
 
 ### Requirement: Skill display covers reusable summaries and the active Configuration view
 
-`ScheduledTaskDetailsSummary` and `ScheduledTaskConfigurationSection` SHALL accept optional localized `skillLabel` and resolved `skillDisplayNames: string[]`; `ScheduledTaskDetailView` SHALL forward its optional skill value and label to Configuration. The host SHALL pass the skill's resolved display name or full raw reference, independent of catalog loading/failure. No skill SHALL produce no Skill field. Values SHALL be plain text, without a details link. Libraries SHALL perform no lookup or navigation.
+`ScheduledTaskDetailsSummary` and `ScheduledTaskConfigurationSection` SHALL accept optional localized `skillLabel` and resolved `skillDisplayNames: string[]`; `ScheduledTaskDetailView` SHALL forward its optional skill value and label to Configuration. The host SHALL pass the skill's resolved display name, or — while unresolved — its last path segment, marked unavailable once resolution has failed; it SHALL NOT pass the raw resource path. No skill SHALL produce no Skill field. Values SHALL be plain text, without a details link. Libraries SHALL perform no lookup or navigation.
 
 The full detail page SHALL render Skill above Instructions in Configuration on desktop and in the mobile Configuration tab, preserving Model in Details. Below 1280px the Details/Configuration/History tab bar SHALL stay pinned to the top of the tab scroller (sticky, on the page background) while the active panel scrolls beneath it, and the title row, tab bar and tab panel SHALL use 16px inline gutters. The conversation sources panel SHALL pass the same saved-task metadata to the reusable summary, ordered Model, Skill, Instructions. Skill-only tasks SHALL render without an empty Instructions block or an empty Configuration section. Lookup failure SHALL NOT replace task content with an error screen. The page root SHALL clip overflow: the active mobile tab owns the body scrollbar, while the desktop body is a non-wrapping clipped row whose Details, Configuration, and History columns scroll independently beneath the fixed header. The existing detail task state remains the source of truth; no new context is added.
 
@@ -749,7 +749,12 @@ The full detail page SHALL render Skill above Instructions in Configuration on d
 #### Scenario: Deleted unreadable or loading skill metadata
 
 - **WHEN** the saved reference cannot be resolved because it is deleted, unreadable, loading, or lookup failed
-- **THEN** the full reference is displayed as text, other task metadata remains visible, and no broken details link appears
+- **THEN** its last path segment is displayed as text — marked unavailable and rendered in the error color (through `unavailableSkillIndexes`) once deletion or lookup failure is known — the raw reference is not displayed, other task metadata remains visible, and no broken details link appears
+
+#### Scenario: Deleted own skill triggers no metadata request
+
+- **WHEN** the saved reference is in the viewer's own bucket and the settled, successful skills listing does not contain it
+- **THEN** `useScheduledTaskSkillDisplayNames` marks it unavailable without calling `getSkillMetadata`, and metadata lookups for other unlisted references wait until the listing has settled
 
 #### Scenario: No skill preserves the established view
 

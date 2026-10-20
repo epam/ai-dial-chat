@@ -50,6 +50,8 @@ export interface ScheduledTaskConversationDetailsSectionProps {
   modelDisplayName?: string;
   /** Resolved skill names or full saved references, in selection order; omit or pass [] to hide the field. */
   skillDisplayNames?: string[];
+  /** Positions in `skillDisplayNames` of skills the host could not resolve (deleted or unreadable); those names render in the error color. */
+  unavailableSkillIndexes?: number[];
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
@@ -82,6 +84,7 @@ export const ScheduledTaskConversationDetailsSection: FC<
   onRetry,
   modelDisplayName,
   skillDisplayNames,
+  unavailableSkillIndexes,
   instructionsMarkdown,
   renderInstructions,
   instructionsClassNames,
@@ -116,6 +119,7 @@ export const ScheduledTaskConversationDetailsSection: FC<
       instructionsLabel={labels.instructionsLabel}
       skillLabel={labels.skillLabel}
       skillDisplayNames={skillDisplayNames}
+      unavailableSkillIndexes={unavailableSkillIndexes}
       modelDisplayName={modelDisplayName}
       instructionsMarkdown={instructionsMarkdown}
       renderInstructions={renderInstructions}

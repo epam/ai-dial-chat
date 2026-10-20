@@ -787,7 +787,7 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 #### Scenario: Missing skill metadata cannot bypass validation
 
 - **WHEN** a saved skill URL is present but the catalog is loading or no longer returns that skill
-- **THEN** the field displays its raw reference, retains removal, and capability validation still uses URL presence
+- **THEN** the field displays the reference's last path segment (marked unavailable once the skill is known deleted or unreadable) instead of the raw reference, renders that reference's tag in the error color through `SkillSelectorField`'s `unavailableValues`, retains removal, and capability validation still uses URL presence
 
 #### Scenario: Capability recovers after a server rejection
 

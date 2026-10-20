@@ -98,6 +98,47 @@ describe('SkillSelectorField', () => {
     expect(onChange).toHaveBeenCalledWith(['skills/public/summary']);
   });
 
+  it('marks only unavailable tags with the error style and keeps them removable', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      field({
+        value: ['skills/public/missing', 'skills/public/summary'],
+        displayNames: {
+          'skills/public/missing': 'missing (unavailable)',
+          'skills/public/summary': 'Summary',
+        },
+        unavailableValues: ['skills/public/missing'],
+        onChange,
+      }),
+    );
+    /* The error style is a CSS class on the tag root, which has no accessible
+     * role of its own, so the assertion walks up from the tag's label text. */
+    // eslint-disable-next-line testing-library/no-node-access -- asserting a CSS class on the role-less tag root
+    const missingTag = screen.getByText('missing (unavailable)').parentElement;
+    // eslint-disable-next-line testing-library/no-node-access -- see above
+    const summaryTag = screen.getByText('Summary').parentElement;
+    expect(missingTag?.className).toMatch(/unavailableTag/);
+    expect(summaryTag?.className).not.toMatch(/unavailableTag/);
+    await user.click(
+      screen.getByRole('button', { name: 'Remove missing (unavailable)' }),
+    );
+    expect(onChange).toHaveBeenCalledWith(['skills/public/summary']);
+  });
+
+  it('keeps the built-in tags when no selected reference is unavailable', () => {
+    render(
+      field({
+        value: ['skills/public/summary'],
+        displayNames: { 'skills/public/summary': 'Summary' },
+        unavailableValues: ['skills/public/report'],
+      }),
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- asserting a CSS class on the role-less tag root
+    const summaryTag = screen.getByText('Summary').parentElement;
+    expect(summaryTag?.className).not.toMatch(/unavailableTag/);
+  });
+
   it('makes every action inert while submitting', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

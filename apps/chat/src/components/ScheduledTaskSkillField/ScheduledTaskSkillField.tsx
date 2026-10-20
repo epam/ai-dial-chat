@@ -14,7 +14,10 @@ import { useScheduledTaskSkillDisplayNames } from '../../hooks/scheduled-tasks/u
 
 /** App skills and translation adapter for the reusable controlled field. */
 const ScheduledTaskSkillField: FC<
-  Omit<SkillSelectorFieldProps, 'labels' | 'displayNames' | 'skills'> & {
+  Omit<
+    SkillSelectorFieldProps,
+    'labels' | 'displayNames' | 'unavailableValues' | 'skills'
+  > & {
     fieldLabel: string;
   }
 > = ({ fieldLabel, ...props }) => {
@@ -29,7 +32,9 @@ const ScheduledTaskSkillField: FC<
     );
     return [...entries.values()];
   }, [skills, sharedWithMe, publicSkills]);
-  const names = useScheduledTaskSkillDisplayNames(props.value);
+  const { names, unavailableUrls } = useScheduledTaskSkillDisplayNames(
+    props.value,
+  );
   const displayNames = Object.fromEntries(
     props.value.map((url, index) => [url, names[index]]),
   );
@@ -49,6 +54,7 @@ const ScheduledTaskSkillField: FC<
     <SkillSelectorField
       {...props}
       displayNames={displayNames}
+      unavailableValues={unavailableUrls}
       labels={labels}
       skills={options}
     />

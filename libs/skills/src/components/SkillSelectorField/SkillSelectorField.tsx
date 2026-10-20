@@ -7,10 +7,19 @@ import {
 import {
   DIAL_ICON_SIZE,
   Highlight,
+  MultiSelectTags,
   Select,
   Tooltip,
+  type SelectOption,
 } from '@epam/ai-dial-ui-kit';
-import { useId, useLayoutEffect, useRef, useState, type FC } from 'react';
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FC,
+  type MouseEvent,
+} from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type {
   SkillSelectorFieldProps,
@@ -19,6 +28,7 @@ import type {
 import styles from './SkillSelectorField.module.scss';
 
 const EMPTY_SKILLS: SkillSelectorOption[] = [];
+const EMPTY_VALUES: string[] = [];
 const DEFAULT_UNAVAILABLE_TOOLTIP_LABEL =
   'Selected model does not support skills. Select a different model to use a skill.';
 
@@ -27,6 +37,7 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
   value,
   onChange,
   displayNames,
+  unavailableValues = EMPTY_VALUES,
   skills = EMPTY_SKILLS,
   isSkillsSupported,
   isDisabled = false,
@@ -64,6 +75,30 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
     icon: <DeploymentIcon size={DIAL_ICON_SIZE.SM} initialsName={item.name} />,
     disabled: !isSkillsSupported,
   }));
+  const unavailable = new Set(
+    unavailableValues.filter((url) => value.includes(url)),
+  );
+  /* The kit's tags take one class for every tag, so each tag renders through
+   * its own MultiSelectTags to mark only the unavailable ones. */
+  const renderTags = (
+    tagOptions: SelectOption[],
+    selectedValues: string[],
+    handleRemoveTag: (
+      event: MouseEvent<HTMLButtonElement>,
+      val: string,
+    ) => void,
+  ) =>
+    selectedValues.map((selected) => (
+      <MultiSelectTags
+        key={selected}
+        options={tagOptions}
+        selectedValues={[selected]}
+        handleRemoveTag={handleRemoveTag}
+        tagClassName={
+          unavailable.has(selected) ? styles.unavailableTag : undefined
+        }
+      />
+    ));
   const cssVars = {
     ...buildCssVars({
       '--ssf-text': fieldStyles?.colors?.text,
@@ -117,6 +152,9 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
                 onChange(Array.isArray(nextValue) ? nextValue : [nextValue]);
             }}
             options={options}
+            customMultiSelectTagsRenderer={
+              unavailable.size > 0 ? renderTags : undefined
+            }
             placeholder={labels.placeholder}
             labelProps={{ label: labels.fieldLabel }}
             error={error}

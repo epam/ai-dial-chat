@@ -462,6 +462,7 @@ export enum ScheduledTasksI18nKeys {
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
   CreateSkillLabel = 'scheduledTasks.create.skillLabel',
   CreateSkillPlaceholder = 'scheduledTasks.create.skillPlaceholder',
+  CreateSkillUnavailableLabel = 'scheduledTasks.create.skillUnavailableLabel',
   CreateInstructionsOrSkillRequired = 'scheduledTasks.create.instructionsOrSkillRequired',
   CreateSubmittingLabel = 'scheduledTasks.create.submittingLabel',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',

@@ -12,6 +12,7 @@ export const ScheduledTaskConfigurationSection: FC<
 > = ({
   skillLabel,
   skillDisplayNames,
+  unavailableSkillIndexes,
   instructionsLabel,
   instructionsMarkdown,
   renderInstructions,
@@ -32,7 +33,14 @@ export const ScheduledTaskConfigurationSection: FC<
         </span>
         <p className="break-all whitespace-normal">
           {skillDisplayNames?.map((name, index) => (
-            <span className="block" key={`${index}:${name}`}>
+            <span
+              className={mergeClasses(
+                'block',
+                unavailableSkillIndexes?.includes(index) &&
+                  styles.unavailableSkill,
+              )}
+              key={`${index}:${name}`}
+            >
               {name}
             </span>
           ))}

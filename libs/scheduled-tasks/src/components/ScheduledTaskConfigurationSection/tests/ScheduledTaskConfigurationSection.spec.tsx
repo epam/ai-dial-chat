@@ -62,4 +62,21 @@ describe('ScheduledTaskConfigurationSection', () => {
     expect(screen.queryByText('Instructions')).toBeNull();
     expect(screen.queryByRole('link')).toBeNull();
   });
+
+  it('renders only the unavailable skill names in the error style', () => {
+    render(
+      <ScheduledTaskConfigurationSection
+        skillLabel="Skill"
+        skillDisplayNames={['Report', 'deleted (unavailable)']}
+        unavailableSkillIndexes={[1]}
+        instructionsLabel="Instructions"
+      />,
+    );
+    expect(screen.getByText('deleted (unavailable)').className).toMatch(
+      /unavailableSkill/,
+    );
+    expect(screen.getByText('Report').className).not.toMatch(
+      /unavailableSkill/,
+    );
+  });
 });

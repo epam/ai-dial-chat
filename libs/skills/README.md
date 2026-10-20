@@ -64,7 +64,11 @@ import '@epam/ai-dial-skills/styles.css';
 
 Controlled array field for forms whose selected skills belong to the host
 draft. It renders the UI kit's multiple `Select` with every skill the host
-passes as a checkbox option and the built-in tags for selected values. There are
+passes as a checkbox option and the built-in tags for selected values. A
+selected reference listed in `unavailableValues` (a skill the host could not
+resolve — deleted or unreadable) keeps its removable tag but renders it in the
+error color (`styles.colors.error`, falling back to `--text-error`); with no
+such reference the kit's tags render unchanged. There are
 no favorites, no Browse action and no catalog dialog. The kit shows the search
 input only for more than eight options. A missing display name falls back to the
 full reference. Adding requires explicit `isSkillsSupported`; unsupported
@@ -626,7 +630,8 @@ Write host overrides with CSS logical properties (`margin-inline-start`,
 
 `SkillSelectorField` accepts `value: string[]`,
 `onChange: (value: string[]) => void`, and optional `displayNames` keyed by
-reference. The host supplies `labels.fieldLabel` as the Select's accessible
-name. Unavailable metadata falls back to the URL. Unsupported models disable
+reference, plus optional `unavailableValues` naming selected references whose
+tags render in the error color. The host supplies `labels.fieldLabel` as the
+Select's accessible name. A reference with no display name falls back to the URL. Unsupported models disable
 adding but allow removal; submission makes the Select inert and disables all
 actions. `SkillSelectorFieldProps` is the single exported field contract.

@@ -14,6 +14,8 @@ export interface SkillsContextType {
   publicSkills: SkillMetadataItemDto[];
   /** Skills other users shared with the caller. */
   sharedWithMe?: SkillMetadataItemDto[];
+  /** Whether the Skills feature is enabled; when false the listings are always empty. */
+  isEnabled: boolean;
   /** True until the aggregate listing has settled. */
   isLoading: boolean;
   /** Rejection reason of the most recent failed listing, or `null`. */
@@ -48,12 +50,13 @@ export const SkillsProvider = ({ children }: { children: ReactNode }) => {
       skills: state.skills,
       sharedWithMe: state.sharedWithMe,
       publicSkills: state.publicSkills,
+      isEnabled: enabled,
       isLoading: state.isLoading,
       error: state.error,
       refetchSkills: state.refetch,
       mergeSharedSkill: state.mergeSharedSkill,
     }),
-    [state],
+    [state, enabled],
   );
 
   return (

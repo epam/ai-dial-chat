@@ -815,6 +815,7 @@
       "errorNotification": "Failed to create the scheduled task",
       "skillLabel": "Skills",
       "skillPlaceholder": "Choose skills",
+      "skillUnavailableLabel": "{{name}} (unavailable)",
       "instructionsOrSkillRequired": "Choose a skill or write instructions."
     },
     "detail": {

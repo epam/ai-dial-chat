@@ -158,6 +158,7 @@ const Providers = ({ children }: { children: ReactNode }) => (
       skills: [],
       publicSkills: [],
       sharedWithMe: [],
+      isEnabled: true,
       isLoading: false,
       error: null,
       refetchSkills,

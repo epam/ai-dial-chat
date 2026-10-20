@@ -42,6 +42,24 @@ describe('ScheduledTaskDetailsSummary', () => {
     expect(screen.queryByText('Skills')).toBeNull();
   });
 
+  it('renders only the unavailable skill names in the error style', () => {
+    render(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        skillLabel="Skills"
+        instructionsLabel="Instructions"
+        skillDisplayNames={['Report', 'deleted (unavailable)']}
+        unavailableSkillIndexes={[1]}
+      />,
+    );
+    expect(screen.getByText('deleted (unavailable)').className).toMatch(
+      /unavailableSkill/,
+    );
+    expect(screen.getByText('Report').className).not.toMatch(
+      /unavailableSkill/,
+    );
+  });
+
   it.each(['Resolved skill', 'skills/public/deleted'])(
     'renders Skill between Model and Instructions: %s',
     (skillDisplayNames) => {
