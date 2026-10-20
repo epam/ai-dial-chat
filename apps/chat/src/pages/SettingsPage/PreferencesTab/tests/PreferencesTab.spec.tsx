@@ -50,12 +50,16 @@ const appConfigMock = vi.hoisted(() => ({
   defaultDeploymentPinned: true,
   status: 'ready' as string,
   activeEventId: null as string | null,
+  celebrationsEnabledByDefault: true,
 }));
 
 vi.mock('../../../../context/AppConfigContext', () => ({
   useAppConfig: () => ({
     status: appConfigMock.status,
-    config: { activeEventId: appConfigMock.activeEventId },
+    config: {
+      activeEventId: appConfigMock.activeEventId,
+      celebrationsEnabledByDefault: appConfigMock.celebrationsEnabledByDefault,
+    },
   }),
   useFeatureFlag: (key: string) =>
     key === 'defaultDeploymentPinned'
@@ -172,6 +176,7 @@ describe('PreferencesTab', () => {
     appConfigMock.defaultDeploymentPinned = true;
     appConfigMock.status = UserConfigStatus.Ready;
     appConfigMock.activeEventId = null;
+    appConfigMock.celebrationsEnabledByDefault = true;
     deploymentsMock.isLoading = false;
     localStorage.clear();
     languageMock.supported = [{ code: 'en', nativeName: 'English' }];
@@ -325,19 +330,56 @@ describe('PreferencesTab', () => {
       ).toBeNull();
     });
 
-    it('is off by default once an event is configured', () => {
+    it.each([true, false])(
+      'follows the operator default %s while the user saved no choice',
+      (isDefaultOn) => {
+        appConfigMock.activeEventId = 'halloween';
+        appConfigMock.celebrationsEnabledByDefault = isDefaultOn;
+
+        render(<PreferencesTab />);
+
+        expect((getCelebrationSwitch() as HTMLInputElement).checked).toBe(
+          isDefaultOn,
+        );
+        expect(
+          screen.getByText(SettingsI18nKeys.CelebrationsDescription),
+        ).toBeTruthy();
+      },
+    );
+
+    it.each([
+      ['false', true, false],
+      ['true', false, true],
+    ])(
+      'shows the stored choice %s over the operator default %s',
+      (stored, isDefaultOn, expected) => {
+        appConfigMock.activeEventId = 'halloween';
+        appConfigMock.celebrationsEnabledByDefault = isDefaultOn;
+        localStorage.setItem(StorageKey.CelebrationsEnabled, stored);
+
+        render(<PreferencesTab />);
+
+        expect((getCelebrationSwitch() as HTMLInputElement).checked).toBe(
+          expected,
+        );
+      },
+    );
+
+    it('stores the opt-out as soon as the switch is turned off', async () => {
       appConfigMock.activeEventId = 'halloween';
 
       render(<PreferencesTab />);
+      await userEvent.click(getCelebrationSwitch());
 
       expect((getCelebrationSwitch() as HTMLInputElement).checked).toBe(false);
-      expect(
-        screen.getByText(SettingsI18nKeys.CelebrationsDescription),
-      ).toBeTruthy();
+      expect(localStorage.getItem(StorageKey.CelebrationsEnabled)).toBe(
+        'false',
+      );
     });
 
     it('stores the opt-in as soon as the switch is turned on', async () => {
       appConfigMock.activeEventId = 'halloween';
+      appConfigMock.celebrationsEnabledByDefault = false;
 
       render(<PreferencesTab />);
       await userEvent.click(getCelebrationSwitch());

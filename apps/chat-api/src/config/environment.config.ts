@@ -930,6 +930,21 @@ export class EnvironmentVariables {
   })
   UI_EVENT?: string;
 
+  /*
+   * Operator default for the user's seasonal-celebrations switch; a choice the
+   * user saved overrides it. Cosmetic and on by default, so only an explicit
+   * false/0/no turns it off and a typo keeps the default.
+   */
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).trim().toLowerCase());
+  })
+  @IsBoolean()
+  UI_EVENT_ENABLED_BY_DEFAULT?: boolean = true;
+
   @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];

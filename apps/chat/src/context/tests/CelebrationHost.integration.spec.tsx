@@ -77,7 +77,7 @@ const setActiveEvent = (activeEventId: string | null) => {
   vi.mocked(useAppConfig).mockReturnValue({
     status: UserConfigStatus.Ready,
     features: {},
-    config: { activeEventId },
+    config: { activeEventId, celebrationsEnabledByDefault: true },
   } as ReturnType<typeof useAppConfig>);
 };
 

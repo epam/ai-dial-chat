@@ -111,6 +111,7 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
   usageLimitsWarningThresholdPercent:
     DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
+  celebrationsEnabledByDefault: true,
 });
 
 /**
@@ -286,6 +287,14 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
         typeof resolved === 'number'
           ? resolved
           : DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
+      ),
+    ],
+    [
+      'ui.celebrationsEnabledByDefault',
+      /* On unless explicitly off, matching the env default. */
+      defineMapping(
+        'celebrationsEnabledByDefault',
+        ({ resolved }) => resolved !== false,
       ),
     ],
   ]);
