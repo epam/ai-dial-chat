@@ -127,6 +127,7 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
         codeClassName={codeClassName}
         languageLabelClassName={codeTitleClassName}
         hideDownload
+        hasContentTopPadding={false}
         titleSlot={
           hasLanguageChoice ? (
             <InlineSelect
@@ -213,6 +214,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           codeClassName={codeClassName}
           languageLabelClassName={codeTitleClassName}
           hideDownload
+          hasContentTopPadding={false}
         />
       )}
 
@@ -238,6 +240,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               codeClassName={codeClassName}
               languageLabelClassName={codeTitleClassName}
               hideDownload
+              hasContentTopPadding={false}
               titleSlot={
                 hasEndpointChoice ? (
                   <InlineSelect
@@ -299,6 +302,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
             copiedLabel={copiedStatusLabel}
             codeClassName={codeClassName}
             hideDownload
+            hasContentTopPadding={false}
           />
         </section>
       )}
@@ -321,6 +325,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
             copiedLabel={copiedStatusLabel}
             codeClassName={codeClassName}
             hideDownload
+            hasContentTopPadding={false}
           />
         </section>
       )}

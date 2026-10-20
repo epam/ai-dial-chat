@@ -370,7 +370,6 @@ const SkillEditorPage: FC = () => {
       uploadFilesLabel: t(SkillEditorI18nKeys.UploadDialogTitle),
       uploadArchiveLabel: t(SkillEditorI18nKeys.UploadArchive),
       openFileSystemLabel: t(SkillEditorI18nKeys.OpenFileSystem),
-      addSiblingLabel: t(SkillEditorI18nKeys.AddSibling),
       deleteLabel: t(ButtonsI18nKeys.Delete),
       newFolderDefaultName: t(SkillEditorI18nKeys.NewFolderDefaultName),
       folderNameRequiredError: t(SkillEditorI18nKeys.FolderNameRequired),

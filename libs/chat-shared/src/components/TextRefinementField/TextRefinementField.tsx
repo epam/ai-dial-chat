@@ -39,6 +39,8 @@ export interface TextRefinementFieldProps {
   feedbackClassName?: string;
   /** Class applied to the error message, after `feedbackClassName`. */
   errorClassName?: string;
+  /** Caption shown at the end of the row below the control, beside the refinement status — e.g. a character counter. */
+  caption?: string;
   /** The refinable control, whose id must equal `fieldId`. */
   children: ReactNode;
 }
@@ -55,17 +57,29 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
   disabled,
   feedbackClassName,
   errorClassName,
+  caption,
   children,
 }) => {
   const controls = useRef<HTMLDivElement>(null);
-  if (!isEnabled) return <>{children}</>;
+  const captionText = caption && (
+    <CaptionText text={caption} className="ms-auto shrink-0 text-end" />
+  );
+  if (!isEnabled) {
+    if (!captionText) return <>{children}</>;
+    return (
+      <div className="flex min-w-0 flex-col gap-1">
+        {children}
+        {captionText}
+      </div>
+    );
+  }
   const error = refinement.state === TextRefinementState.Error;
   const message = {
     [TextRefinementState.Idle]: '',
     [TextRefinementState.Pending]:
       labels?.refinePendingAriaLabel ?? 'Refining text',
     [TextRefinementState.Success]:
-      labels?.refineSuccessAriaLabel ?? 'Text refined. Undo is available.',
+      labels?.refineSuccessAriaLabel ?? 'Text refined',
     [TextRefinementState.Restored]:
       labels?.refineUndoAriaLabel ?? 'Original text restored.',
     [TextRefinementState.Unchanged]:
@@ -129,9 +143,19 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
         </div>
       </div>
       <div aria-busy={refinement.isPending}>{children}</div>
-      {/* The live region stays mounted: CaptionText renders nothing for empty text. */}
-      <div role="status" aria-live="polite">
-        <CaptionText text={message} className={feedbackClassName} />
+      <div className="flex min-w-0 items-start gap-3">
+        {/* The live region stays mounted: CaptionText renders nothing for empty text. */}
+        <div role="status" aria-live="polite" className="min-w-0 flex-1">
+          {/* The Refine spinner already shows pending; only announce it. */}
+          <CaptionText
+            text={message}
+            className={mergeClasses(
+              feedbackClassName,
+              refinement.isPending && 'sr-only',
+            )}
+          />
+        </div>
+        {captionText}
       </div>
       {error && (
         <ErrorText

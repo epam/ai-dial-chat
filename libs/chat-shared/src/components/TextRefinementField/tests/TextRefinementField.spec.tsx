@@ -74,9 +74,7 @@ describe('TextRefinementField', () => {
     });
     renderField(refinement);
 
-    expect(screen.getByRole('status').textContent).toBe(
-      'Text refined. Undo is available.',
-    );
+    expect(screen.getByRole('status').textContent).toBe('Text refined');
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(refinement.undo).toHaveBeenCalledOnce();
     /* Focus has no semantic query. */
@@ -84,6 +82,51 @@ describe('TextRefinementField', () => {
     expect(document.activeElement).toBe(
       screen.getByRole('button', { name: 'Refine with AI' }),
     );
+  });
+
+  it('announces the pending state without showing it visually', () => {
+    renderField(
+      makeRefinement({ state: TextRefinementState.Pending, isPending: true }),
+    );
+
+    const status = within(screen.getByRole('status'));
+    expect(status.getByText('Refining text').className).toContain('sr-only');
+  });
+
+  it('renders the caption outside the status region when refinement is enabled', () => {
+    render(
+      <TextRefinementField
+        isEnabled
+        fieldId="description"
+        label="Description"
+        refinement={makeRefinement({ state: TextRefinementState.Success })}
+        disabled={false}
+        caption="0/500"
+      >
+        <textarea id="description" />
+      </TextRefinementField>,
+    );
+
+    expect(screen.getByText('0/500')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('Text refined');
+  });
+
+  it('renders the caption when the host disables refinement', () => {
+    render(
+      <TextRefinementField
+        isEnabled={false}
+        fieldId="description"
+        label="Description"
+        refinement={makeRefinement()}
+        disabled={false}
+        caption="0/500"
+      >
+        <textarea id="description" />
+      </TextRefinementField>,
+    );
+
+    expect(screen.getByText('0/500')).toBeTruthy();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('shows the error as an alert that describes the group', () => {

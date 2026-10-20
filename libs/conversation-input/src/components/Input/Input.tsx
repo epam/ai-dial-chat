@@ -837,7 +837,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
               key="caret-marker"
               ref={caretMarkerRef}
               aria-hidden
-              className="inline-block h-[1lh] w-0 align-text-top"
+              className="inline-block h-lh w-0 align-text-top"
             />
           ),
         });
@@ -1022,7 +1022,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                * caret marker's box. See `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3b
                * (multi-skill-message-mentions).
                */}
-              <span aria-hidden className="inline-block h-[1lh] w-0" />
+              <span aria-hidden className="inline-block h-lh w-0" />
             </Dropdown>
           </div>
         )}
@@ -1227,7 +1227,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
           />
         )}
         {voiceError && (
-          <ErrorText text={voiceError} className="min-w-0 px-1 break-words" />
+          <ErrorText
+            text={voiceError}
+            className="min-w-0 px-1 wrap-break-word"
+          />
         )}
         {isVoiceActive && (
           <VoiceBar
@@ -1311,7 +1314,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                       }
                       aria-label={micLabel}
                       tooltipProps={{ tooltip: micLabel }}
-                      className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
+                      className="size-[40px] shrink-0 mobile:min-h-11 mobile:min-w-11"
                       onClick={() =>
                         startRecording(VoiceRecordingMode.Dictation)
                       }

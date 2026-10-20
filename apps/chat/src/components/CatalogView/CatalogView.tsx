@@ -694,6 +694,7 @@ const CatalogView: FC<Props> = ({
           sortNewestLabel: t(CatalogI18nKeys.SortNewest),
           sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
           featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
+          noFolderLabel: t(CatalogI18nKeys.NoFolderLabel),
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
@@ -726,6 +727,7 @@ const CatalogView: FC<Props> = ({
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
           tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
+          emptyTabLabel: t(BasicI18nKeys.Empty),
           contentFileSelectorAriaLabel: t(
             CatalogI18nKeys.DetailsContentFileSelectorAriaLabel,
           ),

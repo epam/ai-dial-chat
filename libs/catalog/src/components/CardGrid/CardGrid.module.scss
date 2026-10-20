@@ -6,22 +6,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .starBtn {
-      transition: none !important;
-    }
-
     .emptyStarHidden {
       transition: none !important;
-    }
-  }
-}
-
-.starBtn {
-  transition: transform 150ms ease !important;
-
-  @media (hover: hover) {
-    &:hover {
-      transform: scale(1.15) !important;
     }
   }
 }

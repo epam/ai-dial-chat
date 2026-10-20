@@ -28,6 +28,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
     removeFromFavoritesAriaLabel,
     selectedItemId,
     credentialsBadgeLoggedOutLabel,
+    noFolderLabel,
     isReadonly,
     featuredChipStyle,
     markdownLabels,
@@ -65,6 +66,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
                   credentialsBadgeLoggedOutLabel={
                     credentialsBadgeLoggedOutLabel
                   }
+                  noFolderLabel={noFolderLabel}
                   isReadonly={isReadonly}
                   styles={{ colors: { featuredChipStyle } }}
                   markdownLabels={markdownLabels}

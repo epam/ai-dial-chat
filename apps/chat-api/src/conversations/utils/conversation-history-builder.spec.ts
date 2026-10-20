@@ -338,6 +338,56 @@ describe('buildConversationHistory', () => {
       expect(assistantMessageIndex).toBe(1);
     });
 
+    it('keeps the original timestamp of the first message it replaces', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'old question' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Edit,
+        conv,
+        'new question',
+        0,
+        undefined,
+        'gpt-4o',
+      );
+
+      expect(conversation.messages[0].timestamp).toBe(
+        '2026-01-01T00:00:00.000Z',
+      );
+      expect(conversation.messages[0].content).toBe('new question');
+      expect(conversation.messages[1].timestamp).not.toBe(
+        '2026-01-01T00:00:00.000Z',
+      );
+    });
+
+    it('keeps the original timestamp of a later user message it replaces', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'q1' },
+        { role: ConversationMessageRole.Assistant, content: 'a1' },
+        { role: ConversationMessageRole.User, content: 'q2' },
+        { role: ConversationMessageRole.Assistant, content: 'a2' },
+      ]);
+      conv.messages[2].timestamp = '2026-01-02T00:00:00.000Z';
+
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Edit,
+        conv,
+        'q2 edited',
+        2,
+        undefined,
+        'gpt-4o',
+      );
+
+      expect(conversation.messages[0]).toEqual(conv.messages[0]);
+      expect(conversation.messages[1]).toEqual(conv.messages[1]);
+      expect(conversation.messages[2].timestamp).toBe(
+        '2026-01-02T00:00:00.000Z',
+      );
+      expect(conversation.messages[2].content).toBe('q2 edited');
+    });
+
     it('throws BadRequestException when messageIndex is missing', () => {
       const conv = makeConversation([]);
       expect(() =>

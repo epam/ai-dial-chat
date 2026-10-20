@@ -3,7 +3,7 @@ import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import type { Conversation, ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
@@ -21,6 +21,7 @@ const CONVERSATION_ID = 'conversations/bucket/gpt-4o__Hello';
 const routerMocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   conversationId: 'conversations/bucket/gpt-4o__Hello',
+  state: null as unknown,
 }));
 
 /*
@@ -49,7 +50,7 @@ vi.mock('react-router', () => ({
   useNavigate: () => routerMocks.navigate,
   useParams: () => ({ '*': routerMocks.conversationId }),
   useLocation: () => ({
-    state: null,
+    state: routerMocks.state,
     pathname: `/conversations/${routerMocks.conversationId}`,
     search: '',
   }),
@@ -68,10 +69,12 @@ const MockConversationView = ({
   toolsMenuItems = [],
   onToolToggle,
   inputContentRevision,
+  topContent,
 }: {
   toolsMenuItems?: ToolMenuItem[];
   onToolToggle?: (id: string) => void;
   inputContentRevision?: number;
+  topContent?: ReactNode;
 }) => {
   useState(() =>
     overlayContentMocks.mountedRevisions.push(inputContentRevision ?? 0),
@@ -79,6 +82,7 @@ const MockConversationView = ({
   return (
     <div>
       conversation-view
+      {topContent}
       {toolsMenuItems.map((item) => (
         <button
           key={item.id}
@@ -273,6 +277,7 @@ const notFoundError = { response: { status: 404, json: vi.fn() } };
 beforeEach(() => {
   vi.clearAllMocks();
   routerMocks.conversationId = CONVERSATION_ID;
+  routerMocks.state = null;
   handlersMocks.lastParams = undefined;
   overlayContentMocks.setOverlayInputContent = undefined;
   overlayContentMocks.mountedRevisions = [];
@@ -476,6 +481,71 @@ describe('ConversationPage — opening another conversation mid-load', () => {
     expect(routerMocks.navigate).not.toHaveBeenCalledWith(ROUTES.Root);
     expect(removeConversationFromList).not.toHaveBeenCalled();
     expect(showNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationPage — conversation start label', () => {
+  const STARTED_AT = '2026-09-20T07:15:00.000Z';
+  const OTHER_ID = 'conversations/bucket/claude__Small';
+
+  const makeStarted = (id = CONVERSATION_ID): Conversation =>
+    ({
+      ...makeConversation(),
+      id,
+      messages: [{ role: 'user', content: 'hi', timestamp: STARTED_AT }],
+    }) as Conversation;
+
+  const getStartLabels = () => screen.queryAllByRole('time');
+
+  const openConversation = (
+    rerender: (ui: ReactElement) => void,
+    id: string,
+  ) => {
+    routerMocks.conversationId = id;
+    rerender(<ConversationPage />);
+  };
+
+  beforeEach(() => {
+    mockGetConversation.mockImplementation(
+      async (path: string) =>
+        makeStarted(
+          path.includes('claude') ? OTHER_ID : CONVERSATION_ID,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ) as any,
+    );
+  });
+
+  it('renders exactly one start label for an existing conversation', async () => {
+    render(<ConversationPage />);
+
+    await waitFor(() => expect(getStartLabels()).toHaveLength(1));
+    expect(getStartLabels()[0].getAttribute('datetime')).toBe(STARTED_AT);
+  });
+
+  it('hides the start label for the conversation this page just created', async () => {
+    routerMocks.state = { conversation: makeStarted() };
+    const { rerender } = render(<ConversationPage />);
+
+    expect(getStartLabels()).toHaveLength(0);
+
+    // The page clears router state right after mount.
+    routerMocks.state = null;
+    rerender(<ConversationPage />);
+    expect(await screen.findByText('conversation-view')).toBeTruthy();
+
+    expect(getStartLabels()).toHaveLength(0);
+  });
+
+  it('shows the start label after leaving the just-created conversation and returning', async () => {
+    routerMocks.state = { conversation: makeStarted() };
+    const { rerender } = render(<ConversationPage />);
+    expect(getStartLabels()).toHaveLength(0);
+
+    routerMocks.state = null;
+    openConversation(rerender, OTHER_ID);
+    openConversation(rerender, CONVERSATION_ID);
+
+    await waitFor(() => expect(getStartLabels()).toHaveLength(1));
   });
 });
 

@@ -14,6 +14,8 @@ export interface CardGridTitles {
   removeFromFavoritesAriaLabel?: string;
   /** Accessible label for the logged-out warning icon on card avatars, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
+  /** Text shown in a card's footer when the item is in no folder. Default: `'No folder'`. */
+  noFolderLabel?: string;
 }
 
 /** Props for `CardGrid`. */

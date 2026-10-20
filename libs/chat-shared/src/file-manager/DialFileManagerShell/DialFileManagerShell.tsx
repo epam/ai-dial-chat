@@ -639,7 +639,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           {overlayLabel != null && (
             <div
               aria-live="polite"
-              className="absolute inset-0 z-[52] flex items-center justify-center bg-backdrop desktop:p-4"
+              className="absolute inset-0 z-52 flex items-center justify-center bg-backdrop desktop:p-4"
             >
               <Spinner size={32} fullWidth={false} ariaLabel={overlayLabel} />
             </div>
@@ -647,7 +647,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         </div>
       )}
 
-      <div className="fixed end-4 bottom-4 z-[70]">
+      <div className="fixed inset-e-4 bottom-4 z-70">
         <TransferQueue
           title={labels.getUploadQueueTitle(uploadQueueItems.length)}
           items={uploadQueueItems}

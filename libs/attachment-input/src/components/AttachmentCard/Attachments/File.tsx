@@ -260,7 +260,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         </div>
       )}
 
-      <div className="absolute end-1 top-1 flex">
+      <div className="absolute inset-e-1 top-1 flex">
         {canDownload && (
           <DownloadAction
             ariaLabel={downloadLabel}

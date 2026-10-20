@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.16.0-dev.13 or later with the public `/editors` entry.
+Requires UI Kit ^0.16.0-dev.16 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -198,7 +198,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
       isUnread: true,
     },
@@ -307,7 +308,11 @@ state, pagination callbacks, and labels are all supplied by the host; a run row
 renders as clickable only when its item carries a `conversationId` and
 `onRunClick` is supplied. An `Error` row whose item carries `errorText` reveals
 that text in a tooltip on its status icon (hover or focus) and appends it to the
-row's accessible name; `errorText` is ignored for every other status.
+row's accessible name; `errorText` is ignored for every other status. Set
+`isUnavailable` when the history exists but cannot be shown to the viewer (for
+example a task shared by its owner): `labels.unavailableLabel` then replaces the
+runs, the error message, the retry action and the footer — mirroring
+`ScheduledTaskConversationDetailsSection`'s `state: 'unavailable'`.
 
 ```tsx
 import {
@@ -321,7 +326,8 @@ import {
     {
       id: 'run_1',
       status: ScheduledTaskRunStatus.Success,
-      timestampLabel: 'today at 9:01 AM (99s)',
+      timestampLabel: 'today at 9:01 AM',
+      durationLabel: '(99s)',
       conversationId: 'conversations/bucket/.scheduler/sched_123/run_1',
     },
   ]}
@@ -329,6 +335,7 @@ import {
   isLoadingMore={false}
   error={null}
   onRetry={refetchRuns}
+  isUnavailable={false}
   hasMore={true}
   onLoadMore={loadMoreRuns}
   currentRunId="run_1"
@@ -338,6 +345,7 @@ import {
     emptyLabel: 'No runs yet',
     errorLabel: 'Failed to load history',
     retryLabel: 'Retry',
+    unavailableLabel: 'History is unavailable',
     showMoreLabel: 'Show more',
     runStatusLabels: {
       [ScheduledTaskRunStatus.Success]: 'Succeeded',
@@ -594,7 +602,7 @@ Optional label overrides (English defaults):
 | `refineUndoLabel`          | Undo                                          |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
-| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 

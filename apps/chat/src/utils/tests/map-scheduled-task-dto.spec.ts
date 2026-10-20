@@ -26,13 +26,21 @@ const buildDto = (overrides?: Partial<ScheduledTaskDto>): ScheduledTaskDto => ({
   ...overrides,
 });
 
+const mockBrowserTimeZone = (timeZone: string) => {
+  const options = new Intl.DateTimeFormat().resolvedOptions();
+  vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+    ...options,
+    timeZone,
+  });
+};
+
 describe('mapScheduledTaskDtoToItem', () => {
   beforeEach(() => {
-    vi.stubEnv('TZ', 'UTC');
+    mockBrowserTimeZone('UTC');
   });
 
   afterEach(() => {
-    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it('formats a date trigger via the once translation key with a locale-formatted date', () => {
@@ -78,6 +86,7 @@ describe('mapScheduledTaskDtoToItem', () => {
         },
       }),
       fakeT,
+      'en',
     );
 
     expect(result.scheduleLabel).toBe(
@@ -224,26 +233,37 @@ describe('mapScheduledTaskDtoToItem', () => {
 });
 
 describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion', () => {
+  beforeEach(() => {
+    mockBrowserTimeZone('Europe/Warsaw');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
+  });
+
   afterEach(() => {
-    vi.unstubAllEnvs();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('shows the local equivalent of a stored UTC daily time', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: local = UTC + 2h
+  it.each([
+    ['2026-08-05T12:00:00.000Z', '09:00'],
+    ['2026-01-05T12:00:00.000Z', '08:00'],
+  ])(
+    'shows the local equivalent of a stored UTC daily time on %s',
+    (referenceDate, time) => {
+      vi.setSystemTime(new Date(referenceDate));
 
-    const result = mapScheduledTaskDtoToItem(
-      buildDto({ trigger: { cron: { fields: { hour: '7', minute: '0' } } } }),
-      fakeT,
-    );
+      const result = mapScheduledTaskDtoToItem(
+        buildDto({ trigger: { cron: { fields: { hour: '7', minute: '0' } } } }),
+        fakeT,
+      );
 
-    expect(result.scheduleLabel).toBe(
-      `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '09:00' })}`,
-    );
-  });
+      expect(result.scheduleLabel).toBe(
+        `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time })}`,
+      );
+    },
+  );
 
-  it.skip('shows the local weekday when the stored UTC day rolls back a day', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: local = UTC + 2h
-
+  it('shows the local weekday when the stored UTC day rolls forward a day', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({
         trigger: {
@@ -251,6 +271,7 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
         },
       }),
       fakeT,
+      'en',
     );
 
     expect(result.scheduleLabel).toBe(
@@ -258,9 +279,7 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
     );
   });
 
-  it('leaves a non-numeric day_of_week untouched', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw');
-
+  it('formats a named weekday with its local time', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({
         trigger: {
@@ -268,6 +287,7 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
         },
       }),
       fakeT,
+      'en',
     );
 
     expect(result.scheduleLabel).toBe(
@@ -276,10 +296,6 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
   });
 
   it('shows the local day-of-month when the stored UTC day rolls forward a day', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: local = UTC + 2h
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
-
     const result = mapScheduledTaskDtoToItem(
       buildDto({
         trigger: {
@@ -292,8 +308,6 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
     expect(result.scheduleLabel).toBe(
       `${ScheduledTasksI18nKeys.CardScheduleMonthlyAt}:${JSON.stringify({ day: '15', time: '01:00' })}`, // local day 15
     );
-
-    vi.useRealTimers();
   });
 });
 

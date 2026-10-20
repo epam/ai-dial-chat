@@ -144,7 +144,7 @@ const NewYearPenguinStar: FC = () => {
     return (
       <div
         key="stationary"
-        className="pointer-events-none absolute start-1/2 bottom-8 h-32 w-52 -translate-x-1/2 rtl:translate-x-1/2"
+        className="pointer-events-none absolute inset-s-1/2 bottom-8 h-32 w-52 -translate-x-1/2 rtl:translate-x-1/2"
         inert
         aria-hidden="true"
       >

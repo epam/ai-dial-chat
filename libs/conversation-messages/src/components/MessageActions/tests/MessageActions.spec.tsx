@@ -306,6 +306,44 @@ describe('MessageActions', () => {
     expect(screen.queryByRole('toolbar')).toBeNull();
   });
 
+  it('renders leading content before the action buttons', () => {
+    render(
+      <MessageActions
+        onCopy={vi.fn()}
+        leadingContent={<time dateTime="2026-10-19">3 hours ago</time>}
+      />,
+    );
+
+    const toolbar = screen.getByRole('toolbar');
+    expect(toolbar.textContent?.startsWith('3 hours ago')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+  });
+
+  it('renders trailing content after the action buttons', () => {
+    render(
+      <MessageActions
+        role={MessageRole.Assistant}
+        onCopy={vi.fn()}
+        trailingContent={<time dateTime="2026-10-19">3 hours ago</time>}
+      />,
+    );
+
+    const toolbar = screen.getByRole('toolbar');
+    expect(toolbar.textContent?.endsWith('3 hours ago')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Copy response' })).toBeTruthy();
+  });
+
+  it('renders the toolbar for leading content alone on a read-only message', () => {
+    render(
+      <MessageActions
+        leadingContent={<time dateTime="2026-10-19">3 hours ago</time>}
+      />,
+    );
+
+    expect(screen.getByRole('toolbar')).toBeTruthy();
+    expect(screen.getByText('3 hours ago')).toBeTruthy();
+  });
+
   it('merges additional className onto the wrapper element', () => {
     const { container } = render(
       <MessageActions onEdit={vi.fn()} className="my-custom-class" />,

@@ -127,6 +127,19 @@ describe('MarkdownCodeBlock', () => {
     expect(label.textContent).toBe('');
   });
 
+  /* Padding is a class on the plain <pre>; no semantic query reaches it. */
+  it('keeps the code top padding by default and drops it with hasContentTopPadding={false}', () => {
+    const { rerender } = render(<MarkdownCodeBlock language="" value="x" />);
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(screen.getByText('x').closest('pre')?.className).toBe('p-4');
+
+    rerender(
+      <MarkdownCodeBlock language="" value="x" hasContentTopPadding={false} />,
+    );
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(screen.getByText('x').closest('pre')?.className).toContain('pt-0');
+  });
+
   it('renders the copy button when isStreaming is false', () => {
     render(
       <MarkdownCodeBlock

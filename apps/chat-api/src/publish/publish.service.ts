@@ -11,6 +11,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { parseDialApplicationResource } from '../common/utils/dial-application-resource';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
@@ -30,6 +31,8 @@ import {
 import {
   getPublicationsListScope,
   getPublicTargetFolder,
+  getPublishableIconUrl,
+  getPublishedIconTargetUrl,
   getPublishedTargetUrl,
   getResourceName,
   getResourceTypePrefix,
@@ -134,15 +137,17 @@ export class PublishService {
     const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
     const resourceTypePrefix = getResourceTypePrefix(sourceUrl);
+    const targetResourceName = getVersionedTargetResourceName(
+      resourceTypePrefix,
+      getResourceName(sourceUrl),
+      version,
+    );
     const targetUrl = getPublishedTargetUrl(
       resourceTypePrefix,
       folderPath,
-      getVersionedTargetResourceName(
-        resourceTypePrefix,
-        getResourceName(sourceUrl),
-        version,
-      ),
+      targetResourceName,
     );
+    const iconUrl = await this.getApplicationIconUrl(accessToken, sourceUrl);
     const { name: entityName, version: resourceVersion } =
       splitEntityNameAndVersion(sourceUrl);
     const publicationVersion = version || resourceVersion;
@@ -162,6 +167,19 @@ export class PublishService {
           targetUrl,
           ...(publishCredentials ? { publishCredentials: true } : {}),
         },
+        ...(iconUrl != null
+          ? [
+              {
+                action: 'ADD' as const,
+                sourceUrl: iconUrl,
+                targetUrl: getPublishedIconTargetUrl(
+                  folderPath,
+                  targetResourceName,
+                  iconUrl,
+                ),
+              },
+            ]
+          : []),
       ],
       displayAuthor: author,
       rules: rules ?? [],
@@ -221,6 +239,43 @@ export class PublishService {
         : new Date().toISOString(),
       publishedBy: readPublicationDisplayAuthor(publication, author),
     };
+  }
+
+  /*
+   * Reads an application before publishing it and returns its uploaded icon
+   * file, so the icon is published alongside the app and DIAL Core rewrites
+   * the published copy's `iconUrl` to the public path (#9446). Returns
+   * `undefined` for any other resource type. Best-effort: a failed read is
+   * logged and the app is published without its icon, exactly as before this
+   * lookup existed, rather than failing the publish.
+   */
+  private async getApplicationIconUrl(
+    accessToken: string,
+    sourceUrl: string,
+  ): Promise<string | undefined> {
+    const resource = parseDialApplicationResource(sourceUrl);
+    if (resource == null) return undefined;
+
+    try {
+      const result = await this.dialClient.client.getCustomApplication(
+        resource.bucket,
+        resource.path,
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+      if (result.error != null || result.data == null) {
+        this.logger.warn(
+          `Could not read application "${sourceUrl}" before publishing (status ${result.response?.status}); publishing without its icon`,
+        );
+        return undefined;
+      }
+      return getPublishableIconUrl(result.data, resource.bucket);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to read application "${sourceUrl}" before publishing; publishing without its icon`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return undefined;
+    }
   }
 
   /**

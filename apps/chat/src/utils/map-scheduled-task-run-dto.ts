@@ -22,6 +22,17 @@ const isSameDay = (a: Date, b: Date): boolean =>
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
+/** Formats a run's duration as `(99s)`, or returns `undefined` when `durationSeconds` is absent. */
+export const formatRunDuration = (
+  durationSeconds: number | undefined,
+  t: TFunction,
+): string | undefined =>
+  durationSeconds == null
+    ? undefined
+    : t(ScheduledTasksI18nKeys.DetailHistoryDurationSuffix, {
+        seconds: durationSeconds,
+      });
+
 /**
  * Formats a run's `startTime` as "today at 9:01 AM" when it falls on the
  * current calendar day, or "Jul 17 at 9:01 AM" otherwise, then appends a
@@ -47,9 +58,8 @@ export const formatRunTimestamp = (
         time: timeLabel,
       });
 
-  if (durationSeconds == null) return dateLabel;
-
-  return `${dateLabel} ${t(ScheduledTasksI18nKeys.DetailHistoryDurationSuffix, { seconds: durationSeconds })}`;
+  const durationLabel = formatRunDuration(durationSeconds, t);
+  return durationLabel ? `${dateLabel} ${durationLabel}` : dateLabel;
 };
 
 /**
@@ -74,7 +84,8 @@ export const mapScheduledTaskRunDtoToItem = (
 ): ScheduledTaskRunItem => ({
   id: run.id,
   status: UPSTREAM_STATUS_MAP[run.status] ?? ScheduledTaskRunStatus.Missed,
-  timestampLabel: formatRunTimestamp(run.startTime, run.durationSeconds, t),
+  timestampLabel: formatRunTimestamp(run.startTime, undefined, t),
+  durationLabel: formatRunDuration(run.durationSeconds, t),
   conversationId: run.conversationId,
   isUnread:
     findMatchingConversation(run.conversationId, conversations)?.isUnread ===

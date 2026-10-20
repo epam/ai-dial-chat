@@ -561,10 +561,16 @@ export const Catalog: FC<CatalogProps> = ({
     () => ({
       noResultsTitle: emptyTitle,
       featuredLabel,
+      noFolderLabel: titles?.noFolderLabel,
       credentialsBadgeLoggedOutLabel:
         detailsTexts?.credentialsBadgeLoggedOutLabel,
     }),
-    [emptyTitle, featuredLabel, detailsTexts?.credentialsBadgeLoggedOutLabel],
+    [
+      emptyTitle,
+      featuredLabel,
+      titles?.noFolderLabel,
+      detailsTexts?.credentialsBadgeLoggedOutLabel,
+    ],
   );
 
   /*
@@ -717,7 +723,7 @@ export const Catalog: FC<CatalogProps> = ({
              whether or not it is scrolled. */
           <div
             ref={tabsRowRef}
-            className="mx-4 min-w-0 shrink-0 [scrollbar-width:none] overflow-x-auto desktop:mx-8"
+            className="mx-4 min-w-0 shrink-0 scrollbar-none overflow-x-auto desktop:mx-8"
           >
             <Tabs
               tabListClassName="w-max min-w-full"

@@ -1,5 +1,5 @@
 import { mergeClasses, PanelEmptyState } from '@epam/ai-dial-chat-shared';
-import { Search } from '@epam/ai-dial-ui-kit';
+import { Highlight, Search } from '@epam/ai-dial-ui-kit';
 import { FC, useMemo, useState } from 'react';
 import type {
   CatalogItemTools,
@@ -20,6 +20,9 @@ const DEFAULT_TOOLS_LABELS: ToolsLabels = {
   toolCount: (count) => `${count} tools`,
   noResults: 'No results found',
 };
+
+/* The most lines the kit's `Highlight` can clamp to; longer descriptions get a tooltip. */
+const DESCRIPTION_MAX_LINES = 6;
 
 // A tool matches when its name or description contains the query, ignoring case.
 const matchesQuery = (tool: ToolDefinition, query: string): boolean =>
@@ -59,6 +62,8 @@ export const Tools: FC<ToolsProps> = ({
 }) => {
   const columnLabels = { ...DEFAULT_TOOLS_LABELS, ...labels };
   const [query, setQuery] = useState('');
+
+  const trimmedQuery = query.trim();
 
   const shownTools = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -105,7 +110,9 @@ export const Tools: FC<ToolsProps> = ({
           )}
         >
           <div className="flex flex-col gap-1">
-            <span className={toolNameClassName}>{tool.name}</span>
+            <span className={toolNameClassName}>
+              <Highlight text={tool.name} query={trimmedQuery} />
+            </span>
             {tool.description != null && (
               <p
                 className={mergeClasses(
@@ -114,7 +121,11 @@ export const Tools: FC<ToolsProps> = ({
                   styles.description,
                 )}
               >
-                {tool.description}
+                <Highlight
+                  text={tool.description}
+                  query={trimmedQuery}
+                  maxLines={DESCRIPTION_MAX_LINES}
+                />
               </p>
             )}
           </div>

@@ -59,6 +59,8 @@ export interface MarkdownCodeBlockProps {
   headerClassName?: string;
   /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'dial-code-text'`. */
   codeClassName?: string;
+  /** Whether the code keeps its own top padding below the header; `false` starts it right under the header. Defaults to `true`. */
+  hasContentTopPadding?: boolean;
   /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-lead-semi-text'` plus the module's `.languageLabel` class (`--text-secondary`). */
   languageLabelClassName?: string;
   /** Header text shown in place of `language`, for blocks whose highlighting id is not the name to display (e.g. `bash` highlighted, `cURL` shown). Defaults to the `language` value. */
@@ -95,6 +97,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     copiedLabel = 'Copied!',
     downloadLabel = 'Download code',
     hideDownload = false,
+    hasContentTopPadding = true,
     containerClassName,
     headerClassName,
     codeClassName = 'dial-code-text',
@@ -115,7 +118,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     /* Rendered for language-less or oversized blocks, and as the Suspense
      * fallback while the syntax-highlighting engine loads. */
     const plainCode = (
-      <pre className="p-4">
+      <pre className={hasContentTopPadding ? 'p-4' : 'px-4 pt-0 pb-4'}>
         <code className={mergeClasses('whitespace-pre', codeClassName)}>
           {value}
         </code>
@@ -217,7 +220,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                   background: 'transparent',
                   fontSize: 14,
                   lineHeight: 1.5,
-                  padding: '14px 16px',
+                  padding: hasContentTopPadding ? '14px 16px' : '0 16px 14px',
                   letterSpacing: 0,
                 }}
                 codeTagProps={{ className: codeClassName }}

@@ -72,4 +72,30 @@ describe('TaskHistorySection', () => {
     );
     expect(historyButton.getAttribute('aria-expanded')).toBe('true');
   });
+
+  it('shows the unavailable message without a retry action when the task is unavailable', () => {
+    render(
+      <TaskHistorySection
+        history={{
+          ...makeHistory(),
+          error: new Error('Not found'),
+        }}
+        currentRunId="run-1"
+        scheduleId="schedule-1"
+        isUnavailable
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        'scheduledTasks.conversationPanel.historyUnavailableLabel',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText('scheduledTasks.detail.historyErrorLabel'),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
+    ).toBeNull();
+  });
 });

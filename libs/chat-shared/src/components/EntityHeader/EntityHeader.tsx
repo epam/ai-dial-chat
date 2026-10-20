@@ -80,7 +80,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
             label={typeLabel}
           />
           {(statusBadge != null || (hasFeaturedTag && item.isFeatured)) && (
-            <div className="absolute end-0 top-[-6px] flex items-center gap-2">
+            <div className="absolute inset-e-0 top-[-6px] flex items-center gap-2">
               {statusBadge}
               {hasFeaturedTag && item.isFeatured && (
                 <FeaturedChip

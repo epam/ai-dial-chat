@@ -187,6 +187,7 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sorts.newest',
   SortNameAZ = 'catalog.sorts.nameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  NoFolderLabel = 'catalog.noFolderLabel',
   GridViewLabel = 'catalog.gridViewLabel',
   ListViewLabel = 'catalog.listViewLabel',
   ViewToggleLabel = 'catalog.viewToggleLabel',
@@ -520,6 +521,7 @@ export enum ScheduledTasksI18nKeys {
   ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
   ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
   ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
+  ConversationPanelHistoryUnavailableLabel = 'scheduledTasks.conversationPanel.historyUnavailableLabel',
   OfflineCredentialsBannerTitle = 'scheduledTasks.offlineCredentialsBanner.title',
   OfflineCredentialsBannerBody = 'scheduledTasks.offlineCredentialsBanner.body',
   OfflineCredentialsBannerPopupBlockedMessage = 'scheduledTasks.offlineCredentialsBanner.popupBlockedMessage',
@@ -553,6 +555,8 @@ export enum ConversationI18nKeys {
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
   AddMenuTitle = 'conversation.addMenuTitle',
   MessageTooLong = 'conversation.messageTooLong',
+  StartedToday = 'conversation.startedToday',
+  StartedYesterday = 'conversation.startedYesterday',
 }
 
 export enum DialFileManagerI18nKeys {
@@ -1162,7 +1166,6 @@ export enum SkillEditorI18nKeys {
   CreateFolder = 'skillEditor.createFolder',
   UploadArchive = 'skillEditor.uploadArchive',
   OpenFileSystem = 'skillEditor.openFileSystem',
-  AddSibling = 'skillEditor.addSibling',
   NewFolderDefaultName = 'skillEditor.newFolderDefaultName',
   FolderNameRequired = 'skillEditor.folderNameRequired',
   FolderNameInvalid = 'skillEditor.folderNameInvalid',

@@ -283,6 +283,30 @@ export const collectApplicationPromptResourceUrls = (
   return [...resourceUrls];
 };
 
+/*
+ * Returns the app's uploaded icon as a DIAL file resource url, or `undefined`
+ * when the icon is absent, a theme icon name, or an absolute URL. An uploaded
+ * icon is stored as `files/{bucket}/...` in the author's bucket, so a share
+ * recipient cannot download it unless it is granted alongside the app. Both
+ * `iconUrl` and `icon_url` are read because DIAL Core's application schemas
+ * carry either spelling. Query strings, `#`-fragments and `..` traversal
+ * segments are rejected the same way as prompt urls.
+ */
+export const collectApplicationIconResourceUrl = (
+  application: unknown,
+): string | undefined => {
+  if (!isRecord(application)) return undefined;
+  const iconUrl = application.iconUrl ?? application.icon_url;
+  if (typeof iconUrl !== 'string') return undefined;
+
+  const resourceUrl = iconUrl.split(/[?#]/, 1)[0];
+  if (!resourceUrl.startsWith(FILE_RESOURCE_PREFIX)) return undefined;
+  if (safeDecodeURIComponent(resourceUrl).split('/').includes('..'))
+    return undefined;
+
+  return resourceUrl;
+};
+
 const MS_PER_HOUR = 3_600_000;
 const MS_PER_DAY = 24 * MS_PER_HOUR;
 

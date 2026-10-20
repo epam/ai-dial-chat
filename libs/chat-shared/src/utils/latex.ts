@@ -3,6 +3,21 @@ const MHCHEM_PU_REGEX = /\$\\pu\{/g;
 const MHCHEM_CE_ESCAPED_REGEX = /\$\\\\ce\{[^}]*\}\$/g;
 const MHCHEM_PU_ESCAPED_REGEX = /\$\\\\pu\{[^}]*\}\$/g;
 
+/**
+ * A markdown link destination or a bare URL. Neither ever appears inside a TeX
+ * formula, so a `\[...\]`/`\(...\)` span holding one is escaped prose.
+ */
+const NON_MATH_BODY_REGEX = /\]\(|:\/\//;
+/** The bracket each LLM-style TeX opener (`\[`, `\(`) is closed by. */
+const TEX_CLOSERS: Record<string, string> = { '[': ']', '(': ')' };
+/** Character references that render a bracket without forming a TeX delimiter. */
+const BRACKET_ENTITIES: Record<string, string> = {
+  '[': '&#91;',
+  ']': '&#93;',
+  '(': '&#40;',
+  ')': '&#41;',
+};
+
 /** A `$$ ... $$` span, non-greedy so the nearest closing fence wins. */
 const DISPLAY_MATH_REGEX = /\$\$([\s\S]*?)\$\$/g;
 /** A leading blank line inside a display span, stripped before the fence is rebuilt. */
@@ -198,6 +213,52 @@ const normalizeDisplayMathFences = (content: string): string => {
 };
 
 /**
+ * Turns `\[...\]`/`\(...\)` pairs that wrap prose back into literal brackets.
+ *
+ * Models routinely backslash-escape the brackets around a citation list —
+ * `\[Sources: [cvc.com](https://...)\]` — which CommonMark reads as two literal
+ * brackets, but `micromark-extension-llm-math` reads as a TeX formula. KaTeX then
+ * typesets the whole citation, links and all, as one unbreakable math run that
+ * overflows the message column and prints every `-` in the URLs as a minus sign.
+ * A body holding a link destination or a URL cannot be math, so its delimiters are
+ * rewritten as character references: they render as the brackets the model meant
+ * and no longer open a formula.
+ */
+const escapeNonMathTexDelimiters = (content: string): string => {
+  if (!content.includes('\\[') && !content.includes('\\(')) return content;
+
+  const codeRegions = findCodeBlockRegions(content);
+  const result: string[] = [];
+  let lastIndex = 0;
+
+  for (let i = 0; i < content.length - 1; i++) {
+    const opener = content[i + 1];
+    const closer = TEX_CLOSERS[opener];
+    if (content[i] !== '\\' || closer == null) continue;
+    /* `\\[` is an escaped backslash followed by a plain bracket, not a delimiter. */
+    if (i > 0 && content[i - 1] === '\\') continue;
+    if (isInCodeBlock(i, codeRegions)) continue;
+
+    const close = content.indexOf(`\\${closer}`, i + 2);
+    if (close === -1) continue;
+    if (!NON_MATH_BODY_REGEX.test(content.slice(i + 2, close))) continue;
+
+    result.push(
+      content.slice(lastIndex, i),
+      BRACKET_ENTITIES[opener],
+      content.slice(i + 2, close),
+      BRACKET_ENTITIES[closer],
+    );
+    lastIndex = close + 2;
+    i = close + 1;
+  }
+
+  if (lastIndex === 0) return content;
+  result.push(content.substring(lastIndex));
+  return result.join('');
+};
+
+/**
  * Returns the index just past a currency-shaped amount starting at `index + 1`,
  * or `-1` when no digits follow the `$`.
  */
@@ -311,16 +372,17 @@ const opensFormula = (
  * open, not against the few characters after the amount: `$1 - \frac{3}{p} < 1$` reads as
  * a price for one character and as LaTeX for the rest of the line.
  *
- * The `\(...\)`/`\[...\]` delimiters LLMs commonly emit are deliberately left as-is: they are
- * recognized directly by `micromark-extension-llm-math`, which the consuming app's bundler
- * config aliases in place of the default `micromark-extension-math` used by `remark-math`.
+ * The `\(...\)`/`\[...\]` delimiters LLMs commonly emit are left as-is around a formula: they
+ * are recognized directly by `micromark-extension-llm-math`, which the consuming app's bundler
+ * config aliases in place of the default `micromark-extension-math` used by `remark-math`. A
+ * pair wrapping a link or a URL is escaped prose and is turned back into literal brackets.
  */
 export const preprocessLaTeX = (content: string): string => {
-  if (!content.includes('$')) return content;
+  let processed = escapeNonMathTexDelimiters(content);
+  if (!processed.includes('$')) return processed;
 
-  let processed = content;
-  if (content.includes('\\ce{') || content.includes('\\pu{')) {
-    processed = escapeMhchem(content);
+  if (processed.includes('\\ce{') || processed.includes('\\pu{')) {
+    processed = escapeMhchem(processed);
   }
   processed = normalizeDisplayMathFences(processed);
 

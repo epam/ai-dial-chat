@@ -115,7 +115,7 @@ const NewYearDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
           );
         })}
       </svg>
-      <div className="absolute end-2 bottom-2 desktop:end-4 desktop:bottom-4">
+      <div className="absolute inset-e-2 bottom-2 desktop:inset-e-4 desktop:bottom-4">
         <GhostIconButton
           className={mergeClasses(
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',

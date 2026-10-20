@@ -38,6 +38,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       key === 'chat.generationConflict' ? CONFLICT_TEXT : key,
+    i18n: { language: 'en', changeLanguage: vi.fn() },
   }),
 }));
 
