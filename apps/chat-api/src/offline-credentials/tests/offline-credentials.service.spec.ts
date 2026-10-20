@@ -1,6 +1,12 @@
-import { BadGatewayException, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { SchedulerServiceConsentStatus } from '../../external-services/types/scheduler-service-consent-status.enum';
 import { OfflineCredentialsService } from '../offline-credentials.service';
 
 const okResponse = (data: unknown) =>
@@ -20,8 +26,16 @@ function makeService() {
     dialApiVersion: '2024-10-21',
   } as unknown as DialClientService;
 
-  const service = new OfflineCredentialsService(dialClient);
-  return { service, dialClient };
+  const schedulerConsent = {
+    getSchedulerServiceConsent: vi
+      .fn()
+      .mockResolvedValue(SchedulerServiceConsentStatus.SignedIn),
+  };
+  const service = new OfflineCredentialsService(
+    dialClient,
+    schedulerConsent as never,
+  );
+  return { service, dialClient, schedulerConsent };
 }
 
 describe('OfflineCredentialsService', () => {
@@ -31,14 +45,21 @@ describe('OfflineCredentialsService', () => {
 
   describe('getOfflineCredentialsStatus', () => {
     it('returns mapped status on success', async () => {
-      const { service, dialClient } = makeService();
+      const { service, dialClient, schedulerConsent } = makeService();
       vi.mocked(dialClient.client.getOfflineCredentials).mockResolvedValue(
         okResponse({ available: true, connected: false }),
       );
 
       const result = await service.getOfflineCredentialsStatus('token');
 
-      expect(result).toEqual({ available: true, connected: false });
+      expect(result).toEqual({
+        available: true,
+        connected: false,
+        schedulerServiceConsent: SchedulerServiceConsentStatus.SignedIn,
+      });
+      expect(schedulerConsent.getSchedulerServiceConsent).toHaveBeenCalledWith(
+        'token',
+      );
       expect(dialClient.client.getOfflineCredentials).toHaveBeenCalledWith({
         headers: { Authorization: 'Bearer token' },
       });
@@ -80,6 +101,48 @@ describe('OfflineCredentialsService', () => {
       await expect(
         service.getOfflineCredentialsStatus('token'),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('relays a revoked scheduler service consent as signed_out', async () => {
+      const { service, dialClient, schedulerConsent } = makeService();
+      vi.mocked(dialClient.client.getOfflineCredentials).mockResolvedValue(
+        okResponse({ available: false, connected: false }),
+      );
+      schedulerConsent.getSchedulerServiceConsent.mockResolvedValue(
+        SchedulerServiceConsentStatus.SignedOut,
+      );
+
+      const result = await service.getOfflineCredentialsStatus('token');
+
+      expect(result).toEqual({
+        available: false,
+        connected: false,
+        schedulerServiceConsent: SchedulerServiceConsentStatus.SignedOut,
+      });
+    });
+
+    it('returns unknown and still 200-shaped data when the consent read fails', async () => {
+      const { service, dialClient, schedulerConsent } = makeService();
+      vi.mocked(dialClient.client.getOfflineCredentials).mockResolvedValue(
+        okResponse({ available: true, connected: true }),
+      );
+      schedulerConsent.getSchedulerServiceConsent.mockRejectedValue(
+        new ServiceUnavailableException(
+          'Scheduled tasks are not configured (SCHEDULER_APP_ID is missing)',
+        ),
+      );
+      const warnSpy = vi
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+
+      const result = await service.getOfflineCredentialsStatus('token');
+
+      expect(result).toEqual({
+        available: true,
+        connected: true,
+        schedulerServiceConsent: SchedulerServiceConsentStatus.Unknown,
+      });
+      expect(warnSpy).toHaveBeenCalled();
     });
   });
 

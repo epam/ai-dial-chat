@@ -9,7 +9,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StrictMode } from 'react';
+import { StrictMode, type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -360,6 +360,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   NotificationVariant: { Success: 'success', Error: 'error' },
+  NotificationType: { Toast: 'toast', SectionMessage: 'section-message' },
+  /* The real error-variant Notification is an assertive live region; the
+   * mock keeps the same role so banner-presence queries work unchanged. */
+  Notification: ({ message }: { message?: ReactNode }) => (
+    <div role="alert">{message}</div>
+  ),
   PrimaryButton: ({
     label,
     onClick,
@@ -497,6 +503,7 @@ describe('ScheduledTaskDetailPage', () => {
     useOfflineCredentialsGateMock.mockReturnValue({
       status: 'hidden',
       connect: undefined,
+      schedulerServiceConsent: 'signed_in',
       refetch: vi.fn(),
     });
     loginOfflineCredentialsMock.mockReset();
@@ -751,6 +758,107 @@ describe('ScheduledTaskDetailPage', () => {
     startScheduledTaskMock.mockResolvedValue({ ...run, id: 'run_2' });
     await userEvent.click(button);
     expect(startScheduledTaskMock).toHaveBeenCalledTimes(2);
+  });
+
+  describe('scheduler service consent gating', () => {
+    const renderLoadedTask = () => {
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {},
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+    };
+
+    it('hides the Edit button only when the scheduler service consent is signed out', async () => {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        connected: true,
+        schedulerServiceConsent: 'signed_out',
+        refetch: vi.fn(),
+      });
+      renderLoadedTask();
+
+      /* Awaiting the Delete action proves the task loaded — only then is
+       * the Edit absence meaningful (an unloaded task renders neither). */
+      expect(
+        await screen.findByRole('button', { name: 'buttons.delete' }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', {
+          name: 'scheduledTasks.card.editActionLabel',
+        }),
+      ).toBeNull();
+    });
+
+    it('renders no limited-access banner on the detail route under signed-out consent', () => {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: {
+          clientId: 'offline-client',
+          authorizationEndpoint: 'https://dial.example.test/oauth',
+          scopes: ['openid'],
+        },
+        connected: false,
+        schedulerServiceConsent: 'signed_out',
+        refetch: vi.fn(),
+      });
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {},
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [
+          {
+            id: 'run_credentials',
+            status: 'Error',
+            resultStage: 'credentials',
+            startTime: '2026-09-30T09:00:00Z',
+          },
+        ],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      /* The limited-access banner is a list-page surface only: the detail
+       * route's banner behaviour is unchanged by the consent state. */
+      expect(
+        screen.queryByText('scheduledTasks.limitedAccessBanner.title'),
+      ).toBeNull();
+    });
+
+    it('keeps the Edit button when the consent read failed (unknown)', async () => {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        connected: true,
+        schedulerServiceConsent: 'unknown',
+        refetch: vi.fn(),
+      });
+      renderLoadedTask();
+
+      expect(
+        await screen.findByRole('button', {
+          name: 'scheduledTasks.card.editActionLabel',
+        }),
+      ).toBeTruthy();
+    });
   });
 
   it('rechecks a previously connected credential gate when a new run fails at credentials', async () => {

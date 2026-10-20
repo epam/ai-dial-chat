@@ -1,12 +1,15 @@
 import {
   OfflineCredentialsGateStatus,
   OfflineCredentialsLogoutOutcomeType,
+  SchedulerServiceConsentStatus,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ExtensionsSection,
   type ExtensionServiceItem,
 } from '@epam/ai-dial-settings-panel';
 import {
+  AVATAR_PALETTE,
+  AvatarColor,
   Button,
   ButtonAppearance,
   ButtonVariant,
@@ -45,6 +48,7 @@ const ExtensionsTab: FC = () => {
     status,
     connect,
     connected,
+    schedulerServiceConsent,
     refetch: refetchCredentials,
   } = useOfflineCredentialsGate();
   const { isLoggingIn, loginOutcome, isLoggingOut, logIn, logOut } =
@@ -156,6 +160,17 @@ const ExtensionsTab: FC = () => {
     return null;
   };
 
+  /*
+   * Consent is evaluated before the login state: with the scheduler
+   * service consent missing, neither logging in nor logging out can restore
+   * it, so the red limited-access badge replaces the action regardless of
+   * the connection state, and the avatar's warning glyph renders without a
+   * tooltip (its state is carried by the badge's own text). `unknown` (a
+   * failed consent read) fails open — the login-state branch decides.
+   */
+  const isLimitedAccess =
+    schedulerServiceConsent === SchedulerServiceConsentStatus.SignedOut;
+
   const isServiceRowVisible =
     status === OfflineCredentialsGateStatus.Hidden ||
     status === OfflineCredentialsGateStatus.Available;
@@ -173,10 +188,25 @@ const ExtensionsTab: FC = () => {
         {
           id: 'dial-native',
           displayName: serviceDisplayName,
+          /* Pinned per the design reference so the fixed Dial native service
+           * keeps one colour regardless of the localized display name. */
+          avatarColor: AVATAR_PALETTE[AvatarColor.Violet1],
           description: t(ExtensionsI18nKeys.ServiceDescription),
-          isWarningVisible: status === OfflineCredentialsGateStatus.Available,
-          authorizeLabel: t(ExtensionsI18nKeys.ServiceAuthorizeTooltip),
-          action: resolveAction(),
+          isWarningVisible:
+            isLimitedAccess ||
+            status === OfflineCredentialsGateStatus.Available,
+          limitedAccessLabel: isLimitedAccess
+            ? t(ExtensionsI18nKeys.ServiceLimitedAccessLabel)
+            : undefined,
+          limitedAccessTooltipTitle: isLimitedAccess
+            ? t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)
+            : undefined,
+          limitedAccessTooltipDescription: isLimitedAccess
+            ? t(ExtensionsI18nKeys.ServiceLimitedAccessTooltipDescription)
+            : undefined,
+          /* While the consent is missing the row renders the red
+           * limited-access badge instead of any Log in/Log out action. */
+          action: isLimitedAccess ? null : resolveAction(),
         },
       ]
     : [];

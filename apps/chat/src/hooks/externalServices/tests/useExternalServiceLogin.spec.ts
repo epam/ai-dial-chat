@@ -164,6 +164,7 @@ describe('useExternalServiceLogin', () => {
         available: true,
         connected: false,
         connect,
+        schedulerServiceConsent: 'signed_in',
       });
     });
 
@@ -215,6 +216,7 @@ describe('useExternalServiceLogin', () => {
       vi.mocked(getOfflineCredentials).mockResolvedValue({
         available: true,
         connected: true,
+        schedulerServiceConsent: 'signed_in',
       });
       const { result } = renderHook(() => useExternalServiceLogin());
       expect((await result.current.login(params)).type).toBe(
@@ -229,6 +231,7 @@ describe('useExternalServiceLogin', () => {
       vi.mocked(getOfflineCredentials).mockResolvedValue({
         available: false,
         connected: false,
+        schedulerServiceConsent: 'signed_in',
       });
       const { result } = renderHook(() => useExternalServiceLogin());
       expect((await result.current.login(params)).type).toBe(

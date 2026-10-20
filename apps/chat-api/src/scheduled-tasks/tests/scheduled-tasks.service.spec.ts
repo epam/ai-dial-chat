@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { SchedulerConsentService } from '../../external-services/scheduler-consent.service';
 import { ScheduledTaskRunStatus } from '../dto/scheduled-task-run.dto';
 import { ScheduledTaskRateLimitException } from '../scheduled-task-rate-limit.exception';
 import { ScheduledTasksService } from '../scheduled-tasks.service';
@@ -59,7 +60,7 @@ describe('scheduled task skill persistence and validation', () => {
       makeConfigService('scheduler') as never,
       cache as never,
       deployments as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
     return { service, cache, deployments };
   };
@@ -233,6 +234,16 @@ const makeExternalServices = (
   getExternalService: vi.fn().mockResolvedValue(service),
 });
 
+const makeSchedulerConsent = (
+  externalServices: ReturnType<
+    typeof makeExternalServices
+  > = makeExternalServices(),
+) =>
+  new SchedulerConsentService(
+    externalServices as never,
+    makeConfigService('scheduler-app') as never,
+  );
+
 const makeCacheManager = () => {
   const store = new Map<string, unknown>();
   return {
@@ -264,7 +275,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService(undefined) as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await expect(
@@ -289,7 +300,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.getScheduledTask('token', 'sched_123');
@@ -323,7 +334,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token');
@@ -346,7 +357,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', {
@@ -377,7 +388,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
     const model = 'applications/hash/Daily%20plan__0.0.1';
 
@@ -404,7 +415,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', { model: '' });
@@ -426,7 +437,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', {
@@ -450,7 +461,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', { search: '' });
@@ -478,7 +489,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await service.listScheduledTasks('user-1', 'token', {
@@ -502,7 +513,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token');
@@ -524,7 +535,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', {
@@ -558,7 +569,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', { search: 'daily' });
@@ -578,7 +589,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', { search: 'daily' });
@@ -616,7 +627,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     const result = await service.listScheduledTasks('user-1', 'token');
@@ -659,7 +670,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.createScheduledTask('user-1', 'token', {
@@ -697,7 +708,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app', 10_000, '') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await expect(
@@ -717,7 +728,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app', 10_000, '') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await expect(
@@ -746,7 +757,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app', 10_000, '') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await expect(
@@ -768,7 +779,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await service.listScheduledTasks('user-1', 'token');
@@ -797,7 +808,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     await expect(
@@ -827,7 +838,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await service.listScheduledTaskRuns('token', 'sched_123', {
@@ -851,7 +862,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await service.listScheduledTaskRuns('token', 'sched_123');
@@ -904,7 +915,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       const result = await service.listScheduledTaskRuns('token', 'sched_123');
@@ -930,7 +941,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       const result = await service.listScheduledTaskRuns('token', 'sched_123');
@@ -978,7 +989,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       const result = await service.listScheduledTaskRuns('token', 'sched_123');
@@ -1013,7 +1024,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       const result = await service.listScheduledTaskRuns('token', 'sched_123');
@@ -1030,7 +1041,7 @@ describe('ScheduledTasksService', () => {
           makeConfigService('scheduler-app') as never,
           makeCacheManager() as never,
           { resolveDeploymentItem: vi.fn() } as never,
-          makeExternalServices() as never,
+          makeSchedulerConsent() as never,
         );
 
       /* Routes the list URL to `listRuns` and every per-run URL to a detail
@@ -1177,7 +1188,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await service.listScheduledTaskRuns('token', 'sched_123');
@@ -1192,7 +1203,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1222,7 +1233,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cache as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        externalServices as never,
+        makeSchedulerConsent(externalServices),
       );
 
       await expect(
@@ -1260,7 +1271,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        externalServices as never,
+        makeSchedulerConsent(externalServices),
       );
 
       const error = await service
@@ -1289,7 +1300,7 @@ describe('ScheduledTasksService', () => {
           makeConfigService('scheduler-app') as never,
           makeCacheManager() as never,
           { resolveDeploymentItem: vi.fn() } as never,
-          makeExternalServices() as never,
+          makeSchedulerConsent() as never,
         );
 
         await expect(
@@ -1305,7 +1316,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1333,7 +1344,7 @@ describe('ScheduledTasksService', () => {
           makeConfigService('scheduler-app') as never,
           makeCacheManager() as never,
           { resolveDeploymentItem: vi.fn() } as never,
-          makeExternalServices() as never,
+          makeSchedulerConsent() as never,
         );
         const error = await service
           .getScheduledTaskRun('token', 'sched_123', 'run_123')
@@ -1363,7 +1374,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
       const error = await service
         .getScheduledTaskRun('token', 'sched_123', 'run_123')
@@ -1392,7 +1403,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1425,7 +1436,7 @@ describe('ScheduledTasksService', () => {
           makeConfigService('scheduler-app') as never,
           makeCacheManager() as never,
           { resolveDeploymentItem: vi.fn() } as never,
-          makeExternalServices() as never,
+          makeSchedulerConsent() as never,
         );
 
         await expect(
@@ -1443,7 +1454,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1457,7 +1468,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1486,7 +1497,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       const result = await service.pauseScheduledTask(
@@ -1529,7 +1540,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       const result = await service.resumeScheduledTask(
@@ -1559,7 +1570,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await service.pauseScheduledTask('user-1', 'token', 'sched_123');
@@ -1583,7 +1594,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1609,7 +1620,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1640,7 +1651,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       const result = await service.resumeScheduledTask(
@@ -1664,7 +1675,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1686,7 +1697,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await service.deleteScheduledTask('user-1', 'token', 'sched_123');
@@ -1714,7 +1725,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1735,7 +1746,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1760,7 +1771,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1785,7 +1796,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1805,7 +1816,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1819,7 +1830,7 @@ describe('ScheduledTasksService', () => {
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
         { resolveDeploymentItem: vi.fn() } as never,
-        makeExternalServices() as never,
+        makeSchedulerConsent() as never,
       );
 
       await expect(
@@ -1851,7 +1862,7 @@ describe('ScheduledTasksService', () => {
       makeConfigService('scheduler-app', 25) as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
     const request = service
@@ -1918,7 +1929,7 @@ describe('ScheduledTasksService — isCompleted derivation', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
   it('marks a one-time schedule with a terminal success run as completed', async () => {
@@ -2250,7 +2261,7 @@ describe('ScheduledTasksService — DIAL_NATIVE application consent', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      externalServices as never,
+      makeSchedulerConsent(externalServices),
     ),
   });
 
@@ -2370,7 +2381,7 @@ describe('ScheduledTasksService — upstream error reason and code', () => {
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
       { resolveDeploymentItem: vi.fn() } as never,
-      makeExternalServices() as never,
+      makeSchedulerConsent() as never,
     );
 
   const failure = (promise: Promise<unknown>) =>

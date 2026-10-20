@@ -67,6 +67,7 @@ import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
   getNextCronOccurrence,
+  isSchedulerConsentMissing,
   resolveScheduledTaskErrorMessage,
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
@@ -174,6 +175,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const {
     status: credentialsStatus,
     connect: offlineCredentialsConnect,
+    schedulerServiceConsent,
     refetch: refetchOfflineCredentials,
   } = useOfflineCredentialsGate();
   const { login: loginOfflineCredentials } = useOfflineCredentialsLogin();
@@ -349,6 +351,18 @@ const ScheduledTaskDetailPage: FC = () => {
     /* A run can discover revoked credentials after the route's initial check. */
     void refetchOfflineCredentials();
   }, [credentialsRunId, isEnabled, refetchOfflineCredentials, scheduleId]);
+  /*
+   * Consent is evaluated before the login state: with the scheduler service
+   * consent missing, editing cannot succeed (the BFF rejects the update
+   * with `scheduledTaskAdminConsentRequired`), so the Edit action hides.
+   * No limited-access banner renders on the detail route — it is a
+   * list-page surface only. An unresolved check fails open (the gate
+   * defaults to `unknown`).
+   */
+  const isLimitedAccess = isSchedulerConsentMissing(schedulerServiceConsent);
+  /* Edit needs a loaded, non-deleted task AND a present scheduler service
+   * consent — an unloaded or deleted task renders no header actions at all. */
+  const isTaskEditable = Boolean(task) && !isTaskDeleted && !isLimitedAccess;
   const credentialsBannerState = resolveCredentialsBannerState({
     isCredentialsRequired,
     isLoggingIn,
@@ -737,7 +751,7 @@ const ScheduledTaskDetailPage: FC = () => {
       <ScheduledTaskDetailView
         labels={labels}
         onBack={handleBack}
-        onEdit={task && !isTaskDeleted ? handleEdit : undefined}
+        onEdit={isTaskEditable ? handleEdit : undefined}
         onStartNow={task && !isTaskDeleted ? handleStartNow : undefined}
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
         isDeleting={isDeleting}

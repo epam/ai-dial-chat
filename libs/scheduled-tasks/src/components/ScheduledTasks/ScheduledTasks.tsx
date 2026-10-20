@@ -294,26 +294,28 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           </p>
         </div>
 
-        <PrimaryButton
-          /* The kit wraps `label` in its own span (carrying `textClassName`)
-           * that stays a flex item even when its content is hidden — the gap
-           * then pushes the icon off-center. Hiding the wrapper span itself
-           * below the desktop breakpoint removes the flex item entirely, so
-           * the plus icon alone carries the action, centered. `aria-label`
-           * keeps the accessible name stable at every width. */
-          label={labels.createButtonLabel}
-          textClassName={styles.createButtonLabel}
-          aria-label={labels.createButtonLabel}
-          iconBefore={
-            <IconPlus
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
-          onClick={onCreateClick}
-          className={mergeClasses('shrink-0', styles.createButton)}
-        />
+        {onCreateClick != null && (
+          <PrimaryButton
+            /* The kit wraps `label` in its own span (carrying `textClassName`)
+             * that stays a flex item even when its content is hidden — the gap
+             * then pushes the icon off-center. Hiding the wrapper span itself
+             * below the desktop breakpoint removes the flex item entirely, so
+             * the plus icon alone carries the action, centered. `aria-label`
+             * keeps the accessible name stable at every width. */
+            label={labels.createButtonLabel}
+            textClassName={styles.createButtonLabel}
+            aria-label={labels.createButtonLabel}
+            iconBefore={
+              <IconPlus
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            onClick={onCreateClick}
+            className={mergeClasses('shrink-0', styles.createButton)}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -365,7 +367,18 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
         )}
       </div>
 
-      {banner}
+      {banner != null && (
+        /* The banner shares the card grid's width cap and centering so the
+         * two align horizontally — without this cap the banner renders wider
+         * than the cards below it. Guarded so an omitted banner adds no
+         * empty flex child (and no gap row) between toolbar and content. */
+        <div
+          className="mx-auto w-full min-w-0"
+          style={{ maxWidth: gridLayout?.maxWidth ?? '1180px' }}
+        >
+          {banner}
+        </div>
+      )}
 
       <span role="status" aria-live="polite" className="sr-only">
         {statusMessage}

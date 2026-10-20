@@ -2,6 +2,7 @@ import {
   ScheduledTaskErrorCode,
   type ScheduledTaskDto,
   type ScheduleTriggerDto,
+  SchedulerServiceConsentStatus,
 } from '@epam/ai-dial-chat-api-client';
 import type { ApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
@@ -188,3 +189,14 @@ export const resolveScheduledTaskErrorMessage = (
   const upstreamMessage = details.upstreamMessage?.trim();
   return upstreamMessage || t(fallbackKey);
 };
+
+/**
+ * Whether the scheduler service's administrator consent is missing: the
+ * user can neither create nor edit tasks until an administrator restores
+ * it — logging in cannot help, so consent is evaluated before any login
+ * state. `unknown` (a failed consent read) fails open.
+ */
+export const isSchedulerConsentMissing = (
+  schedulerServiceConsent: SchedulerServiceConsentStatus | undefined,
+): boolean =>
+  schedulerServiceConsent === SchedulerServiceConsentStatus.SignedOut;

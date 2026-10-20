@@ -4681,7 +4681,14 @@ export interface GetOfflineCredentialsResponseDto {
    * @memberof GetOfflineCredentialsResponseDto
    */
   connect?: OfflineCredentialsConnectDto;
+  /**
+   * Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid).
+   * @type {SchedulerServiceConsentStatus}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  schedulerServiceConsent: SchedulerServiceConsentStatus;
 }
+
 /**
  *
  * @export
@@ -6661,6 +6668,19 @@ export interface ScheduledTaskValidationErrorDto {
  * @export
  */
 export type ScheduledTaskValidationErrorDtoMessage = Array<string> | string;
+
+/**
+ * Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid).
+ * @export
+ */
+export const SchedulerServiceConsentStatus = {
+  SignedIn: 'signed_in',
+  SignedOut: 'signed_out',
+  Unknown: 'unknown',
+} as const;
+export type SchedulerServiceConsentStatus =
+  (typeof SchedulerServiceConsentStatus)[keyof typeof SchedulerServiceConsentStatus];
+
 /**
  *
  * @export

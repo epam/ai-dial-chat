@@ -5,6 +5,7 @@ import type {
   ExtensionsLabels,
 } from '../../../models/extensions-props';
 import { ExtensionsSection } from '../ExtensionsSection';
+import styles from '../ExtensionsSection.module.scss';
 
 const labels: ExtensionsLabels = {
   tableAriaLabel: 'Extensions',
@@ -20,7 +21,6 @@ const makeRow = (
   displayName: 'DIAL Scheduler',
   description: 'Connect the scheduler to run tasks on a timetable.',
   isWarningVisible: false,
-  authorizeLabel: 'Connect the DIAL Scheduler service',
   action: <button type="button">Log in</button>,
   ...overrides,
 });
@@ -64,12 +64,13 @@ describe('ExtensionsSection', () => {
     expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
   });
 
-  it('renders the warning badge with its accessible name only when the service is disconnected', () => {
-    const { rerender } = renderSection();
+  it('renders the decorative warning glyph only when the service is disconnected', () => {
+    /* The glyph is aria-hidden decoration (no semantic query reaches it),
+     * so its presence is asserted at the CSS-class level. */
+    const { container, rerender } = renderSection();
 
-    expect(
-      screen.queryByRole('img', { name: 'Connect the DIAL Scheduler service' }),
-    ).toBeNull();
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    expect(container.querySelector(`.${styles.warningBadge}`)).toBeNull();
 
     rerender(
       <ExtensionsSection
@@ -78,9 +79,42 @@ describe('ExtensionsSection', () => {
       />,
     );
 
-    expect(
-      screen.getByRole('img', { name: 'Connect the DIAL Scheduler service' }),
-    ).toBeTruthy();
+    /* The glyph is decoration (the row's action carries the state), so its
+     * presence is asserted at the CSS level — no semantic query applies. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    expect(container.querySelector(`.${styles.warningBadge}`)).toBeTruthy();
+  });
+
+  it('applies the host-pinned avatar colour when one is supplied', () => {
+    /* CSS-level assertion: the pinned palette pair lands on the aria-hidden
+     * avatar badge's classes — no semantic query reaches a colour class. */
+
+    const { container } = renderSection([
+      makeRow({
+        avatarColor: {
+          background: 'bg-violet-1',
+          foreground: 'text-violet-2',
+        },
+      }),
+    ]);
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    expect(container.querySelector('.bg-violet-1')).toBeTruthy();
+  });
+
+  it('replaces the trailing action with the limited-access badge when its label is supplied', () => {
+    renderSection([
+      makeRow({
+        isWarningVisible: true,
+        limitedAccessLabel: 'Limited access',
+        limitedAccessTooltipTitle: 'Limited access.',
+        limitedAccessTooltipDescription:
+          'Contact your administrator for more details.',
+      }),
+    ]);
+
+    expect(screen.getByText('Limited access')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
   });
 
   it('renders multiple rows in display order', () => {

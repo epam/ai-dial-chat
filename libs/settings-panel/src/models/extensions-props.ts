@@ -1,3 +1,4 @@
+import type { AvatarColorClasses } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 
 /** One extension service rendered as one row of the Extensions table. */
@@ -6,13 +7,19 @@ export interface ExtensionServiceItem {
   id: string;
   /** Service display name shown beside the avatar and used for its initials. */
   displayName: string;
+  /** Explicit avatar colour pair (an `AVATAR_PALETTE` entry from the host) overriding the name-derived colour; omitted keeps the deterministic pick. */
+  avatarColor?: AvatarColorClasses;
   /** Localized service description shown in the Description cell. */
   description: string;
   /** Whether the disconnected-state warning badge renders on the avatar's corner. */
   isWarningVisible: boolean;
-  /** Accessible name and tooltip text of the warning badge. */
-  authorizeLabel: string;
-  /** The row's trailing action (e.g. a Log in / Log out button), owned by the host. */
+  /** Label of the red limited-access `Badge` that replaces the row's action while the scheduler service consent is missing; the row renders no badge when omitted. */
+  limitedAccessLabel?: string;
+  /** Bold title line of the limited-access badge's tooltip. */
+  limitedAccessTooltipTitle?: string;
+  /** Normal-weight description line of the limited-access badge's tooltip. */
+  limitedAccessTooltipDescription?: string;
+  /** The row's trailing action (e.g. a Log in / Log out button), owned by the host; ignored while `limitedAccessLabel` is set. */
   action: ReactNode;
 }
 

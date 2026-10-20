@@ -75,6 +75,13 @@ rejects with `403` and code `scheduledTaskAdminConsentRequired`, and nothing
 is sent upstream. Pause and delete skip the check so a user can always stop a
 task. A failed consent lookup or an unreported status defers to DIAL Scheduler.
 
+The same consent read (shared `SchedulerConsentService` in the
+`external-services` domain) rides along on `GET /api/v1/offline-credentials`:
+the response gains `schedulerServiceConsent` (`signed_in`/`signed_out`/
+`unknown`), where `signed_out` means the consent is missing and `unknown` covers
+a failed or unconfigured read — the consent read never fails the status call
+itself.
+
 When DIAL Scheduler itself rejects a request, the response keeps the generic
 `message` (for example `DIAL Core returned a server error`) and adds
 Scheduler's own reason and code as `upstreamMessage` and `upstreamCode`. The

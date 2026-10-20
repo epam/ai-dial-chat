@@ -61,7 +61,7 @@ All directional layout in the Scheduled Tasks header, toolbar, and empty state M
 
 ### Requirement: ScheduledTasks lib component renders header, toolbar, and data-driven content states
 
-`libs/scheduled-tasks` SHALL export a presentational `ScheduledTasks` root component accepting `labels`, `onCreateClick`, `searchQuery`/`onSearchQueryChange`, `sortKey`/`onSortChange`, `items: ScheduledTaskItem[]`, `isLoading` (default `false`), `hasMore: boolean` (default `false`), `isLoadingMore?: boolean` (default `false`), `skeletonCount?: number` (default `6`), `onLoadMore?: () => void`, optional `error`/`onRetry`, and an optional `banner?: ReactNode` slot. It SHALL render, in order: a header (title, subtitle, and a right-side action group containing the primary "create" button as its single header action), a toolbar (search input, sort control with options), and a content region whose rendering depends on state:
+`libs/scheduled-tasks` SHALL export a presentational `ScheduledTasks` root component accepting `labels`, `onCreateClick`, `searchQuery`/`onSearchQueryChange`, `sortKey`/`onSortChange`, `items: ScheduledTaskItem[]`, `isLoading` (default `false`), `hasMore: boolean` (default `false`), `isLoadingMore?: boolean` (default `false`), `skeletonCount?: number` (default `6`), `onLoadMore?: () => void`, optional `error`/`onRetry`, and an optional `banner?: ReactNode` slot. The header's create button SHALL render only when `onCreateClick` is provided — an omitted callback renders no create button and no header action-group markup, so a host can withdraw the create affordance entirely (the limited-access gating) without the lib knowing why. It SHALL render, in order: a header (title, subtitle, and a right-side action group that renders the primary "create" button as its single header action only while `onCreateClick` is provided), a toolbar (search input, sort control with options), and a content region whose rendering depends on state:
 
 - `isLoading` is `true` (initial load) → the content region renders a `Spinner` and no other content-region markup.
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
@@ -78,6 +78,11 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 - **WHEN** `ScheduledTasks` renders with `labels.title = 'Scheduled tasks'` and `labels.createButtonLabel = 'New task'`
 - **THEN** the page shows a heading with that title and a button with that accessible name
+
+#### Scenario: Omitted create callback renders no create button
+
+- **WHEN** `ScheduledTasks` renders without an `onCreateClick` prop
+- **THEN** no create button renders in the header, and the header's action group renders no create-action markup; with a provided callback the button renders as before
 
 #### Scenario: Loading state shows a spinner
 
@@ -101,7 +106,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 #### Scenario: Non-empty items render a flat card grid in received order
 
-- **WHEN** `items` contains entries for tasks owned by the current user and entries for tasks created by other users, already ordered by the caller
+- **WHEN** `ScheduledTasks` renders with `items` containing entries for tasks owned by the current user and entries for tasks created by other users, already ordered by the caller
 - **THEN** the content region renders a single `ScheduledTaskCardGrid` with items in the same order they appear in `items` (no reordering by `sortKey` inside the lib), with no section heading or count badge of any kind
 
 #### Scenario: Loading-more state appends trailing skeletons inside the same grid
@@ -124,14 +129,14 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** the user activates the create button
 - **THEN** `onCreateClick` is called exactly once, with no navigation or network call performed by the lib itself
 
-#### Scenario: The header renders exactly one action button
+#### Scenario: The header renders at most one action button
 
-- **WHEN** `ScheduledTasks` renders
+- **WHEN** `ScheduledTasks` renders with an `onCreateClick` prop
 - **THEN** the header's action group contains exactly one action button (the create action); no disconnect/logout action or its markup renders, and no disconnect props exist on the component's public API
 
 #### Scenario: The header button collapses on narrow viewports
 
-- **WHEN** the viewport is narrower than 1280px
+- **WHEN** the viewport is narrower than 1280px and the create button renders
 - **THEN** the create button renders as an icon-only 40px circle via the collapse class, and the header row does not overflow
 
 #### Scenario: Lib has no host or integration imports
@@ -141,12 +146,17 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 ### Requirement: ScheduledTasks lib component renders an optional banner slot
 
-`libs/scheduled-tasks`'s `ScheduledTasks` component SHALL accept an optional `banner?: ReactNode` prop. When provided, the component SHALL render it between the search/sort toolbar row and the content region (the status message and card grid/spinner/error/empty states) in the resulting layout. When omitted, nothing renders in that position. The component SHALL treat `banner` as opaque content — it MUST NOT interpret, style beyond layout placement, or attach any auth/BFF/routing/feature-flag behavior to it, and MUST NOT import any type describing what the banner represents.
+`libs/scheduled-tasks`'s `ScheduledTasks` component SHALL accept an optional `banner?: ReactNode` prop. When provided, the component SHALL render it between the search/sort toolbar row and the content region (the status message and card grid/spinner/error/empty states) in the resulting layout, inside a wrapper that carries the same width cap and centering as the card grid (`mx-auto w-full min-w-0` with `maxWidth` from `gridLayout?.maxWidth` — default `1180px`), so the banner never renders wider than the cards below it. When omitted, nothing renders in that position — including no empty wrapper (an empty flex child would add a gap row between the toolbar and the content region). The component SHALL treat `banner` as opaque content — it MUST NOT interpret, style beyond layout placement, or attach any auth/BFF/routing/feature-flag behavior to it, and MUST NOT import any type describing what the banner represents.
 
 #### Scenario: Banner renders between toolbar and content
 
 - **WHEN** `ScheduledTasks` renders with `banner={<div>Example</div>}` and a non-empty `items` array
 - **THEN** the rendered "Example" content appears after the search/sort toolbar and before the task card grid in document order
+
+#### Scenario: Banner matches the card grid width
+
+- **WHEN** `ScheduledTasks` renders with a `banner` prop and a populated card grid
+- **THEN** the banner's wrapper and the card grid carry the same `maxWidth` (the `gridLayout?.maxWidth` value, default `1180px`), so the banner never renders wider than the cards below it
 
 #### Scenario: No banner prop renders nothing extra
 
@@ -157,6 +167,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 - **WHEN** `ScheduledTasks` renders with a `banner` prop while `isLoading` is `true`, while `error` is set, and while `items` is empty
 - **THEN** the banner renders in each of these states — its visibility does not depend on the content region's loading/error/empty/populated state
+
 
 ### Requirement: ScheduledTaskCard renders a single task with highlighted search matches
 
@@ -583,3 +594,43 @@ Below 768px (a phone-width cutoff inside the `mobile` band — tablets keep both
 
 - **WHEN** the viewport is 768px or wider (tablet band and desktop alike)
 - **THEN** focusing the search input changes nothing — the sort control stays visible beside the field
+
+### Requirement: Limited-access banner and create gating on the list page
+
+When the route-scoped offline-credentials status check reports `schedulerServiceConsent: 'signed_out'`, the Scheduled Tasks list page (`apps/chat/src/pages/ScheduledTasksPage/ScheduledTasksPage.tsx`) SHALL render a non-blocking inline limited-access banner — the kit `Notification` (`@epam/ai-dial-ui-kit`) with `variant={NotificationVariant.Error}` and `type={NotificationType.SectionMessage}`, rendered through a thin `ScheduledTasksLimitedAccessBanner` wrapper (`apps/chat/src/components/ScheduledTasksLimitedAccessBanner/ScheduledTasksLimitedAccessBanner.tsx`) that takes the localized title/body as props — in the lib's existing `banner` slot, directly above the task cards, and SHALL NOT pass an `onCreateClick` callback to the `ScheduledTasks` lib component, so no "New task" button renders.
+
+The banner SHALL follow the error-alert Notification design: the error variant's own container styling (radius, border, padding — nothing hand-set), the error variant's built-in assertive `role="alert"` live region, no action control, and no close button. The banner SHALL render on **one line**: a semibold localized "Limited access." title span followed by the localized description "You can't create or edit tasks. Contact your administrator for more details." (the kit stacks its `title` prop above the message, so the single line is composed inside the `message` ReactNode — the same bold-title-plus-supporting-text one-baseline-row composition the login banner uses). Strings resolve from the keys `scheduledTasks.limitedAccessBanner.title` ("Limited access.") and `scheduledTasks.limitedAccessBanner.body` ("You can't create or edit tasks. Contact your administrator for more details.") in `apps/chat/src/i18n/locales/en.json`, declared via `ScheduledTasksI18nKeys` in `apps/chat/src/constants/translation-keys.ts`.
+
+`schedulerServiceConsent` of `signed_in` or `unknown` SHALL change nothing on the page. The list itself (search, sort, card clicks, pagination, and the detail route) SHALL stay fully usable while the limited banner shows — only creation is withdrawn.
+
+Feature gating is unchanged: the page stays behind the existing `scheduledTasksEnabled` feature flag; no new flag or role gating is introduced, and no telemetry is added. RTL impact: none — the banner has no directional icon and uses no directional utilities; it inherits the writing direction.
+
+#### Scenario: Revoked consent shows the limited-access banner and hides New task
+
+- **WHEN** the list page's status check reports `schedulerServiceConsent: 'signed_out'`
+- **THEN** the error-alert `Notification` renders in the banner slot directly above the task cards with the localized "Limited access." title and "You can't create or edit tasks. Contact your administrator for more details." description on one line, no action control, no close button, and no "New task" button renders in the header
+
+#### Scenario: The limited banner shows regardless of the login state
+
+- **WHEN** the status check reports `schedulerServiceConsent: 'signed_out'`
+- **THEN** the limited-access banner renders whether `connected` is `true` or `false`, and the login-required banner never renders alongside or instead of it
+
+#### Scenario: Consent present and connected changes nothing
+
+- **WHEN** the status check reports `schedulerServiceConsent: 'signed_in'` and `connected: true`
+- **THEN** no banner renders and the "New task" button renders as before
+
+#### Scenario: Consent present and not connected keeps the login banner
+
+- **WHEN** the status check reports `schedulerServiceConsent: 'signed_in'` or `unknown` and `connected: false`
+- **THEN** the login-required banner and the "New task" button render exactly as before this change
+
+#### Scenario: The list stays usable under limited access
+
+- **WHEN** the limited-access banner is visible
+- **THEN** search, sort, card clicks, and pagination remain fully usable and a card click navigates to the detail route
+
+#### Scenario: The banner is announced assertively
+
+- **WHEN** the limited-access banner transitions from not-rendered to rendered
+- **THEN** its container is announced via the error variant's built-in `role="alert"` exactly once for that transition

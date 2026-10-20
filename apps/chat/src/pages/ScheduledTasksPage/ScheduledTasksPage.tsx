@@ -18,6 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import ScheduledTasksLimitedAccessBanner from '../../components/ScheduledTasksLimitedAccessBanner/ScheduledTasksLimitedAccessBanner';
 import ScheduledTasksLoginBanner, {
   ScheduledTasksLoginBannerState,
 } from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
@@ -34,7 +35,10 @@ import { useOfflineCredentialsGate } from '../../hooks/offlineCredentials/useOff
 import { useScheduledTasks } from '../../hooks/scheduled-tasks/useScheduledTasks';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { mapScheduledTaskDtosToItems } from '../../utils/map-scheduled-task-dto';
+import {
+  isSchedulerConsentMissing,
+  mapScheduledTaskDtosToItems,
+} from '../../utils/map-scheduled-task-dto';
 import { OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS } from '../../utils/offline-credentials-announcements';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -119,6 +123,7 @@ const ScheduledTasksPage: FC = () => {
   const {
     status: credentialsStatus,
     connect,
+    schedulerServiceConsent,
     refetch: refetchCredentials,
   } = useOfflineCredentialsGate();
   const { isLoggingIn, loginOutcome, logIn } = useOfflineCredentialsAuth({
@@ -227,7 +232,11 @@ const ScheduledTasksPage: FC = () => {
     <ScheduledTasks
       labels={labels}
       styles={PAGE_STYLES}
-      onCreateClick={handleCreateClick}
+      onCreateClick={
+        isSchedulerConsentMissing(schedulerServiceConsent)
+          ? undefined
+          : handleCreateClick
+      }
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}
       sortKey={sortKey}
@@ -243,30 +252,37 @@ const ScheduledTasksPage: FC = () => {
       onRetryLoadMore={retryLoadMore}
       onCardClick={handleCardClick}
       banner={
-        <ScheduledTasksLoginBanner
-          state={bannerState}
-          title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
-          body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
-          loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
-          retryButtonLabel={t(ButtonsI18nKeys.Retry)}
-          loggingInLabel={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
-          )}
-          popupBlockedMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
-          )}
-          cancelledMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
-          )}
-          timeoutMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
-          )}
-          failedMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
-          )}
-          liveAnnouncement={liveAnnouncement}
-          onLogIn={connect ? logIn : undefined}
-        />
+        isSchedulerConsentMissing(schedulerServiceConsent) ? (
+          <ScheduledTasksLimitedAccessBanner
+            title={t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)}
+            body={t(ScheduledTasksI18nKeys.LimitedAccessBannerBody)}
+          />
+        ) : (
+          <ScheduledTasksLoginBanner
+            state={bannerState}
+            title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
+            body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
+            loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
+            retryButtonLabel={t(ButtonsI18nKeys.Retry)}
+            loggingInLabel={t(
+              ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
+            )}
+            popupBlockedMessage={t(
+              ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
+            )}
+            cancelledMessage={t(
+              ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
+            )}
+            timeoutMessage={t(
+              ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
+            )}
+            failedMessage={t(
+              ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
+            )}
+            liveAnnouncement={liveAnnouncement}
+            onLogIn={connect ? logIn : undefined}
+          />
+        )
       }
     />
   );

@@ -694,7 +694,8 @@
     "service": {
       "defaultName": "Dial native",
       "description": "Provides access to built-in apps within the platform.",
-      "authorizeTooltip": "Authorize to use this extension"
+      "limitedAccessLabel": "Limited access",
+      "limitedAccessTooltipDescription": "Contact your administrator for more details."
     }
   },
   "attachments": {
@@ -918,6 +919,10 @@
       "failedMessage": "Login failed. Please try again.",
       "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
       "loggingInLabel": "Logging in…"
+    },
+    "limitedAccessBanner": {
+      "title": "Limited access.",
+      "body": "You can't create or edit tasks. Contact your administrator for more details."
     },
     "disconnect": {
       "confirmTitle": "Log out from Dial native",

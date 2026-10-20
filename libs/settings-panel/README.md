@@ -16,8 +16,8 @@ Provides two presentational, host-agnostic surfaces for a chat application's Set
 - `ExtensionsSection`, the Extensions services table: a Name / Description / Actions header row
   (the Actions header is screen-reader-only text over a visually empty column) plus one row per
   service. Each row renders an initials avatar with an optional corner warning badge, the service
-  name, the service description, and a host-supplied trailing action. All user-visible strings,
-  the warning flag, and the action arrive via props — the host owns `t()`, service state, and the
+  name, the service description, and a host-supplied trailing action or limited-access badge. All user-visible
+  strings, the warning flag, and the action arrive via props — the host owns `t()`, service state, and the
   login/logout wiring.
 
 ## Installation
@@ -82,7 +82,6 @@ import { ExtensionsSection } from '@epam/ai-dial-settings-panel';
       displayName: 'DIAL Scheduler',
       description: 'Run tasks on a timetable.',
       isWarningVisible: false,
-      authorizeLabel: 'Connect the DIAL Scheduler service',
       action: <button type="button">Log in</button>,
     },
   ]}
@@ -110,7 +109,7 @@ name, and description typography classes.
 - `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, styles?, className? }`
 - `SettingsPanelStyles` — `{ typography? }`
 - `SettingsPanelTypography` — `{ sectionLabelClassName? }`
-- `ExtensionServiceItem` — `{ id, displayName, description, isWarningVisible, authorizeLabel, action }`
+- `ExtensionServiceItem` — `{ id, displayName, avatarColor?, description, isWarningVisible, limitedAccessLabel?, limitedAccessTooltipTitle?, limitedAccessTooltipDescription?, action }` — `avatarColor` is an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) pinned by the host; omitted keeps the name-derived colour — while `limitedAccessLabel` is set the row renders the red limited-access `Badge` with a two-line hover tooltip (bold `limitedAccessTooltipTitle`, normal `limitedAccessTooltipDescription`) instead of the `action`
 - `ExtensionsLabels` — `{ tableAriaLabel, nameColumnLabel, descriptionColumnLabel, actionsColumnLabel }`
 - `ExtensionsSectionProps` — `{ rows, labels, styles? }`
 - `ExtensionsStyles` — `{ colors?, typography? }`

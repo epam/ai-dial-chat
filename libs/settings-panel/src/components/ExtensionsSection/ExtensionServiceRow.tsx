@@ -1,5 +1,11 @@
 import { InitialsAvatar, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, Tooltip } from '@epam/ai-dial-ui-kit';
+import {
+  Badge,
+  BadgeColor,
+  BadgeVariant,
+  DIAL_ICON_SIZE,
+  Tooltip,
+} from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangleFilled } from '@tabler/icons-react';
 import { type FC } from 'react';
 import type {
@@ -27,7 +33,7 @@ export interface ExtensionServiceRowProps {
   typography: ExtensionsTypography;
 }
 
-/** One service row of the Extensions table: an avatar with an optional corner warning badge, the service name, the description, and the host-supplied trailing action. */
+/** One service row of the Extensions table: an avatar with an optional corner warning badge, the service name, the description, and the host-supplied trailing action or limited-access badge. */
 export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
   row,
   typography,
@@ -37,8 +43,18 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
     descriptionClassName = 'dial-small-text',
   } = typography;
 
-  const { displayName, description, isWarningVisible, authorizeLabel, action } =
-    row;
+  const {
+    displayName,
+    description,
+    avatarColor,
+    isWarningVisible,
+    limitedAccessLabel,
+    limitedAccessTooltipTitle,
+    limitedAccessTooltipDescription,
+    action,
+  } = row;
+
+  const isLimitedAccess = limitedAccessLabel != null;
 
   return (
     <div
@@ -54,29 +70,22 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
           <InitialsAvatar
             name={displayName}
             size={AVATAR_SIZE}
+            color={avatarColor}
             textClassName="text-lg"
           />
           {isWarningVisible && (
-            /* The badge is informational, not an affordance: the plain warning
-             * glyph overhanging the avatar's bottom-end corner by 10px, with
-             * its localized tooltip. The position sits on the tooltip's own
-             * trigger so the hover reference has the glyph's real size —
-             * positioning a child instead leaves the reference zero-sized and
-             * the tooltip flickers. The glyph carries its own accessible name
-             * (the svg is aria-hidden) because the span trigger is not
-             * focusable — so the tooltip text also reaches assistive tech
-             * through the icon itself. */
-            <Tooltip
-              tooltip={authorizeLabel}
-              triggerClassName={mergeClasses(
-                'absolute bottom-[-3px] end-[-10px] flex',
+            /* The glyph is informational decoration: the connected state is
+             * carried by the row's action (the Log in button) or the
+             * limited-access badge's own label text, never by color alone,
+             * so the glyph itself stays hidden from assistive tech. */
+            <span
+              className={mergeClasses(
+                'absolute inset-e-[-10px] bottom-[-3px] flex',
                 styles.warningBadge,
               )}
             >
-              <span role="img" aria-label={authorizeLabel}>
-                <IconAlertTriangleFilled size={DIAL_ICON_SIZE.MD} aria-hidden />
-              </span>
-            </Tooltip>
+              <IconAlertTriangleFilled size={DIAL_ICON_SIZE.MD} aria-hidden />
+            </span>
           )}
         </div>
         <span
@@ -93,7 +102,7 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
         <span
           className={mergeClasses(
             descriptionClassName,
-            'min-w-0 break-words',
+            'min-w-0 wrap-break-word',
             styles.description,
           )}
         >
@@ -101,7 +110,34 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
         </span>
       </div>
       <div role="cell" className="flex items-center justify-end">
-        {action}
+        {isLimitedAccess ? (
+          /* The position sits on the tooltip's own trigger so the hover
+           * reference has the badge's real size — positioning a child instead
+           * leaves the reference zero-sized and the tooltip flickers. The
+           * tooltip is a hover enhancement: the badge's own label text is
+           * its accessible name, so the state never depends on the tooltip
+           * (which renders nothing on touch-only devices). */
+          <Tooltip
+            tooltip={
+              <span className="flex flex-col gap-1 text-start">
+                <span className="dial-small-semi-text">
+                  {limitedAccessTooltipTitle}
+                </span>
+                <span className="dial-small-text">
+                  {limitedAccessTooltipDescription}
+                </span>
+              </span>
+            }
+          >
+            <Badge
+              label={limitedAccessLabel}
+              variant={BadgeVariant.Filled}
+              color={BadgeColor.Red}
+            />
+          </Tooltip>
+        ) : (
+          action
+        )}
       </div>
     </div>
   );

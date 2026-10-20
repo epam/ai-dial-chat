@@ -6,6 +6,8 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { DialClientService } from '../dial/dial-client.service';
+import { SchedulerConsentService } from '../external-services/scheduler-consent.service';
+import { SchedulerServiceConsentStatus } from '../external-services/types/scheduler-service-consent-status.enum';
 import type {
   GetOfflineCredentialsResponseDto,
   OfflineCredentialsSigninBodyDto,
@@ -26,7 +28,10 @@ import {
 export class OfflineCredentialsService {
   private readonly logger = new Logger(OfflineCredentialsService.name);
 
-  constructor(private readonly dialClient: DialClientService) {}
+  constructor(
+    private readonly dialClient: DialClientService,
+    private readonly schedulerConsentService: SchedulerConsentService,
+  ) {}
 
   async getOfflineCredentialsStatus(
     accessToken: string,
@@ -58,7 +63,11 @@ export class OfflineCredentialsService {
       this.logger.debug(
         `Mapped offline-credentials status: ${JSON.stringify(mapped)}`,
       );
-      return mapped;
+      return {
+        ...mapped,
+        schedulerServiceConsent:
+          await this.readSchedulerServiceConsent(accessToken),
+      };
     } catch (err) {
       return handleDialFetchError(
         err,
@@ -66,6 +75,27 @@ export class OfflineCredentialsService {
         this.logger,
         0,
       );
+    }
+  }
+
+  /*
+   * The scheduler service consent rides along on the status response; a
+   * failed read (including missing scheduler configuration) must not fail
+   * the status call itself — it logs a warn and defers as `unknown`.
+   */
+  private async readSchedulerServiceConsent(
+    accessToken: string,
+  ): Promise<SchedulerServiceConsentStatus> {
+    try {
+      return await this.schedulerConsentService.getSchedulerServiceConsent(
+        accessToken,
+      );
+    } catch (err) {
+      this.logger.warn(
+        'Could not read the scheduler service consent; treating it as unknown',
+        err instanceof Error ? err.message : undefined,
+      );
+      return SchedulerServiceConsentStatus.Unknown;
     }
   }
 
