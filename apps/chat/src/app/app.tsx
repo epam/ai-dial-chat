@@ -277,9 +277,12 @@ const App: FC = () => {
         />
 
         <ActiveScheduledTaskProvider>
+          {/* The open drawer has no backdrop, so the page behind it is inert:
+              Tab and screen readers stay inside the drawer. */}
           <main
             id="main-content"
             role="main"
+            inert={isMobile && isNavOpen}
             className="relative flex min-h-0 min-w-0 flex-1 flex-col"
           >
             <Header

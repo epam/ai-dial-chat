@@ -221,6 +221,28 @@ describe('App — navigation', () => {
     expect(getSidebar().getAttribute('data-open')).toBe('true');
   });
 
+  it('makes the page behind the open mobile drawer inert, and restores it on close', async () => {
+    mocks.isMobile = true;
+    renderApp();
+    const getMain = () => screen.getByRole('main', { hidden: true });
+    expect(getMain().hasAttribute('inert')).toBe(false);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'toggle sidebar' }),
+    );
+    expect(getMain().hasAttribute('inert')).toBe(true);
+
+    act(() => mocks.selectConversation?.('chat-1'));
+    expect(getMain().hasAttribute('inert')).toBe(false);
+  });
+
+  it('leaves the page interactive beside the desktop sidebar', () => {
+    mocks.isMobile = false;
+    renderApp();
+
+    expect(screen.getByRole('main').hasAttribute('inert')).toBe(false);
+  });
+
   it('closes the mobile drawer behind a chat the user picks', async () => {
     mocks.isMobile = true;
     renderApp();
