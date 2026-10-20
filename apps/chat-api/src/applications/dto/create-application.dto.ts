@@ -117,6 +117,15 @@ export class CreateApplicationBodyDto {
   @IsOptional()
   preserveApplicationProperties?: boolean;
 
+  @ApiPropertyOptional({
+    example: { tools_supported: true },
+    description:
+      'Top-level DIAL Core application features, stored as supplied. Takes precedence over features hoisted from applicationProperties and turns off the Quick App system_prompt_supported default.',
+  })
+  @IsObject()
+  @IsOptional()
+  features?: Record<string, unknown>;
+
   @ApiPropertyOptional({ example: ['image/png'], type: [String] })
   @IsArray()
   @IsString({ each: true })
