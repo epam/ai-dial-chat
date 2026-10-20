@@ -641,6 +641,8 @@ export enum SettingsI18nKeys {
   DefaultAgent = 'settings.defaultAgent',
   DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
   DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
+  Celebrations = 'settings.celebrations',
+  CelebrationsDescription = 'settings.celebrationsDescription',
 }
 
 export enum ConversationPanelI18nKeys {
