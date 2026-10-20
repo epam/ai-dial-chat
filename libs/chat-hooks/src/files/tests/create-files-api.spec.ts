@@ -1,7 +1,9 @@
-import type {
-  FileMetadataResponseDto,
-  FilesApi,
-  ListFilesResponseDto,
+import {
+  type ArchiveItemDto,
+  ArchiveItemDtoNodeTypeEnum,
+  type FileMetadataResponseDto,
+  type FilesApi,
+  type ListFilesResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it, vi } from 'vitest';
 import { createFilesApiClient } from '../create-files-api';
@@ -200,9 +202,14 @@ describe('createFilesApiClient — downloadArchive', () => {
       failingUploadFileWithProgress,
     );
     const controller = new AbortController();
-    const items = [
-      { bucket: 'b', path: 'docs/', name: 'docs', nodeType: 'FOLDER' },
-    ] as Parameters<typeof client.downloadArchive>[0];
+    const items: ArchiveItemDto[] = [
+      {
+        bucket: 'b',
+        path: 'docs/',
+        name: 'docs',
+        nodeType: ArchiveItemDtoNodeTypeEnum.Folder,
+      },
+    ];
 
     const result = await client.downloadArchive(items, controller.signal);
 
