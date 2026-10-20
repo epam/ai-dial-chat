@@ -47,11 +47,12 @@ const lastProps = () => receivedProps[receivedProps.length - 1];
 const setConfig = (
   activeEventId: string | null,
   status = UserConfigStatus.Ready,
+  celebrationsEnabledByDefault = true,
 ) => {
   vi.mocked(useAppConfig).mockReturnValue({
     status,
     features: {},
-    config: { activeEventId },
+    config: { activeEventId, celebrationsEnabledByDefault },
   } as ReturnType<typeof useAppConfig>);
 };
 
@@ -88,8 +89,23 @@ describe('CelebrationHost', () => {
     localStorage.clear();
   });
 
-  it('withholds the event until the user turns celebrations on', () => {
+  it('passes the event to a user who never chose while the operator default is on', () => {
     localStorage.clear();
+    renderHost();
+
+    expect(lastProps().activeEventId).toBe('halloween');
+  });
+
+  it('withholds the event from a user who turned celebrations off', () => {
+    localStorage.setItem(StorageKey.CelebrationsEnabled, 'false');
+    renderHost();
+
+    expect(lastProps().activeEventId).toBeNull();
+  });
+
+  it('withholds the event until the user turns celebrations on when the operator default is off', () => {
+    localStorage.clear();
+    setConfig('halloween', UserConfigStatus.Ready, false);
     renderHost();
 
     expect(lastProps().activeEventId).toBeNull();

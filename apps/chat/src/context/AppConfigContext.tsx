@@ -50,6 +50,8 @@ export interface AppConfigState {
     customVisualizers: CustomVisualizer[];
     applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
+    /** Operator default for the celebrations switch, used while the user has saved no choice. */
+    celebrationsEnabledByDefault: boolean;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -81,6 +83,7 @@ const INITIAL_STATE: AppConfigState = {
     customVisualizers: [],
     applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
+    celebrationsEnabledByDefault: true,
   },
 };
 
@@ -136,6 +139,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             publicationFilterSources:
               response.config?.publicationFilterSources ??
               DEFAULT_PUBLICATION_FILTER_SOURCES,
+            celebrationsEnabledByDefault:
+              response.config?.celebrationsEnabledByDefault ?? true,
           },
           metadata: response.metadata,
         });

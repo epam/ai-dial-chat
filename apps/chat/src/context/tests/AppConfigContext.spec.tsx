@@ -106,6 +106,28 @@ describe('AppConfigContext', () => {
     expect(result.current.config.activeEventId).toBeNull();
   });
 
+  it('defaults celebrationsEnabledByDefault to true when the response omits it', async () => {
+    mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+    expect(result.current.config.celebrationsEnabledByDefault).toBe(true);
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+    expect(result.current.config.celebrationsEnabledByDefault).toBe(true);
+  });
+
+  it('passes an operator-disabled celebrationsEnabledByDefault through', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      ...READY_RESPONSE,
+      config: { ...READY_RESPONSE.config, celebrationsEnabledByDefault: false },
+    });
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+    expect(result.current.config.celebrationsEnabledByDefault).toBe(false);
+  });
+
   it('populates overlayEnabled/overlayAllowedOrigins from a successful API call', async () => {
     mockGetClientConfig.mockResolvedValue({
       appId: 'chat-ui',

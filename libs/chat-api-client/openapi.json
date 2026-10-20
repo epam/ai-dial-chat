@@ -6711,11 +6711,6 @@
       "ClientConfigDto": {
         "type": "object",
         "properties": {
-          "aiTextRefinementAvailable": {
-            "type": "boolean",
-            "description": "Whether a text refinement model is configured. Missing means unavailable.",
-            "example": false
-          },
           "activeEventId": {
             "type": "string",
             "description": "Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.",
@@ -6874,6 +6869,11 @@
             "items": {
               "type": "string"
             }
+          },
+          "celebrationsEnabledByDefault": {
+            "type": "boolean",
+            "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
+            "example": true
           }
         },
         "required": [
@@ -6890,7 +6890,8 @@
           "customVisualizers",
           "applicationVisualizers",
           "customVariables",
-          "publicationFilterSources"
+          "publicationFilterSources",
+          "celebrationsEnabledByDefault"
         ]
       },
       "ClientConfigMetadataDto": {

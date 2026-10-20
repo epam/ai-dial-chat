@@ -54,6 +54,25 @@ describe('AppConfigService', () => {
       },
     );
 
+    it.each([
+      [false, false],
+      [true, true],
+      [undefined, true],
+      ['false', true],
+    ])(
+      'maps a ui.celebrationsEnabledByDefault value of %j to %j',
+      async (value, expected) => {
+        const { service } = makeService(async (key) =>
+          key === 'ui.celebrationsEnabledByDefault' ? value : undefined,
+        );
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.celebrationsEnabledByDefault).toBe(expected);
+        expect(result.features).not.toHaveProperty(
+          'celebrationsEnabledByDefault',
+        );
+      },
+    );
+
     it('exposes the configured external connection origins', async () => {
       const origins = [
         'https://documents.example.com',

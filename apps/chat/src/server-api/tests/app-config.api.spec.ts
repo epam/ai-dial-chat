@@ -33,6 +33,7 @@ describe('app-config API', () => {
         applicationVisualizers: {},
         customVariables: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
+        celebrationsEnabledByDefault: true,
       },
     });
 

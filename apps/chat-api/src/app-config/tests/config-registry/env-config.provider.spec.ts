@@ -369,6 +369,27 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('ui.celebrationsEnabledByDefault', () => {
+    it.each([true, false])(
+      'returns the parsed UI_EVENT_ENABLED_BY_DEFAULT value %s',
+      async (isEnabled) => {
+        const { provider } = makeProvider({
+          UI_EVENT_ENABLED_BY_DEFAULT: isEnabled,
+        });
+        expect(
+          await provider.resolve('ui.celebrationsEnabledByDefault', ctx),
+        ).toBe(isEnabled);
+      },
+    );
+
+    it('leaves the registry default in charge when the env var is absent', async () => {
+      const { provider } = makeProvider();
+      expect(
+        await provider.resolve('ui.celebrationsEnabledByDefault', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('dialCore.externalUrl', () => {
     it('returns the external URL when DIAL_CORE_EXTERNAL_URL is set', async () => {
       const { provider } = makeProvider({
