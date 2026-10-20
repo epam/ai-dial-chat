@@ -21,6 +21,18 @@
   }
 }
 
+/*
+ * `Indicator` rows are pills. `--cp-row-radius` still wins, so a host that
+ * sets it keeps its own radius under either variant.
+ */
+.itemIndicator {
+  border-radius: var(--cp-row-radius, 9999px);
+}
+
+.indicatorDot {
+  border: 1px solid var(--cp-indicator-dot, var(--stroke-secondary, #d1dbea));
+}
+
 .groupHeader {
   color: var(--cp-text-secondary, var(--text-tertiary, #848e9c));
 }
@@ -64,4 +76,8 @@
     --cp-skeleton-color,
     var(--bg-control-disable-primary, #dce0e8)
   );
+}
+
+.list {
+  font-family: var(--cp-list-font-family, inherit);
 }

@@ -39,7 +39,7 @@ and `libs/chat-api-client` are regenerated. Example response fragment:
 loads and when the response omits it.
 
 The threshold governs the banner only. The dial's running-low mark,
-`CatalogLimitStatus`, and the Settings → Usage page keep their fixed 75%.
+`CatalogLimitStatus`, and the Usage page keep their fixed 75%.
 
 #### Scenario: Default threshold
 
@@ -250,7 +250,7 @@ components call, so their behaviour cannot drift. `ConversationView` SHALL pass
 `isGenerationInProgress={isAssistantTyping}` to the banner.
 
 - **Before the first response, or with no `deploymentId`:** the banner renders nothing. There is no skeleton, so the layout does not jump on every page load.
-- **Fetch failure:** the banner keeps rendering from the last successful response, or renders nothing if there was none. It shows no error text; the Settings → Usage page owns error reporting.
+- **Fetch failure:** the banner keeps rendering from the last successful response, or renders nothing if there was none. It shows no error text; the Usage page owns error reporting.
 - **Caching:** none beyond the hook's in-memory last response. There is no cache key or TTL.
 
 #### Scenario: Refresh after a response

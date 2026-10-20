@@ -5,14 +5,24 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFileDescription } from '@tabler/icons-react';
-import { memo, useCallback, type FC } from 'react';
+import { memo, useCallback, type ComponentType, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { ROUTES } from '../../types/routes';
 
-const SourcesSidebarToggle: FC = () => {
+interface Props {
+  /** Tabler icon drawn in the button. Defaults to the document glyph. */
+  icon?: ComponentType<{ size?: number; stroke?: number; className?: string }>;
+  /** Class applied to the icon, e.g. to mirror a directional glyph in RTL. */
+  iconClassName?: string;
+}
+
+const SourcesSidebarToggle: FC<Props> = ({
+  icon: Icon = IconFileDescription,
+  iconClassName,
+}) => {
   const { t } = useTranslation();
   const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
   const { isOpen, handleOpen } = useSourcesSidebar();
@@ -30,9 +40,10 @@ const SourcesSidebarToggle: FC = () => {
   return (
     <GhostIconButton
       icon={
-        <IconFileDescription
+        <Icon
           size={DIAL_ICON_SIZE.LG}
           stroke={DIAL_KIT_ICON_STROKE}
+          className={iconClassName}
         />
       }
       aria-label={t(SidebarI18nKeys.ToggleOpen)}

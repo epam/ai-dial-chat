@@ -1302,6 +1302,18 @@ Pre-translated strings the shell renders as-is. The shell never calls `useTransl
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 ```
 
+### DialFileManagerShellStyles
+
+Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied.
+
+```ts
+import type { DialFileManagerShellStyles } from '@epam/ai-dial-chat-shared';
+
+const styles: DialFileManagerShellStyles = {
+  colors: { surface: 'transparent' },
+};
+```
+
 ### AttachResult
 
 Result returned by the file-manager attach modal when the user confirms a selection.

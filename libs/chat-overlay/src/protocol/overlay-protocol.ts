@@ -115,9 +115,9 @@ export enum OverlayFeature {
   /** Enables the app header. */
   Header = 'header',
   /**
-   * Hides the header's hamburger button and the navigation sheet it opens â
-   * the mobile-breakpoint navigation surface carrying the nav items, profile,
-   * keyboard shortcuts, and log out.
+   * Hides the navigation part of the mobile sidebar drawer: its items, the
+   * user menu and the Usage link. The header toggle stays only while the
+   * conversation list is still reachable through it.
    */
   HideNavigationMenu = 'hide-navigation-menu',
   /** Makes the conversations sidebar section open by default. */
@@ -158,11 +158,11 @@ export enum OverlayFeature {
    * built on a schema are gated by `SchemaApps` instead.
    */
   CustomApps = 'custom-apps',
-  /** Hides the user avatar/menu button in the header. */
+  /** Hides the user menu in the sidebar and in the mobile drawer. */
   HideUserMenu = 'hide-user-menu',
   /** Hides the settings entry in the user menu. */
   HideUserSettings = 'hide-user-settings',
-  /** Hides the keyboard-shortcuts entry in the user menu and the mobile profile sheet. */
+  /** Hides the keyboard-shortcuts entry in the mobile drawer's user menu. */
   HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',

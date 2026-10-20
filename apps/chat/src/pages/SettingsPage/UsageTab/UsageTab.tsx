@@ -41,6 +41,7 @@ const RESET_SETTLE_MS = 5_000;
  */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
+/** The Usage page: period cost-limit cards and the model limits table. */
 const UsageTab: FC = () => {
   const { t } = useTranslation() as {
     t: (s: string, params?: Record<string, unknown>) => string;
@@ -250,10 +251,11 @@ const UsageTab: FC = () => {
 
   return (
     <div className="flex size-full min-h-0 flex-col">
-      <div className="flex flex-col gap-2 px-8 py-3">
-        <h2 className="dial-h1-text m-0 text-primary">
+      {/* The page header is 16px above and below a 40px title row. */}
+      <div className="flex flex-col gap-0.5 px-8 py-4">
+        <h1 className="dial-h1-text m-0 flex min-h-10 items-center text-primary">
           {t(UsageI18nKeys.PageTitle)}
-        </h2>
+        </h1>
         <p className="dial-small-text m-0 text-secondary">
           {t(UsageI18nKeys.PageDescription)}
         </p>

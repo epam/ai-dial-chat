@@ -200,36 +200,6 @@ The `<LoginPage />` component (`apps/chat/src/pages/auth/Login.tsx`) SHALL own p
 
 ---
 
-### Requirement: User menu shows identity and offers sign-out behind a confirmation
-
-On desktop, `apps/chat/src/components/Navigation/Navigation.tsx` SHALL render the `UserMenu` from `@epam/ai-dial-navigation-panel` in the footer of the `NavigationPanel` rail, only when `status === 'authenticated'` with a `user` and `OverlayFeature.HideUserMenu` is not set. The menu's trigger is an avatar `Button` with `aria-label` `t(AuthI18nKeys.SignedInAs, { email })` (`auth.signedInAs`) and an email tooltip; the avatar uses `auth.userAvatar` as its alt text. Its 2.0 `Dropdown` holds the user's identity, the language group (when one is offered), a Settings item (`basic.settings`, omitted when `OverlayFeature.HideSettingsPage` is set), and a Log out item (`ButtonsI18nKeys.LogOut`, `buttons.logOut`). On mobile, the `NavigationSheet` profile page's Log out row triggers the same flow.
-
-Both Log out entries SHALL call `openLogout()` from `useLogout()`, which opens `LogoutConfirmationModal` (a ui-kit `ConfirmationPopup` with `auth.logOutConfirmTitle`, `auth.logOutConfirmDescription`, and confirm label `buttons.logOut`). Confirming SHALL call `logout()` from `server-api/auth.api.ts`, which sends `fetch(ApiEndpoints.AUTH_LOGOUT, { method: 'POST', credentials: 'include', redirect: 'manual' })` with an `X-CSRF-Token` header when a token is held and always clears the CSRF token afterwards. The modal then logs any request failure via `console.error`, calls `useUser().reset()`, and, outside overlay mode, navigates to `ROUTES.Login`; in overlay mode the current route is kept. There is no HTML form submission.
-
-#### Scenario: Authenticated state shows the user menu
-
-- **WHEN** the user is authenticated with email `u@x.io` on a desktop viewport and `OverlayFeature.HideUserMenu` is not set
-- **THEN** the rail footer renders a button named by `auth.signedInAs` interpolated with `u@x.io`, opening a dropdown that contains the Log out item
-
-#### Scenario: Unauthenticated or hidden state omits the menu
-
-- **WHEN** `status` is not `'authenticated'`, or `OverlayFeature.HideUserMenu` is set
-- **THEN** no `UserMenu` is rendered
-
-#### Scenario: Log out asks for confirmation first
-
-- **WHEN** the user picks Log out in the `UserMenu` or the mobile sheet
-- **THEN** `LogoutConfirmationModal` opens and no logout request has been sent yet
-
-#### Scenario: Confirming sign-out posts to the BFF and resets the session
-
-- **WHEN** the user confirms in `LogoutConfirmationModal` outside overlay mode
-- **THEN** a `fetch` `POST` to `/api/v1/auth/logout` is sent with `credentials: 'include'`, the CSRF token is cleared, `useUser().reset()` is called, and the app navigates to `/login`
-- **AND WHEN** the same happens in overlay mode
-- **THEN** the app stays on the current route
-
----
-
 ### Requirement: All new user-visible strings flow through react-i18next
 
 Every user-visible auth string MUST be looked up via `useTranslation()` from `react-i18next`, through a member of the `AuthI18nKeys` enum in `apps/chat/src/constants/translation-keys.ts` (or a shared enum such as `ButtonsI18nKeys` for generic labels like Log out). Auth-specific keys MUST live under the `auth.*` namespace in `apps/chat/src/i18n/locales/en.json`. Provider names on the login page are the BFF-supplied `label` values and are rendered as-is. No hard-coded English strings are permitted in auth components, pages, or hooks.
@@ -334,3 +304,31 @@ If the revalidation request itself returns `401` (rather than a differing-`sub` 
 
 - **WHEN** `focus` and `visibilitychange` both fire in quick succession while a revalidation request triggered by the first event is still in flight
 - **THEN** only one `GET /api/v1/auth/me` request is in flight at a time for this mechanism; the second trigger does not issue a duplicate request
+
+### Requirement: The sidebar's user menu shows identity and offers sign-out behind a confirmation
+
+`apps/chat/src/components/Navigation/SidebarNavigation.tsx` SHALL render the `UserMenu` from `@epam/ai-dial-navigation-panel` in the footer of the sidebar (the desktop column and the mobile drawer), only when `status === 'authenticated'` with a `user` and `OverlayFeature.HideUserMenu` is not set. The menu's trigger is a `Button` showing the avatar and, while the sidebar is expanded, the display name; its accessible name contains `t(AuthI18nKeys.SignedInAs, { email })` (`auth.signedInAs`), and it has an email tooltip; the avatar uses `auth.userAvatar` as its alt text. Its 2.0 `Dropdown` holds the user's identity, the language group (when one is offered), a Settings item (`basic.settings`, omitted when `OverlayFeature.HideSettingsPage` is set), and a Log out item (`ButtonsI18nKeys.LogOut`, `buttons.logOut`).
+
+The Log out entry SHALL call `openLogout()` from `useLogout()`, which opens `LogoutConfirmationModal` (a ui-kit `ConfirmationPopup` with `auth.logOutConfirmTitle`, `auth.logOutConfirmDescription`, and confirm label `buttons.logOut`). Confirming SHALL call `logout()` from `server-api/auth.api.ts`, which sends `fetch(ApiEndpoints.AUTH_LOGOUT, { method: 'POST', credentials: 'include', redirect: 'manual' })` with an `X-CSRF-Token` header when a token is held and always clears the CSRF token afterwards. The modal then logs any request failure via `console.error`, calls `useUser().reset()`, and, outside overlay mode, navigates to `ROUTES.Login`; in overlay mode the current route is kept. There is no HTML form submission.
+
+#### Scenario: Authenticated state shows the user menu
+
+- **WHEN** the user is authenticated with email `u@x.io` and `OverlayFeature.HideUserMenu` is not set
+- **THEN** the sidebar footer renders a button whose name contains `auth.signedInAs` interpolated with `u@x.io`, opening a dropdown that contains the Log out item
+
+#### Scenario: Unauthenticated or hidden state omits the menu
+
+- **WHEN** `status` is not `'authenticated'`, or `OverlayFeature.HideUserMenu` is set
+- **THEN** no `UserMenu` is rendered
+
+#### Scenario: Log out asks for confirmation first
+
+- **WHEN** the user picks Log out in the `UserMenu`
+- **THEN** `LogoutConfirmationModal` opens and no logout request has been sent yet
+
+#### Scenario: Confirming sign-out posts to the BFF and resets the session
+
+- **WHEN** the user confirms in `LogoutConfirmationModal` outside overlay mode
+- **THEN** a `fetch` `POST` to `/api/v1/auth/logout` is sent with `credentials: 'include'`, the CSRF token is cleared, `useUser().reset()` is called, and the app navigates to `/login`
+- **AND WHEN** the same happens in overlay mode
+- **THEN** the app stays on the current route

@@ -30,7 +30,7 @@ The guard applies in both create and edit mode. It SHALL NOT be gated behind `EN
 
 `UnsavedChangesContext` (`apps/chat/src/context/UnsavedChangesContext.tsx`) SHALL follow the `ThemeContext` pattern: `createContext<T | undefined>(undefined)`, a memoised value, and a consumer hook `useUnsavedChanges()` that throws a clear error when used outside the provider.
 
-`UnsavedChangesProvider` SHALL be mounted inside the authenticated tree in `apps/chat/src/AppRoot.tsx`, above `<App />`, so that both the builder pages and `Navigation` are descendants. It owns:
+`UnsavedChangesProvider` SHALL be mounted inside the authenticated tree in `apps/chat/src/AppRoot.tsx`, above `<App />`, so that both the builder pages and `SidebarNavigation` are descendants. It owns:
 
 - the active registration: whether a builder is mounted and dirty;
 - the single dialog instance and the action that runs on confirm;
@@ -153,7 +153,7 @@ The dialog SHALL render no directional icon and SHALL rely on the kit's flex foo
 
 ### Requirement: Log out asks about unsaved changes first
 
-`Navigation` (`apps/chat/src/components/Navigation/Navigation.tsx`) SHALL route the `onLogout` of both `UserMenu` and `NavigationSheet` through `useUnsavedChanges()`.
+`SidebarNavigation` (`apps/chat/src/components/Navigation/SidebarNavigation.tsx`) SHALL route the `onLogout` of its `UserMenu`, on desktop and in the mobile drawer, through `useUnsavedChanges()`.
 
 - **Clean.** When `hasUnsavedChanges` is `false`, Log out SHALL open `LogoutConfirmationModal` exactly as before.
 - **Dirty.** When `hasUnsavedChanges` is `true`, Log out SHALL call `requestDiscard(performLogout)` and SHALL NOT open `LogoutConfirmationModal`.

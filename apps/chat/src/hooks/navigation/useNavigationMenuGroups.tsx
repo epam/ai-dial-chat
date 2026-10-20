@@ -17,9 +17,9 @@ import { useUiFeature } from '../useUiFeature';
  *
  * Theme and "Default agent for new chats" live only in the Settings page's Preferences tab.
  * Language and the keyboard shortcut are additionally offered as quick
- * shortcuts here: `Navigation` passes `languageGroup` only to the desktop
- * `UserMenu` and `keyboardGroup` only to the mobile `NavigationSheet`. Both
- * menus also keep a Settings entry (`onSettings`, unless the overlay host sets
+ * shortcuts here: `SidebarNavigation` passes `languageGroup` to the sidebar's
+ * `UserMenu` and adds `keyboardGroup` in the mobile drawer. The menu also keeps
+ * a Settings entry (`onSettings`, unless the overlay host sets
  * `OverlayFeature.HideSettingsPage`). Every surface writes through the same
  * hooks (`useLanguage`, `useKeyboardShortcutPreference`), so they cannot disagree.
  */
@@ -39,8 +39,8 @@ export interface NavigationMenuGroups {
 }
 
 /**
- * Builds the settings groups the navigation lib renders — as dropdown submenus
- * on the desktop rail and as pushed pages in the mobile sheet.
+ * Builds the settings groups the navigation lib renders as dropdown submenus of
+ * the sidebar's user menu.
  */
 export const useNavigationMenuGroups = (): NavigationMenuGroups => {
   const { t } = useTranslation();

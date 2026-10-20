@@ -7,6 +7,9 @@ import { ROUTES } from '../types/routes';
 const SettingsPage = lazy(
   async () => import('../pages/SettingsPage/SettingsPage'),
 );
+const UsagePage = lazy(
+  async () => import('../pages/SettingsPage/UsageTab/UsageTab'),
+);
 
 /*
  * The bare /settings URL and a per-tab one render the same shell: only the
@@ -35,3 +38,27 @@ export const renderSettingsRoutes = (
       }
     />
   ));
+
+/*
+ * Usage is its own page, not a Settings tab. A hidden settings page gates it
+ * like the rest of Settings.
+ */
+export const renderUsageRoute = (
+  isSettingsPageHidden: boolean,
+): ReactElement<{ path: string }> => (
+  <Route
+    key={ROUTES.Usage}
+    path={ROUTES.Usage}
+    element={
+      isSettingsPageHidden ? (
+        <Navigate to={ROUTES.Root} replace />
+      ) : (
+        <RouteErrorBoundary>
+          <Suspense fallback={<RouteFallback />}>
+            <UsagePage />
+          </Suspense>
+        </RouteErrorBoundary>
+      )
+    }
+  />
+);

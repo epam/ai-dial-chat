@@ -130,7 +130,7 @@ describe('UsageTab', () => {
     render(<UsageTab />);
 
     expect(
-      screen.getByRole('heading', { name: UsageI18nKeys.PageTitle }),
+      screen.getByRole('heading', { level: 1, name: UsageI18nKeys.PageTitle }),
     ).toBeTruthy();
     expect(screen.getByText(UsageI18nKeys.PageDescription)).toBeTruthy();
     expect(screen.getByRole('status').textContent).toBe(UsageI18nKeys.Loading);
