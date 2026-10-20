@@ -35,6 +35,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useDialFilePreview } from '../../hooks/files/useDialFilePreview';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
@@ -207,6 +208,11 @@ const DialFileManagerPage: FC = () => {
     [t],
   );
 
+  const { onPreview, previewExtensions } = useDialFilePreview(
+    controller.items,
+    bucket,
+  );
+
   const uploadQueueLabels = useUploadQueueLabels();
   const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
@@ -286,6 +292,7 @@ const DialFileManagerPage: FC = () => {
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
       infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      previewLabel: t(BasicI18nKeys.Preview),
       metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
       metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
       metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
@@ -323,6 +330,8 @@ const DialFileManagerPage: FC = () => {
         autoSelectUploadedItems={false}
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
+        onPreview={onPreview}
+        previewExtensions={previewExtensions}
         treeContainerClassName={TREE_PANEL_CLASS_NAME}
       />
     </div>

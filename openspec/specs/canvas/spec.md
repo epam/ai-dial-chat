@@ -34,7 +34,7 @@ Ownership note used throughout this document: the dispatch hook and every render
 2. `useOpenAttachmentCanvas` (`libs/attachment-canvas/src/hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas.ts`) resolves content from the `DisplayAttachment` (fetching file bytes if needed).
 3. Hook calls `openCanvas(content, fileName, attachmentId)` from `useAttachmentCanvas()`. For message attachments, `attachmentId` is a message-scoped composite key (`` `${messageIndex}:${attachment.id}` ``, built by `ConversationView.tsx`) rather than the raw `DisplayAttachment.id` — `id` alone is derived from content and can recur across different messages. Other callers (edit-message tray, `ConversationSourcesPanel`) omit the override and get the raw `attachment.id` default.
 4. `AttachmentCanvasContext` updates `isOpen = true`, `content`, `fileName`, and `attachmentId`. The context treats `attachmentId` as an opaque key — it has no knowledge of the composite-key format.
-5. `AttachmentCanvasContainer` (rendered in `app.tsx` only when `isConversationRoute && isAttachmentsManagerEnabled`) re-renders the panel open.
+5. `AttachmentCanvasContainer` (rendered in `app.tsx` on a conversation route when `isAttachmentsManagerEnabled`, and on the file manager route `/files` regardless of that feature) re-renders the panel open.
 6. `ConversationView.tsx` reads `attachmentId` back from `useAttachmentCanvas()` and passes it to each `ConversationMessageItem` as `selectedAttachmentKey`. Each `ConversationMessageItem` strips its own `` `${index}:` `` prefix (or renders `undefined` if the key doesn't match its own message index) before forwarding a message-scoped `selectedAttachmentId` through `MessageBubble` → `AttachmentGroup`, so only the tile that actually opened the canvas renders selected, even if another message has an attachment with the same content-derived `id` (see `attachment-input-lib` spec, "AttachmentCard, AttachmentGroup, and MessageBubble support a selected-tile visual state").
 
 #### Auto-close
@@ -43,13 +43,13 @@ The canvas closes when the URL `pathname` changes (conversation switch, catalog 
 
 #### Layout
 
-- **Position**: right edge of the conversation layout (`apps/chat/src/app/app.tsx`). Always on the physical right regardless of text direction — a viewer panel is not a directional element.
+- **Position**: right edge of the conversation layout, or of the file manager page when the user chooses Preview there (`apps/chat/src/app/app.tsx`). Always on the physical right regardless of text direction — a viewer panel is not a directional element.
 - **Header**: file name (truncated) on the start side; action buttons + close icon button on the end side.
 - **Download button**: shown only when `onDownload` is provided **and** `isDownloadable(content)` is `true`. `isDownloadable` returns `false` for `content.type === Unsupported` when `url` is `null`, `true` when `url` is present; and always `false` for `content.type === Error` with `errorType === Forbidden` (see "Error rendering" below).
 - **Close button**: calls `onClose` (`closeCanvas`).
 - **Resizability**: enabled on desktop, disabled on mobile (`isMobile` prop from `useIsMobile()`).
-- **Width defaults**: ~50% of the space between the minimum content area and the maximum panel width on desktop, full viewport on mobile. 600 px min. Width is not persisted between sessions.
-- **Resize constraint shared with sidebar**: both `AttachmentCanvas` and `ConversationSourcesPanel` derive their `maxWidth` from the shared `usePanelMaxWidth(minContentAreaWidth)` hook exported from `@epam/ai-dial-chat-hooks`, reactive to window resize. The app passes `MIN_CONTENT_AREA_WIDTH` (400 px, from `apps/chat/src/constants/layout.ts`) so the chat area always retains that much space. The reserved width is a host decision and is therefore a parameter, not a constant baked into the hook. The sidebar has its own `minWidth` of 312 px; the canvas has a separate `minWidth` of 600 px.
+- **Width defaults**: ~50% of the space between the minimum content area and the maximum panel width on desktop, full viewport on mobile. 600 px min. Width is not persisted between sessions. On the file manager page (`/files`) the app passes `minWidth` 400 px and opens the panel at about 33% of the viewport, kept between 400 and 640 px and under the maximum panel width (`resolveCanvasWidth` in `apps/chat/src/utils/canvas-width.ts`; the bounds are in `apps/chat/src/constants/layout.ts`). `AttachmentCanvasContainer` forwards an optional `minWidth` to `AttachmentCanvas` for this.
+- **Resize constraint shared with sidebar**: both `AttachmentCanvas` and `ConversationSourcesPanel` derive their `maxWidth` from the shared `usePanelMaxWidth(minContentAreaWidth)` hook exported from `@epam/ai-dial-chat-hooks`, reactive to window resize. The app passes `MIN_CONTENT_AREA_WIDTH` (400 px, from `apps/chat/src/constants/layout.ts`) so the chat area always retains that much space. The reserved width is a host decision and is therefore a parameter, not a constant baked into the hook. The sidebar has its own `minWidth` of 312 px; the canvas has a separate `minWidth` of 600 px, which the `/files` route lowers to 400 px.
 - **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. The primary path is synchronous: `useOpenAttachmentCanvas` calls the host-supplied `onBeforeOpen?.()` option before `openCanvasLoading`/`openCanvas` for `Image`, `File`, `Pasted` and `Prompt` attachments (never for `Audio`), before any async content resolution, so panels disappear on click rather than after the file fetch completes. The app's `onBeforeOpen` (from `useAttachmentCanvasResolvers`) calls `closePanel()` and `closeSourcesPanel()`. `SourcesSidebarToggle` calls `closeCanvas()` synchronously before `handleOpen()` for the reverse direction. A `useEffect` in `useConversationPanelRouteState` that watches `isCanvasOpen` acts as a safety net for the few call sites that call `openCanvas` directly (citation preview, collapsed stage attachments).
 - **Conversation panel**: The conversation history panel (`isPanelOpen`, managed by `ConversationPanelContext`) and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. `onBeforeOpen` calls `closePanel()` synchronously before async content resolution; `togglePanel` (returned by `useConversationPanelRouteState`) calls `onCloseCanvas()` before opening the panel. The `isCanvasOpen` safety-net effect in the same hook covers direct `openCanvas` call sites.
 
@@ -93,7 +93,7 @@ Lib-level string props use English defaults and are overridden by the app via `A
 
 #### Feature flag
 
-The canvas is not gated by `ENABLED_FEATURES`, but `app.tsx` renders `AttachmentCanvasContainer` only when `isConversationRoute && isAttachmentsManagerEnabled`, where `isAttachmentsManagerEnabled = useUiFeature(OverlayFeature.AttachmentsManager)`.
+The canvas is not gated by `ENABLED_FEATURES`, but `app.tsx` renders `AttachmentCanvasContainer` on conversation routes only when `isAttachmentsManagerEnabled`, where `isAttachmentsManagerEnabled = useUiFeature(OverlayFeature.AttachmentsManager)`, and on the file manager route `/files` regardless of that feature.
 
 ---
 
@@ -454,7 +454,7 @@ interface PdfBBoxSelector {
 
 ### Requirement: The canvas panel opens beside the conversation and closes on navigation
 
-Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the conversation layout, keyed by the `attachmentId` the caller supplies. The panel SHALL close whenever the URL `pathname` changes, and SHALL be mutually exclusive with both `ConversationSourcesPanel` and the conversation history panel — opening any one of the three closes the other two, synchronously, before any content is fetched. For the canvas this runs through the host's `onBeforeOpen` option of `useOpenAttachmentCanvas`, which is called for image, file, pasted and prompt attachments but not for audio; the pathname auto-close, the `togglePanel` canvas close and the `isCanvasOpen` safety net live in `useConversationPanelRouteState`.
+Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the conversation layout, keyed by the `attachmentId` the caller supplies. Choosing Preview on the file manager page (`/files`) SHALL open it the same way, at the right edge of that page, beside the file grid. The panel SHALL close whenever the URL `pathname` changes, and SHALL be mutually exclusive with both `ConversationSourcesPanel` and the conversation history panel — opening any one of the three closes the other two, synchronously, before any content is fetched. For the canvas this runs through the host's `onBeforeOpen` option of `useOpenAttachmentCanvas`, which is called for image, file, pasted and prompt attachments but not for audio; the pathname auto-close, the `togglePanel` canvas close and the `isCanvasOpen` safety net live in `useConversationPanelRouteState`.
 
 #### Scenario: Activating an attachment opens the panel
 
@@ -480,13 +480,24 @@ Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the 
 
 #### Scenario: The chat area keeps a minimum width
 
-- **WHEN** the user drags the canvas resize handle on desktop
+- **WHEN** the user drags the canvas resize handle on desktop on a conversation route
 - **THEN** the width is clamped between 600 px and `usePanelMaxWidth()`, leaving at least 400 px of chat area
 - **AND** on mobile the panel fills the viewport and is not resizable
 
+#### Scenario: The panel on the file manager page opens at a third of the viewport
+
+- **WHEN** the user chooses Preview on `/files` on desktop
+- **THEN** the panel opens at about 33% of the viewport width, never narrower than 400 px and never wider than 640 px or `usePanelMaxWidth()`
+- **AND** the user can resize it, down to 400 px
+
+#### Scenario: Preview from the file manager opens the panel
+
+- **WHEN** the user chooses Preview on a file row on `/files`
+- **THEN** `openCanvas` is called with the resolved content and file name, and the panel renders open at the right edge beside the grid
+
 ### Requirement: The canvas is an accessible panel
 
-`SidebarPanel` SHALL render with `role="complementary"` and the `ariaLabel` prop as its accessible name, SHALL be `inert` while closed, and SHALL expose every header control by keyboard with an `aria-label` supplied as a prop. App-level strings SHALL come from i18n — canvas-specific ones from `AttachmentCanvasI18nKeys`, copy/retry/reload labels from `ButtonsI18nKeys` — with the lib carrying English defaults. The capability SHALL NOT be gated behind `ENABLED_FEATURES`; the app renders the canvas only on conversation routes and only when the `OverlayFeature.AttachmentsManager` UI feature is enabled.
+`SidebarPanel` SHALL render with `role="complementary"` and the `ariaLabel` prop as its accessible name, SHALL be `inert` while closed, and SHALL expose every header control by keyboard with an `aria-label` supplied as a prop. App-level strings SHALL come from i18n — canvas-specific ones from `AttachmentCanvasI18nKeys`, copy/retry/reload labels from `ButtonsI18nKeys` — with the lib carrying English defaults. The capability SHALL NOT be gated behind `ENABLED_FEATURES`; the app renders the canvas on conversation routes only when the `OverlayFeature.AttachmentsManager` UI feature is enabled, and on the file manager route (`/files`) regardless of that feature.
 
 #### Scenario: The panel is a named landmark
 
@@ -500,8 +511,18 @@ Activating an attachment SHALL open `AttachmentCanvas` at the right edge of the 
 
 #### Scenario: The canvas follows the AttachmentsManager UI feature
 
-- **WHEN** `OverlayFeature.AttachmentsManager` is disabled, or the current route is not a conversation route
+- **WHEN** `OverlayFeature.AttachmentsManager` is disabled and the current route is a conversation route
 - **THEN** `AttachmentCanvasContainer` is not rendered
+
+#### Scenario: The canvas is not rendered on other routes
+
+- **WHEN** the current route is neither a conversation route nor `/files`
+- **THEN** `AttachmentCanvasContainer` is not rendered
+
+#### Scenario: The file manager route renders the canvas without the AttachmentsManager feature
+
+- **WHEN** the current route is `/files` and `OverlayFeature.AttachmentsManager` is disabled
+- **THEN** `AttachmentCanvasContainer` is rendered, so Preview from the file manager can open the panel
 
 ### Requirement: Content type routing resolves a typed payload before rendering
 

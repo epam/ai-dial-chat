@@ -127,6 +127,10 @@ export interface DialFileManagerShellProps {
    * Omit to keep the variant's default.
    */
   treeContainerClassName?: string;
+  /** Called with the virtual path of the file the user chose to preview. */
+  onPreview?: (path?: string) => void;
+  /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
+  previewExtensions?: string[];
   /** Color overrides, e.g. a different surface background. */
   styles?: DialFileManagerShellStyles;
 }
@@ -154,6 +158,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
   treeContainerClassName,
+  onPreview,
+  previewExtensions,
   styles: shellStyles,
 }) => {
   const {
@@ -269,9 +275,19 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   ]);
 
   const gridActionLabels = useMemo(() => {
-    if (!(DialFileManagerActions.Info in tabActionLabels)) return actionLabels;
-    return { ...actionLabels, [DialFileManagerActions.Info]: labels.infoLabel };
-  }, [actionLabels, tabActionLabels, labels.infoLabel]);
+    const withPreview =
+      labels.previewLabel != null
+        ? {
+            ...actionLabels,
+            [DialFileManagerActions.Preview]: labels.previewLabel,
+          }
+        : actionLabels;
+    if (!(DialFileManagerActions.Info in tabActionLabels)) return withPreview;
+    return {
+      ...withPreview,
+      [DialFileManagerActions.Info]: labels.infoLabel,
+    };
+  }, [actionLabels, tabActionLabels, labels.infoLabel, labels.previewLabel]);
 
   const allSelectedItemsSharedByMe = useMemo(() => {
     if (selectedPaths.size === 0) return false;
@@ -663,6 +679,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             onRemoveFilesAccess={onRemoveFilesAccess}
             fileMetadataPopupOptions={fileMetadataPopupOptions}
             onGetInfo={onGetInfo}
+            onPreview={onPreview}
+            previewExtensions={previewExtensions}
             onUploadFiles={onUploadFiles}
             onUploadArchive={onUploadArchive}
             onValidateUpload={onValidateUpload}

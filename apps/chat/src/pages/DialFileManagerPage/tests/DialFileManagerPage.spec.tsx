@@ -26,6 +26,10 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   };
 });
 
+vi.mock('../../../hooks/files/useDialFilePreview', () => ({
+  useDialFilePreview: () => ({ onPreview: vi.fn(), previewExtensions: [] }),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
 }));
