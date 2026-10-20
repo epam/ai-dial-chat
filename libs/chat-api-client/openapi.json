@@ -9772,6 +9772,13 @@
             "default": false,
             "description": "Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities."
           },
+          "features": {
+            "type": "object",
+            "example": {
+              "tools_supported": true
+            },
+            "description": "Top-level DIAL Core application features, stored as supplied. Takes precedence over features hoisted from applicationProperties and turns off the Quick App system_prompt_supported default."
+          },
           "inputAttachmentTypes": {
             "example": ["image/png"],
             "type": "array",

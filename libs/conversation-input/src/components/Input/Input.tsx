@@ -270,7 +270,12 @@ export const Input = forwardRef<InputHandle, InputProps>(
         textareaRef.current?.selectionStart ?? message.length,
       );
     };
+    const skipFocusMenuEvaluationRef = useRef(false);
     const handleTextareaFocus = () => {
+      if (skipFocusMenuEvaluationRef.current) {
+        skipFocusMenuEvaluationRef.current = false;
+        return;
+      }
       requestAnimationFrame(() => {
         const textarea = textareaRef.current;
         latestCommandMenuCaretMoveRef.current(
@@ -568,7 +573,21 @@ export const Input = forwardRef<InputHandle, InputProps>(
           focusAfterTranscriptRef.current)
       ) {
         focusAfterTranscriptRef.current = false;
-        textareaRef.current?.focus();
+        const textarea = textareaRef.current;
+        if (textarea != null) {
+          /*
+           * The textarea is unmounted while recording, so it comes back as a
+           * fresh element whose caret sits at the start; a plain `focus()`
+           * would leave it there and the focus handler would re-open the
+           * command menu over a leading `/skill`. Put the caret at the end
+           * and skip that one focus-time menu evaluation.
+           */
+          skipFocusMenuEvaluationRef.current =
+            document.activeElement !== textarea;
+          textarea.focus();
+          const end = textarea.value.length;
+          textarea.setSelectionRange(end, end);
+        }
       }
     }, [voiceState, textareaRef]);
 
