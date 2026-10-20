@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { AdminRoleService } from './admin-role.service';
 import { AuthController } from './auth.controller';
 import { BucketService } from './bucket/bucket.service';
 import { CsrfGuard } from './csrf/csrf.guard';
@@ -21,6 +22,7 @@ import { HeaderTokenStrategy } from './strategies/header-token.strategy';
     SessionService,
     RefreshService,
     ProviderRegistryService,
+    AdminRoleService,
     BucketService,
     HeaderTokenStrategy,
     CookieSessionStrategy,
@@ -41,6 +43,12 @@ import { HeaderTokenStrategy } from './strategies/header-token.strategy';
       useClass: CsrfGuard,
     },
   ],
-  exports: [OptionalSessionGuard, SessionService, KeysService, AUTH_STRATEGIES],
+  exports: [
+    OptionalSessionGuard,
+    SessionService,
+    KeysService,
+    AUTH_STRATEGIES,
+    AdminRoleService,
+  ],
 })
 export class AuthModule {}

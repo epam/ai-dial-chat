@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   getCatalogPublishHistory,
+  getCatalogUnpublishAccess,
   publishCatalogEntity,
   unpublishCatalogEntity,
 } from '../../server-api/publish.api';
@@ -42,8 +43,6 @@ interface UseCatalogPublishingParams {
   showPublishError: (error: unknown, operation?: EntityOperation) => void;
   /** Whether the signed-in user is an administrator. */
   isAdmin: boolean;
-  /** Whether the signed-in user may write to a publish folder. */
-  hasPublishWriteAccess: (folderPath: string[]) => boolean;
 }
 
 interface UseCatalogPublishingResult {
@@ -81,7 +80,6 @@ export const useCatalogPublishing = ({
   notifyOperationSuccess,
   showPublishError,
   isAdmin,
-  hasPublishWriteAccess,
 }: UseCatalogPublishingParams): UseCatalogPublishingResult => {
   const { t } = useTranslation();
 
@@ -110,19 +108,19 @@ export const useCatalogPublishing = ({
    * instead is what made it reachable for a personal item that was never
    * published, while leaving the public copy with no way to remove it.
    *
-   * Who may ask: administrators anywhere, and anyone with write access to the
-   * folder the copy sits in. DIAL Core has the final say — the request only
-   * creates a `PENDING` publication an administrator still has to approve —
-   * so this gate exists to keep an action nobody can complete off the menu,
-   * not to enforce the permission itself.
+   * Who may ask — administrators and the copy's publisher ([#9180](https://github.com/epam/ai-dial-chat/issues/9180)) — is
+   * not decided here but in `getPublishHistory` below, which resolves no
+   * folder for anyone else so the panel hides the entry. Folder write access
+   * was the earlier rule and said nothing about who published the copy:
+   * every unrestricted folder passed it, offering Unpublish to everyone. The
+   * backend refuses the request from anyone else regardless; this gate only
+   * keeps an action the caller cannot complete off the menu.
    */
   const isUnpublishVisible = useCallback(
     (item: CatalogItem) =>
       isPublicCatalogEntityId(item.id) &&
-      toPublishEntityType(item.type) != null &&
-      (isAdmin ||
-        hasPublishWriteAccess(getPublicCatalogEntityFolderPath(item.id))),
-    [isAdmin, hasPublishWriteAccess],
+      toPublishEntityType(item.type) != null,
+    [],
   );
 
   /*
@@ -134,32 +132,47 @@ export const useCatalogPublishing = ({
    * and the resulting `TypeError` was reported as "DIAL Core is currently
    * unavailable". Fixed in `publication.util.ts`.
    */
-  const getPublishHistory = useCallback(async (item: CatalogItem) => {
-    const entityType = toPublishEntityType(item.type);
-    if (!entityType) return [];
-    /*
-     * A public copy's own id already states the one folder it is published
-     * to, and asking Core is not merely wasteful but wrong: publications are
-     * matched by the *source* url and listed from the caller's own bucket, so
-     * a public id matches nothing (the author's publication records the
-     * personal path; an administrator's bucket holds no record at all). That
-     * empty history is what left the copy with no Unpublish. `publishedAt`
-     * falls back to the copy's own timestamp — the details panel reads only
-     * `folderPath` off these entries, and the publish panel, the one surface
-     * that reads the rest, never opens for a public item.
-     */
-    if (isPublicCatalogEntityId(item.id)) {
-      return [
-        {
-          version: item.version,
-          publishedAt: item.updatedAt ?? Date.now(),
-          folderPath: getPublicCatalogEntityFolderPath(item.id),
-        },
-      ];
-    }
-    const entries = await getCatalogPublishHistory(entityType, item.id);
-    return entries.map(mapPublishHistoryEntryDto);
-  }, []);
+  const getPublishHistory = useCallback(
+    async (item: CatalogItem): Promise<PublishHistoryEntry[]> => {
+      const entityType = toPublishEntityType(item.type);
+      if (!entityType) return [];
+      /*
+       * A public copy's own id already states the one folder it is published
+       * to, and asking Core is not merely wasteful but wrong: publications are
+       * matched by the *source* url and listed from the caller's own bucket, so
+       * a public id matches nothing (the author's publication records the
+       * personal path; an administrator's bucket holds no record at all). That
+       * empty history is what left the copy with no Unpublish. `publishedAt`
+       * falls back to the copy's own timestamp — the details panel reads only
+       * `folderPath` off these entries, and the publish panel, the one surface
+       * that reads the rest, never opens for a public item.
+       *
+       * The entry exists only to give Unpublish its folder, so it is offered
+       * only to someone who may unpublish the copy: an administrator outright,
+       * anyone else when the backend confirms they published it. A failed
+       * lookup rejects, which the panel treats as "hidden, retry next open".
+       */
+      if (isPublicCatalogEntityId(item.id)) {
+        if (!isAdmin) {
+          const { canUnpublish } = await getCatalogUnpublishAccess(
+            entityType,
+            item.id,
+          );
+          if (!canUnpublish) return [];
+        }
+        return [
+          {
+            version: item.version,
+            publishedAt: item.updatedAt ?? Date.now(),
+            folderPath: getPublicCatalogEntityFolderPath(item.id),
+          },
+        ];
+      }
+      const entries = await getCatalogPublishHistory(entityType, item.id);
+      return entries.map(mapPublishHistoryEntryDto);
+    },
+    [isAdmin],
+  );
 
   const handlePublish = useCallback(
     async (

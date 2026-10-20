@@ -9,6 +9,7 @@ import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   CatalogPublishEntityType,
   getCatalogPublishHistory,
+  getCatalogUnpublishAccess,
   publishCatalogEntity,
   unpublishCatalogEntity,
 } from '../../../server-api/publish.api';
@@ -23,6 +24,7 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   publishCatalogEntity: vi.fn(),
   unpublishCatalogEntity: vi.fn(),
   getCatalogPublishHistory: vi.fn().mockResolvedValue([]),
+  getCatalogUnpublishAccess: vi.fn(),
 }));
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
@@ -48,10 +50,6 @@ const renderPublishing = (
   const rememberPublishFolder = vi.fn();
   const notifyOperationSuccess = vi.fn();
   const showPublishError = vi.fn();
-  /* Mirrors `usePublishFolders`: every folder is writable except `Production`. */
-  const hasPublishWriteAccess = vi.fn(
-    (folderPath: string[]) => !folderPath.includes('Production'),
-  );
   const view = renderHook(() =>
     useCatalogPublishing({
       deployments: [] as DeploymentItemDto[],
@@ -60,7 +58,6 @@ const renderPublishing = (
       notifyOperationSuccess,
       showPublishError,
       isAdmin: false,
-      hasPublishWriteAccess,
       ...overrides,
     }),
   );
@@ -69,7 +66,6 @@ const renderPublishing = (
     rememberPublishFolder,
     notifyOperationSuccess,
     showPublishError,
-    hasPublishWriteAccess,
   };
 };
 
@@ -92,6 +88,10 @@ const SCHEMA_APP_PUBLISHING = {
 describe('useCatalogPublishing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    /* Callers are publishers unless a test says otherwise. */
+    vi.mocked(getCatalogUnpublishAccess).mockResolvedValue({
+      canUnpublish: true,
+    });
   });
 
   describe('publish wiring', () => {
@@ -630,7 +630,11 @@ describe('useCatalogPublishing', () => {
           ...overrides,
         });
 
-      it('offers Unpublish on a public copy in a folder the user may write to', () => {
+      /*
+       * Who may unpublish is resolved by `getPublishHistory` (see below); this
+       * predicate only says the item is the kind Unpublish applies to.
+       */
+      it('marks a public copy of a publishable type as unpublishable', () => {
         const { result } = renderPublishing();
 
         expect(result.current.isUnpublishVisible(makePublicAgent())).toBe(true);
@@ -645,29 +649,71 @@ describe('useCatalogPublishing', () => {
           ),
         ).toBe(false);
       });
+    });
 
-      it('withholds Unpublish from a non-admin without write access to the folder', () => {
-        const { result } = renderPublishing();
-
-        expect(
-          result.current.isUnpublishVisible(
-            makePublicAgent({
-              id: 'applications/public/Production/Revenue bot',
-            }),
-          ),
-        ).toBe(false);
+    /*
+     * [#9180](https://github.com/epam/ai-dial-chat/issues/9180): folder write
+     * access offered Unpublish to every user on every copy. Only an
+     * administrator or the copy's publisher gets a folder to unpublish from.
+     */
+    describe('who is offered Unpublish on a public copy', () => {
+      const publicAgent = makeCatalogItem({
+        id: PUBLIC_AGENT_ID,
+        type: CatalogEntityType.Agent,
+        isMyApp: false,
       });
 
-      it('offers Unpublish to an admin even in a folder they cannot write to', () => {
+      it('gives the copy’s publisher its folder', async () => {
+        const { result } = renderPublishing();
+
+        const history = await result.current.getPublishHistory(publicAgent);
+
+        expect(getCatalogUnpublishAccess).toHaveBeenCalledWith(
+          CatalogPublishEntityType.Application,
+          PUBLIC_AGENT_ID,
+        );
+        expect(history.map((entry) => entry.folderPath)).toEqual([
+          ['Data Science'],
+        ]);
+      });
+
+      it('gives a user who did not publish the copy no folder, so no Unpublish', async () => {
+        vi.mocked(getCatalogUnpublishAccess).mockResolvedValue({
+          canUnpublish: false,
+        });
+        const { result } = renderPublishing();
+
+        await expect(
+          result.current.getPublishHistory(publicAgent),
+        ).resolves.toEqual([]);
+      });
+
+      it('gives an administrator the folder without asking the backend', async () => {
         const { result } = renderPublishing({ isAdmin: true });
 
-        expect(
-          result.current.isUnpublishVisible(
-            makePublicAgent({
-              id: 'applications/public/Production/Revenue bot',
-            }),
-          ),
-        ).toBe(true);
+        const history = await result.current.getPublishHistory(publicAgent);
+
+        expect(getCatalogUnpublishAccess).not.toHaveBeenCalled();
+        expect(history).toHaveLength(1);
+      });
+
+      it('rejects when the access lookup fails, so the panel keeps Unpublish hidden', async () => {
+        vi.mocked(getCatalogUnpublishAccess).mockRejectedValue(
+          new Error('Bad Gateway'),
+        );
+        const { result } = renderPublishing();
+
+        await expect(
+          result.current.getPublishHistory(publicAgent),
+        ).rejects.toThrow('Bad Gateway');
+      });
+
+      it('never asks about the author’s own item, whose history comes from the endpoint', async () => {
+        const { result } = renderPublishing();
+
+        await result.current.getPublishHistory(makeCatalogItem());
+
+        expect(getCatalogUnpublishAccess).not.toHaveBeenCalled();
       });
     });
 

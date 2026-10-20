@@ -18,12 +18,18 @@ import type {
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRulesResultDto,
+  UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
 } from '../models/index';
 
 export interface GetCatalogPublishHistoryRequest {
   entityType: GetCatalogPublishHistoryEntityTypeEnum;
+  entityId: string;
+}
+
+export interface GetCatalogUnpublishAccessRequest {
+  entityType: GetCatalogUnpublishAccessEntityTypeEnum;
   entityId: string;
 }
 
@@ -114,6 +120,79 @@ export class PublishApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<PublishHistoryEntryDto>> {
     const response = await this.getCatalogPublishHistoryRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Reports whether the session user may submit an unpublish request for this entity: true for an administrator, for an entity in their own bucket, and for the publisher of a public copy (the bucket holding the live publication that created it). It reveals only the caller’s own permission, never who published the entity, and creates nothing. A negative answer is a 200 with `canUnpublish: false`.
+   * Check whether the caller may request removal of a catalog entity
+   */
+  async getCatalogUnpublishAccessRaw(
+    requestParameters: GetCatalogUnpublishAccessRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<UnpublishAccessDto>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling getCatalogUnpublishAccess().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling getCatalogUnpublishAccess().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/unpublish-access`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<UnpublishAccessDto>(response);
+  }
+
+  /**
+   * Reports whether the session user may submit an unpublish request for this entity: true for an administrator, for an entity in their own bucket, and for the publisher of a public copy (the bucket holding the live publication that created it). It reveals only the caller’s own permission, never who published the entity, and creates nothing. A negative answer is a 200 with `canUnpublish: false`.
+   * Check whether the caller may request removal of a catalog entity
+   */
+  async getCatalogUnpublishAccess(
+    requestParameters: GetCatalogUnpublishAccessRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UnpublishAccessDto> {
+    const response = await this.getCatalogUnpublishAccessRaw(
       requestParameters,
       initOverrides,
     );
@@ -361,6 +440,18 @@ export const GetCatalogPublishHistoryEntityTypeEnum = {
 } as const;
 export type GetCatalogPublishHistoryEntityTypeEnum =
   (typeof GetCatalogPublishHistoryEntityTypeEnum)[keyof typeof GetCatalogPublishHistoryEntityTypeEnum];
+/**
+ * @export
+ */
+export const GetCatalogUnpublishAccessEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+} as const;
+export type GetCatalogUnpublishAccessEntityTypeEnum =
+  (typeof GetCatalogUnpublishAccessEntityTypeEnum)[keyof typeof GetCatalogUnpublishAccessEntityTypeEnum];
 /**
  * @export
  */

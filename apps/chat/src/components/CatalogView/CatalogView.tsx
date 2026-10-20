@@ -435,7 +435,6 @@ const CatalogView: FC<Props> = ({
     notifyOperationSuccess,
     showPublishError,
     isAdmin,
-    hasPublishWriteAccess,
   });
 
   const {

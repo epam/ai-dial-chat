@@ -7735,6 +7735,19 @@ export interface TranscribeAudioDto {
 /**
  *
  * @export
+ * @interface UnpublishAccessDto
+ */
+export interface UnpublishAccessDto {
+  /**
+   * Whether the caller may request removal of this entity: true for an administrator or the publisher of the copy
+   * @type {boolean}
+   * @memberof UnpublishAccessDto
+   */
+  canUnpublish: boolean;
+}
+/**
+ *
+ * @export
  * @interface UnpublishCatalogEntityDto
  */
 export interface UnpublishCatalogEntityDto {

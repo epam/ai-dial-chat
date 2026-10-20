@@ -1,0 +1,49 @@
+Slicing strategy: **risk-first, then contract-first.** Slice 1 proves the hardest part — deciding publisher ownership from Core's publication records — and closes the security hole on its own (backend 403). Slice 2 publishes the read contract (OpenAPI + generated client). Slice 3 switches the UI to that contract. Each slice is independently verifiable and shippable; slice 1 alone already satisfies "a direct API call by a non-owner is rejected".
+
+Conventions for every task: follow `apps/chat-api/AGENTS.md` for backend code; extensionless relative imports; `const` arrow helpers; `/* */` for multi-line comments.
+
+## 1. Backend: one admin rule, ownership check, enforced 403 (risk-first)
+
+- [x] 1.1 Extract `AuthController.computeIsAdmin` into `AdminRoleService.isAdmin(user: SessionUser): boolean` in `apps/chat-api/src/auth/admin-role.service.ts` (injects `ProviderRegistryService`; logic moved verbatim, including the unknown-provider → `false` branch). Register it in `AuthModule.providers` and `exports`; make `AuthController.getCurrentUser` call it and delete the private method.
+  - Verification: add `apps/chat-api/src/auth/tests/admin-role.service.spec.ts` (role in `adminRoles` → true; no `adminRoles` → false; string vs array roles claim; unknown provider → false). Run `npm run test:file -- apps/chat-api/src/auth/tests/admin-role.service.spec.ts` and `npm run test:file -- apps/chat-api/src/auth/auth.controller.spec.ts` (unchanged `/auth/me` behaviour).
+- [x] 1.2 Add `publishesCopy(publications, copyUrl): boolean` to `apps/chat-api/src/publish/publication.util.ts`: true when a publishing resource's decoded `targetUrl` equals decoded `copyUrl` and no `APPROVED` `DELETE` with the same folder + `targetUrl` key at or after it cancels it. Reuse the module's existing `toPublishedCopyKey`, `toPublicationTime`, `isApprovedRemoval` and its undateable-removal ordering; JSDoc the export.
+  - Verification: extend `apps/chat-api/src/publish/tests/publication.util.spec.ts` — match; percent-encoded vs plain target; approved later `DELETE` cancels; re-publish after removal is owned again; `PENDING` `DELETE` does not cancel; no matching target → false. Run `npm run test:file -- apps/chat-api/src/publish/tests/publication.util.spec.ts`.
+- [x] 1.3 In `apps/chat-api/src/publish/publish.service.ts`, extract the list→resolve-details step of `listSourcePublications` into a private `listResolvedPublications(accessToken, bucket, context)` (no source filter, same error mapping) and have `listSourcePublications` call it — no behaviour change for history/unpublish target lookup.
+  - Verification: `npm run test:file -- apps/chat-api/src/publish/tests/publish.service.spec.ts` and `npm run test:file -- apps/chat-api/src/publish/tests/unpublish.service.spec.ts` stay green unmodified.
+- [x] 1.4 Add `PublishService.canUnpublish(user: SessionUser, entityType, entityId): Promise<boolean>`: `AdminRoleService.isAdmin` → true; `getResourceBucket(entityId) === user.bucket` → true; else `withCachedDialRequest` on key `unpublish-access:{bucket}:{entityType}:{entityId}`, TTL 60 000 ms, computing `publishesCopy(await listResolvedPublications(...), entityId)`. List failures propagate (fail closed, nothing cached). Import `AuthModule` in `apps/chat-api/src/publish/publish.module.ts` and inject `AdminRoleService`.
+  - Verification: add `apps/chat-api/src/publish/tests/unpublish-access.service.spec.ts` — admin skips Core; own bucket skips Core; publisher true; unrelated user false; `displayAuthor` match ignored; `PENDING` ADD false; list 5xx throws `BadGatewayException` and is not cached; second call within TTL hits cache; different bucket does not share the entry. Run `npm run test:file -- apps/chat-api/src/publish/tests/unpublish-access.service.spec.ts`.
+- [x] 1.5 Enforce in `PublishService.unpublish`: accept the `SessionUser` (controller passes `req.user`), call `canUnpublish` before any `createPublication`; on `false` log `warn` (entity type/id only) and throw `ForbiddenException('You can only unpublish resources you published')`. Update `PublishController.unpublish` accordingly and change its 403 `@ApiResponse` description to `Caller is neither an administrator nor the publisher of this copy, or lacks write access to the target folder`.
+  - Verification: extend `apps/chat-api/src/publish/tests/unpublish.service.spec.ts` (non-owner → 403, `createPublication` not called, history cache not deleted; owner → 200; admin non-owner → 200; access-check list failure → 502, no publication) and `apps/chat-api/src/publish/tests/unpublish.controller.spec.ts` (supertest: non-owner `POST …/unpublish` → 403; owner → 200). Run both with `npm run test:file -- <path>`.
+- [x] 1.6 Slice check: `npm run verify:changed`.
+
+## 2. Backend + client contract: `GET …/unpublish-access`
+
+- [x] 2.1 Add `apps/chat-api/src/publish/dto/unpublish-access.dto.ts` (`class UnpublishAccessDto { @ApiProperty({ description: 'Whether the caller may request removal of this entity' }) canUnpublish: boolean }`).
+- [x] 2.2 Add `PublishController.getCatalogUnpublishAccess` — `@Get(':entityType/:entityId/unpublish-access')`, `@Param() CatalogEntityParamsDto`, `@ApiOperation({ operationId: 'getCatalogUnpublishAccess', summary, description })` stating it reports only the caller's own permission, `@ApiResponse` for 200 (`type: UnpublishAccessDto`), 400, 401, 502, 503 — delegates to `canUnpublish(req.user, …)` and returns `{ canUnpublish }`.
+  - Verification: add cases to `apps/chat-api/src/publish/tests/unpublish.controller.spec.ts` (supertest: owner → 200 `{ canUnpublish: true }`; unrelated → 200 `{ canUnpublish: false }`; bad `entityType` → 400; Core list 5xx → 502). Run `npm run test:file -- apps/chat-api/src/publish/tests/unpublish.controller.spec.ts`.
+- [x] 2.3 Regenerate the client: `npm run openapi` then `npm run openapi:check`; confirm `libs/chat-api-client/openapi.json` carries `getCatalogUnpublishAccess` with a typed `UnpublishAccessDto` and the new 403 text on `unpublishCatalogEntity`. Do not hand-edit generated files.
+  - Verification: `npm exec nx build chat-api-client` and `npm exec nx lint chat-api-client`.
+- [x] 2.4 Add `getCatalogUnpublishAccess(entityType, entityId): Promise<UnpublishAccessDto>` to the `PublishApiClient` interface and `createPublishApiClient` in `libs/chat-hooks/src/catalog/create-publish-api.ts` (JSDoc'd, calls `publishApi.getCatalogUnpublishAccess({ entityType, entityId })`); re-export it from `apps/chat/src/server-api/publish.api.ts` next to `getCatalogPublishHistory`. `apps/chat/src/server-api/api-client.ts` already constructs `publishApi` — no change there.
+  - Architecture guard: the `chat-hooks` change stays inside its generated-client exception — operation signature + thin call on an injected `PublishApi`; no client construction, base URL, auth, env, or app-context import. `libs/catalog` is not touched.
+  - Verification: `npm exec nx run chat-hooks:typecheck`; if `libs/chat-hooks/README.md` documents `createPublishApiClient`'s operations, add the new one and run `npm run validate:docs`.
+- [x] 2.5 Slice check: `npm run verify:changed`.
+
+## 3. Frontend: offer Unpublish only to owners and admins
+
+- [x] 3.1 In `apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`: `isUnpublishVisible` → `isPublicCatalogEntityId(item.id) && toPublishEntityType(item.type) != null`; `getPublishHistory` for a public copy → synthesised entry when `isAdmin`, else only when `getCatalogUnpublishAccess` resolves `canUnpublish: true`, `[]` when false, rejection propagates. Keep both `useCallback` with `isAdmin` in deps. Remove the now-unused `hasPublishWriteAccess` param from `UseCatalogPublishingParams` and from the call in `apps/chat/src/components/CatalogView/CatalogView.tsx` (CatalogView still passes `hasPublishWriteAccess` to `DetailsPanel` for the publish panel). Rewrite the `isUnpublishVisible` comment to state the owner/admin rule and that the backend enforces it.
+  - Verification: update `apps/chat/src/hooks/useCatalogPublishing/tests/useCatalogPublishing.spec.ts` — owner (`canUnpublish: true`) gets one entry; non-owner gets `[]`; admin gets the entry without calling `getCatalogUnpublishAccess`; access rejection rejects history; `isUnpublishVisible` true for any public copy regardless of folder write access, false for a personal item; remove cases that asserted the write-access rule. Run `npm run test:file -- apps/chat/src/hooks/useCatalogPublishing/tests/useCatalogPublishing.spec.ts`.
+- [x] 3.2 Confirm the end-to-end visibility in the catalog view: extend `apps/chat/src/components/CatalogView/tests/CatalogView.spec.tsx` so a non-admin whose access lookup answers `false` sees no `Unpublish` menu item (queried by role/name), and one answering `true` does.
+  - Verification: `npm run test:file -- apps/chat/src/components/CatalogView/tests/CatalogView.spec.tsx`.
+- [x] 3.3 i18n: no new strings — confirm the 403 path is reported by the existing `usePublishErrorNotification` copy and no key was added to `apps/chat/src/i18n/locales/en.json`. RTL: no new UI surface, none required.
+- [x] 3.4 Slice check: `npm run verify:changed`.
+
+## 4. Close-out
+
+- [x] 4.1 Run `npm run validate:specs` (delta specs reference `apps/chat-api/src/auth/admin-role.service.ts` and `apps/chat-api/src/publish/dto/unpublish-access.dto.ts`, which now exist).
+- [x] 4.2 Run `npm run build:quiet` (Nest module wiring changed: `PublishModule` imports `AuthModule`).
+- [x] 4.3 Run `npm run verify:full` once.
+
+## Follow-ups (out of scope, not implemented here)
+
+- F.1 Owner-initiated withdrawal of a pending unpublish request (issue open question 4) — needs Core's publication-delete API; open a separate issue if wanted.
+- F.2 If DIAL Core exposes an owner on the public resource's metadata, replace the publication scan in `canUnpublish` with it (design Open Question 1).
