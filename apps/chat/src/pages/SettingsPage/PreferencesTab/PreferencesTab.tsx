@@ -3,6 +3,7 @@ import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import PreferencesFields from '../../../components/Settings/PreferencesFields/PreferencesFields';
 import { SettingsI18nKeys } from '../../../constants/translation-keys';
+import { useCelebrationPreference } from '../../../hooks/celebration/useCelebrationPreference';
 import { useKeyboardShortcutPreference } from '../../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../../hooks/language/useLanguage';
 import { useThemeOptions } from '../../../hooks/theme/useThemeOptions';
@@ -15,6 +16,10 @@ const PreferencesTab: FC = () => {
   } = useKeyboardShortcutPreference();
   const { language, changeLanguage } = useLanguage();
   const { selectedTheme, setTheme } = useThemeOptions();
+  const {
+    isEnabled: isCelebrationEnabled,
+    setIsEnabled: setIsCelebrationEnabled,
+  } = useCelebrationPreference();
 
   return (
     <div className="flex size-full min-h-0 flex-col">
@@ -37,6 +42,8 @@ const PreferencesTab: FC = () => {
           onLanguageChange={changeLanguage}
           keyboard={keyboardPreference}
           onKeyboardChange={(next: SendOnEnter) => setKeyboardPreference(next)}
+          isCelebrationEnabled={isCelebrationEnabled}
+          onCelebrationEnabledChange={setIsCelebrationEnabled}
         />
       </div>
     </div>

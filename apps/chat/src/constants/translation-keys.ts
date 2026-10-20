@@ -754,6 +754,8 @@ export enum SettingsI18nKeys {
   DefaultAgentOptionDefault = 'settings.defaultAgentOptionDefault',
   DefaultAgentOptionLastUsed = 'settings.defaultAgentOptionLastUsed',
   General = 'settings.general',
+  Celebrations = 'settings.celebrations',
+  CelebrationsDescription = 'settings.celebrationsDescription',
 }
 
 export enum ExtensionsI18nKeys {

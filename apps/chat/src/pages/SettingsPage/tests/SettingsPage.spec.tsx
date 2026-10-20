@@ -107,7 +107,10 @@ describe('SettingsPage', () => {
      * Ready, so this suite has to report a settled config even though it
      * exercises none of the flags.
      */
-    mockUseAppConfig.mockReturnValue({ status: UserConfigStatus.Ready });
+    mockUseAppConfig.mockReturnValue({
+      status: UserConfigStatus.Ready,
+      config: { activeEventId: null },
+    });
     const { useDeployments } =
       await import('../../../context/DeploymentsContext');
     vi.mocked(useDeployments).mockReturnValue(createDeploymentsContextValue());

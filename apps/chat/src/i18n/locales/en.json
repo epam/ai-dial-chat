@@ -665,7 +665,9 @@
     "defaultAgent": "Default agent for new chats",
     "defaultAgentOptionDefault": "Default agent",
     "defaultAgentOptionLastUsed": "Last used agent",
-    "general": "General"
+    "general": "General",
+    "celebrations": "Seasonal celebrations",
+    "celebrationsDescription": "Show holiday decorations and animations on the start page."
   },
   "extensions": {
     "description": "Access additional tools and capabilities through extensions.",

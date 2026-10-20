@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import type { FC } from 'react';
 import { Link, MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { useAppConfig } from '../AppConfigContext';
 import { CelebrationHost } from '../CelebrationHost';
@@ -99,6 +100,7 @@ const renderHost = async (path = '/') => {
 describe('CelebrationHost with the celebrations library', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.setItem(StorageKey.CelebrationsEnabled, 'true');
     lastConsumeResult = null;
     setActiveEvent('halloween');
     vi.mocked(useNotification).mockReturnValue({
@@ -108,6 +110,7 @@ describe('CelebrationHost with the celebrations library', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    localStorage.clear();
   });
 
   it.each(['/conversations/existing', '/apps-editor', '/catalog'])(
