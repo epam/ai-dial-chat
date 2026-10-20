@@ -420,6 +420,29 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     ).toBeTruthy();
   });
 
+  it('shows History as unavailable without a retry action when the task details are unavailable', () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.runId = 'run-1';
+    activeScheduledTaskMock.taskState = 'unavailable';
+    activeScheduledTaskMock.task = null;
+    activeScheduledTaskMock.historyError = new Error('Not found');
+
+    render(<ConversationSourcesPanelContainer />);
+
+    expect(
+      screen.getByText(
+        'scheduledTasks.conversationPanel.historyUnavailableLabel',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText('scheduledTasks.detail.historyErrorLabel'),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
+    ).toBeNull();
+  });
+
   it('shows the task display name as the panel title once loaded', () => {
     activeScheduledTaskMock.status = 'task-conversation';
     activeScheduledTaskMock.scheduleId = 'schedule-1';

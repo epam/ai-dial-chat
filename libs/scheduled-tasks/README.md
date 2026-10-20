@@ -308,7 +308,11 @@ state, pagination callbacks, and labels are all supplied by the host; a run row
 renders as clickable only when its item carries a `conversationId` and
 `onRunClick` is supplied. An `Error` row whose item carries `errorText` reveals
 that text in a tooltip on its status icon (hover or focus) and appends it to the
-row's accessible name; `errorText` is ignored for every other status.
+row's accessible name; `errorText` is ignored for every other status. Set
+`isUnavailable` when the history exists but cannot be shown to the viewer (for
+example a task shared by its owner): `labels.unavailableLabel` then replaces the
+runs, the error message, the retry action and the footer — mirroring
+`ScheduledTaskConversationDetailsSection`'s `state: 'unavailable'`.
 
 ```tsx
 import {
@@ -331,6 +335,7 @@ import {
   isLoadingMore={false}
   error={null}
   onRetry={refetchRuns}
+  isUnavailable={false}
   hasMore={true}
   onLoadMore={loadMoreRuns}
   currentRunId="run_1"
@@ -340,6 +345,7 @@ import {
     emptyLabel: 'No runs yet',
     errorLabel: 'Failed to load history',
     retryLabel: 'Retry',
+    unavailableLabel: 'History is unavailable',
     showMoreLabel: 'Show more',
     runStatusLabels: {
       [ScheduledTaskRunStatus.Success]: 'Succeeded',
