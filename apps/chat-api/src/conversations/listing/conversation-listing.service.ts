@@ -8,7 +8,7 @@ import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationMetadataDto } from '../../openapi/openapi-response.dto';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
-import { MAX_LIST_DISPLAY_NAME_ENRICHMENTS } from '../constants/conversation.constants';
+import { LIST_DISPLAY_NAME_READ_BATCH_SIZE } from '../constants/conversation.constants';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -32,18 +32,6 @@ import { parseScheduledTaskConversationPath } from '../utils/parse-scheduled-tas
 /** Leading segment of every DIAL Core conversation resource id. */
 const CONVERSATION_RESOURCE_TYPE = 'conversations';
 const FULL_CONVERSATION_LIST_PAGE_LIMIT = 1000;
-
-/** True for a writable list item in the caller's own bucket. */
-const isOwned = (item: ConversationListItemDto): boolean =>
-  !item.isReadonly && !item.sharedWithMe && !item.publishedWithMe;
-
-/** The most recently updated slice of one source group's items. */
-const pickMostRecent = (
-  group: ConversationListItemDto[],
-): ConversationListItemDto[] =>
-  [...group]
-    .sort((left, right) => right.updatedAt - left.updatedAt)
-    .slice(0, MAX_LIST_DISPLAY_NAME_ENRICHMENTS);
 
 /** Latest time the current user accepted a share of this resource, or 0. */
 const getSharedAt = (sharedBy: ShareGrant[] | undefined): number =>
@@ -416,29 +404,31 @@ export class ConversationListingService {
    * filename-derived title can be stale for any item — including a published
    * copy, whose public-bucket filename is taken from the source filename at
    * publish time and never follows a later rename. Reading the body back is
-   * the only way to recover the authoritative name, so it is budgeted: the
-   * most recently updated items of each source group (owned, and read-only
-   * ones — published or shared) are enriched per group, so a long list of one
-   * kind cannot starve the other.
+   * the only way to recover the authoritative name. Every item is read, in
+   * bounded batches: an item left with its filename title would be renamed by
+   * the client the moment it is opened (`getConversation` resolves the same
+   * way), dropping it out of a search that matched the old title (#9336).
    */
   private async enrichListItemsWithStoredDisplayNames(
     items: ConversationListItemDto[],
     token: string,
     bucket: string,
   ): Promise<ConversationListItemDto[]> {
-    const candidates = [
-      ...pickMostRecent(items.filter(isOwned)),
-      ...pickMostRecent(items.filter((item) => !isOwned(item))),
-    ];
-    if (candidates.length === 0) {
+    if (items.length === 0) {
       return items;
     }
 
     const displayNameById = new Map<string, string>();
-    const batchSize = 25;
 
-    for (let index = 0; index < candidates.length; index += batchSize) {
-      const batch = candidates.slice(index, index + batchSize);
+    for (
+      let index = 0;
+      index < items.length;
+      index += LIST_DISPLAY_NAME_READ_BATCH_SIZE
+    ) {
+      const batch = items.slice(
+        index,
+        index + LIST_DISPLAY_NAME_READ_BATCH_SIZE,
+      );
       await Promise.all(
         batch.map(async (item) => {
           try {
