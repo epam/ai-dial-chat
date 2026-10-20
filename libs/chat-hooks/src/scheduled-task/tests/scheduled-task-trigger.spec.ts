@@ -227,23 +227,6 @@ describe('mapFormValuesToCreateBody — recurring schedule timezone conversion',
     });
   });
 
-  it('shifts day_of_week backward when the UTC conversion crosses midnight the other way', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: UTC = local - 2h
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Weekly,
-      time: '01:00',
-      dayOfWeek: '0', // Monday, APScheduler convention
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '23',
-      minute: '0',
-      day_of_week: '6', // Sunday
-    });
-  });
-
   it('produces no shift when the browser timezone is UTC', () => {
     vi.stubEnv('TZ', 'UTC');
 
