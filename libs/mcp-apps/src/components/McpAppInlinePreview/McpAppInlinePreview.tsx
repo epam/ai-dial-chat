@@ -195,7 +195,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
           />
         </div>
       </div>
-      <div className="relative min-h-[200px] w-full">
+      <div className="relative min-h-[100px] w-full">
         {isOpenedInCanvas ? (
           <div
             role="status"
