@@ -1,4 +1,8 @@
-import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
+import {
+  FileDownloadStatus,
+  FileUploadFailureReason,
+  HIDDEN_FILE,
+} from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
@@ -1472,6 +1476,170 @@ describe('useDialFileMutations', () => {
       });
 
       expect(filesApi.downloadFile).not.toHaveBeenCalled();
+      expect(result.current.downloadBatchState).toBeNull();
+    });
+
+    describe('download queue entries', () => {
+      const reportFile: DialFile = {
+        id: 'report.pdf',
+        name: 'report.pdf',
+        path: '/My files/report.pdf',
+        parentPath: '/My files',
+        nodeType: DialFileNodeType.ITEM,
+        folderId: BUCKET,
+        bucket: BUCKET,
+      };
+
+      /* A request that only settles when its signal aborts. */
+      const pendingUntilAborted = (signal?: AbortSignal) =>
+        new Promise<Response>((_resolve, reject) => {
+          signal?.addEventListener('abort', () =>
+            reject(new DOMException('Aborted', 'AbortError')),
+          );
+        });
+
+      it('adds an in-progress entry and returns before the transfer ends', async () => {
+        const { result, filesApi } = renderMutations();
+        vi.mocked(filesApi.downloadFile).mockImplementation(
+          (_bucket, _path, signal) => pendingUntilAborted(signal),
+        );
+
+        await act(async () => {
+          result.current.onDownloadFiles([reportFile]);
+        });
+
+        expect(result.current.downloadBatchState?.files).toEqual([
+          expect.objectContaining({
+            name: 'report.pdf',
+            status: FileDownloadStatus.Downloading,
+          }),
+        ]);
+        expect(result.current.isDownloading).toBe(true);
+      });
+
+      it('settles a finished download as completed at 100%', async () => {
+        const { result, filesApi, downloadDestination } = renderMutations();
+        vi.mocked(filesApi.downloadFile).mockResolvedValue(
+          new Response('0123456789', {
+            status: 200,
+            headers: { 'content-length': '10' },
+          }),
+        );
+        vi.mocked(downloadDestination.triggerDownload).mockImplementation(
+          async (response: Response, fallbackName: string) => {
+            await response.arrayBuffer();
+            return fallbackName;
+          },
+        );
+
+        await act(async () => {
+          result.current.onDownloadFiles([reportFile]);
+        });
+
+        await waitFor(() =>
+          expect(result.current.downloadBatchState?.files[0]).toMatchObject({
+            status: FileDownloadStatus.Completed,
+            percent: 100,
+          }),
+        );
+        expect(result.current.isDownloading).toBe(false);
+      });
+
+      it('records why a download failed and keeps the error notification', async () => {
+        const { result, filesApi, onNotification } = renderMutations();
+        vi.mocked(filesApi.downloadFile).mockResolvedValue(
+          new Response('', { status: 403 }),
+        );
+
+        await act(async () => {
+          result.current.onDownloadFiles([reportFile]);
+        });
+
+        await waitFor(() =>
+          expect(result.current.downloadBatchState?.files[0]).toMatchObject({
+            status: FileDownloadStatus.Failed,
+            failureReason: FileUploadFailureReason.Forbidden,
+          }),
+        );
+        expect(onNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          reason: FileManagerNotificationReason.DownloadFileFailed,
+        });
+      });
+
+      it('cancels a download without any notification', async () => {
+        const { result, filesApi, onNotification, onOperationSuccess } =
+          renderMutations();
+        vi.mocked(filesApi.downloadFile).mockImplementation(
+          (_bucket, _path, signal) => pendingUntilAborted(signal),
+        );
+        await act(async () => {
+          result.current.onDownloadFiles([reportFile]);
+        });
+        const id = result.current.downloadBatchState?.files[0].id ?? '';
+
+        await act(async () => {
+          result.current.cancelDownloadFile(id);
+        });
+
+        await waitFor(() =>
+          expect(result.current.downloadBatchState?.files[0].status).toBe(
+            FileDownloadStatus.Cancelled,
+          ),
+        );
+        expect(onNotification).not.toHaveBeenCalled();
+        expect(onOperationSuccess).not.toHaveBeenCalled();
+      });
+
+      it('aborts the archive request when an archive download is canceled', async () => {
+        const { result, filesApi } = renderMutations();
+        let archiveSignal: AbortSignal | undefined;
+        vi.mocked(filesApi.downloadArchive).mockImplementation(
+          (_items, signal) => {
+            archiveSignal = signal;
+            return pendingUntilAborted(signal);
+          },
+        );
+        await act(async () => {
+          result.current.onDownloadFiles([
+            reportFile,
+            {
+              ...reportFile,
+              id: 'b.pdf',
+              name: 'b.pdf',
+              path: '/My files/b.pdf',
+            },
+          ]);
+        });
+
+        await act(async () => {
+          result.current.cancelAllDownloads();
+        });
+
+        expect(archiveSignal?.aborted).toBe(true);
+        await waitFor(() =>
+          expect(result.current.downloadBatchState?.files[0]).toMatchObject({
+            name: 'files.zip',
+            status: FileDownloadStatus.Cancelled,
+          }),
+        );
+      });
+
+      it('empties the batch on clear', async () => {
+        const { result, filesApi } = renderMutations();
+        vi.mocked(filesApi.downloadFile).mockResolvedValue(
+          new Response('', { status: 500 }),
+        );
+        await act(async () => {
+          result.current.onDownloadFiles([reportFile]);
+        });
+
+        await act(async () => {
+          result.current.clearDownloadBatch();
+        });
+
+        expect(result.current.downloadBatchState).toBeNull();
+      });
     });
   });
 

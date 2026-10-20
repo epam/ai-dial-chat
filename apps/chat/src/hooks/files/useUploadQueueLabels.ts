@@ -7,10 +7,15 @@ import { useTranslation } from 'react-i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
 import { useTransferQueueLabels } from '../useTransferQueueLabels';
 
-/** Returns the translated heading, strings and per-reason failure messages of the file manager's upload queue. */
+/** Returns the translated headings, strings and per-reason failure messages of the file manager's transfer queue (uploads and downloads). */
 export const useUploadQueueLabels = (): Pick<
   DialFileManagerShellLabels,
-  'getUploadQueueTitle' | 'uploadQueueLabels' | 'uploadFailureMessages'
+  | 'getUploadQueueTitle'
+  | 'uploadQueueLabels'
+  | 'uploadFailureMessages'
+  | 'getTransferQueueTitle'
+  | 'downloadQueueLabels'
+  | 'transferQueueProgressAriaLabel'
 > => {
   const { t } = useTranslation();
   const sharedQueueLabels = useTransferQueueLabels();
@@ -19,6 +24,37 @@ export const useUploadQueueLabels = (): Pick<
     () => ({
       getUploadQueueTitle: (count: number) =>
         t(DialFileManagerI18nKeys.UploadQueueTitle, { count }),
+      getTransferQueueTitle: ({ uploads, downloads }) => {
+        if (downloads === 0) {
+          return t(DialFileManagerI18nKeys.UploadQueueTitle, {
+            count: uploads,
+          });
+        }
+        if (uploads === 0) {
+          return t(DialFileManagerI18nKeys.DownloadQueueTitle, {
+            count: downloads,
+          });
+        }
+        return t(DialFileManagerI18nKeys.TransferQueueTitle, {
+          count: uploads + downloads,
+        });
+      },
+      downloadQueueLabels: {
+        cancelItemAriaLabel: (fileName: string) =>
+          t(DialFileManagerI18nKeys.DownloadQueueCancelFileAriaLabel, {
+            fileName,
+          }),
+        itemProgressAriaLabel: (fileName: string) =>
+          t(DialFileManagerI18nKeys.DownloadQueueFileProgressAriaLabel, {
+            fileName,
+          }),
+        queueProgressAriaLabel: t(
+          DialFileManagerI18nKeys.DownloadQueueProgressAriaLabel,
+        ),
+      },
+      transferQueueProgressAriaLabel: t(
+        DialFileManagerI18nKeys.TransferQueueProgressAriaLabel,
+      ),
       uploadQueueLabels: {
         ...sharedQueueLabels,
         cancelItemAriaLabel: (fileName) =>

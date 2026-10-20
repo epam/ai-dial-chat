@@ -36,7 +36,12 @@ import type {
 } from '../labels';
 import { OperationLoaderModal } from '../OperationLoaderModal/OperationLoaderModal';
 import { getParentFolderPath } from '../path';
-import { toUploadQueueItems } from '../upload-queue';
+import {
+  buildTransferQueueLabels,
+  parseTransferQueueRowId,
+  toTransferQueueItems,
+  TransferQueueRowKind,
+} from '../upload-queue';
 import { useGridEditingScroll } from '../useGridEditingScroll/useGridEditingScroll';
 
 type DestinationFolderPopupOptions =
@@ -48,7 +53,6 @@ type DestinationFolderPopupOptions =
   };
 
 interface OverlayFlags {
-  isDownloading: boolean;
   isDeleting: boolean;
   isRenaming: boolean;
   isMoving: boolean;
@@ -58,20 +62,15 @@ interface OverlayFlags {
 
 type OverlayLabels = Pick<
   DialFileManagerShellLabels,
-  | 'downloadingLabel'
-  | 'deletingLabel'
-  | 'renamingLabel'
-  | 'unsharingLabel'
-  | 'removingAccessLabel'
+  'deletingLabel' | 'renamingLabel' | 'unsharingLabel' | 'removingAccessLabel'
 >;
 
 const resolveOverlayAriaLabel = (
   flags: OverlayFlags,
   labels: OverlayLabels,
 ): string | undefined => {
-  if (flags.isDownloading) {
-    return labels.downloadingLabel;
-  } else if (flags.isDeleting) {
+  /* Downloads have no overlay: they run as transfer-queue rows. */
+  if (flags.isDeleting) {
     return labels.deletingLabel;
   } else if (flags.isRenaming && !flags.isMoving) {
     return labels.renamingLabel;
@@ -174,10 +173,13 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     cancelUpload,
     cancelUploadFile,
     clearUploadBatch,
+    downloadBatchState,
+    cancelDownloadFile,
+    cancelAllDownloads,
+    clearDownloadBatch,
     onCreateFolder,
     onCreateFolderValidate,
     onDownloadFiles,
-    isDownloading,
     onDeleteFiles,
     isDeleting,
     onMoveToFiles,
@@ -475,18 +477,62 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   );
 
   /* The queue confirms first when work is still running, so closing it aborts whatever is left. */
-  const handleUploadQueueClose = useCallback((): void => {
+  /* One queue for both kinds: closing it stops and clears uploads and downloads alike. */
+  const handleTransferQueueClose = useCallback((): void => {
     cancelUpload();
+    cancelAllDownloads();
     clearUploadBatch();
-  }, [cancelUpload, clearUploadBatch]);
+    clearDownloadBatch();
+  }, [cancelUpload, cancelAllDownloads, clearUploadBatch, clearDownloadBatch]);
 
-  const uploadQueueItems = useMemo(
+  const handleCancelTransferItem = useCallback(
+    (rowId: string): void => {
+      const row = parseTransferQueueRowId(rowId);
+      if (row?.kind === TransferQueueRowKind.Upload) {
+        cancelUploadFile(row.entryId);
+      } else if (row?.kind === TransferQueueRowKind.Download) {
+        cancelDownloadFile(row.entryId);
+      }
+    },
+    [cancelUploadFile, cancelDownloadFile],
+  );
+
+  const transferQueueItems = useMemo(
     () =>
-      toUploadQueueItems(
-        uploadBatchState?.files ?? [],
+      toTransferQueueItems(
+        uploadBatchState,
+        downloadBatchState,
         labels.uploadFailureMessages,
       ),
-    [uploadBatchState, labels.uploadFailureMessages],
+    [uploadBatchState, downloadBatchState, labels.uploadFailureMessages],
+  );
+
+  const uploadCount = uploadBatchState?.files.length ?? 0;
+  const downloadCount = downloadBatchState?.files.length ?? 0;
+  const transferQueueTitle =
+    labels.getTransferQueueTitle?.({
+      uploads: uploadCount,
+      downloads: downloadCount,
+    }) ?? labels.getUploadQueueTitle(uploadCount + downloadCount);
+
+  const transferQueueLabels = useMemo(
+    () =>
+      buildTransferQueueLabels({
+        uploadLabels: labels.uploadQueueLabels,
+        downloadLabels: labels.downloadQueueLabels,
+        mixedProgressLabel: labels.transferQueueProgressAriaLabel,
+        uploadNames: new Set(uploadBatchState?.files.map((file) => file.name)),
+        downloadNames: new Set(
+          downloadBatchState?.files.map((file) => file.name),
+        ),
+      }),
+    [
+      labels.uploadQueueLabels,
+      labels.downloadQueueLabels,
+      labels.transferQueueProgressAriaLabel,
+      uploadBatchState,
+      downloadBatchState,
+    ],
   );
 
   const fileMetadataPopupOptions = useMemo(
@@ -516,7 +562,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const overlayLabel = resolveOverlayAriaLabel(
     {
-      isDownloading,
       isDeleting,
       isRenaming,
       isMoving,
@@ -651,11 +696,11 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
        */}
       <div className="fixed inset-e-4 bottom-4 z-51">
         <TransferQueue
-          title={labels.getUploadQueueTitle(uploadQueueItems.length)}
-          items={uploadQueueItems}
-          onClose={handleUploadQueueClose}
-          onCancelItem={cancelUploadFile}
-          labels={labels.uploadQueueLabels}
+          title={transferQueueTitle}
+          items={transferQueueItems}
+          onClose={handleTransferQueueClose}
+          onCancelItem={handleCancelTransferItem}
+          labels={transferQueueLabels}
         />
       </div>
 

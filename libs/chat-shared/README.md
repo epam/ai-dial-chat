@@ -49,7 +49,7 @@ Peers:
 
 - `react` ^19.2.8
 - `@epam/ai-dial-ui-kit` ^0.16.0-dev.19
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.9 \*
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -1430,19 +1430,37 @@ Internal modal already rendered by `DialFileManagerShell`. Exported for hosts th
 import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';
 ```
 
-### Upload queue
+### Transfer queue (uploads and downloads)
 
-`DialFileManagerShell` shows uploads in the UI kit's `TransferQueue`, fixed to the bottom-end corner. Its heading comes from `labels.getUploadQueueTitle(count)` and its strings from `labels.uploadQueueLabels`. A failed row's tooltip and accessible name come from `labels.uploadFailureMessages[entry.failureReason]`; a reason without a message, or none at all, shows `uploadQueueLabels.failedMessage`. Closing it aborts whatever is still uploading. Two helpers are exported for hosts that render the queue themselves — `isUploadInProgress` from the root entry, and `toUploadQueueItems` from `./file-manager`, since it is a value import of the kit:
+`DialFileManagerShell` shows uploads and downloads in one UI kit `TransferQueue`, fixed to the bottom-end corner. Upload rows come first, then download rows. A download never blocks the page: there is no loader overlay for it, and several can run at once.
+
+- **Title.** From `labels.getTransferQueueTitle({ uploads, downloads })`, falling back to `labels.getUploadQueueTitle(total)`.
+- **Strings.** From `labels.uploadQueueLabels`. Download rows are worded through `labels.downloadQueueLabels` (cancel and progress names), and the aggregate bar is named by `labels.transferQueueProgressAriaLabel` while both kinds run.
+- **Failed rows.** A failed row's tooltip and accessible name come from `labels.uploadFailureMessages[entry.failureReason]`, for both kinds. A reason without a message, or none at all, shows `uploadQueueLabels.failedMessage`.
+- **Cancel and close.** Canceling a row calls `cancelUploadFile` or `cancelDownloadFile` with its entry id. Closing the queue cancels and clears both batches.
+
+Download entries are `FileDownloadEntry` (`{ id, name, status: FileDownloadStatus, percent?, failureReason? }`), where `FileDownloadStatus` is `Downloading | Completed | Failed | Cancelled`, kept in a `FileDownloadBatchState`.
+
+Helpers for hosts that render the queue themselves:
+
+- from the root entry: `isUploadInProgress` and `isDownloadInProgress`;
+- from `./file-manager`, since they import the kit: `toUploadQueueItems`, `toTransferQueueItems` (kind-prefixed row ids, read back with `parseTransferQueueRowId`), and `buildTransferQueueLabels`.
 
 ```ts
-import { isUploadInProgress } from '@epam/ai-dial-chat-shared';
-import { toUploadQueueItems } from '@epam/ai-dial-chat-shared/file-manager';
+import {
+  isDownloadInProgress,
+  isUploadInProgress,
+} from '@epam/ai-dial-chat-shared';
+import { toTransferQueueItems } from '@epam/ai-dial-chat-shared/file-manager';
 
-const items = toUploadQueueItems(
-  uploadBatchState?.files ?? [],
+const items = toTransferQueueItems(
+  uploadBatchState,
+  downloadBatchState,
   labels.uploadFailureMessages,
 );
-const isBusy = isUploadInProgress(uploadBatchState);
+const isBusy =
+  isUploadInProgress(uploadBatchState) ||
+  isDownloadInProgress(downloadBatchState);
 ```
 
 ## Building

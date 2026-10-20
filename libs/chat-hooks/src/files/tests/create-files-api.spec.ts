@@ -187,6 +187,33 @@ describe('createFilesApiClient — downloadFile', () => {
   });
 });
 
+describe('createFilesApiClient — downloadArchive', () => {
+  it('passes an AbortSignal through to downloadArchiveRaw when provided', async () => {
+    const filesApi = makeFilesApi();
+    const rawResponse = new Response('zip');
+    const downloadArchiveRawSpy = vi
+      .fn()
+      .mockResolvedValue({ raw: rawResponse });
+    filesApi.downloadArchiveRaw = downloadArchiveRawSpy;
+    const client = createFilesApiClient(
+      filesApi,
+      failingUploadFileWithProgress,
+    );
+    const controller = new AbortController();
+    const items = [
+      { bucket: 'b', path: 'docs/', name: 'docs', nodeType: 'FOLDER' },
+    ] as Parameters<typeof client.downloadArchive>[0];
+
+    const result = await client.downloadArchive(items, controller.signal);
+
+    expect(downloadArchiveRawSpy).toHaveBeenCalledWith(
+      { downloadArchiveDto: { items } },
+      { signal: controller.signal },
+    );
+    expect(result).toBe(rawResponse);
+  });
+});
+
 describe('createFilesApiClient — uploadFile', () => {
   it('delegates to the generated client when onProgress is not requested', async () => {
     const filesApi = makeFilesApi();

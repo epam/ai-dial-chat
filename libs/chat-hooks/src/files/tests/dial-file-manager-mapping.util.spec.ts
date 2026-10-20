@@ -23,6 +23,7 @@ import {
   buildSharedSearchScope,
   mapSearchItem,
   mergeCreatedFolderIntoCache,
+  resolveTransferFailureReason,
   resolveUploadFailureReason,
   updateEntry,
 } from '../dial-file-manager-mapping.util';
@@ -606,5 +607,33 @@ describe('resolveUploadFailureReason', () => {
         new Error('Upload response was not valid JSON'),
       ),
     ).resolves.toBe(FileUploadFailureReason.Unknown);
+  });
+});
+
+describe('resolveTransferFailureReason', () => {
+  it('treats a request that never got a response as a network failure', async () => {
+    const fetchError = Object.assign(new Error('The request failed'), {
+      name: 'FetchError',
+    });
+
+    await expect(resolveTransferFailureReason(fetchError)).resolves.toBe(
+      FileUploadFailureReason.Network,
+    );
+    await expect(
+      resolveTransferFailureReason(new TypeError('Failed to fetch')),
+    ).resolves.toBe(FileUploadFailureReason.Network);
+  });
+
+  it('maps a download response error by its status', async () => {
+    const responseError = Object.assign(
+      new Error('Response returned an error code'),
+      {
+        response: { status: 403, json: async () => ({}) },
+      },
+    );
+
+    await expect(resolveTransferFailureReason(responseError)).resolves.toBe(
+      FileUploadFailureReason.Forbidden,
+    );
   });
 });

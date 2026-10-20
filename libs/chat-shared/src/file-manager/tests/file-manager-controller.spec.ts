@@ -38,6 +38,10 @@ describe('FileManagerController', () => {
       onCreateFolderValidate: true,
       onDownloadFiles: true,
       isDownloading: true,
+      downloadBatchState: true,
+      cancelDownloadFile: true,
+      cancelAllDownloads: true,
+      clearDownloadBatch: true,
       onDeleteFiles: true,
       isDeleting: true,
       onRenameValidate: true,
@@ -67,7 +71,7 @@ describe('FileManagerController', () => {
       sectionTab: true,
     } satisfies Record<ControllerKeys, true>;
 
-    expect(Object.keys(controllerKeys)).toHaveLength(53);
+    expect(Object.keys(controllerKeys)).toHaveLength(57);
   });
 });
 

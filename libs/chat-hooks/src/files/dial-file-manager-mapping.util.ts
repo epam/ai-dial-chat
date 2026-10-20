@@ -186,18 +186,31 @@ const FAILURE_REASON_BY_STATUS: Record<number, FileUploadFailureReason> = {
   503: FileUploadFailureReason.Unavailable,
 };
 
-/** Resolves why an upload request failed from its rejection: the HTTP status when there is a response, `Network` when there was none. */
-export const resolveUploadFailureReason = async (
+/*
+ * A request that never got a response: the XHR upload's own error, the
+ * generated client's `FetchError` (it wraps a rejected `fetch`), or a bare
+ * `fetch` `TypeError`. `FetchError` is matched by name so this file does not
+ * import the generated runtime.
+ */
+const isNoResponseError = (error: unknown): boolean =>
+  error instanceof UploadNetworkError ||
+  error instanceof TypeError ||
+  (error instanceof Error && error.name === 'FetchError');
+
+/** Resolves why an upload or download request failed from its rejection: the HTTP status when there is a response, `Network` when there was none. */
+export const resolveTransferFailureReason = async (
   error: unknown,
 ): Promise<FileUploadFailureReason> => {
-  if (error instanceof UploadNetworkError)
-    return FileUploadFailureReason.Network;
+  if (isNoResponseError(error)) return FileUploadFailureReason.Network;
   const { status } = await getApiErrorDetails(error);
   return (
     (status != null ? FAILURE_REASON_BY_STATUS[status] : undefined) ??
     FileUploadFailureReason.Unknown
   );
 };
+
+/** Upload-named alias of {@link resolveTransferFailureReason}, kept for existing callers. */
+export const resolveUploadFailureReason = resolveTransferFailureReason;
 
 export const fetchByTab = (
   filesApi: DialFilesApi,
