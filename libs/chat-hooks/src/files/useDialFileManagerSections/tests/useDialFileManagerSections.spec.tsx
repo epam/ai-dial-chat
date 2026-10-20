@@ -399,10 +399,12 @@ describe('useDialFileManagerSections', () => {
       expect(filesApi.downloadFile).toHaveBeenCalledWith(
         BUCKET,
         expect.stringContaining('reports/old.pdf'),
+        expect.any(AbortSignal),
       );
       expect(filesApi.downloadFile).toHaveBeenCalledWith(
         OWNER_BUCKET,
         expect.stringContaining('team-docs/plan.pdf'),
+        expect.any(AbortSignal),
       );
     });
 

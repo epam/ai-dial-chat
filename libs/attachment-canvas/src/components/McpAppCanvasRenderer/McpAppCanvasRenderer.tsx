@@ -101,8 +101,12 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     <div
       ref={containerRef}
       className={mergeClasses(
-        /* `min-h-[200px]` is a Loading-overlay floor, not the intended size — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D19. */
-        'relative h-full min-h-[200px] w-full',
+        /*
+         * Loading-overlay floor, not the intended size (design.md D19); the error
+         * floor is larger so the error icon keeps its size instead of shrinking.
+         */
+        'relative h-full w-full',
+        isErrored ? 'min-h-[160px]' : 'min-h-[100px]',
         isFullscreen && styles.fullscreenFrame,
         !isFullscreen &&
           status === RendererStatus.Loading &&

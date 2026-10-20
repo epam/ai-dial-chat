@@ -25,7 +25,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.Success:
       return (
         <IconCheck
-          size={DIAL_ICON_SIZE.MD}
+          size={DIAL_ICON_SIZE.SM}
           className={styles.successIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -34,7 +34,7 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.Error:
       return (
         <IconCircleX
-          size={DIAL_ICON_SIZE.MD}
+          size={DIAL_ICON_SIZE.SM}
           className={styles.errorIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -43,13 +43,13 @@ const RunStatusIcon: FC<{ status: ScheduledTaskRunStatus }> = ({ status }) => {
     case ScheduledTaskRunStatus.InProgress:
       return (
         <span aria-hidden>
-          <Spinner size={DIAL_ICON_SIZE.MD} />
+          <Spinner size={DIAL_ICON_SIZE.SM} />
         </span>
       );
     case ScheduledTaskRunStatus.Missed:
       return (
         <IconAlertTriangle
-          size={DIAL_ICON_SIZE.MD}
+          size={DIAL_ICON_SIZE.SM}
           className={styles.missedIcon}
           aria-hidden
           stroke={DIAL_KIT_ICON_STROKE}
@@ -152,13 +152,18 @@ export const ScheduledTaskRunHistoryList: FC<
         aria-label={accessibleName}
         aria-current={isCurrent ? 'true' : undefined}
         className={mergeClasses(
-          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
+          /*
+           * `--strhl-row-bleed` (unset: 0) pulls the row's highlight pill out
+           * into the host's padding, so its icon lines up with the content
+           * edge instead of sitting one pill-padding further in.
+           */
+          '-mx-(--strhl-row-bleed,0px) flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
           isCurrent && styles.currentRun,
           isClickable && 'cursor-pointer',
           isClickable && styles.interactiveRow,
         )}
       >
-        <span className="flex min-w-0 items-center gap-2">
+        <span className="flex min-w-0 items-center gap-1">
           {errorText ? (
             <Tooltip
               tooltip={errorText}
@@ -224,7 +229,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <li
         key={`history-skeleton-${index}`}
         aria-hidden="true"
-        className="flex min-h-(--strhl-row-min-height,32px) max-w-[328px] items-center justify-between gap-2 px-3"
+        className="-mx-(--strhl-row-bleed,0px) flex min-h-(--strhl-row-min-height,32px) max-w-[328px] items-center justify-between gap-2 px-3"
       >
         <Skeleton
           variant={SkeletonVariant.Rectangular}
