@@ -125,11 +125,11 @@ export interface DialFileManagerShellProps {
    * Omit to keep the variant's default.
    */
   treeContainerClassName?: string;
-  /** SPIKE: label that turns the Preview row action on; omit to hide it. */
+  /** Label of the Preview row action. Omit to hide the action. */
   previewLabel?: string;
-  /** SPIKE: called with the previewed file's virtual path. */
+  /** Called with the virtual path of the file the user chose to preview. */
   onPreview?: (path?: string) => void;
-  /** SPIKE: dotted extensions the Preview row action is offered for. */
+  /** Dotted, lowercase extensions (e.g. `.md`) the Preview row action is offered for. */
   previewExtensions?: string[];
 }
 

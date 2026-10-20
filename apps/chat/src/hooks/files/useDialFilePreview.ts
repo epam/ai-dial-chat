@@ -7,13 +7,23 @@ import {
 import { useCallback } from 'react';
 import { useAttachmentCanvasResolvers } from '../attachment/useAttachmentCanvasResolvers';
 
-/* SPIKE: hard-coded; the real list should come from the canvas's own type detection. */
+/**
+ * Extensions the attachment canvas renders. Anything else would only reach its
+ * "unsupported" state, so the file manager does not offer Preview for it.
+ */
 export const DIAL_FILE_PREVIEW_EXTENSIONS = [
   '.txt',
   '.md',
+  '.markdown',
   '.json',
   '.csv',
+  '.tsv',
+  '.xml',
+  '.yaml',
+  '.yml',
+  '.log',
   '.html',
+  '.htm',
   '.pdf',
   '.docx',
   '.xlsx',
@@ -45,7 +55,13 @@ const findFileByPath = (
  * virtual path, so the file is looked up in the loaded tree and converted with
  * the same mapper the attach flow uses.
  */
-export const useDialFilePreview = (items: DialFile[], bucket: string) => {
+export const useDialFilePreview = (
+  items: DialFile[],
+  bucket: string,
+): {
+  onPreview: (path?: string) => void;
+  previewExtensions: string[];
+} => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
 

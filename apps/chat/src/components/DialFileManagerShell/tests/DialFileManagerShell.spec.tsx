@@ -39,6 +39,8 @@ const capturedDialFileManagerProps: {
     onFolderPopupPathChange?: unknown;
     autoSelectUploadedItems?: boolean;
     onGetInfo?: unknown;
+    onPreview?: unknown;
+    previewExtensions?: string[];
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
     navigationPanelOptions?: { placeholder?: string };
@@ -93,6 +95,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       onCreateFolder?: unknown;
       onFolderPopupPathChange?: unknown;
       onGetInfo?: unknown;
+      onPreview?: unknown;
+      previewExtensions?: string[];
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
       treeOptions?: CapturedTreeOptions;
@@ -281,6 +285,9 @@ const renderShell = (
     actionProfile?: DialFileManagerActionProfile;
     labels?: DialFileManagerShellLabels;
     treeContainerClassName?: string;
+    previewLabel?: string;
+    onPreview?: (path?: string) => void;
+    previewExtensions?: string[];
   } = {},
 ) =>
   render(
@@ -295,6 +302,9 @@ const renderShell = (
       variant={options.variant ?? DialFileManagerVariant.Standalone}
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
       treeContainerClassName={options.treeContainerClassName}
+      previewLabel={options.previewLabel}
+      onPreview={options.onPreview}
+      previewExtensions={options.previewExtensions}
     />,
   );
 
@@ -630,6 +640,66 @@ describe('DialFileManagerShell', () => {
     const onGetInfo = vi.fn();
     renderShell({ onGetInfo });
     expect(capturedDialFileManagerProps.current?.onGetInfo).toBe(onGetInfo);
+  });
+
+  describe('Preview action', () => {
+    it('adds Preview to gridOptions action labels when a previewLabel is given', () => {
+      renderShell(undefined, new Set(), { previewLabel: 'Preview' });
+      expect(
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBe('Preview');
+    });
+
+    it('omits Preview from gridOptions action labels without a previewLabel', () => {
+      renderShell();
+      expect(
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBeUndefined();
+    });
+
+    it('keeps Info alongside Preview in gridOptions action labels', () => {
+      renderShell(
+        {
+          actionLabels: {
+            [DialFileManagerActions.Download]: 'Download',
+            [DialFileManagerActions.Info]: 'Info',
+          },
+        },
+        new Set(),
+        { previewLabel: 'Preview' },
+      );
+      const labels =
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels;
+      expect(labels?.[DialFileManagerActions.Preview]).toBe('Preview');
+      expect(labels?.[DialFileManagerActions.Info]).toBe(baseLabels.infoLabel);
+    });
+
+    it('never includes Preview in treeOptions or bulkActionsToolbarOptions action labels', () => {
+      renderShell(undefined, new Set(), { previewLabel: 'Preview' });
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBeUndefined();
+      expect(
+        capturedDialFileManagerProps.current?.bulkActionsToolbarOptions
+          ?.actionLabels?.[DialFileManagerActions.Preview],
+      ).toBeUndefined();
+    });
+
+    it('passes onPreview and previewExtensions straight through to DialFileManager', () => {
+      const onPreview = vi.fn();
+      const previewExtensions = ['.md', '.txt'];
+      renderShell(undefined, new Set(), { onPreview, previewExtensions });
+      expect(capturedDialFileManagerProps.current?.onPreview).toBe(onPreview);
+      expect(capturedDialFileManagerProps.current?.previewExtensions).toBe(
+        previewExtensions,
+      );
+    });
   });
 
   it('builds fileMetadataPopupOptions from hook state and translated labels', () => {
