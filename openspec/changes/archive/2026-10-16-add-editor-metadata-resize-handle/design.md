@@ -31,3 +31,12 @@
 - **Persisting on every pointer move** would hammer `localStorage`; the app persists via the hook per call, so coalescing with rAF (decision 4) keeps writes to one per frame. If that proves noisy, the host can debounce in the callback, with no lib change.
 - **Assumed numbers** (280/640/360, 1 s tooltip, double-click reset) come from open questions in the issue and are single constants, easy to retune after design review.
 - **Touch:** below the desktop breakpoint the handle is absent, so there is no touch-drag work; tablets in landscape at desktop width get pointer events, which cover touch.
+
+## Follow-up: handle moved to the UI kit
+
+Decision 3's internal `ResizeHandle` was moved into `@epam/ai-dial-ui-kit` as the 2.0 `ResizeHandle` (epam/ai-dial-ui-kit#955, PR epam/ai-dial-ui-kit#956), so other hosts share one implementation. `libs/builder-form` no longer contains `ResizeHandle.tsx` or its styles and imports the component from the kit.
+
+- **API:** the kit component is controlled (`width`, `minWidth`, `maxWidth`, `defaultWidth`, `onWidthChange`, `label`, `tooltip`, `keyboardStep`, `className`). It has no `containerRef`; `EditorLayout` keeps `clampLeftColumnWidth` and passes the container-limited `maxWidth`, so `aria-valuemax` now reports the effective limit. Direction is read from the handle's own element.
+- **Unchanged:** drag, keyboard, double-click reset, RTL mirroring, the 1 s rest delay and the themed cursor. The `EditorLayout` and `EntityEditor` specs pass unmodified.
+- **Host-side:** the `hidden desktop:block` visibility stays in `EditorLayout` (the wrapper around the handle). The unused `--el-resize-handle-color` override is dropped; the kit colors the line from its border tokens.
+- **Dependency:** requires a published `@epam/ai-dial-ui-kit` version that includes `ResizeHandle`; bump the version in `package.json` before merging.

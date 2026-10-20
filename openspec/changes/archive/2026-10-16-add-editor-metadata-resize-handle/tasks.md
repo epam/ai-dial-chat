@@ -34,3 +34,4 @@ Slicing strategy: vertical, risk-first. The lib behaviour (drag, clamp, RTL, a11
 
 - [x] 5.1 Update `libs/builder-form/README.md` (new props with a type-correct example, and the public class names table if a `dial-*` class is added to `BUILDER_FORM_CLASS`), then run `npm run validate:docs`. Update `docs/architecture.md` only if it describes the editor layout.
 - [ ] 5.2 Run `npm run validate:specs`, then exactly one `npm run verify:full` to close the change (add `npm run build:quiet` since the lib stylesheet changes).
+- [ ] 5.3 Bump `@epam/ai-dial-ui-kit` to the release that includes `ResizeHandle` (epam/ai-dial-ui-kit#956), then re-run typecheck, `npm run validate:docs` and `npm run verify:full`. See the follow-up in `design.md`.

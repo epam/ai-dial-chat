@@ -3,6 +3,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
+  ResizeHandle,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
 import { CSSProperties, FC, useEffect, useId, useRef, useState } from 'react';
@@ -15,7 +16,6 @@ import {
   MIN_LEFT_COLUMN_WIDTH,
 } from '../../utils/clamp-left-column-width';
 import styles from './EditorLayout.module.scss';
-import { ResizeHandle } from './ResizeHandle';
 
 /**
  * Editor shell with a header row (back button, title, actions) and a body of
@@ -48,13 +48,15 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
   const isResizable = resizableLeftColumn != null && centerContent != null;
   const minWidth = resizableLeftColumn?.minWidth;
   const maxWidth = resizableLeftColumn?.maxWidth;
+  const limits = { min: minWidth, max: maxWidth, containerWidth: bodyWidth };
   const leftWidth = isResizable
-    ? clampLeftColumnWidth(resizableLeftColumn.width, {
-        min: minWidth,
-        max: maxWidth,
-        containerWidth: bodyWidth,
-      })
+    ? clampLeftColumnWidth(resizableLeftColumn.width, limits)
     : undefined;
+  /* The handle limits drags to what leaves the center column its minimum width. */
+  const maxLeftWidth = clampLeftColumnWidth(
+    maxWidth ?? MAX_LEFT_COLUMN_WIDTH,
+    limits,
+  );
 
   /* Re-clamp when the window shrinks so the center column never overflows. */
   useEffect(() => {
@@ -148,11 +150,10 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
             <ResizeHandle
               width={leftWidth}
               minWidth={minWidth ?? MIN_LEFT_COLUMN_WIDTH}
-              maxWidth={maxWidth ?? MAX_LEFT_COLUMN_WIDTH}
+              maxWidth={maxLeftWidth}
               defaultWidth={
                 resizableLeftColumn.defaultWidth ?? DEFAULT_LEFT_COLUMN_WIDTH
               }
-              containerRef={bodyRef}
               onWidthChange={resizableLeftColumn.onWidthChange}
               label={labels?.resizeHandleLabel ?? 'Resize columns'}
               tooltip={labels?.resizeHandleTooltip ?? 'Drag to resize'}
