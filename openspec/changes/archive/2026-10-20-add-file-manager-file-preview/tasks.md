@@ -25,5 +25,5 @@ Slicing strategy: vertical. The first group is a working end-to-end path on `/fi
 
 ## 5. Integration
 
-- [ ] 5.1 Run `npm run verify:changed` once; check `/files` with the preview panel at a narrow window and on the phone breakpoint, and note any gap as a follow-up (the phone behavior is deliberately out of scope). Verification: the command passes.
-- [ ] 5.2 Close the change with one `npm run verify:full`, then `/opsx:archive` to sync the delta specs into `openspec/specs/`.
+- [x] 5.1 Run `npm run verify:changed` once; check `/files` with the preview panel at a narrow window and on the phone breakpoint, and note any gap as a follow-up (the phone behavior is deliberately out of scope). Verification: the command passes.
+- [x] 5.2 Close the change with one `npm run verify:full`, then `/opsx:archive` to sync the delta specs into `openspec/specs/`.

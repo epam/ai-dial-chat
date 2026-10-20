@@ -3,7 +3,9 @@
 ## Purpose
 
 Specifies the standalone `/files` route: its registration (`apps/chat/src/types/routes.ts`, `apps/chat/src/app/app.tsx`), its navigation entry, and `DialFileManagerPage` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx`) — a thin host that reuses `DialFileManagerShell` and `useDialFileManager`'s `standalone`/`browse` variant (from the `file-manager-shell` capability) to browse and manage files outside the conversation attach flow, with no page chrome of its own.
+
 ## Requirements
+
 ### Requirement: File Manager route registration
 
 `apps/chat/src/types/routes.ts` SHALL define `ROUTES.FileManager = '/files'`. `apps/chat/src/app/app.tsx` SHALL register a lazy-loaded route at `ROUTES.FileManager` rendering `DialFileManagerPage`, wrapped in `RouteErrorBoundary` and `Suspense` with `fallback={<RouteFallback />}`, following the same pattern as the existing `ROUTES.Catalog` route registration. The route SHALL render the page only while `useUiFeature(OverlayFeature.FileManager)` is enabled; otherwise it SHALL render `<Navigate to={ROUTES.Root} replace />`, so a direct `/files` URL cannot bypass the hidden navigation entry.
@@ -120,3 +122,11 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 - **WHEN** the active language is Arabic
 - **THEN** the page flips direction correctly via inherited `dir="rtl"` and logical-property classes, with no visually mirrored physical-class artifacts
 
+### Requirement: The page wires Preview for files
+
+`DialFileManagerPage` SHALL call `useDialFilePreview` with the composer's `items` and the user's `bucket`, and SHALL pass `previewLabel` (`t(BasicI18nKeys.Preview)`), `onPreview` and `previewExtensions` to `DialFileManagerShell`. The behavior behind those props is specified by the `file-manager-preview` capability. The page's exclusions are unchanged: it still renders no attach footer and passes no attach-only props.
+
+#### Scenario: The page passes the preview props to the shell
+
+- **WHEN** `DialFileManagerPage` is rendered
+- **THEN** `DialFileManagerShell` receives `previewLabel`, `onPreview` and `previewExtensions`
