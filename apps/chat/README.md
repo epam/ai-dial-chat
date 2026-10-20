@@ -122,6 +122,12 @@ setting and `features.halloweenEnabled` flag are removed. Deploy the frontend
 and backend together when migrating that setting. Event selection uses the
 existing client-config refresh lifecycle; it is not a calendar scheduler.
 
+The operator only makes an event available. Each user opts in with the
+**Seasonal celebrations** switch in Settings → Preferences, which is off by
+default and is stored per browser under the `celebrationsEnabled`
+`localStorage` key (`useCelebrationPreference`). The switch is shown only while
+an event is configured and the host does not hide user settings.
+
 Only `/` renders event decoration and intercepts its optional secret phrase.
 Existing conversations send text normally. The current modules are:
 
@@ -134,7 +140,7 @@ The celebrations themselves live in
 [`@epam/ai-dial-celebrations`](../../libs/celebrations/README.md), which documents
 every scene, decoration behavior and the runtime. The app only adapts itself to
 the library in [`CelebrationHost`](src/context/CelebrationHost.tsx): it passes the
-configured event on `/` once the user config is ready, the navigation key as the
+configured event on `/` once the user config is ready and the user has opted in, the navigation key as the
 reset key, labels translated from the existing `halloween.*` and `newYear.*` keys,
 the success toast as the notification sink, `useIsMobile`, and the composer,
 starter-list and history-panel anchors. The app keeps every scene enabled.

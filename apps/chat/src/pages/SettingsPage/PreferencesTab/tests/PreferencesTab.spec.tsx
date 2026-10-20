@@ -2,13 +2,14 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BasicI18nKeys,
   SettingsI18nKeys,
 } from '../../../../constants/translation-keys';
 import * as keyboardShortcutModule from '../../../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as useUiFeatureModule from '../../../../hooks/useUiFeature';
+import { StorageKey } from '../../../../types/storage-key';
 import { UserConfigStatus } from '../../../../types/user-config-status';
 import PreferencesTab from '../PreferencesTab';
 
@@ -48,10 +49,14 @@ vi.mock('../../../../context/DeploymentsContext', () => ({
 const appConfigMock = vi.hoisted(() => ({
   defaultDeploymentPinned: true,
   status: 'ready' as string,
+  activeEventId: null as string | null,
 }));
 
 vi.mock('../../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: appConfigMock.status }),
+  useAppConfig: () => ({
+    status: appConfigMock.status,
+    config: { activeEventId: appConfigMock.activeEventId },
+  }),
   useFeatureFlag: (key: string) =>
     key === 'defaultDeploymentPinned'
       ? appConfigMock.defaultDeploymentPinned
@@ -166,7 +171,9 @@ describe('PreferencesTab', () => {
     deploymentsMock.items = [{ id: 'gpt-4o' }];
     appConfigMock.defaultDeploymentPinned = true;
     appConfigMock.status = UserConfigStatus.Ready;
+    appConfigMock.activeEventId = null;
     deploymentsMock.isLoading = false;
+    localStorage.clear();
     languageMock.supported = [{ code: 'en', nativeName: 'English' }];
     languageMock.language = 'en';
     themeMock.options = [];
@@ -177,6 +184,10 @@ describe('PreferencesTab', () => {
       preference: SendOnEnter.Enter,
       setPreference: setKeyboardPreference,
     });
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   it('renders its heading and description', () => {
@@ -300,6 +311,51 @@ describe('PreferencesTab', () => {
     expect(screen.getByRole('heading', { level: 2 })).toBeTruthy();
     /* The pane must show the shared empty state, not just render bare. */
     expect(screen.getByText(BasicI18nKeys.Empty)).toBeTruthy();
+  });
+
+  describe('celebrations row', () => {
+    const getCelebrationSwitch = () =>
+      screen.getByRole('switch', { name: SettingsI18nKeys.Celebrations });
+
+    it('is absent while the operator configured no event', () => {
+      render(<PreferencesTab />);
+
+      expect(
+        screen.queryByRole('switch', { name: SettingsI18nKeys.Celebrations }),
+      ).toBeNull();
+    });
+
+    it('is off by default once an event is configured', () => {
+      appConfigMock.activeEventId = 'halloween';
+
+      render(<PreferencesTab />);
+
+      expect((getCelebrationSwitch() as HTMLInputElement).checked).toBe(false);
+      expect(
+        screen.getByText(SettingsI18nKeys.CelebrationsDescription),
+      ).toBeTruthy();
+    });
+
+    it('stores the opt-in as soon as the switch is turned on', async () => {
+      appConfigMock.activeEventId = 'halloween';
+
+      render(<PreferencesTab />);
+      await userEvent.click(getCelebrationSwitch());
+
+      expect((getCelebrationSwitch() as HTMLInputElement).checked).toBe(true);
+      expect(localStorage.getItem(StorageKey.CelebrationsEnabled)).toBe('true');
+    });
+
+    it('is hidden when the host hides user settings', () => {
+      appConfigMock.activeEventId = 'halloween';
+      mockUiFeatures({ [OverlayFeature.HideUserSettings]: true });
+
+      render(<PreferencesTab />);
+
+      expect(
+        screen.queryByRole('switch', { name: SettingsI18nKeys.Celebrations }),
+      ).toBeNull();
+    });
   });
 
   describe('theme row', () => {

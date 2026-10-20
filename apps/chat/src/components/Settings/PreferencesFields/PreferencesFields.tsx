@@ -1,7 +1,7 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
-import { NoDataContent, Select, Spinner } from '@epam/ai-dial-ui-kit';
-import { memo, useMemo, type FC } from 'react';
+import { NoDataContent, Select, Spinner, Switch } from '@epam/ai-dial-ui-kit';
+import { memo, useId, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
@@ -26,13 +26,16 @@ interface Props {
   onLanguageChange: (language: string) => void;
   keyboard: SendOnEnter;
   onKeyboardChange: (keyboard: SendOnEnter) => void;
+  isCelebrationEnabled: boolean;
+  onCelebrationEnabledChange: (isEnabled: boolean) => void;
   /** The default-agent preference shown instead of the stored one; omit to edit the stored one directly. */
   defaultAgent?: string;
   onDefaultAgentChange?: (agent: string) => void;
 }
 
 /**
- * The preference rows (theme, language, keyboard shortcut, default agent) with
+ * The preference rows (theme, language, keyboard shortcut, default agent,
+ * seasonal celebrations) with
  * their visibility rules. It holds no state of its own: the Settings tab binds
  * it to the stored preferences so edits apply at once, and the Settings dialog
  * binds it to a draft that is applied on Save.
@@ -44,6 +47,8 @@ const PreferencesFields: FC<Props> = ({
   onLanguageChange,
   keyboard,
   onKeyboardChange,
+  isCelebrationEnabled,
+  onCelebrationEnabledChange,
   defaultAgent,
   onDefaultAgentChange,
 }) => {
@@ -55,7 +60,8 @@ const PreferencesFields: FC<Props> = ({
   const { items: deploymentItems, isLoading: isDeploymentsLoading } =
     useDeployments();
   const { options: themeOptions } = useThemeOptions();
-  const { status: appConfigStatus } = useAppConfig();
+  const { status: appConfigStatus, config } = useAppConfig();
+  const celebrationSwitchId = useId();
   const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
 
   /*
@@ -91,6 +97,9 @@ const PreferencesFields: FC<Props> = ({
    * row rather than a select the user can only reselect the current value in.
    */
   const isThemeRowShown = !isUserSettingsHidden && themeOptions.length > 1;
+  /* Without an operator-configured event the switch would control nothing. */
+  const isCelebrationRowShown =
+    !isUserSettingsHidden && config.activeEventId != null;
 
   /*
    * `i18n.language` can be a regional code (`en-US`) while the options are base
@@ -134,7 +143,8 @@ const PreferencesFields: FC<Props> = ({
     isThemeRowShown ||
     isLanguageRowShown ||
     isKeyboardRowShown ||
-    isDefaultAgentRowShown;
+    isDefaultAgentRowShown ||
+    isCelebrationRowShown;
 
   return (
     <>
@@ -174,6 +184,15 @@ const PreferencesFields: FC<Props> = ({
         <DefaultAgentSelect
           value={defaultAgent}
           onChange={onDefaultAgentChange}
+        />
+      )}
+      {!isResolvingRows && isCelebrationRowShown && (
+        <Switch
+          id={celebrationSwitchId}
+          labelProps={{ label: t(SettingsI18nKeys.Celebrations) }}
+          caption={t(SettingsI18nKeys.CelebrationsDescription)}
+          isOn={isCelebrationEnabled}
+          onChange={onCelebrationEnabledChange}
         />
       )}
     </>

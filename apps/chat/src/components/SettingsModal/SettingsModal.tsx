@@ -13,6 +13,7 @@ import {
   ButtonsI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
+import { useCelebrationPreference } from '../../hooks/celebration/useCelebrationPreference';
 import { useDefaultAgentPreference } from '../../hooks/default-agent/useDefaultAgentPreference';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -41,6 +42,10 @@ const SettingsModal: FC<Props> = ({ onClose }) => {
   const { selectedTheme: storedTheme, setTheme } = useThemeOptions();
   const { storedPreference: storedAgent, setPreference: setAgent } =
     useDefaultAgentPreference();
+  const {
+    isEnabled: storedIsCelebrationEnabled,
+    setIsEnabled: setIsCelebrationEnabled,
+  } = useCelebrationPreference();
 
   const { items, tabComponents } = useSettingsTabConfig();
   const [activeId, setActiveId] = useState<string>(SettingsTabs.Preferences);
@@ -50,12 +55,18 @@ const SettingsModal: FC<Props> = ({ onClose }) => {
   const [agent, setAgentDraft] = useState<string | undefined>(
     storedAgent ?? undefined,
   );
+  const [isCelebrationEnabled, setIsCelebrationEnabledDraft] = useState(
+    storedIsCelebrationEnabled,
+  );
 
   const handleSave = useCallback(() => {
     if (theme !== storedTheme) setTheme(theme);
     if (language !== storedLanguage) changeLanguage(language);
     if (keyboard !== storedKeyboard) setKeyboard(keyboard);
     if (agent != null && agent !== (storedAgent ?? undefined)) setAgent(agent);
+    if (isCelebrationEnabled !== storedIsCelebrationEnabled) {
+      setIsCelebrationEnabled(isCelebrationEnabled);
+    }
     onClose();
   }, [
     theme,
@@ -70,6 +81,9 @@ const SettingsModal: FC<Props> = ({ onClose }) => {
     agent,
     storedAgent,
     setAgent,
+    isCelebrationEnabled,
+    storedIsCelebrationEnabled,
+    setIsCelebrationEnabled,
     onClose,
   ]);
 
@@ -128,6 +142,8 @@ const SettingsModal: FC<Props> = ({ onClose }) => {
                   onLanguageChange={setLanguageDraft}
                   keyboard={keyboard}
                   onKeyboardChange={setKeyboardDraft}
+                  isCelebrationEnabled={isCelebrationEnabled}
+                  onCelebrationEnabledChange={setIsCelebrationEnabledDraft}
                   defaultAgent={agent}
                   onDefaultAgentChange={setAgentDraft}
                 />

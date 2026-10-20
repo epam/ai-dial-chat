@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   changeLanguage: vi.fn(),
   setKeyboard: vi.fn(),
   setAgent: vi.fn(),
+  setIsCelebrationEnabled: vi.fn(),
   storedAgent: null as string | null,
   hasExtensions: true,
 }));
@@ -116,6 +117,13 @@ vi.mock('../../../hooks/default-agent/useDefaultAgentPreference', () => ({
   }),
 }));
 
+vi.mock('../../../hooks/celebration/useCelebrationPreference', () => ({
+  useCelebrationPreference: () => ({
+    isEnabled: false,
+    setIsEnabled: mocks.setIsCelebrationEnabled,
+  }),
+}));
+
 /* The rows have their own tests; this stub only drives the draft callbacks. */
 vi.mock('../../Settings/PreferencesFields/PreferencesFields', () => ({
   default: ({
@@ -123,14 +131,24 @@ vi.mock('../../Settings/PreferencesFields/PreferencesFields', () => ({
     onThemeChange,
     onKeyboardChange,
     onDefaultAgentChange,
+    isCelebrationEnabled,
+    onCelebrationEnabledChange,
   }: {
     theme: string;
     onThemeChange: (value: string) => void;
     onKeyboardChange: (value: SendOnEnter) => void;
     onDefaultAgentChange?: (value: string) => void;
+    isCelebrationEnabled: boolean;
+    onCelebrationEnabledChange: (value: boolean) => void;
   }) => (
     <div>
       <span aria-label="draft theme">{theme}</span>
+      <span aria-label="draft celebrations">
+        {String(isCelebrationEnabled)}
+      </span>
+      <button onClick={() => onCelebrationEnabledChange(true)}>
+        enable celebrations
+      </button>
       <button onClick={() => onThemeChange('dark')}>pick dark</button>
       <button onClick={() => onKeyboardChange(SendOnEnter.MetaEnter)}>
         pick meta enter
@@ -183,7 +201,40 @@ describe('SettingsModal', () => {
     expect(mocks.setAgent).toHaveBeenCalledWith('gpt-4o');
     expect(mocks.setKeyboard).not.toHaveBeenCalled();
     expect(mocks.changeLanguage).not.toHaveBeenCalled();
+    expect(mocks.setIsCelebrationEnabled).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('writes the celebrations opt-in only on Save', () => {
+    render(<SettingsModal onClose={vi.fn()} />);
+
+    expect(screen.getByLabelText('draft celebrations').textContent).toBe(
+      'false',
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'enable celebrations' }),
+    );
+    expect(screen.getByLabelText('draft celebrations').textContent).toBe(
+      'true',
+    );
+    expect(mocks.setIsCelebrationEnabled).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: ButtonsI18nKeys.Save }));
+
+    expect(mocks.setIsCelebrationEnabled).toHaveBeenCalledWith(true);
+  });
+
+  it('discards the celebrations opt-in on Cancel', () => {
+    render(<SettingsModal onClose={vi.fn()} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'enable celebrations' }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Cancel }),
+    );
+
+    expect(mocks.setIsCelebrationEnabled).not.toHaveBeenCalled();
   });
 
   it('discards the draft on Cancel', () => {

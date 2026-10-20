@@ -1,15 +1,17 @@
 import type { CelebrationProviderProps } from '@epam/ai-dial-celebrations';
 import { HALLOWEEN_LABELS } from '@epam/ai-dial-celebrations/halloween';
 import { NEW_YEAR_LABELS } from '@epam/ai-dial-celebrations/new-year';
-import { render, screen } from '@testing-library/react';
+import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   HalloweenI18nKeys,
   NewYearI18nKeys,
 } from '../../constants/translation-keys';
+import { useCelebrationPreference } from '../../hooks/celebration/useCelebrationPreference';
 import en from '../../i18n/locales/en.json';
+import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { useAppConfig } from '../AppConfigContext';
 import { CelebrationHost } from '../CelebrationHost';
@@ -67,6 +69,7 @@ describe('CelebrationHost', () => {
   beforeEach(() => {
     receivedProps.length = 0;
     vi.clearAllMocks();
+    localStorage.setItem(StorageKey.CelebrationsEnabled, 'true');
     setConfig('halloween');
     vi.mocked(useNotification).mockReturnValue({
       showSuccessNotification,
@@ -79,6 +82,22 @@ describe('CelebrationHost', () => {
     expect(lastProps().activeEventId).toBe('halloween');
     expect(lastProps().isMobile).toBe(true);
     expect(Object.keys(lastProps().events)).toEqual(['halloween', 'new-year']);
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('withholds the event until the user turns celebrations on', () => {
+    localStorage.clear();
+    renderHost();
+
+    expect(lastProps().activeEventId).toBeNull();
+
+    const { result } = renderHook(() => useCelebrationPreference());
+    act(() => result.current.setIsEnabled(true));
+
+    expect(lastProps().activeEventId).toBe('halloween');
   });
 
   it.each([
