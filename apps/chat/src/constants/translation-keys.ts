@@ -521,6 +521,7 @@ export enum ScheduledTasksI18nKeys {
   ConversationBannerTaskDetailsAriaLabel = 'scheduledTasks.conversationBanner.taskDetailsAriaLabel',
   ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
   ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
+  ConversationPanelHistoryUnavailableLabel = 'scheduledTasks.conversationPanel.historyUnavailableLabel',
   OfflineCredentialsBannerTitle = 'scheduledTasks.offlineCredentialsBanner.title',
   OfflineCredentialsBannerBody = 'scheduledTasks.offlineCredentialsBanner.body',
   OfflineCredentialsBannerPopupBlockedMessage = 'scheduledTasks.offlineCredentialsBanner.popupBlockedMessage',

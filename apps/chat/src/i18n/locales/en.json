@@ -879,7 +879,8 @@
     },
     "conversationPanel": {
       "modelLabel": "Model",
-      "currentRunLabel": "Current run"
+      "currentRunLabel": "Current run",
+      "historyUnavailableLabel": "History is unavailable"
     },
     "offlineCredentialsBanner": {
       "title": "Log in required.",

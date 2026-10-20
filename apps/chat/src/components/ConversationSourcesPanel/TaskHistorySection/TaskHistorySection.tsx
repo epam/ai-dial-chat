@@ -22,6 +22,8 @@ interface Props {
   currentRunId?: string;
   /** Active schedule id — the expanded state resets whenever it changes. */
   scheduleId?: string;
+  /** The task exists but its details cannot be shown to this user (e.g. shared by its owner); replaces the runs and their retry with the unavailable message. */
+  isUnavailable?: boolean;
 }
 
 /*
@@ -33,6 +35,7 @@ const TaskHistorySection: FC<Props> = ({
   history,
   currentRunId,
   scheduleId,
+  isUnavailable = false,
 }) => {
   const { t } = useTranslation();
   const { conversations } = useConversations();
@@ -58,6 +61,9 @@ const TaskHistorySection: FC<Props> = ({
       emptyLabel: t(ScheduledTasksI18nKeys.DetailHistoryEmptyLabel),
       errorLabel: t(ScheduledTasksI18nKeys.DetailHistoryErrorLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      unavailableLabel: t(
+        ScheduledTasksI18nKeys.ConversationPanelHistoryUnavailableLabel,
+      ),
       runStatusLabels: {
         success: t(ScheduledTasksI18nKeys.DetailStatusSuccess),
         error: t(ScheduledTasksI18nKeys.DetailStatusError),
@@ -80,6 +86,7 @@ const TaskHistorySection: FC<Props> = ({
       isLoadingMore={history.isLoadingMore}
       error={history.error}
       onRetry={history.refetch}
+      isUnavailable={isUnavailable}
       hasMore={history.hasMore}
       onLoadMore={history.loadMore}
       currentRunId={currentRunId}
