@@ -2,7 +2,11 @@ import {
   type TransferQueueItem,
   TransferQueueItemStatus,
 } from '@epam/ai-dial-ui-kit';
-import { type FileUploadEntry, FileUploadStatus } from './upload-batch';
+import {
+  type FileUploadEntry,
+  type FileUploadFailureReason,
+  FileUploadStatus,
+} from './upload-batch';
 
 /*
  * Kept out of `upload-batch.ts`, which the root entry re-exports: this is a
@@ -17,13 +21,19 @@ const UPLOAD_QUEUE_STATUS: Record<FileUploadStatus, TransferQueueItemStatus> = {
   [FileUploadStatus.Cancelled]: TransferQueueItemStatus.Canceled,
 };
 
-/** Maps upload entries onto the UI kit's `TransferQueue` rows. */
+/** Maps upload entries onto the UI kit's `TransferQueue` rows; a failed row's `message` is the host text for its reason, when there is one. */
 export const toUploadQueueItems = (
   files: FileUploadEntry[],
+  failureMessages?: Partial<Record<FileUploadFailureReason, string>>,
 ): TransferQueueItem[] =>
   files.map((file) => ({
     id: file.id,
     name: file.name,
     status: UPLOAD_QUEUE_STATUS[file.status],
     percent: file.percent,
+    /* Unset falls back to the queue's generic `failedMessage` label. */
+    message:
+      file.status === FileUploadStatus.Failed && file.failureReason != null
+        ? failureMessages?.[file.failureReason]
+        : undefined,
   }));

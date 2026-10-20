@@ -919,6 +919,8 @@
     "uploadFailed": "Upload failed",
     "uploadSuccess": "The file has been uploaded successfully to “{{parentPath}}”",
     "uploadConflict": "A file with this name already exists",
+    "uploadFailedTooLarge": "The file is too large to upload",
+    "uploadFailedUnavailable": "The file service is unavailable. Please try again later.",
     "forbiddenSymbolsTooltip": "File name should not contain special symbols {{notAllowedSymbols}}",
     "conflictSingleTitle": "Replace or Duplicate Item",
     "conflictMultipleTitle": "Replace or Duplicate Items",

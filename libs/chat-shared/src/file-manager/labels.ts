@@ -11,6 +11,7 @@ import type {
 } from '@epam/ai-dial-react-file-manager';
 import type { TransferQueueLabels } from '@epam/ai-dial-ui-kit';
 import type { ComponentProps, ReactNode } from 'react';
+import type { FileUploadFailureReason } from './upload-batch';
 
 type DialFileManagerComponentProps = ComponentProps<typeof DialFileManager>;
 
@@ -121,6 +122,8 @@ export interface DialFileManagerShellLabels {
   getUploadQueueTitle: (count: number) => string;
   /** Translated strings for the upload `TransferQueue`; unset ones fall back to the kit's English defaults. */
   uploadQueueLabels?: Partial<TransferQueueLabels>;
+  /** Tooltip and accessible name of a failed upload row, per failure reason; a reason without one shows `uploadQueueLabels.failedMessage`. */
+  uploadFailureMessages?: Partial<Record<FileUploadFailureReason, string>>;
   /** Empty-state title when a search yields no results. */
   searchEmptyStateTitle: string;
   /** Empty-state title for an empty subfolder. */

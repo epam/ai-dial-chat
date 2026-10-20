@@ -2,7 +2,10 @@ import {
   ListFilesItemDtoNodeTypeEnum,
   type ListFilesItemDto,
 } from '@epam/ai-dial-chat-api-client';
-import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+import {
+  FileUploadFailureReason,
+  FileUploadStatus,
+} from '@epam/ai-dial-chat-shared';
 import type { FileUploadBatchState } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
@@ -20,6 +23,7 @@ import {
   buildSharedSearchScope,
   mapSearchItem,
   mergeCreatedFolderIntoCache,
+  resolveUploadFailureReason,
   updateEntry,
 } from '../dial-file-manager-mapping.util';
 import type {
@@ -572,5 +576,35 @@ describe('fetchForSearch', () => {
       new Map(),
     );
     expect(result).toEqual({ items: [] });
+  });
+});
+
+describe('resolveUploadFailureReason', () => {
+  /* The shape `getApiErrorDetails` reads: an error carrying a response. */
+  const httpError = (status: number) =>
+    Object.assign(new Error(`status ${status}`), {
+      response: { status, json: async () => ({}) },
+    });
+
+  it.each([
+    [403, FileUploadFailureReason.Forbidden],
+    [409, FileUploadFailureReason.Conflict],
+    [413, FileUploadFailureReason.TooLarge],
+    [502, FileUploadFailureReason.Unavailable],
+    [503, FileUploadFailureReason.Unavailable],
+    [400, FileUploadFailureReason.Unknown],
+    [500, FileUploadFailureReason.Unknown],
+  ])('maps HTTP %s to %s', async (status, expected) => {
+    await expect(resolveUploadFailureReason(httpError(status))).resolves.toBe(
+      expected,
+    );
+  });
+
+  it('treats an error without a response as unknown', async () => {
+    await expect(
+      resolveUploadFailureReason(
+        new Error('Upload response was not valid JSON'),
+      ),
+    ).resolves.toBe(FileUploadFailureReason.Unknown);
   });
 });

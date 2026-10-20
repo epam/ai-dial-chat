@@ -2,11 +2,12 @@ import type {
   ListFilesItemDto,
   UploadArchiveEntryResultDto,
 } from '@epam/ai-dial-chat-api-client';
-import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
-import type {
-  FileUploadBatchState,
-  FileUploadEntry,
-  FileUploadValidationResult,
+import {
+  type FileUploadBatchState,
+  type FileUploadEntry,
+  type FileUploadFailureReason,
+  FileUploadStatus,
+  type FileUploadValidationResult,
 } from '@epam/ai-dial-chat-shared';
 import type {
   DialFile,
@@ -15,7 +16,10 @@ import type {
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useRef, useState } from 'react';
-import { updateEntry } from '../dial-file-manager-mapping.util';
+import {
+  resolveUploadFailureReason,
+  updateEntry,
+} from '../dial-file-manager-mapping.util';
 import { resolveOwnerCoords } from '../dial-file-manager-path.util';
 import {
   UPLOAD_CONCURRENCY,
@@ -165,6 +169,7 @@ export const useDialFileUploadBatch = ({
 
       const run = async (): Promise<void> => {
         let status = FileUploadStatus.Failed;
+        let failureReason: FileUploadFailureReason | undefined;
         try {
           const { results } = await filesApi.uploadArchive(
             file,
@@ -202,7 +207,8 @@ export const useDialFileUploadBatch = ({
               });
             }
           }
-        } catch {
+        } catch (error) {
+          failureReason = await resolveUploadFailureReason(error);
           onNotification?.({
             variant: NotificationVariant.Error,
             reason: FileManagerNotificationReason.UploadArchiveRequestFailed,
@@ -211,7 +217,7 @@ export const useDialFileUploadBatch = ({
           invalidateFolders([destinationApiPath]);
           bumpRetry();
           setUploadBatchState((prev) =>
-            updateEntry(prev, entryId, { status, percent: 100 }),
+            updateEntry(prev, entryId, { status, percent: 100, failureReason }),
           );
         }
       };
@@ -324,15 +330,22 @@ export const useDialFileUploadBatch = ({
                 }),
               );
               successCount += 1;
-            } catch {
-              let status = FileUploadStatus.Failed;
+            } catch (error) {
               if (controller.signal.aborted) {
-                status = FileUploadStatus.Cancelled;
                 canceledCount += 1;
+                setUploadBatchState((prev) =>
+                  updateEntry(prev, id, FileUploadStatus.Cancelled),
+                );
               } else {
                 failedCount += 1;
+                const failureReason = await resolveUploadFailureReason(error);
+                setUploadBatchState((prev) =>
+                  updateEntry(prev, id, {
+                    status: FileUploadStatus.Failed,
+                    failureReason,
+                  }),
+                );
               }
-              setUploadBatchState((prev) => updateEntry(prev, id, status));
             } finally {
               controllers.delete(id);
             }

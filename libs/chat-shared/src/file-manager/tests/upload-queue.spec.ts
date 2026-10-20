@@ -1,6 +1,10 @@
 import { TransferQueueItemStatus } from '@epam/ai-dial-ui-kit';
 import { describe, expect, it } from 'vitest';
-import { type FileUploadEntry, FileUploadStatus } from '../upload-batch';
+import {
+  type FileUploadEntry,
+  FileUploadFailureReason,
+  FileUploadStatus,
+} from '../upload-batch';
 import { toUploadQueueItems } from '../upload-queue';
 
 const entry = (
@@ -41,5 +45,36 @@ describe('toUploadQueueItems', () => {
         percent: 42,
       },
     ]);
+  });
+
+  it('gives a failed row the host message for its failure reason', () => {
+    const [item] = toUploadQueueItems(
+      [
+        entry(FileUploadStatus.Failed, {
+          failureReason: FileUploadFailureReason.Conflict,
+        }),
+      ],
+      { [FileUploadFailureReason.Conflict]: 'Already exists' },
+    );
+
+    expect(item.message).toBe('Already exists');
+  });
+
+  it('leaves the message unset without a reason or a message for it, so the generic one shows', () => {
+    const messages = { [FileUploadFailureReason.Conflict]: 'Already exists' };
+
+    expect(
+      toUploadQueueItems([entry(FileUploadStatus.Failed)], messages)[0].message,
+    ).toBeUndefined();
+    expect(
+      toUploadQueueItems(
+        [
+          entry(FileUploadStatus.Failed, {
+            failureReason: FileUploadFailureReason.Unknown,
+          }),
+        ],
+        messages,
+      )[0].message,
+    ).toBeUndefined();
   });
 });

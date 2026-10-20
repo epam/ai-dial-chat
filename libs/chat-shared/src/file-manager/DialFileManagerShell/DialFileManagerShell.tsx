@@ -481,8 +481,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   }, [cancelUpload, clearUploadBatch]);
 
   const uploadQueueItems = useMemo(
-    () => toUploadQueueItems(uploadBatchState?.files ?? []),
-    [uploadBatchState],
+    () =>
+      toUploadQueueItems(
+        uploadBatchState?.files ?? [],
+        labels.uploadFailureMessages,
+      ),
+    [uploadBatchState, labels.uploadFailureMessages],
   );
 
   const fileMetadataPopupOptions = useMemo(

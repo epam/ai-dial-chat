@@ -1386,6 +1386,7 @@ DialFileManagerActionProfile.Browse; // full action set
 
 ```ts
 import {
+  FileUploadFailureReason,
   FileUploadStatus,
   type FileUploadEntry,
   type FileUploadBatchState,
@@ -1393,6 +1394,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 
 // FileUploadStatus values: Queued | Uploading | Completed | Failed | Cancelled
+// FileUploadEntry.failureReason (set when Failed): FileUploadFailureReason —
+// Conflict | TooLarge | Forbidden | Unavailable | Network | Unknown
 ```
 
 ### getParentFolderPath
@@ -1429,13 +1432,16 @@ import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';
 
 ### Upload queue
 
-`DialFileManagerShell` shows uploads in the UI kit's `TransferQueue`, fixed to the bottom-end corner. Its heading comes from `labels.getUploadQueueTitle(count)` and its strings from `labels.uploadQueueLabels`. Closing it aborts whatever is still uploading. Two helpers are exported for hosts that render the queue themselves — `isUploadInProgress` from the root entry, and `toUploadQueueItems` from `./file-manager`, since it is a value import of the kit:
+`DialFileManagerShell` shows uploads in the UI kit's `TransferQueue`, fixed to the bottom-end corner. Its heading comes from `labels.getUploadQueueTitle(count)` and its strings from `labels.uploadQueueLabels`. A failed row's tooltip and accessible name come from `labels.uploadFailureMessages[entry.failureReason]`; a reason without a message, or none at all, shows `uploadQueueLabels.failedMessage`. Closing it aborts whatever is still uploading. Two helpers are exported for hosts that render the queue themselves — `isUploadInProgress` from the root entry, and `toUploadQueueItems` from `./file-manager`, since it is a value import of the kit:
 
 ```ts
 import { isUploadInProgress } from '@epam/ai-dial-chat-shared';
 import { toUploadQueueItems } from '@epam/ai-dial-chat-shared/file-manager';
 
-const items = toUploadQueueItems(uploadBatchState?.files ?? []);
+const items = toUploadQueueItems(
+  uploadBatchState?.files ?? [],
+  labels.uploadFailureMessages,
+);
 const isBusy = isUploadInProgress(uploadBatchState);
 ```
 
