@@ -18,6 +18,8 @@ export interface ScheduledTaskConversationHistorySectionLabels {
   errorLabel: string;
   /** Label for the retry action shown alongside `error`. */
   retryLabel: string;
+  /** Message shown instead of the run list while `isUnavailable` is `true`, e.g. "History is unavailable". */
+  unavailableLabel?: string;
   /** Label for the "Show more" footer button, rendered while `hasMore` is `true` and `isLoading` is `false`. Required when `onLoadMore` is supplied. */
   showMoreLabel?: string;
   /** Per-status label used to build each run row's accessible name, e.g. `{ success: 'Succeeded', ... }`. */
@@ -44,6 +46,8 @@ export interface ScheduledTaskConversationHistorySectionProps {
   error?: Error | null;
   /** Called when the user activates the retry action shown alongside `error`. */
   onRetry?: () => void;
+  /** When `true`, the history exists but cannot be shown (e.g. a task shared by its owner): `labels.unavailableLabel` replaces the run list, `error`, and the retry action. Defaults to `false`. */
+  isUnavailable?: boolean;
   /** Whether another page of `items` is available beyond what has been loaded. Defaults to `false`. */
   hasMore?: boolean;
   /** Called when the user activates the "Show more" footer button. The button renders while `hasMore` is `true` and `isLoading` is `false`. */
@@ -58,11 +62,15 @@ export interface ScheduledTaskConversationHistorySectionProps {
   titleClassName?: string;
   /** CSS class applied to the accordion's content region. Defaults to `'ps-3'`. */
   contentClassName?: string;
+  /** CSS class applied to the unavailable message. Defaults to `'dial-body-text text-secondary'`. */
+  unavailableTextClassName?: string;
 }
 
 /**
  * History accordion of a task conversation's sources panel: the schedule's
- * paginated runs with the current run highlighted and a Show-more footer.
+ * paginated runs with the current run highlighted and a Show-more footer, or
+ * the scoped unavailable message (without a retry action) while
+ * `isUnavailable` is set.
  * Expanded by default; resets to expanded whenever `scheduleId` changes.
  */
 export const ScheduledTaskConversationHistorySection: FC<
@@ -75,6 +83,7 @@ export const ScheduledTaskConversationHistorySection: FC<
   skeletonCount = 6,
   error,
   onRetry,
+  isUnavailable = false,
   hasMore = false,
   onLoadMore,
   currentRunId,
@@ -82,6 +91,7 @@ export const ScheduledTaskConversationHistorySection: FC<
   labels,
   titleClassName = 'dial-tiny-semi-text',
   contentClassName = 'ps-3',
+  unavailableTextClassName = 'dial-body-text text-secondary',
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -113,26 +123,32 @@ export const ScheduledTaskConversationHistorySection: FC<
       /* The kit's content region pads px-4 (16px); the design narrows the History rows' start inset to 12px. */
       contentClassName={contentClassName}
     >
-      <ScheduledTaskRunHistoryList
-        items={items}
-        isLoading={isLoading}
-        isLoadingMore={isLoadingMore}
-        skeletonCount={skeletonCount}
-        error={error}
-        onRetry={onRetry}
-        currentRunId={currentRunId}
-        onRunClick={onRunClick}
-        footer={footer}
-        labels={{
-          historyTitle: labels.title,
-          emptyLabel: labels.emptyLabel,
-          errorLabel: labels.errorLabel,
-          retryLabel: labels.retryLabel,
-          runStatusLabels: labels.runStatusLabels,
-          currentRunLabel: labels.currentRunLabel,
-          unreadIndicatorLabel: labels.unreadIndicatorLabel,
-        }}
-      />
+      {isUnavailable ? (
+        <p role="alert" className={unavailableTextClassName}>
+          {labels.unavailableLabel}
+        </p>
+      ) : (
+        <ScheduledTaskRunHistoryList
+          items={items}
+          isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          skeletonCount={skeletonCount}
+          error={error}
+          onRetry={onRetry}
+          currentRunId={currentRunId}
+          onRunClick={onRunClick}
+          footer={footer}
+          labels={{
+            historyTitle: labels.title,
+            emptyLabel: labels.emptyLabel,
+            errorLabel: labels.errorLabel,
+            retryLabel: labels.retryLabel,
+            runStatusLabels: labels.runStatusLabels,
+            currentRunLabel: labels.currentRunLabel,
+            unreadIndicatorLabel: labels.unreadIndicatorLabel,
+          }}
+        />
+      )}
     </Accordion>
   );
 };
