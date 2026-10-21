@@ -7,6 +7,7 @@ import { UserMenu } from '../UserMenu';
 
 const dropdownProps = vi.hoisted(() => ({
   placement: undefined as string | undefined,
+  className: undefined as string | undefined,
   onOpenChange: undefined as ((isOpen: boolean) => void) | undefined,
 }));
 
@@ -23,14 +24,17 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
     Dropdown: ({
       children,
+      className,
       placement,
       onOpenChange,
     }: {
       children: ReactNode;
+      className?: string;
       placement?: string;
       onOpenChange?: (isOpen: boolean) => void;
     }) => {
       dropdownProps.placement = placement;
+      dropdownProps.className = className;
       dropdownProps.onOpenChange = onOpenChange;
       return <>{children}</>;
     },
@@ -50,6 +54,29 @@ const profile: NavigationUserProfile = {
 };
 
 describe('UserMenu — Profile trigger', () => {
+  it('lets the profile trigger fill the room its neighbours leave, so a long name truncates', () => {
+    render(
+      <UserMenu
+        profile={profile}
+        labels={labels}
+        onLogout={vi.fn()}
+        triggerVariant={UserMenuTriggerVariant.Profile}
+      />,
+    );
+
+    /* The wrapper has no role; it is the parent of the trigger button. */
+    /* eslint-disable testing-library/no-node-access */
+    const wrapper = screen.getByRole('button', {
+      name: 'John Doe Signed in as john.doe@example.com',
+    }).parentElement;
+    /* eslint-enable testing-library/no-node-access */
+
+    expect(wrapper?.classList.contains('flex-1')).toBe(true);
+    expect(wrapper?.classList.contains('min-w-0')).toBe(true);
+    /* The kit's trigger wrapper is a flex item too, and must be able to shrink. */
+    expect(dropdownProps.className).toContain('min-w-0');
+  });
+
   it('names the trigger with the visible display name followed by the trigger label', () => {
     render(
       <UserMenu

@@ -223,10 +223,17 @@ export const UserMenu: FC<UserMenuProps> = memo(
           isStartPlacement
             ? 'flex min-w-0 items-center'
             : 'flex size-[60px] items-center justify-center',
+          /* The profile trigger takes the room its neighbours leave, so a long
+             name is truncated instead of running under them. */
+          isProfileTrigger && 'flex-1',
           className,
         )}
       >
         <Dropdown
+          /* The trigger wrapper is a flex item: without `min-w-0` it cannot
+             shrink below its text, and a long name runs past the wrapper
+             instead of being truncated. */
+          className={isStartPlacement ? 'max-w-full min-w-0' : undefined}
           placement={isStartPlacement ? 'top-start' : 'top-end'}
           matchReferenceWidth={false}
           items={items}
