@@ -280,4 +280,23 @@ describe('EntityEditor asideData', () => {
     expect(section?.classList.contains('host-aside')).toBe(true);
     expect(section?.classList.contains(BUILDER_FORM_CLASS.section)).toBe(true);
   });
+
+  it('forwards the resizable column and its labels to the layout', () => {
+    renderEditor({
+      resizableLeftColumn: { width: 450, onWidthChange: vi.fn() },
+      labels: { resizeHandleLabel: 'Resize columns now' },
+    });
+
+    expect(
+      screen
+        .getByRole('separator', { name: 'Resize columns now' })
+        .getAttribute('aria-valuenow'),
+    ).toBe('450');
+  });
+
+  it('renders no separator unless the host opts in', () => {
+    renderEditor();
+
+    expect(screen.queryByRole('separator')).toBeNull();
+  });
 });
