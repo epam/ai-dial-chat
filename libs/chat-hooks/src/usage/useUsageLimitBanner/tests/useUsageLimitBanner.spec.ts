@@ -7,25 +7,29 @@ import { useUsageLimitBanner } from '../useUsageLimitBanner';
 const t = (key: string, options?: Record<string, unknown>): string =>
   options == null ? key : `${key}:${JSON.stringify(options)}`;
 
-const warningDto = {
+const warningUsage = {
   dayTokenStats: { used: 80, total: 100, resetsAt: '2026-10-14T00:00:00Z' },
 };
+
+const comfortableAccount = { weekCostStats: { used: 10, total: 200 } };
 
 const setup = (
   overrides: Partial<Parameters<typeof useUsageLimitBanner>[0]> = {},
 ) => {
-  const getDeploymentLimits = vi.fn().mockResolvedValue(warningDto);
+  const getDeploymentUsage = vi.fn().mockResolvedValue(warningUsage);
+  const getAccountUsage = vi.fn().mockResolvedValue(comfortableAccount);
   const view = renderHook(() =>
     useUsageLimitBanner({
       deploymentId: 'gpt-4o',
-      getDeploymentLimits,
+      getDeploymentUsage,
+      getAccountUsage,
       warningThresholdPercent: 75,
       activeLocale: 'en',
       t,
       ...overrides,
     }),
   );
-  return { ...view, getDeploymentLimits };
+  return { ...view, getDeploymentUsage, getAccountUsage };
 };
 
 afterEach(() => {
@@ -34,13 +38,16 @@ afterEach(() => {
 
 describe('useUsageLimitBanner', () => {
   it('returns no banner without a deployment', () => {
-    const { result, getDeploymentLimits } = setup({ deploymentId: undefined });
+    const { result, getDeploymentUsage, getAccountUsage } = setup({
+      deploymentId: undefined,
+    });
 
     expect(result.current.banner).toBeUndefined();
-    expect(getDeploymentLimits).not.toHaveBeenCalled();
+    expect(getDeploymentUsage).not.toHaveBeenCalled();
+    expect(getAccountUsage).not.toHaveBeenCalled();
   });
 
-  it('returns the translated warning once limits load', async () => {
+  it('returns the translated warning once usage loads', async () => {
     const { result } = setup();
 
     await waitFor(() => expect(result.current.banner).toBeDefined());
@@ -54,11 +61,45 @@ describe('useUsageLimitBanner', () => {
   });
 
   it('returns no banner below the threshold', async () => {
-    const { result, getDeploymentLimits } = setup({
+    const { result, getDeploymentUsage } = setup({
       warningThresholdPercent: 90,
     });
 
-    await waitFor(() => expect(getDeploymentLimits).toHaveBeenCalled());
+    await waitFor(() => expect(getDeploymentUsage).toHaveBeenCalled());
+
+    expect(result.current.banner).toBeUndefined();
+  });
+
+  it('warns from the account cost when the deployment usage fails', async () => {
+    const { result } = setup({
+      getDeploymentUsage: vi.fn().mockRejectedValue(new Error('Not Found')),
+      getAccountUsage: vi
+        .fn()
+        .mockResolvedValue({ dayCostStats: { used: 90, total: 100 } }),
+    });
+
+    await waitFor(() => expect(result.current.banner).toBeDefined());
+
+    expect(result.current.banner).toMatchObject({
+      severity: UsageLimitBannerSeverity.Warning,
+      limitText: 'conversationInput.usageBanner.warningDay:{"percent":90}',
+    });
+  });
+
+  it('raises no banner for an agent whose account budget is comfortable', async () => {
+    const getAccountUsage = vi
+      .fn()
+      .mockResolvedValue({ weekCostStats: { used: 132.24, total: 200 } });
+    const { result } = setup({
+      deploymentId: 'dial-chathub-v2',
+      getDeploymentUsage: vi.fn().mockResolvedValue({
+        dayTokenStats: { used: 0, total: 2_000_000 },
+        weekCostStats: { used: 130.98, total: Number.MAX_SAFE_INTEGER },
+      }),
+      getAccountUsage,
+    });
+
+    await waitFor(() => expect(getAccountUsage).toHaveBeenCalled());
 
     expect(result.current.banner).toBeUndefined();
   });
@@ -72,24 +113,27 @@ describe('useUsageLimitBanner', () => {
     expect(result.current.banner).toBeUndefined();
   });
 
-  it('refetches after generation ends', async () => {
-    const getDeploymentLimits = vi.fn().mockResolvedValue(warningDto);
+  it('refetches both sources after generation ends', async () => {
+    const getDeploymentUsage = vi.fn().mockResolvedValue(warningUsage);
+    const getAccountUsage = vi.fn().mockResolvedValue(comfortableAccount);
     const { rerender } = renderHook(
       ({ busy }: { busy: boolean }) =>
         useUsageLimitBanner({
           deploymentId: 'gpt-4o',
           isGenerationInProgress: busy,
-          getDeploymentLimits,
+          getDeploymentUsage,
+          getAccountUsage,
           warningThresholdPercent: 75,
           activeLocale: 'en',
           t,
         }),
       { initialProps: { busy: true } },
     );
-    await waitFor(() => expect(getDeploymentLimits).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(getDeploymentUsage).toHaveBeenCalledOnce());
 
     rerender({ busy: false });
 
-    await waitFor(() => expect(getDeploymentLimits).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(getDeploymentUsage).toHaveBeenCalledTimes(2));
+    expect(getAccountUsage).toHaveBeenCalledTimes(2);
   });
 });

@@ -576,6 +576,41 @@ export class DeploymentsDetailsService {
   }
 
   /*
+   * Unlike `getDeploymentLimits`, every stat here is scoped to the queried
+   * deployment: `*CostStats.used` is its own direct plus aggregated spend, and
+   * `*CostStats.total` is DIAL Core's unlimited sentinel, since no
+   * per-deployment cost cap exists.
+   */
+  async getDeploymentUsage(
+    deploymentName: string,
+    accessToken: string,
+  ): Promise<DeploymentLimitsResponseDto> {
+    try {
+      const result = await this.dialClient.client.getDeploymentUsage(
+        encodeDialResourcePath(deploymentName),
+        {
+          headers: getBearerAuthHeaders(accessToken),
+        },
+      );
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          `get deployment usage "${deploymentName}"`,
+          this.logger,
+        );
+      }
+      return result.data as unknown as DeploymentLimitsResponseDto;
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        `get deployment usage "${deploymentName}"`,
+        this.logger,
+        0,
+      );
+    }
+  }
+
+  /*
    * The request's deployment kinds, or the configured default when it names
    * none, as `getUserLimits`/`getUserUsage` query params. DIAL Core reads the
    * parameter once and splits it on commas (`LimitController`'s
