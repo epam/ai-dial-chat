@@ -27,7 +27,14 @@ const hasKeys = (value: Record<string, unknown>, keys: string[]): boolean =>
   keys.every((key) => Object.prototype.hasOwnProperty.call(value, key));
 
 /* `https://chat.example.com/` and `https://chat.example.com` name the same origin; `event.origin` never ends in `/`. */
-const normalizeHost = (host: string): string => host.replace(/\/+$/, '');
+const normalizeHost = (host: string): string => {
+  /* Linear trailing-slash trim; `/\/+$/` backtracks polynomially on many `/`. */
+  let end = host.length;
+  while (end > 0 && host[end - 1] === '/') {
+    end--;
+  }
+  return host.slice(0, end);
+};
 
 /** Event types `ChatVisualizerConnector.send()` posts, each prefixed `${appName}/`. */
 export type ChatVisualizerEventType =
