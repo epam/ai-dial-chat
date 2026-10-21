@@ -3,7 +3,9 @@
 ## Purpose
 
 Conversation publish and publish-history endpoints proxying DIAL Core's Publication API.
+
 ## Requirements
+
 ### Requirement: Publish endpoint proxies DIAL Core's Publication API for conversations
 
 The backend SHALL expose `POST /api/v1/conversations/publish` in `apps/chat-api/src/conversations/` via a dedicated `ConversationPublishController` (`conversation-publish.controller.ts`, a sibling of `ConversationController` on the same `conversations` v1 path) and `ConversationPublishService` (`conversation-publish.service.ts`), following `apps/chat-api/AGENTS.md` (thin controller, `@ApiTags`/`@ApiOperation`/`@ApiResponse` per status code, Logger + ConfigService, validated DTOs).
@@ -131,6 +133,7 @@ Authorization: caller SHALL be authenticated (existing session guard). The servi
 #### Scenario: Invalid rules payload is rejected with 400
 - **WHEN** a request includes a malformed `rules` entry (invalid `function` enum value, empty `source`, or empty `targets`)
 - **THEN** the `ValidationPipe` rejects the request with 400 before reaching the service or Core, per the same validation contract defined in `catalog-publish-api`'s "Publish request accepts optional access rules" requirement
+
 ### Requirement: Publish history endpoint derives history from Core publications, scoped by conversation path
 
 The backend SHALL expose `GET /api/v1/conversations/publish-history?path=<conversation-path>` returning every publication this conversation path has ever been published to, most recent first. It SHALL call Core's `getPublications` with the caller's own-bucket list scope (`{ url: "publications/{bucket}/" }`) and narrow the response to publications whose `resources[].sourceUrl` is `"conversations/{bucket}/{normalizedPath}"`, sharing every corrected helper with `PublishService.getPublishHistory` (see `catalog-publish-api`): the response shape is read through `toPublicationList`, so Core's `{ publications: [...] }` envelope no longer surfaces as a 503; and the narrowing goes through `resolvePublicationsForSource`, which re-reads each `APPROVED` candidate through `getPublication` because Core's list response carries publication metadata only and no `resources` array. Only `APPROVED` publications (or ones with no reported status) are re-read as candidates, and an `APPROVED` `DELETE` publication for the same target folder SHALL cancel every `ADD` created at or before it (the shared cancellation rule defined in `catalog-publish-api`). Each entry's `folderPath` SHALL have the `public/` prefix and trailing slash stripped, matching the existing `stripPublicTargetFolder` behavior.
@@ -210,3 +213,25 @@ The published `targetUrl` SHALL be reconstructed from `folderPath` rather than r
 - **WHEN** `folderPath` is `"test 14.04/Ünïcode"`
 - **THEN** `getPublishedTargetUrl` percent-encodes each segment, and the resulting `targetUrl` is the same one the publish call for that folder produced
 
+### Requirement: Publish request includes the conversation's attachment files
+
+`POST /api/v1/conversations/publish` SHALL add the conversation's attachment files to the `resources` array it sends to DIAL Core as defined by the `conversation-published-attachments` capability, after the conversation resource. The request and response DTOs, the validation rules, the `displayAuthor` and `rules` handling and the publish-history behavior SHALL be unchanged: publish history is still matched on the conversation's own `sourceUrl`, so the additional file resources do not appear as separate publications. A publish that fails because an attachment is missing SHALL fail with HTTP 422, `code: conversationAttachmentMissing`, a message naming the missing files and a `missingFiles` array, documented in the endpoint's OpenAPI responses; a conversation whose attachments expand beyond the configured file maximum SHALL fail with HTTP 413 (also documented). No cache entry is invalidated on either failure.
+
+Generated-client impact: no new `operationId`; `publishConversation` keeps its request and response DTOs. The 422 response is added to the endpoint's OpenAPI responses.
+
+#### Scenario: Request body for a conversation with one attachment file
+
+- **GIVEN** `path` is `bucket-123/my-chat` and the conversation references `files/bucket-123/docs/report.pdf`
+- **WHEN** it is published to `Organization/Data Science`
+- **THEN** the `createPublication` body contains the conversation `ADD` resource and an `ADD` resource with `sourceUrl: files/bucket-123/docs/report.pdf` and `targetUrl: files/public/Organization/Data Science/my-chat/docs/report.pdf`
+
+#### Scenario: Publish history still lists one entry per folder
+
+- **GIVEN** a conversation with attachment files was published to `Organization/Data Science`
+- **WHEN** the publish history for the conversation is requested
+- **THEN** the folder appears exactly once
+
+#### Scenario: Missing attachment aborts the publish
+
+- **WHEN** an individually referenced attachment file does not exist
+- **THEN** the endpoint answers 422 with `code: conversationAttachmentMissing` and `createPublication` is not called

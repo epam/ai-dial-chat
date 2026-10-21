@@ -159,6 +159,51 @@ export const getPublishedIconTargetUrl = (
     `${targetResourceName}/${getResourceName(iconUrl)}`,
   );
 
+const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
+
+/**
+ * The folder holding the attachment files of a published conversation:
+ * `files/` plus the published conversation's own path, trailing-slashed, e.g.
+ * `conversations/public/Org/my-chat` -> `files/public/Org/my-chat/`.
+ *
+ * The one derivation shared by publish (where the files are written), unpublish
+ * (which lists the folder to delete its files) and the read-time resolution of
+ * folder attachments, so the three can never disagree on where the files are.
+ * @param publishedConversationUrl - `conversations/public/{folder}/{name}`, encoded
+ */
+export const getPublishedAttachmentsFolderUrl = (
+  publishedConversationUrl: string,
+): string =>
+  `files/${publishedConversationUrl.slice(
+    publishedConversationUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)
+      ? CONVERSATION_RESOURCE_PREFIX.length
+      : 0,
+  )}/`;
+
+/**
+ * The published path of one attachment file:
+ * `files/public/{folderPath}/{conversationResourceName}/{path in the author's bucket}`.
+ * Nesting under the conversation's own target name keeps same-named files of
+ * different conversations from colliding in one Organization folder, the same
+ * way {@link getPublishedIconTargetUrl} does for an app icon, and keeping the
+ * bucket-relative path preserves folder structure.
+ * @param folderPath - plain publish target folder
+ * @param conversationResourceName - the conversation's resource name (last segment of its path)
+ * @param bucketRelativePath - the file's path inside the author's bucket, already percent-encoded
+ */
+export const getPublishedAttachmentTargetUrl = (
+  folderPath: string,
+  conversationResourceName: string,
+  bucketRelativePath: string,
+): string =>
+  `${getPublishedAttachmentsFolderUrl(
+    getPublishedTargetUrl(
+      'conversations',
+      folderPath,
+      conversationResourceName,
+    ),
+  )}${bucketRelativePath}`;
+
 /*
  * DIAL Core stores applications and toolsets as `{name}__{version}`, but
  * editing an existing one's version only rewrites the version field inside the

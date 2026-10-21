@@ -15,6 +15,7 @@
 import * as runtime from '../runtime';
 import type {
   AttachGenerationDto,
+  ConversationAttachmentMissingErrorDto,
   ConversationDeletionResultDto,
   ConversationListResponseDto,
   ConversationMetadataDto,
