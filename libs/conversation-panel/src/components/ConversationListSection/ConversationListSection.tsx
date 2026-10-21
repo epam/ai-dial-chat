@@ -2,6 +2,7 @@ import { FilterTab, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, memo, useCallback, useEffect, useId, useState } from 'react';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type { ConversationListSectionProps } from '../../models/conversation-list-section';
+import { ConversationTypeFilter } from '../../types/conversation-kind';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { ConversationList } from '../ConversationList/ConversationList';
 import { ConversationListHeader } from '../ConversationListHeader/ConversationListHeader';
@@ -17,6 +18,8 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
     requestedFilter,
     isFilterHidden = false,
     onFilterChange,
+    isTypeFilterHidden = false,
+    onTypeFilterChange,
     hiddenSources,
     headerActions,
     getActions,
@@ -31,6 +34,9 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isListExpanded, setIsListExpanded] = useState(true);
     const [activeFilter, setActiveFilter] = useState(FilterTab.All);
+    const [activeTypeFilter, setActiveTypeFilter] = useState(
+      ConversationTypeFilter.All,
+    );
 
     useEffect(() => {
       if (requestedFilter == null) return;
@@ -56,6 +62,14 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
       setIsSearchOpen(isOpen);
       if (isOpen) setIsListExpanded(true);
     }, []);
+
+    const handleTypeFilterChange = useCallback(
+      (type: ConversationTypeFilter) => {
+        setActiveTypeFilter(type);
+        onTypeFilterChange?.(type);
+      },
+      [onTypeFilterChange],
+    );
 
     const handleToggleExpanded = useCallback(
       () => setIsListExpanded((isExpanded) => !isExpanded),
@@ -83,6 +97,12 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
             onSearchOpenChange={handleSearchOpenChange}
             activeFilter={activeFilter}
             onFilterChange={isFilterHidden ? undefined : handleFilterChange}
+            activeTypeFilter={activeTypeFilter}
+            onTypeFilterChange={
+              isFilterHidden || isTypeFilterHidden
+                ? undefined
+                : handleTypeFilterChange
+            }
             hiddenSources={hiddenSources}
             actions={headerActions}
             styles={styles?.header}
@@ -104,6 +124,7 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
             labels={labels}
             searchQuery={searchQuery}
             activeFilter={activeFilter}
+            activeTypeFilter={activeTypeFilter}
             hiddenSources={hiddenSources}
             rowVariant={ConversationRowVariant.Indicator}
             getActions={getActions}

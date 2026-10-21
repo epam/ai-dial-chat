@@ -9,6 +9,7 @@ export type {
   RenameConversationPopupLabels,
   RenameConversationPopupStyles,
 } from './models/rename-conversation-popup';
+export { ConversationTypeFilter } from './types/conversation-kind';
 export { ConversationRowVariant } from './types/conversation-row-variant';
 export type {
   ConversationListHeaderColors,

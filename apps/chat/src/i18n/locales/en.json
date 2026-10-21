@@ -470,6 +470,11 @@
       "all": "All",
       "groupAriaLabel": "Filter chats",
       "shared": "Shared",
+      "personal": "Personal",
+      "type": "Type",
+      "origin": "Origin",
+      "chat": "Chat",
+      "task": "Task",
       "pinnedSection": "Pinned",
       "myChatsSection": "My chats"
     },

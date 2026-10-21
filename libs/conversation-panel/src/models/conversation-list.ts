@@ -1,5 +1,6 @@
 import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import type { ConversationTypeFilter } from '../types/conversation-kind';
 import type { ConversationRowVariant } from '../types/conversation-row-variant';
 import type { ConversationItem, ConversationMove } from './panel-props';
 
@@ -92,6 +93,8 @@ export interface ConversationListProps {
   searchQuery?: string;
   /** Filter tab applied to the list. Defaults to `FilterTab.All`. */
   activeFilter?: FilterTab;
+  /** Which kinds of conversation to show. Defaults to `ConversationTypeFilter.All`. */
+  activeTypeFilter?: ConversationTypeFilter;
   /** Sources to exclude entirely, before filtering and grouping. */
   hiddenSources?: FilterTab[];
   /** Presentation of rows and group headers. Defaults to `ConversationRowVariant.Avatar`. */

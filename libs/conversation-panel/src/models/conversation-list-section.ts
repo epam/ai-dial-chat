@@ -1,6 +1,7 @@
 import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
+import type { ConversationTypeFilter } from '../types/conversation-kind';
 import type {
   ConversationListLabels,
   ConversationListStyles,
@@ -41,6 +42,10 @@ export interface ConversationListSectionProps {
   isFilterHidden?: boolean;
   /** Called when the user chooses a filter in the header. */
   onFilterChange?: (tab: FilterTab) => void;
+  /** Hides the "Type" submenu of the filter menu, e.g. when the host has no scheduled tasks. Defaults to `false`. */
+  isTypeFilterHidden?: boolean;
+  /** Called when the user chooses a type in the filter menu. */
+  onTypeFilterChange?: (type: ConversationTypeFilter) => void;
   /** Sources to exclude entirely, before filtering and grouping. */
   hiddenSources?: FilterTab[];
   /** Extra controls rendered at the end of the header, e.g. an overflow menu. */

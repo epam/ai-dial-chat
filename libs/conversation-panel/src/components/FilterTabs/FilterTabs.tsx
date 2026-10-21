@@ -22,7 +22,7 @@ export interface FilterTabsProps {
 }
 
 /** Keys of `FilterLabels` that name a tab (i.e. all but the group's own label). */
-type FilterTabLabelKey = Exclude<keyof FilterLabels, 'groupAriaLabel'>;
+type FilterTabLabelKey = 'all' | 'myChats' | 'shared' | 'organization';
 
 const TABS: { value: FilterTab; labelKey: FilterTabLabelKey }[] = [
   { value: FilterTab.All, labelKey: 'all' },

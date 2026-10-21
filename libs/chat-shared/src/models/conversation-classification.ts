@@ -6,3 +6,9 @@ export enum FilterTab {
   Shared = 'shared',
   Organization = 'organization',
 }
+
+/** What a conversation is: an ordinary chat or the run of a scheduled task. */
+export enum ConversationKind {
+  Chat = 'chat',
+  Task = 'task',
+}

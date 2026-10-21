@@ -19,9 +19,14 @@ import { List, type ListImperativeAPI } from 'react-window';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type { ConversationListProps } from '../../models/conversation-list';
 import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
+import { ConversationTypeFilter } from '../../types/conversation-kind';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
-import { matchesSearch, matchesTab } from '../../utils/conversation-filter';
+import {
+  matchesKind,
+  matchesSearch,
+  matchesTab,
+} from '../../utils/conversation-filter';
 import {
   getOverscanCount,
   getRowHeight,
@@ -52,6 +57,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
     labels,
     searchQuery = '',
     activeFilter = FilterTab.All,
+    activeTypeFilter = ConversationTypeFilter.All,
     hiddenSources,
     rowVariant,
     getActions,
@@ -197,9 +203,11 @@ export const ConversationList: FC<ConversationListProps> = memo(
       () =>
         visibleConversations.filter(
           (item) =>
-            matchesTab(item, activeFilter) && matchesSearch(item, searchQuery),
+            matchesTab(item, activeFilter) &&
+            matchesKind(item, activeTypeFilter) &&
+            matchesSearch(item, searchQuery),
         ),
-      [visibleConversations, activeFilter, searchQuery],
+      [visibleConversations, activeFilter, activeTypeFilter, searchQuery],
     );
 
     const pinnedItems = useMemo(
