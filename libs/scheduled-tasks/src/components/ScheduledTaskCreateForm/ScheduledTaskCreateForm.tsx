@@ -50,13 +50,13 @@ import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-fo
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
 import {
-  calendarValueToDateValue,
   calendarValueToDayOfWeek,
-  dateValueToCalendarValue,
   dayOfWeekToCalendarValue,
   TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
 import { hasScheduledTaskFormChanges } from '../../utils/scheduled-task-form-values';
+import { keepWindowBoundaryOnRepeatSwitch } from '../../utils/window-boundary';
+import { ScheduledTaskBoundaryField } from '../ScheduledTaskBoundaryField/ScheduledTaskBoundaryField';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
@@ -202,9 +202,53 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     onFieldChange('time', typeof value === 'string' ? value : '');
   };
 
+  /*
+   * A repeat switch clears both window boundaries whenever the boundary
+   * shape changes (see `keepWindowBoundaryOnRepeatSwitch`): an hourly
+   * boundary is an exact picked instant while a day-based one is a whole
+   * local day, so carrying a value across would silently change its
+   * meaning. A switch within the day-based cadences keeps both as-is.
+   */
+  const handleRepeatChange = (next: string | string[]) => {
+    const repeat = next as ScheduledTaskRepeat;
+    onFieldChange('repeat', repeat);
+    const startDate = keepWindowBoundaryOnRepeatSwitch(
+      values.startDate,
+      values.repeat,
+      repeat,
+    );
+    if (startDate !== values.startDate) {
+      onFieldChange('startDate', startDate ?? '');
+    }
+    const endDate = keepWindowBoundaryOnRepeatSwitch(
+      values.endDate,
+      values.repeat,
+      repeat,
+    );
+    if (endDate !== values.endDate) {
+      onFieldChange('endDate', endDate ?? '');
+    }
+  };
+
   const isTimeFieldShown =
     values.repeat !== ScheduledTaskRepeat.OneTime &&
     values.repeat !== ScheduledTaskRepeat.Hourly;
+
+  /* Hourly repeats pick exact window boundaries: date-and-time pickers
+   * writing `YYYY-MM-DDTHH:mm` values, unlike the day-based repeats' date-only
+   * pair. A repeat switch that changes the boundary shape clears both
+   * boundaries (see `handleRepeatChange`), so the shape always matches the
+   * pickers. */
+  const isHourlyRepeat = values.repeat === ScheduledTaskRepeat.Hourly;
+  const boundaryMode = isHourlyRepeat
+    ? CalendarMode.DateTime
+    : CalendarMode.Date;
+  const startBoundaryLabel = isHourlyRepeat
+    ? labels.startDateAndTimeLabel
+    : labels.startDateLabel;
+  const endBoundaryLabel = isHourlyRepeat
+    ? labels.endDateAndTimeLabel
+    : labels.endDateLabel;
 
   /*
    * A blur error describes the time field's visible draft. When a repeat
@@ -231,6 +275,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     !values.modelId ||
     (!values.prompt.trim() && !values.skillUrls?.length) ||
     Boolean(errors.skillUrls) ||
+    /* An empty shown run-at blocks Save immediately, like the other required
+     * fields — and a submit-time run-at error keeps it blocked until the host
+     * clears the error on the next run-at change. */
+    (values.repeat === ScheduledTaskRepeat.OneTime &&
+      (!values.runAt || Boolean(errors.runAt))) ||
     /* An empty shown time blocks Save immediately, like the other required
      * fields — the blur error alone would only catch it on blur or submit. */
     (isTimeFieldShown && !values.time) ||
@@ -371,9 +420,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               <Select
                 labelProps={{ label: labels.repeatLabel }}
                 value={values.repeat}
-                onChange={(next) =>
-                  onFieldChange('repeat', next as ScheduledTaskRepeat)
-                }
+                onChange={handleRepeatChange}
                 options={labels.repeatOptions.map((option) => ({
                   value: option.key,
                   label: option.label,
@@ -383,40 +430,17 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               {values.repeat === ScheduledTaskRepeat.OneTime && (
                 <ScheduledTaskRunAtField
                   label={labels.runAtLabel}
+                  placeholder={labels.runAtPlaceholder}
                   value={values.runAt ?? ''}
                   onChange={handleRunAtChange}
                   error={errors.runAt}
                   errorClassName={instructionsErrorClassName}
+                  disabled={isSubmitting}
                 />
               )}
 
               {values.repeat !== ScheduledTaskRepeat.OneTime && (
                 <>
-                  {isTimeFieldShown && (
-                    <div className="flex flex-col gap-1">
-                      <Calendar
-                        id="scheduled-task-time"
-                        mode={CalendarMode.Time}
-                        value={values.time}
-                        onChange={handleTimeChange}
-                        onBlur={handleTimeBlur}
-                        labelProps={{ label: labels.timeLabel, required: true }}
-                        invalid={Boolean(timeError)}
-                        disabled={isSubmitting}
-                        showTimezone
-                      />
-                      {timeError && (
-                        <p
-                          className={mergeClasses(
-                            instructionsErrorClassName,
-                            styles.instructionsError,
-                          )}
-                        >
-                          {timeError}
-                        </p>
-                      )}
-                    </div>
-                  )}
                   {values.repeat === ScheduledTaskRepeat.Weekly && (
                     <div className="flex flex-col gap-1">
                       <Calendar
@@ -447,6 +471,33 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       )}
                     </div>
                   )}
+
+                  {isTimeFieldShown && (
+                    <div className="flex flex-col gap-1">
+                      <Calendar
+                        id="scheduled-task-time"
+                        mode={CalendarMode.Time}
+                        value={values.time}
+                        onChange={handleTimeChange}
+                        onBlur={handleTimeBlur}
+                        labelProps={{ label: labels.timeLabel, required: true }}
+                        invalid={Boolean(timeError)}
+                        disabled={isSubmitting}
+                        showTimezone
+                      />
+                      {timeError && (
+                        <p
+                          className={mergeClasses(
+                            instructionsErrorClassName,
+                            styles.instructionsError,
+                          )}
+                        >
+                          {timeError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {values.repeat === ScheduledTaskRepeat.Monthly && (
                     <NumberInput
                       id="scheduled-task-day-of-month"
@@ -474,6 +525,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       integer
                       min={0}
                       max={59}
+                      /* Fixed design width on the field box — `className`
+                       * would land on the inner input element, which is
+                       * `w-full` inside the box and ignores it. */
+                      wrapperClassName="w-[142px]"
                       value={values.minute ?? ''}
                       onChange={(value) =>
                         onFieldChange(
@@ -489,63 +544,40 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       error={errors.minute}
                     />
                   )}
-                  {/* The two date fields always share one row. */}
-                  <div className="flex flex-row gap-3">
-                    <div className="flex flex-1 flex-col gap-1">
-                      <Calendar
-                        id="scheduled-task-start-date"
-                        mode={CalendarMode.Date}
-                        value={dateValueToCalendarValue(values.startDate)}
-                        onChange={(value) =>
-                          onFieldChange(
-                            'startDate',
-                            calendarValueToDateValue(value),
-                          )
-                        }
-                        minDate={minDate}
-                        labelProps={{ label: labels.startDateLabel }}
-                        placeholder={labels.startDatePlaceholder}
-                        invalid={Boolean(errors.startDate)}
-                      />
-                      {errors.startDate && (
-                        <p
-                          className={mergeClasses(
-                            instructionsErrorClassName,
-                            styles.instructionsError,
-                          )}
-                        >
-                          {errors.startDate}
-                        </p>
-                      )}
-                    </div>
+                  {/* The two boundary fields share one row for time-of-day
+                   * repeats; for hourly repeats each takes its own
+                   * full-width row as a date-and-time picker. */}
+                  <div
+                    className={mergeClasses(
+                      'gap-3',
+                      isHourlyRepeat ? 'flex flex-col' : 'flex flex-row',
+                    )}
+                  >
+                    <ScheduledTaskBoundaryField
+                      id="scheduled-task-start-date"
+                      mode={boundaryMode}
+                      label={startBoundaryLabel}
+                      placeholder={labels.startDatePlaceholder}
+                      value={values.startDate}
+                      onChange={(value) => onFieldChange('startDate', value)}
+                      minDate={minDate}
+                      error={errors.startDate}
+                      errorClassName={instructionsErrorClassName}
+                      disabled={isSubmitting}
+                    />
 
-                    <div className="flex flex-1 flex-col gap-1">
-                      <Calendar
-                        id="scheduled-task-end-date"
-                        mode={CalendarMode.Date}
-                        value={dateValueToCalendarValue(values.endDate)}
-                        onChange={(value) =>
-                          onFieldChange(
-                            'endDate',
-                            calendarValueToDateValue(value),
-                          )
-                        }
-                        minDate={minDate}
-                        labelProps={{ label: labels.endDateLabel }}
-                        placeholder={labels.endDatePlaceholder}
-                        invalid={Boolean(errors.endDate)}
-                      />
-                      {errors.endDate && (
-                        <p
-                          className={mergeClasses(
-                            instructionsErrorClassName,
-                            styles.instructionsError,
-                          )}
-                        >
-                          {errors.endDate}
-                        </p>
-                      )}
-                    </div>
+                    <ScheduledTaskBoundaryField
+                      id="scheduled-task-end-date"
+                      mode={boundaryMode}
+                      label={endBoundaryLabel}
+                      placeholder={labels.endDatePlaceholder}
+                      value={values.endDate}
+                      onChange={(value) => onFieldChange('endDate', value)}
+                      minDate={minDate}
+                      error={errors.endDate}
+                      errorClassName={instructionsErrorClassName}
+                      disabled={isSubmitting}
+                    />
                   </div>
                 </>
               )}
@@ -565,14 +597,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             <h2 className={sectionTitleClassName}>
               {labels.configurationSectionTitle}
             </h2>
-            <p
-              className={mergeClasses(
-                sectionSubtitleClassName,
-                styles.sectionSubtitle,
-              )}
-            >
-              {labels.configurationSectionSubtitle}
-            </p>
           </div>
 
           {skillSelector != null ? (

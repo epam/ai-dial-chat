@@ -1,0 +1,6 @@
+/* Reads the `--stcf-error-text` var the parent ScheduledTaskCreateForm sets
+   on its root, so the form's `styles.colors.instructionsErrorText` keeps
+   styling this error without the field taking a matching color prop. */
+.error {
+  color: var(--stcf-error-text, var(--text-error, #ae2f2f));
+}

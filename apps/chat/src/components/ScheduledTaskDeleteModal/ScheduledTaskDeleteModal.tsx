@@ -6,6 +6,7 @@ import {
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
+import styles from './ScheduledTaskDeleteModal.module.scss';
 
 interface Props {
   /** Whether the dialog is open. */
@@ -60,6 +61,9 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
       confirmLabel={t(ButtonsI18nKeys.Delete)}
       pendingLabel={t(BasicI18nKeys.DeletingStatus)}
       isDeleting={isDeleting}
+      /* The design's 440px cap — see ScheduledTaskDeleteModal.module.scss
+       * for why this is a stylesheet rule and not a max-w-* className. */
+      styles={{ popupClassName: styles.modal }}
       onConfirm={onConfirm}
       onClose={onClose}
     />
