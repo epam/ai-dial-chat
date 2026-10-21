@@ -650,19 +650,26 @@ import { InitialsAvatar } from '@epam/ai-dial-chat-shared';
 
 ### PanelEmptyState
 
-Generic empty-state placeholder used inside panels. Without `icon` it shows the
-kit's default `NoDataContent` document mark; pass a decorative feature
-illustration to replace it.
+Generic empty-state placeholder used inside panels, built on the kit's
+`NoDataContent`: an illustration, a title (`label`), an optional `description`
+and an optional `action`. Without `icon` it shows the kit's default empty-state
+illustration, which every panel shares. Follow the Patterns 2.0 wording:
+"No [entities] yet" / "[Entities] will appear here once [condition]." for an
+empty list, and "No [entities] found" / "Try a different search term or check
+your filters." after a search or filter.
 
 ```tsx
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
-import { IconClockHour3 } from '@tabler/icons-react';
-
-<PanelEmptyState label="No conversations" />;
 
 <PanelEmptyState
-  label="No scheduled tasks yet"
-  icon={<IconClockHour3 size={48} stroke={1} aria-hidden />}
+  label="No chats yet"
+  description="Chats will appear here once you start one."
+/>;
+
+<PanelEmptyState
+  label="No chats found"
+  description="Try a different search term or check your filters."
+  live
 />;
 ```
 

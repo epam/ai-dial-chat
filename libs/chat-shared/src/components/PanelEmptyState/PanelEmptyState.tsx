@@ -8,41 +8,63 @@ import styles from './PanelEmptyState.module.scss';
 export interface PanelEmptyStateColors {
   /** Label text color. */
   label?: string;
+  /** Description text color. */
+  description?: string;
 }
 
 /** Props for `PanelEmptyState`. */
 export interface PanelEmptyStateProps {
   /** Primary message of the empty state. */
   label: string;
+  /** Secondary line under the label, e.g. what to do next. */
+  description?: string;
+  /** Optional way forward, such as a button, rendered under the text. */
+  action?: ReactNode;
   /** Color overrides applied as CSS custom properties. */
   colors?: PanelEmptyStateColors;
-  /** CSS class applied to the label text. Defaults to `'dial-tiny-text'`. */
+  /** CSS class applied to the label text, on top of the kit's title typography. */
   labelClassName?: string;
+  /** CSS class applied to the description text, on top of the kit's description typography. */
+  descriptionClassName?: string;
   /** CSS class applied to the empty-state container. */
   containerClassName?: string;
-  /** Decorative illustration above the label. Defaults to the kit's `NoDataContent` document mark. */
+  /** Decorative illustration above the label. Defaults to the kit's `NoDataContent` illustration. */
   icon?: ReactNode;
+  /** Announces the empty state to assistive tech as it appears, e.g. after a search. */
+  live?: boolean;
 }
 
 /** Centered empty-state block for use inside a sidebar panel body. */
 export const PanelEmptyState: FC<PanelEmptyStateProps> = memo(
   ({
     label,
+    description,
+    action,
     colors,
-    labelClassName = 'dial-tiny-text',
+    labelClassName,
+    descriptionClassName,
     containerClassName,
     icon,
+    live,
   }) => {
     const cssVars = buildCssVars({
       '--pes-label-color': colors?.label,
+      '--pes-description-color': colors?.description,
     });
 
     return (
       <div style={cssVars}>
         <NoDataContent
           title={label}
+          description={description}
+          action={action}
           icon={icon}
+          live={live}
           titleClassName={mergeClasses(styles.label, labelClassName)}
+          descriptionClassName={mergeClasses(
+            styles.description,
+            descriptionClassName,
+          )}
           className={containerClassName}
         />
       </div>

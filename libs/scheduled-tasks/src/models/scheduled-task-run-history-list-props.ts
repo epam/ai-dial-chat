@@ -8,6 +8,8 @@ export interface ScheduledTaskRunHistoryListLabels {
   historyTitle: string;
   /** Message shown when `items` is empty and `isLoading` is `false`. */
   emptyLabel: string;
+  /** Secondary line under `emptyLabel`. Omitted when not set. */
+  emptyDescription?: string;
   /** Message shown alongside the retry action when `error` is set. */
   errorLabel: string;
   /** Label for the retry action shown alongside `error`. */

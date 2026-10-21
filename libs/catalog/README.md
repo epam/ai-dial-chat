@@ -303,9 +303,11 @@ const createMenu: CreateMenuColors = {
 
 #### Custom empty state
 
-By default, the Browse section renders a `PanelEmptyState` (an icon plus
-`titles.noResultsTitle`) when the current search/filter/tab combination
-matches nothing. While the "My Apps" filter is on with no search query and no
+By default, the Browse section renders a `PanelEmptyState` (the kit's
+empty-state illustration, a title and a description) when the active tab shows
+nothing. After a search or a topic filter it shows
+`titles.noResultsTitle(query)` with `titles.noResultsDescription`; with neither
+applied it shows `titles.emptyTitle` with `titles.emptyDescription`. While the "My Apps" filter is on with no search query and no
 topic filter, it instead renders a personal empty state: the heading from
 `titles.myAppsEmptyTitle(activeTab)`, the `titles.myAppsEmptyDescription` line
 and — unless the catalog is read-only or `hideCreateButton` is set — the same

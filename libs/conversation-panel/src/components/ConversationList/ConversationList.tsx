@@ -70,7 +70,9 @@ export const ConversationList: FC<ConversationListProps> = memo(
     const { colors, typography, itemIconBadgeClassName } = styles ?? {};
     const {
       emptyLabel,
+      emptyDescription,
       noResultsLabel,
+      noResultsDescription,
       loadingLabel = 'Loading conversations',
       groupLabels,
       actionsLabel,
@@ -400,8 +402,15 @@ export const ConversationList: FC<ConversationListProps> = memo(
           </div>
         );
       }
-      if (isNoConversations) return <PanelEmpty label={emptyLabel} />;
-      if (isNoResults) return <PanelNoResults label={noResultsLabel} />;
+      if (isNoConversations)
+        return <PanelEmpty label={emptyLabel} description={emptyDescription} />;
+      if (isNoResults)
+        return (
+          <PanelNoResults
+            label={noResultsLabel}
+            description={noResultsDescription}
+          />
+        );
       return (
         <List<RowRendererData>
           listRef={listRef}

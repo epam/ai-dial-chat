@@ -53,8 +53,10 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
   onMoveConversation={handleMove}
   labels={{
     title: 'Chats',
-    emptyLabel: 'No conversations yet',
-    noResultsLabel: 'No results found',
+    emptyLabel: 'No chats yet',
+    emptyDescription: 'Chats will appear here once you start one.',
+    noResultsLabel: 'No chats found',
+    noResultsDescription: 'Try a different search term or check your filters.',
     newChatLabel: 'New chat',
     searchPlaceholder: 'Search…',
     searchClearLabel: 'Clear search',

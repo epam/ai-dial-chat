@@ -1,3 +1,7 @@
 .label {
   color: var(--pes-label-color, var(--text-primary, #161b2d));
 }
+
+.description {
+  color: var(--pes-description-color, var(--text-secondary, #57647a));
+}
