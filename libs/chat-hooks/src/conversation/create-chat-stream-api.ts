@@ -13,6 +13,14 @@ const GENERATION_CONFLICT_STATUS = 409;
 export const DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE =
   'The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.';
 
+/** Terminal markers the rejected write of a stopped, aborted, or failed answer carried. */
+export interface GenerationPersistenceTerminalMarker {
+  /** Error text the failed write stored; `''` asks the host for its localized fallback. */
+  streamErrorMessage?: string;
+  /** `true` when the rejected write recorded a user stop. */
+  wasStoppedByUser?: boolean;
+}
+
 /** Identifies a failed terminal save independently of the model's generation outcome. */
 export class GenerationPersistenceError extends Error {
   static readonly type = 'conversation_save_failed';
@@ -20,14 +28,22 @@ export class GenerationPersistenceError extends Error {
   /** HTTP status of the rejected terminal write, when the backend reported one. */
   readonly status?: number;
 
+  /** Terminal markers of an answer that did not complete; `undefined` for a completed one. */
+  readonly terminalMarker?: GenerationPersistenceTerminalMarker;
+
   /**
    * Creates the error with the default persistence message.
    * @param status - HTTP status of the rejected terminal write, if known
+   * @param terminalMarker - markers the rejected write of an answer that did not complete carried
    */
-  constructor(status?: number) {
+  constructor(
+    status?: number,
+    terminalMarker?: GenerationPersistenceTerminalMarker,
+  ) {
     super(DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE);
     this.name = 'GenerationPersistenceError';
     this.status = status;
+    this.terminalMarker = terminalMarker;
   }
 }
 
@@ -202,6 +218,23 @@ const readErrorStatus = (error: object): number | undefined => {
   return typeof status === 'number' ? status : undefined;
 };
 
+/**
+ * Returns the terminal markers the backend adds to a persistence error chunk
+ * for an answer that did not complete, or `undefined` when it carries none.
+ * @param error - the chunk's `error` object
+ */
+const readTerminalMarker = (
+  error: object,
+): GenerationPersistenceTerminalMarker | undefined => {
+  const { streamErrorMessage, wasStoppedByUser } = error as {
+    streamErrorMessage?: unknown;
+    wasStoppedByUser?: unknown;
+  };
+  if (wasStoppedByUser === true) return { wasStoppedByUser: true };
+  if (typeof streamErrorMessage === 'string') return { streamErrorMessage };
+  return undefined;
+};
+
 const parseSSELine = (
   line: string,
   onChunk: (chunk: StreamChunk) => void,
@@ -219,7 +252,10 @@ const parseSSELine = (
     if (parsed.error) {
       onError(
         parsed.error.type === GenerationPersistenceError.type
-          ? new GenerationPersistenceError(readErrorStatus(parsed.error))
+          ? new GenerationPersistenceError(
+              readErrorStatus(parsed.error),
+              readTerminalMarker(parsed.error),
+            )
           : new StreamUpstreamError(parsed.error.message),
       );
       return;
@@ -365,11 +401,29 @@ export const createChatStreamApi = (
       /* Set once the idle watchdog cancels the reader: nothing read after that is delivered. */
       let isCancelledForIdle = false;
 
+      /*
+       * An upstream error is held until the stream ends: the backend follows
+       * it with `conversation_save_failed` when it could not save the failed
+       * answer, and that error is the one the caller must see to recover the
+       * save ([#9370](https://github.com/epam/ai-dial-chat/issues/9370)).
+       */
+      let pendingUpstreamError: StreamUpstreamError | undefined;
+
       const handleError = (err: Error) => {
         if (isSettled) return;
         isSettled = true;
         idleWatch.stop();
         onError(err);
+      };
+      const handleLineError = (err: Error) => {
+        if (err instanceof StreamUpstreamError) {
+          pendingUpstreamError ??= err;
+          return;
+        }
+        handleError(err);
+      };
+      const handleLineChunk = (chunk: StreamChunk) => {
+        if (pendingUpstreamError == null) onChunk(chunk);
       };
       /*
        * The reader is cancelled by this transport, not through the caller's
@@ -380,7 +434,7 @@ export const createChatStreamApi = (
         deps.idleTimeoutMs ?? DEFAULT_STREAM_IDLE_TIMEOUT_MS,
         () => {
           isCancelledForIdle = true;
-          handleError(new StreamInterruptedError());
+          handleError(pendingUpstreamError ?? new StreamInterruptedError());
           reader.cancel().catch(() => undefined);
         },
       );
@@ -391,7 +445,8 @@ export const createChatStreamApi = (
           if (isCancelledForIdle) break;
 
           if (done) {
-            if (buffer.trim()) parseSSELine(buffer, onChunk, handleError);
+            if (buffer.trim())
+              parseSSELine(buffer, handleLineChunk, handleLineError);
             break;
           }
           idleWatch.touch();
@@ -402,16 +457,18 @@ export const createChatStreamApi = (
           buffer = lines.pop() ?? '';
 
           for (const line of lines) {
-            parseSSELine(line, onChunk, handleError);
+            parseSSELine(line, handleLineChunk, handleLineError);
           }
         }
-        if (!isSettled) {
+        if (pendingUpstreamError) {
+          handleError(pendingUpstreamError);
+        } else if (!isSettled) {
           isSettled = true;
           onComplete();
         }
       } catch (err) {
         if (isAbortError(err)) return;
-        handleError(new StreamInterruptedError(err));
+        handleError(pendingUpstreamError ?? new StreamInterruptedError(err));
       } finally {
         idleWatch.stop();
         reader.releaseLock();

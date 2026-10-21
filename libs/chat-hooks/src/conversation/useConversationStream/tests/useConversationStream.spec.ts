@@ -1271,6 +1271,32 @@ describe('useConversationStream', () => {
         ).toEqual(initial);
       });
 
+      it.each([
+        ['failed', { streamErrorMessage: 'Rate limit exceeded' }],
+        ['stopped', { wasStoppedByUser: true }],
+      ])(
+        'saves a %s answer with the terminal marker the error carries',
+        async (_outcome, terminalMarker) => {
+          const saved = savedConversation();
+          const saveConversation = vi.fn().mockResolvedValue(saved);
+          const { result } = renderWithSave(saveConversation);
+
+          await streamAnswerThenFail(
+            result,
+            new GenerationPersistenceError(401, terminalMarker),
+          );
+
+          await waitFor(() =>
+            expect(result.current.conversation).toEqual(saved),
+          );
+          expect(saveConversation).toHaveBeenCalledOnce();
+          expect(saveConversation.mock.calls[0][1].messages[1]).toMatchObject({
+            content: 'Visible answer',
+            ...terminalMarker,
+          });
+        },
+      );
+
       it('shows the answer without the warning while the save is pending', async () => {
         const pending = deferred<Conversation>();
         const { result } = renderWithSave(vi.fn(() => pending.promise));

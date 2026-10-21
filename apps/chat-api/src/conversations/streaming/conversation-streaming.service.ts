@@ -57,7 +57,10 @@ import {
   generationTimeToFirstDelta,
 } from '../generation/generation-metrics';
 import type { GenerationRelayTiming } from '../generation/generation.types';
-import { buildGenerationPersistenceError } from '../generation/persistence-error';
+import {
+  buildGenerationPersistenceError,
+  type GenerationPersistenceTerminalMarker,
+} from '../generation/persistence-error';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import {
@@ -806,6 +809,8 @@ export class ConversationStreamingService {
 
     let persistenceFailed = false;
     let persistenceFailureStatus: number | undefined;
+    let persistenceFailureMarker:
+      GenerationPersistenceTerminalMarker | undefined;
     const finalize = async (
       status:
         | GenerationStatus.Done
@@ -851,13 +856,18 @@ export class ConversationStreamingService {
       } catch (err) {
         this.logger.warn(`Failed to save ${status} conversation`, err);
         persistenceFailed = true;
-        /* Only a completed answer is reported with its status: the client
-         * recovers that one alone, because a stopped or aborted answer carries
-         * terminal markers only this write would have stored. */
         persistenceFailureStatus =
-          status === GenerationStatus.Done && err instanceof HttpException
-            ? err.getStatus()
-            : undefined;
+          err instanceof HttpException ? err.getStatus() : undefined;
+        /* A stopped, aborted, or failed answer is reported with the terminal
+         * markers this write carried, so a client recovery save stores the same
+         * outcome instead of an answer that reads as completed ([#9370](https://github.com/epam/ai-dial-chat/issues/9370)). */
+        persistenceFailureMarker =
+          status === GenerationStatus.Done
+            ? undefined
+            : {
+                streamErrorMessage: partialMessage.streamErrorMessage,
+                wasStoppedByUser: partialMessage.wasStoppedByUser,
+              };
         this.generationService.persistenceFailed(lease);
         return;
       }
@@ -981,7 +991,7 @@ export class ConversationStreamingService {
         }
       }
       if (persistenceFailed) {
-        yield `data: ${JSON.stringify({ error: buildGenerationPersistenceError(persistenceFailureStatus) })}\n\n`;
+        yield `data: ${JSON.stringify({ error: buildGenerationPersistenceError(persistenceFailureStatus, persistenceFailureMarker) })}\n\n`;
       }
     } finally {
       /*

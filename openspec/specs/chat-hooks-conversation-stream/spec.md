@@ -121,7 +121,15 @@ for every in-band SSE error chunk except one whose `error.type` is
 - **WHEN** `createChatStreamApi`'s stream reader parses a
   `data: {"error":{"message":"Model overloaded"}}` line
 - **THEN** it calls `onError` with a `StreamUpstreamError` whose `message`
-  is `'Model overloaded'`
+  is `'Model overloaded'` once the stream ends, ignoring any chunk that
+  follows the error line
+
+#### Scenario: A persistence failure after an in-band error is the one reported
+- **WHEN** the stream carries an in-band error line and then a
+  `conversation_save_failed` line before it ends
+- **THEN** `onError` is called once, with the `GenerationPersistenceError`,
+  so the recovery save can run; the in-band text arrives as that error's
+  `terminalMarker.streamErrorMessage`
 
 #### Scenario: The built-in transport leaves non-network failures untagged
 - **WHEN** the response is non-OK and not 409, or the body is missing
@@ -623,7 +631,7 @@ When the conditions above hold and the transport implements `saveConversation`, 
 1. Settle the generation as it does today: streaming and stop controls are released, and the received answer stays buffered and displayed. It SHALL NOT write the persistence warning yet.
 2. Make exactly one recovery attempt for that generation:
    1. read the stored conversation through `transport.getConversation`;
-   2. restore the received answer at its recorded index; when the stored conversation does not end at that index in this turn's unsaved placeholder (the same check the terminal reload uses), treat the attempt as failed without saving;
+   2. restore the received answer at its recorded index, applying the error's `terminalMarker` (`streamErrorMessage` or `wasStoppedByUser`) when it carries one, so a stopped or failed answer is not stored as a placeholder that reads as a running generation after a reload; when the stored conversation does not end at that index in this turn's unsaved placeholder (the same check the terminal reload uses), treat the attempt as failed without saving;
    3. save the result once through `transport.saveConversation`.
 3. Then, depending on the result:
    - **On success**, release that generation's buffer and never show the persistence warning for it. While the conversation is still displayed and the generation was not superseded, it SHALL show the saved conversation.
