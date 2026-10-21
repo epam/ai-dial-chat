@@ -387,6 +387,7 @@ export class DeploymentsDetailsService {
      * full config via getCustomApplication for endpoint and stored properties.
      * getApplication is list-shaped and may omit or return empty properties. */
     let customAppRaw: Record<string, unknown> | undefined;
+    let customAppEtag: string | undefined;
     const appParts = deployment.startsWith('applications/')
       ? deployment.slice('applications/'.length).split('/')
       : undefined;
@@ -400,6 +401,7 @@ export class DeploymentsDetailsService {
       );
       if (!customResult.error && customResult.data != null) {
         customAppRaw = customResult.data as unknown as Record<string, unknown>;
+        customAppEtag = customResult.response.headers?.get('etag') ?? undefined;
       }
     }
 
@@ -444,6 +446,7 @@ export class DeploymentsDetailsService {
             ? raw.max_input_attachments
             : undefined,
         createdAt: raw.created_at,
+        etag: customAppEtag,
       },
     };
 

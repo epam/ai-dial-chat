@@ -413,6 +413,12 @@ export interface ApplicationDetailsDto {
    * @memberof ApplicationDetailsDto
    */
   createdAt?: number;
+  /**
+   * The stored application's version (DIAL Core's ETag from getCustomApplication). Send it as If-Match on PATCH /api/v1/applications/{applicationName} to refuse overwriting a newer version. Absent when the application is not readable as a custom application. The details are cached for 60 seconds, so this may name an older version — a stale If-Match then answers 412, which is the intended outcome.
+   * @type {string}
+   * @memberof ApplicationDetailsDto
+   */
+  etag?: string;
 }
 /**
  *
@@ -4227,6 +4233,91 @@ export interface ExternalServiceAuthResultDto {
    * @memberof ExternalServiceAuthResultDto
    */
   success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface ExternalServiceAuthSettingsBodyDto
+ */
+export interface ExternalServiceAuthSettingsBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  authenticationType: ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum;
+  /**
+   * API_KEY: the header the stored key is sent under. The key itself is never part of the definition.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  apiKeyHeader?: string;
+  /**
+   * OAUTH: the client id.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  clientId?: string;
+  /**
+   * OAUTH: the client secret. Write-only: never returned, never logged.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  clientSecret?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  tokenEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  scopesSupported?: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum = {
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum =
+  (typeof ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum)[keyof typeof ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ExternalServiceDefinitionBodyDto
+ */
+export interface ExternalServiceDefinitionBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {ExternalServiceAuthSettingsBodyDto}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  authSettings: ExternalServiceAuthSettingsBodyDto;
 }
 /**
  *
@@ -8131,6 +8222,12 @@ export interface UpdatedApplicationDto {
    * @memberof UpdatedApplicationDto
    */
   object?: string;
+  /**
+   * The application's new version (DIAL Core's ETag), for the next update's If-Match. Absent when Core sent none.
+   * @type {string}
+   * @memberof UpdatedApplicationDto
+   */
+  etag?: string;
 }
 /**
  *

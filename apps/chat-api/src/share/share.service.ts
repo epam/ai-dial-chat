@@ -74,4 +74,11 @@ export class ShareService {
       sessionBucket,
     );
   }
+
+  withdrawInvitation(accessToken: string, invitationId: string): Promise<void> {
+    return this.shareInvitationService.withdrawInvitation(
+      accessToken,
+      invitationId,
+    );
+  }
 }

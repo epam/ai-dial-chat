@@ -10,10 +10,17 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import { IF_MATCH_HEADER } from '../skills/dto/skill-file-path.dto';
 import { ApplicationsService } from './applications.service';
 import { ApplicationsResponseDto } from './dto/application.dto';
 import {
@@ -126,7 +133,15 @@ export class ApplicationsController {
       'existing application for the authenticated session user, by proxying DIAL Core. ' +
       'Settings-step configuration (application_properties) is preserved untouched unless ' +
       'the request supplies applicationProperties, in which case it fully replaces the ' +
-      'stored value. Invalidates the applications and deployments list caches on success.',
+      'stored value. With an If-Match header the update is refused (412) when the stored version ' +
+      'has moved on; the response carries the new version as etag. Invalidates the applications ' +
+      'and deployments list caches on success.',
+  })
+  @ApiHeader({
+    name: 'If-Match',
+    required: false,
+    description:
+      'The application version the caller last read (etag from GET /api/v1/deployments/{deployment}/details or a previous update). When set, a newer stored version answers 412 and nothing is written.',
   })
   @ApiBody({ type: UpdateApplicationBodyDto })
   @ApiDialCoreErrors()
@@ -146,6 +161,11 @@ export class ApplicationsController {
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Application not found' })
   @ApiResponse({
+    status: 412,
+    description:
+      'If-Match precondition failed — the application changed since that version',
+  })
+  @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
   })
@@ -164,6 +184,7 @@ export class ApplicationsController {
       at,
       params.applicationName,
       body,
+      req.headers[IF_MATCH_HEADER] as string | undefined,
     );
   }
 

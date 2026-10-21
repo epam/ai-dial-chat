@@ -241,6 +241,7 @@ describe('ApplicationsController (integration)', () => {
         TEST_USER.at,
         'my-app',
         validBody,
+        undefined, // no If-Match sent
       );
     });
 
@@ -257,6 +258,7 @@ describe('ApplicationsController (integration)', () => {
         TEST_USER.at,
         'my-app',
         clearBody,
+        undefined, // no If-Match sent
       );
     });
 
@@ -315,6 +317,7 @@ describe('ApplicationsController (integration)', () => {
         TEST_USER.at,
         'my-app',
         bodyWithProperties,
+        undefined, // no If-Match sent
       );
     });
 

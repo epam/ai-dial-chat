@@ -424,6 +424,17 @@ export class ApplicationDetailsDto {
       'Timestamp of creation time from DIAL Core (e.g. 1714768496000)',
   })
   createdAt?: number;
+
+  @ApiPropertyOptional({
+    description:
+      "The stored application's version (DIAL Core's ETag from getCustomApplication). Send it as " +
+      'If-Match on PATCH /api/v1/applications/{applicationName} to refuse overwriting a newer version. ' +
+      'Absent when the application is not readable as a custom application. The details are cached ' +
+      'for 60 seconds, so this may name an older version — a stale If-Match then answers 412, which is ' +
+      'the intended outcome.',
+    example: '"a1b2c3"',
+  })
+  etag?: string;
 }
 
 export class ToolsetDetailsDto {

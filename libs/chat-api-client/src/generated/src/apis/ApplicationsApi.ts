@@ -37,6 +37,7 @@ export interface GetApplicationSchemaRequest {
 export interface UpdateApplicationRequest {
   applicationName: string;
   updateApplicationBodyDto: UpdateApplicationBodyDto;
+  ifMatch?: string;
 }
 
 /**
@@ -317,7 +318,7 @@ export class ApplicationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties) is preserved untouched unless the request supplies applicationProperties, in which case it fully replaces the stored value. Invalidates the applications and deployments list caches on success.
+   * Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties) is preserved untouched unless the request supplies applicationProperties, in which case it fully replaces the stored value. With an If-Match header the update is refused (412) when the stored version has moved on; the response carries the new version as etag. Invalidates the applications and deployments list caches on success.
    * Update an application
    */
   async updateApplicationRaw(
@@ -343,6 +344,10 @@ export class ApplicationsApi extends runtime.BaseAPI {
     const headerParameters: runtime.HTTPHeaders = {};
 
     headerParameters['Content-Type'] = 'application/json';
+
+    if (requestParameters['ifMatch'] != null) {
+      headerParameters['If-Match'] = String(requestParameters['ifMatch']);
+    }
 
     if (this.configuration && this.configuration.accessToken) {
       const token = this.configuration.accessToken;
@@ -374,7 +379,7 @@ export class ApplicationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties) is preserved untouched unless the request supplies applicationProperties, in which case it fully replaces the stored value. Invalidates the applications and deployments list caches on success.
+   * Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties) is preserved untouched unless the request supplies applicationProperties, in which case it fully replaces the stored value. With an If-Match header the update is refused (412) when the stored version has moved on; the response carries the new version as etag. Invalidates the applications and deployments list caches on success.
    * Update an application
    */
   async updateApplication(
