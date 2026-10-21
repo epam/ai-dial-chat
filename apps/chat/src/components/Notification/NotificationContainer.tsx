@@ -114,7 +114,7 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
     const composedMessage = useMemo(
       () => (
         <>
-          <div className="max-h-[30vh] overflow-y-auto [overflow-wrap:anywhere]">
+          <div className="max-h-[30vh] overflow-y-auto wrap-anywhere">
             {item.message}
           </div>
           {item.requestId && <RequestIdRow requestId={item.requestId} />}
@@ -150,7 +150,7 @@ const NotificationContainer: FC = () => {
    * the bottom of the viewport, so the last one is never pushed off-screen.
    */
   return createPortal(
-    <div className="pointer-events-none fixed inset-x-0 top-6 z-[70] flex max-h-[calc(100dvh-3rem)] flex-col items-center gap-2 overflow-y-auto px-4">
+    <div className="pointer-events-none fixed inset-x-0 top-6 z-70 flex max-h-[calc(100dvh-3rem)] flex-col items-center gap-2 overflow-y-auto px-4">
       {notifications.map((item) => (
         <NotificationEntry
           key={item.id}

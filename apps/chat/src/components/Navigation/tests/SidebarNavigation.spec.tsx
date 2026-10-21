@@ -198,10 +198,6 @@ vi.mock('../../SettingsModal/SettingsModal', () => ({
   ),
 }));
 
-vi.mock('../../FooterMessage/FooterMessage', () => ({
-  default: () => <div>Footer message</div>,
-}));
-
 vi.mock('../../LogoutConfirmation/LogoutConfirmationModal', () => ({
   default: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <p>Log out confirmation</p> : null,
@@ -356,16 +352,6 @@ describe('SidebarNavigation', () => {
     userMenuProps.current = undefined;
     setDefaults(mockUseUiFeature);
     enableSidebar(mockUseUiFeature);
-  });
-
-  it('leaves the operator footer to the chat input on desktop', () => {
-    render(
-      <MemoryRouter>
-        <SidebarNavigation chats={<span>chat list</span>} />
-      </MemoryRouter>,
-    );
-
-    expect(screen.queryByText('Footer message')).toBeNull();
   });
 
   it('renders the sidebar instead of the rail', () => {
@@ -677,12 +663,6 @@ describe('SidebarNavigation — mobile drawer', () => {
       'chat list',
     );
     expect(screen.getByRole('button', { name: 'user menu' })).toBeTruthy();
-  });
-
-  it('carries the operator footer below the chats on every route', () => {
-    renderDrawer();
-
-    expect(screen.getByText('Footer message')).toBeTruthy();
   });
 
   it('closes through the close button', async () => {

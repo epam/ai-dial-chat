@@ -31,6 +31,7 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
   asideTitle,
   asideSectionClassName,
   alert,
+  resizableLeftColumn,
   metadataSectionClassName,
   setupSectionClassName,
   labels,
@@ -51,7 +52,12 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
       onBack={onBack}
       backAriaLabel={labels?.backAriaLabel ?? 'Back'}
       isSaving={isSubmitting}
-      labels={{ savingStatusLabel: labels?.savingStatusLabel ?? 'Saving' }}
+      resizableLeftColumn={resizableLeftColumn}
+      labels={{
+        savingStatusLabel: labels?.savingStatusLabel ?? 'Saving',
+        resizeHandleLabel: labels?.resizeHandleLabel,
+        resizeHandleTooltip: labels?.resizeHandleTooltip,
+      }}
       rightContent={
         asideData != null ? (
           <EditorSection

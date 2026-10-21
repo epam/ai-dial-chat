@@ -113,7 +113,7 @@ const ScheduledTaskConversationBanner: FC = () => {
 
   return (
     <div className={CARD_CLASS_NAME}>
-      <p className="dial-small-semi-text min-w-0 flex-1 break-words text-primary">
+      <p className="dial-small-semi-text min-w-0 flex-1 wrap-break-word text-primary">
         {displayName}
         {timestampLabel && (
           /* Own line on mobile so the run time stays readable beside the

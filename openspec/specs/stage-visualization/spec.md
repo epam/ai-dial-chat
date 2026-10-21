@@ -176,6 +176,24 @@ When a `StageItem`'s content body is expanded and `stage.attachments` contains e
 
 ---
 
+### Requirement: Stage attachment previews resolve through caller-supplied URL resolvers
+
+`StageItem` SHALL accept an optional `attachmentDisplayResolvers: AttachmentDisplayResolvers` prop (the type exported by `@epam/ai-dial-chat-shared`), threaded unchanged through `CollapsedGroup`, `StagesPanel` and every nesting level of the stage list, including the attempts of a `×N` group. `mapStageAttachmentsToDisplay` SHALL forward it to the shared mapper, so an image tile's `previewUrl` and an audio tile's `playUrl` come from the host's `resolvePreviewUrl` / `resolvePlayUrl`. The library SHALL NOT construct a download URL, endpoint path or any other host-owned URL itself; without resolvers a tile falls back to the attachment's raw `url`. A DIAL file id (`files/<bucket>/<path>`) is not a loadable image source on its own, so the host SHALL supply resolvers wherever stage attachments may be DIAL files.
+
+#### Scenario: An image stage attachment previews through the host resolver
+- **WHEN** an expanded stage has `attachments: [{ title: "render.png", type: "image/png", url: "files/bucket/appdata/app/render.png" }]` and `attachmentDisplayResolvers.resolvePreviewUrl` is supplied
+- **THEN** the tile's image source is the value `resolvePreviewUrl` returned for that attachment, and the mapped attachment's `url` stays the raw file id
+
+#### Scenario: Without resolvers the tile previews its raw url
+- **WHEN** `attachmentDisplayResolvers` is omitted
+- **THEN** the image tile's `previewUrl` is the attachment's own `url`
+
+#### Scenario: Nested stages receive the same resolvers
+- **WHEN** resolvers are passed to `CollapsedGroup` and an image attachment belongs to a grandchild stage or to one attempt of a `×N` group
+- **THEN** that tile's preview is resolved by the same host resolver
+
+---
+
 ### Requirement: `StagesPanel` renders a hierarchy of stages
 
 `StagesPanel` SHALL accept `stages: Stage[]`, `isStreaming: boolean`, and optional `className`, `styles`, and `labels` props. It SHALL derive a hierarchy from `parent_stage_index` and render a root `<ul role="list">` with one `<li role="listitem">` per root row and nested lists for children. Root and sibling order SHALL follow input encounter order. Inputs without parent metadata SHALL retain the existing flat rendering and grouping behavior. Each normalized stage SHALL appear exactly once in the hierarchy, possibly within a repeated-attempt group. While `isStreaming` is `true`, every stage with `status === null` SHALL receive `isLive={true}` and show a running spinner. The arrival of a later unresolved stage MUST NOT change an earlier unresolved stage to a completed check. A collapsed repeated-stage row SHALL remain live while any attempt in that row has `status === null`.
@@ -246,7 +264,7 @@ Neither the `CollapsedGroup` summary line nor a collapsed repeated-stage (`×N`)
 
 ### Requirement: `CollapsedGroup` is rendered in assistant messages that have stages
 
-In `ConversationMessageItem.tsx`, the `messageHasStages` utility (imported from `@epam/ai-dial-chat-hooks`, `libs/chat-hooks/src/conversation/message-utils.ts`) SHALL return `true` only when `message.role` is `MessageRole.Assistant` and `message.custom_content?.stages?.length > 0`. For each message where this returns `true`, a `CollapsedGroup` SHALL be rendered in the corresponding `MessageBubble`'s `afterContent`, receiving a memoized `mapStages(message.custom_content.stages)` result, including parent metadata and positional identities for complete unindexed arrays. The memo SHALL depend on the original stage-array reference. It SHALL NOT rewrite the stored message or alter other custom content. `ConversationMessageItem` remains the app adapter supplying translated labels and `onAttachmentClick`; neither UI library nor mapper SHALL import app contexts, endpoint paths, SDK setup, routing or persistence. Its `isStreaming` prop SHALL come from `isStreamingMessage`, so it is `true` only for the last assistant message while `isAssistantTyping` is `true`.
+In `ConversationMessageItem.tsx`, the `messageHasStages` utility (imported from `@epam/ai-dial-chat-hooks`, `libs/chat-hooks/src/conversation/message-utils.ts`) SHALL return `true` only when `message.role` is `MessageRole.Assistant` and `message.custom_content?.stages?.length > 0`. For each message where this returns `true`, a `CollapsedGroup` SHALL be rendered in the corresponding `MessageBubble`'s `afterContent`, receiving a memoized `mapStages(message.custom_content.stages)` result, including parent metadata and positional identities for complete unindexed arrays. The memo SHALL depend on the original stage-array reference. It SHALL NOT rewrite the stored message or alter other custom content. `ConversationMessageItem` remains the app adapter supplying translated labels, `onAttachmentClick`, and `attachmentDisplayResolvers` — the same resolvers from `apps/chat/src/utils/attachment-display-resolvers.ts` that message-level attachments use, so a stage image stored as a DIAL file previews through the file download endpoint; neither UI library nor mapper SHALL import app contexts, endpoint paths, SDK setup, routing or persistence. Its `isStreaming` prop SHALL come from `isStreamingMessage`, so it is `true` only for the last assistant message while `isAssistantTyping` is `true`.
 
 #### Scenario: Assistant message with stages shows CollapsedGroup
 - **WHEN** an assistant message has at least one entry in `custom_content.stages`
@@ -264,6 +282,7 @@ In `ConversationMessageItem.tsx`, the `messageHasStages` utility (imported from 
 - **WHEN** an assistant message is loaded from history, restored from a stream buffer, or updated by a new chunk
 - **THEN** its stage renderers receive normalized `Stage[]` through the existing prop
 - **AND** attachment activation continues to invoke the app-supplied callback
+- **AND** stage image previews resolve through the app-supplied `attachmentDisplayResolvers`
 
 ### Requirement: Stage status rendering has unit tests
 

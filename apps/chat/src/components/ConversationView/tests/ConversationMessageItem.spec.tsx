@@ -2102,7 +2102,7 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
     const { className } = screen.getByText(longPath);
 
     expect(className).toContain('min-w-0');
-    expect(className).toContain('[overflow-wrap:anywhere]');
+    expect(className).toContain('wrap-anywhere');
   });
 
   it.each([

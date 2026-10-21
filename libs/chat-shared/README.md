@@ -340,6 +340,14 @@ A `Warning` job delivered its file, but not everything the user asked for made i
 
 Warning jobs may also carry `warningNames?: string[]`: untranslated names of skipped attachments. Import jobs retain the same unique names emitted in their warning event so hosts can identify the skipped files after the notification disappears. Names are optional for compatibility with export jobs and older producers.
 
+### ConversationKind
+
+What a conversation is: `ConversationKind.Chat` (`'chat'`) or `ConversationKind.Task` (`'task'`, the run of a scheduled task). The headless items hook sets it on each panel item and the conversation panel's type filter reads it.
+
+```tsx
+import { ConversationKind } from '@epam/ai-dial-chat-shared';
+```
+
 ### FilterTab
 
 Canonical conversation ownership/grouping identifiers shared by the headless mapping hooks and the conversation panel. `@epam/ai-dial-conversation-panel` re-exports the same enum for compatibility.

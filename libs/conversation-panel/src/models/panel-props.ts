@@ -1,3 +1,4 @@
+import type { ConversationKind } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
@@ -17,6 +18,16 @@ export interface FilterLabels {
   shared: string;
   /** Label for the "Organization" tab. */
   organization: string;
+  /** Label of the "Personal" origin in the filter menu of `ConversationListHeader`. Defaults to `'Personal'`. */
+  personal?: string;
+  /** Label of the "Type" submenu of `ConversationListHeader`'s filter menu. Defaults to `'Type'`. */
+  type?: string;
+  /** Label of the "Origin" submenu of `ConversationListHeader`'s filter menu. Defaults to `'Origin'`. */
+  origin?: string;
+  /** Label of the "Chat" type option. Defaults to `'Chat'`. */
+  chat?: string;
+  /** Label of the "Task" type option. Defaults to `'Task'`. */
+  task?: string;
   /** Accessible name of the filter row itself. Defaults to `"Filter chats"`. */
   groupAriaLabel?: string;
 }
@@ -31,6 +42,8 @@ export interface ConversationItem {
   isPinned?: boolean;
   /** Ownership/share source — used to filter by tab. */
   source?: FilterTab;
+  /** Whether the conversation is a chat or a scheduled task's run, for the type filter. Defaults to `ConversationKind.Chat`. */
+  kind?: ConversationKind;
   /** URL of the model or conversation icon. When absent a default icon is shown. */
   iconUrl?: string;
   /** Tooltip text shown on the deployment icon. */

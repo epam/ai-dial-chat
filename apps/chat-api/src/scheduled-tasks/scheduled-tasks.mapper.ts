@@ -38,11 +38,11 @@ interface UpstreamSchedulePayload {
     url: string;
     api_version: string;
     create_conversation: true;
-    stream: true;
     extra_headers: Record<string, never>;
     retry: null;
     timeout: null;
     payload: {
+      stream: true;
       messages: {
         role: 'user';
         content: string;
@@ -160,11 +160,11 @@ export const toUpstreamSchedulePayload = (
     url: buildScheduledTaskChatCompletionUrl(dialCoreUrl),
     api_version: dialApiVersion,
     create_conversation: true,
-    stream: true,
     extra_headers: {},
     retry: null,
     timeout: null,
     payload: {
+      stream: true,
       messages: [
         {
           role: 'user',

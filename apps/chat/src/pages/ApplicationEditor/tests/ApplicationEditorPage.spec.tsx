@@ -1,8 +1,8 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   CustomAppI18nKeys,
@@ -24,6 +24,7 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
+import { StorageKey } from '../../../types/storage-key';
 import {
   defineApplicationEditor,
   isApplicationEditorPageDefinition,
@@ -242,6 +243,80 @@ describe('ApplicationEditorPage', () => {
       ),
     );
     expect(screen.queryByText('Catalog')).toBeNull();
+  });
+});
+
+describe('ApplicationEditorPage Metadata column resizing', () => {
+  const storageKey = StorageKey.ApplicationEditorMetadataWidth;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  const getHandle = () =>
+    screen.getByRole('separator', {
+      name: EditorI18nKeys.ResizeHandleAriaLabel,
+    });
+
+  it('opens at the default width without a stored value', () => {
+    renderFakeKind();
+
+    expect(getHandle().getAttribute('aria-valuenow')).toBe('400');
+  });
+
+  it('restores the width stored by an earlier visit', () => {
+    localStorage.setItem(storageKey, JSON.stringify(520));
+
+    renderFakeKind();
+
+    expect(getHandle().getAttribute('aria-valuenow')).toBe('520');
+  });
+
+  it('falls back to the default width for a corrupt stored value', () => {
+    localStorage.setItem(storageKey, '"wide"');
+
+    renderFakeKind();
+
+    expect(getHandle().getAttribute('aria-valuenow')).toBe('400');
+  });
+
+  it('sends the same create payload after the column was resized', async () => {
+    mockCreate.mockResolvedValue({ id: 'new-id' });
+    renderFakeKind();
+
+    fireEvent.keyDown(getHandle(), { key: 'End' });
+    await userEvent.type(
+      screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false }),
+      'Fake app',
+    );
+    await userEvent.type(
+      screen.getByLabelText('fake-endpoint'),
+      'https://x.test',
+    );
+    await userEvent.click(getAction(ButtonsI18nKeys.Create));
+
+    await screen.findByText('Catalog');
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Fake app' }),
+      { endpoint: 'https://x.test' },
+      expect.objectContaining({ searchParams: expect.any(URLSearchParams) }),
+    );
+  });
+
+  it('stores the width chosen with the keyboard', () => {
+    renderFakeKind();
+
+    fireEvent.keyDown(getHandle(), { key: 'ArrowRight' });
+
+    expect(localStorage.getItem(storageKey)).toBe('416');
   });
 });
 

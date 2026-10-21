@@ -38,7 +38,11 @@ Alongside the single-DTO mapper, `chat-shared` SHALL export `messageAttachmentsT
 
 #### Scenario: conversation-stages renders audio attachments
 - **WHEN** `libs/conversation-stages` renders a `StageItem` whose attachment DTO has an audio MIME type
-- **THEN** the shared mapper (used with default resolvers) produces a `DisplayAttachment` with a `playUrl`, and the audio attachment is displayed — unlike the pre-consolidation local mapper, which had no audio handling
+- **THEN** the shared mapper produces a `DisplayAttachment` with a `playUrl`, and the audio attachment is displayed — unlike the pre-consolidation local mapper, which had no audio handling
+
+#### Scenario: conversation-stages forwards host resolvers to the shared mapper
+- **WHEN** a host passes `attachmentDisplayResolvers` to `CollapsedGroup` or `StagesPanel`
+- **THEN** `mapStageAttachmentsToDisplay` in `libs/conversation-stages/src/utils/stage-attachments.ts` forwards that object to `messageAttachmentsToDisplayAttachments`, so stage image `previewUrl` and audio `playUrl` come from the host resolvers; the resolvers are optional there, and when omitted the mapper's default fallback to `dto.url` applies
 
 #### Scenario: conversation-stages no longer has a local duplicate mapper
 - **WHEN** the former `libs/conversation-stages/src/utils/to-display-attachment.ts` path is checked

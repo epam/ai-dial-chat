@@ -31,7 +31,7 @@ const UsageLink: FC = () => {
         aria-label={label}
         aria-current={isActive ? 'page' : undefined}
         className={mergeClasses(
-          'flex size-10 items-center justify-center rounded-full p-2 outline-offset-2 hover:bg-control-accent-alpha-hover focus-visible:bg-control-accent-alpha-hover focus-visible:outline-1',
+          'flex size-10 shrink-0 items-center justify-center rounded-full p-2 outline-offset-2 hover:bg-control-accent-alpha-hover focus-visible:bg-control-accent-alpha-hover focus-visible:outline-1',
           isActive
             ? 'bg-control-accent-alpha-active text-accent'
             : 'text-primary',
