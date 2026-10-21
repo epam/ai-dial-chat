@@ -3,11 +3,18 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
+  ResizeHandle,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
-import { FC, useId } from 'react';
+import { CSSProperties, FC, useEffect, useId, useRef, useState } from 'react';
 import { BUILDER_FORM_CLASS } from '../../constants/public-class-names';
 import type { EditorLayoutProps } from '../../models/editor-layout-props';
+import {
+  clampLeftColumnWidth,
+  DEFAULT_LEFT_COLUMN_WIDTH,
+  MAX_LEFT_COLUMN_WIDTH,
+  MIN_LEFT_COLUMN_WIDTH,
+} from '../../utils/clamp-left-column-width';
 import styles from './EditorLayout.module.scss';
 
 /**
@@ -25,6 +32,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
   leftContent,
   centerContent,
   rightContent,
+  resizableLeftColumn,
   isSaving = false,
   labels,
   styles: stylesProp,
@@ -34,6 +42,33 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
   const savingStatusText = isSaving
     ? (labels?.savingStatusLabel ?? 'Saving')
     : '';
+
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [bodyWidth, setBodyWidth] = useState<number>();
+  const isResizable = resizableLeftColumn != null && centerContent != null;
+  const minWidth = resizableLeftColumn?.minWidth;
+  const maxWidth = resizableLeftColumn?.maxWidth;
+  const limits = { min: minWidth, max: maxWidth, containerWidth: bodyWidth };
+  const leftWidth = isResizable
+    ? clampLeftColumnWidth(resizableLeftColumn.width, limits)
+    : undefined;
+  /* The handle limits drags to what leaves the center column its minimum width. */
+  const maxLeftWidth = clampLeftColumnWidth(
+    maxWidth ?? MAX_LEFT_COLUMN_WIDTH,
+    limits,
+  );
+
+  /* Re-clamp when the window shrinks so the center column never overflows. */
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!isResizable || body == null || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const observer = new ResizeObserver(() => setBodyWidth(body.clientWidth));
+    observer.observe(body);
+
+    return () => observer.disconnect();
+  }, [isResizable]);
 
   const cssVars = buildCssVars({
     '--el-header-border-color': stylesProp?.colors?.headerBorderColor,
@@ -88,18 +123,43 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
       </div>
 
       {/* Body: two columns (three with `rightContent`) on desktop, stacked on mobile */}
-      <div className="flex flex-1 flex-col overflow-y-auto desktop:flex-row desktop:overflow-hidden">
+      <div
+        ref={bodyRef}
+        className="flex flex-1 flex-col overflow-y-auto desktop:flex-row desktop:overflow-hidden"
+      >
         <div
           className={mergeClasses(
             centerContent != null
-              ? 'desktop:w-[400px] desktop:shrink-0 desktop:overflow-y-auto desktop:border-e'
+              ? 'desktop:shrink-0 desktop:overflow-y-auto desktop:border-e'
               : 'desktop:flex-1',
+            centerContent != null && !isResizable && 'desktop:w-[400px]',
+            isResizable && 'desktop:relative desktop:w-[var(--el-left-width)]',
             'desktop:overflow-y-auto',
             centerContent != null ? styles.columnBorder : undefined,
           )}
+          style={
+            leftWidth != null
+              ? ({ '--el-left-width': `${leftWidth}px` } as CSSProperties)
+              : undefined
+          }
         >
           {leftContent}
         </div>
+        {isResizable && leftWidth != null && (
+          <div className="relative hidden w-0 shrink-0 desktop:block">
+            <ResizeHandle
+              width={leftWidth}
+              minWidth={minWidth ?? MIN_LEFT_COLUMN_WIDTH}
+              maxWidth={maxLeftWidth}
+              defaultWidth={
+                resizableLeftColumn.defaultWidth ?? DEFAULT_LEFT_COLUMN_WIDTH
+              }
+              onWidthChange={resizableLeftColumn.onWidthChange}
+              label={labels?.resizeHandleLabel ?? 'Resize columns'}
+              tooltip={labels?.resizeHandleTooltip ?? 'Drag to resize'}
+            />
+          </div>
+        )}
         {centerContent != null && (
           <div className="desktop:flex desktop:min-h-0 desktop:flex-1 desktop:flex-col desktop:overflow-y-auto">
             {centerContent}

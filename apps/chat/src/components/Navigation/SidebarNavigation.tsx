@@ -41,7 +41,6 @@ import { useNavigationUserProfile } from '../../hooks/navigation/useNavigationUs
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { AuthStatus } from '../../types/auth-status';
 import { getIconPath } from '../../utils/icon-path';
-import FooterMessage from '../FooterMessage/FooterMessage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import UsageLink from './UsageLink';
 
@@ -194,9 +193,6 @@ const SidebarNavigation: FC<Props> = ({
       footerActions={isUsageShown ? <UsageLink /> : undefined}
     >
       {chats}
-      {/* The drawer repeats the operator footer on every route, as the sheet
-          it replaced did; on desktop it stays under the chat input. */}
-      {isMobile && <FooterMessage />}
     </NavigationSidebar>
   );
 
