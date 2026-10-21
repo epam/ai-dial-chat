@@ -60,7 +60,7 @@ const NegativeFeedbackModal: FC<Props> = ({ onClose, onSubmit }) => {
       header={t(RateI18nKeys.NegativeFeedbackTitle)}
       onClose={onClose}
       size={PopupSize.Sm}
-      className="!h-[422px]"
+      className="h-[422px]!"
       mainButtons={mainButtons}
     >
       <div className="flex h-full flex-col gap-4 px-6 py-4">

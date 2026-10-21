@@ -144,10 +144,10 @@ const ScheduledTasksLoginBanner: FC<Props> = ({
           className="shrink-0 text-warning-icon"
         />
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-primary">
-          <span className="dial-small-paragraph-semi-text min-w-0 break-words">
+          <span className="dial-small-paragraph-semi-text min-w-0 wrap-break-word">
             {title}
           </span>
-          <span className="dial-small-paragraph-text min-w-0 break-words">
+          <span className="dial-small-paragraph-text min-w-0 wrap-break-word">
             {body}
           </span>
         </div>

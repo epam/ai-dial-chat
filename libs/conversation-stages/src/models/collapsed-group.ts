@@ -1,4 +1,8 @@
-import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
+import type {
+  AttachmentDisplayResolvers,
+  DisplayAttachment,
+  Stage,
+} from '@epam/ai-dial-chat-shared';
 import type { StagesPanelColors } from './stages-props';
 
 /** Color overrides for the `CollapsedGroup` component applied as CSS custom properties. */
@@ -69,4 +73,6 @@ export interface CollapsedGroupProps {
   styles?: CollapsedGroupStyles;
   /** Called when a stage attachment tile is clicked/activated. Forwarded unchanged to the inner `StagesPanel`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Host-owned URL resolvers for stage attachment tiles. Forwarded unchanged to the inner `StagesPanel`. */
+  attachmentDisplayResolvers?: AttachmentDisplayResolvers;
 }

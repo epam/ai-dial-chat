@@ -9,6 +9,7 @@ import {
 } from '../../constants/stage-accordion';
 import type {
   StagesPanelLabels,
+  StagesPanelProps,
   StageTypography,
 } from '../../models/stages-props';
 import { mapStageAttachmentsToDisplay } from '../../utils/stage-attachments';
@@ -31,6 +32,8 @@ export interface StageItemProps {
   nameOverride?: string;
   /** Called when a stage attachment tile is clicked/activated. Receives the mapped display attachment. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Host-owned URL resolvers applied when mapping this stage's attachments. See {@link StagesPanelProps.attachmentDisplayResolvers}. */
+  attachmentDisplayResolvers?: StagesPanelProps['attachmentDisplayResolvers'];
   /** Nested list of this stage's child stages, rendered after its own markdown and attachments. Makes the row expandable on its own. */
   childList?: ReactNode;
   /** Controlled expanded state of the disclosure; uncontrolled (initially collapsed) when omitted. The body mounts only while expanded. */
@@ -86,6 +89,7 @@ export const StageItem: FC<StageItemProps> = ({
   labels,
   nameOverride,
   onAttachmentClick,
+  attachmentDisplayResolvers,
   childList,
   isExpanded,
   onToggle,
@@ -110,8 +114,12 @@ export const StageItem: FC<StageItemProps> = ({
     attachmentClickLabel = 'Preview search result',
   } = labels ?? {};
   const displayAttachments = useMemo(
-    () => mapStageAttachmentsToDisplay(stage.attachments),
-    [stage.attachments],
+    () =>
+      mapStageAttachmentsToDisplay(
+        stage.attachments,
+        attachmentDisplayResolvers,
+      ),
+    [stage.attachments, attachmentDisplayResolvers],
   );
   const { name: cleanedName, durationLabel } = cleanStageName(stage.name);
   const displayName = nameOverride ?? cleanedName;

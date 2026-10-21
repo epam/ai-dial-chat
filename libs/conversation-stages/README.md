@@ -56,6 +56,9 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
     attachmentClickLabel: 'Preview search result',
   }}
   onAttachmentClick={(attachment) => openPreview(attachment)}
+  attachmentDisplayResolvers={{
+    resolvePreviewUrl: (attachment) => toDownloadUrl(attachment.url),
+  }}
 />;
 ```
 
@@ -113,7 +116,7 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 
 ### Stage attachments
 
-When a stage carries `attachments` (e.g. a RAG agent's search results), its expanded body renders each one as an `AttachmentCard` tile from `@epam/ai-dial-attachment-input`, in a wrapping row below any `stage.content`. The library maps each raw `MessageAttachment` to a `DisplayAttachment` itself — the host never has to. Clicking a tile calls `onAttachmentClick` with the mapped `DisplayAttachment`; the library never opens a preview or builds a URL itself, so the host decides what "click" means (open a canvas preview, download, navigate, etc.). `attachmentClickLabel` overrides the tile's default click-action label, which otherwise reads as a download/open action rather than a preview.
+When a stage carries `attachments` (e.g. a RAG agent's search results), its expanded body renders each one as an `AttachmentCard` tile from `@epam/ai-dial-attachment-input`, in a wrapping row below any `stage.content`. The library maps each raw `MessageAttachment` to a `DisplayAttachment` itself — the host never has to. Clicking a tile calls `onAttachmentClick` with the mapped `DisplayAttachment`; the library never opens a preview or builds a URL itself, so the host decides what "click" means (open a canvas preview, download, navigate, etc.). For the same reason an image tile previews its raw `url` unless the host passes `attachmentDisplayResolvers` (`AttachmentDisplayResolvers` from `@epam/ai-dial-chat-shared`): a DIAL file id such as `files/<bucket>/path/page.png` is not a loadable `src` on its own, so the host's `resolvePreviewUrl` must turn it into its download URL (and `resolvePlayUrl` does the same for audio). `attachmentClickLabel` overrides the tile's default click-action label, which otherwise reads as a download/open action rather than a preview.
 
 ### CollapsedGroup
 
@@ -143,7 +146,7 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 />;
 ```
 
-`onAttachmentClick` is forwarded unchanged to the inner `StagesPanel` (and every `StageItem` it renders) — see [Stage attachments](#stage-attachments) above.
+`onAttachmentClick` and `attachmentDisplayResolvers` are forwarded unchanged to the inner `StagesPanel` (and every `StageItem` it renders) — see [Stage attachments](#stage-attachments) above.
 
 `CollapsedGroupStyles.panel` is typed `StagesPanelColors` and is forwarded to the
 inner `StagesPanel`, so the group and the panel it wraps are themed from one

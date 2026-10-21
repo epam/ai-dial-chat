@@ -56,7 +56,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
       <div className="grid grid-cols-1 gap-3 desktop:grid-cols-2">
         <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3">
           <legend className="px-1 font-semibold">Read</legend>
-          <div className="flex flex-wrap gap-2 [&>*]:min-h-11 [&>*]:min-w-[160px] [&>*]:flex-1">
+          <div className="flex flex-wrap gap-2 *:min-h-11 *:min-w-[160px] *:flex-1">
             <NeutralButton
               type="button"
               label="Get conversations"
@@ -140,7 +140,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
               value={newName}
               onChange={(value) => setNewName(value ?? '')}
             />
-            <div className="col-span-full flex flex-wrap gap-2 self-end [&>*]:min-h-11 [&>*]:min-w-24 [&>*]:flex-1">
+            <div className="col-span-full flex flex-wrap gap-2 self-end *:min-h-11 *:min-w-24 *:flex-1">
               <NeutralButton
                 type="button"
                 label="Select conversation by id"

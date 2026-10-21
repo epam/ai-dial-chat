@@ -34,6 +34,8 @@ interface StageLevelProps {
   labels?: StagesPanelLabels;
   /** Called when a stage attachment tile is clicked/activated. See {@link StagesPanelProps.onAttachmentClick}. */
   onAttachmentClick?: StagesPanelProps['onAttachmentClick'];
+  /** Host-owned URL resolvers for stage attachment tiles. See {@link StagesPanelProps.attachmentDisplayResolvers}. */
+  attachmentDisplayResolvers?: StagesPanelProps['attachmentDisplayResolvers'];
 }
 
 /** Props for {@link StageList}. */
@@ -81,6 +83,7 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
   typography,
   labels,
   onAttachmentClick,
+  attachmentDisplayResolvers,
 }) => {
   const key = getStageExpansionKey(node.stage.index);
   const childDepth = depth + 1;
@@ -93,6 +96,7 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
       typography={typography}
       labels={labels}
       onAttachmentClick={onAttachmentClick}
+      attachmentDisplayResolvers={attachmentDisplayResolvers}
       isExpanded={expansion.isExpanded(key)}
       onToggle={(isExpanded) => expansion.onToggle(key, isExpanded)}
       childList={
@@ -106,6 +110,7 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
             typography={typography}
             labels={labels}
             onAttachmentClick={onAttachmentClick}
+            attachmentDisplayResolvers={attachmentDisplayResolvers}
           />
         ) : undefined
       }
@@ -122,6 +127,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   typography,
   labels,
   onAttachmentClick,
+  attachmentDisplayResolvers,
 }) => {
   const {
     runningAriaLabel,
@@ -204,6 +210,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                 typography={typography}
                 labels={labels}
                 onAttachmentClick={onAttachmentClick}
+                attachmentDisplayResolvers={attachmentDisplayResolvers}
               />
             </li>
           ))}
