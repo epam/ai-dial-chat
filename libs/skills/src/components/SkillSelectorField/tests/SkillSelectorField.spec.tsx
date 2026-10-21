@@ -114,24 +114,29 @@ describe('SkillSelectorField', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('disables an empty unsupported field without a tooltip or caption', async () => {
+  it('describes a disabled empty unsupported field to screen readers only', async () => {
     const user = userEvent.setup();
     render(field({ isSkillsSupported: false }));
     const trigger = screen.getByRole('combobox', { name: 'Skills' });
     expect((trigger as HTMLInputElement).disabled).toBe(true);
-    expect(trigger.getAttribute('aria-describedby')).toBeNull();
+    const descriptionId = trigger.getAttribute('aria-describedby');
+    expect(descriptionId).toBeTruthy();
+    const description = screen.getByText(
+      'Selected model does not support skills. Select a different model to use a skill.',
+    );
+    expect(description.id).toBe(descriptionId);
     await user.hover(trigger);
-    /* No selection, so no reason text exists to show. */
+    /* The reason is screen-reader-only — no tooltip or caption renders it. */
     expect(screen.queryByRole('tooltip')).toBeNull();
   });
 
-  it('associates a host validation error with the combobox', () => {
+  it('passes a host validation error to Select as the error, not the description', () => {
     render(field({ error: 'Choose supported skills' }));
     const trigger = screen.getByRole('combobox', { name: 'Skills' });
-    expect(trigger.getAttribute('aria-describedby')).toBeTruthy();
     expect(trigger.getAttribute('aria-invalid')).toBe('true');
     expect(screen.getByRole('alert').textContent).toBe(
       'Choose supported skills',
     );
+    expect(trigger.getAttribute('aria-describedby')).toBeNull();
   });
 });

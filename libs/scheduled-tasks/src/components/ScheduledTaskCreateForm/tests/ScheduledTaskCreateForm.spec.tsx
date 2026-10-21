@@ -491,6 +491,122 @@ describe('ScheduledTaskCreateForm', () => {
     expect(getSaveButtons().every((button) => !button.disabled)).toBe(true);
   });
 
+  describe('ScheduledTaskCreateForm — repeat-switch boundary handling', () => {
+    const user = userEvent.setup();
+
+    const selectRepeat = async (value: ScheduledTaskRepeat) => {
+      await user.selectOptions(
+        screen.getByLabelText('Repeat') as HTMLSelectElement,
+        value,
+      );
+    };
+
+    it('clears both boundaries when switching from Hourly to a day-based repeat', async () => {
+      const onFieldChange = vi.fn();
+      await renderForm({
+        onFieldChange,
+        values: {
+          ...baseValues,
+          displayName: 'Task',
+          modelId: 'gpt-4o',
+          prompt: 'Summarize',
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '30',
+          startDate: '2026-09-22T18:00',
+          endDate: '2026-09-23T18:45',
+        },
+      });
+      onFieldChange.mockClear();
+
+      await selectRepeat(ScheduledTaskRepeat.Daily);
+
+      expect(onFieldChange).toHaveBeenCalledWith(
+        'repeat',
+        ScheduledTaskRepeat.Daily,
+      );
+      expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
+      expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
+    });
+
+    it('clears both boundaries when switching to Hourly', async () => {
+      const onFieldChange = vi.fn();
+      await renderForm({
+        onFieldChange,
+        values: {
+          ...baseValues,
+          displayName: 'Task',
+          modelId: 'gpt-4o',
+          prompt: 'Summarize',
+          startDate: '2026-09-22',
+          endDate: '2026-09-23',
+        },
+      });
+      onFieldChange.mockClear();
+
+      await selectRepeat(ScheduledTaskRepeat.Hourly);
+
+      expect(onFieldChange).toHaveBeenCalledWith(
+        'repeat',
+        ScheduledTaskRepeat.Hourly,
+      );
+      expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
+      expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
+    });
+
+    it('leaves boundaries untouched when switching between day-based repeats', async () => {
+      const onFieldChange = vi.fn();
+      await renderForm({
+        onFieldChange,
+        values: {
+          ...baseValues,
+          displayName: 'Task',
+          modelId: 'gpt-4o',
+          prompt: 'Summarize',
+          startDate: '2026-09-22',
+          endDate: '2026-09-23',
+        },
+      });
+      onFieldChange.mockClear();
+
+      await selectRepeat(ScheduledTaskRepeat.Weekly);
+
+      expect(onFieldChange).toHaveBeenCalledWith(
+        'repeat',
+        ScheduledTaskRepeat.Weekly,
+      );
+      expect(onFieldChange).not.toHaveBeenCalledWith(
+        'startDate',
+        expect.anything(),
+      );
+      expect(onFieldChange).not.toHaveBeenCalledWith(
+        'endDate',
+        expect.anything(),
+      );
+    });
+
+    it('emits only the repeat change when no boundary is set', async () => {
+      const onFieldChange = vi.fn();
+      await renderForm({
+        onFieldChange,
+        values: {
+          ...baseValues,
+          displayName: 'Task',
+          modelId: 'gpt-4o',
+          prompt: 'Summarize',
+        },
+      });
+      onFieldChange.mockClear();
+
+      await selectRepeat(ScheduledTaskRepeat.Hourly);
+
+      expect(onFieldChange).toHaveBeenCalledOnce();
+      expect(onFieldChange).toHaveBeenCalledWith(
+        'repeat',
+        ScheduledTaskRepeat.Hourly,
+      );
+    });
+  });
+
   it('disables Save while the shown time field is empty', async () => {
     const validValues = {
       ...baseValues,

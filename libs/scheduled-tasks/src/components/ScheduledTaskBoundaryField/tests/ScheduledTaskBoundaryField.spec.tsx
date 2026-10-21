@@ -124,10 +124,16 @@ describe('ScheduledTaskBoundaryField', () => {
     expect(onChange).toHaveBeenCalledWith('');
   });
 
-  it('shows the submit-time error under the picker and marks it invalid', () => {
+  it('shows the submit-time error under the picker, associated with it and announced', () => {
     renderField({ error: 'Enter a valid start date' });
 
-    expect(screen.getByText('Enter a valid start date')).toBeTruthy();
+    const control = screen.getByLabelText('Start date');
+    const errorId = control.getAttribute('aria-describedby');
+    expect(errorId).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Enter a valid start date',
+    );
+    expect(screen.getByRole('alert').id).toBe(errorId);
     expect(screen.getByText('isInvalid')).toBeTruthy();
   });
 

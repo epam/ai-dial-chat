@@ -13,8 +13,18 @@ import {
   type ConfirmationViewProps,
 } from '../ConfirmationView/ConfirmationView';
 
+/*
+ * `ConfirmationViewProps.className` is omitted so the dialog has exactly one
+ * prop for the view root — `viewClassName`, named for its target like
+ * `popupClassName`/`titleClassName`. The inherited `className` would arrive
+ * through `...viewProps` after `className={viewClassName}` and silently
+ * override it, and a reader would expect it to style the popup instead.
+ */
 /** Props for `ConfirmationDialog`. */
-export interface ConfirmationDialogProps extends ConfirmationViewProps {
+export interface ConfirmationDialogProps extends Omit<
+  ConfirmationViewProps,
+  'className'
+> {
   /** Whether the dialog is open. */
   open: boolean;
   /** Dialog title. A string rather than a node, so the kit names the dialog with it. */

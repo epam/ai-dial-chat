@@ -5,6 +5,7 @@ import {
   type CalendarValue,
 } from '@epam/ai-dial-ui-kit';
 import { useRef, type FC } from 'react';
+import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
 import {
   calendarValueToRunAt,
   runAtToCalendarValue,
@@ -22,7 +23,7 @@ export interface ScheduledTaskRunAtFieldProps {
   onChange: (value: string) => void;
   /** Disables the picker, e.g. while the form is submitting. */
   disabled?: boolean;
-  /** Submit-time validation error rendered under the picker. */
+  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced via `role="alert"` when it appears. */
   error?: string;
   /** CSS class applied to the error text. Defaults to `'dial-small-text'`. */
   errorClassName?: string;
@@ -46,6 +47,8 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
   const handleCalendarChange = (next: CalendarValue) =>
     onChange(calendarValueToRunAt(next));
 
+  const errorId = usePickerErrorAssociation('scheduled-task-run-at', error);
+
   return (
     <div className="flex flex-col gap-1">
       <Calendar
@@ -60,7 +63,13 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
         disabled={disabled}
       />
       {error && (
-        <p className={mergeClasses(errorClassName, styles.error)}>{error}</p>
+        <p
+          id={errorId}
+          role="alert"
+          className={mergeClasses(errorClassName, styles.error)}
+        >
+          {error}
+        </p>
       )}
     </div>
   );

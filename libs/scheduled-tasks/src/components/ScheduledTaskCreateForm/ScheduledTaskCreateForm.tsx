@@ -55,6 +55,7 @@ import {
   TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
 import { hasScheduledTaskFormChanges } from '../../utils/scheduled-task-form-values';
+import { keepWindowBoundaryOnRepeatSwitch } from '../../utils/window-boundary';
 import { ScheduledTaskBoundaryField } from '../ScheduledTaskBoundaryField/ScheduledTaskBoundaryField';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
 import styles from './ScheduledTaskCreateForm.module.scss';
@@ -201,14 +202,43 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     onFieldChange('time', typeof value === 'string' ? value : '');
   };
 
+  /*
+   * A repeat switch clears both window boundaries whenever the boundary
+   * shape changes (see `keepWindowBoundaryOnRepeatSwitch`): an hourly
+   * boundary is an exact picked instant while a day-based one is a whole
+   * local day, so carrying a value across would silently change its
+   * meaning. A switch within the day-based cadences keeps both as-is.
+   */
+  const handleRepeatChange = (next: string | string[]) => {
+    const repeat = next as ScheduledTaskRepeat;
+    onFieldChange('repeat', repeat);
+    const startDate = keepWindowBoundaryOnRepeatSwitch(
+      values.startDate,
+      values.repeat,
+      repeat,
+    );
+    if (startDate !== values.startDate) {
+      onFieldChange('startDate', startDate ?? '');
+    }
+    const endDate = keepWindowBoundaryOnRepeatSwitch(
+      values.endDate,
+      values.repeat,
+      repeat,
+    );
+    if (endDate !== values.endDate) {
+      onFieldChange('endDate', endDate ?? '');
+    }
+  };
+
   const isTimeFieldShown =
     values.repeat !== ScheduledTaskRepeat.OneTime &&
     values.repeat !== ScheduledTaskRepeat.Hourly;
 
   /* Hourly repeats pick exact window boundaries: date-and-time pickers
    * writing `YYYY-MM-DDTHH:mm` values, unlike the day-based repeats' date-only
-   * pair. A boundary set under one cadence keeps its shape after a repeat
-   * switch — every consumer tolerates both shapes. */
+   * pair. A repeat switch that changes the boundary shape clears both
+   * boundaries (see `handleRepeatChange`), so the shape always matches the
+   * pickers. */
   const isHourlyRepeat = values.repeat === ScheduledTaskRepeat.Hourly;
   const boundaryMode = isHourlyRepeat
     ? CalendarMode.DateTime
@@ -390,9 +420,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               <Select
                 labelProps={{ label: labels.repeatLabel }}
                 value={values.repeat}
-                onChange={(next) =>
-                  onFieldChange('repeat', next as ScheduledTaskRepeat)
-                }
+                onChange={handleRepeatChange}
                 options={labels.repeatOptions.map((option) => ({
                   value: option.key,
                   label: option.label,

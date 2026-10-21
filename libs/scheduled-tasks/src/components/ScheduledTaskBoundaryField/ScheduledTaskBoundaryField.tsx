@@ -5,6 +5,7 @@ import {
   type CalendarValue,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
+import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
 import {
   calendarValueToDateValue,
   calendarValueToRunAt,
@@ -27,7 +28,7 @@ export interface ScheduledTaskBoundaryFieldProps {
   onChange: (value: string) => void;
   /** Earliest selectable day, pinned by the owning form. */
   minDate: Date;
-  /** Submit-time validation error rendered under the picker. */
+  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced via `role="alert"` when it appears. */
   error?: string;
   /** CSS class applied to the error text. */
   errorClassName?: string;
@@ -59,6 +60,8 @@ export const ScheduledTaskBoundaryField: FC<
         : calendarValueToDateValue(next),
     );
 
+  const errorId = usePickerErrorAssociation(id, error);
+
   return (
     <div className="flex flex-1 flex-col gap-1">
       <Calendar
@@ -73,7 +76,13 @@ export const ScheduledTaskBoundaryField: FC<
         disabled={disabled}
       />
       {error && (
-        <p className={mergeClasses(errorClassName, styles.error)}>{error}</p>
+        <p
+          id={errorId}
+          role="alert"
+          className={mergeClasses(errorClassName, styles.error)}
+        >
+          {error}
+        </p>
       )}
     </div>
   );

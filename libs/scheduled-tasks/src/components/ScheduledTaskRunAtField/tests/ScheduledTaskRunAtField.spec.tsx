@@ -118,10 +118,16 @@ describe('ScheduledTaskRunAtField', () => {
     expect(onChange).toHaveBeenCalledWith('');
   });
 
-  it('shows the submit-time error under the picker and marks it invalid', () => {
+  it('shows the submit-time error under the picker, associated with it and announced', () => {
     renderField({ error: 'Pick a date in the future' });
 
-    expect(screen.getByText('Pick a date in the future')).toBeTruthy();
+    const control = screen.getByLabelText('Date and time *');
+    const errorId = control.getAttribute('aria-describedby');
+    expect(errorId).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Pick a date in the future',
+    );
+    expect(screen.getByRole('alert').id).toBe(errorId);
     expect(screen.getByText('isInvalid')).toBeTruthy();
   });
 

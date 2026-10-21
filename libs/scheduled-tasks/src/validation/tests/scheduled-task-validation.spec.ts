@@ -219,7 +219,7 @@ describe('validateScheduledTaskFormValues', () => {
           ...values,
           repeat: ScheduledTaskRepeat.Hourly,
           minute: '5',
-          startDate: '2026-09-22T08:00',
+          startDate: '2026-09-22T11:00',
           endDate: '2026-09-23T18:30',
         },
         { now: localNow },
@@ -245,6 +245,8 @@ describe('validateScheduledTaskFormValues', () => {
   });
 
   it('rejects an hourly window whose end precedes its start on the same day', () => {
+    /* Both boundaries sit later than the clock instant, so only the
+       ordering error fires. */
     const localNow = new Date(2026, 8, 22, 10, 0);
 
     expect(
@@ -254,14 +256,14 @@ describe('validateScheduledTaskFormValues', () => {
           repeat: ScheduledTaskRepeat.Hourly,
           minute: '5',
           startDate: '2026-09-22T18:00',
-          endDate: '2026-09-22T08:00',
+          endDate: '2026-09-22T15:00',
         },
         { now: localNow },
       ),
     ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInvalid });
   });
 
-  it('rejects an hourly boundary on an earlier day and accepts one on the clock day', () => {
+  it('rejects an hourly boundary on an earlier day and accepts one later on the clock day', () => {
     const localNow = new Date(2026, 8, 22, 10, 0);
 
     expect(
@@ -275,6 +277,8 @@ describe('validateScheduledTaskFormValues', () => {
         { now: localNow },
       ),
     ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInPast });
+    /* A boundary earlier today than the clock instant has already passed,
+       even though its day is today. */
     expect(
       validateScheduledTaskFormValues(
         {
@@ -285,10 +289,23 @@ describe('validateScheduledTaskFormValues', () => {
         },
         { now: localNow },
       ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInPast });
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-22T11:00',
+        },
+        { now: localNow },
+      ),
     ).toEqual({});
   });
 
-  it('accepts a mixed-shape window left over from a repeat switch', () => {
+  it('rejects an hourly end boundary earlier today than the clock instant', () => {
+    /* The window has already closed by now, so the task would be saved but
+       never run. */
     const localNow = new Date(2026, 8, 22, 10, 0);
 
     expect(
@@ -297,11 +314,34 @@ describe('validateScheduledTaskFormValues', () => {
           ...values,
           repeat: ScheduledTaskRepeat.Hourly,
           minute: '5',
-          startDate: '2026-09-22',
-          endDate: '2026-09-23T18:30',
+          endDate: '2026-09-22T08:00',
         },
         { now: localNow },
       ),
-    ).toEqual({});
+    ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInPast });
+  });
+
+  it('rejects a boundary whose shape does not match the repeat', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    /* A date-only boundary under hourly cannot be an exact picked instant. */
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Hourly,
+          minute: '5',
+          startDate: '2026-09-22',
+        },
+        { now: localNow },
+      ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInvalid });
+    /* A time-carrying boundary under a day-based repeat is not a whole day. */
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, endDate: '2026-09-23T18:30' },
+        { now: localNow },
+      ),
+    ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInvalid });
   });
 });

@@ -103,20 +103,25 @@ const buildCronFields = (
 
 /*
  * Converts a window-boundary value to the UTC ISO instant the cron trigger
- * stores. An hourly `YYYY-MM-DDTHH:mm` value is the picked instant itself;
- * a date-only `YYYY-MM-DD` value (day-based repeats, or a boundary left over
- * from a repeat switch) resolves to the start or end of that local day,
- * using the same reference-`Date`-plus-getters technique as `buildCronFields`
- * above: the browser's own timezone/DST handling does the conversion, rather
- * than manual offset arithmetic. A day-based `end` resolves to `23:59:59.999`
- * local, not midnight of the next day, so the last local day the user picked
- * stays fully inside the window.
+ * stores, keyed off the active repeat: an Hourly boundary is the exact
+ * `YYYY-MM-DDTHH:mm` instant the user picked, passed through as-is; a
+ * day-based boundary is date-only `YYYY-MM-DD`, resolving to the start or
+ * end of that local day, using the same reference-`Date`-plus-getters
+ * technique as `buildCronFields` above: the browser's own timezone/DST
+ * handling does the conversion, rather than manual offset arithmetic. A
+ * day-based `end` resolves to `23:59:59.999` local, not midnight of the
+ * next day, so the last local day the user picked stays fully inside the
+ * window. The form clears both boundaries on a shape-changing repeat
+ * switch and validation rejects a boundary whose shape does not match the
+ * cadence, so the shape reaching this function always matches the repeat
+ * it is converted by.
  */
 const buildCronWindowBoundary = (
+  repeat: ScheduledTaskRepeat,
   dateValue: string,
   edge: CronWindowEdge,
 ): string => {
-  if (dateValue.includes('T')) {
+  if (repeat === ScheduledTaskRepeat.Hourly) {
     return new Date(dateValue).toISOString();
   }
   const [year, month, day] = dateValue.split('-').map(Number);
@@ -148,6 +153,7 @@ export const mapFormValuesToCreateBody = (
             ...(values.startDate
               ? {
                   startDate: buildCronWindowBoundary(
+                    values.repeat,
                     values.startDate,
                     CronWindowEdge.Start,
                   ),
@@ -156,6 +162,7 @@ export const mapFormValuesToCreateBody = (
             ...(values.endDate
               ? {
                   endDate: buildCronWindowBoundary(
+                    values.repeat,
                     values.endDate,
                     CronWindowEdge.End,
                   ),

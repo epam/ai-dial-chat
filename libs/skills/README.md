@@ -74,8 +74,9 @@ accessible association. The host provides feature gating and the skill list.
 
 Pass host-resolved `skills` (`SkillSelectorOption[]`: `id` and `name`) and
 translated `labels.fieldLabel`, `labels.placeholder`,
-`labels.unsupportedTooltipLabel`, `labels.searchPlaceholder`,
-`labels.emptyLabel`, and `labels.noMatchingSkillsLabel`.
+`labels.unsupportedTooltipLabel`, `labels.unavailableHintLabel`,
+`labels.searchPlaceholder`, `labels.emptyLabel`, and
+`labels.noMatchingSkillsLabel`.
 
 ```tsx
 import { useState } from 'react';
@@ -102,7 +103,12 @@ function SkillFieldExample() {
 
 When `isSkillsSupported` is false, adding is disabled and, while a skill is
 selected, hovering the field shows `labels.unsupportedTooltipLabel` as the
-reason. With no selection the field is disabled without a tooltip or caption.
+reason. With no selection the field is disabled without a tooltip or caption;
+`labels.unavailableHintLabel` (default "Selected model does not support skills.
+Select a different model to use a skill.") carries the reason to assistive
+tech only, through a screen-reader-only description associated with the
+combobox. A host validation `error` is rendered by the kit's Select as its
+error, never aliased into that description.
 
 Public types: `SkillSelectorFieldProps`, `SkillSelectorFieldLabels`,
 `SkillSelectorFieldStyles`, and `SkillSelectorOption`. `styles` supports colors (`text`, `background`,

@@ -8,6 +8,8 @@ export interface SkillSelectorFieldLabels {
   placeholder: string;
   /** Explanation shown when the selected model cannot use skills. */
   unsupportedTooltipLabel: string;
+  /** Screen-reader-only explanation of why the field is disabled when the model cannot use skills and no skill is selected; never rendered visibly. Defaults to 'Selected model does not support skills. Select a different model to use a skill.'. */
+  unavailableHintLabel?: string;
   /** Search input placeholder. Defaults to 'Search skills'. */
   searchPlaceholder?: string;
   /** Text shown when no skill is available. Defaults to 'No skills available'. */

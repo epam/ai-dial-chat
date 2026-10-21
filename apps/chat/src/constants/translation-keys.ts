@@ -382,6 +382,7 @@ export enum SkillSelectorI18nKeys {
   NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
   NoSkillsLabel = 'skillSelector.noSkillsLabel',
   UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
+  UnavailableHintLabel = 'skillSelector.unavailableHintLabel',
   DeletedTooltipLabel = 'skillSelector.deletedTooltipLabel',
   NotSharedTooltipLabel = 'skillSelector.notSharedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',

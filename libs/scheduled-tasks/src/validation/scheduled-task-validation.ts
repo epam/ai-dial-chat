@@ -8,7 +8,12 @@ import {
 import { DESCRIPTION_MAX_LENGTH } from '../constants/scheduled-task-create-form';
 import type { ScheduledTaskCreateFormValues } from '../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
-import { TIME_OF_DAY_PATTERN } from '../utils/calendar-value';
+import {
+  DATE_ONLY_VALUE_LENGTH,
+  DATETIME_LOCAL_SEPARATOR,
+  isDateTimeLocalValue,
+  TIME_OF_DAY_PATTERN,
+} from '../utils/calendar-value';
 
 /** Stable error codes that a host translates at its application boundary. */
 export enum ScheduledTaskValidationErrorCode {
@@ -32,10 +37,10 @@ export enum ScheduledTaskValidationErrorCode {
   DayOfWeekInvalid = 'dayOfWeekInvalid',
   DayOfMonthInvalid = 'dayOfMonthInvalid',
   StartDateInvalid = 'startDateInvalid',
-  /** The activity-window start date is earlier than the injected clock's local today and differs from the option's original. */
+  /** The activity-window start boundary is earlier than the clock — its day earlier than today for a date-only value, its instant earlier than now for a time-carrying one — and differs from the option's original. */
   StartDateInPast = 'startDateInPast',
   EndDateInvalid = 'endDateInvalid',
-  /** The activity-window end date is earlier than the injected clock's local today and differs from the option's original. */
+  /** The activity-window end boundary is earlier than the clock — its day earlier than today for a date-only value, its instant earlier than now for a time-carrying one — and differs from the option's original. */
   EndDateInPast = 'endDateInPast',
 }
 
@@ -50,9 +55,9 @@ export interface ScheduledTaskValidationOptions {
   minimumLeadMs?: number;
   /** Explicit capability of the draft's selected model; omitted means unsupported. */
   isSkillsSupported?: boolean;
-  /** Activity-window start date the edit form was hydrated with, in the form's local `YYYY-MM-DD` shape; an unchanged original is exempt from the past-date rule. */
+  /** Activity-window start boundary the edit form was hydrated with, in the hydrated boundary's shape (`YYYY-MM-DD`, or `YYYY-MM-DDTHH:mm` for Hourly); an unchanged original is exempt from the past-date rule. */
   originalStartDate?: string;
-  /** Activity-window end date the edit form was hydrated with, in the form's local `YYYY-MM-DD` shape; an unchanged original is exempt from the past-date rule. */
+  /** Activity-window end boundary the edit form was hydrated with, in the hydrated boundary's shape (`YYYY-MM-DD`, or `YYYY-MM-DDTHH:mm` for Hourly); an unchanged original is exempt from the past-date rule. */
   originalEndDate?: string;
 }
 
@@ -95,7 +100,11 @@ const WEEKDAY_PATTERN = /^[0-6]$/;
 const MONTH_DAY_PATTERN = /^(?:[1-9]|[12][0-9]|3[01])$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 /* Hourly repeats write `YYYY-MM-DDTHH:mm` window boundaries; day-based
- * repeats (and a boundary left over from a repeat switch) write date-only. */
+ * repeats write date-only values. The form clears both boundaries on a
+ * shape-changing repeat switch, so the two shapes never mix; either format
+ * stays parseable here, but a boundary whose shape does not match the
+ * cadence is rejected below — it can only come from a host that bypassed
+ * the form, and the UTC boundary mapping dispatches on the repeat. */
 const DATETIME_LOCAL_PATTERN = /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):([0-5]\d)$/;
 
 const isValidDateOnly = (value: string): boolean => {
@@ -112,9 +121,9 @@ const isValidDateOnly = (value: string): boolean => {
 
 /** Accepts a window boundary in either shape: date-only `YYYY-MM-DD` or hourly `YYYY-MM-DDTHH:mm`. */
 const isValidWindowBoundary = (value: string): boolean => {
-  if (!isValidDateOnly(value.slice(0, 10))) return false;
+  if (!isValidDateOnly(value.slice(0, DATE_ONLY_VALUE_LENGTH))) return false;
   return (
-    value.length === 10 ||
+    !isDateTimeLocalValue(value) ||
     (DATETIME_LOCAL_PATTERN.test(value) &&
       Number.isFinite(new Date(value).getTime()))
   );
@@ -130,6 +139,23 @@ const padDatePart = (value: number): string => String(value).padStart(2, '0');
 /** Formats a `Date` as its local `YYYY-MM-DD` date-only string, matching the form's `startDate`/`endDate` shape. */
 const toLocalDateOnly = (date: Date): string =>
   `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+
+/** Formats a `Date` as its local `YYYY-MM-DDTHH:mm` string, matching the Hourly boundaries' shape. */
+const toLocalDateTime = (date: Date): string =>
+  `${toLocalDateOnly(date)}${DATETIME_LOCAL_SEPARATOR}${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+
+/*
+ * Same-shape string comparison is chronological for these fixed-width ISO
+ * values, so each boundary compares against the clock at its own
+ * granularity: a date-only boundary against today (any time on today's day
+ * is allowed), a time-carrying boundary against the now instant — an end
+ * earlier today than now has already closed the window.
+ */
+const isWindowBoundaryInPast = (
+  value: string,
+  today: string,
+  nowLocal: string,
+): boolean => value < (isDateTimeLocalValue(value) ? nowLocal : today);
 
 /**
  * Validates only the fields active for the selected repeat cadence. This pure
@@ -218,9 +244,30 @@ export const validateScheduledTaskFormValues = (
   if (values.endDate && !isValidWindowBoundary(values.endDate)) {
     errors.endDate = ScheduledTaskValidationErrorCode.EndDateInvalid;
   }
-  /* Raw string comparison is chronological in both shapes: same-shape values
-   * compare field by field, and a date-only value sorts before a same-day
-   * datetime value (it is its prefix). */
+  /* A boundary's shape must match the cadence: hourly picks exact
+   * `YYYY-MM-DDTHH:mm` instants, day-based repeats pick whole `YYYY-MM-DD`
+   * days. */
+  const isHourlyRepeat = values.repeat === ScheduledTaskRepeat.Hourly;
+  const isBoundaryShapeMismatched = (value: string) =>
+    isDateTimeLocalValue(value) !== isHourlyRepeat;
+  if (
+    values.startDate &&
+    isValidWindowBoundary(values.startDate) &&
+    isBoundaryShapeMismatched(values.startDate)
+  ) {
+    errors.startDate = ScheduledTaskValidationErrorCode.StartDateInvalid;
+  }
+  if (
+    values.endDate &&
+    isValidWindowBoundary(values.endDate) &&
+    isBoundaryShapeMismatched(values.endDate)
+  ) {
+    errors.endDate = ScheduledTaskValidationErrorCode.EndDateInvalid;
+  }
+  /* Raw string comparison is chronological within a shape: the form
+   * clears both boundaries on a shape-changing repeat switch, so the two
+   * values reaching this check always share one shape and compare field
+   * by field. */
   if (
     values.startDate &&
     values.endDate &&
@@ -232,20 +279,22 @@ export const validateScheduledTaskFormValues = (
   }
 
   /*
-   * ISO date-only strings compare lexicographically as chronological dates,
-   * so a boundary earlier than the clock's local today is a past date. This
-   * runs after the ordering check so the more fundamental "date is past"
+   * The granularity of "past" follows the value's shape: a date-only boundary
+   * is past when its day is earlier than today, a time-carrying boundary when
+   * its instant is earlier than the now clock (see `isWindowBoundaryInPast`).
+   * This runs after the ordering check so the more fundamental "date is past"
    * message wins when a boundary is both past and mis-ordered. A boundary
    * matching its original is the loaded value of an older task opened for
    * editing, not a user choice, so it is exempt — only a boundary changed
    * into the past is rejected.
    */
   const today = toLocalDateOnly(now);
+  const nowLocal = toLocalDateTime(now);
   if (
     values.startDate &&
     values.startDate !== originalStartDate &&
     isValidWindowBoundary(values.startDate) &&
-    values.startDate < today
+    isWindowBoundaryInPast(values.startDate, today, nowLocal)
   ) {
     errors.startDate = ScheduledTaskValidationErrorCode.StartDateInPast;
   }
@@ -253,7 +302,7 @@ export const validateScheduledTaskFormValues = (
     values.endDate &&
     values.endDate !== originalEndDate &&
     isValidWindowBoundary(values.endDate) &&
-    values.endDate < today
+    isWindowBoundaryInPast(values.endDate, today, nowLocal)
   ) {
     errors.endDate = ScheduledTaskValidationErrorCode.EndDateInPast;
   }
