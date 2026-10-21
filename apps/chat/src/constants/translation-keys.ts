@@ -907,7 +907,6 @@ export enum ConversationExportI18nKeys {
   CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',
   CloseQueueConfirmHeader = 'conversationExport.closeQueueConfirmHeader',
   CloseQueueConfirmDescriptionInProgress = 'conversationExport.closeQueueConfirmDescriptionInProgress',
-  CloseQueueConfirmDescriptionFailed = 'conversationExport.closeQueueConfirmDescriptionFailed',
   CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
   QueueProgressValueText = 'conversationExport.queueProgressValueText',
 }

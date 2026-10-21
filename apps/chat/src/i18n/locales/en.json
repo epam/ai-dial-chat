@@ -609,7 +609,6 @@
     "closeQueueAriaLabel": "Close queue",
     "closeQueueConfirmHeader": "Close queue?",
     "closeQueueConfirmDescriptionInProgress": "Some items are still in progress.",
-    "closeQueueConfirmDescriptionFailed": "Some items have failed.",
     "closeQueueConfirmDescriptionMixed": "Some items are still in progress, and some have failed."
   },
   "conversationImport": {
