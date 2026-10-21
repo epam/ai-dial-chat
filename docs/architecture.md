@@ -61,7 +61,8 @@ root/
 The MCP Apps sandbox runs on an origin distinct from the chat host and has its
 own embedding allowlist. The BFF publishes its URL and host identity through
 client config; see [MCP Apps configuration](../apps/chat-api/README.md#mcp-apps-configuration)
-and the [sandbox deployment guide](../apps/mcp-app-sandbox/README.md).
+and the [sandbox deployment guide](../apps/mcp-app-sandbox/README.md). How the
+pieces fit together end to end is in [MCP Apps](mcp-apps.md).
 
 Three container images are released together, with the same tags per run:
 `ai-dial-chat` (root `Dockerfile`: BFF with the SPA and overlay sandbox
