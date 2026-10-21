@@ -275,6 +275,27 @@ describe('UserMessageBubble — markdown', () => {
     expect(screen.getByRole('button', { name: 'Herunterladen' })).toBeTruthy();
   });
 
+  it('caps the bubble width so long unbroken lines wrap or scroll inside it', () => {
+    const longUrl = `https://chat.example.com/share/${'a'.repeat(200)}`;
+    render(
+      <UserMessageBubble text={`- ${longUrl}\n\n\`\`\`\n${longUrl}\n\`\`\``} />,
+    );
+
+    /*
+     * The bubble and its width cap carry no role, so the regression guard
+     * for issue #9508 is a CSS-level check.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const bubble = screen.getByRole('listitem').closest('.border');
+    expect(bubble?.className).toContain('max-w-full');
+    expect(bubble?.className).toContain('min-w-0');
+    expect(bubble?.className).toContain('wrap-anywhere');
+    expect(
+      // eslint-disable-next-line testing-library/no-node-access -- see comment above
+      screen.getByText(longUrl, { selector: 'code' }).closest('.overflow-auto'),
+    ).toBeTruthy();
+  });
+
   it('aligns lists to the inline start and keeps code LTR under dir="rtl"', () => {
     render(
       <div dir="rtl">
