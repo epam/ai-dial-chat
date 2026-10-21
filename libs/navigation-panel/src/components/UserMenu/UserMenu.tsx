@@ -223,6 +223,9 @@ export const UserMenu: FC<UserMenuProps> = memo(
           isStartPlacement
             ? 'flex min-w-0 items-center'
             : 'flex size-[60px] items-center justify-center',
+          /* The profile trigger takes the room its neighbours leave, so a long
+             name is truncated instead of running under them. */
+          isProfileTrigger && 'flex-1',
           className,
         )}
       >

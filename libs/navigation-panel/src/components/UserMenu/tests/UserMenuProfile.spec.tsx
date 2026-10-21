@@ -50,6 +50,27 @@ const profile: NavigationUserProfile = {
 };
 
 describe('UserMenu — Profile trigger', () => {
+  it('lets the profile trigger fill the room its neighbours leave, so a long name truncates', () => {
+    render(
+      <UserMenu
+        profile={profile}
+        labels={labels}
+        onLogout={vi.fn()}
+        triggerVariant={UserMenuTriggerVariant.Profile}
+      />,
+    );
+
+    /* The wrapper has no role; it is the parent of the trigger button. */
+    /* eslint-disable testing-library/no-node-access */
+    const wrapper = screen.getByRole('button', {
+      name: 'John Doe Signed in as john.doe@example.com',
+    }).parentElement;
+    /* eslint-enable testing-library/no-node-access */
+
+    expect(wrapper?.classList.contains('flex-1')).toBe(true);
+    expect(wrapper?.classList.contains('min-w-0')).toBe(true);
+  });
+
   it('names the trigger with the visible display name followed by the trigger label', () => {
     render(
       <UserMenu
