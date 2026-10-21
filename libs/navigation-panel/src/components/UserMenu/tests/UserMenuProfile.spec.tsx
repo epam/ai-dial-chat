@@ -7,6 +7,7 @@ import { UserMenu } from '../UserMenu';
 
 const dropdownProps = vi.hoisted(() => ({
   placement: undefined as string | undefined,
+  className: undefined as string | undefined,
   onOpenChange: undefined as ((isOpen: boolean) => void) | undefined,
 }));
 
@@ -23,14 +24,17 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
     Dropdown: ({
       children,
+      className,
       placement,
       onOpenChange,
     }: {
       children: ReactNode;
+      className?: string;
       placement?: string;
       onOpenChange?: (isOpen: boolean) => void;
     }) => {
       dropdownProps.placement = placement;
+      dropdownProps.className = className;
       dropdownProps.onOpenChange = onOpenChange;
       return <>{children}</>;
     },
@@ -69,6 +73,8 @@ describe('UserMenu — Profile trigger', () => {
 
     expect(wrapper?.classList.contains('flex-1')).toBe(true);
     expect(wrapper?.classList.contains('min-w-0')).toBe(true);
+    /* The kit's trigger wrapper is a flex item too, and must be able to shrink. */
+    expect(dropdownProps.className).toContain('min-w-0');
   });
 
   it('names the trigger with the visible display name followed by the trigger label', () => {

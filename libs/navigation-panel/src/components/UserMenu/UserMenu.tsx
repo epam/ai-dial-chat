@@ -230,6 +230,10 @@ export const UserMenu: FC<UserMenuProps> = memo(
         )}
       >
         <Dropdown
+          /* The trigger wrapper is a flex item: without `min-w-0` it cannot
+             shrink below its text, and a long name runs past the wrapper
+             instead of being truncated. */
+          className={isStartPlacement ? 'max-w-full min-w-0' : undefined}
           placement={isStartPlacement ? 'top-start' : 'top-end'}
           matchReferenceWidth={false}
           items={items}
