@@ -170,7 +170,7 @@ export interface ScheduledTaskCreateFormTypography {
   sectionSubtitleClassName?: string;
   /** CSS class applied to the Instructions label. Defaults to `'dial-body-semi-text mb-1'`. */
   instructionsLabelClassName?: string;
-  /** CSS class applied to the Instructions editor's validation error text. Defaults to `'dial-small-text'`. */
+  /** CSS class applied to the form's field validation errors. Defaults to `'dial-tiny-text'`. */
   instructionsErrorClassName?: string;
 }
 

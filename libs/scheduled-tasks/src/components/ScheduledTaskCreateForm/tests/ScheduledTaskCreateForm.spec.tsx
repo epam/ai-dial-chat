@@ -11,6 +11,8 @@ import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  ErrorText: ({ text }: { text?: string }) =>
+    text ? <span role="alert">{text}</span> : null,
   CaptionText: ({ text }: { text?: string }) => (text ? <p>{text}</p> : null),
   Input: ({
     labelProps,

@@ -13,6 +13,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
+  ErrorText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Input,
@@ -165,7 +166,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   const instructionsLabelClassName =
     typography?.instructionsLabelClassName ?? 'dial-body-semi-text mb-1';
   const instructionsErrorClassName =
-    typography?.instructionsErrorClassName ?? 'dial-small-text';
+    typography?.instructionsErrorClassName ?? 'dial-tiny-text';
   const cssVars = buildCssVars({
     '--stcf-details-border': colors?.detailsColumnBorder,
     '--stcf-subtitle-text': colors?.sectionSubtitleText,
@@ -356,14 +357,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               />
               {modelSelector}
               {errors.modelId && (
-                <p
+                <ErrorText
                   className={mergeClasses(
                     instructionsErrorClassName,
                     styles.instructionsError,
                   )}
-                >
-                  {errors.modelId}
-                </p>
+                  text={errors.modelId}
+                />
               )}
             </div>
 
@@ -406,14 +406,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                         showTimezone
                       />
                       {timeError && (
-                        <p
+                        <ErrorText
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
                           )}
-                        >
-                          {timeError}
-                        </p>
+                          text={timeError}
+                        />
                       )}
                     </div>
                   )}
@@ -436,14 +435,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                         invalid={Boolean(errors.dayOfWeek)}
                       />
                       {errors.dayOfWeek && (
-                        <p
+                        <ErrorText
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
                           )}
-                        >
-                          {errors.dayOfWeek}
-                        </p>
+                          text={errors.dayOfWeek}
+                        />
                       )}
                     </div>
                   )}
@@ -508,14 +506,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                         invalid={Boolean(errors.startDate)}
                       />
                       {errors.startDate && (
-                        <p
+                        <ErrorText
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
                           )}
-                        >
-                          {errors.startDate}
-                        </p>
+                          text={errors.startDate}
+                        />
                       )}
                     </div>
 
@@ -536,14 +533,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                         invalid={Boolean(errors.endDate)}
                       />
                       {errors.endDate && (
-                        <p
+                        <ErrorText
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
                           )}
-                        >
-                          {errors.endDate}
-                        </p>
+                          text={errors.endDate}
+                        />
                       )}
                     </div>
                   </div>
@@ -580,14 +576,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           ) : (
             errors.skillUrls && (
               <div aria-live="polite">
-                <p
+                <ErrorText
                   className={mergeClasses(
                     instructionsErrorClassName,
                     styles.instructionsError,
                   )}
-                >
-                  {errors.skillUrls}
-                </p>
+                  text={errors.skillUrls}
+                />
               </div>
             )
           )}
@@ -645,14 +640,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   </Suspense>
                 </div>
                 {errors.prompt && (
-                  <p
+                  <ErrorText
                     className={mergeClasses(
                       instructionsErrorClassName,
                       styles.instructionsError,
                     )}
-                  >
-                    {errors.prompt}
-                  </p>
+                    text={errors.prompt}
+                  />
                 )}
               </div>
             </TextRefinementField>
