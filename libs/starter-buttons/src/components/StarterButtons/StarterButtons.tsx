@@ -28,6 +28,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
   onSelect,
   isMobile,
   isCollapsible = true,
+  isIconHidden,
   labels,
   styles,
 }) => {
@@ -158,6 +159,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
             <StarterButton
               label={starter.title}
               onClick={() => onSelect(starter)}
+              iconBefore={isIconHidden ? null : undefined}
             />
           </div>
         ))}
