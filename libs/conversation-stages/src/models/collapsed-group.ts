@@ -3,7 +3,7 @@ import type {
   DisplayAttachment,
   Stage,
 } from '@epam/ai-dial-chat-shared';
-import type { StagesPanelColors } from './stages-props';
+import type { StageCitationRenderer, StagesPanelColors } from './stages-props';
 
 /** Color overrides for the `CollapsedGroup` component applied as CSS custom properties. */
 export interface CollapsedGroupColors {
@@ -75,4 +75,6 @@ export interface CollapsedGroupProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Host-owned URL resolvers for stage attachment tiles. Forwarded unchanged to the inner `StagesPanel`. */
   attachmentDisplayResolvers?: AttachmentDisplayResolvers;
+  /** Host-owned renderer for `<cit data-id="…">` elements in stage content. Forwarded unchanged to the inner `StagesPanel`. */
+  renderCitation?: StageCitationRenderer;
 }

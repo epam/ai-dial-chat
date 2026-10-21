@@ -118,6 +118,20 @@ import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 
 When a stage carries `attachments` (e.g. a RAG agent's search results), its expanded body renders each one as an `AttachmentCard` tile from `@epam/ai-dial-attachment-input`, in a wrapping row below any `stage.content`. The library maps each raw `MessageAttachment` to a `DisplayAttachment` itself — the host never has to. Clicking a tile calls `onAttachmentClick` with the mapped `DisplayAttachment`; the library never opens a preview or builds a URL itself, so the host decides what "click" means (open a canvas preview, download, navigate, etc.). For the same reason an image tile previews its raw `url` unless the host passes `attachmentDisplayResolvers` (`AttachmentDisplayResolvers` from `@epam/ai-dial-chat-shared`): a DIAL file id such as `files/<bucket>/path/page.png` is not a loadable `src` on its own, so the host's `resolvePreviewUrl` must turn it into its download URL (and `resolvePlayUrl` does the same for audio). `attachmentClickLabel` overrides the tile's default click-action label, which otherwise reads as a download/open action rather than a preview.
 
+### Stage citations
+
+A stage's `content` may carry `<cit data-id="…"></cit>` citation markers. By default they render as literal text. Pass `renderCitation` (typed `StageCitationRenderer`, `(dataId, children) => ReactNode`) to render them instead: the stage markdown calls it for every `<cit>` element with the element's `data-id` and children, and keeps the stage's own typography around it. The library resolves no annotations itself — the host decides what a marker becomes, typically with `useCitationTagRenderer` from `@epam/ai-dial-quotations`, and prepares each stage's `content` with that package's `prepareCitationContent` so streaming and malformed markup behave as in the message body. `renderCitation` reaches every stage at every nesting depth.
+
+```tsx
+import { StagesPanel } from '@epam/ai-dial-conversation-stages';
+
+<StagesPanel
+  stages={stages}
+  isStreaming={isStreaming}
+  renderCitation={(dataId) => <sup>[{dataId}]</sup>}
+/>;
+```
+
 ### CollapsedGroup
 
 The nested panel mounts only while the summary is expanded. Collapsing removes
@@ -146,7 +160,7 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 />;
 ```
 
-`onAttachmentClick` and `attachmentDisplayResolvers` are forwarded unchanged to the inner `StagesPanel` (and every `StageItem` it renders) — see [Stage attachments](#stage-attachments) above.
+`onAttachmentClick`, `attachmentDisplayResolvers` and `renderCitation` are forwarded unchanged to the inner `StagesPanel` (and every `StageItem` it renders) — see [Stage attachments](#stage-attachments) and [Stage citations](#stage-citations) above.
 
 `CollapsedGroupStyles.panel` is typed `StagesPanelColors` and is forwarded to the
 inner `StagesPanel`, so the group and the panel it wraps are themed from one
@@ -162,6 +176,7 @@ duration, parsed from its name (for example `[3.99s]` or
 
 ```tsx
 import type {
+  StageCitationRenderer,
   StagesPanelProps,
   StagesPanelColors,
   StagesPanelStyles,
